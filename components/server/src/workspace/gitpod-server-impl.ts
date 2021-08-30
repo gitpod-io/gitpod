@@ -1175,14 +1175,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const user = this.checkAndBlockUser('getHeadlessLog', { instanceId });
         const span = opentracing.globalTracer().startSpan("getHeadlessLog");
 
-        const ws = await this.workspaceDb.trace({span}).findByInstanceId(instanceId);
+        const ws = await this.workspaceDb.trace({ span }).findByInstanceId(instanceId);
         if (!ws) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${instanceId} not found`);
         }
 
         await this.guardAccess({ kind: 'workspaceLog', subject: ws }, 'get');
 
-        const wsi = await this.workspaceDb.trace({span}).findInstanceById(instanceId);
+        const wsi = await this.workspaceDb.trace({ span }).findInstanceById(instanceId);
         if (!wsi) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace instance for ${instanceId} not found`);
         }
@@ -1617,7 +1617,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     public async generateNewGitpodToken(options: { name?: string, type: GitpodTokenType, scopes?: [] }): Promise<string> {
         const user = this.checkAndBlockUser("generateNewGitpodToken");
-        this.checkAndBlockUser
         const token = crypto.randomBytes(30).toString('hex');
         const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest("hex");
         const dbToken: DBGitpodToken = {
@@ -1632,6 +1631,22 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
         await this.userDB.storeGitpodToken(dbToken)
         return token;
+    }
+
+    public async getGitpodTokenScopes(tokenHash: string): Promise<string[]> {
+        const user = this.checkAndBlockUser("getGitpodTokenScopes");
+        let token: GitpodToken | undefined;
+        try {
+            token = await this.userDB.findGitpodTokensOfUser(user.id, tokenHash);
+        } catch (error) {
+            log.error({ userId: user.id }, "failed to resolve gitpod token: ", error);
+            return [];
+        }
+        if (!token || token.deleted) {
+            return [];
+        }
+        await this.guardAccess({ kind: "gitpodToken", subject: token }, "get");
+        return token.scopes;
     }
 
     public async deleteGitpodToken(tokenHash: string): Promise<void> {

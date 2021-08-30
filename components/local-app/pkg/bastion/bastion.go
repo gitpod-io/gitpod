@@ -255,7 +255,8 @@ func (b *Bastion) FullUpdate() {
 func (b *Bastion) Update(workspaceID string) *Workspace {
 	ws, err := b.Client.GetWorkspace(b.ctx, workspaceID)
 	if err != nil {
-		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Warn("cannot get workspace")
+		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error("cannot get workspace")
+		return nil
 	}
 	if ws.LatestInstance == nil {
 		return nil
