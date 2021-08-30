@@ -442,7 +442,7 @@ func (b *Bastion) connectTunnelClient(ctx context.Context, ws *Workspace) error 
 	h := make(http.Header)
 	h.Set("x-gitpod-owner-token", ws.OwnerToken)
 	webSocket := gitpod.NewReconnectingWebsocket(tunnelURL, h, logrus.WithField("workspace", ws.WorkspaceID))
-	go webSocket.Dial()
+	go webSocket.DialContext(ctx)
 	go func() {
 		var (
 			client *TunnelClient

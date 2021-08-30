@@ -124,6 +124,11 @@ func (rc *ReconnectingWebsocket) ReadObject(v interface{}) error {
 
 // Dial creates a new client connection.
 func (rc *ReconnectingWebsocket) Dial() {
+	rc.DialContext(context.Background())
+}
+
+// DialContext creates a new client connection with a context
+func (rc *ReconnectingWebsocket) DialContext(ctx context.Context) {
 	var conn *WebsocketConnection
 	defer func() {
 		if conn == nil {
@@ -133,7 +138,7 @@ func (rc *ReconnectingWebsocket) Dial() {
 		conn.Close()
 	}()
 
-	conn = rc.connect()
+	conn = rc.connect(ctx)
 
 	for {
 		select {
@@ -145,7 +150,7 @@ func (rc *ReconnectingWebsocket) Dial() {
 			conn.Close()
 
 			time.Sleep(1 * time.Second)
-			conn = rc.connect()
+			conn = rc.connect(ctx)
 			if conn != nil && rc.ReconnectionHandler != nil {
 				go rc.ReconnectionHandler()
 			}
@@ -153,11 +158,20 @@ func (rc *ReconnectingWebsocket) Dial() {
 	}
 }
 
-func (rc *ReconnectingWebsocket) connect() *WebsocketConnection {
+func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnection {
 	delay := rc.minReconnectionDelay
 	for {
+		// Gorilla websocket does not check if context is valid when dialing so we do it prior
+		select {
+		case <-ctx.Done():
+			rc.log.WithField("url", rc.url).Info("context done...closing")
+			rc.Close()
+			return nil
+		default:
+		}
+
 		dialer := websocket.Dialer{HandshakeTimeout: rc.handshakeTimeout}
-		conn, _, err := dialer.Dial(rc.url, rc.reqHeader)
+		conn, _, err := dialer.DialContext(ctx, rc.url, rc.reqHeader)
 		if err == nil {
 			rc.log.WithField("url", rc.url).Debug("connection was successfully established")
 			ws, err := NewWebsocketConnection(context.Background(), conn, func(staleErr error) {
