@@ -8,7 +8,6 @@ import (
 	"container/ring"
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -44,9 +43,6 @@ type Controller struct {
 	processPriorities map[ProcessType]int
 
 	Prometheus prometheus.Registerer
-	metrics    struct {
-		CPULimit *prometheus.CounterVec
-	}
 
 	mu       sync.RWMutex
 	stopOnce sync.Once
@@ -141,29 +137,11 @@ func NewController(containerID, instanceID string, cgroupPath string, opts ...Co
 	}
 	gov.cpuExpenditures = ring.New(sampleCount)
 
-	err = gov.registerPrometheusGauges()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot register Prometheus metrics: %w", err)
-	}
-
 	if gov.ControlPeriod%gov.SamplingPeriod != 0 {
 		return nil, xerrors.Errorf("control period must be a multiple of sampling period")
 	}
 
 	return gov, nil
-}
-
-func (gov *Controller) registerPrometheusGauges() (err error) {
-	gov.metrics.CPULimit = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "workspace_cpu_limit_sec",
-		Help: "Time spent in each CPU limit",
-	}, []string{"limit"})
-	err = gov.Prometheus.Register(gov.metrics.CPULimit)
-	if err != nil {
-		log.WithError(err).Warn("cannot register Prometheus metric")
-	}
-
-	return nil
 }
 
 // Start actually starts governing. This function is meant to be called as a Go-routine.
@@ -359,7 +337,6 @@ func (gov *Controller) enforceCPULimit(limit int64) (didChange bool, err error) 
 
 	periodToMilliseconds := (time.Duration(period) * time.Microsecond).Milliseconds()
 	newQuota := limit * (10 /* milli-jiffie per jiffie */) * periodToMilliseconds
-	gov.metrics.CPULimit.WithLabelValues(fmt.Sprintf("%d", limit)).Add(gov.SamplingPeriod.Seconds())
 
 	if newQuota == currentQuota {
 		return false, nil
