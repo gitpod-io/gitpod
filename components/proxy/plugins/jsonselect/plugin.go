@@ -104,6 +104,10 @@ func (e JSONSelectEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Fie
 	// TODO(leo): switch back to EachKey (see git history) for perf reasons when fixed
 	for idx, paths := range e.getters {
 		val, typ, _, err := jsonparser.Get(buf.Bytes(), paths...)
+		if err == jsonparser.KeyPathNotFoundError {
+			// path not found, skip
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
