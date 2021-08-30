@@ -14,12 +14,10 @@ import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import Header from "../components/Header";
 import Spinner from "../icons/Spinner.svg";
 import SpinnerDark from "../icons/SpinnerDark.svg";
-import StatusDone from "../icons/StatusDone.svg";
-import StatusPaused from "../icons/StatusPaused.svg";
-import StatusRunning from "../icons/StatusRunning.svg";
 import PrebuildLogsEmpty from "../images/prebuild-logs-empty.svg";
 import PrebuildLogsEmptyDark from "../images/prebuild-logs-empty-dark.svg";
 import { ThemeContext } from "../theme-context";
+import { PrebuildInstanceStatus } from "./Prebuilds";
 
 const MonacoEditor = React.lazy(() => import('../components/MonacoEditor'));
 
@@ -70,7 +68,7 @@ export default function () {
   const [ isDetecting, setIsDetecting ] = useState<boolean>(true);
   const [ prebuildWasTriggered, setPrebuildWasTriggered ] = useState<boolean>(false);
   const [ startPrebuildResult, setStartPrebuildResult ] = useState<StartPrebuildResult | undefined>();
-  const [ prebuildPhase, setPrebuildPhase ] = useState<string | undefined>();
+  const [ prebuildInstance, setPrebuildInstance ] = useState<WorkspaceInstance | undefined>();
   const { isDark } = useContext(ThemeContext);
 
   useEffect(() => {
@@ -144,7 +142,7 @@ export default function () {
   }
 
   const onInstanceUpdate = (instance: WorkspaceInstance) => {
-    setPrebuildPhase(instance.status.phase);
+    setPrebuildInstance(instance);
   }
 
   useEffect(() => { document.title = 'Configure Project — Gitpod' }, []);
@@ -179,7 +177,7 @@ export default function () {
             </div>
         }</div>
         <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
-          {prebuildWasTriggered && <PrebuildStatus prebuildPhase={prebuildPhase} isDark={isDark} />}
+          {prebuildWasTriggered && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} isDark={isDark} />}
           <div className="flex-grow" />
           <button className="secondary">New Workspace</button>
           <button disabled={isDetecting} onClick={buildProject}>Run Prebuild</button>
@@ -196,51 +194,4 @@ function EditorMessage(props: { heading: string, message: string, type: 'success
   </div>;
 }
 
-function PrebuildStatus(props: { prebuildPhase?: string, isDark?: boolean }) {
-  let status = <></>;
-  let details = <></>;
-  switch (props.prebuildPhase) {
-    case undefined: // Fall through
-    case 'unknown':
-      status = <div className="flex space-x-1 items-center text-yellow-600">
-        <img className="h-4 w-4" src={StatusPaused} />
-        <span>PENDING</span>
-      </div>;
-      details = <div className="flex space-x-1 items-center text-gray-400">
-        <img className="h-4 w-4 animate-spin" src={props.isDark ? SpinnerDark : Spinner} />
-        <span>Prebuild in progress ...</span>
-      </div>;
-      break;
-    case 'preparing': // Fall through
-    case 'pending': // Fall through
-    case 'creating': // Fall through
-    case 'initializing': // Fall  through
-    case 'running': // Fall through
-    case 'interrupted':
-      status = <div className="flex space-x-1 items-center text-blue-600">
-        <img className="h-4 w-4" src={StatusRunning} />
-        <span>RUNNING</span>
-      </div>;
-      details = <div className="flex space-x-1 items-center text-gray-400">
-        <img className="h-4 w-4 animate-spin" src={props.isDark ? SpinnerDark : Spinner} />
-        <span>Prebuild in progress ...</span>
-      </div>;
-      break;
-    case 'stopping': // Fall through
-    case 'stopped':
-      status = <div className="flex space-x-1 items-center text-green-600">
-        <img className="h-4 w-4" src={StatusDone} />
-        <span>READY</span>
-      </div>;
-      // TODO(janx): Calculate actual duration from prebuild instance.
-      details = <div className="flex space-x-1 items-center text-gray-400">
-        <img className="h-4 w-4 filter-grayscale" src={StatusRunning} />
-        <span>00:34</span>
-      </div>;
-      break;
-  }
-  return <div className="flex flex-col space-y-1 justify-center text-sm font-semibold">
-    <div>{status}</div>
-    <div>{details}</div>
-  </div>;
-}
+

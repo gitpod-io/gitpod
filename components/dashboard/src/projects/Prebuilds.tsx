@@ -5,12 +5,18 @@
  */
 
 import moment from "moment";
-import { PrebuildInfo, PrebuildWithStatus, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildInfo, PrebuildWithStatus, PrebuiltWorkspaceState, Project, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import DropDown, { DropDownEntry } from "../components/DropDown";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
+import Spinner from "../icons/Spinner.svg";
+import SpinnerDark from "../icons/SpinnerDark.svg";
+import StatusDone from "../icons/StatusDone.svg";
+import StatusFailed from "../icons/StatusFailed.svg";
+import StatusPaused from "../icons/StatusPaused.svg";
+import StatusRunning from "../icons/StatusRunning.svg";
 import { getGitpodService } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { ContextMenuEntry } from "../components/ContextMenu";
@@ -201,6 +207,7 @@ export function prebuildStatusLabel(status: PrebuiltWorkspaceState | undefined) 
             break;
     }
 }
+
 export function prebuildStatusIcon(status: PrebuiltWorkspaceState | undefined) {
     switch (status) {
         case "aborted":
@@ -222,4 +229,63 @@ export function prebuildStatusIcon(status: PrebuiltWorkspaceState | undefined) {
         default:
             break;
     }
+}
+
+export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInstance, isDark?: boolean }) {
+    let status = <></>;
+    let details = <></>;
+    switch (props.prebuildInstance?.status.phase) {
+        case undefined: // Fall through
+        case 'unknown':
+            status = <div className="flex space-x-1 items-center text-yellow-600">
+                <img className="h-4 w-4" src={StatusPaused} />
+                <span>PENDING</span>
+                </div>;
+            details = <div className="flex space-x-1 items-center text-gray-400">
+                <img className="h-4 w-4 animate-spin" src={props.isDark ? SpinnerDark : Spinner} />
+                <span>Prebuild in progress ...</span>
+                </div>;
+            break;
+        case 'preparing': // Fall through
+        case 'pending': // Fall through
+        case 'creating': // Fall through
+        case 'initializing': // Fall  through
+        case 'running': // Fall through
+        case 'interrupted':
+            status = <div className="flex space-x-1 items-center text-blue-600">
+                <img className="h-4 w-4" src={StatusRunning} />
+                <span>RUNNING</span>
+                </div>;
+            details = <div className="flex space-x-1 items-center text-gray-400">
+                <img className="h-4 w-4 animate-spin" src={props.isDark ? SpinnerDark : Spinner} />
+                <span>Prebuild in progress ...</span>
+                </div>;
+            break;
+        case 'stopping': // Fall through
+        case 'stopped':
+            status = <div className="flex space-x-1 items-center text-green-600">
+                <img className="h-4 w-4" src={StatusDone} />
+                <span>READY</span>
+                </div>;
+            details = <div className="flex space-x-1 items-center text-gray-400">
+                <img className="h-4 w-4 filter-grayscale" src={StatusRunning} />
+                <span>{!!props.prebuildInstance?.stoppedTime
+                    ? `${Math.round(((new Date(props.prebuildInstance.stoppedTime).getTime()) - (new Date(props.prebuildInstance.creationTime).getTime())) / 1000)}s`
+                    : '...'}</span>
+                </div>;
+            break;
+    }
+    if (props.prebuildInstance?.status.conditions.failed) {
+        status = <div className="flex space-x-1 items-center text-gitpod-red">
+            <img className="h-4 w-4" src={StatusFailed} />
+            <span>FAILED</span>
+            </div>;
+        details = <div className="flex space-x-1 items-center text-gray-400">
+            <span>Prebuild failed</span>
+            </div>;
+    }
+    return <div className="flex flex-col space-y-1 justify-center text-sm font-semibold">
+        <div>{status}</div>
+        <div>{details}</div>
+    </div>;
 }
