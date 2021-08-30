@@ -123,12 +123,7 @@ func (rc *ReconnectingWebsocket) ReadObject(v interface{}) error {
 }
 
 // Dial creates a new client connection.
-func (rc *ReconnectingWebsocket) Dial() {
-	rc.DialContext(context.Background())
-}
-
-// DialContext creates a new client connection with a context
-func (rc *ReconnectingWebsocket) DialContext(ctx context.Context) {
+func (rc *ReconnectingWebsocket) Dial(ctx context.Context) {
 	var conn *WebsocketConnection
 	defer func() {
 		if conn == nil {
@@ -164,7 +159,7 @@ func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnecti
 		// Gorilla websocket does not check if context is valid when dialing so we do it prior
 		select {
 		case <-ctx.Done():
-			rc.log.WithField("url", rc.url).Info("context done...closing")
+			rc.log.WithField("url", rc.url).Debug("context done...closing")
 			rc.Close()
 			return nil
 		default:
