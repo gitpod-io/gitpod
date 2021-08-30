@@ -5,7 +5,6 @@
  */
 
 import { OAuthClient, OAuthScope, OAuthToken } from "@jmondi/oauth2-server";
-import { ScopedResourceGuard } from "../auth/resource-access";
 
 /**
 * Currently (2021-05-15) we only support 1 client and a fixed set of scopes so hard-coding here is acceptable.
@@ -19,11 +18,11 @@ export interface InMemory {
 
 // Scopes
 const scopes: OAuthScope[] = [
+  { name: "function:getGitpodTokenScopes" },
   { name: "function:getWorkspace" },
   { name: "function:getWorkspaces" },
   { name: "function:listenForWorkspaceInstanceUpdates" },
-  { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspace", subjectID: "*", operations: ["get"] }) },
-  { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspaceInstance", subjectID: "*", operations: ["get"] }) }
+  { name: "resource:default" }
 ];
 
 // Clients

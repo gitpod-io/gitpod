@@ -691,6 +691,7 @@ export class WorkspaceStarter {
             "function:storeLayout",
             "function:stopWorkspace",
             "function:getToken",
+            "function:getGitpodTokenScopes",
             "function:getContentBlobUploadUrl",
             "function:getContentBlobDownloadUrl",
             "function:accessCodeSyncStorage",

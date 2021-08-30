@@ -174,6 +174,14 @@ export class TypeORMUserDBImpl implements UserDB {
         return { user: token.user, token };
     }
 
+    public async findGitpodTokensOfUser(userId: string, tokenHash: string): Promise<GitpodToken | undefined> {
+        const repo = await this.getGitpodTokenRepo()
+        const qBuilder = repo.createQueryBuilder('gitpodToken')
+            .leftJoinAndSelect("gitpodToken.user", "user");
+        qBuilder.where('user.id = :userId AND gitpodToken.tokenHash = :tokenHash', { userId, tokenHash });
+        return qBuilder.getOne();
+    }
+
     public async findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]> {
         const repo = await this.getGitpodTokenRepo()
         const qBuilder = repo.createQueryBuilder('gitpodToken')

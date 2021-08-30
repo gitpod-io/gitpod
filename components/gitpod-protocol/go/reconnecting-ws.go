@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -15,6 +16,19 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
+
+// ErrClosed is returned when the reconnecting web socket is closed.
+var ErrClosed = errors.New("reconnecting-ws: closed")
+
+// ErrBadHandshake is returned when the server response to opening handshake is
+// invalid.
+type ErrBadHandshake struct {
+	Resp *http.Response
+}
+
+func (e *ErrBadHandshake) Error() string {
+	return fmt.Sprintf("reconnecting-ws: bad handshake: code %v", e.Resp.StatusCode)
+}
 
 // The ReconnectingWebsocket represents a Reconnecting WebSocket connection.
 type ReconnectingWebsocket struct {
@@ -27,6 +41,7 @@ type ReconnectingWebsocket struct {
 	reconnectionDelayGrowFactor float64
 
 	once     sync.Once
+	closeErr error
 	closedCh chan struct{}
 	connCh   chan chan *WebsocketConnection
 	errCh    chan error
@@ -54,7 +69,12 @@ func NewReconnectingWebsocket(url string, reqHeader http.Header, log *logrus.Ent
 
 // Close closes the underlying webscoket connection.
 func (rc *ReconnectingWebsocket) Close() error {
+	return rc.closeWithError(ErrClosed)
+}
+
+func (rc *ReconnectingWebsocket) closeWithError(closeErr error) error {
 	rc.once.Do(func() {
+		rc.closeErr = closeErr
 		close(rc.closedCh)
 	})
 	return nil
@@ -69,7 +89,7 @@ func (rc *ReconnectingWebsocket) EnsureConnection(handler func(conn *WebsocketCo
 		connCh := make(chan *WebsocketConnection, 1)
 		select {
 		case <-rc.closedCh:
-			return errors.New("closed")
+			return rc.closeErr
 		case rc.connCh <- connCh:
 		}
 		conn := <-connCh
@@ -79,7 +99,7 @@ func (rc *ReconnectingWebsocket) EnsureConnection(handler func(conn *WebsocketCo
 		}
 		select {
 		case <-rc.closedCh:
-			return errors.New("closed")
+			return rc.closeErr
 		case rc.errCh <- err:
 		}
 	}
@@ -166,7 +186,7 @@ func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnecti
 		}
 
 		dialer := websocket.Dialer{HandshakeTimeout: rc.handshakeTimeout}
-		conn, _, err := dialer.DialContext(ctx, rc.url, rc.reqHeader)
+		conn, resp, err := dialer.DialContext(ctx, rc.url, rc.reqHeader)
 		if err == nil {
 			rc.log.WithField("url", rc.url).Debug("connection was successfully established")
 			ws, err := NewWebsocketConnection(context.Background(), conn, func(staleErr error) {
@@ -177,7 +197,17 @@ func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnecti
 			}
 		}
 
-		rc.log.WithError(err).WithField("url", rc.url).Errorf("failed to connect, trying again in %d seconds...", uint32(delay.Seconds()))
+		if err == websocket.ErrBadHandshake {
+			_ = rc.closeWithError(&ErrBadHandshake{resp})
+			return nil
+		}
+
+		var statusCode int
+		if resp != nil {
+			statusCode = resp.StatusCode
+		}
+
+		rc.log.WithError(err).WithField("statusCode", statusCode).WithField("url", rc.url).Errorf("failed to connect, trying again in %d seconds...", uint32(delay.Seconds()))
 		select {
 		case <-rc.closedCh:
 			return nil

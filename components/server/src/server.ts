@@ -35,7 +35,7 @@ import { WebsocketConnectionManager } from './websocket-connection-manager';
 import { DeletedEntryGC, PeriodicDbDeleter } from '@gitpod/gitpod-db/lib';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
-import { BearerAuth } from './auth/bearer-authenticator';
+import { BearerAuth, isBearerAuthError } from './auth/bearer-authenticator';
 import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { increaseHttpRequestCounter, observeHttpRequestDuration } from './prometheus-metrics';
@@ -124,12 +124,12 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             //  - a workspace location (ending of hostUrl.hostname)
             // We rely on the origin header being set correctly (needed by regular clients to use Gitpod:
             // CORS allows subdomains to access gitpod.io)
-            const csrfGuard: ws.VerifyClientCallbackAsync = (info: { origin: string; secure: boolean; req: http.IncomingMessage }, callback: (res: boolean, code?: number, message?: string) => void) => {
-                let allowedRequest = isAllowedWebsocketDomain(info.origin, this.env.hostUrl.url.hostname);
+            const verifyCSRF = (origin: string) => {
+                let allowedRequest = isAllowedWebsocketDomain(origin, this.env.hostUrl.url.hostname);
                 if (this.env.kubeStage === 'prodcopy' || this.env.kubeStage === 'staging') {
                     // On staging and devstaging, we want to allow Theia to be able to connect to the server from this magic port
                     // This enables debugging Theia from inside Gitpod
-                    const url = new URL(info.origin);
+                    const url = new URL(origin);
                     if (url.hostname.startsWith("13444-")) {
                         allowedRequest = true;
                     }
@@ -138,10 +138,27 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                     log.warn("Websocket connection CSRF guard disabled");
                     allowedRequest = true;
                 }
+                return allowedRequest;
+            }
 
-                if (!allowedRequest) {
+            /**
+             * Verify the web socket handshake request.
+             */
+            const verifyClient: ws.VerifyClientCallbackAsync = async (info, callback) => {
+                if (!verifyCSRF(info.origin)) {
                     log.warn("Websocket connection attempt with non-matching Origin header: " + info.origin)
                     return callback(false, 403);
+                }
+                if (info.req.url === '/v1') {
+                    try {
+                        await this.bearerAuth.auth(info.req as express.Request)
+                    } catch (e) {
+                        if (isBearerAuthError(e)) {
+                            return callback(false, 401, e.message);
+                        }
+                        log.warn("authentication failed: ", e)
+                        return callback(false, 500);
+                    }
                 }
                 return callback(true);
             };
@@ -160,7 +177,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 }
             );
 
-            const wsHandler = new WsExpressHandler(httpServer, csrfGuard);
+            const wsHandler = new WsExpressHandler(httpServer, verifyClient);
             wsHandler.ws(websocketConnectionHandler.path, (ws, request) => {
                 const websocket = toIWebSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
@@ -170,7 +187,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             wsHandler.ws("/v1", (ws, request) => {
                 const websocket = toIWebSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
-            }, this.bearerAuth.websocketHandler, handleError, pingPong, (ws: ws, req: express.Request) => {
+            }, handleError, pingPong, (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
             });
         })

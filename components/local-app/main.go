@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"context"
-	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -93,6 +92,10 @@ func main() {
 					"GITPOD_LCA_AUTH_REDIRECT_URL",
 				},
 			},
+			&cli.BoolFlag{
+				Name:  "verbose",
+				Value: false,
+			},
 		},
 		Commands: []*cli.Command{
 			{
@@ -101,7 +104,7 @@ func main() {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
 					}
-					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Int("api-port"), c.Bool("allow-cors-from-port"), c.Bool("auto-tunnel"), c.String("auth-redirect-url"))
+					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Int("api-port"), c.Bool("allow-cors-from-port"), c.Bool("auto-tunnel"), c.String("auth-redirect-url"), c.Bool("verbose"))
 				},
 				Flags: []cli.Flag{
 					&cli.PathFlag{
@@ -125,27 +128,14 @@ func DefaultCommand(name string) cli.ActionFunc {
 	}
 }
 
-func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunnel bool, authRedirectUrl string) error {
+func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunnel bool, authRedirectUrl string, verbose bool) error {
+	if verbose {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 	logrus.WithField("ssh_config", sshConfig).Info("writing workspace ssh_config file")
 
 	// Trailing slash(es) result in connection issues, so remove them preemptively
 	origin = strings.TrimRight(origin, "/")
-	tkn, err := auth.GetToken(origin)
-	if errors.Is(err, keyring.ErrNotFound) {
-		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: origin, RedirectURL: authRedirectUrl})
-		if tkn != "" {
-			err = auth.SetToken(origin, tkn)
-			if err != nil {
-				logrus.WithField("origin", origin).Warnf("could not write token to keyring: %s", err)
-				// Allow to continue
-				err = nil
-			}
-		}
-	}
-	if err != nil {
-		return err
-	}
-
 	originURL, err := url.Parse(origin)
 	if err != nil {
 		return err
@@ -160,32 +150,23 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunn
 		return err
 	}
 
+	var b *bastion.Bastion
+
+	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: authRedirectUrl}, func() {
+		if b != nil {
+			b.FullUpdate()
+		}
+	})
+	if err != nil {
+		return err
+	}
+
 	cb := bastion.CompositeCallbacks{
 		&logCallbacks{},
 	}
 	s := &bastion.SSHConfigWritingCallback{Path: sshConfig}
 	if sshConfig != "" {
 		cb = append(cb, s)
-	}
-
-	var b *bastion.Bastion
-
-	wshost := origin
-	wshost = strings.ReplaceAll(wshost, "https://", "wss://")
-	wshost = strings.ReplaceAll(wshost, "http://", "ws://")
-	wshost += "/api/v1"
-	client, err := gitpod.ConnectToServer(wshost, gitpod.ConnectToServerOpts{
-		Context: context.Background(),
-		Token:   tkn,
-		Log:     logrus.NewEntry(logrus.New()),
-		ReconnectionHandler: func() {
-			if b != nil {
-				b.FullUpdate()
-			}
-		},
-	})
-	if err != nil {
-		return err
 	}
 
 	b = bastion.New(client, cb)
@@ -196,21 +177,100 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunn
 		// Is the origin a subdomain of the installations hostname?
 		return hostRegex.Match([]byte(origin))
 	}
-	go http.ListenAndServe("localhost:"+strconv.Itoa(apiPort), grpcweb.WrapServer(grpcServer,
-		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
-		grpcweb.WithOriginFunc(allowOrigin),
-		grpcweb.WithWebsockets(true),
-		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
-			origin, err := grpcweb.WebsocketRequestOrigin(req)
-			if err != nil {
-				return false
-			}
-			return allowOrigin(origin)
-		}),
-		grpcweb.WithWebsocketPingInterval(15*time.Second),
-	))
+	go func() {
+		err := http.ListenAndServe("localhost:"+strconv.Itoa(apiPort), grpcweb.WrapServer(grpcServer,
+			grpcweb.WithCorsForRegisteredEndpointsOnly(false),
+			grpcweb.WithOriginFunc(allowOrigin),
+			grpcweb.WithWebsockets(true),
+			grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+				origin, err := grpcweb.WebsocketRequestOrigin(req)
+				if err != nil {
+					return false
+				}
+				return allowOrigin(origin)
+			}),
+			grpcweb.WithWebsocketPingInterval(15*time.Second),
+		))
+		if err != nil {
+			logrus.WithError(err).Error("API endpoint failed to start")
+			os.Exit(1)
+		}
+	}()
 	defer grpcServer.Stop()
 	return b.Run()
+}
+
+func connectToServer(loginOpts auth.LoginOpts, reconnectionHandler func()) (*gitpod.APIoverJSONRPC, error) {
+	tkn, err := auth.GetToken(loginOpts.GitpodURL)
+	if err != nil {
+		return nil, err
+	}
+
+	if tkn != "" {
+		// try to connect with existing token
+		client, err := tryConnectToServer(loginOpts.GitpodURL, tkn, reconnectionHandler)
+		if client != nil {
+			return client, err
+		}
+		_, invalid := err.(*auth.ErrInvalidGitpodToken)
+		if !invalid {
+			return nil, err
+		}
+		// existing token is invalid, try again
+		logrus.WithError(err).WithField("origin", loginOpts.GitpodURL).Error()
+	}
+
+	tkn, err = login(loginOpts)
+	if err != nil {
+		return nil, err
+	}
+	return tryConnectToServer(loginOpts.GitpodURL, tkn, reconnectionHandler)
+}
+
+func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()) (*gitpod.APIoverJSONRPC, error) {
+	wshost := gitpodUrl
+	wshost = strings.ReplaceAll(wshost, "https://", "wss://")
+	wshost = strings.ReplaceAll(wshost, "http://", "ws://")
+	wshost += "/api/v1"
+	client, err := gitpod.ConnectToServer(wshost, gitpod.ConnectToServerOpts{
+		Context:             context.Background(),
+		Token:               tkn,
+		Log:                 logrus.NewEntry(logrus.StandardLogger()),
+		ReconnectionHandler: reconnectionHandler,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = auth.ValidateToken(client, tkn)
+	if err == nil {
+		return client, nil
+	}
+
+	closeErr := client.Close()
+	if closeErr != nil {
+		logrus.WithError(closeErr).WithField("origin", gitpodUrl).Warn("failed to close connection to gitpod server")
+	}
+
+	deleteErr := auth.DeleteToken(gitpodUrl)
+	if deleteErr != nil {
+		logrus.WithError(deleteErr).WithField("origin", gitpodUrl).Warn("failed to delete gitpod token")
+	}
+
+	return nil, err
+}
+
+func login(loginOpts auth.LoginOpts) (string, error) {
+	tkn, err := auth.Login(context.Background(), loginOpts)
+	if tkn != "" {
+		err = auth.SetToken(loginOpts.GitpodURL, tkn)
+		if err != nil {
+			logrus.WithField("origin", loginOpts.GitpodURL).Warnf("could not write token to keyring: %s", err)
+			// Allow to continue
+			err = nil
+		}
+	}
+	return tkn, err
 }
 
 type logCallbacks struct{}

@@ -405,6 +405,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetSnapshots(ctx, workspaceID interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSnapshots", reflect.TypeOf((*MockAPIInterface)(nil).GetSnapshots), ctx, workspaceID)
 }
 
+// GetGitpodTokenScopes indicates an expected call of GetGitpodTokenScopes.
+func (mr *MockAPIInterfaceMockRecorder) GetGitpodTokenScopes(ctx, tokenHash interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitpodTokenScopes", reflect.TypeOf((*MockAPIInterface)(nil).GetGitpodTokenScopes), ctx, tokenHash)
+}
+
+// GetGitpodTokenScopes mocks base method.
+func (m *MockAPIInterface) GetGitpodTokenScopes(ctx context.Context, tokenHash string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGitpodTokenScopes", ctx, tokenHash)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
 // GetToken mocks base method.
 func (m *MockAPIInterface) GetToken(ctx context.Context, query *GetTokenSearchOptions) (*Token, error) {
 	m.ctrl.T.Helper()
