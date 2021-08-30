@@ -14,8 +14,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/api"
 
@@ -27,13 +27,10 @@ import (
 	"github.com/docker/distribution/registry/api/errcode"
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/mux"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
 )
 
 // Config configures the registry
@@ -153,18 +150,7 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 
 	specProvider := map[string]ImageSpecProvider{}
 	if cfg.RemoteSpecProvider != nil {
-		opts := []grpc.DialOption{
-			grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
-			grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
-			grpc.WithBlock(),
-			grpc.WithBackoffMaxDelay(5 * time.Second),
-			grpc.WithKeepaliveParams(keepalive.ClientParameters{
-				Time:                5 * time.Second,
-				Timeout:             time.Second,
-				PermitWithoutStream: true,
-			}),
-		}
-
+		grpcOpts := common_grpc.DefaultClientOptions()
 		if cfg.RemoteSpecProvider.TLS != nil {
 			ca := cfg.RemoteSpecProvider.TLS.Authority
 			crt := cfg.RemoteSpecProvider.TLS.Certificate
@@ -197,17 +183,17 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 				RootCAs:      certPool,
 				MinVersion:   tls.VersionTLS12,
 			})
-			opts = append(opts, grpc.WithTransportCredentials(creds))
+			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
 			log.
 				WithField("ca", ca).
 				WithField("cert", crt).
 				WithField("key", key).
 				Debug("using TLS config to connect ws-manager")
 		} else {
-			opts = append(opts, grpc.WithInsecure())
+			grpcOpts = append(grpcOpts, grpc.WithInsecure())
 		}
 
-		specprov, err := NewCachingSpecProvider(128, NewRemoteSpecProvider(cfg.RemoteSpecProvider.Addr, opts))
+		specprov, err := NewCachingSpecProvider(128, NewRemoteSpecProvider(cfg.RemoteSpecProvider.Addr, grpcOpts))
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create caching spec provider: %w", err)
 		}

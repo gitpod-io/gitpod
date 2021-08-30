@@ -13,19 +13,17 @@ import (
 	"syscall"
 	"time"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/orchestrator"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
 )
 
 // runCmd represents the run command
@@ -63,22 +61,7 @@ var runCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		grpcOpts := []grpc.ServerOption{
-			// terminate the connection if the client pings more than once every 2 seconds
-			grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
-				MinTime:             2 * time.Second,
-				PermitWithoutStream: true,
-			}),
-			// We don't know how good our cients are at closing connections. If they don't close them properly
-			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
-			grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 30 * time.Minute}),
-			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-				grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
-			)),
-			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
-			)),
-		}
+		grpcOpts := common_grpc.DefaultServerOptions()
 		tlsOpt, err := cfg.Service.TLS.ServerOption()
 		if err != nil {
 			log.WithError(err).Fatal("cannot use TLS config")
