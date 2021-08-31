@@ -16,6 +16,7 @@
 	order gitpod.headless_log_download  before redir
 	order gitpod.sec_websocket_key      before header
 	order http_cache                    before reverse_proxy
+	order gitpod.body_intercept         before redir
 }
 
 (compression) {
