@@ -59,36 +59,38 @@ spec:
         - name: CHARGEBEE_WEBHOOK
           value: '{{ .Values.components.paymentEndpoint.webhook | toJson }}'
 {{- end }}
-{{- if $server.github.app }}
+{{- if $server.githubApp }}
         - name: GITPOD_GITHUB_APP_ENABLED
-          value: "{{ $server.github.app.enabled | default "false" }}"
+          value: "{{ $server.githubApp.enabled | default "false" }}"
         - name: GITPOD_GITHUB_APP_ID
-          value: "{{ $server.github.app.appId }}"
+          value: "{{ $server.githubApp.appId }}"
         - name: GITPOD_GITHUB_APP_WEBHOOK_SECRET
-          value: "{{ $server.github.app.webhookSecret }}"
-{{- if $server.github.app.githubHost }}
+          value: "{{ $server.githubApp.webhookSecret }}"
+        - name: GITPOD_GITHUB_APP_AUTH_PROVIDER_ID
+          value: "{{ $server.githubApp.authProviderId }}"
+{{- if $server.githubApp.baseUrl }}
         - name: GHE_HOST
-          value: "{{ $server.github.app.githubHost }}"
+          value: "{{ $server.githubApp.baseUrl }}"
 {{- end }}
         - name: GITPOD_GITHUB_APP_CERT_PATH
           value: "/github-app-cert/cert"
         - name: GITPOD_GITHUB_APP_MKT_NAME
-          value: "{{ $server.github.app.marketPlaceName }}"
+          value: "{{ $server.githubApp.marketplaceName }}"
 {{- end }}
         volumeMounts:
-{{- if $server.github.app }}
+{{- if and $server.githubApp $server.githubApp.enabled }}
         - name: github-app-cert-secret
-          mountPath: "/github-app-cert"
+          mountPath: "{{ dir $server.githubApp.certPath }}"
           readOnly: true
 {{- end }}
         - name: chargebee-config
           mountPath: "/chargebee"
           readOnly: true
       volumes:
-{{- if $server.github.app }}
+{{- if and $server.githubApp $server.githubApp.enabled }}
       - name: github-app-cert-secret
         secret:
-          secretName: {{ $server.github.app.appCert }}
+          secretName: {{ $server.githubApp.certSecretName }}
 {{- end }}
       - name: chargebee-config
         secret:

@@ -293,9 +293,8 @@ components:
     dependsOn: []
     resources:
       cpu: "200m"
-    github:
-      app:
-        enabled: false
+    githubApp:
+      enabled: false
     blockNewUsers:
       enabled: false
       passlist: []
