@@ -93,7 +93,10 @@ func main() {
 				},
 			},
 			&cli.BoolFlag{
-				Name:  "verbose",
+				Name: "verbose",
+				EnvVars: []string{
+					"GITPOD_LCA_VERBOSE",
+				},
 				Value: false,
 			},
 		},
