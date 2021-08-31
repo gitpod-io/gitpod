@@ -44,8 +44,8 @@ data:
             "defaultFeatureFlags": {{ $comp.defaultFeatureFlags | toJson }}
         },
         "session": {{ $comp.session | toJson }},
-{{- if $comp.github.app }}
-        "githubApp": {{ $comp.github.app | toJson }},
+{{- if $comp.githubApp }}
+        "githubApp": {{ $comp.githubApp | toJson }},
 {{- end }}
         "definitelyGpDisabled": {{ $comp.definitelyGpDisabled }},
         "workspaceGarbageCollection": {{ $comp.garbageCollection | toJson }},

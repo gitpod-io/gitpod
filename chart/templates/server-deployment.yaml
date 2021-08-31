@@ -111,9 +111,9 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
-{{- if and $comp.github.app $comp.github.app.enabled }}
+{{- if and $comp.githubApp $comp.githubApp.enabled }}
         - name: github-app-cert-secret
-          mountPath: "{{ dir $comp.github.app.certPath }}"
+          mountPath: "{{ dir $comp.githubApp.certPath }}"
           readOnly: true
 {{- end }}
 {{- if $comp.serverContainer.volumeMounts }}
@@ -132,23 +132,23 @@ spec:
           value: "{{ .Values.license }}"
         - name: VERSION
           value: "{{ .Values.version }}"
-{{- if $comp.github.app }}
+{{- if $comp.githubApp }}
         - name: GITPOD_GITHUB_APP_ENABLED
-          value: "{{ $comp.github.app.enabled | default "false" }}"
+          value: "{{ $comp.githubApp.enabled | default "false" }}"
         - name: GITPOD_GITHUB_APP_ID
-          value: "{{ $comp.github.app.appId }}"
+          value: "{{ $comp.githubApp.appId }}"
         - name: GITPOD_GITHUB_APP_WEBHOOK_SECRET
-          value: "{{ $comp.github.app.webhookSecret }}"
+          value: "{{ $comp.githubApp.webhookSecret }}"
         - name: GITPOD_GITHUB_APP_AUTH_PROVIDER_ID
-          value: "{{ $comp.github.app.authProviderId }}"
-{{- if $comp.github.app.githubHost }}
+          value: "{{ $comp.githubApp.authProviderId }}"
+{{- if $comp.githubApp.baseUrl }}
         - name: GHE_HOST
-          value: "{{ $comp.github.app.baseUrl }}"
+          value: "{{ $comp.githubApp.baseUrl }}"
 {{- end }}
         - name: GITPOD_GITHUB_APP_CERT_PATH
           value: "/github-app-cert/cert"
         - name: GITPOD_GITHUB_APP_MKT_NAME
-          value: "{{ $comp.github.app.marketplaceName }}"
+          value: "{{ $comp.githubApp.marketplaceName }}"
 {{- end }}
         - name: GITPOD_DEFINITELY_GP_DISABLED
           value: "{{ $comp.definitelyGpDisabled | default "false" }}"
@@ -252,10 +252,10 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: {{ .Values.components.wsManager.tls.client.secretName }}
-{{- if and $comp.github.app $comp.github.app.enabled }}
+{{- if and $comp.githubApp $comp.githubApp.enabled }}
       - name: github-app-cert-secret
         secret:
-          secretName: {{ $comp.github.app.certSecretName }}
+          secretName: {{ $comp.githubApp.certSecretName }}
 {{- end }}
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
