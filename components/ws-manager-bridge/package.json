@@ -31,7 +31,6 @@
     "@gitpod/ws-daemon": "0.1.5",
     "amqplib": "^0.5.2",
     "express": "^4.16.1",
-    "grpc": "^1.21.1",
     "inversify": "^5.0.1",
     "prom-client": "^10.2.0",
     "reflect-metadata": "^0.1.10"
