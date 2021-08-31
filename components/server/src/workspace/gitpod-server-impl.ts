@@ -416,7 +416,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         try {
             const workspace = await this.internalGetWorkspace(id, this.workspaceDb.trace({ span }));
             const latestInstancePromise = this.workspaceDb.trace({}).findCurrentInstance(id);
-            let teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+            const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
             await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers }, "get");
             const latestInstance = await latestInstancePromise;
             if (!!latestInstance) {
