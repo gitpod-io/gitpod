@@ -389,6 +389,8 @@ components:
 
   wsManager:
     name: "ws-manager"
+    dependsOn:
+    - "ws-manager-configmap.yaml"
     resources:
       cpu: 100m
       memory: 32Mi
