@@ -27,7 +27,6 @@ export default function () {
     const projectName = match?.params?.resource;
 
     const [project, setProject] = useState<Project | undefined>();
-    const [defaultBranch, setDefaultBranch] = useState<string | undefined>();
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const [statusFilter, setStatusFilter] = useState<PrebuiltWorkspaceState | undefined>();
@@ -66,11 +65,6 @@ export default function () {
             const newProject = projectName && projects.find(p => p.name === projectName);
             if (newProject) {
                 setProject(newProject);
-
-                const details = await getGitpodService().server.getProjectOverview(newProject.id);
-                if (details?.branches) {
-                    setDefaultBranch(details.branches.find(b => b.isDefault)?.name);
-                }
             }
         })();
     }, [teams]);
@@ -124,7 +118,7 @@ export default function () {
         history.push(`/${!!team ? team.slug : 'projects'}/${projectName}/${pb.id}`);
     }
 
-    const triggerPrebuild = (branchName: string) => {
+    const triggerPrebuild = (branchName: string | null) => {
         if (project) {
             getGitpodService().server.triggerPrebuild(project.id, branchName);
         }
@@ -148,7 +142,7 @@ export default function () {
                 <div className="py-3 pl-3">
                     <DropDown prefix="Prebuild Status: " contextMenuWidth="w-32" entries={statusFilterEntries()} />
                 </div>
-                <button disabled={!defaultBranch} onClick={() => { defaultBranch && triggerPrebuild(defaultBranch) }} className="ml-2">Trigger Prebuild</button>
+                <button disabled={!project} onClick={() => triggerPrebuild(null)} className="ml-2">Trigger Prebuild</button>
             </div>
             <ItemsList className="mt-2">
                 <Item header={true} className="grid grid-cols-3">

@@ -132,7 +132,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getUserProjects(): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
-    triggerPrebuild(projectId: string, branch: string): Promise<void>;
+    triggerPrebuild(projectId: string, branchName: string | null): Promise<void>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
     guessProjectConfiguration(projectId: string): Promise<string | undefined>;
