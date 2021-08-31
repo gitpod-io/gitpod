@@ -87,6 +87,11 @@ data:
         header_down -Expires
       }
 
+      gitpod.body_intercept {
+        search "{{ .Values.vsxRegistry.host | default "open-vsx.org" }}"
+        replace "open-vsx.{$GITPOD_DOMAIN}"
+      }
+
       http_cache {
         cache_type file
         path /tmp/openvsx-cache
