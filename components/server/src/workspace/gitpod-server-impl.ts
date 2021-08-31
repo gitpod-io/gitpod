@@ -1544,7 +1544,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return this.projectsService.getProjectOverview(user, project);
     }
 
-    public async triggerPrebuild(projectId: string, branch: string): Promise<void> {
+    public async triggerPrebuild(projectId: string, branchName: string | null): Promise<void> {
         this.checkAndBlockUser("triggerPrebuild");
         // implemented in EE
     }
