@@ -385,7 +385,7 @@ export default function NewProject() {
 
     return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
         <h1>New Project</h1>
-        <p className="text-gray-500 text-center text-base">Select a git repository on <strong>{provider}</strong>.</p>
+        <p className="text-gray-500 text-center text-base">Select a git repository on <strong>{provider}</strong>. (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>
 
         {!selectedRepo && renderSelectRepository()}
 
