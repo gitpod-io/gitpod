@@ -113,6 +113,10 @@ function App() {
         window.location.href = `https://www.gitpod.io`;
         return <div></div>;
     }
+    if (window.location.pathname === '/chat') {
+        window.location.href = `https://www.gitpod.io/chat`;
+        return <div></div>;
+    }
 
     if (loading) {
         return (<Loading />);
