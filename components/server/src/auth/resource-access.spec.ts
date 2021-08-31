@@ -7,7 +7,7 @@
 import { suite, test } from "mocha-typescript";
 import * as chai from 'chai';
 const expect = chai.expect;
-import { TokenResourceGuard, ScopedResourceGuard, GuardedResource, ResourceAccessOp, GuardEnvVar, WorkspaceEnvVarAccessGuard } from "./resource-access";
+import { TokenResourceGuard, ScopedResourceGuard, GuardedResource, ResourceAccessOp, GuardEnvVar, WorkspaceEnvVarAccessGuard, TeamMemberResourceGuard, GuardedWorkspace } from "./resource-access";
 import { UserEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
 
 @suite class TestResourceAccess {
@@ -56,6 +56,75 @@ import { UserEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
             const res = ScopedResourceGuard.isAllowedUnder(t.parent, t.child);
             expect(res).to.be.eq(t.isAllowed, `"${t.name}" expected isAllowedUnder(parent, child) === ${t.isAllowed}, but was ${res}`);
         });
+    }
+
+    @test public async teamMemberResourceGuard() {
+        const tests: {
+            name: string
+            userId: string
+            resource: GuardedWorkspace
+            isAllowed: boolean
+        }[] = [
+                {
+                    name: "member of team - no prebuild",
+                    userId: "foo",
+                    isAllowed: false,
+                    resource: {
+                        kind: "workspace",
+                        subject: {
+                            id: "foobar",
+                            ownerId: "foo",
+                            type: "regular",
+                        } as any,
+                        teamMembers: [{
+                            userId:"foo",
+                            memberSince: "2021-08-31",
+                            role: "member"
+                        }]
+                    },
+                },
+                {
+                    name: "member of team - prebuild",
+                    userId: "foo",
+                    isAllowed: true,
+                    resource: {
+                        kind: "workspace",
+                        subject: {
+                            id: "foobar",
+                            ownerId: "foo",
+                            type: "prebuild",
+                        } as any,
+                        teamMembers: [{
+                            userId:"foo",
+                            memberSince: "2021-08-31",
+                            role: "member"
+                        }]
+                    },
+                },
+                {
+                    name: "not a member of team - prebuild",
+                    userId: "bar",
+                    isAllowed: false,
+                    resource: {
+                        kind: "workspace",
+                        subject: {
+                            id: "foobar",
+                            ownerId: "foo",
+                            type: "prebuild",
+                        } as any,
+                        teamMembers: [{
+                            userId:"foo",
+                            memberSince: "2021-08-31",
+                            role: "member"
+                        }]
+                    },
+                },
+            ];
+
+        for (const t of tests) {
+            const res = new TeamMemberResourceGuard(t.userId);
+            expect(await res.canAccess(t.resource, "get")).to.be.eq(t.isAllowed, `"${t.name}" expected canAccess(resource, "get") === ${t.isAllowed}, but was ${res}`);
+        }
     }
 
     @test public async tokenResourceGuardCanAccess() {

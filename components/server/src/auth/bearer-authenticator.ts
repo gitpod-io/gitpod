@@ -32,7 +32,7 @@ interface BearerAuthError extends Error {
     code: typeof bearerAuthCode
 }
 export function isBearerAuthError(error: Error): error is BearerAuthError {
-    return 'code' in error && error['code'] === bearerAuthCode;
+    return 'code' in error && (error as any)['code'] === bearerAuthCode;
 }
 function createBearerAuthError(message: string): BearerAuthError {
     return Object.assign(new Error(message), { code: bearerAuthCode } as { code: typeof bearerAuthCode });

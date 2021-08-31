@@ -6,12 +6,12 @@
 
 import { inject, injectable } from "inversify";
 import * as express from 'express';
-import { HEADLESS_LOG_STREAM_STATUS_CODE, Queue, User } from "@gitpod/gitpod-protocol";
+import { HEADLESS_LOG_STREAM_STATUS_CODE, Queue, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { CompositeResourceAccessGuard, OwnerResourceGuard, WorkspaceLogAccessGuard } from "../auth/resource-access";
-import { HostContextProvider } from "../auth/host-context-provider";
+import { CompositeResourceAccessGuard, OwnerResourceGuard, TeamMemberResourceGuard, WorkspaceLogAccessGuard } from "../auth/resource-access";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+import { TeamDB } from "@gitpod/gitpod-db/lib/team-db";
 import { HeadlessLogService } from "./headless-log-service";
 import * as opentracing from 'opentracing';
 import { asyncHandler } from "../express-util";
@@ -19,15 +19,19 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { isWithFunctionAccessGuard } from "../auth/function-access";
 import { accesHeadlessLogs } from "../auth/rate-limiter";
 import { BearerAuth } from "../auth/bearer-authenticator";
+import { ProjectsService } from "../projects/projects-service";
+import { HostContextProvider } from "../auth/host-context-provider";
 
 
 @injectable()
 export class HeadlessLogController {
 
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(HeadlessLogService) protected readonly headlessLogService: HeadlessLogService;
     @inject(BearerAuth) protected readonly auth: BearerAuth;
+    @inject(ProjectsService) protected readonly projectService: ProjectsService;
+    @inject(TeamDB) protected readonly teamDb: TeamDB;
+    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -68,6 +72,13 @@ export class HeadlessLogController {
                 log.warn(`instance ${instanceId} not found`);
                 return;
             }
+            let teamMembers: TeamMemberInfo[] = [];
+            if (workspace?.projectId) {
+                const p = await this.projectService.getProject(workspace.projectId);
+                if (p?.teamId) {
+                    teamMembers = await this.teamDb.findMembersByTeam(p.teamId);
+                }
+            }
             const logCtx = { userId: user.id, instanceId, workspaceId: workspace.id };
             log.debug(logCtx, "/headless-log/");
             log.debug("VERSION: " + req.httpVersion);
@@ -76,9 +87,10 @@ export class HeadlessLogController {
                 // [gpl] It's a bit sad that we have to duplicate this access check... but that's due to the way our API code is written
                 const resourceGuard = new CompositeResourceAccessGuard([
                     new OwnerResourceGuard(user.id),
+                    new TeamMemberResourceGuard(user.id),
                     new WorkspaceLogAccessGuard(user, this.hostContextProvider),
                 ]);
-                if (!await resourceGuard.canAccess({ kind: 'workspaceLog', subject: workspace }, 'get')) {
+                if (!await resourceGuard.canAccess({ kind: 'workspace', subject: workspace, teamMembers }, 'get')) {
                     res.sendStatus(403);
                     log.warn(logCtx, "unauthenticated headless log access");
                     return;
