@@ -15,7 +15,7 @@ import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "v
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "./auth/function-access";
 import { HostContextProvider } from "./auth/host-context-provider";
 import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "./auth/rate-limiter";
-import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "./auth/resource-access";
+import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, TeamMemberResourceGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "./auth/resource-access";
 import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "./prometheus-metrics";
 import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
 
@@ -70,6 +70,7 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
         } else if (!!user) {
             resourceGuard = new CompositeResourceAccessGuard([
                 new OwnerResourceGuard(user.id),
+                new TeamMemberResourceGuard(user.id),
                 new SharedWorkspaceAccessGuard(),
                 new WorkspaceLogAccessGuard(user, this.hostContextProvider),
             ]);

@@ -44,13 +44,14 @@ export function isGuardedResourceKind(kind: any): kind is GuardedResourceKind {
 export interface GuardedWorkspace {
     kind: "workspace";
     subject: Workspace;
+    teamMembers?: TeamMemberInfo[];
 }
 
 export interface GuardedWorkspaceInstance {
     kind: "workspaceInstance";
     subject: WorkspaceInstance | undefined;
-    workspaceOwnerID: string;
-    workspaceIsShared: boolean;
+    workspace: Workspace;
+    teamMembers?: TeamMemberInfo[];
 }
 
 export interface GuardedUser {
@@ -102,6 +103,7 @@ export interface GuardedToken {
 export interface GuardedWorkspaceLog {
     kind: "workspaceLog";
     subject: Workspace;
+    teamMembers?: TeamMemberInfo[];
 }
 
 export type ResourceAccessOp =
@@ -135,6 +137,31 @@ export class CompositeResourceAccessGuard implements ResourceAccessGuard {
 
 }
 
+export class TeamMemberResourceGuard implements ResourceAccessGuard {
+
+    constructor(readonly userId: string) { }
+
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        switch (resource.kind) {
+            case "workspace":
+                return await this.hasAccessToWorkspace(resource.subject, resource.teamMembers);
+            case "workspaceInstance":
+                return await this.hasAccessToWorkspace(resource.workspace, resource.teamMembers);
+            case "workspaceLog":
+                return await this.hasAccessToWorkspace(resource.subject, resource.teamMembers);
+        }
+        return false;
+    }
+
+    protected async hasAccessToWorkspace(workspace: Workspace, teamMembers?: TeamMemberInfo[]): Promise<boolean> {
+        // prebuilds are accessible by team members.
+        if (workspace.type === 'prebuild' && !!teamMembers) {
+            return teamMembers.some(m => m.userId === this.userId);
+        }
+        return false;
+    }
+}
+
 /**
  * OwnerResourceGuard grants access to resources if the user asking for access is the owner of that
  * resource.
@@ -160,7 +187,7 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
             case "workspace":
                 return resource.subject.ownerId === this.userId;
             case "workspaceInstance":
-                return resource.workspaceOwnerID === this.userId;
+                return resource.workspace.ownerId === this.userId;
             case "envVar":
                 return resource.subject.userId === this.userId;
             case "team":
@@ -190,7 +217,7 @@ export class SharedWorkspaceAccessGuard implements ResourceAccessGuard {
             case "workspace":
                 return resource.subject.shareable === true;
             case "workspaceInstance":
-                return !!resource.workspaceIsShared;
+                return !!resource.workspace.shareable;
             default:
                 return false;
         }
