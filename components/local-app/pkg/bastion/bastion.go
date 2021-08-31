@@ -328,7 +328,7 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 			var err error
 			ws.supervisorClient, err = grpc.Dial(ws.supervisorListener.LocalAddr, grpc.WithInsecure())
 			if err != nil {
-				logrus.WithError(err).WithField("workspace", ws.WorkspaceID).Print("error connecting to supervisor")
+				logrus.WithError(err).WithField("workspace", ws.WorkspaceID).Error("error connecting to supervisor")
 			} else {
 				go func() {
 					<-ws.ctx.Done()
