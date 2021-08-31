@@ -1,11 +1,15 @@
 aliases:
 
   engineering-workspace:
-  - akosyakov
   - aledbf
   - csweichel
   - rl-gitpod
   - MrSimonEmms
+
+  engineering-ide:
+  - akosyakov
+  - jeanp413
+  - csweichel
 
   engineering-meta:
   - AlexTugarev
