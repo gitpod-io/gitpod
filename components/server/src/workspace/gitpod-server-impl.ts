@@ -1679,6 +1679,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         this.checkUser("resolvePlugins")
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
+        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
         const result = await this.pluginService.resolvePlugins(workspace.ownerId, params);
         return result.resolved;
     };
