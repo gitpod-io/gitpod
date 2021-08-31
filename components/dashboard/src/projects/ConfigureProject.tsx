@@ -131,7 +131,9 @@ export default function () {
     }
     try {
       setPrebuildWasTriggered(true);
-      await getGitpodService().server.setProjectConfiguration(project.id, gitpodYml);
+      if (!isEditorDisabled) {
+        await getGitpodService().server.setProjectConfiguration(project.id, gitpodYml);
+      }
       const result = await getGitpodService().server.createWorkspace({
         contextUrl: `prebuild/${project.cloneUrl}`,
         mode: CreateWorkspaceMode.ForceNew,
@@ -182,7 +184,7 @@ export default function () {
           {prebuildWasTriggered && <PrebuildStatus prebuildPhase={prebuildPhase} isDark={isDark} />}
           <div className="flex-grow" />
           <button className="secondary">New Workspace</button>
-          <button disabled={isEditorDisabled} onClick={buildProject}>Run Prebuild</button>
+          <button disabled={isDetecting} onClick={buildProject}>Run Prebuild</button>
         </div>
       </div>
     </div>
