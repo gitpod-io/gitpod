@@ -5,10 +5,13 @@
 package content
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -20,12 +23,13 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/procfs"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -781,23 +785,45 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 
 // if the mark mount still exists in /proc/mounts it means we failed to unmount it and
 // we cannot remove the content. As a side effect the pod will stay in Terminating state
-func unmountMark(path string) error {
-	mounts, err := procfs.GetMounts()
+func unmountMark(dir string) error {
+	mounts, err := ioutil.ReadFile("/proc/mounts")
 	if err != nil {
-		return xerrors.Errorf("unexpected error reading /proc/mounts: %w", err)
+		return xerrors.Errorf("cannot read /proc/mounts: %w", err)
 	}
 
-	for _, mount := range mounts {
-		if !strings.Contains(mount.MountPoint, path) {
+	path := fromPartialMount(filepath.Join(dir, "mark"), mounts)
+	// empty path means no mount found
+	if path == "" {
+		return nil
+	}
+
+	// in some scenarios we need to wait for the unmount
+	var errorFn = func(err error) bool {
+		return strings.Contains(err.Error(), "device or resource busy")
+	}
+
+	return retry.OnError(wait.Backoff{
+		Steps:    5,
+		Duration: 1 * time.Second,
+		Factor:   5.0,
+		Jitter:   0.1,
+	}, errorFn, func() error {
+		return unix.Unmount(path, 0)
+	})
+}
+
+func fromPartialMount(path string, info []byte) string {
+	scanner := bufio.NewScanner(bytes.NewReader(info))
+	for scanner.Scan() {
+		mount := strings.Split(scanner.Text(), " ")
+		if len(mount) < 2 {
 			continue
 		}
 
-		log.WithField("path", path).Debug("Unmounting pending mark")
-		err = unix.Unmount(mount.MountPoint, 0)
-		if err != nil && !os.IsNotExist(err) {
-			return err
+		if strings.Contains(mount[1], path) {
+			return mount[1]
 		}
 	}
 
-	return nil
+	return ""
 }
