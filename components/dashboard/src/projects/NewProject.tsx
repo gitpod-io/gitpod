@@ -235,7 +235,7 @@ export default function NewProject() {
         const showSearchInput = !!repoSearchFilter || filteredRepos.length > 0;
 
         const renderRepos = () => (<>
-            <div className={`mt-10 border rounded-xl border-gray-100 flex-col`}>
+            <div className={`mt-10 border rounded-xl border-gray-100 dark:border-gray-800 flex-col`}>
                 <div className="px-8 pt-8 flex flex-col space-y-2">
                     <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
                         <div className="w-full">
@@ -349,8 +349,8 @@ export default function NewProject() {
             <h3 className="pb-2 mt-8">Select Team</h3>
             <h4 className="pb-2">Adding <strong>{selectedRepo}</strong></h4>
 
-            <div className="mt-8 border rounded-xl border-gray-100 flex-col" >
-                <div key={`user-${userFullName}`} className={`w-96 border-b px-8 py-4 flex space-x-2 justify-between dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group`}>
+            <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-800 flex-col" >
+                <div key={`user-${userFullName}`} className={`w-96 border-b px-8 py-4 flex space-x-2 justify-between dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group dark:border-gray-800 rounded-t-xl`}>
                     <div className="w-8/12 m-auto overflow-ellipsis truncate">{userFullName}</div>
                     <div className="w-4/12 flex justify-end">
                         <div className="flex self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
@@ -359,7 +359,7 @@ export default function NewProject() {
                     </div>
                 </div>
                 {teamsToRender.map((t) => (
-                    <div key={`team-${t.name}`} className={`w-96 border-b px-8 py-4 flex space-x-2 justify-between dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group`}>
+                    <div key={`team-${t.name}`} className={`w-96 border-b px-8 py-4 flex space-x-2 justify-between dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group dark:border-gray-800`}>
                         <div className="w-8/12 m-auto overflow-ellipsis truncate">{t.name}</div>
                         <div className="w-4/12 flex justify-end">
                             <div className="flex self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
@@ -428,7 +428,7 @@ function GitProviders(props: {
     }
 
     return (
-        <div className="mt-8 border rounded-t-xl border-gray-100 flex-col">
+        <div className="mt-8 border rounded-t-xl border-gray-100 dark:border-gray-800 flex-col">
             <div className="p-6 p-b-0">
                 <div className="text-center text-gray-500">
                     Select a Git provider first and continue with your repositories.
