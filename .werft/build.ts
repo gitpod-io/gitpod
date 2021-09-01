@@ -98,7 +98,7 @@ export async function build(context, version) {
         return raw.split(",").map(e => e.trim());
     })();
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
-    const withInstaller = "with-installer" in buildConfig || mainBuild;
+    const withContrib = "with-contrib" in buildConfig || mainBuild;
     const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = "with-integration-tests" in buildConfig;
@@ -146,8 +146,8 @@ export async function build(context, version) {
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
-    if (withInstaller || publishRelease) {
-        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`);
+    if (withContrib || publishRelease) {
+        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} contrib:all`);
     }
     exec(`leeway build --werft=true -c ${cacheLevel} ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
     if (publishRelease) {
