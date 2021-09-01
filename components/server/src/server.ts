@@ -40,15 +40,13 @@ import { increaseHttpRequestCounter, observeHttpRequestDuration } from './promet
 import { OAuthController } from './oauth-server/oauth-controller';
 import { HeadlessLogController } from './workspace/headless-log-controller';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
-import { Config, ConfigEnv } from './config';
-import { Env } from './env';
+import { Config } from './config';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
     static readonly EVENT_ON_START = 'start';
 
     @inject(Config) protected readonly config: Config;
-    @inject(Env) protected readonly env: Env;
     @inject(SessionHandlerProvider) protected sessionHandlerProvider: SessionHandlerProvider;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
@@ -83,14 +81,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     public async init(app: express.Application) {
         log.info('Initializing');
 
-        // TODO(gpl) Remove after config is deployed.
-        (() => {
-            const configFromEnv = this.getConfigFromOldEnv();
-            if (!ConfigEnv.validateAgainstConfigFromEnv(this.config, configFromEnv)) {
-                log.error("config mismatch: new config does not match old one!");
-                process.exit(1)
-            }
-        })();
+        // print config
+        log.info("config", { config: JSON.stringify(this.config, undefined, 2) });
 
         // metrics
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -268,11 +260,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         this.app = app;
         log.info('Initialized');
-    }
-
-    // TODO(gpl) Sole purpose of this method is to make 1st deployment of Config as safe as possible. Remove afterwards!
-    protected getConfigFromOldEnv(): Config {
-        return ConfigEnv.fromEnv(this.env);
     }
 
     protected async startDbDeleter() {
