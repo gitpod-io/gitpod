@@ -7,10 +7,9 @@
 import * as express from 'express';
 import { postConstruct, injectable, inject } from 'inversify';
 import { UserDB } from '@gitpod/gitpod-db/lib';
-import { User } from '@gitpod/gitpod-protocol';
+import { User, StartPrebuildResult } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { StartPrebuildResult } from './prebuild-manager';
 import { TokenService } from '../../../src/user/token-service';
 
 @injectable()

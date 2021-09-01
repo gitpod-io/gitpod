@@ -13,11 +13,11 @@ import { Config } from '../../../src/config';
 import { AppInstallationDB, TracedWorkspaceDB, DBWithTracing, UserDB, WorkspaceDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
 import * as express from 'express';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceConfig, User, Project } from '@gitpod/gitpod-protocol';
+import { WorkspaceConfig, User, Project, StartPrebuildResult } from '@gitpod/gitpod-protocol';
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { GithubAppRules } from './github-app-rules';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { PrebuildManager, StartPrebuildResult } from './prebuild-manager';
+import { PrebuildManager } from './prebuild-manager';
 import { PrebuildStatusMaintainer } from './prebuilt-status-maintainer';
 import { Options, ApplicationFunctionOptions } from 'probot/lib/types';
 
