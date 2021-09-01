@@ -5,7 +5,7 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Project, StartPrebuildContext, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { CommitContext, Project, StartPrebuildContext, StartPrebuildResult, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { inject, injectable } from 'inversify';
@@ -30,12 +30,6 @@ export interface StartPrebuildParams {
     commit: string;
     project?: Project;
 }
-export interface StartPrebuildResult {
-    wsid: string;
-    done: boolean;
-    didFinish?: boolean;
-}
-
 
 @injectable()
 export class PrebuildManager {

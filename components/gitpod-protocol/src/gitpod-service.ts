@@ -13,7 +13,7 @@ import {
 } from './protocol';
 import {
     Team, TeamMemberInfo,
-    TeamMembershipInvite, Project, TeamMemberRole, PrebuildWithStatus
+    TeamMembershipInvite, Project, TeamMemberRole, PrebuildWithStatus, StartPrebuildResult
 } from './teams-projects-protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
@@ -132,7 +132,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getUserProjects(): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
-    triggerPrebuild(projectId: string, branchName: string | null): Promise<void>;
+    triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
     guessProjectConfiguration(projectId: string): Promise<string | undefined>;
