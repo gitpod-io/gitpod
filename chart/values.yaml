@@ -334,7 +334,7 @@ components:
       contentRetentionPeriodDays: 21
       contentChunkLimit: 1000
     definitelyGpDisabled: "false"
-    enableLocalApp: true
+    enableLocalApp: false
     disableDynamicAuthProviderLogin: false
     maxEnvvarPerUserCount: 4048
     maxConcurrentPrebuildsPerRef: 10
