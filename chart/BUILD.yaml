@@ -41,11 +41,9 @@ packages:
     - version
     deps:
     - chart/config/db/init:release-tar
-    - install:release-tar
     - :helm
     config:
       commands:
       # re-wrap/mv into named tars
       - ["sh", "-c", "tar czf gitpod-database-init-${version}.tar.gz -C chart-config-db-init--release-tar . && rm -rf chart-config-db-init--release-tar"]
-      - ["sh", "-c", "tar czf gitpod-terraform-${version}.tar.gz -C install--release-tar . && rm -rf install--release-tar"]
       - ["sh", "-c", "mv chart--helm/*.tgz gitpod-helm-${version}.tar.gz && rm -rf chart--helm"]
