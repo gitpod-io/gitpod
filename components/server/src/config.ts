@@ -59,7 +59,6 @@ export interface ConfigSerialized {
     insecureNoDomain: boolean;
 
     license?: string;
-    trialLicensePrivateKey?: string;
 
     workspaceHeartbeat: {
         intervalSeconds: number;
@@ -82,7 +81,6 @@ export interface ConfigSerialized {
         certPath: string;
         marketplaceName: string;
         logLevel?: string;
-        githubHost?: string;
     };
 
     definitelyGpDisabled: boolean;
@@ -179,10 +177,7 @@ export namespace ConfigFile {
             authProviderConfigs = normalizeAuthProviderParamsFromEnv(authProviderConfigs);
         }
         const builtinAuthProvidersConfigured = authProviderConfigs.length > 0;
-        let chargebeeProviderOptions: ChargebeeProviderOptions | undefined = undefined;
-        if (config.chargebeeProviderOptionsFile) {
-            chargebeeProviderOptions = readOptionsFromFile(filePathTelepresenceAware(config.chargebeeProviderOptionsFile));
-        }
+        const chargebeeProviderOptions = readOptionsFromFile(filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""));
         let brandingConfig = config.brandingConfig;
         if (brandingConfig) {
             brandingConfig = BrandingParser.normalize(brandingConfig);
@@ -230,10 +225,6 @@ export namespace ConfigEnv {
         const o = deepCopySorted(_o);
 
         // Changed
-        if (o.chargebeeProviderOptions?.api_key === "" && o.chargebeeProviderOptions?.site === "") {
-            delete (o as any).chargebeeProviderOptions;
-        }
-
         if (o.githubApp?.enabled === false && n.githubApp?.enabled === false) {
             delete (n as any).githubApp;
             delete (o as any).githubApp;
@@ -260,7 +251,6 @@ export namespace ConfigEnv {
             stage: env.kubeStage,
             builtinAuthProvidersConfigured: env.builtinAuthProvidersConfigured,
             license: env.gitpodLicense,
-            trialLicensePrivateKey: env.trialLicensePrivateKey,
             workspaceHeartbeat: {
                 intervalSeconds: env.theiaHeartbeatInterval / 1000,
                 timeoutSeconds: env.workspaceUserTimeout / 1000,
@@ -325,10 +315,6 @@ export namespace ConfigEnv {
             imageBuilderAddr: env.imageBuilderAddress,
             codeSync: env.codeSyncConfig,
         };
-
-        if (!env.trialLicensePrivateKey) {
-            delete config.trialLicensePrivateKey;
-        }
 
         return config;
     }

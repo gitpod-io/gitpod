@@ -111,7 +111,6 @@ export class Env extends AbstractComponentEnv {
     }
 
     readonly gitpodLicense: string | undefined = process.env.GITPOD_LICENSE;
-    readonly trialLicensePrivateKey: string | undefined = process.env.GITPOD_TRIAL_LICENSE_PVK;
 
     // this limit should be so high that no regular user ever reaches it
     readonly maxUserEnvvarCount = Number.parseInt(process.env.MAX_USER_ENVVAR_COUNT || '4048', 10) || 4048;
