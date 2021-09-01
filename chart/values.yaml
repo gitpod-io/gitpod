@@ -293,6 +293,8 @@ components:
       cpu: "200m"
     githubApp:
       enabled: false
+      authProviderId: "Public-GitHub"
+      logLevel: "trace"
     blockNewUsers:
       enabled: false
       passlist: []

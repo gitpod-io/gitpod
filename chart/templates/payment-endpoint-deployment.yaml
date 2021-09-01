@@ -66,6 +66,8 @@ spec:
           value: "{{ $server.githubApp.appId }}"
         - name: GITPOD_GITHUB_APP_WEBHOOK_SECRET
           value: "{{ $server.githubApp.webhookSecret }}"
+        - name: GITPOD_GITHUB_APP_AUTH_PROVIDER_ID
+          value: "{{ $server.githubApp.authProviderId }}"
 {{- if $server.githubApp.baseUrl }}
         - name: GHE_HOST
           value: "{{ $server.githubApp.baseUrl }}"
