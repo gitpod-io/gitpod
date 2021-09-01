@@ -224,6 +224,20 @@ export namespace ConfigEnv {
         const n = deepCopySorted(_n);
         const o = deepCopySorted(_o);
 
+        // Changed
+        if (o.githubApp?.enabled === false && n.githubApp?.enabled === false) {
+            delete (o as any).githubApp;
+            delete (n as any).githubApp;
+        }
+        if (n.githubApp) {
+            delete (n as any).githubApp.certSecretName;
+        }
+
+        delete (n as any).chargebeeProviderOptionsFile;
+        if (o.devBranch === "") {
+            delete (o as any).devBranch;
+        }
+
         // Unique
         delete (n as any).workspaceGarbageCollection.startDate;
         delete (o as any).workspaceGarbageCollection.startDate;

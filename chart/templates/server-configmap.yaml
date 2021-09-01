@@ -72,5 +72,5 @@ data:
         "codeSync": {{ $comp.codeSync | toJson }},
         "enablePayment": {{ $comp.enablePayment }},
         "insecureNoDomain": {{ $comp.insecureNoDomain }},
-        "chargebeeProviderOptionsFile": {{ $comp.chargebeeProviderOptionsFile }}
+        "chargebeeProviderOptionsFile": {{ $comp.chargebeeProviderOptionsFile | quote }}
     }
