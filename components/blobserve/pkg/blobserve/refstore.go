@@ -87,7 +87,7 @@ func newRefStore(cfg Config, resolver ResolverProvider) (*refstore, error) {
 type refstate struct {
 	Digest string
 
-	ch chan struct{}
+	ch chan error
 }
 
 func (r *refstate) Done() bool {
@@ -101,14 +101,20 @@ func (r *refstate) Done() bool {
 
 func (r *refstate) Wait(ctx context.Context) (err error) {
 	select {
-	case <-r.ch:
-		return nil
+	case err := <-r.ch:
+		return err
 	case <-ctx.Done():
 		return ctx.Err()
 	}
 }
 
-func (r *refstate) MarkDone() {
+func (r *refstate) MarkDone(err error) {
+	select {
+	case r.ch <- err:
+		// error sent
+	default:
+		// no receiver
+	}
 	close(r.ch)
 }
 
@@ -159,9 +165,14 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 		// now that we've (re-)attempted to download the blob, it must exist.
 		// if it doesn't something went wrong while trying to download this thing.
 		fs, blobState = store.blobspace.Get(rs.Digest)
-		if blobState != blobReady {
-			return nil, "", errdefs.ErrNotFound
-		}
+	}
+
+	if fs == nil {
+		log.
+			WithField("digest", rs.Digest).
+			WithField("blobState", blobState).
+			Error("Blob could not be found for an unknown reason.")
+		return nil, "", errdefs.ErrUnknown
 	}
 
 	return fs, rs.Digest, nil
@@ -214,7 +225,7 @@ func (store *refstore) handleRequest(ctx context.Context, ref string, force bool
 		store.mu.Unlock()
 		return nil
 	}
-	rs = &refstate{ch: make(chan struct{})}
+	rs = &refstate{ch: make(chan error)}
 	store.refcache[ref] = rs
 	store.mu.Unlock()
 
@@ -224,7 +235,7 @@ func (store *refstore) handleRequest(ctx context.Context, ref string, force bool
 			delete(store.refcache, ref)
 			store.mu.Unlock()
 		}
-		rs.MarkDone()
+		rs.MarkDone(err)
 	}()
 
 	resolver := store.Resolver()
