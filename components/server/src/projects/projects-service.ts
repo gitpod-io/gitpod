@@ -12,7 +12,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { FileProvider, parseRepoUrl } from "../repohost";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ContextParser } from "../workspace/context-parser-service";
-import { ConfigInferrer } from "gitpod-yml-inferrer";
+import { ConfigInferrer } from "./config-inferrer";
 
 @injectable()
 export class ProjectsService {
