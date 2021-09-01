@@ -1499,6 +1499,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const cloneUrlsInUse = new Set(projects.map(p => p.cloneUrl));
         repositories.forEach(r => { r.inUse = cloneUrlsInUse.has(r.cloneUrl) });
 
+        await this.ensureTeamsEnabled();
+
         return repositories;
     }
 
