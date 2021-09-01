@@ -131,7 +131,6 @@ branding:
       - name: Terms of Service
         url: https://www.gitpod.io/terms/
 workspaceScheduler: workspace-scheduler
-serverProxyApiKey: "fF7+aCPvF9Pa0AEjmoZ+yWVh6PqBjM5VEA0wyQs3FH4="
 
 components:
 

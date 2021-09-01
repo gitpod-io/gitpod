@@ -181,8 +181,5 @@ export class Env extends AbstractComponentEnv {
 
     readonly contentServiceAddress = process.env.CONTENT_SERVICE_ADDRESS || "content-service:8080";
 
-    /** TODO(gpl) Looks like this is not used anymore! Verify and remove */
-    readonly serverProxyApiKey = process.env.SERVER_PROXY_APIKEY;
-
     readonly codeSyncConfig = JSON.parse(process.env.CODE_SYNC_CONFIG || "{}");
 }
