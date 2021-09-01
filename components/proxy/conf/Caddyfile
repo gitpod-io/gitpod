@@ -11,9 +11,10 @@
 
 	# configure plugin order
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
-	order gitpod.cors_origin         before header
-	order gitpod.workspace_download  before redir
-	order gitpod.sec_websocket_key   before header
+	order gitpod.cors_origin         	before header
+	order gitpod.workspace_download  	before redir
+	order gitpod.headless_log_download  before redir
+	order gitpod.sec_websocket_key   	before header
 }
 
 (compression) {
@@ -91,6 +92,26 @@
 	}
 }
 
+(google_storage_headers) {
+	header {
+		-x-guploader-uploadid
+		-etag
+		-x-goog-generation
+		-x-goog-metageneration
+		-x-goog-hash
+		-x-goog-stored-content-length
+		-x-gitpod-region
+		-x-goog-stored-content-encoding
+		-x-goog-storage-class
+		-x-goog-generation
+		-x-goog-metageneration
+		-cache-control
+		-expires
+
+		defer # delay changes
+	}
+}
+
 # Kubernetes health-check
 :8003 {
 	respond /live 200
@@ -110,24 +131,11 @@ https://{$GITPOD_DOMAIN} {
 
 	@workspace_download path /workspace-download*
 	handle @workspace_download {
+		import google_storage_headers
+
 		header {
 			# The browser needs to see the correct archive content type to trigger the download.
 			content-type "application/tar+gzip"
-			-x-guploader-uploadid
-			-etag
-			-x-goog-generation
-			-x-goog-metageneration
-			-x-goog-hash
-			-x-goog-stored-content-length
-			-x-gitpod-region
-			-x-goog-stored-content-encoding
-			-x-goog-storage-class
-			-x-goog-generation
-			-x-goog-metageneration
-			-cache-control
-			-expires
-
-			defer # delay changes
 		}
 
 		gitpod.workspace_download {
@@ -135,6 +143,22 @@ https://{$GITPOD_DOMAIN} {
 		}
 
 		redir {http.gitpod.workspace_download_url} 303
+	}
+
+	@headless_log_download path /headless-log-download*
+	handle @headless_log_download {
+		import google_storage_headers
+
+		header {
+			# The browser needs to see the correct content type to trigger the download.
+			content-type "text/html; charset=utf-8"
+		}
+
+		gitpod.headless_log_download {
+			service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
+		}
+
+		redir {http.gitpod.headless_log_download_url} 303
 	}
 
 	@backend_wss {
