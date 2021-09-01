@@ -22,6 +22,7 @@ import { WebsocketTransport } from "../util/grpc-web-ws-transport";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-log_grpc_pb';
 import { ListLogsRequest, ListLogsResponse, LogDownloadURLRequest, LogDownloadURLResponse } from '@gitpod/content-service/lib/headless-log_pb';
+import { HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./headless-log-controller";
 
 @injectable()
 export class HeadlessLogService {
@@ -60,30 +61,12 @@ export class HeadlessLogService {
             });
         });
 
-        log.info(`got ${response.getTaskIdList().length} taskIds from content-service`);
-
-        // fetch a download URL for each task
-        const responses: Promise<[string, string]>[] = response.getTaskIdList()
-            .map((taskId) => new Promise<[string, string]>((resolve, reject) => {
-                const req = new LogDownloadURLRequest();
-                req.setOwnerId(userId);
-                req.setWorkspaceId(wsi.workspaceId);
-                req.setInstanceId(wsi.id);
-                req.setTaskId(taskId);
-                this.headlessLogClient.logDownloadURL(req, (err: grpc.ServiceError | null, response: LogDownloadURLResponse) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve([taskId, response.getUrl()]);
-                    }
-                });
-            }));
-        const urlForTaskId = await Promise.all(responses);
-
-        // TODO translate to URL of proxy endpoint from where this can be downloaded
+        // send client to proxy with plugin, which in turn calls getHeadlessLogDownloadUrl below and redirects to that Url
         const streams: { [id: string]: string } = {};
-        for (const [taskId, url] of urlForTaskId) {
-            streams[taskId] = url;
+        for (const taskId of response.getTaskIdList()) {
+            streams[taskId] = this.config.hostUrl.with({
+                pathname: `${HEADLESS_LOG_DOWNLOAD_PATH_PREFIX}/${wsi.id}/${taskId}`,
+            }).toString();
         }
         return {
             streams
@@ -134,6 +117,36 @@ export class HeadlessLogService {
         return {
             streams
         };
+    }
+
+    /**
+     * Retrieves a download URL for the headless log from content-service
+     *
+     * @param userId
+     * @param wsi
+     * @param taskId
+     * @returns
+     */
+    async getHeadlessLogDownloadUrl(userId: string, wsi: WorkspaceInstance, taskId: string): Promise<string | undefined> {
+        try {
+            return await new Promise<string>((resolve, reject) => {
+                const req = new LogDownloadURLRequest();
+                req.setOwnerId(userId);
+                req.setWorkspaceId(wsi.workspaceId);
+                req.setInstanceId(wsi.id);
+                req.setTaskId(taskId);
+                this.headlessLogClient.logDownloadURL(req, (err: grpc.ServiceError | null, response: LogDownloadURLResponse) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(response.getUrl());
+                    }
+                });
+            });
+        } catch (err) {
+            log.error({ userId, workspaceId: wsi.workspaceId, instanceId: wsi.id }, "an error occurred retrieving a headless log download URL", err, { taskId });
+            return undefined;
+        }
     }
 
     /**

@@ -38,7 +38,7 @@ import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { increaseHttpRequestCounter, observeHttpRequestDuration } from './prometheus-metrics';
 import { OAuthController } from './oauth-server/oauth-controller';
-import { HeadlessLogController } from './workspace/headless-log-controller';
+import { HeadlessLogController, HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from './workspace/headless-log-controller';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config, ConfigEnv } from './config';
 import { Env } from './env';
@@ -291,7 +291,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use('/enforcement', this.enforcementController.apiRouter);
         app.use('/workspace-download', this.workspaceDownloadService.apiRouter);
         app.use('/code-sync', this.codeSyncService.apiRouter);
-        app.use('/headless-logs', this.headlessLogController.apiRouter);
+        app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);
+        app.use(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, this.headlessLogController.headlessLogDownload);
         app.use(this.newsletterSubscriptionController.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.config.version);

@@ -24,6 +24,7 @@ RUN xcaddy build \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
   --with github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload=/plugins/workspacedownload \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/headlesslogdownload=/plugins/headlesslogdownload \
   --with github.com/gitpod-io/gitpod/proxy/plugins/logif=/plugins/logif \
   --with github.com/gitpod-io/gitpod/proxy/plugins/jsonselect=/plugins/jsonselect
 
