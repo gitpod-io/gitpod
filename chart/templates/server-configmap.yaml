@@ -31,9 +31,6 @@ data:
         "devBranch": "{{ .Values.devBranch }}",
 {{- end }}
         "license": "{{ .Values.license }}",
-{{- if .Values.trialLicensePrivateKey }}
-        "trialLicensePrivateKey": "{{ .Values.trialLicensePrivateKey }}",
-{{- end }}
         "workspaceHeartbeat": {{ $comp.workspaceHeartbeat | toJson }},
         "workspaceDefaults": {
             "ideVersion": "{{ template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}",

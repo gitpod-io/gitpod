@@ -18,7 +18,6 @@ installation:
   shortname: ""
   kubedomain: "svc.cluster.local"
 license: ""
-trialLicensePrivateKey: ""
 installNetworkPolicies: true
 installPodSecurityPolicies: true
 imagePullPolicy: IfNotPresent
@@ -366,6 +365,7 @@ components:
       intervalSeconds: 60
       timeoutSeconds: 300
     insecureNoDomain: false
+    chargebeeProviderOptionsFile: "/chargebee/providerOptions"
 
   serviceWaiter:
     imageName: "service-waiter"
