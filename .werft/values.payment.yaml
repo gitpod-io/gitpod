@@ -1,13 +1,11 @@
 components:
   server:
+    enablePayment: true
     serverContainer:
       volumeMounts:
       - name: chargebee-config
         mountPath: "/chargebee"
         readOnly: true
-      env:
-      - name: ENABLE_PAYMENT
-        value: "true"
     volumes:
     - name: chargebee-config
       secret:

@@ -69,9 +69,6 @@ data:
         "rateLimiter": {{ $comp.rateLimiter | toJson }},
         "contentServiceAddr": {{ $comp.contentServiceAddr | quote }},
         "imageBuilderAddr": {{ $comp.imageBuilderAddr | quote }},
-{{- if $comp.serverProxyApiKey }}
-        "serverProxyApiKey": "{{ $comp.serverProxyApiKey }}",
-{{- end }}
         "codeSync": {{ $comp.codeSync | toJson }},
         "enablePayment": {{ $comp.enablePayment }},
         "insecureNoDomain": {{ $comp.insecureNoDomain }}
