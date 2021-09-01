@@ -440,7 +440,7 @@ type inMemoryBlobspace struct {
 }
 
 func (s *inMemoryBlobspace) Get(name string) (fs http.FileSystem, state blobstate) {
-	return nil, s.Content[name]
+	return &FakeFileSystem{}, s.Content[name]
 }
 
 func (s *inMemoryBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error) {
@@ -492,4 +492,11 @@ func (f *fakeFetcher) Fetch(ctx context.Context, desc ociv1.Descriptor) (io.Read
 	}
 
 	return io.NopCloser(bytes.NewReader(c)), nil
+}
+
+type FakeFileSystem struct {
+}
+
+func (FakeFileSystem) Open(name string) (http.File, error) {
+	return nil, nil
 }
