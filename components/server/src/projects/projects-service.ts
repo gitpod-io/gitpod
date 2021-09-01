@@ -51,6 +51,24 @@ export class ProjectsService {
         return repositoryProvider;
     }
 
+    protected async findUserForAccess(user: User, project: Project | string) {
+        if (typeof project === "string") {
+            const projectObj = await this.projectDB.findProjectById(project);
+            if (!projectObj) {
+                return undefined;
+            }
+            project = projectObj;
+        }
+        if (project.userId) {
+            return this.userDB.findUserById(project.userId);
+        }
+        if (project.teamId) {
+            const members = await this.teamDB.findMembersByTeam(project.teamId);
+            const owner = members.filter(m => m.role === "owner")[0];
+            return this.userDB.findUserById(owner.userId);
+        }
+    }
+
     async getBranchDetails(user: User, project: Project, branchName?: string): Promise<Project.BranchDetails[]> {
         const parsedUrl = parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
@@ -61,13 +79,19 @@ export class ProjectsService {
         if (!repositoryProvider) {
             return [];
         }
-        const repository = await repositoryProvider.getRepo(user, owner, repo);
+
+        const userForAccess = await this.findUserForAccess(user, project);
+        if (!userForAccess) {
+            return [];
+        }
+
+        const repository = await repositoryProvider.getRepo(userForAccess, owner, repo);
         const branches: Branch[] = [];
         if (branchName) {
-            const details = await repositoryProvider.getBranch(user, owner, repo, branchName);
+            const details = await repositoryProvider.getBranch(userForAccess, owner, repo, branchName);
             branches.push(details);
         } else {
-            branches.push(...(await repositoryProvider.getBranches(user, owner, repo)));
+            branches.push(...(await repositoryProvider.getBranches(userForAccess, owner, repo)));
         }
 
         const result: Project.BranchDetails[] = [];
@@ -181,19 +205,29 @@ export class ProjectsService {
     }
 
     async fetchProjectRepositoryConfiguration(ctx: TraceContext, user: User, projectId: string): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, projectId);
-        const configString = await fileProvider.getGitpodFileContent(commitContext, user);
+        const userForAccess = await this.findUserForAccess(user, projectId);
+        if (!userForAccess) {
+            return undefined;
+        }
+
+        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, userForAccess, projectId);
+        const configString = await fileProvider.getGitpodFileContent(commitContext, userForAccess);
         return configString;
     }
 
     async guessProjectConfiguration(ctx: TraceContext, user: User, projectId: string): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, projectId);
+        const userForAccess = await this.findUserForAccess(user, projectId);
+        if (!userForAccess) {
+            return undefined;
+        }
+
+        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, userForAccess, projectId);
         const cache: { [path: string]: string } = {};
         const readFile = async (path: string) => {
             if (path in cache) {
                 return cache[path];
             }
-            const content = await fileProvider.getFileContent(commitContext, user, path);
+            const content = await fileProvider.getFileContent(commitContext, userForAccess, path);
             if (content) {
                 cache[path] = content;
             }
