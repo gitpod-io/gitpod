@@ -202,7 +202,7 @@ describe('Basic unidirectional replication', () => {
 
         const sourceMidTargetRepl = container.get(PeriodicReplicator);
         sourceMidTargetRepl.setup(source, [target, middle], 0, undefined);
-        debugger
+        // debugger
         await sourceMidTargetRepl.synchronize(true);
 
         expect(await query(source, 'SELECT * FROM names')).to.deep.equal([
