@@ -55,8 +55,7 @@ type Manager struct {
 	Content   *layer.Provider
 	OnChange  func(context.Context, *api.WorkspaceStatus)
 
-	activity     map[string]time.Time
-	activityLock sync.Mutex
+	activity sync.Map
 
 	wsdaemonPool *grpcpool.Pool
 
@@ -115,7 +114,6 @@ func New(config Configuration, client client.Client, rawClient kubernetes.Interf
 		Clientset:    client,
 		RawClient:    rawClient,
 		Content:      cp,
-		activity:     make(map[string]time.Time),
 		subscribers:  make(map[string]chan *api.SubscribeResponse),
 		wsdaemonPool: grpcpool.New(wsdaemonConnfactory),
 	}
@@ -504,9 +502,7 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 	// We do not keep the last activity as annotation on the workspace to limit the load we're placing
 	// on the K8S master in check. Thus, this state lives locally in a map.
 	now := time.Now().UTC()
-	m.activityLock.Lock()
-	m.activity[req.Id] = now
-	m.activityLock.Unlock()
+	m.activity.Store(req.Id, &now)
 
 	// We do however maintain the the "closed" flag as annotation on the workspace. This flag should not change
 	// very often and provides a better UX if it persists across ws-manager restarts.
@@ -532,13 +528,11 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 }
 
 func (m *Manager) getWorkspaceActivity(workspaceID string) *time.Time {
-	m.activityLock.Lock()
-	lastActivity, hasActivity := m.activity[workspaceID]
-	m.activityLock.Unlock()
-
+	lastActivity, hasActivity := m.activity.Load(workspaceID)
 	if hasActivity {
-		return &lastActivity
+		return lastActivity.(*time.Time)
 	}
+
 	return nil
 }
 
@@ -553,7 +547,6 @@ func (m *Manager) markAllWorkspacesActive() error {
 		return xerrors.Errorf("markAllWorkspacesActive: %w", err)
 	}
 
-	m.activityLock.Lock()
 	for _, pod := range pods.Items {
 		wsid, ok := pod.Annotations[workspaceIDAnnotation]
 		if !ok {
@@ -561,9 +554,9 @@ func (m *Manager) markAllWorkspacesActive() error {
 			continue
 		}
 
-		m.activity[wsid] = time.Now()
+		now := time.Now().UTC()
+		m.activity.Store(wsid, &now)
 	}
-	m.activityLock.Unlock()
 	return nil
 }
 
