@@ -6,7 +6,7 @@
 
 import React, { Suspense, useContext, useEffect, useState } from "react";
 import { useLocation, useRouteMatch } from "react-router";
-import { CreateWorkspaceMode, Project, WorkspaceCreationResult, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { Project, StartPrebuildResult, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import PrebuildLogs from "../components/PrebuildLogs";
 import TabMenuItem from "../components/TabMenuItem";
 import { getGitpodService } from "../service/service";
@@ -69,7 +69,7 @@ export default function () {
   const [ isEditorDisabled, setIsEditorDisabled ] = useState<boolean>(true);
   const [ isDetecting, setIsDetecting ] = useState<boolean>(true);
   const [ prebuildWasTriggered, setPrebuildWasTriggered ] = useState<boolean>(false);
-  const [ workspaceCreationResult, setWorkspaceCreationResult ] = useState<WorkspaceCreationResult | undefined>();
+  const [ startPrebuildResult, setStartPrebuildResult ] = useState<StartPrebuildResult | undefined>();
   const [ prebuildPhase, setPrebuildPhase ] = useState<string | undefined>();
   const { isDark } = useContext(ThemeContext);
 
@@ -97,10 +97,15 @@ export default function () {
       const guessedConfigStringPromise = getGitpodService().server.guessProjectConfiguration(project.id);
       const repoConfigString = await getGitpodService().server.fetchProjectRepositoryConfiguration(project.id);
       if (repoConfigString) {
-        // TODO(janx): Link to .gitpod.yml directly instead of just the cloneUrl.
         setIsDetecting(false);
         setEditorMessage(<EditorMessage type="warning" heading="Configuration already exists in git." message="Run a prebuild or open a new workspace to edit project configuration."/>);
         setGitpodYml(repoConfigString);
+        return;
+      }
+      if (project.config && project.config['.gitpod.yml']) {
+        setIsDetecting(false);
+        setIsEditorDisabled(false);
+        setGitpodYml(project.config['.gitpod.yml']);
         return;
       }
       const guessedConfigString = await guessedConfigStringPromise;
@@ -109,10 +114,6 @@ export default function () {
       if (guessedConfigString) {
         setEditorMessage(<EditorMessage type="success" heading="Project type detected." message="You can edit project configuration below before running a prebuild"/>);
         setGitpodYml(guessedConfigString);
-        return;
-      }
-      if (project.config && project.config['.gitpod.yml']) {
-        setGitpodYml(project.config['.gitpod.yml']);
         return;
       }
       setEditorMessage(<EditorMessage type="warning" heading="Project type could not be detected." message="You can edit project configuration below before running a prebuild."/>);
@@ -126,19 +127,16 @@ export default function () {
     }
     // (event.target as HTMLButtonElement).disabled = true;
     setEditorMessage(null);
-    if (!!workspaceCreationResult) {
-      setWorkspaceCreationResult(undefined);
+    if (!!startPrebuildResult) {
+      setStartPrebuildResult(undefined);
     }
     try {
       setPrebuildWasTriggered(true);
       if (!isEditorDisabled) {
         await getGitpodService().server.setProjectConfiguration(project.id, gitpodYml);
       }
-      const result = await getGitpodService().server.createWorkspace({
-        contextUrl: `prebuild/${project.cloneUrl}`,
-        mode: CreateWorkspaceMode.ForceNew,
-      });
-      setWorkspaceCreationResult(result);
+      const result = await getGitpodService().server.triggerPrebuild(project.id, null);
+      setStartPrebuildResult(result);
     } catch (error) {
       setPrebuildWasTriggered(false);
       setEditorMessage(<EditorMessage type="warning" heading="Could not run prebuild." message={String(error).replace(/Error: Request \w+ failed with message: /, '')}/>);
@@ -172,8 +170,8 @@ export default function () {
         </div>}
       </div>
       <div className="flex-1 h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex flex-col">
-        <div className="flex-grow flex">{workspaceCreationResult
-          ? <PrebuildLogs workspaceId={workspaceCreationResult.createdWorkspaceId} onInstanceUpdate={onInstanceUpdate} />
+        <div className="flex-grow flex">{startPrebuildResult
+          ? <PrebuildLogs workspaceId={startPrebuildResult.wsid} onInstanceUpdate={onInstanceUpdate} />
           : <div className="flex-grow flex flex-col items-center justify-center">
               <img className="w-14" role="presentation" src={isDark ? PrebuildLogsEmptyDark : PrebuildLogsEmpty} />
               <h3 className="text-center text-lg text-gray-500 dark:text-gray-50 mt-4">No Recent Prebuild</h3>
