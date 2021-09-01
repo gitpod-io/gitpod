@@ -55,7 +55,7 @@ export interface ConfigSerialized {
     hostUrl: string;
     installationShortname: string;
     stage: string;
-    devBranch: string;
+    devBranch?: string;
     insecureNoDomain: boolean;
 
     license?: string;
@@ -223,12 +223,6 @@ export namespace ConfigEnv {
         );
         const n = deepCopySorted(_n);
         const o = deepCopySorted(_o);
-
-        // Changed
-        if (o.githubApp?.enabled === false && n.githubApp?.enabled === false) {
-            delete (n as any).githubApp;
-            delete (o as any).githubApp;
-        }
 
         // Unique
         delete (n as any).workspaceGarbageCollection.startDate;
