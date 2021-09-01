@@ -130,6 +130,8 @@ export class StartWorkspaceResponse extends jspb.Message {
     setUrl(value: string): StartWorkspaceResponse;
     getOwnerToken(): string;
     setOwnerToken(value: string): StartWorkspaceResponse;
+    getSuccess(): boolean;
+    setSuccess(value: boolean): StartWorkspaceResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceResponse.AsObject;
@@ -145,6 +147,7 @@ export namespace StartWorkspaceResponse {
     export type AsObject = {
         url: string,
         ownerToken: string,
+        success: boolean,
     }
 }
 

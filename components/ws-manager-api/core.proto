@@ -95,6 +95,9 @@ message StartWorkspaceResponse {
 
     // OwnerToken is the token of the workspace owner used for authentication
     string owner_token = 2;
+
+    // Success tells if the workspace started successfully or not
+    bool success = 3;
 }
 
 // StopWorkspaceRequest requests that the workspace manager stops a workspace

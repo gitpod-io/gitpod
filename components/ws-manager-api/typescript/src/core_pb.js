@@ -1543,7 +1543,8 @@ proto.wsman.StartWorkspaceResponse.prototype.toObject = function(opt_includeInst
 proto.wsman.StartWorkspaceResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
     url: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    ownerToken: jspb.Message.getFieldWithDefault(msg, 2, "")
+    ownerToken: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    success: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -1588,6 +1589,10 @@ proto.wsman.StartWorkspaceResponse.deserializeBinaryFromReader = function(msg, r
       var value = /** @type {string} */ (reader.readString());
       msg.setOwnerToken(value);
       break;
+    case 3:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setSuccess(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1631,6 +1636,13 @@ proto.wsman.StartWorkspaceResponse.serializeBinaryToWriter = function(message, w
       f
     );
   }
+  f = message.getSuccess();
+  if (f) {
+    writer.writeBool(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -1667,6 +1679,24 @@ proto.wsman.StartWorkspaceResponse.prototype.getOwnerToken = function() {
  */
 proto.wsman.StartWorkspaceResponse.prototype.setOwnerToken = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional bool success = 3;
+ * @return {boolean}
+ */
+proto.wsman.StartWorkspaceResponse.prototype.getSuccess = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.wsman.StartWorkspaceResponse} returns this
+ */
+proto.wsman.StartWorkspaceResponse.prototype.setSuccess = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 

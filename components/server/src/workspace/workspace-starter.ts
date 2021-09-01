@@ -56,7 +56,6 @@ export class WorkspaceStarter {
 
     public async startWorkspace(ctx: TraceContext, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], options?: StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
-        const startTime = new Date().getTime();
 
         options = options || {};
         try {
@@ -123,11 +122,11 @@ export class WorkspaceStarter {
             // If the caller requested that errors be rethrown we must await the actual workspace start to be in the exception path.
             // To this end we disable the needsImageBuild behaviour if rethrow is true.
             if (needsImageBuild && !options.rethrow) {
-                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, startTime, userEnvVars, options.rethrow, forceRebuild);
+                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, userEnvVars, options.rethrow, forceRebuild);
                 return { instanceID: instance.id };
             }
 
-            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, startTime, userEnvVars, options.rethrow, forceRebuild);
+            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, userEnvVars, options.rethrow, forceRebuild);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -138,7 +137,7 @@ export class WorkspaceStarter {
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself
     //       and creates its tracing span as followFrom rather than the usual childOf reference.
-    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, mustHaveBackup: boolean, startTime: number, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
+    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, mustHaveBackup: boolean, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
         const span = TraceContext.startAsyncSpan("actuallyStartWorkspace", ctx);
 
         try {
@@ -183,6 +182,11 @@ export class WorkspaceStarter {
             // start that thing
             const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
+            if (resp.success) {
+                increaseWorkspaceStarts("succeeded", workspace.type)
+            } else {
+                increaseWorkspaceStarts("failed", workspace.type)
+            }
 
             this.analytics.track({
                 userId: user.id,
@@ -204,7 +208,6 @@ export class WorkspaceStarter {
                 }
             }
 
-            increaseWorkspaceStarts("succeeded", workspace.type)
             return { instanceID: instance.id, workspaceURL: resp.url };
         } catch (err) {
             increaseWorkspaceStarts("failed", workspace.type)
