@@ -13,15 +13,12 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { GitLabApp } from './prebuilds/gitlab-app';
 import { BitbucketApp } from './prebuilds/bitbucket-app';
 import { GithubApp } from './prebuilds/github-app';
-import { Config, ConfigEnv } from '../../src/config';
-import { EnvEE } from './env';
 
 export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Server<C, S> {
     @inject(GraphQLController) protected readonly adminGraphQLController: GraphQLController;
     @inject(GithubApp) protected readonly githubApp: GithubApp;
     @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
     @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
-    @inject(EnvEE) protected readonly envee: EnvEE;
 
     protected async registerRoutes(app: express.Application): Promise<void> {
         await super.registerRoutes(app);
@@ -41,10 +38,5 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
         log.info("Registered Bitbucket app at " + BitbucketApp.path);
         app.use(BitbucketApp.path, this.bitbucketApp.router);
 
-    }
-
-    // TODO(gpl) Sole purpose of this method is to make 1st deployment of Config as safe as possible. Remove afterwards!
-    protected getConfigFromOldEnv(): Config {
-        return ConfigEnv.fromEnvEE(this.envee);
     }
 }

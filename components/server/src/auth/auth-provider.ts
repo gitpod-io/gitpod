@@ -40,11 +40,11 @@ export interface AuthProviderParams extends AuthProviderEntry {
 }
 export function parseAuthProviderParamsFromEnv(json: object): AuthProviderParams[] {
     if (Array.isArray(json)) {
-        return normalizeAuthProviderParamsFromEnv(json as AuthProviderParams[]);
+        return normalizeAuthProviderParams(json as AuthProviderParams[]);
     }
     return [];
 }
-export function normalizeAuthProviderParamsFromEnv(params: Omit<AuthProviderParams, "ownerId" | "builtin" | "status" | "verified">[]): AuthProviderParams[] {
+export function normalizeAuthProviderParams(params: Omit<AuthProviderParams, "ownerId" | "builtin" | "status" | "verified">[]): AuthProviderParams[] {
     const result: AuthProviderParams[] = [];
     for (const p of params) {
         result.push({

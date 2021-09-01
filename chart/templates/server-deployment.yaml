@@ -31,22 +31,6 @@ manager:
 {{- end -}}
 {{- end -}}
 
-{{ define "rate-limiter-config" -}}
-groups:
-  inWorkspaceUserAction:
-    points: 10
-    durationsSec: 2
-functions:
-  openPort:
-    group: inWorkspaceUserAction
-  closePort:
-    group: inWorkspaceUserAction
-  controlAdmission:
-    group: inWorkspaceUserAction
-  shareSnapshot:
-    group: inWorkspaceUserAction
-{{- end -}}
-
 {{- define "stable-image-full" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
@@ -126,121 +110,12 @@ spec:
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
         - name: CONFIG_PATH
           value: "/config/config.json"
-        - name: RATE_LIMITER_CONFIG
-          value: {{ (include "rate-limiter-config" $this) | fromYaml | toJson | quote }}
-        - name: GITPOD_LICENSE
-          value: "{{ .Values.license }}"
-        - name: VERSION
-          value: "{{ .Values.version }}"
-{{- if $comp.githubApp }}
-        - name: GITPOD_GITHUB_APP_ENABLED
-          value: "{{ $comp.githubApp.enabled | default "false" }}"
-        - name: GITPOD_GITHUB_APP_ID
-          value: "{{ $comp.githubApp.appId }}"
-        - name: GITPOD_GITHUB_APP_WEBHOOK_SECRET
-          value: "{{ $comp.githubApp.webhookSecret }}"
-        - name: GITPOD_GITHUB_APP_AUTH_PROVIDER_ID
-          value: "{{ $comp.githubApp.authProviderId }}"
-{{- if $comp.githubApp.baseUrl }}
-        - name: GHE_HOST
-          value: "{{ $comp.githubApp.baseUrl }}"
-{{- end }}
-        - name: GITPOD_GITHUB_APP_CERT_PATH
-          value: "/github-app-cert/cert"
-        - name: GITPOD_GITHUB_APP_MKT_NAME
-          value: "{{ $comp.githubApp.marketplaceName }}"
-{{- end }}
-        - name: GITPOD_DEFINITELY_GP_DISABLED
-          value: "{{ $comp.definitelyGpDisabled | default "false" }}"
         - name: NODE_ENV
           value: "{{ .Values.installation.stage }}"
-        - name: SERVER_VERSION
-          value: "{{ template "gitpod.comp.version" $this }}"
         - name: SHLVL
           value: "1"
-        - name: THEIA_PORT
-          value: "{{ .Values.components.workspace.ports.http.containerPort | toString }}"
-        - name: THEIA_IMAGE_REPO
-          value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}"
-        - name: THEIA_VERSION
-          value: "{{ .Values.components.workspace.codeImage.stableVersion }}"
-        - name: CODE_IMAGE_REPO
-          value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}"
-        - name: EXPERIMENTAL_FEATURE_FLAGS
-          value: {{ $comp.previewFeatureFlags | toJson | quote }}
-        - name: WORKSPACE_DEFAULT_IMAGE
-          value: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}"
-        - name: IDE_IMAGE_ALIASES
-          value: {{ (dict "code-latest" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage)) "code" (include "stable-image-full" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson | quote }}
-    {{- if $comp.blockNewUsers }}
-        - name: BLOCK_NEW_USERS
-          value: {{ $comp.blockNewUsers.enabled | quote }}
-        - name: BLOCK_NEW_USERS_PASSLIST
-          value: {{ $comp.blockNewUsers.passlist | toJson | quote }}
-    {{- end }}
-    {{- if $comp.makeNewUsersAdmin }}
-        - name: MAKE_NEW_USERS_ADMIN
-          value: {{ $comp.makeNewUsersAdmin | quote }}
-    {{- end }}
-    {{- if $comp.enableLocalApp }}
-        - name: ENABLE_LOCAL_APP
-          value: "true"
-    {{- end }}
-    {{- if $comp.oauthServer.enabled }}
-        - name: ENABLE_OAUTH_SERVER
-          value: "true"
-    {{- end }}
-    {{- if $comp.portAccessForUsersOnly }}
-        - name: PORT_ACCESS_FOR_USERS_ONLY
-          value: "true"
-    {{- end }}
-    {{- if $comp.session.maxAgeMs }}
-        - name: SESSION_MAX_AGE_MS
-          value: "{{ $comp.session.maxAgeMs | toJson }}"
-    {{- end }}
-        - name: SESSION_SECRET
-          value: {{ $comp.session.secret | quote }}
-    {{- if .Values.components.workspace.localTheia }}
-        - name: LOCAL_THEIA
-          value: "true"
-    {{- end }}
-    {{- if $comp.theiaPluginsBucketNameOverride }}
-        - name: THEIA_PLUGINS_BUCKET_NAME_OVERRIDE
-          value: {{ $comp.theiaPluginsBucketNameOverride }}
-    {{- end }}
-    {{- if .Values.devBranch }}
-        - name: DEV_BRANCH
-          value: "{{ .Values.devBranch }}"
-    {{- end }}
         - name: WSMAN_CFG_MANAGERS
           value: {{ index (include "ws-manager-list" $this | fromYaml) "manager" | default list | toJson | b64enc | quote }}
-        - name: GITPOD_BASEIMG_REGISTRY_WHITELIST
-          value: {{ $comp.defaultBaseImageRegistryWhitelist | toJson | quote }}
-        - name: GITPOD_DEFAULT_FEATURE_FLAGS
-          value: {{ $comp.defaultFeatureFlags | toJson | quote }}
-    {{- if $comp.incrementalPrebuilds.repositoryPasslist }}
-        - name: INCREMENTAL_PREBUILDS_REPO_PASSLIST
-          value: {{ $comp.incrementalPrebuilds.repositoryPasslist | toJson | quote }}
-    {{- end }}
-    {{- if $comp.incrementalPrebuilds.commitHistory }}
-        - name: INCREMENTAL_PREBUILDS_COMMIT_HISTORY
-          value: {{ $comp.incrementalPrebuilds.commitHistory | quote }}
-    {{- end }}
-        - name: AUTH_PROVIDERS_CONFIG
-          valueFrom:
-            configMapKeyRef:
-              name: auth-providers-config
-              key: auth-providers.json
-        - name: BRANDING_CONFIG
-          value: {{ .Values.branding | toJson | quote }}
-    {{- if $comp.runDbDeleter }}
-        - name: RUN_DB_DELETER
-          value: {{ $comp.runDbDeleter | quote }}
-    {{- end }}
-        - name: GITPOD_GARBAGE_COLLECTION_DISABLED
-          value: {{ $comp.garbageCollection.disabled | default "false" | quote }}
-        - name: OAUTH_SERVER_JWT_SECRET
-          value: {{ (randAlphaNum 20) | quote }}
 {{- if $comp.serverContainer.env }}
 {{ toYaml $comp.serverContainer.env | indent 8 }}
 {{- end }}
