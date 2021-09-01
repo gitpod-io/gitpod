@@ -146,32 +146,41 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
+	response := &api.StartWorkspaceResponse{
+		Url:        "",
+		OwnerToken: "",
+		Success:    false,
+	}
+
 	// Make sure the objects we're about to create do not exist already
 	exists, err := m.workspaceExists(ctx, req.Id)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot start workspace: %w", err)
+		return response, xerrors.Errorf("cannot start workspace: %w", err)
 	}
 	if exists {
-		return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+		return response, status.Error(codes.AlreadyExists, "workspace instance already exists")
 	}
 	span.LogKV("event", "workspace does not exist")
 	err = validateStartWorkspaceRequest(req)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot start workspace: %w", err)
+		return response, xerrors.Errorf("cannot start workspace: %w", err)
 	}
 	span.LogKV("event", "validated workspace start request")
 	// create the objects required to start the workspace pod/service
 	startContext, err := m.newStartWorkspaceContext(ctx, req)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot create context: %w", err)
+		return response, xerrors.Errorf("cannot create context: %w", err)
 	}
+
+	response.OwnerToken = startContext.OwnerToken
+	response.Url = startContext.WorkspaceURL
 	span.LogKV("event", "created start workspace context")
 	clog.Info("starting new workspace")
 	// we must create the workspace pod first to make sure we don't clean up the services or configmap we're about to create
 	// because they're "dangling".
 	pod, err := m.createWorkspacePod(startContext)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
+		return response, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 	span.LogKV("event", "pod description created")
 	err = m.Clientset.Create(ctx, pod)
@@ -181,19 +190,13 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 
 		if errors.IsAlreadyExists(err) {
 			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Warn("was unable to start workspace which already exists")
-			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+			return response, status.Error(codes.AlreadyExists, "workspace instance already exists")
 		}
 
 		clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
-		return nil, err
+		return response, err
 	}
 	span.LogKV("event", "pod created")
-
-	// all workspaces get a service now
-	okResponse := &api.StartWorkspaceResponse{
-		Url:        startContext.WorkspaceURL,
-		OwnerToken: startContext.OwnerToken,
-	}
 
 	// mandatory Theia service
 	servicePrefix := getServicePrefix(req)
@@ -229,7 +232,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	if err != nil {
 		clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
 		// could not create Theia service
-		return nil, xerrors.Errorf("cannot create workspace's Theia service: %w", err)
+		return response, xerrors.Errorf("cannot create workspace's Theia service: %w", err)
 	}
 	span.LogKV("event", "theia service created")
 
@@ -237,21 +240,22 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	if len(req.Spec.Ports) > 0 {
 		portService, err := m.createPortsService(req.Id, servicePrefix, req.Metadata.MetaId, req.Spec.Ports)
 		if err != nil {
-			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
+			return response, xerrors.Errorf("cannot create workspace's public service: %w", err)
 		}
 
 		err = m.Clientset.Create(ctx, portService)
 		if err != nil {
 			clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
 			// could not create ports service
-			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
+			return response, xerrors.Errorf("cannot create workspace's public service: %w", err)
 		}
 		span.LogKV("event", "ports service created")
 	}
 
 	m.metrics.OnWorkspaceStarted(req.Type)
+	response.Success = true
 
-	return okResponse, nil
+	return response, nil
 }
 
 // validateStartWorkspaceRequest ensures that acting on this request will not leave the system in an invalid state
