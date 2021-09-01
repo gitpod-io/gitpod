@@ -39,7 +39,6 @@ func TestIsWorkspaceTimedout(t *testing.T) {
 		Test: func(t *testing.T, input interface{}) interface{} {
 			fixture := input.(*fixture)
 			manager := Manager{
-				activity: make(map[string]time.Time),
 				Config: Configuration{
 					Timeouts: WorkspaceTimeoutConfiguration{
 						AfterClose:          util.Duration(1 * time.Minute),
@@ -66,7 +65,8 @@ func TestIsWorkspaceTimedout(t *testing.T) {
 					return nil
 				}
 
-				manager.activity[workspaceID] = time.Now().Add(-dt)
+				delta := time.Now().Add(-dt)
+				manager.activity.Store(workspaceID, &delta)
 			}
 
 			if fixture.CreationDelta != "" && fixture.WSO.Pod != nil {
@@ -145,10 +145,9 @@ func BenchmarkGetStatus(b *testing.B) {
 
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				r, err := manager.getWorkspaceStatus(wso)
+				_, err := manager.getWorkspaceStatus(wso)
 				if err != nil {
 					b.Fatal(err)
-					r.Auth = nil
 				}
 			}
 		})
