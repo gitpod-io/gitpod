@@ -80,6 +80,7 @@ import { ProjectsService } from './projects/projects-service';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config, ConfigFile } from './config';
 import { Env } from './env';
+import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -183,25 +184,29 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(TermsProvider).toSelf().inSingletonScope();
 
+    const grpcOptions: grpc.ClientOptions = {
+        ...defaultGRPCOptions,
+    };
+
     bind(ContentServiceClient).toDynamicValue(ctx => {
         const config = ctx.container.get<Config>(Config);
-        return new ContentServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
+        return new ContentServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
     });
     bind(BlobServiceClient).toDynamicValue(ctx => {
         const config = ctx.container.get<Config>(Config);
-        return new BlobServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
+        return new BlobServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
     });
     bind(WorkspaceServiceClient).toDynamicValue(ctx => {
         const config = ctx.container.get<Config>(Config);
-        return new WorkspaceServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
+        return new WorkspaceServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
     });
     bind(IDEPluginServiceClient).toDynamicValue(ctx => {
         const config = ctx.container.get<Config>(Config);
-        return new IDEPluginServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
+        return new IDEPluginServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
     });
     bind(HeadlessLogServiceClient).toDynamicValue(ctx => {
         const config = ctx.container.get<Config>(Config);
-        return new HeadlessLogServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
+        return new HeadlessLogServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
     });
 
     bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();

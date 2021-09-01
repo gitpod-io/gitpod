@@ -13,6 +13,8 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TLSConfig, WorkspaceClusterDB, WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { Queue } from "@gitpod/gitpod-protocol";
+import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
+import * as grpc from '@grpc/grpc-js';
 
 @injectable()
 export class BridgeController {
@@ -84,16 +86,10 @@ export class BridgeController {
 
     protected async createAndStartBridge(cluster: WorkspaceClusterInfo): Promise<WorkspaceManagerBridge> {
         const bridge = this.bridgeFactory() as WorkspaceManagerBridge;
+        const grpcOptions: grpc.ClientOptions = {
+            ...defaultGRPCOptions,
+        };
         const clientProvider = async () => {
-            const grpcOptions = {
-                "grpc.keepalive_timeout_ms": 1000,
-                "grpc.keepalive_time_ms": 5000,
-                "grpc.http2.min_time_between_pings_ms": 1000,
-                "grpc.keepalive_permit_without_calls": 1,
-                "grpc-node.max_session_memory": 50,
-                "grpc.max_reconnect_backoff_ms": 5000,
-            };
-
             return this.clientProvider.get(cluster.name, grpcOptions);
         }
         bridge.start(cluster, clientProvider);

@@ -12,6 +12,7 @@ import { Disposable, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-p
 import { WorkspaceClusterWoTLS, WorkspaceManagerConnectionInfo } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource } from "./client-provider-source";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
 
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
@@ -31,7 +32,10 @@ export class WorkspaceManagerClientProvider implements Disposable {
     public async getStartManager(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string}> {
         const availableCluster = await this.getAvailableStartCluster(user, workspace, instance);
         const chosenCluster = chooseCluster(availableCluster);
-        const client = await this.get(chosenCluster.name);
+        const grpcOptions: grpc.ClientOptions = {
+            ...defaultGRPCOptions,
+        };
+        const client = await this.get(chosenCluster.name, grpcOptions);
         return {
             manager: client,
             installation: chosenCluster.name,
