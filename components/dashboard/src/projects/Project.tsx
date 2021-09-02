@@ -64,10 +64,6 @@ export default function () {
     const branchContextMenu = (branch: Project.BranchDetails) => {
         const entries: ContextMenuEntry[] = [];
         entries.push({
-            title: "New Workspace",
-            onClick: () => onNewWorkspace(branch)
-        });
-        entries.push({
             title: "Rerun Prebuild",
             onClick: () => triggerPrebuild(branch),
         });
@@ -107,10 +103,6 @@ export default function () {
             return false;
         }
         return true;
-    }
-
-    const onNewWorkspace = (branch: Project.BranchDetails) => {
-        window.location.href = gitpodHostUrl.withContext(`${branch.url}`).toString();
     }
 
     const triggerPrebuild = (branch: Project.BranchDetails) => {

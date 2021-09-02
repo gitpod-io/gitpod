@@ -170,17 +170,19 @@ export default function () {
       <div className="flex-1 h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex flex-col">
         <div className="flex-grow flex">{startPrebuildResult
           ? <PrebuildLogs workspaceId={startPrebuildResult.wsid} onInstanceUpdate={onInstanceUpdate} />
-          : <div className="flex-grow flex flex-col items-center justify-center">
+          : (!prebuildWasTriggered && <div className="flex-grow flex flex-col items-center justify-center">
               <img className="w-14" role="presentation" src={isDark ? PrebuildLogsEmptyDark : PrebuildLogsEmpty} />
               <h3 className="text-center text-lg text-gray-500 dark:text-gray-50 mt-4">No Recent Prebuild</h3>
               <p className="text-center text-base text-gray-500 dark:text-gray-400 mt-2 w-64">Edit the project configuration on the left to get started. <a className="gp-link" href="https://www.gitpod.io/docs/config-gitpod-file/">Learn more</a></p>
-            </div>
+            </div>)
         }</div>
         <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
           {prebuildWasTriggered && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} isDark={isDark} />}
           <div className="flex-grow" />
-          <button className="secondary">New Workspace</button>
-          <button disabled={isDetecting} onClick={buildProject}>Run Prebuild</button>
+          {(prebuildInstance?.status.phase === "stopped" && !prebuildInstance?.status.conditions.failed)
+              ? <a className="my-auto" href={`/#${project?.cloneUrl}`}><button className="secondary">New Workspace</button></a>
+              : <button disabled={true} className="secondary">New Workspace</button>}
+          <button disabled={isDetecting || (prebuildWasTriggered && prebuildInstance?.status.phase !== "stopped")} onClick={buildProject}>Run Prebuild</button>
         </div>
       </div>
     </div>

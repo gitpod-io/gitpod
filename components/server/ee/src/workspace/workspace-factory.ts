@@ -133,7 +133,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             { // TODO(at) store prebuild info
                 if (project) {
                     // do not await
-                    this.storePrebuildInfo(ctx, project, pws, user).catch(err => {
+                    this.storePrebuildInfo(ctx, project, pws, ws, user).catch(err => {
                         log.error(`failed to store prebuild info`, err);
                         TraceContext.logError({span}, err);
                     });
@@ -152,39 +152,42 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
         }
     }
 
-    protected async storePrebuildInfo(ctx: TraceContext, project: Project, pws: PrebuiltWorkspace, user: User) {
+    protected async storePrebuildInfo(ctx: TraceContext, project: Project, pws: PrebuiltWorkspace, ws: Workspace, user: User) {
         const span = TraceContext.startSpan("storePrebuildInfo", ctx);
         const { userId, teamId, name: projectName, id: projectId } = project;
         const parsedUrl = parseRepoUrl(project.cloneUrl);
-        if (parsedUrl) {
-            const { owner, repo, host } = parsedUrl;
-            const repositoryProvider = this.hostContextProvider.get(host)?.services?.repositoryProvider;
-            if (repositoryProvider) {
-                const commit = await repositoryProvider.getCommitInfo(user, owner, repo, pws.commit);
-                if (commit) {
-                    await this.db.trace({span}).storePrebuildInfo({
-                        id: pws.id,
-                        buildWorkspaceId: pws.buildWorkspaceId,
-                        teamId,
-                        userId,
-                        projectName,
-                        projectId,
-                        startedAt: pws.creationTime,
-                        startedBy: "", // TODO
-                        startedByAvatar: "", // TODO
-                        cloneUrl: pws.cloneURL,
-                        branch: pws.branch || "unknown",
-                        changeAuthor: commit.author,
-                        changeAuthorAvatar: commit.authorAvatarUrl,
-                        changeDate: commit.authorDate || "",
-                        changeHash: commit.sha,
-                        changeTitle: commit.commitMessage,
-                        // changePR
-                        // changeUrl
-                    });
-                }
-            }
+        if (!parsedUrl) {
+            return;
         }
+        const { owner, repo, host } = parsedUrl;
+        const repositoryProvider = this.hostContextProvider.get(host)?.services?.repositoryProvider;
+        if (!repositoryProvider) {
+            return;
+        }
+        const commit = await repositoryProvider.getCommitInfo(user, owner, repo, pws.commit);
+        if (!commit) {
+            return;
+        }
+        await this.db.trace({span}).storePrebuildInfo({
+            id: pws.id,
+            buildWorkspaceId: pws.buildWorkspaceId,
+            teamId,
+            userId,
+            projectName,
+            projectId,
+            startedAt: pws.creationTime,
+            startedBy: "", // TODO
+            startedByAvatar: "", // TODO
+            cloneUrl: pws.cloneURL,
+            branch: pws.branch || "unknown",
+            changeAuthor: commit.author,
+            changeAuthorAvatar: commit.authorAvatarUrl,
+            changeDate: commit.authorDate || "",
+            changeHash: commit.sha,
+            changeTitle: commit.commitMessage,
+            // changePR
+            changeUrl: ws.contextURL,
+        });
     }
 
     protected async createForPrebuiltWorkspace(ctx: TraceContext, user: User, context: PrebuiltWorkspaceContext, normalizedContextURL: string): Promise<Workspace> {
