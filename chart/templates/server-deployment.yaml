@@ -161,9 +161,9 @@ spec:
         - name: THEIA_PORT
           value: "{{ .Values.components.workspace.ports.http.containerPort | toString }}"
         - name: THEIA_IMAGE_REPO
-          value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}"
+          value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}"
         - name: THEIA_VERSION
-          value: "{{ template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}"
+          value: "{{ .Values.components.workspace.codeImage.stableVersion }}"
         - name: CODE_IMAGE_REPO
           value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}"
         - name: EXPERIMENTAL_FEATURE_FLAGS

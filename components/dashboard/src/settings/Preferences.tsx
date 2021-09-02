@@ -5,31 +5,25 @@
  */
 
 import { useContext, useState } from "react";
-import { getGitpodService } from "../service/service";
-import SelectableCard from "../components/SelectableCard";
-import { UserContext } from "../user-context";
-import { ThemeContext } from "../theme-context";
-import theia from '../images/theia-gray.svg';
-import vscode from '../images/vscode.svg';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import settingsMenu from "./settings-menu";
-import AlertBox from "../components/AlertBox";
+import SelectableCard from "../components/SelectableCard";
 import Tooltip from "../components/Tooltip";
+import vscode from '../images/vscode.svg';
+import { getGitpodService } from "../service/service";
+import { ThemeContext } from "../theme-context";
+import { UserContext } from "../user-context";
+import settingsMenu from "./settings-menu";
 
 type Theme = 'light' | 'dark' | 'system';
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
     const { setIsDark } = useContext(ThemeContext);
-    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'theia');
+    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'code');
     const actuallySetDefaultIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
         const settings = additionalData.ideSettings || {};
-        if (value === 'theia') {
-            delete settings.defaultIde;
-        } else {
-            settings.defaultIde = value;
-        }
+        settings.defaultIde = value;
         additionalData.ideSettings = settings;
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setDefaultIde(value);
@@ -50,9 +44,6 @@ export default function Preferences() {
         <PageWithSubMenu subMenu={settingsMenu} title='Preferences' subtitle='Configure user preferences.'>
             <h3>Default IDE</h3>
             <p className="text-base text-gray-500">Choose which IDE you want to use.</p>
-            <AlertBox className="mt-3 mb-4 w-3/4">
-                We're deprecating the Theia editor. You can still switch back to Theia for the next few weeks but the preference will be removed by the end of August 2021.
-            </AlertBox>
             <div className="mt-4 space-x-4 flex">
                 <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code'} onClick={() => actuallySetDefaultIde('code')}>
                     <div className="flex justify-center mt-3">
@@ -67,11 +58,6 @@ export default function Preferences() {
                         <span className="mt-2 ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-orange-100 text-orange-700 dark:bg-orange-600 dark:text-orange-100 font-semibold">LATEST</span>
                     </SelectableCard>
                 </Tooltip>
-                <SelectableCard className="w-36 h-40" title="Theia" selected={defaultIde === 'theia'} onClick={() => actuallySetDefaultIde('theia')}>
-                    <div className="flex justify-center mt-3">
-                        <img className="w-16 h-16 dark:filter-invert self-center" src={theia} />
-                    </div>
-                </SelectableCard>
             </div>
             <h3 className="mt-12">Theme</h3>
             <p className="text-base text-gray-500">Early bird or night owl? Choose your side.</p>
