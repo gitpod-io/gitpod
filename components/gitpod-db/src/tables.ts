@@ -232,6 +232,12 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             deletionColumn: 'deleted',
             timeColumn: '_lastModified',
         },
+        {
+            name: 'd_b_prebuild_info',
+            primaryKeys: ['prebuildId'],
+            deletionColumn: 'deleted',
+            timeColumn: '_lastModified',
+        },
     ]
 
     public getSortedTables(): TableDescription[] {
