@@ -390,7 +390,7 @@
               "path": "/_supervisor/v1/status/content/wait/true",
               "port": 22999
             },
-            "initialDelaySeconds": 2,
+            "initialDelaySeconds": 4,
             "successThreshold": 1
           },
           "env": [

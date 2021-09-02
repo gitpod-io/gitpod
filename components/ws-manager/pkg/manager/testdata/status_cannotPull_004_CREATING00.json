@@ -594,7 +594,7 @@
               "port": 22999
             },
             "periodSeconds": 1,
-            "initialDelaySeconds": 2,
+            "initialDelaySeconds": 4,
             "successThreshold": 1,
             "timeoutSeconds": 1,
             "failureThreshold": 600

@@ -429,7 +429,7 @@
               "port": 22999,
               "scheme": "HTTP"
             },
-            "initialDelaySeconds": 2,
+            "initialDelaySeconds": 4,
             "failureThreshold": 600,
             "timeoutSeconds": 1,
             "successThreshold": 1
