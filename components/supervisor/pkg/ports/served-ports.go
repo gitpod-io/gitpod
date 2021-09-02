@@ -96,7 +96,6 @@ func (p *PollingServedPortsObserver) Observe(ctx context.Context) (<-chan []Serv
 					key := fmt.Sprintf("%s:%d", port.Address, port.Port)
 					_, exists := visited[key]
 					if exists {
-						log.WithField("addr", port.Address).WithField("port", port.Port).Error("unexpected duplicate served port")
 						continue
 					}
 					visited[key] = struct{}{}
