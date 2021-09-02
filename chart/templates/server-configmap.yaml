@@ -33,8 +33,8 @@ data:
         "license": "{{ .Values.license }}",
         "workspaceHeartbeat": {{ $comp.workspaceHeartbeat | toJson }},
         "workspaceDefaults": {
-            "ideVersion": "{{ template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}",
-            "ideImageRepo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}",
+            "ideVersion": "{{ .Values.components.workspace.codeImage.stableVersion }}",
+            "ideImageRepo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}",
             "ideImageAliases": {{ (dict "code-latest" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage)) "code" (include "stable-image-full" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson }},
             "workspaceImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}",
             "previewFeatureFlags": {{ $comp.previewFeatureFlags | toJson }},
