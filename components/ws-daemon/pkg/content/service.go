@@ -472,7 +472,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 			return
 		}
 		tmpfSize = stat.Size()
-		log.WithField("size", tmpfSize).WithFields(sess.OWI()).Debug("created temp file for workspace backup upload")
+		log.WithField("size", tmpfSize).WithField("location", tmpf.Name()).WithFields(sess.OWI()).Debug("created temp file for workspace backup upload")
 
 		return
 	})
