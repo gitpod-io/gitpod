@@ -35,6 +35,7 @@ spec:
         kind: pod
         stage: {{ .Values.installation.stage }}
       annotations:
+{{ include "gitpod.pod.dependsOn" $this | indent 8 }}
         checksum/tlskey: {{ include (print $.Template.BasePath "/ws-daemon-tlssecret.yaml") $ | sha256sum }}
     spec:
       priorityClassName: system-node-critical
