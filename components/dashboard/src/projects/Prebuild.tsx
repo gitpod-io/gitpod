@@ -10,7 +10,7 @@ import { useContext, useEffect, useState } from "react";
 import { useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import PrebuildLogs from "../components/PrebuildLogs";
-import { getGitpodService } from "../service/service";
+import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { prebuildStatusIcon, prebuildStatusLabel, PrebuildInstanceStatus } from "./Prebuilds";
@@ -97,8 +97,9 @@ export default function () {
                 <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
                     {prebuildInstance && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} isDark={isDark} />}
                     <div className="flex-grow" />
-                    <button className="secondary">New Workspace</button>
-                    <button>Run Prebuild</button>
+                    {prebuildInstance?.status.phase === "stopped"
+                        ? <a className="my-auto" href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}><button>New Workspace</button></a>
+                        : <button disabled={true}>New Workspace</button>}
                 </div>
             </div>
         </div>
