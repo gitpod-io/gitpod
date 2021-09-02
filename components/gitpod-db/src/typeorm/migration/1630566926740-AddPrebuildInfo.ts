@@ -6,7 +6,7 @@
 
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class AddPrebuildInfo1628160315471 implements MigrationInterface {
+export class AddPrebuildInfo1630566926740 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query("CREATE TABLE IF NOT EXISTS `d_b_prebuild_info` ( `prebuildId` char(36) NOT NULL, `info` text NOT NULL, `deleted` tinyint(4) NOT NULL DEFAULT '0', `_lastModified` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (`prebuildId`), KEY `ind_dbsync` (`_lastModified`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
