@@ -166,7 +166,7 @@ export default function () {
         </Suspense>
         {isDetecting && <div className="absolute h-full w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center space-x-2">
           <img className="h-5 w-5 animate-spin" src={isDark ? SpinnerDark : Spinner} />
-          <span className="font-semibold text-gray-400">Detecting project type ...</span>
+          <span className="font-semibold text-gray-400">Detecting project configuration ...</span>
         </div>}
       </div>
       <div className="flex-1 h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex flex-col">
