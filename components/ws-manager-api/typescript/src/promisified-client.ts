@@ -219,11 +219,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
     }
 
     protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {
-        /* the node grpc client does not support dial timeouts, hence we need to time out the operation as a whole.
-         */
-        let deadline = new Date(new Date().getTime() + 10000);
         return {
-            deadline
         }
     }
 
