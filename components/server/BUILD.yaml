@@ -13,6 +13,7 @@ packages:
       - components/gitpod-messagebus:lib
       - components/ee/payment-endpoint:lib
       - components/gitpod-protocol:lib
+      - components/gitpod-yml-inferrer:lib
       - components/image-builder-api/typescript:lib
       - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib

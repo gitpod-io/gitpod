@@ -1,0 +1,5 @@
+tasks:
+  - init: yarn && yarn build
+    command: |
+      echo "//registry.yarnpkg.com/:_authToken=$NPM_TOKEN" >>~/.npmrc
+      yarn watch

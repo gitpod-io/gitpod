@@ -1,0 +1,26 @@
+{
+    "name": "@gitpod/gitpod-yml-inferrer",
+    "version": "0.1.5",
+    "license": "UNLICENSED",
+    "main": "./lib/config-inferrer.js",
+    "types": "./lib/config-inferrer.d.ts",
+    "private": false,
+    "devDependencies": {
+        "@types/chai": "4.1.3",
+        "@types/mocha": "^5.2.7",
+        "@types/node": "12.12.2",
+        "chai": "^4.2.0",
+        "mocha": "^6.2.2",
+        "mocha-typescript": "^1.1.17",
+        "reflect-metadata": "^0.1.13",
+        "rimraf": "^2.6.2",
+        "ts-node": "^8.5.4",
+        "typescript": "^3.7.4"
+    },
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc --watch",
+        "test": "mocha --no-timeouts --colors --opts mocha.opts **/*.spec.js",
+        "release": "npm version patch && git push --tags origin main"
+    }
+}
