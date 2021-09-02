@@ -7,7 +7,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 import { columnExists } from "./helper/helper";
 
-export class UpdateDevxAndOnboardingMail1630335270192 implements MigrationInterface {
+export class UpdateDevxAndOnboardingMail1630586785018 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (await columnExists(queryRunner, "d_b_user", "additionalData")) {
