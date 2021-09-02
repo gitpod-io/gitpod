@@ -538,7 +538,7 @@
           ],
           "readinessProbe": {
             "failureThreshold": 600,
-            "initialDelaySeconds": 2,
+            "initialDelaySeconds": 4,
             "periodSeconds": 1,
             "successThreshold": 1,
             "timeoutSeconds": 1,
