@@ -186,19 +186,23 @@ export class ProjectsService {
         return configString;
     }
 
+    // a static cache used to prefetch inferrer related files in parallel in advance
+    private requestedPaths = new Set<string>();
+
     async guessProjectConfiguration(ctx: TraceContext, user: User, projectId: string): Promise<string | undefined> {
         const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, projectId);
-        const cache: { [path: string]: string } = {};
+        const cache: { [path: string]: string | undefined } = {};
         const readFile = async (path: string) => {
             if (path in cache) {
                 return cache[path];
             }
+            this.requestedPaths.add(path);
             const content = await fileProvider.getFileContent(commitContext, user, path);
-            if (content) {
-                cache[path] = content;
-            }
+            cache[path] = content;
             return content;
         }
+        // eagerly fetch for all files that the inferrer usualyl asks for.
+        this.requestedPaths.forEach(path => !(path in cache) && readFile(path));
         const config: WorkspaceConfig = await new ConfigInferrer().getConfig({
             config: {},
             read: readFile,
