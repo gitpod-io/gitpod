@@ -21,3 +21,10 @@ packages:
       image:
         - ${imageRepoBase}/changelog:${version}
         - ${imageRepoBase}/changelog:commit-${__git_commit}
+scripts:
+  - name: update
+    deps:
+      - dev/changelog:app
+    description: Updates the CHANGELOG.md from release-notes blocks in the description of PRs
+    script: |
+      changelog -t $GITHUB_TOKEN -o $GITHUB_ORG -r $GITHUB_REPO -b $GIT_BRANCH
