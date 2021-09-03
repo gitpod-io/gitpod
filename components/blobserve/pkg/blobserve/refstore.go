@@ -26,15 +26,18 @@ const (
 	parallelBlobDownloads = 10
 )
 
-// BlobModifier modifies files in a blob. The map keys are paths relative to the
-// the blob's workdir.
-type blobModifier map[string]FileModifier
+// blobModifier modifies files in a blob. The path is relative to the blob's
+// workdir.
+type blobModifier struct {
+	Path     string
+	Modifier FileModifier
+}
 
 // BlobConfig configures the behaviour of blobs served from a refstore
 type blobConfig struct {
 	// Workdir is the path that files are served from relative to the blob root.
 	Workdir  string
-	Modifier blobModifier
+	Modifier []blobModifier
 }
 
 type refstore struct {
@@ -58,9 +61,9 @@ func newRefStore(cfg Config, resolver ResolverProvider) (*refstore, error) {
 
 	config := make(map[string]blobConfig)
 	for ref, repo := range cfg.Repos {
-		mods := make(map[string]FileModifier, len(repo.Replacements))
+		mods := make([]blobModifier, 0, len(repo.Replacements))
 		for _, mod := range repo.Replacements {
-			mods[mod.Path] = modifySearchAndReplace(mod.Search, mod.Replacement)
+			mods = append(mods, blobModifier{Path: mod.Path, Modifier: modifySearchAndReplace(mod.Search, mod.Replacement)})
 		}
 
 		config[ref] = blobConfig{
@@ -266,7 +269,7 @@ func (store *refstore) handleRequest(ctx context.Context, ref string, force bool
 				return err
 			}
 
-			var mods blobModifier
+			var mods []blobModifier
 			cfg, ok := store.config[reference.Domain(pref)+"/"+reference.Path(pref)]
 			if ok {
 				mods = cfg.Modifier

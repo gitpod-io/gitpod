@@ -443,7 +443,7 @@ func (s *inMemoryBlobspace) Get(name string) (fs http.FileSystem, state blobstat
 	return &FakeFileSystem{}, s.Content[name]
 }
 
-func (s *inMemoryBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error) {
+func (s *inMemoryBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications []blobModifier) (err error) {
 	return s.Adder(ctx, name, in)
 }
 
