@@ -30,7 +30,7 @@ type FileModifier func(in io.Reader, out io.Writer) error
 
 type blobspace interface {
 	Get(name string) (fs http.FileSystem, state blobstate)
-	AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error)
+	AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications []blobModifier) (err error)
 }
 
 type diskBlobspace struct {
@@ -186,7 +186,7 @@ func (b *diskBlobspace) Get(name string) (fs http.FileSystem, state blobstate) {
 
 // AddFromTar adds content to this store under the given name.
 // In is expected to yield an uncompressed tar stream.
-func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error) {
+func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reader, modifications []blobModifier) (err error) {
 	fn := filepath.Join(b.Location, name)
 	if _, err := os.Stat(fn); !os.IsNotExist(err) {
 		return errdefs.ErrAlreadyExists
@@ -213,10 +213,10 @@ func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reade
 		return xerrors.Errorf("cannot untar: %w: %s", err, string(out))
 	}
 
-	for path, mod := range modifications {
-		err := b.modifyFile(name, path, mod)
+	for _, mod := range modifications {
+		err := b.modifyFile(name, mod.Path, mod.Modifier)
 		if err != nil {
-			return xerrors.Errorf("cannot modify blob %s: %w", path, err)
+			return xerrors.Errorf("cannot modify blob %s: %w", mod.Path, err)
 		}
 	}
 
@@ -229,7 +229,7 @@ func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reade
 
 // AddFromTarGzip adds content to this store under the given name.
 // In is expected to yield a gzip compressed tar stream.
-func (b *diskBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error) {
+func (b *diskBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications []blobModifier) (err error) {
 	gin, err := gzip.NewReader(in)
 	if err != nil {
 		return err
