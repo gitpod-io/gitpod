@@ -32,6 +32,8 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/controllers"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/pkg/kubeapi/v1"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
 )
 
@@ -72,27 +74,36 @@ var runCmd = &cobra.Command{
 
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), opts)
 		if err != nil {
-			log.WithError(err).Fatal(err, "unable to start manager")
+			log.WithError(err).Fatal("unable to start manager")
+		}
+
+		wsctrl := &controllers.WorkspaceReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		}
+		err = wsctrl.SetupWithManager(mgr)
+		if err != nil {
+			log.WithError(err).Fatal("unable to setup workspace controller")
 		}
 
 		kubeConfig, err := ctrl.GetConfig()
 		if err != nil {
-			log.WithError(err).Fatal(err, "unable to create a Kubernetes API Client configuration")
+			log.WithError(err).Fatal("unable to create a Kubernetes API Client configuration")
 		}
 		if err != nil {
-			log.WithError(err).Fatal(err, "unable to getting Kubernetes client config")
+			log.WithError(err).Fatal("unable to getting Kubernetes client config")
 		}
 
 		clientset, err := kubernetes.NewForConfig(kubeConfig)
 		if err != nil {
-			log.WithError(err).Fatal(err, "constructing Kubernetes client")
+			log.WithError(err).Fatal("constructing Kubernetes client")
 		}
 
 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 			log.WithError(err).Fatal("unable to set up health check")
 		}
 		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-			log.WithError(err).Fatal(err, "unable to set up ready check")
+			log.WithError(err).Fatal("unable to set up ready check")
 		}
 
 		cp, err := layer.NewProvider(&cfg.Content.Storage)
@@ -194,7 +205,7 @@ var runCmd = &cobra.Command{
 			Scheme:  mgr.GetScheme(),
 		}).SetupWithManager(mgr)
 		if err != nil {
-			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
+			log.WithError(err).Fatal("unable to create controller", "controller", "Pod")
 		}
 
 		if cfg.PProf.Addr != "" {
@@ -204,7 +215,7 @@ var runCmd = &cobra.Command{
 		// run until we're told to stop
 		log.Info("🦸  wsman is up and running. Stop with SIGINT or CTRL+C")
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-			log.WithError(err).Fatal(err, "problem starting wsman")
+			log.WithError(err).Fatal("problem starting wsman")
 		}
 
 		log.Info("Received SIGINT - shutting down")
@@ -213,6 +224,8 @@ var runCmd = &cobra.Command{
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(workspacev1.AddToScheme(scheme))
+
 	rootCmd.AddCommand(runCmd)
 }
 

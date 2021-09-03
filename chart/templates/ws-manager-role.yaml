@@ -29,3 +29,19 @@ rules:
   - watch
   - delete
   - deletecollection
+- apiGroups:
+  - "crd.gitpod.io"
+  resources:
+  - workspaces
+  - workspaces/status
+  - workspace
+  - workspace/status
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+  - delete
+  - deletecollection
