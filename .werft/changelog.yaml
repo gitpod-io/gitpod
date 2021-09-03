@@ -3,16 +3,63 @@ pod:
   serviceAccount: werft
   nodeSelector:
     cloud.google.com/gke-nodepool: builds
+  volumes:
+  - name: gcp-sa
+    secret:
+      secretName: gcp-sa-gitpod-dev-deployer
+  - name: gcp-sa-release
+    secret:
+      secretName: gcp-sa-gitpod-release-deployer
+  - name: gpsh-coredev-license
+    secret:
+      secretName: gpsh-coredev-license
+  - name: payment-provider-secret
+    secret:
+      secretName: payment-provider-secret
+  - name: payment-webhook-secret
+    secret:
+      secretName: payment-webhook-secret
+  - name: go-build-cache
+    hostPath:
+      path: /mnt/disks/ssd0/go-build-cache
+      type: DirectoryOrCreate
   containers:
   - name: build
     image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-deve.7
     workingDir: /workspace
     imagePullPolicy: Always
+    volumeMounts:
+    - name: gcp-sa
+      mountPath: /mnt/secrets/gcp-sa
+      readOnly: true
+    - name: gcp-sa-release
+      mountPath: /mnt/secrets/gcp-sa-release
+      readOnly: true
+    - name: gpsh-coredev-license
+      mountPath: /mnt/secrets/gpsh-coredev
+      readOnly: true
+    - name: payment-webhook-secret
+      mountPath: /mnt/secrets/payment-webhook-config
+      readOnly: true
+    - name: payment-provider-secret
+      mountPath: /mnt/secrets/payment-provider-config
+      readOnly: true
+    - name: go-build-cache
+      mountPath: /go-build-cache
+      readOnly: false
     env:
     - name: LEEWAY_WORKSPACE_ROOT
       value: /workspace
     - name: LEEWAY_REMOTE_CACHE_BUCKET
+      {{- if eq .Repository.Ref "refs/heads/master" }}
       value: gitpod-core-leeway-cache-master
+      {{- else }}
+      value: gitpod-core-leeway-cache-branch
+      {{- end }}
+    - name: GOPROXY
+      value: http://athens-athens-proxy.athens.svc.cluster.local:9999
+    - name: GOCACHE
+      value: /go-build-cache
     - name: GITHUB_USER
       value: roboquat
     - name: GITHUB_EMAIL
@@ -36,6 +83,8 @@ pod:
         export GITHUB_REPO={{ .Repository.Repo }}
 
         sudo chown -R gitpod:gitpod /workspace
+        sudo chown gitpod:gitpod $GOCACHE
+
         git checkout $GIT_BRANCH
         leeway run dev/changelog:update
         if [[ $(git status --porcelain) ]]; then
