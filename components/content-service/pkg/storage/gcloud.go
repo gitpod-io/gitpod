@@ -925,6 +925,9 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 // DeleteObject deletes objects in the given bucket specified by the given query
 func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
 	client, err := newGCPClient(ctx, p.config)
+	if err != nil {
+		return err
+	}
 	//nolint:staticcheck
 	defer client.Close()
 
@@ -959,17 +962,18 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 		if err == iterator.Done {
 			break
 		}
-		if err != nil && !errors.Is(err, gcpstorage.ErrBucketNotExist) {
+		// if we get any error besides "done" the iterator is broken: make sure we don't use it again.
+		if err != nil {
 			log.WithField("bucket", bucket).WithError(err).Error("cannot delete objects")
-			return err
+			break
 		}
 		err = b.Object(attrs.Name).Delete(ctx)
-		if err != nil && !errors.Is(err, gcpstorage.ErrBucketNotExist) {
+		if err != nil && !errors.Is(err, gcpstorage.ErrObjectNotExist) {
 			log.WithField("bucket", bucket).WithField("object", attrs.Name).WithError(err).Error("cannot delete objects")
 		}
 	}
 
-	if errors.Is(err, gcpstorage.ErrBucketNotExist) {
+	if errors.Is(err, gcpstorage.ErrBucketNotExist) || errors.Is(err, gcpstorage.ErrObjectNotExist) {
 		return ErrNotFound
 	}
 	return err
@@ -978,14 +982,14 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 // DeleteBucket deletes a bucket
 func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (err error) {
 	client, err := newGCPClient(ctx, p.config)
+	if err != nil {
+		return err
+	}
 	//nolint:staticcheck
 	defer client.Close()
 
 	err = p.DeleteObject(ctx, bucket, &DeleteObjectQuery{})
 	if err != nil {
-		if errors.Is(err, gcpstorage.ErrBucketNotExist) {
-			return ErrNotFound
-		}
 		return err
 	}
 
@@ -1002,6 +1006,9 @@ func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (
 // ObjectHash gets a hash value of an object
 func (p *PresignedGCPStorage) ObjectHash(ctx context.Context, bucket string, obj string) (hash string, err error) {
 	client, err := newGCPClient(ctx, p.config)
+	if err != nil {
+		return "", err
+	}
 	//nolint:staticcheck
 	defer client.Close()
 
