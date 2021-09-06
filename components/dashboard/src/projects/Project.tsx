@@ -160,7 +160,7 @@ export default function () {
                             <div>
                                 <div className="text-base text-gray-900 dark:text-gray-50 font-medium mb-1">
                                     {branchName}
-                                    {branch.isDefault && (<span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-400">DEFAULT</span>)}
+                                    {branch.isDefault && (<span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">DEFAULT</span>)}
                                 </div>
                             </div>
                         </ItemField>
