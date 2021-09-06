@@ -458,7 +458,7 @@ func (m *Monitor) writeEventTraceLog(status *api.WorkspaceStatus, wso *workspace
 
 	if m.manager.Config.EventTraceLog == "-" {
 		//nolint:errcheck
-		log.WithField("evt", entry).Debug("event trace log")
+		log.WithField("evt", entry).Info("event trace log")
 		return
 	}
 
