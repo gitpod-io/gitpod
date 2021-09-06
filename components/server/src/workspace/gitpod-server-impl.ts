@@ -524,14 +524,20 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
     }
 
-    protected async internalStopWorkspace(ctx: TraceContext, workspace: Workspace, policy?: StopWorkspacePolicy): Promise<void> {
+    protected async internalStopWorkspace(ctx: TraceContext, workspace: Workspace, policy?: StopWorkspacePolicy, admin: boolean = false): Promise<void> {
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspace.id);
         if (!instance) {
             // there's no instance running - we're done
             return;
         }
 
-        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
+        // If it's an admin that wants to stop a workspace, don't check if it's
+        // the workspace of the logged in user (it is not, since it's the admin
+        // that is logged in).
+        // The guard check happens in guardAdminAccess(...) for admin users.
+        if (!admin) {
+            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
+        }
         await this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, policy);
     }
 
