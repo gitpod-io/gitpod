@@ -201,7 +201,7 @@ export class ProjectsService {
             cache[path] = content;
             return await content;
         }
-        // eagerly fetch for all files that the inferrer usualyl asks for.
+        // eagerly fetch for all files that the inferrer usually asks for.
         this.requestedPaths.forEach(path => !(path in cache) && readFile(path));
         const config: WorkspaceConfig = await new ConfigInferrer().getConfig({
             config: {},
