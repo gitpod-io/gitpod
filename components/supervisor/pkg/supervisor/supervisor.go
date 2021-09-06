@@ -186,7 +186,7 @@ func Run(options ...RunOption) {
 		)
 		termMux             = terminal.NewMux()
 		termMuxSrv          = terminal.NewMuxTerminalService(termMux)
-		taskManager         = newTasksManager(cfg, termMuxSrv, cstate, &loggingHeadlessTaskProgressReporter{})
+		taskManager         = newTasksManager(cfg, termMuxSrv, cstate, nil)
 		analytics           = analytics.NewFromEnvironment()
 		notificationService = NewNotificationService()
 	)

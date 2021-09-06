@@ -285,7 +285,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 		}
 	}
 
-	if tm.config.isHeadless() {
+	if tm.config.isHeadless() && tm.reporter != nil {
 		tm.reporter.done(success)
 	}
 	successChan <- success
@@ -423,7 +423,9 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 				}
 				data := string(buf[:n])
 				fileWriter.Write(buf[:n])
-				tm.reporter.write(data, task, terminal)
+				if tm.reporter != nil {
+					tm.reporter.write(data, task, terminal)
+				}
 
 				endMessage := "\n🤙 This task ran as a workspace prebuild\n" + duration + "\n"
 				fileWriter.WriteString(endMessage)
@@ -435,7 +437,9 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 			}
 			data := string(buf[:n])
 			fileWriter.Write(buf[:n])
-			tm.reporter.write(data, task, terminal)
+			if tm.reporter != nil {
+				tm.reporter.write(data, task, terminal)
+			}
 		}
 	}()
 }
@@ -494,28 +498,4 @@ func composeCommand(options composeCommandOptions) string {
 		}
 	}
 	return strings.Join(commands, options.sep)
-}
-
-type loggingHeadlessTaskProgressReporter struct {
-}
-
-func (r *loggingHeadlessTaskProgressReporter) write(data string, task *task, terminal *terminal.Term) {
-	log.WithField("component", "workspace").WithField("pid", terminal.Command.Process.Pid).
-		WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskOutput", Data: data}).Info()
-}
-
-func (r *loggingHeadlessTaskProgressReporter) done(success bool) {
-	workspaceLog := log.WithField("component", "workspace")
-	workspaceLog.WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskOutput", Data: "🚛 uploading workspace image"}).Info()
-	if !success {
-		workspaceLog.WithField("error", "one of the tasks failed with non-zero exit code").
-			WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskFailed"}).Info()
-		return
-	}
-	workspaceLog.WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskDone"}).Info()
-}
-
-type taskLogMessage struct {
-	Type string `json:"type"`
-	Data string `json:"data"`
 }
