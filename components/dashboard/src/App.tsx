@@ -53,6 +53,15 @@ function isGitpodIo() {
     return window.location.hostname === 'gitpod.io' || window.location.hostname === 'gitpod-staging.com' || window.location.hostname.endsWith('gitpod-dev.com') || window.location.hostname.endsWith('gitpod-io-dev.com')
 }
 
+function isWebsiteSlug(pathName: string) {
+    const slugs = ['chat', 'features', 'screencasts', 'blog', 'docs', 'changelog', 'pricing', 'self-hosted', 'gitpod-vs-github-codespaces', 'support', 'about', 'careers', 'contact', 'media-kit', 'imprint', 'terms', 'privacy', 'values']
+    return slugs.some(slug => pathName.startsWith('/' + slug + '/') || pathName === ('/' + slug));
+}
+
+function getURLHash() {
+    return window.location.hash.replace(/^[#/]+/, '');
+}
+
 function App() {
     const { user, setUser } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
@@ -108,6 +117,12 @@ function App() {
             window.removeEventListener('storage', updateTheme);
         }
     }, []);
+
+    // redirect to website for any website slugs
+    if (isGitpodIo() && isWebsiteSlug(window.location.pathname)) {
+        window.location.host = 'www.gitpod.io';
+        return <div></div>;
+    }
 
     if (isGitpodIo() && window.location.pathname === '/' && window.location.hash === '' && !loading && !user) {
         window.location.href = `https://www.gitpod.io`;
@@ -237,11 +252,11 @@ function App() {
                         return isGitpodIo() ?
                             // delegate to our website to handle the request
                             (window.location.host = 'www.gitpod.io') :
-                                <div className="mt-48 text-center">
-                                    <h1 className="text-gray-500 text-3xl">404</h1>
-                                    <p className="mt-4 text-lg">Page not found.</p>
-                                </div>;
-                }}>
+                            <div className="mt-48 text-center">
+                                <h1 className="text-gray-500 text-3xl">404</h1>
+                                <p className="mt-4 text-lg">Page not found.</p>
+                            </div>;
+                    }}>
                 </Route>
             </Switch>
         </div>
@@ -265,10 +280,6 @@ function App() {
             </Suspense>
         </BrowserRouter>
     );
-}
-
-function getURLHash() {
-    return window.location.hash.replace(/^[#/]+/, '');
 }
 
 export default App;
