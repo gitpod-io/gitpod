@@ -117,6 +117,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 ws = await this.createForCommit({span}, user, commitContext, normalizedContextURL);
             }
             ws.type = "prebuild";
+            ws.projectId = project?.id;
             ws = await this.db.trace({span}).store(ws);
 
             const pws = await this.db.trace({span}).storePrebuiltWorkspace({
@@ -126,20 +127,17 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 commit: commitContext.revision,
                 state: "queued",
                 creationTime: new Date().toISOString(),
-                projectId: project?.id,
+                projectId: ws.projectId,
                 branch
             });
 
-            { // TODO(at) store prebuild info
-                if (project) {
-                    // do not await
-                    this.storePrebuildInfo(ctx, project, pws, ws, user).catch(err => {
-                        log.error(`failed to store prebuild info`, err);
-                        TraceContext.logError({span}, err);
-                    });
-                }
+            if (project) {
+                // do not await
+                this.storePrebuildInfo(ctx, project, pws, ws, user).catch(err => {
+                    log.error(`failed to store prebuild info`, err);
+                    TraceContext.logError({span}, err);
+                });
             }
-
 
             log.debug({ userId: user.id, workspaceId: ws.id }, `Registered workspace prebuild: ${pws.id} for ${commitContext.repository.cloneUrl}:${commitContext.revision}`);
 
