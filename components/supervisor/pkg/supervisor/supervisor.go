@@ -944,8 +944,10 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 		log.WithError(err).WithField("out", string(out)).Error("cannot create hostkey file")
 		return
 	}
+	_ = os.Chown(hostkeyFN.Name(), gitpodUID, gitpodGID)
 
 	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-p", fmt.Sprintf(":%d", cfg.SSHPort), "-r", hostkeyFN.Name())
+	cmd = runAsGitpodUser(cmd)
 	cmd.Env = buildChildProcEnv(cfg, nil)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
