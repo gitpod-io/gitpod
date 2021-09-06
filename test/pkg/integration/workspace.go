@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -413,13 +414,14 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 	if desc != nil {
 		switch desc.Status.Phase {
 		case wsmanapi.WorkspacePhase_STOPPED:
-			return desc.Status
+			// ensure theia service is cleaned up
+			lastStatus = desc.Status
 		}
 	}
 
 	select {
 	case <-it.ctx.Done():
-		it.t.Fatalf("cannot wait for workspace: %q", it.ctx.Err())
+		it.t.Fatalf("cannot wait for workspace stop: %q", it.ctx.Err())
 		return
 	case <-done:
 	}
@@ -432,8 +434,12 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 		serviceGone bool
 		k8s, ns     = it.API().Kubernetes()
 	)
+
+	// NOTE: this needs to be kept in sync with components/ws-manager/pkg/manager/manager.go:getTheiaServiceName()
+	// TODO(rl) expose it?
+	theiaName := fmt.Sprintf("ws-%s-theia", strings.TrimSpace(strings.ToLower(workspaceID)))
 	for time.Since(start) < 1*time.Minute {
-		_, err := k8s.CoreV1().Services(ns).Get(ctx, fmt.Sprintf("ws-%s-theia", workspaceID), v1.GetOptions{})
+		_, err := k8s.CoreV1().Services(ns).Get(ctx, theiaName, v1.GetOptions{})
 		if errors.IsNotFound(err) {
 			serviceGone = true
 			break
@@ -441,7 +447,21 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 		time.Sleep(200 * time.Millisecond)
 	}
 	if !serviceGone {
-		it.t.Fatalf("Theia service did not disappear in time")
+		it.t.Fatalf("Theia service:%s did not disappear in time", theiaName)
+		return
+	}
+	// Wait for the theia endpoints to be properly deleted (i.e. syncing)
+	var endpointGone bool
+	for time.Since(start) < 1*time.Minute {
+		_, err := k8s.CoreV1().Endpoints(ns).Get(ctx, theiaName, v1.GetOptions{})
+		if errors.IsNotFound(err) {
+			endpointGone = true
+			break
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	if !endpointGone {
+		it.t.Fatalf("Theia endpoint:%s did not disappear in time", theiaName)
 		return
 	}
 

@@ -65,6 +65,15 @@ func TestBackup(t *testing.T) {
 		return
 	}
 
+	defer func() {
+		t.Log("Cleaning up on TestBackup exit")
+		sctx, scancel := context.WithTimeout(ctx, 5*time.Second)
+		defer scancel()
+		_, err = it.API().WorkspaceManager().StopWorkspace(sctx, &wsapi.StopWorkspaceRequest{
+			Id: ws.Req.Id,
+		})
+	}()
+
 	var ls agent.ListDirResponse
 	err = rsa.Call("WorkspaceAgent.ListDir", &agent.ListDirRequest{
 		Dir: "/workspace",
