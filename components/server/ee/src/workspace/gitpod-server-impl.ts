@@ -644,7 +644,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const span = opentracing.globalTracer().startSpan("adminForceStopWorkspace");
         const workspace = await this.workspaceDb.trace({ span }).findById(id);
         if (workspace) {
-            await this.internalStopWorkspace({ span }, workspace, StopWorkspacePolicy.IMMEDIATELY);
+            await this.internalStopWorkspace({ span }, workspace, StopWorkspacePolicy.IMMEDIATELY, true);
         }
     }
 
