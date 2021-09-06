@@ -40,7 +40,7 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 
 			ws := info.WorkspaceInfo(req.Context(), wsID)
 			if ws == nil {
-				log.Warn("did not find workspace info")
+				log.WithField("workspaceId", wsID).Warn("did not find workspace info")
 				resp.WriteHeader(http.StatusNotFound)
 				return
 			}
