@@ -356,11 +356,11 @@ export class GenericAuthProvider implements AuthProvider {
                 message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
             }
 
-            if (!UnconfirmedUserException.is(err)) {
-                // user did not accept ToS. Don't count this towards the error burn rate.
-                increaseLoginCounter("failed", this.host);
+            if (UnconfirmedUserException.is(err)) {
+                return this.sendCompletionRedirectWithError(response, { error: err.message });
             }
 
+            increaseLoginCounter("failed", this.host);
             log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, { ...defaultLogPayload, err });
             response.redirect(this.getSorryUrl(message));
             return;
