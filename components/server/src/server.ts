@@ -36,7 +36,7 @@ import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
 import { BearerAuth, isBearerAuthError } from './auth/bearer-authenticator';
 import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
-import { increaseHttpRequestCounter, observeHttpRequestDuration } from './prometheus-metrics';
+import { increaseHttpRequestCounter, observeHttpRequestDuration, setGitpodVersion } from './prometheus-metrics';
 import { OAuthController } from './oauth-server/oauth-controller';
 import { HeadlessLogController, HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from './workspace/headless-log-controller';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
@@ -84,6 +84,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // print config
         log.info("config", { config: JSON.stringify(this.config, undefined, 2) });
 
+        // Set version info metric
+        setGitpodVersion(this.config.version)
         // metrics
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
             const startTime = Date.now();

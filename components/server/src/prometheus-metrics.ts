@@ -101,3 +101,14 @@ export function increaseMessagebusTopicReads(topic: string) {
         topic,
     })
 }
+
+const gitpodVersionInfo = new prometheusClient.Gauge({
+    name: 'gitpod_version_info',
+    help: "Gitpod's version",
+    labelNames: ["gitpod_version"],
+    registers: [prometheusClient.register]
+});
+
+export function setGitpodVersion(gitpod_version: string){
+    gitpodVersionInfo.set({gitpod_version}, 1)
+}
