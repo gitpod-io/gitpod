@@ -13,7 +13,7 @@ defaultVariant:
     - "**/node_modules/**"
   config:
     go:
-      lintCommand: ["golangci-lint", "run", "--disable", "govet,errcheck,typecheck,staticcheck", "--allow-parallel-runners", "--timeout", "5m"]
+      lintCommand: ["sh", "-c", "gokart scan && golangci-lint run --disable govet,errcheck,typecheck,staticcheck --allow-parallel-runners --timeout 5m"]
       buildFlags: ["-trimpath", "-ldflags='-buildid= -w -s'"]
 
 variants:
