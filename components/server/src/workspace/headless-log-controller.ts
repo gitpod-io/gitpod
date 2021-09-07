@@ -127,7 +127,7 @@ export class HeadlessLogController {
 
             try {
                 const taskId = params.taskId;
-                const downloadUrl = await this.headlessLogService.getHeadlessLogDownloadUrl(user.id, instance, taskId);
+                const downloadUrl = await this.headlessLogService.getHeadlessLogDownloadUrl(user.id, instance, workspace.ownerId, taskId);
                 res.send(downloadUrl);  // cmp. headless_log_download.go
             } catch (err) {
                 log.error(logCtx, "error retrieving headless log download URL", err);
