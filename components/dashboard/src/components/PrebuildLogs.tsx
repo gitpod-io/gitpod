@@ -128,10 +128,16 @@ export function watchHeadlessLogs(instanceId: string, onLog: (chunk: string) => 
       return;
     }
 
-    const retry = async (reason: string, err?: Error) => {
+    const initialDelaySeconds = 1;
+    let delayInSeconds = initialDelaySeconds;
+    const retryBackoff = async (reason: string, err?: Error) => {
+      const backoffFactor = 1.2;
+      const maxBackoffSeconds = 5;
+      delayInSeconds = Math.min(delayInSeconds * backoffFactor, maxBackoffSeconds);
+
       console.debug("re-trying headless-logs because: " + reason, err);
       await new Promise((resolve) => {
-        setTimeout(resolve, 2000);
+        setTimeout(resolve, delayInSeconds * 1000);
       });
       startWatchingLogs().catch(console.error);
     };
@@ -143,7 +149,7 @@ export function watchHeadlessLogs(instanceId: string, onLog: (chunk: string) => 
       // TODO(gpl) Only listening on first stream for now
       const streamIds = Object.keys(logSources.streams);
       if (streamIds.length < 1) {
-        await retry("no streams");
+        await retryBackoff("no streams");
         return;
       }
 
@@ -160,7 +166,7 @@ export function watchHeadlessLogs(instanceId: string, onLog: (chunk: string) => 
       });
       reader = response.body?.getReader();
       if (!reader) {
-        await retry("no reader");
+        await retryBackoff("no reader");
         return;
       }
       disposables.push({ dispose: () => reader?.cancel() });
@@ -177,9 +183,9 @@ export function watchHeadlessLogs(instanceId: string, onLog: (chunk: string) => 
           if (matches.length < 2) {
             console.debug("error parsing log stream status code. msg: " + msg);
           } else {
-            const streamStatusCode = matches[1];
-            if (streamStatusCode !== "200") {
-              throw new Error("received status code: " + streamStatusCode);
+            const code = parseStatusCode(matches[1]);
+            if (code !== 200) {
+              throw new StreamError(code);
             }
           }
         } else {
@@ -195,10 +201,32 @@ export function watchHeadlessLogs(instanceId: string, onLog: (chunk: string) => 
       }
     } catch(err) {
       reader?.cancel().catch(console.debug);
-      await retry("error while listening to stream", err);
+      if (err.code === 400) {
+        // sth is really off, and we _should not_ retry
+        console.error("stopped watching headless logs", err);
+        return;
+      }
+      await retryBackoff("error while listening to stream", err);
     }
   };
   startWatchingLogs().catch(console.error);
 
   return disposables;
+}
+
+class StreamError extends Error {
+  constructor(readonly code?: number) {
+    super(`stream status code: ${code}`)
+  }
+}
+
+function parseStatusCode(code: string | undefined): number | undefined {
+  try {
+    if (!code) {
+      return undefined;
+    }
+    return Number.parseInt(code);
+  } catch(err) {
+    return undefined;
+  }
 }
