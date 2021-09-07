@@ -123,9 +123,10 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
         return await (await this.getSubscriptionRepo()).delete(subscription as DBSubscription);
     }
 
-    async findActiveSubscriptionByPlanID(planID: string): Promise<Subscription[]> {
+    async findActiveSubscriptionByPlanID(planID: string, date: string): Promise<Subscription[]> {
         return (await this.getSubscriptionRepo()).createQueryBuilder('subscription')
             .where('subscription.planID = :planID', { planID })
+            .andWhere('subscription.startDate <= :date AND (subscription.endDate = "" OR subscription.endDate > :date)', { date: date })
             .andWhere('subscription.deleted != true')
             .andWhere('subscription.planId != "free"')  // TODO DEL FREE-SUBS
             .getMany();
