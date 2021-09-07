@@ -186,7 +186,7 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 
 	res, err := cmd.CombinedOutput()
 	if err != nil {
-		if err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes" {
+		if strings.Contains(err.Error(), "no child process") {
 			return res, nil
 		}
 
