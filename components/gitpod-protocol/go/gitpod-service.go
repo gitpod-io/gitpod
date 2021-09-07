@@ -216,6 +216,7 @@ type ConnectToServerOpts struct {
 	Token               string
 	Log                 *logrus.Entry
 	ReconnectionHandler func()
+	CloseHandler        func(error)
 }
 
 // ConnectToServer establishes a new websocket connection to the server
@@ -244,7 +245,12 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 	}
 	ws := NewReconnectingWebsocket(endpoint, reqHeader, opts.Log)
 	ws.ReconnectionHandler = opts.ReconnectionHandler
-	go ws.Dial(opts.Context)
+	go func() {
+		err := ws.Dial(opts.Context)
+		if opts.CloseHandler != nil {
+			opts.CloseHandler(err)
+		}
+	}()
 
 	var res APIoverJSONRPC
 	res.log = opts.Log

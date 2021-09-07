@@ -143,7 +143,7 @@ func (rc *ReconnectingWebsocket) ReadObject(v interface{}) error {
 }
 
 // Dial creates a new client connection.
-func (rc *ReconnectingWebsocket) Dial(ctx context.Context) {
+func (rc *ReconnectingWebsocket) Dial(ctx context.Context) error {
 	var conn *WebsocketConnection
 	defer func() {
 		if conn == nil {
@@ -158,7 +158,7 @@ func (rc *ReconnectingWebsocket) Dial(ctx context.Context) {
 	for {
 		select {
 		case <-rc.closedCh:
-			return
+			return rc.closeErr
 		case connCh := <-rc.connCh:
 			connCh <- conn
 		case <-rc.errCh:
