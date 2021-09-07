@@ -159,6 +159,9 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunn
 		if b != nil {
 			b.FullUpdate()
 		}
+	}, func(closeErr error) {
+		logrus.WithError(closeErr).Error("server connection failed")
+		os.Exit(1)
 	})
 	if err != nil {
 		return err
@@ -203,7 +206,13 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunn
 	return b.Run()
 }
 
-func connectToServer(loginOpts auth.LoginOpts, reconnectionHandler func()) (*gitpod.APIoverJSONRPC, error) {
+func connectToServer(loginOpts auth.LoginOpts, reconnectionHandler func(), closeHandler func(error)) (*gitpod.APIoverJSONRPC, error) {
+	var client *gitpod.APIoverJSONRPC
+	onClose := func(closeErr error) {
+		if client != nil {
+			closeHandler(closeErr)
+		}
+	}
 	tkn, err := auth.GetToken(loginOpts.GitpodURL)
 	if err != nil {
 		return nil, err
@@ -211,7 +220,7 @@ func connectToServer(loginOpts auth.LoginOpts, reconnectionHandler func()) (*git
 
 	if tkn != "" {
 		// try to connect with existing token
-		client, err := tryConnectToServer(loginOpts.GitpodURL, tkn, reconnectionHandler)
+		client, err = tryConnectToServer(loginOpts.GitpodURL, tkn, reconnectionHandler, onClose)
 		if client != nil {
 			return client, err
 		}
@@ -227,10 +236,11 @@ func connectToServer(loginOpts auth.LoginOpts, reconnectionHandler func()) (*git
 	if err != nil {
 		return nil, err
 	}
-	return tryConnectToServer(loginOpts.GitpodURL, tkn, reconnectionHandler)
+	client, err = tryConnectToServer(loginOpts.GitpodURL, tkn, reconnectionHandler, onClose)
+	return client, err
 }
 
-func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()) (*gitpod.APIoverJSONRPC, error) {
+func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func(), closeHandler func(error)) (*gitpod.APIoverJSONRPC, error) {
 	wshost := gitpodUrl
 	wshost = strings.ReplaceAll(wshost, "https://", "wss://")
 	wshost = strings.ReplaceAll(wshost, "http://", "ws://")
@@ -240,6 +250,7 @@ func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()
 		Token:               tkn,
 		Log:                 logrus.NewEntry(logrus.StandardLogger()),
 		ReconnectionHandler: reconnectionHandler,
+		CloseHandler:        closeHandler,
 	})
 	if err != nil {
 		return nil, err
