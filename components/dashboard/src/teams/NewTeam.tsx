@@ -21,7 +21,7 @@ export default function () {
             const team = await getGitpodService().server.createTeam(name);
             const teams = await getGitpodService().server.getTeams();
             setTeams(teams);
-            history.push(`/${team.slug}`);
+            history.push(`/t/${team.slug}`);
         } catch (error) {
             console.error(error);
             setCreationError(error);

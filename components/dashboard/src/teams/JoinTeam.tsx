@@ -34,7 +34,7 @@ export default function() {
                     }
                 }
 
-                history.push(`/${team.slug}/members`);
+                history.push(`/t/${team.slug}/members`);
             } catch (error) {
                 console.error(error);
                 setJoinError(error);

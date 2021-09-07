@@ -29,7 +29,7 @@ export default function () {
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
 
-    const match = useRouteMatch<{ team: string, resource: string }>("/:team/:resource");
+    const match = useRouteMatch<{ team: string, resource: string }>("/(t/)?:team/:resource");
     const projectName = match?.params?.resource;
 
     const [project, setProject] = useState<Project | undefined>();
@@ -121,7 +121,7 @@ export default function () {
     }
 
     const openPrebuild = (pb: PrebuildInfo) => {
-        history.push(`/${!!team ? team.slug : 'projects'}/${projectName}/${pb.id}`);
+        history.push(`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/${pb.id}`);
     }
 
     const triggerPrebuild = (branchName: string | null) => {

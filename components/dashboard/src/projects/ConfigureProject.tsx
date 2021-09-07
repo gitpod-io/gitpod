@@ -58,7 +58,7 @@ export default function () {
   const { teams } = useContext(TeamsContext);
   const location = useLocation();
   const team = getCurrentTeam(location, teams);
-  const routeMatch = useRouteMatch<{ teamSlug: string, projectSlug: string }>("/:teamSlug/:projectSlug/configure");
+  const routeMatch = useRouteMatch<{ teamSlug: string, projectSlug: string }>("/(t/)?:teamSlug/:projectSlug/configure");
   const [ project, setProject ] = useState<Project | undefined>();
   const [ gitpodYml, setGitpodYml ] = useState<string>('');
   const [ dockerfile, setDockerfile ] = useState<string>('');

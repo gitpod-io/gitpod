@@ -22,7 +22,7 @@ export default function () {
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
 
-    const match = useRouteMatch<{ team: string, project: string, prebuildId: string }>("/:team/:project/:prebuildId");
+    const match = useRouteMatch<{ team: string, project: string, prebuildId: string }>("/(t/)?:team/:project/:prebuildId");
     const projectName = match?.params?.project;
     const prebuildId = match?.params?.prebuildId;
 

@@ -181,7 +181,7 @@ export default function NewProject() {
             appInstallationId: String(repo.installationId),
         });
 
-        history.push(`/${User.is(teamOrUser) ? 'projects' : teamOrUser.slug}/${repo.name}/configure`);
+        history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${repo.name}/configure`);
     }
 
     const toSimpleName = (fullName: string) => {

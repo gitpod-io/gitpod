@@ -76,7 +76,7 @@ export default function () {
         return true;
     }
 
-    const teamOrUserSlug = !!team ? team.slug : 'projects';
+    const teamOrUserSlug = !!team ? 't/'+team.slug : 'projects';
 
     const getPrebuildStatusIcon = (status: PrebuiltWorkspaceState) => {
         switch (status) {
@@ -95,7 +95,7 @@ export default function () {
 
     return <>
         <Header title="Projects" subtitle="Manage recently added projects." />
-        {projects.length < 1 && (
+        {projects.length === 0 && (
             <div>
                 <img alt="Projects (empty)" className="h-44 mt-24 mx-auto" role="presentation" src={isDark ? projectsEmptyDark : projectsEmpty} />
                 <h3 className="text-center text-gray-500 mt-8">No Recent Projects</h3>
@@ -127,7 +127,7 @@ export default function () {
                         <div className="h-42 border border-gray-100 dark:border-gray-800 rounded-t-xl">
                             <div className="h-32 p-6">
                                 <div className="flex text-xl font-semibold text-gray-700 dark:text-gray-200 font-medium">
-                                    <Link to={`/${!!team ? team.slug : 'projects'}/${p.name}`}>
+                                    <Link to={`/${teamOrUserSlug}/${p.name}`}>
                                         {p.name}
                                     </Link>
                                     <span className="flex-grow" />
