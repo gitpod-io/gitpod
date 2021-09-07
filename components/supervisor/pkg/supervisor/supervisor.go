@@ -252,7 +252,7 @@ func Run(options ...RunOption) {
 	wg.Add(1)
 	go startSSHServer(ctx, cfg, &wg)
 	wg.Add(1)
-	tasksSuccessChan := make(chan bool, 1)
+	tasksSuccessChan := make(chan taskSuccess, 1)
 	go taskManager.Run(ctx, &wg, tasksSuccessChan)
 	wg.Add(1)
 	go socketActivationForDocker(ctx, &wg, termMux)
@@ -882,14 +882,14 @@ func tunnelOverSSH(ctx context.Context, tunneled *ports.TunneledPortsService, ne
 	<-ctx.Done()
 }
 
-func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan ShutdownReason, successChan <-chan bool) {
+func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan ShutdownReason, successChan <-chan taskSuccess) {
 	defer wg.Done()
 	defer close(shutdown)
 
 	success := <-successChan
-	if !success {
+	if success.Failed() {
 		// we signal task failure via kubernetes termination log
-		msg := []byte("headless task failed")
+		msg := []byte("headless task failed: " + string(success))
 		err := ioutil.WriteFile("/dev/termination-log", msg, 0644)
 		if err != nil {
 			log.WithError(err).Error("err while writing termination log")

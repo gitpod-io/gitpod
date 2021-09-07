@@ -65,13 +65,32 @@ type task struct {
 	api.TaskStatus
 	config      TaskConfig
 	command     string
-	successChan chan bool
+	successChan chan taskSuccess
 	title       string
 }
 
 type headlessTaskProgressReporter interface {
 	write(data string, task *task, terminal *terminal.Term)
-	done(success bool)
+	done(success taskSuccess)
+}
+
+type taskSuccess string
+
+func (t taskSuccess) Failed() bool { return t != "" }
+
+var taskSuccessful taskSuccess = ""
+
+func (t taskSuccess) Fail(msg string) taskSuccess {
+	res := string(t)
+	if res != "" {
+		res += "; "
+	}
+	res += msg
+	return taskSuccess(res)
+}
+
+func taskFailed(msg string) taskSuccess {
+	return taskSuccessful.Fail(msg)
 }
 
 type tasksManager struct {
@@ -194,19 +213,19 @@ func (tm *tasksManager) init(ctx context.Context) {
 				Presentation: presentation,
 			},
 			config:      config,
-			successChan: make(chan bool, 1),
+			successChan: make(chan taskSuccess, 1),
 			title:       title,
 		}
 		task.command = getCommand(task, tm.config.isHeadless(), tm.contentSource, tm.storeLocation)
 		if tm.config.isHeadless() && task.command == "exit" {
 			task.State = api.TaskState_closed
-			task.successChan <- true
+			task.successChan <- taskSuccessful
 		}
 		tm.tasks = append(tm.tasks, task)
 	}
 }
 
-func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan chan bool) {
+func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan chan taskSuccess) {
 	defer wg.Done()
 	defer log.Debug("tasksManager shutdown")
 
@@ -232,7 +251,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 		})
 		if err != nil {
 			taskLog.WithError(err).Error("cannot open new task terminal")
-			t.successChan <- false
+			t.successChan <- taskFailed("cannot open new task terminal")
 			tm.setTaskState(t, api.TaskState_closed)
 			continue
 		}
@@ -241,7 +260,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 		term, ok := tm.terminalService.Mux.Get(resp.Terminal.Alias)
 		if !ok {
 			taskLog.Error("cannot find a task terminal")
-			t.successChan <- false
+			t.successChan <- taskFailed("cannot find a task terminal")
 			tm.setTaskState(t, api.TaskState_closed)
 			continue
 		}
@@ -255,11 +274,20 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 		})
 
 		go func(t *task, term *terminal.Term) {
-			state, _ := term.Wait()
+			state, err := term.Wait()
 			if state != nil {
-				t.successChan <- state.Success()
+				if state.Success() {
+					t.successChan <- taskSuccessful
+				} else {
+					t.successChan <- taskFailed(state.String())
+				}
 			} else {
-				t.successChan <- false
+				msg := "cannot wait for task"
+				if err != nil {
+					msg = err.Error()
+				}
+
+				t.successChan <- taskFailed(msg)
 			}
 			taskLog.Info("task terminal has been closed")
 			tm.setTaskState(t, api.TaskState_closed)
@@ -272,15 +300,15 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 		}
 	}
 
-	success := true
+	var success taskSuccess
 	for _, task := range tm.tasks {
 		select {
 		case <-ctx.Done():
-			success = false
+			success = taskFailed(ctx.Err().Error())
 			break
-		case taskSuccess := <-task.successChan:
-			if !taskSuccess {
-				success = false
+		case taskResult := <-task.successChan:
+			if taskResult.Failed() {
+				success = success.Fail(string(taskResult))
 			}
 		}
 	}
