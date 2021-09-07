@@ -1080,7 +1080,7 @@ func terminateProcess(pid int, privileged bool) {
 	}
 
 	if err != nil {
-		log.WithError(err).WithField("pid", pid).Warn("cannot terminate child process")
+		log.WithError(err).WithField("pid", pid).Debug("child process is already terminated")
 		return
 	}
 
