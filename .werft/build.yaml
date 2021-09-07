@@ -46,7 +46,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-libsecov.2
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-gokart.18
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -144,7 +144,7 @@ pod:
         export DOCKER_HOST=tcp://$NODENAME:2375
         sudo chown -R gitpod:gitpod /workspace
 
-        (cd .werft && yarn install && mv node_modules ..)
+        (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
 
         npx ts-node .werft/build.ts
