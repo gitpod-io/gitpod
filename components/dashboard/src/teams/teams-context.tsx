@@ -26,7 +26,7 @@ export const TeamsContextProvider: React.FC = ({ children }) => {
 }
 
 export function getCurrentTeam(location: Location<any>, teams?: Team[]): Team | undefined {
-    const slug = location.pathname.split('/')[1];
+    const slug = location.pathname.startsWith('/t/') ? location.pathname.split('/')[2] : undefined;
     if (!slug || !teams) {
         return;
     }

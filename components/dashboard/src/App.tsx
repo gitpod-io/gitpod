@@ -225,11 +225,11 @@ function App() {
                     <Route exact path="/teams/new" component={NewTeam} />
                     <Route exact path="/teams/join" component={JoinTeam} />
                 </Route>
-                {(teams || []).map(team => <Route path={`/${team.slug}`}>
-                    <Route exact path={`/${team.slug}`}>
-                        <Redirect to={`/${team.slug}/projects`} />
+                {(teams || []).map(team => <Route path={`/t/${team.slug}`}>
+                    <Route exact path={`/t/${team.slug}`}>
+                        <Redirect to={`/t/${team.slug}/projects`} />
                     </Route>
-                    <Route exact path={`/${team.slug}/:maybeProject/:resourceOrPrebuild?`} render={(props) => {
+                    <Route exact path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`} render={(props) => {
                         const { maybeProject, resourceOrPrebuild } = props.match.params;
                         if (maybeProject === "projects") {
                             return <Projects />;
