@@ -32,7 +32,7 @@ export class HeadlessLogService {
     @inject(Config) protected readonly config: Config;
     @inject(HeadlessLogServiceClient) protected readonly headlessLogClient: HeadlessLogServiceClient;
 
-    public async getHeadlessLogURLs(userId: string, wsi: WorkspaceInstance, maxTimeoutSecs: number = 30): Promise<HeadlessLogUrls | undefined> {
+    public async getHeadlessLogURLs(userId: string, wsi: WorkspaceInstance, ownerId: string, maxTimeoutSecs: number = 30): Promise<HeadlessLogUrls | undefined> {
         if (isSupervisorAvailableSoon(wsi)) {
             const aborted = new Deferred<boolean>();
             setTimeout(() => aborted.resolve(true), maxTimeoutSecs * 1000);
@@ -43,12 +43,12 @@ export class HeadlessLogService {
         }
 
         // we were unable to get a repsonse from supervisor - let's try content service next
-        return await this.contentServiceListLogs(userId, wsi);
+        return await this.contentServiceListLogs(userId, wsi, ownerId);
     }
 
-    protected async contentServiceListLogs(userId: string, wsi: WorkspaceInstance): Promise<HeadlessLogUrls | undefined> {
+    protected async contentServiceListLogs(userId: string, wsi: WorkspaceInstance, ownerId: string): Promise<HeadlessLogUrls | undefined> {
         const req = new ListLogsRequest();
-        req.setOwnerId(userId);
+        req.setOwnerId(ownerId);
         req.setWorkspaceId(wsi.workspaceId);
         req.setInstanceId(wsi.id);
         const response = await new Promise<ListLogsResponse>((resolve, reject) => {
@@ -124,14 +124,15 @@ export class HeadlessLogService {
      *
      * @param userId
      * @param wsi
+     * @param ownerId
      * @param taskId
      * @returns
      */
-    async getHeadlessLogDownloadUrl(userId: string, wsi: WorkspaceInstance, taskId: string): Promise<string | undefined> {
+    async getHeadlessLogDownloadUrl(userId: string, wsi: WorkspaceInstance, ownerId: string, taskId: string): Promise<string | undefined> {
         try {
             return await new Promise<string>((resolve, reject) => {
                 const req = new LogDownloadURLRequest();
-                req.setOwnerId(userId);
+                req.setOwnerId(ownerId);
                 req.setWorkspaceId(wsi.workspaceId);
                 req.setInstanceId(wsi.id);
                 req.setTaskId(taskId);
