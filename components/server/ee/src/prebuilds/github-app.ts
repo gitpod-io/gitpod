@@ -164,7 +164,7 @@ export class GithubApp {
             const cloneURL = ctx.payload.repository.clone_url;
             const owner = installationId && (await this.findProjectOwner(cloneURL) || (await this.findInstallationOwner(installationId)));
             if (!owner) {
-                log.info(`No installation or associated user found.`, { repo: ctx.payload.repository, installationId });
+                log.info(`Did not find user for installation. Probably an incomplete app installation.`, { repo: ctx.payload.repository, installationId });
                 return;
             }
             const logCtx: LogContext = { userId: owner.user.id };
@@ -223,7 +223,7 @@ export class GithubApp {
             const cloneURL = ctx.payload.repository.clone_url;
             const owner = installationId && (await this.findProjectOwner(cloneURL) || (await this.findInstallationOwner(installationId)));
             if (!owner) {
-                log.warn("Did not find user for installation. Someone's Gitpod experience may be broken.", { repo: ctx.payload.repository, installationId });
+                log.info("Did not find user for installation. Probably an incomplete app installation.", { repo: ctx.payload.repository, installationId });
                 return;
             }
 
@@ -359,14 +359,12 @@ export class GithubApp {
         //
         const installation = await this.appInstallationDB.findInstallation("github", String(installationId));
         if (!installation) {
-            log.error("Prebuilt requested from unknown GitHub app installation");
             return;
         }
 
         const ownerID = installation.ownerUserID || "this-should-never-happen";
         const user = await this.userDB.findUserById(ownerID);
         if (!user) {
-            log.error(`App installation owner ${ownerID} does not exist`)
             return;
         }
 
