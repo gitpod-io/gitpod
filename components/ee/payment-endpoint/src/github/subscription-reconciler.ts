@@ -174,7 +174,7 @@ export class GithubSubscriptionReconciler {
         }
 
         // compare database with GitHub
-        const subscriptionsInDB = (await this.accountingDB.findActiveSubscriptionByPlanID(plan.chargebeeId)).filter(s => !!s.paymentReference && s.paymentReference.startsWith("github:"));
+        const subscriptionsInDB = (await this.accountingDB.findActiveSubscriptionByPlanID(plan.chargebeeId, new Date().toISOString())).filter(s => !!s.paymentReference && s.paymentReference.startsWith("github:"));
         for (const sub of subscriptionsInDB) {
             const paymentRef = (sub.paymentReference || "").split(":");
             if (paymentRef.length != 2 || paymentRef[0] != "github") {

@@ -23,7 +23,7 @@ export interface AccountingDB {
     findActiveSubscriptions(fromDate: string, toDate: string): Promise<Subscription[]>;
     findActiveSubscriptionsForUser(userId: string, fromDate: string): Promise<Subscription[]>;
     findActiveSubscriptionsByIdentity(authId: string[], authProvider: string): Promise<{ [authId:string]:SubscriptionAndUser[] }>;
-    findActiveSubscriptionByPlanID(planID: string): Promise<Subscription[]>;
+    findActiveSubscriptionByPlanID(planID: string, date: string): Promise<Subscription[]>;
     findAllSubscriptionsForUser(userId: string): Promise<Subscription[]>;
     findSubscriptionsForUserInPeriod(userId: string, fromDate: string, toDate: string): Promise<Subscription[]>;
     findNotYetCancelledSubscriptions(userId: string, date: string): Promise<Subscription[]>;
