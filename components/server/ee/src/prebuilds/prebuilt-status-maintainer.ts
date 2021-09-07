@@ -100,6 +100,8 @@ export class PrebuildStatusMaintainer implements Disposable {
     protected getConclusionFromPrebuildState(pws: PrebuiltWorkspace): "error" | "failure" | "pending" | "success" {
         if (pws.state === "aborted") {
             return "error";
+        } else if (pws.state === "queued") {
+            return "pending";
         } else if (pws.state === "timeout") {
             return "error";
         } else if (pws.state === "available" && !pws.error) {
@@ -108,8 +110,7 @@ export class PrebuildStatusMaintainer implements Disposable {
             // Not sure if this is the right choice - do we really want the check to fail if the prebuild fails?
             return "failure";
         } else if (pws.state === "building") {
-            log.warn("Should have updated prebuilt workspace updatable but prebuild still seems to be running. Resorting to error conclusion.", { pws });
-            return "error";
+            return "pending";
         } else {
             log.warn("Should have updated prebuilt workspace updatable, but don't know how. Resorting to error conclusion.", { pws });
             return "error";
