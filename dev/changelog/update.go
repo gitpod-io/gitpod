@@ -42,10 +42,12 @@ var updateCommand = &cobra.Command{
 		if err != nil {
 			logger.WithError(err).Fatal("error retrieving PRs")
 		}
-		if len(notes) > 0 {
-			logger.Infof("Adding %d release note entries", len(notes))
-			WriteFile(opts.ChangelogFile, notes, existingNotes, lastPrDate)
+		if len(notes) == 0 {
+			logger.Infof("No new PRs, changelog is up-to-date")
+			return
 		}
+		logger.Infof("Adding %d release note entries", len(notes))
+		WriteFile(opts.ChangelogFile, notes, existingNotes, lastPrDate)
 	},
 }
 

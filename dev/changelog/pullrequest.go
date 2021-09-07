@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/go-github/v38/github"
+	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -31,13 +32,29 @@ var pullRequestCommand = &cobra.Command{
 	Run: func(c *cobra.Command, args []string) {
 		client := NewClient(prOpts.Token)
 		context := context.Background()
-		pr := &github.NewPullRequest{
+		newPr := &github.NewPullRequest{
 			Title: &prOpts.Title,
 			Body:  &prOpts.Body,
 			Base:  &prOpts.BaseBranch,
 			Head:  &prOpts.HeadBranch,
 		}
-		client.PullRequests.Create(context, prOpts.Org, prOpts.Repo, pr)
+		pr, _, err := client.PullRequests.Create(context, prOpts.Org, prOpts.Repo, newPr)
+		if err != nil {
+			logger.WithError(err).Fatal("Error creating pull request")
+		}
+		logger.WithField("url", pr.URL).WithField("pr", pr.Number).Info("PR successfully created")
+		labels, _, err := client.Issues.AddLabelsToIssue(context, prOpts.Org, prOpts.Repo, *pr.Number, []string{"lgtm", "approved"})
+		if err != nil {
+			logger.WithError(err).Fatal("Error setting labels")
+		}
+		l := ""
+		for _, label := range labels {
+			if l != "" {
+				l += ", "
+			}
+			l += *label.Name
+		}
+		logger.WithField("labels", l).WithField("pr", pr.Number).Info("PR labels successfully added")
 	},
 }
 
