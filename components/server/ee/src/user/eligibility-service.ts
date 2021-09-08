@@ -212,9 +212,9 @@ export class EligibilityService {
     }
 
     /**
-     * A user may open private repos if he either:
-     *  - not started his free "priate repo trial" yet
-     *  - is has been no longer than 30 days since he started his "priate repo trial"
+     * A user may open private repos if they either:
+     *  - not started their free "private repo trial" yet
+     *  - is has been no longer than 30 days since they started their "private repo trial"
      *  - has a paid subscription
      *  - has assigned team subscription
      * @param user
