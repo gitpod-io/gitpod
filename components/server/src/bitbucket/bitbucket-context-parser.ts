@@ -58,8 +58,8 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                     }
                     case "branch": {
                         const more: Partial<NavigatorContext> = {};
-                        const branch = moreSegments.length > 1 ? moreSegments[1] : "";
-                        more.ref = branch;
+                        const pathSegments = moreSegments.length > 1 ? moreSegments.slice(1) : [];
+                        more.ref = pathSegments.join("/");
                         more.refType = "branch";
                         return this.handleNavigatorContext(ctx, user, host, owner, repoName, more);
                     }

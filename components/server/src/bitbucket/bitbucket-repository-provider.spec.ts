@@ -61,14 +61,14 @@ class TestBitbucketRepositoryProvider {
     }
 
     @test public async testGetRepo() {
-        const result = await this.repoProvider.getRepo(this.user, "gitpod", "sample-repository");
+        const result = await this.repoProvider.getRepo(this.user, "gitpod", "integration-tests");
         expect(result).to.deep.include({
             host: "bitbucket.org",
             owner: "gitpod",
-            name: "sample-repository",
-            cloneUrl: "https://gitpod@bitbucket.org/gitpod/sample-repository.git",
-            description: "This is a sample repository.",
-            webUrl: "https://bitbucket.org/gitpod/sample-repository",
+            name: "integration-tests",
+            cloneUrl: "https://gitpod-test@bitbucket.org/gitpod/integration-tests.git",
+            description: "This is the repository used for integration tests.",
+            webUrl: "https://bitbucket.org/gitpod/integration-tests",
         });
     }
 

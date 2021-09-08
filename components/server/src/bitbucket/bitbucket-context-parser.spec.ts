@@ -214,7 +214,7 @@ class TestBitbucketContextParser {
             "ref": "feature/JIRA-123-summary",
             "refType": "branch",
             "path": "",
-            "revision": "5a24a0c8a7b42c2e6418593d788e17cb987bda25",
+            "revision": "bcf3a4b9329385b7a5f50a4490b79570da029cf3",
             "isFile": false,
             "repository": {
                 "host": "bitbucket.org",
@@ -386,8 +386,8 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "corneliusltf",
-                "name": "integration-tests",
-                "cloneUrl": "https://bitbucket.org/corneliusltf/integration-tests.git",
+                "name": "sample-repository",
+                "cloneUrl": "https://bitbucket.org/corneliusltf/sample-repository.git",
                 "defaultBranch": "master",
                 "private": false,
                 "fork": {
@@ -443,18 +443,18 @@ class TestBitbucketContextParser {
     }
 
     @test public async testSrcContextForkedRepo_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/clu-sample-repo/src/master/');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests-forked-repository/src/master/');
         expect(result).to.deep.include({
             "ref": "master",
             "refType": "branch",
             "path": "",
-            "revision": "d932021835e4024136a4f608719720d414490c73",
+            "revision": "3f1c8403570427170bd3776cfb3aa24c688c2b29",
             "isFile": false,
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "clu-sample-repo",
-                "cloneUrl": "https://bitbucket.org/gitpod/clu-sample-repo.git",
+                "name": "integration-tests-forked-repository",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests-forked-repository.git",
                 "defaultBranch": "master",
                 "private": false,
                 "fork": {
@@ -468,7 +468,7 @@ class TestBitbucketContextParser {
                     }
                 }
             },
-            "title": "gitpod/clu-sample-repo - master"
+            "title": "gitpod/integration-tests-forked-repository - master"
         })
     }
 
