@@ -288,7 +288,8 @@ components:
 
   server:
     name: "server"
-    dependsOn: []
+    dependsOn:
+    - "server-configmap.yaml"
     resources:
       cpu: "200m"
     githubApp:
