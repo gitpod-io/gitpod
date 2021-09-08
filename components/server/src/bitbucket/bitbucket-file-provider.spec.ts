@@ -61,14 +61,14 @@ class TestBitbucketFileProvider {
     }
 
     @test public async testGetFileContents() {
-        const result = await this.fileProvider.getFileContent({ repository: { owner: "gitpod", name: "sample-repository" }, revision: "5a24a0c" } as Commit, this.user, "README.md");
+        const result = await this.fileProvider.getFileContent({ repository: { owner: "gitpod", name: "integration-tests" }, revision: "5a24a0c" } as Commit, this.user, "README.md");
         expect(result).to.equal(`# README #
 
 This is the readme of the second branch.`);
     }
 
     @test public async testGetLastChangeRevision() {
-        const result = await this.fileProvider.getLastChangeRevision({ owner: "gitpod", name: "sample-repository" } as Repository, "second-branch", this.user, "README.md");
+        const result = await this.fileProvider.getLastChangeRevision({ owner: "gitpod", name: "integration-tests" } as Repository, "second-branch", this.user, "README.md");
         expect(result).to.equal("5a24a0c8a7b42c2e6418593d788e17cb987bda25");
     }
 }
