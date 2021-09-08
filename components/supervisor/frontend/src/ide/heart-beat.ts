@@ -30,9 +30,11 @@ export function schedule(instanceId: string): void {
         sendHeartBeat(true);
     }, { once: true });
 
-    let activityInterval = 10000;
+    let activityInterval = 30000;
     intervalHandle = setInterval(() => {
-        if (lastActivity + activityInterval < new Date().getTime()) {
+        // add an additional random value between 5 and 15 seconds
+        const randomInterval = Math.floor(Math.random() * (15000 - 5000 + 1)) + 5000;
+        if (lastActivity + activityInterval + randomInterval < new Date().getTime()) {
             // no activity, no heartbeat
             return;
         }
