@@ -359,14 +359,26 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 				break
 			}
 		}
-		if _, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]; gone {
+
+		_, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]
+
+		if terminated || gone {
 			// workaround for https://github.com/containerd/containerd/pull/4214 which can prevent pod status
 			// propagation. ws-daemon observes the pods and propagates this state out-of-band via the annotation.
-			if !terminated {
-				go m.finalizeWorkspaceContent(ctx, wso)
-			}
-		} else {
 			go m.finalizeWorkspaceContent(ctx, wso)
+		} else {
+			// add an additional wait time on top of a deletionGracePeriod
+			// to make sure the changes propagate on the data plane.
+			var gracePeriod int64 = 30
+			if wso.Pod.DeletionGracePeriodSeconds != nil {
+				gracePeriod = *wso.Pod.DeletionGracePeriodSeconds
+			}
+			ttl := time.Duration(gracePeriod) * time.Second * 2
+
+			go func() {
+				time.Sleep(ttl)
+				m.finalizeWorkspaceContent(ctx, wso)
+			}()
 		}
 	}
 
