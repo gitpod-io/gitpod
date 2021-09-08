@@ -1,13 +1,6 @@
 # Change Log
 
 ## September 2021
-- [build] automated changelog extraction ([#5462](https://github.com/gitpod-io/gitpod/pull/5462)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
-- s ([#5575](https://github.com/gitpod-io/gitpod/pull/5575)) - [@svenefftinge](https://github.com/svenefftinge)
-- NONE ([#5575](https://github.com/gitpod-io/gitpod/pull/5575)) - [@svenefftinge](https://github.com/svenefftinge)
-- Change default branch label colors for dark theme ([#5556](https://github.com/gitpod-io/gitpod/pull/5556)) - [@gtsiolis](https://github.com/gtsiolis)
-- [dashboard] give team URLs a dedicated slug ([#5544](https://github.com/gitpod-io/gitpod/pull/5544)) - [@svenefftinge](https://github.com/svenefftinge)
-- s ([#5547](https://github.com/gitpod-io/gitpod/pull/5547)) - [@aledbf](https://github.com/aledbf)
-- NONE ([#5547](https://github.com/gitpod-io/gitpod/pull/5547)) - [@aledbf](https://github.com/aledbf)
 - [server] Remove legacy configuration ([#5496](https://github.com/gitpod-io/gitpod/pull/5496)) - [@geropl](https://github.com/geropl)
 - [image-builder-bob] Update to latest buildkit ([#5530](https://github.com/gitpod-io/gitpod/pull/5530)) - [@aledbf](https://github.com/aledbf)
 - [server / inferrer] prefetch configuration files ([#5529](https://github.com/gitpod-io/gitpod/pull/5529)) - [@svenefftinge](https://github.com/svenefftinge)
