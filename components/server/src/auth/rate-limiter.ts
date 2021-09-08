@@ -138,6 +138,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
 
         "adminAddStudentEmailDomain":  { group: "default", points: 1 },
         "adminGetAccountStatement":  { group: "default", points: 1 },
+        "adminIsGitpodder":  { group: "default", points: 1 },
         "adminIsStudent":  { group: "default", points: 1 },
         "adminSetProfessionalOpenSource":  { group: "default", points: 1 },
         "adminGrantExtraHours":  { group: "default", points: 1 },

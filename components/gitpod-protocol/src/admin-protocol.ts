@@ -26,6 +26,7 @@ export interface AdminServer {
 
     adminGetAccountStatement(userId: string): Promise<AccountStatement>;
     adminSetProfessionalOpenSource(userId: string, shouldGetProfOSS: boolean): Promise<void>;
+    adminIsGitpodder(userId: string): Promise<boolean>;
     adminIsStudent(userId: string): Promise<boolean>;
     adminAddStudentEmailDomain(userId: string, domain: string): Promise<void>;
     adminGrantExtraHours(userId: string, extraHours: number): Promise<void>;
