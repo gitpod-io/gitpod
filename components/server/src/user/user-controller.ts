@@ -512,6 +512,7 @@ export class UserController {
                 "name": user.identities[0].authName,
                 "full_name": user.fullName,
                 "created_at": user.creationDate,
+                "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
                 "unsubscribed_changelog": !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
                 "unsubscribed_devx": !user.additionalData?.emailNotificationSettings?.allowsDevXMail,
                 "blocked": user.blocked
