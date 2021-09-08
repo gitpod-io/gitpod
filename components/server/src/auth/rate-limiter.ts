@@ -10,8 +10,8 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 
 export const accessCodeSyncStorage = 'accessCodeSyncStorage';
-export const accesHeadlessLogs = 'accesHeadlessLogs';
-type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accesHeadlessLogs;
+export const accessHeadlessLogs = 'accessHeadlessLogs';
+type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs;
 type GroupsConfig = {
     [key: string]: {
         points: number,
@@ -135,7 +135,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
 
         "accessCodeSyncStorage": { group: "default", points: 1 },
 
-        accesHeadlessLogs: { group: "default", points: 1 },
+        accessHeadlessLogs: { group: "default", points: 1 },
 
         "adminAddStudentEmailDomain":  { group: "default", points: 1 },
         "adminGetAccountStatement":  { group: "default", points: 1 },
