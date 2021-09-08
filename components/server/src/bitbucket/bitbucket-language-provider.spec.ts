@@ -61,7 +61,7 @@ class TestBitbucketLanguageProvider {
     }
 
     @test public async testGetLanguages() {
-        const result = await this.languageProvider.getLanguages({ owner: "gitpod", name: "sample-repository" } as Repository, this.user);
+        const result = await this.languageProvider.getLanguages({ owner: "gitpod", name: "integration-tests" } as Repository, this.user);
         expect(result).to.deep.equal({ "markdown": 100.0 });
     }
 
