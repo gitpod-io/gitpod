@@ -54,6 +54,28 @@ export class EligibilityService {
     @inject(AccountStatementProvider) protected readonly accountStatementProvider: AccountStatementProvider;
 
     /**
+     * Whether the given user is recognized as a Gitpodder within Gitpod
+     * @param user
+     */
+    async isGitpodder(user: User | string): Promise<boolean> {
+        user = await this.getUser(user);
+
+        // check if any of the user's emails is from a known university
+        for (const identity of user.identities) {
+            if (!identity.primaryEmail) {
+                continue;
+            }
+
+            const emailSuffixMatches = await this.domainService.hasGitpodIoSuffix(identity.primaryEmail);
+            if (emailSuffixMatches) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Whether the given user is recognized as a student within Gitpod
      * @param user
      */
