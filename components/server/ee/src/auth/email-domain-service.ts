@@ -14,6 +14,7 @@ import { BlockedUserFilter } from "../../../src/auth/blocked-user-filter"
 export const EMailDomainService = Symbol('EMailDomainService');
 export interface EMailDomainService extends BlockedUserFilter {
     hasEducationalInstitutionSuffix(email: string): Promise<boolean>;
+    hasGitpodIoSuffix(email: string): Promise<boolean>;
 }
 
 @injectable()
@@ -46,6 +47,12 @@ export class EMailDomainServiceImpl implements EMailDomainService {
     protected async checkSwotJsForEducationalInstitutionSuffix(email: string): Promise<boolean> {
         const swotJs = await this.swotJsPromise;
         return !!swotJs.check(email);
+    }
+
+    protected async hasGitpodIoSuffix(email: string): Promise<boolean>
+    {
+        const { domain } = this.parseMail(email);
+        return domain === "gitpod.io";
     }
 
     protected parseMail(email: string): { user: string, domain: string } {

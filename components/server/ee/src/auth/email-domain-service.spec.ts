@@ -32,6 +32,20 @@ export class EMailDomainServiceSpec {
         expect(await test("asd@hdm-stuttgart.de")).to.be.true;
         expect(await test("as@purdue.edu")).to.be.true;
     }
+
+    @test public async GitpodIoEmailAddress()
+    {
+        const svc = testContainer.get<EMailDomainService>(EMailDomainService);
+        const test = (emailOrDomain: string) => (svc as any).hasGitpodIoSuffix(emailOrDomain);
+
+        expect(await test("")).to.be.false;
+        expect(await test("hdm-stuttgart.de")).to.be.false;
+        expect(await test("asd@hdm-stuttgart.de")).to.be.false;
+
+        expect(await test("gitpod.io")).to.be.true;
+        expect(await test("asd@gitpod.io")).to.be.true;
+
+    }
 }
 
 module.exports = new EMailDomainServiceSpec();
