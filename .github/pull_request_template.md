@@ -14,6 +14,7 @@ Fixes #
   Each line becomes a separate entry.
   Format: [!<optional for breaking>] <description>
   Example: !basic auth is no longer supported
+  See https://www.notion.so/gitpod/Release-Notes-513a74fdd23b4cb1b3b3aefb1d34a3e0
 -->
 ```release-note
 ```

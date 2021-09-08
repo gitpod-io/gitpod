@@ -1,4 +1,5 @@
 # debug using `werft run github -f -j .werft/changelog.yaml -a debug=true`
+# this werft job is periodically run every night
 pod:
   serviceAccount: werft
   nodeSelector:
@@ -16,7 +17,7 @@ pod:
     - name: GITHUB_TOKEN
       valueFrom:
         secretKeyRef:
-          name: github-sh-release-token
+          name: github-roboquat-automatic-changelog
           key: token
     command:
       - bash
