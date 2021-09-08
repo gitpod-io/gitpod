@@ -1442,6 +1442,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         }
     }
 
+    async adminIsGitpodder(userId: string): Promise<boolean> {
+        const user = this.checkAndBlockUser("adminIsGitpodder");
+        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+
+        return this.eligibilityService.isGitpodder(userId);
+    }
+
+
     async adminIsStudent(userId: string): Promise<boolean> {
         const user = this.checkAndBlockUser("adminIsStudent");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
