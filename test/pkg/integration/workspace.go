@@ -31,10 +31,12 @@ const (
 )
 
 type launchWorkspaceDirectlyOptions struct {
-	BaseImage   string
-	IdeImage    string
-	Mods        []func(*wsmanapi.StartWorkspaceRequest) error
-	WaitForOpts []WaitForWorkspaceOpt
+	BaseImage             string
+	WorkspaceImageRequest *imgbldr.ResolveWorkspaceImageRequest
+	ImgBldrOpts           []APIImageBuilderOpt
+	IdeImage              string
+	Mods                  []func(*wsmanapi.StartWorkspaceRequest) error
+	WaitForOpts           []WaitForWorkspaceOpt
 }
 
 // LaunchWorkspaceDirectlyOpt configures the behaviour of LaunchWorkspaceDirectly
@@ -52,7 +54,7 @@ func WithoutWorkspaceImage() LaunchWorkspaceDirectlyOpt {
 
 // WithBaseImage configures the base image used to start the workspace. The base image
 // will be resolved to a workspace image using the image builder. If the corresponding
-// workspace image isn't built yet, it will NOT be built.
+// workspace image isn't built yet, it will be built.
 func WithBaseImage(baseImage string) LaunchWorkspaceDirectlyOpt {
 	return func(lwdo *launchWorkspaceDirectlyOptions) error {
 		lwdo.BaseImage = baseImage
@@ -82,6 +84,22 @@ func WithRequestModifier(mod func(*wsmanapi.StartWorkspaceRequest) error) Launch
 func WithWaitWorkspaceForOpts(opt ...WaitForWorkspaceOpt) LaunchWorkspaceDirectlyOpt {
 	return func(lwdo *launchWorkspaceDirectlyOptions) error {
 		lwdo.WaitForOpts = opt
+		return nil
+	}
+}
+
+// WithWorkspaceImageRequest is a more complete alternative to WithBaseImage
+func WithWorkspaceImageRequest(req *imgbldr.ResolveWorkspaceImageRequest) LaunchWorkspaceDirectlyOpt {
+	return func(lwdo *launchWorkspaceDirectlyOptions) error {
+		lwdo.WorkspaceImageRequest = req
+		return nil
+	}
+}
+
+// WithImageBuilderOpts allows to pass options to ImageBuilder(opts)
+func WithImageBuilderOpts(opts ...APIImageBuilderOpt) LaunchWorkspaceDirectlyOpt {
+	return func(lwdo *launchWorkspaceDirectlyOptions) error {
+		lwdo.ImgBldrOpts = opts
 		return nil
 	}
 }
@@ -120,12 +138,29 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 	}
 
 	var workspaceImage string
-	if options.BaseImage != "" {
-		workspaceImage, err = it.resolveOrBuildImage(options.BaseImage)
-		if err != nil {
-			it.t.Fatalf("cannot resolve base image: %v", err)
-			return
-		}
+	if options.WorkspaceImageRequest != nil {
+		workspaceImage, err = it.resolveOrBuildImage(options.WorkspaceImageRequest, options.ImgBldrOpts...)
+	} else if options.BaseImage != "" {
+		workspaceImage, err = it.resolveOrBuildImage(&imgbldr.ResolveWorkspaceImageRequest{
+			Source: &imgbldr.BuildSource{
+				From: &imgbldr.BuildSource_Ref{
+					Ref: &imgbldr.BuildSourceReference{
+						Ref: options.BaseImage,
+					},
+				},
+			},
+			Auth: &imgbldr.BuildRegistryAuth{
+				Mode: &imgbldr.BuildRegistryAuth_Total{
+					Total: &imgbldr.BuildRegistryAuthTotal{
+						AllowAll: true,
+					},
+				},
+			},
+		}, options.ImgBldrOpts...)
+	}
+	if err != nil {
+		it.t.Fatalf("cannot resolve base image: %v", err)
+		return
 	}
 
 	ideImage := options.IdeImage
@@ -512,25 +547,10 @@ func (it *Test) WaitForWorkspace(instanceID string, condition func(status *wsman
 	}
 }
 
-func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {
+func (it *Test) resolveOrBuildImage(req *imgbldr.ResolveWorkspaceImageRequest, imgbldrOpts ...APIImageBuilderOpt) (absref string, err error) {
 	rctx, rcancel := context.WithTimeout(it.ctx, perCallTimeout)
-	cl := it.API().ImageBuilder()
-	reslv, err := cl.ResolveWorkspaceImage(rctx, &imgbldr.ResolveWorkspaceImageRequest{
-		Source: &imgbldr.BuildSource{
-			From: &imgbldr.BuildSource_Ref{
-				Ref: &imgbldr.BuildSourceReference{
-					Ref: baseRef,
-				},
-			},
-		},
-		Auth: &imgbldr.BuildRegistryAuth{
-			Mode: &imgbldr.BuildRegistryAuth_Total{
-				Total: &imgbldr.BuildRegistryAuthTotal{
-					AllowAll: true,
-				},
-			},
-		},
-	})
+	cl := it.API().ImageBuilder(imgbldrOpts...)
+	reslv, err := cl.ResolveWorkspaceImage(rctx, req)
 	rcancel()
 	if err != nil {
 		return
@@ -546,19 +566,9 @@ func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {
 	defer rcancel()
 	bld, err := cl.Build(rctx, &imgbldr.BuildRequest{
 		Source: &imgbldr.BuildSource{
-			From: &imgbldr.BuildSource_Ref{
-				Ref: &imgbldr.BuildSourceReference{
-					Ref: baseRef,
-				},
-			},
+			From: req.Source.From,
 		},
-		Auth: &imgbldr.BuildRegistryAuth{
-			Mode: &imgbldr.BuildRegistryAuth_Total{
-				Total: &imgbldr.BuildRegistryAuthTotal{
-					AllowAll: true,
-				},
-			},
-		},
+		Auth: req.Auth,
 	})
 	if err != nil {
 		return
