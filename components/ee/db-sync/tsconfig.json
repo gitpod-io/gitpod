@@ -22,6 +22,7 @@
         "skipLibCheck": true,
         "rootDir": "src",
         "outDir": "lib",
+        "useUnknownInCatchVariables": false
     },
     "include": [
         "src"
