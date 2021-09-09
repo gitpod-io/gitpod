@@ -8,7 +8,7 @@ require (
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/go-cmp v0.5.6
 	github.com/hexops/valast v1.4.0
 	github.com/spf13/cobra v1.2.1
 	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
@@ -28,6 +28,8 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../components/content
 replace github.com/gitpod-io/gitpod/ws-daemon => ../components/ws-daemon // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon/api => ../components/ws-daemon-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ws-manager/api => ../components/ws-manager-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.22.0 // leeway indirect from components/common-go:lib
 

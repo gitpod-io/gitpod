@@ -7,7 +7,7 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
-	//wsmcfg := manager.Configuration{}
+	wsmcfg := config.Configuration
 
 	//fc, err := json.MarshalIndent(wsmcfg, "", " ")
 	//if err != nil {

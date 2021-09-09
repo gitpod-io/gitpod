@@ -14,7 +14,7 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
+      # - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -32,7 +32,7 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
+      # - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
@@ -50,7 +50,7 @@ packages:
       - go.sum
       - "**/*.go"
     deps:
-      - :version
+      # - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
       - components/local-app-api/go:lib
