@@ -171,7 +171,11 @@ func (m *Manager) modifyFinalizer(ctx context.Context, workspaceID string, final
 
 		pod, err := m.findWorkspacePod(ctx, workspaceID)
 		if err != nil {
-			return xerrors.Errorf("cannot find workspace %s: %w", workspaceID, err)
+			if isKubernetesObjNotFoundError(err) {
+				return nil
+			}
+
+			return xerrors.Errorf("unexpected error searching workspace %s: %w", workspaceID, err)
 		}
 		if pod == nil {
 			return xerrors.Errorf("workspace %s does not exist", workspaceID)
