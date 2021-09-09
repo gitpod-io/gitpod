@@ -27,7 +27,7 @@ mockgen \
     github.com/gitpod-io/gitpod/ws-daemon/api WorkspaceContentServiceClient,WorkspaceContentServiceServer,InWorkspaceServiceClient > mock/mock.go
 
 echo "updating JSON tags"
-go get github.com/fatih/gomodifytags
+go install github.com/fatih/gomodifytags
 # remove depreated json tags
 # shellcheck disable=SC2002
 gomodifytags -line 0,"$(cat daemon.pb.go|wc -l)" -file daemon.pb.go -remove-tags json -w >/dev/null

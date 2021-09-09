@@ -9,9 +9,9 @@ install_dependencies() {
 
     go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 
-    go get github.com/golang/mock/mockgen@v1.6.0
+    go install github.com/golang/mock/mockgen@v1.6.0
 
-    go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
 }
 
 go_protoc() {
