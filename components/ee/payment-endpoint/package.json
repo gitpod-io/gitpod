@@ -9,15 +9,16 @@
     "@octokit/webhooks": "7.21.0",
     "@gitpod/gitpod-db": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
-    "body-parser": "^1.18.2",
+    "body-parser": "^1.19.0",
     "chargebee": "^2.4.6",
-    "express": "^4.16.1",
+    "express": "^4.17.1",
     "inversify": "^5.0.1",
     "jsonwebtoken": "^8.5.0",
     "node-fetch": "^2.6.1",
     "passport": "^0.4.0",
     "passport-http": "^0.3.0",
-    "reflect-metadata": "^0.1.10"
+    "reflect-metadata": "^0.1.13",
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
     "@types/body-parser": "^1.16.5",
@@ -32,7 +33,7 @@
     "rimraf": "^2.6.1",
     "mocha": "^5.0.0",
     "ts-node": "<7.0.0",
-    "typescript": "~4.1.2"
+    "typescript": "~4.4.2"
   },
   "scripts": {
     "start": "yarn serve",

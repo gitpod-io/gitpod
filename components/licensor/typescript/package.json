@@ -14,7 +14,8 @@
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
   },
   "devDependencies": {
-    "node-gyp": "^7.0.0"
+    "node-gyp": "^7.0.0",
+    "typescript": "~4.4.2"
   },
   "typings": "./src/index.d.ts",
   "dependencies": {

@@ -25,20 +25,19 @@
     "@gitpod/gitpod-protocol": "0.1.5",
     "@jmondi/oauth2-server": "^1.1.0",
     "mysql": "^2.15.0",
-    "reflect-metadata": "^0.1.10",
+    "reflect-metadata": "^0.1.13",
     "the-big-username-blacklist": "^1.5.2",
-    "typeorm": "0.1.20",
-    "uuid": "^3.1.0"
+    "typeorm": "0.1.20"
   },
   "devDependencies": {
     "@types/chai": "^4.2.2",
     "@types/mysql": "^2.15.0",
-    "@types/uuid": "^3.1.0",
+    "@types/uuid": "^3.4.5",
     "chai": "^4.2.0",
     "mocha": "^4.1.0",
     "mocha-typescript": "^1.1.17",
     "rimraf": "^2.6.1",
     "ts-node": "<7.0.0",
-    "typescript": "~4.1.2"
+    "typescript": "~4.4.2"
   }
 }

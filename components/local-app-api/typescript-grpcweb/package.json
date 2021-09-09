@@ -13,7 +13,7 @@
   "dependencies": {
     "@gitpod/supervisor-api-grpcweb": "0.1.5",
     "@improbable-eng/grpc-web": "0.14.0",
-    "google-protobuf": "^3.17.0"
+    "google-protobuf": "^3.18.0-rc.2"
   },
   "devDependencies": {
     "source-map-loader": "^3.0.0",
