@@ -28,6 +28,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
 // Protobuf structures often require pointer to boolean values (as that's Go's best means of expression optionallity).
@@ -39,22 +40,22 @@ var (
 // createWorkspacePod creates the actual workspace pod based on the definite workspace pod and appropriate
 // templates. The result of this function is not expected to be modified prior to being passed to Kubernetes.
 func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*corev1.Pod, error) {
-	podTemplate, err := getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.DefaultPath)
+	podTemplate, err := config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.DefaultPath)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read pod template - this is a configuration problem: %w", err)
 	}
 	var typeSpecificTpl *corev1.Pod
 	switch startContext.Request.Type {
 	case api.WorkspaceType_REGULAR:
-		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.RegularPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.RegularPath)
 	case api.WorkspaceType_PREBUILD:
-		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.PrebuildPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.PrebuildPath)
 	case api.WorkspaceType_PROBE:
-		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ProbePath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ProbePath)
 	case api.WorkspaceType_GHOST:
-		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.GhostPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.GhostPath)
 	case api.WorkspaceType_IMAGEBUILD:
-		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ImagebuildPath)
+		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ImagebuildPath)
 	}
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read type-specific pod template - this is a configuration problem: %w", err)
@@ -643,7 +644,7 @@ func (m *Manager) createPortsService(workspaceID string, metaID string, serviceP
 			servicePorts[i].TargetPort = intstr.FromInt(int(p.Target))
 		}
 
-		url, err := renderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, portURLContext{
+		url, err := config.RenderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, config.PortURLContext{
 			Host:          m.Config.GitpodHostURL,
 			ID:            metaID,
 			IngressPort:   fmt.Sprint(p.Port),
@@ -691,7 +692,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		headless = true
 	}
 
-	workspaceURL, err := renderWorkspaceURL(m.Config.WorkspaceURLTemplate, req.Id, req.ServicePrefix, m.Config.GitpodHostURL)
+	workspaceURL, err := config.RenderWorkspaceURL(m.Config.WorkspaceURLTemplate, req.Id, req.ServicePrefix, m.Config.GitpodHostURL)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot get workspace URL: %w", err)
 	}

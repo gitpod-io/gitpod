@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package manager
+package config
 
 import (
 	"testing"
@@ -12,6 +12,6 @@ func BenchmarkRenderWorkspacePortURL(b *testing.B) {
 	b.ReportAllocs()
 
 	for n := 0; n < b.N; n++ {
-		renderWorkspaceURL("{{.Port}}-{{.Prefix}}.{{.Host}}", "foo", "bar", "gitpod.io")
+		RenderWorkspaceURL("{{.Port}}-{{.Prefix}}.{{.Host}}", "foo", "bar", "gitpod.io")
 	}
 }
