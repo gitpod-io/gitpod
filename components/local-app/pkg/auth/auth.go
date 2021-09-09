@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -95,6 +96,7 @@ func DeleteToken(host string) error {
 type LoginOpts struct {
 	GitpodURL   string
 	RedirectURL string
+	AuthTimeout time.Duration
 }
 
 const html = `
@@ -201,6 +203,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		return "", xerrors.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err)
 	}
 
+	authTimeout := time.NewTimer(opts.AuthTimeout * time.Second)
 	var query url.Values
 	var code, approved string
 	select {
@@ -211,6 +214,8 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	case query = <-queryChan:
 		code = query.Get("code")
 		approved = query.Get("approved")
+	case <-authTimeout.C:
+		return "", xerrors.Errorf("auth timeout after %d seconds", uint32(opts.AuthTimeout))
 	}
 
 	if approved == "no" {
