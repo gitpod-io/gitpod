@@ -22,6 +22,8 @@ type Config struct {
 
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
 
+	InstallNetworkPolicies bool `json:"installNetworkPolicies"`
+
 	WorkspaceRuntime WorkspaceRuntime `json:"workspaceRuntime"`
 }
 

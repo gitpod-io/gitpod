@@ -16,7 +16,7 @@ import (
 // Renderable turns the config into a set of Kubernetes runtime objects
 type RenderFunc func(cfg *RenderContext) ([]runtime.Object, error)
 
-func CompositeRendeFunc(f ...RenderFunc) RenderFunc {
+func CompositeRenderFunc(f ...RenderFunc) RenderFunc {
 	return func(ctx *RenderContext) ([]runtime.Object, error) {
 		var res []runtime.Object
 		for _, g := range f {
@@ -58,4 +58,5 @@ func DependencySortingRenderFunc(f RenderFunc) RenderFunc {
 type RenderContext struct {
 	VersionManifest versions.Manifest
 	Config          config.Config
+	Namespace       string
 }

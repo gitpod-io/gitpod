@@ -10,8 +10,13 @@ import (
 
 const component = "ws-daemon"
 
-var Objects = common.CompositeRendeFunc(
+var Objects = common.CompositeRenderFunc(
+	clusterrole,
 	configmap,
 	common.DefaultServiceAccount(component),
 	daemonset,
+	networkpolicy,
+	rolebinding,
+	common.GenerateService(component),
+	tlssecret,
 )

@@ -219,9 +219,28 @@ var (
 		APIVersion: "apps/v1",
 		Kind:       "DaemonSet",
 	}
-
+	TypeMetaService = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "Service",
+	}
 	TypeMetaClusterRole = metav1.TypeMeta{
 		APIVersion: "rbac.authorization.k8s.io/v1",
 		Kind:       "ClusterRole",
+	}
+	TypeMetaClusterRoleBinding = metav1.TypeMeta{
+		APIVersion: "rbac.authorization.k8s.io/v1",
+		Kind:       "ClusterRoleBinding",
+	}
+	TypeMetaRoleBinding = metav1.TypeMeta{
+		APIVersion: "rbac.authorization.k8s.io/v1",
+		Kind:       "RoleBinding",
+	}
+	TypeMetaNetworkPolicy = metav1.TypeMeta{
+		APIVersion: "networking.k8s.io/v1",
+		Kind:       "NetworkPolicy",
+	}
+	TypeMetaDeployment = metav1.TypeMeta{
+		APIVersion: "apps/v1",
+		Kind:       "Deployment",
 	}
 )
