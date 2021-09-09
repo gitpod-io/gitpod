@@ -78,8 +78,10 @@ type WorkspaceInfo struct {
 	// (parsed from URL)
 	IDEPublicPort string
 
-	Ports []PortInfo
-	Auth  *wsapi.WorkspaceAuthentication
+	Ports     []PortInfo
+	Auth      *wsapi.WorkspaceAuthentication
+	Phase     wsapi.WorkspacePhase
+	StartedAt time.Time
 }
 
 // PortInfo contains all information ws-proxy needs to know about a workspace port
@@ -265,7 +267,7 @@ func (p *RemoteWorkspaceInfoProvider) listen(client wsapi.WorkspaceManagerClient
 		}
 
 		if status.Phase == wsapi.WorkspacePhase_STOPPED {
-			p.cache.Delete(status.Metadata.MetaId)
+			p.cache.Delete(status.Metadata.MetaId, status.Id)
 		} else {
 			info := mapWorkspaceStatusToInfo(status)
 			p.cache.Insert(info)
@@ -309,10 +311,12 @@ func mapWorkspaceStatusToInfo(status *wsapi.WorkspaceStatus) *WorkspaceInfo {
 		IDEPublicPort: getPortStr(status.Spec.Url),
 		Ports:         portInfos,
 		Auth:          status.Auth,
+		Phase:         status.Phase,
+		StartedAt:     status.Metadata.StartedAt.AsTime(),
 	}
 }
 
-// WorkspaceInfo return the WorkspaceInfo avaiable for the given workspaceID.
+// WorkspaceInfo return the WorkspaceInfo available for the given workspaceID.
 // Callers should make sure their context gets canceled properly. For good measure
 // this function will timeout by itself as well.
 func (p *RemoteWorkspaceInfoProvider) WorkspaceInfo(ctx context.Context, workspaceID string) *WorkspaceInfo {
@@ -355,10 +359,14 @@ func getPortStr(urlStr string) string {
 	return portURL.Port()
 }
 
+// TODO(rl): type def workspaceID and instanceID throughout for better readability and type safety?
+type workspaceInfosByInstance map[string]*WorkspaceInfo
+type instanceInfosByWorkspace map[string]workspaceInfosByInstance
+
 // workspaceInfoCache stores WorkspaceInfo in a manner which is easy to query for WorkspaceInfoProvider
 type workspaceInfoCache struct {
-	// WorkspaceInfos indexed by workspaceID
-	infos map[string]*WorkspaceInfo
+	// WorkspaceInfos indexed by workspaceID and then instanceID
+	infos instanceInfosByWorkspace
 	// WorkspaceCoords indexed by public (proxy) port (string)
 	coordsByPublicPort map[string]*WorkspaceCoords
 
@@ -371,7 +379,7 @@ type workspaceInfoCache struct {
 func newWorkspaceInfoCache() *workspaceInfoCache {
 	var mu sync.RWMutex
 	return &workspaceInfoCache{
-		infos:              make(map[string]*WorkspaceInfo),
+		infos:              make(map[string]workspaceInfosByInstance),
 		coordsByPublicPort: make(map[string]*WorkspaceCoords),
 		mu:                 &mu,
 		cond:               sync.NewCond(&mu),
@@ -382,7 +390,7 @@ func (c *workspaceInfoCache) Reinit(infos []*WorkspaceInfo) {
 	c.cond.L.Lock()
 	defer c.cond.L.Unlock()
 
-	c.infos = make(map[string]*WorkspaceInfo, len(infos))
+	c.infos = make(map[string]workspaceInfosByInstance, len(infos))
 	c.coordsByPublicPort = make(map[string]*WorkspaceCoords, len(c.coordsByPublicPort))
 
 	for _, info := range infos {
@@ -400,7 +408,15 @@ func (c *workspaceInfoCache) Insert(info *WorkspaceInfo) {
 }
 
 func (c *workspaceInfoCache) doInsert(info *WorkspaceInfo) {
-	c.infos[info.WorkspaceID] = info
+	existingInfos, ok := c.infos[info.WorkspaceID]
+	if !ok {
+		existingInfos = make(map[string]*WorkspaceInfo)
+	}
+	existingInfos[info.InstanceID] = info
+	c.infos[info.WorkspaceID] = existingInfos
+
+	// NOTE: in the unlikely event that a subsequent insert changes the port
+	//       then we add it here assuming that the delete will remove it
 	c.coordsByPublicPort[info.IDEPublicPort] = &WorkspaceCoords{
 		ID: info.WorkspaceID,
 	}
@@ -413,25 +429,66 @@ func (c *workspaceInfoCache) doInsert(info *WorkspaceInfo) {
 	}
 }
 
-func (c *workspaceInfoCache) Delete(workspaceID string) {
+func (c *workspaceInfoCache) Delete(workspaceID string, instanceID string) {
 	c.cond.L.Lock()
 	defer c.cond.L.Unlock()
 
-	info, present := c.infos[workspaceID]
-	if !present || info == nil {
+	infos, present := c.infos[workspaceID]
+	if !present || infos == nil {
 		return
 	}
-	delete(c.coordsByPublicPort, info.IDEPublicPort)
-	delete(c.infos, workspaceID)
+
+	// Keep only the active instances and public port(s) for the workspace id
+	var instanceIDEPublicPort string
+	if info, ok := infos[instanceID]; ok {
+		delete(infos, instanceID)
+		instanceIDEPublicPort = info.IDEPublicPort
+	}
+
+	if len(infos) == 0 {
+		delete(c.infos, workspaceID)
+	} else {
+		c.infos[workspaceID] = infos
+	}
+
+	// Clean up the public port if port no longer active
+	activePublicPorts := make(map[string]interface{})
+	for _, info := range infos {
+		activePublicPorts[info.IDEPublicPort] = true
+	}
+
+	if _, ok := activePublicPorts[instanceIDEPublicPort]; !ok {
+		log.WithField("workspaceID", workspaceID).WithField("instanceID", instanceID).WithField("port", instanceIDEPublicPort).Debug("deleting port for workspace")
+		delete(c.coordsByPublicPort, instanceIDEPublicPort)
+	}
 }
 
 // WaitFor waits for workspace info until that info is available or the context is canceled.
 func (c *workspaceInfoCache) WaitFor(ctx context.Context, workspaceID string) (w *WorkspaceInfo, ok bool) {
 	c.mu.RLock()
-	w, ok = c.infos[workspaceID]
+	existing, ok := c.infos[workspaceID]
 	c.mu.RUnlock()
+
+	getCandidate := func(infos map[string]*WorkspaceInfo) *WorkspaceInfo {
+		// Find the *best* candidate i.e. prefer any instance running over stopping/stopped
+		// If there are >1 instances in running state it will pick the most recently started
+		// as opposed to the random iteration order (which is harder to test)
+		// NOTE: Yes, these is a potential issue with clock drift
+		//       but this scenario is extremely unlikely to happen in the wild
+		var candidate *WorkspaceInfo
+		for _, info := range infos {
+			if candidate == nil ||
+				(info.Phase == wsapi.WorkspacePhase_RUNNING &&
+					(candidate.Phase != info.Phase || info.StartedAt.After(candidate.StartedAt))) ||
+				(candidate.Phase > wsapi.WorkspacePhase_RUNNING && candidate.Phase < info.Phase) {
+				candidate = info
+			}
+		}
+		return candidate
+	}
+
 	if ok {
-		return
+		return getCandidate(existing), true
 	}
 
 	inc := make(chan *WorkspaceInfo)
@@ -446,12 +503,12 @@ func (c *workspaceInfoCache) WaitFor(ctx context.Context, workspaceID string) (w
 				return
 			}
 
-			info, ok := c.infos[workspaceID]
+			infos, ok := c.infos[workspaceID]
 			if !ok {
 				continue
 			}
 
-			inc <- info
+			inc <- getCandidate(infos)
 			return
 		}
 	}()
