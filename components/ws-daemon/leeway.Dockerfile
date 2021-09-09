@@ -5,7 +5,7 @@
 FROM alpine:3.14 as dl
 WORKDIR /dl
 RUN apk add --no-cache curl \
-  && curl -OL https://github.com/opencontainers/runc/releases/download/v1.0.0-rc95/runc.amd64 \
+  && curl -OL https://github.com/opencontainers/runc/releases/download/v1.0.1/runc.amd64 \
   && chmod +x runc.amd64
 
 FROM alpine:3.14
