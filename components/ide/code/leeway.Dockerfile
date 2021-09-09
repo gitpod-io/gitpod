@@ -6,22 +6,6 @@
 # ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
 ARG NODE_VERSION=14.17.4
 
-
-FROM node:${NODE_VERSION} AS node_installer
-RUN mkdir -p /ide/node/bin \
-    /ide/node/include/node/ \
-    /ide/node/lib/node_modules/npm/ \
-    /ide/node/lib/ && \
-    cp -a  /usr/local/bin/node              /ide/node/bin/ && \
-    cp -a  /usr/local/bin/npm               /ide/node/bin/ && \
-    cp -a  /usr/local/bin/npx               /ide/node/bin/ && \
-    cp -ar /usr/local/include/node/         /ide/node/include/ && \
-    cp -ar /usr/local/lib/node_modules/npm/ /ide/node/lib/node_modules/
-
-# rename node executable
-RUN cp /ide/node/bin/node /ide/node/bin/gitpod-node && rm /ide/node/bin/node
-
-
 FROM ubuntu:18.04 as code_installer
 
 RUN apt-get update \
@@ -42,7 +26,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh |
     && npm install -g yarn node-gyp
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-ENV GP_CODE_COMMIT 26bf7356a65baf730233257f41d77ebbf7e977f3
+ENV GP_CODE_COMMIT 332c5fa4288eddcb44f999fa5a7661e5d87f6d74
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
@@ -66,7 +50,6 @@ FROM scratch
 # copy static web resources in first layer to serve from blobserve
 COPY --from=code_installer --chown=33333:33333 /gitpod-pkg-web/ /ide/
 COPY --from=code_installer --chown=33333:33333 /gitpod-pkg-server/ /ide/
-COPY --from=node_installer --chown=33333:33333 /ide/node /ide/node
 COPY --chown=33333:33333 startup.sh supervisor-ide-config.json /ide/
 
 # cli config
