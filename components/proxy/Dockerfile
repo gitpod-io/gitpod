@@ -2,25 +2,18 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM golang:1.16 as builder
+FROM golang:1.17 as builder
 
-RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.1.9/xcaddy_0.1.9_linux_amd64.tar.gz \
+RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.2.0/xcaddy_0.2.0_linux_amd64.tar.gz \
   | tar -xzv -C /usr/local/bin/ xcaddy
 
 WORKDIR /plugins
 
 COPY plugins /plugins
 
-# the fork contains two changes:
-# - configure http/2 server
-# - update golang.org/x/net go dependency
-# TODO (aledbf): use upstream once the fixes are applied.
-RUN git clone -b http2 https://github.com/aledbf/caddy caddy-fork
-
 # build caddy
-RUN xcaddy build \
+RUN xcaddy build v2.4.5 \
   --output /caddy \
-  --with github.com/caddyserver/caddy/v2=$PWD/caddy-fork \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
   --with github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload=/plugins/workspacedownload \
