@@ -16,6 +16,7 @@ import (
 type PullRequestOptions struct {
 	Title      string
 	Body       string
+	Comment    string
 	Token      string
 	Org        string
 	Repo       string
@@ -43,6 +44,16 @@ var pullRequestCommand = &cobra.Command{
 			logger.WithError(err).Fatal("Error creating pull request")
 		}
 		logger.WithField("url", pr.URL).WithField("pr", pr.Number).Info("PR successfully created")
+		if prOpts.Comment != "" {
+			newComment := &github.IssueComment{
+				Body: &prOpts.Comment,
+			}
+			_, _, err = client.Issues.CreateComment(context, prOpts.Org, prOpts.Repo, *pr.Number, newComment)
+			if err != nil {
+				logger.WithError(err).Fatal("Error creating comment")
+			}
+			logger.WithField("url", pr.URL).WithField("pr", pr.Number).Info("PR approval comment added")
+		}
 		labels, _, err := client.Issues.AddLabelsToIssue(context, prOpts.Org, prOpts.Repo, *pr.Number, []string{"lgtm", "approved"})
 		if err != nil {
 			logger.WithError(err).Fatal("Error setting labels")
@@ -67,6 +78,7 @@ func init() {
 	prFlags.StringVarP(&prOpts.HeadBranch, "head", "H", "main", "the head branch for pull requests")
 	prFlags.StringVarP(&prOpts.BaseBranch, "base", "b", "main", "the base branch for pull requests")
 	prFlags.StringVarP(&prOpts.Title, "title", "T", "[changelog] updated changelog", "the title of the PR")
-	prFlags.StringVarP(&prOpts.Body, "body", "B", "Updated the changelog from recent PR descriptions\n\n```release-note\nNONE\n```", "the body of the PR")
+	prFlags.StringVarP(&prOpts.Body, "body", "B", "Updated the changelog from recent PR descriptions\n\n```release-note\nNONE\n```\n- [x] /werft no-preview\n- [x] /werft no-test", "the body of the PR")
+	prFlags.StringVarP(&prOpts.Comment, "comment", "C", "/approve no-issue", "an additional comment to the PR")
 	rootCommand.AddCommand(pullRequestCommand)
 }

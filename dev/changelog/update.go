@@ -129,7 +129,7 @@ type Author struct {
 type void struct{}
 
 var member void
-var releaseNoteRegexp = regexp.MustCompile("(?s)```release-note(.+?)```")
+var releaseNoteRegexp = regexp.MustCompile("(?s)```release-note\\b(.+?)```")
 
 const defaultGitHubBaseURI = "https://github.com"
 

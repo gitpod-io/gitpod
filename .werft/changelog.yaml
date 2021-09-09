@@ -6,7 +6,7 @@ pod:
     cloud.google.com/gke-nodepool: builds
   containers:
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.18
+    image: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.24
     workingDir: /workspace
     imagePullPolicy: Always
     env:
@@ -28,7 +28,7 @@ pod:
         export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
         export GIT_REF={{ .Repository.Ref }}
         export GIT_BRANCH=${GIT_REF/refs\/heads\//}
-        export PR_BRANCH=$(date '+rg/changelog_%Y%m%d%H%M')
+        export PR_BRANCH=$(date '+rq/changelog_%Y%m%d%H%M')
         git checkout -b $PR_BRANCH
         /app/changelog update -t $GITHUB_TOKEN -o {{ .Repository.Owner }} -r {{ .Repository.Repo }} -b $GIT_BRANCH
         if [[ $(git status --porcelain) ]]; then
