@@ -12,6 +12,7 @@
     "@improbable-eng/grpc-web": "^0.14.0"
   },
   "devDependencies": {
-    "ts-protoc-gen": "^0.13.0"
+    "ts-protoc-gen": "^0.13.0",
+    "typescript": "~4.4.2"
   }
 }
