@@ -8,8 +8,8 @@ require (
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/local-app/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
-	github.com/golang/mock v1.6.0 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/golang/mock v1.6.0
+	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.2
 	github.com/improbable-eng/grpc-web v0.14.0
 	github.com/kevinburke/ssh_config v1.1.0

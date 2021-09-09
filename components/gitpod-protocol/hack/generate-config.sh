@@ -1,6 +1,6 @@
 #!/bin/bash
 
-go get -u github.com/a-h/generate/...
+go install -u github.com/a-h/generate/...
 
 schema-generate -p protocol ../data/gitpod-schema.json > ../go/gitpod-config-types.go
 

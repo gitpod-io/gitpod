@@ -19,7 +19,7 @@ require (
 
 require (
 	github.com/fatih/camelcase v1.0.0 // indirect
-	github.com/fatih/gomodifytags v1.13.0 // indirect
+	github.com/fatih/gomodifytags v1.14.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
