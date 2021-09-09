@@ -58,12 +58,12 @@ export class GitHubAppSupport {
                     return {
                         name: r.name,
                         cloneUrl: r.clone_url,
-                        account: r.owner.login,
+                        account: r.owner?.login,
                         accountAvatarUrl: r.owner?.avatar_url,
                         updatedAt: r.updated_at,
                         installationId: installation.data.id,
                         installationUpdatedAt: installation.data.updated_at
-                    };
+                    } as ProviderRepository;
                 });
             } catch (error) {
                 if (error instanceof RequestError) {
@@ -133,8 +133,8 @@ export class GitHubAppSupport {
                             // requires an extra permission of the org's maintainer.
                             user.additionalData = user.additionalData || {}
                             user.additionalData.knownGitHubOrgs = user.additionalData.knownGitHubOrgs || [ ];
-                            if (!user.additionalData.knownGitHubOrgs.includes(repo.account)) {
-                                user.additionalData.knownGitHubOrgs.push(repo.account);
+                            if (!user.additionalData.knownGitHubOrgs.includes(repo.account!)) {
+                                user.additionalData.knownGitHubOrgs.push(repo.account!);
                                 await this.userDB.updateUserPartial(user);
                             }
                         }

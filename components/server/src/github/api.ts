@@ -125,7 +125,7 @@ export class GitHubRestApi {
 
     @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(GitHubTokenHelper) protected readonly tokenHelper: GitHubTokenHelper;
-
+    //@ts-ignore
     protected async create(userOrToken: User | string) {
         let token: string | undefined;
         if (typeof userOrToken === 'string') {

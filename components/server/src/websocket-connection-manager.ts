@@ -92,7 +92,7 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
 
         return new Proxy<GitpodServerImpl<C, S>>(gitpodServer, {
             get: (target, property: keyof GitpodServerImpl<C, S>) => {
-                if (session) session.touch(console.error);
+                if (session) session.touch();
 
                 return target[property];
             }

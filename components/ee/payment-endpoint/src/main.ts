@@ -31,7 +31,7 @@ const init = async () => {
 const start = async (initResult: { server: Server, port: number }) => {
     await initResult.server.start(initResult.port);
 
-    process.on('unhandledRejection', error => {
+    process.on('unhandledRejection', (error:any) => {
         log.error('Received an unhandledRejection event. Exiting.', error);
         process.exit(1);
     });

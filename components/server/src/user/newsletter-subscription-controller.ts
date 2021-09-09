@@ -18,7 +18,9 @@ export class NewsletterSubscriptionController {
         const router = express.Router();
 
         router.get("/unsubscribe", async (req: express.Request, res: express.Response) => {
+            // @ts-ignore Type 'ParsedQs' is not assignable
             const email: string = req.query.email;
+            // @ts-ignore Type 'ParsedQs' is not assignable
             const newsletterType: string = req.query.type;
             const acceptedNewsletterTypes: string[] = ["changelog", "devx"];
             const newsletterProperties: {[key:string]: {[key: string]: string}} = {

@@ -32,6 +32,7 @@ interface BearerAuthError extends Error {
     code: typeof bearerAuthCode
 }
 export function isBearerAuthError(error: Error): error is BearerAuthError {
+    // @ts-ignore
     return 'code' in error && (error as any)['code'] === bearerAuthCode;
 }
 function createBearerAuthError(message: string): BearerAuthError {

@@ -44,15 +44,18 @@ export namespace TosFlow {
     }
 
     const storageKey = "tosFlowInfo";
+    //@ts-ignore
     export function get(session: Express.Session | undefined): TosFlow | undefined {
         if (session) {
             return session[storageKey] as TosFlow | undefined;
         }
     }
+    //@ts-ignore
     export async function attach(session: Express.Session, tosFlowInfo: TosFlow): Promise<void> {
         session[storageKey] = tosFlowInfo;
         return saveSession(session);
     }
+    //@ts-ignore
     export async function clear(session: Express.Session | undefined) {
         if (session) {
             session[storageKey] = undefined;

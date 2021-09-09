@@ -26,7 +26,7 @@ import * as crypto from 'crypto';
 import { inject, injectable } from 'inversify';
 import * as opentracing from 'opentracing';
 import { URL } from 'url';
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { Disposable, ResponseError } from 'vscode-jsonrpc';
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from '../auth/auth-provider-service';
@@ -686,7 +686,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             await client.markActive({ span }, req);
 
             if (options && options.roundTripTime && Number.isFinite(options.roundTripTime)) {
-                this.clientDataPrometheusAdapter.storeWorkspaceRoundTripTimeSample(new Date(), user, instanceId, options.roundTripTime);
+                this.clientDataPrometheusAdapter.storeWorkspaceRoundTripTimeSample(user, instanceId, options.roundTripTime);
             }
         } catch (e) {
             TraceContext.logError({ span }, e);

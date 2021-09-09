@@ -132,7 +132,7 @@ export class GithubApp {
         options.getRouter && options.getRouter('/reconfigure').get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             const gh = await app.auth();
             const data = await gh.apps.getAuthenticated();
-            const slug = data.data.slug;
+            const slug = data?.data?.slug;
 
             const state = req.query.state;
             res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`)

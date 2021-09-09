@@ -7,7 +7,7 @@
 import { ProbotOctokit } from 'probot';
 import { injectable, inject } from 'inversify';
 import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid';
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -65,7 +65,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                     contextUrl: cri.details_url,
                     prebuiltWorkspaceId: pws.id,
                 });
-                await githubApi.repos.createCommitStatus({
+                await (githubApi as InstanceType<typeof ProbotOctokit>).repos.createCommitStatus({
                     repo: cri.repo,
                     owner: cri.owner,
                     sha: cri.head_sha,
@@ -77,7 +77,7 @@ export class PrebuildStatusMaintainer implements Disposable {
             } else {
                 // prebuild isn't running - mark with check
                 const conclusion = this.getConclusionFromPrebuildState(pws);
-                await githubApi.repos.createCommitStatus({
+                await (githubApi as InstanceType<typeof ProbotOctokit>).repos.createCommitStatus({
                     repo: cri.repo,
                     owner: cri.owner,
                     sha: cri.head_sha,
@@ -153,7 +153,7 @@ export class PrebuildStatusMaintainer implements Disposable {
 
                 let found = true;
                 try {
-                    await github!.repos.createCommitStatus({
+                    await (github as InstanceType<typeof ProbotOctokit>).repos.createCommitStatus({
                         owner: updatatable.owner,
                         repo: updatatable.repo,
                         context: "Gitpod",
@@ -208,5 +208,4 @@ export class PrebuildStatusMaintainer implements Disposable {
             this.periodicChecker = undefined;
         }
     }
-
 }

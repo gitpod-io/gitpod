@@ -9,12 +9,11 @@ import * as session from 'express-session'
 import { SessionOptions } from 'express-session'
 import * as uuidv4 from "uuid/v4"
 import { injectable, inject , postConstruct } from 'inversify';
-
-import * as MySQLStore from 'express-mysql-session';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { Config as DBConfig } from '@gitpod/gitpod-db/lib/config';
 import { Config } from './config';
 
+const MySQLStore = require('express-mysql-session');
 
 @injectable()
 export class SessionHandlerProvider {
@@ -95,7 +94,8 @@ export class SessionHandlerProvider {
             database: 'gitpod-sessions',
             createDatabaseTable: true
         };
-        return new MySQLStore(options, undefined, (err) => {
+        const store = MySQLStore(session);
+        return new store(options, undefined, (err:Error) => {
             if (err) {
                 log.debug('MySQL session store error: ', err);
             }

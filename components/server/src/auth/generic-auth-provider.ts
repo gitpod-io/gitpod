@@ -27,6 +27,8 @@ import { AuthProviderService } from './auth-provider-service';
 import { LoginCompletionHandler } from './login-completion-handler';
 import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
+import { OutgoingHttpHeaders } from 'http2';
+
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
  * --
@@ -642,15 +644,15 @@ export class GenericAuthProvider implements AuthProvider {
 export type VerifyResult = TosFlow.WithIdentity | TosFlow.WithUser;
 
 interface GenericOAuthStrategyOptions {
-    scope?: string | string[];
+    scope?: string | string[] | undefined;
     /**
      * This should be Gitpod's hostname.
      */
     userAgent: string;
 
-    scopeSeparator?: string;
-    customHeaders?: any;
-    skipUserProfile?: true;
+    scopeSeparator?: string | undefined;
+    customHeaders?: OutgoingHttpHeaders | undefined;
+    skipUserProfile?: any;
     /**
      * Non-spec autorization params.
      */

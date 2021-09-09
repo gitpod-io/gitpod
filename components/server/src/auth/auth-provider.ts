@@ -91,15 +91,18 @@ export interface AuthFlow {
 }
 export namespace AuthFlow {
     const storageKey = "authFlow";
+    //@ts-ignore
     export function get(session: Express.Session | undefined): AuthFlow | undefined {
         if (session) {
             return session[storageKey] as AuthFlow | undefined;
         }
     }
+    //@ts-ignore
     export async function attach(session: Express.Session, authFlow: AuthFlow): Promise<void> {
         session[storageKey] = authFlow;
         return saveSession(session);
     }
+    //@ts-ignore
     export async function clear(session: Express.Session | undefined) {
         if (session) {
             session[storageKey] = undefined;

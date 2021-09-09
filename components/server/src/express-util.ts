@@ -11,6 +11,14 @@ import * as express from 'express';
 import * as crypto from 'crypto';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 
+import * as session from 'express-session';
+export type MyContext = {
+    req: express.Request & {
+        session: session.Session & Partial<session.SessionData> & { userId: number };
+    };
+    res: express.Response;
+};
+
 export const pingPong: WsRequestHandler = (ws, req, next) => {
     let pingSentTimer: any;
     const timer = setInterval(() => {
@@ -101,6 +109,7 @@ const looksLikeWorkspaceHostname = (originHostname: URL, gitpodHostName: string)
     return false;
 };
 
+//@ts-ignore
 export function saveSession(reqOrSession: express.Request | Express.Session): Promise<void> {
     const session = reqOrSession.session ? reqOrSession.session : reqOrSession;
     return new Promise<void>((resolve, reject) => {
@@ -113,6 +122,7 @@ export function saveSession(reqOrSession: express.Request | Express.Session): Pr
         });
     });
 }
+//@ts-ignore
 export function destroySession(reqOrSession: express.Request | Express.Session): Promise<void> {
     const session = reqOrSession.session ? reqOrSession.session : reqOrSession;
     return new Promise<void>((resolve, reject) => {

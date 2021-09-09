@@ -142,7 +142,7 @@ export class ExportCommand implements ICommand {
         const conn = await connect(new Config().mysqlConfig);
 
         const statements = await this.tableUpdateProvider.getAllStatementsForAllTables(conn, args.table_set, args.start_date, args.end_date);
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             writeFile("export.sql", [...statements.deletions, ...statements.updates].join("\n"), (err) => {
                 if(err) {
                     reject(err);

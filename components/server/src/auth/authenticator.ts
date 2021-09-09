@@ -36,6 +36,7 @@ export class Authenticator {
         // Setup passport
         this.passportInitialize = passport.initialize();
         this.passportSession = passport.session();
+        //@ts-ignore
         passport.serializeUser((user: User, done) => {
             if (user) {
                 done(null, user.id);
@@ -95,6 +96,7 @@ export class Authenticator {
             log.info({ sessionId: req.sessionID }, `User is already authenticated. Continue.`, { 'login-flow': true });
             return next();
         }
+        //@ts-ignore
         let returnTo: string | undefined = req.query.returnTo;
         if (returnTo) {
             log.info({ sessionId: req.sessionID }, `Stored returnTo URL: ${returnTo}`, { 'login-flow': true });
@@ -102,7 +104,7 @@ export class Authenticator {
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
         returnTo = returnTo || workspaceUrl;
-
+        //@ts-ignore
         const host: string = req.query.host;
         const authProvider = host && await this.getAuthProviderForHost(host);
         if (!host || !authProvider) {
@@ -153,7 +155,9 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
+        //@ts-ignore
         const returnTo: string = req.query.returnTo || this.config.hostUrl.asDashboard().toString();
+        //@ts-ignore
         const host: string | undefined = req.query.host;
 
         const authProvider = host && await this.getAuthProviderForHost(host);
@@ -185,8 +189,11 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
+        //@ts-ignore
         const returnTo: string | undefined = req.query.returnTo;
+        //@ts-ignore
         const host: string | undefined = req.query.host;
+        //@ts-ignore
         const scopes: string = req.query.scopes || "";
         const override = req.query.override === 'true';
         const authProvider = host && await this.getAuthProviderForHost(host);

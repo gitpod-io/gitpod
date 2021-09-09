@@ -10,8 +10,8 @@ import { WorkspaceInstance } from '@gitpod/gitpod-protocol';
 
 @injectable()
 export class PrometheusMetricsExporter {
-    protected readonly workspaceStartupTimeHistogram: prom.Histogram;
-    protected readonly timeToFirstUserActivityHistogram: prom.Histogram;
+    protected readonly workspaceStartupTimeHistogram: prom.Histogram<string>;
+    protected readonly timeToFirstUserActivityHistogram: prom.Histogram<string>;
 
     constructor() {
         this.workspaceStartupTimeHistogram = new prom.Histogram({
