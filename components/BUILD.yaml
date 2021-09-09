@@ -41,7 +41,6 @@ packages:
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/ide/code:docker
-      - components/ide/theia:docker
       - components/image-builder:docker
       - components/image-builder-mk3:docker
       - components/image-builder-bob:docker
