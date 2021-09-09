@@ -93,11 +93,20 @@ func main() {
 				},
 			},
 			&cli.BoolFlag{
-				Name: "verbose",
+				Name:  "verbose",
+				Usage: "Enable verbose logging",
 				EnvVars: []string{
 					"GITPOD_LCA_VERBOSE",
 				},
 				Value: false,
+			},
+			&cli.DurationFlag{
+				Name:  "auth-timeout",
+				Usage: "Auth timeout in seconds",
+				EnvVars: []string{
+					"GITPOD_LCA_AUTH_TIMEOUT",
+				},
+				Value: 30,
 			},
 		},
 		Commands: []*cli.Command{
@@ -107,7 +116,8 @@ func main() {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
 					}
-					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Int("api-port"), c.Bool("allow-cors-from-port"), c.Bool("auto-tunnel"), c.String("auth-redirect-url"), c.Bool("verbose"))
+					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Int("api-port"), c.Bool("allow-cors-from-port"),
+						c.Bool("auto-tunnel"), c.String("auth-redirect-url"), c.Bool("verbose"), c.Duration("auth-timeout"))
 				},
 				Flags: []cli.Flag{
 					&cli.PathFlag{
@@ -131,7 +141,7 @@ func DefaultCommand(name string) cli.ActionFunc {
 	}
 }
 
-func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunnel bool, authRedirectUrl string, verbose bool) error {
+func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunnel bool, authRedirectUrl string, verbose bool, authTimeout time.Duration) error {
 	if verbose {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
@@ -155,7 +165,7 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunn
 
 	var b *bastion.Bastion
 
-	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: authRedirectUrl}, func() {
+	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: authRedirectUrl, AuthTimeout: authTimeout}, func() {
 		if b != nil {
 			b.FullUpdate()
 		}
