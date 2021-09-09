@@ -41,6 +41,7 @@ import (
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	wsdaemon_mock "github.com/gitpod-io/gitpod/ws-daemon/api/mock"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
 )
@@ -61,7 +62,7 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 		return nil
 	}
 
-	config := Configuration{
+	config := config.Configuration{
 		Namespace:                ns,
 		HeartbeatInterval:        util.Duration(30 * time.Second),
 		WorkspaceHostPath:        "/tmp",
@@ -69,19 +70,19 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		WorkspacePortURLTemplate: "{{ .Host }}:{{ .IngressPort }}",
 		RegistryFacadeHost:       "registry-facade:8080",
-		Container: AllContainerConfiguration{
-			Workspace: ContainerConfiguration{
-				Limits: ResourceConfiguration{
+		Container: config.AllContainerConfiguration{
+			Workspace: config.ContainerConfiguration{
+				Limits: config.ResourceConfiguration{
 					CPU:    "900m",
 					Memory: "1000M",
 				},
-				Requests: ResourceConfiguration{
+				Requests: config.ResourceConfiguration{
 					CPU:    "1m",
 					Memory: "1m",
 				},
 			},
 		},
-		Timeouts: WorkspaceTimeoutConfiguration{
+		Timeouts: config.WorkspaceTimeoutConfiguration{
 			AfterClose:          util.Duration(1 * time.Minute),
 			Initialization:      util.Duration(30 * time.Minute),
 			TotalStartup:        util.Duration(45 * time.Minute),

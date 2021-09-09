@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package manager
+package config
 
 import (
 	"bytes"
@@ -28,9 +28,9 @@ func (*osFS) Open(name string) (iofs.File, error) {
 	return os.Open(name)
 }
 
-// fs is used to load files referred to by this configuration.
+// FS is used to load files referred to by this configuration.
 // We use a library here to be able to test things properly.
-var fs iofs.FS = &osFS{}
+var FS iofs.FS = &osFS{}
 
 // Configuration is the configuration of the ws-manager
 type Configuration struct {
@@ -200,7 +200,7 @@ var validPodTemplate = validation.By(func(o interface{}) error {
 		return xerrors.Errorf("field should be string")
 	}
 
-	_, err := getWorkspacePodTemplate(s)
+	_, err := GetWorkspacePodTemplate(s)
 	return err
 })
 
@@ -210,7 +210,7 @@ var validWorkspaceURLTemplate = validation.By(func(o interface{}) error {
 		return xerrors.Errorf("field should be string")
 	}
 
-	wsurl, err := renderWorkspaceURL(s, "foo", "bar", "gitpod.io")
+	wsurl, err := RenderWorkspaceURL(s, "foo", "bar", "gitpod.io")
 	if err != nil {
 		return xerrors.Errorf("cannot render URL: %w", err)
 	}
@@ -291,8 +291,8 @@ func (r *ResourceConfiguration) ResourceList() (corev1.ResourceList, error) {
 	return l, nil
 }
 
-// getWorkspacePodTemplate parses a pod template YAML file. Returns nil if path is empty.
-func getWorkspacePodTemplate(filename string) (*corev1.Pod, error) {
+// GetWorkspacePodTemplate parses a pod template YAML file. Returns nil if path is empty.
+func GetWorkspacePodTemplate(filename string) (*corev1.Pod, error) {
 	if filename == "" {
 		return nil, nil
 	}
@@ -302,7 +302,7 @@ func getWorkspacePodTemplate(filename string) (*corev1.Pod, error) {
 		filename = filepath.Join(tpr, filename)
 	}
 
-	tpl, err := fs.Open(filename)
+	tpl, err := FS.Open(filename)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read pod template: %w", err)
 	}
@@ -318,8 +318,8 @@ func getWorkspacePodTemplate(filename string) (*corev1.Pod, error) {
 	return &res, nil
 }
 
-// renderWorkspaceURL takes a workspace URL template and renders it
-func renderWorkspaceURL(urltpl, id, servicePrefix, host string) (string, error) {
+// RenderWorkspaceURL takes a workspace URL template and renders it
+func RenderWorkspaceURL(urltpl, id, servicePrefix, host string) (string, error) {
 	tpl, err := template.New("url").Parse(urltpl)
 	if err != nil {
 		return "", xerrors.Errorf("cannot compute workspace URL: %w", err)
@@ -345,7 +345,7 @@ func renderWorkspaceURL(urltpl, id, servicePrefix, host string) (string, error) 
 	return b.String(), nil
 }
 
-type portURLContext struct {
+type PortURLContext struct {
 	ID            string
 	Prefix        string
 	Host          string
@@ -353,8 +353,8 @@ type portURLContext struct {
 	IngressPort   string
 }
 
-// renderWorkspacePortURL takes a workspace port URL template and renders it
-func renderWorkspacePortURL(urltpl string, ctx portURLContext) (string, error) {
+// RenderWorkspacePortURL takes a workspace port URL template and renders it
+func RenderWorkspacePortURL(urltpl string, ctx PortURLContext) (string, error) {
 	tpl, err := template.New("url").Parse(urltpl)
 	if err != nil {
 		return "", xerrors.Errorf("cannot compute workspace URL: %w", err)

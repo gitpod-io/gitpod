@@ -18,6 +18,7 @@ import (
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -39,8 +40,8 @@ func TestIsWorkspaceTimedout(t *testing.T) {
 		Test: func(t *testing.T, input interface{}) interface{} {
 			fixture := input.(*fixture)
 			manager := Manager{
-				Config: Configuration{
-					Timeouts: WorkspaceTimeoutConfiguration{
+				Config: config.Configuration{
+					Timeouts: config.WorkspaceTimeoutConfiguration{
 						AfterClose:          util.Duration(1 * time.Minute),
 						Initialization:      util.Duration(30 * time.Minute),
 						TotalStartup:        util.Duration(45 * time.Minute),

@@ -18,7 +18,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
 var (
@@ -72,13 +72,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", "", "path to the kubeconfig file to use (defaults to in-cluster config)")
 }
 
-func getConfig() *config {
+func getConfig() *Configuration {
 	ctnt, err := os.ReadFile(cfgFile)
 	if err != nil {
 		log.WithError(err).Fatal("cannot read configuration. Maybe missing --config?")
 	}
 
-	var cfg config
+	var cfg Configuration
 	dec := json.NewDecoder(bytes.NewReader(ctnt))
 	dec.DisallowUnknownFields()
 	err = dec.Decode(&cfg)
@@ -89,8 +89,8 @@ func getConfig() *config {
 	return &cfg
 }
 
-type config struct {
-	Manager manager.Configuration `json:"manager"`
+type Configuration struct {
+	Manager config.Configuration `json:"manager"`
 	Content struct {
 		Storage storage.Config `json:"storage"`
 	} `json:"content"`

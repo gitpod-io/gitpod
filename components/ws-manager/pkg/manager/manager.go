@@ -44,12 +44,13 @@ import (
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 )
 
 // Manager is a kubernetes backed implementation of a workspace manager
 type Manager struct {
-	Config    Configuration
+	Config    config.Configuration
 	Clientset client.Client
 	RawClient kubernetes.Interface
 	Content   *layer.Provider
@@ -107,7 +108,7 @@ const (
 )
 
 // New creates a new workspace manager
-func New(config Configuration, client client.Client, rawClient kubernetes.Interface, cp *layer.Provider) (*Manager, error) {
+func New(config config.Configuration, client client.Client, rawClient kubernetes.Interface, cp *layer.Provider) (*Manager, error) {
 	wsdaemonConnfactory, _ := newWssyncConnectionFactory(config)
 	m := &Manager{
 		Config:       config,
@@ -706,7 +707,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		service.Spec = *spec
 
 		for _, p := range service.Spec.Ports {
-			url, err := renderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, portURLContext{
+			url, err := config.RenderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, config.PortURLContext{
 				Host:          m.Config.GitpodHostURL,
 				ID:            req.Id,
 				IngressPort:   fmt.Sprint(p.Port),
@@ -1168,7 +1169,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 }
 
 // newWssyncConnectionFactory creates a new wsdaemon connection factory based on the wsmanager configuration
-func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, error) {
+func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Factory, error) {
 	cfg := managerConfig.WorkspaceDaemon
 	grpcOpts := common_grpc.DefaultClientOptions()
 	if cfg.TLS.Authority != "" || cfg.TLS.Certificate != "" && cfg.TLS.PrivateKey != "" {

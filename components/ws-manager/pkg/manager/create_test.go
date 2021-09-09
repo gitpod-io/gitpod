@@ -16,18 +16,19 @@ import (
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
 func TestCreateDefiniteWorkspacePod(t *testing.T) {
 	type fixture struct {
-		Spec             *json.RawMessage       `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
-		Request          *json.RawMessage       `json:"request,omitempty"` // *api.StartWorkspaceRequest
-		Context          *startWorkspaceContext `json:"context,omitempty"`
-		DefaultTemplate  *corev1.Pod            `json:"defaultTemplate,omitempty"`
-		PrebuildTemplate *corev1.Pod            `json:"prebuildTemplate,omitempty"`
-		ProbeTemplate    *corev1.Pod            `json:"probeTemplate,omitempty"`
-		RegularTemplate  *corev1.Pod            `json:"regularTemplate,omitempty"`
-		ResourceRequests *ResourceConfiguration `json:"resourceRequests,omitempty"`
+		Spec             *json.RawMessage              `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
+		Request          *json.RawMessage              `json:"request,omitempty"` // *api.StartWorkspaceRequest
+		Context          *startWorkspaceContext        `json:"context,omitempty"`
+		DefaultTemplate  *corev1.Pod                   `json:"defaultTemplate,omitempty"`
+		PrebuildTemplate *corev1.Pod                   `json:"prebuildTemplate,omitempty"`
+		ProbeTemplate    *corev1.Pod                   `json:"probeTemplate,omitempty"`
+		RegularTemplate  *corev1.Pod                   `json:"regularTemplate,omitempty"`
+		ResourceRequests *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
 	}
 	type gold struct {
 		Pod   corev1.Pod `json:"reason,omitempty"`
@@ -55,7 +56,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 			// create in-memory file system
 			mapFS := fstest.MapFS{}
 
-			fs = mapFS
+			config.FS = mapFS
 
 			files := []struct {
 				tplfn  string

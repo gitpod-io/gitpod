@@ -19,7 +19,7 @@ var generateConfigCmd = &cobra.Command{
 	Short: "Generates JSON schema for the configuration",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		schema := jsonschema.Reflect(&config{})
+		schema := jsonschema.Reflect(&Configuration{})
 		schema.Title = "ws-manager config schema - generated using wsman generate config"
 		out, err := json.MarshalIndent(schema, "", "  ")
 		if err != nil {

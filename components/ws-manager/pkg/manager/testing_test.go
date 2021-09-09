@@ -18,6 +18,7 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
 // This file contains test infrastructure for this package. No function in here is meant for consumption outside of tests.
@@ -28,7 +29,7 @@ import (
 
 // forTestingOnlyGetManager creates a workspace manager instance for testing purposes
 func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
-	config := Configuration{
+	config := config.Configuration{
 		Namespace:                "default",
 		SchedulerName:            "workspace-scheduler",
 		SeccompProfile:           "localhost/workspace-default",
@@ -38,21 +39,21 @@ func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		WorkspacePortURLTemplate: "{{ .WorkspacePort }}-{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		RegistryFacadeHost:       "registry-facade:8080",
-		Container: AllContainerConfiguration{
-			Workspace: ContainerConfiguration{
+		Container: config.AllContainerConfiguration{
+			Workspace: config.ContainerConfiguration{
 				Image: "workspace-image",
-				Limits: ResourceConfiguration{
+				Limits: config.ResourceConfiguration{
 					CPU:    "900m",
 					Memory: "1000M",
 				},
-				Requests: ResourceConfiguration{
+				Requests: config.ResourceConfiguration{
 					CPU:     "899m",
 					Memory:  "999M",
 					Storage: "5Gi",
 				},
 			},
 		},
-		Timeouts: WorkspaceTimeoutConfiguration{
+		Timeouts: config.WorkspaceTimeoutConfiguration{
 			AfterClose:          util.Duration(1 * time.Minute),
 			Initialization:      util.Duration(30 * time.Minute),
 			TotalStartup:        util.Duration(45 * time.Minute),
