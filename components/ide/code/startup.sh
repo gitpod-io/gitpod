@@ -37,7 +37,7 @@ grep -rl open-vsx.org /ide | xargs sed -i "s|https://open-vsx.org|$VSX_REGISTRY_
 
 cd /ide || exit
 if [ "$SUPERVISOR_DEBUG_ENABLE" = "true" ]; then
-    exec /ide/node/bin/gitpod-node --inspect ./out/gitpod.js "$@" --verbose --log=trace
+    exec /ide/node --inspect ./out/gitpod.js "$@" --verbose --log=trace
 else
-    exec /ide/node/bin/gitpod-node ./out/gitpod.js "$@"
+    exec /ide/node ./out/gitpod.js "$@"
 fi
