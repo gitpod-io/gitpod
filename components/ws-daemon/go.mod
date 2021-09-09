@@ -53,7 +53,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
-	github.com/fatih/gomodifytags v1.13.0 // indirect
+	github.com/fatih/gomodifytags v1.14.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible // indirect

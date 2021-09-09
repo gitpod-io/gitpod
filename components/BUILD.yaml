@@ -150,6 +150,15 @@ scripts:
     script: |
       leeway exec --filter-type go -v -- go mod tidy -compat=1.17
 
+      # not all the code is present in leeway.
+      # ensure we update everything containing a go.mod file
+      for COMPONENT in $(find . -name go.mod); do
+        DIRECTORY=$(dirname $COMPONENT)
+        pushd $DIRECTORY > /dev/null
+        go mod tidy -compat=1.17
+        popd > /dev/null
+      done
+
   - name: unblock-user
     deps:
       - components/service-waiter:app
