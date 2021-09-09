@@ -215,9 +215,9 @@ export class SharedWorkspaceAccessGuard implements ResourceAccessGuard {
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         switch (resource.kind) {
             case "workspace":
-                return resource.subject.shareable === true;
+                return operation == "get" && resource.subject.shareable === true;
             case "workspaceInstance":
-                return !!resource.workspace.shareable;
+                return operation == "get" && !!resource.workspace.shareable;
             default:
                 return false;
         }
