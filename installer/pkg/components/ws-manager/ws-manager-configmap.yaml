@@ -1,0 +1,125 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.wsManager -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $gp := $.Values -}}
+{{- $wscomp := .Values.components.workspace -}}
+{{- $wsproxy := .Values.components.wsProxy -}}
+{{- $wsdaemon := .Values.components.wsDaemon -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-manager-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        "manager": {
+            "namespace": "{{ .Release.Namespace }}",
+            "schedulerName": "{{ .Values.workspaceScheduler }}",
+{{- if $wsdaemon.userNamespaces.seccompProfileInstaller.enabled }}
+            "seccompProfile": "localhost/workspace_default_{{ $gp.version }}.json",
+{{- else }}
+            "seccompProfile": "runtime/default",
+{{- end }}
+            "dryRun": false,
+            "wsdaemon": {
+                "port": {{ .Values.components.wsDaemon.servicePort }},
+                "tls": {
+                    "ca": "/ws-daemon-tls-certs/ca.crt",
+                    "crt": "/ws-daemon-tls-certs/tls.crt",
+                    "key": "/ws-daemon-tls-certs/tls.key"
+                }
+            },
+            "container": {
+                "workspace": {
+                    {{- if .Values.workspaceSizing.memoryRequest }}
+                    "requests": {
+                        "cpu": "1m",
+                        "memory": "{{ .Values.workspaceSizing.memoryRequest }}Mi"
+                    },
+                    "limits": {
+                        "cpu": "5",
+                        "memory": "{{ .Values.workspaceSizing.memoryLimit }}Mi"
+                    },
+                    {{ else -}}
+                    {{- if .Values.workspaceSizing.requests }}
+                    "requests": {{ toJson .Values.workspaceSizing.requests }},
+                    {{ end -}}
+                    {{- if .Values.workspaceSizing.limits }}
+                    "limits": {{ toJson .Values.workspaceSizing.limits }},
+                    {{ end -}}
+                    {{ end -}}
+                    "image": "OVERWRITTEN-IN-REQUEST"
+                }
+            },
+            "heartbeatInterval": "30s",
+            "hostURL": "https://{{ $.Values.hostname }}",
+            "workspaceClusterHost": "ws{{- if $gp.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            "initProbe": {
+                "timeout": "1s"
+            },
+            "urlTemplate":     "https://{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            "portUrlTemplate": "https://{{"{{ .WorkspacePort }}"}}-{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            "workspaceHostPath": "{{ .Values.components.wsDaemon.hostWorkspaceArea }}",
+            "podTemplate": {
+                {{- if $wscomp.templates }}
+                {{ if (or $wscomp.templates.prebuild $wscomp.affinity) -}}"prebuildPath": "/workspace-template/prebuild.yaml",{{- end }}
+                {{ if (or $wscomp.templates.probe $wscomp.affinity) -}}"probePath": "/workspace-template/probe.yaml",{{- end }}
+                {{ if (or $wscomp.templates.ghost $wscomp.affinity) -}}"ghostPath": "/workspace-template/ghost.yaml",{{- end }}
+                {{ if (or $wscomp.templates.regular $wscomp.affinity) -}}"regularPath": "/workspace-template/regular.yaml",{{- end }}
+                {{ end -}}
+                "defaultPath": "/workspace-template/default.yaml"
+            },
+            "timeouts": {
+                "afterClose": "2m",
+                "headlessWorkspace": "60m",
+                "initialization": "30m",
+                "regularWorkspace": "30m",
+                "startup": "60m",
+                "contentFinalization": "60m",
+                "stopping": "60m",
+                "interrupted": "5m"
+            },
+            {{ if $comp.eventTraceLogLocation }}"eventTraceLog": "{{ $comp.eventTraceLogLocation }}",{{- end }}
+            "reconnectionInterval": "30s",
+            "registryFacadeHost": {{ (printf "reg.%s:%v" (.Values.components.registryFacade.hostname | default .Values.hostname) .Values.components.registryFacade.ports.registry.servicePort) | quote }}
+            {{ if $comp.additionalConfig }}, {{ $comp.additionalConfig | toJson | trim | trimPrefix "{" | trimSuffix "}" }}{{- end }}
+        },
+        "content": {{ include "gitpod.remoteStorage.config" (dict "root" . "remoteStorage" .Values.components.contentService.remoteStorage) | fromYaml | toJson }},
+        "rpcServer": {
+            {{- if $comp.rpc }}
+            {{- if $comp.rpc.ratelimit }}
+            "ratelimits": { {{ range $i, $v := $comp.rpc.ratelimit }}
+                {{ if (gt $i 0) }},
+                {{- end }}
+                {{ $v.method | quote }}: {
+                    "block": {{ $v.block | default false }},
+                    "bucketSize": {{ $v.bucketSize }},
+                    "refillInterval": {{ $v.refillInterval | quote }}
+                }
+                {{- end }}
+            },
+            {{- end }}
+            {{- end }}
+            "addr": ":{{ $comp.ports.rpc.containerPort }}",
+            "tls": {
+                "ca": "/certs/ca.crt",
+                "crt": "/certs/tls.crt",
+                "key": "/certs/tls.key"
+            }
+        },
+        "pprof": {
+            "addr": "localhost:6060"
+        },
+        "prometheus": {
+            "addr": "127.0.0.1:9500"
+        }
+    }
+{{- end -}}

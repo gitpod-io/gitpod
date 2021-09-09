@@ -1,0 +1,96 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.wsManager -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ws-manager
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-manager
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: ws-manager
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: ws-manager
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: ws-manager
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+      annotations:
+        checksum/tlskey: {{ include (print $.Template.BasePath "/ws-daemon-tlssecret.yaml") $ | sha256sum }}
+    spec:
+      priorityClassName: system-node-critical
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: ws-manager
+      securityContext:
+        runAsUser: 31002
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      - name: ws-daemon-tls-certs
+        secret:
+          secretName: ws-daemon-tls
+      - name: tls-certs
+        secret:
+          secretName: {{ $comp.tls.server.secretName }}
+      - name: workspace-template
+        configMap:
+          name: workspace-template
+{{- if $comp.volumes }}
+{{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
+      enableServiceLinks: false
+      containers:
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+      - name: ws-manager
+        args: ["run", "-v", "--config", "/config/config.json"]
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        volumeMounts:
+        - name: config
+          mountPath: "/config"
+          readOnly: true
+        - name: workspace-template
+          mountPath: "/workspace-template"
+          readOnly: true
+        - mountPath: /ws-daemon-tls-certs
+          name: ws-daemon-tls-certs
+          readOnly: true
+        - mountPath: /certs
+          name: tls-certs
+          readOnly: true
+{{- if $comp.volumeMounts }}
+{{ toYaml $comp.volumeMounts | indent 8 }}
+{{- end }}
+        securityContext:
+          privileged: false
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        - name: GRPC_GO_RETRY
+          value: "on"
+{{- if .Values.components.wsManager.env }}
+{{ toYaml .Values.components.wsManager.env | indent 8 }}
+{{- end }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

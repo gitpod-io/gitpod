@@ -7,15 +7,17 @@ package components
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
+	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 )
 
-var MetaObjects = common.CompositeRendeFunc()
+var MetaObjects = common.CompositeRenderFunc()
 
-var WorkspaceObjects = common.CompositeRendeFunc(
+var WorkspaceObjects = common.CompositeRenderFunc(
 	wsdaemon.Objects,
+	wsmanager.Objects,
 )
 
-var FullObjects = common.CompositeRendeFunc(
+var FullObjects = common.CompositeRenderFunc(
 	MetaObjects,
 	WorkspaceObjects,
 )
