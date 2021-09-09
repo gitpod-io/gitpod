@@ -1,6 +1,10 @@
 # Change Log
 
 ## September 2021
+- GitLab users who have not completed the auth process on GitLab will be notified with an error message. ([#5568](https://github.com/gitpod-io/gitpod/pull/5568)) ([#5568](https://github.com/gitpod-io/gitpod/pull/5568)) - [@laushinka](https://github.com/laushinka)
+- [build] automated changelog extraction ([#5462](https://github.com/gitpod-io/gitpod/pull/5462)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
+- Change default branch label colors for dark theme ([#5556](https://github.com/gitpod-io/gitpod/pull/5556)) - [@gtsiolis](https://github.com/gtsiolis)
+- [dashboard] give team URLs a dedicated slug ([#5544](https://github.com/gitpod-io/gitpod/pull/5544)) - [@svenefftinge](https://github.com/svenefftinge)
 - [server] Remove legacy configuration ([#5496](https://github.com/gitpod-io/gitpod/pull/5496)) - [@geropl](https://github.com/geropl)
 - [image-builder-bob] Update to latest buildkit ([#5530](https://github.com/gitpod-io/gitpod/pull/5530)) - [@aledbf](https://github.com/aledbf)
 - [server / inferrer] prefetch configuration files ([#5529](https://github.com/gitpod-io/gitpod/pull/5529)) - [@svenefftinge](https://github.com/svenefftinge)
