@@ -83,7 +83,7 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 				cn := fmt.Sprintf("%s%s_owner_", cookiePrefix, ws.InstanceID)
 				c, err := req.Cookie(cn)
 				if err != nil {
-					log.WithField("cookieName", cn).Warn("no owner cookie present")
+					log.WithField("cookieName", cn).Debug("no owner cookie present")
 					resp.WriteHeader(http.StatusUnauthorized)
 					return
 				}
