@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/jsonschema"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,7 @@ var generateConfigCmd = &cobra.Command{
 	Short: "Generates JSON schema for the configuration",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		schema := jsonschema.Reflect(&Configuration{})
+		schema := jsonschema.Reflect(&config.ServiceConfiguration{})
 		schema.Title = "ws-manager config schema - generated using wsman generate config"
 		out, err := json.MarshalIndent(schema, "", "  ")
 		if err != nil {
