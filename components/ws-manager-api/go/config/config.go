@@ -19,7 +19,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
+	"github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/util"
+	cntntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 )
 
 type osFS struct{}
@@ -31,6 +33,30 @@ func (*osFS) Open(name string) (iofs.File, error) {
 // FS is used to load files referred to by this configuration.
 // We use a library here to be able to test things properly.
 var FS iofs.FS = &osFS{}
+
+// ServiceConfiguration configures the ws-manager configuration
+type ServiceConfiguration struct {
+	Manager Configuration `json:"manager"`
+	Content struct {
+		Storage cntntcfg.StorageConfig `json:"storage"`
+	} `json:"content"`
+	RPCServer struct {
+		Addr string `json:"addr"`
+		TLS  struct {
+			CA          string `json:"ca"`
+			Certificate string `json:"crt"`
+			PrivateKey  string `json:"key"`
+		} `json:"tls"`
+		RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
+	} `json:"rpcServer"`
+
+	PProf struct {
+		Addr string `json:"addr"`
+	} `json:"pprof"`
+	Prometheus struct {
+		Addr string `json:"addr"`
+	} `json:"prometheus"`
+}
 
 // Configuration is the configuration of the ws-manager
 type Configuration struct {

@@ -14,10 +14,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	cntntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
@@ -72,13 +70,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", "", "path to the kubeconfig file to use (defaults to in-cluster config)")
 }
 
-func getConfig() *Configuration {
+func getConfig() *config.ServiceConfiguration {
 	ctnt, err := os.ReadFile(cfgFile)
 	if err != nil {
 		log.WithError(err).Fatal("cannot read configuration. Maybe missing --config?")
 	}
 
-	var cfg Configuration
+	var cfg config.ServiceConfiguration
 	dec := json.NewDecoder(bytes.NewReader(ctnt))
 	dec.DisallowUnknownFields()
 	err = dec.Decode(&cfg)
@@ -87,27 +85,4 @@ func getConfig() *Configuration {
 	}
 
 	return &cfg
-}
-
-type Configuration struct {
-	Manager config.Configuration `json:"manager"`
-	Content struct {
-		Storage cntntcfg.StorageConfig `json:"storage"`
-	} `json:"content"`
-	RPCServer struct {
-		Addr string `json:"addr"`
-		TLS  struct {
-			CA          string `json:"ca"`
-			Certificate string `json:"crt"`
-			PrivateKey  string `json:"key"`
-		} `json:"tls"`
-		RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
-	} `json:"rpcServer"`
-
-	PProf struct {
-		Addr string `json:"addr"`
-	} `json:"pprof"`
-	Prometheus struct {
-		Addr string `json:"addr"`
-	} `json:"prometheus"`
 }
