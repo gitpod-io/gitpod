@@ -55,6 +55,7 @@ export class WorkspaceStarter {
 
     public async startWorkspace(ctx: TraceContext, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], options?: StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
+        span.setTag("workspaceId", workspace.id);
 
         options = options || {};
         try {
