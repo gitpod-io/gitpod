@@ -94,6 +94,9 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
+        - mountPath: /ide-config
+          name: ide-config
+          readOnly: true
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
@@ -112,6 +115,8 @@ spec:
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
         - name: CONFIG_PATH
           value: "/config/config.json"
+        - name: IDE_CONFIG_PATH
+          value: "/ide-config/config.json"
         - name: NODE_ENV
           value: "{{ .Values.installation.stage }}"
         - name: SHLVL
@@ -126,6 +131,9 @@ spec:
       - name: config
         configMap:
           name: server-config
+      - name: ide-config
+        configMap:
+          name: server-ide-config
       - name: ws-manager-client-tls-certs
         secret:
           secretName: {{ .Values.components.wsManager.tls.client.secretName }}
