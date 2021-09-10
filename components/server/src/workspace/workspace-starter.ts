@@ -29,6 +29,7 @@ import { UserService } from "../user/user-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
 import * as path from 'path';
+import { IDEConfig, IDEConfigService } from "../ide-config";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -40,6 +41,7 @@ export interface StartWorkspaceOptions {
 export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
     @inject(Config) protected readonly config: Config;
+    @inject(IDEConfigService) private readonly ideConfigService: IDEConfigService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
@@ -92,8 +94,10 @@ export class WorkspaceStarter {
             const pastInstances = await this.workspaceDb.trace({ span }).findInstances(workspace.id);
             const mustHaveBackup = pastInstances.some(i => !!i.status && !!i.status.conditions && !i.status.conditions.failed);
 
+            const ideConfig = await this.ideConfigService.config;
+
             // create and store instance
-            let instance = await this.workspaceDb.trace({ span }).storeInstance(await this.newInstance(workspace, user, options.excludeFeatureFlags || []));
+            let instance = await this.workspaceDb.trace({ span }).storeInstance(await this.newInstance(workspace, user, options.excludeFeatureFlags || [], ideConfig));
             span.log({ "newInstance": instance.id });
 
             const forceRebuild = !!workspace.context.forceImageBuild;
@@ -121,11 +125,11 @@ export class WorkspaceStarter {
             // If the caller requested that errors be rethrown we must await the actual workspace start to be in the exception path.
             // To this end we disable the needsImageBuild behaviour if rethrow is true.
             if (needsImageBuild && !options.rethrow) {
-                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, userEnvVars, options.rethrow, forceRebuild);
+                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, ideConfig, userEnvVars, options.rethrow, forceRebuild);
                 return { instanceID: instance.id };
             }
 
-            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, userEnvVars, options.rethrow, forceRebuild);
+            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, ideConfig, userEnvVars, options.rethrow, forceRebuild);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -136,7 +140,7 @@ export class WorkspaceStarter {
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself
     //       and creates its tracing span as followFrom rather than the usual childOf reference.
-    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, mustHaveBackup: boolean, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
+    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, mustHaveBackup: boolean, ideConfig: IDEConfig, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
         const span = TraceContext.startAsyncSpan("actuallyStartWorkspace", ctx);
 
         try {
@@ -151,7 +155,7 @@ export class WorkspaceStarter {
             }
 
             // create spec
-            const spec = await this.createSpec({span}, user, workspace, instance, mustHaveBackup, userEnvVars);
+            const spec = await this.createSpec({span}, user, workspace, instance, mustHaveBackup, ideConfig, userEnvVars);
 
             // create start workspace request
             const metadata = new WorkspaceMetadata();
@@ -274,20 +278,17 @@ export class WorkspaceStarter {
      *
      * @param workspace the workspace to create an instance for
      */
-    protected async newInstance(workspace: Workspace, user: User, excludeFeatureFlags: NamedWorkspaceFeatureFlag[]): Promise<WorkspaceInstance> {
-        const theiaVersion = this.config.workspaceDefaults.ideVersion;
-        const ideImage = this.config.workspaceDefaults.ideImage;
-
+    protected async newInstance(workspace: Workspace, user: User, excludeFeatureFlags: NamedWorkspaceFeatureFlag[], ideConfig: IDEConfig): Promise<WorkspaceInstance> {
         // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
         //           give that value precedence over the default choice.
         const configuration: WorkspaceInstanceConfiguration = {
-            theiaVersion,
-            ideImage,
+            theiaVersion: ideConfig.ideVersion,
+            ideImage: ideConfig.ideImage,
         };
 
         const ideChoice = user.additionalData?.ideSettings?.defaultIde;
         if (!!ideChoice) {
-            const mappedImage = this.config.workspaceDefaults.ideImageAliases[ideChoice];
+            const mappedImage = ideConfig.ideImageAliases[ideChoice];
             if (!!mappedImage) {
                 configuration.ideImage = mappedImage;
             } else if (this.authService.hasPermission(user, "ide-settings")) {
@@ -535,7 +536,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async createSpec(traceCtx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, mustHaveBackup: boolean, userEnvVars?: UserEnvVarValue[]): Promise<StartWorkspaceSpec> {
+    protected async createSpec(traceCtx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, mustHaveBackup: boolean, ideConfig: IDEConfig, userEnvVars?: UserEnvVarValue[]): Promise<StartWorkspaceSpec> {
         const context = workspace.context;
 
         let allEnvVars: UserEnvVarValue[] = [];
@@ -557,7 +558,7 @@ export class WorkspaceStarter {
         });
 
         const ideAlias = user.additionalData?.ideSettings?.defaultIde;
-        if (ideAlias && this.config.workspaceDefaults.ideImageAliases[ideAlias]) {
+        if (ideAlias && ideConfig.ideImageAliases[ideAlias]) {
             const ideAliasEnv = new EnvironmentVariable();
             ideAliasEnv.setName('GITPOD_IDE_ALIAS');
             ideAliasEnv.setValue(ideAlias);
@@ -679,7 +680,7 @@ export class WorkspaceStarter {
         if (!!instance.configuration?.ideImage) {
             ideImage = instance.configuration?.ideImage;
         } else {
-            ideImage = this.config.workspaceDefaults.ideImage;
+            ideImage = ideConfig.ideImage;
         }
 
         const spec = new StartWorkspaceSpec();

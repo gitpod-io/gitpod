@@ -4,13 +4,6 @@
 {{ $comp := .Values.components.server -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 
-{{- define "stable-image-full" -}}
-{{- $ := .root -}}
-{{- $gp := .gp -}}
-{{- $comp := .comp -}}
-{{ template "gitpod.comp.imageRepo" . }}:{{ $comp.stableVersion }}
-{{- end -}}
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -33,9 +26,6 @@ data:
         "license": "{{ .Values.license }}",
         "workspaceHeartbeat": {{ $comp.workspaceHeartbeat | toJson }},
         "workspaceDefaults": {
-            "ideVersion": "{{ .Values.components.workspace.codeImage.stableVersion }}",
-            "ideImageRepo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}",
-            "ideImageAliases": {{ (dict "code-latest" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage)) "code" (include "stable-image-full" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson }},
             "workspaceImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}",
             "previewFeatureFlags": {{ $comp.previewFeatureFlags | toJson }},
             "defaultFeatureFlags": {{ $comp.defaultFeatureFlags | toJson }}
