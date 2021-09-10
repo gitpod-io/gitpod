@@ -180,6 +180,7 @@ export class WorkspaceStarter {
             }
 
             // start that thing
+            log.info('starting instance', {instanceId: instance.id});
             const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
 
@@ -211,8 +212,7 @@ export class WorkspaceStarter {
             if (rethrow) {
                 throw err;
             } else {
-                // we "swallow" this error as the promise of this function might not be awaited to - and even so,
-                // we've already handled the error properly.
+                log.error("error starting instance", err, { instanceId: instance.id});
             }
 
             return { instanceID: instance.id };
