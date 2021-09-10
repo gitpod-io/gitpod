@@ -219,7 +219,9 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
     }
 
     protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {
+        let deadline = new Date(new Date().getTime() + 30000);
         return {
+            deadline
         }
     }
 
