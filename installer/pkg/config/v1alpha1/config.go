@@ -101,7 +101,8 @@ type ContainerRegistryExternal struct {
 type LogLevel string
 
 type WorkspaceRuntime struct {
-	FSShiftMethod FSShiftMethod `json:"fsShiftMethod"`
+	FSShiftMethod        FSShiftMethod `json:"fsShiftMethod"`
+	ContainerDRuntimeDir string        // @todo
 }
 
 type FSShiftMethod string

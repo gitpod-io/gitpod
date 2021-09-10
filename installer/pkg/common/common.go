@@ -131,6 +131,28 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 	}
 }
 
+// @todo(sje) is there a function that mirrors Sprig's template functions?
+type Certificate struct {
+	Cert string
+	Key  string
+}
+
+func GenerateCA(name string, daysValid int) (Certificate, error) {
+	return Certificate{
+		Cert: "ca cert",
+		Key:  "ca key",
+	}, nil
+}
+
+func GenerateSignedCert(name string, ips []interface{}, alternateDNS []string, daysValid int, ca Certificate) (Certificate, error) {
+	return Certificate{
+		Cert: "signed cert",
+		Key:  "signed key",
+	}, nil
+}
+
+// @todo(sje) end
+
 func ImageName(repo, name, tag string) string {
 	ref := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(repo, "/"), name, tag)
 	pref, err := reference.ParseNamed(ref)
@@ -242,5 +264,13 @@ var (
 	TypeMetaDeployment = metav1.TypeMeta{
 		APIVersion: "apps/v1",
 		Kind:       "Deployment",
+	}
+	TypeMetaCertificate = metav1.TypeMeta{
+		APIVersion: "cert-manager.io/v1",
+		Kind:       "Certificate",
+	}
+	TypeMetaSecret = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "Secret",
 	}
 )

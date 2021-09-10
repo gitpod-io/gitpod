@@ -12,6 +12,7 @@ const component = "ws-manager"
 
 // @todo(sje) don't include if component disabled
 var Objects = common.CompositeRenderFunc(
+	configmap,
 	deployment,
 	networkpolicy,
 	role,

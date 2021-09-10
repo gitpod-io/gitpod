@@ -8,8 +8,10 @@ require (
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.6
 	github.com/hexops/valast v1.4.0
+	github.com/jetstack/cert-manager v1.5.3
 	github.com/spf13/cobra v1.2.1
 	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
 	golang.org/x/text v0.3.7 // indirect
