@@ -11,17 +11,21 @@ import (
 	"time"
 )
 
+// X509CACert todo(sje): I'm not sure I like this name
+type X509CACert struct {
+	Cert *x509.Certificate
+	PrivateKey *rsa.PrivateKey
+}
+
 type Certificate struct {
 	Cert *bytes.Buffer
 	Key  *bytes.Buffer
 }
 
-func GenerateCA(name string, daysValid int) (Certificate, *x509.Certificate, *rsa.PrivateKey, error) {
-	caCert := Certificate{}
-
+func GenerateCA(name string, daysValid int) (*Certificate, *X509CACert, error) {
 	caPrivateKey, err := generateRSAKey()
 	if err != nil {
-		return caCert, nil, nil, err
+		return nil, nil, err
 	}
 
 	ca := &x509.Certificate{
@@ -39,7 +43,7 @@ func GenerateCA(name string, daysValid int) (Certificate, *x509.Certificate, *rs
 
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivateKey.PublicKey, caPrivateKey)
 	if err != nil {
-		return caCert, nil, nil, err
+		return  nil, nil, err
 	}
 
 	// pem encode
@@ -48,7 +52,7 @@ func GenerateCA(name string, daysValid int) (Certificate, *x509.Certificate, *rs
 		caPEM,
 		&pem.Block{Type: "CERTIFICATE", Bytes: caBytes},
 	); err != nil {
-		return caCert, nil, nil, err
+		return nil, nil, err
 	}
 
 	caPrivateKeyPEM := new(bytes.Buffer)
@@ -56,16 +60,23 @@ func GenerateCA(name string, daysValid int) (Certificate, *x509.Certificate, *rs
 		caPrivateKeyPEM,
 		&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(caPrivateKey)},
 	); err != nil {
-		return caCert, nil, nil, err
+		return nil, nil, err
 	}
 
-	caCert.Cert = caPEM
-	caCert.Key = caPrivateKeyPEM
+	cert := &Certificate{
+		Cert: caPEM,
+		Key: caPrivateKeyPEM,
+	}
 
-	return caCert, ca, caPrivateKey, nil
+	caCert := &X509CACert{
+		Cert: ca,
+		PrivateKey: caPrivateKey,
+	}
+
+	return cert, caCert, nil
 }
 
-func GenerateSignedCert(name string, dnsNames []string, daysValid int, ca *x509.Certificate, caPrivateKey *rsa.PrivateKey) (Certificate, error) {
+func GenerateSignedCert(name string, dnsNames []string, daysValid int, ca *X509CACert) (Certificate, error) {
 	cert := Certificate{}
 
 	certPrivKey, err := generateRSAKey()
@@ -87,7 +98,7 @@ func GenerateSignedCert(name string, dnsNames []string, daysValid int, ca *x509.
 		KeyUsage:     x509.KeyUsageDigitalSignature,
 	}
 
-	certBytes, err := x509.CreateCertificate(rand.Reader, template, ca, &certPrivKey.PublicKey, caPrivateKey)
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, ca.Cert, &certPrivKey.PublicKey, ca.PrivateKey)
 	if err != nil {
 		return cert, err
 	}

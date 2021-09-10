@@ -11,7 +11,7 @@ import (
 )
 
 func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
-	gitpodFullname := "gitpod" // todo(sje): do we need to replace "gitpod" with a fullNameOverride?
+	gitpodFullname := "gitpod"
 
 	serverAltNames := []string{
 		fmt.Sprintf("%s.%s", gitpodFullname, ctx.Namespace),
@@ -28,17 +28,17 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		"ws-manager",
 	}
 
-	caCert, ca, caPrivateKey, err := common.GenerateCA("wsmanager-caCert", 365)
+	caCert, x509CaCert, err := common.GenerateCA("wsmanager-caCert", 365)
 	if err != nil {
 		return nil, err
 	}
 
-	cert, err := common.GenerateSignedCert(gitpodFullname, serverAltNames, 365, ca, caPrivateKey)
+	cert, err := common.GenerateSignedCert(gitpodFullname, serverAltNames, 365, x509CaCert)
 	if err != nil {
 		return nil, err
 	}
 
-	clientCert, err := common.GenerateSignedCert(gitpodFullname, clientAltNames, 365, ca, caPrivateKey)
+	clientCert, err := common.GenerateSignedCert(gitpodFullname, clientAltNames, 365, x509CaCert)
 	if err != nil {
 		return nil, err
 	}
