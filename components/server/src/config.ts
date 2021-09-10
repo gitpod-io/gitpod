@@ -26,10 +26,6 @@ export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOption
 }
 
 export interface WorkspaceDefaults {
-    ideVersion: string;
-    ideImageRepo: string;
-    ideImage: string;
-    ideImageAliases: { [index: string]: string };
     workspaceImage: string;
     previewFeatureFlags: NamedWorkspaceFeatureFlag[];
     defaultFeatureFlags: NamedWorkspaceFeatureFlag[];
@@ -182,7 +178,6 @@ export namespace ConfigFile {
         if (brandingConfig) {
             brandingConfig = BrandingParser.normalize(brandingConfig);
         }
-        const ideImage = `${config.workspaceDefaults.ideImageRepo}:${config.workspaceDefaults.ideVersion}`;
         return {
             ...config,
             stage: translateLegacyStagename(config.stage),
@@ -191,14 +186,6 @@ export namespace ConfigFile {
             builtinAuthProvidersConfigured,
             brandingConfig,
             chargebeeProviderOptions,
-            workspaceDefaults: {
-                ...config.workspaceDefaults,
-                ideImage,
-                ideImageAliases: {
-                    ...config.workspaceDefaults.ideImageAliases,
-                    "theia": ideImage,
-                }
-            },
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,
                 startDate: config.workspaceGarbageCollection.startDate ? new Date(config.workspaceGarbageCollection.startDate).getTime() : Date.now(),

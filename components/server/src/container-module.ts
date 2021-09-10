@@ -80,9 +80,11 @@ import { ProjectsService } from './projects/projects-service';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config, ConfigFile } from './config';
 import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
+import { IDEConfigService } from './ide-config';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
+    bind(IDEConfigService).toSelf().inSingletonScope();
 
     bind(UserService).toSelf().inSingletonScope();
     bind(UserDeletionService).toSelf().inSingletonScope();
