@@ -11,7 +11,7 @@ import (
 )
 
 func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
-	gitpodFullname := "gitpod" // @todo(sje) do we need to replace "gitpod" with a fullNameOverride?
+	gitpodFullname := "gitpod" // todo(sje): do we need to replace "gitpod" with a fullNameOverride?
 
 	ca, err := common.GenerateCA("wsmanager-ca", 365)
 	if err != nil {
@@ -46,7 +46,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 	serverSecretName := "ws-manager-tls"
 	clientSecretName := "ws-manager-client-tls"
 
-	// @todo(sje) inject config and make conditional
+	// todo(sje): inject config and make conditional
 	return []runtime.Object{
 		&certmanagerv1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,

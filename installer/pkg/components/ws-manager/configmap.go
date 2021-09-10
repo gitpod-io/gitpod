@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// @todo(sje) use type in gitpod/components/ws-manager/cmd/root.go
+// todo(sje): use type in gitpod/components/ws-manager/cmd/root.go
 type managerConfigMap struct {
 	Manager config.Configuration `json:"manager"`
 	Content struct {
@@ -39,7 +39,7 @@ type managerConfigMap struct {
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	wsmcfg := managerConfigMap{
-		// @todo(sje) put in config values
+		// todo(sje): put in config values
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
 			SchedulerName:  "workspace-scheduler",
@@ -93,7 +93,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Stopping:            util.Duration(1 * time.Hour),
 				Interrupted:         util.Duration(5 * time.Minute),
 			},
-			EventTraceLog:        "", // @todo(sje) make conditional based on config
+			EventTraceLog:        "", // todo(sje): make conditional based on config
 			ReconnectionInterval: util.Duration(30 * time.Second),
 			RegistryFacadeHost:   "",
 		},

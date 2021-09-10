@@ -6,6 +6,8 @@ package common
 
 import (
 	"fmt"
+	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"strings"
 
 	"github.com/docker/distribution/reference"
@@ -131,7 +133,7 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 	}
 }
 
-// @todo(sje) is there a function that mirrors Sprig's template functions?
+// todo(sje): is there a function that mirrors Sprig's template functions?
 type Certificate struct {
 	Cert string
 	Key  string
@@ -151,7 +153,7 @@ func GenerateSignedCert(name string, ips []interface{}, alternateDNS []string, d
 	}, nil
 }
 
-// @todo(sje) end
+// todo(sje): end
 
 func ImageName(repo, name, tag string) string {
 	ref := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(repo, "/"), name, tag)
@@ -222,6 +224,32 @@ func StorageConfig(cfg *config.Config) storage.Config {
 
 	return *res
 }
+
+var (
+	TCPProtocol = func() *corev1.Protocol {
+		tcpProtocol := corev1.ProtocolTCP
+		return &tcpProtocol
+	}()
+	PrometheusIngressRule = networkingv1.NetworkPolicyIngressRule{
+		Ports: []networkingv1.NetworkPolicyPort{
+			{
+				Protocol: TCPProtocol,
+				Port: &intstr.IntOrString{IntVal: 9500},
+			},
+		},
+		From: []networkingv1.NetworkPolicyPeer{
+			{
+				// todo(sje): add these labels to the prometheus instance
+				PodSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app":       "prometheus",
+						"component": "server",
+					},
+				},
+			},
+		},
+	}
+)
 
 // TODO(cw): find a better way to do this. Those values must exist in the appropriate places already.
 var (

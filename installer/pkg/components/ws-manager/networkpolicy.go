@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// @todo(sje) establish how to pass in config with cw
+// todo(sje): establish how to pass in config with cw
 func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if !ctx.Config.InstallNetworkPolicies {
 		return nil, nil

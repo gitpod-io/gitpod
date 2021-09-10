@@ -38,7 +38,7 @@ func GenerateService(component string) RenderFunc {
 				Namespace: cfg.Namespace,
 				Labels:    labels,
 			},
-			// @todo(sje) decide how to pass a lot of config in with default values
+			// todo(sje): decide how to pass a lot of config in with default values
 			Spec: corev1.ServiceSpec{
 				Ports:                 []corev1.ServicePort{},
 				Selector:              map[string]string{},
