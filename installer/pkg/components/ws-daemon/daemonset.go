@@ -86,7 +86,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
 		},
 	}
-	if cfg.WorkspaceRuntime.FSShiftMethod == config.FSShiftShiftFS {
+	if cfg.Workspace.Runtime.FSShiftMethod == config.FSShiftShiftFS {
 		initContainers = append(initContainers, corev1.Container{
 			Name:  "shiftfs-module-loader",
 			Image: common.ImageName(cfg.Repository, "shiftfs-module-loader", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.ShiftFSModuleLoader.Version),

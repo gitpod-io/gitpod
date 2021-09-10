@@ -4,6 +4,11 @@
 
 package config
 
+import (
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
+	corev1 "k8s.io/api/core/v1"
+)
+
 type Config struct {
 	Kind       InstallationKind `json:"kind"`
 	Domain     string           `json:"domain"`
@@ -22,9 +27,9 @@ type Config struct {
 
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
 
-	InstallNetworkPolicies bool `json:"installNetworkPolicies"`
+	InstallNetworkPolicies bool `json:"installNetworkPolicies"` // todo(sje): remove - this is always true
 
-	WorkspaceRuntime WorkspaceRuntime `json:"workspaceRuntime"`
+	Workspace Workspace `json:"workspace"`
 }
 
 type Metadata struct {
@@ -100,9 +105,42 @@ type ContainerRegistryExternal struct {
 
 type LogLevel string
 
+type Resources struct {
+	// todo(sje): investigate using corev1.ResourceList
+	Requests struct {
+		CPU              string
+		Memory           string
+		Storage          string
+		EphemeralStorage string
+	}
+	Limits struct {
+		CPU              string
+		Memory           string
+		Storage          string
+		EphemeralStorage string
+	}
+	DynamicLimits struct {
+		CPU []resources.Bucket
+	}
+}
+
 type WorkspaceRuntime struct {
 	FSShiftMethod        FSShiftMethod `json:"fsShiftMethod"`
-	ContainerDRuntimeDir string        // @todo
+	ContainerDRuntimeDir string        `json:"containerdRuntimeDir"`
+}
+
+type WorkspaceTemplates struct {
+	Default    *corev1.Pod `json:"default"`
+	Prebuild   *corev1.Pod `json:"prebuild"`
+	Ghost      *corev1.Pod `json:"ghost"`
+	ImageBuild *corev1.Pod `json:"image_build"`
+	Regular    *corev1.Pod `json:"regular"`
+}
+
+type Workspace struct {
+	Runtime   WorkspaceRuntime   `json:"runtime"`
+	Resources Resources          `json:"resources"`
+	Templates WorkspaceTemplates `json:"templates"`
 }
 
 type FSShiftMethod string

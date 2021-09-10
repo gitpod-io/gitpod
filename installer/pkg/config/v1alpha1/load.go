@@ -49,8 +49,11 @@ func LoadMock() *Config {
 		Certificate: ObjectRef{
 			Name: "https-certs",
 		},
-		WorkspaceRuntime: WorkspaceRuntime{
-			FSShiftMethod: FSShiftFuseFS,
+		Workspace: Workspace{
+			Runtime: WorkspaceRuntime{
+				FSShiftMethod: FSShiftFuseFS,
+				ContainerDRuntimeDir: "/run/containerd/io.containerd.runtime.v2.task/k8s.io",
+			},
 		},
 	}
 }

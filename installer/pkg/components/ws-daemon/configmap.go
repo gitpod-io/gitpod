@@ -34,13 +34,13 @@ const (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var fsshift wsdapi.FSShiftMethod
-	switch ctx.Config.WorkspaceRuntime.FSShiftMethod {
+	switch ctx.Config.Workspace.Runtime.FSShiftMethod {
 	case config.FSShiftFuseFS:
 		fsshift = wsdapi.FSShiftMethod_FUSE
 	case config.FSShiftShiftFS:
 		fsshift = wsdapi.FSShiftMethod_SHIFTFS
 	default:
-		return nil, fmt.Errorf("unknown fs shift method: %s", ctx.Config.WorkspaceRuntime.FSShiftMethod)
+		return nil, fmt.Errorf("unknown fs shift method: %s", ctx.Config.Workspace.Runtime.FSShiftMethod)
 	}
 
 	wsdcfg := wsdconfig.Config{

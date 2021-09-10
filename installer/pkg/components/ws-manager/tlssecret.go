@@ -13,11 +13,6 @@ import (
 func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 	gitpodFullname := "gitpod" // todo(sje): do we need to replace "gitpod" with a fullNameOverride?
 
-	ca, err := common.GenerateCA("wsmanager-ca", 365)
-	if err != nil {
-		return nil, err
-	}
-
 	serverAltNames := []string{
 		fmt.Sprintf("%s.%s", gitpodFullname, ctx.Namespace),
 		fmt.Sprintf("%s.ws-manager.svc", ctx.Namespace),
@@ -33,12 +28,17 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		"ws-manager",
 	}
 
-	cert, err := common.GenerateSignedCert(gitpodFullname, nil, serverAltNames, 365, ca)
+	caCert, ca, caPrivateKey, err := common.GenerateCA("wsmanager-caCert", 365)
 	if err != nil {
 		return nil, err
 	}
 
-	clientCert, err := common.GenerateSignedCert(gitpodFullname, nil, clientAltNames, 365, ca)
+	cert, err := common.GenerateSignedCert(gitpodFullname, serverAltNames, 365, ca, caPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	clientCert, err := common.GenerateSignedCert(gitpodFullname, clientAltNames, 365, ca, caPrivateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				SecretName: serverSecretName,
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
-					Name:  "ca-issuer",
+					Name:  "caCert-issuer",
 					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
@@ -76,7 +76,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				SecretName: clientSecretName,
 				DNSNames:   clientAltNames,
 				IssuerRef: cmmeta.ObjectReference{
-					Name:  "ca-issuer",
+					Name:  "caCert-issuer",
 					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
@@ -90,9 +90,9 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(component),
 			},
 			Data: map[string][]byte{
-				"ca.crt":  []byte(ca.Cert),
-				"tls.crt": []byte(cert.Cert),
-				"tls.key": []byte(cert.Key),
+				"caCert.crt": []byte(caCert.Cert.String()),
+				"tls.crt":    []byte(cert.Cert.String()),
+				"tls.key":    []byte(cert.Key.String()),
 			},
 		},
 		&v1.Secret{
@@ -103,9 +103,9 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(component),
 			},
 			Data: map[string][]byte{
-				"ca.crt":  []byte(ca.Cert),
-				"tls.crt": []byte(clientCert.Cert),
-				"tls.key": []byte(clientCert.Key),
+				"caCert.crt": []byte(caCert.Cert.String()),
+				"tls.crt":    []byte(clientCert.Cert.String()),
+				"tls.key":    []byte(clientCert.Key.String()),
 			},
 		},
 	}, nil

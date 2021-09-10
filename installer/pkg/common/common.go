@@ -6,13 +6,12 @@ package common
 
 import (
 	"fmt"
-	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"strings"
-
 	"github.com/docker/distribution/reference"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -133,28 +132,6 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 	}
 }
 
-// todo(sje): is there a function that mirrors Sprig's template functions?
-type Certificate struct {
-	Cert string
-	Key  string
-}
-
-func GenerateCA(name string, daysValid int) (Certificate, error) {
-	return Certificate{
-		Cert: "ca cert",
-		Key:  "ca key",
-	}, nil
-}
-
-func GenerateSignedCert(name string, ips []interface{}, alternateDNS []string, daysValid int, ca Certificate) (Certificate, error) {
-	return Certificate{
-		Cert: "signed cert",
-		Key:  "signed key",
-	}, nil
-}
-
-// todo(sje): end
-
 func ImageName(repo, name, tag string) string {
 	ref := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(repo, "/"), name, tag)
 	pref, err := reference.ParseNamed(ref)
@@ -234,7 +211,7 @@ var (
 		Ports: []networkingv1.NetworkPolicyPort{
 			{
 				Protocol: TCPProtocol,
-				Port: &intstr.IntOrString{IntVal: 9500},
+				Port:     &intstr.IntOrString{IntVal: 9500},
 			},
 		},
 		From: []networkingv1.NetworkPolicyPeer{
