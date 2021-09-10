@@ -15,19 +15,20 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/api"
+	config "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 // BlobService implements BlobServiceServer
 type BlobService struct {
-	cfg storage.Config
+	cfg config.StorageConfig
 	s   storage.PresignedAccess
 
 	api.UnimplementedBlobServiceServer
 }
 
 // NewBlobService create a new content service
-func NewBlobService(cfg storage.Config) (res *BlobService, err error) {
+func NewBlobService(cfg config.StorageConfig) (res *BlobService, err error) {
 	s, err := storage.NewPresignedAccess(&cfg)
 	if err != nil {
 		return nil, err

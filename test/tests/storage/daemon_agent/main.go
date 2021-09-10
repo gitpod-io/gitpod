@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	ctntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"github.com/gitpod-io/gitpod/test/tests/storage/daemon_agent/api"
@@ -22,7 +23,7 @@ func main() {
 type daemonConfig struct {
 	Daemon struct {
 		Content struct {
-			Storage storage.Config `json:"storage"`
+			Storage ctntcfg.StorageConfig `json:"storage"`
 		} `json:"content"`
 	} `json:"daemon"`
 }

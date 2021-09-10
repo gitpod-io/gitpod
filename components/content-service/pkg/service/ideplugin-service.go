@@ -14,19 +14,20 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 // IDEPluginService implements IDEPluginServiceServer
 type IDEPluginService struct {
-	cfg storage.Config
+	cfg config.StorageConfig
 	s   storage.PresignedAccess
 
 	api.UnimplementedIDEPluginServiceServer
 }
 
 // NewIDEPluginService create a new IDE plugin service
-func NewIDEPluginService(cfg storage.Config) (res *IDEPluginService, err error) {
+func NewIDEPluginService(cfg config.StorageConfig) (res *IDEPluginService, err error) {
 	s, err := storage.NewPresignedAccess(&cfg)
 	if err != nil {
 		return nil, err

@@ -13,14 +13,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	storagemock "github.com/gitpod-io/gitpod/content-service/pkg/storage/mock"
 )
 
 func TestListLogs(t *testing.T) {
-	cfg := storage.Config{
-		Stage: storage.StageProduction,
-		Kind:  storage.GCloudStorage, // dummy, mocked away
+	cfg := config.StorageConfig{
+		Stage: config.StageProduction,
+		Kind:  config.GCloudStorage, // dummy, mocked away
 		BackupTrail: struct {
 			Enabled   bool "json:\"enabled\""
 			MaxLength int  "json:\"maxLength\""
@@ -60,7 +61,7 @@ func TestListLogs(t *testing.T) {
 
 			s := storagemock.NewMockPresignedAccess(ctrl)
 			da := storagemock.NewMockDirectAccess(ctrl)
-			daFactory := func(cfg *storage.Config) (storage.DirectAccess, error) {
+			daFactory := func(cfg *config.StorageConfig) (storage.DirectAccess, error) {
 				return da, nil
 			}
 			svc := HeadlessLogService{

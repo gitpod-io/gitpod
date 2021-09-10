@@ -20,24 +20,14 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	config "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 var _ DirectAccess = &DirectMinIOStorage{}
 
-// MinIOConfig MinIOconfigures the MinIO remote storage backend
-type MinIOConfig struct {
-	Endpoint        string `json:"endpoint"`
-	AccessKeyID     string `json:"accessKey"`
-	SecretAccessKey string `json:"secretKey"`
-	Secure          bool   `json:"secure,omitempty"`
-
-	Region         string `json:"region"`
-	ParallelUpload uint   `json:"parallelUpload,omitempty"`
-}
-
 // Validate checks if the GCloud storage MinIOconfig is valid
-func (c *MinIOConfig) Validate() error {
+func ValidateMinIOConfig(c *config.MinIOConfig) error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.Endpoint, validation.Required),
 		validation.Field(&c.AccessKeyID, validation.Required),
@@ -47,13 +37,13 @@ func (c *MinIOConfig) Validate() error {
 }
 
 // MinIOClient produces a new minio client based on this configuration
-func (c *MinIOConfig) MinIOClient() (*minio.Client, error) {
+func NewMinIOClient(c *config.MinIOConfig) (*minio.Client, error) {
 	if c.ParallelUpload == 0 {
 		c.ParallelUpload = 1
 	}
 
 	// now that we have all the information complete, validate if we're good to go
-	err := c.Validate()
+	err := ValidateMinIOConfig(c)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +60,8 @@ func (c *MinIOConfig) MinIOClient() (*minio.Client, error) {
 }
 
 // newDirectMinIOAccess provides direct access to the remote storage system
-func newDirectMinIOAccess(cfg MinIOConfig) (*DirectMinIOStorage, error) {
-	if err := cfg.Validate(); err != nil {
+func newDirectMinIOAccess(cfg config.MinIOConfig) (*DirectMinIOStorage, error) {
+	if err := ValidateMinIOConfig(&cfg); err != nil {
 		return nil, err
 	}
 	return &DirectMinIOStorage{MinIOConfig: cfg}, nil
@@ -82,7 +72,7 @@ type DirectMinIOStorage struct {
 	Username      string
 	WorkspaceName string
 	InstanceID    string
-	MinIOConfig   MinIOConfig
+	MinIOConfig   config.MinIOConfig
 
 	client *minio.Client
 
@@ -92,7 +82,7 @@ type DirectMinIOStorage struct {
 
 // Validate checks if the GCloud storage is MinIOconfigured properly
 func (rs *DirectMinIOStorage) Validate() error {
-	err := rs.MinIOConfig.Validate()
+	err := ValidateMinIOConfig(&rs.MinIOConfig)
 	if err != nil {
 		return err
 	}
@@ -113,7 +103,7 @@ func (rs *DirectMinIOStorage) Init(ctx context.Context, owner, workspace, instan
 		return err
 	}
 
-	cl, err := rs.MinIOConfig.MinIOClient()
+	cl, err := NewMinIOClient(&rs.MinIOConfig)
 	if err != nil {
 		return err
 	}
@@ -148,7 +138,7 @@ func (rs *DirectMinIOStorage) EnsureExists(ctx context.Context) (err error) {
 	return minioEnsureExists(ctx, rs.client, rs.bucketName(), rs.MinIOConfig)
 }
 
-func minioEnsureExists(ctx context.Context, client *minio.Client, bucketName string, miniIOConfig MinIOConfig) (err error) {
+func minioEnsureExists(ctx context.Context, client *minio.Client, bucketName string, miniIOConfig config.MinIOConfig) (err error) {
 	//nolint:staticcheck,ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DirectEnsureExists")
 	defer tracing.FinishSpan(span, &err)
@@ -310,8 +300,8 @@ func (rs *DirectMinIOStorage) objectName(name string) string {
 	return minioWorkspaceBackupObjectName(rs.WorkspaceName, name)
 }
 
-func newPresignedMinIOAccess(cfg MinIOConfig) (*presignedMinIOStorage, error) {
-	cl, err := cfg.MinIOClient()
+func newPresignedMinIOAccess(cfg config.MinIOConfig) (*presignedMinIOStorage, error) {
+	cl, err := NewMinIOClient(&cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +310,7 @@ func newPresignedMinIOAccess(cfg MinIOConfig) (*presignedMinIOStorage, error) {
 
 type presignedMinIOStorage struct {
 	client      *minio.Client
-	MinIOConfig MinIOConfig
+	MinIOConfig config.MinIOConfig
 }
 
 // EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from

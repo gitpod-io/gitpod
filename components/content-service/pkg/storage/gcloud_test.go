@@ -11,6 +11,7 @@ import (
 
 	"golang.org/x/xerrors"
 
+	"github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
@@ -18,7 +19,7 @@ func TestObjectAccessToNonExistentObj(t *testing.T) {
 	storage := objDoesNotExistGCloudStorage{
 		Delegate: &DirectGCPStorage{
 			WorkspaceName: "foobar",
-			Stage:         StageDevStaging,
+			Stage:         config.StageDevStaging,
 		},
 	}
 	var mappings []archive.IDMapping
