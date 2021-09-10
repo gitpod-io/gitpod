@@ -18,7 +18,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
+	"github.com/gitpod-io/gitpod/content-service/api/config"
 )
 
 var (
@@ -51,14 +51,14 @@ func Execute() {
 	}
 }
 
-func getConfig() *config {
+func getConfig() *serviceConfig {
 	ctnt, err := os.ReadFile(configFile)
 	if err != nil {
 		log.WithError(xerrors.Errorf("cannot read config: %w", err)).Error("cannot read configuration. Maybe missing --config?")
 		os.Exit(1)
 	}
 
-	var cfg config
+	var cfg serviceConfig
 	err = json.Unmarshal(ctnt, &cfg)
 	if err != nil {
 		log.WithError(err).Error("cannot read configuration. Maybe missing --config?")
@@ -73,7 +73,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file")
 }
 
-type config struct {
+type serviceConfig struct {
 	// Daemon  daemon.Config `json:"daemon"`
 	Service struct {
 		Addr string    `json:"address"`
@@ -85,7 +85,7 @@ type config struct {
 	PProf struct {
 		Addr string `json:"address"`
 	} `json:"pprof"`
-	Storage storage.Config `json:"storage"`
+	Storage config.StorageConfig `json:"storage"`
 }
 
 type tlsConfig struct {

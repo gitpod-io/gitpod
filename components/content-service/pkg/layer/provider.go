@@ -21,6 +21,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
@@ -34,7 +35,7 @@ const (
 )
 
 // NewProvider produces a new content layer provider
-func NewProvider(cfg *storage.Config) (*Provider, error) {
+func NewProvider(cfg *config.StorageConfig) (*Provider, error) {
 	s, err := storage.NewPresignedAccess(cfg)
 	if err != nil {
 		return nil, err

@@ -16,26 +16,27 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 // HeadlessLogService implements LogServiceServer
 type HeadlessLogService struct {
-	cfg       storage.Config
+	cfg       config.StorageConfig
 	s         storage.PresignedAccess
-	daFactory func(cfg *storage.Config) (storage.DirectAccess, error)
+	daFactory func(cfg *config.StorageConfig) (storage.DirectAccess, error)
 
 	api.UnimplementedHeadlessLogServiceServer
 }
 
 // NewHeadlessLogService create a new content service
-func NewHeadlessLogService(cfg storage.Config) (res *HeadlessLogService, err error) {
+func NewHeadlessLogService(cfg config.StorageConfig) (res *HeadlessLogService, err error) {
 	s, err := storage.NewPresignedAccess(&cfg)
 	if err != nil {
 		return nil, err
 	}
-	daFactory := func(cfg *storage.Config) (storage.DirectAccess, error) {
+	daFactory := func(cfg *config.StorageConfig) (storage.DirectAccess, error) {
 		return storage.NewDirectAccess(cfg)
 	}
 	return &HeadlessLogService{

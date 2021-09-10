@@ -16,19 +16,20 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 // WorkspaceService implements WorkspaceServiceServer
 type WorkspaceService struct {
-	cfg storage.Config
+	cfg config.StorageConfig
 	s   storage.PresignedAccess
 
 	api.UnimplementedWorkspaceServiceServer
 }
 
 // NewWorkspaceService create a new content service
-func NewWorkspaceService(cfg storage.Config) (res *WorkspaceService, err error) {
+func NewWorkspaceService(cfg config.StorageConfig) (res *WorkspaceService, err error) {
 	s, err := storage.NewPresignedAccess(&cfg)
 	if err != nil {
 		return nil, err

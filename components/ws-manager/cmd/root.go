@@ -17,7 +17,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
+	cntntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 )
 
@@ -92,7 +92,7 @@ func getConfig() *Configuration {
 type Configuration struct {
 	Manager config.Configuration `json:"manager"`
 	Content struct {
-		Storage storage.Config `json:"storage"`
+		Storage cntntcfg.StorageConfig `json:"storage"`
 	} `json:"content"`
 	RPCServer struct {
 		Addr string `json:"addr"`

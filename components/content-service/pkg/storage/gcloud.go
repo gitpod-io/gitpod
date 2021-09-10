@@ -31,21 +31,12 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	config "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/opentracing/opentracing-go"
 )
 
 var _ DirectAccess = &DirectGCPStorage{}
-
-// GCPConfig controls the access to GCloud resources/buckets
-type GCPConfig struct {
-	CredentialsFile string `json:"credentialsFile"`
-	Region          string `json:"region"`
-	Project         string `json:"projectId"`
-	ParallelUpload  int    `json:"parallelUpload"`
-
-	MaximumBackupCount int `json:"maximumBackupCount"`
-}
 
 var validateExistsInFilesystem = validation.By(func(o interface{}) error {
 	s, ok := o.(string)
@@ -63,7 +54,7 @@ var validateExistsInFilesystem = validation.By(func(o interface{}) error {
 })
 
 // Validate checks if the GCloud storage GCPconfig is valid
-func (c *GCPConfig) Validate() error {
+func ValidateGCPConfig(c *config.GCPConfig) error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.CredentialsFile, validateExistsInFilesystem),
 		validation.Field(&c.Region, validation.Required),
@@ -72,8 +63,8 @@ func (c *GCPConfig) Validate() error {
 }
 
 // newDirectGCPAccess provides direct access to the remote storage system
-func newDirectGCPAccess(cfg GCPConfig, stage Stage) (*DirectGCPStorage, error) {
-	if err := cfg.Validate(); err != nil {
+func newDirectGCPAccess(cfg config.GCPConfig, stage config.Stage) (*DirectGCPStorage, error) {
+	if err := ValidateGCPConfig(&cfg); err != nil {
 		return nil, err
 	}
 
@@ -88,8 +79,8 @@ type DirectGCPStorage struct {
 	Username      string
 	WorkspaceName string
 	InstanceID    string
-	GCPConfig     GCPConfig
-	Stage         Stage
+	GCPConfig     config.GCPConfig
+	Stage         config.Stage
 
 	client *gcpstorage.Client
 
@@ -99,7 +90,7 @@ type DirectGCPStorage struct {
 
 // Validate checks if the GCloud storage is GCPconfigured properly
 func (rs *DirectGCPStorage) Validate() error {
-	err := rs.GCPConfig.Validate()
+	err := ValidateGCPConfig(&rs.GCPConfig)
 	if err != nil {
 		return err
 	}
@@ -145,7 +136,7 @@ func (rs *DirectGCPStorage) EnsureExists(ctx context.Context) (err error) {
 	return gcpEnsureExists(ctx, rs.client, rs.bucketName(), rs.GCPConfig)
 }
 
-func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName string, gcpConfig GCPConfig) (err error) {
+func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName string, gcpConfig config.GCPConfig) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.EnsureExists")
 	defer tracing.FinishSpan(span, &err)
@@ -686,7 +677,7 @@ func (rs *DirectGCPStorage) BackupObject(name string) string {
 	return rs.objectName(name)
 }
 
-func gcpBucketName(stage Stage, ownerID string) string {
+func gcpBucketName(stage config.Stage, ownerID string) string {
 	return fmt.Sprintf("gitpod-%s-user-%s", stage, ownerID)
 }
 
@@ -710,7 +701,7 @@ func (rs *DirectGCPStorage) trailingObjectName(id string, t time.Time) string {
 	return fmt.Sprintf("%s%d-%s", rs.trailPrefix(), t.Unix(), id)
 }
 
-func newGCPClient(ctx context.Context, cfg GCPConfig) (*gcpstorage.Client, error) {
+func newGCPClient(ctx context.Context, cfg config.GCPConfig) (*gcpstorage.Client, error) {
 	credfile := cfg.CredentialsFile
 	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 		credfile = filepath.Join(tproot, credfile)
@@ -723,8 +714,8 @@ func newGCPClient(ctx context.Context, cfg GCPConfig) (*gcpstorage.Client, error
 	return client, nil
 }
 
-func newPresignedGCPAccess(config GCPConfig, stage Stage) (*PresignedGCPStorage, error) {
-	err := config.Validate()
+func newPresignedGCPAccess(config config.GCPConfig, stage config.Stage) (*PresignedGCPStorage, error) {
+	err := ValidateGCPConfig(&config)
 	if err != nil {
 		return nil, xerrors.Errorf("invalid config: %w", err)
 	}
@@ -767,8 +758,8 @@ func newPresignedGCPAccess(config GCPConfig, stage Stage) (*PresignedGCPStorage,
 
 // PresignedGCPStorage provides presigned URLs to access GCP storage objects
 type PresignedGCPStorage struct {
-	config     GCPConfig
-	stage      Stage
+	config     config.GCPConfig
+	stage      config.Stage
 	privateKey []byte
 	accessID   string
 }
