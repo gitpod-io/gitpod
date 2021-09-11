@@ -49,6 +49,8 @@
 #define INFO    "info"
 #define DEBUG   "debug"
 
+inline void ignore_unused_result() {}
+
 /*
  * Use the raw syscall for versions of glibc which don't include a function for
  * it, namely (glibc 2.12).
@@ -70,33 +72,41 @@ int setns(int fd, int nstype)
 }
 #endif
 
-static void write_log_with_info(const char *level, const char *function, int line, const char *format, ...)
+static void write_log(const char *level, const char *format, ...)
 {
-	char message[1024] = {};
-
+	char *message = NULL, *json = NULL;
 	va_list args;
-
-	if (level == NULL)
-		return;
+	int ret;
 
 	va_start(args, format);
-	if (vsnprintf(message, sizeof(message), format, args) < 0)
-		goto done;
-
-	printf("{\"level\":\"%s\", \"msg\": \"%s:%d %s\"}\n", level, function, line, message);
-	fflush(stdout);
-done:
+	ret = vasprintf(&message, format, args);
 	va_end(args);
+	if (ret < 0)
+	{
+		message = NULL;
+		goto out;
+	}
+
+	ret = asprintf(&json, "{\"level\":\"%s\", \"msg\": \"%s\"}\n", level, message);
+	if (ret < 0)
+	{
+		json = NULL;
+		goto out;
+	}
+
+	ignore_unused_result(write(1, json, ret));
+
+out:
+	free(message);
+	free(json);
 }
 
-#define write_log(level, fmt, ...) \
-	write_log_with_info((level), __FUNCTION__, __LINE__, (fmt), ##__VA_ARGS__)
-
-#define bail(fmt, ...)                                       \
-	do {                                                       \
+#define bail(fmt, ...)                                           \
+	do                                                           \
+	{                                                            \
 		write_log(FATAL, "nsenter: " fmt ": %m", ##__VA_ARGS__); \
 		exit(1);                                                 \
-	} while(0)
+	} while (0)
 
 void join_ns(char *fdstr, int nstype)
 {
@@ -114,11 +124,7 @@ void nsexec(void)
 	if (in_init == NULL || *in_init == '\0')
 		return;
 
-	char *log_level = getenv("LOG_LEVEL");
-	if (!log_level || strlen(log_level) == 0)
-		log_level = "INFO";
-
-	write_log(log_level, "nsexec started");
+	write_log(DEBUG, "nsexec started");
 
 	/*
 	 * Make the process non-dumpable, to avoid various race conditions that
@@ -132,53 +138,65 @@ void nsexec(void)
 	prctl(PR_SET_NAME, (unsigned long)"workspacekit:[CHILD]", 0, 0, 0);
 
 	char *mntnsfd = getenv("_LIBNSENTER_MNTNSFD");
-	if (mntnsfd != NULL) {
-		write_log(log_level, "join mnt namespace: %s", mntnsfd);
+	if (mntnsfd != NULL)
+	{
+		write_log(DEBUG, "join mnt namespace: %s", mntnsfd);
 		join_ns(mntnsfd, CLONE_NEWNS);
 	}
 
 	char *rootfd = getenv("_LIBNSENTER_ROOTFD");
-	if (rootfd != NULL) {
-		write_log(log_level, "chroot: %s", rootfd);
-		fchdir(atoi(rootfd));
-		chroot(".");
+	if (rootfd != NULL)
+	{
+		write_log(DEBUG, "chroot: %s", rootfd);
+		ignore_unused_result(fchdir(atoi(rootfd)));
+		ignore_unused_result(chroot("."));
 	}
 	char *cwdfd = getenv("_LIBNSENTER_CWDFD");
-	if (cwdfd != NULL) {
-		write_log(log_level, "chcwd: %s", cwdfd);
-		fchdir(atoi(cwdfd));
+	if (cwdfd != NULL)
+	{
+		write_log(DEBUG, "chcwd: %s", cwdfd);
+		ignore_unused_result(fchdir(atoi(cwdfd)));
 	}
 
 	char *netnsfd = getenv("_LIBNSENTER_NETNSFD");
-	if (netnsfd != NULL) {
-		write_log(log_level, "join net namespace: %s", netnsfd);
+	if (netnsfd != NULL)
+	{
+		write_log(DEBUG, "join net namespace: %s", netnsfd);
 		join_ns(netnsfd, CLONE_NEWNET);
 	}
 
 	char *pidnsfd = getenv("_LIBNSENTER_PIDNSFD");
-	if (pidnsfd != NULL) {
-		write_log(log_level, "join pid namespace: %s", pidnsfd);
+	if (pidnsfd != NULL)
+	{
+		write_log(DEBUG, "join pid namespace: %s", pidnsfd);
 		join_ns(pidnsfd, CLONE_NEWPID);
 	}
 
 	pid_t pid = fork();
-	if (pid == -1) {
+	if (pid == -1)
+	{
 		bail("failed to fork");
 	}
-	if (pid == 0) {
+	if (pid == 0)
+	{
 		/* child process*/
 		/* Finish executing, let the Go runtime take over. */
-		write(1, "", 1); // write NULL byte
+		ignore_unused_result(write(1, "", 1)); // write NULL byte
 		return;
 	}
 
 	int wstatus;
 	if (wait(&wstatus) < 0)
+	{
 		bail("failed to wait for child process");
+	}
 
-	if (WIFEXITED(wstatus)) {
+	if (WIFEXITED(wstatus))
+	{
 		exit(WEXITSTATUS(wstatus));
-	} else {
+	}
+	else
+	{
 		exit(1);
 	}
 }

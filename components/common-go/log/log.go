@@ -5,6 +5,7 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -131,28 +132,48 @@ func (f *gcpFormatter) Format(entry *log.Entry) ([]byte, error) {
 	return f.JSONFormatter.Format(entry)
 }
 
-// Writer produces a writer that wraps everything that's written to it in a log message.
+// JSONWriter produces a writer that wraps everything
+// that's written to it in a log message.
 // Callers are expected to close the returned writer.
 //
-// Beware: due to logEntry not being synchronised, writes to the returned writer must not
-//         concurrent.
-func Writer(logEntry *logrus.Entry) io.WriteCloser {
+// Beware: due to logEntry not being synchronised, writes
+// to the returned writer must not concurrent.
+func JSONWriter(logEntry *logrus.Entry) io.WriteCloser {
 	rd, rw := io.Pipe()
 	go func() {
-		b := make([]byte, 4096)
-		for {
-			n, err := rd.Read(b)
-			if err == io.EOF {
-				break
-			}
+		defer func() {
+			err := recover()
 			if err != nil {
-				log.WithError(err).Error("cannot read from content initializer output")
-				return
+				logrus.Warnf("log.JSONWriter panic: %v", err)
+			}
+		}()
+
+		dec := json.NewDecoder(rd)
+		for {
+			var entry jsonEntry
+			if err := dec.Decode(&entry); err != nil {
+				logrus.Errorf("log.JSONWriter decoding JSON: %v", err)
+				continue
 			}
 
-			logEntry.Debug(string(b[:n]))
+			// common field name
+			message := entry.Message
+			if message == "" {
+				// msg is defined in runc
+				message = entry.Msg
+			}
+
+			if entry.Level == logrus.DebugLevel || entry.Level == logrus.ErrorLevel {
+				logEntry.Log(entry.Level, message)
+			}
 		}
 	}()
 
 	return rw
+}
+
+type jsonEntry struct {
+	Level   logrus.Level `json:"level,omitempty"`
+	Message string       `json:"message,omitempty"`
+	Msg     string       `json:"msg,omitempty"`
 }
