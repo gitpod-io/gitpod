@@ -36,6 +36,8 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create daemon")
 		}
 
+		common_grpc.SetupLogging()
+
 		grpcMetrics := grpc_prometheus.NewServerMetrics()
 		grpcMetrics.EnableHandlingTimeHistogram()
 		reg.MustRegister(grpcMetrics)

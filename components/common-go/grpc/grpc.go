@@ -7,11 +7,14 @@ package grpc
 import (
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -66,4 +69,12 @@ func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary 
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(stream...)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unary...)),
 	}
+}
+
+func SetupLogging() {
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(
+		log.WithField("component", "grpc").WriterLevel(logrus.InfoLevel),
+		log.WithField("component", "grpc").WriterLevel(logrus.WarnLevel),
+		log.WithField("component", "grpc").WriterLevel(logrus.ErrorLevel),
+	))
 }

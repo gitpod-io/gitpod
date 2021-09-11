@@ -33,6 +33,8 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
 
+		common_grpc.SetupLogging()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		span, ctx := opentracing.StartSpanFromContext(ctx, "/cmd/Run")

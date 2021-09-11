@@ -49,6 +49,8 @@ var runCmd = &cobra.Command{
 		}
 		log.Info("wsman configuration is valid")
 
+		common_grpc.SetupLogging()
+
 		ctrl.SetLogger(logrusr.NewLogger(log.Log))
 
 		opts := ctrl.Options{

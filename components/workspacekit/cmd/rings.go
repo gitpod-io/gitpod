@@ -31,6 +31,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/lift"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
@@ -58,6 +59,8 @@ var ring0Cmd = &cobra.Command{
 	Run: func(_ *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 0)
+
+		common_grpc.SetupLogging()
 
 		exitCode := 1
 		defer handleExit(&exitCode)
@@ -177,6 +180,8 @@ var ring1Cmd = &cobra.Command{
 	Run: func(_cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 1)
+
+		common_grpc.SetupLogging()
 
 		exitCode := 1
 		defer handleExit(&exitCode)
@@ -606,6 +611,8 @@ var ring2Cmd = &cobra.Command{
 	Run: func(_cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 2)
+
+		common_grpc.SetupLogging()
 
 		exitCode := 1
 		defer handleExit(&exitCode)

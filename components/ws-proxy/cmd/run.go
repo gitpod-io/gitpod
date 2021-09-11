@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
@@ -32,6 +33,8 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
+
+		common_grpc.SetupLogging()
 
 		const wsmanConnectionAttempts = 5
 		workspaceInfoProvider := proxy.NewRemoteWorkspaceInfoProvider(cfg.WorkspaceInfoProviderConfig)
