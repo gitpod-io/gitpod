@@ -33,6 +33,8 @@ var runCmd = &cobra.Command{
 		cfg := getConfig()
 		reg := prometheus.NewRegistry()
 
+		common_grpc.SetupLogging()
+
 		grpcMetrics := grpc_prometheus.NewServerMetrics()
 		grpcMetrics.EnableHandlingTimeHistogram()
 		reg.MustRegister(grpcMetrics)
