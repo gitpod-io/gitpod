@@ -235,7 +235,7 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		"source": source,
 		"dest":   dest,
 		"fstype": filesystem,
-	}).Info("handling mount syscall")
+	}).Debug("handling mount syscall")
 
 	if filesystem == "proc" || filesystem == "sysfs" {
 		// When a process wants to mount proc relative to `/proc/self` that path has no meaning outside of the processes' context.

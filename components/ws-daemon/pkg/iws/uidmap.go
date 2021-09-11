@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -66,8 +65,13 @@ func (m *Uidmapper) HandleUIDMappingRequest(ctx context.Context, req *api.WriteI
 		return err
 	}
 
-	fields := logrus.Fields{"req": string(reqjson), "containerID": containerID, "instanceId": instanceID}
-	log.WithFields(fields).Info("received UID mapping request")
+	log := log.WithFields(map[string]interface{}{
+		"req":         string(reqjson),
+		"containerID": containerID,
+		"instanceId":  instanceID,
+	})
+
+	log.Debug("received UID mapping request")
 
 	err = m.validateMapping(req.Mapping)
 	if err != nil {
@@ -76,25 +80,27 @@ func (m *Uidmapper) HandleUIDMappingRequest(ctx context.Context, req *api.WriteI
 
 	containerPID, err := m.Runtime.ContainerPID(ctx, containerID)
 	if err != nil {
-		log.WithError(err).WithFields(fields).Error("handleUIDMappingRequest: cannot get containerPID")
+		log.WithError(err).Error("handleUIDMappingRequest: cannot get containerPID")
 		return status.Error(codes.Internal, "cannot establish mapping")
 	}
-	fields["containerPID"] = containerPID
+
+	log.WithField("containerPID", containerPID)
 
 	hostPID, err := m.findHostPID(uint64(containerPID), uint64(req.Pid))
 	if err != nil {
-		log.WithError(err).WithFields(fields).Error("handleUIDMappingRequest: cannot find PID on host")
+		log.WithError(err).Error("handleUIDMappingRequest: cannot find PID on host")
 		return status.Error(codes.InvalidArgument, "cannot find PID")
 	}
-	fields["hostPID"] = hostPID
+
+	log = log.WithField("hostPID", hostPID)
 
 	err = WriteMapping(hostPID, req.Gid, req.Mapping)
 	if err != nil {
-		log.WithError(err).WithFields(fields).Error("handleUIDMappingRequest: cannot write mapping")
+		log.WithError(err).Error("handleUIDMappingRequest: cannot write mapping")
 		return status.Error(codes.FailedPrecondition, "cannot write mapping")
 	}
 
-	log.WithFields(fields).Info("established UID/GID mapping")
+	log.Debug("established UID/GID mapping")
 
 	return nil
 }

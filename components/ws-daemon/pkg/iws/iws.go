@@ -667,7 +667,7 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 		cmd.ExtraFiles = append(cmd.ExtraFiles, f)
 	}
 
-	rw := log.Writer(log.WithFields(log.OWI("", "", instanceID)))
+	rw := log.JSONWriter(log.WithFields(log.OWI("", "", instanceID)))
 	defer rw.Close()
 
 	cmd.Stdout = rw
