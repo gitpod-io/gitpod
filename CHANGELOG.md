@@ -41,11 +41,6 @@
 - [blobserve] Add error handling in MarkDone ([#5486](https://github.com/gitpod-io/gitpod/pull/5486)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - [ws-manager] Increase readiness probe initial delay ([#5489](https://github.com/gitpod-io/gitpod/pull/5489)) - [@aledbf](https://github.com/aledbf)
 - vscode desktop on windows ([#5456](https://github.com/gitpod-io/gitpod/pull/5456)) - [@akosyakov](https://github.com/akosyakov)
-
-## August 2021
-- [server] Bump gitpod-yml-inferrer ([#5438](https://github.com/gitpod-io/gitpod/pull/5438)) - [@jankeromnes](https://github.com/jankeromnes)
-
-## September 2021
 - Fix dark theme colors and overflowing rounded corners ([#5481](https://github.com/gitpod-io/gitpod/pull/5481)) - [@gtsiolis](https://github.com/gtsiolis)
 - Enable Teams & Projects on joining of a team ([#5477](https://github.com/gitpod-io/gitpod/pull/5477)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [server] Fix temporary config validation ([#5485](https://github.com/gitpod-io/gitpod/pull/5485)) - [@geropl](https://github.com/geropl)
@@ -59,6 +54,7 @@
 - Prebuild Events ([#5116](https://github.com/gitpod-io/gitpod/pull/5116)) - [@AlexTugarev](https://github.com/AlexTugarev)
 
 ## August 2021
+- [server] Bump gitpod-yml-inferrer ([#5438](https://github.com/gitpod-io/gitpod/pull/5438)) - [@jankeromnes](https://github.com/jankeromnes)
 - [server] Allow team members (and everyone in legacy mode) to access prebuilds ([#5433](https://github.com/gitpod-io/gitpod/pull/5433)) - [@jankeromnes](https://github.com/jankeromnes), [@svenefftinge](https://github.com/svenefftinge)
 - [owners] Introduce the IDE team ([#5459](https://github.com/gitpod-io/gitpod/pull/5459)) - [@csweichel](https://github.com/csweichel)
 - [ws-manager-bridge] Remove unused grpc dependency ([#5457](https://github.com/gitpod-io/gitpod/pull/5457)) - [@aledbf](https://github.com/aledbf)
