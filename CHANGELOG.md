@@ -1,6 +1,10 @@
 # Change Log
 
 ## September 2021
+- [chart] Redirect bash debug to stdout ([#5283](https://github.com/gitpod-io/gitpod/pull/5283)) - [@aledbf](https://github.com/aledbf)
+- OpenVSX proxy cache ([#4997](https://github.com/gitpod-io/gitpod/pull/4997)) - [@corneliusludmann](https://github.com/corneliusludmann)
+- VS Code Desktop support ([#5599](https://github.com/gitpod-io/gitpod/pull/5599)) - [@akosyakov](https://github.com/akosyakov)
+- [ws-daemon] Update runc to v1.0.1 ([#5190](https://github.com/gitpod-io/gitpod/pull/5190)) - [@aledbf](https://github.com/aledbf)
 - GitLab users who have not completed the auth process on GitLab will be notified with an error message. ([#5568](https://github.com/gitpod-io/gitpod/pull/5568)) ([#5568](https://github.com/gitpod-io/gitpod/pull/5568)) - [@laushinka](https://github.com/laushinka)
 - [build] automated changelog extraction ([#5462](https://github.com/gitpod-io/gitpod/pull/5462)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
 - Change default branch label colors for dark theme ([#5556](https://github.com/gitpod-io/gitpod/pull/5556)) - [@gtsiolis](https://github.com/gtsiolis)
