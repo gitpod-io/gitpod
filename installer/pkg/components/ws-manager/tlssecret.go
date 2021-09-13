@@ -5,16 +5,14 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"time"
 )
 
 func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
-	gitpodFullname := "gitpod"
-
 	serverAltNames := []string{
-		fmt.Sprintf("%s.%s", gitpodFullname, ctx.Namespace),
+		fmt.Sprintf("gitpod.%s", ctx.Namespace),
 		fmt.Sprintf("%s.ws-manager.svc", ctx.Namespace),
 		"ws-manager",
 		"ws-manager-dev",
@@ -28,25 +26,11 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		"ws-manager",
 	}
 
-	caCert, x509CaCert, err := common.GenerateCA("wsmanager-caCert", 365)
-	if err != nil {
-		return nil, err
-	}
-
-	cert, err := common.GenerateSignedCert(gitpodFullname, serverAltNames, 365, x509CaCert)
-	if err != nil {
-		return nil, err
-	}
-
-	clientCert, err := common.GenerateSignedCert(gitpodFullname, clientAltNames, 365, x509CaCert)
-	if err != nil {
-		return nil, err
-	}
-
 	serverSecretName := "ws-manager-tls"
 	clientSecretName := "ws-manager-client-tls"
+	sixMonths := &metav1.Duration{Duration: time.Hour * 4380}
+	issuer := "ca-issuer"
 
-	// todo(sje): inject config and make conditional
 	return []runtime.Object{
 		&certmanagerv1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,
@@ -56,10 +40,11 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(component),
 			},
 			Spec: certmanagerv1.CertificateSpec{
+				Duration:   sixMonths,
 				SecretName: serverSecretName,
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
-					Name:  "caCert-issuer",
+					Name:  issuer,
 					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
@@ -73,39 +58,14 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(component),
 			},
 			Spec: certmanagerv1.CertificateSpec{
+				Duration:   sixMonths,
 				SecretName: clientSecretName,
 				DNSNames:   clientAltNames,
 				IssuerRef: cmmeta.ObjectReference{
-					Name:  "caCert-issuer",
+					Name:  issuer,
 					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
-			},
-		},
-		&v1.Secret{
-			TypeMeta: common.TypeMetaSecret,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      serverSecretName,
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(component),
-			},
-			Data: map[string][]byte{
-				"caCert.crt": []byte(caCert.Cert.String()),
-				"tls.crt":    []byte(cert.Cert.String()),
-				"tls.key":    []byte(cert.Key.String()),
-			},
-		},
-		&v1.Secret{
-			TypeMeta: common.TypeMetaSecret,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      clientSecretName,
-				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(component),
-			},
-			Data: map[string][]byte{
-				"caCert.crt": []byte(caCert.Cert.String()),
-				"tls.crt":    []byte(clientCert.Cert.String()),
-				"tls.key":    []byte(clientCert.Key.String()),
 			},
 		},
 	}, nil
