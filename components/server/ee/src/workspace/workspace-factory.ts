@@ -192,11 +192,6 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
         this.requireEELicense(Feature.FeaturePrebuild);
         const span = TraceContext.startSpan("createForPrebuiltWorkspace", ctx);
 
-        const fallback = await this.fallbackIfOutPrebuildTime(ctx, user, context, normalizedContextURL);
-        if (!!fallback) {
-            return fallback;
-        }
-
         try {
             const buildWorkspaceID = context.prebuiltWorkspace.buildWorkspaceId;
             const buildWorkspace = await this.db.trace({span}).findById(buildWorkspaceID);
@@ -239,17 +234,6 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
         } finally {
             span.finish();
         }
-    }
-
-    protected async fallbackIfOutPrebuildTime(ctx: TraceContext, user: User, context: PrebuiltWorkspaceContext, normalizedContextURL: string): Promise<Workspace | undefined> {
-        const prebuildTime = await this.db.trace({}).getTotalPrebuildUseSeconds(30);
-        if (!this.licenseEvaluator.canUsePrebuild(prebuildTime || 0)) {
-            // TODO: find a way to signal the out-of-prebuild-time situation
-            log.warn({}, "cannot use prebuild because enterprise license prevents it", {prebuildTime});
-            return this.createForContext(ctx, user, context.originalContext, normalizedContextURL);
-        }
-
-        return;
     }
 
 }

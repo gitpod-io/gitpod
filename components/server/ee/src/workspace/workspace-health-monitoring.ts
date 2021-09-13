@@ -10,7 +10,7 @@ import { WorkspaceInstance, WorkspaceProbeContext, RunningWorkspaceInfo } from "
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { URL } from "url";
 import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
-import { UserDB, BUILTIN_WORKSPACE_PROBE_USER_NAME, WorkspaceDB, TracedWorkspaceDB, DBWithTracing, TracedUserDB } from "@gitpod/gitpod-db/lib";
+import { UserDB, BUILTIN_WORKSPACE_PROBE_USER_ID, WorkspaceDB, TracedWorkspaceDB, DBWithTracing, TracedUserDB } from "@gitpod/gitpod-db/lib";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
 import fetch from "node-fetch";
 import { Config } from "../../../src/config";
@@ -37,7 +37,7 @@ export class WorkspaceHealthMonitoring {
         const span = TraceContext.startSpan("startWorkspaceProbe", ctx);
 
         try {
-            const user = await this.userDB.trace({span}).findUserByName(BUILTIN_WORKSPACE_PROBE_USER_NAME);
+            const user = await this.userDB.trace({span}).findUserById(BUILTIN_WORKSPACE_PROBE_USER_ID);
             if (!user) {
                 throw new Error("cannot find workspace probe user. DB not set up properly?")
             }

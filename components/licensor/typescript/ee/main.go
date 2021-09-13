@@ -7,7 +7,6 @@ package main
 import (
 	"C"
 	"encoding/json"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -61,18 +60,6 @@ func HasEnoughSeats(id int, seats int) (permitted, ok bool) {
 	}
 
 	return e.HasEnoughSeats(seats), true
-}
-
-// CanUsePrebuild returns true if the use a prebuild is permissible under the license,
-// given the total prebuild time used already.
-//export CanUsePrebuild
-func CanUsePrebuild(id int, totalSecondsUsed int64) (permitted, ok bool) {
-	e, ok := instances[id]
-	if !ok {
-		return
-	}
-
-	return e.CanUsePrebuild(time.Duration(totalSecondsUsed) * time.Second), true
 }
 
 // Inspect returns the license information this evaluator holds.

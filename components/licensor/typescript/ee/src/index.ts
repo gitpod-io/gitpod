@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject, postConstruct } from 'inversify';
-import { init, Instance, dispose, isEnabled, hasEnoughSeats, canUsePrebuild, inspect, validate } from "./nativemodule";
+import { init, Instance, dispose, isEnabled, hasEnoughSeats, inspect, validate } from "./nativemodule";
 import { Feature, LicensePayload } from './api';
 
 export const LicenseKeySource = Symbol("LicenseKeySource");
@@ -55,10 +55,6 @@ export class LicenseEvaluator {
 
     public hasEnoughSeats(seats: number): boolean {
         return hasEnoughSeats(this.instanceID, seats);
-    }
-
-    public canUsePrebuild(totalPrebuildSecondsSpent: number): boolean {
-        return canUsePrebuild(this.instanceID, totalPrebuildSecondsSpent);
     }
 
     public inspect(): LicensePayload {

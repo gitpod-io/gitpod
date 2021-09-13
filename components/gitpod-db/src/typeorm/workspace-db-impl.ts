@@ -18,7 +18,7 @@ import { DBRepositoryWhiteList } from "./entity/db-repository-whitelist";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DBPrebuiltWorkspace } from "./entity/db-prebuilt-workspace";
 import { DBPrebuiltWorkspaceUpdatable } from "./entity/db-prebuilt-workspace-updatable";
-import { BUILTIN_WORKSPACE_PROBE_USER_NAME } from "../user-db";
+import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../user-db";
 import { DBPrebuildInfo } from "./entity/db-prebuild-info-entry";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
@@ -463,11 +463,9 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                                     ws.softDeletedTime < NOW() - INTERVAL ? DAY
                                 OR  ws.softDeletedTime = ''
                             )
-                        AND ws.ownerId NOT IN (
-                            SELECT id from d_b_user WHERE name = ?
-                        )
+                        AND ws.ownerId <> ?
                     LIMIT ?;
-            `, [minSoftDeletedTimeInDays, BUILTIN_WORKSPACE_PROBE_USER_NAME, limit]);
+            `, [minSoftDeletedTimeInDays, BUILTIN_WORKSPACE_PROBE_USER_ID, limit]);
 
         return dbResults as WorkspaceOwnerAndSoftDeleted[];
     }
@@ -572,25 +570,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .orderBy('pws.creationTime', 'DESC')
             .innerJoinAndMapOne('pws.workspace', DBWorkspace, 'ws', "pws.buildWorkspaceId = ws.id and ws.contentDeletedTime = ''")
             .getOne();
-    }
-
-    public async getTotalPrebuildUseSeconds(forDays: number): Promise<number | undefined> {
-        const manager = await this.getManager();
-        const res = await manager.query(`
-            SELECT SUM(COALESCE(STR_TO_DATE(wsi.stoppedTime, "%Y-%m-%dT%H:%i:%s.%fZ") - STR_TO_DATE(wsi.startedTime, "%Y-%m-%dT%H:%i:%s.%fZ"))) AS tps FROM d_b_workspace_instance wsi
-            INNER JOIN d_b_prebuilt_workspace pws ON pws.buildWorkspaceId = wsi.workspaceId
-            INNER JOIN (
-	            SELECT ws.context->>'$.prebuildWorkspaceId' as sid FROM d_b_workspace ws
-                WHERE  ws.creationTime > NOW() - INTERVAL ? DAY
-                  AND  JSON_EXTRACT(ws.context, '$.prebuildWorkspaceId') IS NOT NULL
-            ) AS sns ON sns.sid = pws.id
-            WHERE wsi.startedTime IS NOT NULL
-        `, [forDays]);
-        if (!res || res.length < 1) {
-            return;
-        }
-
-        return res[0].tps;
     }
 
     public async findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined> {

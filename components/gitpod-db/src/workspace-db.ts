@@ -95,7 +95,6 @@ export interface WorkspaceDB {
     findSnapshotsByWorkspaceId(workspaceId: string): Promise<Snapshot[]>;
     storeSnapshot(snapshot: Snapshot): Promise<Snapshot>;
 
-    getTotalPrebuildUseSeconds(forDays: number): Promise<number | undefined>;
     storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace>;
     findPrebuiltWorkspaceByCommit(cloneURL: string, commit: string): Promise<PrebuiltWorkspace | undefined>;
     findPrebuildsWithWorkpace(cloneURL: string): Promise<PrebuildWithWorkspace[]>;
