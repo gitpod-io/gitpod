@@ -20,7 +20,7 @@ export class NewsletterSubscriptionController {
         router.get("/unsubscribe", async (req: express.Request, res: express.Response) => {
             const email: string = req.query.email;
             const newsletterType: string = req.query.type;
-            const acceptedNewsletterTypes: string[] = ["changelog", "devx"];
+            const acceptedNewsletterTypes: string[] = ["changelog", "devx", "onboarding"];
             const newsletterProperties: {[key:string]: {[key: string]: string}} = {
                 changelog: {
                     property: "unsubscribed_changelog",
@@ -29,6 +29,10 @@ export class NewsletterSubscriptionController {
                 devx: {
                     property: "unsubscribed_devx",
                     value: "allowsDevXMail"
+                },
+                onboarding: {
+                    property: "unsubscribed_onboarding",
+                    value: "allowsOnboardingMail"
                 }
             }
 
