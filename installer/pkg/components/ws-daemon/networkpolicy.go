@@ -27,7 +27,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
 								Protocol: common.TCPProtocol,
-								Port:     &intstr.IntOrString{IntVal: 8080}, // todo(sje): use constant
+								Port:     &intstr.IntOrString{IntVal: ServicePort},
 							},
 						},
 						From: []networkingv1.NetworkPolicyPeer{

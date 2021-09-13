@@ -214,8 +214,8 @@ sysctl -w vm.unprivileged_userfaultfd=0
 							},
 							Ports: []corev1.ContainerPort{{
 								Name:          "rpc",
-								HostPort:      8080,
-								ContainerPort: 8080,
+								HostPort:      ServicePort,
+								ContainerPort: ServicePort,
 							}},
 							Env: common.MergeEnv(
 								common.DefaultEnv(&cfg),
