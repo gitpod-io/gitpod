@@ -9,6 +9,7 @@ packages:
         - components/common-go:lib
         - components/ws-daemon:lib
         - components/ws-manager-api/go:lib
+        - components/content-service:lib
       env:
         - CGO_ENABLED=0
       config:

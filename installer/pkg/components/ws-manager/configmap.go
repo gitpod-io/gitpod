@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/util"
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
+	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	corev1 "k8s.io/api/core/v1"
@@ -14,31 +14,8 @@ import (
 	"time"
 )
 
-// todo(sje): use type in gitpod/components/ws-manager/cmd/root.go
-type managerConfigMap struct {
-	Manager config.Configuration `json:"manager"`
-	Content struct {
-		Storage storage.Config `json:"storage"`
-	} `json:"content"`
-	RPCServer struct {
-		Addr string `json:"addr"`
-		TLS  struct {
-			CA          string `json:"ca"`
-			Certificate string `json:"crt"`
-			PrivateKey  string `json:"key"`
-		} `json:"tls"`
-		RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
-	} `json:"rpcServer"`
-	PProf struct {
-		Addr string `json:"addr"`
-	} `json:"pprof"`
-	Prometheus struct {
-		Addr string `json:"addr"`
-	} `json:"prometheus"`
-}
-
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	wsmcfg := managerConfigMap{
+	wsmcfg := config.ServiceConfiguration{
 		// todo(sje): put in config values
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
@@ -98,8 +75,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RegistryFacadeHost:   "",
 		},
 		Content: struct {
-			Storage storage.Config `json:"storage"`
-		}{Storage: storage.Config{}},
+			Storage storageconfig.StorageConfig `json:"storage"`
+		}{Storage: storageconfig.StorageConfig{}},
 		RPCServer: struct {
 			Addr string `json:"addr"`
 			TLS  struct {
