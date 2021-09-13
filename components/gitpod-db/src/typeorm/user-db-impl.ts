@@ -11,7 +11,7 @@ import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthClient, OAu
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import * as uuidv4 from 'uuid/v4';
-import { BUILTIN_WORKSPACE_PROBE_USER_NAME, MaybeUser, PartialUserUpdate, UserDB } from "../user-db";
+import { BUILTIN_WORKSPACE_PROBE_USER_ID, MaybeUser, PartialUserUpdate, UserDB } from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBIdentity } from "./entity/db-identity";
 import { DBTokenEntry } from "./entity/db-token-entry";
@@ -310,7 +310,7 @@ export class TypeORMUserDBImpl implements UserDB {
             WHERE markedDeleted != true`;
         if (excludeBuiltinUsers) {
             query = `${query}
-                AND name <> '${BUILTIN_WORKSPACE_PROBE_USER_NAME}'`
+                AND id <> '${BUILTIN_WORKSPACE_PROBE_USER_ID}'`
         }
         const res = await userRepo.query(query);
         const count = res[0].cnt;
@@ -354,7 +354,7 @@ export class TypeORMUserDBImpl implements UserDB {
             qBuilder.andWhere("user.creationDate < :maxCreationDate", { maxCreationDate: maxCreationDate.toISOString() });
         }
         if (excludeBuiltinUsers) {
-            qBuilder.andWhere("user.name <> :username", { username: BUILTIN_WORKSPACE_PROBE_USER_NAME })
+            qBuilder.andWhere("user.id <> :userId", { userId: BUILTIN_WORKSPACE_PROBE_USER_ID })
         }
         qBuilder.orderBy("user." + orderBy, orderDir);
         qBuilder.skip(offset).take(limit).select();

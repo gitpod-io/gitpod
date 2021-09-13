@@ -119,7 +119,7 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
 }
 export type PartialUserUpdate = Partial<Omit<User, "identities">> & Pick<User, "id">
 
-export const BUILTIN_WORKSPACE_PROBE_USER_NAME = "builtin-workspace-prober";
+export const BUILTIN_WORKSPACE_PROBE_USER_ID = "builtin-user-workspace-probe-0000000";
 
 export interface OwnerAndRepo {
     owner: string

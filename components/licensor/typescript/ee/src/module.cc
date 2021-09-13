@@ -165,41 +165,6 @@ void HasEnoughSeatsM(const FunctionCallbackInfo<Value> &args) {
     args.GetReturnValue().Set(Boolean::New(isolate, r.r0));
 }
 
-void CanUsePrebuildM(const FunctionCallbackInfo<Value> &args) {
-    Isolate *isolate = args.GetIsolate();
-    Local<Context> context = isolate->GetCurrentContext();
-
-    if (args.Length() < 2) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments")));
-        return;
-    }
-    if (!args[0]->IsNumber() || args[0]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 0 must be a number")));
-        return;
-    }
-    if (!args[1]->IsNumber() || args[1]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 1 must be a number")));
-        return;
-    }
-
-    double rid = args[0]->NumberValue(context).FromMaybe(0);
-    int id = static_cast<int>(rid);
-    double rsec = args[1]->NumberValue(context).FromMaybe(-1);
-    GoInt64 sec = static_cast<GoInt64>(rsec);
-    if (sec < 0) {
-        isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "cannot convert total prebuild time used")));
-    }
-
-    CanUsePrebuild_return r = CanUsePrebuild(id, sec);
-    if (!r.r1) {
-        isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "invalid instance ID")));
-        return;
-    }
-
-    // return the value
-    args.GetReturnValue().Set(Boolean::New(isolate, r.r0));
-}
-
 void InspectM(const FunctionCallbackInfo<Value> &args) {
     Isolate *isolate = args.GetIsolate();
     Local<Context> context = isolate->GetCurrentContext();
@@ -250,7 +215,6 @@ void initModule(Local<Object> exports) {
     NODE_SET_METHOD(exports, "validate", ValidateM);
     NODE_SET_METHOD(exports, "isEnabled", EnabledM);
     NODE_SET_METHOD(exports, "hasEnoughSeats", HasEnoughSeatsM);
-    NODE_SET_METHOD(exports, "canUsePrebuild", CanUsePrebuildM);
     NODE_SET_METHOD(exports, "inspect", InspectM);
     NODE_SET_METHOD(exports, "dispose", DisposeM);
 }

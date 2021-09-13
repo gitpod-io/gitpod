@@ -151,30 +151,6 @@ func TestFeatures(t *testing.T) {
 	}
 }
 
-func TestCanUsePrebuild(t *testing.T) {
-	validate := func(usedTime time.Duration, expectation bool) func(t *testing.T, eval *Evaluator) {
-		return func(t *testing.T, eval *Evaluator) {
-			act := eval.CanUsePrebuild(usedTime)
-			if expectation != act {
-				t.Errorf("CanUsePrebuild returned unexpected value: expected %v, got %v", expectation, act)
-			}
-		}
-	}
-
-	enterpriseLic := &LicensePayload{Domain: domain, ID: someID, Level: LevelEnterprise, Seats: 0, ValidUntil: time.Now().Add(6 * time.Hour)}
-	tests := []licenseTest{
-		{Name: "default license ok", License: nil, Validate: validate(0*time.Hour, true)},
-		{Name: "default license not ok", License: nil, Validate: validate(250*time.Hour, false)},
-		{Name: "enterprise license a", License: enterpriseLic, Validate: validate(1*time.Hour, true)},
-		{Name: "enterprise license b", License: enterpriseLic, Validate: validate(500*time.Hour, true)},
-		{Name: "enterprise license c", License: enterpriseLic, Validate: validate(-1*time.Hour, true)},
-		{Name: "broken license", License: &LicensePayload{Level: LevelEnterprise}, Validate: validate(0*time.Hour, false)},
-	}
-	for _, test := range tests {
-		test.Run(t)
-	}
-}
-
 func TestEvalutorKeys(t *testing.T) {
 	tests := []struct {
 		Name       string

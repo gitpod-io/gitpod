@@ -218,27 +218,6 @@ func (e *Evaluator) HasEnoughSeats(seats int) bool {
 	return e.lic.Seats == 0 || seats <= e.lic.Seats
 }
 
-// CanUsePrebuild returns true if the use a prebuild is permissible under the license,
-// given the total prebuild time used already.
-func (e *Evaluator) CanUsePrebuild(totalPrebuildTimeSpent time.Duration) bool {
-	if !e.Enabled(FeaturePrebuild) {
-		// prebuilds aren't even enabled - time spent doesn't matter
-		return false
-	}
-
-	pbt := e.lic.Level.allowance().PrebuildTime
-	if pbt == 0 {
-		// allowed prebuild time == 0 means the prebuild time is not limited
-		return true
-	}
-	if totalPrebuildTimeSpent <= pbt {
-		// not all time is spent yet
-		return true
-	}
-
-	return false
-}
-
 // Inspect returns the license information this evaluator holds.
 // This function is intended for transparency/debugging purposes only and must
 // never be used to determine feature eligibility under a license. All code making
