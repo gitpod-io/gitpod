@@ -45,7 +45,9 @@ export default function () {
         }
         const registration = getGitpodService().registerClient({
             onPrebuildUpdate: (update: PrebuildWithStatus) => {
-                setPrebuilds(prev => [update, ...prev.filter(p => p.info.id !== update.info.id)])
+                if (update.info.projectId === project.id) {
+                    setPrebuilds(prev => [update, ...prev.filter(p => p.info.id !== update.info.id)])
+                }
             }
         });
 
