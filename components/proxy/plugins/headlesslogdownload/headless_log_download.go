@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/caddyserver/caddy/v2"
@@ -18,7 +19,6 @@ import (
 
 const (
 	headlessLogDownloadModule = "gitpod.headless_log_download"
-	redirectURLVariable       = "http." + headlessLogDownloadModule + "_url"
 )
 
 func init() {
@@ -41,18 +41,19 @@ func (HeadlessLogDownload) CaddyModule() caddy.ModuleInfo {
 
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
 func (m HeadlessLogDownload) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
-
 	query := r.URL.RawQuery
 	if query != "" {
 		query = "?" + query
 	}
 
 	// server has an endpoint on the same path that returns the
-	url := fmt.Sprintf("%v%v%v", m.Service, r.URL.Path, query)
+	origReq := r.Context().Value(caddyhttp.OriginalRequestCtxKey).(http.Request)
+	u := fmt.Sprintf("%v%v%v", m.Service, origReq.URL.Path, query)
+
 	client := http.Client{Timeout: 5 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
+		caddy.Log().Sugar().Errorf("cannot download URL %v: %w", u, err)
 		return fmt.Errorf("Server Error: cannot download headless log")
 	}
 
@@ -64,9 +65,6 @@ func (m HeadlessLogDownload) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 		}
 	}
 
-	// override content-type
-	req.Header.Set("Content-Type", "*/*")
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("Server Error: cannot download headless log")
@@ -77,11 +75,35 @@ func (m HeadlessLogDownload) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 		return fmt.Errorf("Bad Request: /headless-log-download/get returned with code %v", resp.StatusCode)
 	}
 
-	redirectURL, err := io.ReadAll(resp.Body)
+	redirectURLBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("Server error: cannot obtain headless log redirect URL")
+		caddy.Log().Sugar().Errorf("cannot obtain headless log redirect URL: %v", err)
+		return fmt.Errorf("server error: cannot obtain headless log redirect URL")
 	}
-	repl.Set(redirectURLVariable, string(redirectURL))
+	redirectURL, err := url.Parse(string(redirectURLBytes))
+	if err != nil {
+		caddy.Log().Sugar().Errorf("cannot parse redirectURL %v: %v", string(redirectURLBytes), err)
+		return fmt.Errorf("cannot parse redirectURL")
+	}
+
+	resp, err = http.Get(redirectURL.String())
+	if err != nil {
+		caddy.Log().Sugar().Errorf("error starting download of prebuild log for %v: %v", redirectURL.String(), err)
+		return caddyhttp.Error(http.StatusInternalServerError, fmt.Errorf("unexpected error downloading prebuild log"))
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		caddy.Log().Sugar().Errorf("invalid status code downloading prebuild log for %v: %v", redirectURL.String(), resp.StatusCode)
+		return caddyhttp.Error(http.StatusInternalServerError, fmt.Errorf("unexpected error downloading prebuild log"))
+	}
+
+	brw := newNoBufferResponseWriter(w)
+	_, err = io.Copy(brw, resp.Body)
+	if err != nil {
+		caddy.Log().Sugar().Errorf("error downloading prebuild log for %v: %v", redirectURL.String(), err)
+		return caddyhttp.Error(http.StatusInternalServerError, fmt.Errorf("unexpected error downloading prebuild log"))
+	}
 
 	return next.ServeHTTP(w, r)
 }
@@ -130,3 +152,28 @@ var (
 	_ caddyhttp.MiddlewareHandler = (*HeadlessLogDownload)(nil)
 	_ caddyfile.Unmarshaler       = (*HeadlessLogDownload)(nil)
 )
+
+// noBufferWriter ResponseWriter that allow an HTTP handler to flush buffered data to the client.
+type noBufferWriter struct {
+	w       http.ResponseWriter
+	flusher http.Flusher
+}
+
+func newNoBufferResponseWriter(w http.ResponseWriter) *noBufferWriter {
+	writer := &noBufferWriter{
+		w: w,
+	}
+	if flusher, ok := w.(http.Flusher); ok {
+		writer.flusher = flusher
+	}
+	return writer
+}
+
+func (n *noBufferWriter) Write(p []byte) (written int, err error) {
+	written, err = n.w.Write(p)
+	if n.flusher != nil {
+		n.flusher.Flush()
+	}
+
+	return
+}

@@ -6,10 +6,8 @@ components:
         enabled: true
         maxLength: 2
       gcloud:
-        credentialsFileUpload: true
-        credentialsFile: /credentials/gitpod-dev-syncd-key.json
-        secretName: remote-storage-gcloud
-        projectId: gitpod-dev
+        credentialsFile: /credentials/service-account.json
+        projectId: gitpod-core-dev
         region: europe-west1
         parallelUpload: 6
     volumes:
