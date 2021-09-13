@@ -415,7 +415,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             flags += ` --set components.server.wsmanSkipSelf=true`
         }
         if (storage === "gcp") {
-            exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -");
+            exec("kubectl get secret gcp-sa-gitpod-dev-deployer -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -");
             flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
         }
 
@@ -443,8 +443,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePortK3sWs}`;
         flags += ` --set components.wsProxy.loadBalancerIP=${wsProxyIP}`;
         if (storage === "gcp") {
-            // notice below that we are not using the k3s cluster to get the gcp-sa-cloud-storage-dev-sync-key. As it is present in the dev cluster only
-            exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud > remote-storage-gcloud.yaml");
+            // notice below that we are not using the k3s cluster to get the gcp-sa-gitpod-dev-deployer. As it is present in the dev cluster only
+            exec("kubectl get secret gcp-sa-gitpod-dev-deployer -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud > remote-storage-gcloud.yaml");
             // After storing the yaml we apply it to the k3s cluster
             exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl apply -f remote-storage-gcloud.yaml`)
             flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
