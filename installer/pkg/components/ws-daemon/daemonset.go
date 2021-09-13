@@ -132,7 +132,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 						},
 						{
 							Name:         "tls-certs",
-							VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "ws-daemon-tls"}},
+							VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretName}},
 						},
 						{
 							Name: "config",

@@ -26,8 +26,6 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		"ws-manager",
 	}
 
-	serverSecretName := "ws-manager-tls"
-	clientSecretName := "ws-manager-client-tls"
 	sixMonths := &metav1.Duration{Duration: time.Hour * 4380}
 	issuer := "ca-issuer"
 
@@ -41,7 +39,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: certmanagerv1.CertificateSpec{
 				Duration:   sixMonths,
-				SecretName: serverSecretName,
+				SecretName: TLSSecretNameSecret,
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  issuer,
@@ -59,7 +57,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: certmanagerv1.CertificateSpec{
 				Duration:   sixMonths,
-				SecretName: clientSecretName,
+				SecretName: TLSSecretNameClient,
 				DNSNames:   clientAltNames,
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  issuer,
