@@ -584,6 +584,8 @@ mysql:
 redis:
   enabled: true
   fullnameOverride: redis
+  auth:
+    existingSecret: db-password
 
 rabbitmq:
   enabled: true
