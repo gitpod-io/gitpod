@@ -304,6 +304,7 @@ components:
       enabled: false
       passlist: []
     runDbDeleter: true
+    serverIdeConfigDeploy: true
     storage: {}
     wsman: []
     defaultBaseImageRegistryWhitelist: []
