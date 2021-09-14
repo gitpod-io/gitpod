@@ -23,6 +23,7 @@ data:
 {{- if .Values.devBranch }}
         "devBranch": "{{ .Values.devBranch }}",
 {{- end }}
+        "logLevel": {{ template "gitpod.loglevel" }},
         "license": "{{ .Values.license }}",
         "workspaceHeartbeat": {{ $comp.workspaceHeartbeat | toJson }},
         "workspaceDefaults": {

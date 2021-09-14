@@ -13,7 +13,7 @@ import { RateLimiterConfig } from './auth/rate-limiter';
 import { CodeSyncConfig } from './code-sync/code-sync-service';
 import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import * as fs from 'fs';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { filePathTelepresenceAware, KubeStage, translateLegacyStagename } from '@gitpod/gitpod-protocol/lib/env';
 import { BrandingParser } from './branding-parser';
 
@@ -51,6 +51,7 @@ export interface ConfigSerialized {
     stage: string;
     devBranch?: string;
     insecureNoDomain: boolean;
+    logLevel: LogrusLogLevel;
 
     license?: string;
 
@@ -74,7 +75,6 @@ export interface ConfigSerialized {
         authProviderId: string;
         certPath: string;
         marketplaceName: string;
-        logLevel?: string;
     };
 
     definitelyGpDisabled: boolean;
