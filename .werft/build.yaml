@@ -4,6 +4,9 @@ pod:
   nodeSelector:
     cloud.google.com/gke-nodepool: builds
   volumes:
+  - name: monitoring-satellite-preview-token
+    secret:
+      secretName: monitoring-satellite-preview-token
   - name: gcp-sa
     secret:
       secretName: gcp-sa-gitpod-dev-deployer
@@ -47,6 +50,8 @@ pod:
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
+    - name: monitoring-satellite-preview-token
+      mountPath: /mnt/secrets/monitoring-satellite-preview-token
     - name: gcp-sa
       mountPath: /mnt/secrets/gcp-sa
       readOnly: true
