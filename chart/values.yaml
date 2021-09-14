@@ -326,9 +326,12 @@ components:
       metrics:
         expose: true
         containerPort: 9500
-      debug:
+      debugNode:
         expose: false
         containerPort: 9229
+      debug:
+        expose: false
+        containerPort: 6060
     serviceSessionAffinity: None
     serverContainer:
       volumeMounts: null
