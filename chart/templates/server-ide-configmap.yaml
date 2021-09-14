@@ -11,7 +11,7 @@
 {{ template "gitpod.comp.imageRepo" . }}:{{ $comp.stableVersion }}
 {{- end -}}
 
-{{- if $comp.serverIdeConfigDeploy }}
+{{- if $comp.serverIdeConfigDeploy.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
