@@ -17,10 +17,15 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/containerd/console"
+	"github.com/containerd/containerd/remotes"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/moby/buildkit/client"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/session"
+	"github.com/moby/buildkit/util/contentutil"
+	"github.com/moby/buildkit/util/imageutil"
 	"github.com/moby/buildkit/util/progress/progressui"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 )
@@ -188,27 +193,59 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 }
 
 func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (err error) {
-	var sess []session.Attachable
+	// Note: buildkit does not handle/export image config by default. That's why we need
+	//       to download it ourselves and explicitely export it.
+	//       See https://github.com/moby/buildkit/issues/2362 for details.
+
+	var (
+		sess     []session.Attachable
+		resolver remotes.Resolver
+	)
 	if gplayerAuth := b.Config.WorkspaceLayerAuth; gplayerAuth != "" {
 		auth, err := newAuthProviderFromEnvvar(gplayerAuth)
 		if err != nil {
 			return err
 		}
 		sess = append(sess, auth)
+
+		authorizer, err := newDockerAuthorizerFromEnvvar(gplayerAuth)
+		if err != nil {
+			return err
+		}
+		resolver = docker.NewResolver(docker.ResolverOptions{
+			Authorizer: authorizer,
+		})
+	} else {
+		resolver = docker.NewResolver(docker.ResolverOptions{})
 	}
 
-	def, err := llb.Image(b.Config.BaseRef).Marshal(context.Background())
+	platform := specs.Platform{OS: "linux", Architecture: "amd64"}
+	_, cfg, err := imageutil.Config(ctx, b.Config.BaseRef, resolver, contentutil.NewBuffer(), nil, &platform)
 	if err != nil {
 		return err
 	}
+	state, err := llb.Image(b.Config.BaseRef).WithImageConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	def, err := state.Marshal(ctx, llb.Platform(platform))
+	if err != nil {
+		return err
+	}
+
+	// TODO(cw):
+	// buildkit does not support setting raw annotations yet (https://github.com/moby/buildkit/issues/1220).
+	// Once it does, we should set org.opencontainers.image.base.name as defined in https://github.com/opencontainers/image-spec/blob/main/annotations.md
 
 	solveOpt := client.SolveOpt{
 		Exports: []client.ExportEntry{
 			{
 				Type: "image",
 				Attrs: map[string]string{
-					"name": b.Config.TargetRef,
-					"push": "true",
+					"name":                  b.Config.TargetRef,
+					"push":                  "true",
+					"containerimage.config": string(cfg),
 				},
 			},
 		},

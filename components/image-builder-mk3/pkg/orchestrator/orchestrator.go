@@ -52,7 +52,7 @@ const (
 
 	// workspaceBuildProcessVersion controls how we build workspace images.
 	// Incrementing this value will trigger a rebuild of all workspace images.
-	workspaceBuildProcessVersion = 1
+	workspaceBuildProcessVersion = 2
 )
 
 // Configuration configures the orchestrator
