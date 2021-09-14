@@ -9,6 +9,7 @@ import (
 	"github.com/docker/distribution/reference"
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	v1 "k8s.io/api/apps/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"strings"
@@ -231,6 +232,14 @@ var (
 		},
 	}
 )
+
+var DeploymentStrategy = v1.DeploymentStrategy{
+	Type: v1.RollingUpdateDeploymentStrategyType,
+	RollingUpdate: &v1.RollingUpdateDeployment{
+		MaxSurge:       &intstr.IntOrString{IntVal: 1},
+		MaxUnavailable: &intstr.IntOrString{IntVal: 0},
+	},
+}
 
 // TODO(cw): find a better way to do this. Those values must exist in the appropriate places already.
 var (

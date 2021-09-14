@@ -5,20 +5,22 @@ import (
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
 	"k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
+	labels := common.DefaultLabels(Component)
+
 	return []runtime.Object{
 		&v1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    labels,
 			},
 			Spec: v1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
@@ -28,27 +30,15 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				// todo(sje): receive config value
 				Replicas: pointer.Int32(1),
-				Strategy: v1.DeploymentStrategy{
-					Type: v1.RollingUpdateDeploymentStrategyType,
-					RollingUpdate: &v1.RollingUpdateDeployment{
-						MaxSurge:       &intstr.IntOrString{IntVal: 1},
-						MaxUnavailable: &intstr.IntOrString{IntVal: 0},
-					},
-				},
+				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      Component,
 						Namespace: ctx.Namespace,
-						Labels:    common.DefaultLabels(Component),
+						Labels:    labels,
 					},
 					Spec: corev1.PodSpec{
-						PriorityClassName: "system-node-critical",
-						// todo(sje): add in affinity - this is a Helm definition
-						// {{ include "gitpod.pod.affinity" $this | indent 6 }}
-						// todo(sje): add in volumes - this is a Helm definition
-						// {{- if $comp.volumes }}
-						// {{ toYaml $comp.volumes | indent 6 }}
-						// {{- end }}
+						PriorityClassName:  "system-node-critical",
 						Affinity:           &corev1.Affinity{},
 						EnableServiceLinks: pointer.Bool(false),
 						ServiceAccountName: Component,
@@ -60,8 +50,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Args:            []string{"run", "-v", "--config", "/config/config.json"},
 							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManager.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources:       corev1.ResourceRequirements{}, // todo(sje): add in details
-							Ports:           []corev1.ContainerPort{},      // todo(sje): add in details
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    resource.MustParse("100m"),
+									"memory": resource.MustParse("32Mi"),
+								},
+							},
+							Ports: []corev1.ContainerPort{{
+								Name:          "rpc",
+								ContainerPort: RPCPort,
+							}},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),
 							},
@@ -92,9 +90,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name: VolumeConfig,
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "", // todo(sje): work out this value
-									},
+									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
 								},
 							},
 						}, {
