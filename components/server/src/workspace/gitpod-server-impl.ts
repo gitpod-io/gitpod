@@ -120,7 +120,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         this.resourceAccessGuard = accessGuard;
 
         log.debug({ userId: this.user?.id }, `clientRegion: ${this.clientRegion}`);
-        log.info({ userId: this.user?.id }, 'initializeClient');
+        log.debug({ userId: this.user?.id }, 'initializeClient');
 
         this.listenForWorkspaceInstanceUpdates();
     }
@@ -194,7 +194,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return res;
     }
 
-    protected checkUser(methodName?: string, logPayload?: {}): User {
+    protected checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): User {
         if (this.showSetupCondition?.value) {
             throw new ResponseError(ErrorCodes.SETUP_REQUIRED, 'Setup required.');
         }
@@ -204,25 +204,31 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         if (this.user.markedDeleted === true) {
             throw new ResponseError(ErrorCodes.USER_DELETED, 'User has been deleted.');
         }
-        const userContext: LogContext = { userId: this.user.id };
+        const userContext: LogContext = {
+            ...ctx,
+            userId: this.user.id,
+        };
         if (methodName) {
             if (logPayload) {
-                log.info(userContext, methodName, logPayload);
+                log.debug(userContext, methodName, logPayload);
             } else {
-                log.info(userContext, methodName);
+                log.debug(userContext, methodName);
             }
         }
         return this.user;
     }
 
-    protected checkAndBlockUser(methodName?: string, logPayload?: {}): User {
+    protected checkAndBlockUser(methodName?: string, logPayload?: {}, ctx?: LogContext): User {
         const user = this.checkUser(methodName, logPayload);
         if (user.blocked) {
-            const userContext: LogContext = { userId: user.id };
+            const userContext: LogContext = {
+                ...ctx,
+                userId: user.id,
+            };
             if (logPayload) {
-                log.info(userContext, `${methodName || 'checkAndBlockUser'}: blocked`, logPayload);
+                log.debug(userContext, `${methodName || 'checkAndBlockUser'}: blocked`, logPayload);
             } else {
-                log.info(userContext, `${methodName || 'checkAndBlockUser'}: blocked`);
+                log.debug(userContext, `${methodName || 'checkAndBlockUser'}: blocked`);
             }
             throw new ResponseError(ErrorCodes.USER_BLOCKED, "You've been blocked.");
         }
@@ -448,10 +454,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         span.setTag("workspaceId", workspaceId);
 
         try {
-            const user = this.checkAndBlockUser();
+            const user = this.checkAndBlockUser("startWorkspace", undefined, { workspaceId });
             await this.checkTermsAcceptance();
-
-            log.info({ userId: user.id, workspaceId }, 'startWorkspace');
 
             const mayStartPromise = this.mayStartWorkspace({ span }, user, this.workspaceDb.trace({ span }).findRegularRunningInstances(user.id));
             const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
@@ -501,15 +505,13 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     public async stopWorkspace(workspaceId: string): Promise<void> {
-        const user = this.checkUser('stopWorkspace');
+        const user = this.checkUser('stopWorkspace', undefined, { workspaceId });
         const logCtx = { userId: user.id, workspaceId };
 
         const span = opentracing.globalTracer().startSpan("stopWorkspace");
         span.setTag("workspaceId", workspaceId);
 
         try {
-            log.info(logCtx, 'stopWorkspace');
-
             const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
             await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
@@ -645,8 +647,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     public async isWorkspaceOwner(workspaceId: string): Promise<boolean> {
-        const user = this.checkUser();
-        log.info({ userId: user.id, workspaceId }, 'isWorkspaceOwner');
+        const user = this.checkUser("isWorkspaceOwner", undefined, { workspaceId });
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
@@ -654,10 +655,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     public async sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void> {
-        const user = this.checkAndBlockUser("sendHeartBeat");
-
         const { instanceId } = options;
-        log.info({ userId: user.id, instanceId }, 'sendHeartBeat');
+        const user = this.checkAndBlockUser("sendHeartBeat", undefined, { instanceId });
 
         const span = opentracing.globalTracer().startSpan("sendHeartBeat");
         try {
@@ -715,8 +714,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     public async getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]> {
-        const user = this.checkUser();
-        log.info({ userId: user.id, workspaceId }, 'getWorkspaceUsers');
+        this.checkUser("getWorkspaceUsers", undefined, { workspaceId });
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
@@ -886,7 +884,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 // specific errors will be handled in create-workspace.tsx
                 throw error;
             }
-            log.error(logContext, error);
+            log.debug(logContext, error);
             throw new ResponseError(ErrorCodes.CONTEXT_PARSE_ERROR, (error && error.message) ? error.message
                 : `Cannot create workspace for URL: ${normalizedContextUrl}`);
         } finally {
@@ -1052,7 +1050,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
             const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspaceId);
             if (!runningInstance) {
-                log.warn({ userId: user.id, workspaceId }, 'Cannot open port for workspace with no running instance', { port });
+                log.debug({ userId: user.id, workspaceId }, 'Cannot open port for workspace with no running instance', { port });
                 return;
             }
             await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace }, "update");
@@ -1110,7 +1108,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         try {
             const { workspace, instance } = await this.internGetCurrentWorkspaceInstance(user.id, workspaceId);
             if (!instance || instance.status.phase !== 'running') {
-                log.warn({ userId: user.id, workspaceId }, 'Cannot close a port for a workspace which has no running instance', { port });
+                log.debug({ userId: user.id, workspaceId }, 'Cannot close a port for a workspace which has no running instance', { port });
                 return;
             }
             await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
@@ -1133,21 +1131,20 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     async watchWorkspaceImageBuildLogs(workspaceId: string): Promise<void> {
-        const user = this.checkAndBlockUser("watchWorkspaceImageBuildLogs");
+        const user = this.checkAndBlockUser("watchWorkspaceImageBuildLogs", undefined, { workspaceId });
         const span = opentracing.globalTracer().startSpan("watchWorkspaceImageBuildLogs");
-        const context: LogContext = { userId: user.id, workspaceId };
-        log.info(context, 'watchWorkspaceImageBuildLogs', { workspaceId });
+        const logCtx: LogContext = { userId: user.id, workspaceId };
 
         const { instance, workspace } = await this.internGetCurrentWorkspaceInstance(user.id, workspaceId);
         if (!this.client) {
             return;
         }
         if (!instance) {
-            log.warn(`No running instance for workspaceId ${workspaceId}.`);
+            log.debug(logCtx, `No running instance for workspaceId.`);
             return;
         }
         if (!workspace.imageNameResolved) {
-            log.warn(`No imageNameResolved set for workspaceId ${workspaceId}, cannot watch logs.`);
+            log.debug(logCtx, `No imageNameResolved set for workspaceId, cannot watch logs.`);
             return;
         }
         const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
@@ -1178,7 +1175,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 return 'continue';
             });
         } catch (err) {
-            log.warn(`Cannot watch logs for workspaceId ${workspaceId}:`, err)
+            log.error(logCtx, `cannot watch logs for workspaceId`, err)
         }
     }
 
