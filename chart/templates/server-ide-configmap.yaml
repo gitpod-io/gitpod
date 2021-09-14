@@ -11,6 +11,7 @@
 {{ template "gitpod.comp.imageRepo" . }}:{{ $comp.stableVersion }}
 {{- end -}}
 
+{{- if $comp.serverIdeConfigDeploy }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -27,3 +28,4 @@ data:
         "ideImageRepo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}",
         "ideImageAliases": {{ (dict "code-latest" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage)) "code" (include "stable-image-full" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson }}
     }
+{{- end }}
