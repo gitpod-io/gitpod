@@ -2,6 +2,7 @@
 	# disable automatic SSL certificate generation
 	auto_https off
 	# disable admin API server
+	# admin localhost:2019
 	admin off
 
 	# set default SNI for old clients
@@ -13,7 +14,7 @@
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
 	order gitpod.cors_origin            before header
 	order gitpod.workspace_download     before redir
-	order gitpod.headless_log_download  before redir
+	order gitpod.headless_log_download	before rewrite
 	order gitpod.sec_websocket_key      before header
 	order http_cache                    before reverse_proxy
 	order gitpod.body_intercept         before redir
@@ -154,23 +155,21 @@ https://{$GITPOD_DOMAIN} {
 			service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 		}
 
+		# redirect works here because we "navigate" to this URL, which makes the browser handle this as primary request, and not fuff around with CORS at all
 		redir {http.gitpod.workspace_download_url} 303
 	}
 
 	@headless_log_download path /headless-log-download*
 	handle @headless_log_download {
-		import google_storage_headers
-
 		header {
-			# The browser needs to see the correct content type to trigger the download.
+			# Alltough logs are plain text "text/html" works for reliably for streaming
 			content-type "text/html; charset=utf-8"
 		}
 
+		# Perform lookup to server and actual reverse_proxy in one go because caddy's `reverse_proxy` is not powerful enough
 		gitpod.headless_log_download {
 			service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 		}
-
-		redir {http.gitpod.headless_log_download_url} 303
 	}
 
 	@backend_wss {
