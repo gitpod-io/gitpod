@@ -2,7 +2,7 @@ module "cert" {
   source = "./cert"
 
   # The project the DNS zone lives in
-  project = "gitpod-dev"
+  project = "gitpod-core-dev"
   region  = "europe-west-3"
 
   dns_zone_domain = var.dns_zone_domain
@@ -16,7 +16,7 @@ module "cert" {
 
 # https://www.terraform.io/docs/providers/google/guides/provider_reference.html
 provider "google" {
-  project = "gitpod-dev"
+  project = "gitpod-core-dev"
   region  = "europe-west-3"
   # Relies on GOOGLE_APPLICATION_CREDENTIALS pointing to the service account file
 }
