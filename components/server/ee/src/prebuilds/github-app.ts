@@ -20,6 +20,7 @@ import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { PrebuildManager } from './prebuild-manager';
 import { PrebuildStatusMaintainer } from './prebuilt-status-maintainer';
 import { Options, ApplicationFunctionOptions } from 'probot/lib/types';
+import { asyncHandler } from '../../../src/express-util';
 
 /**
  * GitHub app urls:
@@ -80,65 +81,71 @@ export class GithubApp {
         });
 
         // Backward-compatibility: Redirect old badge URLs (e.g. "/api/apps/github/pbs/github.com/gitpod-io/gitpod/5431d5735c32ab7d5d840a4d1a7d7c688d1f0ce9.svg")
-        options.getRouter && options.getRouter('/pbs').get('/*', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        options.getRouter && options.getRouter('/pbs').get('/*', (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.redirect(301, this.getBadgeImageURL());
         });
 
-        app.on('installation.created', async ctx => {
-            const targetAccountName = `${ctx.payload.installation.account.login}`;
-            const installationId = `${ctx.payload.installation.id}`;
+        app.on('installation.created', ctx => {
+            catchError((async () => {
+                const targetAccountName = `${ctx.payload.installation.account.login}`;
+                const installationId = `${ctx.payload.installation.id}`;
 
-            // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
-            const authId = `${ctx.payload.sender.id}`;
+                // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
+                const authId = `${ctx.payload.sender.id}`;
 
-            const user = await this.userDB.findUserByIdentity({ authProviderId: this.config.githubApp?.authProviderId || "unknown", authId });
-            const userId = user ? user.id : undefined;
-            await this.appInstallationDB.recordNewInstallation("github", 'platform', installationId, userId, authId);
-            log.debug({ userId }, "New installation recorded", { userId, authId, targetAccountName })
+                const user = await this.userDB.findUserByIdentity({ authProviderId: this.config.githubApp?.authProviderId || "unknown", authId });
+                const userId = user ? user.id : undefined;
+                await this.appInstallationDB.recordNewInstallation("github", 'platform', installationId, userId, authId);
+                log.debug({ userId }, "New installation recorded", { userId, authId, targetAccountName })
+            })());
         });
-        app.on('installation.deleted', async ctx => {
-            const installationId = `${ctx.payload.installation.id}`;
-            await this.appInstallationDB.recordUninstallation("github", 'platform', installationId);
+        app.on('installation.deleted', ctx => {
+            catchError((async () => {
+                const installationId = `${ctx.payload.installation.id}`;
+                await this.appInstallationDB.recordUninstallation("github", 'platform', installationId);
+            })());
         });
 
-        app.on('repository.renamed', async ctx => {
-            const { action, repository, installation } = ctx.payload;
-            if (!installation) {
-                return;
-            }
-            if (action === "renamed") {
-                // HINT(AT): This is undocumented, but the event payload contains something like
-                // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
-                // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
-                const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
-                if (oldName) {
-                    const project = await this.projectDB.findProjectByCloneUrl(`https://github.com/${repository.owner.login}/${oldName}.git`)
-                    if (project) {
-                        project.cloneUrl = repository.clone_url;
-                        await this.projectDB.storeProject(project);
+        app.on('repository.renamed', ctx => {
+            catchError((async () => {
+                const { action, repository, installation } = ctx.payload;
+                if (!installation) {
+                    return;
+                }
+                if (action === "renamed") {
+                    // HINT(AT): This is undocumented, but the event payload contains something like
+                    // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
+                    // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
+                    const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
+                    if (oldName) {
+                        const project = await this.projectDB.findProjectByCloneUrl(`https://github.com/${repository.owner.login}/${oldName}.git`)
+                        if (project) {
+                            project.cloneUrl = repository.clone_url;
+                            await this.projectDB.storeProject(project);
+                        }
                     }
                 }
-            }
+            })())
             // TODO(at): handle deleted as well
         });
 
-        app.on('push', async ctx => {
-            await this.handlePushEvent(ctx);
+        app.on('push', ctx => {
+            catchError(this.handlePushEvent(ctx));
         });
 
-        app.on(['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'], async ctx => {
-            await this.handlePullRequest(ctx);
+        app.on(['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'], ctx => {
+            catchError(this.handlePullRequest(ctx));
         });
 
-        options.getRouter && options.getRouter('/reconfigure').get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        options.getRouter && options.getRouter('/reconfigure').get('/', asyncHandler(async (req: express.Request, res: express.Response) => {
             const gh = await app.auth();
             const data = await gh.apps.getAuthenticated();
             const slug = data.data.slug;
 
             const state = req.query.state;
             res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`)
-        });
-        options.getRouter && options.getRouter('/setup').get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        }));
+        options.getRouter && options.getRouter('/setup').get('/', (req: express.Request, res: express.Response) => {
             const state = req.query.state;
             const installationId = req.query.installation_id;
             const setupAction = req.query.setup_action;
@@ -152,7 +159,6 @@ export class GithubApp {
                 const url = this.config.hostUrl.with({ pathname: 'install-github-app', search: `installation_id=${installationId}` }).toString();
                 res.redirect(url);
             }
-
         });
     }
 
@@ -373,8 +379,12 @@ export class GithubApp {
     }
 }
 
-export namespace GithubApp {
+function catchError<R>(p: Promise<R>): void {
+    // log as "debug" for now
+    p.catch(log.debug);
+}
 
+export namespace GithubApp {
     export function loadPrivateKey(filename: string | undefined): string | undefined {
         if (!filename) {
             return;
