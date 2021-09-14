@@ -10,6 +10,7 @@ import * as util from 'util';
 import { sleep } from './util/util';
 import * as gpctl from './util/gpctl';
 import { createHash } from "crypto";
+import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from './util/observability';
 
 const readDir = util.promisify(fs.readdir)
 
@@ -228,12 +229,14 @@ export async function build(context, version) {
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
+    const monitoringDomain = `${destname}.preview.gitpod-dev.com`;
     const url = `https://${domain}`;
     const deploymentConfig = {
         version,
         destname,
         namespace,
         domain,
+        monitoringDomain,
         url,
         analytics,
         cleanSlateDeployment,
@@ -251,6 +254,7 @@ interface DeploymentConfig {
     destname: string;
     namespace: string;
     domain: string;
+    monitoringDomain: string,
     url: string;
     k3sWsCluster?: boolean;
     analytics?: string;
@@ -265,10 +269,11 @@ interface DeploymentConfig {
  */
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
-    const { version, destname, namespace, domain, url, k3sWsCluster } = deploymentConfig;
-    const [wsdaemonPortMeta, registryNodePortMeta] = findFreeHostPorts("", [
+    const { version, destname, namespace, domain, monitoringDomain, url, k3sWsCluster } = deploymentConfig;
+    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts("", [
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
+        { start: 31001, end: 32000 },
     ], 'hostports');
     const [wsdaemonPortK3sWs, registryNodePortK3sWs] = !k3sWsCluster ? [0, 0] : findFreeHostPorts(getK3sWsKubeConfigPath(), [
         { start: 10000, end: 11000 },
@@ -330,8 +335,18 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             await issueK3sWsCerts(k3sWsProxyIP);
             await installWsCertificates();
         }
-
         werft.done('certificate');
+
+        werft.log(`observability`, "Installing monitoring-satellite...")
+        if (context.Annotations.withMonitoringSatellite != null) {
+            await installMonitoring();
+            exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
+            exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
+        } else {
+            exec(`echo '"withMonitoringSatellite" annotation not set, skipping...'`, {slice: `observability`})
+            exec(`echo 'To deploy monitoring-satellite, please add "/werft withMonitoringSatellite" to your PR description.'`, {slice: `observability`})
+        }
+        werft.done('observability');
 
         werft.done('prep');
     } catch (err) {
@@ -533,6 +548,21 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         await installCertficate(werft, wsInstallCertParams);
     }
 
+    async function installMonitoring() {
+        const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
+        if(context.Annotations.withMonitoringSatellite == "") {
+            installMonitoringSatelliteParams.branch = 'main'
+        } else {
+            installMonitoringSatelliteParams.branch = context.Annotations.withMonitoringSatellite
+        }
+        installMonitoringSatelliteParams.pathToKubeConfig = ""
+        installMonitoringSatelliteParams.satelliteNamespace = namespace
+        installMonitoringSatelliteParams.clusterName = namespace
+        installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
+        installMonitoringSatelliteParams.previewDomain = monitoringDomain
+        await installMonitoringSatellite(installMonitoringSatelliteParams);
+    }
+
 
     async function issueMetaCerts() {
         let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
@@ -668,3 +698,4 @@ async function publishHelmChart(imageRepoBase, version) {
         exec(cmd, { slice: 'publish-charts' });
     });
 }
+
