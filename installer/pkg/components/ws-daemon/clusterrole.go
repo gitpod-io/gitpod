@@ -38,7 +38,7 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 				APIGroups: []string{""},
 				Resources: []string{"pods"},
 				Verbs:     []string{"delete", "update", "patch"},
-			},
-			},
-		}}, nil
+			}},
+		},
+	}, nil
 }
