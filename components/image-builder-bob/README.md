@@ -10,13 +10,16 @@ sudo mv bin/* /usr/bin
 
 Set things up
 ```bash
+# install oci-tool for inspecting the built image
+go install github.com/csweichel/oci-tool@latest
+
 # run a local registry
 docker run --rm -d -p 5000:5000 registry:latest
 
 # produce a test image
 mkdir -p /tmp/f
 cd /tmp/f
-echo <<EOF > Dockerfile
+cat <<EOF > Dockerfile
 FROM alpine:latest
 ENV foo=bar
 EOF
