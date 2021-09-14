@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -26,7 +27,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				// todo(sje): receive config value
-				Replicas: func(i int32) *int32 { return &i }(1),
+				Replicas: pointer.Int32(1),
 				Strategy: v1.DeploymentStrategy{
 					Type: v1.RollingUpdateDeploymentStrategyType,
 					RollingUpdate: &v1.RollingUpdateDeployment{
@@ -49,10 +50,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						// {{ toYaml $comp.volumes | indent 6 }}
 						// {{- end }}
 						Affinity:           &corev1.Affinity{},
-						EnableServiceLinks: func(b bool) *bool { return &b }(false),
+						EnableServiceLinks: pointer.Bool(false),
 						ServiceAccountName: component,
 						SecurityContext: &corev1.PodSecurityContext{
-							RunAsUser: func(i int64) *int64 { return &i }(31002),
+							RunAsUser: pointer.Int64(31002),
 						},
 						Containers: []corev1.Container{{
 							Name:            component,
@@ -62,7 +63,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Resources:       corev1.ResourceRequirements{}, // todo(sje): add in details
 							Ports:           []corev1.ContainerPort{},      // todo(sje): add in details
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: func(b bool) *bool { return &b }(false),
+								Privileged: pointer.Bool(false),
 							},
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
