@@ -581,6 +581,10 @@ mysql:
   volumePermissions:
     enabled: true
 
+redis:
+  enabled: true
+  fullnameOverride: redis
+
 rabbitmq:
   enabled: true
   fullnameOverride: "messagebus"
