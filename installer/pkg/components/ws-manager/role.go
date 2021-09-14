@@ -12,13 +12,13 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, nil
 	}
 
-	labels := common.DefaultLabels(component)
+	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{
 		&rbacv1.Role{
 			TypeMeta: common.TypeMetaNetworkPolicy,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      component,
+				Name:      Component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},

@@ -13,20 +13,20 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, nil
 	}
 
-	labels := common.DefaultLabels(component)
+	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{
 		&networkingv1.NetworkPolicy{
 			TypeMeta: common.TypeMetaNetworkPolicy,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      component,
+				Name:      Component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
 			Spec: networkingv1.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{MatchLabels: labels},
 				PolicyTypes: []networkingv1.PolicyType{"Ingress"},
-				Ingress: []networkingv1.NetworkPolicyIngressRule{},
+				Ingress:     []networkingv1.NetworkPolicyIngressRule{},
 			},
 		},
 	}, nil

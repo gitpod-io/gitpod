@@ -8,16 +8,14 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
-const component = "ws-manager"
-
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
 	networkpolicy,
 	role,
 	rolebinding,
-	common.DefaultServiceAccount(component),
-	common.GenerateService(component),
+	common.DefaultServiceAccount(Component),
+	common.GenerateService(Component),
 	tlssecret,
 	unprivilegedRolebinding,
 )

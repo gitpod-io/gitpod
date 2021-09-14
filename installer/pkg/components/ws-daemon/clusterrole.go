@@ -9,13 +9,13 @@ import (
 )
 
 func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(component)
+	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{
 		&rbacv1.ClusterRole{
 			TypeMeta: common.TypeMetaClusterRole,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      component,
+				Name:      Component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},

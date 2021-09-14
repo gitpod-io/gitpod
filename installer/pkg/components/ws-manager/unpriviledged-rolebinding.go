@@ -9,13 +9,13 @@ import (
 )
 
 func unprivilegedRolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(component)
+	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      component,
+				Name:      Component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},

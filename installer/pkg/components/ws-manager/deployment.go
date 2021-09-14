@@ -16,14 +16,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&v1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      component,
+				Name:      Component,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(component),
+				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: v1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						"component": component,
+						"Component": Component,
 					},
 				},
 				// todo(sje): receive config value
@@ -37,9 +37,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      component,
+						Name:      Component,
 						Namespace: ctx.Namespace,
-						Labels:    common.DefaultLabels(component),
+						Labels:    common.DefaultLabels(Component),
 					},
 					Spec: corev1.PodSpec{
 						PriorityClassName: "system-node-critical",
@@ -51,14 +51,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						// {{- end }}
 						Affinity:           &corev1.Affinity{},
 						EnableServiceLinks: pointer.Bool(false),
-						ServiceAccountName: component,
+						ServiceAccountName: Component,
 						SecurityContext: &corev1.PodSecurityContext{
 							RunAsUser: pointer.Int64(31002),
 						},
 						Containers: []corev1.Container{{
-							Name:            component,
+							Name:            Component,
 							Args:            []string{"run", "-v", "--config", "/config/config.json"},
-							Image:           "", // todo(sje): work out this value
+							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManager.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources:       corev1.ResourceRequirements{}, // todo(sje): add in details
 							Ports:           []corev1.ContainerPort{},      // todo(sje): add in details

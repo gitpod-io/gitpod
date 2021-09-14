@@ -33,9 +33,9 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&certmanagerv1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      component,
+				Name:      Component,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(component),
+				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: certmanagerv1.CertificateSpec{
 				Duration:   sixMonths,
@@ -51,9 +51,9 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&certmanagerv1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      component,
+				Name:      Component,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(component),
+				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: certmanagerv1.CertificateSpec{
 				Duration:   sixMonths,

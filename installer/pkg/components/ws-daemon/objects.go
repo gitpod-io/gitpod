@@ -8,15 +8,13 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
-const component = "ws-daemon"
-
 var Objects = common.CompositeRenderFunc(
 	clusterrole,
 	configmap,
-	common.DefaultServiceAccount(component),
+	common.DefaultServiceAccount(Component),
 	daemonset,
 	networkpolicy,
 	rolebinding,
-	common.GenerateService(component),
+	common.GenerateService(Component),
 	tlssecret,
 )

@@ -130,9 +130,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&corev1.ConfigMap{
 		TypeMeta: common.TypeMetaConfigmap,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      component,
+			Name:      Component,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(component),
+			Labels:    common.DefaultLabels(Component),
 		},
 		Data: map[string]string{
 			"config.json": string(fc),
