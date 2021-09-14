@@ -21,14 +21,15 @@ import (
 
 func TestCreateDefiniteWorkspacePod(t *testing.T) {
 	type fixture struct {
-		Spec             *json.RawMessage              `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
-		Request          *json.RawMessage              `json:"request,omitempty"` // *api.StartWorkspaceRequest
-		Context          *startWorkspaceContext        `json:"context,omitempty"`
-		DefaultTemplate  *corev1.Pod                   `json:"defaultTemplate,omitempty"`
-		PrebuildTemplate *corev1.Pod                   `json:"prebuildTemplate,omitempty"`
-		ProbeTemplate    *corev1.Pod                   `json:"probeTemplate,omitempty"`
-		RegularTemplate  *corev1.Pod                   `json:"regularTemplate,omitempty"`
-		ResourceRequests *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
+		Spec               *json.RawMessage              `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
+		Request            *json.RawMessage              `json:"request,omitempty"` // *api.StartWorkspaceRequest
+		Context            *startWorkspaceContext        `json:"context,omitempty"`
+		DefaultTemplate    *corev1.Pod                   `json:"defaultTemplate,omitempty"`
+		PrebuildTemplate   *corev1.Pod                   `json:"prebuildTemplate,omitempty"`
+		ProbeTemplate      *corev1.Pod                   `json:"probeTemplate,omitempty"`
+		ImagebuildTemplate *corev1.Pod                   `json:"imagebuildTemplate,omitempty"`
+		RegularTemplate    *corev1.Pod                   `json:"regularTemplate,omitempty"`
+		ResourceRequests   *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
 	}
 	type gold struct {
 		Pod   corev1.Pod `json:"reason,omitempty"`
@@ -66,6 +67,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 				{"default-template.yaml", fixture.DefaultTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.DefaultPath = fn }},
 				{"prebuild-template.yaml", fixture.PrebuildTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.PrebuildPath = fn }},
 				{"probe-template.yaml", fixture.ProbeTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.ProbePath = fn }},
+				{"imagebuild-template.yaml", fixture.ImagebuildTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.ImagebuildPath = fn }},
 				{"regular-template.yaml", fixture.RegularTemplate, func(fn string) { manager.Config.WorkspacePodTemplate.RegularPath = fn }},
 			}
 			for _, f := range files {
