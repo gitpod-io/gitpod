@@ -51,10 +51,10 @@ export class BearerAuth {
                     res.status(401).send(e.message);
                     return;
                 }
-                throw e;
+                return next(e);
             }
             return next();
-        }
+        };
     }
 
     get restHandlerOptionally(): express.RequestHandler {
@@ -65,7 +65,7 @@ export class BearerAuth {
                 // don't error the request, we just have not bearer authentication token
             }
             return next();
-        }
+        };
     }
 
     async auth(req: express.Request): Promise<void> {

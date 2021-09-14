@@ -17,7 +17,7 @@ import { UserController } from './user/user-controller';
 import { EventEmitter } from 'events';
 import { toIWebSocket } from '@gitpod/gitpod-protocol/lib/messaging/node/connection';
 import { WsExpressHandler, WsRequestHandler } from './express/ws-handler';
-import { pingPong, handleError, isAllowedWebsocketDomain } from './express-util';
+import { pingPong, handleError, isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from './express-util';
 import { createWebSocketConnection } from 'vscode-ws-jsonrpc/lib';
 import { MessageBusIntegration } from './workspace/messagebus-integration';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -30,7 +30,7 @@ import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
 import { MonitoringEndpointsApp } from './monitoring-endpoints';
 import { WebsocketConnectionManager } from './websocket-connection-manager';
-import { DeletedEntryGC, PeriodicDbDeleter } from '@gitpod/gitpod-db/lib';
+import { DeletedEntryGC, PeriodicDbDeleter, TypeORM } from '@gitpod/gitpod-db/lib';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
 import { BearerAuth, isBearerAuthError } from './auth/bearer-authenticator';
@@ -47,6 +47,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     static readonly EVENT_ON_START = 'start';
 
     @inject(Config) protected readonly config: Config;
+    @inject(TypeORM) protected readonly typeOrm: TypeORM;
     @inject(SessionHandlerProvider) protected sessionHandlerProvider: SessionHandlerProvider;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
@@ -79,13 +80,18 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected monHttpServer?: http.Server;
 
     public async init(app: express.Application) {
-        log.info('Initializing');
+        log.info('server initializing...');
 
         // print config
         log.info("config", { config: JSON.stringify(this.config, undefined, 2) });
 
         // Set version info metric
         setGitpodVersion(this.config.version)
+
+        // ensure DB connection is established to avoid noisy error messages
+        await this.typeOrm.connect();
+        log.info("connected to DB");
+
         // metrics
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
             const startTime = Date.now();
@@ -196,43 +202,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         await this.registerRoutes(app);
 
         // Turn unhandled requests into errors
-        app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-            if (this.isAnsweredRequest(req, res)) {
-                return next();
-            }
-
-            // As we direct browsers to *api*.gitpod.io/login, we get requests like the following, which we do not want to end up in the error logs
-            if (req.originalUrl === '/'
-                || req.originalUrl === '/gitpod'
-                || req.originalUrl === '/favicon.ico'
-                || req.originalUrl === '/robots.txt') {
-                // Redirect to gitpod.io/<pathname>
-                res.redirect(this.config.hostUrl.with({ pathname: req.originalUrl }).toString());
-                return;
-            }
-            return next(new Error("Unhandled request: " + req.method + " " + req.originalUrl));
-        });
+        app.use(unhandledToError);
 
         // Generic error handler
-        app.use((err: any, req: express.Request, response: express.Response, next: express.NextFunction) => {
-            let msg: string;
-            let status = 500;
-            if (err instanceof Error) {
-                msg = err.toString() + "\nStack: " + err.stack;
-                status = typeof (err as any).status === 'number' ? (err as any).status : 500;
-            } else {
-                msg = err.toString();
-            }
-            log.debug({ sessionId: req.sessionID }, err, {
-                originalUrl: req.originalUrl,
-                headers: req.headers,
-                cookies: req.cookies,
-                session: req.session
-            });
-            if (!this.isAnsweredRequest(req, response)) {
-                response.status(status).send({ error: msg });
-            }
-        });
+        app.use(bottomErrorHandler(log.debug));
 
 
         // Health check + metrics endpoints
@@ -261,7 +234,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         this.startDbDeleter();
 
         this.app = app;
-        log.info('Initialized');
+        log.info('server initialized.');
     }
 
     protected async startDbDeleter() {
@@ -289,23 +262,20 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use(this.oauthController.oauthRouter);
     }
 
-    protected isAnsweredRequest(req: express.Request, res: express.Response) {
-        return res.headersSent || req.originalUrl.endsWith(".websocket");
-    }
-
     public async start(port: number) {
         if (!this.app) {
-            throw new Error("Server cannot start, not initialized");
+            throw new Error("server cannot start, not initialized");
         }
 
         const httpServer = this.app.listen(port, () => {
             this.eventEmitter.emit(Server.EVENT_ON_START, httpServer);
-            log.info(`Server listening on port: ${(<AddressInfo>httpServer.address()).port}`);
+            log.info(`server listening on port: ${(<AddressInfo>httpServer.address()).port}`);
         })
         this.httpServer = httpServer;
+
         if (this.monApp) {
             this.monHttpServer = this.monApp.listen(9500, 'localhost', () => {
-                log.info(`Monitoring server listening on port: ${(<AddressInfo>this.monHttpServer!.address()).port}`);
+                log.info(`monitoring app listening on port: ${(<AddressInfo>this.monHttpServer!.address()).port}`);
             });
         }
     }
@@ -313,7 +283,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     public async stop() {
         await this.stopServer(this.monHttpServer);
         await this.stopServer(this.httpServer);
-        log.info('Stopped');
+        log.info('server stopped.');
     }
 
     protected async stopServer(server?: http.Server): Promise<void> {
@@ -322,7 +292,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         }
         return new Promise((resolve) => server.close((err: any) => {
             if (err) {
-                log.warn(`Error on server close.`, { err });
+                log.warn(`error on server close.`, { err });
             }
             resolve();
         }));

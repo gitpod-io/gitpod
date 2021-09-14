@@ -96,7 +96,7 @@ export class HeadlessLogController {
 
                 res.end();
             } catch (err) {
-                log.error(logCtx, "error streaming headless logs", err);
+                log.debug(logCtx, "error streaming headless logs", err);
 
                 res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
                 res.end();

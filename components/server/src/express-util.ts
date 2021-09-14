@@ -147,9 +147,57 @@ export function getRequestingClientInfo(req: express.Request) {
  * @param handler
  * @returns
  */
-export function asyncHandler(handler: (req: express.Request, res: express.Response, next?: express.NextFunction) => Promise<void>): express.Handler {
+export function asyncHandler(handler: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>): express.Handler {
     return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        handler(req, res)
+        handler(req, res, next)
             .catch(err => next(err));
     }
+}
+
+/**
+ * Turns all unhandled requests into an error
+ * @param req
+ * @param res
+ * @param next
+ * @returns
+ */
+export function unhandledToError(req: express.Request, res: express.Response, next: express.NextFunction) {
+    if (isAnsweredRequest(req, res)) {
+        return next();
+    }
+    return next(new Error("unhandled request: " + req.method + " " + req.originalUrl));
+}
+
+/**
+ * Logs all errors, and responds unanswered requests.
+ * @param log
+ */
+export function bottomErrorHandler(log: (...args: any[]) => void): express.ErrorRequestHandler {
+    return (err: any, req: express.Request, response: express.Response, next: express.NextFunction) => {
+        if (!err) {
+            return next();
+        }
+
+        let msg = "undefined";
+        let status = 500;
+        if (err instanceof Error) {
+            msg = err.toString() + "\nStack: " + err.stack;
+            status = typeof (err as any).status === 'number' ? (err as any).status : 500;
+        } else {
+            msg = err.toString();
+        }
+        log({ sessionId: req.sessionID }, err, {
+            originalUrl: req.originalUrl,
+            headers: req.headers,
+            cookies: req.cookies,
+            session: req.session
+        });
+        if (!isAnsweredRequest(req, response)) {
+            response.status(status).send({ error: msg });
+        }
+    }
+}
+
+export function isAnsweredRequest(req: express.Request, res: express.Response) {
+    return res.headersSent || req.originalUrl.endsWith(".websocket");
 }
