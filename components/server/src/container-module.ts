@@ -83,6 +83,7 @@ import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
 import { IDEConfigService } from './ide-config';
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { IClientCallMetrics } from '@gitpod/content-service/lib/client-call-metrics';
+import { DebugApp } from './debug-app';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -103,6 +104,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(SessionHandlerProvider).toSelf().inSingletonScope();
     bind(Server).toSelf().inSingletonScope();
+    bind(DebugApp).toSelf().inSingletonScope();
 
     bind(GitpodFileParser).toSelf().inSingletonScope();
 
