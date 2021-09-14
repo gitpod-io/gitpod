@@ -65,13 +65,13 @@ export function toIWebSocket(webSocket: ws) {
         send: content => {
             if (webSocket.readyState !== ws.OPEN) {
                 if (sendsAfterOpen++ > 3) {
-                    log.error(`Repeated try to send on closed web socket (readyState was ${webSocket.readyState})`, { ws });
+                    //log.debug(`Repeated try to send on closed web socket (readyState was ${webSocket.readyState})`, { ws });
                 }
                 return;
             }
             webSocket.send(content, err => {
                 if (err) {
-                    log.error('Error in ws.send()', err, { ws });
+                    log.error('error in ws.send()', err, { ws });
                 }
             })
         },
