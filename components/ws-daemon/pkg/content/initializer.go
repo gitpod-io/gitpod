@@ -5,6 +5,7 @@
 package content
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -223,20 +224,22 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		return err
 	}
 
-	var withDebug string
+	args := []string{"--root", "state"}
+
 	if log.Log.Logger.IsLevelEnabled(logrus.DebugLevel) {
-		withDebug = "--debug"
+		args = append(args, "--debug")
 	}
 
-	rw := log.JSONWriter(log.WithFields(opts.OWI))
-	defer rw.Close()
+	args = append(args, "--log-format", "json", "run", "gogogo")
 
-	cmd = exec.Command("runc", "--root", "state", withDebug, "--log-format", "json", "run", "gogogo")
+	var cmdOut bytes.Buffer
+	cmd = exec.Command("runc", args...)
 	cmd.Dir = tmpdir
-	cmd.Stdout = rw
-	cmd.Stderr = rw
+	cmd.Stdout = &cmdOut
+	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	err = cmd.Run()
+	log.FromBuffer(&cmdOut, log.WithFields(opts.OWI))
 	if err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0. If it's 42, it was deliberate.
