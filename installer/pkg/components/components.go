@@ -9,6 +9,7 @@ import (
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsproxy "github.com/gitpod-io/gitpod/installer/pkg/components/ws-proxy"
+	wsscheduler "github.com/gitpod-io/gitpod/installer/pkg/components/ws-scheduler"
 )
 
 var MetaObjects = common.CompositeRenderFunc()
@@ -17,6 +18,7 @@ var WorkspaceObjects = common.CompositeRenderFunc(
 	wsdaemon.Objects,
 	wsmanager.Objects,
 	wsproxy.Objects,
+	wsscheduler.Objects,
 )
 
 var FullObjects = common.CompositeRenderFunc(

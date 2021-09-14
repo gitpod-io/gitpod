@@ -11,6 +11,7 @@ require (
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-proxy v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ws-scheduler v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.6
 	github.com/hexops/valast v1.4.0
 	github.com/jetstack/cert-manager v1.5.3
@@ -28,6 +29,8 @@ replace github.com/gitpod-io/gitpod/common-go => ../components/common-go // leew
 replace github.com/gitpod-io/gitpod/content-service => ../components/content-service // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../components/content-service-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ws-scheduler => ../components/ee/ws-scheduler // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon => ../components/ws-daemon // leeway
 

@@ -1728,6 +1728,7 @@ k8s.io/client-go v0.22.0 h1:sD6o9O6tCwUKCENw8v+HFsuAbq2jCu8cWC61/ydwA50=
 k8s.io/client-go v0.22.0/go.mod h1:GUjIuXR5PiEv/RVK5OODUsm6eZk7wtSWZSaSJbpFdGg=
 k8s.io/code-generator v0.22.0/go.mod h1:eV77Y09IopzeXOJzndrDyCI88UBok2h6WxAlBwpxa+o=
 k8s.io/component-base v0.22.0/go.mod h1:SXj6Z+V6P6GsBhHZVbWCw9hFjUdUYnJerlhhPnYCBCg=
+k8s.io/component-helpers v0.22.0 h1:OoTOtxTkg/T16FRS1K/WfABzxliTCq3RTbFHMBSod/o=
 k8s.io/component-helpers v0.22.0/go.mod h1:YNIbQI59ayNiU8JHlPIxVkOUYycbKhk5Niy0pcyJOEY=
 k8s.io/cri-api v0.22.0/go.mod h1:mj5DGUtElRyErU5AZ8EM0ahxbElYsaLAMTPhLPQ40Eg=
 k8s.io/gengo v0.0.0-20200413195148-3a45101e95ac/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
