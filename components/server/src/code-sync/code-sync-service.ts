@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { status } from '@grpc/grpc-js';
+import { status, ServiceError } from '@grpc/grpc-js';
 import fetch from "node-fetch";
 import { User } from '@gitpod/gitpod-protocol/lib/protocol';
 import bodyParser = require('body-parser');
@@ -255,8 +255,12 @@ export class CodeSyncService {
                 const request = new DeleteRequest();
                 request.setOwnerId(userId);
                 request.setExact(oldObject);
-                this.blobs.delete(request, (err: any) => {
+                this.blobs.delete(request, (err: ServiceError | null) => {
                     if (err) {
+                        if (err.code === status.NOT_FOUND) {
+                            // we're good here
+                            return;
+                        }
                         log.error({ userId }, 'code sync: failed to delete', err, { object: oldObject });
                     }
                 });
