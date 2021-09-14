@@ -97,24 +97,32 @@ export namespace log {
     /**
      * Do not use in frontend.
      */
-    export function enableJSONLogging(componentArg: string, versionArg: string | undefined): void {
+    export function enableJSONLogging(componentArg: string, versionArg: string | undefined, logLevel?: LogrusLogLevel): void {
         component = componentArg;
         version = versionArg;
 
+        setLogLevel(logLevel);
+    }
+
+    export function setLogLevel(logLevel: LogrusLogLevel | undefined) {
         jsonLogging = true;
 
-        console.error = function (...args: any[]): void {
-            errorLog(true, args);
-        }
-        console.warn = function (...args: any[]): void {
-            warnLog(true, args);
-        }
-        console.info = function (...args: any[]): void {
-            infoLog(true, args);
-        }
-        console.debug = function (...args: any[]): void {
-            debugLog(true, args);
-        }
+        const noop = () => {};
+        const setLog = (logFunc: (calleViaConsole: boolean, args: any[]) => void, funcLvl: LogrusLogLevel): (() => void) => {
+            if (LogrusLogLevel.isGreatherOrEqual(funcLvl, logLevel)) {
+                return function (...args: any[]): void {
+                    logFunc(true, args);
+                };
+            } else {
+                return noop;
+            }
+        };
+
+        console.error = setLog(errorLog, "error");
+        console.warn = setLog(warnLog, "warning");
+        console.info = setLog(infoLog, "info");
+        console.debug = setLog(debugLog, "debug");
+
         console.log = console.info;
         // FIXME wrap also other console methods (e.g. trace())
     }
@@ -148,6 +156,45 @@ function infoLog(calledViaConsole: boolean, args: any[]): void {
 
 function debugLog(calledViaConsole: boolean, args: any[]): void {
     doLog(calledViaConsole, debugConsoleLog, 'DEBUG', args);
+}
+
+// Ref: https://github.com/sirupsen/logrus#level-logging
+export type LogrusLogLevel = keyof (typeof LogrusLogLevels);
+export const LogrusLogLevels = {
+    trace: true,
+    debug: true,
+    info: true,
+    warning: true,
+    error: true,
+    fatal: true,
+    panic: true,
+}
+export namespace LogrusLogLevel {
+    export function isGreatherOrEqual(lvl: LogrusLogLevel | undefined, ref: LogrusLogLevel | undefined): boolean {
+        if (lvl === undefined) {
+            return false;
+        }
+        if (ref === undefined) {
+            return true;
+        }
+        return getLevelArity(lvl) >= getLevelArity(ref);
+    }
+    function getLevelArity(lvl: LogrusLogLevel): number {
+        return Object.keys(LogrusLogLevels)
+            .findIndex((l) => l === lvl);
+    }
+    export function getFromEnv(): LogrusLogLevel | undefined {
+        const lvlStr = process.env.LOG_LEVEL;
+        if (!lvlStr) {
+            return undefined;
+        }
+        const lvl = lvlStr as LogrusLogLevel;
+        const exists = LogrusLogLevels[lvl]
+        if (!exists) {
+            return undefined;
+        }
+        return lvl;
+    }
 }
 
 // Source: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity

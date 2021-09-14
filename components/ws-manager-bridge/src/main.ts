@@ -7,7 +7,7 @@
 import { Container } from 'inversify';
 import * as express from 'express';
 import * as prometheusClient from 'prom-client';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { MessageBusIntegration } from './messagebus-integration';
 import { TypeORM } from '@gitpod/gitpod-db/lib/typeorm/typeorm';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
@@ -15,7 +15,7 @@ import { ClusterServiceServer } from './cluster-service-server';
 import { BridgeController } from './bridge-controller';
 import { MetaInstanceController } from './meta-instance-controller';
 
-log.enableJSONLogging('ws-manager-bridge', undefined);
+log.enableJSONLogging('ws-manager-bridge', undefined, LogrusLogLevel.getFromEnv());
 
 export const start = async (container: Container) => {
     try {

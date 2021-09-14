@@ -7,11 +7,11 @@
 require("reflect-metadata")
 
 import { ArgumentParser } from "argparse";
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ICommand } from "./commands";
 import { Container } from "inversify";
 import { productionContainerModule } from "./container-module";
-log.enableJSONLogging('db-sync', undefined);
+log.enableJSONLogging('db-sync', undefined, LogrusLogLevel.getFromEnv());
 
 const parser = new ArgumentParser({
     version: "0.1.5",
