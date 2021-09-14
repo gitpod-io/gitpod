@@ -73,6 +73,7 @@ data:
                 {{ if (or $wscomp.templates.prebuild $wscomp.affinity) -}}"prebuildPath": "/workspace-template/prebuild.yaml",{{- end }}
                 {{ if (or $wscomp.templates.probe $wscomp.affinity) -}}"probePath": "/workspace-template/probe.yaml",{{- end }}
                 {{ if (or $wscomp.templates.ghost $wscomp.affinity) -}}"ghostPath": "/workspace-template/ghost.yaml",{{- end }}
+                {{ if (or $wscomp.templates.imagebuild $wscomp.affinity) -}}"imagebuildPath": "/workspace-template/imagebuild.yaml",{{- end }}
                 {{ if (or $wscomp.templates.regular $wscomp.affinity) -}}"regularPath": "/workspace-template/regular.yaml",{{- end }}
                 {{ end -}}
                 "defaultPath": "/workspace-template/default.yaml"
