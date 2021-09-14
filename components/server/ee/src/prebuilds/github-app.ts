@@ -12,7 +12,7 @@ import { injectable, inject } from 'inversify';
 import { Config } from '../../../src/config';
 import { AppInstallationDB, TracedWorkspaceDB, DBWithTracing, UserDB, WorkspaceDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
 import * as express from 'express';
-import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log, LogContext, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WorkspaceConfig, User, Project, StartPrebuildResult } from '@gitpod/gitpod-protocol';
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { GithubAppRules } from './github-app-rules';
@@ -56,7 +56,7 @@ export class GithubApp {
                     appId: config.githubApp.appId,
                     privateKey: GithubApp.loadPrivateKey(config.githubApp.certPath),
                     secret: config.githubApp.webhookSecret,
-                    logLevel: config.githubApp.logLevel as Options["logLevel"],
+                    logLevel: GithubApp.mapToGitHubLogLevel(config.logLevel),
                     baseUrl: config.githubApp.baseUrl,
                 })
             });
@@ -402,6 +402,17 @@ export namespace GithubApp {
             if (key) {
                 return key.toString();
             }
+        }
+    }
+
+    export function mapToGitHubLogLevel(logLevel: LogrusLogLevel): Options["logLevel"] {
+        switch (logLevel) {
+            case "warning":
+                return "warn";
+            case "panic":
+                return "fatal";
+            default:
+                return logLevel;
         }
     }
 }
