@@ -59,13 +59,13 @@ if (typeof (Symbol as any).asyncIterator === 'undefined') {
 import * as express from 'express';
 import { Container } from 'inversify';
 import { Server } from "./server"
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
 if (process.env.NODE_ENV === 'development') {
     require('longjohn');
 }
 
-log.enableJSONLogging('server', process.env.VERSION);
+log.enableJSONLogging('server', process.env.VERSION, LogrusLogLevel.getFromEnv());
 
 export async function start(container: Container) {
     const tracing = container.get(TracingManager);

@@ -11,10 +11,10 @@ import { Container } from 'inversify';
 import { Server } from "./server";
 import { productionContainerModule } from './container-module';
 
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { dbContainerModule } from '@gitpod/gitpod-db/lib/container-module';
 
-log.enableJSONLogging('payment-endpoint', undefined);
+log.enableJSONLogging('payment-endpoint', undefined, LogrusLogLevel.getFromEnv());
 
 const init = async () => {
     const container = new Container();
