@@ -145,7 +145,7 @@ export class HeadlessLogService {
                 });
             });
         } catch (err) {
-            log.error({ userId, workspaceId: wsi.workspaceId, instanceId: wsi.id }, "an error occurred retrieving a headless log download URL", err, { taskId });
+            log.debug({ userId, workspaceId: wsi.workspaceId, instanceId: wsi.id }, "an error occurred retrieving a headless log download URL", err, { taskId });
             return undefined;
         }
     }

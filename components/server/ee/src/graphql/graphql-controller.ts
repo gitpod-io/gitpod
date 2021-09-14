@@ -30,6 +30,10 @@ export class GraphQLController {
         const schema = makeExecutableSchema({
             typeDefs,
             resolvers,
+            // silence noisy warnings
+            resolverValidationOptions :{
+                requireResolversForResolveType: false,
+            },
         });
         return graphqlHTTP(async (request) => {
             const ctx = request as any as Context;

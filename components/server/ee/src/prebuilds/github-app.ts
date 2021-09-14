@@ -64,6 +64,7 @@ export class GithubApp {
                 cert: config.githubApp.certPath,
                 secret: config.githubApp.webhookSecret
             });
+
             this.server.load(this.buildApp.bind(this));
         }
     }

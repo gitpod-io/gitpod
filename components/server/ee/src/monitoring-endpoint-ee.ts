@@ -36,7 +36,7 @@ export class MonitoringEndpointsAppEE extends WorkspaceHealthMonitoring {
                     res.status(200).send(result);
                 }
             } catch (err) {
-                log.error("failed to check workspace health", err);
+                log.debug("failed to check workspace health", err);
                 res.status(500).send(err);
             }
         });
