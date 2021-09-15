@@ -31,7 +31,7 @@ import { UserService } from './user/user-service';
 import { UserDeletionService } from './user/user-deletion-service';
 import { WorkspaceDeletionService } from './workspace/workspace-deletion-service';
 import { EnvvarPrefixParser } from './workspace/envvar-prefix-context-parser';
-import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
+import { IWorkspaceManagerClientCallMetrics, WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderEnvSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
 import { WorkspaceStarter } from './workspace/workspace-starter';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
@@ -41,7 +41,7 @@ import { ConsensusLeaderMessenger } from './consensus/consensus-leader-messenger
 import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus-leader-messenger';
 import { ConsensusLeaderQorum } from './consensus/consensus-leader-quorum';
 import { StorageClient } from './storage/storage-client';
-import { ImageBuilderClientConfig, ImageBuilderClientProvider, CachingImageBuilderClientProvider } from '@gitpod/image-builder/lib';
+import { ImageBuilderClientConfig, ImageBuilderClientProvider, CachingImageBuilderClientProvider, ImageBuilderClientCallMetrics } from '@gitpod/image-builder/lib';
 import { ImageSourceProvider } from './workspace/image-source-provider';
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { TokenGarbageCollector } from './user/token-garbage-collector';
@@ -81,6 +81,8 @@ import { NewsletterSubscriptionController } from './user/newsletter-subscription
 import { Config, ConfigFile } from './config';
 import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
 import { IDEConfigService } from './ide-config';
+import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
+import { IClientCallMetrics } from '@gitpod/content-service/lib/client-call-metrics';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -131,12 +133,16 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         }
     ).inSingletonScope();
 
+    bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
+    bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
+
     bind(ImageBuilderClientConfig).toDynamicValue(ctx => {
         const config = ctx.container.get<Config>(Config);
         return { address: config.imageBuilderAddr }
     });
     bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
     bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
+    bind(ImageBuilderClientCallMetrics).toService(IClientCallMetrics);
 
     /* The binding order of the context parser does not configure preference/a working order. Each context parser must be able
      * to decide for themselves, independently and without overlap to the other parsers what to do.
@@ -167,6 +173,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
+    bind(IWorkspaceManagerClientCallMetrics).toService(IClientCallMetrics);
 
     bind(TheiaPluginService).toSelf().inSingletonScope();
 

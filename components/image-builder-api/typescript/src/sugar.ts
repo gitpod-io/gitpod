@@ -8,10 +8,11 @@ import { ImageBuilderClient } from "./imgbuilder_grpc_pb";
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
 import * as opentracing from 'opentracing';
 import { Metadata } from "@grpc/grpc-js";
 import { BuildRequest, BuildResponse, BuildStatus, LogsRequest, LogsResponse, ResolveWorkspaceImageResponse, ResolveWorkspaceImageRequest, ResolveBaseImageRequest, ResolveBaseImageResponse } from "./imgbuilder_pb";
-import { injectable, inject } from 'inversify';
+import { injectable, inject, optional } from 'inversify';
 import * as grpc from "@grpc/grpc-js";
 import { TextDecoder } from "util";
 
@@ -33,6 +34,7 @@ function withTracing(ctx: TraceContext) {
 }
 
 export const ImageBuilderClientConfig = Symbol("ImageBuilderClientConfig");
+export const ImageBuilderClientCallMetrics = Symbol('ImageBuilderCallMetrics')
 
 // ImageBuilderClientConfig configures the access to an image builder
 export interface ImageBuilderClientConfig {
@@ -43,14 +45,25 @@ export interface ImageBuilderClientConfig {
 export class CachingImageBuilderClientProvider implements ImageBuilderClientProvider {
     @inject(ImageBuilderClientConfig) protected readonly clientConfig: ImageBuilderClientConfig;
 
+    @inject(ImageBuilderClientCallMetrics) @optional()
+    protected readonly clientCallMetrics: IClientCallMetrics;
+
     // gRPC connections maintain their connectivity themselves, i.e. they reconnect when neccesary.
     // They can also be used concurrently, even across services.
     // Thus it makes sense to cache them rather than create a new connection for each request.
     protected connectionCache: PromisifiedImageBuilderClient | undefined;
 
     getDefault() {
+        let interceptor: grpc.Interceptor[] = [];
+        if (this.clientCallMetrics) {
+            interceptor = [ createClientCallMetricsInterceptor(this.clientCallMetrics) ];
+        }
+
         if (!this.connectionCache || !this.connectionCache.isConnectionAlive()) {
-            this.connectionCache = new PromisifiedImageBuilderClient(new ImageBuilderClient(this.clientConfig.address, grpc.credentials.createInsecure()));
+            this.connectionCache = new PromisifiedImageBuilderClient(
+                new ImageBuilderClient(this.clientConfig.address, grpc.credentials.createInsecure()),
+                interceptor
+            );
         }
         return this.connectionCache!;
     }
@@ -68,7 +81,7 @@ export interface StagedBuildResponse {
 
 export class PromisifiedImageBuilderClient {
 
-    constructor(public readonly client: ImageBuilderClient) { }
+    constructor(public readonly client: ImageBuilderClient, protected readonly interceptor: grpc.Interceptor[]) { }
 
     public isConnectionAlive() {
         const cs = this.client.getChannel().getConnectivityState(false);
@@ -78,7 +91,7 @@ export class PromisifiedImageBuilderClient {
     public resolveBaseImage(ctx: TraceContext, request: ResolveBaseImageRequest): Promise<ResolveBaseImageResponse> {
         return new Promise<ResolveBaseImageResponse>((resolve, reject) => {
             const span = TraceContext.startSpan(`/image-builder/resolveBaseImage`, ctx);
-            this.client.resolveBaseImage(request, withTracing({ span }), (err, resp) => {
+            this.client.resolveBaseImage(request, withTracing({ span }), this.getDefaultUnaryOptions(), (err, resp) => {
                 if (err) {
                     TraceContext.logError({ span }, err);
                     reject(err);
@@ -93,7 +106,7 @@ export class PromisifiedImageBuilderClient {
     public resolveWorkspaceImage(ctx: TraceContext, request: ResolveWorkspaceImageRequest): Promise<ResolveWorkspaceImageResponse> {
         return new Promise<ResolveWorkspaceImageResponse>((resolve, reject) => {
             const span = TraceContext.startSpan(`/image-builder/resolveWorkspaceImage`, ctx);
-            this.client.resolveWorkspaceImage(request, withTracing({ span }), (err, resp) => {
+            this.client.resolveWorkspaceImage(request, withTracing({ span }), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
                     TraceContext.logError({ span }, err);
@@ -200,6 +213,12 @@ export class PromisifiedImageBuilderClient {
                 }
             });
         })
+    }
+
+    protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {
+        return {
+            interceptors: this.interceptor,
+        }
     }
 
 }
