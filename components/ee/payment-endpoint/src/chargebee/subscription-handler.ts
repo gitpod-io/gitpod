@@ -41,7 +41,7 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
         const eventType = event.event_type;
 
         const logContext: LogContext = { userId };
-        log.info(logContext, `Start SubscriptionHandler.handleSingleEvent`, { eventType });
+        log.debug(logContext, `Start SubscriptionHandler.handleSingleEvent`, { eventType });
         try {
             if (!event.content.subscription) {
                 log.error(logContext, 'Ignoring event, because it does not contain a subscription', event);
@@ -62,7 +62,7 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
             log.error(logContext, "Error in SubscriptionHandler.handleSingleEvent", error);
             throw error;
         }
-        log.info(logContext, "Finished SubscriptionHandler.handleSingleEvent", { eventType });
+        log.debug(logContext, "Finished SubscriptionHandler.handleSingleEvent", { eventType });
         return true;
     }
 
