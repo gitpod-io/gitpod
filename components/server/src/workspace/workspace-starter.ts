@@ -528,7 +528,14 @@ export class WorkspaceStarter {
             await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
             TraceContext.logError({ span }, err);
-            log.error({instanceId: instance.id, userId: user.id, workspaceId: workspace.id}, `workspace image build failed: ${message}`);
+            const looksLikeUserError = (msg: string): boolean => {
+                return msg.startsWith("build failed:");
+            };
+            if (looksLikeUserError(message)) {
+                log.debug({instanceId: instance.id, userId: user.id, workspaceId: workspace.id}, `workspace image build failed: ${message}`);
+            } else {
+                log.warn({instanceId: instance.id, userId: user.id, workspaceId: workspace.id}, `workspace image build failed: ${message}`);
+            }
             this.analytics.track({ userId: user.id, event: "imagebuild-failed", properties: { workspaceId: workspace.id, instanceId: instance.id, contextURL: workspace.contextURL, }});
 
             throw err;
@@ -953,7 +960,7 @@ export class WorkspaceStarter {
                     return (WorkspaceFeatureFlag[key] as any) as WorkspaceFeatureFlag;
                 }
             }
-            log.warn(`not a valid workspace feature flag: ${name}`);
+            log.debug(`not a valid workspace feature flag: ${name}`);
             return undefined;
         }).filter(f => !!f) as WorkspaceFeatureFlag[];
 
