@@ -49,6 +49,11 @@ export class WorkspaceInitializer extends jspb.Message {
     getBackup(): FromBackupInitializer | undefined;
     setBackup(value?: FromBackupInitializer): WorkspaceInitializer;
 
+    hasFiles(): boolean;
+    clearFiles(): void;
+    getFiles(): FilesInitializer | undefined;
+    setFiles(value?: FilesInitializer): WorkspaceInitializer;
+
     getSpecCase(): WorkspaceInitializer.SpecCase;
 
     serializeBinary(): Uint8Array;
@@ -70,6 +75,7 @@ export namespace WorkspaceInitializer {
         composite?: CompositeInitializer.AsObject,
         download?: FileDownloadInitializer.AsObject,
         backup?: FromBackupInitializer.AsObject,
+        files?: FilesInitializer.AsObject,
     }
 
     export enum SpecCase {
@@ -81,6 +87,7 @@ export namespace WorkspaceInitializer {
         COMPOSITE = 5,
         DOWNLOAD = 6,
         BACKUP = 7,
+        FILES = 8,
     }
 
 }
@@ -105,6 +112,56 @@ export namespace CompositeInitializer {
     export type AsObject = {
         initializerList: Array<WorkspaceInitializer.AsObject>,
     }
+}
+
+export class FilesInitializer extends jspb.Message {
+    clearFilesList(): void;
+    getFilesList(): Array<FilesInitializer.File>;
+    setFilesList(value: Array<FilesInitializer.File>): FilesInitializer;
+    addFiles(value?: FilesInitializer.File, index?: number): FilesInitializer.File;
+    getTargetLocation(): string;
+    setTargetLocation(value: string): FilesInitializer;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): FilesInitializer.AsObject;
+    static toObject(includeInstance: boolean, msg: FilesInitializer): FilesInitializer.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: FilesInitializer, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): FilesInitializer;
+    static deserializeBinaryFromReader(message: FilesInitializer, reader: jspb.BinaryReader): FilesInitializer;
+}
+
+export namespace FilesInitializer {
+    export type AsObject = {
+        filesList: Array<FilesInitializer.File.AsObject>,
+        targetLocation: string,
+    }
+
+
+    export class File extends jspb.Message {
+        getContent(): string;
+        setContent(value: string): File;
+        getFilePath(): string;
+        setFilePath(value: string): File;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): File.AsObject;
+        static toObject(includeInstance: boolean, msg: File): File.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: File, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): File;
+        static deserializeBinaryFromReader(message: File, reader: jspb.BinaryReader): File;
+    }
+
+    export namespace File {
+        export type AsObject = {
+            content: string,
+            filePath: string,
+        }
+    }
+
 }
 
 export class FileDownloadInitializer extends jspb.Message {

@@ -136,6 +136,8 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		initializer, err = newSnapshotInitializer(loc, rs, ir.Snapshot)
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Download); ok {
 		initializer, err = newFileDownloadInitializer(loc, ir.Download)
+	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Files); ok {
+		initializer, err = newFilesInitializer(loc, ir.Files)
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Backup); ok {
 		initializer, err = newFromBackupInitializer(loc, rs, ir.Backup)
 	} else {
@@ -145,6 +147,20 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %v", err))
 	}
 	return initializer, nil
+}
+
+func newFilesInitializer(loc string, req *csapi.FilesInitializer) (*filesInitializer, error) {
+	files := make([]file, len(req.Files))
+	for i, f := range req.Files {
+		files[i] = file{
+			Content: f.Content,
+			Path:    f.FilePath,
+		}
+	}
+	return &filesInitializer{
+		Files:          files,
+		TargetLocation: req.TargetLocation,
+	}, nil
 }
 
 // newFileDownloadInitializer creates a download initializer for a request

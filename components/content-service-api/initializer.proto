@@ -14,6 +14,7 @@ message WorkspaceInitializer {
         CompositeInitializer composite = 5;
         FileDownloadInitializer download = 6;
         FromBackupInitializer backup = 7;
+        FilesInitializer files = 8;
     }
 }
 
@@ -21,6 +22,20 @@ message WorkspaceInitializer {
 // All initializer are executed in the order they're provided.
 message CompositeInitializer {
     repeated WorkspaceInitializer initializer = 1;
+}
+
+// FilesInitializer takes raw files bytes and uses them as workspace content.
+message FilesInitializer {
+    message File {
+       string content = 1;
+       // file_path is relative to the target_location, e.g. if target_location is in `/workspace/myrepo`
+       // a file_path of `foobar/file` would produce a file in `/workspace/myrepo/foobar/file`.
+       // file_path must include the filename. The FileDownloadInitializer will create any parent directories
+       // necessary to place the file.
+       string file_path = 2;
+    }
+    repeated File files = 1;
+    string target_location = 2;
 }
 
 // FileDownloadInitializer downloads files and uses them as workspace content.
