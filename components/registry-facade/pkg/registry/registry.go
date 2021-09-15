@@ -33,25 +33,26 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
+type TLS struct {
+	Authority   string `json:"ca"`
+	Certificate string `json:"crt"`
+	PrivateKey  string `json:"key"`
+}
+
+type RSProvider struct {
+	Addr string `json:"addr"`
+	TLS  *TLS   `json:"tls,omitempty"`
+}
+
 // Config configures the registry
 type Config struct {
 	Port               int              `json:"port"`
 	Prefix             string           `json:"prefix"`
 	StaticLayer        []StaticLayerCfg `json:"staticLayer"`
-	RemoteSpecProvider *struct {
-		Addr string `json:"addr"`
-		TLS  *struct {
-			Authority   string `json:"ca"`
-			Certificate string `json:"crt"`
-			PrivateKey  string `json:"key"`
-		} `json:"tls,omitempty"`
-	} `json:"remoteSpecProvider,omitempty"`
-	Store       string `json:"store"`
-	RequireAuth bool   `json:"requireAuth"`
-	TLS         *struct {
-		Certificate string `json:"crt"`
-		PrivateKey  string `json:"key"`
-	} `json:"tls"`
+	RemoteSpecProvider *RSProvider      `json:"remoteSpecProvider,omitempty"`
+	Store              string           `json:"store"`
+	RequireAuth        bool             `json:"requireAuth"`
+	TLS                *TLS             `json:"tls"`
 }
 
 // StaticLayerCfg configure statically added layer

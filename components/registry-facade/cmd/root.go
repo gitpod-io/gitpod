@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -13,7 +12,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 )
 
 var (
@@ -48,28 +46,4 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "v", false, "produce JSON log output on verbose level")
-}
-
-// Config configures this servuce
-type Config struct {
-	Registry       registry.Config `json:"registry"`
-	AuthCfg        string          `json:"dockerAuth"`
-	PProfAddr      string          `json:"pprofAddr"`
-	PrometheusAddr string          `json:"prometheusAddr"`
-}
-
-// getConfig loads and validates the configuration
-func getConfig(fn string) (*Config, error) {
-	fc, err := os.ReadFile(fn)
-	if err != nil {
-		return nil, err
-	}
-
-	var cfg Config
-	err = json.Unmarshal(fc, &cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cfg, nil
 }
