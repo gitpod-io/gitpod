@@ -20,10 +20,12 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
@@ -41,6 +43,34 @@ var runCmd = &cobra.Command{
 		cfg, err := getConfig(configPath)
 		if err != nil {
 			log.WithError(err).WithField("filename", configPath).Fatal("cannot load config")
+		}
+
+		promreg := prometheus.NewRegistry()
+		gpreg := prometheus.WrapRegistererWithPrefix("gitpod_registry_facade_", promreg)
+		rtt, err := registry.NewMeasuringRegistryRoundTripper(newDefaultTransport(), prometheus.WrapRegistererWithPrefix("downstream_", gpreg))
+		if err != nil {
+			log.WithError(err).Fatal("cannot registry metrics")
+		}
+		if cfg.PrometheusAddr != "" {
+			promreg.MustRegister(
+				collectors.NewGoCollector(),
+				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+				common_grpc.ClientMetrics(),
+			)
+
+			handler := http.NewServeMux()
+			handler.Handle("/metrics", promhttp.HandlerFor(promreg, promhttp.HandlerOpts{}))
+
+			go func() {
+				err := http.ListenAndServe(cfg.PrometheusAddr, handler)
+				if err != nil {
+					log.WithError(err).Error("Prometheus metrics server failed")
+				}
+			}()
+			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
+		}
+		if cfg.PProfAddr != "" {
+			go pprof.Serve(cfg.PProfAddr)
 		}
 
 		var dockerCfg *configfile.ConfigFile
@@ -61,13 +91,6 @@ var runCmd = &cobra.Command{
 				log.WithError(err).Fatal("cannot read docker config")
 			}
 			log.WithField("fn", authCfg).Info("using authentication for backing registries")
-		}
-
-		promreg := prometheus.NewRegistry()
-		gpreg := prometheus.WrapRegistererWithPrefix("gitpod_registry_facade_", promreg)
-		rtt, err := registry.NewMeasuringRegistryRoundTripper(newDefaultTransport(), prometheus.WrapRegistererWithPrefix("downstream_", gpreg))
-		if err != nil {
-			log.WithError(err).Fatal("cannot registry metrics")
 		}
 
 		resolverProvider := func() remotes.Resolver {
@@ -94,27 +117,6 @@ var runCmd = &cobra.Command{
 			defer close(registryDoneChan)
 			reg.MustServe()
 		}()
-
-		if cfg.PProfAddr != "" {
-			go pprof.Serve(cfg.PProfAddr)
-		}
-		if cfg.PrometheusAddr != "" {
-			promreg.MustRegister(
-				prometheus.NewGoCollector(),
-				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
-			)
-
-			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(promreg, promhttp.HandlerOpts{}))
-
-			go func() {
-				err := http.ListenAndServe(cfg.PrometheusAddr, handler)
-				if err != nil {
-					log.WithError(err).Error("Prometheus metrics server failed")
-				}
-			}()
-			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
-		}
 
 		log.Info("🏪 registry facade is up and running")
 		sigChan := make(chan os.Signal, 1)

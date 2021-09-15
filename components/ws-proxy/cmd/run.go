@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 
@@ -35,6 +36,28 @@ var runCmd = &cobra.Command{
 		}
 
 		common_grpc.SetupLogging()
+		if cfg.PrometheusAddr != "" {
+			reg := prometheus.NewRegistry()
+			reg.MustRegister(
+				collectors.NewGoCollector(),
+				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+				common_grpc.ClientMetrics(),
+			)
+
+			handler := http.NewServeMux()
+			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+
+			go func() {
+				err := http.ListenAndServe(cfg.PrometheusAddr, handler)
+				if err != nil {
+					log.WithError(err).Error("Prometheus metrics server failed")
+				}
+			}()
+			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
+		}
+		if cfg.PProfAddr != "" {
+			go pprof.Serve(cfg.PProfAddr)
+		}
 
 		const wsmanConnectionAttempts = 5
 		workspaceInfoProvider := proxy.NewRemoteWorkspaceInfoProvider(cfg.WorkspaceInfoProviderConfig)
@@ -58,27 +81,6 @@ var runCmd = &cobra.Command{
 		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider).MustServe()
 		log.Infof("started proxying on %s", cfg.Ingress.HttpAddress)
 
-		if cfg.PProfAddr != "" {
-			go pprof.Serve(cfg.PProfAddr)
-		}
-		if cfg.PrometheusAddr != "" {
-			reg := prometheus.NewRegistry()
-			reg.MustRegister(
-				prometheus.NewGoCollector(),
-				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
-			)
-
-			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-
-			go func() {
-				err := http.ListenAndServe(cfg.PrometheusAddr, handler)
-				if err != nil {
-					log.WithError(err).Error("Prometheus metrics server failed")
-				}
-			}()
-			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
-		}
 		if cfg.ReadinessProbeAddr != "" {
 			go func() {
 				err = http.ListenAndServe(cfg.ReadinessProbeAddr, http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {

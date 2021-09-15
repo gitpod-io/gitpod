@@ -21,6 +21,7 @@ import (
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -34,6 +35,26 @@ var runCmd = &cobra.Command{
 		cfg := getConfig()
 
 		common_grpc.SetupLogging()
+		if cfg.Prometheus.Addr != "" {
+			// BEWARE: for the gRPC client side metrics to work it's important to call common_grpc.ClientMetrics()
+			//         before NewOrchestratingBuilder as the latter produces the gRPC client.
+			handler := http.NewServeMux()
+			handler.Handle("/metrics", promhttp.Handler())
+
+			prometheus.DefaultRegisterer.MustRegister(common_grpc.ClientMetrics())
+
+			go func() {
+				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
+				if err != nil {
+					log.WithError(err).Error("Prometheus metrics server failed")
+				}
+			}()
+			log.WithField("addr", cfg.Prometheus.Addr).Info("started Prometheus metrics server")
+		}
+
+		if cfg.PProf.Addr != "" {
+			go pprof.Serve(cfg.PProf.Addr)
+		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -88,23 +109,6 @@ var runCmd = &cobra.Command{
 			}
 		}()
 		log.WithField("addr", cfg.Service.Addr).Info("started workspace content server")
-
-		if cfg.Prometheus.Addr != "" {
-			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.Handler())
-
-			go func() {
-				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
-				if err != nil {
-					log.WithError(err).Error("Prometheus metrics server failed")
-				}
-			}()
-			log.WithField("addr", cfg.Prometheus.Addr).Info("started Prometheus metrics server")
-		}
-
-		if cfg.PProf.Addr != "" {
-			go pprof.Serve(cfg.PProf.Addr)
-		}
 
 		// run until we're told to stop
 		sigChan := make(chan os.Signal, 1)

@@ -10,7 +10,9 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
@@ -22,14 +24,38 @@ import (
 // grpc library default is 4MB
 const maxMsgSize = 1024 * 1024 * 16
 
+var defaultClientOptionsConfig struct {
+	Metrics *grpc_prometheus.ClientMetrics
+}
+
+// ClientMetrics produces client-side gRPC metrics
+func ClientMetrics() prometheus.Collector {
+	res := grpc_prometheus.NewClientMetrics()
+	defaultClientOptionsConfig.Metrics = res
+	return res
+}
+
 // DefaultClientOptions returns the default grpc client connection options
 func DefaultClientOptions() []grpc.DialOption {
 	bfConf := backoff.DefaultConfig
 	bfConf.MaxDelay = 5 * time.Second
 
-	return []grpc.DialOption{
-		grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
-		grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
+	var (
+		unaryInterceptor = []grpc.UnaryClientInterceptor{
+			grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+		}
+		streamInterceptor = []grpc.StreamClientInterceptor{
+			grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
+		}
+	)
+	if defaultClientOptionsConfig.Metrics != nil {
+		unaryInterceptor = append(unaryInterceptor, defaultClientOptionsConfig.Metrics.UnaryClientInterceptor())
+		streamInterceptor = append(streamInterceptor, defaultClientOptionsConfig.Metrics.StreamClientInterceptor())
+	}
+
+	res := []grpc.DialOption{
+		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(unaryInterceptor...)),
+		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(streamInterceptor...)),
 		grpc.WithBlock(),
 		grpc.WithConnectParams(grpc.ConnectParams{
 			Backoff: bfConf,
@@ -41,6 +67,8 @@ func DefaultClientOptions() []grpc.DialOption {
 		}),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
 	}
+
+	return res
 }
 
 // DefaultServerOptions returns the default ServerOption sets options for internal components
