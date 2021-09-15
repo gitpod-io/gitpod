@@ -57,14 +57,7 @@ const (
 
 // Configuration configures the orchestrator
 type Configuration struct {
-	WorkspaceManager struct {
-		Address string `json:"address"`
-		TLS     struct {
-			Authority   string `json:"ca"`
-			Certificate string `json:"crt"`
-			PrivateKey  string `json:"key"`
-		} `json:"tls,omitempty"`
-	} `json:"wsman"`
+	WorkspaceManager WorkspaceManagerConfig `json:"wsman"`
 
 	// AuthFile points to a Docker configuration file from which we draw registry authentication
 	AuthFile string `json:"authFile"`
@@ -82,6 +75,17 @@ type Configuration struct {
 	// BuilderAuthKeyFile points to a keyfile shared by the builder workspaces and this service.
 	// The key is used to encypt authentication data shipped across environment varibales.
 	BuilderAuthKeyFile string `json:"builderAuthKeyFile,omitempty"`
+}
+
+// WorkspaceManagerConfig configures the workspace manager connection
+type WorkspaceManagerConfig struct {
+	Address string `json:"address"`
+	TLS     struct {
+		Authority   string `json:"ca"`
+		Certificate string `json:"crt"`
+		PrivateKey  string `json:"key"`
+	} `json:"tls,omitempty"`
+	Client wsmanapi.WorkspaceManagerClient `json:"-"`
 }
 
 // NewOrchestratingBuilder creates a new orchestrating image builder
@@ -118,47 +122,53 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 		copy(builderAuthKey[:], data)
 	}
 
-	grpcOpts := common_grpc.DefaultClientOptions()
-	if cfg.WorkspaceManager.TLS.Authority != "" || cfg.WorkspaceManager.TLS.Certificate != "" && cfg.WorkspaceManager.TLS.PrivateKey != "" {
-		ca := cfg.WorkspaceManager.TLS.Authority
-		crt := cfg.WorkspaceManager.TLS.Certificate
-		key := cfg.WorkspaceManager.TLS.PrivateKey
-
-		// Telepresence (used for debugging only) requires special paths to load files from
-		if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
-			ca = filepath.Join(root, ca)
-			crt = filepath.Join(root, crt)
-			key = filepath.Join(root, key)
-		}
-
-		rootCA, err := os.ReadFile(ca)
-		if err != nil {
-			return nil, xerrors.Errorf("could not read ca certificate: %s", err)
-		}
-		certPool := x509.NewCertPool()
-		if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
-			return nil, xerrors.Errorf("failed to append ca certs")
-		}
-
-		certificate, err := tls.LoadX509KeyPair(crt, key)
-		if err != nil {
-			log.WithField("config", cfg.WorkspaceManager.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
-			return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
-		}
-
-		creds := credentials.NewTLS(&tls.Config{
-			ServerName:   "ws-manager",
-			Certificates: []tls.Certificate{certificate},
-			RootCAs:      certPool,
-			MinVersion:   tls.VersionTLS12,
-		})
-		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
+	var wsman wsmanapi.WorkspaceManagerClient
+	if cfg.WorkspaceManager.Client != nil {
+		wsman = cfg.WorkspaceManager.Client
 	} else {
-		grpcOpts = append(grpcOpts, grpc.WithInsecure())
-	}
-	conn, err := grpc.Dial(cfg.WorkspaceManager.Address, grpcOpts...)
-	if err != nil {
-		return
+		grpcOpts := common_grpc.DefaultClientOptions()
+		if cfg.WorkspaceManager.TLS.Authority != "" || cfg.WorkspaceManager.TLS.Certificate != "" && cfg.WorkspaceManager.TLS.PrivateKey != "" {
+			ca := cfg.WorkspaceManager.TLS.Authority
+			crt := cfg.WorkspaceManager.TLS.Certificate
+			key := cfg.WorkspaceManager.TLS.PrivateKey
+
+			// Telepresence (used for debugging only) requires special paths to load files from
+			if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
+				ca = filepath.Join(root, ca)
+				crt = filepath.Join(root, crt)
+				key = filepath.Join(root, key)
+			}
+
+			rootCA, err := os.ReadFile(ca)
+			if err != nil {
+				return nil, xerrors.Errorf("could not read ca certificate: %s", err)
+			}
+			certPool := x509.NewCertPool()
+			if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
+				return nil, xerrors.Errorf("failed to append ca certs")
+			}
+
+			certificate, err := tls.LoadX509KeyPair(crt, key)
+			if err != nil {
+				log.WithField("config", cfg.WorkspaceManager.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
+				return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
+			}
+
+			creds := credentials.NewTLS(&tls.Config{
+				ServerName:   "ws-manager",
+				Certificates: []tls.Certificate{certificate},
+				RootCAs:      certPool,
+				MinVersion:   tls.VersionTLS12,
+			})
+			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
+		} else {
+			grpcOpts = append(grpcOpts, grpc.WithInsecure())
+		}
+		conn, err := grpc.Dial(cfg.WorkspaceManager.Address, grpcOpts...)
+		if err != nil {
+			return nil, err
+		}
+		wsman = wsmanapi.NewWorkspaceManagerClient(conn)
 	}
 
 	o := &Orchestrator{
@@ -170,7 +180,7 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 		},
 		RefResolver: &resolve.StandaloneRefResolver{},
 
-		wsman:          wsmanapi.NewWorkspaceManagerClient(conn),
+		wsman:          wsman,
 		buildListener:  make(map[string]map[buildListener]struct{}),
 		logListener:    make(map[string]map[logListener]struct{}),
 		censorship:     make(map[string][]string),
@@ -276,6 +286,10 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	span, ctx := opentracing.StartSpanFromContext(resp.Context(), "Build")
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
+
+	if req.Source == nil {
+		return status.Errorf(codes.InvalidArgument, "build source is missing")
+	}
 
 	// resolve build request authentication
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
@@ -433,6 +447,21 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		if update == nil {
 			// channel was closed unexpectatly
 			return status.Error(codes.Aborted, "subscription canceled - please try again")
+		}
+
+		// The failed condition of ws-manager is not stable, hence we might wrongly report that the
+		// build was successful when in fact it wasn't. This would break workspace startup with a strange
+		// "cannot pull from reg.gitpod.io" error message. Instead the image-build should fail properly.
+		// To do this, we resolve the built image afterwards to ensure it was actually built.
+		if update.Status == protocol.BuildStatus_done_success {
+			exists, err := o.checkImageExists(ctx, wsrefstr, wsrefAuth)
+			if err != nil {
+				update.Status = protocol.BuildStatus_done_failure
+				update.Message = fmt.Sprintf("cannot check if workspace image exists after the build: %v", err)
+			} else if !exists {
+				update.Status = protocol.BuildStatus_done_failure
+				update.Message = "image build did not produce a workspace image"
+			}
 		}
 
 		err := resp.Send(update)
