@@ -209,11 +209,11 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             userId: this.user.id,
         };
         if (methodName) {
+            let payload = { api: true };
             if (logPayload) {
-                log.debug(userContext, methodName, logPayload);
-            } else {
-                log.debug(userContext, methodName);
+                payload = { ...logPayload, ...payload };
             }
+            log.debug(userContext, methodName, payload);
         }
         return this.user;
     }
@@ -225,11 +225,11 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 ...ctx,
                 userId: user.id,
             };
+            let payload = { api: true };
             if (logPayload) {
-                log.debug(userContext, `${methodName || 'checkAndBlockUser'}: blocked`, logPayload);
-            } else {
-                log.debug(userContext, `${methodName || 'checkAndBlockUser'}: blocked`);
+                payload = { ...logPayload, ...payload };
             }
+            log.debug(userContext, `${methodName || 'checkAndBlockUser'}: blocked`, payload);
             throw new ResponseError(ErrorCodes.USER_BLOCKED, "You've been blocked.");
         }
         return user;
