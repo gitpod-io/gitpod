@@ -277,7 +277,6 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		log.WithField("containerPID", containerPID).WithError(err).Error("cannot make container's rootfs shared")
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
 	}
-	log.WithField("containerPID", containerPID).Info("mount shared")
 
 	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
