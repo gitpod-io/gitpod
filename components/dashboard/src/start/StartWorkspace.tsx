@@ -77,7 +77,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         properties: {
           sessionId,
           instanceId: this.state.workspaceInstance?.id,
-          workspaceId: this.state?.workspace?.id,
+          workspaceId: this.props.workspaceId,
           type: this.state.workspace?.type,
           phase: newPhase
         },

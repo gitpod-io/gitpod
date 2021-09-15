@@ -131,14 +131,7 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
             ideFrontendFailureCause: ideService.failureCause?.message
         });
     }
-
-    updateCurrentFrame();
-    updateLoadingState();
-    gitpodServiceClient.onDidChangeInfo(() => updateCurrentFrame());
-    ideService.onDidChange(() => {
-        updateLoadingState();
-        updateCurrentFrame();
-
+    const trackStatusRenderedEvent = (phase: string, error?: string) => {
         window.gitpod.service.server.trackEvent({
             event: "status_rendered",
             properties: {
@@ -146,11 +139,29 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
                 instanceId: gitpodServiceClient.info.latestInstance?.id,
                 workspaceId: gitpodServiceClient.info.workspace.id,
                 type: gitpodServiceClient.info.workspace.type,
-                phase: `ide-${ideService.state}`,
-                error: ideService.failureCause?.message,
+                phase,
+                error,
             },
         });
+    }
+    const trackIDEStatusRenderedEvent = () => {
+        let error: string | undefined;
+        if (ideService.failureCause) {
+            error = `${ideService.failureCause.message}\n${ideService.failureCause.stack}`;
+        }
+        trackStatusRenderedEvent(`ide-${ideService.state}`, error);
+    }
+
+    updateCurrentFrame();
+    updateLoadingState();
+    trackIDEStatusRenderedEvent();
+    gitpodServiceClient.onDidChangeInfo(() => updateCurrentFrame());
+    ideService.onDidChange(() => {
+        updateLoadingState();
+        updateCurrentFrame();
+        trackIDEStatusRenderedEvent();
     });
+    window.addEventListener('beforeunload', () => trackStatusRenderedEvent('window-unload'), { capture: true });
     //#endregion
 
     //#region heart-beat
