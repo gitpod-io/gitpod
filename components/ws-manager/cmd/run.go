@@ -64,6 +64,10 @@ var runCmd = &cobra.Command{
 
 		if cfg.Prometheus.Addr != "" {
 			opts.MetricsBindAddress = cfg.Prometheus.Addr
+			err := metrics.Registry.Register(common_grpc.ClientMetrics())
+			if err != nil {
+				log.WithError(err).Error("Prometheus metrics incomplete")
+			}
 		}
 
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), opts)
@@ -103,7 +107,7 @@ var runCmd = &cobra.Command{
 		defer mgmt.Close()
 
 		if cfg.Prometheus.Addr != "" {
-			err := mgmt.RegisterMetrics(metrics.Registry)
+			err = mgmt.RegisterMetrics(metrics.Registry)
 			if err != nil {
 				log.WithError(err).Error("Prometheus metrics incomplete")
 			}
