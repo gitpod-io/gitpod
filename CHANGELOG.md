@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2021
+- [projects] add check for createProject ([#5421](https://github.com/gitpod-io/gitpod/pull/5421)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Update code to 1.60.0 ([#5633](https://github.com/gitpod-io/gitpod/pull/5633)) - [@jeanp413](https://github.com/jeanp413)
 - allow users to unsubscribe from onboarding emails ([#5682](https://github.com/gitpod-io/gitpod/pull/5682)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
 - [ws-proxy] Remove proxy of ws-manager ([#5400](https://github.com/gitpod-io/gitpod/pull/5400)) - [@aledbf](https://github.com/aledbf)
 - [chart] Redirect bash debug to stdout ([#5283](https://github.com/gitpod-io/gitpod/pull/5283)) - [@aledbf](https://github.com/aledbf)
