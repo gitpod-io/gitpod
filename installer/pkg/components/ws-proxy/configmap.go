@@ -3,15 +3,71 @@ package wsproxy
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"time"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	// todo(sje): get the types from components/ws-proxy
-	var wspcfg interface{}
+	// todo(sje): wsManagerProxy seems to be unused
+	wspcfg := config.Config{
+		Ingress: proxy.HostBasedIngressConfig{
+			HttpAddress:  string(rune(HTTPProxyPort)),
+			HttpsAddress: string(rune(HTTPSProxyPort)),
+			Header:       HostHeader,
+		},
+		Proxy: proxy.Config{
+			HTTPS: struct {
+				Key         string `json:"key"`
+				Certificate string `json:"crt"`
+			}{
+				Key:         "/mnt/certificates/tls.key",
+				Certificate: "/mnt/certificates/tls.crt",
+			},
+			TransportConfig: &proxy.TransportConfig{
+				ConnectTimeout:      util.Duration(time.Second * 10),
+				IdleConnTimeout:     util.Duration(time.Minute),
+				MaxIdleConns:        0,
+				MaxIdleConnsPerHost: 100,
+			},
+			BlobServer: &proxy.BlobServerConfig{
+				Scheme: "http",
+				// todo(sje): get blob service port from (future) blob service package
+				Host: fmt.Sprintf("blobserve.%s.svc.cluster.local:{{ .Values.components.blobserve.ports.service.servicePort }}", ctx.Namespace),
+			},
+			// todo(sje): import gitpod values from (future) gitpod package
+			GitpodInstallation: &proxy.GitpodInstallation{
+				Scheme: "http",
+			},
+			// todo(sje): import wspod config from (future) workspace package
+			WorkspacePodConfig: &proxy.WorkspacePodConfig{},
+			BuiltinPages: proxy.BuiltinPagesConfig{
+				Location: "/app/public",
+			},
+		},
+		WorkspaceInfoProviderConfig: proxy.WorkspaceInfoProviderConfig{
+			WsManagerAddr:     fmt.Sprintf("ws-manager:%d", wsmanager.RPCPort),
+			ReconnectInterval: util.Duration(time.Second * 3),
+			TLS: struct {
+				CA   string `json:"ca"`
+				Cert string `json:"crt"`
+				Key  string `json:"key"`
+			}{
+				CA:   "/ws-manager-client-tls-certs/ca.crt",
+				Cert: "/ws-manager-client-tls-certs/tls.crt",
+				Key:  "/ws-manager-client-tls-certs/tls.key",
+			},
+		},
+		PProfAddr:          ":60060",
+		PrometheusAddr:     ":60095",
+		ReadinessProbeAddr: ":60088",
+	}
 
 	fc, err := json.MarshalIndent(wspcfg, "", " ")
 	if err != nil {

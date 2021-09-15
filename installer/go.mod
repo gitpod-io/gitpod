@@ -10,6 +10,7 @@ require (
 	github.com/gitpod-io/gitpod/ws-daemon v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ws-proxy v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.6
 	github.com/hexops/valast v1.4.0
 	github.com/jetstack/cert-manager v1.5.3
@@ -31,6 +32,8 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../components/content
 replace github.com/gitpod-io/gitpod/ws-daemon => ../components/ws-daemon // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon/api => ../components/ws-daemon-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ws-proxy => ../components/ws-proxy // leeway
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../components/ws-manager-api/go // leeway
 
