@@ -4,20 +4,26 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as grpc from "@grpc/grpc-js";
-import { injectable, inject } from 'inversify';
-import { WorkspaceManagerClient } from './core_grpc_pb';
-import { PromisifiedWorkspaceManagerClient, linearBackoffStrategy } from "./promisified-client";
+import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
 import { Disposable, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { WorkspaceClusterWoTLS, WorkspaceManagerConnectionInfo } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
-import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource } from "./client-provider-source";
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { WorkspaceClusterWoTLS, WorkspaceManagerConnectionInfo } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import * as grpc from "@grpc/grpc-js";
+import { inject, injectable, optional } from 'inversify';
+import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource } from "./client-provider-source";
+import { WorkspaceManagerClient } from './core_grpc_pb';
+import { linearBackoffStrategy, PromisifiedWorkspaceManagerClient } from "./promisified-client";
+
+export const IWorkspaceManagerClientCallMetrics = Symbol('IWorkspaceManagerClientCallMetrics')
 
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
     @inject(WorkspaceManagerClientProviderCompositeSource)
     protected readonly source: WorkspaceManagerClientProviderSource;
+
+    @inject(IWorkspaceManagerClientCallMetrics) @optional()
+    protected readonly clientCallMetrics: IClientCallMetrics;
 
     // gRPC connections maintain their connectivity themselves, i.e. they reconnect when neccesary.
     // They can also be used concurrently, even across services.
@@ -29,7 +35,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
      *
      * @returns The WorkspaceManagerClient that was chosen to start the next workspace with.
      */
-    public async getStartManager(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string}> {
+    public async getStartManager(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string }> {
         const availableCluster = await this.getAvailableStartCluster(user, workspace, instance);
         const chosenCluster = chooseCluster(availableCluster);
         const grpcOptions: grpc.ClientOptions = {
@@ -66,7 +72,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
             const info = await getConnectionInfo();
             client = this.createClient(info, grpcOptions);
             this.connectionCache.set(name, client);
-        } else if(client.getChannel().getConnectivityState(true) != grpc.connectivityState.READY) {
+        } else if (client.getChannel().getConnectivityState(true) != grpc.connectivityState.READY) {
             client.close();
 
             console.warn(`Lost connection to workspace manager \"${name}\" - attempting to reestablish`);
@@ -75,8 +81,13 @@ export class WorkspaceManagerClientProvider implements Disposable {
             this.connectionCache.set(name, client);
         }
 
+        let interceptor: grpc.Interceptor[] = [];
+        if (this.clientCallMetrics) {
+            interceptor = [ createClientCallMetricsInterceptor(this.clientCallMetrics) ];
+        }
+
         const stopSignal = { stop: false };
-        return new PromisifiedWorkspaceManagerClient(client, linearBackoffStrategy(30, 1000, stopSignal), stopSignal);
+        return new PromisifiedWorkspaceManagerClient(client, linearBackoffStrategy(30, 1000, stopSignal), interceptor, stopSignal);
     }
 
     /**
@@ -98,7 +109,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
             credentials = grpc.credentials.createInsecure();
         }
 
-        const options = {
+        const options: Partial<grpc.ClientOptions> = {
             ...grpcOptions,
             'grpc.ssl_target_name_override': "ws-manager",  // this makes sure we can call ws-manager with a URL different to "ws-manager"
         };
@@ -109,6 +120,8 @@ export class WorkspaceManagerClientProvider implements Disposable {
         Array.from(this.connectionCache.values()).map(c => c.close());
     }
 }
+
+
 
 /**
  *

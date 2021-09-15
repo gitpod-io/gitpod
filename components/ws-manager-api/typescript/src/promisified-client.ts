@@ -64,6 +64,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
     constructor(
         public readonly client: WorkspaceManagerClient,
         protected readonly retryIfUnavailable: RetryStrategy = noRetry,
+        protected readonly interceptor: grpc.Interceptor[],
         protected readonly stopSignal?: { stop: boolean }) { }
 
     public startWorkspace(ctx: TraceContext, request: StartWorkspaceRequest): Promise<StartWorkspaceResponse> {
@@ -180,7 +181,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
         return this.retryIfUnavailable((attempt: number) => new Promise<TakeSnapshotResponse>((resolve, reject) => {
             const span = TraceContext.startSpan(`/ws-manager/takeSnapshot`, ctx);
             span.log({attempt});
-            this.client.takeSnapshot(request, withTracing({span}), (err, resp) => {
+            this.client.takeSnapshot(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
                     reject(err);
@@ -196,7 +197,7 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
         return this.retryIfUnavailable((attempt: number) => new Promise<ControlAdmissionResponse>((resolve, reject) => {
             const span = TraceContext.startSpan(`/ws-manager/controlAdmission`, ctx);
             span.log({attempt});
-            this.client.controlAdmission(request, withTracing({span}), (err, resp) => {
+            this.client.controlAdmission(request, withTracing({span}), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
                     reject(err);
@@ -221,7 +222,8 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
     protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {
         let deadline = new Date(new Date().getTime() + 30000);
         return {
-            deadline
+            deadline,
+            interceptors: this.interceptor,
         }
     }
 
