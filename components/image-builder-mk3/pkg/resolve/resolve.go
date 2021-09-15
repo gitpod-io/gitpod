@@ -183,3 +183,13 @@ func (pr *PrecachingRefResolver) Resolve(ctx context.Context, ref string, opts .
 
 	return res, nil
 }
+
+type MockRefResolver map[string]string
+
+func (m MockRefResolver) Resolve(ctx context.Context, ref string, opts ...DockerRefResolverOption) (res string, err error) {
+	res, ok := m[ref]
+	if !ok {
+		return "", ErrNotFound
+	}
+	return res, nil
+}
