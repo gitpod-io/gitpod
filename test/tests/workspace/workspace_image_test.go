@@ -5,6 +5,7 @@
 package workspace_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -20,6 +21,8 @@ func TestImageBuildPreservesEnvVarMk3(t *testing.T) {
 	it, ctx := integration.NewTest(t, 5*time.Minute)
 	defer it.Done()
 
+	envVarName := "MY_TEST_ENV_VAR"
+	envVarValue := "asd"
 	res := integration.LaunchWorkspaceDirectly(it, integration.WithWorkspaceImageRequest(&imgapi.ResolveWorkspaceImageRequest{
 		Source: &imgapi.BuildSource{
 			From: &imgapi.BuildSource_File{
@@ -28,14 +31,13 @@ func TestImageBuildPreservesEnvVarMk3(t *testing.T) {
 					DockerfilePath:    ".gitpod.Dockerfile",
 					ContextPath:       ".",
 					Source: &csapi.WorkspaceInitializer{
-						Spec: &csapi.WorkspaceInitializer_Git{
-							Git: &csapi.GitInitializer{
-								RemoteUri:  "https://github.com/gitpod-io/gitpod-test-repo.git",
-								TargetMode: csapi.CloneTargetMode_REMOTE_BRANCH,
-								// this branch has a docker file that adds 'MY_TEST_ENV_VAR=asd' as env var (ref: https://github.com/gitpod-io/gitpod-test-repo/blob/integration-test/imgbldr/env-is-persisted/.gitpod.Dockerfile#L3)
-								CloneTaget: "integration-test/imgbldr/env-is-persisted",
-								Config: &csapi.GitConfig{
-									Authentication: csapi.GitAuthMethod_NO_AUTH,
+						Spec: &csapi.WorkspaceInitializer_Files{
+							Files: &csapi.FilesInitializer{
+								Files: []*csapi.FilesInitializer_File{
+									{
+										Content:  fmt.Sprintf("FROM gitpod/workspace-full\nENV %s=%s", envVarName, envVarValue),
+										FilePath: ".gitpod.Dockerfile",
+									},
 								},
 							},
 						},
@@ -58,7 +60,7 @@ func TestImageBuildPreservesEnvVarMk3(t *testing.T) {
 	err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     "/workspace",
 		Command: "bash",
-		Args:    []string{"-c", "echo $MY_TEST_ENV_VAR"},
+		Args:    []string{"-c", fmt.Sprintf("echo $%s", envVarName)},
 	}, &resp)
 	if err != nil {
 		t.Fatal(err)
@@ -67,6 +69,6 @@ func TestImageBuildPreservesEnvVarMk3(t *testing.T) {
 		t.Fatalf("got non-zero exit code: %d", resp.ExitCode)
 	}
 	if strings.TrimSpace(resp.Stdout) == "" {
-		t.Fatalf("env var MY_TEST_ENV_VAR is not preserved!")
+		t.Fatalf("env var %s is not preserved!", envVarName)
 	}
 }
