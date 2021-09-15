@@ -136,7 +136,7 @@ export class ClusterService implements IClusterServiceServer {
                 });
 
                 await this.clusterDB.save(newCluster);
-                log.warn({}, "cluster registered", {cluster: req.name});
+                log.info({}, "cluster registered", {cluster: req.name});
                 this.triggerReconcile("register", req.name);
 
                 callback(null, new RegisterResponse());
@@ -191,7 +191,7 @@ export class ClusterService implements IClusterServiceServer {
                     }
                 }
                 await this.clusterDB.save(cluster);
-                log.warn({}, "cluster updated", {cluster: req.name});
+                log.info({}, "cluster updated", {cluster: req.name});
                 this.triggerReconcile("update", req.name);
 
                 callback(null, new UpdateResponse());
@@ -213,7 +213,7 @@ export class ClusterService implements IClusterServiceServer {
                 }
 
                 await this.clusterDB.deleteByName(req.name);
-                log.warn({}, "cluster deregistered", {cluster: req.name});
+                log.info({}, "cluster deregistered", {cluster: req.name});
                 this.triggerReconcile("deregister", req.name);
 
                 callback(null, new DeregisterResponse());

@@ -37,21 +37,21 @@ export class MetaInstanceController {
                 const timedOutInUnknown   = now >= creationTime + (this.config.timeouts.unknownPhaseSeconds * 1000);
                 const currentPhase = instance.latestInstance.status.phase;
 
-                log.debug(logContext, 'MetaInstanceController: Checking for workspaces to stop', {
-                    creationTime,
-                    stoppingTime,
-                    timedOutInPreparing,
-                    timedOutInStopping,
-                    timedOutInUnknown,
-                    currentPhase
-                });
+                // log.debug(logContext, 'MetaInstanceController: Checking for workspaces to stop', {
+                //     creationTime,
+                //     stoppingTime,
+                //     timedOutInPreparing,
+                //     timedOutInStopping,
+                //     timedOutInUnknown,
+                //     currentPhase
+                // });
 
                 if (
                     (currentPhase === 'preparing' && timedOutInPreparing) ||
                     (currentPhase === 'stopping' && timedOutInStopping) ||
                     (currentPhase === 'unknown' && timedOutInUnknown)
                 ) {
-                    log.warn(logContext, 'MetaInstanceController: Setting workspace instance to stopped', {
+                    log.debug(logContext, 'MetaInstanceController: Setting workspace instance to stopped', {
                         creationTime,
                         currentPhase
                     });
@@ -65,13 +65,13 @@ export class MetaInstanceController {
                     await this.messagebus.notifyOnInstanceUpdate({}, instance.workspace.ownerId, instance.latestInstance);
                 }
             } catch (err) {
-                log.error(logContext, 'MetaInstanceController: Error whilst stopping workspace instance', err);
+                log.warn(logContext, 'MetaInstanceController: Error whilst stopping workspace instance', err);
             }
         }));
     }
 
     public start() {
-        log.debug('MetaInstanceController: Starting interval to check for workspaces to stop', {
+        log.info('MetaInstanceController: Starting interval to check for workspaces to stop', {
             interval: this.config.timeouts.metaInstanceCheckIntervalSeconds
         });
 

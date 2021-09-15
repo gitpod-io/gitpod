@@ -118,7 +118,7 @@ export class WorkspaceManagerBridge implements Disposable {
         log.debug("Received status update", status);
 
         const span = TraceContext.startSpan("handleStatusUpdate", ctx);
-        span.setTag("status", JSON.stringify(status))
+        span.setTag("status", JSON.stringify(filterStatus(status)));
         try {
             // Beware of the ID mapping here: What's a workspace to the ws-manager is a workspace instance to the rest of the system.
             //                                The workspace ID of ws-manager is the workspace instance ID in the database.
@@ -367,3 +367,18 @@ const mapPortVisibility = (visibility: WsManPortVisibility | undefined): PortVis
 const durationLongerThanSeconds = (time: number, durationSeconds: number, now: number = Date.now()) => {
     return (now - time) / 1000 > durationSeconds;
 };
+
+/**
+ * Filter here to avoid overloading spans
+ * @param status
+ */
+const filterStatus = (status: WorkspaceStatus.AsObject): Partial<WorkspaceStatus.AsObject> => {
+    return {
+        id: status.id,
+        metadata: status.metadata,
+        phase: status.phase,
+        message: status.message,
+        conditions: status.conditions,
+        runtime: status.runtime,
+    };
+}
