@@ -6,6 +6,7 @@ package supervisor
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"strings"
@@ -103,6 +104,10 @@ func (s *statusService) IDEStatus(ctx context.Context, req *api.IDEStatusRequest
 		case <-s.ideReady.Wait():
 			return &api.IDEStatusResponse{Ok: true}, nil
 		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return nil, status.Error(codes.Canceled, "execution canceled")
+			}
+
 			return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
 		}
 	}
@@ -129,6 +134,10 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 				Source:    srcmap[src],
 			}, nil
 		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return nil, status.Error(codes.Canceled, "Context canceled")
+			}
+
 			return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
 		}
 	}
@@ -557,6 +566,10 @@ func (rt *remoteTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRe
 
 	select {
 	case <-ctx.Done():
+		if errors.Is(ctx.Err(), context.Canceled) {
+			return nil, status.Error(codes.Canceled, "execution canceled")
+		}
+
 		return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
 	case err = <-rr.Err:
 	case tkn = <-rr.Resp:
