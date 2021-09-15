@@ -925,14 +925,11 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 	if query.Name != "" {
 		err = client.Bucket(bucket).Object(query.Name).Delete(ctx)
 		if err != nil {
-			if !errors.Is(err, gcpstorage.ErrBucketNotExist) {
-				log.WithField("bucket", bucket).WithField("object", query.Name).WithError(err).Error("cannot delete objects")
-			}
-
 			if errors.Is(err, gcpstorage.ErrBucketNotExist) || errors.Is(err, gcpstorage.ErrObjectNotExist) {
 				return ErrNotFound
 			}
 
+			log.WithField("bucket", bucket).WithField("object", query.Name).WithError(err).Warn("cannot delete object")
 			return err
 		}
 		return nil
@@ -955,12 +952,15 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 		}
 		// if we get any error besides "done" the iterator is broken: make sure we don't use it again.
 		if err != nil {
-			log.WithField("bucket", bucket).WithError(err).Error("cannot delete objects")
+			log.WithField("bucket", bucket).WithError(err).Error("error iterating object")
 			break
 		}
 		err = b.Object(attrs.Name).Delete(ctx)
-		if err != nil && !errors.Is(err, gcpstorage.ErrObjectNotExist) {
-			log.WithField("bucket", bucket).WithField("object", attrs.Name).WithError(err).Error("cannot delete objects")
+		if err != nil {
+			if errors.Is(err, gcpstorage.ErrBucketNotExist) || errors.Is(err, gcpstorage.ErrObjectNotExist) {
+				continue
+			}
+			log.WithField("bucket", bucket).WithField("object", attrs.Name).WithError(err).Warn("cannot delete object, continue deleting objects")
 		}
 	}
 
