@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/gitpod-io/gitpod/registry-facade/api/config"
 	"net"
 	"net/http"
 	"os"
@@ -33,35 +34,8 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// Config configures the registry
-type Config struct {
-	Port               int              `json:"port"`
-	Prefix             string           `json:"prefix"`
-	StaticLayer        []StaticLayerCfg `json:"staticLayer"`
-	RemoteSpecProvider *struct {
-		Addr string `json:"addr"`
-		TLS  *struct {
-			Authority   string `json:"ca"`
-			Certificate string `json:"crt"`
-			PrivateKey  string `json:"key"`
-		} `json:"tls,omitempty"`
-	} `json:"remoteSpecProvider,omitempty"`
-	Store       string `json:"store"`
-	RequireAuth bool   `json:"requireAuth"`
-	TLS         *struct {
-		Certificate string `json:"crt"`
-		PrivateKey  string `json:"key"`
-	} `json:"tls"`
-}
-
-// StaticLayerCfg configure statically added layer
-type StaticLayerCfg struct {
-	Ref  string `json:"ref"`
-	Type string `json:"type"`
-}
-
 // BuildStaticLayer builds a layer set from a static layer configuration
-func buildStaticLayer(ctx context.Context, cfg []StaticLayerCfg, newResolver ResolverProvider) (CompositeLayerSource, error) {
+func buildStaticLayer(ctx context.Context, cfg []config.StaticLayerCfg, newResolver ResolverProvider) (CompositeLayerSource, error) {
 	var l CompositeLayerSource
 	for _, sl := range cfg {
 		switch sl.Type {
@@ -89,7 +63,7 @@ type ResolverProvider func() remotes.Resolver
 
 // Registry acts as registry facade
 type Registry struct {
-	Config         Config
+	Config         config.Config
 	Resolver       ResolverProvider
 	Store          content.Store
 	LayerSource    LayerSource
@@ -102,7 +76,7 @@ type Registry struct {
 }
 
 // NewRegistry creates a new registry
-func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Registerer) (*Registry, error) {
+func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus.Registerer) (*Registry, error) {
 	storePath := cfg.Store
 	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 		storePath = filepath.Join(tproot, storePath)
@@ -214,7 +188,7 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 }
 
 // UpdateStaticLayer updates the static layer a registry-facade adds
-func (reg *Registry) UpdateStaticLayer(ctx context.Context, cfg []StaticLayerCfg) error {
+func (reg *Registry) UpdateStaticLayer(ctx context.Context, cfg []config.StaticLayerCfg) error {
 	l, err := buildStaticLayer(ctx, cfg, reg.Resolver)
 	if err != nil {
 		return err
