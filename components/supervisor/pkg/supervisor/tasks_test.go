@@ -24,6 +24,11 @@ import (
 var skipCommand = "echo \"skip\""
 var failCommand = "exit 1"
 
+var testEnv = &map[string]interface{}{
+	"object": map[string]interface{}{"baz": 3},
+}
+var testEnvCommand = `test $object == "{\"baz\":3}"`
+
 func TestTaskManager(t *testing.T) {
 	log.Log.Logger.SetLevel(logrus.FatalLevel)
 	tests := []struct {
@@ -97,6 +102,17 @@ func TestTaskManager(t *testing.T) {
 			ExpectedReporter: testHeadlessTaskProgressReporter{
 				Done:    true,
 				Success: false,
+			},
+		},
+		{
+			Desc:        "env var parsing",
+			Headless:    true,
+			Source:      csapi.WorkspaceInitFromOther,
+			GitpodTasks: &[]TaskConfig{{Init: &testEnvCommand, Env: testEnv}},
+
+			ExpectedReporter: testHeadlessTaskProgressReporter{
+				Done:    true,
+				Success: true,
 			},
 		},
 	}

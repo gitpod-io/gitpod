@@ -7,6 +7,7 @@ package supervisor
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -239,7 +240,15 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 		taskLog.Info("starting a task terminal...")
 		openRequest := &api.OpenTerminalRequest{}
 		if t.config.Env != nil {
-			openRequest.Env = *t.config.Env
+			openRequest.Env = make(map[string]string, len(*t.config.Env))
+			for key, value := range *t.config.Env {
+				v, err := json.Marshal(value)
+				if err != nil {
+					taskLog.WithError(err).WithField("key", key).Error("cannot marshal env var")
+				} else {
+					openRequest.Env[key] = string(v)
+				}
+			}
 		}
 		var readTimeout time.Duration
 		if !tm.config.isHeadless() {
