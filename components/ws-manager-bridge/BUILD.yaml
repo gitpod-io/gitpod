@@ -5,6 +5,7 @@ packages:
       - "**/*.ts"
       - package.json
     deps:
+      - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
       - components/gitpod-messagebus:lib
       - components/gitpod-protocol:lib
