@@ -65,6 +65,6 @@ data:
         },
         "pprofAddr": ":6060",
         "readinessProbeAddr": ":60088",
-        "prometheusAddr": ":60095"
+        "prometheusAddr": "localhost:9500"
     }
 {{- end -}}
