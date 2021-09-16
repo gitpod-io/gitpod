@@ -17,6 +17,7 @@ packages:
       - components/gitpod-protocol:publish
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor-api/typescript-grpcweb:publish
+      - components/supervisor-api/java:lib
   - name: docker-versions
     type: docker
     config:

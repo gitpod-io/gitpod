@@ -9,6 +9,7 @@ package supervisor;
 import "google/api/annotations.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
 
 // Notification serivce allows external processes to notify the user and ask for decisions.
 service NotificationService {
