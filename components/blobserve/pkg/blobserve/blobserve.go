@@ -44,23 +44,27 @@ type BlobserveInlineVars struct {
 	SupervisorImage string `json:"supervisor"`
 }
 
+type BlobSpace struct {
+	Location string `json:"location"`
+	MaxSize  int64  `json:"maxSizeBytes,omitempty"`
+}
+
+type Repo struct {
+	PrePull      []string            `json:"prePull,omitempty"`
+	Workdir      string              `json:"workdir,omitempty"`
+	Replacements []StringReplacement `json:"replacements,omitempty"`
+	InlineStatic []InlineReplacement `json:"inlineStatic,omitempty"`
+}
+
 // Config configures a server.
 type Config struct {
-	Port    int           `json:"port"`
-	Timeout util.Duration `json:"timeout,omitempty"`
-	Repos   map[string]struct {
-		PrePull      []string            `json:"prePull,omitempty"`
-		Workdir      string              `json:"workdir,omitempty"`
-		Replacements []StringReplacement `json:"replacements,omitempty"`
-		InlineStatic []InlineReplacement `json:"inlineStatic,omitempty"`
-	} `json:"repos"`
+	Port    int             `json:"port"`
+	Timeout util.Duration   `json:"timeout,omitempty"`
+	Repos   map[string]Repo `json:"repos"`
 	// AllowAnyRepo enables users to access any repo/image, irregardles if they're listed in the
 	// ref config or not.
-	AllowAnyRepo bool `json:"allowAnyRepo"`
-	BlobSpace    struct {
-		Location string `json:"location"`
-		MaxSize  int64  `json:"maxSizeBytes,omitempty"`
-	} `json:"blobSpace"`
+	AllowAnyRepo bool      `json:"allowAnyRepo"`
+	BlobSpace    BlobSpace `json:"blobSpace"`
 }
 
 type StringReplacement struct {
