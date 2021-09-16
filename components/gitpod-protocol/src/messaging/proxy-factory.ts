@@ -158,7 +158,9 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
      * methods calls.
      */
     protected onNotification(method: string, ...args: any[]): void {
-        this.target[method](...args);
+        if (this.target[method]) {
+            this.target[method](...args);
+        }
     }
 
     /**
