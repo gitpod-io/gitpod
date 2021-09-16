@@ -12,41 +12,86 @@ export interface IGrpcCallMetricsLabels {
 	service: string,
 	method: string,
 	type: GrpcMethodType,
-	code?: string
 }
 
+export interface IGrpcCallMetricsLabelsWithCode extends IGrpcCallMetricsLabels {
+	code: string
+}
+
+export const IClientCallMetrics = Symbol("IClientCallMetrics");
+
 export interface IClientCallMetrics {
-    called(labels: IGrpcCallMetricsLabels) : void;
+	started(labels: IGrpcCallMetricsLabels) : void;
+    sent(labels: IGrpcCallMetricsLabels) : void;
+    received(labels: IGrpcCallMetricsLabels) : void;
+    handled(labels: IGrpcCallMetricsLabelsWithCode) : void;
 }
 
 @injectable()
 export class PrometheusClientCallMetrics implements IClientCallMetrics {
 
-	readonly counter: prometheusClient.Counter;
+	readonly startedCounter: prometheusClient.Counter;
+	readonly sentCounter: prometheusClient.Counter;
+	readonly receivedCounter: prometheusClient.Counter;
+	readonly handledCounter: prometheusClient.Counter;
 
 	constructor() {
-		this.counter = new prometheusClient.Counter({
-			name: 'grpc_client_calls_total',
-			help: 'Total amount of gRPC client calls',
+		this.startedCounter = new prometheusClient.Counter({
+			name: 'grpc_client_started_total',
+			help: 'Total number of RPCs started on the client.',
+			labelNames: ['grpc_service', 'grpc_method', 'grpc_type'],
+			registers: [prometheusClient.register]
+		});
+		this.sentCounter = new prometheusClient.Counter({
+			name: 'grpc_client_msg_sent_total',
+			help: ' Total number of gRPC stream messages sent by the client.',
+			labelNames: ['grpc_service', 'grpc_method', 'grpc_type'],
+			registers: [prometheusClient.register]
+		});
+		this.receivedCounter = new prometheusClient.Counter({
+			name: 'grpc_client_msg_received_total',
+			help: 'Total number of RPC stream messages received by the client.',
+			labelNames: ['grpc_service', 'grpc_method', 'grpc_type'],
+			registers: [prometheusClient.register]
+		});
+		this.handledCounter = new prometheusClient.Counter({
+			name: 'grpc_client_handled_total',
+			help: 'Total number of RPCs completed by the client, regardless of success or failure.',
 			labelNames: ['grpc_service', 'grpc_method', 'grpc_type', 'grpc_code'],
 			registers: [prometheusClient.register]
 		});
 	}
 
-	called(labels: IGrpcCallMetricsLabels): void {
-		if (labels.code) {
-			this.counter.inc({
-				grpc_service: labels.service,
-				grpc_method: labels.method,
-				grpc_type: labels.type,
-				grpc_code: labels.code,
-			});
-		} else {
-			this.counter.inc({
-				grpc_service: labels.service,
-				grpc_method: labels.method,
-				grpc_type: labels.type
-			});
-		}
+	started(labels: IGrpcCallMetricsLabels): void {
+		this.startedCounter.inc({
+			grpc_service: labels.service,
+			grpc_method: labels.method,
+			grpc_type: labels.type
+		});
+	}
+
+	sent(labels: IGrpcCallMetricsLabels): void {
+		this.sentCounter.inc({
+			grpc_service: labels.service,
+			grpc_method: labels.method,
+			grpc_type: labels.type
+		});
+	}
+
+	received(labels: IGrpcCallMetricsLabels): void {
+		this.receivedCounter.inc({
+			grpc_service: labels.service,
+			grpc_method: labels.method,
+			grpc_type: labels.type
+		});
+	}
+
+	handled(labels: IGrpcCallMetricsLabelsWithCode): void {
+		this.handledCounter.inc({
+			grpc_service: labels.service,
+			grpc_method: labels.method,
+			grpc_type: labels.type,
+			grpc_code: labels.code
+		});
 	}
 }
