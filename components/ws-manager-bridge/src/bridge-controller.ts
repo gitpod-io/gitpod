@@ -15,6 +15,7 @@ import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster"
 import { Queue } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
 import * as grpc from '@grpc/grpc-js';
+import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
 
 @injectable()
 export class BridgeController {
@@ -29,6 +30,9 @@ export class BridgeController {
 
     @inject(WorkspaceClusterDB)
     protected readonly db: WorkspaceClusterDB;
+
+    @inject(PrometheusMetricsExporter)
+    protected readonly metrics: PrometheusMetricsExporter;
 
     protected readonly bridges: Map<string, WorkspaceManagerBridge> = new Map();
     protected readonly reconcileQueue: Queue = new Queue();
@@ -76,6 +80,7 @@ export class BridgeController {
                 }
             }
 
+            this.metrics.updateClusterMetrics(Array.from(allClusters).map(c => c[1]));
             for (const [name, newCluster] of allClusters) {
                 log.info("reconcile: create bridge for new cluster", { name });
                 const bridge = await this.createAndStartBridge(newCluster);

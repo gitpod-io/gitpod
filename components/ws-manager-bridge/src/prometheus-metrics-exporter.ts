@@ -7,11 +7,14 @@
 import * as prom from 'prom-client';
 import { injectable } from "inversify";
 import { WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/src/workspace-cluster';
 
 @injectable()
 export class PrometheusMetricsExporter {
     protected readonly workspaceStartupTimeHistogram: prom.Histogram;
     protected readonly timeToFirstUserActivityHistogram: prom.Histogram;
+    protected readonly clusterScore: prom.Gauge;
+    protected readonly clusterCordoned: prom.Gauge;
 
     constructor() {
         this.workspaceStartupTimeHistogram = new prom.Histogram({
@@ -25,6 +28,16 @@ export class PrometheusMetricsExporter {
             help: 'The time between a workspace is running and first user activity',
             labelNames: ['region'],
             buckets: prom.exponentialBuckets(2, 2, 10),
+        });
+        this.clusterScore = new prom.Gauge({
+            name: 'gitpod_ws_manager_bridge_cluster_score',
+            help: 'Score of the individual registered workspace cluster',
+            labelNames: ["cluster"]
+        });
+        this.clusterCordoned = new prom.Gauge({
+            name: 'gitpod_ws_manager_bridge_cluster_cordoned',
+            help: 'Cordoned status of the individual registered workspace cluster',
+            labelNames: ["cluster"]
         });
     }
 
@@ -46,4 +59,15 @@ export class PrometheusMetricsExporter {
             region: instance.region,
         }, timeToFirstUserActivity);
     }
+
+    updateClusterMetrics(clusters: WorkspaceClusterWoTLS[]): void {
+        this.clusterScore.reset();
+        this.clusterCordoned.reset();
+
+        clusters.forEach(cluster => {
+            this.clusterCordoned.labels(cluster.name).set(cluster.state === 'cordoned' ? 1 : 0);
+            this.clusterScore.labels(cluster.name).set(cluster.score);
+        });
+    }
 }
+
