@@ -19,6 +19,7 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Runs the image build and is configured using environment variables (see pkg/builder/config.go for details)",
 	Run: func(cmd *cobra.Command, args []string) {
+		t0 := time.Now()
 		if os.Geteuid() != 0 {
 			log.Fatal("must run as root")
 		}
@@ -37,7 +38,13 @@ var buildCmd = &cobra.Command{
 		}
 		err = b.Build()
 		if err != nil {
-			log.WithError(err).Fatal("build failed")
+			log.WithError(err).Error("build failed")
+
+			// make sure we're running long enough to have our logs read
+			if dt := time.Since(t0); dt < 5*time.Second {
+				time.Sleep(dt)
+			}
+
 			return
 		}
 	},
