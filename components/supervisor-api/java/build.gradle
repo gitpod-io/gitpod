@@ -1,0 +1,52 @@
+plugins {
+    id 'application'
+    id 'java-library'
+    id 'maven-publish'
+}
+
+repositories {
+    mavenCentral()
+}
+
+group 'io.gitpod.api'
+
+dependencies {
+    implementation 'com.google.protobuf:protobuf-java:3.17.3'
+    implementation 'com.google.protobuf:protobuf-java-util:3.17.3'
+    implementation 'com.google.api.grpc:proto-google-common-protos:2.2.2'
+    implementation 'io.grpc:grpc-core:1.40.1'
+    implementation 'io.grpc:grpc-protobuf:1.40.1'
+    implementation 'io.grpc:grpc-stub:1.40.1'
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
+    runtimeOnly 'io.grpc:grpc-netty-shaded:1.40.1'
+}
+
+application {
+    mainClass = 'io.gitpod.supervisor.testclient.TestClient'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// Set env vars GITHUB_GPR_USERNAME and GITHUB_GPR_TOKEN and run:
+// ./gradlew publish
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/gitpod-io/gitpod")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_GPR_USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_GPR_TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+        }
+    }
+}

@@ -38,6 +38,8 @@ ports:
 tasks:
   - name: Prepare Agent Smith BPF dev environment
     command: leeway run components/ee/agent-smith:qemu
+  - name: Java
+    init: leeway exec --package components/supervisor-api/java:lib -- ./gradlew jar
   - before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
   - name: Go
@@ -56,3 +58,5 @@ vscode:
     - zxh404.vscode-proto3
     - matthewpi.caddyfile-support
     - heptio.jsonnet
+    - timonwong.shellcheck
+    - vscjava.vscode-java-pack

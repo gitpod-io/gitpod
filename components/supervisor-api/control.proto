@@ -7,6 +7,7 @@ syntax = "proto3";
 package supervisor;
 
 option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
 
 // ControlService provides workspace-facing, misc control related services
 service ControlService {
