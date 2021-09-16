@@ -12,13 +12,19 @@ export interface IGrpcCallMetricsLabels {
 	service: string,
 	method: string,
 	type: GrpcMethodType,
-	code?: string
+}
+
+export interface IGrpcCallMetricsLabelsWithCode extends IGrpcCallMetricsLabels {
+	code: string
 }
 
 export const IClientCallMetrics = Symbol("IClientCallMetrics");
 
 export interface IClientCallMetrics {
-    called(labels: IGrpcCallMetricsLabels) : void;
+    handled(labels: IGrpcCallMetricsLabelsWithCode) : void;
+    received(labels: IGrpcCallMetricsLabels) : void;
+    sent(labels: IGrpcCallMetricsLabels) : void;
+    started(labels: IGrpcCallMetricsLabels) : void;
 }
 
 export function getGrpcMethodType(requestStream: boolean, responseStream: boolean): GrpcMethodType {
@@ -39,24 +45,43 @@ export function getGrpcMethodType(requestStream: boolean, responseStream: boolea
 
 export function createClientCallMetricsInterceptor(metrics: IClientCallMetrics): grpc.Interceptor {
     return (options, nextCall): grpc.InterceptingCall => {
+        const methodDef = options.method_definition;
+        const method = methodDef.path.substring(methodDef.path.lastIndexOf('/') + 1);
+        const service = methodDef.path.substring(1, methodDef.path.length - method.length - 1);
+        const labels = {
+            service,
+            method,
+            type: getGrpcMethodType(options.method_definition.requestStream, options.method_definition.responseStream)
+        };
         const requester = new grpc.RequesterBuilder()
             .withStart((metadata, listener, next) => {
                 const newListener = new grpc.ListenerBuilder().withOnReceiveStatus((status, next) => {
                     try {
-                        const methodDef = options.method_definition;
-                        const method = methodDef.path.substring(methodDef.path.lastIndexOf('/') + 1);
-                        const service = methodDef.path.substring(0, methodDef.path.length - method.length);
-                        metrics.called({
-                            service,
-                            method,
-                            type: getGrpcMethodType(options.method_definition.requestStream, options.method_definition.responseStream),
+                        metrics.handled({
+                            ...labels,
                             code: Status[status.code]
                         });
                     } finally {
                         next(status);
                     }
+                }).withOnReceiveMessage((message, next) => {
+                    try {
+                        metrics.received(labels);
+                    } finally {
+                        next(message);
+                    }
                 }).build()
-                next(metadata, newListener);
+                try {
+                    metrics.started(labels);
+                } finally {
+                    next(metadata, newListener);
+                }
+            }).withSendMessage((message, next) => {
+                try {
+                    metrics.sent(labels);
+                } finally {
+                    next(message);
+                }
             }).build();
         return new grpc.InterceptingCall(nextCall(options), requester);
     };
