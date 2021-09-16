@@ -458,7 +458,6 @@ func (c *workspaceInfoCache) Delete(workspaceID string, instanceID string) {
 	}
 
 	if _, ok := activePublicPorts[instanceIDEPublicPort]; !ok {
-		log.WithField("workspaceID", workspaceID).WithField("instanceID", instanceID).WithField("port", instanceIDEPublicPort).Debug("deleting port for workspace")
 		delete(c.coordsByPublicPort, instanceIDEPublicPort)
 	}
 }

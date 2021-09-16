@@ -600,12 +600,11 @@ func (t *Test) selectPod(component ComponentType, options selectPodOptions) (pod
 
 // ServerConfigPartial is the subset of server config we're using for integration tests.
 // Ideally we're using a definition derived from the config interface, someday...
+// NOTE: keep in sync with chart/templates/server-configmap.yaml
 type ServerConfigPartial struct {
 	HostURL           string `json:"hostUrl"`
 	WorkspaceDefaults struct {
-		IDEImageAliases struct {
-			Code string `json:"code"`
-		} `json:"ideImageAliases"`
+		WorkspaceImage string `json:"workspaceImage"`
 	} `json:"workspaceDefaults"`
 }
 
@@ -624,7 +623,38 @@ func (t *Test) GetServerConfig() (*ServerConfigPartial, error) {
 	var config ServerConfigPartial
 	err = json.Unmarshal([]byte(configJson), &config)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling config: %v", err)
+		return nil, fmt.Errorf("error unmarshalling server config: %v", err)
+	}
+	return &config, nil
+}
+
+// ServerIDEConfigPartial is the subset of server IDE config we're using for integration tests.
+// NOTE: keep in sync with chart/templates/server-ide-configmap.yaml
+type ServerIDEConfigPartial struct {
+	IDEVersion      string `json:"ideVersion"`
+	IDEImageRepo    string `json:"ideImageRepo"`
+	IDEImageAliases struct {
+		Code       string `json:"code"`
+		CodeLatest string `json:"code-latest"`
+	} `json:"ideImageAliases"`
+}
+
+func (t *Test) GetServerIDEConfig() (*ServerIDEConfigPartial, error) {
+	cm, err := t.clientset.CoreV1().ConfigMaps(t.namespace).Get(context.Background(), "server-ide-config", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	key := "config.json"
+	configJson, ok := cm.Data[key]
+	if !ok {
+		return nil, fmt.Errorf("key %s not found", key)
+	}
+
+	var config ServerIDEConfigPartial
+	err = json.Unmarshal([]byte(configJson), &config)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling server IDE config: %v", err)
 	}
 	return &config, nil
 }
