@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,7 +33,7 @@ var runCmd = &cobra.Command{
 	Short: "Starts the blobserve",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := getConfig(args[0])
+		cfg, err := config.GetConfig(args[0])
 		if err != nil {
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
