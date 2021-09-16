@@ -110,7 +110,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
 
         try {
             if (renameInputRef.current!.value.length === 0) {
-                setErrorMessage('Description must not be empty.');
+                setErrorMessage('Description cannot not be empty.');
                 return false;
             }
 
@@ -183,7 +183,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
             </div>
             <div className="flex justify-end mt-6">
                 <button className="secondary" onClick={() => setRenameModalVisible(false)}>Cancel</button>
-                <button className="ml-2" type="submit" onClick={updateWorkspaceDescription}>Rename</button>
+                <button className="ml-2" type="submit" onClick={updateWorkspaceDescription}>Update Description</button>
             </div>
         </Modal>
     </Item>;
