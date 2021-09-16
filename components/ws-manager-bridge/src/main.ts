@@ -34,8 +34,8 @@ export const start = async (container: Container) => {
             res.send(prometheusClient.register.metrics().toString());
         });
         const metricsPort = 9500;
-        const metricsHttpServer = metricsApp.listen(metricsPort, () => {
-            log.info(`prometheus metrics server running on: ${metricsPort}`);
+        const metricsHttpServer = metricsApp.listen(metricsPort, 'localhost', () => {
+            log.info(`prometheus metrics server running on: localhost:${metricsPort}`);
         });
 
         const bridgeController = container.get<BridgeController>(BridgeController);

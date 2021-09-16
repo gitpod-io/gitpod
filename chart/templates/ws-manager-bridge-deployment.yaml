@@ -43,6 +43,7 @@ spec:
 {{ include "gitpod.databaseWaiter.container" $this | indent 6 }}
 {{ include "gitpod.msgbusWaiter.container" $this | indent 6 }}
       containers:
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       - name: ws-manager-bridge
         image: {{ template "gitpod.comp.imageFull" $this }}
 {{ include "gitpod.container.resources" $this | indent 8 }}
