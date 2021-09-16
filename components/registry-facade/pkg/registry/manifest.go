@@ -148,7 +148,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 		}
 		rc, err := fetcher.Fetch(ctx, desc)
 		if err != nil {
-			log.WithError(err).WithField("ref", ref).WithFields(logFields).Error("cannot fetch manifest")
+			log.WithError(err).WithField("ref", ref).WithField("desc", desc).WithFields(logFields).Error("cannot fetch manifest")
 			return distv2.ErrorCodeManifestUnknown.WithDetail(err)
 		}
 		defer rc.Close()
