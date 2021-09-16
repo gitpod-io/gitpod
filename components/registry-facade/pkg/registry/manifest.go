@@ -137,6 +137,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 
 		_, desc, err := mh.Resolver.Resolve(ctx, ref)
 		if err != nil {
+			log.WithError(err).WithField("ref", ref).WithFields(logFields).Error("cannot resolve")
 			// ErrInvalidAuthorization
 			return err
 		}
@@ -155,6 +156,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 
 		manifest, ndesc, err := DownloadManifest(ctx, fetcher, desc, WithStore(mh.Store))
 		if err != nil {
+			log.WithError(err).WithField("desc", desc).WithFields(logFields).Error("cannot download manifest")
 			return distv2.ErrorCodeManifestUnknown.WithDetail(err)
 		}
 		desc = *ndesc
@@ -165,12 +167,14 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 			// download config
 			cfg, err := DownloadConfig(ctx, fetcher, manifest.Config)
 			if err != nil {
+				log.WithError(err).WithFields(logFields).Error("cannot download config")
 				return err
 			}
 
 			// modify config
 			addonLayer, err := mh.ConfigModifier(ctx, mh.Spec, cfg)
 			if err != nil {
+				log.WithError(err).WithFields(logFields).Error("cannot modify config")
 				return err
 			}
 			manifest.Layers = append(manifest.Layers, addonLayer...)
@@ -178,6 +182,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 			// place config in store
 			rawCfg, err := json.Marshal(cfg)
 			if err != nil {
+				log.WithError(err).WithFields(logFields).Error("cannot marshal config")
 				return err
 			}
 			cfgDgst := digest.FromBytes(rawCfg)

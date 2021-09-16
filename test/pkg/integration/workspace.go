@@ -128,14 +128,20 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 			return
 		}
 	}
+	if workspaceImage == "" {
+		it.t.Fatalf("cannot start workspaces without a workspace image (required by registry-facade resolver)")
+	}
 
 	ideImage := options.IdeImage
 	if ideImage == "" {
-		cfg, err := it.GetServerConfig()
+		cfg, err := it.GetServerIDEConfig()
 		if err != nil {
-			it.t.Fatalf("cannot find server config: %q", err)
+			it.t.Fatalf("cannot find server IDE config: %q", err)
 		}
-		ideImage = cfg.WorkspaceDefaults.IDEImageAliases.Code
+		ideImage = cfg.IDEImageAliases.Code
+		if ideImage == "" {
+			it.t.Fatalf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
+		}
 	}
 
 	req := &wsmanapi.StartWorkspaceRequest{
