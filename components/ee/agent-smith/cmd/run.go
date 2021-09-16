@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -30,7 +31,7 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Starts agent smith",
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := getConfig()
+		cfg, err := config.GetConfig(cfgFile)
 		if err != nil {
 			log.WithError(err).Fatal("cannot get config")
 		}
