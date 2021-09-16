@@ -6,14 +6,12 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
 	containerd_log "github.com/containerd/containerd/log"
 	"github.com/spf13/cobra"
 
-	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 )
@@ -53,28 +51,4 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "v", false, "produce JSON log output on verbose level")
-}
-
-// Config configures this servuce
-type Config struct {
-	BlobServe      blobserve.Config `json:"blobserve"`
-	AuthCfg        string           `json:"dockerAuth"`
-	PProfAddr      string           `json:"pprofAddr"`
-	PrometheusAddr string           `json:"prometheusAddr"`
-}
-
-// getConfig loads and validates the configuration
-func getConfig(fn string) (*Config, error) {
-	fc, err := os.ReadFile(fn)
-	if err != nil {
-		return nil, err
-	}
-
-	var cfg Config
-	err = json.Unmarshal(fc, &cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cfg, nil
 }
