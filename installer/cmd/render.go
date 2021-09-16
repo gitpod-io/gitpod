@@ -12,7 +12,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"

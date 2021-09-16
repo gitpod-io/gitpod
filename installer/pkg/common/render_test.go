@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/google/go-cmp/cmp"
 

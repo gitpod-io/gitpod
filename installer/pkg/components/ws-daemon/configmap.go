@@ -11,7 +11,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	wsdapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 	wsdconfig "github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"

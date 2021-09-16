@@ -7,7 +7,7 @@ package cmd
 import (
 	"fmt"
 
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 )

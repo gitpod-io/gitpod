@@ -6,7 +6,7 @@ package wsdaemon
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/hexops/valast"
 
 	appsv1 "k8s.io/api/apps/v1"

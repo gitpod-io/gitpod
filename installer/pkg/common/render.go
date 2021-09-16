@@ -7,7 +7,7 @@ package common
 import (
 	"sort"
 
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	"k8s.io/apimachinery/pkg/runtime"

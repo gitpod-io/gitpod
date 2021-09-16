@@ -6,13 +6,14 @@ package common
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/docker/distribution/reference"
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	v1 "k8s.io/api/apps/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
