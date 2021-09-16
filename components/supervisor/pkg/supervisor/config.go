@@ -224,14 +224,14 @@ type WorkspaceGitpodToken struct {
 
 // TaskConfig defines gitpod task shape
 type TaskConfig struct {
-	Name     *string            `json:"name,omitempty"`
-	Before   *string            `json:"before,omitempty"`
-	Init     *string            `json:"init,omitempty"`
-	Prebuild *string            `json:"prebuild,omitempty"`
-	Command  *string            `json:"command,omitempty"`
-	Env      *map[string]string `json:"env,omitempty"`
-	OpenIn   *string            `json:"openIn,omitempty"`
-	OpenMode *string            `json:"openMode,omitempty"`
+	Name     *string                 `json:"name,omitempty"`
+	Before   *string                 `json:"before,omitempty"`
+	Init     *string                 `json:"init,omitempty"`
+	Prebuild *string                 `json:"prebuild,omitempty"`
+	Command  *string                 `json:"command,omitempty"`
+	Env      *map[string]interface{} `json:"env,omitempty"`
+	OpenIn   *string                 `json:"openIn,omitempty"`
+	OpenMode *string                 `json:"openMode,omitempty"`
 }
 
 // Validate validates this configuration

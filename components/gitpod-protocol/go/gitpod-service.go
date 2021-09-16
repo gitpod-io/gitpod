@@ -1827,14 +1827,14 @@ type ResolvePluginsParams struct {
 
 // TaskConfig is the TaskConfig message type
 type TaskConfig struct {
-	Before   string            `json:"before,omitempty"`
-	Command  string            `json:"command,omitempty"`
-	Env      map[string]string `json:"env,omitempty"`
-	Init     string            `json:"init,omitempty"`
-	Name     string            `json:"name,omitempty"`
-	OpenIn   string            `json:"openIn,omitempty"`
-	OpenMode string            `json:"openMode,omitempty"`
-	Prebuild string            `json:"prebuild,omitempty"`
+	Before   string                 `json:"before,omitempty"`
+	Command  string                 `json:"command,omitempty"`
+	Env      map[string]interface{} `json:"env,omitempty"`
+	Init     string                 `json:"init,omitempty"`
+	Name     string                 `json:"name,omitempty"`
+	OpenIn   string                 `json:"openIn,omitempty"`
+	OpenMode string                 `json:"openMode,omitempty"`
+	Prebuild string                 `json:"prebuild,omitempty"`
 }
 
 // VSCodeConfig is the VSCodeConfig message type

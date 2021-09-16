@@ -705,7 +705,7 @@ export interface TaskConfig {
     init?: string;
     prebuild?: string;
     command?: string;
-    env?: { [env: string]: string };
+    env?: { [env: string]: any };
     openIn?: 'bottom' | 'main' | 'left' | 'right';
     openMode?: 'split-top' | 'split-left' | 'split-right' | 'split-bottom' | 'tab-before' | 'tab-after';
 }
