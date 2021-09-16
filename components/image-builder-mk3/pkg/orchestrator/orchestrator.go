@@ -175,6 +175,7 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 		logListener:    make(map[string]map[logListener]struct{}),
 		censorship:     make(map[string][]string),
 		builderAuthKey: builderAuthKey,
+		metrics:        newMetrics(),
 	}
 	o.monitor = newBuildMonitor(o, o.wsman)
 
@@ -197,6 +198,8 @@ type Orchestrator struct {
 	mu             sync.RWMutex
 
 	monitor *buildMonitor
+
+	metrics *metrics
 
 	protocol.UnimplementedImageBuilderServer
 }

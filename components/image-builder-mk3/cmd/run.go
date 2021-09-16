@@ -22,6 +22,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -35,13 +36,21 @@ var runCmd = &cobra.Command{
 		cfg := getConfig()
 
 		common_grpc.SetupLogging()
+		var promreg prometheus.Registerer
 		if cfg.Prometheus.Addr != "" {
+			reg := prometheus.NewRegistry()
+			promreg = reg
+
+			handler := http.NewServeMux()
+			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+
 			// BEWARE: for the gRPC client side metrics to work it's important to call common_grpc.ClientMetrics()
 			//         before NewOrchestratingBuilder as the latter produces the gRPC client.
-			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.Handler())
-
-			prometheus.DefaultRegisterer.MustRegister(common_grpc.ClientMetrics())
+			reg.MustRegister(
+				collectors.NewGoCollector(),
+				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+				common_grpc.ClientMetrics(),
+			)
 
 			go func() {
 				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
@@ -77,6 +86,12 @@ var runCmd = &cobra.Command{
 			}
 			go resolver.StartCaching(ctx, interval)
 			service.RefResolver = resolver
+		}
+		if promreg != nil {
+			err = service.RegisterMetrics(promreg)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		err = service.Start(ctx)
