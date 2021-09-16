@@ -2,6 +2,7 @@
 #include <linux/bpf.h>
 #include "bpf_helpers.h"
 #include "bpf_endian.h"
+#include <stddef.h>
 #include <linux/if_ether.h>
 #include <linux/ip.h>
 #include <linux/in.h>
@@ -30,14 +31,13 @@ static inline int ip_is_fragment(struct __sk_buff *skb, __u64 nhoff)
     return load_half(skb, nhoff + offsetof(struct iphdr, frag_off)) & (IP_MF | IP_OFFSET);
 }
 
-struct
-{
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __uint(key_size, sizeof(__u32));
-    __uint(value_size, sizeof(__u16)); // value is the index of the domain + 1
-    __uint(max_entries, 64534);        // 65535 - 1 = 2^16 - 1
-    __uint(pinning, 1);                // PIN_OBJECT_NS
-} hot SEC(".maps");
+struct bpf_elf_map SEC("maps") hot = {
+    .type		= BPF_MAP_TYPE_HASH,
+	.size_key	= sizeof(__u32),
+	.size_value	= sizeof(__u16),        // value represents the index of the domain + 1
+	.pinning	= PIN_GLOBAL_NS,
+	.max_elem	= 64534,                // temporary
+};
 
 // todo: IPv6
 SEC("classifier")
@@ -74,11 +74,10 @@ int dropitlikeitshot(struct __sk_buff *skb)
         return TC_ACT_OK;
     }
 
-    // todo(leodido) > put map lookup back
-    __u32 blockme = 16843009; // 1.1.1.1 (test)
-    if (ip_header->daddr == blockme)
-    {
-        bpf_printk("classifier: hit domain with index ...: block\n");
+    __u16 *res;
+    res = bpf_map_lookup_elem(&hot, &ip_header->daddr);
+    if (res != NULL) {
+        bpf_printk("classifier: hit domain with index %d: block\n", bpf_htons(*res)); // -1
         return TC_ACT_SHOT;
     }
 
