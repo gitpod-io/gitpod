@@ -55,3 +55,4 @@ vscode:
     - stkb.rewrap
     - zxh404.vscode-proto3
     - matthewpi.caddyfile-support
+    - vsls-contrib.codetour
