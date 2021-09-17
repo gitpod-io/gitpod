@@ -12,7 +12,6 @@ import Header from "../components/Header";
 import PrebuildLogs from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
-import { ThemeContext } from "../theme-context";
 import { PrebuildInstanceStatus } from "./Prebuilds";
 import { shortCommitMessage } from "./render-utils";
 
@@ -28,7 +27,6 @@ export default function () {
 
     const [ prebuild, setPrebuild ] = useState<PrebuildWithStatus | undefined>();
     const [ prebuildInstance, setPrebuildInstance ] = useState<WorkspaceInstance | undefined>();
-    const { isDark } = useContext(ThemeContext);
 
     useEffect(() => {
         if (!teams || !projectName || !prebuildId) {
@@ -88,7 +86,7 @@ export default function () {
                     <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId} onInstanceUpdate={onInstanceUpdate} />
                 </div>
                 <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
-                    {prebuildInstance && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} isDark={isDark} />}
+                    {prebuildInstance && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} />}
                     <div className="flex-grow" />
                     {prebuildInstance?.status.phase === "stopped"
                         ? <a className="my-auto" href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}><button>New Workspace</button></a>
