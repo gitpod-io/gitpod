@@ -129,6 +129,10 @@
 :8003 {
 	respond /live 200
 	respond /ready 200
+
+	metrics /metrics {
+		disable_openmetrics
+	}
 }
 
 # always redirect to HTTPS
