@@ -13,7 +13,6 @@ import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import Header from "../components/Header";
 import Spinner from "../icons/Spinner.svg";
-import SpinnerDark from "../icons/SpinnerDark.svg";
 import PrebuildLogsEmpty from "../images/prebuild-logs-empty.svg";
 import PrebuildLogsEmptyDark from "../images/prebuild-logs-empty-dark.svg";
 import { ThemeContext } from "../theme-context";
@@ -163,7 +162,7 @@ export default function () {
             <MonacoEditor classes="w-full flex-grow" disabled={isEditorDisabled} language="dockerfile" value={dockerfile} onChange={setDockerfile} />}
         </Suspense>
         {isDetecting && <div className="absolute h-full w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center space-x-2">
-          <img className="h-5 w-5 animate-spin" src={isDark ? SpinnerDark : Spinner} />
+          <img className="h-5 w-5 animate-spin" src={Spinner} />
           <span className="font-semibold text-gray-400">Detecting project configuration ...</span>
         </div>}
       </div>
@@ -177,7 +176,7 @@ export default function () {
             </div>)
         }</div>
         <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
-          {prebuildWasTriggered && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} isDark={isDark} />}
+          {prebuildWasTriggered && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} />}
           <div className="flex-grow" />
           {(prebuildInstance?.status.phase === "stopped" && !prebuildInstance?.status.conditions.failed)
               ? <a className="my-auto" href={`/#${project?.cloneUrl}`}><button className="secondary">New Workspace</button></a>

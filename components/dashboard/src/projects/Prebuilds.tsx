@@ -12,7 +12,6 @@ import Header from "../components/Header";
 import DropDown, { DropDownEntry } from "../components/DropDown";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import Spinner from "../icons/Spinner.svg";
-import SpinnerDark from "../icons/SpinnerDark.svg";
 import StatusDone from "../icons/StatusDone.svg";
 import StatusFailed from "../icons/StatusFailed.svg";
 import StatusPaused from "../icons/StatusPaused.svg";
@@ -233,7 +232,7 @@ export function prebuildStatusIcon(status: PrebuiltWorkspaceState | undefined) {
     }
 }
 
-export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInstance, isDark?: boolean }) {
+export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInstance }) {
     let status = <></>;
     let details = <></>;
     switch (props.prebuildInstance?.status.phase) {
@@ -244,7 +243,7 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
                 <span>PENDING</span>
                 </div>;
             details = <div className="flex space-x-1 items-center text-gray-400">
-                <img className="h-4 w-4 animate-spin" src={props.isDark ? SpinnerDark : Spinner} />
+                <img className="h-4 w-4 animate-spin" src={Spinner} />
                 <span>Prebuild in progress ...</span>
                 </div>;
             break;
@@ -259,7 +258,7 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
                 <span>RUNNING</span>
                 </div>;
             details = <div className="flex space-x-1 items-center text-gray-400">
-                <img className="h-4 w-4 animate-spin" src={props.isDark ? SpinnerDark : Spinner} />
+                <img className="h-4 w-4 animate-spin" src={Spinner} />
                 <span>Prebuild in progress ...</span>
                 </div>;
             break;
