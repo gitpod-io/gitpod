@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2021
+- Allows renaming of workspace description. ([#5695](https://github.com/gitpod-io/gitpod/pull/5695)) - [@laushinka](https://github.com/laushinka)
+- [gpctl] Add missing go dependencies ([#5709](https://github.com/gitpod-io/gitpod/pull/5709)) - [@princerachit](https://github.com/princerachit)
 - [projects] add check for createProject ([#5421](https://github.com/gitpod-io/gitpod/pull/5421)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Update code to 1.60.0 ([#5633](https://github.com/gitpod-io/gitpod/pull/5633)) - [@jeanp413](https://github.com/jeanp413)
 - allow users to unsubscribe from onboarding emails ([#5682](https://github.com/gitpod-io/gitpod/pull/5682)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
