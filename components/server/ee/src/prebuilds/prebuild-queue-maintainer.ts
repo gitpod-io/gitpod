@@ -132,8 +132,7 @@ export class PrebuildQueueMaintainer implements Disposable {
                 await this.workspaceStarter.startWorkspace({span}, workspace, user);
             }
 
-            const t = new Date();
-            Array.from(queueLengths.keys()).forEach(q => this.prometheusAdapter.storePrebuildQueueLength(t, q, queueLengths.get(q) || 0));
+            Array.from(queueLengths.keys()).forEach(q => this.prometheusAdapter.storePrebuildQueueLength(q, queueLengths.get(q) || 0));
         } catch (err) {
             TraceContext.logError({span}, err);
             throw err;

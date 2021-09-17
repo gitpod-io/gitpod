@@ -29,9 +29,10 @@ export const start = async (container: Container) => {
         tracingManager.setup("ws-manager-bridge");
 
         const metricsApp = express();
-        prometheusClient.collectDefaultMetrics({ timeout: 5000 });
-        metricsApp.get('/metrics', (req, res) => {
-            res.send(prometheusClient.register.metrics().toString());
+        prometheusClient.collectDefaultMetrics();
+        metricsApp.get('/metrics', async (req, res) => {
+            res.set('Content-Type', prometheusClient.register.contentType);
+            res.send(await prometheusClient.register.metrics());
         });
         const metricsPort = 9500;
         const metricsHttpServer = metricsApp.listen(metricsPort, 'localhost', () => {

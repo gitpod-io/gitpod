@@ -686,7 +686,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             await client.markActive({ span }, req);
 
             if (options && options.roundTripTime && Number.isFinite(options.roundTripTime)) {
-                this.clientDataPrometheusAdapter.storeWorkspaceRoundTripTimeSample(new Date(), user, instanceId, options.roundTripTime);
+                this.clientDataPrometheusAdapter.storeWorkspaceRoundTripTimeSample(user, instanceId, options.roundTripTime);
             }
         } catch (e) {
             TraceContext.logError({ span }, e);
