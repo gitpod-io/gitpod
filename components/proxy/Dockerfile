@@ -21,6 +21,7 @@ RUN xcaddy build v2.4.5 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/logif=/plugins/logif \
   --with github.com/gitpod-io/gitpod/proxy/plugins/jsonselect=/plugins/jsonselect \
   --with github.com/gitpod-io/gitpod/proxy/plugins/bodyintercept=/plugins/bodyintercept \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/metricst=/plugins/metrics \
   --with github.com/sillygod/cdp-cache
 
 FROM alpine:3.14

@@ -18,6 +18,9 @@
 	order gitpod.sec_websocket_key      before header
 	order http_cache                    before reverse_proxy
 	order gitpod.body_intercept         before redir
+	order caddy.metrics                 before reverse_proxy
+	# move default metrics to last
+	order metrics                       last
 }
 
 (compression) {
@@ -129,6 +132,9 @@
 :8003 {
 	respond /live 200
 	respond /ready 200
+
+	caddy.metrics /metrics {
+	}
 }
 
 # always redirect to HTTPS
