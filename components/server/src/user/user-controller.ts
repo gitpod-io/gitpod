@@ -170,6 +170,18 @@ export class UserController {
                 return;
             }
 
+            let cookiePrefix: string = this.config.hostUrl.url.host;
+            cookiePrefix = cookiePrefix.replace(/^https?/, '');
+            [" ", "-", "."].forEach(c => cookiePrefix = cookiePrefix.split(c).join("_"));
+            const name = `_${cookiePrefix}_ws_${instanceID}_owner_`;
+
+            if (!!req.cookies[name]) {
+                // cookie is already set - do nothing. This prevents server from drowning in load
+                // if the dashboard is ill-behaved.
+                res.sendStatus(200);
+                return;
+            }
+
             const [workspace, instance] = await Promise.all([
                 this.workspaceDB.findByInstanceId(instanceID),
                 this.workspaceDB.findInstanceById(instanceID)
@@ -207,11 +219,6 @@ export class UserController {
                 return;
             }
 
-            let cookiePrefix: string = this.config.hostUrl.url.host;
-            cookiePrefix = cookiePrefix.replace(/^https?/, '');
-            [" ", "-", "."].forEach(c => cookiePrefix = cookiePrefix.split(c).join("_"));
-
-            const name = `_${cookiePrefix}_ws_${instanceID}_owner_`;
             res.cookie(name, token, {
                 path: "/",
                 httpOnly: true,
