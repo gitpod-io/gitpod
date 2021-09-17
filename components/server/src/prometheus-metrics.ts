@@ -7,7 +7,7 @@
 import * as prometheusClient from 'prom-client';
 
 // Enable collection of default metrics.
-prometheusClient.collectDefaultMetrics({ timeout: 5000 });
+prometheusClient.collectDefaultMetrics();
 export const register = prometheusClient.register;
 
 const loginCounter = new prometheusClient.Counter({

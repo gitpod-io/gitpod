@@ -32,7 +32,7 @@
     "amqplib": "^0.5.2",
     "express": "^4.16.1",
     "inversify": "^5.0.1",
-    "prom-client": "^10.2.0",
+    "prom-client": "^13.2.0",
     "reflect-metadata": "^0.1.10"
   },
   "devDependencies": {

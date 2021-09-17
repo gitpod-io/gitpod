@@ -30,10 +30,10 @@ export interface IClientCallMetrics {
 @injectable()
 export class PrometheusClientCallMetrics implements IClientCallMetrics {
 
-	readonly startedCounter: prometheusClient.Counter;
-	readonly sentCounter: prometheusClient.Counter;
-	readonly receivedCounter: prometheusClient.Counter;
-	readonly handledCounter: prometheusClient.Counter;
+	readonly startedCounter: prometheusClient.Counter<string>;
+	readonly sentCounter: prometheusClient.Counter<string>;
+	readonly receivedCounter: prometheusClient.Counter<string>;
+	readonly handledCounter: prometheusClient.Counter<string>;
 
 	constructor() {
 		this.startedCounter = new prometheusClient.Counter({

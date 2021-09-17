@@ -76,7 +76,7 @@
     "passport-gitlab2": "5.0.0",
     "passport-http": "^0.3.0",
     "probot": "11.4.0",
-    "prom-client": "^10.2.0",
+    "prom-client": "^13.2.0",
     "rate-limiter-flexible": "^2.2.1",
     "reflect-metadata": "^0.1.10",
     "swot-js": "^1.0.3",

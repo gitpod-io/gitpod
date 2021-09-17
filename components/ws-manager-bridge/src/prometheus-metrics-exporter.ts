@@ -11,10 +11,10 @@ import { WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/src/workspace-clu
 
 @injectable()
 export class PrometheusMetricsExporter {
-    protected readonly workspaceStartupTimeHistogram: prom.Histogram;
-    protected readonly timeToFirstUserActivityHistogram: prom.Histogram;
-    protected readonly clusterScore: prom.Gauge;
-    protected readonly clusterCordoned: prom.Gauge;
+    protected readonly workspaceStartupTimeHistogram: prom.Histogram<string>;
+    protected readonly timeToFirstUserActivityHistogram: prom.Histogram<string>;
+    protected readonly clusterScore: prom.Gauge<string>;
+    protected readonly clusterCordoned: prom.Gauge<string>;
 
     constructor() {
         this.workspaceStartupTimeHistogram = new prom.Histogram({
