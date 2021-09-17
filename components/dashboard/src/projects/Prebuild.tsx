@@ -13,7 +13,7 @@ import PrebuildLogs from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
-import { prebuildStatusIcon, prebuildStatusLabel, PrebuildInstanceStatus } from "./Prebuilds";
+import { PrebuildInstanceStatus } from "./Prebuilds";
 import { shortCommitMessage } from "./render-utils";
 
 export default function () {
@@ -62,15 +62,8 @@ export default function () {
         if (!prebuild) {
             return "";
         }
-        const statusIcon = prebuildStatusIcon(prebuild.status);
-        const status = prebuildStatusLabel(prebuild.status);
         const startedByAvatar = prebuild.info.startedByAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={prebuild.info.startedByAvatar || ''} alt={prebuild.info.startedBy} />;
         return (<div className="flex">
-            <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase">
-                <div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>
-                {status}
-            </div>
-            <p className="mx-2 my-auto">·</p>
             <div className="my-auto">
                 <p>{startedByAvatar}Triggered {moment(prebuild.info.startedAt).fromNow()}</p>
             </div>
