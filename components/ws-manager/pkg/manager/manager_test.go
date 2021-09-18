@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestValidateStartWorkspaceRequest(t *testing.T) {
@@ -429,7 +430,7 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 		// Add dummy daemon pool - slightly hacky but we aren't testing the actual connectivity here
 		manager.wsdaemonPool = grpcpool.New(func(host string) (*grpc.ClientConn, error) {
 			return nil, nil
-		})
+		}, func(checkAddress string) bool { return false })
 
 		t.Run(tt.Name, func(t *testing.T) {
 			got, err := manager.connectToWorkspaceDaemon(tt.Args.Ctx, tt.Args.WSO)
@@ -439,6 +440,113 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 			}
 			if err != nil && got != nil {
 				t.Errorf("Manager.connectToWorkspaceDaemon() = %v, wanted nil", got)
+			}
+		})
+	}
+}
+
+func TestCheckWSDaemonEntpoint(t *testing.T) {
+	type Args struct {
+		Objs []client.Object
+	}
+	tests := []struct {
+		Name     string
+		Input    string
+		Args     Args
+		Expected bool
+	}{
+		{
+			Name:     "handles no endpoints",
+			Input:    "10.1.2.3",
+			Args:     Args{},
+			Expected: false,
+		},
+		{
+			Name: "handles no endpoint on current node",
+			Args: Args{
+				Objs: []client.Object{
+					&corev1.Endpoints{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Endpoints",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ws-daemon-endpoints",
+							Namespace: "default",
+							Labels: labels.Set{
+								"component": "ws-daemon",
+								"kind":      "service",
+							},
+						},
+						Subsets: []corev1.EndpointSubset{
+							{
+								Addresses: []corev1.EndpointAddress{
+									{
+										IP: "10.1.2.2",
+									},
+								},
+								Ports: []corev1.EndpointPort{
+									{
+										Name:     "port1",
+										Port:     7766,
+										Protocol: "TCP",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Expected: false,
+		},
+		{
+			Name:  "finds endpoint on current node",
+			Input: "10.1.2.3",
+			Args: Args{
+				Objs: []client.Object{
+					&corev1.Endpoints{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Endpoints",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ws-daemon-endpoints",
+							Namespace: "default",
+							Labels: labels.Set{
+								"component": "ws-daemon",
+								"kind":      "service",
+							},
+						},
+						Subsets: []corev1.EndpointSubset{
+							{
+								Addresses: []corev1.EndpointAddress{
+									{
+										IP: "10.1.2.3",
+									},
+								},
+								Ports: []corev1.EndpointPort{
+									{
+										Name:     "port1",
+										Port:     7766,
+										Protocol: "TCP",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		clientset := fake.NewClientBuilder().WithObjects(tt.Args.Objs...).Build()
+
+		t.Run(tt.Name, func(t *testing.T) {
+			got := checkWSDaemonEndpoint("default", clientset)(tt.Input)
+			if got != tt.Expected {
+				t.Errorf("checkWSDaemonEndpoint = %v, wanted %v", got, tt.Expected)
 			}
 		})
 	}

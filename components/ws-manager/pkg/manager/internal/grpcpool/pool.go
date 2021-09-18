@@ -7,6 +7,7 @@ package grpcpool
 import (
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -27,14 +28,27 @@ type Pool struct {
 	factory     Factory
 	closed      bool
 	mu          sync.RWMutex
+
+	checkFn ConnectionValidationFunc
 }
 
+type ConnectionValidationFunc func(hostIP string) (valid bool)
+
 // New creates a new connection pool
-func New(factory Factory) *Pool {
-	return &Pool{
+func New(factory Factory, checkFn ConnectionValidationFunc) *Pool {
+	pool := &Pool{
 		connections: make(map[string]*grpc.ClientConn),
 		factory:     factory,
+		checkFn:     checkFn,
 	}
+
+	go func() {
+		for range time.Tick(5 * time.Minute) {
+			pool.ValidateConnections()
+		}
+	}()
+
+	return pool
 }
 
 // Get will return a client connection to the host. If no connection exists yet, the factory
@@ -97,4 +111,28 @@ func (p *Pool) Close() error {
 	}
 
 	return nil
+}
+
+// ValidateConnections check if existing connections in the pool
+// are using valid addresses and remove them from the pool if not.
+func (p *Pool) ValidateConnections() {
+	p.mu.RLock()
+	addresses := make([]string, 0, len(p.connections))
+	for address := range p.connections {
+		addresses = append(addresses, address)
+	}
+	p.mu.RUnlock()
+
+	for _, address := range addresses {
+		found := p.checkFn(address)
+		if !found {
+			continue
+		}
+
+		p.mu.Lock()
+		conn := p.connections[address]
+		conn.Close()
+		delete(p.connections, address)
+		p.mu.Unlock()
+	}
 }
