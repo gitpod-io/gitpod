@@ -160,6 +160,21 @@ func (m *MockWorkspaceManagerServer) EXPECT() *MockWorkspaceManagerServerMockRec
 	return m.recorder
 }
 
+// BackupWorkspace mocks base method.
+func (m *MockWorkspaceManagerServer) BackupWorkspace(arg0 context.Context, arg1 *api.BackupWorkspaceRequest) (*api.BackupWorkspaceResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BackupWorkspace", arg0, arg1)
+	ret0, _ := ret[0].(*api.BackupWorkspaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BackupWorkspace indicates an expected call of BackupWorkspace.
+func (mr *MockWorkspaceManagerServerMockRecorder) BackupWorkspace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupWorkspace", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).BackupWorkspace), arg0, arg1)
+}
+
 // ControlAdmission mocks base method.
 func (m *MockWorkspaceManagerServer) ControlAdmission(arg0 context.Context, arg1 *api.ControlAdmissionRequest) (*api.ControlAdmissionResponse, error) {
 	m.ctrl.T.Helper()
@@ -465,6 +480,26 @@ func NewMockWorkspaceManagerClient(ctrl *gomock.Controller) *MockWorkspaceManage
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockWorkspaceManagerClient) EXPECT() *MockWorkspaceManagerClientMockRecorder {
 	return m.recorder
+}
+
+// BackupWorkspace mocks base method.
+func (m *MockWorkspaceManagerClient) BackupWorkspace(arg0 context.Context, arg1 *api.BackupWorkspaceRequest, arg2 ...grpc.CallOption) (*api.BackupWorkspaceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "BackupWorkspace", varargs...)
+	ret0, _ := ret[0].(*api.BackupWorkspaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BackupWorkspace indicates an expected call of BackupWorkspace.
+func (mr *MockWorkspaceManagerClientMockRecorder) BackupWorkspace(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupWorkspace", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).BackupWorkspace), varargs...)
 }
 
 // ControlAdmission mocks base method.

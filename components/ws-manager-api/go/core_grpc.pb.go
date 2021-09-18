@@ -30,6 +30,8 @@ type WorkspaceManagerClient interface {
 	StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (*StopWorkspaceResponse, error)
 	// describeWorkspace investigates a workspace and returns its status, and configuration
 	DescribeWorkspace(ctx context.Context, in *DescribeWorkspaceRequest, opts ...grpc.CallOption) (*DescribeWorkspaceResponse, error)
+	// backupWorkspace backs up a running workspace
+	BackupWorkspace(ctx context.Context, in *BackupWorkspaceRequest, opts ...grpc.CallOption) (*BackupWorkspaceResponse, error)
 	// subscribe streams all status updates to a client
 	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (WorkspaceManager_SubscribeClient, error)
 	// markActive records a workspace as being active which prevents it from timing out
@@ -82,6 +84,15 @@ func (c *workspaceManagerClient) StopWorkspace(ctx context.Context, in *StopWork
 func (c *workspaceManagerClient) DescribeWorkspace(ctx context.Context, in *DescribeWorkspaceRequest, opts ...grpc.CallOption) (*DescribeWorkspaceResponse, error) {
 	out := new(DescribeWorkspaceResponse)
 	err := c.cc.Invoke(ctx, "/wsman.WorkspaceManager/DescribeWorkspace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceManagerClient) BackupWorkspace(ctx context.Context, in *BackupWorkspaceRequest, opts ...grpc.CallOption) (*BackupWorkspaceResponse, error) {
+	out := new(BackupWorkspaceResponse)
+	err := c.cc.Invoke(ctx, "/wsman.WorkspaceManager/BackupWorkspace", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -177,6 +188,8 @@ type WorkspaceManagerServer interface {
 	StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error)
 	// describeWorkspace investigates a workspace and returns its status, and configuration
 	DescribeWorkspace(context.Context, *DescribeWorkspaceRequest) (*DescribeWorkspaceResponse, error)
+	// backupWorkspace backs up a running workspace
+	BackupWorkspace(context.Context, *BackupWorkspaceRequest) (*BackupWorkspaceResponse, error)
 	// subscribe streams all status updates to a client
 	Subscribe(*SubscribeRequest, WorkspaceManager_SubscribeServer) error
 	// markActive records a workspace as being active which prevents it from timing out
@@ -207,6 +220,9 @@ func (UnimplementedWorkspaceManagerServer) StopWorkspace(context.Context, *StopW
 }
 func (UnimplementedWorkspaceManagerServer) DescribeWorkspace(context.Context, *DescribeWorkspaceRequest) (*DescribeWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeWorkspace not implemented")
+}
+func (UnimplementedWorkspaceManagerServer) BackupWorkspace(context.Context, *BackupWorkspaceRequest) (*BackupWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BackupWorkspace not implemented")
 }
 func (UnimplementedWorkspaceManagerServer) Subscribe(*SubscribeRequest, WorkspaceManager_SubscribeServer) error {
 	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
@@ -307,6 +323,24 @@ func _WorkspaceManager_DescribeWorkspace_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceManagerServer).DescribeWorkspace(ctx, req.(*DescribeWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceManager_BackupWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BackupWorkspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceManagerServer).BackupWorkspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsman.WorkspaceManager/BackupWorkspace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceManagerServer).BackupWorkspace(ctx, req.(*BackupWorkspaceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -444,6 +478,10 @@ var WorkspaceManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DescribeWorkspace",
 			Handler:    _WorkspaceManager_DescribeWorkspace_Handler,
+		},
+		{
+			MethodName: "BackupWorkspace",
+			Handler:    _WorkspaceManager_BackupWorkspace_Handler,
 		},
 		{
 			MethodName: "MarkActive",

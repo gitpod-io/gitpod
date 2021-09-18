@@ -40,6 +40,26 @@ func (m *MockWorkspaceContentServiceClient) EXPECT() *MockWorkspaceContentServic
 	return m.recorder
 }
 
+// BackupWorkspace mocks base method.
+func (m *MockWorkspaceContentServiceClient) BackupWorkspace(arg0 context.Context, arg1 *api.BackupWorkspaceRequest, arg2 ...grpc.CallOption) (*api.BackupWorkspaceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "BackupWorkspace", varargs...)
+	ret0, _ := ret[0].(*api.BackupWorkspaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BackupWorkspace indicates an expected call of BackupWorkspace.
+func (mr *MockWorkspaceContentServiceClientMockRecorder) BackupWorkspace(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupWorkspace", reflect.TypeOf((*MockWorkspaceContentServiceClient)(nil).BackupWorkspace), varargs...)
+}
+
 // DisposeWorkspace mocks base method.
 func (m *MockWorkspaceContentServiceClient) DisposeWorkspace(arg0 context.Context, arg1 *api.DisposeWorkspaceRequest, arg2 ...grpc.CallOption) (*api.DisposeWorkspaceResponse, error) {
 	m.ctrl.T.Helper()
@@ -124,7 +144,6 @@ func (mr *MockWorkspaceContentServiceClientMockRecorder) WaitForInit(arg0, arg1 
 type MockWorkspaceContentServiceServer struct {
 	ctrl     *gomock.Controller
 	recorder *MockWorkspaceContentServiceServerMockRecorder
-	api.UnimplementedWorkspaceContentServiceServer
 }
 
 // MockWorkspaceContentServiceServerMockRecorder is the mock recorder for MockWorkspaceContentServiceServer.
@@ -142,6 +161,21 @@ func NewMockWorkspaceContentServiceServer(ctrl *gomock.Controller) *MockWorkspac
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockWorkspaceContentServiceServer) EXPECT() *MockWorkspaceContentServiceServerMockRecorder {
 	return m.recorder
+}
+
+// BackupWorkspace mocks base method.
+func (m *MockWorkspaceContentServiceServer) BackupWorkspace(arg0 context.Context, arg1 *api.BackupWorkspaceRequest) (*api.BackupWorkspaceResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BackupWorkspace", arg0, arg1)
+	ret0, _ := ret[0].(*api.BackupWorkspaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BackupWorkspace indicates an expected call of BackupWorkspace.
+func (mr *MockWorkspaceContentServiceServerMockRecorder) BackupWorkspace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BackupWorkspace", reflect.TypeOf((*MockWorkspaceContentServiceServer)(nil).BackupWorkspace), arg0, arg1)
 }
 
 // DisposeWorkspace mocks base method.

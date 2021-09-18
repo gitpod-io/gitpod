@@ -12,6 +12,28 @@ var core_pb = require('./core_pb.js');
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 
+function serialize_wsman_BackupWorkspaceRequest(arg) {
+  if (!(arg instanceof core_pb.BackupWorkspaceRequest)) {
+    throw new Error('Expected argument of type wsman.BackupWorkspaceRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_BackupWorkspaceRequest(buffer_arg) {
+  return core_pb.BackupWorkspaceRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_BackupWorkspaceResponse(arg) {
+  if (!(arg instanceof core_pb.BackupWorkspaceResponse)) {
+    throw new Error('Expected argument of type wsman.BackupWorkspaceResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_BackupWorkspaceResponse(buffer_arg) {
+  return core_pb.BackupWorkspaceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsman_ControlAdmissionRequest(arg) {
   if (!(arg instanceof core_pb.ControlAdmissionRequest)) {
     throw new Error('Expected argument of type wsman.ControlAdmissionRequest');
@@ -281,6 +303,18 @@ describeWorkspace: {
     requestDeserialize: deserialize_wsman_DescribeWorkspaceRequest,
     responseSerialize: serialize_wsman_DescribeWorkspaceResponse,
     responseDeserialize: deserialize_wsman_DescribeWorkspaceResponse,
+  },
+  // backupWorkspace backs up a running workspace
+backupWorkspace: {
+    path: '/wsman.WorkspaceManager/BackupWorkspace',
+    requestStream: false,
+    responseStream: false,
+    requestType: core_pb.BackupWorkspaceRequest,
+    responseType: core_pb.BackupWorkspaceResponse,
+    requestSerialize: serialize_wsman_BackupWorkspaceRequest,
+    requestDeserialize: deserialize_wsman_BackupWorkspaceRequest,
+    responseSerialize: serialize_wsman_BackupWorkspaceResponse,
+    responseDeserialize: deserialize_wsman_BackupWorkspaceResponse,
   },
   // subscribe streams all status updates to a client
 subscribe: {

@@ -32,3 +32,8 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 func (m *Manager) SetTimeout(ctx context.Context, req *api.SetTimeoutRequest) (res *api.SetTimeoutResponse, err error) {
 	return nil, errEnterpriseFeature
 }
+
+// BackupWorkspace creates a copy of the workspace content and stores it so that another workspace can be created from it.
+func (m *Manager) BackupWorkspace(ctx context.Context, req *api.BackupWorkspaceRequest) (res *api.BackupWorkspaceResponse, err error) {
+	return nil, errEnterpriseFeature
+}

@@ -133,3 +133,33 @@ func (m *Manager) SetTimeout(ctx context.Context, req *api.SetTimeoutRequest) (r
 
 	return &api.SetTimeoutResponse{}, nil
 }
+
+// BackupWorkspace attempts to create a backup of the workspace, ignoring its perceived current status as much as it can
+func (m *Manager) BackupWorkspace(ctx context.Context, req *api.BackupWorkspaceRequest) (res *api.BackupWorkspaceResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "BackupWorkspace")
+	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
+	defer tracing.FinishSpan(span, &err)
+
+	pod, err := m.findWorkspacePod(ctx, req.Id)
+	if isKubernetesObjNotFoundError(err) {
+		return nil, status.Errorf(codes.NotFound, "workspace pod for %s does not exist", req.Id)
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot get workspace pod: %q", err)
+	}
+	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+	span.LogKV("event", "get pod")
+
+	sync, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
+	}
+
+	r, err := sync.BackupWorkspace(ctx, &wsdaemon.BackupWorkspaceRequest{Id: req.Id})
+	if err != nil {
+		// err is already a grpc error - no need to faff with that
+		return nil, err
+	}
+
+	return &api.BackupWorkspaceResponse{Url: r.Url}, nil
+}
