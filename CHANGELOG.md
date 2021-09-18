@@ -1,6 +1,12 @@
 # Change Log
 
 ## September 2021
+- [server] Update preometheus library (prom-client) to v13.2.0 ([#5727](https://github.com/gitpod-io/gitpod/pull/5727)) - [@aledbf](https://github.com/aledbf)
+- [ws-manager-bridge] Update preometheus library (prom-client) to v13.2.0 ([#5727](https://github.com/gitpod-io/gitpod/pull/5727)) - [@aledbf](https://github.com/aledbf)
+- [server] Add gRPC client call metrics ([#5726](https://github.com/gitpod-io/gitpod/pull/5726)) - [@JanKoehnlein](https://github.com/JanKoehnlein), [@csweichel](https://github.com/csweichel)
+- [ws-manager-bridge] Add gRPC client call and cluster registration metrics ([#5726](https://github.com/gitpod-io/gitpod/pull/5726)) - [@JanKoehnlein](https://github.com/JanKoehnlein), [@csweichel](https://github.com/csweichel)
+- [image-builder-mk3] Add image-build metrics ([#5726](https://github.com/gitpod-io/gitpod/pull/5726)) - [@JanKoehnlein](https://github.com/JanKoehnlein), [@csweichel](https://github.com/csweichel)
+- Fix parsing of tasks' env vars. ([#5719](https://github.com/gitpod-io/gitpod/pull/5719)) - [@akosyakov](https://github.com/akosyakov)
 - Allows renaming of workspace description. ([#5695](https://github.com/gitpod-io/gitpod/pull/5695)) - [@laushinka](https://github.com/laushinka)
 - [gpctl] Add missing go dependencies ([#5709](https://github.com/gitpod-io/gitpod/pull/5709)) - [@princerachit](https://github.com/princerachit)
 - [projects] add check for createProject ([#5421](https://github.com/gitpod-io/gitpod/pull/5421)) - [@AlexTugarev](https://github.com/AlexTugarev)
