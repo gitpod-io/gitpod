@@ -262,6 +262,11 @@ func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name st
 	// upload the thing
 	bucket = rs.bucketName()
 	obj = rs.objectName(name)
+	span.LogKV("bucket", bucket)
+	span.LogKV("obj", obj)
+	span.LogKV("endpoint", rs.MinIOConfig.Endpoint)
+	span.LogKV("region", rs.MinIOConfig.Region)
+	span.LogKV("key", rs.MinIOConfig.AccessKeyID)
 	_, err = rs.client.FPutObject(ctx, bucket, obj, source, minio.PutObjectOptions{
 		NumThreads:   rs.MinIOConfig.ParallelUpload,
 		UserMetadata: options.Annotations,

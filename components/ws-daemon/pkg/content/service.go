@@ -379,6 +379,11 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadWorkspaceContent")
+	span.SetTag("workspace", sess.WorkspaceID)
+	span.SetTag("instance", sess.InstanceID)
+	span.SetTag("backup", backupName)
+	span.SetTag("manifest", mfName)
+	span.SetTag("full", sess.FullWorkspaceBackup)
 	defer tracing.FinishSpan(span, &err)
 
 	var (
@@ -699,6 +704,56 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 
 	return &api.TakeSnapshotResponse{
 		Url: snapshotName,
+	}, nil
+}
+
+// BackupWorkspace creates a backup of a workspace, if possible
+func (s *WorkspaceService) BackupWorkspace(ctx context.Context, req *api.BackupWorkspaceRequest) (res *api.BackupWorkspaceResponse, err error) {
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "BackupWorkspace")
+	span.SetTag("workspace", req.Id)
+	defer tracing.FinishSpan(span, &err)
+
+	sess := s.store.Get(req.Id)
+	if sess == nil {
+		// TODO(rl): do we want to fake a session just to see if we can access the location
+		// Potentiall fragile but we are probably using the backup in dire straits :shrug:
+		// i.e. location = /mnt/disks/ssd0/workspaces- + req.Id
+		// It would also need to setup the remote storagej
+		// ... but in the worse case we *could* backup locally and then upload manually
+		return nil, status.Error(codes.NotFound, "workspace does not exist")
+	}
+	if sess.RemoteStorageDisabled {
+		return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
+	}
+	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
+	if rs == nil || !ok {
+		log.WithFields(sess.OWI()).WithError(err).Error("cannot take backup: no remote storage configured")
+		return nil, status.Error(codes.Internal, "workspace has no remote storage")
+	}
+
+	backupName := storage.DefaultBackup
+	var mfName = storage.DefaultBackupManifest
+	// TODO: do we want this always in the worse case?
+	if sess.FullWorkspaceBackup {
+		backupName = fmt.Sprintf(storage.FmtFullWorkspaceBackup, time.Now().UnixNano())
+	}
+	log.WithField("workspaceId", sess.WorkspaceID).WithField("instanceID", sess.InstanceID).WithField("backupName", backupName).Info("backing up")
+
+	err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+	if err != nil {
+		log.WithError(err).WithFields(sess.OWI()).Error("final backup failed")
+		return nil, status.Error(codes.DataLoss, "final backup failed")
+	}
+
+	var qualifiedName string
+	if sess.FullWorkspaceBackup {
+		qualifiedName = rs.Qualify(mfName)
+	} else {
+		qualifiedName = rs.Qualify(backupName)
+	}
+	return &api.BackupWorkspaceResponse{
+		Url: qualifiedName,
 	}, nil
 }
 

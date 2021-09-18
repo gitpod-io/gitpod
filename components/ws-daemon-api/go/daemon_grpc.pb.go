@@ -32,6 +32,8 @@ type WorkspaceContentServiceClient interface {
 	TakeSnapshot(ctx context.Context, in *TakeSnapshotRequest, opts ...grpc.CallOption) (*TakeSnapshotResponse, error)
 	// disposeWorkspace cleans up a workspace, possibly after taking a final backup
 	DisposeWorkspace(ctx context.Context, in *DisposeWorkspaceRequest, opts ...grpc.CallOption) (*DisposeWorkspaceResponse, error)
+	// BackupWorkspace creates a backup of a workspace
+	BackupWorkspace(ctx context.Context, in *BackupWorkspaceRequest, opts ...grpc.CallOption) (*BackupWorkspaceResponse, error)
 }
 
 type workspaceContentServiceClient struct {
@@ -78,6 +80,15 @@ func (c *workspaceContentServiceClient) DisposeWorkspace(ctx context.Context, in
 	return out, nil
 }
 
+func (c *workspaceContentServiceClient) BackupWorkspace(ctx context.Context, in *BackupWorkspaceRequest, opts ...grpc.CallOption) (*BackupWorkspaceResponse, error) {
+	out := new(BackupWorkspaceResponse)
+	err := c.cc.Invoke(ctx, "/wsdaemon.WorkspaceContentService/BackupWorkspace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceContentServiceServer is the server API for WorkspaceContentService service.
 // All implementations must embed UnimplementedWorkspaceContentServiceServer
 // for forward compatibility
@@ -92,6 +103,8 @@ type WorkspaceContentServiceServer interface {
 	TakeSnapshot(context.Context, *TakeSnapshotRequest) (*TakeSnapshotResponse, error)
 	// disposeWorkspace cleans up a workspace, possibly after taking a final backup
 	DisposeWorkspace(context.Context, *DisposeWorkspaceRequest) (*DisposeWorkspaceResponse, error)
+	// BackupWorkspace creates a backup of a workspace
+	BackupWorkspace(context.Context, *BackupWorkspaceRequest) (*BackupWorkspaceResponse, error)
 	mustEmbedUnimplementedWorkspaceContentServiceServer()
 }
 
@@ -110,6 +123,9 @@ func (UnimplementedWorkspaceContentServiceServer) TakeSnapshot(context.Context, 
 }
 func (UnimplementedWorkspaceContentServiceServer) DisposeWorkspace(context.Context, *DisposeWorkspaceRequest) (*DisposeWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DisposeWorkspace not implemented")
+}
+func (UnimplementedWorkspaceContentServiceServer) BackupWorkspace(context.Context, *BackupWorkspaceRequest) (*BackupWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BackupWorkspace not implemented")
 }
 func (UnimplementedWorkspaceContentServiceServer) mustEmbedUnimplementedWorkspaceContentServiceServer() {
 }
@@ -197,6 +213,24 @@ func _WorkspaceContentService_DisposeWorkspace_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceContentService_BackupWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BackupWorkspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceContentServiceServer).BackupWorkspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsdaemon.WorkspaceContentService/BackupWorkspace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceContentServiceServer).BackupWorkspace(ctx, req.(*BackupWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceContentService_ServiceDesc is the grpc.ServiceDesc for WorkspaceContentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -219,6 +253,10 @@ var WorkspaceContentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DisposeWorkspace",
 			Handler:    _WorkspaceContentService_DisposeWorkspace_Handler,
+		},
+		{
+			MethodName: "BackupWorkspace",
+			Handler:    _WorkspaceContentService_BackupWorkspace_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

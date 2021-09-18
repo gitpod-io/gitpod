@@ -20,6 +20,9 @@ service WorkspaceManager {
     // describeWorkspace investigates a workspace and returns its status, and configuration
     rpc DescribeWorkspace(DescribeWorkspaceRequest) returns (DescribeWorkspaceResponse) {}
 
+    // backupWorkspace backs up a running workspace
+    rpc BackupWorkspace(BackupWorkspaceRequest) returns (BackupWorkspaceResponse) {}
+
     // subscribe streams all status updates to a client
     rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
 
@@ -212,6 +215,18 @@ enum AdmissionLevel {
 
     // WORKSPACE_ADMIT_EVERYONE means the workspace (including ports) can be accessed by everyone.
     ADMIT_EVERYONE = 1;
+}
+
+// BackupWorkspaceRequest backs up a running workspace
+message BackupWorkspaceRequest {
+    // ID is the unique identifier of the workspace of which to take a backup
+    string id = 1;
+}
+
+// BackupWorkspaceResponse is the answer to a backup workspace request
+message BackupWorkspaceResponse {
+    // URL is the location of the backup
+    string url = 1;
 }
 
 // WorkspaceStatus describes a workspace status

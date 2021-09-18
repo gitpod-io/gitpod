@@ -11,6 +11,28 @@ var grpc = require('@grpc/grpc-js');
 var daemon_pb = require('./daemon_pb.js');
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
 
+function serialize_wsdaemon_BackupWorkspaceRequest(arg) {
+  if (!(arg instanceof daemon_pb.BackupWorkspaceRequest)) {
+    throw new Error('Expected argument of type wsdaemon.BackupWorkspaceRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsdaemon_BackupWorkspaceRequest(buffer_arg) {
+  return daemon_pb.BackupWorkspaceRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsdaemon_BackupWorkspaceResponse(arg) {
+  if (!(arg instanceof daemon_pb.BackupWorkspaceResponse)) {
+    throw new Error('Expected argument of type wsdaemon.BackupWorkspaceResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsdaemon_BackupWorkspaceResponse(buffer_arg) {
+  return daemon_pb.BackupWorkspaceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsdaemon_DisposeWorkspaceRequest(arg) {
   if (!(arg instanceof daemon_pb.DisposeWorkspaceRequest)) {
     throw new Error('Expected argument of type wsdaemon.DisposeWorkspaceRequest');
@@ -150,6 +172,18 @@ disposeWorkspace: {
     requestDeserialize: deserialize_wsdaemon_DisposeWorkspaceRequest,
     responseSerialize: serialize_wsdaemon_DisposeWorkspaceResponse,
     responseDeserialize: deserialize_wsdaemon_DisposeWorkspaceResponse,
+  },
+  // BackupWorkspace creates a backup of a workspace
+backupWorkspace: {
+    path: '/wsdaemon.WorkspaceContentService/BackupWorkspace',
+    requestStream: false,
+    responseStream: false,
+    requestType: daemon_pb.BackupWorkspaceRequest,
+    responseType: daemon_pb.BackupWorkspaceResponse,
+    requestSerialize: serialize_wsdaemon_BackupWorkspaceRequest,
+    requestDeserialize: deserialize_wsdaemon_BackupWorkspaceRequest,
+    responseSerialize: serialize_wsdaemon_BackupWorkspaceResponse,
+    responseDeserialize: deserialize_wsdaemon_BackupWorkspaceResponse,
   },
 };
 

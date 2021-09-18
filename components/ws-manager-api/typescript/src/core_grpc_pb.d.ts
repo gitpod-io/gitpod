@@ -20,6 +20,7 @@ interface IWorkspaceManagerService extends grpc.ServiceDefinition<grpc.UntypedSe
     startWorkspace: IWorkspaceManagerService_IStartWorkspace;
     stopWorkspace: IWorkspaceManagerService_IStopWorkspace;
     describeWorkspace: IWorkspaceManagerService_IDescribeWorkspace;
+    backupWorkspace: IWorkspaceManagerService_IBackupWorkspace;
     subscribe: IWorkspaceManagerService_ISubscribe;
     markActive: IWorkspaceManagerService_IMarkActive;
     setTimeout: IWorkspaceManagerService_ISetTimeout;
@@ -63,6 +64,15 @@ interface IWorkspaceManagerService_IDescribeWorkspace extends grpc.MethodDefinit
     requestDeserialize: grpc.deserialize<core_pb.DescribeWorkspaceRequest>;
     responseSerialize: grpc.serialize<core_pb.DescribeWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<core_pb.DescribeWorkspaceResponse>;
+}
+interface IWorkspaceManagerService_IBackupWorkspace extends grpc.MethodDefinition<core_pb.BackupWorkspaceRequest, core_pb.BackupWorkspaceResponse> {
+    path: "/wsman.WorkspaceManager/BackupWorkspace";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<core_pb.BackupWorkspaceRequest>;
+    requestDeserialize: grpc.deserialize<core_pb.BackupWorkspaceRequest>;
+    responseSerialize: grpc.serialize<core_pb.BackupWorkspaceResponse>;
+    responseDeserialize: grpc.deserialize<core_pb.BackupWorkspaceResponse>;
 }
 interface IWorkspaceManagerService_ISubscribe extends grpc.MethodDefinition<core_pb.SubscribeRequest, core_pb.SubscribeResponse> {
     path: "/wsman.WorkspaceManager/Subscribe";
@@ -126,6 +136,7 @@ export interface IWorkspaceManagerServer extends grpc.UntypedServiceImplementati
     startWorkspace: grpc.handleUnaryCall<core_pb.StartWorkspaceRequest, core_pb.StartWorkspaceResponse>;
     stopWorkspace: grpc.handleUnaryCall<core_pb.StopWorkspaceRequest, core_pb.StopWorkspaceResponse>;
     describeWorkspace: grpc.handleUnaryCall<core_pb.DescribeWorkspaceRequest, core_pb.DescribeWorkspaceResponse>;
+    backupWorkspace: grpc.handleUnaryCall<core_pb.BackupWorkspaceRequest, core_pb.BackupWorkspaceResponse>;
     subscribe: grpc.handleServerStreamingCall<core_pb.SubscribeRequest, core_pb.SubscribeResponse>;
     markActive: grpc.handleUnaryCall<core_pb.MarkActiveRequest, core_pb.MarkActiveResponse>;
     setTimeout: grpc.handleUnaryCall<core_pb.SetTimeoutRequest, core_pb.SetTimeoutResponse>;
@@ -147,6 +158,9 @@ export interface IWorkspaceManagerClient {
     describeWorkspace(request: core_pb.DescribeWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeWorkspaceResponse) => void): grpc.ClientUnaryCall;
     describeWorkspace(request: core_pb.DescribeWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeWorkspaceResponse) => void): grpc.ClientUnaryCall;
     describeWorkspace(request: core_pb.DescribeWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    backupWorkspace(request: core_pb.BackupWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: core_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    backupWorkspace(request: core_pb.BackupWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    backupWorkspace(request: core_pb.BackupWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
     subscribe(request: core_pb.SubscribeRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<core_pb.SubscribeResponse>;
     subscribe(request: core_pb.SubscribeRequest, metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<core_pb.SubscribeResponse>;
     markActive(request: core_pb.MarkActiveRequest, callback: (error: grpc.ServiceError | null, response: core_pb.MarkActiveResponse) => void): grpc.ClientUnaryCall;
@@ -180,6 +194,9 @@ export class WorkspaceManagerClient extends grpc.Client implements IWorkspaceMan
     public describeWorkspace(request: core_pb.DescribeWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public describeWorkspace(request: core_pb.DescribeWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public describeWorkspace(request: core_pb.DescribeWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public backupWorkspace(request: core_pb.BackupWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: core_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public backupWorkspace(request: core_pb.BackupWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public backupWorkspace(request: core_pb.BackupWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public subscribe(request: core_pb.SubscribeRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<core_pb.SubscribeResponse>;
     public subscribe(request: core_pb.SubscribeRequest, metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<core_pb.SubscribeResponse>;
     public markActive(request: core_pb.MarkActiveRequest, callback: (error: grpc.ServiceError | null, response: core_pb.MarkActiveResponse) => void): grpc.ClientUnaryCall;

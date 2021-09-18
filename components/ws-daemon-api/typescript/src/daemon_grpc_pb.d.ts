@@ -19,6 +19,7 @@ interface IWorkspaceContentServiceService extends grpc.ServiceDefinition<grpc.Un
     waitForInit: IWorkspaceContentServiceService_IWaitForInit;
     takeSnapshot: IWorkspaceContentServiceService_ITakeSnapshot;
     disposeWorkspace: IWorkspaceContentServiceService_IDisposeWorkspace;
+    backupWorkspace: IWorkspaceContentServiceService_IBackupWorkspace;
 }
 
 interface IWorkspaceContentServiceService_IInitWorkspace extends grpc.MethodDefinition<daemon_pb.InitWorkspaceRequest, daemon_pb.InitWorkspaceResponse> {
@@ -57,6 +58,15 @@ interface IWorkspaceContentServiceService_IDisposeWorkspace extends grpc.MethodD
     responseSerialize: grpc.serialize<daemon_pb.DisposeWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<daemon_pb.DisposeWorkspaceResponse>;
 }
+interface IWorkspaceContentServiceService_IBackupWorkspace extends grpc.MethodDefinition<daemon_pb.BackupWorkspaceRequest, daemon_pb.BackupWorkspaceResponse> {
+    path: "/wsdaemon.WorkspaceContentService/BackupWorkspace";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<daemon_pb.BackupWorkspaceRequest>;
+    requestDeserialize: grpc.deserialize<daemon_pb.BackupWorkspaceRequest>;
+    responseSerialize: grpc.serialize<daemon_pb.BackupWorkspaceResponse>;
+    responseDeserialize: grpc.deserialize<daemon_pb.BackupWorkspaceResponse>;
+}
 
 export const WorkspaceContentServiceService: IWorkspaceContentServiceService;
 
@@ -65,6 +75,7 @@ export interface IWorkspaceContentServiceServer extends grpc.UntypedServiceImple
     waitForInit: grpc.handleUnaryCall<daemon_pb.WaitForInitRequest, daemon_pb.WaitForInitResponse>;
     takeSnapshot: grpc.handleUnaryCall<daemon_pb.TakeSnapshotRequest, daemon_pb.TakeSnapshotResponse>;
     disposeWorkspace: grpc.handleUnaryCall<daemon_pb.DisposeWorkspaceRequest, daemon_pb.DisposeWorkspaceResponse>;
+    backupWorkspace: grpc.handleUnaryCall<daemon_pb.BackupWorkspaceRequest, daemon_pb.BackupWorkspaceResponse>;
 }
 
 export interface IWorkspaceContentServiceClient {
@@ -80,6 +91,9 @@ export interface IWorkspaceContentServiceClient {
     disposeWorkspace(request: daemon_pb.DisposeWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.DisposeWorkspaceResponse) => void): grpc.ClientUnaryCall;
     disposeWorkspace(request: daemon_pb.DisposeWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.DisposeWorkspaceResponse) => void): grpc.ClientUnaryCall;
     disposeWorkspace(request: daemon_pb.DisposeWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.DisposeWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    backupWorkspace(request: daemon_pb.BackupWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    backupWorkspace(request: daemon_pb.BackupWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    backupWorkspace(request: daemon_pb.BackupWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class WorkspaceContentServiceClient extends grpc.Client implements IWorkspaceContentServiceClient {
@@ -96,4 +110,7 @@ export class WorkspaceContentServiceClient extends grpc.Client implements IWorks
     public disposeWorkspace(request: daemon_pb.DisposeWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.DisposeWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public disposeWorkspace(request: daemon_pb.DisposeWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.DisposeWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public disposeWorkspace(request: daemon_pb.DisposeWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.DisposeWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public backupWorkspace(request: daemon_pb.BackupWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public backupWorkspace(request: daemon_pb.BackupWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public backupWorkspace(request: daemon_pb.BackupWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.BackupWorkspaceResponse) => void): grpc.ClientUnaryCall;
 }

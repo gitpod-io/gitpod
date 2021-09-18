@@ -20,6 +20,10 @@ service WorkspaceContentService {
 
     // disposeWorkspace cleans up a workspace, possibly after taking a final backup
     rpc DisposeWorkspace(DisposeWorkspaceRequest) returns (DisposeWorkspaceResponse) {}
+
+    // BackupWorkspace creates a backup of a workspace
+    rpc BackupWorkspace(BackupWorkspaceRequest) returns (BackupWorkspaceResponse) {}
+
 }
 
 // InitWorkspaceRequest intialises a new workspace folder in the working area
@@ -112,4 +116,16 @@ message DisposeWorkspaceResponse {
     // git_status is the current state of the Git repo in this workspace prior to disposal.
     // If the workspace has no Git repo at its checkout location, this is nil.
     contentservice.GitStatus git_status = 1;
+}
+
+// BackupWorkspaceRequest creates a backup of a workspace
+// TODO(rl): do we need an optional bool 'backup_logs' to capture the logs as well?
+message BackupWorkspaceRequest {
+    // ID is the identifier of the workspace of which we want to create a backup of
+    string id = 1;
+}
+
+message BackupWorkspaceResponse {
+    // url is the name of the resulting backup
+    string url = 1;
 }
