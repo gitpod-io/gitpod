@@ -108,8 +108,8 @@ static long (*bpf_trace_printk)(const char *fmt, __u32 fmt_size, ...) = (void *)
 #define offsetof(TYPE, MEMBER)	((unsigned long)&((TYPE *)0)->MEMBER)
 #endif
 
-/* llvm builtin functions that eBPF C program may use to
- * emit BPF_LD_ABS and BPF_LD_IND instructions
+/*
+ * LLVM builtin functions that eBPF C program may use to emit BPF_LD_ABS and BPF_LD_IND instructions.
  */
 unsigned long long load_byte(void *skb, unsigned long long off) asm("llvm.bpf.load.byte");
 unsigned long long load_half(void *skb, unsigned long long off) asm("llvm.bpf.load.half");
@@ -119,16 +119,22 @@ unsigned long long load_half(void *skb, unsigned long long off) asm("llvm.bpf.lo
 #define PIN_GLOBAL_NS	2
 #define NO_PREPOPULATE	-1
 
+/*
+ * bpf_elf_map is a custom BPF map definition used by iproute2.
+ * It contains the id, pinning, inner_id and inner_idx fields
+ * in addition to the ones in struct bpf_map_def which is commonly
+ * used in the kernel and libbpf.
+ */
 struct bpf_elf_map {
-	__u32 type;
-	__u32 size_key;
-	__u32 size_value;
-	__u32 max_elem;
-	__u32 flags;
-	__u32 id;
-	__u32 pinning;
-	__u32 inner_id;
-	__u32 inner_idx;
+	unsigned int type;
+	unsigned int size_key;
+	unsigned int size_value;
+	unsigned int max_elem;
+	unsigned int flags;
+	unsigned int id;
+	unsigned int pinning;
+	unsigned int inner_id;
+	unsigned int inner_idx;
 };
 
 #endif
