@@ -90,7 +90,7 @@ var clustersRegisterCmd = &cobra.Command{
 				filepath := path.Join(tlsPath, filename)
 				content, err := ioutil.ReadFile(filepath)
 				if err != nil {
-					log.WithError(err).Fatal("unable to read from: '%s'", filepath)
+					log.WithError(err).Fatalf("unable to read from: '%s'", filepath)
 				}
 				return base64.StdEncoding.EncodeToString(content)
 			}

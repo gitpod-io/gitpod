@@ -48,10 +48,10 @@ var clustersSwapCmd = &cobra.Command{
 			}
 		}
 		if src == nil {
-			log.Fatal("source cluster \"%s\" not found", args[0])
+			log.Fatalf("source cluster \"%s\" not found", args[0])
 		}
 		if dst == nil {
-			log.Fatal("destination cluster \"%s\" not found", args[1])
+			log.Fatalf("destination cluster \"%s\" not found", args[1])
 		}
 		if ignore, _ := cmd.Flags().GetBool("ignore-admission-constraints"); !ignore {
 			if len(src.AdmissionConstraints) > 0 || len(dst.AdmissionConstraints) > 0 {
