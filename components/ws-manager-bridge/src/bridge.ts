@@ -55,9 +55,12 @@ export class WorkspaceManagerBridge implements Disposable {
     protected readonly disposables: Disposable[] = [];
     protected readonly queues = new Map<string, Queue>();
 
+    protected cluster: WorkspaceClusterInfo;
+
     public start(cluster: WorkspaceClusterInfo, clientProvider: ClientProvider) {
         const logPayload = { name: cluster.name, url: cluster.url };
         log.info(`starting bridge to cluster...`, logPayload);
+        this.cluster = cluster;
 
         if (cluster.govern) {
             log.debug(`starting DB updater: ${cluster.name}`, logPayload);
@@ -70,7 +73,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 throw new Error("controllerInterval <= 0!");
             }
             log.debug(`starting controller: ${cluster.name}`, logPayload);
-            this.startController(clientProvider, cluster.name, controllerInterval, this.config.controllerMaxDisconnectSeconds);
+            this.startController(clientProvider, controllerInterval, this.config.controllerMaxDisconnectSeconds);
         }
         log.info(`started bridge to cluster.`, logPayload);
     }
@@ -129,7 +132,10 @@ export class WorkspaceManagerBridge implements Disposable {
             const logCtx = { instanceId, workspaceId, userId };
 
             const instance = await this.workspaceDB.trace({span}).findInstanceById(instanceId);
-            if (!instance) {
+            if (instance) {
+                this.prometheusExporter.statusUpdateReceived(this.cluster.name, true);
+            } else {
+                this.prometheusExporter.statusUpdateReceived(this.cluster.name, false);
                 log.warn(logCtx, "Received a status update for an unknown instance", { status });
                 return;
             }
@@ -259,17 +265,17 @@ export class WorkspaceManagerBridge implements Disposable {
         }
     }
 
-    protected startController(clientProvider: ClientProvider, installation: string, controllerIntervalSeconds: number, controllerMaxDisconnectSeconds: number, maxTimeToRunningPhaseSeconds = 60 * 60) {
+    protected startController(clientProvider: ClientProvider, controllerIntervalSeconds: number, controllerMaxDisconnectSeconds: number, maxTimeToRunningPhaseSeconds = 60 * 60) {
         let disconnectStarted = Number.MAX_SAFE_INTEGER;
         const timer = setInterval(async () => {
             try {
                 const client = await clientProvider();
-                await this.controlInstallationInstances(client, installation, maxTimeToRunningPhaseSeconds);
+                await this.controlInstallationInstances(client, maxTimeToRunningPhaseSeconds);
 
                 disconnectStarted = Number.MAX_SAFE_INTEGER;    // Reset disconnect period
             } catch (e) {
                 if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
-                    log.warn("error while controlling installation's workspaces", e, { installation });
+                    log.warn("error while controlling installation's workspaces", e, { installation: this.cluster.name });
                 } else if (disconnectStarted > Date.now()) {
                     disconnectStarted = Date.now();
                 }
@@ -278,7 +284,8 @@ export class WorkspaceManagerBridge implements Disposable {
         this.disposables.push({ dispose: () => clearTimeout(timer) });
     }
 
-    protected async controlInstallationInstances(client: PromisifiedWorkspaceManagerClient, installation: string, maxTimeToRunningPhaseSeconds: number) {
+    protected async controlInstallationInstances(client: PromisifiedWorkspaceManagerClient, maxTimeToRunningPhaseSeconds: number) {
+        const installation = this.cluster.name;
         log.debug("controlling instances", { installation });
         let ctx: TraceContext = {};
 
