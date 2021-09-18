@@ -15,6 +15,7 @@ export class PrometheusMetricsExporter {
     protected readonly timeToFirstUserActivityHistogram: prom.Histogram<string>;
     protected readonly clusterScore: prom.Gauge<string>;
     protected readonly clusterCordoned: prom.Gauge<string>;
+    protected readonly statusUpdatesTotal: prom.Counter<string>;
 
     constructor() {
         this.workspaceStartupTimeHistogram = new prom.Histogram({
@@ -38,6 +39,11 @@ export class PrometheusMetricsExporter {
             name: 'gitpod_ws_manager_bridge_cluster_cordoned',
             help: 'Cordoned status of the individual registered workspace cluster',
             labelNames: ["workspace_cluster"]
+        });
+        this.statusUpdatesTotal = new prom.Counter({
+            name: 'gitpod_ws_manager_bridge_status_updates_total',
+            help: 'Total workspace status updates received',
+            labelNames: ["workspace_cluster", "known_instance"]
         });
     }
 
@@ -68,6 +74,10 @@ export class PrometheusMetricsExporter {
             this.clusterCordoned.labels(cluster.name).set(cluster.state === 'cordoned' ? 1 : 0);
             this.clusterScore.labels(cluster.name).set(cluster.score);
         });
+    }
+
+    statusUpdateReceived(installation: string, knownInstance: boolean): void {
+        this.statusUpdatesTotal.labels(installation, knownInstance ? "true" : "false").inc();
     }
 }
 
