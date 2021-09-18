@@ -27,7 +27,6 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -109,14 +108,18 @@ const (
 
 // New creates a new workspace manager
 func New(config config.Configuration, client client.Client, rawClient kubernetes.Interface, cp *layer.Provider) (*Manager, error) {
-	wsdaemonConnfactory, _ := newWssyncConnectionFactory(config)
+	wsdaemonConnfactory, err := newWssyncConnectionFactory(config)
+	if err != nil {
+		return nil, err
+	}
+
 	m := &Manager{
 		Config:       config,
 		Clientset:    client,
 		RawClient:    rawClient,
 		Content:      cp,
 		subscribers:  make(map[string]chan *api.SubscribeResponse),
-		wsdaemonPool: grpcpool.New(wsdaemonConnfactory),
+		wsdaemonPool: grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
 	}
 	m.metrics = newMetrics(m)
 	m.OnChange = m.onChange
@@ -177,7 +180,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		m, _ := json.Marshal(pod)
 		safePod, _ := log.RedactJSON(m)
 
-		if errors.IsAlreadyExists(err) {
+		if k8serr.IsAlreadyExists(err) {
 			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Warn("was unable to start workspace which already exists")
 			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
 		}
@@ -1231,4 +1234,37 @@ func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Fa
 		}
 		return conn, nil
 	}, nil
+}
+
+func checkWSDaemonEndpoint(namespace string, clientset client.Client) func(string) bool {
+	return func(address string) bool {
+		var endpointsList corev1.EndpointsList
+		err := clientset.List(context.Background(), &endpointsList,
+			&client.ListOptions{
+				Namespace: namespace,
+				LabelSelector: labels.SelectorFromSet(labels.Set{
+					"component": "ws-daemon",
+					"kind":      "service",
+				}),
+			},
+		)
+		if err != nil {
+			log.WithError(err).Error("cannot list ws-daemon endpoints")
+			return false
+		}
+
+		var foundEndpoint bool
+		for _, pod := range endpointsList.Items {
+			for _, subset := range pod.Subsets {
+				for _, endpointAddress := range subset.Addresses {
+					if address == endpointAddress.IP {
+						foundEndpoint = true
+						break
+					}
+				}
+			}
+		}
+
+		return foundEndpoint
+	}
 }
