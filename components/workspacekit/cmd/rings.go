@@ -146,6 +146,11 @@ var ring0Cmd = &cobra.Command{
 				log.Warn("ring1 did not shut down in time - sending sigkill")
 				err = cmd.Process.Kill()
 				if err != nil {
+					if isProcessAlreadyFinished(err) {
+						err = nil
+						return
+					}
+
 					log.WithError(err).Error("cannot kill ring1")
 				}
 				return
@@ -847,4 +852,8 @@ func init() {
 
 	ring1Cmd.Flags().BoolVar(&ring1Opts.MappingEstablished, "mapping-established", false, "true if the UID/GID mapping has already been established")
 	ring2Cmd.Flags().StringVar(&ring2Opts.SupervisorPath, "supervisor-path", supervisorPath, "path to the supervisor binary (taken from $GITPOD_WORKSPACEKIT_SUPERVISOR_PATH, defaults to '$PWD/supervisor')")
+}
+
+func isProcessAlreadyFinished(err error) bool {
+	return strings.Contains(err.Error(), "os: process already finished")
 }
