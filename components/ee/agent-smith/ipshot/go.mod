@@ -3,6 +3,7 @@ module github.com/gitpod-io/gitpod/agent-smith/ipshot
 go 1.17
 
 require (
+	github.com/cilium/ebpf v0.6.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5
 	github.com/florianl/go-tc v0.3.0
