@@ -49,6 +49,9 @@ type ReconnectingWebsocket struct {
 	log *logrus.Entry
 
 	ReconnectionHandler func()
+
+	badHandshakeCount uint8
+	badHandshakeMax   uint8
 }
 
 // NewReconnectingWebsocket creates a new instance of ReconnectingWebsocket
@@ -64,6 +67,8 @@ func NewReconnectingWebsocket(url string, reqHeader http.Header, log *logrus.Ent
 		closedCh:                    make(chan struct{}),
 		errCh:                       make(chan error),
 		log:                         log,
+		badHandshakeCount:           0,
+		badHandshakeMax:             15,
 	}
 }
 
@@ -193,21 +198,30 @@ func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnecti
 				rc.errCh <- staleErr
 			})
 			if err == nil {
+				rc.badHandshakeCount = 0
 				return ws
 			}
 		}
 
 		if err == websocket.ErrBadHandshake {
-			_ = rc.closeWithError(&ErrBadHandshake{resp})
-			return nil
+			rc.badHandshakeCount++
+			// if mal-formed handshake request (unauthorized, forbidden) or client actions (redirect) are required then fail immediately
+			// otherwise try several times and fail, maybe temporarily unavailable, like server restart
+			if rc.badHandshakeCount > rc.badHandshakeMax || (http.StatusMultipleChoices <= resp.StatusCode && resp.StatusCode < http.StatusInternalServerError) {
+				_ = rc.closeWithError(&ErrBadHandshake{resp})
+				return nil
+			}
 		}
-
 		var statusCode int
 		if resp != nil {
 			statusCode = resp.StatusCode
 		}
 
-		rc.log.WithError(err).WithField("statusCode", statusCode).WithField("url", rc.url).Errorf("failed to connect, trying again in %d seconds...", uint32(delay.Seconds()))
+		rc.log.WithError(err).
+			WithField("url", rc.url).
+			WithField("badHandshakeCount", fmt.Sprintf("%d/%d", rc.badHandshakeCount, rc.badHandshakeMax)).
+			WithField("statusCode", statusCode).
+			Errorf("failed to connect, trying again in %d seconds...", uint32(delay.Seconds()))
 		select {
 		case <-rc.closedCh:
 			return nil
