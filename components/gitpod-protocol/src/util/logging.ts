@@ -128,6 +128,10 @@ export namespace log {
         console.info = infoConsoleLog;
         console.debug = debugConsoleLog;
     }
+
+    export function setVersion(versionArg: string) {
+        version = versionArg;
+    }
 }
 
 function errorLog(calledViaConsole: boolean, args: any[]): void {
