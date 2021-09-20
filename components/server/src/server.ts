@@ -80,6 +80,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected monHttpServer?: http.Server;
 
     public async init(app: express.Application) {
+        log.setVersion(this.config.version);
         log.info('server initializing...');
 
         // print config
