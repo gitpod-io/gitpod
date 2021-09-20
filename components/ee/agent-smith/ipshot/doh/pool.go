@@ -5,7 +5,6 @@
 package doh
 
 import (
-	"hash/fnv"
 	"math/rand"
 )
 
@@ -69,13 +68,13 @@ func (p *Pool) Return(c *Upstream) {
 // 	return
 // }
 
-func fingerprint(s string) uint64 {
-	h := fnv.New64a()
-	h.Write([]byte(s))
-	return h.Sum64()
-}
+// func fingerprint(s string) uint64 {
+// 	h := fnv.New64a()
+// 	h.Write([]byte(s))
+// 	return h.Sum64()
+// }
 
-func getUpstream(query string) *Upstream {
+func GetUpstream(query string) *Upstream {
 	// todo > make configurable
 	// if len(query) == 0 {
 	return upstreams[rand.Intn(len(upstreams))]

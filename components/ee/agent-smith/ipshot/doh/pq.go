@@ -15,7 +15,7 @@ type Item struct {
 	DomainIndex uint16
 	Expiry      int
 
-	index int // The index of the item in the heap (mandated by the heap.Interface methods)
+	Index int // The index of the item in the heap
 }
 
 // A PriorityQueue implements heap.Interface and holds Item entities.
@@ -33,8 +33,8 @@ func (pq PriorityQueue) Less(i, j int) bool {
 
 func (pq PriorityQueue) Swap(i, j int) {
 	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
+	pq[i].Index = i
+	pq[j].Index = j
 }
 
 func (pq *PriorityQueue) Pop() interface{} {
@@ -57,6 +57,6 @@ func (pq *PriorityQueue) Pop() interface{} {
 func (pq *PriorityQueue) Push(x interface{}) {
 	n := len(*pq)
 	item := x.(*Item)
-	item.index = n
+	item.Index = n
 	*pq = append(*pq, item)
 }

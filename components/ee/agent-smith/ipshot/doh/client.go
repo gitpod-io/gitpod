@@ -44,7 +44,7 @@ func (u *Upstream) Lookup(name string, dnsType dns.Type) (Response, error) {
 	}
 
 	client := http.Client{
-		Timeout: timeout,
+		Timeout: Timeout,
 	}
 
 	req, err := http.NewRequest("GET", u.url, nil)

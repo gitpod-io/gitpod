@@ -12,7 +12,7 @@ import (
 const maxRetries = 3
 
 // Lookup timeout
-const timeout time.Duration = 10 * time.Second
+const Timeout time.Duration = 10 * time.Second
 
 // Don't look up any of these TLDs
 // RFC 2606, 3166, 6303, 7393
@@ -72,7 +72,7 @@ var upstreams = []*Upstream{
 	ahadnsIT, ahadnsES,
 }
 
-var questions = []string{
+var Questions = []string{
 	"xmr.f2pool.com",
 	"eth.f2pool.com",      // v6 too
 	"ethv2-eu.f2pool.com", // v6 too
