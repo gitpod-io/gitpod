@@ -5,7 +5,7 @@
  */
 
 import moment from "moment";
-import { PrebuildInfo, PrebuildWithStatus, PrebuiltWorkspaceState, Project, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { PrebuildInfo, PrebuildWithStatus, PrebuiltWorkspaceState, Project, StartPrebuildResult, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
@@ -37,6 +37,7 @@ export default function () {
     const [statusFilter, setStatusFilter] = useState<PrebuiltWorkspaceState | undefined>();
 
     const [prebuilds, setPrebuilds] = useState<PrebuildWithStatus[]>([]);
+    const [isPrebuildPending, setIsPrebuildPending] = useState<boolean>(false);
 
     useEffect(() => {
         if (!project) {
@@ -45,7 +46,8 @@ export default function () {
         const registration = getGitpodService().registerClient({
             onPrebuildUpdate: (update: PrebuildWithStatus) => {
                 if (update.info.projectId === project.id) {
-                    setPrebuilds(prev => [update, ...prev.filter(p => p.info.id !== update.info.id)])
+                    setPrebuilds(prev => [update, ...prev.filter(p => p.info.id !== update.info.id)]);
+                    setIsPrebuildPending(false);
                 }
             }
         });
@@ -125,9 +127,23 @@ export default function () {
         history.push(`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/${pb.id}`);
     }
 
-    const triggerPrebuild = (branchName: string | null) => {
+    const triggerPrebuild = async (branchName: string | null) => {
         if (project) {
-            getGitpodService().server.triggerPrebuild(project.id, branchName);
+            setIsPrebuildPending(true);
+            try {
+                const result = await Promise.race([
+                    getGitpodService().server.triggerPrebuild(project.id, branchName),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timed out while waiting for new prebuild')), 30000)),
+                ]) as StartPrebuildResult;
+                console.log('Successfully triggerred!', result);
+                if (result.done) {
+                    // TODO(janx): Visually highlight the prebuild with `p.info.buildWorkspaceId === result.wsid`
+                    setIsPrebuildPending(false);
+                }
+            } catch (error) {
+                console.error('Running prebuild failed!', error);
+                setIsPrebuildPending(false);
+            }
         }
     }
 
@@ -149,7 +165,7 @@ export default function () {
                 <div className="py-3 pl-3">
                     <DropDown prefix="Prebuild Status: " contextMenuWidth="w-32" entries={statusFilterEntries()} />
                 </div>
-                <button disabled={!project} onClick={() => triggerPrebuild(null)} className="ml-2">Trigger Prebuild</button>
+                <button disabled={!project || isPrebuildPending} onClick={() => triggerPrebuild(null)} className="ml-2 flex items-center space-x-2"><span>Trigger Prebuild</span>{isPrebuildPending && <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />}</button>
             </div>
             <ItemsList className="mt-2">
                 <Item header={true} className="grid grid-cols-3">
