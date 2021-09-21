@@ -486,7 +486,7 @@ export class TypeORMUserDBImpl implements UserDB {
         } else {
             var user: MaybeUser;
             if (accessToken.user) {
-                user = await this.findUserById(accessToken.user.id);
+                user = await this.findUserById(accessToken.user.id.toString());
             }
             dbToken = {
                 tokenHash,

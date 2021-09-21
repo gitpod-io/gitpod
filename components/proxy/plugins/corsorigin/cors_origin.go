@@ -27,6 +27,7 @@ func init() {
 
 // CorsOrigin implements an HTTP handler that generates a valid CORS Origin value
 type CorsOrigin struct {
+	AnyDomain  bool   `json:"any_domain,omitempty"`
 	BaseDomain string `json:"base_domain,omitempty"`
 	Debug      bool   `json:"debug,omitempty"`
 }
@@ -50,8 +51,14 @@ var (
 
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
 func (m CorsOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+	var allowedOrigins []string
+	if m.AnyDomain {
+		allowedOrigins = []string{"*"}
+	} else {
+		allowedOrigins = []string{"*." + m.BaseDomain}
+	}
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*." + m.BaseDomain},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   allowedMethods,
 		AllowedHeaders:   allowedHeaders,
 		ExposedHeaders:   exposeHeaders,
@@ -84,6 +91,13 @@ func (m *CorsOrigin) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 		}
 
 		switch key {
+		case "any_domain":
+			b, err := strconv.ParseBool(value)
+			if err != nil {
+				return d.Errf("invalid boolean value for subdirective any_domain '%s'", value)
+			}
+
+			m.AnyDomain = b
 		case "base_domain":
 			m.BaseDomain = value
 		case "debug":
@@ -98,7 +112,7 @@ func (m *CorsOrigin) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 		}
 	}
 
-	if m.BaseDomain == "" {
+	if !m.AnyDomain && m.BaseDomain == "" {
 		return fmt.Errorf("Please configure the base_domain subdirective")
 	}
 
