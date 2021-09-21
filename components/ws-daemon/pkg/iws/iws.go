@@ -97,7 +97,7 @@ func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx co
 			return xerrors.Errorf("cannot start in-workspace-helper server: %w", err)
 		}
 
-		log.WithFields(ws.OWI()).Info("established IWS server")
+		log.WithFields(ws.OWI()).Debug("established IWS server")
 		ws.NonPersistentAttrs[session.AttrWorkspaceServer] = helper.Stop
 
 		return nil
@@ -121,7 +121,7 @@ func StopServingWorkspace(ctx context.Context, ws *session.Workspace) (err error
 	}
 
 	stopFn()
-	log.WithFields(ws.OWI()).Info("stopped IWS server")
+	log.WithFields(ws.OWI()).Debug("stopped IWS server")
 	return nil
 }
 

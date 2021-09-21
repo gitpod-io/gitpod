@@ -123,7 +123,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		log.WithError(err).Warn("error while updating submodules - continuing")
 	}
 
-	log.WithField("stage", "init").WithField("location", ws.Location).Info("Git operations complete")
+	log.WithField("stage", "init").WithField("location", ws.Location).Debug("Git operations complete")
 	return
 }
 
