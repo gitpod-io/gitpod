@@ -7,7 +7,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 import { columnExists } from "./helper/helper";
 
-export class ReplaceStringBooleansWithBooleans1630333424897 implements MigrationInterface {
+export class ReplaceStringBooleansWithBooleans1632224603256 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (await columnExists(queryRunner, "d_b_user", "additionalData")) {
