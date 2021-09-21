@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM node:12.22.1-slim as builder
+FROM node:12.22.6-slim as builder
 
 RUN apt-get update && apt-get install -y build-essential python
 
@@ -12,11 +12,15 @@ WORKDIR /app
 RUN /installer/install.sh
 
 
-FROM node:12.22.1-slim
+FROM node:12.22.6-slim
 
 # Using ssh-keygen for RSA keypair generation
 RUN apt-get update && apt-get install -yq \
         openssh-client \
+        procps \
+        net-tools \
+        nano \
+        curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 EXPOSE 3000
