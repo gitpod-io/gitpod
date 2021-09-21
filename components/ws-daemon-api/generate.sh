@@ -26,6 +26,9 @@ mockgen \
     -package mock \
     github.com/gitpod-io/gitpod/ws-daemon/api WorkspaceContentServiceClient,WorkspaceContentServiceServer,InWorkspaceServiceClient > mock/mock.go
 
+# NOTE: must manually embed the Unimplemented struct as mockgen cannot do so
+sed -i '/\trecorder \*MockWorkspaceContentServiceServerMockRecorde/a \\tapi.UnimplementedWorkspaceContentServiceServer' mock/mock.go
+
 echo "updating JSON tags"
 go install github.com/fatih/gomodifytags
 # remove depreated json tags
