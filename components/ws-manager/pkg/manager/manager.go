@@ -1253,18 +1253,16 @@ func checkWSDaemonEndpoint(namespace string, clientset client.Client) func(strin
 			return false
 		}
 
-		var foundEndpoint bool
-		for _, pod := range endpointsList.Items {
-			for _, subset := range pod.Subsets {
+		for _, endpoints := range endpointsList.Items {
+			for _, subset := range endpoints.Subsets {
 				for _, endpointAddress := range subset.Addresses {
 					if address == endpointAddress.IP {
-						foundEndpoint = true
-						break
+						return true
 					}
 				}
 			}
 		}
 
-		return foundEndpoint
+		return false
 	}
 }
