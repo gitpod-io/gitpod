@@ -29,17 +29,18 @@ type Pool struct {
 	closed      bool
 	mu          sync.RWMutex
 
-	checkFn ConnectionValidationFunc
+	isValidConnection ConnectionValidationFunc
 }
 
 type ConnectionValidationFunc func(hostIP string) (valid bool)
 
 // New creates a new connection pool
-func New(factory Factory, checkFn ConnectionValidationFunc) *Pool {
+func New(factory Factory, callback ConnectionValidationFunc) *Pool {
 	pool := &Pool{
 		connections: make(map[string]*grpc.ClientConn),
 		factory:     factory,
-		checkFn:     checkFn,
+
+		isValidConnection: callback,
 	}
 
 	go func() {
@@ -124,8 +125,7 @@ func (p *Pool) ValidateConnections() {
 	p.mu.RUnlock()
 
 	for _, address := range addresses {
-		found := p.checkFn(address)
-		if !found {
+		if p.isValidConnection(address) {
 			continue
 		}
 
