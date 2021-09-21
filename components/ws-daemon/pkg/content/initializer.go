@@ -16,6 +16,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/google/uuid"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
@@ -42,7 +43,17 @@ type RunInitializerOpts struct {
 	UID uint32
 	GID uint32
 
-	OWI map[string]interface{}
+	OWI OWI
+}
+
+type OWI struct {
+	Owner       string
+	WorkspaceID string
+	InstanceID  string
+}
+
+func (o OWI) Fields() map[string]interface{} {
+	return log.OWI(o.Owner, o.WorkspaceID, o.InstanceID)
 }
 
 // errors to be tested with errors.Is
@@ -140,7 +151,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		IDMappings:    opts.IdMappings,
 		GID:           int(opts.GID),
 		UID:           int(opts.UID),
-		OWI:           opts.OWI,
+		OWI:           opts.OWI.Fields(),
 	}
 	fc, err := json.MarshalIndent(msg, "", "  ")
 	if err != nil {
@@ -230,7 +241,18 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		args = append(args, "--debug")
 	}
 
-	args = append(args, "--log-format", "json", "run", "gogogo")
+	var name string
+	if opts.OWI.InstanceID == "" {
+		id, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+		name = "init-rnd-" + id.String()
+	} else {
+		name = "init-ws-" + opts.OWI.InstanceID
+	}
+
+	args = append(args, "--log-format", "json", "run", name)
 
 	var cmdOut bytes.Buffer
 	cmd = exec.Command("runc", args...)
@@ -239,7 +261,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	err = cmd.Run()
-	log.FromBuffer(&cmdOut, log.WithFields(opts.OWI))
+	log.FromBuffer(&cmdOut, log.WithFields(opts.OWI.Fields()))
 	if err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0. If it's 42, it was deliberate.
