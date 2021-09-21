@@ -113,7 +113,7 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 
 	d.governer[ws.ContainerID] = g
 	go g.Start(ctx)
-	log.Info("started new resource governer")
+	log.Debug("started new resource governer")
 
 	return nil
 }

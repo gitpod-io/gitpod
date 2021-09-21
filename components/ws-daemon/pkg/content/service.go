@@ -149,7 +149,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	owi := log.OWI(req.Metadata.Owner, req.Metadata.MetaId, req.Id)
 	tracing.ApplyOWI(span, owi)
 	log := log.WithFields(owi)
-	log.Info("InitWorkspace called")
+	log.Debug("InitWorkspace called")
 
 	var (
 		wsloc string
