@@ -210,7 +210,7 @@ https://{$GITPOD_DOMAIN} {
 	@codesync path /code-sync*
 	handle @codesync {
 		gitpod.cors_origin {
-			base_domain {$GITPOD_DOMAIN}
+			any_domain true
 		}
 
 		import compression

@@ -57,10 +57,30 @@ const jetBrainsGateway: OAuthClient = {
     ],
 };
 
+function createVSCodeClient(protocol: "vscode" | "vscode-insiders"): OAuthClient {
+    return {
+        id: protocol + "-" + "gitpod",
+        name: `VS Code${protocol === "vscode-insiders" ? " Insiders" : ""}: Gitpod extension`,
+        redirectUris: [protocol + "://gitpod.gitpod-desktop/complete-gitpod-auth"],
+        allowedGrants: ["authorization_code"],
+        scopes: [
+            { name: "function:getGitpodTokenScopes" },
+            { name: "function:getLoggedInUser" },
+            { name: "function:accessCodeSyncStorage" },
+            { name: "resource:default" },
+        ],
+    };
+}
+
+const vscode = createVSCodeClient("vscode");
+const vscodeInsiders = createVSCodeClient("vscode-insiders");
+
 export const inMemoryDatabase: InMemory = {
     clients: {
         [localClient.id]: localClient,
         [jetBrainsGateway.id]: jetBrainsGateway,
+        [vscode.id]: vscode,
+        [vscodeInsiders.id]: vscodeInsiders,
     },
     tokens: {},
     scopes: {},

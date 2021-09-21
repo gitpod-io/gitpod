@@ -1727,10 +1727,10 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
-"@jmondi/oauth2-server@^1.1.0":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@jmondi/oauth2-server/-/oauth2-server-1.1.1.tgz#cb2530c17e2c7db3cc632bb68ec0f38a54c7ae1c"
-  integrity sha512-my3776n6TDsJQJ+nONG52VNgTQ7veH9lo4kb/AAWt9Rko6VBuMxOb/KxcYdkDrpOznJ036+tVveuhY7zSJjGYg==
+"@jmondi/oauth2-server@^2.2.2":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/@jmondi/oauth2-server/-/oauth2-server-2.2.2.tgz#e99b6edcd068c1a58423e2e8e94eeb0acb048b39"
+  integrity sha512-U9038EvDQJwc6SUxGjNfP1nhcyIzUuo4MLDBjWEp4ieuoyMYFBlMtmUbXcIEvvlwWQSXneUm7+TcTBcNHKrE8w==
   dependencies:
     jsonwebtoken "^8.5.1"
     ms "^2.1.3"
