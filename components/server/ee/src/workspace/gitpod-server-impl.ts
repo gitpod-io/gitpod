@@ -1015,7 +1015,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
                     }).request((error: any, result: any) => {
                         if (error) {
                             log.error(logContext, 'Checkout page error', error);
-                            reject(error);
+                            throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${error.api_error_code}: ${error.message}`);
                         } else {
                             log.debug(logContext, 'Checkout page initiated');
                             resolve(result.hosted_page);
