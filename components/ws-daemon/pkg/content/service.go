@@ -226,6 +226,11 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
 				{ContainerID: 1, HostID: 100000, Size: 65534},
 			},
+			OWI: OWI{
+				Owner:       req.Metadata.Owner,
+				WorkspaceID: req.Metadata.MetaId,
+				InstanceID:  req.Id,
+			},
 		}
 
 		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)
