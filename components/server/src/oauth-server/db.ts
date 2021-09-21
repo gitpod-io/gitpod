@@ -17,7 +17,7 @@ export interface InMemory {
 }
 
 // Scopes
-const scopes: OAuthScope[] = [
+const localAppScopes: OAuthScope[] = [
   { name: "function:getGitpodTokenScopes" },
   { name: "function:getWorkspace" },
   { name: "function:getWorkspaces" },
@@ -35,16 +35,38 @@ const localClient: OAuthClient = {
   // NOTE: these need to be kept in sync with the port range in the local app
   redirectUris: Array.from({ length: 10 }, (_, i) => 'http://127.0.0.1:' + (63110 + i)),
   allowedGrants: ['authorization_code'],
-  scopes,
+  scopes: localAppScopes,
 }
+
+function createVSCodeClient(protocol: 'vscode' | 'vscode-insiders'): OAuthClient {
+  return {
+    id: protocol + '+' + 'gitpod',
+    name: `VS Code${protocol === 'vscode-insiders' ? ' Insiders' : ''}: Gitpod`,
+    redirectUris: [protocol + '://gitpod.gitpod-desktop/complete-gitpod-auth'],
+    allowedGrants: ['authorization_code'],
+    scopes: [
+      { name: "function:getGitpodTokenScopes" },
+      { name: "function:accessCodeSyncStorage" },
+      { name: "resource:default" }
+    ],
+  }
+}
+
+const vscode = createVSCodeClient('vscode');
+const vscodeInsiders = createVSCodeClient('vscode-insiders');
 
 export const inMemoryDatabase: InMemory = {
   clients: {
     [localClient.id]: localClient,
+    [vscode.id]: vscode,
+    [vscodeInsiders.id]: vscodeInsiders
   },
   tokens: {},
   scopes: {},
 };
-for (const scope of scopes) {
-  inMemoryDatabase.scopes[scope.name] = scope;
+for (const clientId in inMemoryDatabase.clients) {
+  const client = inMemoryDatabase.clients[clientId];
+  for (const scope of client.scopes) {
+    inMemoryDatabase.scopes[scope.name] = scope;
+  }
 }
