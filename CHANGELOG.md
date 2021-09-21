@@ -1,6 +1,10 @@
 # Change Log
 
 ## September 2021
+- runtime configurable log-level for `server` ([#5697](https://github.com/gitpod-io/gitpod/pull/5697)) - [@geropl](https://github.com/geropl)
+- [db] Fix string booleans to be booleans ([#5439](https://github.com/gitpod-io/gitpod/pull/5439)) - [@laushinka](https://github.com/laushinka)
+- [ws-manager-bridge] Introduce `gitpod_ws_manager_bridge_status_updates_total` metric to monitor workspace cluster stability ([#5755](https://github.com/gitpod-io/gitpod/pull/5755)) - [@csweichel](https://github.com/csweichel)
+- chore(dei): he -> [they|their] ([#5581](https://github.com/gitpod-io/gitpod/pull/5581)) - [@ghuntley](https://github.com/ghuntley)
 - [server] Update preometheus library (prom-client) to v13.2.0 ([#5727](https://github.com/gitpod-io/gitpod/pull/5727)) - [@aledbf](https://github.com/aledbf)
 - [ws-manager-bridge] Update preometheus library (prom-client) to v13.2.0 ([#5727](https://github.com/gitpod-io/gitpod/pull/5727)) - [@aledbf](https://github.com/aledbf)
 - [server] Add gRPC client call metrics ([#5726](https://github.com/gitpod-io/gitpod/pull/5726)) - [@JanKoehnlein](https://github.com/JanKoehnlein), [@csweichel](https://github.com/csweichel)
