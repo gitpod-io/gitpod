@@ -108,11 +108,11 @@ RUN curl -fsSL https://packagecloud.io/datawireio/telepresence/gpgkey | apt-key 
 RUN curl -fsSL -o /usr/bin/toxiproxy https://github.com/Shopify/toxiproxy/releases/download/v2.1.4/toxiproxy-cli-linux-amd64 \
     && chmod +x /usr/bin/toxiproxy
 
-### libseccomp > 2.5.0
+### libseccomp > 2.5.2
 RUN install-packages gperf \
     && cd $(mktemp -d) \
-    && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.1/libseccomp-2.5.1.tar.gz | tar xz \
-    && cd libseccomp-2.5.1 && ./configure && make && make install
+    && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.2/libseccomp-2.5.2.tar.gz | tar xz \
+    && cd libseccomp-2.5.2 && ./configure && make && make install
 
 USER gitpod
 

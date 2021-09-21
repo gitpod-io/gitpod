@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-deve.7
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-libsecov.2
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
