@@ -107,6 +107,23 @@ export namespace log {
     export function setLogLevel(logLevel: LogrusLogLevel | undefined) {
         jsonLogging = true;
 
+        console.error = function (...args: any[]): void {
+            errorLog(true, args);
+        }
+        console.warn = function (...args: any[]): void {
+            warnLog(true, args);
+        }
+        console.info = function (...args: any[]): void {
+            infoLog(true, args);
+        }
+        console.debug = function (...args: any[]): void {
+            debugLog(true, args);
+        }
+
+        console.log = console.info;
+        // FIXME wrap also other console methods (e.g. trace())
+
+        // set/unset log functions based on loglevel so we only have to evaluate once, not every call
         const noop = () => {};
         const setLog = (logFunc: (calleViaConsole: boolean, args: any[]) => void, funcLvl: LogrusLogLevel): (() => void) => {
             if (LogrusLogLevel.isGreatherOrEqual(funcLvl, logLevel)) {
@@ -118,13 +135,10 @@ export namespace log {
             }
         };
 
-        console.error = setLog(errorLog, "error");
-        console.warn = setLog(warnLog, "warning");
-        console.info = setLog(infoLog, "info");
-        console.debug = setLog(debugLog, "debug");
-
-        console.log = console.info;
-        // FIXME wrap also other console methods (e.g. trace())
+        errorLog = setLog(doErrorLog, "error");
+        warnLog = setLog(doWarnLog, "warning");
+        infoLog = setLog(doInfoLog, "info");
+        debugLog = setLog(doDebugLog, "debug");
     }
 
     export function resetToDefaultLogging(): void {
@@ -142,19 +156,23 @@ export namespace log {
     }
 }
 
-function errorLog(calledViaConsole: boolean, args: any[]): void {
+let errorLog = doErrorLog;
+function doErrorLog(calledViaConsole: boolean, args: any[]): void {
     doLog(calledViaConsole, errorConsoleLog, 'ERROR', args);
 }
 
-function warnLog(calledViaConsole: boolean, args: any[]): void {
+let warnLog = doWarnLog;
+function doWarnLog(calledViaConsole: boolean, args: any[]): void {
     doLog(calledViaConsole, warnConsoleLog, 'WARNING', args);
 }
 
-function infoLog(calledViaConsole: boolean, args: any[]): void {
+let infoLog = doInfoLog;
+function doInfoLog(calledViaConsole: boolean, args: any[]): void {
     doLog(calledViaConsole, infoConsoleLog, 'INFO', args);
 }
 
-function debugLog(calledViaConsole: boolean, args: any[]): void {
+let debugLog = doDebugLog;
+function doDebugLog(calledViaConsole: boolean, args: any[]): void {
     doLog(calledViaConsole, debugConsoleLog, 'DEBUG', args);
 }
 
