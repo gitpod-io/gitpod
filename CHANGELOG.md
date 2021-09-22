@@ -1,6 +1,7 @@
 # Change Log
 
 ## September 2021
+- [ws-daemon] Improved the stability of concurrent content initialisation ([#5797](https://github.com/gitpod-io/gitpod/pull/5797)) - [@csweichel](https://github.com/csweichel)
 - runtime configurable log-level for `server` ([#5697](https://github.com/gitpod-io/gitpod/pull/5697)) - [@geropl](https://github.com/geropl)
 - [db] Fix string booleans to be booleans ([#5439](https://github.com/gitpod-io/gitpod/pull/5439)) - [@laushinka](https://github.com/laushinka)
 - [ws-manager-bridge] Introduce `gitpod_ws_manager_bridge_status_updates_total` metric to monitor workspace cluster stability ([#5755](https://github.com/gitpod-io/gitpod/pull/5755)) - [@csweichel](https://github.com/csweichel)
