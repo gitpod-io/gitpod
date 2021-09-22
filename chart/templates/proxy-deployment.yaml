@@ -51,6 +51,7 @@ spec:
             - -c
             - "sysctl -w net.core.somaxconn=32768; sysctl -w net.ipv4.ip_local_port_range='1024 65000'"
       containers:
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       - name: proxy
         image: {{ template "gitpod.comp.imageFull" $this }}
 {{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}

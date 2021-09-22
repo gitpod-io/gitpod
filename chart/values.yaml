@@ -430,6 +430,9 @@ components:
       https:
         expose: true
         containerPort: 443
+      metrics:
+        expose: false
+        containerPort: 9500
     loadBalancerIP: null
     serviceType: "LoadBalancer"
     serviceSessionAffinity: "None"
