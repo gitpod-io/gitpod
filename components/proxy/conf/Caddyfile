@@ -129,7 +129,9 @@
 :8003 {
 	respond /live 200
 	respond /ready 200
+}
 
+127.0.0.1:9500 {
 	metrics /metrics {
 		disable_openmetrics
 	}
