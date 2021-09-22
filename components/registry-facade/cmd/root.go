@@ -29,7 +29,7 @@ var rootCmd = &cobra.Command{
 	Short: "This service acts as image registry augmenting images with workspace content and Theia",
 	Args:  cobra.MinimumNArgs(1),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, jsonLog, jsonLog)
+		log.Init(ServiceName, Version, jsonLog, verbose)
 	},
 }
 
@@ -47,7 +47,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "v", false, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
 }
 
 // Config configures this servuce

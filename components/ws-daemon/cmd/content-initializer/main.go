@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	log.Init("content-initializer", "", true, true)
+	log.Init("content-initializer", "", true, false)
 	tracing.Init("content-initializer")
 
 	err := content.RunInitializerChild()

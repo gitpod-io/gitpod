@@ -25,13 +25,14 @@ var (
 
 var cfgFile string
 var jsonLog bool
+var verbose bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "service-waiter",
 	Short: "service-waiter waits until a service becomes available",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, jsonLog, jsonLog)
+		log.Init(ServiceName, Version, jsonLog, verbose)
 	},
 }
 
@@ -48,7 +49,8 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.service-waiter.yaml)")
-	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "v", false, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
 
 	defaultTimeout := os.Getenv("SERVICE_WAITER_TIMEOUT")
 	if defaultTimeout == "" {

@@ -262,7 +262,7 @@ func main() {
 		},
 	}
 
-	log.Init("nsinsider", "", true, true)
+	log.Init("nsinsider", "", true, false)
 	err := app.Run(os.Args)
 	if err != nil {
 		log.WithField("instanceId", os.Getenv("GITPOD_INSTANCE_ID")).WithField("args", os.Args).Fatal(err)

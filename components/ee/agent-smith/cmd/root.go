@@ -27,6 +27,7 @@ var (
 
 var cfgFile string
 var jsonLog bool
+var verbose bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -34,7 +35,7 @@ var rootCmd = &cobra.Command{
 	Short: "Moves through workspace pods and finds bad players",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		os.Args = []string{""}
-		log.Init(ServiceName, Version, jsonLog, jsonLog)
+		log.Init(ServiceName, Version, jsonLog, verbose)
 
 		// Disable golog, Googles logging framwork for misanthropic
 		err := goflag.Set("stderrthreshold", "5")
@@ -56,7 +57,8 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
-	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "v", false, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
 }
 
 func getConfig() (*config, error) {

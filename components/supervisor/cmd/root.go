@@ -30,7 +30,7 @@ var (
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	log.Init(ServiceName, Version, false, true)
+	log.Init(ServiceName, Version, true, false)
 	log.Log.Logger.AddHook(fatalTerminationLogHook{})
 
 	if err := rootCmd.Execute(); err != nil {

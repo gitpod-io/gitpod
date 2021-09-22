@@ -54,14 +54,17 @@ func init() {
 
 func logLevelFromEnv() {
 	level := os.Getenv("LOG_LEVEL")
-	if level == "" {
-		return
+	if len(level) == 0 {
+		level = "info"
 	}
 
 	newLevel, err := logrus.ParseLevel(level)
-	if err == nil {
-		Log.Logger.SetLevel(newLevel)
+	if err != nil {
+		Log.WithError(err).Errorf("cannot change log level to '%v'", level)
+		return
 	}
+
+	Log.Logger.SetLevel(newLevel)
 }
 
 // Init initializes/configures the application-wide logger
