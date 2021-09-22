@@ -6,11 +6,11 @@
  */
 
 import { Logger, ConsoleLogger, toSocket, IWebSocket } from "vscode-ws-jsonrpc";
-import { MessageConnection, createMessageConnection } from "vscode-jsonrpc";
+import { createMessageConnection } from "vscode-jsonrpc";
 import { AbstractMessageWriter } from "vscode-jsonrpc/lib/messageWriter";
 import { AbstractMessageReader } from "vscode-jsonrpc/lib/messageReader";
 import { JsonRpcProxyFactory, JsonRpcProxy } from "../proxy-factory";
-import { ConnectionHandler } from "../handler";
+import { ConnectionEventHandler, ConnectionHandler } from "../handler";
 import ReconnectingWebSocket, { Event } from 'reconnecting-websocket';
 
 export interface WebSocketOptions {
@@ -32,7 +32,10 @@ export class WebSocketConnectionProvider {
         const startListening = (path: string) => {
             const socket = this.listen({
                 path,
-                onConnection: c => factory.listen(c)
+                onConnection: c => factory.listen(c),
+            }, {
+                onTransportDidClose: () => factory.fireConnectionClosed(),
+                onTransportDidOpen: () => factory.fireConnectionOpened(),
             },
                 options
             );
@@ -52,7 +55,7 @@ export class WebSocketConnectionProvider {
     /**
      * Install a connection handler for the given path.
      */
-    listen(handler: ConnectionHandler, options?: WebSocketOptions): WebSocket {
+    listen(handler: ConnectionHandler, eventHandler: ConnectionEventHandler, options?: WebSocketOptions): WebSocket {
         const url = handler.path;
         const webSocket = this.createWebSocket(url);
 
@@ -69,7 +72,8 @@ export class WebSocketConnectionProvider {
         }
         doListen(
             webSocket as any as ReconnectingWebSocket,
-            connection => handler.onConnection(connection),
+            handler,
+            eventHandler,
             logger,
         );
         return webSocket;
@@ -100,16 +104,22 @@ export class WebSocketConnectionProvider {
 //  - webSocket.onopen: making sure it's only ever called once so we're re-using MessageConnection
 //  - WebSocketMessageWriter: buffer and re-try messages instead of throwing an error immidiately
 //  - WebSocketMessageReader: don't close MessageConnection on 'socket.onclose'
-function doListen(resocket: ReconnectingWebSocket, onConnection: (connection: MessageConnection) => void, logger: Logger) {
+function doListen(resocket: ReconnectingWebSocket, handler: ConnectionHandler, eventHandler: ConnectionEventHandler, logger: Logger) {
+    resocket.addEventListener("close", () => eventHandler.onTransportDidClose());
+
     let alreadyOpened = false;
     resocket.onopen = () => {
+        // trigerr "open" every time we re-open the underlying websocket
+        eventHandler.onTransportDidOpen();
+
+        // make sure we're only ever creating one MessageConnection, irregardless of how many times we have to re-open the underlying (reconnecting) websocket
         if (alreadyOpened) {
             return;
         }
         alreadyOpened = true;
 
         const connection = createWebSocketConnection(resocket, logger);
-        onConnection(connection);
+        handler.onConnection(connection);
     };
 }
 
@@ -167,12 +177,12 @@ class BufferingWebSocketMessageWriter extends AbstractMessageWriter {
         for (const msg of buffer) {
             this.write(msg);
         }
-        this.logger.info(`flushed buffer (${this.buffer.length})`)
+        //this.logger.info(`flushed buffer (${this.buffer.length})`)
     }
 
     protected bufferMsg(msg: any) {
         this.buffer.push(msg);
-        this.logger.info(`buffered message (${this.buffer.length})`);
+        //this.logger.info(`buffered message (${this.buffer.length})`);
     }
 }
 
