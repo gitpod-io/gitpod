@@ -57,7 +57,7 @@ var ring0Cmd = &cobra.Command{
 	Use:   "ring0",
 	Short: "starts ring0 - enter here",
 	Run: func(_ *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, true, true)
+		log.Init(ServiceName, Version, true, false)
 		log := log.WithField("ring", 0)
 
 		common_grpc.SetupLogging()
@@ -183,7 +183,7 @@ var ring1Cmd = &cobra.Command{
 	Use:   "ring1",
 	Short: "starts ring1",
 	Run: func(_cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, true, true)
+		log.Init(ServiceName, Version, true, false)
 		log := log.WithField("ring", 1)
 
 		common_grpc.SetupLogging()
@@ -614,7 +614,7 @@ var ring2Cmd = &cobra.Command{
 	Short: "starts ring2",
 	Args:  cobra.ExactArgs(1),
 	Run: func(_cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, true, true)
+		log.Init(ServiceName, Version, true, false)
 		log := log.WithField("ring", 2)
 
 		common_grpc.SetupLogging()

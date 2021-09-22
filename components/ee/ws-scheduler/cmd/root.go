@@ -31,13 +31,14 @@ var (
 var cfgFile string
 var kubeconfig string
 var jsonLog bool
+var verbose bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "ws-scheduler",
 	Short: "ws-scheduler schedules workspace pods to nodes",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, jsonLog, jsonLog)
+		log.Init(ServiceName, Version, jsonLog, verbose)
 	},
 }
 
@@ -57,7 +58,8 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kedgei.yaml)")
-	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "v", false, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
 
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", "", "path to the kubeconfig file to use (defaults to in-cluster config)")
 }

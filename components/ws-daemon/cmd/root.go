@@ -31,11 +31,13 @@ var (
 
 var verbose bool
 var configFile string
+var jsonLog bool
+
 var rootCmd = &cobra.Command{
 	Use:   "ws-daemond",
 	Short: "Workspace initialization and synchronization daemon",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, verbose, verbose)
+		log.Init(ServiceName, Version, jsonLog, verbose)
 	},
 }
 
@@ -70,6 +72,7 @@ func getConfig() *config {
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file")
 }

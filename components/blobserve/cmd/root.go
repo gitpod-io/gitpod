@@ -31,7 +31,7 @@ var rootCmd = &cobra.Command{
 	Short: "This service provides static assets from OCI images",
 	Args:  cobra.MinimumNArgs(1),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, jsonLog, jsonLog)
+		log.Init(ServiceName, Version, jsonLog, verbose)
 
 		// configure containerd log with gitpod-io configuration
 		containerd_log.WithLogger(context.Background(), log.Log)
@@ -52,7 +52,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "v", false, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
 }
 
 // Config configures this servuce

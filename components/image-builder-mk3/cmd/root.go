@@ -30,13 +30,14 @@ var (
 	Version = ""
 )
 
+var jsonLog bool
 var verbose bool
 var configFile string
 var rootCmd = &cobra.Command{
 	Use:   "image-builder-mk3",
 	Short: "Workspace image-builder service",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, verbose && !isatty.IsTerminal(os.Stdout.Fd()), verbose)
+		log.Init(ServiceName, Version, jsonLog && !isatty.IsTerminal(os.Stdout.Fd()), verbose)
 	},
 }
 
@@ -71,6 +72,7 @@ func getConfig() *config {
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file")
 }

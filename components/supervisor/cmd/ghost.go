@@ -19,7 +19,7 @@ var ghostCmd = &cobra.Command{
 	Short: "starts the supervisor",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, true, true)
+		log.Init(ServiceName, Version, true, false)
 		log.Info("running as ghost - waiting for SIGTERM")
 
 		sigChan := make(chan os.Signal, 1)

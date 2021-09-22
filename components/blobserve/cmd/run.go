@@ -24,6 +24,7 @@ import (
 )
 
 var jsonLog bool
+var verbose bool
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{

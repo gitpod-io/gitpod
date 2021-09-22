@@ -17,7 +17,7 @@ var runCmd = &cobra.Command{
 	Short: "starts the supervisor",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, true, true)
+		log.Init(ServiceName, Version, true, false)
 		common_grpc.SetupLogging()
 		supervisor.Run()
 	},
