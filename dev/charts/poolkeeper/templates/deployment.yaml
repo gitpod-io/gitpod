@@ -32,7 +32,6 @@ spec:
           - --config
           - /config/config.json
           - run
-          - -v
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:

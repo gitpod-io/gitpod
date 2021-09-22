@@ -183,13 +183,13 @@ env:
 - name: GITPOD_INSTALLATION_SHORTNAME
   value: {{ template "gitpod.installation.shortname" . }}
 - name: LOG_LEVEL
-  value: {{ template "gitpod.loglevel" }}
+  value: {{ template "gitpod.loglevel" . }}
 {{- end -}}
 
 {{- define "gitpod.loglevel" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
-{{ $gp.log.level | default "debug" | lower | quote }}
+{{ $gp.log.level | default "info" | lower | quote }}
 {{- end -}}
 
 {{- define "gitpod.container.analyticsEnv" -}}
