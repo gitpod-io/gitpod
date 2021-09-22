@@ -193,7 +193,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 		defer stop()
 		renewal = tc
 
-		log.WithField("percentage", wspd.Config.Renewal.Percentage).WithField("interval", wspd.Config.Renewal.Interval.String()).Info("enabled ghost workspace renewal")
+		log.WithField("percentage", wspd.Config.Renewal.Percentage).WithField("interval", wspd.Config.Renewal.Interval.String()).Debug("enabled ghost workspace renewal")
 	}
 	scheduleGhosts, stopSchedulingGhosts := wspd.time.NewTicker(time.Duration(wspd.Config.SchedulerInterval))
 	defer stopSchedulingGhosts()
@@ -256,7 +256,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 				log.WithError(err).Error("cannot stop ghost workspaces during renewal")
 				continue
 			}
-			log.WithField("delta", d).WithField("ghostCount", status.Count.Ghost).Info("deleted ghost workspaces for renewal")
+			log.WithField("delta", d).WithField("ghostCount", status.Count.Ghost).Debug("deleted ghost workspaces for renewal")
 		case setpoint = <-cchan:
 			// we've already set the new setpoint - wait for scheduleGhosts to act on it.
 			wspd.metrics.OnSetpointChange(setpoint)
@@ -279,7 +279,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 				log.WithError(err).Error("failed to realise ghost workspace delta")
 				continue
 			}
-			log.WithField("setpoint", setpoint).WithField("delta", d).Info("(de)scheduled ghost workspaces")
+			log.WithField("setpoint", setpoint).WithField("delta", d).Debug("(de)scheduled ghost workspaces")
 		}
 	}
 }
