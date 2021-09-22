@@ -44,7 +44,7 @@ spec:
       containers:
       - name: content-service
         image: {{ template "gitpod.comp.imageFull" $this }}
-        args: ["run", "-v", "--config", "/config/config.json"]
+        args: ["run", "--config", "/config/config.json"]
 {{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
 {{ include "gitpod.container.resources" $this | indent 8 }}
         ports:

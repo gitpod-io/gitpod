@@ -39,7 +39,7 @@ spec:
       containers:
       - name: registry-facade
         image: {{ template "gitpod.comp.imageFull" $this }}
-        args: ["run", "-v", "/mnt/config/config.json"]
+        args: ["run", "/mnt/config/config.json"]
 {{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
 {{ include "gitpod.container.resources" $this | indent 8 }}
         ports:

@@ -50,7 +50,7 @@ spec:
       enableServiceLinks: false
       containers:
       - name: scheduler
-        args: ["run", "-v", "--config", "/config/config.json"]
+        args: ["run", "--config", "/config/config.json"]
         image: {{ template "gitpod.comp.imageFull" $this }}
 {{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
 {{ include "gitpod.container.resources" $this | indent 8 }}
