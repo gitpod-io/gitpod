@@ -57,7 +57,7 @@ spec:
 {{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       - name: ws-proxy
         image: {{ template "gitpod.comp.imageFull" $this }}
-        args: ["run", "-v", "/config/config.json"]
+        args: ["run", "/config/config.json"]
 {{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
 {{ include "gitpod.container.resources" $this | indent 8 }}
 {{ include "gitpod.container.ports" $this | indent 8 }}
