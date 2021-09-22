@@ -134,7 +134,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                         <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 dark:border-gray-800 h-96">
                             <div className="flex flex-col items-center w-96 m-auto">
                                 <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Active Workspaces</h3>
-                                <div className="text-center pb-6 text-gray-500">Prefix any git repository URL with gitpod.io/# or create a new workspace for a recently used project. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
+                                <div className="text-center pb-6 text-gray-500">Import your existing projects by prefixing any git repository URL with gitpod.io/# or create a new workspace for a recently used project. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
                                 <span>
                                     <button onClick={this.showStartWSModal}>New Workspace</button>
                                     {wsModel.getAllFetchedWorkspaces().size > 0 ? <button className="secondary ml-2" onClick={onAll}>View All Workspaces</button>:null}
