@@ -91,7 +91,6 @@ spec:
         image: {{ template "gitpod.comp.imageFull" $this }}
         args:
         - "run"
-        - "-v"
         - "--config"
         - "/config/image-builder.json"
 {{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
