@@ -121,6 +121,16 @@ export default function () {
         return true;
     }
 
+    const prebuildSorter = (a: PrebuildWithStatus, b: PrebuildWithStatus) => {
+        if (a.info.startedAt < b.info.startedAt) {
+            return 1;
+        }
+        if (a.info.startedAt === b.info.startedAt) {
+            return 0;
+        }
+        return -1;
+    }
+
     const openPrebuild = (pb: PrebuildInfo) => {
         history.push(`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/${pb.id}`);
     }
@@ -164,7 +174,7 @@ export default function () {
                         <ItemFieldContextMenu />
                     </ItemField>
                 </Item>
-                {prebuilds.filter(filter).map((p, index) => <Item key={`prebuild-${p.info.id}`} className="grid grid-cols-3">
+                {prebuilds.filter(filter).sort(prebuildSorter).map((p, index) => <Item key={`prebuild-${p.info.id}`} className="grid grid-cols-3">
                     <ItemField className="flex items-center">
                         <div className="cursor-pointer" onClick={() => openPrebuild(p.info)}>
                             <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1">
