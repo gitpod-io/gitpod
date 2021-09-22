@@ -15,6 +15,7 @@ import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { shortCommitMessage } from "./render-utils";
+import Spinner from "../icons/Spinner.svg";
 
 export default function () {
     const history = useHistory();
@@ -28,6 +29,7 @@ export default function () {
 
     const [project, setProject] = useState<Project | undefined>();
 
+    const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
     const [branches, setBranches] = useState<Project.BranchDetails[]>([]);
     const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus | undefined>>(new Map());
     const [prebuildLoaders] = useState<Set<string>>(new Set());
@@ -53,11 +55,18 @@ export default function () {
 
         setProject(project);
 
-        const details = await getGitpodService().server.getProjectOverview(project.id);
-        if (details) {
-            // default branch on top of the rest
-            const branches = details.branches.sort((a, b) => (b.isDefault as any) - (a.isDefault as any)) || [];
-            setBranches(branches);
+        setIsLoadingBranches(true);
+        try {
+            const details = await getGitpodService().server.getProjectOverview(project.id);
+            if (details) {
+                // default branch on top of the rest
+                const branches = details.branches.sort((a, b) => (b.isDefault as any) - (a.isDefault as any)) || [];
+                setBranches(branches);
+            }
+        } catch (error) {
+            console.error('Error getting project overview', error);
+        } finally {
+            setIsLoadingBranches(false);
         }
     }
 
@@ -146,6 +155,10 @@ export default function () {
                         <ItemFieldContextMenu />
                     </ItemField>
                 </Item>
+                {isLoadingBranches && <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16">
+                    <img className="h-4 w-4 animate-spin" src={Spinner} />
+                    <span>Fetching repository branches...</span>
+                </div>}
                 {branches.filter(filter).slice(0, 10).map((branch, index) => {
 
                     const branchName = branch.name;
