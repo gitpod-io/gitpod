@@ -6,7 +6,6 @@ package content
 
 import (
 	"archive/tar"
-	"bufio"
 	"context"
 	"io"
 	"os"
@@ -82,10 +81,8 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 	}
 
 	defer fout.Close()
-	fbout := bufio.NewWriter(fout)
-	defer fbout.Flush()
 
-	targetOut := newLimitWriter(fbout, cfg.MaxSizeBytes)
+	targetOut := newLimitWriter(fout, cfg.MaxSizeBytes)
 	defer func(e *error) {
 		if targetOut.DidMaxOut() {
 			*e = ErrMaxSizeExceeded
@@ -96,7 +93,7 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 	if err != nil {
 		return cleanCorruptedTarballAndReturnError(dst, xerrors.Errorf("cannot write tar file: %w", err))
 	}
-	if err = fbout.Flush(); err != nil {
+	if err = fout.Sync(); err != nil {
 		return cleanCorruptedTarballAndReturnError(dst, xerrors.Errorf("cannot flush tar out stream: %w", err))
 	}
 
