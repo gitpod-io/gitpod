@@ -65,6 +65,7 @@ var ahadnsES = &Upstream{
 	url: "https://doh.es.ahadns.net/dns-query",
 }
 
+// Note: additional upstreams can be found at https://github.com/curl/curl/wiki/DNS-over-HTTPS
 var upstreams = []*Upstream{
 	cloudflare1, cloudflare2,
 	google1,
@@ -72,6 +73,8 @@ var upstreams = []*Upstream{
 	ahadnsIT, ahadnsES,
 }
 
+// TODO(cw): do subdomain iteration on the domains themselves to list the pools
+// Note: the original list comes from Falco, but this list is more comprehensive
 var Questions = []string{
 	"xmr.f2pool.com",
 	"eth.f2pool.com",      // v6 too
@@ -127,5 +130,5 @@ var Questions = []string{
 	"us2.ethermine.org",   // v6 too
 	"xmr.crypto-pool.fr",
 	"xmr.pool.minergate.com",
-	"rx.unmineable.com",
+	"rx.unmineable.com", // Note: uses very low TTL which might be used to bypass this mechanism. The median mechanism in `main.go` is a defense mechanism here.
 }

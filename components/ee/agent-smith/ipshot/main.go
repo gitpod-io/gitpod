@@ -51,11 +51,13 @@ func main() {
 	log.WithField("network interface", route.Iface).Info("default gateway")
 
 	// Load the SHED_CLS eBPF program for TC
+	// TODO(cw): defer the removal of the QDISK CLSACT which will also unload the TC BPF program
 	if err := tc.Load("bpf/tc.bpf.o", route.Iface, log); err != nil {
 		log.WithError(err).Fatalf("loading eBPF filter")
 	}
 
 	// Setup the eBPF map storage
+	// Note: requires the BPF FS to be mounted (if it's not present, it can be mounted using `mount`, should be present but might need to mounted in the container)
 	m, err := store.Attach("/sys/fs/bpf/tc/globals/hot", true /* remove existing items */)
 	if err != nil {
 		log.WithError(err).Fatal("loading the storage")
@@ -97,6 +99,8 @@ func main() {
 			count4++
 		} // todo > else, what?
 	}
+
+	// Beware: DON'T TRUST the TTL of the domains
 
 	// Continue to lookup...
 	maxLookupsPerTick := 2

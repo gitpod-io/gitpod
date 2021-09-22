@@ -128,8 +128,10 @@ func addClsAct(qdisc *tc.Qdisc, dev uint32, iface string, l *logrus.Logger) (*tc
 	}
 	obj.Msg = tc.Msg{
 		Ifindex: dev,
-		Handle:  core.BuildHandle(0xFFFF, 0x0000),
-		Parent:  tc.HandleIngress,
+		// 0xFFFF 0x0000 used by TC to understand where in the flow to put the queing mechanism.
+		// The values mean: place it at the ingress mechanism considering the entire range of the chain.
+		Handle: core.BuildHandle(0xFFFF, 0x0000),
+		Parent: tc.HandleIngress,
 	}
 
 	if err := delClsAct(qdisc, obj); err != nil {
