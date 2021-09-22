@@ -47,6 +47,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
     terminalRef.current = terminal;
     terminal.loadAddon(fitAddon);
     terminal.open(xTermParentRef.current);
+    terminal.write('Connecting to workspace logs...\r\n');
     props.logsEmitter.on('logs', logs => {
       if (terminal && logs) {
         terminal.write(logs);
@@ -74,7 +75,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
 
   useEffect(() => {
     if (terminalRef.current && props.errorMessage) {
-      terminalRef.current.write(`\n\u001b[38;5;196m${props.errorMessage}\u001b[0m`);
+      terminalRef.current.write(`\r\n\u001b[38;5;196m${props.errorMessage}\u001b[0m`);
     }
   }, [ terminalRef.current, props.errorMessage ]);
 
