@@ -60,6 +60,7 @@ func createAndRunc(runcPath string) error {
 	}
 
 	cfg.Process.OOMScoreAdj = &defaultOOMScoreAdj
+	delete(cfg.Linux.Sysctl, "net.ipv4.ip_unprivileged_port_start")
 
 	fc, err = json.Marshal(cfg)
 	if err != nil {
