@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"syscall"
 	"time"
 
@@ -108,9 +109,9 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 			}
 
 			var dnsError *net.DNSError
-			if !errors.As(err, &dnsError) {
-				// skip "no such host" errors (workspace service not available, yet)
-				log.WithField("url", originalURL.String()).WithError(err).Error("proxied request failed")
+			if !errors.As(err, &dnsError) && !strings.HasPrefix(originalURL.Path, "/_supervisor/") {
+				// skip "no such host" errors (workspace service not available, yet) and not
+				log.WithField("url", originalURL.String()).WithError(err).Debug("proxied request failed")
 			}
 
 			rw.WriteHeader(http.StatusBadGateway)
