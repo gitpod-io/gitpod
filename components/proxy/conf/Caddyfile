@@ -131,7 +131,8 @@
 	respond /ready 200
 }
 
-localhost:9500 {
+# TODO: refactor once we can listen only in localhost
+:9545 {
 	metrics /metrics {
 		disable_openmetrics
 	}
