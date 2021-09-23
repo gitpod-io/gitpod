@@ -30,6 +30,7 @@ export default function () {
     const [ prebuild, setPrebuild ] = useState<PrebuildWithStatus | undefined>();
     const [ prebuildInstance, setPrebuildInstance ] = useState<WorkspaceInstance | undefined>();
     const [ isRerunningPrebuild, setIsRerunningPrebuild ] = useState<boolean>(false);
+    const [ isCancellingPrebuild, setIsCancellingPrebuild ] = useState<boolean>(false);
 
     useEffect(() => {
         if (!teams || !projectName || !prebuildId) {
@@ -83,8 +84,8 @@ export default function () {
         if (!prebuild) {
             return;
         }
-        setIsRerunningPrebuild(true);
         try {
+            setIsRerunningPrebuild(true);
             await getGitpodService().server.triggerPrebuild(prebuild.info.projectId, prebuild.info.branch);
             // TODO: Open a Prebuilds page that's specific to `prebuild.info.branch`?
             history.push(`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/prebuilds`);
@@ -92,6 +93,20 @@ export default function () {
             console.error('Could not rerun prebuild', error);
         } finally {
             setIsRerunningPrebuild(false);
+        }
+    }
+
+    const cancelPrebuild = async () => {
+        if (!prebuild) {
+            return;
+        }
+        try {
+            setIsCancellingPrebuild(true);
+            await getGitpodService().server.cancelPrebuild(prebuild.info.projectId, prebuild.info.id);
+        } catch (error) {
+            console.error('Could not cancel prebuild', error);
+        } finally {
+            setIsCancellingPrebuild(false);
         }
     }
 
@@ -112,9 +127,14 @@ export default function () {
                             {isRerunningPrebuild && <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />}
                             <span>Rerun Prebuild ({prebuild.info.branch})</span>
                         </button>
-                        : (prebuild?.status === 'available'
-                            ? <a className="my-auto" href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}><button>New Workspace ({prebuild?.info.branch})</button></a>
-                            : <button disabled={true}>New Workspace ({prebuild?.info.branch})</button>)}
+                        : (prebuild?.status === 'building'
+                            ? <button className="danger flex items-center space-x-2" disabled={isCancellingPrebuild} onClick={cancelPrebuild}>
+                                {isCancellingPrebuild && <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />}
+                                <span>Cancel Prebuild</span>
+                            </button>
+                            : (prebuild?.status === 'available'
+                                ? <a className="my-auto" href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}><button>New Workspace ({prebuild?.info.branch})</button></a>
+                                : <button disabled={true}>New Workspace ({prebuild?.info.branch})</button>))}
                 </div>
             </div>
         </div>

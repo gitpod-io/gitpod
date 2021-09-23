@@ -14,6 +14,7 @@ import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/
 import Spinner from "../icons/Spinner.svg";
 import StatusDone from "../icons/StatusDone.svg";
 import StatusFailed from "../icons/StatusFailed.svg";
+import StatusCanceled from "../icons/StatusCanceled.svg";
 import StatusPaused from "../icons/StatusPaused.svg";
 import StatusRunning from "../icons/StatusRunning.svg";
 import { getGitpodService } from "../service/service";
@@ -91,7 +92,7 @@ export default function () {
             entries.push({
                 title: "Cancel Prebuild",
                 customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
-                onClick: () => window.alert('cancellation not yet supported')
+                onClick: () => cancelPrebuild(p.info.id),
             })
         }
         return entries;
@@ -131,9 +132,17 @@ export default function () {
     }
 
     const triggerPrebuild = (branchName: string | null) => {
-        if (project) {
-            getGitpodService().server.triggerPrebuild(project.id, branchName);
+        if (!project) {
+            return;
         }
+        getGitpodService().server.triggerPrebuild(project.id, branchName);
+    }
+
+    const cancelPrebuild = (prebuildId: string) => {
+        if (!project) {
+            return;
+        }
+        getGitpodService().server.cancelPrebuild(project.id, prebuildId);
     }
 
     const formatDate = (date: string | undefined) => {
@@ -200,37 +209,39 @@ export default function () {
 }
 
 export function prebuildStatusLabel(prebuild?: PrebuildWithStatus) {
-    if (prebuild?.error) {
-        return (<span className="font-medium text-red-500 uppercase">failed</span>);
-    }
     switch (prebuild?.status) {
         case undefined: // Fall through
         case "queued":
             return (<span className="font-medium text-orange-500 uppercase">pending</span>);
         case "building":
             return (<span className="font-medium text-blue-500 uppercase">running</span>);
-        case "aborted": // Fall through
+        case "aborted":
+            return (<span className="font-medium text-gray-500 uppercase">canceled</span>);
         case "timeout":
             return (<span className="font-medium text-red-500 uppercase">failed</span>);
         case "available":
+            if (prebuild?.error) {
+                return (<span className="font-medium text-red-500 uppercase">failed</span>);
+            }
             return (<span className="font-medium text-green-500 uppercase">ready</span>);
     }
 }
 
 export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
-    if (prebuild?.error) {
-        return <img className="h-4 w-4" src={StatusFailed} />;
-    }
     switch (prebuild?.status) {
         case undefined: // Fall through
         case "queued":
             return <img className="h-4 w-4" src={StatusPaused} />;
         case "building":
             return <img className="h-4 w-4" src={StatusRunning} />;
-        case "aborted": // Fall through
+        case "aborted":
+            return <img className="h-4 w-4" src={StatusCanceled} />;
         case "timeout":
             return <img className="h-4 w-4" src={StatusFailed} />;
         case "available":
+            if (prebuild?.error) {
+                return <img className="h-4 w-4" src={StatusFailed} />;
+            }
             return <img className="h-4 w-4" src={StatusDone} />;
     }
 }
@@ -279,14 +290,22 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
                 </div>;
             break;
     }
-    if (props.prebuildInstance?.status.conditions.failed || props.prebuildInstance?.status.conditions.headlessTaskFailed) {
+    if (props.prebuildInstance?.status.conditions.stoppedByRequest) {
+        status = <div className="flex space-x-1 items-center text-gray-500">
+            <img className="h-4 w-4" src={StatusCanceled} />
+            <span>CANCELED</span>
+        </div>;
+        details = <div className="flex space-x-1 items-center text-gray-400">
+            <span>Prebuild canceled</span>
+        </div>;
+    } else if (props.prebuildInstance?.status.conditions.failed || props.prebuildInstance?.status.conditions.headlessTaskFailed) {
         status = <div className="flex space-x-1 items-center text-gitpod-red">
             <img className="h-4 w-4" src={StatusFailed} />
             <span>FAILED</span>
-            </div>;
+        </div>;
         details = <div className="flex space-x-1 items-center text-gray-400">
             <span>Prebuild failed</span>
-            </div>;
+        </div>;
     }
     return <div className="flex flex-col space-y-1 justify-center text-sm font-semibold">
         <div>{status}</div>

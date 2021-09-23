@@ -288,6 +288,7 @@ export class WorkspaceStarter {
                     await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild)
                     await this.messageBus.notifyHeadlessUpdate({span}, workspace.ownerId, workspace.id, <HeadlessWorkspaceEvent>{
                         type: HeadlessWorkspaceEventType.Aborted,
+                        // TODO: `workspaceID: workspace.id` not needed here? (found in ee/src/prebuilds/prebuild-queue-maintainer.ts and ee/src/bridge.ts)
                     });
                 }
             }

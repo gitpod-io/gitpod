@@ -82,7 +82,7 @@ export class PrebuildManager {
                 const isSameConfig = JSON.stringify(filterPrebuildTasks(existingConfig?.tasks)) === JSON.stringify(filterPrebuildTasks(newConfig?.tasks));
                 // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
                 if (isSameConfig) {
-                    return { wsid: existingPB.buildWorkspaceId, done: true };
+                    return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
                 }
             }
 
@@ -110,6 +110,7 @@ export class PrebuildManager {
             log.debug("Created prebuild context", prebuildContext);
 
             const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, contextURL);
+            const prebuildPromise = this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
 
             // const canBuildNow = await this.prebuildRateLimiter.canBuildNow({ span }, user, cloneURL);
             // if (!canBuildNow) {
@@ -120,7 +121,11 @@ export class PrebuildManager {
 
             span.setTag("starting", true);
             await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], {excludeFeatureFlags: ['full_workspace_backup']});
-            return { wsid: workspace.id, done: false };
+            const prebuild = await prebuildPromise;
+            if (!prebuild) {
+                throw new Error(`Failed to create a prebuild for: ${contextURL}`);
+            }
+            return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.logError({ span }, err);
             throw err;
@@ -133,18 +138,24 @@ export class PrebuildManager {
         const span = TraceContext.startSpan("retriggerPrebuild", ctx);
         span.setTag("workspaceId", workspaceId);
         try {
+            const workspacePromise = this.workspaceDB.trace({ span }).findById(workspaceId);
+            const prebuildPromise = this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspaceId);
             const runningInstance = await this.workspaceDB.trace({ span }).findRunningInstance(workspaceId);
             if (runningInstance !== undefined) {
                 throw new WorkspaceRunningError('Workspace is still runnning', runningInstance);
             }
             span.setTag("starting", true);
-            const workspace = await this.workspaceDB.trace({ span }).findById(workspaceId);
+            const workspace = await workspacePromise;
             if (!workspace) {
                 console.error('Unknown workspace id.', { workspaceId });
                 throw new Error('Unknown workspace ' + workspaceId);
             }
+            const prebuild = await prebuildPromise;
+            if (!prebuild) {
+                throw new Error('No prebuild found for workspace ' + workspaceId);
+            }
             await this.workspaceStarter.startWorkspace({ span }, workspace, user);
-            return { wsid: workspace.id, done: false };
+            return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.logError({ span }, err);
             throw err;
