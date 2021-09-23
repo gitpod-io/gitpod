@@ -5,7 +5,7 @@ module "cert" {
   project = "gitpod-dev"
   region  = "europe-west-3"
 
-  dns_zone_domain = "gitpod-dev"
+  dns_zone_domain = "gitpod-dev.com"
   domain = var.domain
   subdomains = var.subdomains
   public_ip = var.public_ip
