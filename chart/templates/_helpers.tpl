@@ -357,7 +357,7 @@ storage:
 
 {{- define "gitpod.kube-rbac-proxy" -}}
 - name: kube-rbac-proxy
-  image: quay.io/brancz/kube-rbac-proxy:v0.9.0
+  image: quay.io/brancz/kube-rbac-proxy:v0.11.0
   args:
   - --v=10
   - --logtostderr
