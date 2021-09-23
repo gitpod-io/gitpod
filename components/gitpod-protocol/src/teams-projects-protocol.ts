@@ -93,7 +93,6 @@ export namespace PrebuildInfo {
 export interface StartPrebuildResult {
     wsid: string;
     done: boolean;
-    didFinish?: boolean;
 }
 
 export interface Team {

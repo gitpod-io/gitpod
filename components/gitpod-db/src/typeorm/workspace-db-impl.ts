@@ -567,6 +567,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return await repo.save(pws as DBPrebuiltWorkspace);
     }
 
+    // Find the (last triggered) prebuild for a given commit
     public async findPrebuiltWorkspaceByCommit(cloneURL: string, commit: string): Promise<PrebuiltWorkspace | undefined> {
         if (!commit || !cloneURL) {
             return undefined;

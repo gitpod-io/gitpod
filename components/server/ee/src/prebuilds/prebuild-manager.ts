@@ -67,7 +67,10 @@ export class PrebuildManager {
         try {
             const existingPB = await this.workspaceDB.trace({ span }).findPrebuiltWorkspaceByCommit(cloneURL, commit);
             if (!!existingPB) {
-                return { wsid: existingPB.buildWorkspaceId, done: true, didFinish: existingPB.state === 'available' };
+                // If the prebuild is failed, we want to retrigger it.
+                if (existingPB.state !== 'aborted' && existingPB.state !== 'timeout' && !existingPB.error) {
+                    return { wsid: existingPB.buildWorkspaceId, done: true };
+                }
             }
 
             const contextParser = this.getContextParserFor(contextURL);

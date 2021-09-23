@@ -694,6 +694,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
             const logCtx: LogContext = { userId: user.id };
             const cloneUrl = context.repository.cloneUrl;
+            // Note: findPrebuiltWorkspaceByCommit always returns the last triggered prebuild (so, if you re-trigger a prebuild, the newer one will always be used here)
             const prebuiltWorkspace = await this.workspaceDb.trace({ span }).findPrebuiltWorkspaceByCommit(cloneUrl, context.revision);
             const logPayload = { mode, cloneUrl, commit: context.revision, prebuiltWorkspace };
             log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
