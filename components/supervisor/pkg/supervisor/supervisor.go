@@ -358,7 +358,7 @@ func symlinkBinaries(cfg *Config) {
 			to   = filepath.Join("/usr/bin", v)
 		)
 		err = os.Symlink(from, to)
-		if err != nil {
+		if err != nil && !os.IsExist(err) {
 			log.WithError(err).WithField("from", from).WithField("to", to).Warn("cannot create symlink")
 		}
 	}
