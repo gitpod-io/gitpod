@@ -1,6 +1,11 @@
 # Change Log
 
 ## September 2021
+- [workspacekit] Update fuse-overlayfs to v1.7.1 ([#5794](https://github.com/gitpod-io/gitpod/pull/5794)) - [@aledbf](https://github.com/aledbf)
+- [workspacekit] Update libseccomp to v2.5.2 ([#5794](https://github.com/gitpod-io/gitpod/pull/5794)) - [@aledbf](https://github.com/aledbf)
+- [server] Update node to 12.22.6 and add additional binaries ([#5776](https://github.com/gitpod-io/gitpod/pull/5776)) - [@aledbf](https://github.com/aledbf)
+- [chart] Fix default log level template ([#5796](https://github.com/gitpod-io/gitpod/pull/5796)) - [@aledbf](https://github.com/aledbf)
+- [chart] Do not enable verbose log level by default in containers ([#5796](https://github.com/gitpod-io/gitpod/pull/5796)) - [@aledbf](https://github.com/aledbf)
 - [ws-daemon] Improved the stability of concurrent content initialisation ([#5797](https://github.com/gitpod-io/gitpod/pull/5797)) - [@csweichel](https://github.com/csweichel)
 - runtime configurable log-level for `server` ([#5697](https://github.com/gitpod-io/gitpod/pull/5697)) - [@geropl](https://github.com/geropl)
 - [db] Fix string booleans to be booleans ([#5439](https://github.com/gitpod-io/gitpod/pull/5439)) - [@laushinka](https://github.com/laushinka)
