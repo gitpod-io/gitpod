@@ -247,11 +247,11 @@ func (gov *Controller) SetFixedCPULimit(jiffiesPerSec int64) {
 	gov.mu.Lock()
 	defer gov.mu.Unlock()
 
+	gov.cpuLimiterOverride = nil
+
 	if jiffiesPerSec > 0 {
 		gov.cpuLimiterOverride = FixedLimiter(jiffiesPerSec)
-		gov.log.WithField("limit", jiffiesPerSec).Info("set fixed CPU limit for workspace")
-	} else {
-		gov.cpuLimiterOverride = nil
+		gov.log.WithField("limit", jiffiesPerSec).Debug("set fixed CPU limit for workspace")
 	}
 }
 
