@@ -11,6 +11,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { OAuthException, OAuthRequest, OAuthResponse } from "@jmondi/oauth2-server";
 import * as express from 'express';
 import { inject, injectable } from "inversify";
+import { URL } from 'url';
 import { Config } from '../config';
 import { clientRepository, createAuthorizationServer } from './oauth-authorization-server';
 
@@ -50,8 +51,10 @@ export class OAuthController {
             }
 
             // Let the local app know they rejected the approval
-            const rt = req.query.redirect_uri;
-            if (!rt || !rt.startsWith("http://127.0.0.1:")) {
+            const rt: string = req.query.redirect_uri;
+            const redirectURLObject = new URL(rt);
+
+            if (!rt || !rt.startsWith("http://127.0.0.1:") || !(['vscode:', 'vscode-insiders:'].includes(redirectURLObject.protocol) && redirectURLObject.pathname !== '//gitpod.gitpod-desktop/complete-gitpod-auth')) {
                 log.error(`/oauth/authorize: invalid returnTo URL: "${rt}"`)
                 res.sendStatus(400);
                 return false;
