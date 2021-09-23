@@ -61,6 +61,11 @@ func createAndRunc(runcPath string) error {
 
 	cfg.Process.OOMScoreAdj = &defaultOOMScoreAdj
 	delete(cfg.Linux.Sysctl, "net.ipv4.ip_unprivileged_port_start")
+	cfg.Process.Capabilities.Ambient = append(cfg.Process.Capabilities.Ambient, "CAP_NET_BIND_SERVICE")
+	cfg.Process.Capabilities.Bounding = append(cfg.Process.Capabilities.Bounding, "CAP_NET_BIND_SERVICE")
+	cfg.Process.Capabilities.Effective = append(cfg.Process.Capabilities.Effective, "CAP_NET_BIND_SERVICE")
+	cfg.Process.Capabilities.Inheritable = append(cfg.Process.Capabilities.Inheritable, "CAP_NET_BIND_SERVICE")
+	cfg.Process.Capabilities.Permitted = append(cfg.Process.Capabilities.Permitted, "CAP_NET_BIND_SERVICE")
 
 	fc, err = json.Marshal(cfg)
 	if err != nil {
