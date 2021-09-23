@@ -28,7 +28,7 @@ spec:
   # Allow prometheus scraping from proxy /metrics endpoint
   - ports:
     - protocol: TCP
-      port: 9145
+      port: 9500
     from:
     - namespaceSelector:
         matchLabels:
