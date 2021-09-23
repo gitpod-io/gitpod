@@ -20,10 +20,6 @@ roleRef:
   kind: ClusterRole
   name: {{ .Release.Namespace }}-ns-psp:unprivileged
   apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name:  {{ .Release.Namespace }}-kube-rbac-proxy
-  apiGroup: rbac.authorization.k8s.io
 
 ---
 
