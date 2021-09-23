@@ -20,8 +20,6 @@ import { UserServiceEE } from "./user/user-service";
 import { HostContainerMapping } from "../../src/auth/host-container-mapping";
 import { HostContainerMappingEE } from "./auth/host-container-mapping";
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
-import { PrebuildRateLimiter } from "./prebuilds/prebuild-rate-limiter";
-import { PrebuildQueueMaintainer } from "./prebuilds/prebuild-queue-maintainer";
 import { GithubApp } from "./prebuilds/github-app";
 import { GithubAppRules } from "./prebuilds/github-app-rules";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
@@ -62,8 +60,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
 
     bind(WorkspaceHealthMonitoring).toSelf().inSingletonScope();
     bind(PrebuildManager).toSelf().inSingletonScope();
-    bind(PrebuildRateLimiter).toSelf().inSingletonScope();
-    bind(PrebuildQueueMaintainer).toSelf().inSingletonScope();
     bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
     bind(IPrefixContextParser).to(StartIncrementalPrebuildContextParser).inSingletonScope();
     bind(GithubApp).toSelf().inSingletonScope();
