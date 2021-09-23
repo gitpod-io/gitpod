@@ -10,7 +10,7 @@ import * as util from 'util';
 import { sleep } from './util/util';
 import * as gpctl from './util/gpctl';
 import { createHash } from "crypto";
-import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from './util/observability';
+import { InstallMonitoringSatelliteParams, installMonitoringSatellite, observabilityStaticChecks } from './util/observability';
 
 const readDir = util.promisify(fs.readdir)
 
@@ -398,6 +398,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces/`);
     }
 
+    werft.log(`observability`, "Running observability static checks.")
+    observabilityStaticChecks()
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         await installMonitoring();
