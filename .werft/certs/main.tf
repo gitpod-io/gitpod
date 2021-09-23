@@ -2,10 +2,10 @@ module "cert" {
   source = "./cert"
 
   # The project the DNS zone lives in
-  project = "gitpod-core-dev"
+  project = "gitpod-dev"
   region  = "europe-west-3"
 
-  dns_zone_domain = var.dns_zone_domain
+  dns_zone_domain = "gitpod-dev"
   domain = var.domain
   subdomains = var.subdomains
   public_ip = var.public_ip

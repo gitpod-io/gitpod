@@ -46,7 +46,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     && rm -rf .terraform* \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
     && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state -upgrade \
-    && terraform apply -auto-approve \
+    && terraform apply -auto-approve -no-color \
         -var 'namespace=${params.namespace}' \
         -var 'dns_zone_domain=${params.dnsZoneDomain}' \
         -var 'domain=${params.domain}' \
