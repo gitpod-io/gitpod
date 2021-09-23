@@ -97,6 +97,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "findPrebuilds":  { group: "default", points: 1 },
         "getProjectOverview":  { group: "default", points: 1 },
         "triggerPrebuild":  { group: "default", points: 1 },
+        "cancelPrebuild":  { group: "default", points: 1 },
         "setProjectConfiguration":  { group: "default", points: 1 },
         "fetchProjectRepositoryConfiguration":  { group: "default", points: 1 },
         "guessProjectConfiguration":  { group: "default", points: 1 },

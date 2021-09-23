@@ -5,9 +5,9 @@
  */
 
 import moment from "moment";
-import { PrebuildInfo, PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -20,7 +20,6 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
 
 export default function () {
-    const history = useHistory();
     const location = useLocation();
 
     const { teams } = useContext(TeamsContext);
@@ -155,13 +154,17 @@ export default function () {
     }
 
     const triggerPrebuild = (branch: Project.BranchDetails) => {
-        if (project) {
-            getGitpodService().server.triggerPrebuild(project.id, branch.name)
+        if (!project) {
+            return;
         }
+        getGitpodService().server.triggerPrebuild(project.id, branch.name);
     }
 
-    const openPrebuild = (pb: PrebuildInfo) => {
-        history.push(`/${!!team ? 't/' + team.slug : 'projects'}/${projectName}/${pb.id}`);
+    const cancelPrebuild = (prebuildId: string) => {
+        if (!project) {
+            return;
+        }
+        getGitpodService().server.cancelPrebuild(project.id, prebuildId);
     }
 
     const formatDate = (date: string | undefined) => {
@@ -236,9 +239,9 @@ export default function () {
                                 </div>
                             </ItemField>
                             <ItemField className="flex items-center">
-                                <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" onClick={() => prebuild && openPrebuild(prebuild.info)}>
+                                <a className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" href={prebuild ? `/${!!team ? 't/' + team.slug : 'projects'}/${projectName}/${prebuild.info.id}` : 'javascript:void(0)'}>
                                     {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span> </span>)}
-                                </div>
+                                </a>
                                 <span className="flex-grow" />
                                 <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
                                     <button className={`primary mr-2 py-2 opacity-0 group-hover:opacity-100`}>New Workspace</button>
@@ -248,7 +251,13 @@ export default function () {
                                         title: `${prebuild ? 'Rerun' : 'Run'} Prebuild (${branch.name})`,
                                         onClick: () => triggerPrebuild(branch),
                                     }]
-                                    : []} />
+                                    : (prebuild.status === 'building'
+                                        ? [{
+                                            title: 'Cancel Prebuild',
+                                            customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
+                                            onClick: () => cancelPrebuild(prebuild.info.id),
+                                        }]
+                                        : [])} />
                             </ItemField>
                         </Item>
                     }

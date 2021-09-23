@@ -78,6 +78,10 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     prebuild.state = "aborted";
                     prebuild.error = status.conditions!.failed;
                     headlessUpdateType = HeadlessWorkspaceEventType.Aborted;
+                } else if (!!status.conditions!.stoppedByRequest) {
+                    prebuild.state = "aborted";
+                    prebuild.error = "Cancelled";
+                    headlessUpdateType = HeadlessWorkspaceEventType.Aborted;
                 } else if (!!status.conditions!.headlessTaskFailed) {
                     prebuild.state = "available";
                     prebuild.error = status.conditions!.headlessTaskFailed;

@@ -69,6 +69,7 @@ export default function () {
     const [isEditorDisabled, setIsEditorDisabled] = useState<boolean>(true);
     const [isDetecting, setIsDetecting] = useState<boolean>(true);
     const [prebuildWasTriggered, setPrebuildWasTriggered] = useState<boolean>(false);
+    const [prebuildWasCancelled, setPrebuildWasCancelled] = useState<boolean>(false);
     const [startPrebuildResult, setStartPrebuildResult] = useState<StartPrebuildResult | undefined>();
     const [prebuildInstance, setPrebuildInstance] = useState<WorkspaceInstance | undefined>();
     const { isDark } = useContext(ThemeContext);
@@ -172,6 +173,9 @@ export default function () {
         if (!!startPrebuildResult) {
             setStartPrebuildResult(undefined);
         }
+        if (!!prebuildInstance) {
+            setPrebuildInstance(undefined);
+        }
         try {
             setPrebuildWasTriggered(true);
             if (!isEditorDisabled) {
@@ -182,6 +186,20 @@ export default function () {
         } catch (error) {
             setPrebuildWasTriggered(false);
             setEditorMessage(<EditorMessage type="warning" heading="Could not run prebuild." message={String(error).replace(/Error: Request \w+ failed with message: /, '')} />);
+        }
+    }
+
+    const cancelPrebuild = async () => {
+        if (!project || !startPrebuildResult) {
+            return;
+        }
+        setPrebuildWasCancelled(true);
+        try {
+            await getGitpodService().server.cancelPrebuild(project.id, startPrebuildResult.prebuildId);
+        } catch (error) {
+            setEditorMessage(<EditorMessage type="warning" heading="Could not cancel prebuild." message={String(error).replace(/Error: Request \w+ failed with message: /, '')}/>);
+        } finally {
+            setPrebuildWasCancelled(false);
         }
     }
 
@@ -239,10 +257,14 @@ export default function () {
                 <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
                     {prebuildWasTriggered && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} />}
                     <div className="flex-grow" />
-                    {((!isDetecting && isEditorDisabled) || (prebuildInstance?.status.phase === "stopped" && !prebuildInstance?.status.conditions.failed))
+                    {((!isDetecting && isEditorDisabled) || (prebuildInstance?.status.phase === "stopped" && !prebuildInstance?.status.conditions.failed && !prebuildInstance?.status.conditions.headlessTaskFailed))
                         ? <a className="my-auto" href={`/#${project?.cloneUrl}`}><button className="secondary">New Workspace</button></a>
                         : <button disabled={true} className="secondary">New Workspace</button>}
-                    <button disabled={isDetecting || (prebuildWasTriggered && prebuildInstance?.status.phase !== "stopped")} onClick={buildProject}>Run Prebuild</button>
+                    {(prebuildWasTriggered && prebuildInstance?.status.phase !== "stopped")
+                        ? <button className="danger flex items-center space-x-2" disabled={prebuildWasCancelled || (prebuildInstance?.status.phase !== "initializing" && prebuildInstance?.status.phase !== "running")} onClick={cancelPrebuild}>
+                            <span>Cancel Prebuild</span>
+                        </button>
+                        : <button disabled={isDetecting} onClick={buildProject}>Run Prebuild</button>}
                 </div>
             </div>
         </div>
