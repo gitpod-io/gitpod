@@ -3,20 +3,19 @@ aliases:
   engineering-workspace:
   - aledbf
   - csweichel
-  - rl-gitpod
   - MrSimonEmms
+  - princerachit
+  - rl-gitpod
 
   engineering-ide:
   - akosyakov
+  - corneliusludmann
   - jeanp413
-  - csweichel
 
   engineering-meta:
   - AlexTugarev
-  - corneliusludmann
   - geropl
   - jankeromnes
   - JanKoehnlein
-  - svenefftinge
-  - csweichel
   - laushinka
+  - svenefftinge
