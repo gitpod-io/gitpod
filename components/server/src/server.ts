@@ -100,7 +100,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             const startTime = Date.now();
             req.on("end", () =>{
                 const method = req.method;
-                const route = req.route?.path || req.baseUrl || req.url || "unknown";
+                const route = req.route?.path || req.baseUrl || "unknown";
                 observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000)
                 increaseHttpRequestCounter(method, route, res.statusCode);
             });
