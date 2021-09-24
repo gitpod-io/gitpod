@@ -17,6 +17,8 @@ export class PrometheusMetricsExporter {
     protected readonly clusterCordoned: prom.Gauge<string>;
     protected readonly statusUpdatesTotal: prom.Counter<string>;
 
+    protected activeClusterNames: string[] = [];
+
     constructor() {
         this.workspaceStartupTimeHistogram = new prom.Histogram({
             name: 'workspace_startup_time',
@@ -67,13 +69,19 @@ export class PrometheusMetricsExporter {
     }
 
     updateClusterMetrics(clusters: WorkspaceClusterWoTLS[]): void {
-        this.clusterScore.reset();
-        this.clusterCordoned.reset();
-
+        let newActiveClusterNames: string[] = [];
         clusters.forEach(cluster => {
             this.clusterCordoned.labels(cluster.name).set(cluster.state === 'cordoned' ? 1 : 0);
             this.clusterScore.labels(cluster.name).set(cluster.score);
+            newActiveClusterNames.push(cluster.name);
         });
+
+        const noLongerActiveCluster = this.activeClusterNames.filter(c => !newActiveClusterNames.includes(c));
+        if (noLongerActiveCluster.length > 0) {
+            this.clusterScore.remove(...noLongerActiveCluster);
+            this.clusterCordoned.remove(...noLongerActiveCluster);
+        }
+        this.activeClusterNames = newActiveClusterNames;
     }
 
     statusUpdateReceived(installation: string, knownInstance: boolean): void {
