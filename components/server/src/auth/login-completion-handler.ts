@@ -77,16 +77,54 @@ export class LoginCompletionHandler {
 
             increaseLoginCounter("succeeded", authHost);
 
-            //read anonymous ID set by analytics.js
-            let anonymousId = request.cookies.ajs_anonymous_id;
-            //make identify call if anonymous ID was found
-            if (anonymousId) this.analytics.identify({anonymousId: anonymousId.replace(/(^"|"$)/g, ''),userId:user.id});
+            //fill identities from user
+            let identities: { github_slug?: String, gitlab_slug?: String, bitbucket_slug?: String } = {};
+            user.identities.forEach((value) => {
+                switch(value.authProviderId) {
+                    case "Public-GitHub": {
+                        identities.github_slug = value.authName;
+                        break;
+                    }
+                    case "Public-GitLab": {
+                        identities.gitlab_slug = value.authName;
+                        break;
+                    }
+                    case "Public-Bitbucket": {
+                        identities.bitbucket_slug = value.authName;
+                        break;
+                    }
+                }
+            });
+            const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
+
+            //make new complete identify call for each login
+            this.analytics.identify({
+                anonymousId: request.cookies.ajs_anonymous_id,
+                userId:user.id,
+                context: {
+                    "ip": request.ips[0],
+                    "userAgent": request.get("User-Agent"),
+                    "location": {
+                        "city": request.get("x-glb-client-city"),
+                        "country": request.get("x-glb-client-region"),
+                        "latitude": coords?.length == 2 ? coords[0] : undefined,
+                        "longitude": coords?.length == 2 ? coords[1] : undefined
+                    }
+                },
+                traits: {
+                    ...identities,
+                    "email": User.getPrimaryEmail(user),
+                    "full_name": user.fullName,
+                    "created_at": user.creationDate
+                }
+            });
+
+            //track the login
             this.analytics.track({
                 userId: user.id,
                 event: "login",
                 properties: {
-                    "loginContext": authHost,
-                    "location": request.headers["x-glb-client-city-lat-long"]
+                    "loginContext": authHost
                 }
             });
         }

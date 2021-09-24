@@ -41,6 +41,8 @@ export type RemotePageMessage = Omit<PageMessage, "timestamp" | "userId"> & {
     anonymousId?: string | number;
 };
 
+export type RemoteIdentifyMessage = Omit<IdentifyMessage, "timestamp" | "userId" | "anonymousId">;
+
 export interface IAnalyticsWriter {
 
     identify(msg: IdentifyMessage): void;

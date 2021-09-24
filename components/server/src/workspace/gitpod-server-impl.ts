@@ -18,7 +18,7 @@ import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } 
 import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { PageMessage, RemotePageMessage, RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
+import { IdentifyMessage, PageMessage, RemoteIdentifyMessage, RemotePageMessage, RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
 import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { ControlPortRequest, DescribeWorkspaceRequest, MarkActiveRequest, PortSpec, PortVisibility as ProtoPortVisibility, StopWorkspacePolicy, StopWorkspaceRequest } from '@gitpod/ws-manager/lib/core_pb';
@@ -2039,6 +2039,19 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             }
             this.analytics.page(msg);
         }
+    }
+
+    public async identifyUser(event: RemoteIdentifyMessage): Promise<void> {
+        //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
+        if (!this.user) {
+            return;
+        }
+        const msg: IdentifyMessage = {
+            userId: this.user.id,
+            traits: event.traits,
+            context: event.context
+        };
+        this.analytics.identify(msg);
     }
 
     async getTerms(): Promise<Terms> {

@@ -28,7 +28,7 @@ import { Emitter } from './util/event';
 import { AccountStatement, CreditAlert } from './accounting-protocol';
 import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
-import { RemotePageMessage, RemoteTrackMessage } from './analytics';
+import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from './analytics';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -230,6 +230,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      */
     trackEvent(event: RemoteTrackMessage): Promise<void>;
     trackLocation(event: RemotePageMessage): Promise<void>;
+    identifyUser(event: RemoteIdentifyMessage): Promise<void>;
 }
 
 export interface CreateProjectParams {
@@ -268,7 +269,7 @@ export interface ProviderRepository {
 export interface ClientHeaderFields{
     ip?:string;
     userAgent?:string;
-    dnt?:number;
+    dnt?:string;
     clientRegion?:string;
 }
 
