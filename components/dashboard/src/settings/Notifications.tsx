@@ -30,9 +30,8 @@ export default function Notifications() {
                     }
                 }
             });
-            await getGitpodService().server.trackEvent({
-                event: "notification_change",
-                properties: { "unsubscribed_onboarding": !newIsOnboardingMail }
+            await getGitpodService().server.identifyUser({
+                traits: { "unsubscribed_onboarding": !newIsOnboardingMail }
             })
             setUser(user);
             setOnboardingMail(newIsOnboardingMail);
@@ -52,9 +51,8 @@ export default function Notifications() {
                     }
                 }
             });
-            await getGitpodService().server.trackEvent({
-                event: "notification_change",
-                properties: { "unsubscribed_changelog": !newIsChangelogMail }
+            await getGitpodService().server.identifyUser({
+                traits: { "unsubscribed_changelog": !newIsChangelogMail }
             })
             setUser(user);
             setChangelogMail(newIsChangelogMail);
@@ -74,9 +72,8 @@ export default function Notifications() {
                     }
                 }
             });
-            await getGitpodService().server.trackEvent({
-                event: "notification_change",
-                properties: { "unsubscribed_devx": !newIsDevXMail }
+            await getGitpodService().server.identifyUser({
+                traits: { "unsubscribed_devx": !newIsDevXMail }
             })
             setUser(user);
             setDevXMail(newIsDevXMail);

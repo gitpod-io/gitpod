@@ -492,19 +492,21 @@ export class UserController {
 
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
+
+        this.analytics.identify({
+            userId: user.id,
+            traits: {
+                "created_at": user.creationDate,
+                "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
+                "unsubscribed_changelog": !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
+                "unsubscribed_devx": !user.additionalData?.emailNotificationSettings?.allowsDevXMail
+            }
+        });
         this.analytics.track({
             userId: user.id,
             event: "signup",
             properties: {
                 "auth_provider": user.identities[0].authProviderId,
-                "email": User.getPrimaryEmail(user),
-                "name": user.identities[0].authName,
-                "full_name": user.fullName,
-                "created_at": user.creationDate,
-                "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
-                "unsubscribed_changelog": !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
-                "unsubscribed_devx": !user.additionalData?.emailNotificationSettings?.allowsDevXMail,
-                "blocked": user.blocked
             }
         });
         await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
