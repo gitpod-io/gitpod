@@ -1137,20 +1137,40 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	}()
 
 	_ = os.Chown(fn, gitpodUID, gitpodGID)
-	err = activation.Listen(ctx, l, func(socketFD *os.File) error {
-		cmd := exec.Command("docker-up")
-		cmd.Env = append(os.Environ(), "LISTEN_FDS=1")
-		cmd.ExtraFiles = []*os.File{socketFD}
-		_, err := term.Start(cmd, terminal.TermOptions{
-			Annotations: map[string]string{
-				"supervisor": "true",
-			},
-			LogToStdout: true,
+	for ctx.Err() == nil {
+		err = activation.Listen(ctx, l, func(socketFD *os.File) error {
+			defer socketFD.Close()
+			cmd := exec.Command("/usr/bin/docker-up")
+			cmd.Env = append(os.Environ(), "LISTEN_FDS=1")
+			cmd.ExtraFiles = []*os.File{socketFD}
+			alias, err := term.Start(cmd, terminal.TermOptions{
+				Annotations: map[string]string{
+					"supervisor": "true",
+				},
+				LogToStdout: true,
+			})
+			if err != nil {
+				return err
+			}
+			pty, ok := term.Get(alias)
+			if !ok {
+				return errors.New("cannot find pty")
+			}
+			ptyCtx, cancel := context.WithCancel(context.Background())
+			go func(ptyCtx context.Context) {
+				select {
+				case <-ctx.Done():
+					pty.Command.Process.Signal(syscall.SIGTERM)
+				case <-ptyCtx.Done():
+				}
+			}(ptyCtx)
+			_, err = pty.Wait()
+			cancel()
+			return err
 		})
-		return err
-	})
-	if err != nil && !errors.Is(err, context.Canceled) {
-		log.WithError(err).Error("cannot provide Docker activation socket")
+		if err != nil && !errors.Is(err, context.Canceled) {
+			log.WithError(err).Error("cannot provide Docker activation socket")
+		}
 	}
 }
 
