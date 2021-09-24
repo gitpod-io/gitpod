@@ -20,7 +20,6 @@ package content
 import (
 	"archive/tar"
 	"bufio"
-	"bytes"
 	"errors"
 	"io"
 	"os"
@@ -71,9 +70,7 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 		// this buffer is needed for the duration of this piped stream
 		defer pools.BufioWriter32KPool.Put(ta.Buffer)
 
-		seen := make(map[string]bool)
-
-		_ = filepath.Walk(srcPath, func(filePath string, f os.FileInfo, err error) error {
+		_ = filepath.WalkDir(srcPath, func(filePath string, f os.DirEntry, err error) error {
 			if err != nil {
 				log.Errorf("Tar: Can't stat file %s to tar: %s", srcPath, err)
 				return nil
@@ -86,20 +83,11 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 				return nil
 			}
 
-			if relFilePath != "." {
-				buffer := bytes.NewBufferString(".")
-				_, _ = buffer.WriteRune(filepath.Separator)
-				_, _ = buffer.WriteString(relFilePath)
-				relFilePath = buffer.String()
-			}
-
-			if seen[relFilePath] {
+			if relFilePath == "." {
 				return nil
 			}
 
-			seen[relFilePath] = true
-
-			if err := ta.addTarFile(filePath, relFilePath); err != nil {
+			if err := ta.addTarFile(filePath, filepath.Join(".", relFilePath)); err != nil {
 				log.Errorf("Can't add file %s to tar: %s", filePath, err)
 				// if pipe is broken, stop writing tar stream to it
 				if err == io.ErrClosedPipe {
