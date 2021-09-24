@@ -110,6 +110,7 @@ export async function build(context, version) {
     const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
     const installEELicense = !("without-ee-license" in buildConfig);
     const withPayment= "with-payment" in buildConfig;
+    const withObservability = "with-observability" in buildConfig;
 
     werft.log("job config", JSON.stringify({
         buildConfig,
@@ -130,6 +131,7 @@ export async function build(context, version) {
         retag,
         cleanSlateDeployment,
         installEELicense,
+        withObservability,
     }));
 
     /**
@@ -231,7 +233,7 @@ export async function build(context, version) {
     const domain = `${destname}.staging.gitpod-dev.com`;
     const monitoringDomain = `${destname}.preview.gitpod-dev.com`;
     const url = `https://${domain}`;
-    const deploymentConfig = {
+    const deploymentConfig: DeploymentConfig = {
         version,
         destname,
         namespace,
@@ -244,6 +246,7 @@ export async function build(context, version) {
         installEELicense,
         k3sWsCluster,
         withPayment,
+        withObservability,
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
     await triggerIntegrationTests(deploymentConfig.version, deploymentConfig.namespace, context.Owner, !withIntegrationTests)
@@ -262,6 +265,7 @@ interface DeploymentConfig {
     sweeperImage: string;
     installEELicense: boolean;
     withPayment: boolean;
+    withObservability: boolean;
 }
 
 /**
@@ -337,17 +341,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         }
         werft.done('certificate');
 
-        werft.log(`observability`, "Installing monitoring-satellite...")
-        if (context.Annotations.withMonitoringSatellite != null) {
-            await installMonitoring();
-            exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
-            exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
-        } else {
-            exec(`echo '"withMonitoringSatellite" annotation not set, skipping...'`, {slice: `observability`})
-            exec(`echo 'To deploy monitoring-satellite, please add "/werft withMonitoringSatellite" to your PR description.'`, {slice: `observability`})
-        }
-        werft.done('observability');
-
         werft.done('prep');
     } catch (err) {
         werft.fail('prep', err);
@@ -404,6 +397,17 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github url ${url}/workspaces/`);
     }
+
+    werft.log(`observability`, "Installing monitoring-satellite...")
+    if (deploymentConfig.withObservability) {
+        await installMonitoring();
+        exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
+        exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
+    } else {
+        exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
+        exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
+    }
+    werft.done('observability');
 
     if (k3sWsCluster) {
         try {
@@ -550,11 +554,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     async function installMonitoring() {
         const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
-        if(context.Annotations.withMonitoringSatellite == "") {
-            installMonitoringSatelliteParams.branch = 'main'
-        } else {
-            installMonitoringSatelliteParams.branch = context.Annotations.withMonitoringSatellite
-        }
+        installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "main";
         installMonitoringSatelliteParams.pathToKubeConfig = ""
         installMonitoringSatelliteParams.satelliteNamespace = namespace
         installMonitoringSatelliteParams.clusterName = namespace
