@@ -121,7 +121,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 		log.Debug("prebuild initializer Git operations complete")
 	}
 
-	log.Info("Initialized workspace with prebuilt snapshot")
+	log.Debug("Initialized workspace with prebuilt snapshot")
 	return
 }
 
