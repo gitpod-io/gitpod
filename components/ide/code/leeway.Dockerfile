@@ -4,7 +4,7 @@
 
 # we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
 # ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
-ARG NODE_VERSION=14.17.4
+ARG NODE_VERSION=14.17.6
 
 FROM ubuntu:18.04 as code_installer
 
@@ -26,7 +26,10 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh |
     && npm install -g yarn node-gyp
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-ENV GP_CODE_COMMIT 8aa7f43919a48f5d5dc3e8eb997d0919977de32a
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD 1
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD 1
+
+ENV GP_CODE_COMMIT eb4bf8291aa39a0d027a3de93fc63fe191db26e7
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
@@ -34,7 +37,7 @@ RUN mkdir gp-code \
     && git fetch origin $GP_CODE_COMMIT \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
-RUN yarn
+RUN yarn --frozen-lockfile --network-timeout 180000
 RUN yarn --cwd ./extensions compile
 RUN yarn gulp gitpod-min
 
