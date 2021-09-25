@@ -1,6 +1,13 @@
 # Change Log
 
 ## September 2021
+- Ask for a Gitpod workspace snapshot ([#5026](https://github.com/gitpod-io/gitpod/pull/5026)) - [@mikenikles](https://github.com/mikenikles)
+- [workspace] Support Docker 20.10 ([#5815](https://github.com/gitpod-io/gitpod/pull/5815)) - [@csweichel](https://github.com/csweichel)
+- [chart] Upgrade kube-rbac-proxy to v0.11.0 ([#5829](https://github.com/gitpod-io/gitpod/pull/5829)) - [@aledbf](https://github.com/aledbf)
+- [ws-manager-bridge] Remove duplicated roleRef in helm chart ([#5828](https://github.com/gitpod-io/gitpod/pull/5828)) - [@aledbf](https://github.com/aledbf)
+- [proxy] Configure prometheus metrics endpoint ([#5828](https://github.com/gitpod-io/gitpod/pull/5828)) - [@aledbf](https://github.com/aledbf)
+- [ws-manager-bridge] Add missing cluster role binding for tokenreviews ([#5818](https://github.com/gitpod-io/gitpod/pull/5818)) - [@aledbf](https://github.com/aledbf)
+- [proxy] Enable kube-rbac-proxy ([#5818](https://github.com/gitpod-io/gitpod/pull/5818)) - [@aledbf](https://github.com/aledbf)
 - [workspacekit] Update fuse-overlayfs to v1.7.1 ([#5794](https://github.com/gitpod-io/gitpod/pull/5794)) - [@aledbf](https://github.com/aledbf)
 - [workspacekit] Update libseccomp to v2.5.2 ([#5794](https://github.com/gitpod-io/gitpod/pull/5794)) - [@aledbf](https://github.com/aledbf)
 - [server] Update node to 12.22.6 and add additional binaries ([#5776](https://github.com/gitpod-io/gitpod/pull/5776)) - [@aledbf](https://github.com/aledbf)
