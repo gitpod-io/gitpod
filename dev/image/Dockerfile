@@ -7,6 +7,8 @@ FROM gitpod/workspace-full-vnc:latest
 ENV TRIGGER_REBUILD 15
 ENV WORKSPACE_KERNEL 5.4.0-1046-gke
 
+SHELL ["/bin/bash", "-c"]
+
 USER root
 
 ### QEMU (x86) and workspace kernel development tools
