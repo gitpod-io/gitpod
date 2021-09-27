@@ -7,7 +7,6 @@ package builder
 import (
 	"encoding/json"
 
-	"github.com/containerd/containerd/remotes/docker"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth"
 	"google.golang.org/grpc"
@@ -19,17 +18,27 @@ type authConfig struct {
 	Password string `json:"password"`
 }
 
-func newDockerAuthorizerFromEnvvar(content string) (at docker.Authorizer, err error) {
+type authorizerImpl map[string]authConfig
+
+func (a authorizerImpl) Authorize(host string) (user, pass string, err error) {
+	res, ok := a[host]
+	if !ok {
+		return "", "", nil
+	}
+	return res.Username, res.Password, nil
+}
+
+type Authorizer interface {
+	Authorize(host string) (user, pass string, err error)
+}
+
+func NewAuthorizerFromEnvVar(content string) (auth Authorizer, err error) {
 	var res map[string]authConfig
 	err = json.Unmarshal([]byte(content), &res)
 	if err != nil {
 		return
 	}
-
-	return docker.NewDockerAuthorizer(docker.WithAuthCreds(func(host string) (user, pass string, err error) {
-		cfg := res[host]
-		return cfg.Username, cfg.Password, nil
-	})), nil
+	return authorizerImpl(res), nil
 }
 
 func newAuthProviderFromEnvvar(content string) (at session.Attachable, err error) {
