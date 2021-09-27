@@ -262,7 +262,8 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
         case 'creating': // Fall through
         case 'initializing': // Fall  through
         case 'running': // Fall through
-        case 'interrupted':
+        case 'interrupted': // Fall through
+        case 'stopping':
             status = <div className="flex space-x-1 items-center text-blue-600">
                 <img className="h-4 w-4" src={StatusRunning} />
                 <span>RUNNING</span>
@@ -272,7 +273,6 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
                 <span>Prebuild in progress ...</span>
                 </div>;
             break;
-        case 'stopping': // Fall through
         case 'stopped':
             status = <div className="flex space-x-1 items-center text-green-600">
                 <img className="h-4 w-4" src={StatusDone} />
