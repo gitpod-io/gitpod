@@ -149,7 +149,11 @@ export class ProjectsService {
             const pbws = await this.workspaceDb.trace({}).findPrebuiltWorkspaceById(prebuildId);
             const info = (await this.workspaceDb.trace({}).findPrebuildInfos([prebuildId]))[0];
             if (info && pbws) {
-                result.push({ info, status: pbws.state });
+                const r: PrebuildWithStatus = { info, status: pbws.state };
+                if (pbws.error) {
+                    r.error = pbws.error;
+                }
+                result.push(r);
             }
         } else {
             let limit = params.limit !== undefined ? params.limit : 30;
@@ -159,7 +163,14 @@ export class ProjectsService {
             let branch = params.branch;
             const prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id, branch, limit);
             const infos = await this.workspaceDb.trace({}).findPrebuildInfos([...prebuilds.map(p => p.id)]);
-            result.push(...infos.map(info => ({ info, status: prebuilds.find(p => p.id === info.id)?.state! })));
+            result.push(...infos.map(info => {
+                const p = prebuilds.find(p => p.id === info.id)!;
+                const r: PrebuildWithStatus = { info, status: p.state };
+                if (p.error) {
+                    r.error = p.error;
+                }
+                return r;
+            }));
         }
         return result;
     }

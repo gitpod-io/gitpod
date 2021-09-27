@@ -110,6 +110,9 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         getGitpodService().server.watchWorkspaceImageBuildLogs(workspace!.id);
         break;
     }
+    if (workspaceInstance?.status.conditions.headlessTaskFailed) {
+      setError(new Error(workspaceInstance.status.conditions.headlessTaskFailed));
+    }
     if (workspaceInstance?.status.conditions.failed) {
       setError(new Error(workspaceInstance.status.conditions.failed));
     }
