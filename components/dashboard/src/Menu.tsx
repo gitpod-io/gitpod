@@ -33,11 +33,12 @@ export default function Menu() {
     const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
+    const visibleTeams = teams?.filter(team => { return Boolean(!team.markedDeleted) });
 
     const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/(t/)?:segment1/:segment2?/:segment3?");
     const projectName = (() => {
         const resource = match?.params?.segment2;
-        if (resource && !["projects", "members", "users", "workspaces"].includes(resource)) {
+        if (resource && !["projects", "members", "users", "workspaces", "settings"].includes(resource)) {
             return resource;
         }
     })();
@@ -107,8 +108,10 @@ export default function Menu() {
             ];
         }
         // Team menu
-        if (team) {
-            return [
+        if (team && teamMembers && teamMembers[team.id]) {
+            const currentUserInTeam = teamMembers[team.id].find(m => m.userId === user?.id);
+
+            const teamSettingsList = [
                 {
                     title: 'Projects',
                     link: `/t/${team.slug}/projects`,
@@ -123,6 +126,14 @@ export default function Menu() {
                     link: `/t/${team.slug}/members`
                 }
             ];
+            if (currentUserInTeam?.role === "owner") {
+                teamSettingsList.push({
+                    title: 'Settings',
+                    link: `/t/${team.slug}/settings`,
+                })
+            }
+
+            return teamSettingsList;
         }
         // User menu
         return [
@@ -178,7 +189,7 @@ export default function Menu() {
                             separator: true,
                             link: '/',
                         },
-                        ...(teams || []).map(t => ({
+                        ...(visibleTeams || []).map(t => ({
                             title: t.name,
                             customContent: <div className="w-full text-gray-400 flex flex-col">
                                 <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{t.name}</span>

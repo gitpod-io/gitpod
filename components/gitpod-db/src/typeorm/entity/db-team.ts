@@ -22,6 +22,9 @@ export class DBTeam {
   @Column("varchar")
   creationTime: string;
 
+  @Column()
+  markedDeleted?: boolean;
+
   // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
   @Column()
   deleted: boolean;

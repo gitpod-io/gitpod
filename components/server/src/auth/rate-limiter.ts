@@ -88,6 +88,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "removeTeamMember": { group: "default", points: 1 },
         "getGenericInvite": { group: "default", points: 1 },
         "resetGenericInvite": { group: "default", points: 1 },
+        "deleteTeam": { group: "default", points: 1 },
         "getProviderRepositoriesForUser":  { group: "default", points: 1 },
         "createProject":  { group: "default", points: 1 },
         "getTeamProjects": { group: "default", points: 1 },
