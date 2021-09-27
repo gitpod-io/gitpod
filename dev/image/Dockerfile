@@ -5,7 +5,7 @@
 FROM gitpod/workspace-full-vnc:latest
 
 ENV TRIGGER_REBUILD 15
-ENV WORKSPACE_KERNEL 5.4.0-1046-gke
+ENV WORKSPACE_KERNEL 5.4.0-1051-gke
 
 SHELL ["/bin/bash", "-c"]
 
