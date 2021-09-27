@@ -58,6 +58,14 @@ export default function Menu() {
     const showTeamsUI = user?.rolesOrPermissions?.includes('teams-and-projects');
     const team = getCurrentTeam(location, teams);
 
+    if (team) {
+        // updating last team selection
+        try {
+            localStorage.setItem('team-selection', team.slug);
+        } catch {
+        }
+    }
+
     // Hide most of the top menu when in a full-page form.
     const isMinimalUI = ['/new', '/teams/new'].includes(location.pathname);
 
@@ -268,7 +276,7 @@ export default function Menu() {
                 </div>
             </div>
             {!isMinimalUI && showTeamsUI && !prebuildId && <div className="flex">
-                {leftMenu.map((entry: Entry) => <TabMenuItem name={entry.title} selected={isSelected(entry, location)} link={entry.link}/>)}
+                {leftMenu.map((entry: Entry) => <TabMenuItem key={entry.title} name={entry.title} selected={isSelected(entry, location)} link={entry.link}/>)}
             </div>}
         </header>
         {showTeamsUI && <Separator />}

@@ -84,6 +84,22 @@ function App() {
                 setUser(user);
 
                 const teams = await teamsPromise;
+
+                {
+                    // if a team was selected previously and we call the root URL (e.g. "gitpod.io"),
+                    // let's continue with the team page
+                    const hash = getURLHash();
+                    const isRoot = window.location.pathname === '/' && hash === '';
+                    if (isRoot) {
+                        try {
+                            const teamSlug = localStorage.getItem('team-selection');
+                            if (teams.some(t => t.slug === teamSlug)) {
+                                history.push(`/t/${teamSlug}`);
+                            }
+                        } catch {
+                        }
+                    }
+                }
                 setTeams(teams);
             } catch (error) {
                 console.error(error);
@@ -260,7 +276,7 @@ function App() {
                     <Route exact path="/teams/new" component={NewTeam} />
                     <Route exact path="/teams/join" component={JoinTeam} />
                 </Route>
-                {(teams || []).map(team => <Route path={`/t/${team.slug}`}>
+                {(teams || []).map(team => <Route key={`route-for-team-${team.slug}`} path={`/t/${team.slug}`}>
                     <Route exact path={`/t/${team.slug}`}>
                         <Redirect to={`/t/${team.slug}/projects`} />
                     </Route>
