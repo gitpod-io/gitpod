@@ -265,6 +265,9 @@ function App() {
                         if (resourceOrPrebuild === "configure") {
                             return <ConfigureProject />;
                         }
+                        if (resourceOrPrebuild === "workspaces") {
+                            return <Workspaces />;
+                        }
                         if (resourceOrPrebuild === "prebuilds") {
                             return <Prebuilds />;
                         }
@@ -276,20 +279,27 @@ function App() {
                     <Route exact path="/teams/new" component={NewTeam} />
                     <Route exact path="/teams/join" component={JoinTeam} />
                 </Route>
-                {(teams || []).map(team => <Route key={`route-for-team-${team.slug}`} path={`/t/${team.slug}`}>
+                {(teams || []).map(team =>
+                <Route path={`/t/${team.slug}`} key={team.slug}>
                     <Route exact path={`/t/${team.slug}`}>
-                        <Redirect to={`/t/${team.slug}/projects`} />
+                        <Redirect to={`/t/${team.slug}/workspaces`} />
                     </Route>
                     <Route exact path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`} render={(props) => {
                         const { maybeProject, resourceOrPrebuild } = props.match.params;
                         if (maybeProject === "projects") {
                             return <Projects />;
                         }
+                        if (maybeProject === "workspaces") {
+                            return <Workspaces />;
+                        }
                         if (maybeProject === "members") {
                             return <Members />;
                         }
                         if (resourceOrPrebuild === "configure") {
                             return <ConfigureProject />;
+                        }
+                        if (resourceOrPrebuild === "workspaces") {
+                            return <Workspaces />;
                         }
                         if (resourceOrPrebuild === "prebuilds") {
                             return <Prebuilds />;

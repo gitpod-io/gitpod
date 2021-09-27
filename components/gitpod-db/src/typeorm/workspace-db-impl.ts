@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder } from "typeorm";
+import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import { MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
 import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "./typeorm";
@@ -144,13 +144,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             // We need to put the subquery into the join condition (ON) here to be able to reference `ws.id` which is
             // not possible in a subquery on JOIN (e.g. 'LEFT JOIN (SELECT ... WHERE i.workspaceId = ws.id)')
             .leftJoinAndMapOne('ws.latestInstance', DBWorkspaceInstance, 'wsi',
-                `wsi.id = (
-                    SELECT i.id
-                    FROM d_b_workspace_instance AS i
-                    WHERE i.workspaceId = ws.id
-                    ORDER BY i.creationTime DESC
-                    LIMIT 1
-                )`
+                `wsi.id = (SELECT i.id FROM d_b_workspace_instance AS i WHERE i.workspaceId = ws.id ORDER BY i.creationTime DESC LIMIT 1)`
             )
             .leftJoin((qb) => {
                 return qb.select('workspaceId')
@@ -172,10 +166,23 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         if (options.pinnedOnly) {
             qb.andWhere("ws.pinned = true");
         }
-        if (options.projectId) {
-            qb.andWhere('ws.projectId = :projectId', { projectId: options.projectId })
+        const projectIds = typeof options.projectId === 'string' ? [options.projectId] : options.projectId;
+        if (Array.isArray(projectIds)) {
+            if (projectIds.length === 0 && !options.includeWithoutProject) {
+                // user passed an empty array of projectids and also is not interested in unassigned workspaces -> no results
+                return [];
+            }
+            qb.andWhere(new Brackets(qb => {
+                if (projectIds.length > 0) {
+                    qb.where('ws.projectId IN (:pids)', { pids: projectIds });
+                    if (options.includeWithoutProject) {
+                        qb.orWhere("ws.projectId IS NULL");
+                    }
+                } else if (options.includeWithoutProject) {
+                    qb.where("ws.projectId IS NULL");
+                }
+            }));
         }
-
         const rawResults = await qb.getMany() as any as (Workspace & { latestInstance?: WorkspaceInstance })[]; // see leftJoinAndMapOne above
         return rawResults.map(r => {
             const workspace = { ...r };

@@ -25,6 +25,9 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
     readonly timeWs = new Date(2018, 2, 16, 10, 0, 0).toISOString();
     readonly timeBefore = new Date(2018, 2, 16, 11, 5, 10).toISOString();
     readonly timeAfter = new Date(2019, 2, 16, 11, 5, 10).toISOString();
+    readonly userId = '12345';
+    readonly projectAID = 'projectA';
+    readonly projectBID = 'projectB';
     readonly ws: Workspace = {
         id: '1',
         type: 'regular',
@@ -34,10 +37,11 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             image: '',
             tasks: []
         },
+        projectId: this.projectAID,
         context: { title: 'example' },
         contextURL: 'example.org',
         description: 'blabla',
-        ownerId: '12345'
+        ownerId: this.userId
     };
     readonly wsi1: WorkspaceInstance = {
         workspaceId: this.ws.id,
@@ -90,10 +94,11 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             image: '',
             tasks: []
         },
+        projectId: this.projectBID,
         context: { title: 'example' },
         contextURL: 'https://github.com/gitpod-io/gitpod',
         description: 'Gitpod',
-        ownerId: '12345'
+        ownerId: this.userId
     };
     readonly ws2i1: WorkspaceInstance = {
         workspaceId: this.ws2.id,
@@ -345,6 +350,102 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
 
             // It should select the workspace instance that was queried, not the most recent one
             expect(workspaceAndInstance.instanceId).to.eq(this.wsi1.id)
+        });
+    }
+
+    @test(timeout(10000))
+    public async testFind_ByProjectIds() {
+        await this.db.transaction(async db => {
+            await Promise.all([
+                db.store(this.ws),
+                db.storeInstance(this.wsi1),
+                db.storeInstance(this.wsi2),
+                db.store(this.ws2),
+                db.storeInstance(this.ws2i1),
+            ]);
+            const dbResult = await db.find({
+                userId: this.userId,
+                includeHeadless: false,
+                projectId: [this.projectAID],
+                includeWithoutProject: false
+            });
+
+            // It should only find one workspace instance
+            expect(dbResult.length).to.eq(1);
+
+            expect(dbResult[0].workspace.id).to.eq(this.ws.id);
+        });
+    }
+
+    @test(timeout(10000))
+    public async testFind_ByProjectIds_01() {
+        await this.db.transaction(async db => {
+            await Promise.all([
+                db.store(this.ws),
+                db.storeInstance(this.wsi1),
+                db.storeInstance(this.wsi2),
+                db.store(this.ws2),
+                db.storeInstance(this.ws2i1),
+            ]);
+            const dbResult = await db.find({
+                userId: this.userId,
+                includeHeadless: false,
+                projectId: [this.projectBID],
+                includeWithoutProject: false
+            });
+
+            // It should only find one workspace instance
+            expect(dbResult.length).to.eq(1);
+
+            expect(dbResult[0].workspace.id).to.eq(this.ws2.id);
+        });
+    }
+
+    @test(timeout(10000))
+    public async testFind_ByProjectIds_02() {
+        await this.db.transaction(async db => {
+            await Promise.all([
+                db.store(this.ws),
+                db.storeInstance(this.wsi1),
+                db.storeInstance(this.wsi2),
+                db.store(this.ws2),
+                db.storeInstance(this.ws2i1),
+            ]);
+            const dbResult = await db.find({
+                userId: this.userId,
+                includeHeadless: false,
+                projectId: [this.projectAID, this.projectBID],
+                includeWithoutProject: false
+            });
+
+            expect(dbResult.length).to.eq(2);
+
+            expect(dbResult[0].workspace.id).to.eq(this.ws.id);
+            expect(dbResult[1].workspace.id).to.eq(this.ws2.id);
+        });
+    }
+
+    @test(timeout(10000))
+    public async testFind_ByProjectIds_03() {
+        await this.db.transaction(async db => {
+            await Promise.all([
+                db.store(this.ws),
+                db.storeInstance(this.wsi1),
+                db.storeInstance(this.wsi2),
+                db.store(this.ws2),
+                db.storeInstance(this.ws2i1),
+            ]);
+            const dbResult = await db.find({
+                userId: this.userId,
+                includeHeadless: false,
+                projectId: [],
+                includeWithoutProject: false
+            });
+
+            expect(dbResult.length).to.eq(0);
+
+            // expect(dbResult[0].workspace.id).to.eq(this.ws.id);
+            // expect(dbResult[1].workspace.id).to.eq(this.ws2.id);
         });
     }
 }

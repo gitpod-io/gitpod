@@ -8,6 +8,7 @@
     "build:clean": "yarn clean && yarn build",
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",
+    "test": "leeway build components/gitpod-db:dbtest",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
     "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
     "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",

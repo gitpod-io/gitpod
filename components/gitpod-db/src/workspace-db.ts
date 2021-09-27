@@ -13,7 +13,8 @@ export type MaybeWorkspaceInstance = WorkspaceInstance | undefined;
 
 export interface FindWorkspacesOptions {
     userId: string
-    projectId?: string
+    projectId?: string | string[]
+    includeWithoutProject?: boolean;
     limit?: number
     searchString?: string
     includeHeadless?: boolean
