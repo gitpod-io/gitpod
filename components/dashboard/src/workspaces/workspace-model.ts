@@ -13,6 +13,7 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     protected currentlyFetching = new Set<string>();
     protected disposables = new DisposableCollection();
     protected internalLimit = 50;
+    public initialized = false;
 
     get limit(): number {
         return this.internalLimit;
@@ -23,33 +24,50 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
         this.internalRefetch();
     }
 
-    constructor(protected setWorkspaces: (ws: WorkspaceInfo[]) => void) {
+    constructor(
+            protected setActiveWorkspaces: (ws: WorkspaceInfo[]) => void,
+            protected setInActiveWorkspaces: (ws: WorkspaceInfo[]) => void,
+            protected projectIds: Promise<string[]>,
+            protected includeWithoutProject?: boolean) {
         this.internalRefetch();
     }
 
-    protected internalRefetch() {
+    protected async internalRefetch(): Promise<void> {
         this.disposables.dispose();
         this.disposables = new DisposableCollection();
-        getGitpodService().server.getWorkspaces({
-            limit: this.internalLimit
-        }).then( infos => {
-            this.updateMap(infos);
-            // Additional fetch pinned workspaces
-            // see also: https://github.com/gitpod-io/gitpod/issues/4488
+        const [infos, pinned] = await Promise.all([
+            getGitpodService().server.getWorkspaces({
+                limit: this.internalLimit,
+                projectId: await this.projectIds,
+                includeWithoutProject: !!this.includeWithoutProject
+            }),
             getGitpodService().server.getWorkspaces({
                 limit: this.internalLimit,
                 pinnedOnly: true,
-            }).then(infos => {
-                this.updateMap(infos);
-                this.notifyWorkpaces();
-            });
-        });
+                projectId: await this.projectIds,
+                includeWithoutProject: !!this.includeWithoutProject
+            })
+        ]);
+
+        this.updateMap(infos);
+        // Additional fetch pinned workspaces
+        // see also: https://github.com/gitpod-io/gitpod/issues/4488
+        this.updateMap(pinned);
+        this.notifyWorkpaces();
         this.disposables.push(getGitpodService().registerClient(this));
     }
 
     protected updateMap(workspaces: WorkspaceInfo[]) {
         for (const ws of workspaces) {
             this.workspaces.set(ws.workspace.id, ws);
+        }
+    }
+
+    protected async isIncluded(info: WorkspaceInfo): Promise<boolean> {
+        if (info.workspace.projectId) {
+            return (await this.projectIds).some(id => id === info.workspace.projectId);
+        } else {
+            return !!this.includeWithoutProject;
         }
     }
 
@@ -69,7 +87,7 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
                 try {
                     this.currentlyFetching.add(instance.workspaceId);
                     const info = await getGitpodService().server.getWorkspace(instance.workspaceId);
-                    if (info.workspace.type === 'regular') {
+                    if (info.workspace.type === 'regular' && await this.isIncluded(info)) {
                         this.workspaces.set(instance.workspaceId, info);
                         this.notifyWorkpaces();
                     }
@@ -86,16 +104,6 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
         this.notifyWorkpaces();
     }
 
-    protected internalActive = true;
-    get active() {
-        return this.internalActive;
-    }
-    set active(active: boolean) {
-        if (active !== this.internalActive) {
-            this.internalActive = active;
-            this.notifyWorkpaces();
-        }
-    }
     searchTerm: string | undefined;
     setSearch(searchTerm: string) {
         if (searchTerm !== this.searchTerm) {
@@ -123,15 +131,18 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     }
 
     protected notifyWorkpaces(): void {
+        this.initialized = true;
         let infos = Array.from(this.workspaces.values());
-        infos = infos.filter(ws => !this.active || this.isActive(ws));
         if (this.searchTerm) {
             infos = infos.filter(ws => (ws.workspace.description+ws.workspace.id+ws.workspace.contextURL+ws.workspace.context).toLowerCase().indexOf(this.searchTerm!.toLowerCase()) !== -1);
         }
         infos = infos.sort((a,b) => {
            return WorkspaceInfo.lastActiveISODate(b).localeCompare(WorkspaceInfo.lastActiveISODate(a));
         });
-        this.setWorkspaces(infos.slice(0, this.internalLimit));
+        const activeInfo = infos.filter(ws => this.isActive(ws));
+        const inActiveInfo = infos.filter(ws => !this.isActive(ws));
+        this.setActiveWorkspaces(activeInfo);
+        this.setInActiveWorkspaces(inActiveInfo.slice(0, this.internalLimit - activeInfo.length));
     }
 
     protected isActive(info: WorkspaceInfo): boolean {

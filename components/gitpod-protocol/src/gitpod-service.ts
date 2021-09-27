@@ -313,7 +313,8 @@ export namespace GitpodServer {
         limit?: number;
         searchString?: string;
         pinnedOnly?: boolean;
-        projectId?: string;
+        projectId?: string | string[];
+        includeWithoutProject?: boolean;
     }
     export interface GetAccountStatementOptions {
         date?: string;

@@ -43,7 +43,7 @@ export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
         <div className="border-t border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 pt-2">
             <div className="flex">
                 <TabMenuItem name='Recent' selected={selection === 'Recent'} onClick={() => setSelection('Recent')} />
-                <TabMenuItem name='Examples' selected={selection === 'Examples'} onClick={() => setSelection('Examples')} />
+                {p.examples.length>0 && <TabMenuItem name='Examples' selected={selection === 'Examples'} onClick={() => setSelection('Examples')} />}
             </div>
         </div>
         <div className="border-t border-gray-200 dark:border-gray-800 -mx-6 px-6 py-2">
