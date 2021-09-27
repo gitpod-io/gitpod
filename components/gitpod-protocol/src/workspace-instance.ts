@@ -145,6 +145,9 @@ export interface WorkspaceInstanceConditions {
 
     // ISO8601 timestamp when the first user activity was registered in the frontend. Only set if the workspace is running.
     firstUserActivity?: string;
+
+    // headless_task_failed indicates that a headless workspace task failed
+    headlessTaskFailed?: string;
 }
 
 // AdmissionLevel describes who can access a workspace instance and its ports.
