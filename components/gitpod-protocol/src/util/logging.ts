@@ -125,14 +125,8 @@ export namespace log {
 
         // set/unset log functions based on loglevel so we only have to evaluate once, not every call
         const noop = () => {};
-        const setLog = (logFunc: (calleViaConsole: boolean, args: any[]) => void, funcLvl: LogrusLogLevel): (() => void) => {
-            if (LogrusLogLevel.isGreatherOrEqual(funcLvl, logLevel)) {
-                return function (...args: any[]): void {
-                    logFunc(true, args);
-                };
-            } else {
-                return noop;
-            }
+        const setLog = (logFunc: DoLogFunction, funcLevel: LogrusLogLevel): DoLogFunction => {
+            return LogrusLogLevel.isGreatherOrEqual(funcLevel, logLevel) ? logFunc : noop;
         };
 
         errorLog = setLog(doErrorLog, "error");
@@ -155,6 +149,8 @@ export namespace log {
         version = versionArg;
     }
 }
+
+type DoLogFunction = (calledViaConsole: boolean, args: any[]) => void;
 
 let errorLog = doErrorLog;
 function doErrorLog(calledViaConsole: boolean, args: any[]): void {
