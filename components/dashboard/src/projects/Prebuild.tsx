@@ -7,15 +7,17 @@
 import moment from "moment";
 import { PrebuildWithStatus, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { useLocation, useRouteMatch } from "react-router";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import PrebuildLogs from "../components/PrebuildLogs";
+import Spinner from "../icons/Spinner.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { PrebuildInstanceStatus } from "./Prebuilds";
 import { shortCommitMessage } from "./render-utils";
 
 export default function () {
+    const history = useHistory();
     const location = useLocation();
 
     const { teams } = useContext(TeamsContext);
@@ -27,6 +29,7 @@ export default function () {
 
     const [ prebuild, setPrebuild ] = useState<PrebuildWithStatus | undefined>();
     const [ prebuildInstance, setPrebuildInstance ] = useState<WorkspaceInstance | undefined>();
+    const [ isRerunningPrebuild, setIsRerunningPrebuild ] = useState<boolean>(false);
 
     useEffect(() => {
         if (!teams || !projectName || !prebuildId) {
@@ -76,6 +79,22 @@ export default function () {
         setPrebuildInstance(instance);
     }
 
+    const rerunPrebuild = async () => {
+        if (!prebuild) {
+            return;
+        }
+        setIsRerunningPrebuild(true);
+        try {
+            await getGitpodService().server.triggerPrebuild(prebuild.info.projectId, prebuild.info.branch);
+            // TODO: Open a Prebuilds page that's specific to `prebuild.info.branch`?
+            history.push(`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/prebuilds`);
+        } catch (error) {
+            console.error('Could not rerun prebuild', error);
+        } finally {
+            setIsRerunningPrebuild(false);
+        }
+    }
+
     useEffect(() => { document.title = 'Prebuild — Gitpod' }, []);
 
     return <>
@@ -88,9 +107,14 @@ export default function () {
                 <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
                     {prebuildInstance && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} />}
                     <div className="flex-grow" />
-                    {prebuildInstance?.status.phase === "stopped"
-                        ? <a className="my-auto" href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}><button>New Workspace</button></a>
-                        : <button disabled={true}>New Workspace</button>}
+                    {(prebuild?.status === 'aborted' || prebuild?.status === 'timeout' || !!prebuild?.error)
+                        ? <button className="flex items-center space-x-2" disabled={isRerunningPrebuild} onClick={rerunPrebuild}>
+                            {isRerunningPrebuild && <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />}
+                            <span>Rerun Prebuild ({prebuild.info.branch})</span>
+                        </button>
+                        : (prebuild?.status === 'available'
+                            ? <a className="my-auto" href={gitpodHostUrl.withContext(`${prebuild?.info.changeUrl}`).toString()}><button>New Workspace ({prebuild?.info.branch})</button></a>
+                            : <button disabled={true}>New Workspace ({prebuild?.info.branch})</button>)}
                 </div>
             </div>
         </div>

@@ -75,7 +75,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
 
   useEffect(() => {
     if (terminalRef.current && props.errorMessage) {
-      terminalRef.current.write(`\r\n\u001b[38;5;196m${props.errorMessage}\u001b[0m`);
+      terminalRef.current.write(`\r\n\u001b[38;5;196m${props.errorMessage}\u001b[0m\r\n`);
     }
   }, [ terminalRef.current, props.errorMessage ]);
 

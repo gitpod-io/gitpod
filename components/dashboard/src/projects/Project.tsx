@@ -13,7 +13,6 @@ import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
-import { ContextMenuEntry } from "../components/ContextMenu";
 import { shortCommitMessage, toRemoteURL } from "./render-utils";
 import Spinner from "../icons/Spinner.svg";
 import NoAccess from "../icons/NoAccess.svg";
@@ -120,15 +119,6 @@ export default function () {
         });
     };
 
-    const branchContextMenu = (branch: Project.BranchDetails) => {
-        const entries: ContextMenuEntry[] = [];
-        entries.push({
-            title: "Rerun Prebuild",
-            onClick: () => triggerPrebuild(branch),
-        });
-        return entries;
-    }
-
     const lastPrebuild = (branch: Project.BranchDetails) => {
         const lastPrebuild = lastPrebuilds.get(branch.name);
         if (!lastPrebuild) {
@@ -211,18 +201,17 @@ export default function () {
                     </div>}
                     {branches.filter(filter).slice(0, 10).map((branch, index) => {
 
-                        const branchName = branch.name;
                         const prebuild = lastPrebuild(branch); // this might lazily trigger fetching of prebuild details
 
                         const avatar = branch.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={branch.changeAuthorAvatar || ''} alt={branch.changeAuthor} />;
-                        const statusIcon = prebuildStatusIcon(prebuild?.status);
-                        const status = prebuildStatusLabel(prebuild?.status);
+                        const statusIcon = prebuildStatusIcon(prebuild);
+                        const status = prebuildStatusLabel(prebuild);
 
-                        return <Item key={`branch-${index}-${branchName}`} className="grid grid-cols-3 group">
+                        return <Item key={`branch-${index}-${branch.name}`} className="grid grid-cols-3 group">
                             <ItemField className="flex items-center">
                                 <div>
                                     <a href={branch.url}><div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1">
-                                        {branchName}
+                                        {branch.name}
                                         {branch.isDefault && (<span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">DEFAULT</span>)}
                                     </div></a>
                                 </div>
@@ -241,7 +230,12 @@ export default function () {
                                 <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
                                     <button className={`primary mr-2 py-2 opacity-0 group-hover:opacity-100`}>New Workspace</button>
                                 </a>
-                                <ItemFieldContextMenu className="py-0.5" menuEntries={branchContextMenu(branch)} />
+                                <ItemFieldContextMenu className="py-0.5" menuEntries={(!prebuild || prebuild.status === 'aborted' || prebuild.status === 'timeout' || !!prebuild.error)
+                                    ? [{
+                                        title: `${prebuild ? 'Rerun' : 'Run'} Prebuild (${branch.name})`,
+                                        onClick: () => triggerPrebuild(branch),
+                                    }]
+                                    : []} />
                             </ItemField>
                         </Item>
                     }

@@ -57,6 +57,7 @@ export namespace Project {
 export interface PrebuildWithStatus {
     info: PrebuildInfo;
     status: PrebuiltWorkspaceState;
+    error?: string;
 }
 
 export interface PrebuildInfo {
