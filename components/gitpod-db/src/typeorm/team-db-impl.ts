@@ -145,6 +145,15 @@ export class TeamDBImpl implements TeamDB {
         return team;
     }
 
+    public async deleteTeam(teamId: string): Promise<void> {
+        const teamRepo = await this.getTeamRepo();
+        const team = await this.findTeamById(teamId);
+        if (team) {
+            team.markedDeleted = true;
+            await teamRepo.save(team);
+        }
+    }
+
     public async addMemberToTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOneById(teamId);

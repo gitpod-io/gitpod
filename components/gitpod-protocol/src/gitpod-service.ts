@@ -123,6 +123,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     removeTeamMember(teamId: string, userId: string): Promise<void>;
     getGenericInvite(teamId: string): Promise<TeamMembershipInvite>;
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
+    deleteTeam(teamId: string, userId: string): Promise<void>;
 
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
