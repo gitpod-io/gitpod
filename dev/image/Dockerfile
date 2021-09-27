@@ -5,7 +5,7 @@
 FROM gitpod/workspace-full-vnc:latest
 
 ENV TRIGGER_REBUILD 14
-ENV WORKSPACE_KERNEL 5.4.0-1046-gke
+ENV WORKSPACE_KERNEL 5.4.0-1051-gke
 
 USER root
 
@@ -68,7 +68,7 @@ RUN cd /usr/bin && curl -L https://github.com/praetorian-inc/gokart/releases/dow
 
 # leeway
 ENV LEEWAY_NESTED_WORKSPACE=true
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.6/leeway_0.2.6_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.7/leeway_0.2.7_Linux_x86_64.tar.gz | tar xz
 
 # dazzle
 RUN cd /usr/bin && curl -fsSL https://github.com/32leaves/dazzle/releases/download/v0.0.3/dazzle_0.0.3_Linux_x86_64.tar.gz | tar xz
