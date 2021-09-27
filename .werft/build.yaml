@@ -1,8 +1,15 @@
 # debug using `werft run github -f -s .werft/build.js -j .werft/build.yaml -a debug=true`
 pod:
   serviceAccount: werft
-  nodeSelector:
-    cloud.google.com/gke-nodepool: builds
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: dev/workload
+            operator: In
+            values:
+            - "builds"
   volumes:
   - name: monitoring-satellite-preview-token
     secret:
