@@ -2,8 +2,15 @@
 # this werft job is periodically run every night
 pod:
   serviceAccount: werft
-  nodeSelector:
-    cloud.google.com/gke-nodepool: builds
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: dev/workload
+            operator: In
+            values:
+            - "builds"
   containers:
   - name: build
     image: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.24
