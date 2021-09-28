@@ -48,9 +48,14 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	}
 	cgCustomizer := &CgroupCustomizer{}
 	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupsBasePath)
+	markUnmountFallback, err := NewMarkUnmountFallback(reg)
+	if err != nil {
+		return nil, err
+	}
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
 		resources.NewDispatchListener(&config.Resources, reg),
 		cgCustomizer,
+		markUnmountFallback,
 	)
 	if err != nil {
 		return nil, err

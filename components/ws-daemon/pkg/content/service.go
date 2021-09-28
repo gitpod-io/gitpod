@@ -5,17 +5,13 @@
 package content
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
@@ -24,12 +20,9 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -263,10 +256,15 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.Worksp
 			ContentManifest:       req.ContentManifest,
 			RemoteStorageDisabled: req.RemoteStorageDisabled,
 
-			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, req.Id+"-daemon"),
-			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, req.Id+"-daemon"),
+			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, ServiceDirName(req.Id)),
+			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, ServiceDirName(req.Id)),
 		}, nil
 	}
+}
+
+// ServiceDirName produces the directory name for a workspace
+func ServiceDirName(instanceID string) string {
+	return instanceID + "-daemon"
 }
 
 // getCheckoutLocation returns the first checkout location found of any Git initializer configured by this request
@@ -368,16 +366,6 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot delete workspace from store")
 		span.LogKV("error", err.Error())
 		return nil, status.Error(codes.Internal, "cannot delete workspace from store")
-	}
-
-	// Important:
-	// If ws-daemon is killed or restarts, the new ws-daemon pod mount table contains the
-	// node's current state, i.e., it has all the running workspaces running in the node.
-	// Unmounting the mark in Teardown (nsenter) works from inside the workspace,
-	// but the mount is still present in ws-daemon mount table. Unmounting the mark from
-	// ws-daemon is required to ensure the proper termination of the workspace pod.
-	if err := unmountMark(sess.ServiceLocDaemon); err != nil {
-		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot unmount mark mount")
 	}
 
 	// remove workspace daemon directory in the node
@@ -786,49 +774,4 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 		session.WorkspaceReady:        {setupWorkspace, startIWS},
 		session.WorkspaceDisposed:     {iws.StopServingWorkspace},
 	}
-}
-
-// if the mark mount still exists in /proc/mounts it means we failed to unmount it and
-// we cannot remove the content. As a side effect the pod will stay in Terminating state
-func unmountMark(dir string) error {
-	mounts, err := ioutil.ReadFile("/proc/mounts")
-	if err != nil {
-		return xerrors.Errorf("cannot read /proc/mounts: %w", err)
-	}
-
-	path := fromPartialMount(filepath.Join(dir, "mark"), mounts)
-	// empty path means no mount found
-	if path == "" {
-		return nil
-	}
-
-	// in some scenarios we need to wait for the unmount
-	var errorFn = func(err error) bool {
-		return strings.Contains(err.Error(), "device or resource busy")
-	}
-
-	return retry.OnError(wait.Backoff{
-		Steps:    5,
-		Duration: 1 * time.Second,
-		Factor:   5.0,
-		Jitter:   0.1,
-	}, errorFn, func() error {
-		return unix.Unmount(path, 0)
-	})
-}
-
-func fromPartialMount(path string, info []byte) string {
-	scanner := bufio.NewScanner(bytes.NewReader(info))
-	for scanner.Scan() {
-		mount := strings.Split(scanner.Text(), " ")
-		if len(mount) < 2 {
-			continue
-		}
-
-		if strings.Contains(mount[1], path) {
-			return mount[1]
-		}
-	}
-
-	return ""
 }
