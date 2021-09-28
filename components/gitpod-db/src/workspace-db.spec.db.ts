@@ -122,6 +122,42 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
         deleted: false
     };
 
+    readonly ws3: Workspace = {
+        id: '3',
+        type: 'regular',
+        creationTime: this.timeWs,
+        config: {
+            ports: [],
+            image: '',
+            tasks: []
+        },
+        context: { title: 'example' },
+        contextURL: 'example.org',
+        description: 'blabla',
+        ownerId: this.userId
+    };
+    readonly ws3i1: WorkspaceInstance = {
+        workspaceId: this.ws3.id,
+        id: '3_1',
+        ideUrl: 'example.org',
+        region: 'unknown',
+        workspaceImage: 'abc.io/test/image:123',
+        creationTime: this.timeBefore,
+        startedTime: undefined,
+        deployedTime: undefined,
+        stoppingTime: undefined,
+        stoppedTime: undefined,
+        status: {
+            phase: "preparing",
+            conditions: {},
+        },
+        configuration: {
+            theiaVersion: "unknown",
+            ideImage: "unknown"
+        },
+        deleted: false
+    };
+
     async before() {
         await this.wipeRepo();
     }
@@ -446,6 +482,57 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
 
             // expect(dbResult[0].workspace.id).to.eq(this.ws.id);
             // expect(dbResult[1].workspace.id).to.eq(this.ws2.id);
+        });
+    }
+
+    @test(timeout(10000))
+    public async testFind_ByProjectIds_04() {
+        await this.db.transaction(async db => {
+            await Promise.all([
+                db.store(this.ws),
+                db.storeInstance(this.wsi1),
+                db.storeInstance(this.wsi2),
+                db.store(this.ws2),
+                db.storeInstance(this.ws2i1),
+                db.store(this.ws3),
+                db.storeInstance(this.ws3i1),
+            ]);
+            const dbResult = await db.find({
+                userId: this.userId,
+                includeHeadless: false,
+                projectId: [],
+                includeWithoutProject: true
+            });
+
+            expect(dbResult.length).to.eq(1);
+
+            expect(dbResult[0].workspace.id).to.eq(this.ws3.id);
+        });
+    }
+
+    @test(timeout(10000))
+    public async testFind_ByProjectIds_05() {
+        await this.db.transaction(async db => {
+            await Promise.all([
+                db.store(this.ws),
+                db.storeInstance(this.wsi1),
+                db.storeInstance(this.wsi2),
+                db.store(this.ws2),
+                db.storeInstance(this.ws2i1),
+                db.store(this.ws3),
+                db.storeInstance(this.ws3i1),
+            ]);
+            const dbResult = await db.find({
+                userId: this.userId,
+                includeHeadless: false,
+                projectId: [this.projectBID],
+                includeWithoutProject: true
+            });
+
+            expect(dbResult.length).to.eq(2);
+
+            expect(dbResult[0].workspace.id).to.eq(this.ws2.id);
+            expect(dbResult[1].workspace.id).to.eq(this.ws3.id);
         });
     }
 }
