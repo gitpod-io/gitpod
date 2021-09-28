@@ -21,7 +21,7 @@ export default function () {
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
 
-    const match = useRouteMatch<{ team: string, project: string, branchName: string }>("/(t/)?:team/:project/:branchname");
+    const match = useRouteMatch<{ team: string, project: string, branchName: string }>("/(t/)?:team/:project/:branchName");
     const projectName = match?.params?.project;
     const branchName = match?.params?.branchName;
 
