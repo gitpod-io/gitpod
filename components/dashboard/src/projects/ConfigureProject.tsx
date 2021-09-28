@@ -178,7 +178,7 @@ export default function () {
         <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
           {prebuildWasTriggered && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} />}
           <div className="flex-grow" />
-          {(prebuildInstance?.status.phase === "stopped" && !prebuildInstance?.status.conditions.failed)
+          {((!isDetecting && isEditorDisabled) || (prebuildInstance?.status.phase === "stopped" && !prebuildInstance?.status.conditions.failed))
               ? <a className="my-auto" href={`/#${project?.cloneUrl}`}><button className="secondary">New Workspace</button></a>
               : <button disabled={true} className="secondary">New Workspace</button>}
           <button disabled={isDetecting || (prebuildWasTriggered && prebuildInstance?.status.phase !== "stopped")} onClick={buildProject}>Run Prebuild</button>
