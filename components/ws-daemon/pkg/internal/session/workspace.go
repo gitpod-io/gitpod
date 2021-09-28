@@ -69,6 +69,8 @@ type Workspace struct {
 
 	RemoteStorageDisabled bool `json:"remoteStorageDisabled,omitempty"`
 
+	XFSProjectID int `json:"xfsProjectID"`
+
 	NonPersistentAttrs map[string]interface{} `json:"-"`
 
 	store              *Store
