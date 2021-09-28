@@ -315,9 +315,9 @@ func RunInitializerChild() (err error) {
 
 	initSource, err := wsinit.InitializeWorkspace(ctx, "/dst", rs,
 		wsinit.WithInitializer(initializer),
-		wsinit.WithCleanSlate,
 		wsinit.WithMappings(initmsg.IDMappings),
 		wsinit.WithChown(initmsg.UID, initmsg.GID),
+		wsinit.WithCleanSlate,
 	)
 	if err != nil {
 		return err
