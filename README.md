@@ -8,12 +8,15 @@
 
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/from-referrer/)
 [![Werft.dev - Gitpod CI](https://img.shields.io/badge/Werft.dev-CI--builds-green)](https://werft.gitpod-dev.com/)
+[![Discord](https://img.shields.io/discord/816244985187008514)](https://www.gitpod.io/chat)
 
-Gitpod is an open-source Kubernetes application for automated and ready-to-code development environments that blends in your existing workflow. It enables you to describe your dev environment as code and start instant and fresh development environments for each new task directly from your browser.
+Gitpod is an open-source Kubernetes application for ready-to-code developer environments that spins up fresh, automated dev environments
+for each task, in the cloud, in seconds. It enables you to describe your dev environment as code and start instant, remote and cloud-based developer environments directly from your browser or your Desktop IDE.  
 
 Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and continuously prebuilds dev environments for all your branches. As a result, team members can instantly start coding with fresh, ephemeral and fully-compiled dev environments - no matter if you are building a new feature, want to fix a bug or do a code review.
 
-![image](https://user-images.githubusercontent.com/120486/116072013-40a8aa00-a697-11eb-846b-89e6f5e1a82e.png)
+![browser-vscode](https://user-images.githubusercontent.com/22498066/135150975-23bba3a6-f099-48c5-83ed-a1a6627ff0e9.png)
+
 
 ## Features
 
@@ -31,17 +34,19 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 🛠 Professional & customizable developer experience - a Gitpod workspace gives you the same capabilities (yes, even [root & docker](https://www.gitpod.io/docs/feature-preview/#root-access)) as your Linux machine - pre-configured and optimized for your individual development workflow. Install any [VS Code extension](https://www.gitpod.io/docs/vscode-extensions/) with one click on a user and/or team level.
 
-[Learn more 👉](https://www.gitpod.io/features/)
+[Learn more 👉](https://www.gitpod.io/)
 
 Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free subscription for open-source or a [free self-hosted version](https://www.gitpod.io/self-hosted). An enterprise license is available [here](https://www.gitpod.io/self-hosted).
 
 ## Getting Started
 
 You can start using Gitpod with one or more of the following ways:
+1. Quick start using an [Example Project](https://www.gitpod.io/docs/quickstart) or [OSS Project](https://contribute.dev/)
+1. Getting started with [one of your existing projects](https://www.gitpod.io/docs/getting-started)
 1. [Use a Prefixed URL](https://www.gitpod.io/docs/getting-started/#prefixed-url)
 1. [Install Browser Extension](https://www.gitpod.io/docs/getting-started#browser-extension)
 1. [Enable GitLab Integration](https://www.gitpod.io/docs/gitlab-integration#gitlab-integration)
-1. Quick start using an [Example Project](https://www.gitpod.io/docs/quickstart) or [OSS Project](https://contribute.dev/)
+
 
 ## Documentation
 
@@ -63,11 +68,10 @@ You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/is
 
 ## Development Process
 
-We work with quarterly roadmaps in monthly iterations.
+We work with quarterly roadmaps in autonomous product teams. 
 
- - [Development Process](https://www.notion.so/gitpod/Development-Process-2b105f72847440ec8f4a1d87ac25801b)
- - [Product Roadmap](https://www.notion.so/gitpod/Product-Roadmap-b9b5eac0a15147ac8d2dd25cf0519203)
- - [Architectural Roadmap](https://www.notion.so/gitpod/Architecture-Roadmap-4669b58fc9cc45488a0a094d2a596886)
+ - [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
+ - [Product Roadmap](https://github.com/gitpod-io/roadmap)
 
 ## Related Projects
 
@@ -77,6 +81,7 @@ To this end we've developed a number of open source projects including:
 1. [**Werft**](https://github.com/csweichel/werft) - A Kubernetes native CI system
 1. [**Leeway**](https://github.com/gitpod-io/leeway) - A heavily caching build system
 1. [**Dazzle**](https://github.com/gitpod-io/dazzle/) - An experimental Docker image builder
+1. [**OpenVSCode Server**](https://github.com/gitpod-io/openvscode-server) - Run the latest VS Code on a remote machine accessed through a browser
 
 ## Code of Conduct
 
