@@ -22,6 +22,13 @@ export class GitLabAppSupport {
         const api = new Gitlab({ oauthToken });
 
         const result: ProviderRepository[] = [];
+        const ownersRepos: ProviderRepository[] = [];
+
+        const identity = params.user.identities.find(i => i.authProviderId === "Public-GitLab");
+        if (!identity) {
+            return result;
+        }
+        const usersGitLabAccount = identity.authName;
 
         // cf. https://docs.gitlab.com/ee/api/projects.html#list-all-projects
         // we are listing only those projects with access level of maintainers.
@@ -34,10 +41,11 @@ export class GitLabAppSupport {
             const cloneUrl = anyProject.http_url_to_repo as string;
             const updatedAt = anyProject.last_activity_at as string;
             const accountAvatarUrl = anyProject.owner?.avatar_url as string;
+            const account = fullPath.split("/")[0];
 
-            result.push({
+            (account === usersGitLabAccount ? ownersRepos : result).push({
                 name: project.name,
-                account: fullPath.split("/")[0],
+                account,
                 cloneUrl,
                 updatedAt,
                 accountAvatarUrl,
@@ -45,6 +53,8 @@ export class GitLabAppSupport {
             })
         }
 
+        // put owner's repos first. the frontend will pick first account to continue with
+        result.unshift(...ownersRepos);
         return result;
     }
 

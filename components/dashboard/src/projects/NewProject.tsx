@@ -68,8 +68,13 @@ export default function NewProject() {
         if (reposInAccounts.length === 0) {
             setSelectedAccount(undefined);
         } else {
-            const mostRecent = reposInAccounts.reduce((prev, current) => (prev.installationUpdatedAt || 0) > (current.installationUpdatedAt || 0) ? prev : current);
-            setSelectedAccount(mostRecent.account);
+            const first = reposInAccounts[0];
+            if (!!first.installationUpdatedAt) {
+                const mostRecent = reposInAccounts.reduce((prev, current) => (prev.installationUpdatedAt || 0) > (current.installationUpdatedAt || 0) ? prev : current);
+                setSelectedAccount(mostRecent.account);
+            } else {
+                setSelectedAccount(first.account);
+            }
         }
 
     }, [reposInAccounts]);
