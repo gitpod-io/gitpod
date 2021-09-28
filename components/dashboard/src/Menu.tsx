@@ -58,10 +58,10 @@ export default function Menu() {
     const showTeamsUI = user?.rolesOrPermissions?.includes('teams-and-projects');
     const team = getCurrentTeam(location, teams);
 
-    if (team) {
+    {
         // updating last team selection
         try {
-            localStorage.setItem('team-selection', team.slug);
+            localStorage.setItem('team-selection', team ? team.slug : "");
         } catch {
         }
     }
