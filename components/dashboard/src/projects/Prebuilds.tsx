@@ -171,7 +171,6 @@ export default function () {
                     </ItemField>
                     <ItemField>
                         <span>Branch</span>
-                        <ItemFieldContextMenu />
                     </ItemField>
                 </Item>
                 {prebuilds.filter(filter).sort(prebuildSorter).map((p, index) => <Item key={`prebuild-${p.info.id}`} className="grid grid-cols-3">

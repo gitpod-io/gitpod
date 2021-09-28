@@ -46,10 +46,10 @@ export function ItemFieldIcon(props: {
 }
 
 export function ItemFieldContextMenu(props: {
-    menuEntries?: ContextMenuEntry[];
+    menuEntries: ContextMenuEntry[];
     className?: string;
 }) {
     return <div className={`flex self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer w-8 ${props.className || ""}`}>
-        {!props.menuEntries ? null : <ContextMenu menuEntries={props.menuEntries} />}
+        <ContextMenu menuEntries={props.menuEntries} />
     </div>;
 }
