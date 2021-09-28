@@ -32,20 +32,24 @@ export class DebugApp {
 
     create(): express.Application {
         const app = express();
+
+        app.use(express.json());
+        app.use(express.urlencoded({ extended: true }));
+
         app.post('/debug/logging', (req, res) => {
-	        try {
-                const parsed = JSON.parse(req.body);
-                if (!SetLogLevelRequest.is(parsed)) {
+            try {
+                const levelRequest = req.body;
+                if (!SetLogLevelRequest.is(levelRequest)) {
                     res.status(400).end("not a SetLogLevelRequest");
                     return;
                 }
 
-                const newLogLevel = parsed.level;
+                const newLogLevel = levelRequest.level;
                 log.setLogLevel(newLogLevel);
                 log.info("set log level", { newLogLevel });
-	        } catch (err) {
-    		    res.status(500).end(err);
-	        }
+            } catch (err) {
+                res.status(500).end(err);
+            }
         });
         return app;
     }
