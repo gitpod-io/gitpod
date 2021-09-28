@@ -5,20 +5,19 @@
  */
 
 import moment from "moment";
-import { PrebuildInfo, PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
-import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { shortCommitMessage } from "./render-utils";
 import Spinner from "../icons/Spinner.svg";
+import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 
 export default function () {
-    const history = useHistory();
     const location = useLocation();
 
     const { teams } = useContext(TeamsContext);
@@ -120,8 +119,10 @@ export default function () {
         }
     }
 
-    const openPrebuild = (pb: PrebuildInfo) => {
-        history.push(`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/${pb.id}`);
+    const branchDetailsUrl = (branchName: string) => {
+        return gitpodHostUrl.with({
+            pathname: `/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/${branchName}`
+        }).toString();
     }
 
     const formatDate = (date: string | undefined) => {
@@ -171,10 +172,12 @@ export default function () {
                     return <Item key={`branch-${index}-${branchName}`} className="grid grid-cols-3 group">
                         <ItemField className="flex items-center">
                             <div>
-                                <div className="text-base text-gray-900 dark:text-gray-50 font-medium mb-1">
-                                    {branchName}
-                                    {branch.isDefault && (<span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">DEFAULT</span>)}
-                                </div>
+                                <a href={branchDetailsUrl(branchName)}>
+                                    <div className="text-base text-gray-900 dark:text-gray-50 font-medium mb-1">
+                                        {branchName}
+                                        {branch.isDefault && (<span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">DEFAULT</span>)}
+                                    </div>
+                                </a>
                             </div>
                         </ItemField>
                         <ItemField className="flex items-center">
@@ -184,10 +187,11 @@ export default function () {
                             </div>
                         </ItemField>
                         <ItemField className="flex items-center">
-                            <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" onClick={() => prebuild && openPrebuild(prebuild.info)}>
-                                {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span> </span>)}
-                            </div>
-                            <span className="flex-grow" />
+                            <a href={prebuild && branchDetailsUrl(prebuild.info.branch)}>
+                                <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1">
+                                    {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span> </span>)}
+                                </div>
+                            </a>                            <span className="flex-grow" />
                             <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
                                 <button className={`primary mr-2 py-2 opacity-0 group-hover:opacity-100`}>New Workspace</button>
                             </a>

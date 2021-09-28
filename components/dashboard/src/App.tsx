@@ -38,8 +38,7 @@ const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ './projec
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ './projects/ConfigureProject'));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Projects'));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Project'));
-const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuilds'));
-const Prebuild = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuild'));
+const Branch = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Branch'));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './prebuilds/InstallGitHubApp'));
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/UserSearch'));
@@ -268,10 +267,7 @@ function App() {
                         if (resourceOrPrebuild === "workspaces") {
                             return <Workspaces />;
                         }
-                        if (resourceOrPrebuild === "prebuilds") {
-                            return <Prebuilds />;
-                        }
-                        return resourceOrPrebuild ? <Prebuild /> : <Project />;
+                        return resourceOrPrebuild ? <Branch /> : <Project />;
                     }} />
                 </Route>
                 <Route path="/teams">
@@ -301,10 +297,7 @@ function App() {
                         if (resourceOrPrebuild === "workspaces") {
                             return <Workspaces />;
                         }
-                        if (resourceOrPrebuild === "prebuilds") {
-                            return <Prebuilds />;
-                        }
-                        return resourceOrPrebuild ? <Prebuild /> : <Project />;
+                        return resourceOrPrebuild ? <Branch /> : <Project />;
                     }} />
                 </Route>)}
                 <Route path="*" render={
