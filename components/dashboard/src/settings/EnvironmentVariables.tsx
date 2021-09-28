@@ -216,7 +216,6 @@ export default function EnvVars() {
                 <Item header={true}>
                     <ItemField className="w-5/12">Name</ItemField>
                     <ItemField className="w-5/12">Scope</ItemField>
-                    <ItemFieldContextMenu />
                 </Item>
                 {envVars.map(variable => {
                     return <Item className="whitespace-nowrap">

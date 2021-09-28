@@ -151,7 +151,6 @@ export default function() {
                     </ItemField>
                     <ItemField className="flex items-center">
                         <span className="flex-grow">Role</span>
-                        <ItemFieldContextMenu />
                     </ItemField>
                 </Item>
                 {filteredMembers.length === 0
@@ -190,7 +189,7 @@ export default function() {
                                         customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
                                         onClick: () => removeTeamMember(m.userId)
                                     }]
-                                    : undefined)} />
+                                    : [])} />
                         </ItemField>
                     </Item>)}
             </ItemsList>

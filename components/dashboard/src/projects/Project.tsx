@@ -203,7 +203,6 @@ export default function () {
                         </ItemField>
                         <ItemField>
                             <span>Prebuild</span>
-                            <ItemFieldContextMenu />
                         </ItemField>
                     </Item>
                     {isLoadingBranches && <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16">
