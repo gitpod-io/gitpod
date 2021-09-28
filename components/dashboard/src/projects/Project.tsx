@@ -14,7 +14,7 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { ContextMenuEntry } from "../components/ContextMenu";
-import { shortCommitMessage } from "./render-utils";
+import { shortCommitMessage, toRemoteURL } from "./render-utils";
 import Spinner from "../icons/Spinner.svg";
 
 export default function () {
@@ -129,7 +129,7 @@ export default function () {
     }
 
     return <>
-        <Header title="Branches" subtitle={<h2 className="tracking-wide">View recent active branches for <a className="text-gray-500 hover:text-gray-800 font-semibold" href={project?.cloneUrl}>{project?.name}</a>.</h2>} />
+        <Header title="Branches" subtitle={<h2 className="tracking-wide">View recent active branches for <a className="gp-link" href={project?.cloneUrl!}>{toRemoteURL(project?.cloneUrl || '')}</a>.</h2>} />
         <div className="lg:px-28 px-10">
             <div className="flex mt-8">
                 <div className="flex">
@@ -171,10 +171,10 @@ export default function () {
                     return <Item key={`branch-${index}-${branchName}`} className="grid grid-cols-3 group">
                         <ItemField className="flex items-center">
                             <div>
-                                <div className="text-base text-gray-900 dark:text-gray-50 font-medium mb-1">
+                                <a href={branch.url}><div className="text-base text-gray-900 dark:text-gray-50 font-medium mb-1">
                                     {branchName}
                                     {branch.isDefault && (<span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">DEFAULT</span>)}
-                                </div>
+                                </div></a>
                             </div>
                         </ItemField>
                         <ItemField className="flex items-center">
