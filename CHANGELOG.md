@@ -1,6 +1,8 @@
 # Change Log
 
 ## September 2021
+- fix log format for meta components ([#5899](https://github.com/gitpod-io/gitpod/pull/5899)) - [@geropl](https://github.com/geropl)
+- improve websocket reconnection handling in the frontend ([#5787](https://github.com/gitpod-io/gitpod/pull/5787)) - [@geropl](https://github.com/geropl)
 - Ask for a Gitpod workspace snapshot ([#5026](https://github.com/gitpod-io/gitpod/pull/5026)) - [@mikenikles](https://github.com/mikenikles)
 - [workspace] Support Docker 20.10 ([#5815](https://github.com/gitpod-io/gitpod/pull/5815)) - [@csweichel](https://github.com/csweichel)
 - [chart] Upgrade kube-rbac-proxy to v0.11.0 ([#5829](https://github.com/gitpod-io/gitpod/pull/5829)) - [@aledbf](https://github.com/aledbf)
