@@ -467,7 +467,7 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 					tm.reporter.write(data, task, terminal)
 				}
 
-				endMessage := "\n🤙 This task ran as a workspace prebuild\n" + duration + "\n"
+				endMessage := "\r\n🤙 This task ran as a workspace prebuild\r\n" + duration + "\r\n"
 				fileWriter.WriteString(endMessage)
 				break
 			}
