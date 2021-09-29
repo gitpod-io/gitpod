@@ -3,19 +3,20 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
+export CGO_ENABLED=0
 
 mkdir -p bin
 
-# shellcheck disable=SC2044
-for i in $(find . -type d -name "*_agent"); do
-    echo building agent "$i"
-    base=$(basename "$i")
-    CGO_ENABLED=0 go build -o bin/gitpod-integration-test-"${base%_agent}"-agent "$i"
+for AGENT in pkg/agent/*; do
+    echo building agent "$AGENT"
+    base=$(basename "$AGENT")
+    go build -trimpath -ldflags="-buildid= -w -s" -o bin/gitpod-integration-test-"${base%_agent}"-agent ./"$AGENT"
 done
 
-# shellcheck disable=SC2045
-for i in $(ls tests/); do
-    echo building test "$i"
-    CGO_ENABLED=0 go test -c ./tests/"$i"
-    mv "$i".test bin
+for COMPONENT in tests/components/*; do
+    echo building test "$COMPONENT"
+    OUTPUT=$(basename "$COMPONENT")
+    go test -trimpath -ldflags="-buildid= -w -s" -c -o bin/"$OUTPUT" ./"$COMPONENT"
 done
+
+go test -trimpath -ldflags="-buildid= -w -s" -o bin/workspace -c ./tests/workspace
