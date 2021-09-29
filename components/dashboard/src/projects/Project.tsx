@@ -171,7 +171,7 @@ export default function () {
                     return <Item key={`branch-${index}-${branchName}`} className="grid grid-cols-3 group">
                         <ItemField className="flex items-center">
                             <div>
-                                <a href={branch.url}><div className="text-base text-gray-900 dark:text-gray-50 font-medium mb-1">
+                                <a href={branch.url}><div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1">
                                     {branchName}
                                     {branch.isDefault && (<span className="ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-blue-50 text-blue-40 dark:bg-blue-500 dark:text-blue-100">DEFAULT</span>)}
                                 </div></a>
