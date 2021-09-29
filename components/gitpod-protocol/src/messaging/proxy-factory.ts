@@ -104,14 +104,12 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
         this.connectionPromise = new Promise(resolve =>
             this.connectionPromiseResolve = resolve
         );
-    }
-
-    fireConnectionClosed() {
-        this.onDidCloseConnectionEmitter.fire(undefined)
-    }
-
-    fireConnectionOpened() {
-        this.onDidOpenConnectionEmitter.fire(undefined);
+        this.connectionPromise.then(connection => {
+            connection.onClose(() =>
+                this.onDidCloseConnectionEmitter.fire(undefined)
+            );
+            this.onDidOpenConnectionEmitter.fire(undefined);
+        });
     }
 
     /**
