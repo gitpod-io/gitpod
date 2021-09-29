@@ -6,9 +6,10 @@ package integration
 
 import (
 	"github.com/google/uuid"
+	"golang.org/x/xerrors"
 )
 
-func CreateUser(it *Test, username string, admin bool) (userId string, err error) {
+func CreateUser(username string, admin bool, api *ComponentAPI) (userId string, err error) {
 	userUUID, err := uuid.NewRandom()
 	if err != nil {
 		return
@@ -20,7 +21,11 @@ func CreateUser(it *Test, username string, admin bool) (userId string, err error
 		rolesOrPermissions = `["admin"]`
 	}
 
-	db := it.API().DB()
+	db, err := api.DB()
+	if err != nil {
+		return
+	}
+
 	_, err = db.Exec("INSERT INTO d_b_user (id, creationDate, name, rolesOrPermissions) VALUES (?, NOW(), ?, ?)",
 		userId,
 		username,
@@ -29,21 +34,30 @@ func CreateUser(it *Test, username string, admin bool) (userId string, err error
 	return
 }
 
-func DeleteUser(it *Test, userId string) (err error) {
-	db := it.API().DB()
+func DeleteUser(userId string, api *ComponentAPI) (err error) {
+	db, err := api.DB()
+	if err != nil {
+		return
+	}
+
 	_, err = db.Exec("DELETE FROM d_b_user WHERE id = ?", userId)
 	return
 }
 
-func IsUserBlocked(it *Test, userId string) (blocked bool, err error) {
-	db := it.API().DB()
+func IsUserBlocked(userId string, api *ComponentAPI) (blocked bool, err error) {
+	db, err := api.DB()
+	if err != nil {
+		return
+	}
+
 	rows, err := db.Query("SELECT blocked FROM d_b_user WHERE id = ?", userId)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
+
 	if !rows.Next() {
-		it.t.Fatal("no rows selected - should not happen")
+		return false, xerrors.Errorf("no rows selected - should not happen")
 	}
 
 	err = rows.Scan(&blocked)

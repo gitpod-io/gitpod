@@ -12,8 +12,8 @@ import (
 
 	ctntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
+	"github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/tests/storage/daemon_agent/api"
 )
 
 func main() {
@@ -51,7 +51,7 @@ func (*DaemonAgent) CreateBucket(args *api.CreateBucketRequest, resp *api.Create
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	err = ac.Init(ctx, args.Owner, args.Workspace, "")
 	if err != nil {
