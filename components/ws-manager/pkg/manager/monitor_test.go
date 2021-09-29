@@ -13,6 +13,7 @@ import (
 	"time"
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/clock"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -32,7 +33,9 @@ func TestActOnPodEvent(t *testing.T) {
 		},
 		Test: func(t *testing.T, input interface{}) interface{} {
 			fixture := input.(*workspaceObjects)
-			manager := Manager{}
+			manager := Manager{
+				clock: clock.LogicalOnly(),
+			}
 			status, serr := manager.getWorkspaceStatus(*fixture)
 			if serr != nil {
 				t.Skipf("skipping due to status computation error: %v", serr)
