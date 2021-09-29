@@ -108,6 +108,15 @@ export function listAllPreviewNamespaces(pathToKubeConfig: string): string[] {
         .filter(o => o.length > 0);
 }
 
+export function listAllNamespacePods(pathToKubeConfig: string, namespace: string): string[] {
+    return exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get pods -l component=workspace --namespace ${namespace} | grep Terminating | awk '{print $1}'`, { silent: true })
+        .stdout
+        .split("\n")
+        .map(o => o.trim())
+        .filter(o => o.length > 0);
+}
+
+
 export function deleteNamespace(pathToKubeConfig: string, wait: boolean, namespace: string, shellOpts: ExecOptions) {
     // check if present
     const result = (exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
@@ -120,6 +129,12 @@ export function deleteNamespace(pathToKubeConfig: string, wait: boolean, namespa
 
     // wait until deletion was successful
     while (wait) {
+        const podsLeft = listAllNamespacePods(pathToKubeConfig,namespace);
+        if (podsLeft.length > 0) {
+            for (let pod in podsLeft) {
+                exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl patch pod $pod -p '{"metadata":{"finalizers":null}}' --namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
+            }
+        }
         const result = (exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
         wait = result.code === 0;
     }
