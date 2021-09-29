@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"io"
 	"io/ioutil"
 	"os"
@@ -55,41 +56,8 @@ const (
 	workspaceBuildProcessVersion = 2
 )
 
-// Configuration configures the orchestrator
-type Configuration struct {
-	WorkspaceManager WorkspaceManagerConfig `json:"wsman"`
-
-	// AuthFile points to a Docker configuration file from which we draw registry authentication
-	AuthFile string `json:"authFile"`
-
-	// BaseImageRepository configures repository where we'll push base images to.
-	BaseImageRepository string `json:"baseImageRepository"`
-
-	// WorkspaceImageRepository configures the repository where we'll push the final workspace images to.
-	// Note that the workspace nodes/kubelets need access to this repository.
-	WorkspaceImageRepository string `json:"workspaceImageRepository"`
-
-	// BuilderImage is an image ref to the workspace builder image
-	BuilderImage string `json:"builderImage"`
-
-	// BuilderAuthKeyFile points to a keyfile shared by the builder workspaces and this service.
-	// The key is used to encypt authentication data shipped across environment varibales.
-	BuilderAuthKeyFile string `json:"builderAuthKeyFile,omitempty"`
-}
-
-// WorkspaceManagerConfig configures the workspace manager connection
-type WorkspaceManagerConfig struct {
-	Address string `json:"address"`
-	TLS     struct {
-		Authority   string `json:"ca"`
-		Certificate string `json:"crt"`
-		PrivateKey  string `json:"key"`
-	} `json:"tls,omitempty"`
-	Client wsmanapi.WorkspaceManagerClient `json:"-"`
-}
-
 // NewOrchestratingBuilder creates a new orchestrating image builder
-func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
+func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err error) {
 	var authentication auth.RegistryAuthenticator
 	if cfg.AuthFile != "" {
 		fn := cfg.AuthFile
@@ -123,8 +91,8 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 	}
 
 	var wsman wsmanapi.WorkspaceManagerClient
-	if cfg.WorkspaceManager.Client != nil {
-		wsman = cfg.WorkspaceManager.Client
+	if c, ok := cfg.WorkspaceManager.Client.(wsmanapi.WorkspaceManagerClient); ok {
+		wsman = c
 	} else {
 		grpcOpts := common_grpc.DefaultClientOptions()
 		if cfg.WorkspaceManager.TLS.Authority != "" || cfg.WorkspaceManager.TLS.Certificate != "" && cfg.WorkspaceManager.TLS.PrivateKey != "" {
@@ -194,7 +162,7 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 
 // Orchestrator runs image builds by orchestrating headless build workspaces
 type Orchestrator struct {
-	Config       Configuration
+	Config       config.Configuration
 	Auth         auth.RegistryAuthenticator
 	AuthResolver auth.Resolver
 	RefResolver  resolve.DockerRefResolver
