@@ -459,7 +459,7 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 					if elapsedInMinutes != "1" {
 						duration += "s"
 					}
-					duration += "\n"
+					duration += "\r\n"
 				}
 				data := string(buf[:n])
 				fileWriter.Write(buf[:n])
@@ -467,7 +467,7 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 					tm.reporter.write(data, task, terminal)
 				}
 
-				endMessage := "\n🤙 This task ran as a workspace prebuild\n" + duration + "\n"
+				endMessage := "\r\n🤙 This task ran as a workspace prebuild\r\n" + duration + "\r\n"
 				fileWriter.WriteString(endMessage)
 				break
 			}
@@ -497,7 +497,7 @@ func importParentLogAndGetDuration(fn string, out io.Writer) time.Duration {
 	}
 	defer file.Close()
 
-	defer out.Write([]byte("♻️ Re-running task as an incremental workspace prebuild\n\n"))
+	defer out.Write([]byte("♻️ Re-running task as an incremental workspace prebuild\r\n\r\n"))
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
