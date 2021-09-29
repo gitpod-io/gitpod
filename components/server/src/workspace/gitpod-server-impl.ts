@@ -1592,7 +1592,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
         }
         await this.guardProjectOperation(user, projectId, "get");
-        return this.projectsService.getProjectOverview(user, project);
+        try {
+            return await this.projectsService.getProjectOverview(user, project);
+        } catch (error) {
+            if (UnauthorizedError.is(error)) {
+                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+            }
+            throw error;
+        }
     }
 
     public async triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult> {
@@ -1616,7 +1623,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         span.setTag("projectId", projectId);
 
         await this.guardProjectOperation(user, projectId, "get");
-        return this.projectsService.fetchProjectRepositoryConfiguration({ span }, user, projectId);
+        try {
+            return await this.projectsService.fetchProjectRepositoryConfiguration({ span }, user, projectId);
+        } catch (error) {
+            if (UnauthorizedError.is(error)) {
+                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+            }
+            throw error;
+        }
     }
 
     public async guessProjectConfiguration(projectId: string): Promise<string | undefined> {
@@ -1625,7 +1639,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         span.setTag("projectId", projectId);
 
         await this.guardProjectOperation(user, projectId, "get");
-        return this.projectsService.guessProjectConfiguration({ span }, user, projectId);
+        try {
+            return await this.projectsService.guessProjectConfiguration({ span }, user, projectId);
+        } catch (error) {
+            if (UnauthorizedError.is(error)) {
+                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+            }
+            throw error;
+        }
     }
 
     public async getContentBlobUploadUrl(name: string): Promise<string> {

@@ -291,12 +291,12 @@ export default function NewProject() {
                         <p className="text-center">No Results</p>
                     )}
                     {loaded && noReposAvailable && isGitHub() && (<div>
-                        <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <div className="px-12 py-20 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
                             <img src={NoAccess} title="No Access" className="m-auto mb-4" />
-                            <h3 className="mb-2 text-gray-600 dark:text-gray-400">
+                            <h3 className="text-center text-gray-600 dark:text-gray-50 pb-3 font-bold">
                                 No Access
                             </h3>
-                            <span className="dark:text-gray-500">
+                            <span className="dark:text-gray-400">
                                 Authorize GitHub (github.com) or select a different account.
                             </span>
                             <br />
