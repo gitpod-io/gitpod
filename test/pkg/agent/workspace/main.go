@@ -13,11 +13,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/test/pkg/integration"
-	"github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
 	"github.com/prometheus/procfs"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
+	"github.com/gitpod-io/gitpod/test/pkg/integration"
 )
 
 func main() {

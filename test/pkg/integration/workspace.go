@@ -16,8 +16,8 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -28,7 +28,7 @@ import (
 
 const (
 	gitpodBuiltinUserID = "builtin-user-workspace-probe-0000000"
-	perCallTimeout      = 20 * time.Second
+	perCallTimeout      = 1 * time.Minute
 )
 
 type launchWorkspaceDirectlyOptions struct {
@@ -97,50 +97,48 @@ type LaunchWorkspaceDirectlyResult struct {
 // LaunchWorkspaceDirectly starts a workspace pod by talking directly to ws-manager.
 // Whenever possible prefer this function over LaunchWorkspaceFromContextURL, because
 // it has fewer prerequisites.
-func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res *LaunchWorkspaceDirectlyResult) {
+func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...LaunchWorkspaceDirectlyOpt) (*LaunchWorkspaceDirectlyResult, error) {
 	options := launchWorkspaceDirectlyOptions{
-		BaseImage: "gitpod/workspace-full:latest",
+		BaseImage: "docker.io/gitpod/workspace-full:latest",
 	}
 	for _, o := range opts {
 		err := o(&options)
 		if err != nil {
-			it.t.Fatal(err)
-			return
+			return nil, err
 		}
 	}
 
 	instanceID, err := uuid.NewRandom()
 	if err != nil {
-		it.t.Fatal(err)
-		return
+		return nil, err
+
 	}
 	workspaceID, err := namegen.GenerateWorkspaceID()
 	if err != nil {
-		it.t.Fatal(err)
-		return
+		return nil, err
+
 	}
 
 	var workspaceImage string
 	if options.BaseImage != "" {
-		workspaceImage, err = it.resolveOrBuildImage(options.BaseImage)
+		workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
 		if err != nil {
-			it.t.Fatalf("cannot resolve base image: %v", err)
-			return
+			return nil, xerrors.Errorf("cannot resolve base image: %v", err)
 		}
 	}
 	if workspaceImage == "" {
-		it.t.Fatalf("cannot start workspaces without a workspace image (required by registry-facade resolver)")
+		return nil, xerrors.Errorf("cannot start workspaces without a workspace image (required by registry-facade resolver)")
 	}
 
 	ideImage := options.IdeImage
 	if ideImage == "" {
-		cfg, err := it.GetServerIDEConfig()
+		cfg, err := GetServerIDEConfig(api.namespace, api.client)
 		if err != nil {
-			it.t.Fatalf("cannot find server IDE config: %q", err)
+			return nil, xerrors.Errorf("cannot find server IDE config: %q", err)
 		}
 		ideImage = cfg.IDEImageAliases.Code
 		if ideImage == "" {
-			it.t.Fatalf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
+			return nil, xerrors.Errorf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
 		}
 	}
 
@@ -173,27 +171,36 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 	for _, m := range options.Mods {
 		err := m(req)
 		if err != nil {
-			it.t.Fatal(err)
-			return
+			return nil, err
 		}
 	}
 
-	sctx, scancel := context.WithTimeout(it.ctx, perCallTimeout)
-	sresp, err := it.API().WorkspaceManager().StartWorkspace(sctx, req)
-	scancel()
+	sctx, scancel := context.WithTimeout(ctx, perCallTimeout)
+	defer scancel()
+
+	wsm, err := api.WorkspaceManager()
 	if err != nil {
-		it.t.Fatalf("cannot start workspace: %q", err)
+		return nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
 
-	lastStatus := it.WaitForWorkspaceStart(it.ctx, instanceID.String(), options.WaitForOpts...)
+	sresp, err := wsm.StartWorkspace(sctx, req)
+	scancel()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot start workspace: %q", err)
+	}
 
-	it.t.Logf("workspace is running: instanceID=%s", instanceID.String())
+	lastStatus, err := WaitForWorkspaceStart(ctx, instanceID.String(), api, options.WaitForOpts...)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot start workspace: %q", err)
+	}
+
+	// it.t.Logf("workspace is running: instanceID=%s", instanceID.String())
 
 	return &LaunchWorkspaceDirectlyResult{
 		Req:        req,
 		IdeURL:     sresp.Url,
 		LastStatus: lastStatus,
-	}
+	}, nil
 }
 
 // LaunchWorkspaceFromContextURL force-creates a new workspace using the Gitpod server API,
@@ -201,32 +208,45 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 // fail the test.
 //
 // When possible, prefer the less complex LaunchWorkspaceDirectly.
-func LaunchWorkspaceFromContextURL(it *Test, contextURL string, serverOpts ...GitpodServerOpt) (nfo *protocol.WorkspaceInfo, stopWs func(waitForStop bool)) {
+func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, username string, api *ComponentAPI, serverOpts ...GitpodServerOpt) (*protocol.WorkspaceInfo, func(waitForStop bool), error) {
 	var defaultServerOpts []GitpodServerOpt
-	if it.username != "" {
-		defaultServerOpts = []GitpodServerOpt{WithGitpodUser(it.username)}
+	if username != "" {
+		defaultServerOpts = []GitpodServerOpt{WithGitpodUser(username)}
 	}
-	server := it.API().GitpodServer(append(defaultServerOpts, serverOpts...)...)
 
-	cctx, ccancel := context.WithTimeout(it.ctx, perCallTimeout)
+	server, err := api.GitpodServer(append(defaultServerOpts, serverOpts...)...)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot start server: %q", err)
+	}
+
+	cctx, ccancel := context.WithTimeout(context.Background(), perCallTimeout)
 	defer ccancel()
 	resp, err := server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
 		ContextURL: contextURL,
 		Mode:       "force-new",
 	})
 	if err != nil {
-		it.t.Fatalf("cannot start workspace: %q", err)
+		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
-	stopWs = func(waitForStop bool) {
-		sctx, scancel := context.WithTimeout(it.ctx, perCallTimeout)
-		err := server.StopWorkspace(sctx, resp.CreatedWorkspaceID)
+
+	nfo, err := server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot get workspace: %q", err)
+	}
+	if nfo.LatestInstance == nil {
+		return nil, nil, xerrors.Errorf("CreateWorkspace did not start the workspace")
+	}
+
+	stopWs := func(waitForStop bool) {
+		sctx, scancel := context.WithTimeout(ctx, perCallTimeout)
+		_ = server.StopWorkspace(sctx, resp.CreatedWorkspaceID)
 		scancel()
-		if err != nil {
-			it.t.Errorf("cannot stop workspace: %q", err)
-		}
+		//if err != nil {
+		//it.t.Errorf("cannot stop workspace: %q", err)
+		//}
 
 		if waitForStop {
-			it.WaitForWorkspaceStop(nfo.LatestInstance.ID)
+			_, _ = WaitForWorkspaceStop(ctx, api, nfo.LatestInstance.ID)
 		}
 	}
 	defer func() {
@@ -234,22 +254,16 @@ func LaunchWorkspaceFromContextURL(it *Test, contextURL string, serverOpts ...Gi
 			stopWs(false)
 		}
 	}()
-	it.t.Logf("created workspace: workspaceID=%s url=%s", resp.CreatedWorkspaceID, resp.WorkspaceURL)
+	// it.t.Logf("created workspace: workspaceID=%s url=%s", resp.CreatedWorkspaceID, resp.WorkspaceURL)
 
-	nfo, err = server.GetWorkspace(it.ctx, resp.CreatedWorkspaceID)
+	_, err = WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
 	if err != nil {
-		it.t.Fatalf("cannot get workspace: %q", err)
-	}
-	if nfo.LatestInstance == nil {
-		err = xerrors.Errorf("CreateWorkspace did not start the workspace")
-		it.t.Fatal(err)
+		return nil, nil, xerrors.Errorf("cannot start workspace: %q", err)
 	}
 
-	it.WaitForWorkspaceStart(it.ctx, nfo.LatestInstance.ID)
+	// it.t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)
 
-	it.t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)
-
-	return nfo, stopWs
+	return nfo, stopWs, nil
 }
 
 // WaitForWorkspaceOpt configures a WaitForWorkspace call
@@ -266,25 +280,26 @@ func WorkspaceCanFail(o *waitForWorkspaceOpts) {
 
 // WaitForWorkspace waits until a workspace is running. Fails the test if the workspace
 // fails or does not become RUNNING before the context is canceled.
-func (t *Test) WaitForWorkspaceStart(ctx context.Context, instanceID string, opts ...WaitForWorkspaceOpt) (lastStatus *wsmanapi.WorkspaceStatus) {
+func WaitForWorkspaceStart(ctx context.Context, instanceID string, api *ComponentAPI, opts ...WaitForWorkspaceOpt) (lastStatus *wsmanapi.WorkspaceStatus, err error) {
 	var cfg waitForWorkspaceOpts
 	for _, o := range opts {
 		o(&cfg)
 	}
 
-	wsman := t.API().WorkspaceManager()
+	wsman, err := api.WorkspaceManager()
+	if err != nil {
+		return nil, err
+	}
 
 	var sub wsmanapi.WorkspaceManager_SubscribeClient
 	for i := 0; i < 5; i++ {
-		var err error
 		sub, err = wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
 		if status.Code(err) == codes.NotFound {
 			time.Sleep(1 * time.Second)
 			continue
 		}
 		if err != nil {
-			t.t.Fatalf("cannot listen for workspace updates: %q", err)
-			return
+			return nil, xerrors.Errorf("cannot listen for workspace updates: %q", err)
 		}
 		defer func() {
 			_ = sub.CloseSend()
@@ -293,6 +308,8 @@ func (t *Test) WaitForWorkspaceStart(ctx context.Context, instanceID string, opt
 	}
 
 	done := make(chan *wsmanapi.WorkspaceStatus)
+	errStatus := make(chan error)
+
 	go func() {
 		var status *wsmanapi.WorkspaceStatus
 		defer func() {
@@ -302,7 +319,7 @@ func (t *Test) WaitForWorkspaceStart(ctx context.Context, instanceID string, opt
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
-				t.t.Errorf("workspace update error: %q", err)
+				errStatus <- xerrors.Errorf("workspace update error: %q", err)
 				return
 			}
 			status = resp.GetStatus()
@@ -322,15 +339,15 @@ func (t *Test) WaitForWorkspaceStart(ctx context.Context, instanceID string, opt
 				}
 			} else {
 				if status.Conditions.Failed != "" {
-					t.t.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
+					errStatus <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
 					return
 				}
 				if status.Phase == wsmanapi.WorkspacePhase_STOPPING {
-					t.t.Errorf("workspace instance %s is stopping", instanceID)
+					errStatus <- xerrors.Errorf("workspace instance %s is stopping", instanceID)
 					return
 				}
 				if status.Phase == wsmanapi.WorkspacePhase_STOPPED {
-					t.t.Errorf("workspace instance %s has stopped", instanceID)
+					errStatus <- xerrors.Errorf("workspace instance %s has stopped", instanceID)
 					return
 				}
 			}
@@ -352,34 +369,36 @@ func (t *Test) WaitForWorkspaceStart(ctx context.Context, instanceID string, opt
 			return
 		case wsmanapi.WorkspacePhase_STOPPING:
 			if !cfg.CanFail {
-				t.t.Fatalf("workspace instance %s is stopping", instanceID)
+				return nil, xerrors.Errorf("workspace instance %s is stopping", instanceID)
 			}
-			return
 		case wsmanapi.WorkspacePhase_STOPPED:
 			if !cfg.CanFail {
-				t.t.Fatalf("workspace instance %s has stopped", instanceID)
+				return nil, xerrors.Errorf("workspace instance %s has stopped", instanceID)
 			}
-			return
 		}
 	}
 
 	select {
 	case <-ctx.Done():
-		t.t.Fatalf("cannot wait for workspace: %q", ctx.Err())
-		return nil
+		return nil, xerrors.Errorf("cannot wait for workspace: %q", ctx.Err())
 	case s := <-done:
-		return s
+		return s, nil
+	case err := <-errStatus:
+		return nil, err
 	}
 }
 
 // WaitForWorkspaceStop waits until a workspace is stopped. Fails the test if the workspace
 // fails or does not stop before the context is canceled.
-func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.WorkspaceStatus) {
-	wsman := it.API().WorkspaceManager()
-	sub, err := wsman.Subscribe(it.ctx, &wsmanapi.SubscribeRequest{})
+func WaitForWorkspaceStop(ctx context.Context, api *ComponentAPI, instanceID string) (lastStatus *wsmanapi.WorkspaceStatus, err error) {
+	wsman, err := api.WorkspaceManager()
 	if err != nil {
-		it.t.Fatalf("cannot listen for workspace updates: %q", err)
-		return
+		return nil, xerrors.Errorf("cannot listen for workspace updates: %q", err)
+	}
+
+	sub, err := wsman.Subscribe(context.Background(), &wsmanapi.SubscribeRequest{})
+	if err != nil {
+		return nil, xerrors.Errorf("cannot listen for workspace updates: %q", err)
 	}
 	defer func() {
 		_ = sub.CloseSend()
@@ -387,12 +406,13 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 
 	var workspaceID string
 	done := make(chan struct{})
+	errCh := make(chan error)
 	go func() {
 		defer close(done)
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
-				it.t.Errorf("workspace update error: %q", err)
+				errCh <- xerrors.Errorf("workspace update error: %q", err)
 				return
 			}
 			status := resp.GetStatus()
@@ -405,7 +425,7 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 
 			workspaceID = status.Metadata.MetaId
 			if status.Conditions.Failed != "" {
-				it.t.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
+				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
 				return
 			}
 			if status.Phase == wsmanapi.WorkspacePhase_STOPPED {
@@ -416,7 +436,7 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 	}()
 
 	// maybe the workspace has stopped in the meantime and we've missed the update
-	desc, _ := wsman.DescribeWorkspace(it.ctx, &wsmanapi.DescribeWorkspaceRequest{Id: instanceID})
+	desc, _ := wsman.DescribeWorkspace(context.Background(), &wsmanapi.DescribeWorkspaceRequest{Id: instanceID})
 	if desc != nil {
 		switch desc.Status.Phase {
 		case wsmanapi.WorkspacePhase_STOPPED:
@@ -426,26 +446,27 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 	}
 
 	select {
-	case <-it.ctx.Done():
-		it.t.Fatalf("cannot wait for workspace stop: %q", it.ctx.Err())
-		return
+	case err := <-errCh:
+		return nil, err
+	case <-ctx.Done():
+		return nil, xerrors.Errorf("cannot wait for workspace: %q", ctx.Err())
 	case <-done:
 	}
 
 	// wait for the Theia service to be properly deleted
-	ctx, cancel := context.WithTimeout(it.ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	var (
 		start       = time.Now()
 		serviceGone bool
-		k8s, ns     = it.API().Kubernetes()
 	)
 
 	// NOTE: this needs to be kept in sync with components/ws-manager/pkg/manager/manager.go:getTheiaServiceName()
 	// TODO(rl) expose it?
 	theiaName := fmt.Sprintf("ws-%s-theia", strings.TrimSpace(strings.ToLower(workspaceID)))
 	for time.Since(start) < 1*time.Minute {
-		_, err := k8s.CoreV1().Services(ns).Get(ctx, theiaName, v1.GetOptions{})
+		var svc corev1.Service
+		err := api.client.Resources().Get(ctx, fmt.Sprintf("ws-%s-theia", workspaceID), api.namespace, &svc)
 		if errors.IsNotFound(err) {
 			serviceGone = true
 			break
@@ -453,13 +474,13 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 		time.Sleep(200 * time.Millisecond)
 	}
 	if !serviceGone {
-		it.t.Fatalf("Theia service:%s did not disappear in time", theiaName)
-		return
+		return nil, xerrors.Errorf("workspace service did not disappear in time (theia)")
 	}
 	// Wait for the theia endpoints to be properly deleted (i.e. syncing)
 	var endpointGone bool
 	for time.Since(start) < 1*time.Minute {
-		_, err := k8s.CoreV1().Endpoints(ns).Get(ctx, theiaName, v1.GetOptions{})
+		var svc corev1.Endpoints
+		err := api.client.Resources().Get(ctx, theiaName, api.namespace, &svc)
 		if errors.IsNotFound(err) {
 			endpointGone = true
 			break
@@ -467,8 +488,7 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 		time.Sleep(200 * time.Millisecond)
 	}
 	if !endpointGone {
-		it.t.Fatalf("Theia endpoint:%s did not disappear in time", theiaName)
-		return
+		return nil, xerrors.Errorf("Theia endpoint:%s did not disappear in time", theiaName)
 	}
 
 	return
@@ -476,15 +496,20 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 
 // WaitForWorkspace waits until the condition function returns true. Fails the test if the condition does
 // not become true before the context is canceled.
-func (it *Test) WaitForWorkspace(instanceID string, condition func(status *wsmanapi.WorkspaceStatus) bool) (lastStatus *wsmanapi.WorkspaceStatus) {
-	wsman := it.API().WorkspaceManager()
-	sub, err := wsman.Subscribe(it.ctx, &wsmanapi.SubscribeRequest{})
+func WaitForWorkspace(ctx context.Context, api *ComponentAPI, instanceID string, condition func(status *wsmanapi.WorkspaceStatus) bool) (lastStatus *wsmanapi.WorkspaceStatus, err error) {
+	wsman, err := api.WorkspaceManager()
 	if err != nil {
-		it.t.Errorf("cannot listen for workspace updates: %q", err)
 		return
 	}
 
+	sub, err := wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{})
+	if err != nil {
+		return nil, xerrors.Errorf("cannot listen for workspace updates: %q", err)
+	}
+
 	done := make(chan *wsmanapi.WorkspaceStatus, 1)
+	errCh := make(chan error)
+
 	var once sync.Once
 	go func() {
 		var status *wsmanapi.WorkspaceStatus
@@ -501,7 +526,7 @@ func (it *Test) WaitForWorkspace(instanceID string, condition func(status *wsman
 				return
 			}
 			if err != nil {
-				it.t.Errorf("workspace update error: %q", err)
+				errCh <- xerrors.Errorf("workspace update error: %q", err)
 				return
 			}
 			status = resp.GetStatus()
@@ -519,29 +544,32 @@ func (it *Test) WaitForWorkspace(instanceID string, condition func(status *wsman
 	}()
 
 	// maybe the workspace has started in the meantime and we've missed the update
-	desc, err := wsman.DescribeWorkspace(it.ctx, &wsmanapi.DescribeWorkspaceRequest{Id: instanceID})
+	desc, err := wsman.DescribeWorkspace(ctx, &wsmanapi.DescribeWorkspaceRequest{Id: instanceID})
 	if err != nil {
-		it.t.Fatalf("cannot get workspace: %q", err)
-		return
+		return nil, xerrors.Errorf("cannot get workspace: %q", err)
 	}
 	if condition(desc.Status) {
 		once.Do(func() { close(done) })
-		return desc.Status
+		return desc.Status, nil
 	}
 
 	select {
-	case <-it.ctx.Done():
-		it.t.Fatalf("cannot wait for workspace: %q", it.ctx.Err())
-		return
+	case err := <-errCh:
+		return nil, err
+	case <-ctx.Done():
+		return nil, xerrors.Errorf("cannot wait for workspace: %q", ctx.Err())
 	case s := <-done:
-		return s
+		return s, nil
 	}
 }
 
-func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {
-	rctx, rcancel := context.WithTimeout(it.ctx, perCallTimeout)
-	cl := it.API().ImageBuilder()
-	reslv, err := cl.ResolveWorkspaceImage(rctx, &imgbldr.ResolveWorkspaceImageRequest{
+func resolveOrBuildImage(ctx context.Context, api *ComponentAPI, baseRef string) (absref string, err error) {
+	cl, err := api.ImageBuilder()
+	if err != nil {
+		return
+	}
+
+	reslv, err := cl.ResolveWorkspaceImage(ctx, &imgbldr.ResolveWorkspaceImageRequest{
 		Source: &imgbldr.BuildSource{
 			From: &imgbldr.BuildSource_Ref{
 				Ref: &imgbldr.BuildSourceReference{
@@ -557,7 +585,6 @@ func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {
 			},
 		},
 	})
-	rcancel()
 	if err != nil {
 		return
 	}
@@ -566,11 +593,7 @@ func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {
 		return reslv.Ref, nil
 	}
 
-	it.t.Log("workspace image isn't built - building now")
-
-	rctx, rcancel = context.WithTimeout(it.ctx, 5*time.Minute)
-	defer rcancel()
-	bld, err := cl.Build(rctx, &imgbldr.BuildRequest{
+	bld, err := cl.Build(ctx, &imgbldr.BuildRequest{
 		Source: &imgbldr.BuildSource{
 			From: &imgbldr.BuildSource_Ref{
 				Ref: &imgbldr.BuildSourceReference{
@@ -607,26 +630,27 @@ func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {
 }
 
 // DeleteWorkspace cleans up a workspace started during an integration test
-func DeleteWorkspace(it *Test, instanceID string) {
-	err := func() error {
-		ctx, cancel := context.WithTimeout(it.ctx, perCallTimeout)
-		defer cancel()
-		_, err := it.API().WorkspaceManager().StopWorkspace(ctx, &wsmanapi.StopWorkspaceRequest{
-			Id: instanceID,
-		})
-
-		if err == nil {
-			return nil
-		}
-		s, ok := status.FromError(err)
-		if ok && s.Code() == codes.NotFound {
-			return nil
-		}
-
-		return err
-	}()
-
+func DeleteWorkspace(ctx context.Context, api *ComponentAPI, instanceID string) error {
+	wm, err := api.WorkspaceManager()
 	if err != nil {
-		it.t.Logf("cannot delete workspace: %s", instanceID)
+		return err
 	}
+
+	_, err = wm.StopWorkspace(ctx, &wsmanapi.StopWorkspaceRequest{
+		Id: instanceID,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err == nil {
+		return nil
+	}
+
+	s, ok := status.FromError(err)
+	if ok && s.Code() == codes.NotFound {
+		return nil
+	}
+
+	return err
 }

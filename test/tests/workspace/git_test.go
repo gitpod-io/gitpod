@@ -2,16 +2,20 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package workspace_test
+package workspace
 
 import (
+	"context"
 	"net/rpc"
 	"testing"
 	"time"
 
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
+	"sigs.k8s.io/e2e-framework/pkg/features"
+
+	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"github.com/gitpod-io/gitpod/test/tests/workspace/common"
-	agent "github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
 )
 
 //
@@ -91,34 +95,54 @@ func TestGitActions(t *testing.T) {
 			},
 		},
 	}
-	runGitTests(t, tests)
-}
 
-func runGitTests(t *testing.T, tests []GitTest) {
-	for _, test := range tests {
-		t.Run(test.ContextURL, func(t *testing.T) {
-			if test.Skip {
-				t.SkipNow()
+	f := features.New("GitActions").
+		WithLabel("component", "server").
+		Assess("it can run git actions", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
+			for _, test := range tests {
+				t.Run(test.ContextURL, func(t *testing.T) {
+					if test.Skip {
+						t.SkipNow()
+					}
+
+					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					defer stopWS(false)
+
+					_, err = integration.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID, api)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
+					if err != nil {
+						t.Fatal(err)
+					}
+					defer rsa.Close()
+					integration.DeferCloser(t, closer)
+
+					git := common.Git(rsa)
+					err = test.Action(rsa, git, test.WorkspaceRoot)
+					if err != nil {
+						t.Fatal(err)
+					}
+				})
 			}
 
-			it, ctx := integration.NewTest(t, 5*time.Minute)
-			defer it.Done()
+			return ctx
+		}).
+		Feature()
 
-			nfo, stopWS := integration.LaunchWorkspaceFromContextURL(it, test.ContextURL)
-			defer stopWS(false)
-
-			it.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID)
-
-			rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(nfo.LatestInstance.ID))
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer rsa.Close()
-
-			git := common.Git(rsa)
-			test.Action(rsa, git, test.WorkspaceRoot)
-
-			rsa.Close()
-		})
-	}
+	testEnv.Test(t, f)
 }

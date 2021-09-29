@@ -23,11 +23,13 @@ var ErrClosed = errors.New("reconnecting-ws: closed")
 // ErrBadHandshake is returned when the server response to opening handshake is
 // invalid.
 type ErrBadHandshake struct {
-	Resp *http.Response
+	URL       string
+	ReqHeader http.Header
+	Resp      *http.Response
 }
 
 func (e *ErrBadHandshake) Error() string {
-	return fmt.Sprintf("reconnecting-ws: bad handshake: code %v", e.Resp.StatusCode)
+	return fmt.Sprintf("reconnecting-ws: bad handshake: code %v - URL: %v - headers: %v", e.Resp.StatusCode, e.URL, e.ReqHeader)
 }
 
 // The ReconnectingWebsocket represents a Reconnecting WebSocket connection.
@@ -208,7 +210,7 @@ func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnecti
 			// if mal-formed handshake request (unauthorized, forbidden) or client actions (redirect) are required then fail immediately
 			// otherwise try several times and fail, maybe temporarily unavailable, like server restart
 			if rc.badHandshakeCount > rc.badHandshakeMax || (http.StatusMultipleChoices <= resp.StatusCode && resp.StatusCode < http.StatusInternalServerError) {
-				_ = rc.closeWithError(&ErrBadHandshake{resp})
+				_ = rc.closeWithError(&ErrBadHandshake{rc.url, rc.reqHeader, resp})
 				return nil
 			}
 		}
@@ -216,6 +218,7 @@ func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnecti
 		if resp != nil {
 			statusCode = resp.StatusCode
 		}
+		rc.log.WithField("url", rc.url).WithField("headers", rc.reqHeader).Info("websocket handshake")
 
 		rc.log.WithError(err).
 			WithField("url", rc.url).
