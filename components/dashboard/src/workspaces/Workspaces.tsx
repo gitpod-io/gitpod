@@ -152,11 +152,7 @@ export default function () {
                                 onClick: () => { if (workspaceModel) workspaceModel.limit = 200; }
                             }]} />
                         </div>
-                        {
-                            projects.length === 0
-                            ? <button onClick={onNewProject} className="ml-2">New Project</button>
-                            : <button onClick={showStartWSModal} className="ml-2">New Workspace</button>
-                        }
+                        <button onClick={showStartWSModal} className="ml-2">New Workspace</button>
                     </div>
                     <ItemsList className="lg:px-28 px-10">
                         <div className="border-t border-gray-200 dark:border-gray-800"></div>
