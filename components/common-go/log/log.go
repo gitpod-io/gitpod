@@ -73,6 +73,7 @@ func Init(service, version string, json, verbose bool) {
 	if json {
 		Log.Logger.SetFormatter(&gcpFormatter{
 			log.JSONFormatter{
+				TimestampFormat: "2006-01-02T15:04:05.000Z07:00", // millisecond resolution (default: second)
 				FieldMap: log.FieldMap{
 					log.FieldKeyMsg: "message",
 				},
