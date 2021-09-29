@@ -9,7 +9,7 @@ import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-
 import { inject, injectable } from "inversify";
 import * as url from "url";
 import { Status, StatusServiceClient } from '@gitpod/supervisor-api-grpcweb/lib/status_pb_service'
-import { TasksStatusRequest, TasksStatusResponse, TaskStatus } from "@gitpod/supervisor-api-grpcweb/lib/status_pb";
+import { TasksStatusRequest, TasksStatusResponse, TaskState, TaskStatus } from "@gitpod/supervisor-api-grpcweb/lib/status_pb";
 import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
 import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
@@ -104,11 +104,15 @@ export class HeadlessLogService {
         for (const task of tasks) {
             const taskId = task.getId();
             const terminalId = task.getTerminal();
-            if (terminalId === "") {
+            if (task.getState() === TaskState.OPENING) {
                 // this might be the case when there is no terminal for this task, yet.
                 // if we find any such case, we deem the workspace not ready yet, and try to reconnect later,
                 // to be sure to get hold of all terminals created.
-                throw new Error(`instance's ${wsi.id} task ${task.getId} has no terminal yet`);
+                throw new Error(`instance's ${wsi.id} task ${task.getId()} has no terminal yet`);
+            }
+            if (task.getState() === TaskState.CLOSED) {
+                // if a task has already been closed we can no longer access it's terminal, and have to skip it.
+                continue;
             }
             streams[taskId] = this.config.hostUrl.with({
                 pathname: `/headless-logs/${wsi.id}/${terminalId}`,
