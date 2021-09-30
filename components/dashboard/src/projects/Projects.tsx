@@ -146,7 +146,7 @@ export default function () {
                                         {prebuildStatusIcon(lastPrebuilds.get(p.id))}
                                         <div className="font-semibold text-gray-500 dark:text-gray-400 truncate w-24" title={lastPrebuilds.get(p.id)?.info?.branch}>{lastPrebuilds.get(p.id)?.info?.branch}</div>
                                         <span className="mx-1 text-gray-400 dark:text-gray-600">·</span>
-                                        <div className="text-gray-400 dark:text-gray-500 flex-grow hover:text-gray-800 dark:hover:text-gray-300">{moment(lastPrebuilds.get(p.id)?.info?.startedAt, "YYYYMMDD").fromNow()}</div>
+                                        <div className="text-gray-400 dark:text-gray-500 flex-grow hover:text-gray-800 dark:hover:text-gray-300">{moment(lastPrebuilds.get(p.id)?.info?.startedAt).fromNow()}</div>
                                     </Link>
                                     <Link to={`/${teamOrUserSlug}/${p.name}/prebuilds`} className="my-auto group">
                                         <div className="flex my-auto text-gray-400 flex-grow text-right group-hover:text-gray-600 dark:hover:text-gray-300">View All &rarr;</div>
