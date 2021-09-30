@@ -227,6 +227,12 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: '_lastModified',
         },
         {
+            name: 'd_b_team_membership_invite',
+            primaryKeys: ['id'],
+            deletionColumn: 'deleted',
+            timeColumn: '_lastModified',
+        },
+        {
             name: 'd_b_project',
             primaryKeys: ['id'],
             deletionColumn: 'deleted',

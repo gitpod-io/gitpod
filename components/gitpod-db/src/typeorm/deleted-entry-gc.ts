@@ -46,6 +46,7 @@ const tables: TableWithDeletion[] = [
     { deletionColumn: "deleted", name: "d_b_code_sync_resource" },
     { deletionColumn: "deleted", name: "d_b_team" },
     { deletionColumn: "deleted", name: "d_b_team_membership" },
+    { deletionColumn: "deleted", name: "d_b_team_membership_invite" },
     { deletionColumn: "deleted", name: "d_b_project" },
     { deletionColumn: "deleted", name: "d_b_prebuild_info" },
 ];
