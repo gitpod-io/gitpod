@@ -424,8 +424,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePortMeta}`;
 
         const nodeAffinityValues = [
-            "values.nodeAffinities_0.yaml",
-            "values.nodeAffinities_1.yaml"
+            "values.nodeAffinities_2.yaml",
+            "values.nodeAffinities_3.yaml",
         ]
 
         if (k3sWsCluster) {
@@ -477,8 +477,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     function addDeploymentFlags() {
         let flags = ""
         flags += ` --namespace ${namespace}`;
-        flags += ` --set components.imageBuilder.hostDindData=/mnt/disks/ssd0/docker-${namespace}`;
-        flags += ` --set components.wsDaemon.hostWorkspaceArea=/mnt/disks/ssd0/workspaces-${namespace}`;
+        flags += ` --set components.imageBuilder.hostDindData=/mnt/disks/raid0/docker-${namespace}`;
+        flags += ` --set components.wsDaemon.hostWorkspaceArea=/mnt/disks/raid0/workspaces-${namespace}`;
         flags += ` --set version=${version}`;
         flags += ` --set hostname=${domain}`;
         flags += ` --set devBranch=${destname}`;

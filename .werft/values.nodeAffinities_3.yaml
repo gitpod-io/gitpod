@@ -14,7 +14,7 @@ components:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: gitpod.io/workspace_0
+            - key: gitpod.io/workspace_3
               operator: Exists
 
   registryFacade:
@@ -23,13 +23,13 @@ components:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: gitpod.io/workspace_0
+            - key: gitpod.io/workspace_3
               operator: Exists
 
 
   workspace:
     affinity:
-      default: gitpod.io/workspace_0
+      default: gitpod.io/workspace_3
 
 # Sub-Charts
 
