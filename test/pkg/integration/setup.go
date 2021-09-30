@@ -27,6 +27,7 @@ import (
 
 func Setup(ctx context.Context) (string, string, env.Environment) {
 	var (
+		kubeconfig      = flag.String("kubeconfig", "", "path to the kubeconfig file or empty to use of in cluster Kubernetes config")
 		namespace       = flag.String("namespace", "", `namespace to execute the test against. Defaults to the one configured in "kubeconfig".`)
 		username        = flag.String("username", "", "username to execute the tests with. Chooses one automatically if left blank.")
 		waitGitpodReady = flag.Duration("wait-gitpod-timeout", 5*time.Minute, `wait time for Gitpod components before starting integration test`)
@@ -35,7 +36,14 @@ func Setup(ctx context.Context) (string, string, env.Environment) {
 	klog.InitFlags(nil)
 	flag.Parse()
 
-	restConfig, ns, err := getKubeconfig(conf.ResolveKubeConfigFile())
+	var kubecfg string
+	if *kubeconfig != "" {
+		kubecfg = *kubeconfig
+	} else {
+		kubecfg = conf.ResolveKubeConfigFile()
+	}
+
+	restConfig, ns, err := getKubeconfig(kubecfg)
 	if err != nil {
 		klog.Fatalf("unexpected error: %v", err)
 	}
@@ -54,7 +62,11 @@ func Setup(ctx context.Context) (string, string, env.Environment) {
 		klog.Fatalf("unexpected error: %v", err)
 	}
 
-	conf := envconf.New()
+	conf, err := envconf.NewFromFlags()
+	if err != nil {
+		klog.Fatalf("cannot create test environment: %v", err)
+	}
+
 	conf.WithClient(client)
 	conf.WithNamespace(*namespace)
 
