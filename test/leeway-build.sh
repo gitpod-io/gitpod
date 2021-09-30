@@ -16,7 +16,7 @@ done
 for COMPONENT in tests/components/*; do
     echo building test "$COMPONENT"
     OUTPUT=$(basename "$COMPONENT")
-    go test -trimpath -ldflags="-buildid= -w -s" -c -o bin/"$OUTPUT" ./"$COMPONENT"
+    go test -trimpath -ldflags="-buildid= -w -s" -c -o bin/"$OUTPUT".test ./"$COMPONENT"
 done
 
 go test -trimpath -ldflags="-buildid= -w -s" -o bin/workspace -c ./tests/workspace

@@ -5,7 +5,9 @@
 
 set -ex
 
+export PATH=$PATH:/tests
+
 # shellcheck disable=SC2045
-for i in $(ls /tests/*); do
+for i in $(ls /tests/*.test); do
     "$i" "$@";
 done
