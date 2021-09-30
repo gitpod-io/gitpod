@@ -32,7 +32,7 @@ export abstract class AbstractContextParser implements IContextParser {
         if (url.startsWith(`${this.host}/`)) {
             url = `https://${url}`;
         }
-        if (url.startsWith(`https://${this.host}/`)) {
+        if (url.startsWith(`https://${this.host}/`) || url.startsWith(`http://${this.host}/`) ) {
             return url;
         }
         return undefined;

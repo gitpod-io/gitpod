@@ -38,6 +38,7 @@ data:
         "definitelyGpDisabled": {{ $comp.definitelyGpDisabled }},
         "workspaceGarbageCollection": {{ $comp.garbageCollection | toJson }},
         "enableLocalApp": {{ $comp.enableLocalApp }},
+        "enableHttpGitlabProvider": {{ $comp.enableHttpGitlabProvider }},
         "authProviderConfigs": {{ .Values.authProviders | toJson }},
         "disableDynamicAuthProviderLogin": {{ $comp.disableDynamicAuthProviderLogin }},
         "brandingConfig": {{ .Values.branding | toJson }},

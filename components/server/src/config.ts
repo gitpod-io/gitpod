@@ -83,6 +83,7 @@ export interface ConfigSerialized {
 
     enableLocalApp: boolean;
 
+    enableHttpGitlabProvider: boolean;
     authProviderConfigs: AuthProviderParams[];
     builtinAuthProvidersConfigured: boolean;
     disableDynamicAuthProviderLogin: boolean;

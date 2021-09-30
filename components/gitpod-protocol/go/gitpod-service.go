@@ -1554,6 +1554,7 @@ type OAuth2Config struct {
 	ScopeSeparator      string            `json:"scopeSeparator,omitempty"`
 	SettingsURL         string            `json:"settingsUrl,omitempty"`
 	TokenURL            string            `json:"tokenUrl,omitempty"`
+	Protocol            string            `json:"protocol,omitempty"`
 }
 
 // AuthProviderEntry is the AuthProviderEntry message type

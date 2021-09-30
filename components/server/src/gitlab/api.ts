@@ -15,11 +15,13 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabScope } from "./scopes";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
+import { Config } from "../config";
 
 @injectable()
 export class GitLabApi {
 
     @inject(AuthProviderParams) readonly config: AuthProviderParams;
+    @inject(Config) readonly globalConfig: Config;
     @inject(GitLabTokenHelper) protected readonly tokenHelper: GitLabTokenHelper;
 
     async create(userOrToken: User | string) {
@@ -30,8 +32,12 @@ export class GitLabApi {
             const gitlabToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GitLabScope.Requirements.DEFAULT);
             oauthToken = gitlabToken.value;
         }
+        let host = `https://${this.config.host}`
+        if (this.globalConfig.enableHttpGitlabProvider === true && this.config.oauth.protocol === "http") {
+            host = `http://${this.config.host}`
+        }
         return GitLab.create({
-            host: `https://${this.config.host}`,
+            host,
             oauthToken
         });
     }

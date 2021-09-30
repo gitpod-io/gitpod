@@ -148,7 +148,7 @@ func parseHostFromStdin() string {
 
 func parseProcessTree() (repoUrl string, gitCommand string) {
 	gitCommandRegExp := regexp.MustCompile(`git(,\d+\s+|\s+)(push|clone|fetch|pull|diff)`)
-	repoUrlRegExp := regexp.MustCompile(`\sorigin\s*(https:[^\s]*)\s`)
+	repoUrlRegExp := regexp.MustCompile(`\sorigin\s*(https?:[^\s]*)\s`)
 	pid := os.Getpid()
 	for {
 		cmdLine := readProc(pid, "cmdline")

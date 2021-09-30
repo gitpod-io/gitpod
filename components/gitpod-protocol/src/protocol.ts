@@ -1145,6 +1145,7 @@ export interface OAuth2Config {
     readonly tokenUrl: string;
     readonly scope?: string;
     readonly scopeSeparator?: string;
+    readonly protocol?: string;
 
     readonly settingsUrl?: string;
     readonly authorizationParams?: { [key: string]: string }

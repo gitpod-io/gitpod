@@ -45,7 +45,7 @@ export class GitTokenScopeGuesser {
      * @param repoUrl e.g. https://gitlab.domain.com/group/subgroup1/subgroug2/project-repo.git
      */
     protected parseRepoFull(repoUrl: string | undefined): string | undefined {
-        if (repoUrl && repoUrl.startsWith("https://") && repoUrl.endsWith(".git")) {
+        if (repoUrl && (repoUrl.startsWith("https://") || repoUrl.startsWith("http://")) && repoUrl.endsWith(".git")) {
             const parts = repoUrl.substr("https://".length).split("/").splice(1); // without host parts
             if (parts.length >= 2) {
                 parts[parts.length - 1] = parts[parts.length - 1].slice(0, -1 * ".git".length);

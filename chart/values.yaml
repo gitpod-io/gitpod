@@ -346,6 +346,7 @@ components:
       contentChunkLimit: 1000
     definitelyGpDisabled: "false"
     enableLocalApp: false
+    enableHttpGitlabProvider: false
     disableDynamicAuthProviderLogin: false
     maxEnvvarPerUserCount: 4048
     maxConcurrentPrebuildsPerRef: 10

@@ -36,7 +36,12 @@ export class GitLabAuthProvider extends GenericAuthProvider {
      */
     protected get oauthConfig() {
         const oauth = this.params.oauth!;
-        const defaultUrls = oauthUrls(this.params.host);
+        let protocol = "https"
+        if (this.config.enableHttpGitlabProvider === true && oauth.protocol === "http") {
+            protocol = "http"
+        }
+
+        const defaultUrls = oauthUrls(this.params.host, protocol);
         const scopeSeparator = " ";
         return <typeof oauth>{
             ...oauth,
@@ -53,6 +58,9 @@ export class GitLabAuthProvider extends GenericAuthProvider {
     }
 
     protected get baseURL() {
+        if (this.config.enableHttpGitlabProvider === true && this.params.oauth?.protocol === "http") {
+            return `http://${this.params.host}`;
+        }
         return `https://${this.params.host}`;
     }
 
