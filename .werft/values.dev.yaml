@@ -152,7 +152,7 @@ components:
       memory: 350Mi
 
   wsDaemon:
-    hostWorkspaceArea: /mnt/disks/ssd0/workspaces
+    setupSSDRaid: true
     disableKubeHealthMonitor: true
     volumes:
     - name: gcloud-tmp
