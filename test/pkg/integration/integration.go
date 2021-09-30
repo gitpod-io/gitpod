@@ -26,6 +26,7 @@ import (
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
@@ -168,8 +169,20 @@ func Instrument(component ComponentType, agentName string, namespace string, cli
 		}
 	}
 
-	res, err := rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
-	if err != nil {
+	var res *rpc.Client
+	var lastError error
+	waitErr := wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+		res, lastError = rpc.DialHTTP("tcp", fmt.Sprintf("localhost:%d", localAgentPort))
+		if lastError != nil {
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if waitErr == wait.ErrWaitTimeout {
+		return nil, closer, xerrors.Errorf("timed out attempting to connect agent: %v", lastError)
+	}
+	if waitErr != nil {
 		return nil, closer, err
 	}
 
