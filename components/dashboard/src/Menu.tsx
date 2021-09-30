@@ -55,7 +55,6 @@ export default function Menu() {
     }
 
     const userFullName = user?.fullName || user?.name || '...';
-    const showTeamsUI = user?.rolesOrPermissions?.includes('teams-and-projects');
     const team = getCurrentTeam(location, teams);
 
     {
@@ -71,7 +70,7 @@ export default function Menu() {
 
     const [ teamMembers, setTeamMembers ] = useState<Record<string, TeamMemberInfo[]>>({});
     useEffect(() => {
-        if (!showTeamsUI || !teams) {
+        if (!teams) {
             return;
         }
         (async () => {
@@ -127,10 +126,10 @@ export default function Menu() {
         }
         // User menu
         return [
-            ...(showTeamsUI ? [{
+            {
                 title: 'Projects',
                 link: '/projects'
-            }] : []),
+            },
             {
                 title: 'Workspaces',
                 link: '/workspaces',
@@ -239,17 +238,7 @@ export default function Menu() {
                         <img src={gitpodIcon} className="h-6" />
                     </Link>
                     {!isMinimalUI && <div className="ml-2 text-base">
-                        {showTeamsUI
-                            ? renderTeamMenu()
-                            : <nav className="flex-1">
-                                <ul className="flex flex-1 items-center justify-between text-base text-gray-700 space-x-2">
-                                    <li className="flex-1"></li>
-                                    {leftMenu.map(entry => <li key={entry.title}>
-                                        <PillMenuItem name={entry.title} selected={isSelected(entry, location)} link={entry.link}/>
-                                    </li>)}
-                                </ul>
-                            </nav>
-                        }
+                        {renderTeamMenu()}
                     </div>}
                 </div>
                 <div className="flex flex-1 items-center w-auto" id="menu">
@@ -283,10 +272,10 @@ export default function Menu() {
                     </div>
                 </div>
             </div>
-            {!isMinimalUI && showTeamsUI && !prebuildId && <div className="flex">
+            {!isMinimalUI && !prebuildId && <div className="flex">
                 {leftMenu.map((entry: Entry) => <TabMenuItem key={entry.title} name={entry.title} selected={isSelected(entry, location)} link={entry.link}/>)}
             </div>}
         </header>
-        {showTeamsUI && <Separator />}
+        <Separator />
     </>;
 }

@@ -7,12 +7,10 @@
 import { useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
 import { TeamsContext } from "./teams-context";
 
 export default function() {
     const { setTeams } = useContext(TeamsContext);
-    const { user, setUser } = useContext(UserContext);
     const history = useHistory();
 
     const [ joinError, setJoinError ] = useState<Error>();
@@ -27,12 +25,6 @@ export default function() {
                 const team = await getGitpodService().server.joinTeam(inviteId);
                 const teams = await getGitpodService().server.getTeams();
                 setTeams(teams);
-
-                { // automatically enable T&P
-                    if (!user?.rolesOrPermissions?.includes('teams-and-projects')) {
-                        setUser(await getGitpodService().server.getLoggedInUser());
-                    }
-                }
 
                 history.push(`/t/${team.slug}/members`);
             } catch (error) {

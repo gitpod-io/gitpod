@@ -16,7 +16,6 @@ export const Permissions = {
     "admin-api": undefined,
     "ide-settings": undefined,
     "new-workspace-cluster": undefined,
-    "teams-and-projects": undefined,
 };
 export type PermissionName = keyof (typeof Permissions);
 export const Roles = {"devops": undefined, "viewer": undefined, "admin": undefined };

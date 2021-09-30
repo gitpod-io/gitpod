@@ -22,7 +22,7 @@ const u1: User = {
             "primaryEmail": "tester@gitpod.io",
         }
     ],
-    rolesOrPermissions: ["teams-and-projects"],
+    rolesOrPermissions: [],
     additionalData: {
         whatsNewSeen: {
             "April-2021": "true",

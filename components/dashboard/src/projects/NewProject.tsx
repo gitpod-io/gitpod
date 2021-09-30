@@ -46,14 +46,6 @@ export default function NewProject() {
                 setProvider("github.com");
             }
         }
-        if (user) {
-            if (!user?.rolesOrPermissions?.includes('teams-and-projects')) {
-                (async () => {
-                    setUser(await getGitpodService().server.getLoggedInUser());
-                })();
-
-            }
-        }
     }, [user]);
 
     useEffect(() => {
@@ -93,13 +85,6 @@ export default function NewProject() {
         (async () => {
             updateOrgsState();
             const repos = await updateReposInAccounts();
-
-            { // automatically enable T&P
-                if (!user?.rolesOrPermissions?.includes('teams-and-projects')) {
-                    setUser(await getGitpodService().server.getLoggedInUser());
-                }
-            }
-
             const first = repos[0];
             if (first) {
                 setSelectedAccount(first.account);
