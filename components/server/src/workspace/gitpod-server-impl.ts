@@ -1442,8 +1442,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         await this.teamDB.addMemberToTeam(user.id, invite.teamId);
         const team = await this.teamDB.findTeamById(invite.teamId);
 
-        await this.ensureTeamsEnabled();
-
         this.analytics.track({
             userId: user.id,
             event: "team_joined",
@@ -1453,16 +1451,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             }
         })
         return team!;
-    }
-
-    protected async ensureTeamsEnabled() {
-        if (this.user && !this.user?.rolesOrPermissions?.includes('teams-and-projects')) {
-            this.user.rolesOrPermissions = [...(this.user.rolesOrPermissions || []), 'teams-and-projects'];
-            await this.userDB.updateUserPartial({
-                id: this.user.id,
-                rolesOrPermissions: this.user.rolesOrPermissions
-            })
-        }
     }
 
     public async setTeamMemberRole(teamId: string, userId: string, role: TeamMemberRole): Promise<void> {
