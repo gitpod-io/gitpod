@@ -1,6 +1,20 @@
 # Change Log
 
 ## September 2021
+- [dashboard] fix accumulating websocket connections ([#5935](https://github.com/gitpod-io/gitpod/pull/5935)) - [@geropl](https://github.com/geropl)
+- Clean-up Readme ([#5912](https://github.com/gitpod-io/gitpod/pull/5912)) - [@JohannesLandgraf](https://github.com/JohannesLandgraf), [@aledbf](https://github.com/aledbf)
+
+## June 2021
+- [dashboard] Implement inviting team members ([#4490](https://github.com/gitpod-io/gitpod/pull/4490)) - [@jankeromnes](https://github.com/jankeromnes), [@svenefftinge](https://github.com/svenefftinge)
+
+## September 2021
+- [workspace] Make the workspace stopping mechanism more deterministic ([#5897](https://github.com/gitpod-io/gitpod/pull/5897)) - [@csweichel](https://github.com/csweichel)
+- [prebuilds] fix prebuild logs with multiple tasks ([#5918](https://github.com/gitpod-io/gitpod/pull/5918)) - [@geropl](https://github.com/geropl)
+- [ws-manager] Provide ordering of status updates ([#5223](https://github.com/gitpod-io/gitpod/pull/5223)) - [@aledbf](https://github.com/aledbf), [@csweichel](https://github.com/csweichel)
+- [image-builder] Include environment variables in the built workspace image ([#5693](https://github.com/gitpod-io/gitpod/pull/5693)) - [@csweichel](https://github.com/csweichel)
+- [db] add missing index `d_b_prebuild_workspace.buildWorkspaceId` ([#5920](https://github.com/gitpod-io/gitpod/pull/5920)) - [@geropl](https://github.com/geropl)
+- fix log format for meta components ([#5899](https://github.com/gitpod-io/gitpod/pull/5899)) - [@geropl](https://github.com/geropl)
+- improve websocket reconnection handling in the frontend ([#5787](https://github.com/gitpod-io/gitpod/pull/5787)) - [@geropl](https://github.com/geropl)
 - Ask for a Gitpod workspace snapshot ([#5026](https://github.com/gitpod-io/gitpod/pull/5026)) - [@mikenikles](https://github.com/mikenikles)
 - [workspace] Support Docker 20.10 ([#5815](https://github.com/gitpod-io/gitpod/pull/5815)) - [@csweichel](https://github.com/csweichel)
 - [chart] Upgrade kube-rbac-proxy to v0.11.0 ([#5829](https://github.com/gitpod-io/gitpod/pull/5829)) - [@aledbf](https://github.com/aledbf)
