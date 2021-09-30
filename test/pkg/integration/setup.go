@@ -8,79 +8,83 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/e2e-framework/klient"
-	"sigs.k8s.io/e2e-framework/klient/conf"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"sigs.k8s.io/e2e-framework/pkg/flags"
 )
 
 func Setup(ctx context.Context) (string, string, env.Environment) {
 	var (
-		kubeconfig      = flag.String("kubeconfig", "", "path to the kubeconfig file or empty to use of in cluster Kubernetes config")
-		namespace       = flag.String("namespace", "", `namespace to execute the test against. Defaults to the one configured in "kubeconfig".`)
-		username        = flag.String("username", "", "username to execute the tests with. Chooses one automatically if left blank.")
-		waitGitpodReady = flag.Duration("wait-gitpod-timeout", 5*time.Minute, `wait time for Gitpod components before starting integration test`)
+		username        string
+		waitGitpodReady time.Duration
+
+		namespace  string
+		kubeconfig string
+		feature    string
+		assess     string
+
+		labels = make(flags.LabelsMap)
 	)
 
-	klog.InitFlags(nil)
-	flag.Parse()
+	flagset := flag.CommandLine
+	klog.InitFlags(flagset)
 
-	var kubecfg string
-	if *kubeconfig != "" {
-		kubecfg = *kubeconfig
-	} else {
-		kubecfg = conf.ResolveKubeConfigFile()
+	flagset.StringVar(&username, "username", "", "username to execute the tests with. Chooses one automatically if left blank.")
+	flagset.DurationVar(&waitGitpodReady, "wait-gitpod-timeout", 5*time.Minute, `wait time for Gitpod components before starting integration test`)
+	flagset.StringVar(&namespace, "namespace", "", "Kubernetes cluster namespaces to use")
+	flagset.StringVar(&kubeconfig, "kubeconfig", "", "The path to the kubeconfig file")
+	flagset.StringVar(&feature, "feature", "", "Regular expression that targets features to test")
+	flagset.StringVar(&assess, "assess", "", "Regular expression that targets assertive steps to run")
+	flagset.Var(&labels, "labels", "Comma-separated key/value pairs to filter tests by labels")
+	if err := flagset.Parse(os.Args[1:]); err != nil {
+		klog.Fatalf("cannot parse flags: %v", err)
 	}
 
-	restConfig, ns, err := getKubeconfig(kubecfg)
+	e := envconf.New()
+	if assess != "" {
+		e.WithAssessmentRegex(assess)
+	}
+	if feature != "" {
+		e.WithFeatureRegex(feature)
+	}
+
+	client, err := klient.NewWithKubeConfigFile(kubeconfig)
 	if err != nil {
 		klog.Fatalf("unexpected error: %v", err)
 	}
+
+	e.WithClient(client)
+	e.WithLabels(labels)
+	e.WithNamespace(namespace)
 
 	// use the namespace from the CurrentContext
-	if *namespace == "" {
-		*namespace = ns
+	if namespace == "" {
+		ns, err := getNamespace(kubeconfig)
+		if err != nil {
+			klog.Fatalf("unexpected error obtaining context namespace: %v", err)
+		}
+		e.WithNamespace(ns)
 	}
 
-	// change defaults to avoid limiting connections
-	restConfig.QPS = 20
-	restConfig.Burst = 50
-
-	client, err := klient.New(restConfig)
-	if err != nil {
-		klog.Fatalf("unexpected error: %v", err)
-	}
-
-	conf, err := envconf.NewFromFlags()
-	if err != nil {
-		klog.Fatalf("cannot create test environment: %v", err)
-	}
-
-	conf.WithClient(client)
-	conf.WithNamespace(*namespace)
-
-	ctx = context.WithValue(ctx, "username", *username)
-
-	testenv, err := env.NewWithContext(ctx, conf)
+	testenv, err := env.NewWithContext(ctx, e)
 	if err != nil {
 		klog.Fatalf("unexpected error: %v", err)
 	}
 	testenv.Setup(
-		waitOnGitpodRunning(*namespace, *waitGitpodReady),
+		waitOnGitpodRunning(e.Namespace(), waitGitpodReady),
 	)
 
-	return *username, *namespace, testenv
+	return username, e.Namespace(), testenv
 }
 
 func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
@@ -146,21 +150,24 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 	}
 }
 
-func getKubeconfig(kubeconfig string) (res *rest.Config, namespace string, err error) {
-	cfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
-		&clientcmd.ConfigOverrides{},
-	)
-	namespace, _, err = cfg.Namespace()
-	if err != nil {
-		return nil, "", err
+func getNamespace(path string) (string, error) {
+	var cfg clientcmd.ClientConfig
+
+	switch path {
+	case "":
+		loadingrules := clientcmd.NewDefaultClientConfigLoadingRules()
+		cfg = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingrules,
+			&clientcmd.ConfigOverrides{})
+	default:
+		cfg = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			&clientcmd.ClientConfigLoadingRules{ExplicitPath: path},
+			&clientcmd.ConfigOverrides{})
 	}
 
-	res, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	namespace, _, err := cfg.Namespace()
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
-	res.RateLimiter = &wsk8s.UnlimitedRateLimiter{}
 
-	return res, namespace, nil
+	return namespace, nil
 }
