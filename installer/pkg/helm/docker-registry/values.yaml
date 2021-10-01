@@ -1,0 +1,5 @@
+docker-registry:
+  fullnameOverride: registry
+  service:
+    port: 443
+  tlsSecretName: builtin-registry-certs
