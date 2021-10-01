@@ -154,7 +154,7 @@ export class TeamDBImpl implements TeamDB {
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!!membership) {
-            throw new Error('You are already a member of this team');
+            throw new Error(`You are already a member of this team. (${team.slug})`);
         }
         await membershipRepo.save({
             id: uuidv4(),
