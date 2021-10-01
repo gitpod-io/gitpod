@@ -181,7 +181,20 @@ export default function () {
     return <>
         <Header title="Branches" subtitle={<h2 className="tracking-wide">View recent active branches for <a className="gp-link" href={project?.cloneUrl!}>{toRemoteURL(project?.cloneUrl || '')}</a>.</h2>} />
         <div className="lg:px-28 px-10">
-            {showAuthBanner && (<>
+            {showAuthBanner ? (
+                <div className="mt-8 rounded-xl text-gray-500 bg-gray-50 dark:bg-gray-800 flex-col">
+                    <div className="p-8 text-center">
+                        <img src={NoAccess} title="No Access" className="m-auto mb-4" />
+                        <div className="text-center text-gray-600 dark:text-gray-50 pb-3 font-bold">
+                            No Access
+                        </div>
+                        <div className="text-center dark:text-gray-400 pb-3">
+                            Authorize {showAuthBanner.host} <br />to access branch information.
+                        </div>
+                        <button className={`primary mr-2 py-2`} onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}>Authorize Provider</button>
+                    </div>
+                </div>
+            ) : (<>
                 <div className="flex mt-8">
                     <div className="flex">
                         <div className="py-4">
@@ -247,19 +260,6 @@ export default function () {
                         </Item>
                     }
                     )}
-
-                    <div className="mt-8 rounded-xl text-gray-500 bg-gray-50 dark:bg-gray-800 flex-col">
-                        <div className="p-8 text-center">
-                            <img src={NoAccess} title="No Access" className="m-auto mb-4" />
-                            <div className="text-center text-gray-600 dark:text-gray-50 pb-3 font-bold">
-                                No Access
-                            </div>
-                            <div className="text-center dark:text-gray-400 pb-3">
-                                Authorize {showAuthBanner.host} <br />to access branch information.
-                            </div>
-                            <button className={`primary mr-2 py-2`} onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}>Authorize Provider</button>
-                        </div>
-                    </div>
                 </ItemsList>
             </>)}
         </div>
