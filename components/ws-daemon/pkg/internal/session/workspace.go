@@ -250,6 +250,7 @@ func (s *Workspace) SetGitStatus(status *csapi.GitStatus) error {
 
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
 func (s *Workspace) UpdateGitStatus(ctx context.Context) (res *csapi.GitStatus, err error) {
+	log.WithField("loc", s.Location).WithField("chk", s.CheckoutLocation).WithFields(s.OWI()).Debug("updating Git status")
 	loc := s.Location
 	if loc == "" {
 		// FWB workspaces don't have `Location` set, but rather ServiceLocDaemon and ServiceLocNode.
