@@ -250,7 +250,7 @@ func (s *Workspace) SetGitStatus(status *csapi.GitStatus) error {
 
 // UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
 func (s *Workspace) UpdateGitStatus(ctx context.Context) (res *csapi.GitStatus, err error) {
-	log.WithField("loc", s.Location).WithField("chk", s.CheckoutLocation).WithFields(s.OWI()).Debug("updating Git status")
+	log.WithField("loc", s.Location).WithField("chk", s.CheckoutLocation).WithFields(s.OWI()).Info("updating Git status")
 	loc := s.Location
 	if loc == "" {
 		// FWB workspaces don't have `Location` set, but rather ServiceLocDaemon and ServiceLocNode.
@@ -261,17 +261,17 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context) (res *csapi.GitStatus, 
 		// does not work.
 		//
 		// TODO(cw): figure out a way to get ahold of the Git status.
-		log.WithField("loc", loc).WithFields(s.OWI()).Debug("not updating Git status of FWB workspace")
+		log.WithField("loc", loc).WithFields(s.OWI()).Info("not updating Git status of FWB workspace")
 		return
 	}
 
 	if s.CheckoutLocation == "" {
-		log.WithField("loc", loc).WithFields(s.OWI()).Debug("did not have a Git location - not updating Git status")
+		log.WithField("loc", loc).WithFields(s.OWI()).Info("did not have a Git location - not updating Git status")
 		return
 	}
 	loc = filepath.Join(loc, s.CheckoutLocation)
 	if !git.IsWorkingCopy(loc) {
-		log.WithField("loc", loc).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")
+		log.WithField("loc", loc).WithFields(s.OWI()).Info("did not find a Git working copy - not updating Git status")
 		return nil, nil
 	}
 
