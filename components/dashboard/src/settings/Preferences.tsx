@@ -55,7 +55,7 @@ export default function Preferences() {
                         <div className="flex justify-center mt-3">
                             <img className="w-16 filter-grayscale self-center" src={vscode} />
                         </div>
-                        <span className="mt-2 ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-orange-100 text-orange-700 dark:bg-orange-600 dark:text-orange-100 font-semibold">LATEST</span>
+                        <span className="mt-2 ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-orange-100 text-orange-700 dark:bg-orange-600 dark:text-orange-100 font-semibold">INSIDERS</span>
                     </SelectableCard>
                 </Tooltip>
             </div>
