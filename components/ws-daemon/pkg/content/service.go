@@ -300,6 +300,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	if sess == nil {
 		return nil, status.Error(codes.NotFound, "workspace does not exist")
 	}
+	log.WithError(err).WithFields(sess.OWI()).Info("dispose workspace")
 
 	// We were asked to do a backup of a session that was never ready. There seems to have been some state drift here - tell the caller.
 	if req.Backup && !sess.IsReady() {
