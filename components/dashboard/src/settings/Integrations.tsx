@@ -25,7 +25,7 @@ import settingsMenu from "./settings-menu";
 export default function Integrations() {
 
     return (<div>
-        <PageWithSubMenu subMenu={settingsMenu} title='Integrations' subtitle='Manage permissions for git providers and integrations.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Integrations' subtitle='Manage permissions for Git providers and integrations.'>
             <GitProviders />
             <div className="h-12"></div>
             <GitIntegrations />
@@ -280,7 +280,7 @@ function GitProviders() {
         )}
 
         <h3>Git Providers</h3>
-        <h2>Manage permissions for git providers.</h2>
+        <h2>Manage permissions for Git providers.</h2>
         <ItemsList className="pt-6">
             {authProviders && authProviders.map(ap => (
                 <Item key={"ap-" + ap.authProviderId} className="h-16">
@@ -360,7 +360,7 @@ function GitIntegrations() {
         {modal?.mode === "delete" && (
             <ConfirmationModal
                 title="Remove Integration"
-                areYouSureText="Are you sure you want to remove the following git integration?"
+                areYouSureText="Are you sure you want to remove the following Git integration?"
                 children={{
                     name: modal.provider.type,
                     description: modal.provider.host,
@@ -375,7 +375,7 @@ function GitIntegrations() {
         <div className="flex items-start sm:justify-between mb-2">
             <div>
                 <h3>Git Integrations</h3>
-                <h2 className="text-gray-500">Manage git integrations for GitLab or GitHub self-hosted instances.</h2>
+                <h2 className="text-gray-500">Manage Git integrations for GitLab or GitHub self-hosted instances.</h2>
             </div>
             {providers.length !== 0
                 ?
@@ -625,7 +625,7 @@ export function GitIntegrationModal(props: ({
                 <AlertBox>You need to activate this integration.</AlertBox>
             )}
             <div className="flex flex-col">
-                <span className="text-gray-500">{props.headerText || "Configure a git integration with a GitLab or GitHub self-hosted instance."}</span>
+                <span className="text-gray-500">{props.headerText || "Configure a Git integration with a GitLab or GitHub self-hosted instance."}</span>
             </div>
 
             <div className="overscroll-contain max-h-96 overflow-y-auto pr-2">

@@ -59,12 +59,12 @@ export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
                         <div className="flex flex-col pt-10 items-center px-2">
                             <h3 className="mb-2 text-gray-500 dark:text-gray-400">No Recent Projects</h3>
                             <p className="text-center">Projects you use frequently will show up here.</p>
-                            <p className="text-center">Prefix a git repository URL with gitpod.io/# or start with an example.</p>
+                            <p className="text-center">Prefix a Git repository URL with gitpod.io/# or start with an example.</p>
                             <button onClick={() => setSelection('Examples')} className="font-medium mt-8">Select Example</button>
                         </div> :
                         <div className="flex flex-col pt-10 items-center px-2">
                             <h3 className="mb-2 text-gray-500 dark:text-gray-400">No Example Projects</h3>
-                            <p className="text-center">Sorry there seem to be no example projects, that work with your current git provider.</p>
+                            <p className="text-center">Sorry there seem to be no example projects, that work with your current Git provider.</p>
                         </div>)
                 }
             </div>

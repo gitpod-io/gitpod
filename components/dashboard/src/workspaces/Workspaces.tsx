@@ -193,7 +193,7 @@ export default function () {
                             </>
                             :<>
                                 <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Workspaces</h3>
-                                <div className="text-center pb-6 text-gray-500">Prefix any git repository URL with gitpod.io/# or create a new workspace for a recently used project. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
+                                <div className="text-center pb-6 text-gray-500">Prefix any Git repository URL with gitpod.io/# or create a new workspace for a recently used project. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
                                 <span>
                                     <button onClick={showStartWSModal}>New Workspace</button>
                                 </span>
