@@ -66,7 +66,7 @@ export default function InstallGitHubApp() {
                 <div className="flex flex-col items-center m-auto max-w-lg mt-40">
                     <h3 className="text-center pb-3 text-gray-500">Install GitHub App</h3>
                     <div className="text-center pb-6 text-gray-500">You are about to install the GitHub app for Gitpod.</div>
-                    <InfoBox>This action will also allow Gitpod to access private repositories. You can edit git provider permissions later in user settings.</InfoBox>
+                    <InfoBox>This action will also allow Gitpod to access private repositories. You can edit Git provider permissions later in user settings.</InfoBox>
                     <div className="mt-6">
                         <button className="secondary">Cancel</button>
                         <button className="ml-2" onClick={() => registerApp(installationId, setModal)}>Install App</button>
