@@ -1,6 +1,20 @@
 # Change Log
 
+## October 2021
+- Make it possible to re-trigger failed or timed out Prebuilds ([#5836](https://github.com/gitpod-io/gitpod/pull/5836)) - [@jankeromnes](https://github.com/jankeromnes)
+
 ## September 2021
+- [Teams & Projects] Ask for authorization when viewing a project of a provider without connection ([#5640](https://github.com/gitpod-io/gitpod/pull/5640)) - [@AlexTugarev](https://github.com/AlexTugarev)
+
+## October 2021
+- [teams] Fix joining teams from different DB region ([#5967](https://github.com/gitpod-io/gitpod/pull/5967)) - [@jankeromnes](https://github.com/jankeromnes)
+
+## September 2021
+- Refactor integration tests using [sigs.k8s.io/e2e-framework](https://sigs.k8s.io/e2e-framework) ([#5572](https://github.com/gitpod-io/gitpod/pull/5572)) - [@aledbf](https://github.com/aledbf)
+- Allow creation of projects with visibility of prebuilds ([#5957](https://github.com/gitpod-io/gitpod/pull/5957)) - [@svenefftinge](https://github.com/svenefftinge)
+- Allow creation of teams used to collaborate on projects ([#5957](https://github.com/gitpod-io/gitpod/pull/5957)) - [@svenefftinge](https://github.com/svenefftinge)
+- [werft] replaced ws-nodepools and enabled raid0 on ws-nodepools ([#5948](https://github.com/gitpod-io/gitpod/pull/5948)) - [@wulfthimm](https://github.com/wulfthimm)
+- Add 5 second interval automatic page reload to default 404 page for unserved ports. ([#5938](https://github.com/gitpod-io/gitpod/pull/5938)) - [@rohan-patra](https://github.com/rohan-patra)
 - [dashboard] fix accumulating websocket connections ([#5935](https://github.com/gitpod-io/gitpod/pull/5935)) - [@geropl](https://github.com/geropl)
 - Clean-up Readme ([#5912](https://github.com/gitpod-io/gitpod/pull/5912)) - [@JohannesLandgraf](https://github.com/JohannesLandgraf), [@aledbf](https://github.com/aledbf)
 
