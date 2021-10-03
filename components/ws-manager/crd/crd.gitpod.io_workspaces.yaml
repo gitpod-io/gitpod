@@ -67,8 +67,13 @@ spec:
                 type: string
               workspace:
                 properties:
-                  admission:
-                    type: string
+                  auth:
+                    properties:
+                      admission:
+                        type: string
+                      ownerToken:
+                        type: string
+                    type: object
                   checkoutLocation:
                     type: string
                   env:
@@ -201,6 +206,7 @@ spec:
                   workspaceLocation:
                     type: string
                 required:
+                - auth
                 - env
                 - ideImage
                 - initializer
@@ -215,11 +221,6 @@ spec:
           status:
             description: WorkspaceStatus defines the observed state of Workspace
             properties:
-              auth:
-                properties:
-                  ownerToken:
-                    type: string
-                type: object
               conditions:
                 properties:
                   deployed:

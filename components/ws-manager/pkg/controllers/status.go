@@ -158,9 +158,6 @@ func getWorkspaceStatus(wso workspaceObjects) (*workspacev1.WorkspaceStatus, err
 	if wso.Workspace == nil {
 		return nil, xerrors.Errorf("missing workspace object")
 	}
-	if wso.Pod == nil {
-		return nil, xerrors.Errorf("need pod to compute status")
-	}
 
 	res := wso.Workspace.DeepCopy()
 
@@ -262,6 +259,9 @@ func getContainer(pod *corev1.Pod, name string) *corev1.Container {
 
 func extractStatusFromPod(result *workspacev1.WorkspaceStatus, wso workspaceObjects) error {
 	pod := wso.Pod
+	if pod == nil {
+		return nil
+	}
 
 	// check failure states, i.e. determine value of result.Failed
 	failure, phase := extractFailure(wso)

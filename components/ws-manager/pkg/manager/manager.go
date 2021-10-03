@@ -47,7 +47,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/clock"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/pkg/kubeapi/v1"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 )
 
@@ -267,50 +266,6 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 		span.LogKV("event", "ports service created")
 	}
-
-	wsObj := &workspacev1.Workspace{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Workspace",
-			APIVersion: "crd.gitpod.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        req.Id,
-			Namespace:   m.Config.Namespace,
-			Labels:      startContext.Labels,
-			Annotations: req.Metadata.Annotations,
-		},
-		Spec: workspacev1.WorkspaceSpec{
-			Pod: pod.Name,
-			Metadata: workspacev1.WorkspaceSpecMetadata{
-				ServicePrefix: req.ServicePrefix,
-				Owner:         req.Metadata.Owner,
-				WorkspaceID:   req.Metadata.MetaId,
-			},
-			Orchestration: workspacev1.WorkspaceSpecOrchestration{
-				URL: startContext.WorkspaceURL,
-			},
-			Workspace: workspacev1.WorkspaceSpecProper{
-				WorkspaceImage:    req.Spec.WorkspaceImage,
-				IDEImage:          req.Spec.IdeImage,
-				Initializer:       []byte(pod.Annotations[workspaceInitializerAnnotation]),
-				Env:               pod.Spec.Containers[0].Env,
-				CheckoutLocation:  req.Spec.CheckoutLocation,
-				WorkspaceLocation: req.Spec.WorkspaceLocation,
-				Git: &workspacev1.GitSpec{
-					Username: req.Spec.Git.Username,
-					Email:    req.Spec.Git.Email,
-				},
-				Timeout: req.Spec.Timeout,
-				Admission: func() workspacev1.AdmissionLevel {
-					if req.Spec.Admission == api.AdmissionLevel_ADMIT_EVERYONE {
-						return workspacev1.AdmissionEveryone
-					}
-					return workspacev1.AdmissionOwnerOnly
-				}(),
-			},
-		},
-	}
-	m.Clientset.Create(ctx, wsObj)
 
 	m.metrics.OnWorkspaceStarted(req.Type)
 

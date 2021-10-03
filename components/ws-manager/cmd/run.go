@@ -32,6 +32,8 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
+	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/controllers"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/pkg/kubeapi/v1"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
@@ -77,10 +79,7 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("unable to start manager")
 		}
 
-		wsctrl := &controllers.WorkspaceReconciler{
-			Client: mgr.GetClient(),
-			Scheme: mgr.GetScheme(),
-		}
+		wsctrl := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), cfg.Manager)
 		err = wsctrl.SetupWithManager(mgr)
 		if err != nil {
 			log.WithError(err).Fatal("unable to setup workspace controller")
@@ -172,7 +171,17 @@ var runCmd = &cobra.Command{
 		defer grpcServer.Stop()
 		grpc_prometheus.Register(grpcServer)
 
-		manager.Register(grpcServer, mgmt)
+		wsmanapi.RegisterWorkspaceManagerServer(grpcServer, &controllers.WorkspaceServiceDelegator{
+			Handler: mgmt,
+			Shadows: []wsmanapi.WorkspaceManagerServer{
+				&controllers.Manager{
+					Config:    mgmt.Config,
+					Clientset: mgmt.Clientset,
+					RawClient: mgmt.RawClient,
+				},
+			},
+		})
+		regapi.RegisterSpecProviderServer(grpcServer, mgmt)
 		lis, err := net.Listen("tcp", cfg.RPCServer.Addr)
 		if err != nil {
 			log.WithError(err).WithField("addr", cfg.RPCServer.Addr).Fatal("cannot start RPC server")

@@ -9,6 +9,7 @@
 package v1
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -53,7 +54,12 @@ type WorkspaceSpecProper struct {
 	WorkspaceLocation string          `json:"workspaceLocation,omitempty"`
 	Git               *GitSpec        `json:"git,omitempty"`
 	Timeout           string          `json:"timeout,omitempty"`
-	Admission         AdmissionLevel  `json:"admission,omitempty"`
+	Auth              AuthSpec        `json:"auth"`
+}
+
+type AuthSpec struct {
+	OwnerToken string         `json:"ownerToken,omitempty"`
+	Admission  AdmissionLevel `json:"admission,omitempty"`
 }
 
 type WorkspaceType string
@@ -88,7 +94,6 @@ type WorkspaceStatus struct {
 	Conditions Conditions   `json:"conditions"`
 	Message    string       `json:"message,omitempty"`
 	Runtime    RuntimeInfo  `json:"runtime,omitempty"`
-	Auth       AuthStatus   `json:"auth,omitempty"`
 	Ports      []PortStatus `json:"ports,omitempty"`
 
 	Control WorkspaceControl `json:"control"`
@@ -140,10 +145,6 @@ type RuntimeInfo struct {
 	Node string `json:"node,omitempty"`
 }
 
-type AuthStatus struct {
-	OwnerToken string `json:"ownerToken,omitempty"`
-}
-
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
@@ -154,6 +155,10 @@ type Workspace struct {
 
 	Spec   WorkspaceSpec   `json:"spec,omitempty"`
 	Status WorkspaceStatus `json:"status,omitempty"`
+}
+
+func (ws Workspace) OWI() map[string]interface{} {
+	return log.OWI(ws.Spec.Metadata.Owner, ws.Spec.Metadata.WorkspaceID, ws.Name)
 }
 
 //+kubebuilder:object:root=true
