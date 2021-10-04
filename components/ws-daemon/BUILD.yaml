@@ -1,4 +1,17 @@
 packages:
+  - name: lib
+    type: go
+    srcs:
+      - "pkg/**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/content-service:lib
+      - components/ws-daemon-api/go:lib
+    config:
+      packaging: library
   - name: app
     type: go
     srcs:

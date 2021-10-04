@@ -2,6 +2,7 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.agentSmith -}}
+{{ $wsDaemon := .Values.components.wsDaemon -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- $gp := $.Values -}}
 {{- if not $comp.disabled -}}
@@ -36,6 +37,10 @@ spec:
       - name: config
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
+      - name: containerd-socket
+        hostPath:
+          path: {{ $wsDaemon.containerRuntime.containerd.socket }}
+          type: Socket
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
@@ -45,6 +50,8 @@ spec:
         volumeMounts:
         - mountPath: /config
           name: config
+        - mountPath: /mnt/containerd.sock
+          name: containerd-socket
 {{- if $comp.volumeMounts }}
 {{ toYaml $comp.volumeMounts | indent 8 }}
 {{- end }}

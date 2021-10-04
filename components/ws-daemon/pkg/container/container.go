@@ -47,6 +47,9 @@ type Runtime interface {
 
 	// IsContainerdReady returns is the status of containerd.
 	IsContainerdReady(ctx context.Context) (bool, error)
+
+	// ListWorkspaceContainers retuns a list of all WorkspaceContainers currently known to the runtime
+	ListWorkspaceContainers(ctx context.Context) ([]*WorkspaceContainerInfo, error)
 }
 
 var (
@@ -66,4 +69,19 @@ type ID string
 // OptsContainerRootfs provides options for the ContainerRootfs function
 type OptsContainerRootfs struct {
 	Unmapped bool
+}
+
+type WorkspaceContainerInfo struct {
+	// The PID of the container's namespace root process, e.g. the container shim.
+	PID uint64
+	// The CRI container id
+	ID ID
+	// The OwnerID is the user id of the workspace owner
+	OwnerID string
+	// The WorkspaceID
+	WorkspaceID string
+	// The InstanceID of the workspace this container is attached to
+	InstanceID string
+	// The workspace type
+	WorkspaceType string
 }

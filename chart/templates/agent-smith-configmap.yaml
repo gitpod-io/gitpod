@@ -48,6 +48,14 @@ data:
       },
       "kubernetes": {
         "enabled": true
+      },
+      "container": {
+        "runtime": "containerd",
+        "containerd": {
+          "socket": "/mnt/containerd.sock",
+          "nodeToContainerMapping": {},
+          "mounts": {}
+        }
       }
     }
 {{- end -}}

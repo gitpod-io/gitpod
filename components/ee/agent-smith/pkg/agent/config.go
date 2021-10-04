@@ -27,6 +27,7 @@ type Config struct {
 		Enabled    bool   `json:"enabled"`
 		Kubeconfig string `json:"kubeconfig,omitempty"`
 	} `json:"kubernetes"`
+	Container *Container `json:"container"`
 
 	ProbePath string `json:"probePath,omitempty"`
 }

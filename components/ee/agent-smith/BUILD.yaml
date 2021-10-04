@@ -9,6 +9,7 @@ packages:
       - "go.mod"
       - "go.sum"
     deps:
+      - components/ws-daemon:lib
       - components/common-go:lib
       - components/gitpod-protocol/go:lib
     env:

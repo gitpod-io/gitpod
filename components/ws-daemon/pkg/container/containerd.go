@@ -75,18 +75,19 @@ type Containerd struct {
 }
 
 type containerInfo struct {
-	WorkspaceID string
-	InstanceID  string
-	OwnerID     string
-	ID          string
-	Snapshotter string
-	SnapshotKey string
-	PodName     string
-	SeenTask    bool
-	Rootfs      string
-	UpperDir    string
-	CGroupPath  string
-	PID         uint32
+	WorkspaceID   string
+	InstanceID    string
+	OwnerID       string
+	WorkspaceType string
+	ID            string
+	Snapshotter   string
+	SnapshotKey   string
+	PodName       string
+	SeenTask      bool
+	Rootfs        string
+	UpperDir      string
+	CGroupPath    string
+	PID           uint32
 }
 
 // start listening to containerd
@@ -185,7 +186,7 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 		return
 	}
 
-	if c.Labels[containerLabelCRIKind] == "sandbox" && c.Labels[wsk8s.WorkspaceIDLabel] != "" {
+	if isWorkspaceContainerShim(c) {
 		s.cond.L.Lock()
 		defer s.cond.L.Unlock()
 
@@ -196,10 +197,11 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 		}
 
 		info := &containerInfo{
-			InstanceID:  c.Labels[wsk8s.WorkspaceIDLabel],
-			OwnerID:     c.Labels[wsk8s.OwnerLabel],
-			WorkspaceID: c.Labels[wsk8s.MetaIDLabel],
-			PodName:     podName,
+			InstanceID:    c.Labels[wsk8s.WorkspaceIDLabel],
+			OwnerID:       c.Labels[wsk8s.OwnerLabel],
+			WorkspaceID:   c.Labels[wsk8s.MetaIDLabel],
+			WorkspaceType: c.Labels[wsk8s.TypeLabel],
+			PodName:       podName,
 		}
 		if info.Snapshotter == "" {
 			// c.Snapshotter is optional
@@ -215,7 +217,7 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 		return
 	}
 
-	if c.Labels[containerLabelCRIKind] == "container" && c.Labels[containerLabelK8sContainerName] == "workspace" {
+	if isWorkspaceContainer(c) {
 		s.cond.L.Lock()
 		defer s.cond.L.Unlock()
 		if _, ok := s.cntIdx[c.ID]; ok {
@@ -242,7 +244,16 @@ func (s *Containerd) handleNewContainer(c containers.Container) {
 
 		s.cntIdx[c.ID] = info
 		log.WithField("podname", podName).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).WithField("ID", c.ID).Debug("found workspace container - updating label cache")
+
 	}
+}
+
+func isWorkspaceContainerShim(c containers.Container) bool {
+	return c.Labels[containerLabelCRIKind] == "sandbox" && c.Labels[wsk8s.WorkspaceIDLabel] != ""
+}
+
+func isWorkspaceContainer(c containers.Container) bool {
+	return c.Labels[containerLabelCRIKind] == "container" && c.Labels[containerLabelK8sContainerName] == "workspace"
 }
 
 func (s *Containerd) handleNewTask(cid string, rootfs []*types.Mount, pid uint32) {
@@ -453,6 +464,61 @@ func (s *Containerd) ContainerPID(ctx context.Context, id ID) (pid uint64, err e
 // ContainerPID returns the PID of the container's namespace root process, e.g. the container shim.
 func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {
 	return s.Client.IsServing(ctx)
+}
+
+// ListWorkspaceContainers returns a list of running workspace containers
+func (s *Containerd) ListWorkspaceContainers(ctx context.Context) ([]*WorkspaceContainerInfo, error) {
+	// taskMap := make(map[string]*task.Process)
+	// resp, err := s.Client.TaskService().List(ctx, &tasks.ListTasksRequest{})
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// for _, t := range resp.Tasks {
+	// 	if t.Status != task.StatusRunning {
+	// 		continue
+	// 	}
+	// 	tt := t
+	// 	taskMap[t.ContainerID] = tt
+	// }
+
+	// cs, err := s.Client.ContainerService().List(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	wscs := make([]*WorkspaceContainerInfo, 0)
+	for _, wsInfo := range s.wsiIdx {
+		wsc := WorkspaceContainerInfo{
+			ID:          ID(wsInfo.ID),
+			PID:         uint64(wsInfo.PID),
+			OwnerID:     wsInfo.OwnerID,
+			WorkspaceID: wsInfo.WorkspaceID,
+			InstanceID:  wsInfo.InstanceID,
+		}
+		wscs = append(wscs, &wsc)
+	}
+	// wscMap := make(map[ID]*WorkspaceContainerInfo)
+	// for _, c := range cs {
+	// 	if !isWorkspaceContainerShim(c) {
+	// 		continue
+	// 	}
+
+	// 	t, ok := taskMap[c.ID]
+	// 	if !ok {
+	// 		// might very well happen, we don't care that much
+	// 		continue
+	// 	}
+
+	// 	wsc := WorkspaceContainerInfo{
+	// 		ID:         ID(c.ID),
+	// 		PID:        uint64(t.Pid),
+	// 		InstanceID: c.Labels[wsk8s.WorkspaceIDLabel],
+	// 	}
+	// 	wscMap[wsc.ID] = &wsc
+	// 	wscs = append(wscs, &wsc)
+	// }
+
+	return wscs, nil
 }
 
 // ExtractCGroupPathFromContainer retrieves the CGroupPath from the linux section
