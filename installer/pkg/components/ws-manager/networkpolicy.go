@@ -14,10 +14,6 @@ import (
 
 // todo(sje): establish how to pass in config with cw
 func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !ctx.Config.InstallNetworkPolicies {
-		return nil, nil
-	}
-
 	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{

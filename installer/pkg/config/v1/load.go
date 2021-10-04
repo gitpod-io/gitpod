@@ -51,7 +51,7 @@ func LoadMock() *Config {
 		},
 		Workspace: Workspace{
 			Runtime: WorkspaceRuntime{
-				FSShiftMethod: FSShiftFuseFS,
+				FSShiftMethod:        FSShiftFuseFS,
 				ContainerDRuntimeDir: "/run/containerd/io.containerd.runtime.v2.task/k8s.io",
 			},
 		},
