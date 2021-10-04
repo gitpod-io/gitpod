@@ -6,6 +6,7 @@ package wsmanagerbridge
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 )

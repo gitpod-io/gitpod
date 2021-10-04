@@ -6,20 +6,22 @@ package image_builder_mk3
 
 import (
 	"fmt"
-	util "github.com/Masterminds/goutils"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	v1 "k8s.io/api/core/v1"
+	"github.com/google/uuid"
+
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
-	keyfile, err := util.CryptoRandomAlphaNumeric(32)
+	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 
-	return []runtime.Object{&v1.Secret{
+	return []runtime.Object{&corev1.Secret{
 		TypeMeta: common.TypeMetaSecret,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-authkey", Component),
@@ -27,7 +29,7 @@ func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels:    common.DefaultLabels(Component),
 		},
 		Data: map[string][]byte{
-			"keyfile": []byte(keyfile),
+			"keyfile": []byte(id.String()),
 		},
 	}}, nil
 }

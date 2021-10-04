@@ -7,29 +7,31 @@ package registryfacade
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
-	"github.com/gitpod-io/gitpod/registry-facade/api/config"
+	regfac "github.com/gitpod-io/gitpod/registry-facade/api/config"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	var tls config.TLS
+	var tls regfac.TLS
 	if ctx.Config.Certificate.Name != "" {
-		tls = config.TLS{
+		tls = regfac.TLS{
 			Certificate: "/mnt/certificates/tls.crt",
 			PrivateKey:  "/mnt/certificates/tls.key",
 		}
 	}
 
-	rfcfg := config.ServiceConfig{
-		Registry: config.Config{
+	rfcfg := regfac.ServiceConfig{
+		Registry: regfac.Config{
 			Port: ContainerPort,
-			RemoteSpecProvider: &config.RSProvider{
+			RemoteSpecProvider: &regfac.RSProvider{
 				Addr: fmt.Sprintf("dns:///ws-manager:%d", wsmanager.RPCPort),
-				TLS: &config.TLS{
+				TLS: &regfac.TLS{
 					Authority:   "/ws-manager-client-tls-certs/ca.crt",
 					Certificate: "/ws-manager-client-tls-certs/tls.crt",
 					PrivateKey:  "/ws-manager-client-tls-certs/tls.key",
@@ -39,7 +41,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Store:       "/mnt/cache/registry",
 			RequireAuth: false,
 			// todo(sje): figure out these values
-			StaticLayer: []config.StaticLayerCfg{{
+			StaticLayer: []regfac.StaticLayerCfg{{
 				Ref:  common.ImageName(ctx.Config.Repository, Component, "todo"),
 				Type: "image",
 			}, {

@@ -9,13 +9,15 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	util "github.com/Masterminds/goutils"
+	"text/template"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+
+	util "github.com/Masterminds/goutils"
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"text/template"
 )
 
 //go:embed templates/configmap/vhost.docker-registry.tpl
