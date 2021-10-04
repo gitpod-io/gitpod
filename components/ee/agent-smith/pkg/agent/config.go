@@ -30,6 +30,7 @@ type Config struct {
 	GitpodAPI           GitpodAPI          `json:"gitpodAPI"`
 	KubernetesNamespace string             `json:"namespace"`
 	Blacklists          *Blacklists        `json:"blacklists,omitempty"`
+	AllowList           *AllowList         `json:"allowList,omitempty"`
 	EgressTraffic       *EgressTraffic     `json:"egressTraffic,omitempty"`
 	Enforcement         Enforcement        `json:"enforcement,omitempty"`
 	ExcessiveCPUCheck   *ExcessiveCPUCheck `json:"excessiveCPUCheck,omitempty"`
