@@ -13,3 +13,15 @@ export interface ConnectionHandler {
     readonly path: string;
     onConnection(connection: MessageConnection, session?: object): void;
 }
+
+export interface ConnectionEventHandler {
+    /**
+     * Called when the transport underpinning the connection got closed
+     */
+     onTransportDidClose(): void;
+
+     /**
+      * Called when the transport underpinning the connection is (re-)opened
+      */
+     onTransportDidOpen(): void;
+}
