@@ -16,16 +16,12 @@ import (
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/yaml"
 )
 
 var renderOpts struct {
 	ConfigFN  string
 	Namespace string
 }
-
-//go:embed versions.yaml
-var versionManifest []byte
 
 // renderCmd represents the render command
 var renderCmd = &cobra.Command{
@@ -51,17 +47,19 @@ A config file is required which can be generated with the init command.`,
 		}
 		cfg := rawCfg.(*configv1.Config)
 
-		var versionMF versions.Manifest
-		err = yaml.Unmarshal(versionManifest, &versionMF)
+		versionManifest, err := versions.GetManifest()
 		if err != nil {
 			return err
 		}
 
-		namespace, _ := cmd.PersistentFlags().GetString("namespace")
+		namespace, err := cmd.Root().PersistentFlags().GetString("namespace")
+		if err != nil {
+			return err
+		}
 
 		ctx := &common.RenderContext{
 			Config:          *cfg,
-			VersionManifest: versionMF,
+			VersionManifest: *versionManifest,
 			Namespace:       namespace,
 		}
 
@@ -77,19 +75,12 @@ A config file is required which can be generated with the init command.`,
 			return fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
 		}
 
-		objs, err := renderable(ctx)
+		rendered, err := common.RenderToYaml(ctx, renderable)
 		if err != nil {
 			return err
 		}
 
-		for _, o := range objs {
-			fc, err := yaml.Marshal(o)
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("---\n%s\n", string(fc))
-		}
+		fmt.Printf("%s\n", rendered)
 
 		return nil
 	},
@@ -99,5 +90,4 @@ func init() {
 	rootCmd.AddCommand(renderCmd)
 
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
-	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 }

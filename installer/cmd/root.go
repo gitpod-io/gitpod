@@ -19,5 +19,10 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().BoolP("debug", "d", false, "Enable verbose output")
+	rootCmd.PersistentFlags().BoolP("dry-run", "", false, "Simulate an install")
+	rootCmd.PersistentFlags().StringP("kube-context", "", "", "Name of the kubeconfig context to use")
+	rootCmd.PersistentFlags().StringP("kubeconfig", "", "", "Path to the kubeconfig file")
+	rootCmd.PersistentFlags().StringP("name", "n", "gitpod", "Installation name")
+	rootCmd.PersistentFlags().StringP("namespace", "", "default", "namespace to deploy to")
 }

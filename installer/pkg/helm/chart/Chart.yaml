@@ -1,0 +1,25 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+apiVersion: v2
+description: The core chart for Gitpod
+name: gitpod
+version: 1.0.0
+dependencies:
+  - name: docker-registry
+    version: 1.11.0
+    repository: https://helm.twun.io
+    condition: docker-registry.enabled
+  - name: minio
+    version: 8.0.10
+    repository: https://helm.min.io/
+    condition: minio.enabled
+  - name: mysql
+    version: 8.6.2
+    repository: https://charts.bitnami.com/bitnami
+    condition: mysql.enabled
+  - name: rabbitmq
+    version: 8.16.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: rabbitmq.enabled

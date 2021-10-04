@@ -4,6 +4,24 @@
 
 package versions
 
+import (
+	_ "embed"
+	"sigs.k8s.io/yaml"
+)
+
+//go:embed versions.yaml
+var versionManifest []byte
+
+func GetManifest() (*Manifest, error) {
+	var versionMF Manifest
+	err := yaml.Unmarshal(versionManifest, &versionMF)
+	if err != nil {
+		return nil, err
+	}
+
+	return &versionMF, nil
+}
+
 type Manifest struct {
 	Version    string     `json:"version"`
 	Components Components `json:"components"`

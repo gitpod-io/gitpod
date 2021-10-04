@@ -5,9 +5,12 @@
 package common
 
 import (
+	"bytes"
+	"fmt"
+	"sigs.k8s.io/yaml"
 	"sort"
 
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,6 +56,28 @@ func DependencySortingRenderFunc(f RenderFunc) RenderFunc {
 
 		return objs, nil
 	}
+}
+
+func RenderToYaml(ctx *RenderContext, renderable RenderFunc) (*bytes.Buffer, error) {
+	objs, err := renderable(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var buffer bytes.Buffer
+	for _, obj := range objs {
+		fc, err := yaml.Marshal(obj)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = fmt.Fprintf(&buffer, "---\n%s", string(fc))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &buffer, nil
 }
 
 type RenderContext struct {
