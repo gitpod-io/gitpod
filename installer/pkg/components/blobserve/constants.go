@@ -4,9 +4,13 @@
 
 package blobserve
 
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
+
 const (
 	Component     = "blobserve"
 	ContainerPort = 32224
-	ServicePort   = 4000
+	ServicePort   = common.BlobServeServicePort
 	MaxSizeBytes  = 1024 * 1024 * 1024 // 1 Gibibyte
 )

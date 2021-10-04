@@ -14,7 +14,7 @@ import (
 
 func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&rbacv1.Role{
-		TypeMeta: common.TypeMetaNetworkPolicy,
+		TypeMeta: common.TypeMetaRole,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Component,
 			Namespace: ctx.Namespace,

@@ -43,7 +43,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			BlobServer: &proxy.BlobServerConfig{
 				Scheme: "http",
 				// todo(sje): get blob service port from (future) blob service package
-				Host: fmt.Sprintf("blobserve.%s.svc.cluster.local:{{ .Values.components.blobserve.ports.service.servicePort }}", ctx.Namespace),
+				Host: fmt.Sprintf("blobserve.%s.svc.cluster.local:%d", ctx.Namespace, common.BlobServeServicePort),
 			},
 			// todo(sje): import gitpod values from (future) gitpod package
 			GitpodInstallation: &proxy.GitpodInstallation{
@@ -80,7 +80,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	return []runtime.Object{
 		&corev1.ConfigMap{
-			TypeMeta: common.TypeMetaNetworkPolicy,
+			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
 				Namespace: ctx.Namespace,

@@ -331,6 +331,10 @@ var (
 		APIVersion: "rbac.authorization.k8s.io/v1",
 		Kind:       "RoleBinding",
 	}
+	TypeMetaRole = metav1.TypeMeta{
+		APIVersion: "rbac.authorization.k8s.io/v1",
+		Kind:       "Role",
+	}
 	TypeMetaNetworkPolicy = metav1.TypeMeta{
 		APIVersion: "networking.k8s.io/v1",
 		Kind:       "NetworkPolicy",
