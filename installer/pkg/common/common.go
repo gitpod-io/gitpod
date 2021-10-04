@@ -6,6 +6,8 @@ package common
 
 import (
 	"fmt"
+	"io"
+	"math/rand"
 	"strings"
 
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
@@ -127,7 +129,7 @@ func DatabaseWaiterContainer() *corev1.Container {
 	return &corev1.Container{}
 }
 
-func MsgBusWaiterContainer() *corev1.Container {
+func MessageBusWaiterContainer() *corev1.Container {
 	return &corev1.Container{}
 }
 
@@ -357,4 +359,31 @@ type TLS struct {
 	Authority   string `json:"ca"`
 	Certificate string `json:"cert"`
 	Key         string `json:"key"`
+}
+
+// validCookieChars contains all characters which may occur in an HTTP Cookie value (unicode \u0021 through \u007E),
+// without the characters , ; and / ... I did not find more details about permissible characters in RFC2965, so I took
+// this list of permissible chars from Wikipedia.
+//
+// The tokens we produce here (e.g. owner token or CLI API token) are likely placed in cookies or transmitted via HTTP.
+// To make the lifes of downstream users easier we'll try and play nice here w.r.t. to the characters used.
+var validCookieChars = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-.")
+
+// RandomString produces a cryptographically secure random string of length N.
+// The string contains alphanumeric characters and _ (underscore), - (dash) and . (dot)
+func RandomString(length int) (string, error) {
+	b := make([]byte, length)
+	n, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	if n != length {
+		return "", io.ErrShortWrite
+	}
+
+	lrsc := len(validCookieChars)
+	for i, c := range b {
+		b[i] = validCookieChars[int(c)%lrsc]
+	}
+	return string(b), nil
 }

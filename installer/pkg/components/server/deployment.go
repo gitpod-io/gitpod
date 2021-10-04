@@ -81,7 +81,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 						}},
-						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(), *common.MsgBusWaiterContainer()},
+						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(), *common.MessageBusWaiterContainer()},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Server.Version),
