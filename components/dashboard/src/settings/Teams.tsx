@@ -428,7 +428,7 @@ function AllTeams() {
         <div className="flex flex-row">
             <div className="flex-grow ">
                 <h3 className="self-center">All Teams</h3>
-                <h2>Manage team plan and team members.</h2>
+                <h2>Manage team plans and team members.</h2>
             </div>
             <div className="flex flex-end space-x-3">
                 {isChargebeeCustomer && (
@@ -525,7 +525,7 @@ function AllTeams() {
         {showPaymentUI ? renderTeams() : (
             <div className="flex flex-row">
                 <div className="flex-grow ">
-                    <h3 className="self-center">All Teams</h3>
+                    <h3 className="self-center">All Team Plans</h3>
                     <h2>Manage team plans and team members.</h2>
                 </div>
             </div>
