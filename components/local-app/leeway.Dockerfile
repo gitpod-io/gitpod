@@ -5,8 +5,17 @@
 FROM alpine:3.14
 
 WORKDIR /app
-COPY components-local-app--app/components-local-app--app-linux/local-app local-app-linux
-COPY components-local-app--app/components-local-app--app-darwin/local-app local-app-darwin
-COPY components-local-app--app/components-local-app--app-windows/local-app.exe local-app-windows.exe
+COPY components-local-app--app/components-local-app--app-linux-amd64/local-app local-app-linux
+COPY components-local-app--app/components-local-app--app-darwin-amd64/local-app local-app-darwin
+COPY components-local-app--app/components-local-app--app-windows-amd64/local-app.exe local-app-windows.exe
+
+COPY components-local-app--app/components-local-app--app-linux-amd64/local-app local-app-linux-amd64
+COPY components-local-app--app/components-local-app--app-darwin-amd64/local-app local-app-darwin-amd64
+COPY components-local-app--app/components-local-app--app-windows-amd64/local-app.exe local-app-windows-amd64.exe
+
+COPY components-local-app--app/components-local-app--app-linux-arm64/local-app local-app-linux-arm64
+COPY components-local-app--app/components-local-app--app-darwin-arm64/local-app local-app-darwin-arm64
+COPY components-local-app--app/components-local-app--app-windows-arm64/local-app.exe local-app-windows-arm64.exe
+COPY components-local-app--app/components-local-app--app-windows-386/local-app.exe local-app-windows-386.exe
 
 CMD ["/bin/sh", "-c", "cp /app/* /out"]

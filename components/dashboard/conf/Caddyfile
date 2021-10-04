@@ -12,6 +12,13 @@
 		path /static/* /favicon* /manifest.json
 	}
 
+    rewrite /static/bin/gitpod-local-companion-linux /static/bin/gitpod-local-companion-linux-amd64
+    rewrite /static/bin/gitpod-local-companion-darwin /static/bin/gitpod-local-companion-darwin-amd64
+    rewrite /static/bin/gitpod-local-companion-windows.exe /static/bin/gitpod-local-companion-windows-amd64.exe
+    rewrite /static/bin/gitpod-local-companion-linux.gz /static/bin/gitpod-local-companion-linux-amd64.gz
+    rewrite /static/bin/gitpod-local-companion-darwin.gz /static/bin/gitpod-local-companion-darwin-amd64.gz
+    rewrite /static/bin/gitpod-local-companion-windows.exe.gz /static/bin/gitpod-local-companion-windows-amd64.exe.gz
+
 	@bin_asset {
 		file
 		path /static/bin/*
