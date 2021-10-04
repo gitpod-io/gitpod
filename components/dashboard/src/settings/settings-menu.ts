@@ -18,7 +18,7 @@ export default [
         link: ['/plans']
     },
     {
-        title: 'Teams',
+        title: 'Team Plans',
         link: ['/teams']
     },
     {
