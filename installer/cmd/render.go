@@ -12,7 +12,8 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config"
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
@@ -40,10 +41,15 @@ A config file is required which can be generated with the init command.`,
   gitpod-installer render --config config.yaml --namespace gitpod | kubectl apply -f -`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfgFN, _ := cmd.PersistentFlags().GetString("config")
-		cfg, err := config.Load(cfgFN)
+
+		rawCfg, cfgVersion, err := config.Load(cfgFN)
 		if err != nil {
 			return fmt.Errorf("error loading config: %w", err)
 		}
+		if cfgVersion != config.CurrentVersion {
+			return fmt.Errorf("config version is mismatch: expected %s, got %s", config.CurrentVersion, cfgVersion)
+		}
+		cfg := rawCfg.(*configv1.Config)
 
 		var versionMF versions.Manifest
 		err = yaml.Unmarshal(versionManifest, &versionMF)
@@ -61,11 +67,11 @@ A config file is required which can be generated with the init command.`,
 
 		var renderable common.RenderFunc
 		switch cfg.Kind {
-		case config.InstallationFull:
+		case configv1.InstallationFull:
 			renderable = components.FullObjects
-		case config.InstallationMeta:
+		case configv1.InstallationMeta:
 			renderable = components.MetaObjects
-		case config.InstallationWorkspace:
+		case configv1.InstallationWorkspace:
 			renderable = components.WorkspaceObjects
 		default:
 			return fmt.Errorf("unsupported installation kind: %s", cfg.Kind)

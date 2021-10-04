@@ -13,10 +13,6 @@ import (
 )
 
 func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !ctx.Config.InstallNetworkPolicies {
-		return nil, nil
-	}
-
 	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{&networkingv1.NetworkPolicy{

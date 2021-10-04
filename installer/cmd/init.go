@@ -7,9 +7,8 @@ package cmd
 import (
 	"fmt"
 
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/yaml"
 )
 
 // initCmd represents the init command
@@ -23,8 +22,11 @@ be saved to a repository.`,
 	Example: `  # Save config to config.yaml.
   gitpod-installer init > config.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var cfg config.Config
-		fc, err := yaml.Marshal(cfg)
+		cfg, err := config.NewDefaultConfig()
+		if err != nil {
+			panic(err)
+		}
+		fc, err := config.Marshal(config.CurrentVersion, cfg)
 		if err != nil {
 			panic(err)
 		}

@@ -8,37 +8,90 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	v1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"sigs.k8s.io/yaml"
 )
 
-var (
-	versions = map[string]interface{}{
-		"v1": &v1.Config{},
+// CurrentVersion points to the latest config version
+const CurrentVersion = "v1"
+
+// NewDefaultConfig returns a new instance of the current config struct,
+// with all defaults filled in.
+func NewDefaultConfig() (interface{}, error) {
+	v, ok := versions[CurrentVersion]
+	if !ok {
+		return nil, fmt.Errorf("current config version is invalid - this should never happen")
 	}
+
+	cfg := v.Factory()
+	err := v.Defaults(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+type ConfigVersion interface {
+	// Factory provides a new instance of the config struct
+	Factory() interface{}
+
+	// Defaults fills in the defaults for this version.
+	// obj is expected to be the return value of Factory()
+	Defaults(obj interface{}) error
+}
+
+// AddVersion adds a new version.
+// Expected to be called from the init package of a config package.
+func AddVersion(version string, v ConfigVersion) {
+	if versions == nil {
+		versions = make(map[string]ConfigVersion)
+	}
+	versions[version] = v
+}
+
+var (
+	ErrInvalidType = fmt.Errorf("invalid type")
 )
 
-func Load(fn string) (interface{}, error) {
+var versions map[string]ConfigVersion
+
+func Load(fn string) (cfg interface{}, version string, err error) {
 	fc, err := ioutil.ReadFile(fn)
 	if err != nil {
-		return nil, nil
+		return
 	}
 	var vs struct {
 		APIVersion string `json:"apiVersion"`
 	}
 	err = yaml.Unmarshal(fc, &vs)
 	if err != nil {
-		return nil, nil
+		return
 	}
 
-	cfg, ok := versions[vs.APIVersion]
+	v, ok := versions[vs.APIVersion]
 	if !ok {
-		return nil, fmt.Errorf("unsupprted API version: %s", vs.APIVersion)
+		err = fmt.Errorf("unsupprted API version: %s", vs.APIVersion)
+		return
 	}
+	cfg = v.Factory()
+	version = vs.APIVersion
 	err = yaml.Unmarshal(fc, cfg)
 	if err != nil {
-		return nil, nil
+		return
 	}
 
-	return cfg, nil
+	return cfg, version, nil
+}
+
+func Marshal(version string, cfg interface{}) ([]byte, error) {
+	if _, ok := versions[version]; !ok {
+		return nil, fmt.Errorf("unsupported API version: %s", version)
+	}
+
+	b, err := yaml.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(fmt.Sprintf("apiVersion: %s\n%s", version, string(b))), nil
 }
