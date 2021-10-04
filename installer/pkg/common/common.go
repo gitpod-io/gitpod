@@ -8,16 +8,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/distribution/reference"
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	v1 "k8s.io/api/apps/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
+	"github.com/docker/distribution/reference"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -289,9 +289,9 @@ var (
 	}
 )
 
-var DeploymentStrategy = v1.DeploymentStrategy{
-	Type: v1.RollingUpdateDeploymentStrategyType,
-	RollingUpdate: &v1.RollingUpdateDeployment{
+var DeploymentStrategy = appsv1.DeploymentStrategy{
+	Type: appsv1.RollingUpdateDeploymentStrategyType,
+	RollingUpdate: &appsv1.RollingUpdateDeployment{
 		MaxSurge:       &intstr.IntOrString{IntVal: 1},
 		MaxUnavailable: &intstr.IntOrString{IntVal: 0},
 	},

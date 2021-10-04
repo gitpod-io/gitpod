@@ -6,12 +6,14 @@ package wsmanager
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"time"
 )
 
 func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {

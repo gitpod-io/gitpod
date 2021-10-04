@@ -6,6 +6,7 @@ package wsdaemon
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
