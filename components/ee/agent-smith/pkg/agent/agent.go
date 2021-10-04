@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -59,6 +60,8 @@ type Smith struct {
 
 	egressTrafficCheckHandler func(pid int) (int64, error)
 	timeElapsedHandler        func(t time.Time) time.Duration
+
+	allowList []*regexp.Regexp
 }
 
 // EgressTraffic configures an upper limit of allowed egress traffic over time
@@ -94,6 +97,12 @@ func (b *Blacklists) Levels() map[InfringementSeverity]*PerLevelBlacklist {
 		res[InfringementSeverityVery] = b.Very
 	}
 	return res
+}
+
+// AllowList configures a list of commands that should not be blocked.
+// The command could be the full path to the executable or a regular expression
+type AllowList struct {
+	Commands []string `json:"commands,omitempty"`
 }
 
 // PerLevelBlacklist lists blacklists for level of infringement
@@ -198,6 +207,19 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 			return nil, err
 		}
 		res.EnforcementRules[repo] = rules
+	}
+
+	res.allowList = make([]*regexp.Regexp, 0)
+	if cfg.AllowList != nil {
+		for _, pattern := range cfg.AllowList.Commands {
+			regex, err := regexp.Compile(string(pattern))
+			if err != nil {
+				log.WithError(err).Warn("unexpected error parsing allow command")
+				continue
+			}
+
+			res.allowList = append(res.allowList, regex)
+		}
 	}
 
 	return res, nil
@@ -684,7 +706,6 @@ func isSupervisor(execve Execve) bool {
 
 // handles an execve event checks if it's infringing
 func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspace, error) {
-
 	if isSupervisor(execve) {
 		// this is not the exact process startup time
 		// but for the type of comparison we need to do is enough
@@ -694,6 +715,15 @@ func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspac
 	return func() (*InfringingWorkspace, error) {
 		if agent.Config.Blacklists == nil {
 			return nil, nil
+		}
+
+		if agent.allowList != nil {
+			for _, pattern := range agent.allowList {
+				if pattern.MatchString(execve.Filename) || pattern.MatchString(fmt.Sprintf("%v", execve.Argv)) {
+					log.Infof("Skipping infringement because the allowlist contains '%v'", pattern.String())
+					return nil, nil
+				}
+			}
 		}
 
 		// Note: mind the order of severity here. We check, hence return very blacklisted command infringements first
