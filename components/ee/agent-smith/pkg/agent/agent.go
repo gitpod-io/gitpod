@@ -36,7 +36,7 @@ const (
 	notificationCacheSize = 1000
 )
 
-type scanProcessFunc func() (*InfringingWorkspace, error)
+type policeFunc func() (*InfringingWorkspace, error)
 
 // Smith can perform operations within a users workspace and judge a user
 type Smith struct {
@@ -48,10 +48,9 @@ type Smith struct {
 	metrics          *metrics
 
 	notifiedInfringements *lru.Cache
-	scanProcessQueue      chan scanProcessFunc
+	policeQueue           chan policeFunc
 
 	egressTrafficCheckHandler func(pid int) (int64, error)
-	timeElapsedHandler        func(t time.Time) time.Duration
 }
 
 // EgressTraffic configures an upper limit of allowed egress traffic over time
@@ -192,10 +191,9 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 		Kubernetes:                clientset,
 		Runtime:                   runtime,
 		notifiedInfringements:     notificationCache,
-		scanProcessQueue:          make(chan scanProcessFunc, 10),
+		policeQueue:               make(chan policeFunc, 10),
 		metrics:                   m,
 		egressTrafficCheckHandler: getEgressTraffic,
-		timeElapsedHandler:        time.Since,
 	}
 	if cfg.Enforcement.Default != nil {
 		if err := cfg.Enforcement.Default.Validate(); err != nil {
@@ -378,50 +376,21 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 	}
 	defer abpf.Close()
 
-	// egressTicker := time.NewTicker(30 * time.Second)
+	egressCheckFactor := 6
 	psScanTicker := time.NewTicker(5 * time.Second)
 
 	for i := 0; i < 10; i++ {
 		go func(i int) {
 			for {
 				select {
-				// case <-egressTicker.C:
-				// 	agent.pidsMap.Range(func(key, value interface{}) bool {
-				// 		p := key.(int)
-				// 		t := value.(time.Time)
-				// 		infr, err := agent.checkEgressTrafficCallback(p, t)
-				// 		if err != nil {
-				// 			return true
-				// 		}
-				// 		if infr == nil {
-				// 			return true
-				// 		}
-				// 		var res []Infringement
-				// 		v, err := getWorkspaceFromProcess(p)
-				// 		if err != nil {
-				// 			return true
-				// 		}
-				// 		res = append(res, *infr)
-				// 		v.Infringements = res
-				// 		ps, err := agent.Penalize(*v)
-				// 		if err != nil {
-				// 			log.WithError(err).WithField("infringement", v).Warn("error while reacting to infringement")
-				// 		}
-				// 		alreadyNotified, _ := agent.notifiedInfringements.ContainsOrAdd(v.VID(), nil)
-				// 		if alreadyNotified {
-				// 			return true
-				// 		}
-				// 		callback(*v, ps)
-				// 		return true
-				// 	})
-				case s := <-agent.scanProcessQueue:
+				case s := <-agent.policeQueue:
 					if s == nil {
 						continue
 					}
 
 					v, err := s()
 					if err != nil {
-						log.WithError(err).Warn("error while scanning process")
+						log.WithError(err).Warn("error while scanning process/checking egress")
 					}
 
 					// event did not generate an infringement
@@ -445,13 +414,15 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 		}(i)
 	}
 
+	var scanCounter int
 	for {
 		select {
 		case <-ctx.Done():
 			log.Info("agent stopped")
 			break
 		case <-psScanTicker.C:
-			err := agent.scanPs(ctx)
+			scanCounter++
+			err := agent.scanPs(ctx, scanCounter%egressCheckFactor == 0)
 			if err != nil {
 				log.WithError(err).Error("error scanning ps in workspaces")
 			}
@@ -460,7 +431,7 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 	}
 }
 
-func (agent *Smith) scanPs(ctx context.Context) error {
+func (agent *Smith) scanPs(ctx context.Context, triggerEgressCheck bool) error {
 	if agent.Config.Container == nil {
 		return nil
 	}
@@ -477,16 +448,27 @@ func (agent *Smith) scanPs(ctx context.Context) error {
 		return err
 	}
 
-	// parse output and send actual scan closure over to scanProcessQueue
+	// send actual scan closure over to scanProcessQueue
 	for _, ws := range wss {
 		if ws.WorkspaceType == "ghost" {
 			continue
 		}
 
 		log.WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Debugf("scanning workspace")
+
+		// processes
 		childProcesses := psm.ListAllChildren(ws.PID)
 		for _, p := range childProcesses {
-			agent.scanProcessQueue <- agent.scanProcess(p, psm, ws)
+			agent.policeQueue <- agent.scanProcess(p, psm, ws)
+		}
+
+		// egress
+		if triggerEgressCheck {
+			supervisor := psm.FindSupervisorForRootProcess(ws.PID)
+			if supervisor == nil {
+				continue
+			}
+			agent.policeQueue <- agent.checkEgress(supervisor, psm, ws)
 		}
 	}
 
@@ -578,6 +560,23 @@ func getPenalty(defaultRules, perRepoRules EnforcementRules, vs []Infringement) 
 	return ps
 }
 
+// checkEgress check whether a given workspace used more egress than it shouled
+func (agent *Smith) checkEgress(supervisor *Process, m *ProcessMap, wsInfo *container.WorkspaceContainerInfo) func() (*InfringingWorkspace, error) {
+	return func() (*InfringingWorkspace, error) {
+		infr, err := agent.checkEgressTrafficCallback(supervisor, supervisor.ElapsedTime())
+		if err != nil {
+			return nil, err
+		}
+		if infr == nil {
+			return nil, err
+		}
+
+		ws := workspaceInfoToInfringingWorkspace(wsInfo, supervisor)
+		ws.Infringements = []Infringement{*infr}
+		return ws, nil
+	}
+}
+
 // handles an execve event checks if it's infringing
 func (agent *Smith) scanProcess(p *Process, m *ProcessMap, wsInfo *container.WorkspaceContainerInfo) func() (*InfringingWorkspace, error) {
 
@@ -652,23 +651,27 @@ func (agent *Smith) scanProcess(p *Process, m *ProcessMap, wsInfo *container.Wor
 			return nil, nil
 		}
 
-		var ws *InfringingWorkspace
-		supervisor := m.FindSupervisorFor(p.PID)
-		if supervisor == nil {
-			log.WithField("pid", p.PID).Warn("cannot find supervisor PID for workspace")
-			ws = &InfringingWorkspace{}
-		} else {
-			ws = &InfringingWorkspace{
-				SupervisorPID: int(supervisor.PID),
-				Owner:         wsInfo.OwnerID,
-				WorkspaceID:   wsInfo.WorkspaceID,
-				InstanceID:    wsInfo.InstanceID,
-				GitRemoteURL:  []string{"todo"},
-			}
-		}
+		supervisor := m.FindSupervisorForChild(p.PID)
+		ws := workspaceInfoToInfringingWorkspace(wsInfo, supervisor)
 		ws.Infringements = res
 		return ws, nil
 	}
+}
+
+func workspaceInfoToInfringingWorkspace(wsInfo *container.WorkspaceContainerInfo, supervisor *Process) *InfringingWorkspace {
+	ws := &InfringingWorkspace{
+		SupervisorPID: int(supervisor.PID),
+		Owner:         wsInfo.OwnerID,
+		WorkspaceID:   wsInfo.WorkspaceID,
+		InstanceID:    wsInfo.InstanceID,
+		GitRemoteURL:  []string{"todo"},
+	}
+	if supervisor == nil {
+		log.WithField("pid", supervisor.PID).Warn("cannot find supervisor PID for workspace")
+	} else {
+		ws.SupervisorPID = int(supervisor.PID)
+	}
+	return ws
 }
 
 // RegisterMetrics registers prometheus metrics for this driver
@@ -676,13 +679,12 @@ func (agent *Smith) RegisterMetrics(reg prometheus.Registerer) error {
 	return agent.metrics.Register(reg)
 }
 
-func (agent *Smith) checkEgressTrafficCallback(pid int, pidCreationTime time.Time) (*Infringement, error) {
+func (agent *Smith) checkEgressTrafficCallback(p *Process, podLifetime time.Duration) (*Infringement, error) {
 	if agent.Config.EgressTraffic == nil {
 		return nil, nil
 	}
 
-	podLifetime := agent.timeElapsedHandler(pidCreationTime)
-	resp, err := agent.egressTrafficCheckHandler(pid)
+	resp, err := agent.egressTrafficCheckHandler(int(p.PID))
 	if err != nil {
 		return nil, err
 	}

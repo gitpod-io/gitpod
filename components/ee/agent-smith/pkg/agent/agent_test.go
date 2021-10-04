@@ -101,53 +101,38 @@ func BenchmarkFindEnforcementRules(b *testing.B) {
 }
 
 func TestCeckEgressTrafficCallback(t *testing.T) {
-	simpleTime, _ := time.Parse(time.RFC3339, "2021-07-05T15:16:17+02:00")
-
-	type args struct {
-		pid             int
-		pidCreationTime time.Time
-	}
 	tests := map[string]struct {
-		args                      args
+		process                   *Process
 		want                      *Infringement
 		egressTrafficCheckHandler func(pid int) (int64, error)
-		timeElapsedHandler        func(t time.Time) time.Duration
+		podLifetime               time.Duration
 		wantErr                   bool
 	}{
 		"no_infringement": {
-			args: args{
-				pid:             1234,
-				pidCreationTime: simpleTime,
+			process: &Process{
+				PID: 1234,
 			},
 			want: nil,
 			egressTrafficCheckHandler: func(pid int) (int64, error) {
 				return 2000000, nil
 			},
-			timeElapsedHandler: func(t time.Time) time.Duration {
-				d, _ := time.ParseDuration("1m")
-				return d
-			},
-			wantErr: false,
+			podLifetime: time.Minute * 1,
+			wantErr:     false,
 		},
 		"zero_egress": {
-			args: args{
-				pid:             1234,
-				pidCreationTime: simpleTime,
+			process: &Process{
+				PID: 1234,
 			},
 			want: nil,
 			egressTrafficCheckHandler: func(pid int) (int64, error) {
 				return 0, nil
 			},
-			timeElapsedHandler: func(t time.Time) time.Duration {
-				d, _ := time.ParseDuration("1m")
-				return d
-			},
-			wantErr: false,
+			podLifetime: time.Minute * 1,
+			wantErr:     false,
 		},
 		"excessive_egress": {
-			args: args{
-				pid:             1234,
-				pidCreationTime: simpleTime,
+			process: &Process{
+				PID: 1234,
 			},
 			want: &Infringement{
 				Kind:        GradedInfringementKind(InfringementExcessiveEgress),
@@ -156,16 +141,12 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 			egressTrafficCheckHandler: func(pid int) (int64, error) {
 				return 328000000, nil
 			},
-			timeElapsedHandler: func(t time.Time) time.Duration {
-				d, _ := time.ParseDuration("1m")
-				return d
-			},
-			wantErr: false,
+			podLifetime: time.Minute * 1,
+			wantErr:     false,
 		},
 		"very_excessive_egress_simple": {
-			args: args{
-				pid:             1234,
-				pidCreationTime: simpleTime,
+			process: &Process{
+				PID: 1234,
 			},
 			want: &Infringement{
 				Kind:        GradedInfringementKind(InfringementVeryExcessiveEgress),
@@ -174,16 +155,12 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 			egressTrafficCheckHandler: func(pid int) (int64, error) {
 				return 200000000000, nil
 			},
-			timeElapsedHandler: func(t time.Time) time.Duration {
-				d, _ := time.ParseDuration("1s")
-				return d
-			},
-			wantErr: false,
+			podLifetime: time.Minute * 1,
+			wantErr:     false,
 		},
 		"very_excessive_egress": {
-			args: args{
-				pid:             1234,
-				pidCreationTime: simpleTime,
+			process: &Process{
+				PID: 1234,
 			},
 			want: &Infringement{
 				Kind:        GradedInfringementKind(InfringementVeryExcessiveEgress),
@@ -192,11 +169,8 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 			egressTrafficCheckHandler: func(pid int) (int64, error) {
 				return 200000000000, nil
 			},
-			timeElapsedHandler: func(t time.Time) time.Duration {
-				d, _ := time.ParseDuration("1m")
-				return d
-			},
-			wantErr: false,
+			podLifetime: time.Minute * 1,
+			wantErr:     false,
 		},
 	}
 
@@ -219,8 +193,7 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 				return
 			}
 			agent.egressTrafficCheckHandler = tt.egressTrafficCheckHandler
-			agent.timeElapsedHandler = tt.timeElapsedHandler
-			got, err := agent.checkEgressTrafficCallback(tt.args.pid, tt.args.pidCreationTime)
+			got, err := agent.checkEgressTrafficCallback(tt.process, tt.podLifetime)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Smith.checkEgressTrafficCallback() error = %v, wantErr %v", err, tt.wantErr)
 				return

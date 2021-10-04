@@ -10,9 +10,10 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 )
 
-var PS_COLUMNS = []string{"pid", "ppid", "comm", "args"}
+var PS_COLUMNS = []string{"etimes", "pid", "ppid", "comm", "args"}
 
 type Process struct {
 	// Process ID
@@ -23,6 +24,8 @@ type Process struct {
 	Filename string
 	// Args string
 	Args string
+	// ElapsedTimeSeconds since process start
+	ElapsedTimeSeconds uint64
 	// Children contains pointers to all child processes
 	Children []*Process
 }
@@ -30,6 +33,10 @@ type Process struct {
 func (p *Process) IsSupervisor() bool {
 	// TODO(gpl) In the outer context we know the list of container roots processes; we could use that to verify this local "thruth" and FindSupervisorForRootProcess
 	return p.Filename == "supervisor" && p.Args == "run"
+}
+
+func (p *Process) ElapsedTime() time.Duration {
+	return time.Second * time.Duration(p.ElapsedTimeSeconds)
 }
 
 type ProcessMap struct {
@@ -44,7 +51,9 @@ func NewProcessMap(capacity int) *ProcessMap {
 	}
 }
 
-func (m *ProcessMap) FindSupervisorFor(pid uint64) *Process {
+// FindSupervisorForChild simply walks up the process tree.
+// TODO(gpl) this can be easily be cached
+func (m *ProcessMap) FindSupervisorForChild(pid uint64) *Process {
 	p := m.GetByPID(pid)
 	for p != nil {
 		if p.IsSupervisor() {
@@ -56,20 +65,40 @@ func (m *ProcessMap) FindSupervisorFor(pid uint64) *Process {
 	return nil
 }
 
-func (m *ProcessMap) Insert(pid uint64, ppid uint64, filename string, args string) *Process {
+// FindSupervisorForRootProcess relies on the process hierarchy layout: supervisor is running as only 2nd level child of "ring0"
+func (m *ProcessMap) FindSupervisorForRootProcess(pid uint64) *Process {
+	ring0 := m.GetByPID(pid)
+	if ring0 == nil || len(ring0.Children) != 1 {
+		return nil
+	}
+
+	ring1 := ring0.Children[0]
+	if ring1 == nil || len(ring1.Children) != 1 {
+		return nil
+	}
+	supervisor := ring1.Children[0]
+	if supervisor == nil || !supervisor.IsSupervisor() {
+		return nil
+	}
+	return supervisor
+}
+
+func (m *ProcessMap) Insert(pid uint64, ppid uint64, filename string, args string, etimes uint64) *Process {
 	p, alreadyPresent := m.pmap[pid]
 	if alreadyPresent {
 		p.PPID = ppid
 		p.Filename = filename
 		p.Args = args
+		p.ElapsedTimeSeconds = etimes
 		return p
 	}
 
 	process := Process{
-		PID:      pid,
-		PPID:     ppid,
-		Filename: filename,
-		Args:     args,
+		PID:                pid,
+		PPID:               ppid,
+		Filename:           filename,
+		Args:               args,
+		ElapsedTimeSeconds: etimes,
 	}
 	m.ps = append(m.ps, process)
 	p = &m.ps[len(m.ps)-1]
@@ -164,15 +193,16 @@ func ParsePsOutput(output *bytes.Buffer) (*ProcessMap, error) {
 			ppid     uint64
 			filename string
 			args     string
+			etimes   uint64
 		)
-		colsParsed, err := fmt.Sscanf(scanner.Text(), "%d %d %s %s", &pid, &ppid, &filename, &args)
+		colsParsed, err := fmt.Sscanf(scanner.Text(), "%d %d %d %s %s", &etimes, &pid, &ppid, &filename, &args)
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan ps output: %w", err)
 		}
 		if colsParsed != len(PS_COLUMNS) {
 			return nil, fmt.Errorf("unable to scan ps output: expected %d but got %d columns", len(PS_COLUMNS), colsParsed)
 		}
-		m.Insert(pid, ppid, filename, args)
+		m.Insert(pid, ppid, filename, args, etimes)
 	}
 	return m, nil
 }
