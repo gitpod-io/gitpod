@@ -508,7 +508,8 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	spec := startContext.Request.Spec
 
 	getWorkspaceRelativePath := func(segment string) string {
-		return filepath.Join("/workspace", segment)
+		// ensure we do not produce nested paths for the default workspace location
+		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
 	}
 
 	// Envs that start with GITPOD_ are appended to the Terminal environments
