@@ -7,8 +7,6 @@ package agentsmith
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
-	"github.com/hexops/valast"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -70,7 +68,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						),
 						SecurityContext: &corev1.SecurityContext{
 							Privileged: pointer.Bool(true),
-							ProcMount:  valast.Addr(corev1.DefaultProcMount).(*corev1.ProcMountType),
+							ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
 						},
 					}, *common.KubeRBACProxyContainer()},
 					Volumes: []corev1.Volume{{

@@ -3,7 +3,6 @@ module github.com/gitpod-io/gitpod/installer
 go 1.17
 
 require (
-	github.com/Masterminds/goutils v1.1.1
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/gitpod-io/gitpod/agent-smith v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/blobserve v0.0.0-00010101000000-000000000000
@@ -17,7 +16,6 @@ require (
 	github.com/gitpod-io/gitpod/ws-proxy v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-scheduler v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.6
-	github.com/hexops/valast v1.4.0
 	github.com/jetstack/cert-manager v1.5.3
 	github.com/spf13/cobra v1.2.1
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
@@ -108,9 +106,9 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
+	github.com/rogpeppe/go-internal v1.6.2 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/shirou/gopsutil v2.20.9+incompatible // indirect
-	github.com/shurcooL/go-goon v0.0.0-20170922171312-37c2f522c041 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -140,7 +138,6 @@ require (
 	k8s.io/client-go v0.22.0 // indirect
 	k8s.io/component-helpers v0.22.0 // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect
-	mvdan.cc/gofumpt v0.0.0-20210107193838-d24d34e18d44 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 )
 

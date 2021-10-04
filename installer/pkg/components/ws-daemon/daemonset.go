@@ -7,7 +7,6 @@ package wsdaemon
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/hexops/valast"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -49,7 +48,7 @@ fi
 `},
 			SecurityContext: &corev1.SecurityContext{
 				Privileged: pointer.Bool(true),
-				ProcMount:  valast.Addr(corev1.ProcMountType("Default")).(*corev1.ProcMountType),
+				ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
 			},
 		},
 		{
@@ -127,7 +126,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 							Name: "working-area",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/mnt/disks/ssd0/workspaces",
-								Type: valast.Addr(corev1.HostPathType("DirectoryOrCreate")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
 							}},
 						},
 						{
@@ -144,49 +143,49 @@ sysctl -w vm.unprivileged_userfaultfd=0
 							Name: "containerd-socket",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/run/containerd/containerd.sock",
-								Type: valast.Addr(corev1.HostPathType("Socket")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathSocket; return &r }(),
 							}},
 						},
 						{
 							Name: "node-fs0",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/var/lib",
-								Type: valast.Addr(corev1.HostPathType("Directory")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
 							}},
 						},
 						{
 							Name: "node-fs1",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/run/containerd/io.containerd.runtime.v2.task/k8s.io",
-								Type: valast.Addr(corev1.HostPathType("Directory")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
 							}},
 						},
 						{
 							Name: "node-mounts",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/proc/mounts",
-								Type: valast.Addr(corev1.HostPathType("File")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathFile; return &r }(),
 							}},
 						},
 						{
 							Name: "node-cgroups",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/sys/fs/cgroup",
-								Type: valast.Addr(corev1.HostPathType("Directory")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
 							}},
 						},
 						{
 							Name: "node-hosts",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/etc/hosts",
-								Type: valast.Addr(corev1.HostPathType("File")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathFile; return &r }(),
 							}},
 						},
 						{
 							Name: "node-linux-src",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/usr/src",
-								Type: valast.Addr(corev1.HostPathType("Directory")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
 							}},
 						},
 						{
@@ -197,7 +196,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 							Name: "gcloud-tmp",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/mnt/disks/ssd0/sync-tmp",
-								Type: valast.Addr(corev1.HostPathType("DirectoryOrCreate")).(*corev1.HostPathType),
+								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
 							}},
 						},
 					},
@@ -229,7 +228,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 								{
 									Name:             "working-area",
 									MountPath:        "/mnt/workingarea",
-									MountPropagation: valast.Addr(corev1.MountPropagationMode("Bidirectional")).(*corev1.MountPropagationMode),
+									MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationBidirectional; return &r }(),
 								},
 								{
 									Name:      "config",
@@ -251,12 +250,12 @@ sysctl -w vm.unprivileged_userfaultfd=0
 									Name:             "node-mounts",
 									ReadOnly:         true,
 									MountPath:        "/mnt/mounts",
-									MountPropagation: valast.Addr(corev1.MountPropagationMode("HostToContainer")).(*corev1.MountPropagationMode),
+									MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationHostToContainer; return &r }(),
 								},
 								{
 									Name:             "node-cgroups",
 									MountPath:        "/mnt/node-cgroups",
-									MountPropagation: valast.Addr(corev1.MountPropagationMode("HostToContainer")).(*corev1.MountPropagationMode),
+									MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationHostToContainer; return &r }(),
 								},
 								{
 									Name:      "node-hosts",
@@ -291,7 +290,6 @@ sysctl -w vm.unprivileged_userfaultfd=0
 							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(true),
-								ProcMount:  valast.Addr(corev1.DefaultProcMount).(*corev1.ProcMountType),
 							},
 						},
 						*common.KubeRBACProxyContainer(),

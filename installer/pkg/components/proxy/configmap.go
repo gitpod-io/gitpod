@@ -13,7 +13,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
-	util "github.com/Masterminds/goutils"
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -90,13 +89,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	// todo(sje) make conditional
 	// todo(sje): allow value to be set via config
-	username, err := util.CryptoRandomAlphaNumeric(20)
+	username, err := common.RandomString(20)
 	if err != nil {
 		return nil, err
 	}
 
 	// todo(sje): allow value to be set via config
-	password, err := util.CryptoRandomAlphaNumeric(20)
+	password, err := common.RandomString(20)
 	if err != nil {
 		return nil, err
 	}

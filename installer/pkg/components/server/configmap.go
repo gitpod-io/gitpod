@@ -11,14 +11,13 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 
-	util "github.com/Masterminds/goutils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	jwtSecret, err := util.CryptoRandomAlphaNumeric(20)
+	jwtSecret, err := common.RandomString(20)
 	if err != nil {
 		return nil, err
 	}

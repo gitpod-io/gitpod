@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/google/uuid"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +15,7 @@ import (
 )
 
 func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
-	id, err := uuid.NewRandom()
+	key, err := common.RandomString(32)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +28,7 @@ func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels:    common.DefaultLabels(Component),
 		},
 		Data: map[string][]byte{
-			"keyfile": []byte(id.String()),
+			"keyfile": []byte(key),
 		},
 	}}, nil
 }
