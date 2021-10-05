@@ -20,7 +20,7 @@ export default function ConfirmationModal(props: {
 }) {
 
     const child: React.ReactChild[] = [
-        <p className="mt-3 mb-3 text-base text-gray-500">{props.areYouSureText || "Are you sure?"}</p>,
+        <p className="mt-3 mb-3 text-base text-gray-500">{props.areYouSureText}</p>,
     ]
 
     if (props.warningText) {
