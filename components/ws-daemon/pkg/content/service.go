@@ -283,7 +283,7 @@ func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
 			return ir.Prebuild.Git.CheckoutLocation
 		}
 	}
-	log.WithFields(log.OWI("", "", req.Id)).Info("getCheckoutLocation empty")
+	log.WithField("req", req.String()).WithFields(log.OWI("", "", req.Id)).Info("getCheckoutLocation empty")
 	return ""
 }
 
