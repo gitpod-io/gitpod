@@ -47,6 +47,7 @@ packages:
       - components/image-builder-mk3:docker
       - components/image-builder-bob:docker
       - components/local-app:docker
+      - components/openvsx-proxy:docker
       - components/proxy:docker
       - components/registry-facade:docker
       - components/server:docker
@@ -79,6 +80,7 @@ packages:
       - components/ee/payment-endpoint:app
       - components/ee/ws-scheduler:app
       - components/image-builder:app
+      - components/openvsx-proxy:app
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
