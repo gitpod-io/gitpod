@@ -184,7 +184,7 @@ export class WorkspaceStarter {
             }
 
             // start that thing
-            log.info('starting instance', {instanceId: instance.id});
+            log.info('starting instance', {instanceId: instance.id, checkout: spec.getCheckoutLocation()});
             const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
 
