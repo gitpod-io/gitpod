@@ -239,7 +239,7 @@ function App() {
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
 
                 <Route path={["/", "/login"]} exact>
-                    <Redirect to="/workspaces" />
+                    <Redirect to="/projects" />
                 </Route>
                 <Route path={["/settings"]} exact>
                     <Redirect to="/account" />
@@ -283,7 +283,7 @@ function App() {
                 {(teams || []).map(team =>
                     <Route path={`/t/${team.slug}`} key={team.slug}>
                         <Route exact path={`/t/${team.slug}`}>
-                            <Redirect to={`/t/${team.slug}/workspaces`} />
+                            <Redirect to={`/t/${team.slug}/projects`} />
                         </Route>
                         <Route exact path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`} render={(props) => {
                             const { maybeProject, resourceOrPrebuild } = props.match.params;

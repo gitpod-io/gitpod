@@ -391,7 +391,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.fail('deploy', err);
     } finally {
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
-        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces/`);
+        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
     }
 
     werft.log(`observability`, "Running observability static checks.")

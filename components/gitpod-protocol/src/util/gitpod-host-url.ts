@@ -85,23 +85,23 @@ export class GitpodHostUrl {
     }
 
     asDashboard(): GitpodHostUrl {
-        return this.with(url => ({ pathname: '/workspaces/' }));
+        return this.with(url => ({ pathname: '/projects' }));
     }
 
     asLogin(): GitpodHostUrl {
-        return this.with(url => ({ pathname: '/login/' }));
+        return this.with(url => ({ pathname: '/login' }));
     }
 
     asUpgradeSubscription(): GitpodHostUrl {
-        return this.with(url => ({ pathname: '/plans/' }));
+        return this.with(url => ({ pathname: '/plans' }));
     }
 
     asAccessControl(): GitpodHostUrl {
-        return this.with(url => ({ pathname: '/access-control/' }));
+        return this.with(url => ({ pathname: '/integrations' }));
     }
 
     asSettings(): GitpodHostUrl {
-        return this.with(url => ({ pathname: '/settings/' }));
+        return this.with(url => ({ pathname: '/settings' }));
     }
 
     asGraphQLApi(): GitpodHostUrl {
