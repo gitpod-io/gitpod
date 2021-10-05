@@ -2,7 +2,7 @@
 # Licensed under the Gitpod Enterprise Source Code License,
 # See License.enterprise.txt in the project root folder.
 
-FROM alpine:latest
+FROM alpine:3.14
 
 RUN apk add --no-cache git bash ca-certificates
 COPY components-ee-kedge--app/kedge /app/
