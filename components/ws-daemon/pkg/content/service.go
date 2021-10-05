@@ -269,17 +269,21 @@ func ServiceDirName(instanceID string) string {
 
 // getCheckoutLocation returns the first checkout location found of any Git initializer configured by this request
 func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
+	log.WithField("req", req.String()).WithFields(log.OWI("", "", req.Id)).Info("getCheckoutLocation")
 	spec := req.Initializer.Spec
 	if ir, ok := spec.(*csapi.WorkspaceInitializer_Git); ok {
 		if ir.Git != nil {
+			log.WithField("loc", ir.Git.CheckoutLocation).WithFields(log.OWI("", "", req.Id)).Info("getCheckoutLocation git")
 			return ir.Git.CheckoutLocation
 		}
 	}
 	if ir, ok := spec.(*csapi.WorkspaceInitializer_Prebuild); ok {
 		if ir.Prebuild != nil && ir.Prebuild.Git != nil {
+			log.WithField("loc", ir.Prebuild.Git.CheckoutLocation).WithFields(log.OWI("", "", req.Id)).Info("getCheckoutLocation prebuild git")
 			return ir.Prebuild.Git.CheckoutLocation
 		}
 	}
+	log.WithFields(log.OWI("", "", req.Id)).Info("getCheckoutLocation empty")
 	return ""
 }
 
