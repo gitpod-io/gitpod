@@ -77,8 +77,11 @@ export default function Menu() {
         (async () => {
             const members: Record<string, TeamMemberInfo[]> = {};
             await Promise.all(teams.map(async (team) => {
-                const infos = await getGitpodService().server.getTeamMembers(team.id);
-                members[team.id] = infos;
+                try {
+                    members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
+                } catch (error) {
+                    console.error('Could not get members of team', team, error);
+                }
             }));
             setTeamMembers(members);
         })();
@@ -108,8 +111,8 @@ export default function Menu() {
             ];
         }
         // Team menu
-        if (team && teamMembers && teamMembers[team.id]) {
-            const currentUserInTeam = teamMembers[team.id].find(m => m.userId === user?.id);
+        if (team) {
+            const currentUserInTeam = (teamMembers[team.id] || []).find(m => m.userId === user?.id);
 
             const teamSettingsList = [
                 {
