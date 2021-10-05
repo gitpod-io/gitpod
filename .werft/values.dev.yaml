@@ -69,6 +69,8 @@ components:
       memory: 350Mi
 
   workspace:
+    codeImage:
+      insidersVersion: null
     # configure GCP registry
     pullSecret:
       secretName: gcp-sa-registry-auth
