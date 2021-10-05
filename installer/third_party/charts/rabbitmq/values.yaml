@@ -1,0 +1,37 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+rabbitmq:
+  enabled: true
+  fullnameOverride: "messagebus"
+  persistence:
+    enabled: false
+  replicaCount: 1
+  auth:
+    tls:
+      enabled: true
+      existingSecretFullChain: true
+  metrics:
+    enabled: true
+  extraEnvVars:
+    # Disable Speculative Scheduler Busy Waiting
+    # https://www.rabbitmq.com/runtime.html#busy-waiting
+    - name: RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
+      value: "+sbwt none +sbwtdcpu none +sbwtdio none"
+  networkPolicy:
+    enabled: true
+    allowExternal: true
+  plugins: "rabbitmq_management rabbitmq_peer_discovery_k8s"
+  extraPlugins: "rabbitmq_shovel rabbitmq_shovel_management"
+  loadDefinition:
+    enabled: true
+    existingSecret: load-definition
+  extraConfiguration: |
+    load_definitions = /app/load_definition.json
+    # Increase statistics emission interval https://www.rabbitmq.com/management.html#statistics-interval
+    collect_statistics_interval = 15000
+  pdb:
+    create: true
+    minAvailable: 0
+    maxUnavailable: 1

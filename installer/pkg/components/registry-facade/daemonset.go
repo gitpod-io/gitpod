@@ -6,6 +6,7 @@ package registryfacade
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -22,8 +23,9 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var certSecretsVolume corev1.Volume
 	var certSecretsVolumeMount corev1.VolumeMount
 	if ctx.Config.Certificate.Name != "" {
+		name := "config-certificates"
 		certSecretsVolume = corev1.Volume{
-			Name: "config-certificates",
+			Name: name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: ctx.Config.Certificate.Name,
@@ -32,13 +34,31 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 
 		certSecretsVolumeMount = corev1.VolumeMount{
-			Name:      "config-certificates",
+			Name:      name,
 			MountPath: "/mnt/certificates",
 		}
 	}
 
 	// todo(sje): get value from workspace pull secret
-	var pullSecret corev1.VolumeMount
+	var pullSecretVolume corev1.Volume
+	var pullSecretVolumeMount corev1.VolumeMount
+	if *ctx.Config.ContainerRegistry.InCluster {
+		name := "pull-secret"
+		pullSecretVolume = corev1.Volume{
+			Name: name,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: dockerregistry.BuiltInRegistrySecret,
+				},
+			},
+		}
+
+		pullSecretVolumeMount = corev1.VolumeMount{
+			Name:      name,
+			MountPath: "/mnt/pull-secret.json",
+			SubPath:   ".dockerconfigjson",
+		}
+	}
 
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
@@ -102,7 +122,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:      "ws-manager-client-tls-certs",
 							MountPath: "/ws-manager-client-tls-certs",
 							ReadOnly:  true,
-						}, pullSecret, certSecretsVolumeMount},
+						}, pullSecretVolumeMount, certSecretsVolumeMount},
 					}, *common.KubeRBACProxyContainer()},
 					Volumes: []corev1.Volume{{
 						Name:         "cache",
@@ -119,7 +139,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								SecretName: wsmanager.TLSSecretNameClient,
 							},
 						},
-					}, certSecretsVolume},
+					}, pullSecretVolume, certSecretsVolume},
 				},
 			},
 		},

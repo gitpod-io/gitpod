@@ -21,38 +21,38 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	var prometheusPort corev1.ContainerPort
 	// todo(sje): make conditional (default to false)
-	prometheusPort = corev1.ContainerPort{
+	prometheusPort := corev1.ContainerPort{
 		ContainerPort: PrometheusPort,
 		Name:          MetricsContainerName,
 	}
 
-	// todo(sje): make conditional if registry enabled
 	var registryVolumes []corev1.Volume
 	var registryVolumeMounts []corev1.VolumeMount
-	registryVolumes = []corev1.Volume{{
-		Name: RegistryAuthSecret,
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: RegistryAuthSecret,
+	if *ctx.Config.ContainerRegistry.InCluster {
+		registryVolumes = []corev1.Volume{{
+			Name: RegistryAuthSecret,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: RegistryAuthSecret,
+				},
 			},
-		},
-	}, {
-		Name: RegistryTLSCertSecret,
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: RegistryTLSCertSecret,
+		}, {
+			Name: RegistryTLSCertSecret,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: RegistryTLSCertSecret,
+				},
 			},
-		},
-	}}
-	registryVolumeMounts = []corev1.VolumeMount{{
-		Name:      RegistryAuthSecret,
-		MountPath: "/etc/caddy/registry-auth",
-	}, {
-		Name:      RegistryTLSCertSecret,
-		MountPath: "/etc/caddy/registry-certs",
-	}}
+		}}
+		registryVolumeMounts = []corev1.VolumeMount{{
+			Name:      RegistryAuthSecret,
+			MountPath: "/etc/caddy/registry-auth",
+		}, {
+			Name:      RegistryTLSCertSecret,
+			MountPath: "/etc/caddy/registry-certs",
+		}}
+	}
 
 	return []runtime.Object{
 		&appsv1.Deployment{
