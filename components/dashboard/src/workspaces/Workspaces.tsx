@@ -125,7 +125,7 @@ export default function () {
     }
 
     return <>
-        <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
+        <Header title="My Workspaces" subtitle="Manage recent and stopped workspaces." />
 
         {workspaceModel?.initialized && (
             activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ?

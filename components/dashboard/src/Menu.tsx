@@ -94,7 +94,7 @@ export default function Menu() {
                     link: `${teamOrUserSlug}/${projectName}`
                 },
                 {
-                    title: 'Workspaces',
+                    title: 'My Workspaces',
                     link: `${teamOrUserSlug}/${projectName}/workspaces`
                 },
                 {
@@ -117,7 +117,7 @@ export default function Menu() {
                     link: `/t/${team.slug}/projects`,
                 },
                 {
-                    title: 'Workspaces',
+                    title: 'My Workspaces',
                     link: `/t/${team.slug}/workspaces`,
                     alternatives: [`/t/${team.slug}`]
                 },
@@ -142,7 +142,7 @@ export default function Menu() {
                 link: '/projects'
             },
             {
-                title: 'Workspaces',
+                title: 'My Workspaces',
                 link: '/workspaces',
                 alternatives: ['/']
             },
