@@ -29,12 +29,12 @@ ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD 1
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD 1
 
-ENV GP_CODE_COMMIT eb4bf8291aa39a0d027a3de93fc63fe191db26e7
+ENV GP_CODE_COMMIT 4f904fdab938aa6a1d0be4f74727addfe1130380
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
     && git remote add origin https://github.com/gitpod-io/vscode \
-    && git fetch origin $GP_CODE_COMMIT \
+    && git fetch origin $GP_CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
 RUN yarn --frozen-lockfile --network-timeout 180000

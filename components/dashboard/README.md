@@ -29,3 +29,6 @@ const GitIntegration = React.lazy(() => import('./settings/GitIntegration'));
 ```
 
 Global state is passed through `React.Context`.
+
+After creating a new component, run the following to update the license header:
+`leeway run components:update-license-header`

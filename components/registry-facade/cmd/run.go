@@ -7,6 +7,7 @@ package cmd
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"github.com/gitpod-io/gitpod/registry-facade/api/config"
 	"io"
 	"net"
 	"net/http"
@@ -41,7 +42,7 @@ var runCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		configPath := args[0]
-		cfg, err := getConfig(configPath)
+		cfg, err := config.GetConfig(configPath)
 		if err != nil {
 			log.WithError(err).WithField("filename", configPath).Fatal("cannot load config")
 		}
@@ -181,7 +182,7 @@ func watchConfig(fn string, reg *registry.Registry) {
 		return hex.EncodeToString(h.Sum(nil)), nil
 	}
 	reloadConfig := func() error {
-		cfg, err := getConfig(fn)
+		cfg, err := config.GetConfig(fn)
 		if err != nil {
 			return err
 		}

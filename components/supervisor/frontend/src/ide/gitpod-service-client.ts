@@ -31,10 +31,6 @@ export async function create(): Promise<GitpodServiceClient> {
         rejectAuth = reject
     });
     async function auth(workspaceInstanceId: string): Promise<void> {
-        if (document.cookie.includes(`${workspaceInstanceId}_owner_`)) {
-            resolveAuth!();
-            return;
-        }
         try {
             const response = await fetch(wsUrl.asStart().asWorkspaceAuth(workspaceInstanceId).toString(), {
                 credentials: 'include'

@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 )
 
 // can be used with the helm-template like so:
@@ -27,7 +28,7 @@ var validateConfigCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot read configuration")
 		}
 
-		var cfg config
+		var cfg config.Config
 		err = json.Unmarshal(ctnt, &cfg)
 		if err != nil {
 			fmt.Println(string(ctnt))

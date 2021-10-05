@@ -161,7 +161,7 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
         updateCurrentFrame();
         trackIDEStatusRenderedEvent();
     });
-    window.addEventListener('beforeunload', () => trackStatusRenderedEvent('window-unload'), { capture: true });
+    window.addEventListener('unload', () => trackStatusRenderedEvent('window-unload'), { capture: true });
     //#endregion
 
     //#region heart-beat

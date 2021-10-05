@@ -70,7 +70,7 @@ var runCmd = &cobra.Command{
 		span, ctx := opentracing.StartSpanFromContext(ctx, "/cmd/Run")
 		defer span.Finish()
 
-		service, err := orchestrator.NewOrchestratingBuilder(*cfg.Orchestrator)
+		service, err := orchestrator.NewOrchestratingBuilder(cfg.Orchestrator)
 		if err != nil {
 			log.Fatal(err)
 		}

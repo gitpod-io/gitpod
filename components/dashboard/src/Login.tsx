@@ -53,7 +53,7 @@ export function Login() {
     }, [])
 
     const authorizeSuccessful = async (payload?: string) => {
-        updateUser();
+        updateUser().catch(console.error);
         // Check for a valid returnTo in payload
         const safeReturnTo = getSafeURLRedirect(payload);
         if (safeReturnTo) {

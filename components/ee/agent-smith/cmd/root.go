@@ -5,17 +5,13 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	goflag "flag"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/agent"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -59,48 +55,4 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json-log", "j", true, "produce JSON log output on verbose level")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose JSON logging")
-}
-
-func getConfig() (*config, error) {
-	if cfgFile == "" {
-		return nil, xerrors.Errorf("missing --config")
-	}
-
-	fc, err := ioutil.ReadFile(cfgFile)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot read config: %v", err)
-	}
-
-	var cfg config
-	err = json.Unmarshal(fc, &cfg)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot unmarshal config: %v", err)
-	}
-
-	if cfg.ProbePath == "" {
-		cfg.ProbePath = "/app/probe.o"
-	}
-
-	return &cfg, nil
-}
-
-// config is the struct holding the configuration for agent-smith
-// if you are considering changing this struct, remember
-// to update the config schema using:
-// $ go run main.go config-schema > config-schema.json
-// And also update the examples accordingly.
-type config struct {
-	agent.Config
-
-	Namespace string `json:"namespace,omitempty"`
-
-	PProfAddr      string `json:"pprofAddr,omitempty"`
-	PrometheusAddr string `json:"prometheusAddr,omitempty"`
-
-	// We have had memory leak issues with agent smith in the past due to experimental gRPC use.
-	// This upper limit causes agent smith to stop itself should it go above this limit.
-	MaxSysMemMib uint64 `json:"systemMemoryLimitMib,omitempty"`
-
-	HostURL        string `json:"hostURL,omitempty"`
-	GitpodAPIToken string `json:"gitpodAPIToken,omitempty"`
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/image-builder/api"
+	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	apimock "github.com/gitpod-io/gitpod/image-builder/api/mock"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -127,8 +128,8 @@ func TestBuild(t *testing.T) {
 
 			wsman := wsmock.NewMockWorkspaceManagerClient(ctrl)
 
-			o, err := NewOrchestratingBuilder(Configuration{
-				WorkspaceManager: WorkspaceManagerConfig{
+			o, err := NewOrchestratingBuilder(config.Configuration{
+				WorkspaceManager: config.WorkspaceManagerConfig{
 					Client: wsman,
 				},
 				BaseImageRepository:      "registry/base",

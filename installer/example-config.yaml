@@ -1,0 +1,28 @@
+apiVersion: v1
+blockNewUsers:
+  enabled: false
+certificate:
+  kind: ""
+  name: ""
+containerRegistry:
+  inCluster: true
+database:
+  inCluster: true
+domain: "gitpod.io"
+imagePullSecrets: null
+kind: Full
+metadata:
+  region: "eu-west1"
+objectStorage:
+  inCluster: true
+observability:
+  logLevel: info
+repository: eu.gcr.io/gitpod-core-dev/build
+workspace:
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+  runtime:
+    containerdRuntimeDir: /run/containerd/io.containerd.runtime.v2.task/k8s.io
+    fsShiftMethod: fuse

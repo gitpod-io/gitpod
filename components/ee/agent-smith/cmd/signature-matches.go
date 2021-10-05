@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"os"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
@@ -18,7 +19,7 @@ var signatureMatchesCmd = &cobra.Command{
 	Use:   "matches <binary>",
 	Short: "Finds all signatures that match the binary",
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := getConfig()
+		cfg, err := config.GetConfig(cfgFile)
 		if err != nil {
 			log.WithError(err).Fatal("cannot get config")
 		}
