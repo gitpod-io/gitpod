@@ -54,7 +54,7 @@ export default function TeamSettings() {
         <PageWithSubMenu subMenu={settingsMenu} title='General' subtitle='Manage general team settings.'>
             <h3>Delete Team</h3>
             <p className="text-base text-gray-500 pb-4">Deleting this team will also remove all associated data with this team, including projects and workspaces. Deleted teams cannot be restored!</p>
-            <button className="danger secondary" onClick={() => setModal(true)}>Delete Account</button>
+            <button className="danger secondary" onClick={() => setModal(true)}>Delete Team</button>
         </PageWithSubMenu>
 
         <ConfirmationModal
