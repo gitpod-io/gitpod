@@ -2,39 +2,20 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-# we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
-# ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
-ARG NODE_VERSION=14.17.6
+# BUILDER_BASE is a placeholder, will be replaced before build time
+# Check BUILD.yaml
+FROM BUILDER_BASE as code_installer
 
-FROM ubuntu:18.04 as code_installer
-
-RUN apt-get update \
-    # see https://github.com/microsoft/vscode/blob/42e271dd2e7c8f320f991034b62d4c703afb3e28/.github/workflows/ci.yml#L94
-    && apt-get -y install --no-install-recommends libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1 \
-    && apt-get -y install --no-install-recommends git curl build-essential libssl-dev ca-certificates python \
-    # Clean up
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
-
-ARG NODE_VERSION
-ENV NVM_DIR /root/.nvm
-RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | sh \
-    && . $NVM_DIR/nvm.sh  \
-    && nvm install $NODE_VERSION \
-    && nvm alias default $NODE_VERSION \
-    && npm install -g yarn node-gyp
-ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+ARG CODE_COMMIT
 
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD 1
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD 1
 
-ENV GP_CODE_COMMIT 128bab190731bc4af1a6e58b9324110a0d087884
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
     && git remote add origin https://github.com/gitpod-io/vscode \
-    && git fetch origin $GP_CODE_COMMIT --depth=1 \
+    && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
 RUN yarn --frozen-lockfile --network-timeout 180000

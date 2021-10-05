@@ -6,6 +6,7 @@
 
 import * as fs from 'fs';
 import * as Ajv from 'ajv';
+import * as cp from 'child_process';
 import * as crypto from 'crypto';
 import debounce = require('lodash.debounce')
 import { injectable } from 'inversify';
@@ -67,6 +68,7 @@ export class IDEConfigService {
         this.validate = this.ajv.compile(scheme);
         this.reconcile();
         fs.watchFile(this.configPath, () => this.reconcile());
+        setInterval(() => this.reconcile(), 60 * 60 * 1000 /* 1 hour */);
     }
 
     get config(): Promise<IDEConfig> {
@@ -84,37 +86,53 @@ export class IDEConfigService {
     private contentHash: string | undefined;
     private reconcile = debounce(async () => {
         try {
-            let content: string | undefined;
+            let fileContent: string | undefined;
             try {
-                content = await fs.promises.readFile(this.configPath, { encoding: "utf-8" });
+                fileContent = await fs.promises.readFile(this.configPath, { encoding: "utf-8" });
             } catch { }
-            if (!content) {
+            if (!fileContent) {
                 return;
             }
-            const contentHash = crypto.createHash('sha256').update(content, 'utf8').digest('hex');
-            if (this.contentHash === contentHash) {
-                return;
-            }
-            this.contentHash = contentHash;
 
-            const raw: RawIDEConfig = JSON.parse(content);
-            this.validate(raw);
-            if (this.validate.errors) {
-                throw new Error('invalid: ' + this.ajv.errorsText(this.validate.errors));
-            }
-            const ideImage = `${raw.ideImageRepo}:${raw.ideVersion}`;
-            const value: IDEConfig = {
-                ...raw,
-                ideImage: ideImage,
-                ideImageAliases: {
-                    ...raw.ideImageAliases,
-                    "theia": ideImage,
+            let value = this.state.value;
+
+            const raw: RawIDEConfig = JSON.parse(fileContent);
+            const contentHash = crypto.createHash('sha256').update(fileContent, 'utf8').digest('hex');
+            if (this.contentHash !== contentHash) {
+                this.contentHash = contentHash;
+
+                this.validate(raw);
+                if (this.validate.errors) {
+                    throw new Error('invalid: ' + this.ajv.errorsText(this.validate.errors));
+                }
+                const ideImage = `${raw.ideImageRepo}:${raw.ideVersion}`;
+                value = {
+                    ...raw,
+                    ideImage: ideImage,
+                    ideImageAliases: {
+                        ...raw.ideImageAliases,
+                        "theia": ideImage,
+                    }
                 }
             }
+
+            if (!value) {
+                return;
+            }
+
+            try {
+                if (raw.ideImageAliases?.['code-latest']){
+                    value.ideImageAliases['code-latest'] = await this.resolveImageDigest(raw.ideImageAliases?.['code-latest']);
+                }
+            } catch (e) {
+                console.error('ide config: error while resolving image digest: ', e);
+            }
+
             const key = JSON.stringify(value);
             if (key === this.state.key) {
                 return;
             }
+
             console.log('ide config updated: ' + JSON.stringify(value, undefined, 2));
             this.state = { key, value };
             this.onDidChangeEmitter.fire(value);
@@ -123,4 +141,19 @@ export class IDEConfigService {
         }
     }, 500, { leading: true });
 
+    private resolveImageDigest(imageName:string) {
+        return new Promise<string>((resolve, reject) => {
+            cp.exec(`oci-tool --timeout 30s resolve name ${imageName}`, (error, imageDigest) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                if (!imageDigest) {
+                    throw new Error(`Cannot resolve ${imageName} image`);
+                }
+
+                return resolve(imageDigest.trim());
+            });
+        });
+    }
 }
