@@ -66,18 +66,27 @@ A config file is required which can be generated with the init command.`,
 		}
 
 		var renderable common.RenderFunc
+		var helmCharts common.HelmFunc
 		switch cfg.Kind {
 		case configv1.InstallationFull:
 			renderable = components.FullObjects
+			helmCharts = components.FullHelmDependencies
 		case configv1.InstallationMeta:
 			renderable = components.MetaObjects
+			helmCharts = components.MetaHelmDependencies
 		case configv1.InstallationWorkspace:
 			renderable = components.WorkspaceObjects
+			helmCharts = components.WorkspaceHelmDependencies
 		default:
 			return fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
 		}
 
 		objs, err := renderable(ctx)
+		if err != nil {
+			return err
+		}
+
+		charts, err := helmCharts(ctx)
 		if err != nil {
 			return err
 		}
@@ -89,6 +98,10 @@ A config file is required which can be generated with the init command.`,
 			}
 
 			fmt.Printf("---\n%s\n", string(fc))
+		}
+
+		for _, c := range charts {
+			fmt.Printf("---\n%s\n", c)
 		}
 
 		return nil

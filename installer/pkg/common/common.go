@@ -93,22 +93,77 @@ func AnalyticsEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}}
 }
 
-// todo(sje): figure out how to put in the MessageBus config
 func MessageBusEnv(cfg *config.Config) (res []corev1.EnvVar) {
-	return []corev1.EnvVar{}
+	clusterObj := corev1.LocalObjectReference{Name: InClusterMessageQueueName}
+	tlsObj := corev1.LocalObjectReference{Name: InClusterMessageQueueTLS}
+
+	return []corev1.EnvVar{{
+		Name: "MESSAGEBUS_USERNAME",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: clusterObj,
+			Key:                  "username",
+		}},
+	}, {
+		Name: "MESSAGEBUS_PASSWORD",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: clusterObj,
+			Key:                  "password",
+		}},
+	}, {
+		Name: "MESSAGEBUS_CA",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: tlsObj,
+			Key:                  "ca.crt",
+		}},
+	}, {
+		Name: "MESSAGEBUS_CERT",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: tlsObj,
+			Key:                  "tls.crt",
+		}},
+	}, {
+		Name: "MESSAGEBUS_KEY",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: tlsObj,
+			Key:                  "tls.key",
+		}},
+	}}
 }
 
-// todo(sje): provide values from config
 func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
+	var name string
+
+	if *cfg.Database.InCluster {
+		// Cluster provided internally
+		name = InClusterDbSecret
+	} else if cfg.Database.RDS.Certificate.Name != "" {
+		// AWS
+		name = cfg.Database.RDS.Certificate.Name
+	} else if cfg.Database.CloudSQL.Certificate.Name != "" {
+		// GCP
+		name = cfg.Database.CloudSQL.Certificate.Name
+	}
+
+	obj := corev1.LocalObjectReference{Name: name}
+
 	return []corev1.EnvVar{{
-		Name:  "DB_HOST",
-		Value: "",
+		Name: "DB_HOST",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: obj,
+			Key:                  "host",
+		}},
 	}, {
-		Name:  "DB_PORT",
-		Value: "",
+		Name: "DB_PORT",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: obj,
+			Key:                  "port",
+		}},
 	}, {
-		Name:  "DB_PASSWORD",
-		Value: "",
+		Name: "DB_PASSWORD",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: obj,
+			Key:                  "password",
+		}},
 	}, {
 		// todo(sje): conditional
 		Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
@@ -302,6 +357,10 @@ var DeploymentStrategy = appsv1.DeploymentStrategy{
 
 // TODO(cw): find a better way to do this. Those values must exist in the appropriate places already.
 var (
+	TypeMetaNamespace = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "namespace",
+	}
 	TypeMetaConfigmap = metav1.TypeMeta{
 		APIVersion: "v1",
 		Kind:       "ConfigMap",

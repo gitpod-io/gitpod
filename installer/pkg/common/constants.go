@@ -7,9 +7,12 @@ package common
 // This file exists to break cyclic-dependency errors
 
 const (
-	BlobServeServicePort = 4000
-	DockerRegistryName   = "registry"
-	MonitoringChart      = "monitoring"
-	ProxyComponent       = "proxy"
-	ServerComponent      = "server"
+	BlobServeServicePort      = 4000
+	DockerRegistryName        = "registry"
+	InClusterDbSecret         = "mysql"
+	InClusterMessageQueueName = "rabbitmq"
+	InClusterMessageQueueTLS  = "messagebus-certificates-secret-core"
+	MonitoringChart           = "monitoring"
+	ProxyComponent            = "proxy"
+	ServerComponent           = "server"
 )
