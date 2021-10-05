@@ -27,6 +27,7 @@ func (v version) Defaults(in interface{}) error {
 	}
 
 	cfg.Kind = InstallationFull
+	cfg.Domain = "gitpod.example.com"
 	cfg.Repository = "eu.gcr.io/gitpod-core-dev/build"
 	cfg.Observability = Observability{
 		LogLevel: LogLevel("info"),
@@ -34,6 +35,8 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Database.InCluster = pointer.Bool(true)
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
 	cfg.ContainerRegistry.InCluster = pointer.Bool(true)
+	cfg.JaegerOperator.InCluster = pointer.Bool(true)
+	cfg.MessageQueue.InCluster = pointer.Bool(true)
 	cfg.Workspace.Resources.Requests = corev1.ResourceList{
 		corev1.ResourceCPU:    resource.MustParse("1000m"),
 		corev1.ResourceMemory: resource.MustParse("2Gi"),
@@ -58,6 +61,10 @@ type Config struct {
 	ObjectStorage ObjectStorage `json:"objectStorage"`
 
 	ContainerRegistry ContainerRegistry `json:"containerRegistry"`
+
+	JaegerOperator JaegerOperator `json:"jaegerOperator"`
+
+	MessageQueue MessageQueue `json:"messageQueue"`
 
 	Certificate ObjectRef `json:"certificate"`
 
@@ -142,6 +149,24 @@ type ContainerRegistry struct {
 
 type ContainerRegistryExternal struct {
 	URL         string    `json:"url"`
+	Certificate ObjectRef `json:"certificate"`
+}
+
+type JaegerOperator struct {
+	InCluster *bool                   `json:"InCluster,omitempty"`
+	External  *JaegerOperatorExternal `json:"external,omitempty"`
+}
+
+type JaegerOperatorExternal struct {
+	Certificate ObjectRef `json:"certificate"`
+}
+
+type MessageQueue struct {
+	InCluster *bool                 `json:"InCluster,omitempty"`
+	External  *MessageQueueExternal `json:"external,omitempty"`
+}
+
+type MessageQueueExternal struct {
 	Certificate ObjectRef `json:"certificate"`
 }
 

@@ -8,11 +8,15 @@ containerRegistry:
   inCluster: true
 database:
   inCluster: true
-domain: "gitpod.io"
+domain: gitpod.example.com
 imagePullSecrets: null
+jaegerOperator:
+  InCluster: true
 kind: Full
+messageQueue:
+  InCluster: true
 metadata:
-  region: "eu-west1"
+  region: ""
 objectStorage:
   inCluster: true
 observability:

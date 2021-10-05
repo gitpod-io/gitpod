@@ -302,6 +302,10 @@ var DeploymentStrategy = appsv1.DeploymentStrategy{
 
 // TODO(cw): find a better way to do this. Those values must exist in the appropriate places already.
 var (
+	TypeMetaNamespace = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "namespace",
+	}
 	TypeMetaConfigmap = metav1.TypeMeta{
 		APIVersion: "v1",
 		Kind:       "ConfigMap",

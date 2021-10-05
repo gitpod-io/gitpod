@@ -7,14 +7,24 @@ package common
 import (
 	"sort"
 
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
+	"helm.sh/helm/v3/pkg/cli/values"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // Renderable turns the config into a set of Kubernetes runtime objects
 type RenderFunc func(cfg *RenderContext) ([]runtime.Object, error)
+
+type HelmFunc func(cfg *RenderContext) ([]string, error)
+
+type PkgConfig func(cfg *RenderContext) (*HelmConfig, error)
+
+type HelmConfig struct {
+	Enabled bool
+	Values  *values.Options
+}
 
 func CompositeRenderFunc(f ...RenderFunc) RenderFunc {
 	return func(ctx *RenderContext) ([]runtime.Object, error) {
@@ -25,6 +35,20 @@ func CompositeRenderFunc(f ...RenderFunc) RenderFunc {
 				return nil, err
 			}
 			res = append(res, obj...)
+		}
+		return res, nil
+	}
+}
+
+func CompositeHelmFunc(f ...HelmFunc) HelmFunc {
+	return func(ctx *RenderContext) ([]string, error) {
+		var res []string
+		for _, g := range f {
+			str, err := g(ctx)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, str...)
 		}
 		return res, nil
 	}
