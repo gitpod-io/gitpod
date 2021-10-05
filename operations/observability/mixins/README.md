@@ -131,6 +131,61 @@ https://www.loom.com/share/23356f272a894801acc4f16bb3fd635a
 
 It doesn't matter how they are imported from each teams' `mixin.libsonnet` file, the only requirement is that they endup in an object called `prometheusRules`.
 
+Some examples!
+
+Importing json files:
+```jsonnet
+// content of my-team/rules/components/my-component/rules.json
+{
+  "groups": [
+    {
+      "name": "example",
+      "rules": [
+        {
+          "record": "instance_path:requests:rate5m",
+          "expr": "rate(requests_total{job=\"myjob\"}[5m])"
+        },
+        {
+          "record": "path:requests:rate5m",
+          "expr": "sum without (instance)(instance_path:requests:rate5m{job=\"myjob\"})"
+        }
+      ]
+    }
+  ]
+}
+
+
+// content of my-team/rules/components.libsonnet
+{
+  prometheusRules+:: {} +
+  (import './my-component/rules.json'),
+}
+```
+
+Directly importing inside the `prometheusRules` object:
+```jsonnet
+// content of my-team/rules/components.libsonnet
+{
+  prometheusRules+:: {
+    groups+: [
+      {
+        name: 'example',
+        rules: [
+          {
+            record: 'instance_path:requests:rate5m',
+            expr: 'rate(requests_total{job="myjob"}[5m])',
+          },
+          {
+            record: 'path:requests:rate5m',
+            expr: 'sum without (instance)(instance_path:requests:rate5m{job="myjob"})',
+          },
+        ],
+      },
+    ],
+  },
+}
+```
+
 When developing new recording rules, please use [Prometheus' recording rule naming convention](https://prometheus.io/docs/practices/rules/).
 
 ### Alerts
@@ -140,6 +195,67 @@ When developing new recording rules, please use [Prometheus' recording rule nami
 Alerting rules that we develop have direct impact on the reliability of our systems, and also with the pressure put on top of the person on-call. To make the duty of the person on-call more efficient, and reduce stress at the same time, we require that every new `critical` alert has a corresponding runbook at the [observability repository](https://github.com/gitpod-io/observability). Please don't forget to open a new Pull Request there!
 
 It doesn't matter how they are imported from each teams' `mixin.libsonnet` file, the only requirement is that they end up in an object called `prometheusAlerts`.
+
+Some examples!
+
+Importing json files:
+```jsonnet
+// content of my-team/rules/components/my-component/alerts.json
+{
+  "groups": [
+    {
+      "name": "example",
+      "rules": [
+        {
+          "alert": "HighRequestLatency",
+          "expr": "job:request_latency_seconds:mean5m{job=\"myjob\"} > 0.5",
+          "for": "10m",
+          "labels": {
+            "severity": "critical"
+          },
+          "annotations": {
+            "summary": "High request latency"
+          }
+        }
+      ]
+    }
+  ]
+}
+
+
+// content of my-team/rules/components.libsonnet
+{
+  prometheusAlerts+:: {} +
+  (import './my-component/alerts.json'),
+}
+```
+
+Directly importing inside the `prometheusAlerts` object:
+```jsonnet
+// content of my-team/rules/components.libsonnet
+{
+  prometheusAlerts+:: {
+    groups: [
+      {
+        name: 'example',
+        rules: [
+          {
+            alert: 'HighRequestLatency',
+            expr: 'job:request_latency_seconds:mean5m{job="myjob"} > 0.5',
+            'for': '10m',
+            labels: {
+              severity: 'page',
+            },
+            annotations: {
+              summary: 'High request latency',
+            },
+          },
+        ],
+      },
+    ],
+  },
+}
+```
 
 For further explanation of Prometheus Alerts, please head to the [official documentation](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/).
 
