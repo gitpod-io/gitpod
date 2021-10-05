@@ -176,7 +176,7 @@ export default function Menu() {
         return (
             <div className="flex p-1 pl-3 ">
                 { projectName && <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
-                    <Link to={team ? `/t/${team.slug}/projects` : "/workspaces"}>
+                    <Link to={team ? `/t/${team.slug}/projects` : `/projects`}>
                         <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>
                     </Link>
                 </div> }
