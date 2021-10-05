@@ -29,9 +29,6 @@ resources:
     # => 32Gi / 100 ~ 328Mi => 350Mi
     memory: 350Mi
 
-vsxRegistry:
-  proxy: true
-
 components:
 
   agentSmith:
@@ -108,6 +105,9 @@ components:
                 cpu: 1m
                 ephemeral-storage: 5Gi
                 memory: 4608Mi  # = 2 * 2304Mi
+  openVsxProxy:
+    disabled: false
+    replicas: 2
 
   # Allow per-branch ingress from another, in-cluster proxy
   proxy:
