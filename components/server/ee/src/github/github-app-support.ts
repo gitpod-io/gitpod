@@ -42,7 +42,7 @@ export class GitHubAppSupport {
         const findInstallationForAccount = async (account: string) => {
             try {
                 return await appApi.apps.getUserInstallation({ username: account })
-            } catch (error) {
+            } catch (error: any) {
                 if (error instanceof RequestError) {
                     // ignore 404 - not found
                 } else {
@@ -53,8 +53,8 @@ export class GitHubAppSupport {
         const listReposForInstallation = async (installation: RestEndpointMethodTypes["apps"]["getUserInstallation"]["response"]) => {
             const sub = await probot.auth(installation.data.id);
             try {
-                const accessibleRepos = await sub.apps.listReposAccessibleToInstallation({ per_page: 100 });
-                return accessibleRepos.data.repositories.map(r => {
+                const accessibleRepos = (await sub.paginate(sub.rest.apps.listReposAccessibleToInstallation, { per_page: 100 }));
+                return accessibleRepos.repositories.map(r => {
                     return {
                         name: r.name,
                         cloneUrl: r.clone_url,
@@ -65,7 +65,7 @@ export class GitHubAppSupport {
                         installationUpdatedAt: installation.data.updated_at
                     };
                 });
-            } catch (error) {
+            } catch (error: any) {
                 if (error instanceof RequestError) {
                     // ignore 404 - not found
                 } else {
