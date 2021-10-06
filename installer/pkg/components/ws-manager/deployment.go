@@ -91,36 +91,39 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ReadOnly:  true,
 							}},
 						}},
-						Volumes: []corev1.Volume{{
-							Name: VolumeConfig,
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+						Volumes: []corev1.Volume{
+							{
+								Name: VolumeConfig,
+								VolumeSource: corev1.VolumeSource{
+									ConfigMap: &corev1.ConfigMapVolumeSource{
+										LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+									},
 								},
 							},
-						}, {
-							Name: wsdaemon.VolumeTLSCerts,
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsdaemon.TLSSecretName,
+							{
+								Name: wsdaemon.VolumeTLSCerts,
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{
+										SecretName: wsdaemon.TLSSecretName,
+									},
 								},
 							},
-						}, {
-							Name: VolumeTLSCerts,
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: TLSSecretNameSecret,
+							{
+								Name: VolumeTLSCerts,
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{
+										SecretName: TLSSecretNameSecret,
+									},
 								},
 							},
-						}, {
-							Name: VolumeWorkspaceTemplate,
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "workspace-template",
-									}},
+							{
+								Name: VolumeWorkspaceTemplate,
+								VolumeSource: corev1.VolumeSource{
+									ConfigMap: &corev1.ConfigMapVolumeSource{
+										LocalObjectReference: corev1.LocalObjectReference{Name: WorkspaceTemplateConfigMap}},
+								},
 							},
-						}},
+						},
 					},
 				},
 			},

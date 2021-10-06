@@ -7,20 +7,28 @@ package wsmanager
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	templatesCfg, tpls, err := buildWorkspaceTemplates(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	wsmcfg := config.ServiceConfiguration{
 		// todo(sje): put in config values
 		Manager: config.Configuration{
@@ -59,13 +67,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			WorkspaceURLTemplate:     "",
 			WorkspacePortURLTemplate: "",
 			WorkspaceHostPath:        "",
-			WorkspacePodTemplate: config.WorkspacePodTemplateConfiguration{
-				PrebuildPath: "",
-				ProbePath:    "",
-				GhostPath:    "",
-				RegularPath:  "",
-				DefaultPath:  "/workspace-template/default.yaml",
-			},
+			WorkspacePodTemplate:     templatesCfg,
 			Timeouts: config.WorkspaceTimeoutConfiguration{
 				AfterClose:          util.Duration(2 * time.Minute),
 				HeadlessWorkspace:   util.Duration(1 * time.Hour),
@@ -117,7 +119,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("failed to marshal ws-manager config: %w", err)
 	}
 
-	return []runtime.Object{
+	res := []runtime.Object{
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
@@ -128,6 +130,57 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Data: map[string]string{
 				"config.json": string(fc),
 			},
+		},
+	}
+	res = append(res, tpls...)
+	return res, nil
+}
+
+func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemplateConfiguration, []runtime.Object, error) {
+	var (
+		cfg  config.WorkspacePodTemplateConfiguration
+		tpls = make(map[string]string)
+	)
+	cfgTpls := ctx.Config.Workspace.Templates
+	if cfgTpls == nil {
+		cfgTpls = &configv1.WorkspaceTemplates{}
+	}
+
+	ops := []struct {
+		Name string
+		Path *string
+		Tpl  *corev1.Pod
+	}{
+		{Name: "default", Path: &cfg.DefaultPath, Tpl: cfgTpls.Default},
+		{Name: "ghost", Path: &cfg.GhostPath, Tpl: cfgTpls.Ghost},
+		{Name: "imagebuild", Path: &cfg.ImagebuildPath, Tpl: cfgTpls.ImageBuild},
+		{Name: "prebuild", Path: &cfg.PrebuildPath, Tpl: cfgTpls.Prebuild},
+		{Name: "regular", Path: &cfg.RegularPath, Tpl: cfgTpls.Regular},
+	}
+	for _, op := range ops {
+		if op.Tpl == nil {
+			continue
+		}
+
+		fc, err := yaml.Marshal(op.Tpl)
+		if err != nil {
+			return cfg, nil, fmt.Errorf("unable to marshal %s workspace template: %w", op.Name, err)
+		}
+
+		fn := op.Name + ".yaml"
+		*op.Path = filepath.Join(WorkspaceTemplatePath, fn)
+		tpls[fn] = string(fc)
+	}
+
+	return cfg, []runtime.Object{
+		&corev1.ConfigMap{
+			TypeMeta: common.TypeMetaConfigmap,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      WorkspaceTemplateConfigMap,
+				Namespace: ctx.Namespace,
+				Labels:    common.DefaultLabels(Component),
+			},
+			Data: tpls,
 		},
 	}, nil
 }
