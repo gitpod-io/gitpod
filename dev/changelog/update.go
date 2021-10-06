@@ -151,12 +151,6 @@ func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int, lastPr
 			Page: 1,
 		},
 	}
-<<<<<<< HEAD
-	defer sort.SliceStable(releaseNotes, func(i, j int) bool {
-		return releaseNotes[i].MergedAt.After(releaseNotes[j].MergedAt)
-	})
-=======
->>>>>>> 1d9688eb ([changelog] sort release notes by merge date and wait for prow to add labels)
 
 	for {
 		logger.Infof("Querying PRs from GitHub, page %d", listingOpts.ListOptions.Page)

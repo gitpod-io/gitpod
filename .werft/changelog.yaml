@@ -34,7 +34,7 @@ pod:
         set -Eeuo pipefail
         export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
         export GIT_REF={{ .Repository.Ref }}
-        export GIT_BRANCH=main #${GIT_REF/refs\/heads\//}
+        export GIT_BRANCH=${GIT_REF/refs\/heads\//}
         export PR_BRANCH=$(date '+rq/changelog_%Y%m%d%H%M')
         git checkout -b $PR_BRANCH
         /app/changelog update -t $GITHUB_TOKEN -o {{ .Repository.Owner }} -r {{ .Repository.Repo }} -b $GIT_BRANCH
