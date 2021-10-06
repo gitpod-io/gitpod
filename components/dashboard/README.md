@@ -32,3 +32,24 @@ Global state is passed through `React.Context`.
 
 After creating a new component, run the following to update the license header:
 `leeway run components:update-license-header`
+
+## How to develop in gitpod.io
+
+Edit `craco.config.js`, add `devServer` section, replace GITPOD_HOST to `SaaS Gitpod host` or `self-hosted Gitpod host`, then replace `cookie` field.
+```js
+     devServer: {
+         proxy: {
+             '/api': {
+                 target: 'https://' + GITPOD_HOST,
+                 ws: true,
+                 headers: {
+                     host: GITPOD_HOST,
+                     origin: 'https://' + GITPOD_HOST,
+                     cookie: '__REPLACE_YOUR_COOKIE__'
+                 },
+             }
+         }
+     }
+```
+
+After following the above steps, run `yarn run start` to start developing.
