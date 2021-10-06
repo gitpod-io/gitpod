@@ -1,6 +1,10 @@
 # Change Log
 
 ## October 2021
+- [Teams] Fix Teams menu rendering even when there are backend errors ([#6041](https://github.com/gitpod-io/gitpod/pull/6041)) - [@jankeromnes](https://github.com/jankeromnes)
+- Fixed incorrectly defined types in the installer components ([#6020](https://github.com/gitpod-io/gitpod/pull/6020)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- improve websocket reconnection handling in the frontend ([#6006](https://github.com/gitpod-io/gitpod/pull/6006)) - [@geropl](https://github.com/geropl)
+- [db] add missing index `ind_dbsync` to table `d_b_code_sync_resource` ([#6005](https://github.com/gitpod-io/gitpod/pull/6005)) - [@geropl](https://github.com/geropl)
 - [workspaces] Add support filesystem quota on /workspace ([#5982](https://github.com/gitpod-io/gitpod/pull/5982)) - [@csweichel](https://github.com/csweichel)
 - [Teams] Fix Teams menu rendering even when there are backend errors ([#6041](https://github.com/gitpod-io/gitpod/pull/6041)) - [@jankeromnes](https://github.com/jankeromnes)
 - Fixed incorrectly defined types in the installer components ([#6020](https://github.com/gitpod-io/gitpod/pull/6020)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
