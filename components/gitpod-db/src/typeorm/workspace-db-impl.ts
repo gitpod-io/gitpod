@@ -180,6 +180,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                     }
                 } else if (options.includeWithoutProject) {
                     qb.where("ws.projectId IS NULL");
+                    qb.orWhere("ws.projectId NOT IN (select project.id from d_b_project as project left join d_b_team_membership as members on project.teamId = members.teamId where members.userId = :userId)", { userId: options.userId });
                 }
             }));
         }
