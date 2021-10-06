@@ -408,6 +408,18 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			result.Phase = api.WorkspacePhase_STOPPED
 		}
 
+		// image builds are normal workspaces but with no backups.
+		if wso.IsWorkspaceHeadless() {
+			switch wsk8s.GetWorkspaceType(pod) {
+			case "imagebuild":
+				result.Conditions.FinalBackupComplete = api.WorkspaceConditionBool_FALSE
+			case "prebuild":
+				result.Conditions.FinalBackupComplete = api.WorkspaceConditionBool_FALSE
+			}
+			result.Phase = api.WorkspacePhase_STOPPED
+			return nil
+		}
+
 		if rawDisposalStatus, ok := pod.Annotations[disposalStatusAnnotation]; ok {
 			var ds workspaceDisposalStatus
 			err := json.Unmarshal([]byte(rawDisposalStatus), &ds)
