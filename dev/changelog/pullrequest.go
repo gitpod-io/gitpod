@@ -88,11 +88,7 @@ var pullRequestCommand = &cobra.Command{
 		}
 		logger.WithField("url", pr.URL).WithField("pr", pr.Number).Info("PR approval comment added")
 
-<<<<<<< HEAD
-		labels, _, err := client.Issues.AddLabelsToIssue(context, prOpts.Org, prOpts.Repo, *pr.Number, []string{"lgtm"})
-=======
 		labels, _, err := client.Issues.AddLabelsToIssue(context, prOpts.Org, prOpts.Repo, *pr.Number, []string{"lgtm", "approved"})
->>>>>>> 1d9688eb ([changelog] sort release notes by merge date and wait for prow to add labels)
 		if err != nil {
 			logger.WithError(err).Fatal("Error setting labels")
 		}
