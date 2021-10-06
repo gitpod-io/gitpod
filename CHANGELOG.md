@@ -1,6 +1,24 @@
 # Change Log
 
+## October 2021
+- [workspaces] Add support filesystem quota on /workspace ([#5982](https://github.com/gitpod-io/gitpod/pull/5982)) - [@csweichel](https://github.com/csweichel)
+- [Teams] Fix Teams menu rendering even when there are backend errors ([#6041](https://github.com/gitpod-io/gitpod/pull/6041)) - [@jankeromnes](https://github.com/jankeromnes)
+- Fixed incorrectly defined types in the installer components ([#6020](https://github.com/gitpod-io/gitpod/pull/6020)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- improve websocket reconnection handling in the frontend ([#6006](https://github.com/gitpod-io/gitpod/pull/6006)) - [@geropl](https://github.com/geropl)
+- [db] add missing index `ind_dbsync` to table `d_b_code_sync_resource` ([#6005](https://github.com/gitpod-io/gitpod/pull/6005)) - [@geropl](https://github.com/geropl)
+- Teams get a dedicated settings page where for now deletion can be done. ([#5966](https://github.com/gitpod-io/gitpod/pull/5966)) - [@laushinka](https://github.com/laushinka)
+- [teams] Fix joining teams from different DB region ([#5967](https://github.com/gitpod-io/gitpod/pull/5967)) - [@jankeromnes](https://github.com/jankeromnes)
+
 ## September 2021
+- Allow creation of projects with visibility of prebuilds ([#5957](https://github.com/gitpod-io/gitpod/pull/5957)) - [@svenefftinge](https://github.com/svenefftinge)
+- Allow creation of teams used to collaborate on projects ([#5957](https://github.com/gitpod-io/gitpod/pull/5957)) - [@svenefftinge](https://github.com/svenefftinge)
+- [werft] replaced ws-nodepools and enabled raid0 on ws-nodepools ([#5948](https://github.com/gitpod-io/gitpod/pull/5948)) - [@wulfthimm](https://github.com/wulfthimm)
+- Add 5 second interval automatic page reload to default 404 page for unserved ports. ([#5938](https://github.com/gitpod-io/gitpod/pull/5938)) - [@rohan-patra](https://github.com/rohan-patra)
+- [dashboard] fix accumulating websocket connections ([#5935](https://github.com/gitpod-io/gitpod/pull/5935)) - [@geropl](https://github.com/geropl)
+- Clean-up Readme ([#5912](https://github.com/gitpod-io/gitpod/pull/5912)) - [@JohannesLandgraf](https://github.com/JohannesLandgraf), [@aledbf](https://github.com/aledbf)
+- [prebuilds] fix prebuild logs with multiple tasks ([#5918](https://github.com/gitpod-io/gitpod/pull/5918)) - [@geropl](https://github.com/geropl)
+- [db] add missing index `d_b_prebuild_workspace.buildWorkspaceId` ([#5920](https://github.com/gitpod-io/gitpod/pull/5920)) - [@geropl](https://github.com/geropl)
+- fix log format for meta components ([#5899](https://github.com/gitpod-io/gitpod/pull/5899)) - [@geropl](https://github.com/geropl)
 - [workspace] Make the workspace stopping mechanism more deterministic ([#5897](https://github.com/gitpod-io/gitpod/pull/5897)) - [@csweichel](https://github.com/csweichel)
 - [prebuilds] fix prebuild logs with multiple tasks ([#5918](https://github.com/gitpod-io/gitpod/pull/5918)) - [@geropl](https://github.com/geropl)
 - [ws-manager] Provide ordering of status updates ([#5223](https://github.com/gitpod-io/gitpod/pull/5223)) - [@aledbf](https://github.com/aledbf), [@csweichel](https://github.com/csweichel)
