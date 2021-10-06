@@ -38,7 +38,7 @@ var updateCommand = &cobra.Command{
 	Run: func(c *cobra.Command, args []string) {
 		existingNotes, lastPrNumber, lastPrDate := ParseFile(opts.ChangelogFile)
 		client := NewClient(opts.Token)
-		notes, err := GetReleaseNotes(client, opts, lastPrNumber)
+		notes, err := GetReleaseNotes(client, opts, lastPrNumber, lastPrDate)
 		if err != nil {
 			logger.WithError(err).Fatal("error retrieving PRs")
 		}
@@ -134,7 +134,7 @@ var releaseNoteRegexp = regexp.MustCompile("(?s)```release-note\\b(.+?)```")
 const defaultGitHubBaseURI = "https://github.com"
 
 // Get returns the list of release notes found for the given parameters.
-func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int) ([]ReleaseNote, error) {
+func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int, lastPrDate time.Time) ([]ReleaseNote, error) {
 	var (
 		ctx          = context.Background()
 		releaseNotes = []ReleaseNote{}
@@ -143,7 +143,7 @@ func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int) ([]Rel
 	listingOpts := &github.PullRequestListOptions{
 		State:     "closed",
 		Base:      opts.Branch,
-		Sort:      "updated",
+		Sort:      "created",
 		Direction: "desc",
 		ListOptions: github.ListOptions{
 			// All GitHub paginated queries start at page 1 !?
@@ -151,9 +151,12 @@ func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int) ([]Rel
 			Page: 1,
 		},
 	}
+<<<<<<< HEAD
 	defer sort.SliceStable(releaseNotes, func(i, j int) bool {
 		return releaseNotes[i].MergedAt.After(releaseNotes[j].MergedAt)
 	})
+=======
+>>>>>>> 1d9688eb ([changelog] sort release notes by merge date and wait for prow to add labels)
 
 	for {
 		logger.Infof("Querying PRs from GitHub, page %d", listingOpts.ListOptions.Page)
@@ -168,6 +171,9 @@ func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int) ([]Rel
 		for _, p := range prs {
 			num := p.GetNumber()
 			if _, exists := processed[num]; exists {
+				continue
+			}
+			if p.GetMergedAt().Before(lastPrDate) {
 				continue
 			}
 			processed[num] = member
@@ -263,6 +269,9 @@ func GetAuthors(c *github.Client, ctx context.Context, opts *UpdateOptions, prNu
 }
 
 func WriteFile(path string, notes []ReleaseNote, existingNotes []string, lastPrDate time.Time) {
+	sort.SliceStable(notes, func(i, j int) bool {
+		return notes[i].MergedAt.After(notes[j].MergedAt)
+	})
 	file, err := os.Create(path)
 	if err != nil {
 		logger.Fatalf("Cannot write file %s", path)
