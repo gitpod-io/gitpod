@@ -73,6 +73,10 @@ export default function () {
         return true;
     }
 
+    function hasNewerPrebuild(p0: Project, p1: Project): number {
+        return moment(lastPrebuilds.get(p1.id)?.info?.startedAt || '1970-01-01').diff(moment(lastPrebuilds.get(p0.id)?.info?.startedAt || '1970-01-01'));
+    }
+
     const teamOrUserSlug = !!team ? 't/'+team.slug : 'projects';
 
     return <>
@@ -105,7 +109,7 @@ export default function () {
                     <button className="ml-2" onClick={() => onNewProject()}>New Project</button>
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-4">
-                    {projects.filter(filter).map(p => (<div key={`project-${p.id}`} className="h-52">
+                    {projects.filter(filter).sort(hasNewerPrebuild).map(p => (<div key={`project-${p.id}`} className="h-52">
                         <div className="h-42 border border-gray-100 dark:border-gray-800 rounded-t-xl">
                             <div className="h-32 p-6">
                                 <div className="flex text-xl font-semibold text-gray-700 dark:text-gray-200 font-medium">
