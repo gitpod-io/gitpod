@@ -118,17 +118,24 @@ export default function () {
                     {projects.filter(filter).sort(hasNewerPrebuild).map(p => (<div key={`project-${p.id}`} className="h-52">
                         <div className="h-42 border border-gray-100 dark:border-gray-800 rounded-t-xl">
                             <div className="h-32 p-6">
-                                <div className="flex text-xl font-semibold text-gray-700 dark:text-gray-200 font-medium">
+                                <div className="flex text-gray-700 dark:text-gray-200 font-medium">
                                     <Link to={`/${teamOrUserSlug}/${p.name}`}>
-                                        {p.name}
+                                        <span className="text-xl font-semibold">{p.name}</span>
                                     </Link>
                                     <span className="flex-grow" />
                                     <div className="justify-end">
-                                        <ContextMenu menuEntries={[{
-                                            title: "Remove Project",
-                                            customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
-                                            onClick: () => onRemoveProject(p)
-                                        }]} />
+                                        <ContextMenu menuEntries={[
+                                            {
+                                                title: "New Workspace",
+                                                href: `/#${p.cloneUrl}`,
+                                                separator: true,
+                                            },
+                                            {
+                                                title: "Remove Project",
+                                                customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
+                                                onClick: () => onRemoveProject(p)
+                                            },
+                                        ]} />
                                     </div>
                                 </div>
                                 <a href={p.cloneUrl.replace(/\.git$/, '')}>
