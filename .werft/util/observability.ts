@@ -1,6 +1,7 @@
 import { werft, exec } from './shell';
 import * as shell from 'shelljs';
 import * as fs from 'fs';
+import { validateIPaddress } from './util';
 
 /**
  * Monitoring satellite deployment bits
@@ -52,6 +53,7 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     exec(jsonnetRenderCmd, {silent: true})
     // The correct kubectl context should already be configured prior to this step
     ensureCorrectInstallationOrder()
+    ensureIngressesReadiness(params)
 }
 
 async function ensureCorrectInstallationOrder(){
@@ -151,4 +153,35 @@ function jsonnetUnitTests(): boolean {
         werft.log(sliceName, failedMessage)
     }
     return success
+}
+
+function ensureIngressesReadiness(params: InstallMonitoringSatelliteParams) {
+    // Read more about validating ingresses readiness
+    // https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balance-ingress?hl=it#validate
+
+    let grafanaIngressReady = false
+    let prometheusIngressReady = false
+    werft.log(sliceName, "Checking ingresses readiness")
+    for(let i = 0; i < 15; i++) {
+        grafanaIngressReady = ingressReady(params.satelliteNamespace, 'grafana')
+        prometheusIngressReady = ingressReady(params.satelliteNamespace, 'prometheus')
+
+        if(grafanaIngressReady && prometheusIngressReady) { break }
+        werft.log(sliceName, "Trying again in 1 minute")
+        exec(`sleep 60`, {slice: sliceName}) // 1 min
+        i++
+    }
+
+    if (!prometheusIngressReady || !grafanaIngressReady) {
+        throw new Error('Timeout while waiting for ingresses readiness')
+    }
+}
+
+function ingressReady(namespace: string, name: string): boolean {
+    let ingressAddress = exec(`kubectl get ingress -n ${namespace} --no-headers ${name} | awk {'print $4'}`, {silent: true}).stdout.trim()
+    if (validateIPaddress(ingressAddress)) {
+        return true
+    }
+    werft.log(sliceName, `${name} ingress not ready.`)
+    return false
 }
