@@ -151,6 +151,10 @@ func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int) ([]Rel
 			Page: 1,
 		},
 	}
+	defer sort.SliceStable(releaseNotes, func(i, j int) bool {
+		return releaseNotes[i].MergedAt.After(releaseNotes[j].MergedAt)
+	})
+
 	for {
 		logger.Infof("Querying PRs from GitHub, page %d", listingOpts.ListOptions.Page)
 		prs, response, err := c.PullRequests.List(ctx, opts.Org, opts.Repo, listingOpts)
