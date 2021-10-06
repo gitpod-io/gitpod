@@ -179,8 +179,8 @@ export default function () {
                         </a>
                     </ItemField>
                     <ItemField className="flex items-center">
-                        <div>
-                            <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1">{shortCommitMessage(p.info.changeTitle)}</div>
+                        <div className="truncate">
+                            <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate">{shortCommitMessage(p.info.changeTitle)}</div>
                             <p>{p.info.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={p.info.changeAuthorAvatar || ''} alt={p.info.changeAuthor} />}Authored {formatDate(p.info.changeDate)} · {p.info.changeHash?.substring(0, 8)}</p>
                         </div>
                     </ItemField>
