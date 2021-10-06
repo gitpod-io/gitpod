@@ -322,6 +322,10 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	}
 
 	if req.BackupLogs {
+		if sess.RemoteStorageDisabled {
+			return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
+		}
+
 		// Ok, we have to do all the work
 		err = s.uploadWorkspaceLogs(ctx, sess)
 		if err != nil {
