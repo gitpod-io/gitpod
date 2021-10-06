@@ -1,6 +1,21 @@
 # Change Log
 
+## October 2021
+- [workspaces] Add support filesystem quota on /workspace ([#5982](https://github.com/gitpod-io/gitpod/pull/5982)) - [@csweichel](https://github.com/csweichel)
+- [Teams] Fix Teams menu rendering even when there are backend errors ([#6041](https://github.com/gitpod-io/gitpod/pull/6041)) - [@jankeromnes](https://github.com/jankeromnes)
+- Fixed incorrectly defined types in the installer components ([#6020](https://github.com/gitpod-io/gitpod/pull/6020)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- improve websocket reconnection handling in the frontend ([#6006](https://github.com/gitpod-io/gitpod/pull/6006)) - [@geropl](https://github.com/geropl)
+- Teams get a dedicated settings page where for now deletion can be done. ([#5966](https://github.com/gitpod-io/gitpod/pull/5966)) - [@laushinka](https://github.com/laushinka)
+- [db] add missing index `ind_dbsync` to table `d_b_code_sync_resource` ([#6005](https://github.com/gitpod-io/gitpod/pull/6005)) - [@geropl](https://github.com/geropl)
+- Make it possible to re-trigger failed or timed out Prebuilds ([#5836](https://github.com/gitpod-io/gitpod/pull/5836)) - [@jankeromnes](https://github.com/jankeromnes)
+
 ## September 2021
+- [Teams & Projects] Ask for authorization when viewing a project of a provider without connection ([#5640](https://github.com/gitpod-io/gitpod/pull/5640)) - [@AlexTugarev](https://github.com/AlexTugarev)
+
+## October 2021
+- [teams] Fix joining teams from different DB region ([#5967](https://github.com/gitpod-io/gitpod/pull/5967)) - [@jankeromnes](https://github.com/jankeromnes)
+
+##  September 2021
 - Refactor integration tests using [sigs.k8s.io/e2e-framework](https://sigs.k8s.io/e2e-framework) ([#5572](https://github.com/gitpod-io/gitpod/pull/5572)) - [@aledbf](https://github.com/aledbf)
 - Allow creation of projects with visibility of prebuilds ([#5957](https://github.com/gitpod-io/gitpod/pull/5957)) - [@svenefftinge](https://github.com/svenefftinge)
 - Allow creation of teams used to collaborate on projects ([#5957](https://github.com/gitpod-io/gitpod/pull/5957)) - [@svenefftinge](https://github.com/svenefftinge)
