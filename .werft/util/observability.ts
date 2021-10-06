@@ -27,15 +27,13 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     werft.log(sliceName, `Updating Gitpod's mixin in monitoring-satellite's jsonnetfile.json to latest commit SHA: ${currentCommit}`);
 
     let jsonnetFile = JSON.parse(fs.readFileSync(`${pwd}/observability/jsonnetfile.json`, 'utf8'));
-    let gitSource = ""
     jsonnetFile.dependencies.forEach(dep => {
         if(dep.name == 'gitpod') {
             dep.version = currentCommit
-            gitSource = dep.source.git.remote
         }
     });
     fs.writeFileSync(`${pwd}/observability/jsonnetfile.json`, JSON.stringify(jsonnetFile));
-    exec(`cd observability && jb update ${gitSource}`, {slice: sliceName})
+    exec(`cd observability && jb update`, {slice: sliceName})
 
     let jsonnetRenderCmd = `cd observability && jsonnet -c -J vendor -m monitoring-satellite/manifests \
     --ext-str is_preview="true" \
