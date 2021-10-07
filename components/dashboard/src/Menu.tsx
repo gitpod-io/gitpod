@@ -249,7 +249,7 @@ export default function Menu() {
             <div className="flex h-10">
                 <div className="flex justify-between items-center pr-3">
                     <Link to={gitpodIconUrl()}>
-                        <img src={gitpodIcon} className="h-6" />
+                        <img src={gitpodIcon} alt="Gitpod's logo" className="h-6" />
                     </Link>
                     {!isMinimalUI && <div className="ml-2 text-base">
                         {renderTeamMenu()}

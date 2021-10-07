@@ -28,7 +28,7 @@ export default function OAuthClientApproval() {
                 <div className="flex-grow h-100 flex flex-row items-center justify-center" >
                     <div className="rounded-xl px-10 py-10 mx-auto">
                         <div className="mx-auto pb-8">
-                            <img src={gitpodIcon} className="h-16 mx-auto" />
+                            <img src={gitpodIcon} alt="Gitpod's logo" className="h-16 mx-auto" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
                             <h1 className="text-3xl">Authorize {clientName}</h1>
