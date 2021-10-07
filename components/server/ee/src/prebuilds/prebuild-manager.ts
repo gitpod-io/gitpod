@@ -5,7 +5,7 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Project, StartPrebuildContext, StartPrebuildResult, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { CommitContext, Project, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { inject, injectable } from 'inversify';
@@ -66,9 +66,22 @@ export class PrebuildManager {
         span.setTag("commit", commit);
         try {
             const existingPB = await this.workspaceDB.trace({ span }).findPrebuiltWorkspaceByCommit(cloneURL, commit);
-            if (!!existingPB) {
-                // If the prebuild is failed, we want to retrigger it.
-                if (existingPB.state !== 'aborted' && existingPB.state !== 'timeout' && !existingPB.error) {
+            // If the existing prebuild is failed, we want to retrigger it.
+            if (!!existingPB && existingPB.state !== 'aborted' && existingPB.state !== 'timeout' && !existingPB.error) {
+                // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
+                const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
+                const existingConfig = existingPBWS?.config;
+                const newConfig = await this.fetchConfig({ span }, user, contextURL);
+                log.debug(`startPrebuild | commit: ${commit}, existingPB: ${existingPB.id}, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(newConfig)}}`);
+                const filterPrebuildTasks = (tasks: TaskConfig[] = []) => (tasks
+                    .map(task => Object.keys(task)
+                        .filter(key => ['before', 'init', 'prebuild'].includes(key))
+                        // @ts-ignore
+                        .reduce((obj, key) => ({ ...obj, [key]: task[key] }), {}))
+                    .filter(task => Object.keys(task).length > 0));
+                const isSameConfig = JSON.stringify(filterPrebuildTasks(existingConfig?.tasks)) === JSON.stringify(filterPrebuildTasks(newConfig?.tasks));
+                // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
+                if (isSameConfig) {
                     return { wsid: existingPB.buildWorkspaceId, done: true };
                 }
             }
