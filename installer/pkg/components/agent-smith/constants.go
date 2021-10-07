@@ -5,5 +5,7 @@
 package agentsmith
 
 const (
-	Component = "agent-smith"
+	Component      = "agent-smith"
+	PrometheusPort = 9500
+	PProfPort      = 6060
 )

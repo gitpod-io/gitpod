@@ -24,8 +24,8 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	ascfg := config.ServiceConfig{
-		PProfAddr:      "localhost:6060",
-		PrometheusAddr: "localhost:9500",
+		PProfAddr:      fmt.Sprintf("localhost:%d", PProfPort),
+		PrometheusAddr: fmt.Sprintf("localhost:%d", PrometheusPort),
 		HostURL:        fmt.Sprintf("https://%s", ctx.Config.Domain),
 		Config: agent.Config{
 			Blacklists: &agent.Blacklists{

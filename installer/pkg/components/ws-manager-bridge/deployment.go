@@ -21,8 +21,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	// todo(sje): get value from workspace pull secret
 	var pullSecret corev1.VolumeMount
-	var pullSecretVolume corev1.Volume
-	pullSecretVolume = corev1.Volume{
+	pullSecretVolume := corev1.Volume{
 		Name: "pull-secret",
 		VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
 			SecretName: "",
