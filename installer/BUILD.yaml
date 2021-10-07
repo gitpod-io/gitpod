@@ -10,7 +10,21 @@ packages:
         - components/ws-daemon:lib
         - components/ws-manager-api/go:lib
         - components/content-service:lib
+        - components/ee/agent-smith:lib
+        - components/blobserve:lib
+        - components/registry-facade-api/go:lib
+        - components/registry-facade:lib
       env:
         - CGO_ENABLED=0
       config:
         packaging: app
+    - name: docker
+      type: docker
+      deps:
+        - :app
+      argdeps:
+        - imageRepoBase
+      config:
+        dockerfile: leeway.Dockerfile
+        image:
+          - ${imageRepoBase}/installer:${version}

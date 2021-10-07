@@ -206,9 +206,15 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 )
 
-replace github.com/gitpod-io/gitpod/agent-smith => ../components/ee/agent-smith // leeway
+replace github.com/gitpod-io/gitpod/image-builder => ../components/image-builder-mk3 // leeway
 
-replace github.com/gitpod-io/gitpod/gitpod-protocol => ../components/gitpod-protocol/go // leeway
+replace github.com/gitpod-io/gitpod/image-builder/api => ../components/image-builder-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ws-scheduler => ../components/ee/ws-scheduler // leeway
+
+replace github.com/gitpod-io/gitpod/ws-proxy => ../components/ws-proxy // leeway
+
+replace github.com/gitpod-io/gitpod/agent-smith => ../components/ee/agent-smith // leeway
 
 replace github.com/gitpod-io/gitpod/blobserve => ../components/blobserve // leeway
 
@@ -218,11 +224,7 @@ replace github.com/gitpod-io/gitpod/content-service => ../components/content-ser
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../components/content-service-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/image-builder => ../components/image-builder-mk3 // leeway
-
-replace github.com/gitpod-io/gitpod/image-builder/api => ../components/image-builder-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-scheduler => ../components/ee/ws-scheduler // leeway
+replace github.com/gitpod-io/gitpod/gitpod-protocol => ../components/gitpod-protocol/go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade => ../components/registry-facade // leeway
 
@@ -231,8 +233,6 @@ replace github.com/gitpod-io/gitpod/registry-facade/api => ../components/registr
 replace github.com/gitpod-io/gitpod/ws-daemon => ../components/ws-daemon // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon/api => ../components/ws-daemon-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-proxy => ../components/ws-proxy // leeway
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../components/ws-manager-api/go // leeway
 

@@ -28,3 +28,18 @@ packages:
       image:
         - ${imageRepoBase}/blobserve:${version}
         - ${imageRepoBase}/blobserve:commit-${__git_commit}
+  - name: lib
+    type: go
+    srcs:
+      - "pkg/agent/testdata/**"
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/gitpod-protocol/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: library
