@@ -1,16 +1,42 @@
 packages:
-    - name: app
-      type: go
-      srcs:
-        - go.mod
-        - go.sum
-        - "**/*.go"
-      deps:
-        - components/common-go:lib
-        - components/ws-daemon:lib
-        - components/ws-manager-api/go:lib
-        - components/content-service:lib
-      env:
-        - CGO_ENABLED=0
-      config:
-        packaging: app
+  - name: app
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+      - "cmd/versions.yaml"
+      - "pkg/components/**/*.tpl"
+      - "pkg/components/**/*.crt"
+      - "pkg/components/**/*.key"
+      - "pkg/components/**/*.pem"
+      - "third_party/**/*"
+    deps:
+      - components/common-go:lib
+      - components/ws-daemon:lib
+      - components/ws-manager-api/go:lib
+      - components/content-service:lib
+      - components/ee/agent-smith:lib
+      - components/ee/ws-scheduler:lib
+      - components/blobserve:lib
+      - components/content-service-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/image-builder-api/go:lib
+      - components/registry-facade-api/go:lib
+      - components/registry-facade:lib
+      - components/ws-daemon-api/go:lib
+      - components/ws-proxy:lib
+    env:
+      - CGO_ENABLED=0
+    config:
+      packaging: app
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/installer:${version}
