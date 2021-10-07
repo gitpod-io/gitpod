@@ -10,7 +10,7 @@ import * as util from 'util';
 import { sleep } from './util/util';
 import * as gpctl from './util/gpctl';
 import { createHash } from "crypto";
-import { InstallMonitoringSatelliteParams, installMonitoringSatellite, observabilityStaticChecks } from './util/observability';
+import { InstallMonitoringSatelliteParams, installMonitoringSatellite, observabilityStaticChecks } from './observability/monitoring-satellite';
 
 const readDir = util.promisify(fs.readdir)
 

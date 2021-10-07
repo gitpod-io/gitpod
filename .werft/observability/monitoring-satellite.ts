@@ -1,7 +1,7 @@
-import { werft, exec } from './shell';
+import { werft, exec } from '../util/shell';
 import * as shell from 'shelljs';
 import * as fs from 'fs';
-import { validateIPaddress } from './util';
+import { validateIPaddress } from '../util/util';
 
 /**
  * Monitoring satellite deployment bits
