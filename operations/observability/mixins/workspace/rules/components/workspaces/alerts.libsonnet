@@ -43,6 +43,21 @@
               ) without(phase) > 5
             |||,
           },
+          {
+            alert: 'GitpodWorkspaceStatusUpdatesCeased',
+            labels: {
+              severity: 'warning',
+            },
+            'for': '10m',
+            annotations: {
+              runbook_url: 'none',
+              summary: 'meta has not seen a workspace update in the last 10 minutes despite starting workspaces',
+              description: 'meta has not seen a workspace update in the last 10 minutes despite starting workspaces',
+            },
+            expr: |||
+              sum(rate(gitpod_ws_manager_bridge_status_updates_total[1m])) == 0 AND sum(rate(grpc_client_handled_total{grpc_method="StartWorkspace", grpc_service="wsman.WorkspaceManager"}[1m])) != 0
+            |||,
+          },
         ],
       },
     ],
