@@ -20,6 +20,7 @@ import { getGitpodService } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { shortCommitMessage } from "./render-utils";
+import { Link } from "react-router-dom";
 
 export default function () {
     const location = useLocation();
@@ -170,13 +171,13 @@ export default function () {
                 </Item>
                 {prebuilds.filter(filter).sort(prebuildSorter).map((p, index) => <Item key={`prebuild-${p.info.id}`} className="grid grid-cols-3">
                     <ItemField className="flex items-center">
-                        <a href={`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/${p.info.id}`} className="cursor-pointer">
+                        <Link to={`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/${p.info.id}`} className="cursor-pointer">
                             <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1">
                                 <div className="inline-block align-text-bottom mr-2 w-4 h-4">{prebuildStatusIcon(p)}</div>
                                 {prebuildStatusLabel(p)}
                             </div>
                             <p>{p.info.startedByAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={p.info.startedByAvatar || ''} alt={p.info.startedBy} />}Triggered {formatDate(p.info.startedAt)}</p>
-                        </a>
+                        </Link>
                     </ItemField>
                     <ItemField className="flex items-center">
                         <div>
