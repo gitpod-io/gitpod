@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, ProjectDB } from '@gitpod/gitpod-db/lib';
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
 import { AdditionalContentContext, CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
@@ -20,6 +20,7 @@ export class WorkspaceFactory {
 
     @inject(TracedWorkspaceDB) protected readonly db: DBWithTracing<WorkspaceDB>;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(ConfigProvider) protected configProvider: ConfigProvider;
     @inject(ImageSourceProvider) protected imageSourceProvider: ImageSourceProvider;
 
@@ -152,13 +153,26 @@ export class WorkspaceFactory {
                 }
             }
 
+            let projectId: string | undefined;
+            // associate with a project, if it's the personal project of the current user
+            if (project?.userId && project?.userId === user.id) {
+                projectId = project.id;
+            }
+            // associate with a project, if the current user is a team member
+            if (project?.teamId) {
+                const teams = await this.teamDB.findTeamsByUser(user.id);
+                if (teams.some(t => t.id === project?.teamId)) {
+                    projectId = project.id;
+                }
+            }
+
             const id = await generateWorkspaceID();
             const newWs: Workspace = {
                 id,
                 type: "regular",
                 creationTime: new Date().toISOString(),
                 contextURL: normalizedContextURL,
-                projectId: project?.id,
+                projectId,
                 description: this.getDescription(context),
                 ownerId: user.id,
                 context,
