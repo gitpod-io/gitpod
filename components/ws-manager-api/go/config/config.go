@@ -107,6 +107,8 @@ type Configuration struct {
 	RegistryFacadeHost string `json:"registryFacadeHost"`
 	// Cluster host under which workspaces are served, e.g. ws-eu11.gitpod.io
 	WorkspaceClusterHost string `json:"workspaceClusterHost"`
+	// EnforceWorkspaceNodeAffinity makes ws-manager add node affinity to all workspace pods
+	EnforceWorkspaceNodeAffinity bool `json:"enforceWorkspaceNodeAffinity"`
 }
 
 // AllContainerConfiguration contains the configuration for all container in a workspace pod

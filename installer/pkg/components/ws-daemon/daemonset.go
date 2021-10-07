@@ -299,7 +299,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 					DNSPolicy:                     corev1.DNSPolicy("ClusterFirst"),
 					ServiceAccountName:            Component,
 					HostPID:                       true,
-					Affinity:                      common.Affinity(common.AffinityLabelWorkspaces, common.AffinityLabelHeadless),
+					Affinity:                      common.Affinity(common.AffinityLabelWorkspacesRegular, common.AffinityLabelWorkspacesHeadless),
 					Tolerations: []corev1.Toleration{
 						{
 							Key:      "node.kubernetes.io/disk-pressure",

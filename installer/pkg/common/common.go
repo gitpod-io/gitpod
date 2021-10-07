@@ -24,10 +24,11 @@ import (
 )
 
 const (
-	AffinityLabelMeta              = "gitpod.io/workload_meta"
-	AffinityLabelWorkspaceServices = "gitpod.io/workload_workspace_services"
-	AffinityLabelWorkspaces        = "gitpod.io/workload_workspaces"
-	AffinityLabelHeadless          = "gitpod.io/workload_headless"
+	AffinityLabelMeta               = "gitpod.io/workload/meta"
+	AffinityLabelIDE                = "gitpod.io/workload/ide"
+	AffinityLabelWorkspaceServices  = "gitpod.io/workload/workspace/services"
+	AffinityLabelWorkspacesRegular  = "gitpod.io/workload/workspace/regular"
+	AffinityLabelWorkspacesHeadless = "gitpod.io/workload/workspace/headless"
 )
 
 func DefaultLabels(component string) map[string]string {
@@ -176,7 +177,7 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 			MatchExpressions: []corev1.NodeSelectorRequirement{
 				{
 					Key:      lbl,
-					Operator: corev1.NodeSelectorOperator("Exists"),
+					Operator: corev1.NodeSelectorOpExists,
 				},
 			},
 		})

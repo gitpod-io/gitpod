@@ -27,9 +27,8 @@ import (
 //    Because we need to modify package internal state
 //
 
-// forTestingOnlyGetManager creates a workspace manager instance for testing purposes
-func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
-	config := config.Configuration{
+func forTestingOnlyManagerConfig() config.Configuration {
+	return config.Configuration{
 		Namespace:                "default",
 		SchedulerName:            "workspace-scheduler",
 		SeccompProfile:           "localhost/workspace-default",
@@ -64,6 +63,11 @@ func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 			Interrupted:         util.Duration(5 * time.Minute),
 		},
 	}
+}
+
+// forTestingOnlyGetManager creates a workspace manager instance for testing purposes
+func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
+	config := forTestingOnlyManagerConfig()
 
 	testEnv := &envtest.Environment{}
 	cfg, err := testEnv.Start()

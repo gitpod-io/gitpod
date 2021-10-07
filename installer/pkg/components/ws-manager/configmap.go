@@ -78,9 +78,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Stopping:            util.Duration(1 * time.Hour),
 				Interrupted:         util.Duration(5 * time.Minute),
 			},
-			EventTraceLog:        "", // todo(sje): make conditional based on config
-			ReconnectionInterval: util.Duration(30 * time.Second),
-			RegistryFacadeHost:   "",
+			EventTraceLog:                "", // todo(sje): make conditional based on config
+			ReconnectionInterval:         util.Duration(30 * time.Second),
+			RegistryFacadeHost:           "",
+			EnforceWorkspaceNodeAffinity: true,
 		},
 		Content: struct {
 			Storage storageconfig.StorageConfig `json:"storage"`
