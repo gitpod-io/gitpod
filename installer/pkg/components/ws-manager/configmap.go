@@ -29,6 +29,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	quantityString := func(idx corev1.ResourceList, key corev1.ResourceName) string {
+		q, ok := idx[key]
+		if !ok {
+			return ""
+		}
+		return (&q).String()
+	}
+
 	wsmcfg := config.ServiceConfiguration{
 		// todo(sje): put in config values
 		Manager: config.Configuration{
@@ -51,15 +59,20 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Container: config.AllContainerConfiguration{
 				Workspace: config.ContainerConfiguration{
 					Requests: config.ResourceConfiguration{
-						CPU:    "",
-						Memory: "",
+						CPU:     quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceCPU),
+						Memory:  quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceMemory),
+						Storage: quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceEphemeralStorage),
 					},
-					Limits: config.ResourceConfiguration{},
-					Image:  "OVERWRITTEN-IN-REQUEST",
+					Limits: config.ResourceConfiguration{
+						CPU:     quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceCPU),
+						Memory:  quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceMemory),
+						Storage: quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceEphemeralStorage),
+					},
+					Image: "OVERWRITTEN-IN-REQUEST",
 				},
 			},
 			HeartbeatInterval:    util.Duration(30 * time.Second),
-			GitpodHostURL:        "https://",
+			GitpodHostURL:        "https://" + ctx.Config.Domain,
 			WorkspaceClusterHost: "",
 			InitProbe: config.InitProbeConfiguration{
 				Timeout: (1 * time.Second).String(),
