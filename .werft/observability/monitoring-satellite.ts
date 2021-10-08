@@ -11,6 +11,7 @@ import { validateIPaddress } from '../util/util';
     satelliteNamespace: string
     clusterName: string
     nodeExporterPort: number
+    parcaAgentPort: number
     branch: string
     previewDomain: string
 }
@@ -43,8 +44,10 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     --ext-str namespace="${params.satelliteNamespace}" \
     --ext-str cluster_name="${params.satelliteNamespace}" \
     --ext-str node_exporter_port="${params.nodeExporterPort}" \
+    --ext-str parca_agent_port="${params.parcaAgentPort}" \
     --ext-str prometheus_dns_name="prometheus-${params.previewDomain}" \
     --ext-str grafana_dns_name="grafana-${params.previewDomain}" \
+    --ext-str parca_dns_name="parca-${params.previewDomain}" \
     --ext-str node_affinity_label="gitpod.io/workload_services" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
     find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
@@ -73,6 +76,8 @@ async function ensureCorrectInstallationOrder(){
     deployKubeStateMetrics()
     deployGitpodServiceMonitors()
     deployKubernetesServiceMonitors()
+    deployParca()
+    deployParcaAgent()
 }
 
 async function deployPrometheus() {
@@ -109,6 +114,18 @@ async function deployGitpodServiceMonitors() {
 async function deployKubernetesServiceMonitors() {
     werft.log(sliceName, 'installing Kubernetes ServiceMonitor resources')
     exec('kubectl apply -f observability/monitoring-satellite/manifests/kubernetes/', {silent: true})
+}
+
+async function deployParcaAgent() {
+    werft.log(sliceName, 'installing parca-agent')
+    exec('kubectl apply -f observability/monitoring-satellite/manifests/parca-agent/', {silent: true})
+    exec('kubectl rollout status daemonset parca-agent', {slice: sliceName})
+}
+
+async function deployParca() {
+    werft.log(sliceName, 'installing parca')
+    exec('kubectl apply -f observability/monitoring-satellite/manifests/parca/', {silent: true})
+    exec('kubectl rollout status deployment parca', {slice: sliceName})
 }
 
 export function observabilityStaticChecks() {

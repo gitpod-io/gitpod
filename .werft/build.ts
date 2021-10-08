@@ -270,10 +270,11 @@ interface DeploymentConfig {
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, monitoringDomain, url, k3sWsCluster } = deploymentConfig;
-    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts("", [
+    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort, parcaAgentPort] = findFreeHostPorts("", [
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
         { start: 31001, end: 32000 },
+        { start: 32001, end: 32500 }
     ], 'hostports');
     const [wsdaemonPortK3sWs, registryNodePortK3sWs] = !k3sWsCluster ? [0, 0] : findFreeHostPorts(getK3sWsKubeConfigPath(), [
         { start: 10000, end: 11000 },
@@ -401,6 +402,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         await installMonitoring();
         exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
         exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
+        exec(`werft log result -d "Monitoring Satellite - Parca" -c github-check-Parca url https://parca-${monitoringDomain}`);
     } else {
         exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
         exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
@@ -557,6 +559,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         installMonitoringSatelliteParams.satelliteNamespace = namespace
         installMonitoringSatelliteParams.clusterName = namespace
         installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
+        installMonitoringSatelliteParams.parcaAgentPort = parcaAgentPort
         installMonitoringSatelliteParams.previewDomain = monitoringDomain
         await installMonitoringSatellite(installMonitoringSatelliteParams);
     }
