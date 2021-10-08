@@ -1,6 +1,9 @@
 # Change Log
 
 ## October 2021
+- [dashboard] In /workspaces, indicate when you have active workspaces in your teams ([#6103](https://github.com/gitpod-io/gitpod/pull/6103)) - [@jankeromnes](https://github.com/jankeromnes)
+- Projects in the dashboard are now sorted by most recent pre-build ([#6073](https://github.com/gitpod-io/gitpod/pull/6073)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
+- Fix for missing active workspaces in the personal workspace list. ([#6097](https://github.com/gitpod-io/gitpod/pull/6097)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [Teams] Fix Teams menu rendering even when there are backend errors ([#6041](https://github.com/gitpod-io/gitpod/pull/6041)) - [@jankeromnes](https://github.com/jankeromnes)
 - Fixed incorrectly defined types in the installer components ([#6020](https://github.com/gitpod-io/gitpod/pull/6020)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - improve websocket reconnection handling in the frontend ([#6006](https://github.com/gitpod-io/gitpod/pull/6006)) - [@geropl](https://github.com/geropl)
