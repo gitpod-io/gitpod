@@ -12,7 +12,7 @@ import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { BuildRegistryAuth, BuildRegistryAuthSelective, BuildRegistryAuthTotal, BuildRequest, BuildResponse, BuildSource, BuildSourceDockerfile, BuildSourceReference, BuildStatus, ImageBuilderClientProvider, ResolveBaseImageRequest, ResolveWorkspaceImageRequest } from "@gitpod/image-builder/lib";
-import { StartWorkspaceSpec, WorkspaceFeatureFlag } from "@gitpod/ws-manager/lib";
+import { StartWorkspaceSpec, WorkspaceFeatureFlag, StartWorkspaceResponse } from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { AdmissionLevel, EnvironmentVariable, GitSpec, PortSpec, PortVisibility, StartWorkspaceRequest, WorkspaceMetadata, WorkspaceType } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from 'crypto';
@@ -29,6 +29,7 @@ import { UserService } from "../user/user-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
 import * as path from 'path';
+import * as grpc from "@grpc/grpc-js";
 import { IDEConfig, IDEConfigService } from "../ide-config";
 
 export interface StartWorkspaceOptions {
@@ -170,22 +171,46 @@ export class WorkspaceStarter {
             startRequest.setServicePrefix(workspace.id);
 
             // tell the world we're starting this instance
-            const { manager, installation } = await this.clientProvider.getStartManager(user, workspace, instance);
-            instance.status.phase = "pending";
-            instance.region = installation;
-            await this.workspaceDb.trace({ span }).storeInstance(instance);
-            try {
-                await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
-            } catch (err) {
-                // if sending the notification fails that's no reason to stop the workspace creation.
-                // If the dashboard misses this event it will catch up at the next one.
-                span.log({ "notifyOnInstanceUpdate.error": err });
-                log.warn("cannot send instance update - this should be mostly inconsequential", err);
+            let resp: StartWorkspaceResponse.AsObject | undefined;
+            let exceptInstallation: string[] = [];
+            let installation = "";
+            for (let i = 0; i < 5; i++) {
+                try {
+                    // getStartManager will throw an exception if there's no cluster available and hence exit the loop
+                    const mgmtAndInstallation = await this.clientProvider.getStartManager(user, workspace, instance, exceptInstallation);
+                    const manager = mgmtAndInstallation.manager;
+                    installation = mgmtAndInstallation.installation;
+
+                    // We need to update the phase here in case the startWorkspace call succeeds. Otherwise we might be racing the ws-manager-bridge
+                    // update and overwrite the correct phase with pending.
+                    instance.status.phase = "pending";
+                    instance.region = installation;
+                    await this.workspaceDb.trace({ span }).storeInstance(instance);
+                    try {
+                        await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+                    } catch (err) {
+                        // if sending the notification fails that's no reason to stop the workspace creation.
+                        // If the dashboard misses this event it will catch up at the next one.
+                        span.log({ "notifyOnInstanceUpdate.error": err });
+                        log.debug("cannot send instance update - this should be mostly inconsequential", err);
+                    }
+
+                    // start that thing
+                    log.info({instanceId: instance.id}, 'starting instance');
+                    resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
+                } catch (err: any) {
+                    if ('code' in err && err.code !== grpc.status.OK && installation !== "") {
+                        log.error({instanceId: instance.id}, "cannot start workspace on cluster, might retry", err, {cluster: installation});
+                        exceptInstallation.push(installation);
+                    } else {
+                        throw err;
+                    }
+                }
+            }
+            if (!resp) {
+                throw new Error("cannot start a workspace because no workspace clusters are available");
             }
 
-            // start that thing
-            log.info('starting instance', {instanceId: instance.id});
-            const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
 
             this.analytics.track({

@@ -133,7 +133,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
  */
 function chooseCluster(availableCluster: WorkspaceClusterWoTLS[]): WorkspaceClusterWoTLS {
     if (availableCluster.length === 0) {
-        throw new Error("No cluster to choose from!");
+        throw new Error("no available workspace cluster to choose from!");
     }
 
     const scoreFunc = (c: WorkspaceClusterWoTLS): number => {
