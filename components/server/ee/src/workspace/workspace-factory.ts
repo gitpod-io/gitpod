@@ -205,13 +205,27 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 extensions: config && config.vscode && config.vscode.extensions || []
             }
 
+            const project = await this.projectDB.findProjectByCloneUrl(context.prebuiltWorkspace.cloneURL);
+            let projectId: string | undefined;
+            // associate with a project, if it's the personal project of the current user
+            if (project?.userId && project?.userId === user.id) {
+                projectId = project.id;
+            }
+            // associate with a project, if the current user is a team member
+            if (project?.teamId) {
+                const teams = await this.teamDB.findTeamsByUser(user.id);
+                if (teams.some(t => t.id === project?.teamId)) {
+                    projectId = project.id;
+                }
+            }
+
             const id = await generateWorkspaceID();
             const newWs: Workspace = {
                 id,
                 type: "regular",
                 creationTime: new Date().toISOString(),
                 contextURL: normalizedContextURL,
-                projectId: context.prebuiltWorkspace.projectId,
+                projectId,
                 description: this.getDescription(context),
                 ownerId: user.id,
                 context: <WorkspaceContext & WithSnapshot & WithPrebuild>{
