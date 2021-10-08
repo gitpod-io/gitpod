@@ -35,8 +35,11 @@ export class WorkspaceManagerClientProvider implements Disposable {
      *
      * @returns The WorkspaceManagerClient that was chosen to start the next workspace with.
      */
-    public async getStartManager(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string }> {
-        const availableCluster = await this.getAvailableStartCluster(user, workspace, instance);
+    public async getStartManager(user: User, workspace: Workspace, instance: WorkspaceInstance, exceptInstallations?: string[]): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string }> {
+        let availableCluster = await this.getAvailableStartCluster(user, workspace, instance);
+        if (!!exceptInstallations) {
+            availableCluster = availableCluster.filter(c => !exceptInstallations?.includes(c.name));
+        }
         const chosenCluster = chooseCluster(availableCluster);
         const grpcOptions: grpc.ClientOptions = {
             ...defaultGRPCOptions,
