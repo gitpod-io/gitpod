@@ -104,8 +104,8 @@ export function Login() {
             <div id="feature-section-column" className="flex max-w-xl h-full mx-auto pt-6">
                 <div className="flex flex-col px-8 my-auto ml-auto">
                     <div className="mb-12">
-                        <img src={gitpod} alt="Gitpod's logo" className="h-8 block dark:hidden" />
-                        <img src={gitpodDark} alt="Gitpod's logo" className="h-8 hidden dark:block" />
+                        <img src={gitpod} className="h-8 block dark:hidden" alt="Gitpod's logo" />
+                        <img src={gitpodDark} className="h-8 hidden dark:block" alt="Gitpod's logo" />
                     </div>
                     <div className="mb-10">
                         <h1 className="text-5xl mb-3">Welcome to Gitpod</h1>
@@ -131,7 +131,7 @@ export function Login() {
                 <div className="flex-grow h-100 flex flex-row items-center justify-center" >
                     <div className="rounded-xl px-10 py-10 mx-auto">
                         <div className="mx-auto pb-8">
-                            <img src={gitpodIcon} alt="Gitpod's logo" className="h-16 mx-auto" />
+                            <img src={gitpodIcon} className="h-16 mx-auto" alt="Gitpod's logo" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
                             <h1 className="text-3xl">Log in{showWelcome ? '' : ' to Gitpod'}</h1>
