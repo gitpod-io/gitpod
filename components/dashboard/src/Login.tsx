@@ -104,8 +104,8 @@ export function Login() {
             <div id="feature-section-column" className="flex max-w-xl h-full mx-auto pt-6">
                 <div className="flex flex-col px-8 my-auto ml-auto">
                     <div className="mb-12">
-                        <img src={gitpod} className="h-8 block dark:hidden" alt="Gitpod's logo" />
-                        <img src={gitpodDark} className="h-8 hidden dark:block" alt="Gitpod's logo" />
+                        <img src={gitpod} className="h-8 block dark:hidden" alt="Gitpod light theme logo" />
+                        <img src={gitpodDark} className="h-8 hidden dark:block" alt="Gitpod dark theme logo" />
                     </div>
                     <div className="mb-10">
                         <h1 className="text-5xl mb-3">Welcome to Gitpod</h1>
