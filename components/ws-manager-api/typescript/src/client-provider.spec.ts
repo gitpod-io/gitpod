@@ -59,8 +59,13 @@ class TestClientProvider {
             additionalData: {featurePreview: true}
         } as User, {} as Workspace, {} as WorkspaceInstance));
         this.expectInstallations(["a1", "a2", "a3", "con2"], await this.provider.getAvailableStartCluster({
-            rolesOrPermissions: ["admin"]
+            rolesOrPermissions: ["new-workspace-cluster"]
         } as User, {} as Workspace, {} as WorkspaceInstance));
+    }
+
+    public async getStartManager() {
+        const { installation } = await this.provider.getStartManager({} as User, {} as Workspace, {} as WorkspaceInstance, ["a2", "a3"]);
+        expect(installation).to.be.eql("a1");
     }
 
     private expectInstallations(expected: string[], actual: WorkspaceClusterWoTLS[]) {
