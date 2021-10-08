@@ -34,7 +34,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         default: {
             points: 60000, // 1,000 calls per user per second
             durationsSec: 60,
-        },
+        }
     }
     const defaultFunctions: FunctionsConfig = {
         "getLoggedInUser": { group: "default", points: 1 },
