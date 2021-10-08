@@ -45,15 +45,21 @@ export default function () {
             : await getGitpodService().server.getUserProjects());
         setProjects(infos);
 
-        for (const p of infos) {
-            const lastPrebuild = await getGitpodService().server.findPrebuilds({
-                projectId: p.id,
-                latest: true,
-            });
-            if (lastPrebuild[0]) {
-                setLastPrebuilds(prev => new Map(prev).set(p.id, lastPrebuild[0]));
+        const map = new Map();
+        await Promise.all(infos.map(async (p) => {
+            try {
+                const lastPrebuild = await getGitpodService().server.findPrebuilds({
+                    projectId: p.id,
+                    latest: true,
+                });
+                if (lastPrebuild[0]) {
+                    map.set(p.id, lastPrebuild[0]);
+                }
+            } catch (error) {
+                console.error('Failed to load prebuilds for project', p, error);
             }
-        }
+        }));
+        setLastPrebuilds(map);
     }
 
     const newProjectUrl = !!team ? `/new?team=${team.slug}` : '/new';
