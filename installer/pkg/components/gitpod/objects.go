@@ -7,6 +7,5 @@ package gitpod
 import "github.com/gitpod-io/gitpod/installer/pkg/common"
 
 var Objects = common.CompositeRenderFunc(
-	certificate,
 	configmap,
 )

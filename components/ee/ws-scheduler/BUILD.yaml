@@ -27,6 +27,21 @@ packages:
       image:
         - ${imageRepoBase}/ws-scheduler:${version}
         - ${imageRepoBase}/ws-scheduler:commit-${__git_commit}
+  - name: lib
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/ws-manager-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: library
 scripts:
   - name: telepresence
     script: |
