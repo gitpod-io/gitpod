@@ -304,7 +304,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("cannot mount proc")
+		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).WithField("instanceID", wbs.Session.InstanceID).Error("cannot mount proc")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount proc")
 		}
@@ -523,7 +523,7 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("cannot mount proc")
+		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).WithField("instanceID", wbs.Session.InstanceID).Error("cannot mount proc")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount proc")
 		}
