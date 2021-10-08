@@ -3,7 +3,7 @@
 
 {{ $comp := .Values.components.openVsxProxy -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
-{{- if not $comp.disabled -}}
+{{- if and (not $comp.disabled) (not $comp.deployDisabled) -}}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
