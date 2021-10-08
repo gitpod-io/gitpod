@@ -1,4 +1,6 @@
 # Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
+{{ if and (not .Values.components.openVsxProxy.disabled) (not .Values.components.openVsxProxy.deployDisabled) -}}
 {{ template "gitpod.service.default" dict "root" . "gp" .Values "comp" .Values.components.openVsxProxy }}
+{{ end }}
