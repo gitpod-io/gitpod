@@ -231,3 +231,99 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleExecveEventCallback(t *testing.T) {
+	type args struct {
+		execve *Execve
+	}
+	type want struct {
+		infringingWs *InfringingWorkspace
+		err          error
+	}
+	tests := map[string]struct {
+		args args
+		want want
+	}{
+		"blocked_raw_binary": {
+			args: args{
+				execve: &Execve{
+					Filename: "/tmp/offending.rb",
+					Argv:     []string{"arg1", "arg2"},
+				},
+			},
+			want: want{
+				infringingWs: &InfringingWorkspace{
+					Infringements: []Infringement{
+						{
+							Description: fmt.Sprintf("user ran %s blacklisted command: %s %v", "", "/tmp/offending.rb", []string{"arg1", "arg2"}),
+							Kind:        GradeKind(InfringementExecBlacklistedCmd, ""),
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		"blocked_raw_binary_arg": {
+			args: args{
+				execve: &Execve{
+					Filename: "/tmp/test.rb",
+					Argv:     []string{"offending"},
+				},
+			},
+			want: want{
+				infringingWs: &InfringingWorkspace{
+					Infringements: []Infringement{
+						{
+							Description: fmt.Sprintf("user ran %s blacklisted command: %s %v", "", "/tmp/test.rb", []string{"offending"}),
+							Kind:        GradeKind(InfringementExecBlacklistedCmd, ""),
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		"blocked_binary_allowlisted_via_path": {
+			args: args{
+				execve: &Execve{
+					Filename: "User/Library/Allowed/path/git.MyAllowed/offending.rb",
+					Argv:     []string{"test1", "test2"},
+				},
+			},
+			want: want{
+				infringingWs: nil,
+				err:          nil,
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			fc, err := ioutil.ReadFile(path.Join("testdata", "agent_check_binary_blocking.golden"))
+			if err != nil {
+				t.Errorf("cannot read config: %v", err)
+				return
+			}
+			var cfg Config
+			err = json.Unmarshal(fc, &cfg)
+			if err != nil {
+				t.Errorf("cannot unmarshal config: %v", err)
+				return
+			}
+			agent, err := NewAgentSmith(cfg)
+			if err != nil {
+				t.Errorf("cannot create test agent smith from config: %v %v %v", err, agent, tt.args)
+				return
+			}
+			fn := agent.handleExecveEvent(*tt.args.execve)
+			gotInfringementWorkspaces, err := fn()
+			if err != tt.want.err {
+				t.Errorf("Smith.handleExecveEvent() error = %v, wantErr %v", err, tt.want.err)
+				return
+			}
+
+			if !reflect.DeepEqual(gotInfringementWorkspaces, tt.want.infringingWs) {
+				t.Errorf("Smith.handleExecveEvent() = %s", cmp.Diff(gotInfringementWorkspaces, tt.want))
+			}
+		})
+	}
+}

@@ -1,0 +1,14 @@
+{
+    "allowList": {
+        "commands": [
+            "User/Library/Allowed/path/git.*Allowed/offending.rb"
+        ]
+    },
+    "blacklists": {
+        "audit": {
+            "binaries": [
+                "offending"
+            ]
+        }
+    }
+}
