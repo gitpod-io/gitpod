@@ -1,6 +1,9 @@
 # Change Log
 
 ## October 2021
+- [projects] Load the last Prebuilds of all Projects in parallel and make Projects page loading more stable ([#6118](https://github.com/gitpod-io/gitpod/pull/6118)) - [@jankeromnes](https://github.com/jankeromnes)
+- None ([#6114](https://github.com/gitpod-io/gitpod/pull/6114)) - [@princerachit](https://github.com/princerachit)
+- [Dashboard] Fix workspace-project associations for workspaces based on prebuilds. ([#6117](https://github.com/gitpod-io/gitpod/pull/6117)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [dashboard] In /workspaces, indicate when you have active workspaces in your teams ([#6103](https://github.com/gitpod-io/gitpod/pull/6103)) - [@jankeromnes](https://github.com/jankeromnes)
 - Projects in the dashboard are now sorted by most recent pre-build ([#6073](https://github.com/gitpod-io/gitpod/pull/6073)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
 - Fix for missing active workspaces in the personal workspace list. ([#6097](https://github.com/gitpod-io/gitpod/pull/6097)) - [@AlexTugarev](https://github.com/AlexTugarev)
