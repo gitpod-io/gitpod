@@ -120,7 +120,7 @@ RUN install-packages gperf \
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=12.22.4
+ARG GITPOD_NODE_VERSION=12.22.6
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
