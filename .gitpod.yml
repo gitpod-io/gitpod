@@ -36,11 +36,10 @@ ports:
   - port: 1234
     onOpen: ignore
 tasks:
-  - name: Prepare Agent Smith BPF dev environment
-    command: leeway run components/ee/agent-smith:qemu
   - name: Java
     init: leeway exec --package components/supervisor-api/java:lib -- ./gradlew jar
-  - before: scripts/branch-namespace.sh
+  - name: TypeScript
+    before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
   - name: Go
     init: leeway exec --filter-type go -v -- go mod verify
