@@ -61,7 +61,7 @@ func DefaultClientOptions() []grpc.DialOption {
 			Backoff: bfConf,
 		}),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                5 * time.Second,
+			Time:                10 * time.Second,
 			Timeout:             time.Second,
 			PermitWithoutStream: true,
 		}),
@@ -85,7 +85,7 @@ func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary 
 	return []grpc.ServerOption{
 		// terminate the connection if the client pings more than once every 2 seconds
 		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
-			MinTime:             2 * time.Second,
+			MinTime:             10 * time.Second,
 			PermitWithoutStream: true,
 		}),
 		grpc.MaxRecvMsgSize(maxMsgSize),
@@ -101,7 +101,7 @@ func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary 
 
 func SetupLogging() {
 	grpclog.SetLoggerV2(grpclog.NewLoggerV2(
-		log.WithField("component", "grpc").WriterLevel(logrus.InfoLevel),
+		log.WithField("component", "grpc").WriterLevel(logrus.DebugLevel),
 		log.WithField("component", "grpc").WriterLevel(logrus.WarnLevel),
 		log.WithField("component", "grpc").WriterLevel(logrus.ErrorLevel),
 	))
