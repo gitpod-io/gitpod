@@ -1,0 +1,48 @@
+plugins {
+    id 'application'
+    id 'java-library'
+    id 'maven-publish'
+}
+
+repositories {
+    mavenCentral()
+}
+
+group 'io.gitpod.api'
+version '1.0-SNAPSHOT'
+
+dependencies {
+    implementation group: 'org.eclipse.lsp4j', name: 'org.eclipse.lsp4j.jsonrpc', version: '0.12.0'
+    implementation group: 'org.eclipse.lsp4j', name: 'org.eclipse.lsp4j.websocket', version: '0.12.0'
+    compileOnly group: 'javax.websocket', name: 'javax.websocket-api', version: '1.1'
+    implementation group: 'org.glassfish.tyrus.bundles', name: 'tyrus-standalone-client', version: '1.18'
+}
+
+application {
+    mainClass = 'io.gitpod.gitpodprotocol.testclient.TestClient'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// Set env vars GITHUB_GPR_USERNAME and GITHUB_GPR_TOKEN and run:
+// ./gradlew publish
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/gitpod-io/gitpod")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_GPR_USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_GPR_TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+        }
+    }
+}

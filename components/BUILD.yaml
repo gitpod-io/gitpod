@@ -15,6 +15,7 @@ packages:
       - dev/loadgen:app
       - components/local-app-api/typescript-grpcweb:publish
       - components/gitpod-protocol:publish
+      - components/gitpod-protocol/java:lib
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor-api/typescript-grpcweb:publish
       - components/supervisor-api/java:lib
