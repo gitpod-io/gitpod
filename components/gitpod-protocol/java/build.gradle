@@ -27,22 +27,11 @@ java {
     withJavadocJar()
 }
 
-// Set env vars GITHUB_GPR_USERNAME and GITHUB_GPR_TOKEN and run:
-// ./gradlew publish
+
 publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/gitpod-io/gitpod")
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_GPR_USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_GPR_TOKEN")
-            }
-        }
-    }
     publications {
-        gpr(MavenPublication) {
-            from(components.java)
+        mavenJava(MavenPublication) {
+            from components.java
         }
-    }
+     }
 }

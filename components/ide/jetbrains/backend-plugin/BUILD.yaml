@@ -1,0 +1,18 @@
+packages:
+  - name: plugin
+    type: generic
+    deps:
+      - components/supervisor-api/java:lib
+      - components/gitpod-protocol/java:lib
+    srcs:
+      - "**/*.kt"
+      - "build.gradle.kts"
+      - "gradle.properties"
+      - "gradle/wrapper/*"
+      - "gradlew"
+      - "settings.gradle.kts"
+    env:
+      - JAVA_HOME=/home/gitpod/.sdkman/candidates/java/current
+    config:
+      commands:
+        - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "buildPlugin"]
