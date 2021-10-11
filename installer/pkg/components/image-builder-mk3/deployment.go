@@ -125,7 +125,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: RPCPort,
-							Name:          "rpc",
+							Name:          RPCPortName,
 						}},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged: pointer.Bool(false),

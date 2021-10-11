@@ -94,6 +94,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Privileged: pointer.Bool(false),
 								RunAsUser:  pointer.Int64(31001),
 							},
+							Ports: []corev1.ContainerPort{{
+								Name:          ContainerPortName,
+								ContainerPort: ContainerPort,
+							}, {
+								Name:          PrometheusPortName,
+								ContainerPort: PrometheusPort,
+							}},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),

@@ -57,7 +57,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							Ports: []corev1.ContainerPort{{
 								ContainerPort: ContainerPort,
-								Name:          "http",
+								Name:          PortName,
 							}},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),

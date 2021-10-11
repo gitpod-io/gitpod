@@ -10,6 +10,7 @@ const (
 	BuilderImageVersion = "latest"
 	Component           = "image-builder-mk3"
 	RPCPort             = 8080
+	RPCPortName         = "service"
 	PProfPort           = 6060
 	PrometheusPort      = 9500
 )

@@ -68,8 +68,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 							Ports: []corev1.ContainerPort{{
+								Name:          RPCServiceName,
+								ContainerPort: RPCPort,
+							}, {
 								ContainerPort: PrometheusPort,
-								Name:          "metrics",
+								Name:          PrometheusName,
 							}},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),

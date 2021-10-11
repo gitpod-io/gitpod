@@ -62,6 +62,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Args:            []string{"run", "-v", "/mnt/config/config.json"},
 							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Blobserve.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
+							Ports: []corev1.ContainerPort{{
+								Name:          ServicePortName,
+								ContainerPort: ContainerPort,
+							}},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),

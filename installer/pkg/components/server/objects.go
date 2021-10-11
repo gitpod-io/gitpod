@@ -14,11 +14,11 @@ var Objects = common.CompositeRenderFunc(
 	role,
 	rolebinding,
 	common.GenerateService(Component, map[string]common.ServicePort{
-		"http": {
+		ContainerPortName: {
 			ContainerPort: ContainerPort,
 			ServicePort:   ServicePort,
 		},
-		"metrics": {
+		PrometheusPortName: {
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},

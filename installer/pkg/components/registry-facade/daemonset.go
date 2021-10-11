@@ -93,7 +93,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 						},
 						Ports: []corev1.ContainerPort{{
-							Name:          "registry",
+							Name:          ContainerPortName,
 							ContainerPort: ContainerPort,
 							HostPort:      ServicePort,
 						}},

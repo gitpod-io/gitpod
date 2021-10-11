@@ -5,7 +5,8 @@
 package registryfacade
 
 const (
-	Component     = "registry-facade"
-	ContainerPort = 32223
-	ServicePort   = 3000
+	Component         = "registry-facade"
+	ContainerPortName = "registry"
+	ContainerPort     = 32223
+	ServicePort       = 3000
 )
