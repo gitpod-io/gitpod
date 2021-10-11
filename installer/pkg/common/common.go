@@ -23,12 +23,13 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+// Valid characters for affinities are alphanumeric, -, _, . and one / as a subdomain prefix
 const (
-	AffinityLabelMeta               = "gitpod.io/workload/meta"
-	AffinityLabelIDE                = "gitpod.io/workload/ide"
-	AffinityLabelWorkspaceServices  = "gitpod.io/workload/workspace/services"
-	AffinityLabelWorkspacesRegular  = "gitpod.io/workload/workspace/regular"
-	AffinityLabelWorkspacesHeadless = "gitpod.io/workload/workspace/headless"
+	AffinityLabelMeta               = "gitpod.io/workload_meta"
+	AffinityLabelIDE                = "gitpod.io/workload_ide"
+	AffinityLabelWorkspaceServices  = "gitpod.io/workload_workspace_services"
+	AffinityLabelWorkspacesRegular  = "gitpod.io/workload_workspace_regular"
+	AffinityLabelWorkspacesHeadless = "gitpod.io/workload_workspace_headless"
 )
 
 func DefaultLabels(component string) map[string]string {
