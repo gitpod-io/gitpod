@@ -20,44 +20,42 @@ import (
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	var certSecretsVolume corev1.Volume
-	var certSecretsVolumeMount corev1.VolumeMount
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
+
 	if ctx.Config.Certificate.Name != "" {
 		name := "config-certificates"
-		certSecretsVolume = corev1.Volume{
+		volumes = append(volumes, corev1.Volume{
 			Name: name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: ctx.Config.Certificate.Name,
 				},
 			},
-		}
+		})
 
-		certSecretsVolumeMount = corev1.VolumeMount{
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      name,
 			MountPath: "/mnt/certificates",
-		}
+		})
 	}
 
-	// todo(sje): get value from workspace pull secret
-	var pullSecretVolume corev1.Volume
-	var pullSecretVolumeMount corev1.VolumeMount
 	if *ctx.Config.ContainerRegistry.InCluster {
 		name := "pull-secret"
-		pullSecretVolume = corev1.Volume{
+		volumes = append(volumes, corev1.Volume{
 			Name: name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: dockerregistry.BuiltInRegistrySecret,
 				},
 			},
-		}
+		})
 
-		pullSecretVolumeMount = corev1.VolumeMount{
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      name,
 			MountPath: "/mnt/pull-secret.json",
 			SubPath:   ".dockerconfigjson",
-		}
+		})
 	}
 
 	return []runtime.Object{&appsv1.DaemonSet{
@@ -111,7 +109,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Value: "on",
 							}},
 						),
-						VolumeMounts: []corev1.VolumeMount{{
+						VolumeMounts: append([]corev1.VolumeMount{{
 							Name:      "cache",
 							MountPath: "/mnt/cache",
 						}, {
@@ -122,9 +120,9 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:      "ws-manager-client-tls-certs",
 							MountPath: "/ws-manager-client-tls-certs",
 							ReadOnly:  true,
-						}, pullSecretVolumeMount, certSecretsVolumeMount},
+						}}, volumeMounts...),
 					}, *common.KubeRBACProxyContainer()},
-					Volumes: []corev1.Volume{{
+					Volumes: append([]corev1.Volume{{
 						Name:         "cache",
 						VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
 					}, {
@@ -139,7 +137,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								SecretName: wsmanager.TLSSecretNameClient,
 							},
 						},
-					}, pullSecretVolume, certSecretsVolume},
+					}}, volumes...),
 				},
 			},
 		},

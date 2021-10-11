@@ -39,21 +39,22 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// todo(sje): get SHA256Sum of registry secret
 	annotations["checksum/builtin-registry-auth"] = getChecksum("@todo")
 
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
+
 	// todo(sje): make conditional
 	// todo(sje): get value from workspace pull secret
-	var pullSecret corev1.VolumeMount
-	var pullSecretVolume corev1.Volume
-	pullSecret = corev1.VolumeMount{
+	volumeMounts = append(volumeMounts, corev1.VolumeMount{
 		Name:      "pull-secret",
 		MountPath: PullSecretFile,
 		SubPath:   ".dockerconfigjson",
-	}
-	pullSecretVolume = corev1.Volume{
+	})
+	volumes = append(volumes, corev1.Volume{
 		Name: "pull-secret",
 		VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
 			SecretName: "",
 		}},
-	}
+	})
 
 	return []runtime.Object{&appsv1.Deployment{
 		TypeMeta: common.TypeMetaDeployment,
@@ -83,7 +84,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
-					Volumes: []corev1.Volume{{
+					Volumes: append([]corev1.Volume{{
 						Name: "configuration",
 						VolumeSource: corev1.VolumeSource{
 							ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -104,7 +105,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								SecretName: wsmanager.TLSSecretNameClient,
 							},
 						},
-					}, pullSecretVolume},
+					}}, volumes...),
 					Containers: []corev1.Container{{
 						Name:            Component,
 						Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
@@ -132,7 +133,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Privileged: pointer.Bool(false),
 							RunAsUser:  pointer.Int64(33333),
 						},
-						VolumeMounts: []corev1.VolumeMount{{
+						VolumeMounts: append([]corev1.VolumeMount{{
 							Name:      "configuration",
 							MountPath: "/config/image-builder.json",
 							SubPath:   "image-builder.json",
@@ -144,7 +145,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:      "wsman-tls-certs",
 							MountPath: "/wsman-certs",
 							ReadOnly:  true,
-						}, pullSecret},
+						}}, volumeMounts...),
 					}, *common.KubeRBACProxyContainer()},
 				},
 			},
