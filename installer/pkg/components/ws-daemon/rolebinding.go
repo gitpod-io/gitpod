@@ -44,12 +44,14 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
-			Subjects: []rbacv1.Subject{
-				{
-					Kind:     "ClusterRole",
-					Name:     fmt.Sprintf("%s-ns-ws-daemon", ctx.Namespace),
-					APIGroup: "rbac.authorization.k8s.io",
-				},
+			Subjects: []rbacv1.Subject{{
+				Kind: "ServiceAccount",
+				Name: Component,
+			}},
+			RoleRef: rbacv1.RoleRef{
+				Kind:     "ClusterRole",
+				Name:     fmt.Sprintf("%s-ns-ws-daemon", ctx.Namespace),
+				APIGroup: "rbac.authorization.k8s.io",
 			},
 		},
 	}, nil

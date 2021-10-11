@@ -3,7 +3,7 @@ blockNewUsers:
   enabled: false
 certificate:
   kind: ""
-  name: ""
+  name: "https-certificates"
 containerRegistry:
   inCluster: true
 database:

@@ -168,26 +168,54 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}, {
 		// todo(sje): conditional
 		Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
-		Value: "",
+		Value: "false",
 	}, {
 		Name: "DB_ENCRYPTION_KEYS",
 		// todo(sje): either Value or ValueFrom
-		Value: "",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: corev1.LocalObjectReference{
-				Name: "",
-			},
-			Key: "keys",
-		}},
+		Value: "todo",
+		//ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+		//	LocalObjectReference: corev1.LocalObjectReference{
+		//		Name: "",
+		//	},
+		//	Key: "keys",
+		//}},
 	}}
 }
 
-func DatabaseWaiterContainer() *corev1.Container {
-	return &corev1.Container{}
+func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
+	return &corev1.Container{
+		Name:  "database-waiter",
+		Image: ImageName(ctx.Config.Repository, "service-waiter", "latest"),
+		Args: []string{
+			"-v",
+			"database",
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged: pointer.Bool(false),
+			RunAsUser:  pointer.Int64(31001),
+		},
+		Env: MergeEnv(
+			DatabaseEnv(&ctx.Config),
+		),
+	}
 }
 
-func MessageBusWaiterContainer() *corev1.Container {
-	return &corev1.Container{}
+func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
+	return &corev1.Container{
+		Name:  "msgbus-waiter",
+		Image: ImageName(ctx.Config.Repository, "service-waiter", "latest"),
+		Args: []string{
+			"-v",
+			"messagebus",
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged: pointer.Bool(false),
+			RunAsUser:  pointer.Int64(31001),
+		},
+		Env: MergeEnv(
+			MessageBusEnv(&ctx.Config),
+		),
+	}
 }
 
 func KubeRBACProxyContainer() *corev1.Container {
