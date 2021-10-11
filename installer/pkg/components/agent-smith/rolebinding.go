@@ -36,7 +36,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}},
 		},
 		&rbacv1.ClusterRoleBinding{
-			TypeMeta: common.TypeMetaRoleBinding,
+			TypeMeta: common.TypeMetaClusterRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   fmt.Sprintf("%s-%s-rb-kube-rbac-proxy", ctx.Namespace, Component),
 				Labels: labels,

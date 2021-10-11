@@ -5,7 +5,9 @@
 package common
 
 import (
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -67,4 +69,39 @@ func GenerateService(component string, ports map[string]ServicePort, clusterIP *
 			},
 		}}, nil
 	}
+}
+
+// GlobalObjects is any objects which are outside the scope of components, but
+// required for the application to function. Typically, these will be ClusterRole,
+// ClusterRoleBindings and similar cluster-level objects
+func GlobalObjects(ctx *RenderContext) ([]runtime.Object, error) {
+	return []runtime.Object{
+		&rbacv1.ClusterRole{
+			TypeMeta: TypeMetaClusterRole,
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%s-kube-rbac-proxy", ctx.Namespace),
+			},
+			Rules: []rbacv1.PolicyRule{{
+				APIGroups: []string{"authentication.k8s.io"},
+				Resources: []string{"tokenreviews"},
+				Verbs:     []string{"create"},
+			}, {
+				APIGroups: []string{"authorization.k8s.io"},
+				Resources: []string{"subjectaccessreviews"},
+				Verbs:     []string{"create"},
+			}},
+		},
+		&rbacv1.ClusterRole{
+			TypeMeta: TypeMetaClusterRole,
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%s-ns-psp:unprivileged", ctx.Namespace),
+			},
+			Rules: []rbacv1.PolicyRule{{
+				APIGroups:     []string{"policy"},
+				Resources:     []string{"podsecuritypolicies"},
+				Verbs:         []string{"use"},
+				ResourceNames: []string{fmt.Sprintf("%s-ns-unprivileged", ctx.Namespace)},
+			}},
+		},
+	}, nil
 }
