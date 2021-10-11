@@ -26,3 +26,11 @@ prometheus_alerts.yaml:
 .PHONY: promtool-lint
 promtool-lint: prometheus_alerts.yaml
 	promtool check rules prometheus_alerts.yaml
+
+.PHONY: vendor
+vendor:
+	jb install
+
+.PHONY: unit-tests
+unit-tests: vendor
+	jsonnet unit-test.jsonnet -J vendor/

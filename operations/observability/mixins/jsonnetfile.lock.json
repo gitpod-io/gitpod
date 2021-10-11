@@ -8,7 +8,8 @@
           "subdir": "grafonnet"
         }
       },
-      "version": "master"
+      "version": "3626fc4dc2326931c530861ac5bebe39444f6cbf",
+      "sum": "gF8foHByYcB25jcUOBqP6jxk0OPifQMjPvKY0HaCk6w="
     },
     {
       "source": {
@@ -17,7 +18,8 @@
           "subdir": "jsonnetunit"
         }
       },
-      "version": "master",
+      "version": "6927c58cae7624a00f368b977ccc477d4f74071f",
+      "sum": "9FFqqln65hooRF0l6rjICDtnTxUlmDj34+sKMh4sjPI=",
       "name": "unit"
     }
   ],
