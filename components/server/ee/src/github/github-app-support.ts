@@ -54,7 +54,7 @@ export class GitHubAppSupport {
             const sub = await probot.auth(installation.data.id);
             try {
                 const accessibleRepos = (await sub.paginate(sub.rest.apps.listReposAccessibleToInstallation, { per_page: 100 }));
-                return accessibleRepos.repositories.map(r => {
+                return accessibleRepos.map(r => {
                     return {
                         name: r.name,
                         cloneUrl: r.clone_url,
