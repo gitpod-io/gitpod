@@ -27,10 +27,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Name:          MetricsContainerName,
 	}
 
-	var registryVolumes []corev1.Volume
-	var registryVolumeMounts []corev1.VolumeMount
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
+
 	if *ctx.Config.ContainerRegistry.InCluster {
-		registryVolumes = []corev1.Volume{{
+		volumes = append(volumes, []corev1.Volume{{
 			Name: RegistryAuthSecret,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
@@ -44,14 +45,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					SecretName: RegistryTLSCertSecret,
 				},
 			},
-		}}
-		registryVolumeMounts = []corev1.VolumeMount{{
+		}}...)
+		volumeMounts = append(volumeMounts, []corev1.VolumeMount{{
 			Name:      RegistryAuthSecret,
 			MountPath: "/etc/caddy/registry-auth",
 		}, {
 			Name:      RegistryTLSCertSecret,
 			MountPath: "/etc/caddy/registry-certs",
-		}}
+		}}...)
 	}
 
 	return []runtime.Object{
@@ -100,7 +101,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									SecretName: ctx.Config.Certificate.Name,
 								},
 							},
-						}}, registryVolumes...),
+						}}, volumes...),
 						InitContainers: []corev1.Container{{
 							Name:            "sysctl",
 							Image:           InitContainerImage,
@@ -188,7 +189,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}, {
 								Name:      "config-certificates",
 								MountPath: "/etc/caddy/certificates",
-							}}, registryVolumeMounts...),
+							}}, volumeMounts...),
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 								[]corev1.EnvVar{{

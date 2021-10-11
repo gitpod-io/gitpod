@@ -18,15 +18,6 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	// todo(sje): get value from workspace pull secret
-	var pullSecret corev1.VolumeMount
-	pullSecretVolume := corev1.Volume{
-		Name: "pull-secret",
-		VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
-			SecretName: "",
-		}},
-	}
-
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -62,7 +53,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
 								},
 							},
-						}, pullSecretVolume},
+						}, {
+							Name: "pull-secret",
+							VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
+								SecretName: "",
+							}},
+						}},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "-v", "/mnt/config/config.json"},
@@ -89,7 +85,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}, {
 								Name:      "cache",
 								MountPath: "/mnt/cache",
-							}, pullSecret},
+							}},
 						}, *common.KubeRBACProxyContainer()},
 					},
 				},
