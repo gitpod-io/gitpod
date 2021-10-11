@@ -10,13 +10,10 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"io"
 	"io/ioutil"
 	"os"
@@ -25,6 +22,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gitpod-io/gitpod/image-builder/api/config"
 
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -96,39 +95,17 @@ func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err e
 	} else {
 		grpcOpts := common_grpc.DefaultClientOptions()
 		if cfg.WorkspaceManager.TLS.Authority != "" || cfg.WorkspaceManager.TLS.Certificate != "" && cfg.WorkspaceManager.TLS.PrivateKey != "" {
-			ca := cfg.WorkspaceManager.TLS.Authority
-			crt := cfg.WorkspaceManager.TLS.Certificate
-			key := cfg.WorkspaceManager.TLS.PrivateKey
-
-			// Telepresence (used for debugging only) requires special paths to load files from
-			if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
-				ca = filepath.Join(root, ca)
-				crt = filepath.Join(root, crt)
-				key = filepath.Join(root, key)
-			}
-
-			rootCA, err := os.ReadFile(ca)
-			if err != nil {
-				return nil, xerrors.Errorf("could not read ca certificate: %s", err)
-			}
-			certPool := x509.NewCertPool()
-			if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
-				return nil, xerrors.Errorf("failed to append ca certs")
-			}
-
-			certificate, err := tls.LoadX509KeyPair(crt, key)
+			tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+				cfg.WorkspaceManager.TLS.Authority, cfg.WorkspaceManager.TLS.Certificate, cfg.WorkspaceManager.TLS.PrivateKey,
+				common_grpc.WithSetRootCAs(true),
+				common_grpc.WithServerName("ws-manager"),
+			)
 			if err != nil {
 				log.WithField("config", cfg.WorkspaceManager.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
 				return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
 			}
 
-			creds := credentials.NewTLS(&tls.Config{
-				ServerName:   "ws-manager",
-				Certificates: []tls.Certificate{certificate},
-				RootCAs:      certPool,
-				MinVersion:   tls.VersionTLS12,
-			})
-			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
+			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 		} else {
 			grpcOpts = append(grpcOpts, grpc.WithInsecure())
 		}

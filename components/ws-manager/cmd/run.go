@@ -6,9 +6,6 @@ package cmd
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"io/ioutil"
 	"net"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -127,32 +124,16 @@ var runCmd = &cobra.Command{
 			[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor(), ratelimits.UnaryInterceptor()},
 		)
 		if cfg.RPCServer.TLS.CA != "" && cfg.RPCServer.TLS.Certificate != "" && cfg.RPCServer.TLS.PrivateKey != "" {
-			cert, err := tls.LoadX509KeyPair(cfg.RPCServer.TLS.Certificate, cfg.RPCServer.TLS.PrivateKey)
+			tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+				cfg.RPCServer.TLS.CA, cfg.RPCServer.TLS.Certificate, cfg.RPCServer.TLS.PrivateKey,
+				common_grpc.WithSetClientCAs(true),
+				common_grpc.WithServerName("ws-manager"),
+			)
 			if err != nil {
-				log.WithError(err).WithField("crt", cfg.RPCServer.TLS.Certificate).WithField("key", cfg.RPCServer.TLS.PrivateKey).Fatal("could not load TLS keys")
-			}
-			certPool := x509.NewCertPool()
-			b, err := ioutil.ReadFile(cfg.RPCServer.TLS.CA)
-			if err != nil {
-				log.WithError(err).WithField("ca", cfg.RPCServer.TLS.CA).Fatal("could not load CA")
-			}
-			if !certPool.AppendCertsFromPEM(b) {
-				log.WithError(err).WithField("ca", cfg.RPCServer.TLS.CA).Fatal("failed to append CA")
+				log.WithError(err).Fatal("cannot load ws-manager certs")
 			}
 
-			creds := credentials.NewTLS(&tls.Config{
-				ClientAuth:   tls.RequireAndVerifyClientCert,
-				Certificates: []tls.Certificate{cert},
-				ClientCAs:    certPool,
-				ServerName:   "ws-manager",
-			})
-
-			grpcOpts = append(grpcOpts, grpc.Creds(creds))
-			log.
-				WithField("ca", cfg.RPCServer.TLS.CA).
-				WithField("crt", cfg.RPCServer.TLS.Certificate).
-				WithField("key", cfg.RPCServer.TLS.PrivateKey).
-				Debug("securing gRPC server with TLS")
+			grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewTLS(tlsConfig)))
 		} else {
 			log.Warn("no TLS configured - gRPC server will be unsecured")
 		}

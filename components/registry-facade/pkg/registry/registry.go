@@ -6,15 +6,14 @@ package registry
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"github.com/gitpod-io/gitpod/registry-facade/api/config"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gitpod-io/gitpod/registry-facade/api/config"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -126,43 +125,17 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 	if cfg.RemoteSpecProvider != nil {
 		grpcOpts := common_grpc.DefaultClientOptions()
 		if cfg.RemoteSpecProvider.TLS != nil {
-			ca := cfg.RemoteSpecProvider.TLS.Authority
-			crt := cfg.RemoteSpecProvider.TLS.Certificate
-			key := cfg.RemoteSpecProvider.TLS.PrivateKey
-
-			// Telepresence (used for debugging only) requires special paths to load files from
-			if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
-				ca = filepath.Join(root, ca)
-				crt = filepath.Join(root, crt)
-				key = filepath.Join(root, key)
-			}
-
-			rootCA, err := os.ReadFile(ca)
-			if err != nil {
-				return nil, xerrors.Errorf("could not read ca certificate: %s", err)
-			}
-			certPool := x509.NewCertPool()
-			if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
-				return nil, xerrors.Errorf("failed to append ca certs")
-			}
-
-			certificate, err := tls.LoadX509KeyPair(crt, key)
+			tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+				cfg.RemoteSpecProvider.TLS.Authority, cfg.RemoteSpecProvider.TLS.Certificate, cfg.RemoteSpecProvider.TLS.PrivateKey,
+				common_grpc.WithSetRootCAs(true),
+				common_grpc.WithServerName("ws-manager"),
+			)
 			if err != nil {
 				log.WithField("config", cfg.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
 				return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
 			}
 
-			creds := credentials.NewTLS(&tls.Config{
-				Certificates: []tls.Certificate{certificate},
-				RootCAs:      certPool,
-				MinVersion:   tls.VersionTLS12,
-			})
-			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
-			log.
-				WithField("ca", ca).
-				WithField("cert", crt).
-				WithField("key", key).
-				Debug("using TLS config to connect ws-manager")
+			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 		} else {
 			grpcOpts = append(grpcOpts, grpc.WithInsecure())
 		}
