@@ -6,10 +6,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"os"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +24,7 @@ var signatureMatchesCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("cannot get config")
 		}
-		if cfg.Blacklists == nil {
+		if cfg.Blocklists == nil {
 			log.WithError(err).Fatal("no signatures configured")
 		}
 
@@ -33,8 +34,8 @@ var signatureMatchesCmd = &cobra.Command{
 		}
 		defer f.Close()
 
-		var res []*signature.Signature
-		for _, bl := range cfg.Blacklists.Levels() {
+		var res []*classifier.Signature
+		for _, bl := range cfg.Blocklists.Levels() {
 			for _, s := range bl.Signatures {
 				m, err := s.Matches(f)
 				if err != nil {

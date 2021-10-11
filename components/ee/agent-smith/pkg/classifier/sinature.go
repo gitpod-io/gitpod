@@ -5,7 +5,7 @@
 //go:build linux
 // +build linux
 
-package signature
+package classifier
 
 import (
 	"bytes"

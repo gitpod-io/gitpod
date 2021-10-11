@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ var signatureElfdumpCmd = &cobra.Command{
 		}
 		defer f.Close()
 
-		syms, err := signature.ExtractELFSymbols(f)
+		syms, err := classifier.ExtractELFSymbols(f)
 		if err != nil {
 			log.Fatal(err)
 		}
