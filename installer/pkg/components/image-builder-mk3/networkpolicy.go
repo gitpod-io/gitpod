@@ -27,9 +27,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 			PolicyTypes: []networkingv1.PolicyType{"Ingress", "Egress"},
 			Ingress: []networkingv1.NetworkPolicyIngressRule{{
 				From: []networkingv1.NetworkPolicyPeer{{
-					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						"component": Component,
-					}},
+					PodSelector: &metav1.LabelSelector{MatchLabels: labels},
 				}},
 			}},
 			Egress: []networkingv1.NetworkPolicyEgressRule{{

@@ -64,9 +64,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    labels,
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"Component": Component},
-				},
+				Selector: &metav1.LabelSelector{MatchLabels: labels},
 				// todo(sje): receive config value
 				Replicas: pointer.Int32(1),
 				Strategy: common.DeploymentStrategy,
