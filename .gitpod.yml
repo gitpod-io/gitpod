@@ -37,7 +37,9 @@ ports:
     onOpen: ignore
 tasks:
   - name: Java
-    init: leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew jar
+    init: |
+      leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
+      leeway exec --package components/ide/jetbrains/backend-plugin:plugin -- ./gradlew buildPlugin
   - name: TypeScript
     before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
@@ -59,3 +61,4 @@ vscode:
     - heptio.jsonnet
     - timonwong.shellcheck
     - vscjava.vscode-java-pack
+    - fwcd.kotlin
