@@ -398,7 +398,7 @@ components:
       imageName: "ide/theia"
     codeImage:
       imageName: "ide/code"
-      stableVersion: "commit-8be670686186fcc71076bc95166de1ada9c232d8"
+      stableVersion: "commit-7107fb8bde0b1f92265402ad5fa09a51022b14dd"
     supervisor:
       imageName: "supervisor"
     dockerUp:
