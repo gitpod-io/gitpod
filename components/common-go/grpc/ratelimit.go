@@ -51,7 +51,7 @@ func (r RatelimitingInterceptor) UnaryInterceptor() grpc.UnaryServerInterceptor 
 		if ok {
 			if f.Block {
 				err := f.L.Wait(ctx)
-				if err == context.Canceled || err == context.DeadlineExceeded {
+				if err == context.Canceled {
 					return nil, err
 				}
 				if err != nil {
