@@ -49,6 +49,7 @@ import { WorkspaceCluster, WorkspaceClusterFilter, WorkspaceClusterWoTLS } from 
             state: "available",
             govern: false,
             admissionConstraints: [],
+            admissionPreferences: [],
         };
 
         const repo = await this.getRepo();

@@ -54,7 +54,7 @@ var clustersSwapCmd = &cobra.Command{
 			log.Fatalf("destination cluster \"%s\" not found", args[1])
 		}
 		if ignore, _ := cmd.Flags().GetBool("ignore-admission-constraints"); !ignore {
-			if len(src.AdmissionConstraints) > 0 || len(dst.AdmissionConstraints) > 0 {
+			if len(src.AdmissionConstraint) > 0 || len(dst.AdmissionConstraint) > 0 {
 				log.Fatal("one of the clusters has admission constraints. Swapping their state/score is unlikely to have the desired effect. If you want to swap nonetheless, please remove the constraints or run with --ignore-admission-constraints")
 			}
 		}
