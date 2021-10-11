@@ -17,6 +17,12 @@ import { linearBackoffStrategy, PromisifiedWorkspaceManagerClient } from "./prom
 
 export const IWorkspaceManagerClientCallMetrics = Symbol('IWorkspaceManagerClientCallMetrics')
 
+export const IsPayingCustomerProvider = Symbol('IsPayingCustomerProvider');
+
+export interface IsPayingCustomerProvider {
+    isPayingCustomer(user: User): Promise<boolean>;
+}
+
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
     @inject(WorkspaceManagerClientProviderCompositeSource)
@@ -24,6 +30,9 @@ export class WorkspaceManagerClientProvider implements Disposable {
 
     @inject(IWorkspaceManagerClientCallMetrics) @optional()
     protected readonly clientCallMetrics: IClientCallMetrics;
+
+    @inject(IsPayingCustomerProvider)
+    protected readonly isPayingCustomerProvider: IsPayingCustomerProvider;
 
     // gRPC connections maintain their connectivity themselves, i.e. they reconnect when neccesary.
     // They can also be used concurrently, even across services.
@@ -173,6 +182,8 @@ function admissionConstraintsFilter(user: User, workspace: Workspace, instance: 
                     return !!user.additionalData && !!user.additionalData.featurePreview;
                 case "has-permission":
                     return user.rolesOrPermissions?.includes(con.permission);
+                case "is-paying-customer":
+                    return false;
             }
         });
     };

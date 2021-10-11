@@ -42,10 +42,12 @@ message AdmissionConstraint {
   message HasPermission {
     string permission = 1;
   }
+  message IsPayingCustomer {}
 
   oneof constraint {
     FeaturePreview has_feature_preview = 1;
     HasPermission has_permission = 2;
+    IsPayingCustomer is_paying_customer = 3;
   }
 }
 

@@ -30,6 +30,7 @@ import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientPr
 import * as grpc from "@grpc/grpc-js";
 import { ServiceError as grpcServiceError } from '@grpc/grpc-js';
 import { inject, injectable } from 'inversify';
+import { AdmissionConstraint } from '../../gitpod-protocol/src/workspace-cluster';
 import { BridgeController } from './bridge-controller';
 import { Configuration } from './config';
 
@@ -281,6 +282,9 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 perm.setPermission(c.permission);
                 constraint.setHasPermission(perm);
                 break;
+            case "is-paying-cusomter":
+                constraint.setIsPayingCusomter(new GRPCAdmissionConstraint.IsPayingCusomter());
+                break;
             default:
                 return;
         }
@@ -304,6 +308,9 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
         }
 
         return <AdmissionConstraintHasRole>{type: "has-permission", permission};
+    }
+    if (c.hasIsPayingCustomer()) {
+        return <AdmissionConstraint>{type: "is-paying-customer"};
     }
     return;
 }
