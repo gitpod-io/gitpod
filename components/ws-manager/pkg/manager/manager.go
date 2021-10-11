@@ -6,14 +6,10 @@ package manager
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -1194,39 +1190,17 @@ func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Fa
 	// TODO(cw): add client-side gRPC metrics
 	grpcOpts := common_grpc.DefaultClientOptions()
 	if cfg.TLS.Authority != "" || cfg.TLS.Certificate != "" && cfg.TLS.PrivateKey != "" {
-		ca := cfg.TLS.Authority
-		crt := cfg.TLS.Certificate
-		key := cfg.TLS.PrivateKey
-
-		// Telepresence (used for debugging only) requires special paths to load files from
-		if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
-			ca = filepath.Join(root, ca)
-			crt = filepath.Join(root, crt)
-			key = filepath.Join(root, key)
-		}
-
-		rootCA, err := os.ReadFile(ca)
+		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+			cfg.TLS.Authority, cfg.TLS.Certificate, cfg.TLS.PrivateKey,
+			common_grpc.WithSetRootCAs(true),
+			common_grpc.WithServerName("wsdaemon"),
+		)
 		if err != nil {
-			return nil, xerrors.Errorf("could not read ca certificate: %s", err)
-		}
-		certPool := x509.NewCertPool()
-		if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
-			return nil, xerrors.Errorf("failed to append ca certs")
+			log.WithField("config", cfg.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
+			return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
 		}
 
-		certificate, err := tls.LoadX509KeyPair(crt, key)
-		if err != nil {
-			log.WithField("config", cfg.TLS).Error("Cannot load ws-daemon certs - this is a configuration issue.")
-			return nil, xerrors.Errorf("cannot load ws-daemon certs: %w", err)
-		}
-
-		creds := credentials.NewTLS(&tls.Config{
-			ServerName:   "wsdaemon",
-			Certificates: []tls.Certificate{certificate},
-			RootCAs:      certPool,
-			MinVersion:   tls.VersionTLS12,
-		})
-		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 	} else {
 		grpcOpts = append(grpcOpts, grpc.WithInsecure())
 	}
