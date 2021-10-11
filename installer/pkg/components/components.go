@@ -49,6 +49,7 @@ var WorkspaceObjects = common.CompositeRenderFunc(
 
 var FullObjects = common.CompositeRenderFunc(
 	dockerregistry.Objects,
+	common.GlobalObjects,
 	MetaObjects,
 	WorkspaceObjects,
 )

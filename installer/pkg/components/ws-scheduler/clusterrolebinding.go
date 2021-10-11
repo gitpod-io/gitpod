@@ -21,7 +21,7 @@ func clusterrolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&rbacv1.ClusterRoleBinding{
 			TypeMeta: common.TypeMetaClusterRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
+				Name:      fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
@@ -41,7 +41,7 @@ func clusterrolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&rbacv1.ClusterRoleBinding{
 			TypeMeta: common.TypeMetaClusterRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
+				Name:      fmt.Sprintf("%s-ns-%s-kube-rbac-proxy", ctx.Namespace, Component),
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},

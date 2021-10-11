@@ -15,8 +15,8 @@ import (
 )
 
 func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
-	return []runtime.Object{&rbacv1.ClusterRoleBinding{
-		TypeMeta: common.TypeMetaClusterRoleBinding,
+	return []runtime.Object{&rbacv1.RoleBinding{
+		TypeMeta: common.TypeMetaRoleBinding,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Component,
 			Namespace: ctx.Namespace,
