@@ -35,6 +35,9 @@ export interface WorkspaceCluster {
 
     // An optional set of constraints that limit who can start workspaces on the cluster
     admissionConstraints?: AdmissionConstraint[];
+
+    // An optional set of admission preferences that guide cluster selection
+    admissionPreferences?: AdmissionPreference[];
 }
 
 export type WorkspaceClusterState = "available" | "cordoned" | "draining";
@@ -52,9 +55,13 @@ export namespace TLSConfig {
 export type WorkspaceClusterWoTLS = Omit<WorkspaceCluster, "tls">;
 export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "name" | "url" | "tls">;
 
-export type AdmissionConstraint = AdmissionConstraintFeaturePreview | AdmissionConstraintHasRole;
+export type AdmissionConstraint = AdmissionConstraintFeaturePreview | AdmissionConstraintHasRole | AdmissionConstraintHasUserLevel;
 export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
 export type AdmissionConstraintHasRole = { type: "has-permission", permission: PermissionName };
+export type AdmissionConstraintHasUserLevel = { type: "has-user-level", level: string };
+
+export type AdmissionPreference = AdmissionPreferenceUserLevel;
+export type AdmissionPreferenceUserLevel = { type: 'user-level', level: string };
 
 
 export const WorkspaceClusterDB = Symbol("WorkspaceClusterDB");

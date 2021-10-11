@@ -17,6 +17,14 @@ import { linearBackoffStrategy, PromisifiedWorkspaceManagerClient } from "./prom
 
 export const IWorkspaceManagerClientCallMetrics = Symbol('IWorkspaceManagerClientCallMetrics')
 
+/**
+ * ExtendedUser adds additional attributes to a user which are helpful
+ * during cluster selection.
+ */
+export interface ExtendedUser extends User  {
+    level?: string;
+}
+
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
     @inject(WorkspaceManagerClientProviderCompositeSource)
@@ -35,12 +43,23 @@ export class WorkspaceManagerClientProvider implements Disposable {
      *
      * @returns The WorkspaceManagerClient that was chosen to start the next workspace with.
      */
-    public async getStartManager(user: User, workspace: Workspace, instance: WorkspaceInstance, exceptInstallations?: string[]): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string }> {
+    public async getStartManager(user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance, exceptInstallations?: string[]): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string }> {
         let availableCluster = await this.getAvailableStartCluster(user, workspace, instance);
         if (!!exceptInstallations) {
             availableCluster = availableCluster.filter(c => !exceptInstallations?.includes(c.name));
         }
-        const chosenCluster = chooseCluster(availableCluster);
+
+        let chosenCluster = chooseCluster(availableCluster.filter(admissionPreferencesFilter(user)))
+        if (!chosenCluster) {
+            // We did not choose a prefered cluster. That's ok, we'll try with the remaining set.
+            chosenCluster = chooseCluster(availableCluster);
+        }
+        if (!chosenCluster) {
+            // We still haven't choosen a cluster. That's a problem.
+            throw new Error("no available workspace cluster to choose from!");
+        }
+
+
         const grpcOptions: grpc.ClientOptions = {
             ...defaultGRPCOptions,
         };
@@ -132,10 +151,6 @@ export class WorkspaceManagerClientProvider implements Disposable {
  * @returns The chosen cluster. Throws an error if there are 0 WorkspaceClusters to choose from.
  */
 function chooseCluster(availableCluster: WorkspaceClusterWoTLS[]): WorkspaceClusterWoTLS {
-    if (availableCluster.length === 0) {
-        throw new Error("no available workspace cluster to choose from!");
-    }
-
     const scoreFunc = (c: WorkspaceClusterWoTLS): number => {
         let score = c.score;    // here is the point where we may want to implement non-static approaches
 
@@ -175,5 +190,18 @@ function admissionConstraintsFilter(user: User, workspace: Workspace, instance: 
                     return user.rolesOrPermissions?.includes(con.permission);
             }
         });
+    };
+}
+
+function admissionPreferencesFilter(user: ExtendedUser): (c: WorkspaceClusterWoTLS) => boolean {
+    return (c: WorkspaceClusterWoTLS) => {
+        return (c.admissionPreferences || []).every(pref => {
+            switch (pref.type) {
+                case "user-level":
+                    return pref.level === user.level;
+                default:
+                    return false;
+            }
+        })
     };
 }
