@@ -112,7 +112,7 @@ async function deployKubernetesServiceMonitors() {
 export function observabilityStaticChecks() {
     shell.cd('/workspace/operations/observability/mixins')
 
-    if (!jsonnetFmtCheck() || !prometheusRulesCheck()) {
+    if (!jsonnetFmtCheck() || !prometheusRulesCheck() || !jsonnetUnitTests()) {
         throw new Error("Observability static checks failed!")
     }
 }
@@ -135,6 +135,19 @@ function prometheusRulesCheck(): boolean {
         const failedMessage = `Prometheus rule validation failed. For futher reference, please read:
 https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
 https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/`
+        werft.log(sliceName, failedMessage)
+    }
+    return success
+}
+
+function jsonnetUnitTests(): boolean {
+    werft.log(sliceName, "Running mixin unit tests")
+    werft.log(sliceName, "Checking for hardcoded dashboard's datasources")
+
+    let success = exec("make unit-tests", {slice: sliceName}).code == 0
+
+    if (!success) {
+        const failedMessage = `To make sure our dashboards work for both preview-environments and production/staging, we can't hardcode datasources. Please use datasource variables.`
         werft.log(sliceName, failedMessage)
     }
     return success
