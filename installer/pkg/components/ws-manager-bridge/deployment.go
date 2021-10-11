@@ -61,7 +61,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 						}},
-						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(), *common.MessageBusWaiterContainer()},
+						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx), *common.MessageBusWaiterContainer(ctx)},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "-v", "/mnt/config/config.json"},

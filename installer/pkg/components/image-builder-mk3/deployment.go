@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
@@ -42,19 +43,19 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
 
-	// todo(sje): make conditional
-	// todo(sje): get value from workspace pull secret
-	volumeMounts = append(volumeMounts, corev1.VolumeMount{
-		Name:      "pull-secret",
-		MountPath: PullSecretFile,
-		SubPath:   ".dockerconfigjson",
-	})
-	volumes = append(volumes, corev1.Volume{
-		Name: "pull-secret",
-		VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
-			SecretName: "",
-		}},
-	})
+	if *ctx.Config.ContainerRegistry.InCluster {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "pull-secret",
+			MountPath: PullSecretFile,
+			SubPath:   ".dockerconfigjson",
+		})
+		volumes = append(volumes, corev1.Volume{
+			Name: "pull-secret",
+			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
+				SecretName: dockerregistry.BuiltInRegistrySecret,
+			}},
+		})
+	}
 
 	return []runtime.Object{&appsv1.Deployment{
 		TypeMeta: common.TypeMetaDeployment,
