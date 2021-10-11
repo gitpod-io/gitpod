@@ -46,7 +46,7 @@ async function linearBackoffRetry<Res>(run: (attempt: number) => Promise<Res>, a
                 throw err;
             }
 
-            console.debug(`ws-manager unavailable - retrying in ${delayMS}ms`);
+            console.warn(`ws-manager unavailable - retrying in ${delayMS}ms`);
             await new Promise((retry, _) => setTimeout(retry, delayMS));
         }
 
@@ -55,7 +55,7 @@ async function linearBackoffRetry<Res>(run: (attempt: number) => Promise<Res>, a
         }
     }
 
-    console.debug(`ws-manager unavailable - no more attempts left`);
+    console.error(`ws-manager unavailable - no more attempts left`);
     throw error;
 }
 
