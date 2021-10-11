@@ -14,7 +14,7 @@ var Objects = common.CompositeRenderFunc(
 	podsecuritypolicy,
 	rolebinding,
 	common.GenerateService(Component, map[string]common.ServicePort{
-		"registry": {
+		ContainerPortName: {
 			ContainerPort: ContainerPort,
 			ServicePort:   ServicePort,
 		},

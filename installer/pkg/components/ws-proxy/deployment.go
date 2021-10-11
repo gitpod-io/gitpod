@@ -93,13 +93,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 							Ports: []corev1.ContainerPort{{
-								Name:          "httpProxy",
+								Name:          HTTPProxyPortName,
 								ContainerPort: HTTPProxyPort,
 							}, {
-								Name:          "httpsProxy",
+								Name:          HTTPSProxyPortName,
 								ContainerPort: HTTPSProxyPort,
 							}, {
-								Name:          "metrics",
+								Name:          MetricsPortName,
 								ContainerPort: MetricsPort,
 							}},
 							SecurityContext: &corev1.SecurityContext{

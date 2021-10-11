@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	Component     = "blobserve"
-	ContainerPort = 32224
-	ServicePort   = common.BlobServeServicePort
-	MaxSizeBytes  = 1024 * 1024 * 1024 // 1 Gibibyte
+	Component       = "blobserve"
+	ContainerPort   = 32224
+	ServicePort     = common.BlobServeServicePort
+	ServicePortName = "service"
+	MaxSizeBytes    = 1024 * 1024 * 1024 // 1 Gibibyte
 )

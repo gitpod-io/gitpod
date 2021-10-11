@@ -7,6 +7,8 @@ package content_service
 const (
 	Component      = "content-service"
 	RPCPort        = 8080
+	RPCServiceName = "rpc"
 	PrometheusPort = 9500
+	PrometheusName = "metrics"
 	PProfPort      = 6060
 )

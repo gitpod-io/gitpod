@@ -12,15 +12,15 @@ var Objects = common.CompositeRenderFunc(
 	networkpolicy,
 	rolebinding,
 	common.GenerateService(Component, map[string]common.ServicePort{
-		"http": {
+		ContainerHTTPName: {
 			ContainerPort: ContainerHTTPPort,
 			ServicePort:   ContainerHTTPPort,
 		},
-		"https": {
+		ContainerHTTPSName: {
 			ContainerPort: ContainerHTTPSPort,
 			ServicePort:   ContainerHTTPSPort,
 		},
-		"metrics": {
+		MetricsContainerName: {
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
