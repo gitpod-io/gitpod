@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +14,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 
 	slack "github.com/ashwanthkumar/slack-go-webhook"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/agent"
@@ -59,7 +61,7 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create agent smith")
 		}
 
-		err = smith.RegisterMetrics(reg)
+		err = reg.Register(smith)
 		if err != nil {
 			log.WithError(err).Fatal("cannot register metrics")
 		}
@@ -68,7 +70,7 @@ var runCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		go smith.Start(ctx, func(violation agent.InfringingWorkspace, penalties []agent.PenaltyKind) {
+		go smith.Start(ctx, func(violation agent.InfringingWorkspace, penalties []config.PenaltyKind) {
 			log.WithField("violation", violation).WithField("penalties", penalties).Info("Found violation")
 
 			if cfg.SlackWebhooks != nil {
@@ -76,10 +78,10 @@ var runCmd = &cobra.Command{
 					// Need to set err to nil to eliminate the chance of logging previous errors after the loop.
 					err = nil
 
-					if i.Kind.Severity() == agent.InfringementSeverityAudit {
+					if i.Kind.Severity() == common.SeverityAudit {
 						err = notifySlack(cfg.SlackWebhooks.Audit, cfg.HostURL, violation, penalties)
 						break
-					} else if i.Kind.Severity() != agent.InfringementSeverityBarely {
+					} else if i.Kind.Severity() != common.SeverityBarely {
 						err = notifySlack(cfg.SlackWebhooks.Warning, cfg.HostURL, violation, penalties)
 						break
 					}
@@ -130,7 +132,7 @@ func startMemoryWatchdog(maxSysMemMib uint64) {
 	}
 }
 
-func notifySlack(webhook string, hostURL string, ws agent.InfringingWorkspace, penalties []agent.PenaltyKind) error {
+func notifySlack(webhook string, hostURL string, ws agent.InfringingWorkspace, penalties []config.PenaltyKind) error {
 	var (
 		region           = os.Getenv("GITPOD_REGION")
 		lblDetails       = "Details"

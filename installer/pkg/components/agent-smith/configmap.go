@@ -10,9 +10,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/agent"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
@@ -27,30 +26,30 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PProfAddr:      fmt.Sprintf("localhost:%d", PProfPort),
 		PrometheusAddr: fmt.Sprintf("localhost:%d", PrometheusPort),
 		HostURL:        fmt.Sprintf("https://%s", ctx.Config.Domain),
-		Config: agent.Config{
-			Blacklists: &agent.Blacklists{
-				Very: &agent.PerLevelBlacklist{
-					Signatures: []*signature.Signature{{
+		Config: config.Config{
+			Blocklists: &config.Blocklists{
+				Very: &config.PerLevelBlocklist{
+					Signatures: []*classifier.Signature{{
 						Name:    "testtarget",
-						Domain:  signature.DomainProcess,
-						Kind:    signature.ObjectELF,
+						Domain:  classifier.DomainProcess,
+						Kind:    classifier.ObjectELF,
 						Pattern: []byte(base64.StdEncoding.EncodeToString([]byte("agentSmithTestTarget"))),
 						Regexp:  false,
 					}},
 				},
 			},
-			EgressTraffic: &agent.EgressTraffic{
+			EgressTraffic: &config.EgressTraffic{
 				WindowDuration: util.Duration(time.Minute * 2),
-				ExcessiveLevel: &agent.PerLevelEgressTraffic{
+				ExcessiveLevel: &config.PerLevelEgressTraffic{
 					BaseBudget: resource.MustParse("300Mi"),
 					Threshold:  resource.MustParse("100Mi"),
 				},
-				VeryExcessiveLevel: &agent.PerLevelEgressTraffic{
+				VeryExcessiveLevel: &config.PerLevelEgressTraffic{
 					BaseBudget: resource.MustParse("2Gi"),
 					Threshold:  resource.MustParse("250Mi"),
 				},
 			},
-			Kubernetes: agent.Kubernetes{Enabled: true},
+			Kubernetes: config.Kubernetes{Enabled: true},
 		},
 	}
 

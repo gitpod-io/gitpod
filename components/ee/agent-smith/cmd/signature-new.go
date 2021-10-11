@@ -10,7 +10,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/spf13/cobra"
 )
 
@@ -35,12 +35,12 @@ var signatureNewCmd = &cobra.Command{
 			fns = []string{fn}
 		}
 
-		sig := signature.Signature{
+		sig := classifier.Signature{
 			Name:    args[0],
-			Kind:    signature.ObjectKind(cmd.Flags().Lookup("kind").Value.String()),
+			Kind:    classifier.ObjectKind(cmd.Flags().Lookup("kind").Value.String()),
 			Pattern: []byte(cmd.Flags().Lookup("pattern").Value.String()),
 			Regexp:  cmd.Flags().Lookup("regexp").Value.String() == "true",
-			Slice: signature.Slice{
+			Slice: classifier.Slice{
 				Start: ss,
 				End:   se,
 			},

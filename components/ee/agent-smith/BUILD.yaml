@@ -1,5 +1,3 @@
-const:
-  falcoLibsVersion: 5c0b863ddade7a45568c0ac97d037422c9efb750
 packages:
   - name: app
     type: go
@@ -31,22 +29,10 @@ packages:
       - GOOS=linux
     config:
       packaging: library
-  - name: falco-bpf-probe
-    type: generic
-    config:
-      commands:
-        - [
-            "curl",
-            "-L",
-            "-o",
-            "probe.o",
-            "https://download.falco.org/driver/${falcoLibsVersion}/falco_ubuntu-generic_5.4.0-1033-gke_35.o",
-          ]
   - name: docker
     type: docker
     deps:
       - :app
-      - :falco-bpf-probe
     argdeps:
       - imageRepoBase
     config:
@@ -61,17 +47,3 @@ packages:
       - "example-config.json"
     config:
       commands: [["echo"]]
-scripts:
-  - name: qemu
-    script: scripts/qemu.sh
-  - name: copy-to-qemu
-    workdir: "packages"
-    deps:
-      - :app
-      - :falco-bpf-probe
-      - :example-config
-      - components/ee/agent-smith/cmd/testbed:app
-      - components/ee/agent-smith/cmd/testtarget:app
-    script: |
-      scp -P 2222 -i ~/.ssh/id_rsa_vm -o StrictHostKeyChecking=no vm ./components-ee-agent-smith--falco-bpf-probe/probe.o ./components-ee-agent-smith--app/agent-smith ./components-ee-agent-smith--example-config/example-config.json ./components-ee-agent-smith-cmd-testbed--app/testbed ./components-ee-agent-smith-cmd-testtarget--app/testtarget root@localhost:/
-      echo "copied agent-smith to /"
