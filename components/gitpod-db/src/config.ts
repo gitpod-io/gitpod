@@ -16,7 +16,7 @@ export class Config {
         const dbSetup = {
             host: process.env.DB_HOST || 'localhost',
             port: getEnvVarParsed('DB_PORT', Number.parseInt, '23306'),
-            username: 'gitpod',
+            username: process.env.DB_USERNAME || 'gitpod',
             password: process.env.DB_PASSWORD || 'test',
             database: process.env.DB_NAME || 'gitpod'
         };

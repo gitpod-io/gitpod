@@ -62,6 +62,7 @@ workspaceSizing:
 db:
   host: db
   port: 3306
+  username: gitpod
   password: test
 
 defaults:
