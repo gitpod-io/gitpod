@@ -197,6 +197,7 @@ func extractBuildStatus(status *wsmanapi.WorkspaceStatus) *api.BuildInfo {
 	}
 
 	return &api.BuildInfo{
+		BuildId:   status.Metadata.MetaId,
 		Ref:       status.Metadata.Annotations[annotationRef],
 		BaseRef:   status.Metadata.Annotations[annotationBaseRef],
 		Status:    s,
@@ -254,6 +255,7 @@ func (m *buildMonitor) RegisterNewBuild(buildID string, ref, baseRef, url, owner
 
 	bld := &runningBuild{
 		Info: api.BuildInfo{
+			BuildId:   buildID,
 			Ref:       ref,
 			BaseRef:   baseRef,
 			Status:    api.BuildStatus_running,

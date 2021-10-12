@@ -84,6 +84,7 @@ func TestExtractBuildResponse(t *testing.T) {
 			status := &wsmanapi.WorkspaceStatus{
 				Id: buildID,
 				Metadata: &wsmanapi.WorkspaceMetadata{
+					MetaId: buildID,
 					Annotations: map[string]string{
 						annotationRef:     ref,
 						annotationBaseRef: baseref,
@@ -101,6 +102,7 @@ func TestExtractBuildResponse(t *testing.T) {
 				BaseRef: baseref,
 				Status:  api.BuildStatus_running,
 				Info: &api.BuildInfo{
+					BuildId:   buildID,
 					Ref:       ref,
 					BaseRef:   baseref,
 					Status:    api.BuildStatus_running,

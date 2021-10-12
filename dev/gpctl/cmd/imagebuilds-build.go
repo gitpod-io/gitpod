@@ -106,6 +106,7 @@ var imagebuildsBuildCmd = &cobra.Command{
 		// build did start, print log until done
 		censor, _ := cmd.Flags().GetBool("censor")
 		lc, err := client.Logs(ctx, &builder.LogsRequest{
+			BuildId:  r.Info.BuildId,
 			BuildRef: r.Ref,
 			Censored: censor,
 		})
