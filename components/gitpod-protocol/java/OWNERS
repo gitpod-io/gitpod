@@ -3,3 +3,6 @@ options:
 
 approvers:
   - engineering-ide
+
+labels:
+  - "team: IDE"
