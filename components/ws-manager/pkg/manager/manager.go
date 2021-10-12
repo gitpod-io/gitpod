@@ -149,13 +149,34 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	defer tracing.FinishSpan(span, &err)
 
 	// Make sure the objects we're about to create do not exist already
-	exists, err := m.workspaceExists(ctx, req.Id)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot start workspace: %w", err)
+	switch req.Type {
+	case api.WorkspaceType_IMAGEBUILD:
+		wss, err := m.GetWorkspaces(ctx, &api.GetWorkspacesRequest{
+			MustMatch: &api.MetadataFilter{
+				Annotations: req.Metadata.Annotations,
+			},
+		})
+		if err != nil {
+			return nil, xerrors.Errorf("cannot start workspace: %w", err)
+		}
+
+		if len(wss.Status) >= 1 {
+			status := wss.Status[0]
+			return &api.StartWorkspaceResponse{
+				Url:        status.Spec.Url,
+				OwnerToken: status.Metadata.Owner,
+			}, nil
+		}
+	default:
+		exists, err := m.workspaceExists(ctx, req.Id)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot start workspace: %w", err)
+		}
+		if exists {
+			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+		}
 	}
-	if exists {
-		return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
-	}
+
 	span.LogKV("event", "workspace does not exist")
 	err = validateStartWorkspaceRequest(req)
 	if err != nil {

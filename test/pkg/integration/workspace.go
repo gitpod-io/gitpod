@@ -144,7 +144,7 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 
 	req := &wsmanapi.StartWorkspaceRequest{
 		Id:            instanceID.String(),
-		ServicePrefix: workspaceID,
+		ServicePrefix: instanceID.String(),
 		Metadata: &wsmanapi.WorkspaceMetadata{
 			Owner:  gitpodBuiltinUserID,
 			MetaId: workspaceID,

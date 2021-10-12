@@ -23,8 +23,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/image-builder/api/config"
-
+	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -38,6 +37,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/image-builder/api"
 	protocol "github.com/gitpod-io/gitpod/image-builder/api"
+	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/auth"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -286,8 +286,13 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	ctx, cancel := context.WithTimeout(&parentCantCancelContext{Delegate: ctx}, maxBuildRuntime)
 	defer cancel()
 
+	randomUUID, err := uuid.NewRandom()
+	if err != nil {
+		return
+	}
+
 	var (
-		buildID        = computeBuildID(wsrefstr)
+		buildID        = randomUUID.String()
 		buildBase      = "false"
 		contextPath    = "."
 		dockerfilePath = "Dockerfile"
@@ -373,7 +378,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 			Type: wsmanapi.WorkspaceType_IMAGEBUILD,
 		})
 		return
-	}, retryIfUnavailable1, 1*time.Second, 5)
+	}, retryIfUnavailable1, 1*time.Second, 10)
 	if status.Code(err) == codes.AlreadyExists {
 		// build is already running - do not add it to the list of builds
 	} else if errors.Is(err, errOutOfRetries) {
@@ -465,18 +470,17 @@ func (o *Orchestrator) Logs(req *protocol.LogsRequest, resp protocol.ImageBuilde
 	tracing.LogRequestSafe(span, req)
 
 	rb, err := o.monitor.GetAllRunningBuilds(ctx)
-	var found bool
+	var buildID string
 	for _, bld := range rb {
 		if bld.Info.Ref == req.BuildRef {
-			found = true
+			buildID = bld.Info.BuildId
 			break
 		}
 	}
-	if !found {
+	if buildID == "" {
 		return status.Error(codes.NotFound, "build not found")
 	}
 
-	buildID := computeBuildID(req.BuildRef)
 	logs, cancel := o.registerLogListener(buildID)
 	defer cancel()
 	for {
@@ -646,16 +650,6 @@ func (c *parentCantCancelContext) Err() error {
 
 func (c *parentCantCancelContext) Value(key interface{}) interface{} {
 	return c.Delegate.Value(key)
-}
-
-func computeBuildID(ref string) string {
-	// The buildID will be used as workspaceID which must not be longer than 63 characters because it's a kubernetes label.
-	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(ref)))
-
-	// Truncating hashes is fine according to NIST - and StackOverflow :)
-	// Note: the buildID is also used as servicePrefix for the StartWorkspace request and must match
-	//       the workspaceIDIdentifier regexp in ws-proxy
-	return fmt.Sprintf("%s-%s-%s", hash[0:16], hash[16:32], hash[32:40])
 }
 
 // source: https://astaxie.gitbooks.io/build-web-application-with-golang/en/09.6.html

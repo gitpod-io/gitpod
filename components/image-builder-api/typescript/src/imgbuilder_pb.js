@@ -2812,7 +2812,8 @@ proto.builder.LogsRequest.prototype.toObject = function(opt_includeInstance) {
 proto.builder.LogsRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     buildRef: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    censored: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
+    censored: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
+    buildId: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -2857,6 +2858,10 @@ proto.builder.LogsRequest.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setCensored(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setBuildId(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2900,6 +2905,13 @@ proto.builder.LogsRequest.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getBuildId();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -2936,6 +2948,24 @@ proto.builder.LogsRequest.prototype.getCensored = function() {
  */
 proto.builder.LogsRequest.prototype.setCensored = function(value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
+};
+
+
+/**
+ * optional string build_id = 3;
+ * @return {string}
+ */
+proto.builder.LogsRequest.prototype.getBuildId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.builder.LogsRequest} returns this
+ */
+proto.builder.LogsRequest.prototype.setBuildId = function(value) {
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 
@@ -3389,7 +3419,8 @@ proto.builder.BuildInfo.toObject = function(includeInstance, msg) {
     ref: jspb.Message.getFieldWithDefault(msg, 1, ""),
     baseRef: jspb.Message.getFieldWithDefault(msg, 4, ""),
     status: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    startedAt: jspb.Message.getFieldWithDefault(msg, 3, 0)
+    startedAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
+    buildId: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -3441,6 +3472,10 @@ proto.builder.BuildInfo.deserializeBinaryFromReader = function(msg, reader) {
     case 3:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setStartedAt(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setBuildId(value);
       break;
     default:
       reader.skipField();
@@ -3496,6 +3531,13 @@ proto.builder.BuildInfo.serializeBinaryToWriter = function(message, writer) {
   if (f !== 0) {
     writer.writeInt64(
       3,
+      f
+    );
+  }
+  f = message.getBuildId();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
       f
     );
   }
@@ -3571,6 +3613,24 @@ proto.builder.BuildInfo.prototype.getStartedAt = function() {
  */
 proto.builder.BuildInfo.prototype.setStartedAt = function(value) {
   return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+
+/**
+ * optional string build_id = 5;
+ * @return {string}
+ */
+proto.builder.BuildInfo.prototype.getBuildId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.builder.BuildInfo} returns this
+ */
+proto.builder.BuildInfo.prototype.setBuildId = function(value) {
+  return jspb.Message.setProto3StringField(this, 5, value);
 };
 
 
