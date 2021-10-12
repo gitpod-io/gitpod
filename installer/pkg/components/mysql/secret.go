@@ -9,10 +9,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !*ctx.Config.Database.InCluster {
+	if !pointer.BoolDeref(ctx.Config.Database.InCluster, false) {
 		return nil, nil
 	}
 

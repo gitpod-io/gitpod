@@ -51,7 +51,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		MountPath: "/etc/caddy/certificates",
 	}}
 
-	if *ctx.Config.ContainerRegistry.InCluster {
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		volumes = append(volumes, corev1.Volume{
 			Name: RegistryAuthSecret,
 			VolumeSource: corev1.VolumeSource{

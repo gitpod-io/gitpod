@@ -5,18 +5,20 @@
 package dockerregistry
 
 import (
+	"strconv"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"strconv"
+	"k8s.io/utils/pointer"
 )
 
 var Helm = common.CompositeHelmFunc(
 	helm.ImportTemplate(charts.DockerRegistry(), helm.TemplateConfig{}, func(cfg *common.RenderContext) (*common.HelmConfig, error) {
 		return &common.HelmConfig{
-			Enabled: *cfg.Config.ContainerRegistry.InCluster,
+			Enabled: pointer.BoolDeref(cfg.Config.ContainerRegistry.InCluster, false),
 			Values: &values.Options{
 				Values: []string{
 					helm.KeyValue("docker-registry.service.port", strconv.Itoa(proxy.ContainerHTTPSPort)),
