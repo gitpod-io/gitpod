@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -43,7 +44,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
 
-	if *ctx.Config.ContainerRegistry.InCluster {
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "pull-secret",
 			MountPath: PullSecretFile,

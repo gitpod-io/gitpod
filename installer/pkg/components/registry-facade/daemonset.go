@@ -40,7 +40,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
-	if *ctx.Config.ContainerRegistry.InCluster {
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		name := "pull-secret"
 		volumes = append(volumes, corev1.Volume{
 			Name: name,

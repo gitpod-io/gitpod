@@ -62,10 +62,10 @@ func TracingEnv(cfg *config.Config) (res []corev1.EnvVar) {
 		return
 	}
 
-	if cfg.Observability.Tracing.Endpoint != nil {
-		res = append(res, corev1.EnvVar{Name: "JAEGER_ENDPOINT", Value: *cfg.Observability.Tracing.Endpoint})
-	} else if cfg.Observability.Tracing.AgentHost != nil {
-		res = append(res, corev1.EnvVar{Name: "JAEGER_AGENT_HOST", Value: *cfg.Observability.Tracing.Endpoint})
+	if ep := cfg.Observability.Tracing.Endpoint; ep != nil {
+		res = append(res, corev1.EnvVar{Name: "JAEGER_ENDPOINT", Value: *ep})
+	} else if v := cfg.Observability.Tracing.AgentHost; v != nil {
+		res = append(res, corev1.EnvVar{Name: "JAEGER_AGENT_HOST", Value: *v})
 	} else {
 		// TODO(cw): think about proper error handling here.
 		//			 Returning an error would be the appropriate thing to do,
@@ -134,7 +134,7 @@ func MessageBusEnv(cfg *config.Config) (res []corev1.EnvVar) {
 func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	var name string
 
-	if *cfg.Database.InCluster {
+	if pointer.BoolDeref(cfg.Database.InCluster, false) {
 		// Cluster provided internally
 		name = InClusterDbSecret
 	} else if cfg.Database.RDS.Certificate.Name != "" {

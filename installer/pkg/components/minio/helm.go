@@ -6,10 +6,12 @@ package minio
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"k8s.io/utils/pointer"
 )
 
 var Helm = common.CompositeHelmFunc(
@@ -24,7 +26,7 @@ var Helm = common.CompositeHelmFunc(
 		}
 
 		return &common.HelmConfig{
-			Enabled: *cfg.Config.ObjectStorage.InCluster,
+			Enabled: pointer.BoolDeref(cfg.Config.ObjectStorage.InCluster, false),
 			Values: &values.Options{
 				Values: []string{
 					helm.KeyValue("minio.accessKey", accessKey),

@@ -7,15 +7,17 @@ package dockerregistry
 import (
 	"encoding/base64"
 	"encoding/json"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubectl/pkg/cmd/create"
+	"k8s.io/utils/pointer"
 )
 
 func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !*ctx.Config.ContainerRegistry.InCluster {
+	if !pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		return nil, nil
 	}
 
