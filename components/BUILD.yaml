@@ -153,6 +153,7 @@ scripts:
     srcs:
       - components/**/*
       - test/**/*
+      - dev/**/*
     script: |
       leeway exec --filter-type go -v -- go mod tidy -compat=1.17
 
