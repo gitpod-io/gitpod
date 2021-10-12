@@ -40,7 +40,7 @@ const localClient: OAuthClient = {
 
 function createVSCodeClient(protocol: 'vscode' | 'vscode-insiders'): OAuthClient {
   return {
-    id: protocol + '+' + 'gitpod',
+    id: protocol + '-' + 'gitpod',
     name: `VS Code${protocol === 'vscode-insiders' ? ' Insiders' : ''}: Gitpod`,
     redirectUris: [protocol + '://gitpod.gitpod-desktop/complete-gitpod-auth'],
     allowedGrants: ['authorization_code'],
