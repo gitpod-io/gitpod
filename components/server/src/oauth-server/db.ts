@@ -46,6 +46,7 @@ function createVSCodeClient(protocol: 'vscode' | 'vscode-insiders'): OAuthClien
     allowedGrants: ['authorization_code'],
     scopes: [
       { name: "function:getGitpodTokenScopes" },
+      { name: "function:getLoggedInUser" },
       { name: "function:accessCodeSyncStorage" },
       { name: "resource:default" }
     ],
