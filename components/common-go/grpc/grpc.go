@@ -101,7 +101,7 @@ func ServerOptionsWithInterceptors(stream []grpc.StreamServerInterceptor, unary 
 
 func SetupLogging() {
 	grpclog.SetLoggerV2(grpclog.NewLoggerV2(
-		log.WithField("component", "grpc").WriterLevel(logrus.InfoLevel),
+		log.WithField("component", "grpc").WriterLevel(logrus.DebugLevel),
 		log.WithField("component", "grpc").WriterLevel(logrus.WarnLevel),
 		log.WithField("component", "grpc").WriterLevel(logrus.ErrorLevel),
 	))
