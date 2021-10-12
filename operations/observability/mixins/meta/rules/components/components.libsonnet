@@ -4,4 +4,5 @@
  */
 
 (import './nodes/alerts.libsonnet') +
-(import './nodes/rules.libsonnet')
+(import './nodes/rules.libsonnet') +
+(import './server/alerts.libsonnet')
