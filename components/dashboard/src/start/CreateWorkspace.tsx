@@ -169,7 +169,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           <p className="mt-1 mb-2 text-base">You already have running workspaces with the same context. You can open an existing one or open a new workspace.</p>
           <>
             {result?.existingWorkspaces?.map(w =>
-              <a href={w.latestInstance?.ideUrl} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1">
+              <a href={w.latestInstance?.ideUrl || gitpodHostUrl.with({ pathname: '/start/', hash: '#' + w.latestInstance?.workspaceId }).toString()} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1">
                 <div className="w-full">
                   <p className="text-base text-black dark:text-gray-100 font-bold">{w.workspace.id}</p>
                   <p className="truncate" title={w.workspace.contextURL}>{w.workspace.contextURL}</p>
