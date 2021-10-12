@@ -1,6 +1,8 @@
 # Change Log
 
 ## October 2021
+- [Projects] Fix collection of accessible GitHub repos ([#6146](https://github.com/gitpod-io/gitpod/pull/6146)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Fall back to another workspace cluster if a workspace start request fails ([#6124](https://github.com/gitpod-io/gitpod/pull/6124)) - [@csweichel](https://github.com/csweichel)
 - [projects] Load the last Prebuilds of all Projects in parallel and make Projects page loading more stable ([#6118](https://github.com/gitpod-io/gitpod/pull/6118)) - [@jankeromnes](https://github.com/jankeromnes)
 - None ([#6114](https://github.com/gitpod-io/gitpod/pull/6114)) - [@princerachit](https://github.com/princerachit)
 - [Dashboard] Fix workspace-project associations for workspaces based on prebuilds. ([#6117](https://github.com/gitpod-io/gitpod/pull/6117)) - [@AlexTugarev](https://github.com/AlexTugarev)
