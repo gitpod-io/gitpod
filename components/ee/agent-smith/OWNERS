@@ -4,3 +4,6 @@ options:
 
 approvers:
   - engineering-workspace
+
+labels:
+  - "team: workspace"

@@ -4,4 +4,6 @@ options:
 
 approvers:
   - engineering-meta
-  - gtsiolis
+
+labels:
+  - "team: meta"
