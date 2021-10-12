@@ -173,16 +173,13 @@ export class WorkspaceStarter {
             // tell the world we're starting this instance
             let resp: StartWorkspaceResponse.AsObject | undefined;
             let exceptInstallation: string[] = [];
-            let installation = "";
+            let lastInstallation = "";
             for (let i = 0; i < 5; i++) {
                 try {
                     // getStartManager will throw an exception if there's no cluster available and hence exit the loop
-                    const mgmtAndInstallation = await this.clientProvider.getStartManager(user, workspace, instance, exceptInstallation);
-                    const manager = mgmtAndInstallation.manager;
-                    installation = mgmtAndInstallation.installation;
+                    const { manager, installation } = await this.clientProvider.getStartManager(user, workspace, instance, exceptInstallation);
+                    lastInstallation = installation;
 
-                    // We need to update the phase here in case the startWorkspace call succeeds. Otherwise we might be racing the ws-manager-bridge
-                    // update and overwrite the correct phase with pending.
                     instance.status.phase = "pending";
                     instance.region = installation;
                     await this.workspaceDb.trace({ span }).storeInstance(instance);
@@ -198,10 +195,11 @@ export class WorkspaceStarter {
                     // start that thing
                     log.info({instanceId: instance.id}, 'starting instance');
                     resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
+                    break;
                 } catch (err: any) {
-                    if ('code' in err && err.code !== grpc.status.OK && installation !== "") {
-                        log.error({instanceId: instance.id}, "cannot start workspace on cluster, might retry", err, {cluster: installation});
-                        exceptInstallation.push(installation);
+                    if ('code' in err && err.code !== grpc.status.OK && lastInstallation !== "") {
+                        log.error({instanceId: instance.id}, "cannot start workspace on cluster, might retry", err, {cluster: lastInstallation});
+                        exceptInstallation.push(lastInstallation);
                     } else {
                         throw err;
                     }
