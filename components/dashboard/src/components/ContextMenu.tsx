@@ -69,7 +69,7 @@ function ContextMenu(props: ContextMenuProps) {
     const menuId = String(Math.random());
 
     // Default 'children' is the three dots hamburger button.
-    const children = props.children || <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)" /><circle cx="1" cy="1" r="2" transform="translate(11 11)" /><circle cx="1" cy="1" r="2" transform="translate(17 11)" /></g></svg>;
+    const children = props.children || <svg className="w-8 h-8 p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)" /><circle cx="1" cy="1" r="2" transform="translate(11 11)" /><circle cx="1" cy="1" r="2" transform="translate(17 11)" /></g></svg>;
 
     return (
         <div className="relative cursor-pointer">
