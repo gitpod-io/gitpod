@@ -1,6 +1,11 @@
 # Change Log
 
 ## October 2021
+- None ([#6159](https://github.com/gitpod-io/gitpod/pull/6159)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Refactor GRPC TLS connection defaults ([#6163](https://github.com/gitpod-io/gitpod/pull/6163)) - [@aledbf](https://github.com/aledbf)
+- None ([#6174](https://github.com/gitpod-io/gitpod/pull/6174)) - [@csweichel](https://github.com/csweichel)
+- Enable setting of DB username with DB_USERNAME envvar ([#6171](https://github.com/gitpod-io/gitpod/pull/6171)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Update VS Code Web to 1.61.0 ([#6149](https://github.com/gitpod-io/gitpod/pull/6149)) - [@akosyakov](https://github.com/akosyakov)
 - [Projects] Fix collection of accessible GitHub repos ([#6146](https://github.com/gitpod-io/gitpod/pull/6146)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Fall back to another workspace cluster if a workspace start request fails ([#6124](https://github.com/gitpod-io/gitpod/pull/6124)) - [@csweichel](https://github.com/csweichel)
 - [projects] Load the last Prebuilds of all Projects in parallel and make Projects page loading more stable ([#6118](https://github.com/gitpod-io/gitpod/pull/6118)) - [@jankeromnes](https://github.com/jankeromnes)
