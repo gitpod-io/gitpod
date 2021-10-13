@@ -17,7 +17,7 @@
               severity: 'critical',
             },
             annotations: {
-              runbook_url: '<https://your-runbook-URL>',
+              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/WebsocketConnectionsNotClosing.md',
               summary: 'Open websocket connections are not closing for the last 10 minutes and accumulating.'
             },
           },
