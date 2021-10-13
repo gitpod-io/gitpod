@@ -46,6 +46,7 @@ import (
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/activation"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
@@ -172,7 +173,7 @@ func Run(options ...RunOption) {
 		ideReady            = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 		cstate              = NewInMemoryContentState(cfg.RepoRoot)
 		gitpodService       = createGitpodService(cfg, tokenService)
-		gitpodConfigService = gitpod.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
+		gitpodConfigService = config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
 		portMgmt            = ports.NewManager(
 			createExposedPortsImpl(cfg, gitpodService),
 			&ports.PollingServedPortsObserver{
@@ -191,6 +192,8 @@ func Run(options ...RunOption) {
 		notificationService = NewNotificationService()
 	)
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
+
+	go gitpodConfigService.Watch(ctx)
 
 	defer analytics.Close()
 	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
@@ -1174,8 +1177,8 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	}
 }
 
-func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs gitpod.ConfigInterface) {
-	cfgc, errc := cfgobs.Observe(ctx)
+func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
+	cfgc := cfgobs.Observe(ctx)
 	var (
 		cfg     *gitpod.GitpodConfig
 		t       = time.NewTicker(10 * time.Second)
@@ -1198,8 +1201,8 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 
 	for {
 		select {
-		case c := <-cfgc:
-			if c == nil {
+		case c, ok := <-cfgc:
+			if !ok {
 				return
 			}
 			if cfg == nil {
@@ -1211,10 +1214,20 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 				Name string
 				G    func(*gitpod.GitpodConfig) interface{}
 			}{
-				{"ports", func(gc *gitpod.GitpodConfig) interface{} { return gc.Ports }},
-				{"tasks", func(gc *gitpod.GitpodConfig) interface{} { return gc.Tasks }},
+				{"ports", func(gc *gitpod.GitpodConfig) interface{} {
+					if gc == nil {
+						return nil
+					}
+					return gc.Ports
+				}},
+				{"tasks", func(gc *gitpod.GitpodConfig) interface{} {
+					if gc == nil {
+						return nil
+					}
+					return gc.Tasks
+				}},
 				{"prebuild", func(gc *gitpod.GitpodConfig) interface{} {
-					if gc.Github == nil {
+					if gc == nil || gc.Github == nil {
 						return nil
 					}
 					return gc.Github.Prebuilds
@@ -1222,7 +1235,7 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 			}
 			for _, ch := range pch {
 				prev, _ := computeHash(ch.G(cfg))
-				curr, _ := computeHash(ch.G(c))
+				curr, _ := computeHash(ch.G(cfg))
 				if prev != curr {
 					changes = append(changes, ch.Name)
 				}
@@ -1240,7 +1253,6 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 				},
 			})
 			changes = nil
-		case <-errc:
 		case <-ctx.Done():
 			return
 		}

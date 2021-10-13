@@ -13,6 +13,7 @@ import (
 	"strconv"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
 )
 
 // RangeConfig is a port range config
@@ -91,12 +92,12 @@ type ConfigInterace interface {
 // ConfigService allows to watch port configurations
 type ConfigService struct {
 	workspaceID   string
-	configService gitpod.ConfigInterface
+	configService config.ConfigInterface
 	gitpodAPI     gitpod.APIInterface
 }
 
 // NewConfigService creates a new instance of ConfigService
-func NewConfigService(workspaceID string, configService gitpod.ConfigInterface, gitpodAPI gitpod.APIInterface) *ConfigService {
+func NewConfigService(workspaceID string, configService config.ConfigInterface, gitpodAPI gitpod.APIInterface) *ConfigService {
 	return &ConfigService{
 		workspaceID:   workspaceID,
 		configService: configService,
@@ -113,7 +114,7 @@ func (service *ConfigService) Observe(ctx context.Context) (<-chan *Configs, <-c
 		defer close(updatesChan)
 		defer close(errorsChan)
 
-		configs, errs := service.configService.Observe(ctx)
+		configs := service.configService.Observe(ctx)
 
 		current := &Configs{}
 		if service.gitpodAPI != nil {
@@ -132,9 +133,10 @@ func (service *ConfigService) Observe(ctx context.Context) (<-chan *Configs, <-c
 			select {
 			case <-ctx.Done():
 				return
-			case err := <-errs:
-				errorsChan <- err
-			case config := <-configs:
+			case config, ok := <-configs:
+				if !ok {
+					return
+				}
 				changed := service.update(config, current)
 				if !changed {
 					continue
