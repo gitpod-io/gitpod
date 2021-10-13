@@ -556,7 +556,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     async function installMonitoring() {
         const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
-        installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "main";
+        installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "release-v0.2.0";
         installMonitoringSatelliteParams.pathToKubeConfig = ""
         installMonitoringSatelliteParams.satelliteNamespace = namespace
         installMonitoringSatelliteParams.clusterName = namespace
