@@ -28,16 +28,16 @@ void InitM(const FunctionCallbackInfo<Value> &args) {
     Isolate *isolate = args.GetIsolate();
 
     if (args.Length() < 2) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "wrong number of arguments")));
         return;
     }
 
     if (!args[0]->IsString()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 0 must be a string")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 0 must be a string")));
         return;
     }
     if (!args[1]->IsString() || args[1]->IsUndefined() || args[1]->IsNull()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 1 must be a string")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 1 must be a string")));
         return;
     }
 
@@ -47,7 +47,7 @@ void InitM(const FunctionCallbackInfo<Value> &args) {
 
     String::Utf8Value ndomain(args.GetIsolate(), args[1]);
     if (ndomain.length() == 0) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "domain must not be empty")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "domain must not be empty")));
         return;
     }
     const char* cdomain = ToCString(ndomain);
@@ -65,11 +65,11 @@ void ValidateM(const FunctionCallbackInfo<Value> &args) {
     Local<Context> context = isolate->GetCurrentContext();
 
     if (args.Length() < 1) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "wrong number of arguments")));
         return;
     }
     if (!args[0]->IsNumber() || args[0]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 0 must be a number")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 0 must be a number")));
         return;
     }
 
@@ -85,7 +85,7 @@ void ValidateM(const FunctionCallbackInfo<Value> &args) {
     ).FromJust();
     obj->Set(context,
         String::NewFromUtf8(isolate, "msg", NewStringType::kNormal).ToLocalChecked(),
-        String::NewFromUtf8(isolate, r.r0)
+        String::NewFromUtf8(isolate, r.r0).ToLocalChecked()
     ).FromJust();
 
     args.GetReturnValue().Set(obj);
@@ -96,16 +96,16 @@ void EnabledM(const FunctionCallbackInfo<Value> &args) {
     Local<Context> context = isolate->GetCurrentContext();
 
     if (args.Length() < 2) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "wrong number of arguments")));
         return;
     }
 
     if (!args[0]->IsNumber() || args[0]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 0 must be a number")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 0 must be a number")));
         return;
     }
     if (!args[1]->IsString() || args[1]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 1 must be a string")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 1 must be a string")));
         return;
     }
 
@@ -120,7 +120,7 @@ void EnabledM(const FunctionCallbackInfo<Value> &args) {
     Enabled_return r = Enabled(id, featurestr);
 
     if (!r.r1) {
-        isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "invalid instance ID")));
+        isolate->ThrowException(Exception::Error(String::NewFromUtf8Literal(isolate, "invalid instance ID")));
         return;
     }
 
@@ -133,15 +133,15 @@ void HasEnoughSeatsM(const FunctionCallbackInfo<Value> &args) {
     Local<Context> context = isolate->GetCurrentContext();
 
     if (args.Length() < 2) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "wrong number of arguments")));
         return;
     }
     if (!args[0]->IsNumber() || args[0]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 0 must be a number")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 0 must be a number")));
         return;
     }
     if (!args[1]->IsNumber() || args[1]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 1 must be a number")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 1 must be a number")));
         return;
     }
 
@@ -150,14 +150,14 @@ void HasEnoughSeatsM(const FunctionCallbackInfo<Value> &args) {
     double rseats = args[1]->NumberValue(context).FromMaybe(-1);
     int seats = static_cast<int>(rseats);
     if (seats < 0) {
-        isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "cannot convert number of seats")));
+        isolate->ThrowException(Exception::Error(String::NewFromUtf8Literal(isolate, "cannot convert number of seats")));
         return;
     }
 
     HasEnoughSeats_return r = HasEnoughSeats(id, seats);
 
     if (!r.r1) {
-        isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "invalid instance ID")));
+        isolate->ThrowException(Exception::Error(String::NewFromUtf8Literal(isolate, "invalid instance ID")));
         return;
     }
 
@@ -170,11 +170,11 @@ void InspectM(const FunctionCallbackInfo<Value> &args) {
     Local<Context> context = isolate->GetCurrentContext();
 
     if (args.Length() < 1) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "wrong number of arguments")));
         return;
     }
     if (!args[0]->IsNumber() || args[0]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 0 must be a number")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 0 must be a number")));
         return;
     }
 
@@ -183,11 +183,11 @@ void InspectM(const FunctionCallbackInfo<Value> &args) {
 
     Inspect_return r = Inspect(id);
     if (!r.r1) {
-        isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "invalid instance ID")));
+        isolate->ThrowException(Exception::Error(String::NewFromUtf8Literal(isolate, "invalid instance ID")));
         return;
     }
 
-    args.GetReturnValue().Set(String::NewFromUtf8(isolate, r.r0));
+    args.GetReturnValue().Set(String::NewFromUtf8(isolate, r.r0).ToLocalChecked());
 }
 
 void DisposeM(const FunctionCallbackInfo<Value> &args) {
@@ -195,11 +195,11 @@ void DisposeM(const FunctionCallbackInfo<Value> &args) {
     Local<Context> context = isolate->GetCurrentContext();
 
     if (args.Length() < 1) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "wrong number of arguments")));
         return;
     }
     if (!args[0]->IsNumber() || args[0]->IsUndefined()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 0 must be a number")));
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8Literal(isolate, "argument 0 must be a number")));
         return;
     }
 
