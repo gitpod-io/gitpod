@@ -22,7 +22,7 @@
   ],
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
-    "@jmondi/oauth2-server": "^1.1.0",
+    "@jmondi/oauth2-server": "^2.1.0",
     "mysql": "^2.15.0",
     "reflect-metadata": "^0.1.10",
     "the-big-username-blacklist": "^1.5.2",

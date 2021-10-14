@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { OAuthAuthCode, OAuthClient, OAuthScope } from "@jmondi/oauth2-server";
+import { CodeChallengeMethod, OAuthAuthCode, OAuthClient, OAuthScope } from "@jmondi/oauth2-server";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Transformer } from "../transformer";
 import { DBUser } from "./db-user";
@@ -38,7 +38,7 @@ export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
         type: "varchar",
         length: 10,
     })
-    codeChallengeMethod: string
+    codeChallengeMethod: CodeChallengeMethod
 
     @Column({
         type: 'timestamp',

@@ -27,7 +27,7 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
         return (await this.getEntityManager()).getRepository<DBOAuthAuthCodeEntry>(DBOAuthAuthCodeEntry);
     }
 
-    public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
+    public async getByIdentifier(authCodeCode: string): Promise<DBOAuthAuthCodeEntry> {
         const authCodeRepo = await this.getOauthAuthCodeRepo();
         let authCodes = await authCodeRepo.find({ code: authCodeCode });
         authCodes = authCodes.filter(te => (new Date(te.expiresAt)).getTime() > Date.now());
@@ -48,7 +48,7 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
             scopes: scopes,
         };
     }
-    public async persist(authCode: OAuthAuthCode): Promise<void> {
+    public async persist(authCode: DBOAuthAuthCodeEntry): Promise<void> {
         const authCodeRepo = await this.getOauthAuthCodeRepo();
         authCodeRepo.save(authCode);
     }
