@@ -7,6 +7,7 @@ package common
 import (
 	"fmt"
 	"io"
+	"k8s.io/apimachinery/pkg/runtime"
 	"math/rand"
 	"strings"
 
@@ -388,7 +389,7 @@ var DeploymentStrategy = appsv1.DeploymentStrategy{
 var (
 	TypeMetaNamespace = metav1.TypeMeta{
 		APIVersion: "v1",
-		Kind:       "namespace",
+		Kind:       "Namespace",
 	}
 	TypeMetaConfigmap = metav1.TypeMeta{
 		APIVersion: "v1",
@@ -479,4 +480,13 @@ func RandomString(length int) (string, error) {
 		b[i] = validCookieChars[int(c)%lrsc]
 	}
 	return string(b), nil
+}
+
+func CreateNamespace(name string) ([]runtime.Object, error) {
+	return []runtime.Object{&corev1.Namespace{
+		TypeMeta: TypeMetaNamespace,
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}}, nil
 }
