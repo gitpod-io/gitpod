@@ -121,7 +121,41 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       if (!result) {
         throw new Error("No result!");
       }
-      console.log("/start: started workspace instance: " + result.instanceID);
+
+      console.log(`%c
+
+─────────────────────────────────────────────────────────────────────────────────
+
+      ./shhs           Welconme to Gitpod!
+    :oyhhhhhy
+ .ohhhhhhs/-    -//-   We want you to have frictionless experiences when
+ yyyyyo:    .:ohhhhhs. interacting with our product and our company: no hurdles,
+ yyyy:   .+yhhhhhhhhh. no BS, no unnecessary extra steps and as much automation
+ yyyy:  .yyhhhy+ohhhh  as possible.
+ yyyy:   :++:.  :hhhh
+ yyyys/.      ./shhhh. Just straight to the point solutions that delight.
+ -syyyyyy+-:+yyyyyyy-
+   .:osyyyyyyyyyo/.    If Gitpod does not spark joy, please let us know!
+       -+syys+-
+
+─────────────────────────────────────────────────────────────────────────────────
+
+`, `font-family: monospace`);
+
+    console.log("Your workspace instance is: " + result.instanceID);
+
+    console.log(`%c
+
+─────────────────────────────────────────────────────────────────────────────────
+
+   Help and general support      - https://www.gitpod.io/support
+   Community                     - https://www.gitpod.io/community
+   Privacy                       - https://www.gitpod.io/privacy
+   Security disclosures          - https://www.gitpod.io/security
+   Gitpod source code            - https://www.github.com/gitpod-io
+
+   `, `font-family: monospace`);
+
       // redirect to workspaceURL if we are not yet running in an iframe
       if (!this.runsInIFrame() && result.workspaceURL) {
         this.redirectTo(result.workspaceURL);
