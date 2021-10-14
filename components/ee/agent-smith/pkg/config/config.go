@@ -216,7 +216,7 @@ type Blocklists struct {
 
 func (b *Blocklists) Classifier() (classifier.ProcessClassifier, error) {
 	if b == nil {
-		return &classifier.CommandlineClassifier{}, nil
+		return classifier.NewCommandlineClassifier(nil, nil)
 	}
 
 	var err error

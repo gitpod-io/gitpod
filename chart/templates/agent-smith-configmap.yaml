@@ -19,7 +19,7 @@ metadata:
 data:
   config.json: |
     {
-      "blacklists": {
+      "blocklists": {
         "very": {
           "signatures": [
             {
