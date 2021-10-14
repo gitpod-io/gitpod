@@ -1,0 +1,36 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package contentservice;
+
+option go_package = "github.com/gitpod-io/gitpod/content-service/api";
+
+service LogStreamService {
+    rpc StartStream(StartStreamRequest) returns (StartStreamResponse) {};
+    rpc AccessStream(AccessStreamRequest) returns (AccessStreamResponse) {};
+}
+
+message StartStreamRequest {
+    string id = 1;
+
+    string owner_id = 2;
+    string workspace_id = 3;
+    string instance_id = 4;
+};
+message StartStreamResponse {
+    string url = 1;
+}
+
+message AccessStreamRequest {
+    string id = 1;
+
+    string owner_id = 2;
+    string workspace_id = 3;
+    string instance_id = 4;
+}
+message AccessStreamResponse {
+    string url = 1;
+}
