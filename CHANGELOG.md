@@ -1,6 +1,13 @@
 # Change Log
 
 ## October 2021
+- Fixed compile error ([#6193](https://github.com/gitpod-io/gitpod/pull/6193)) - [@meysholdt](https://github.com/meysholdt)
+- Add 'New Workspace' context menu option to all Projects cards ([#6185](https://github.com/gitpod-io/gitpod/pull/6185)) - [@jankeromnes](https://github.com/jankeromnes)
+- [gitpod-protocol] Adjust typescript GRPC options ([#6166](https://github.com/gitpod-io/gitpod/pull/6166)) - [@aledbf](https://github.com/aledbf)
+- None ([#6182](https://github.com/gitpod-io/gitpod/pull/6182)) - [@csweichel](https://github.com/csweichel)
+- Refactor GRPC TLS connection defaults ([#6163](https://github.com/gitpod-io/gitpod/pull/6163)) - [@aledbf](https://github.com/aledbf)
+- None ([#6174](https://github.com/gitpod-io/gitpod/pull/6174)) - [@csweichel](https://github.com/csweichel)
+- Enable setting of DB username with DB_USERNAME envvar ([#6171](https://github.com/gitpod-io/gitpod/pull/6171)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - None ([#6159](https://github.com/gitpod-io/gitpod/pull/6159)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Refactor GRPC TLS connection defaults ([#6163](https://github.com/gitpod-io/gitpod/pull/6163)) - [@aledbf](https://github.com/aledbf)
 - None ([#6174](https://github.com/gitpod-io/gitpod/pull/6174)) - [@csweichel](https://github.com/csweichel)
