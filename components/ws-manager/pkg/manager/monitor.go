@@ -823,7 +823,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
-	doBackupLogs := !wsk8s.IsGhostWorkspace(wso.Pod)
+	doBackupLogs := tpe == api.WorkspaceType_PREBUILD
 	doSnapshot := tpe == api.WorkspaceType_PREBUILD
 	doFinalize := func() (worked bool, gitStatus *csapi.GitStatus, err error) {
 		m.finalizerMapLock.Lock()
