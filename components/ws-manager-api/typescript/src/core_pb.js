@@ -5363,7 +5363,8 @@ proto.wsman.WorkspaceConditions.toObject = function(includeInstance, msg) {
     deployed: jspb.Message.getFieldWithDefault(msg, 7, 0),
     networkNotReady: jspb.Message.getFieldWithDefault(msg, 8, 0),
     firstUserActivity: (f = msg.getFirstUserActivity()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-    headlessTaskFailed: jspb.Message.getFieldWithDefault(msg, 10, "")
+    headlessTaskFailed: jspb.Message.getFieldWithDefault(msg, 10, ""),
+    stoppedByRequest: jspb.Message.getFieldWithDefault(msg, 11, 0)
   };
 
   if (includeInstance) {
@@ -5440,6 +5441,10 @@ proto.wsman.WorkspaceConditions.deserializeBinaryFromReader = function(msg, read
     case 10:
       var value = /** @type {string} */ (reader.readString());
       msg.setHeadlessTaskFailed(value);
+      break;
+    case 11:
+      var value = /** @type {!proto.wsman.WorkspaceConditionBool} */ (reader.readEnum());
+      msg.setStoppedByRequest(value);
       break;
     default:
       reader.skipField();
@@ -5538,6 +5543,13 @@ proto.wsman.WorkspaceConditions.serializeBinaryToWriter = function(message, writ
   if (f.length > 0) {
     writer.writeString(
       10,
+      f
+    );
+  }
+  f = message.getStoppedByRequest();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      11,
       f
     );
   }
@@ -5740,6 +5752,24 @@ proto.wsman.WorkspaceConditions.prototype.getHeadlessTaskFailed = function() {
  */
 proto.wsman.WorkspaceConditions.prototype.setHeadlessTaskFailed = function(value) {
   return jspb.Message.setProto3StringField(this, 10, value);
+};
+
+
+/**
+ * optional WorkspaceConditionBool stopped_by_request = 11;
+ * @return {!proto.wsman.WorkspaceConditionBool}
+ */
+proto.wsman.WorkspaceConditions.prototype.getStoppedByRequest = function() {
+  return /** @type {!proto.wsman.WorkspaceConditionBool} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
+};
+
+
+/**
+ * @param {!proto.wsman.WorkspaceConditionBool} value
+ * @return {!proto.wsman.WorkspaceConditions} returns this
+ */
+proto.wsman.WorkspaceConditions.prototype.setStoppedByRequest = function(value) {
+  return jspb.Message.setProto3EnumField(this, 11, value);
 };
 
 

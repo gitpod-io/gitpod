@@ -350,6 +350,9 @@ message WorkspaceConditions {
 
     // headless_task_failed indicates that a headless workspace task failed
     string headless_task_failed = 10;
+
+    // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
+    WorkspaceConditionBool stopped_by_request = 11;
 }
 
 // WorkspaceConditionBool is a trinary bool: true/false/empty

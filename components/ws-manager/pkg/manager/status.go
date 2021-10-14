@@ -375,6 +375,9 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		}
 		result.Conditions.Timeout = reason
 	}
+	if _, sbr := pod.Annotations[stoppedByRequestAnnotation]; sbr {
+		result.Conditions.StoppedByRequest = api.WorkspaceConditionBool_TRUE
+	}
 	if wso.IsWorkspaceHeadless() {
 		for _, cs := range pod.Status.ContainerStatuses {
 			if cs.State.Terminated != nil && cs.State.Terminated.Message != "" {

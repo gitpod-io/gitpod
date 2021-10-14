@@ -85,6 +85,9 @@ const (
 
 	// workspaceAnnotationPrefix prefixes pod annotations that contain annotations specified during the workspaces start request
 	workspaceAnnotationPrefix = "gitpod.io/annotation."
+
+	// stoppedByRequestAnnotation is set on a pod when it was requested to stop using a StopWorkspace call
+	stoppedByRequestAnnotation = "gitpod.io/stoppedByRequest"
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod
