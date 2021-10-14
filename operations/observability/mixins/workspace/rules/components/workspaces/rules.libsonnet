@@ -5,7 +5,18 @@
 
 {
   prometheusRules+:: {
-    groups+: [],
-    // meta team doesn have any recording rules yet
+    groups+: [
+      {
+        name: 'gitpod-workspace-regular-not-active-records',
+        rules: [
+          {
+            record: 'gitpod_workspace_regular_not_active_percentage',
+            expr: |||
+              sum(gitpod_ws_manager_workspace_activity_total{active="false"}) / sum(gitpod_ws_manager_workspace_activity_total)
+            |||,
+          },
+        ]
+      }
+    ],
   },
 }
