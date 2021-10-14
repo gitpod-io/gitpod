@@ -1,0 +1,53 @@
+{
+    "status": {
+        "id": "18f99de5-090f-4318-9759-05f5ef0277f7",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "f4a5920f-303f-4221-bacd-7be9e1dd8e09",
+            "meta_id": "lime-opossum-3jftf65i",
+            "started_at": {
+                "seconds": 1634238683
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:3bd5ce12f7acd1ff19494a25aa2ff01ff9a7b938567c84d52ce6aa0b2bd40092",
+            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-7107fb8bde0b1f92265402ad5fa09a51022b14dd",
+            "url": "https://lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com",
+            "exposed_ports": [
+                {
+                    "port": 3000,
+                    "url": "https://3000-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 27017,
+                    "target": 60000,
+                    "url": "https://27017-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 9229,
+                    "target": 59999,
+                    "url": "https://9229-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com"
+                }
+            ],
+            "timeout": "60m"
+        },
+        "phase": 4,
+        "conditions": {
+            "service_exists": 1,
+            "deployed": 1,
+            "first_user_activity": {
+                "seconds": 1634238703,
+                "nanos": 983492544
+            },
+            "stopped_by_request": 1
+        },
+        "runtime": {
+            "node_name": "gke-core-dev-workspace-3-a69c4dd8-jqzs",
+            "pod_name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7",
+            "node_ip": "10.132.0.40"
+        },
+        "auth": {
+            "owner_token": "Tx5RtJ5f4LWUWvrGJ_-.AJmcTd5MB_8e"
+        }
+    }
+}

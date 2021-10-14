@@ -689,6 +689,8 @@ export class WorkspaceConditions extends jspb.Message {
     setFirstUserActivity(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceConditions;
     getHeadlessTaskFailed(): string;
     setHeadlessTaskFailed(value: string): WorkspaceConditions;
+    getStoppedByRequest(): WorkspaceConditionBool;
+    setStoppedByRequest(value: WorkspaceConditionBool): WorkspaceConditions;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceConditions.AsObject;
@@ -712,6 +714,7 @@ export namespace WorkspaceConditions {
         networkNotReady: WorkspaceConditionBool,
         firstUserActivity?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         headlessTaskFailed: string,
+        stoppedByRequest: WorkspaceConditionBool,
     }
 }
 

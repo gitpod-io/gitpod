@@ -378,7 +378,8 @@ func (m *Manager) StopWorkspace(ctx context.Context, req *api.StopWorkspaceReque
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
 	}
 
-	if err := m.stopWorkspace(ctx, req.Id, gracePeriod); err != nil {
+	err = m.markWorkspace(ctx, req.Id, addMark(stoppedByRequestAnnotation, gracePeriod.String()))
+	if err != nil {
 		return nil, err
 	}
 

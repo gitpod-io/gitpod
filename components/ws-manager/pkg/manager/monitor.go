@@ -287,6 +287,22 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		}
 
 		return nil
+	} else if status.Conditions.StoppedByRequest == api.WorkspaceConditionBool_TRUE {
+		gracePeriod := stopWorkspaceNormallyGracePeriod
+		if gp, ok := pod.Annotations[stoppedByRequestAnnotation]; ok {
+			dt, err := time.ParseDuration(gp)
+			if err == nil {
+				gracePeriod = dt
+			} else {
+				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Warn("invalid duration on stoppedByRequestAnnotation")
+			}
+		}
+
+		// we're asked to stop the workspace but aren't doing so yet
+		err := m.stopWorkspace(ctx, workspaceID, gracePeriod)
+		if err != nil && !isKubernetesObjNotFoundError(err) {
+			return xerrors.Errorf("cannot stop workspace: %w", err)
+		}
 	}
 
 	if status.Phase == api.WorkspacePhase_CREATING {
