@@ -42,7 +42,7 @@ export class OAuthController {
     }
 
     private async hasApproval(user: User, clientID: string, req: express.Request, res: express.Response): Promise<boolean> {
-        // Have they just authorized, or not, the local-app?
+        // Have they just authorized, or not, registered clients?
         const wasApproved = req.query['approved'] || '';
         if (wasApproved === 'no') {
             const additionalData = user?.additionalData;
@@ -51,16 +51,25 @@ export class OAuthController {
                 await this.userDb.updateUserPartial(user);
             }
 
-            // Let the local app know they rejected the approval
-            const rt: string = req.query.redirect_uri;
-            const redirectURLObject = new URL(rt);
+            // Let the client know they rejected the approval
+            const client = await clientRepository.getByIdentifier(clientID);
+            if (client) {
+                const normalizedRedirectUri = new URL(req.query.redirect_uri);
+                normalizedRedirectUri.search = '';
 
-            if (!rt || !rt.startsWith("http://127.0.0.1:") || !(['vscode:', 'vscode-insiders:'].includes(redirectURLObject.protocol) && redirectURLObject.pathname !== '//gitpod.gitpod-desktop/complete-gitpod-auth')) {
-                log.error(`/oauth/authorize: invalid returnTo URL: "${rt}"`)
+                if (!client.redirectUris.some(u => new URL(u).toString() === normalizedRedirectUri.toString())) {
+                    log.error(`/oauth/authorize: invalid returnTo URL: "${req.query.redirect_uri}"`)
+                    res.sendStatus(400);
+                    return false;
+                }
+            } else {
+                log.error(`/oauth/authorize unknown client id: "${clientID}"`)
                 res.sendStatus(400);
                 return false;
             }
-            res.redirect(`${rt}/?approved=no`);
+            const redirectUri = new URL(req.query.redirect_uri);
+            redirectUri.searchParams.append('approved', 'no');
+            res.redirect(redirectUri.toString());
             return false;
         } else if (wasApproved == 'yes') {
             const additionalData = user.additionalData = user.additionalData || {};
