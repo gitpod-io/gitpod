@@ -173,7 +173,7 @@ function ensureIngressesReadiness(params: InstallMonitoringSatelliteParams) {
     }
 
     if (!prometheusIngressReady || !grafanaIngressReady) {
-        throw new Error('Timeout while waiting for ingresses readiness')
+        werft.log(sliceName, "Time out while waiting for ingress readiness")
     }
 }
 
