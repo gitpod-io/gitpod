@@ -49,7 +49,7 @@
   "gnetId": null,
   "graphTooltip": 1,
   "id": null,
-  "iteration": 1633704520775,
+  "iteration": 1634205960963,
   "links": [],
   "panels": [
     {
@@ -774,13 +774,95 @@
       "type": "timeseries"
     },
     {
+      "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 63,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum (gitpod_version_info{}) by (cluster, gitpod_version)",
+          "interval": "",
+          "legendFormat": "{{ cluster }}: {{ gitpod_version }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Version",
+      "type": "timeseries"
+    },
+    {
       "collapsed": true,
       "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 34
       },
       "id": 50,
       "panels": [
@@ -1035,7 +1117,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 35
       },
       "id": 16,
       "panels": [],
@@ -1098,7 +1180,7 @@
         "h": 7,
         "w": 10,
         "x": 0,
-        "y": 28
+        "y": 36
       },
       "id": 55,
       "options": {
@@ -1137,7 +1219,7 @@
         "h": 7,
         "w": 7,
         "x": 10,
-        "y": 28
+        "y": 36
       },
       "hiddenSeries": false,
       "id": 2,
@@ -1232,7 +1314,7 @@
         "h": 7,
         "w": 7,
         "x": 17,
-        "y": 28
+        "y": 36
       },
       "hiddenSeries": false,
       "id": 4,
@@ -1335,7 +1417,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 43
       },
       "hiddenSeries": false,
       "id": 6,
@@ -1428,7 +1510,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 43
       },
       "hiddenSeries": false,
       "id": 8,
@@ -1520,7 +1602,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 42
+        "y": 50
       },
       "hiddenSeries": false,
       "id": 10,
@@ -1618,7 +1700,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 42
+        "y": 50
       },
       "hiddenSeries": false,
       "id": 38,
@@ -1718,7 +1800,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 42
+        "y": 50
       },
       "hiddenSeries": false,
       "id": 40,
@@ -1819,7 +1901,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 49
+        "y": 57
       },
       "hiddenSeries": false,
       "id": 32,
@@ -1913,7 +1995,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 49
+        "y": 57
       },
       "hiddenSeries": false,
       "id": 34,
@@ -2020,7 +2102,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 49
+        "y": 57
       },
       "hiddenSeries": false,
       "id": 36,
@@ -2121,7 +2203,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 66
       },
       "id": 22,
       "panels": [
@@ -2698,5 +2780,5 @@
   "timezone": "utc",
   "title": "Gitpod / Component / server",
   "uid": "server",
-  "version": 3
+  "version": 4
 }
