@@ -243,11 +243,18 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 		if t.config.Env != nil {
 			openRequest.Env = make(map[string]string, len(*t.config.Env))
 			for key, value := range *t.config.Env {
-				v, err := json.Marshal(value)
-				if err != nil {
-					taskLog.WithError(err).WithField("key", key).Error("cannot marshal env var")
+				// Required check because a string is considered valid JSON (e.g. "hello")
+				// We don't want to marshall basic strings otherwise we get a double quoted environment variable
+				// See: https://github.com/gitpod-io/gitpod/issues/5887
+				if val, ok := value.(string); ok {
+					openRequest.Env[key] = val
 				} else {
-					openRequest.Env[key] = string(v)
+					v, err := json.Marshal(value)
+					if err != nil {
+						taskLog.WithError(err).WithField("key", key).Error("cannot marshal env var")
+					} else {
+						openRequest.Env[key] = string(v)
+					}
 				}
 			}
 		}
