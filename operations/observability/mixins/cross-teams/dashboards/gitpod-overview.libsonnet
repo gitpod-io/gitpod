@@ -9,6 +9,7 @@ local row = grafana.row;
 local prometheus = grafana.prometheus;
 local template = grafana.template;
 local graphPanel = grafana.graphPanel;
+local tablePanel = grafana.tablePanel;
 local heatmapPanel = grafana.heatmapPanel;
 local link = grafana.link;
 local _config = (import '../config.libsonnet')._config;
@@ -41,6 +42,34 @@ local clusterTemplate =
     sort=1
   );
 
+local hiddenTimeStyle = {
+  type: 'hidden',
+  pattern: 'Time',
+}
+;
+
+local hiddenNodepoolStyle = {
+  type: 'hidden',
+  pattern: 'nodepool',
+}
+;
+
+local noneValueStyle = {
+  unit: 'none',
+  decimals: 1,
+  pattern: 'Value',
+  type: 'number',
+}
+;
+
+local adminNodeDashboardRedirectStyle = {
+  pattern: 'node',
+  link: true,
+  linkUrl: 'd/gitpod-admin-nodes/gitpod-admin-nodes?var-datasource=$datasource&var-cluster=$__cell_1&var-nodepool=$__cell_3&var-node=$__cell',
+  linkTargetBlank: true,
+}
+;
+
 // Panels
 local runningWorkspacesGraph =
   graphPanel.new(
@@ -62,54 +91,24 @@ local runningWorkspacesGraph =
   .addSeriesOverride({ alias: 'Regular Not Active', color: '#FADE2A' })
 ;
 
-local noisyNeighborGraph =
-  graphPanel.new(
-    '$cluster: # of Regular Workspaces under Noisy Neighborhood',
+local wsNodeLoadAverageTable =
+  tablePanel.new(
+    title="$cluster: Workspace node's normalized load average",
     description=
     |||
-      When a Node has a normalized load average higher than 1, that means that the workloads are demanding more compute power than the node is able to provide.
-      When that happens, then all workloads may have degraded performance.
+      Top 10 nodes with highest normalized load average. Nodes with a high normalized load average do not represent a real problem, it only means that pods should probably not be scheduled to them.
 
-      This panel do not answer the question: "What is workload is demanding so much CPU?"
-      But it does answer: "How many regular workspaces are experiencing degraded performance because of the noisy neightbor effect?"
-
-      To find out the noisy neighbor, drill down to '%(dashboardNamePrefix)sNodes Overview' and explore nodes that have normalized load average higher than 1.
-    ||| % _config,
+      If you'd like to see more details about resource consumption of a particular node, you can do so by clicking at the node name.
+    |||,
     datasource='$datasource',
-    format='none',
-    stack=false,
-    fill=1,
-    fillGradient=5,
-    min=0,
-    repeat='cluster',
-    nullPointMode='null as zero'
+    styles=[adminNodeDashboardRedirectStyle, hiddenNodepoolStyle, hiddenTimeStyle, noneValueStyle { alias: 'Normalized load average' }]
   )
-  .addLink(link.dashboards(
-    title='%sNodes Overview' % _config.dashboardNamePrefix,
-    tags=[''],
-    url='d/gitpod-nodes-overview/gitpod-nodes-overview',
-    keepTime=true,
-    targetBlank=true,
-    includeVars=true,
-  ))
   .addTarget(prometheus.target(
     |||
-      sum(
-        count(
-          sum(container_cpu_cfs_periods_total{%(clusterLabel)s=~"$cluster", container="workspace"}) by (pod, node, %(clusterLabel)s) # Sum just to aggregate all containers into a single pod
-          *
-          on(pod) group_left() kube_pod_labels{component="workspace", workspace_type="regular", %(clusterLabel)s=~"$cluster"} # join to make sure we only count pods of regular workspaces
-        ) by (node, %(clusterLabel)s)
-
-        and # We are correlating workspaces with Nodes with high normalized load average
-
-        (
-          sum(
-            instance:node_load1_per_cpu:ratio{cluster=~"$cluster"}
-          ) by (node, %(clusterLabel)s) # Sum to remove all labels except node and %(clusterLabel)s, labels must match with the first part of the query
-        ) > 1
-      ) by (%(clusterLabel)s)
-    ||| % _config, legendFormat='# of workspaces'
+      sort(
+          sum(nodepool:node_load1:normalized{%(clusterLabel)s=~"$cluster", nodepool=~".*workspace.*"}) by (node)
+      )
+    ||| % _config, format='table', instant=true
   ))
 ;
 
@@ -222,8 +221,8 @@ local clusterScaleSizeGraph =
         .addPanel(runningWorkspacesGraph)
       )
       .addRow(
-        row.new('Noisy Neighborhood')
-        .addPanel(noisyNeighborGraph)
+        row.new("Workspace node's normalized Load Average")
+        .addPanel(wsNodeLoadAverageTable)
       )
       .addRow(
         row.new('Workspace Startup time')
