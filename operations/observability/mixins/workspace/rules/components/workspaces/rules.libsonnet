@@ -15,8 +15,8 @@
               sum(gitpod_ws_manager_workspace_activity_total{active="false"}) / sum(gitpod_ws_manager_workspace_activity_total)
             |||,
           },
-        ]
-      }
+        ],
+      },
     ],
   },
 }
