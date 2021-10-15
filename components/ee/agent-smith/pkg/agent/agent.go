@@ -264,10 +264,13 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 		remoteURL = ws.GitRemoteURL[0]
 	}
 
+	owi := log.OWI(ws.Owner, ws.WorkspaceID, ws.InstanceID)
+
 	penalty := getPenalty(agent.EnforcementRules[defaultRuleset], agent.EnforcementRules[remoteURL], ws.Infringements)
 	for _, p := range penalty {
 		switch p {
 		case config.PenaltyStopWorkspace:
+			log.WithFields(owi).Info("stopping workspace")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.stopWorkspace(ws.SupervisorPID)
 			if err != nil {
@@ -275,6 +278,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			}
 			return penalty, err
 		case config.PenaltyStopWorkspaceAndBlockUser:
+			log.WithFields(owi).Info("stopping workspace and blocking user")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner)
 			if err != nil {
@@ -282,6 +286,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			}
 			return penalty, err
 		case config.PenaltyLimitCPU:
+			log.WithFields(owi).Info("limiting CPU")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.limitCPUUse(ws.Pod)
 			if err != nil {

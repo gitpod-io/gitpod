@@ -27,7 +27,8 @@ type ProcfsDetector struct {
 	mu sync.RWMutex
 	ps chan Process
 
-	indexSizeGuage prometheus.Gauge
+	indexSizeGuage         prometheus.Gauge
+	nearWorkspaceMissTotal prometheus.Gauge
 
 	startOnce sync.Once
 }
@@ -45,17 +46,24 @@ func NewProcfsDetector() (*ProcfsDetector, error) {
 			Name:      "index_size",
 			Help:      "number of entries in the last procfs scan index",
 		}),
+		nearWorkspaceMissTotal: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: "gitpod",
+			Subsystem: "agent_smith_procfs_detector",
+			Name:      "near_workspace_miss",
+			Help:      "total count where a process structure looked like a workspace, but did not have all environment variables",
+		}),
 		p: p,
 	}, nil
 }
 
 func (det *ProcfsDetector) Describe(d chan<- *prometheus.Desc) {
 	det.indexSizeGuage.Describe(d)
-
+	det.nearWorkspaceMissTotal.Describe(d)
 }
 
 func (det *ProcfsDetector) Collect(m chan<- prometheus.Metric) {
 	det.indexSizeGuage.Collect(m)
+	det.nearWorkspaceMissTotal.Collect(m)
 }
 
 func (det *ProcfsDetector) start() {
@@ -156,9 +164,12 @@ func (det *ProcfsDetector) run(processes chan<- Process) {
 			if len(p.Children) == 1 {
 				c := p.Children[0]
 
-				if len(c.Cmdline) != 2 || c.Cmdline[0] != "supervisor" || c.Cmdline[1] != "run" {
+				if len(c.Cmdline) == 2 && c.Cmdline[0] == "supervisor" && c.Cmdline[1] == "run" {
 					// we've found the corresponding supervisor process - hence the original process must be a workspace
 					p.Workspace = extractWorkspaceFromWorkspacekit(p.PID)
+					if p.Workspace.WorkspaceID == "" || p.Workspace.InstanceID == "" {
+						det.nearWorkspaceMissTotal.Inc()
+					}
 					found = true
 					if minWSDepth == -1 || p.Depth < minWSDepth {
 						minWSDepth = p.Depth

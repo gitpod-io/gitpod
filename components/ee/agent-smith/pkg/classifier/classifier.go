@@ -43,7 +43,7 @@ type ProcessClassifier interface {
 	Matches(executable string, cmdline []string) (*Classification, error)
 }
 
-func NewCommandlineClassifier(allowList []string, blockList []string) (*CommandlineClassifier, error) {
+func NewCommandlineClassifier(name string, allowList []string, blockList []string) (*CommandlineClassifier, error) {
 	al := make([]*regexp.Regexp, 0, len(allowList))
 	for _, a := range allowList {
 		r, err := regexp.Compile(a)
@@ -63,6 +63,18 @@ func NewCommandlineClassifier(allowList []string, blockList []string) (*Commandl
 			Subsystem: "classifier_commandline",
 			Name:      "allowlist_hit_total",
 			Help:      "total count of allowlist hits",
+			ConstLabels: prometheus.Labels{
+				"classifier_name": name,
+			},
+		}),
+		blocklistHitTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "gitpod_agent_smith",
+			Subsystem: "classifier_commandline",
+			Name:      "blocklist_hit_total",
+			Help:      "total count of blocklist hits",
+			ConstLabels: prometheus.Labels{
+				"classifier_name": name,
+			},
 		}),
 	}, nil
 }
@@ -74,6 +86,7 @@ type CommandlineClassifier struct {
 	BlockList    []string
 
 	allowListHitTotal prometheus.Counter
+	blocklistHitTotal prometheus.Counter
 }
 
 var _ ProcessClassifier = &CommandlineClassifier{}
@@ -90,6 +103,7 @@ func (cl *CommandlineClassifier) Matches(executable string, cmdline []string) (*
 
 	for _, b := range cl.BlockList {
 		if strings.Contains(executable, b) || strings.Contains(strings.Join(cmdline, "|"), b) {
+			cl.blocklistHitTotal.Inc()
 			return &Classification{
 				Level:      cl.DefaultLevel,
 				Classifier: ClassifierCommandline,
@@ -103,13 +117,15 @@ func (cl *CommandlineClassifier) Matches(executable string, cmdline []string) (*
 
 func (cl *CommandlineClassifier) Describe(d chan<- *prometheus.Desc) {
 	cl.allowListHitTotal.Describe(d)
+	cl.blocklistHitTotal.Describe(d)
 }
 
 func (cl *CommandlineClassifier) Collect(m chan<- prometheus.Metric) {
 	cl.allowListHitTotal.Collect(m)
+	cl.blocklistHitTotal.Collect(m)
 }
 
-func NewSignatureMatchClassifier(sig []*Signature) *SignatureMatchClassifier {
+func NewSignatureMatchClassifier(name string, sig []*Signature) *SignatureMatchClassifier {
 	return &SignatureMatchClassifier{
 		Signatures:   sig,
 		DefaultLevel: LevelAudit,
@@ -118,6 +134,18 @@ func NewSignatureMatchClassifier(sig []*Signature) *SignatureMatchClassifier {
 			Subsystem: "classifier_signature",
 			Name:      "process_miss_total",
 			Help:      "total count of process executable misses",
+			ConstLabels: prometheus.Labels{
+				"classifier_name": name,
+			},
+		}),
+		signatureHitTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "gitpod_agent_smith",
+			Subsystem: "classifier_signature",
+			Name:      "signature_hit_total",
+			Help:      "total count of process executable signature hits",
+			ConstLabels: prometheus.Labels{
+				"classifier_name": name,
+			},
 		}),
 	}
 }
@@ -127,7 +155,8 @@ type SignatureMatchClassifier struct {
 	Signatures   []*Signature
 	DefaultLevel Level
 
-	processMissTotal prometheus.Counter
+	processMissTotal  prometheus.Counter
+	signatureHitTotal prometheus.Counter
 }
 
 var _ ProcessClassifier = &SignatureMatchClassifier{}
@@ -146,6 +175,7 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	for _, sig := range sigcl.Signatures {
 		match, err := sig.Matches(r)
 		if match {
+			sigcl.signatureHitTotal.Inc()
 			return &Classification{
 				Level:      sigcl.DefaultLevel,
 				Classifier: ClassifierSignature,
@@ -165,10 +195,12 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 
 func (sigcl *SignatureMatchClassifier) Describe(d chan<- *prometheus.Desc) {
 	sigcl.processMissTotal.Describe(d)
+	sigcl.signatureHitTotal.Describe(d)
 }
 
 func (sigcl *SignatureMatchClassifier) Collect(m chan<- prometheus.Metric) {
 	sigcl.processMissTotal.Collect(m)
+	sigcl.signatureHitTotal.Collect(m)
 }
 
 // CompositeClassifier combines multiple classifiers into one. The first match wins.
@@ -298,4 +330,43 @@ func (cl GradedClassifier) Collect(m chan<- prometheus.Metric) {
 		}
 		obs.Collect(m)
 	}
+}
+
+func NewCountingMetricsClassifier(name string, delegate ProcessClassifier) *CountingMetricsClassifier {
+	return &CountingMetricsClassifier{
+		D: delegate,
+		callCount: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "gitpod_agent_smith",
+			Subsystem: "classifier_count",
+			Name:      "match_total",
+			Help:      "total count of all Matches calls",
+			ConstLabels: prometheus.Labels{
+				"classifier_name": name,
+			},
+		}),
+	}
+}
+
+// CountingMetricsClassifier adds a call count metric to a classifier
+type CountingMetricsClassifier struct {
+	D ProcessClassifier
+
+	callCount prometheus.Counter
+}
+
+var _ ProcessClassifier = &CountingMetricsClassifier{}
+
+func (cl *CountingMetricsClassifier) Matches(executable string, cmdline []string) (*Classification, error) {
+	cl.callCount.Inc()
+	return cl.D.Matches(executable, cmdline)
+}
+
+func (cl *CountingMetricsClassifier) Describe(d chan<- *prometheus.Desc) {
+	cl.callCount.Describe(d)
+	cl.D.Describe(d)
+}
+
+func (cl *CountingMetricsClassifier) Collect(m chan<- prometheus.Metric) {
+	cl.callCount.Collect(m)
+	cl.D.Collect(m)
 }
