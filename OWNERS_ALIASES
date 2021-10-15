@@ -23,7 +23,7 @@ aliases:
   - jldec
   - gtsiolis
 
-  platform:
+  engineering-platform:
   - ArthurSens
   - meysholdt
   - mads-hartmann

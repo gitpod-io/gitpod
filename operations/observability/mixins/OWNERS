@@ -1,2 +1,5 @@
 approvers:
-  - ArthurSens
+  - engineering-platform
+
+labels:
+  - "team: platform"
