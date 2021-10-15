@@ -41,6 +41,7 @@ packages:
         helm-component: agentSmith
       image:
         - ${imageRepoBase}/agent-smith:${version}
+        - ${imageRepoBase}/agent-smith:commit-${__git_commit}
   - name: example-config
     type: generic
     srcs:

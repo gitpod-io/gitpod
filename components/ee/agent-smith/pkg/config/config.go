@@ -214,28 +214,31 @@ type Blocklists struct {
 	Very   *PerLevelBlocklist `json:"very,omitempty"`
 }
 
-func (b *Blocklists) Classifier() (classifier.ProcessClassifier, error) {
+func (b *Blocklists) Classifier() (res classifier.ProcessClassifier, err error) {
+	defer func() {
+		if res == nil {
+			return
+		}
+		res = classifier.NewCountingMetricsClassifier("all", res)
+	}()
+
 	if b == nil {
-		return classifier.NewCommandlineClassifier(nil, nil)
+		return classifier.NewCommandlineClassifier("empty", nil, nil)
 	}
 
-	var err error
-	res := make(classifier.GradedClassifier)
-
-	res[classifier.LevelAudit], err = b.Audit.Classifier()
-	if err != nil {
-		return nil, err
+	gres := make(classifier.GradedClassifier)
+	lvls := []classifier.Level{
+		classifier.LevelAudit,
+		classifier.LevelBarely,
+		classifier.LevelVery,
 	}
-	res[classifier.LevelBarely], err = b.Barely.Classifier()
-	if err != nil {
-		return nil, err
+	for _, level := range lvls {
+		gres[level], err = b.Audit.Classifier(string(level), level)
+		if err != nil {
+			return nil, err
+		}
 	}
-	res[classifier.LevelVery], err = b.Very.Classifier()
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return gres, nil
 }
 
 func (b *Blocklists) Levels() map[common.Severity]*PerLevelBlocklist {
@@ -265,16 +268,18 @@ type PerLevelBlocklist struct {
 	Signatures []*classifier.Signature `json:"signatures,omitempty"`
 }
 
-func (p *PerLevelBlocklist) Classifier() (classifier.ProcessClassifier, error) {
+func (p *PerLevelBlocklist) Classifier(name string, level classifier.Level) (classifier.ProcessClassifier, error) {
 	if p == nil {
 		return classifier.CompositeClassifier{}, nil
 	}
 
-	cmdl, err := classifier.NewCommandlineClassifier(p.AllowList, p.Binaries)
+	cmdl, err := classifier.NewCommandlineClassifier(name, p.AllowList, p.Binaries)
+	cmdl.DefaultLevel = level
 	if err != nil {
 		return nil, err
 	}
-	sigs := classifier.NewSignatureMatchClassifier(p.Signatures)
+	sigs := classifier.NewSignatureMatchClassifier(name, p.Signatures)
+	sigs.DefaultLevel = level
 
 	return classifier.CompositeClassifier{cmdl, sigs}, nil
 }
