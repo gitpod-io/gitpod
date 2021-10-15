@@ -121,10 +121,16 @@ export function observabilityStaticChecks() {
 
 function jsonnetFmtCheck(): boolean {
     werft.log(sliceName, "Checking if jsonnet compiles and is well formated")
-    let success = exec('make lint', {slice: sliceName}).code == 0
+    let success = exec('make fmt && git diff --exit-code .', {slice: sliceName}).code == 0
 
     if (!success) {
-        werft.fail(sliceName, "Jsonnet linter failed. You can fix it by running 'cd operations/observability/mixins && make fmt'");
+        werft.fail(sliceName, "Jsonnet is badly formatted. You can fix it by running 'cd operations/observability/mixins && make fmt'");
+    }
+
+    success = exec('make lint', {slice: sliceName}).code == 0
+
+    if (!success) {
+        werft.fail(sliceName, "Jsonnet does not compile.");
     }
     return success
 }
