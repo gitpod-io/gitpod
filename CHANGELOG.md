@@ -1,6 +1,7 @@
 # Change Log
 
 ## October 2021
+- [ws-manager] Introduce stoppedByRequest annotation marking workspaces explicitly stopped using a `StopWorkspace` call ([#6218](https://github.com/gitpod-io/gitpod/pull/6218)) - [@csweichel](https://github.com/csweichel)
 - Fixed compile error ([#6193](https://github.com/gitpod-io/gitpod/pull/6193)) - [@meysholdt](https://github.com/meysholdt)
 - Add 'New Workspace' context menu option to all Projects cards ([#6185](https://github.com/gitpod-io/gitpod/pull/6185)) - [@jankeromnes](https://github.com/jankeromnes)
 - [gitpod-protocol] Adjust typescript GRPC options ([#6166](https://github.com/gitpod-io/gitpod/pull/6166)) - [@aledbf](https://github.com/aledbf)
