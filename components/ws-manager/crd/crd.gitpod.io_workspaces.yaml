@@ -63,8 +63,6 @@ spec:
                 required:
                 - url
                 type: object
-              pod:
-                type: string
               workspace:
                 properties:
                   auth:

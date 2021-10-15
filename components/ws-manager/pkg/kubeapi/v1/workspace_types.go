@@ -22,7 +22,6 @@ type WorkspaceSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "generate.sh" to regenerate code after modifying this file
 
-	Pod      string                `json:"pod,omitempty"`
 	Metadata WorkspaceSpecMetadata `json:"metadata"`
 
 	Workspace     WorkspaceSpecProper        `json:"workspace"`
@@ -65,10 +64,11 @@ type AuthSpec struct {
 type WorkspaceType string
 
 const (
-	WorkspaceRegular        WorkspaceType = "regular"
-	WorkspacePrebuild       WorkspaceType = "prebuild"
-	WorkspaceGhostWorkspace WorkspaceType = "ghost"
-	WorkspaceImageBuild     WorkspaceType = "imagebuild"
+	WorkspaceTypeRegular    WorkspaceType = "regular"
+	WorkspaceTypePrebuild   WorkspaceType = "prebuild"
+	WorkspaceTypeGhost      WorkspaceType = "ghost"
+	WorkspaceTypeImageBuild WorkspaceType = "imagebuild"
+	WorkspaceTypeProbe      WorkspaceType = "probe"
 )
 
 type GitSpec struct {

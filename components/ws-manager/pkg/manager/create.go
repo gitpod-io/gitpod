@@ -504,6 +504,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 	}, nil
 }
+
 func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext) ([]corev1.EnvVar, error) {
 	spec := startContext.Request.Spec
 

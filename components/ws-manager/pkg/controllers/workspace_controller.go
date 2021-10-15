@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,9 +29,10 @@ import (
 
 func NewWorkspaceReconciler(client client.Client, scheme *runtime.Scheme, cfg config.Configuration) *WorkspaceReconciler {
 	return &WorkspaceReconciler{
-		Client: client,
-		Scheme: scheme,
-		Config: &cfg,
+		Client:  client,
+		Scheme:  scheme,
+		Config:  &cfg,
+		creator: &WorkspaceCreator{Config: &cfg},
 		actor: &actorImpl{
 			Client: client,
 			Config: &cfg,
@@ -43,6 +45,8 @@ type WorkspaceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Config *config.Configuration
+
+	creator *WorkspaceCreator
 
 	actor actor
 }
@@ -76,28 +80,24 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if workspace.Spec.Pod == "" {
-		// workspace has no pod yet, that's ok
-		log.V(1).Info("workspace has no pod")
-		return ctrl.Result{}, nil
-	}
-
-	var pod corev1.Pod
-	err = r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: workspace.Spec.Pod}, &pod)
-	if err != nil {
-		return ctrl.Result{}, err
+	var pod *corev1.Pod
+	if workspace.Status.Pod != "" {
+		err = r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: workspace.Status.Pod}, pod)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	wso := workspaceObjects{
 		Workspace: &workspace,
-		Pod:       &pod,
+		Pod:       pod,
 	}
 	s, err := getWorkspaceStatus(wso)
 	if err != nil {
 		log.V(1).Error(err, "cannot get status update")
 		return ctrl.Result{}, err
 	}
-	err = actOnPodEvent(ctx, r.actor, s, &wso)
+	err = actOnPodEvent(ctx, r.actor, s, &wso, r.creator)
 	if err != nil {
 		log.V(1).Error(err, "cannot get status update")
 		return ctrl.Result{}, err
@@ -114,6 +114,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 type actor interface {
+	// CreatePod creates a new Kubernetes pod
+	CreatePod(ctx context.Context, pod *corev1.Pod) error
+
 	// InitializeWorkspaceContent initializes the workspace content. If this operation is already ongoing,
 	// no new attempt is made (the call is idempotent).
 	InitializeWorkspaceContent(ctx context.Context, workspace *workspacev1.Workspace) (err error)
@@ -240,9 +243,14 @@ func (a *actorImpl) ModifyFinalizer(ctx context.Context, instanceID string, add 
 	})
 }
 
+// CreatePod creates a new Kubernetes pod
+func (a *actorImpl) CreatePod(ctx context.Context, pod *corev1.Pod) error {
+	return a.Client.Create(ctx, pod)
+}
+
 // actOnPodEvent performs actions when a kubernetes event comes in. For example we shut down failed workspaces or start
 // polling the ready state of initializing ones.
-func actOnPodEvent(ctx context.Context, actor actor, status *workspacev1.WorkspaceStatus, wso *workspaceObjects) (err error) {
+func actOnPodEvent(ctx context.Context, actor actor, status *workspacev1.WorkspaceStatus, wso *workspaceObjects, creator *WorkspaceCreator) (err error) {
 	if status.Phase == workspacev1.PhaseStopping || status.Phase == workspacev1.PhaseStopped {
 		// Beware: do not else-if this condition with the other phases as we don't want the stop
 		//         login in any other phase, too.
@@ -294,6 +302,23 @@ func actOnPodEvent(ctx context.Context, actor actor, status *workspacev1.Workspa
 		}
 
 		return nil
+	}
+
+	if status.Phase == workspacev1.PhasePending && !pointer.BoolDeref(status.Conditions.Deployed, false) {
+		// there's no pod yet for this workspace - create one
+		status.Pod = podName(wso.Workspace.Spec.Workspace.Type, wso.Workspace.Name)
+
+		pod, err := creator.createWorkspacePod(wso.Workspace)
+		if err != nil {
+			return err
+		}
+
+		err = actor.CreatePod(ctx, pod)
+		if err != nil {
+			return err
+		}
+
+		status.Conditions.Deployed = pointer.Bool(true)
 	}
 
 	if status.Phase == workspacev1.PhaseCreating {

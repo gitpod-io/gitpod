@@ -110,14 +110,20 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("invalid content provider configuration")
 		}
 
-		mgmt, err := manager.New(cfg.Manager, mgr.GetClient(), clientset, cp)
+		legacyMgmt, err := manager.New(cfg.Manager, mgr.GetClient(), clientset, cp)
 		if err != nil {
 			log.WithError(err).Fatal("cannot create manager")
 		}
-		defer mgmt.Close()
+		defer legacyMgmt.Close()
+
+		newMgmt := &controllers.Manager{
+			Config:    legacyMgmt.Config,
+			Clientset: legacyMgmt.Clientset,
+			RawClient: legacyMgmt.RawClient,
+		}
 
 		if cfg.Prometheus.Addr != "" {
-			err = mgmt.RegisterMetrics(metrics.Registry)
+			err = legacyMgmt.RegisterMetrics(metrics.Registry)
 			if err != nil {
 				log.WithError(err).Error("Prometheus metrics incomplete")
 			}
@@ -171,17 +177,10 @@ var runCmd = &cobra.Command{
 		defer grpcServer.Stop()
 		grpc_prometheus.Register(grpcServer)
 
-		wsmanapi.RegisterWorkspaceManagerServer(grpcServer, &controllers.WorkspaceServiceDelegator{
-			Handler: mgmt,
-			Shadows: []wsmanapi.WorkspaceManagerServer{
-				&controllers.Manager{
-					Config:    mgmt.Config,
-					Clientset: mgmt.Clientset,
-					RawClient: mgmt.RawClient,
-				},
-			},
-		})
-		regapi.RegisterSpecProviderServer(grpcServer, mgmt)
+		// wsmanapi.RegisterWorkspaceManagerServer(grpcServer, legacyMgmt)
+		wsmanapi.RegisterWorkspaceManagerServer(grpcServer, newMgmt)
+
+		regapi.RegisterSpecProviderServer(grpcServer, legacyMgmt)
 		lis, err := net.Listen("tcp", cfg.RPCServer.Addr)
 		if err != nil {
 			log.WithError(err).WithField("addr", cfg.RPCServer.Addr).Fatal("cannot start RPC server")
@@ -190,7 +189,7 @@ var runCmd = &cobra.Command{
 		go grpcServer.Serve(lis)
 		log.WithField("addr", cfg.RPCServer.Addr).Info("started gRPC server")
 
-		monitor, err := mgmt.CreateMonitor()
+		monitor, err := legacyMgmt.CreateMonitor()
 		if err != nil {
 			log.WithError(err).Fatal("cannot start workspace monitor")
 		}
