@@ -3,7 +3,7 @@ options:
   no_parent_owners: true
 
 approvers:
-  - engineering-platform
+  - engineering-meta
 
 labels:
-  - "team: platform"
+  - "team: meta"
