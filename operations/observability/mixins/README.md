@@ -12,6 +12,7 @@ Gitpod's mixin is based on the [Prometheus Monitoring Mixins project](https://gi
     * [Recording Rules](#Recording-Rules)
     * [Alerts](#Alerts)
     * [Rules and Alerts validation](#Rules-and-Alerts-validation)
+* [Deploying merged changes to production](#Deploying-merged-changes-to-production)
 * [Frequently asked Questions](#FAQ)
     * [Any recommendations when developing new dashboards?](#Any-recommendations-when-developing-new-dashboards)
     * [How is our mixin consumed?](#How-is-our-mixin-consumed)
@@ -267,6 +268,14 @@ You can use our Makefile to make sure the alerts and recording rules you've crea
 By running `make promtool-lint`, you'll generate a new file called `prometheus_alerts.yaml` with all teams' recording rules and alerts together, and also use the `promtool` binary to validate all of them.
 
 We also have this same validation running in our CI, to make sure we don't merge stuff that can break our monitoring system.
+
+## Deploying merged changes to production
+
+Alright, you got your changes merged, now what? The changes need to land on our [gitpod-io/observability](https://github.com/gitpod-io/observability) repository by updating the `vendor/` folder.
+
+The `vendor/` folder can be updated by triggering this [workflow](https://github.com/gitpod-io/observability/actions/workflows/dep-update.yaml). Yes, you just need to click the button and the workflow will open a new Pull Request with the updates.
+
+After all CI checks pass, it is safe to merge the Pull Request. It is now ArgoCD's duty to synchronize the monitoring-satellite applications across all clusters. If you want to check progress, you can do that through [ArgoCD UI](https://argo-cd.gitpod-io-dev.com/applications?labels=application%253Dmonitoring-satellite).
 
 ## FAQ
 
