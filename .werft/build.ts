@@ -53,10 +53,8 @@ export async function build(context, version) {
 
     try {
         exec(`pre-commit run --all-files --show-diff-on-failure`);
-        werft.result("validate changes", "github-check-changes", "conclusion success");
         werft.done('validate-changes');
     } catch (err) {
-        werft.result("validate changes", "github-check-changes", "conclusion failure");
         werft.fail('validate-changes', err);
     }
 
