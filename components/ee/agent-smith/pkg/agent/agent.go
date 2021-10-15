@@ -206,8 +206,8 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 	}
 	var (
 		wg  sync.WaitGroup
-		cli chan detector.Process
-		clo chan classifiedProcess
+		cli = make(chan detector.Process, 200)
+		clo = make(chan classifiedProcess, 20)
 	)
 	defer wg.Wait()
 	for i := 0; i < 10; i++ {
@@ -270,7 +270,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 	for _, p := range penalty {
 		switch p {
 		case config.PenaltyStopWorkspace:
-			log.WithFields(owi).Info("stopping workspace")
+			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("stopping workspace")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.stopWorkspace(ws.SupervisorPID)
 			if err != nil {
@@ -278,7 +278,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			}
 			return penalty, err
 		case config.PenaltyStopWorkspaceAndBlockUser:
-			log.WithFields(owi).Info("stopping workspace and blocking user")
+			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("stopping workspace and blocking user")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner)
 			if err != nil {
@@ -286,7 +286,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			}
 			return penalty, err
 		case config.PenaltyLimitCPU:
-			log.WithFields(owi).Info("limiting CPU")
+			log.WithField("infringement", ws.Infringements).WithFields(owi).Info("limiting CPU")
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.limitCPUUse(ws.Pod)
 			if err != nil {
