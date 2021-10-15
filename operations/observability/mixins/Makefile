@@ -33,4 +33,9 @@ vendor:
 
 .PHONY: unit-tests
 unit-tests: vendor
-	jsonnet unit-test.jsonnet -J vendor/
+	@echo 'Testing dashboard datasources'
+	jsonnet tests/dashboardDatasources.jsonnet -J vendor/
+	@echo 'Testing alert severity labels'
+	jsonnet tests/alertsSeverityLabel.jsonnet -J vendor/
+	@echo 'Testing alert descripion annotation'
+	jsonnet tests/alertsDescriptionAnnotation.jsonnet -J vendor/
