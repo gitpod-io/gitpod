@@ -124,7 +124,7 @@ function jsonnetFmtCheck(): boolean {
     let success = exec('make lint', {slice: sliceName}).code == 0
 
     if (!success) {
-        werft.log(sliceName, "Jsonnet linter failed. You can fix it by running 'cd operations/observability/mixins && make fmt'")
+        werft.fail(sliceName, "Jsonnet linter failed. You can fix it by running 'cd operations/observability/mixins && make fmt'");
     }
     return success
 }
@@ -137,7 +137,7 @@ function prometheusRulesCheck(): boolean {
         const failedMessage = `Prometheus rule validation failed. For futher reference, please read:
 https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
 https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/`
-        werft.log(sliceName, failedMessage)
+        werft.fail(sliceName, failedMessage)
     }
     return success
 }
@@ -150,7 +150,7 @@ function jsonnetUnitTests(): boolean {
 
     if (!success) {
         const failedMessage = `To make sure our dashboards work for both preview-environments and production/staging, we can't hardcode datasources. Please use datasource variables.`
-        werft.log(sliceName, failedMessage)
+        werft.fail(sliceName, failedMessage)
     }
     return success
 }
