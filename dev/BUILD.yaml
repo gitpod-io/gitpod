@@ -8,3 +8,9 @@ packages:
     config:
       commands:
         - ["sh", "-c", "tail -n1 dev-sweeper--docker/imgnames.txt > sweeper.txt"]
+  - name: all-app
+    type: generic
+    deps:
+      - dev/blowtorch:app
+      - dev/gpctl:app
+      - dev/loadgen:app
