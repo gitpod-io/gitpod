@@ -32,6 +32,14 @@ const (
 	AffinityLabelWorkspacesHeadless = "gitpod.io/workload_workspace_headless"
 )
 
+var AffinityList = []string{
+	AffinityLabelMeta,
+	AffinityLabelIDE,
+	AffinityLabelWorkspaceServices,
+	AffinityLabelWorkspacesRegular,
+	AffinityLabelWorkspacesHeadless,
+}
+
 func DefaultLabels(component string) map[string]string {
 	return map[string]string{
 		"component": component,
