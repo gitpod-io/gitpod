@@ -89,7 +89,6 @@ export async function build(context, version) {
     const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
     const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
     const dontTest = "no-test" in buildConfig;
-    const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
     const workspaceFeatureFlags: string[] = ((): string[] => {
         const raw: string = buildConfig["ws-feature-flags"] || "";
@@ -117,7 +116,6 @@ export async function build(context, version) {
         version,
         mainBuild,
         dontTest,
-        cacheLevel,
         publishRelease,
         workspaceFeatureFlags,
         dynamicCPULimits,
@@ -144,15 +142,15 @@ export async function build(context, version) {
 
     exec(`LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`)
     exec(`leeway vet --ignore-warnings`);
-    exec(`leeway build --docker-build-options network=host --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} --dont-retag --coverage-output-path=${coverageOutput} --save /tmp/dev.tar.gz -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
+    exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} --dont-retag --coverage-output-path=${coverageOutput} --save /tmp/dev.tar.gz -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
     const sweeperImage = exec(`tar xfO /tmp/dev.tar.gz ./sweeper.txt`).stdout.trim();
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
     if (withContrib || publishRelease) {
-        exec(`leeway build --docker-build-options network=host --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} contrib:all`);
+        exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} contrib:all`);
     }
-    exec(`leeway build --docker-build-options network=host --werft=true -c ${cacheLevel} ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
+    exec(`leeway build --docker-build-options network=host --werft=true -c remote ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");
