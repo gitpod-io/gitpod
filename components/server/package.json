@@ -98,6 +98,7 @@
     "@types/chai": "^4.1.2",
     "@types/chai-http": "^3.0.4",
     "@types/cookie-parser": "^1.4.2",
+    "@types/cookie-signature": "^1.1.0",
     "@types/cors": "^2.8.3",
     "@types/deep-equal": "^1.0.1",
     "@types/dotenv": "^4.0.2",
