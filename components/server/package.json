@@ -97,6 +97,7 @@
     "@types/body-parser": "^1.16.5",
     "@types/chai": "^4.1.2",
     "@types/chai-http": "^3.0.4",
+    "@types/cookie": "^0.4.1",
     "@types/cookie-parser": "^1.4.2",
     "@types/cookie-signature": "^1.0.3",
     "@types/cors": "^2.8.3",
