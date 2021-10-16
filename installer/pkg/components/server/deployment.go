@@ -100,6 +100,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}, {
 								Name:          PrometheusPortName,
 								ContainerPort: PrometheusPort,
+							},{
+								Name:          "testLogin",
+								ContainerPort: 9333,
 							}},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: common.MergeEnv(
