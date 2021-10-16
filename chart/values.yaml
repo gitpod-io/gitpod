@@ -328,6 +328,9 @@ components:
       debug:
         expose: false
         containerPort: 6060
+      testUser:
+        expose: true
+        containerPort: 9333
     serviceSessionAffinity: None
     serverContainer:
       volumeMounts: null
