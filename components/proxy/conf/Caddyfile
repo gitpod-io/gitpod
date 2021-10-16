@@ -223,6 +223,22 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
+	@test_login path /login/github
+	handle @test_login {
+		gitpod.cors_origin {
+			base_domain {$GITPOD_DOMAIN}
+		}
+
+		import compression
+
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9333 {
+			import upstream_headers
+			import upstream_connection
+
+			flush_interval -1
+		}
+	}
+
 	@to_server path /auth/github/callback /auth /auth/* /apps /apps/*
 	handle @to_server {
 		import compression
