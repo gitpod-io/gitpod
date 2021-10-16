@@ -42,7 +42,7 @@ import { HeadlessLogController, HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config } from './config';
 import { DebugApp } from './debug-app';
-import { TestController, testControllerApp } from './user/test-user-controller';
+import { TestController/* , testControllerApp */ } from './user/test-user-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
