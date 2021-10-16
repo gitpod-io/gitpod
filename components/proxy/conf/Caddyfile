@@ -231,7 +231,7 @@ https://{$GITPOD_DOMAIN} {
 
 		import compression
 
-		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9333 {
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_headers
 			import upstream_connection
 

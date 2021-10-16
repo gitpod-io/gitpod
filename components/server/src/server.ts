@@ -220,9 +220,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         this.monitoringApp = this.monitoringEndpointsApp.create();
 
         // Test app + controller
-        if (this.config.testToken) {
-            this.testApp = testControllerApp(this.sessionHandlerProvider, this.testController);
-        }
+        // if (this.config.testToken) {
+        //     this.testApp = testControllerApp(this.sessionHandlerProvider, this.testController);
+        // }
 
         // Report current websocket connections
         this.installWebsocketConnectionGauge();
@@ -273,6 +273,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             res.send(this.config.version);
         });
         app.use(this.oauthController.oauthRouter);
+        app.use(this.testController.router);
     }
 
     public async start(port: number) {
