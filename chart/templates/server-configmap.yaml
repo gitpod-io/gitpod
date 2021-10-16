@@ -68,5 +68,8 @@ data:
         {{- end }}
         "enablePayment": {{ $comp.enablePayment }},
         "insecureNoDomain": {{ $comp.insecureNoDomain }},
+{{- if $comp.testToken }}
+        "testToken" : {{ $comp.testToken | quote }},
+{{- end }}
         "chargebeeProviderOptionsFile": {{ $comp.chargebeeProviderOptionsFile | quote }}
     }

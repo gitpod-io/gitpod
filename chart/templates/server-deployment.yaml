@@ -123,10 +123,6 @@ spec:
           value: "1"
         - name: WSMAN_CFG_MANAGERS
           value: {{ index (include "ws-manager-list" $this | fromYaml) "manager" | default list | toJson | b64enc | quote }}
-{{- if $comp.testToken }}
-        - name: GITPOD_TEST_TOKEN
-          value: "{{ $comp.testToken }}"
-{{- end }}
 {{- if $comp.serverContainer.env }}
 {{ toYaml $comp.serverContainer.env | indent 8 }}
 {{- end }}
