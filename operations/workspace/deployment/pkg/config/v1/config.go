@@ -12,6 +12,8 @@ import (
 // version: v1
 // environment: production
 // project: gitpod-staging
+// #TODO(prs): gcpSecretPath: /var/gcp/gitpod-sa.json
+//
 // metaClusters:
 //   - name: prod-meta-eu00
 //     region: europe-west1
@@ -64,8 +66,12 @@ func isValidProject(value interface{}) error {
 	if !ok {
 		return xerrors.Errorf("value not a valid project")
 	}
-	if strings.TrimSpace(p.Name) == "" {
-		return xerrors.Errorf("project Name must not be empty")
+
+	err := validation.ValidateStruct(&p,
+		validation.Field(strings.TrimSpace(p.Name), validation.Required),
+	)
+	if err != nil {
+		return xerrors.Errorf("invalid project: %s", err)
 	}
 	return nil
 }
@@ -76,11 +82,12 @@ func areValidMetaClusters(value interface{}) error {
 		return xerrors.Errorf("value not a valid []*MetaCluster")
 	}
 	for _, mc := range mcs {
-		if strings.TrimSpace(mc.Name) == "" {
-			xerrors.Errorf("meta cluster name cannot be empty")
-		}
-		if strings.TrimSpace(mc.Region) == "" {
-			xerrors.Errorf("meta cluster region cannot be empty")
+		err := validation.ValidateStruct(&mc,
+			validation.Field(strings.TrimSpace(mc.Name), validation.Required),
+			validation.Field(strings.TrimSpace(mc.Region), validation.Required),
+		)
+		if err != nil {
+			return xerrors.Errorf("invalid MetaCluster: %s", err)
 		}
 	}
 	return nil
@@ -93,9 +100,14 @@ func areValidWorkspaceClusters(value interface{}) error {
 	}
 	for _, wc := range wcs {
 		err := validation.ValidateStruct(&wc,
-			validation.Field(&wc., validation.Required),
-			validation.Field(&c.MetaClusters, validation.By(areValidWorkspacelusters)),
+			validation.Field(strings.TrimSpace(wc.Name), validation.Required),
+			validation.Field(strings.TrimSpace(wc.Region), validation.Required),
+			validation.Field(strings.TrimSpace(wc.Prefix), validation.Required),
+			validation.Field(strings.TrimSpace(wc.GovernedBy), validation.Required),
 		)
+		if err != nil {
+			return xerrors.Errorf("invalid WorkspaceCluster: %s", err)
+		}
 	}
 	return nil
 }
@@ -107,36 +119,10 @@ func (c *Config) Validate() error {
 		validation.Field(c.WorkspaceClusters, validation.Required),
 		validation.Field(&c.Project, validation.By(isValidProject)),
 		validation.Field(&c.MetaClusters, validation.By(areValidMetaClusters)),
-		validation.Field(&c.MetaClusters, validation.By(areValidWorkspacelusters)),
+		validation.Field(&c.WorkspaceClusters, validation.By(areValidWorkspaceClusters)),
 	)
 	if err != nil {
-		return xerrors.Errorf("invalid request: %w", err)
+		return xerrors.Errorf("invalid configuration: %w", err)
 	}
-	return nil
-}
-
-func areValidFeatureFlags(value interface{}) error {
-	s, ok := value.([]api.WorkspaceFeatureFlag)
-	if !ok {
-		return xerrors.Errorf("value not a feature flag list")
-	}
-
-	idx := make(map[api.WorkspaceFeatureFlag]struct{}, len(s))
-	for _, k := range s {
-		idx[k] = struct{}{}
-	}
-
-	return nil
-}
-
-func (p *Project) Validate() error {
-	return isValidProject(c)
-}
-
-func (mc *MetaCluster) Validate() error {
-	return nil
-}
-
-func (wc *WorkspaceCluster) Validate() error {
 	return nil
 }
