@@ -100,7 +100,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}, {
 								Name:          PrometheusPortName,
 								ContainerPort: PrometheusPort,
-							},{
+							}, {
 								Name:          "testLogin",
 								ContainerPort: 9333,
 							}},
