@@ -212,7 +212,7 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 	)
 	agent.metrics.RegisterClassificationQueues(cli, clo)
 	defer wg.Wait()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 25; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
