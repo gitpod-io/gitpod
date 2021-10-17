@@ -22,7 +22,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": null,
   "graphTooltip": 1,
-  "iteration": 1634292515205,
+  "iteration": 1634553368544,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -130,46 +130,94 @@
       "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": "$datasource",
       "description": "This panel represents the number of penalties that Agent-Smith is trying to apply per second.\n\nIt represents attempts and may not reflect the exact number of penalties applied, please check for error logs or slack messages to be sure if penalties are indeed applied.",
-      "fill": 1,
-      "fillGradient": 0,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "rate"
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
         "y": 1
       },
-      "hiddenSeries": false,
       "id": 46,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
-      "percentage": false,
       "pluginVersion": "8.2.0",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
       "targets": [
         {
           "exemplar": true,
@@ -178,48 +226,20 @@
           "legendFormat": "{{cluster}} - {{penalty}}",
           "queryType": "randomWalk",
           "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Penalty attempts",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
         },
         {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+          "exemplar": true,
+          "expr": "sum(rate(gitpod_agent_smith_penalty_attempts_failed_total{cluster=~\"$cluster\"})) by (cluster, penalty)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{cluster}} - failed ⚠️  {{penalty}}",
+          "refId": "B"
         }
       ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Penalty attempts",
+      "type": "timeseries"
     },
     {
       "datasource": "$datasource",
@@ -319,7 +339,7 @@
           },
           "custom": {
             "axisLabel": "",
-            "axisPlacement": "auto",
+            "axisPlacement": "left",
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -358,18 +378,23 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "none"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "B"
+              "options": "C"
             },
             "properties": [
               {
                 "id": "custom.axisPlacement",
                 "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "rate"
               }
             ]
           }
@@ -396,6 +421,7 @@
         {
           "exemplar": true,
           "expr": "sum(gitpod_agent_smith_classification_backpressure_in_count{cluster=~\"$cluster\"}) by (cluster)",
+          "hide": false,
           "interval": "",
           "legendFormat": "{{cluster}} - In Pressure",
           "refId": "A"
@@ -407,6 +433,14 @@
           "interval": "",
           "legendFormat": "{{cluster}} - Out Pressure",
           "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(rate(gitpod_agent_smith_classification_backpressure_in_drop_total{cluster=~\"$cluster\"})) by (cluster)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{cluster}} - Classification Drop Rate",
+          "refId": "C"
         }
       ],
       "title": "Classification Backpressure",
@@ -491,6 +525,88 @@
         }
       ],
       "title": "Proc Index Size",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 58,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "(sum(rate(gitpod_agent_smith_classifier_signature_cache_use_total{cluster=~\"$cluster\", use=\"miss\"}[5m])) by (cluster) / sum(rate(gitpod_agent_smith_classifier_signature_cache_use_total{cluster=~\"$cluster\"}[5m])) by (cluster)) * 100",
+          "interval": "",
+          "legendFormat": "{{ cluster }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Signature Cache Miss",
       "type": "timeseries"
     },
     {
@@ -2185,12 +2301,14 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": [
-            "All"
+            "prod-ws-us17",
+            "prod-ws-eu17"
           ],
           "value": [
-            "$__all"
+            "prod-ws-us17",
+            "prod-ws-eu17"
           ]
         },
         "datasource": "$datasource",
@@ -2220,8 +2338,12 @@
         "allValue": null,
         "current": {
           "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": "$datasource",
         "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"agent-smith.*\"}, node)",
@@ -2250,8 +2372,12 @@
         "allValue": null,
         "current": {
           "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": "$datasource",
         "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"agent-smith.*\"}, pod)",
@@ -2279,8 +2405,8 @@
       {
         "current": {
           "selected": false,
-          "text": "$datasource",
-          "value": "$datasource"
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
         },
         "description": null,
         "error": null,
@@ -2299,12 +2425,12 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "utc",
   "title": "Gitpod / Component / agent-smith",
   "uid": "agent-smith",
-  "version": 1
+  "version": 2
 }
