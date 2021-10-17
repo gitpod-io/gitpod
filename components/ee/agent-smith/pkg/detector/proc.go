@@ -7,7 +7,9 @@ package detector
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -28,7 +30,8 @@ type realProcfs procfs.FS
 var _ discoverableProcFS = realProcfs{}
 
 func (fs realProcfs) Discover() map[int]*process {
-	procs, err := procfs.FS(fs).AllProcs()
+	proc := procfs.FS(fs)
+	procs, err := proc.AllProcs()
 	if err != nil {
 		log.WithError(err).Error("cannot list processes")
 	}
@@ -47,11 +50,10 @@ func (fs realProcfs) Discover() map[int]*process {
 			log.WithField("pid", p.PID).WithError(err).Debug("cannot stat process")
 			continue
 		}
-		path, err := p.Executable()
-		if err != nil {
-			log.WithField("pid", p.PID).WithError(err).Debug("cannot get process executable")
-			continue
-		}
+		// Note: don't use p.Executable() here because it resolves the exe symlink which yields
+		//       a path that doesn't make sense in this mount namespace. However, reading from this
+		//       file directly works.
+		path := filepath.Join("proc", strconv.Itoa(p.PID), "exe")
 
 		// Even though we loop through a sorted process list (lowest PID first), we cannot
 		// assume that we've seen the parent already due to PID reuse.
@@ -165,6 +167,7 @@ type process struct {
 }
 
 func (det *ProcfsDetector) run(processes chan<- Process) {
+	log.Debug("procfs detector run")
 	idx := det.proc.Discover()
 
 	// We now have a complete view of the process table. Let's calculate the depths
@@ -186,12 +189,14 @@ func (det *ProcfsDetector) run(processes chan<- Process) {
 			continue
 		}
 
-		processes <- Process{
+		proc := Process{
 			Path:        p.Path,
 			CommandLine: p.Cmdline,
 			Kind:        p.Kind,
 			Workspace:   p.Workspace,
 		}
+		log.WithField("proc", proc).Debug("found process")
+		processes <- proc
 	}
 }
 

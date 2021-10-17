@@ -223,17 +223,13 @@ func (b *Blocklists) Classifier() (res classifier.ProcessClassifier, err error) 
 	}()
 
 	if b == nil {
-		return classifier.NewCommandlineClassifier("empty", nil, nil)
+		return classifier.NewCommandlineClassifier("empty", classifier.LevelAudit, nil, nil)
 	}
 
 	gres := make(classifier.GradedClassifier)
-	lvls := []classifier.Level{
-		classifier.LevelAudit,
-		classifier.LevelBarely,
-		classifier.LevelVery,
-	}
-	for _, level := range lvls {
-		gres[level], err = b.Audit.Classifier(string(level), level)
+	for level, bl := range b.Levels() {
+		lvl := classifier.Level(level)
+		gres[lvl], err = bl.Classifier(string(level), lvl)
 		if err != nil {
 			return nil, err
 		}
@@ -273,13 +269,15 @@ func (p *PerLevelBlocklist) Classifier(name string, level classifier.Level) (cla
 		return classifier.CompositeClassifier{}, nil
 	}
 
-	cmdl, err := classifier.NewCommandlineClassifier(name, p.AllowList, p.Binaries)
-	cmdl.DefaultLevel = level
+	cmdl, err := classifier.NewCommandlineClassifier(name, level, p.AllowList, p.Binaries)
 	if err != nil {
 		return nil, err
 	}
-	sigs := classifier.NewSignatureMatchClassifier(name, p.Signatures)
-	sigs.DefaultLevel = level
+	cmdlc := classifier.NewCountingMetricsClassifier("cmd_"+name, cmdl)
 
-	return classifier.CompositeClassifier{cmdl, sigs}, nil
+	sigsc := classifier.NewCountingMetricsClassifier("sig_"+name,
+		classifier.NewSignatureMatchClassifier(name, level, p.Signatures),
+	)
+
+	return classifier.CompositeClassifier{cmdlc, sigsc}, nil
 }
