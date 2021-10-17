@@ -83,8 +83,9 @@ export class TestController {
                 }
 
                 // Create and set testuser
-                const testCaseId = String(req.body);
-                const params = TEST_CASES[testCaseId];
+                // const testCaseId = String(req.body);
+                const body = req.body as { [key: string]: string };
+                const params = TEST_CASES[body.key];
                 if (!params) {
                     res.sendStatus(404);
                     return;
@@ -111,7 +112,7 @@ export class TestController {
                     userId: user.id,
                     cookie: SessionHandlerProvider.generateCookieForSession(this.config, req.session!)
                 });
-            } catch(err) {
+            } catch (err) {
                 log.error({ sessionId: req.sessionID }, "(TestAuth) Error during the TESTUSER login process", err);
                 res.sendStatus(500);
             }
