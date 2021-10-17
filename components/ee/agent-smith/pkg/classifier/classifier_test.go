@@ -74,7 +74,7 @@ func TestCommandlineClassifier(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			class, err := classifier.NewCommandlineClassifier("test", test.AllowList, test.BlockList)
+			class, err := classifier.NewCommandlineClassifier("test", classifier.LevelAudit, test.AllowList, test.BlockList)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -22,7 +22,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": null,
   "graphTooltip": 1,
-  "iteration": 1634292515205,
+  "iteration": 1634512084745,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -174,10 +174,19 @@
         {
           "exemplar": true,
           "expr": "sum(rate(gitpod_agent_smith_penalty_attempts_total{cluster=~\"$cluster\"}[5m])) by (cluster, penalty)",
+          "instant": false,
           "interval": "",
           "legendFormat": "{{cluster}} - {{penalty}}",
           "queryType": "randomWalk",
           "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(rate(gitpod_agent_smith_penalty_attempts_failed_total{cluster=~\"$cluster\"}[5m])) by (cluster, penalty)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{cluster}} - failed!! - {{penalty}}",
+          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -407,6 +416,14 @@
           "interval": "",
           "legendFormat": "{{cluster}} - Out Pressure",
           "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(rate(gitpod_agent_smith_classification_backpressure_in_drop_total{cluster=~\"$cluster\"})) by (cluster)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{cluster}} - Drop Rate",
+          "refId": "C"
         }
       ],
       "title": "Classification Backpressure",
@@ -491,6 +508,87 @@
         }
       ],
       "title": "Proc Index Size",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "VictoriaMetrics",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 58,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(rate(gitpod_agent_smith_classifier_count_match_total{cluster=~\"$cluster\"})) by (cluster)",
+          "interval": "",
+          "legendFormat": "{{ cluster }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Classification Attempts per Second",
       "type": "timeseries"
     },
     {
@@ -2187,10 +2285,10 @@
         "current": {
           "selected": true,
           "text": [
-            "All"
+            "prod-ws-eu17"
           ],
           "value": [
-            "$__all"
+            "prod-ws-eu17"
           ]
         },
         "datasource": "$datasource",
@@ -2249,9 +2347,13 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": "$datasource",
         "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"agent-smith.*\"}, pod)",
@@ -2279,8 +2381,8 @@
       {
         "current": {
           "selected": false,
-          "text": "$datasource",
-          "value": "$datasource"
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
         },
         "description": null,
         "error": null,
@@ -2299,12 +2401,12 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "utc",
   "title": "Gitpod / Component / agent-smith",
   "uid": "agent-smith",
-  "version": 1
+  "version": 2
 }
