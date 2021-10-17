@@ -192,6 +192,12 @@ type Infringement struct {
 // defaultRuleset is the name ("remote origin URL") of the default enforcement rules
 const defaultRuleset = ""
 
+type classifiedProcess struct {
+	P   detector.Process
+	C   *classifier.Classification
+	Err error
+}
+
 // Start gets a stream of Infringements from Run and executes a callback on them to apply a Penalty
 func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace, []config.PenaltyKind)) {
 	ps, err := agent.detector.DiscoverProcesses(ctx)
@@ -199,22 +205,16 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 		log.WithError(err).Fatal("cannot start process detector")
 	}
 
-	type classifiedProcess struct {
-		P   detector.Process
-		C   *classifier.Classification
-		Err error
-	}
 	var (
 		wg  sync.WaitGroup
 		cli = make(chan detector.Process, 200)
 		clo = make(chan classifiedProcess, 20)
 	)
+	agent.metrics.RegisterClassificationQueues(cli, clo)
 	defer wg.Wait()
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func() {
-			agent.metrics.classificationBackpressureInCount.Set(float64(len(cli)))
-			agent.metrics.classificationBackpressureOutCount.Set(float64(len(clo)))
 			defer wg.Done()
 			for i := range cli {
 				class, err := agent.classifier.Matches(i.Path, i.CommandLine)
@@ -233,7 +233,14 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 			if !ok {
 				return
 			}
-			cli <- proc
+			select {
+			case cli <- proc:
+			default:
+				// without this case we might deadlock the main loop, because all workers try to write to clo,
+				// but clo is full. Because all worker are blocked (trying to write to clo), we cannot write to
+				// cli either.
+				agent.metrics.classificationBackpressureInDrop.Inc()
+			}
 		case class := <-clo:
 			proc, cl, err := class.P, class.C, class.Err
 			if err != nil {
@@ -274,6 +281,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.stopWorkspace(ws.SupervisorPID)
 			if err != nil {
+				log.WithError(err).WithFields(owi).Debug("failed to stop workspace")
 				agent.metrics.penaltyFailures.WithLabelValues(string(p), err.Error()).Inc()
 			}
 			return penalty, err
@@ -282,6 +290,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner)
 			if err != nil {
+				log.WithError(err).WithFields(owi).Debug("failed to stop workspace and block user")
 				agent.metrics.penaltyFailures.WithLabelValues(string(p), err.Error()).Inc()
 			}
 			return penalty, err
@@ -290,6 +299,7 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]config.PenaltyKind, erro
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
 			err := agent.limitCPUUse(ws.Pod)
 			if err != nil {
+				log.WithError(err).WithFields(owi).Debug("failed to limit CPU")
 				agent.metrics.penaltyFailures.WithLabelValues(string(p), err.Error()).Inc()
 			}
 			return penalty, err

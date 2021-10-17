@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -43,7 +44,7 @@ type ProcessClassifier interface {
 	Matches(executable string, cmdline []string) (*Classification, error)
 }
 
-func NewCommandlineClassifier(name string, allowList []string, blockList []string) (*CommandlineClassifier, error) {
+func NewCommandlineClassifier(name string, level Level, allowList []string, blockList []string) (*CommandlineClassifier, error) {
 	al := make([]*regexp.Regexp, 0, len(allowList))
 	for _, a := range allowList {
 		r, err := regexp.Compile(a)
@@ -54,7 +55,7 @@ func NewCommandlineClassifier(name string, allowList []string, blockList []strin
 	}
 
 	return &CommandlineClassifier{
-		DefaultLevel: LevelAudit,
+		DefaultLevel: level,
 		AllowList:    al,
 		BlockList:    blockList,
 
@@ -125,10 +126,10 @@ func (cl *CommandlineClassifier) Collect(m chan<- prometheus.Metric) {
 	cl.blocklistHitTotal.Collect(m)
 }
 
-func NewSignatureMatchClassifier(name string, sig []*Signature) *SignatureMatchClassifier {
+func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signature) *SignatureMatchClassifier {
 	return &SignatureMatchClassifier{
 		Signatures:   sig,
-		DefaultLevel: LevelAudit,
+		DefaultLevel: defaultLevel,
 		processMissTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "gitpod_agent_smith",
 			Subsystem: "classifier_signature",
@@ -167,6 +168,7 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	r, err := os.Open(executable)
 	if os.IsNotExist(err) {
 		sigcl.processMissTotal.Inc()
+		log.WithField("executable", executable).WithField("cmdline", cmdline).Debug("signature classification miss")
 		return sigNoMatch, nil
 	}
 	defer r.Close()
