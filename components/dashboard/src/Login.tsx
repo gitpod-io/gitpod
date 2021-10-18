@@ -38,10 +38,14 @@ export function hasLoggedInBefore() {
     return document.cookie.match("gitpod-user=loggedIn");
 }
 
+export function hasVisitedMarketingWebsiteBefore() {
+    return document.cookie.match("gitpod-marketing-website-visited=true");
+}
+
 export function Login() {
     const { setUser } = useContext(UserContext);
     const { setTeams } = useContext(TeamsContext);
-    const showWelcome = !hasLoggedInBefore();
+    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore();
 
     const [ authProviders, setAuthProviders ] = useState<AuthProviderInfo[]>([]);
     const [ errorMessage, setErrorMessage ] = useState<string | undefined>(undefined);
