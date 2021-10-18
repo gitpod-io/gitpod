@@ -10,6 +10,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.get
+import io.ktor.client.features.json.JacksonSerializer
 
 class ControllerStatusProvider {
     private val logger = logger<ControllerStatusProvider>()
@@ -19,7 +20,9 @@ class ControllerStatusProvider {
             @Suppress("MagicNumber")
             requestTimeoutMillis = 2000
         }
-        install(JsonFeature)
+        install(JsonFeature) {
+            serializer = JacksonSerializer()
+        }
     }
     private val cwmToken = System.getenv("CWM_HOST_STATUS_OVER_HTTP_TOKEN")
 
