@@ -1,8 +1,8 @@
 package step
 
 import (
-	"checks/prerun"
-	v1 "config/v1"
+	prerun "github.com/gitpod-io/gitpod/ws-deployment/pkg/check/prerun"
+	v1 "github.com/gitpod-io/gitpod/ws-deployment/pkg/config/v1"
 )
 
 // InstallGitpodStep is the step which installs gitpod on a cluster

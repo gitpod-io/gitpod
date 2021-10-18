@@ -1,10 +1,11 @@
 package infra
 
 import (
-	"common/cluster"
 	"fmt"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/gitpod-io/gitpod/ws-deployment/pkg/common"
 )
 
 const (
@@ -30,9 +31,9 @@ const (
 //
 // ./build-ws-cluster.sh -e production -l europe-west1 -p us89 -t k3s
 type TerraformModule struct {
-	ClusterType        cluster.ClusterType
+	ClusterType        common.ClusterType
 	ClusterPrefix      string
-	ClusterEnvironment cluster.Environment
+	ClusterEnvironment common.Environment
 
 	Region         string
 	ScriptPath     string

@@ -1,9 +1,10 @@
 package prerun
 
-import "common/cluster"
+import "github.com/gitpod-io/gitpod/ws-deployment/pkg/common"
 
+// CreateClusterPreruns represents preruns before creating a cluster
 type CreateClusterPreruns struct {
-	Cluster cluster.WorkspaceCluster
+	Cluster common.WorkspaceCluster
 	PreRuns []*IPreRun
 }
 

@@ -1,13 +1,13 @@
 package prerun
 
-import "common/cluster"
+import "github.com/gitpod-io/gitpod/ws-deployment/pkg/common"
 
+// CreateClusterPreruns represents preruns before creating a cluster
 type InstallGitpodPreruns struct {
-	Cluster cluster.WorkspaceCluster
+	Cluster common.WorkspaceCluster
 	PreRuns []*IPreRun
 }
 
-// gkeClusterWithNameExists
 // CreatePreRuns creates a set of pre runs to be executed before actual creation
 // of the cluster. It populates the calling object's `PreRuns` field
 func (gp *InstallGitpodPreruns) CreatePreRuns() error {

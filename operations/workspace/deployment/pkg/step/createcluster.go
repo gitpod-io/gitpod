@@ -1,8 +1,9 @@
 package step
 
 import (
-	"checks/prerun"
-	v1 "config/v1"
+	v1 "github.com/gitpod-io/gitpod/ws-deployment/pkg/config/v1"
+
+	prerun "github.com/gitpod-io/gitpod/ws-deployment/pkg/check/prerun"
 )
 
 // CreateClusterStep is the step which creates a kubernetes cluster
