@@ -4,6 +4,8 @@ ws-deployment is a cli used to deploy gitpod workspace to a new cluster. It uses
 Please refer to [this design doc](https://www.notion.so/gitpod/Deployment-Process-Workspace-5f082cc8387447f5940ffb8389bb4fc7) where we had first set of proposals and discussions. For the first iteration we decided to do things with the following in mind:
 `Create immutable workspace clusters and avoid as much manual intervention as possible.`
 
+What this means is we can create same terraform modules and helm values yaml files when a set of same parameters is passed (Note: We are however creating a random id in code for a new cluster). This will help us avoid checking in terraform modules to ops repository. We can generate the same set of modules by running with a bunch of parameters. This is particulary required when we want to destroy a cluster through terraform.
+
 # What
 Broadly these are the steps/things that it does in the given order:
 
