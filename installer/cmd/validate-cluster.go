@@ -7,6 +7,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
@@ -45,12 +47,15 @@ var validateClusterCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
 		out := fmt.Sprintf("%s\n", string(jsonOut))
 
 		if result.Status == cluster.ValidationStatusError {
 			// Warnings are treated as valid
-			return fmt.Errorf(out)
+			_, err := fmt.Fprintln(os.Stderr, out)
+			if err != nil {
+				return err
+			}
+			os.Exit(1)
 		}
 
 		fmt.Printf(out)
