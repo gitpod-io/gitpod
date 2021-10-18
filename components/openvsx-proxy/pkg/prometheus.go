@@ -159,7 +159,7 @@ func (p *Prometheus) IncStatusCounter(r *http.Request, status string) {
 		path = strings.Join(s[:4], "/")
 	}
 	// don't track unexepected paths (e.g. requests from crawlers/bots)
-	if _, ok := expectedPaths[strings.TrimSuffix(path, "/")]; !ok || path != "/" {
+	if _, ok := expectedPaths[strings.TrimSuffix(path, "/")]; !ok {
 		log.WithField("path", path).Debug("unexpected path")
 		path = "(other)"
 	}
