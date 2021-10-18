@@ -10,7 +10,7 @@ require (
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.6
 	github.com/h2non/filetype v1.0.8
-	github.com/hashicorp/golang-lru v0.5.1
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/parnurzeal/gorequest v0.2.16 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/procfs v0.6.0
@@ -39,6 +39,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/minio/highwayhash v1.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

@@ -207,8 +207,8 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 
 	var (
 		wg  sync.WaitGroup
-		cli = make(chan detector.Process, 200)
-		clo = make(chan classifiedProcess, 20)
+		cli = make(chan detector.Process, 500)
+		clo = make(chan classifiedProcess, 50)
 	)
 	agent.metrics.RegisterClassificationQueues(cli, clo)
 	defer wg.Wait()
@@ -218,6 +218,10 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 			defer wg.Done()
 			for i := range cli {
 				class, err := agent.classifier.Matches(i.Path, i.CommandLine)
+				// optimisation: early out to not block on the CLO chan
+				if err == nil && class.Level == classifier.LevelNoMatch {
+					continue
+				}
 				clo <- classifiedProcess{P: i, C: class, Err: err}
 			}
 		}()
@@ -225,22 +229,32 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 
 	defer log.Info("agent smith main loop ended")
 
+	// We want to fill the classifier in a Go routine seaparete from using the classification
+	// results, to ensure we're not deadlocking/block ourselves. If this were in the same loop,
+	// we could easily get into a situation where we'd need to scale the queues to match the proc index.
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case proc, ok := <-ps:
+				if !ok {
+					return
+				}
+				select {
+				case cli <- proc:
+				default:
+					// we're overfilling the classifier worker
+					agent.metrics.classificationBackpressureInDrop.Inc()
+				}
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case proc, ok := <-ps:
-			if !ok {
-				return
-			}
-			select {
-			case cli <- proc:
-			default:
-				// without this case we might deadlock the main loop, because all workers try to write to clo,
-				// but clo is full. Because all worker are blocked (trying to write to clo), we cannot write to
-				// cli either.
-				agent.metrics.classificationBackpressureInDrop.Inc()
-			}
 		case class := <-clo:
 			proc, cl, err := class.P, class.C, class.Err
 			if err != nil {

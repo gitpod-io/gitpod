@@ -6,12 +6,15 @@ package classifier
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/minio/highwayhash"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -127,6 +130,11 @@ func (cl *CommandlineClassifier) Collect(m chan<- prometheus.Metric) {
 }
 
 func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signature) *SignatureMatchClassifier {
+	cache, err := lru.New(2000)
+	if err != nil {
+		// lru.New only errs when size is <= 0
+		panic(err)
+	}
 	return &SignatureMatchClassifier{
 		Signatures:   sig,
 		DefaultLevel: defaultLevel,
@@ -148,6 +156,16 @@ func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signatu
 				"classifier_name": name,
 			},
 		}),
+		cacheUseTotal: *prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "gitpod_agent_smith",
+			Subsystem: "classifier_signature",
+			Name:      "cache_use_total",
+			Help:      "total count of cache hits and misses",
+			ConstLabels: prometheus.Labels{
+				"classifier_name": name,
+			},
+		}, []string{"use"}),
+		cache: cache,
 	}
 }
 
@@ -155,16 +173,18 @@ func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signatu
 type SignatureMatchClassifier struct {
 	Signatures   []*Signature
 	DefaultLevel Level
+	cache        *lru.Cache
 
 	processMissTotal  prometheus.Counter
 	signatureHitTotal prometheus.Counter
+	cacheUseTotal     prometheus.CounterVec
 }
 
 var _ ProcessClassifier = &SignatureMatchClassifier{}
 
 var sigNoMatch = &Classification{Level: LevelNoMatch, Classifier: ClassifierSignature}
 
-func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []string) (*Classification, error) {
+func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []string) (c *Classification, err error) {
 	r, err := os.Open(executable)
 	if os.IsNotExist(err) {
 		sigcl.processMissTotal.Inc()
@@ -172,6 +192,22 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 		return sigNoMatch, nil
 	}
 	defer r.Close()
+
+	hash, err := computeHash(r)
+	if err == nil && hash != "" {
+		clo, ok := sigcl.cache.Get(hash)
+		if cl, cok := clo.(*Classification); ok && cok {
+			sigcl.cacheUseTotal.WithLabelValues("hit").Inc()
+			return cl, nil
+		}
+	}
+	sigcl.cacheUseTotal.WithLabelValues("miss").Inc()
+
+	defer func() {
+		if c != nil && hash != "" {
+			sigcl.cache.Add(hash, c)
+		}
+	}()
 
 	var serr error
 	for _, sig := range sigcl.Signatures {
@@ -195,14 +231,34 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	return sigNoMatch, nil
 }
 
+func computeHash(r io.ReadSeeker) (string, error) {
+	defer func() {
+		// once we're done with r, reset it
+		r.Seek(0, io.SeekStart)
+	}()
+
+	var key = []byte{0x7e, 0x56, 0x05, 0xc7, 0x7f, 0xe6, 0x82, 0x65, 0xa2, 0xb6, 0xe4, 0xaf, 0x56, 0xb8, 0x78, 0x22, 0x0a, 0xd7, 0x51, 0x30, 0x59, 0xad, 0x79, 0xf3, 0x4a, 0x65, 0x79, 0xdc, 0x8c, 0xdb, 0xdd, 0x3c}
+	hash, err := highwayhash.New(key)
+	if err != nil {
+		return "", err
+	}
+	_, err = io.Copy(hash, r)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
 func (sigcl *SignatureMatchClassifier) Describe(d chan<- *prometheus.Desc) {
 	sigcl.processMissTotal.Describe(d)
 	sigcl.signatureHitTotal.Describe(d)
+	sigcl.cacheUseTotal.Describe(d)
 }
 
 func (sigcl *SignatureMatchClassifier) Collect(m chan<- prometheus.Metric) {
 	sigcl.processMissTotal.Collect(m)
 	sigcl.signatureHitTotal.Collect(m)
+	sigcl.cacheUseTotal.Collect(m)
 }
 
 // CompositeClassifier combines multiple classifiers into one. The first match wins.
