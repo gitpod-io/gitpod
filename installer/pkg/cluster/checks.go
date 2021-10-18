@@ -6,16 +6,18 @@ package cluster
 
 import (
 	"context"
-	"github.com/Masterminds/semver"
+	"strings"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+
+	"github.com/Masterminds/semver"
 	certmanager "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
-	"strings"
 )
 
-// checkAffinityLabels validates that the nodes all the correct affinity labels applied
+// checkAffinityLabels validates that the nodes have all the required affinity labels applied
 // It assumes all the values are `true`
 func checkAffinityLabels(list *v1.NodeList, _ *rest.Config) []ValidationError {
 	affinityList := map[string]bool{}
@@ -90,12 +92,16 @@ func checkContainerDRuntime(list *v1.NodeList, _ *rest.Config) []ValidationError
 	return resultErr
 }
 
-// checkKernelVersion checks the nodes are using the correct linux Kernel version
-func checkKernelVersion(list *v1.NodeList, _ *rest.Config) []ValidationError {
+const (
 	// Allow pre-release range as GCP (and potentially others) use the patch for
 	// additional information, which get interpreted as pre-release (eg, 1.2.3-rc4)
-	constraintString := ">= 5.4.0-0"
-	constraint, err := semver.NewConstraint(constraintString)
+	kernelVersionConstraint = ">= 5.4.0-0"
+)
+
+// checkKernelVersion checks the nodes are using the correct linux Kernel version
+func checkKernelVersion(list *v1.NodeList, _ *rest.Config) []ValidationError {
+
+	constraint, err := semver.NewConstraint(kernelVersionConstraint)
 	if err != nil {
 		return []ValidationError{{
 			Message: err.Error(),
@@ -106,6 +112,8 @@ func checkKernelVersion(list *v1.NodeList, _ *rest.Config) []ValidationError {
 	var resultErr []ValidationError
 	for _, node := range list.Items {
 		kernelVersion := node.Status.NodeInfo.KernelVersion
+		// Some GCP kernel versions contain a non-semver compatible suffix
+		kernelVersion = strings.TrimSuffix(kernelVersion, "+")
 		version, err := semver.NewVersion(kernelVersion)
 		if err != nil {
 			// This means that the given version doesn't conform to semver format - user must decide
@@ -120,7 +128,7 @@ func checkKernelVersion(list *v1.NodeList, _ *rest.Config) []ValidationError {
 
 		if !valid {
 			resultErr = append(resultErr, ValidationError{
-				Message: "kernel version " + kernelVersion + " does not satisfy " + constraintString + " on node: " + node.Name,
+				Message: "kernel version " + kernelVersion + " does not satisfy " + kernelVersionConstraint + " on node: " + node.Name,
 				Type:    ValidationStatusError,
 			})
 		}

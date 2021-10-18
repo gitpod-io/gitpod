@@ -6,12 +6,15 @@ package cluster
 
 import (
 	"context"
-	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth" // https://github.com/kubernetes/client-go/issues/242
-	"k8s.io/client-go/rest"
+	"fmt"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth" // https://github.com/kubernetes/client-go/issues/242
+	"k8s.io/client-go/rest"
 )
 
 type ValidationStatus string
@@ -28,14 +31,15 @@ type ValidationError struct {
 }
 
 type ValidationCheck struct {
-	Name  string
-	Check func(*v1.NodeList, *rest.Config) []ValidationError
+	Name        string                                             `json:"name"`
+	Description string                                             `json:"description"`
+	Check       func(*v1.NodeList, *rest.Config) []ValidationError `json:"-"`
 }
 
 type ValidationItem struct {
-	Name   string            `json:"name"`
+	ValidationCheck
 	Status ValidationStatus  `json:"status"`
-	Errors []ValidationError `json:"errors"` // Only populated if present
+	Errors []ValidationError `json:"errors,omitempty"` // Only populated if present
 }
 
 type ValidationResult struct {
@@ -44,19 +48,28 @@ type ValidationResult struct {
 }
 
 func ValidationChecks() []ValidationCheck {
-	return []ValidationCheck{{
-		Name:  "Kernel version",
-		Check: checkKernelVersion,
-	}, {
-		Name:  "containerd enabled",
-		Check: checkContainerDRuntime,
-	}, {
-		Name:  "Affinity labels",
-		Check: checkAffinityLabels,
-	}, {
-		Name:  "cert-manager installed",
-		Check: checkCertManagerInstalled,
-	}}
+	return []ValidationCheck{
+		{
+			Name:        "Kernel version",
+			Description: "all cluster nodes run Linux " + kernelVersionConstraint,
+			Check:       checkKernelVersion,
+		},
+		{
+			Name:        "containerd enabled",
+			Check:       checkContainerDRuntime,
+			Description: "all cluster nodes run containerd",
+		},
+		{
+			Name:        "Affinity labels",
+			Check:       checkAffinityLabels,
+			Description: "all required affinity node labels " + fmt.Sprint(common.AffinityList) + " are present in the cluster",
+		},
+		{
+			Name:        "cert-manager installed",
+			Check:       checkCertManagerInstalled,
+			Description: "cert-manager is installed and has available issuer",
+		},
+	}
 }
 
 func Validate(client *kubernetes.Clientset, config *rest.Config) (*ValidationResult, error) {
@@ -72,9 +85,9 @@ func Validate(client *kubernetes.Clientset, config *rest.Config) (*ValidationRes
 
 	for _, check := range ValidationChecks() {
 		result := ValidationItem{
-			Name:   check.Name,
-			Status: ValidationStatusOk,
-			Errors: []ValidationError{},
+			ValidationCheck: check,
+			Status:          ValidationStatusOk,
+			Errors:          []ValidationError{},
 		}
 
 		if errs := check.Check(nodes, config); len(errs) > 0 {
