@@ -33,7 +33,6 @@ export default function Menu() {
     const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
-    const visibleTeams = teams?.filter(team => { return Boolean(!team.markedDeleted) });
 
     const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/(t/)?:segment1/:segment2?/:segment3?");
     const projectName = (() => {
@@ -192,7 +191,7 @@ export default function Menu() {
                             separator: true,
                             link: '/',
                         },
-                        ...(visibleTeams || []).map(t => ({
+                        ...(teams || []).map(t => ({
                             title: t.name,
                             customContent: <div className="w-full text-gray-400 flex flex-col">
                                 <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{t.name}</span>

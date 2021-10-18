@@ -76,7 +76,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async findTeamById(teamId: string): Promise<Team | undefined> {
         const teamRepo = await this.getTeamRepo();
-        return teamRepo.findOne({ id: teamId, deleted: false });
+        return teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false});
     }
 
     public async findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]> {
@@ -123,7 +123,7 @@ export class TeamDBImpl implements TeamDB {
             throw new Error('A team cannot have the same name as an existing user');
         }
         const teamRepo = await this.getTeamRepo();
-        const existingTeam = await teamRepo.findOne({ slug, deleted: false });
+        const existingTeam = await teamRepo.findOne({ slug, deleted: false, markedDeleted: false });
         if (!!existingTeam) {
             throw new Error('A team with this name already exists');
         }
