@@ -29,8 +29,16 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":supervisor-api"))
-    implementation(project(":gitpod-protocol"))
+    implementation(project(":supervisor-api")) {
+        artifact {
+            type = "jar"
+        }
+    }
+    implementation(project(":gitpod-protocol")) {
+        artifact {
+            type = "jar"
+        }
+    }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.2")
     implementation("io.ktor:ktor-client-core:1.6.3")
@@ -80,6 +88,10 @@ tasks {
 
     withType<Detekt> {
         jvmTarget = "11"
+    }
+
+    buildSearchableOptions {
+        enabled = false
     }
 
     test {

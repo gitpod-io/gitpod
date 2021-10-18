@@ -19,13 +19,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.random.Random.Default.nextInt
+import java.lang.Thread
 
 @Service
-class HeartbeatService(
-    private val fetchToken: suspend () -> String = { AuthTokenService.fetchToken() },
-    private val controllerStatusProvider: ControllerStatusProvider = ControllerStatusProvider(),
-) : Disposable {
+class HeartbeatService() : Disposable {
     private val logger = logger<HeartbeatService>()
+    private val fetchToken: suspend () -> String = { AuthTokenService.fetchToken() }
+    private val controllerStatusProvider = ControllerStatusProvider()
 
     @Suppress("MagicNumber")
     private val intervalInSeconds = 30
@@ -44,8 +44,10 @@ class HeartbeatService(
     private val closed = AtomicBoolean(false)
 
     init {
+        logger.info("Service initiated")
+
         @Suppress("MagicNumber")
-        thread(name = "gitpod-heartbeat") {
+        thread(name = "gitpod-heartbeat", contextClassLoader = this.javaClass.classLoader) {
             runBlocking {
                 while (!closed.get()) {
                     checkActivity(intervalInSeconds + nextInt(5, 15))
@@ -56,7 +58,7 @@ class HeartbeatService(
     }
 
     private suspend fun checkActivity(maxIntervalInSeconds: Int) {
-        logger.debug("Checking activity")
+        logger.info("Checking activity")
         val status = controllerStatusProvider.fetch()
         val previousStatus = this.status.getAndSet(status)
 
@@ -85,7 +87,7 @@ class HeartbeatService(
             try {
                 val s = server.get()!!
                 s.sendHeartBeat(SendHeartBeatOptions(instanceId, wasClosed)).await()
-                logger.debug("Heartbeat sent with wasClosed=$wasClosed")
+                logger.info("Heartbeat sent with wasClosed=$wasClosed")
             } catch (e: Exception) {
                 // If connection fails for some reason,
                 // remove the reference to the existing server.
@@ -98,10 +100,10 @@ class HeartbeatService(
     /**
      * @throws DeploymentException
      * @throws IOException
-     * @throw IllegalStateException
+     * @throws IllegalStateException
      */
     private suspend fun createServer(): GitpodServer {
-        logger.debug("Creating GitpodServer")
+        logger.info("Creating GitpodServer")
         val token = fetchToken()
         val server = ConnectionHelper().connect(uri, origin, token).server()
         return server
