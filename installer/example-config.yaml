@@ -2,8 +2,8 @@ apiVersion: v1
 blockNewUsers:
   enabled: false
 certificate:
-  kind: ""
-  name: "https-certificates"
+  kind: secret
+  name: https-certificates
 containerRegistry:
   inCluster: true
 database:
@@ -11,10 +11,8 @@ database:
 domain: gitpod.example.com
 imagePullSecrets: null
 jaegerOperator:
-  InCluster: true
+  inCluster: true
 kind: Full
-messageQueue:
-  InCluster: true
 metadata:
   region: ""
 objectStorage:
