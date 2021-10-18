@@ -9,6 +9,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// Config is the input configuration to create and manage lifecycle of a cluster
+//
 // Here is a sample representation of yaml configuration
 //
 // version: v1
@@ -32,7 +34,6 @@ import (
 //     governedBy: prod-meta-us01
 //     create: true
 //     type: gke
-
 type Config struct {
 	// We do not support cross project deployment
 	// All deployments would be in the same GCP project
@@ -45,6 +46,7 @@ type Config struct {
 	// TODO(princerachit): Add gitpod version here when we decide to use installed instead of relying solely on ops repository
 }
 
+// Project refers to the project id in GCP
 type Project struct {
 	Name string `yaml:"name"`
 }
@@ -64,14 +66,15 @@ func isValidProject(value interface{}) error {
 	return nil
 }
 
+// Validate validates if this config is right
 func (c *Config) Validate() error {
 	err := validation.ValidateStruct(&c,
 		validation.Field(c.Version, validation.Required),
 		validation.Field(c.Environment, validation.Required),
 		validation.Field(c.WorkspaceClusters, validation.Required),
 		validation.Field(&c.Project, validation.By(isValidProject)),
-		validation.Field(&c.MetaClusters, validation.By(cluster.areValidMetaClusters)),
-		validation.Field(&c.WorkspaceClusters, validation.By(cluster.areValidWorkspaceClusters)),
+		validation.Field(&c.MetaClusters, validation.By(cluster.AreValidMetaClusters)),
+		validation.Field(&c.WorkspaceClusters, validation.By(cluster.AreValidWorkspaceClusters)),
 	)
 	if err != nil {
 		return xerrors.Errorf("invalid configuration: %w", err)

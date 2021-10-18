@@ -7,23 +7,7 @@ import (
 	"path/filepath"
 )
 
-// // TFClusterType is the type of cluster to be created e.g. k3s, gke etc
-// type TFClusterType string
-
-// // Environment is the cluster environment i.e. staging, production etc.
-// type Environment string
-
 const (
-	// // ClusterTypeGKE represents a cluster of type Google Kubernetes Engine (GKE)
-	// ClusterTypeGKE TFClusterType = "gke"
-	// // ClusterTypeK3s represents a kubernetes cluster created using k3s distribution on GCP
-	// ClusterTypeK3s TFClusterType = "k3s"
-
-	// // EnvironmentStaging refers to the staging environment
-	// EnvironmentStaging Environment = "staging"
-	// // EnvironmentProduction refers to the production environment
-	// EnvironmentProduction Environment = "production"
-
 	// DefaultTFModuleGeneratorScriptPath is the path to script that must be invoked
 	// from its parent dir in order to generate terraform modules
 	DefaultTFModuleGeneratorScriptPath = "dev/build-ws-cluster/build-ws-cluster.sh"

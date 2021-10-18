@@ -25,11 +25,13 @@ const (
 	EnvironmentProduction Environment = "production"
 )
 
+// MetaCluster represents a meta cluster
 type MetaCluster struct {
 	Name   string `yaml:"name"`
 	Region string `yaml:"region"`
 }
 
+// WorkspaceCluster represents a workspace cluster
 type WorkspaceCluster struct {
 	Name        string      `yaml:"name"`
 	Region      string      `yaml:"string"`
@@ -39,9 +41,8 @@ type WorkspaceCluster struct {
 	Create      bool        `yaml:"create"`
 }
 
-// gp-prod-ws-eu17-eu-west1
-
-func areValidMetaClusters(value interface{}) error {
+// AreValidMetaClusters validates if the MetaCluster config is valid
+func AreValidMetaClusters(value interface{}) error {
 	mcs, ok := value.([]*MetaCluster)
 	if !ok {
 		return xerrors.Errorf("value not a valid []*MetaCluster")
@@ -58,7 +59,8 @@ func areValidMetaClusters(value interface{}) error {
 	return nil
 }
 
-func areValidWorkspaceClusters(value interface{}) error {
+// AreValidMetaClusters validates if the WorkspaceCluster config is valid
+func AreValidWorkspaceClusters(value interface{}) error {
 	wcs, ok := value.([]WorkspaceCluster)
 	if !ok {
 		return xerrors.Errorf("value not a valid []WorkspaceCluster")
