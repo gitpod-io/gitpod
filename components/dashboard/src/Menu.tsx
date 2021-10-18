@@ -166,8 +166,8 @@ export default function Menu() {
             link: 'https://www.gitpod.io/docs/',
         },
         {
-            title: 'Community',
-            link: 'https://community.gitpod.io/',
+            title: 'Help',
+            link: 'https://www.gitpod.io/support',
         }
     ];
 
