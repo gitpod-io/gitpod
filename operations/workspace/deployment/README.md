@@ -16,6 +16,10 @@ Broadly these are the steps/things that it does in the given order:
 
 
 # How
+## Overall Flow Diagram
+![Gitpod Workspace Deployment](ws-deployment-flow.jpg?raw=true "Gitpod Worksapce Deployment")
+
+## Flow Steps
 This is the flow that we are building to achive automated gitpod deployment:
 
 1. A config (default `$HOME/ws-deployment.yaml`) is read by the cli `ws-deployment` and validated based on the version. Currently the config looks similar to below but is constantly being updated as we make progress.
