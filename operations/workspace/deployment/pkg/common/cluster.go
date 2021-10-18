@@ -5,6 +5,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.org/x/xerrors"
+	"k8s.io/client-go/kubernetes"
 )
 
 // ClusterType is the type of cluster to be created e.g. k3s, gke etc
@@ -39,6 +40,12 @@ type WorkspaceCluster struct {
 	GovernedBy  string      `yaml:"governedBy"`
 	ClusterType ClusterType `yaml:"clusterType"`
 	Create      bool        `yaml:"create"`
+}
+
+// ClusterContext contains the context to access the cluster
+type ClusterContext struct {
+	KubeconfigPath string
+	Client         *kubernetes.Clientset
 }
 
 // AreValidMetaClusters validates if the MetaCluster config is valid

@@ -60,5 +60,5 @@ func (c *Config) Validate() error {
 
 // initializes workspace cluster names based on the config provided
 func initializeWorkspaceClusterNames() {
-
+	panic("I am not implemented yet!")
 }
