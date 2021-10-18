@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"strings"
-
 	"github.com/gitpod-io/gitpod/ws-deployment/pkg/common"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.org/x/xerrors"
@@ -36,7 +34,7 @@ import (
 type Config struct {
 	// We do not support cross project deployment
 	// All deployments would be in the same GCP project
-	Project     *Project
+	Project     string             `yaml:"project"`
 	Version     string             `yaml:"version"`
 	Environment common.Environment `yaml:"environment"`
 	// MetaClusters is optional as we may not want to register the cluster
@@ -45,33 +43,12 @@ type Config struct {
 	// TODO(princerachit): Add gitpod version here when we decide to use installed instead of relying solely on ops repository
 }
 
-// Project refers to the project id in GCP
-type Project struct {
-	Name string `yaml:"name"`
-}
-
-func isValidProject(value interface{}) error {
-	p, ok := value.(Project)
-	if !ok {
-		return xerrors.Errorf("value not a valid project")
-	}
-
-	err := validation.ValidateStruct(&p,
-		validation.Field(strings.TrimSpace(p.Name), validation.Required),
-	)
-	if err != nil {
-		return xerrors.Errorf("invalid project: %s", err)
-	}
-	return nil
-}
-
 // Validate validates if this config is right
 func (c *Config) Validate() error {
 	err := validation.ValidateStruct(&c,
 		validation.Field(c.Version, validation.Required),
 		validation.Field(c.Environment, validation.Required),
 		validation.Field(c.WorkspaceClusters, validation.Required),
-		validation.Field(&c.Project, validation.By(isValidProject)),
 		validation.Field(&c.MetaClusters, validation.By(common.AreValidMetaClusters)),
 		validation.Field(&c.WorkspaceClusters, validation.By(common.AreValidWorkspaceClusters)),
 	)

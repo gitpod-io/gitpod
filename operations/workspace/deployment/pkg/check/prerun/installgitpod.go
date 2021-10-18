@@ -5,6 +5,7 @@ import "github.com/gitpod-io/gitpod/ws-deployment/pkg/common"
 // CreateClusterPreruns represents preruns before creating a cluster
 type InstallGitpodPreruns struct {
 	Cluster common.WorkspaceCluster
+	Context common.ProjectContext
 	PreRuns []*IPreRun
 }
 
