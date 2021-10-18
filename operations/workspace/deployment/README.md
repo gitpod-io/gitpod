@@ -1,7 +1,7 @@
 # Overview
 ws-deployment is a cli used to deploy gitpod workspace to a new cluster. It uses a combination of existing tools, scripts and methodologies to achieve this.
 
-Please refer to this RFC where we had first set of proposals and discussions. For the first iteration we decided to do things with the following in mind:
+Please refer to [this design doc](https://www.notion.so/gitpod/Deployment-Process-Workspace-5f082cc8387447f5940ffb8389bb4fc7) where we had first set of proposals and discussions. For the first iteration we decided to do things with the following in mind:
 `Create immutable workspace clusters and avoid as much manual intervention as possible.`
 
 # What
