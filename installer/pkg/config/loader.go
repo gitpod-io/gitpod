@@ -6,6 +6,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"io/ioutil"
 
 	"sigs.k8s.io/yaml"
@@ -38,6 +39,9 @@ type ConfigVersion interface {
 	// Defaults fills in the defaults for this version.
 	// obj is expected to be the return value of Factory()
 	Defaults(obj interface{}) error
+
+	// LoadValidationFuncs loads the custom validation functions
+	LoadValidationFuncs(*validator.Validate) error
 }
 
 // AddVersion adds a new version.
@@ -55,6 +59,15 @@ var (
 
 var versions map[string]ConfigVersion
 
+func LoadConfigVersion(version string) (ConfigVersion, error) {
+	v, ok := versions[version]
+	if !ok {
+		return nil, fmt.Errorf("unsupprted API version: %s", version)
+	}
+
+	return v, nil
+}
+
 func Load(fn string) (cfg interface{}, version string, err error) {
 	fc, err := ioutil.ReadFile(fn)
 	if err != nil {
@@ -68,11 +81,11 @@ func Load(fn string) (cfg interface{}, version string, err error) {
 		return
 	}
 
-	v, ok := versions[vs.APIVersion]
-	if !ok {
-		err = fmt.Errorf("unsupprted API version: %s", vs.APIVersion)
+	v, err := LoadConfigVersion(vs.APIVersion)
+	if err != nil {
 		return
 	}
+
 	cfg = v.Factory()
 	version = vs.APIVersion
 	err = yaml.Unmarshal(fc, cfg)
