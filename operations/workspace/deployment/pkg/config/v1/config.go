@@ -33,9 +33,6 @@ import (
 //   create: true
 //   type: gke
 type Config struct {
-	// We do not support cross project deployment
-	// All deployments would be in the same GCP project
-	Project         string `yaml:"project"`
 	Version         string `yaml:"version"`
 	EnvironmentFile string `yaml:"environmentFile"`
 	// MetaClusters is optional as we may not want to register the cluster

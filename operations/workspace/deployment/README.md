@@ -18,6 +18,13 @@ Broadly these are the steps/things that it does in the given order:
 
 
 # How
+## Quick Start
+
+Use the below command to get started:
+```sh
+go run main.go deploy --config /path/to/config.yaml
+```
+
 ## Overall Flow Diagram
 ![Gitpod Workspace Deployment](ws-deployment-flow.jpg?raw=true "Gitpod Worksapce Deployment")
 

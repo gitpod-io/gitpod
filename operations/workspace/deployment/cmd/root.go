@@ -6,13 +6,13 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/ws-deployment/pkg/config/v1"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -33,7 +33,6 @@ var rootCmd = &cobra.Command{
 	Long:  "ws-deployment manages the the creation of workspace clusters, installation of gitpod in those clusters and traffic shifting",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, jsonLog, verbose)
-		
 	},
 }
 
@@ -58,8 +57,7 @@ func getConfig() *v1.Config {
 	}
 
 	var cfg v1.Config
-	dec := json.NewDecoder(bytes.NewReader(ctnt))
-	dec.DisallowUnknownFields()
+	dec := yaml.NewDecoder(bytes.NewReader(ctnt))
 	err = dec.Decode(&cfg)
 	if err != nil {
 		log.WithError(err).Fatal("cannot decode configuration. Maybe missing --config?")
