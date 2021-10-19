@@ -256,12 +256,14 @@ func (b *Bastion) FullUpdate() {
 func (b *Bastion) Update(workspaceID string) (*Workspace, error) {
 	ws, err := b.Client.GetWorkspace(b.ctx, workspaceID)
 	if err != nil {
-		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error("cannot get workspace")
-		return nil, xerrors.Errorf("cannot get workspace: %w", err)
+		err = xerrors.Errorf("cannot get workspace: %w", err)
+		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error("cannot update workspace")
+		return nil, err
 	}
 	if ws.LatestInstance == nil {
-		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error("cannot get workspace last known instance")
-		return nil, xerrors.Errorf("cannot get workspace last known instance: %w", err)
+		err := xerrors.Errorf("cannot get workspace last known instance")
+		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error("cannot update workspace")
+		return nil, err
 	}
 	done := make(chan *Workspace)
 	errChan := make(chan error)
