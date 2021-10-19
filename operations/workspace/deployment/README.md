@@ -26,7 +26,7 @@ go run main.go deploy --config /path/to/config.yaml
 ```
 
 ## Overall Flow Diagram
-![Gitpod Workspace Deployment](ws-deployment-flow.jpg?raw=true "Gitpod Worksapce Deployment")
+![Gitpod Workspace Deployment](https://user-images.githubusercontent.com/32481722/137714660-7083d730-d3d6-481d-8bd3-82ec2bb83dad.png "Gitpod Worksapce Deployment")
 
 ## Flow Steps
 This is the flow that we are building to achive automated gitpod deployment:
