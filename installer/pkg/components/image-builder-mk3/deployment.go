@@ -53,7 +53,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumes = append(volumes, corev1.Volume{
 			Name: "pull-secret",
 			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
-				SecretName: dockerregistry.BuiltInRegistrySecret,
+				SecretName: dockerregistry.BuiltInRegistryAuth,
 			}},
 		})
 	}

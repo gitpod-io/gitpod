@@ -9,17 +9,19 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"k8s.io/utils/pointer"
 )
 
 var Helm = common.CompositeHelmFunc(
 	helm.ImportTemplate(charts.MySQL(), helm.TemplateConfig{}, func(cfg *common.RenderContext) (*common.HelmConfig, error) {
 		return &common.HelmConfig{
-			Enabled: pointer.BoolDeref(cfg.Config.Database.InCluster, false),
+			Enabled: enabled(cfg),
 			Values: &values.Options{
 				Values: []string{
 					helm.KeyValue("mysql.auth.existingSecret", SQLPasswordName),
-					helm.KeyValue("mysql.initdbScriptsConfigMap", SQLPasswordName),
+					helm.KeyValue("mysql.auth.database", Database),
+					helm.KeyValue("mysql.auth.username", Username),
+					helm.KeyValue("mysql.initdbScriptsConfigMap", SQLInitScripts),
+					helm.KeyValue("mysql.serviceAccount.name", Component),
 				},
 			},
 		}, nil

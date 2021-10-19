@@ -18,6 +18,5 @@ mysql:
         memory: 128Mi
   serviceAccount:
     create: false
-    name: db
   volumePermissions:
     enabled: true

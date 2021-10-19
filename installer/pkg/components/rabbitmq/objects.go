@@ -7,5 +7,6 @@ package rabbitmq
 import "github.com/gitpod-io/gitpod/installer/pkg/common"
 
 var Objects = common.CompositeRenderFunc(
+	rolebinding,
 	secrets,
 )
