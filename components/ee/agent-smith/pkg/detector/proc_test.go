@@ -5,6 +5,7 @@
 package detector
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 	"sync"
@@ -274,5 +275,131 @@ func TestDiscovery(t *testing.T) {
 
 	if len(res) == 0 {
 		t.Fatal("did not discover any process")
+	}
+}
+
+func TestParseGitpodEnviron(t *testing.T) {
+	tests := []struct {
+		Name        string
+		Content     string
+		Expectation []string
+	}{
+		{
+			Name:        "empty set",
+			Expectation: []string{},
+		},
+		{
+			Name:    "happy path",
+			Content: "GITPOD_INSTANCE_ID=foobar\000GITPOD_SOMETHING=blabla\000SOMETHING_ELSE\000",
+			Expectation: []string{
+				"GITPOD_INSTANCE_ID=foobar",
+				"GITPOD_SOMETHING=blabla",
+			},
+		},
+		{
+			Name: "exceed token size",
+			Content: func() string {
+				r := "12345678"
+				for i := 0; i < 7; i++ {
+					r += r
+				}
+				return "SOME_ENV_VAR=" + r + "\000GITPOD_FOOBAR=bar"
+			}(),
+			Expectation: []string{
+				"GITPOD_FOOBAR=bar",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			act, err := parseGitpodEnviron(bytes.NewReader([]byte(test.Content)))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected parseGitpodEnviron (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func benchmarkParseGitPodEnviron(content string, b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		parseGitpodEnviron(bytes.NewReader([]byte(content)))
+	}
+}
+
+func BenchmarkParseGitPodEnvironP0(b *testing.B) { benchmarkParseGitPodEnviron("", b) }
+func BenchmarkParseGitPodEnvironP1(b *testing.B) {
+	benchmarkParseGitPodEnviron("GITPOD_INSTANCE_ID=foobar\000", b)
+}
+func BenchmarkParseGitPodEnvironP2(b *testing.B) {
+	benchmarkParseGitPodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
+}
+func BenchmarkParseGitPodEnvironP4(b *testing.B) {
+	benchmarkParseGitPodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
+}
+func BenchmarkParseGitPodEnvironP8(b *testing.B) {
+	benchmarkParseGitPodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
+}
+func BenchmarkParseGitPodEnvironN1(b *testing.B) { benchmarkParseGitPodEnviron("NOT_ME\000", b) }
+func BenchmarkParseGitPodEnvironN2(b *testing.B) {
+	benchmarkParseGitPodEnviron("NOT_ME\000NOT_ME\000", b)
+}
+func BenchmarkParseGitPodEnvironN4(b *testing.B) {
+	benchmarkParseGitPodEnviron("NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000", b)
+}
+func BenchmarkParseGitPodEnvironN8(b *testing.B) {
+	benchmarkParseGitPodEnviron("NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000", b)
+}
+
+func TestParseStat(t *testing.T) {
+	type Expectation struct {
+		S   *stat
+		Err string
+	}
+	tests := []struct {
+		Name        string
+		Content     string
+		Expectation Expectation
+	}{
+		{
+			Name:        "empty set",
+			Expectation: Expectation{Err: "cannot parse stat"},
+		},
+		{
+			Name:        "happy path",
+			Content:     "80275 (cat) R 717 80275 717 34817 80275 4194304 85 0 0 0 0 0 0 0 26 6 1 0 4733826 5771264 135 18446744073709551615 94070799228928 94070799254577 140722983793472 0 0 0 0 0 0 0 0 0 17 14 0 0 0 0 0 94070799272592 94070799274176 94070803738624 140722983801930 140722983801950 140722983801950 140722983821291 0",
+			Expectation: Expectation{S: &stat{PPID: 717, Starttime: 4733826}},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			var (
+				act Expectation
+				err error
+			)
+			act.S, err = parseStat(bytes.NewReader([]byte(test.Content)))
+			if err != nil {
+				act.Err = err.Error()
+			}
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected parseStat (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func BenchmarkParseStat(b *testing.B) {
+	r := bytes.NewReader([]byte("80275 (cat) R 717 80275 717 34817 80275 4194304 85 0 0 0 0 0 0 0 26 6 1 0 4733826 5771264 135 18446744073709551615 94070799228928 94070799254577 140722983793472 0 0 0 0 0 0 0 0 0 17 14 0 0 0 0 0 94070799272592 94070799274176 94070803738624 140722983801930 140722983801950 140722983801950 140722983821291 0"))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		parseStat(r)
 	}
 }

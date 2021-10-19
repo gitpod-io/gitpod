@@ -5,9 +5,13 @@
 package detector
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/binary"
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -49,7 +53,7 @@ func (fs realProcfs) Discover() map[int]*process {
 			log.WithField("pid", p.PID).WithError(err).Debug("cannot get commandline of process")
 			continue
 		}
-		stat, err := p.Stat()
+		stat, err := statProc(p.PID)
 		if err != nil {
 			log.WithField("pid", p.PID).WithError(err).Debug("cannot stat process")
 			continue
@@ -76,7 +80,7 @@ func (fs realProcfs) Discover() map[int]*process {
 		proc.Path = path
 		parent.Children = append(parent.Children, proc)
 
-		binary.LittleEndian.PutUint64(digest[0:8], uint64(stat.PID))
+		binary.LittleEndian.PutUint64(digest[0:8], uint64(p.PID))
 		binary.LittleEndian.PutUint64(digest[8:16], uint64(stat.PPID))
 		binary.LittleEndian.PutUint64(digest[16:24], stat.Starttime)
 		proc.Hash = xxhash.Sum64(digest)
@@ -86,16 +90,151 @@ func (fs realProcfs) Discover() map[int]*process {
 	return idx
 }
 
+type stat struct {
+	PPID      int
+	Starttime uint64
+}
+
+// statProc returns a limited set of /proc/<pid>/stat content.
+func statProc(pid int) (*stat, error) {
+	f, err := os.Open(fmt.Sprintf("/proc/%d/stat", pid))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return parseStat(f)
+}
+
+func parseStat(r io.Reader) (res *stat, err error) {
+	var (
+		ppid      uint64
+		starttime uint64
+		i         = -1
+	)
+
+	scan := bufio.NewScanner(r)
+	// We use a fixed buffer size assuming that none of the env vars we're interested in is any larger.
+	// This is part of the trick to keep allocs down.
+	scan.Buffer(make([]byte, 512), 512)
+	scan.Split(scanFixedSpace(512))
+	for scan.Scan() {
+		text := scan.Bytes()
+		if text[len(text)-1] == ')' {
+			i = 0
+		}
+
+		if i == 2 {
+			ppid, err = strconv.ParseUint(string(text), 10, 64)
+		}
+		if i == 20 {
+			starttime, err = strconv.ParseUint(string(text), 10, 64)
+		}
+		if err != nil {
+			return
+		}
+
+		if i >= 0 {
+			i++
+		}
+	}
+	if err := scan.Err(); err != nil {
+		return nil, err
+	}
+
+	if ppid == 0 || starttime == 0 {
+		return nil, fmt.Errorf("cannot parse stat")
+	}
+
+	return &stat{
+		PPID:      int(ppid),
+		Starttime: starttime,
+	}, nil
+}
+
 func (p realProcfs) Environ(pid int) ([]string, error) {
-	proc, err := procfs.NewProc(pid)
+	// Note: procfs.Environ is too expensive becuase it uses io.ReadAll which leaks
+	//       memory over time.
+
+	f, err := os.Open(fmt.Sprintf("/proc/%d/environ", pid))
 	if err != nil {
 		return nil, err
 	}
-	env, err := proc.Environ()
-	if err != nil {
-		return nil, err
+	defer f.Close()
+
+	return parseGitpodEnviron(f)
+}
+
+func parseGitpodEnviron(r io.Reader) ([]string, error) {
+	// Note: this function is benchmarked in BenchmarkParseGitPodEnviron.
+	//       At the time of this wriging it consumed 3+N allocs where N is the number of
+	//       env vars starting with GITPOD_.
+	//
+	// When making changes to this function, ensure you're not causing more allocs
+	// which could have a too drastic resource usage effect in prod.
+
+	scan := bufio.NewScanner(r)
+	// We use a fixed buffer size assuming that none of the env vars we're interested in is any larger.
+	// This is part of the trick to keep allocs down.
+	scan.Buffer(make([]byte, 512), 512)
+	scan.Split(scanNullTerminatedLines(512))
+
+	// we expect at least 10 relevant env vars
+	res := make([]string, 0, 10)
+	for scan.Scan() {
+		// we only keep GITPOD_ variables for optimisation
+		text := scan.Bytes()
+		if !bytes.HasPrefix(text, []byte("GITPOD_")) {
+			continue
+		}
+
+		res = append(res, string(text))
 	}
-	return env, nil
+	return res, nil
+}
+
+func scanNullTerminatedLines(fixedBufferSize int) func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+		if i := bytes.IndexByte(data, 0); i >= 0 {
+			// We have a full null-terminated line.
+			return i + 1, data[:i], nil
+		}
+		// If we're at EOF, we have a final, non-terminated line. Return it.
+		if atEOF {
+			return len(data), data, nil
+		}
+		if len(data) == 512 {
+			return len(data), data, nil
+		}
+		// Request more data.
+		return 0, nil, nil
+	}
+}
+
+func scanFixedSpace(fixedBufferSize int) func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	// The returned function behaves like bufio.ScanLines except that it doesn't try to
+	// request lines longer than fixedBufferSize.
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+		if i := bytes.IndexByte(data, ' '); i >= 0 {
+			// We have a full null-terminated line.
+			return i + 1, data[:i], nil
+		}
+		// If we're at EOF, we have a final, non-terminated line. Return it.
+		if atEOF {
+			return len(data), data, nil
+		}
+		if len(data) == 512 {
+			return len(data), data, nil
+		}
+		// Request more data.
+		return 0, nil, nil
+	}
 }
 
 var _ ProcessDetector = &ProcfsDetector{}
