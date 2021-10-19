@@ -11,5 +11,4 @@ packages:
       - CGO_ENABLED=0
     config:
       packaging: app
-      dontTest: true
 
