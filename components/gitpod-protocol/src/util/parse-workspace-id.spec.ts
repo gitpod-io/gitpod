@@ -6,7 +6,7 @@
 
 import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
-import { parseWorkspaceIdFromHostname } from './parse-workspace-id';
+import { matchesInstanceIdOrLegacyWorkspaceIdExactly, matchesNewWorkspaceIdExactly, parseWorkspaceIdFromHostname } from './parse-workspace-id';
 const expect = chai.expect;
 
 @suite
@@ -51,6 +51,26 @@ export class ParseWorkspaceIdTest {
     @test public parseLegacyWorkspaceIdFromHostname_fromWorkspacePortLocationWithWebviewPrefixCustomHost() {
         const actual = parseWorkspaceIdFromHostname("webview-3000-ca81a50f-09d7-465c-acd9-264a747d5351.ws-eu01.some.subdomain.somehost.com");
         expect(actual).to.equal("ca81a50f-09d7-465c-acd9-264a747d5351");
+    }
+
+    // match - instance ID
+    @test public matchesInstanceIdOrLegacyWorkspaceIdExactly_positive() {
+        const actual = matchesInstanceIdOrLegacyWorkspaceIdExactly("b7e0eaf8-ec73-44ec-81ea-04859263b656");
+        expect(actual).to.be.true;
+    }
+    @test public matchesInstanceIdOrLegacyWorkspaceIdExactly_negative() {
+        const actual = matchesInstanceIdOrLegacyWorkspaceIdExactly("b7e0eaf8-ec73-44ec-81a-04859263b656");
+        expect(actual).to.be.false;
+    }
+
+    // match - new workspace ID
+    @test public matchesWorkspaceIdExactly_new_positive() {
+        const actual = matchesNewWorkspaceIdExactly("moccasin-ferret-155799b3");
+        expect(actual).to.be.true;
+    }
+    @test public matchesWorkspaceIdExactly_new_negative() {
+        const actual = matchesNewWorkspaceIdExactly("moccasin-ferret-15599b3");
+        expect(actual).to.be.false;
     }
 }
 module.exports = new ParseWorkspaceIdTest()
