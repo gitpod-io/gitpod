@@ -13,7 +13,6 @@ type ClusterType string
 
 // Environment is the cluster environment
 // TODO(prs): Update this struct to include right fields which can map to a file
-// which contains 
 type Environment struct{}
 
 const (

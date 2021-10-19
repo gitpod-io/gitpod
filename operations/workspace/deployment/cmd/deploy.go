@@ -26,15 +26,11 @@ import (
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Creates a new workspace cluster and installs gitpod on it",
-	Run:   getRunFunc(),
-}
-
-func getRunFunc() func(cmd *cobra.Command, args []string) {
-	return func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
 		randomId := fmt.Sprintf("%d", rand.Intn(200)+100)
 		cfg.InitializeWorkspaceClusterNames(randomId) // TODO(prs):revisit and update this
-	}
+	},
 }
 
 func init() {

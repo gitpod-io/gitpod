@@ -6,6 +6,7 @@ package infra
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -39,31 +40,25 @@ type TerraformModule struct {
 	ClusterPrefix      string
 	ClusterEnvironment common.Environment
 
-	Region         string
-	ScriptPath     string
-	ScriptPathArgs string
-	ModulePath     string
+	Region     string
+	ScriptPath string
+	ScriptArgs string
+	ModulePath string
 }
 
 // CreateTerraformModule creates a terraform module for kubernetes cluster creation and other resources
 // required to install gitpod
 func (tm *TerraformModule) CreateTerraformModule() error {
-	scriptPathDir := filepath.Dir(tm.ScriptPath)
-	scriptPathDirName := filepath.Base(scriptPathDir)
-
-	// cd {scriptPathDirName} && ./{ScriptPath} {ScriptPathArgs}
+	// ./{ScriptPath} {ScriptArgs}
 	//
 	// e.g.
-	// cd dev/build-ws-cluster && ./build-ws-cluster.sh -e production -l europe-west1 -p us89 -t k3s
+	// ./dev/build-ws-cluster/build-ws-cluster.sh -e production -l europe-west1 -p us89 -t k3s
 	//
 	// here `-e production -l europe-west1 -p us89 -t k3s` is the args
-	commandToRun := fmt.Sprintf(`cd %s && ./%s %s`, scriptPathDirName, tm.ScriptPath, tm.ScriptPathArgs)
-
-	// commandToRun := fmt.Sprintf(`export KUBECONFIG=%s && gcloud container clusters get-credentials %s --project %s --zone %s`, kubeconfigPath, clusterName, projectId, region)
-	cmd := exec.Command("/bin/sh", "-c", commandToRun)
+	cmd := exec.Command(tm.ScriptPath, tm.ScriptArgs)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
-	stdout, _ := cmd.Output()
-	fmt.Print(string(stdout))
 	if err != nil {
 		return err
 	}
@@ -105,9 +100,9 @@ func (tm *TerraformModule) DestroyTerraformModule() error {
 	commandToRun := fmt.Sprintf(`cd %s && terraform destroy -auto-approve`, modulePathDirName)
 
 	cmd := exec.Command("/bin/sh", "-c", commandToRun)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
-	stdout, _ := cmd.Output()
-	fmt.Print(string(stdout))
 	if err != nil {
 		return err
 	}
