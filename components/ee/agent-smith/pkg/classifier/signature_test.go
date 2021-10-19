@@ -23,7 +23,7 @@ func TestMatchELF(t *testing.T) {
 	defer input.Close()
 
 	sig := Signature{
-		Kind:    ObjectELF,
+		Kind:    ObjectELFSymbols,
 		Pattern: []byte("bash_groupname_completion_function"),
 		Regexp:  false,
 	}
