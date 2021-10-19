@@ -16,7 +16,7 @@
             },
             'for': '1h',
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/GitpodWorkspaceStuckOnStarting.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStarting.md',
               summary: '5 or more workspaces are stuck on starting',
               description: '{{ printf "%.2f" $value }} regular workspaces are stuck on starting for more than 1 hour. Current status: "{{ $labels.reason }}"',
             },
@@ -33,7 +33,7 @@
             },
             'for': '1h',
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/GitpodWorkspaceStuckOnStopping.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopping.md',
               summary: '5 or more workspaces are stuck on stopping',
               description: '{{ printf "%.2f" $value }} {{ $labels.workspace_type }} workspaces are stuck on stopping for more than 1 hour.',
             },
