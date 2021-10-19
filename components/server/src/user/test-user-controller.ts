@@ -84,8 +84,8 @@ export class TestController {
 
                 // Create and set testuser
                 // const testCaseId = String(req.body);
-                const body = req.body as { [key: string]: string };
-                const params = TEST_CASES[body.key];
+                const body = req.body as { [key: string]: any };
+                const params = (typeof body.identity === 'object' ? body : TEST_CASES[body.key]) as GitHubLoginParameters;
                 if (!params) {
                     res.sendStatus(404);
                     return;
