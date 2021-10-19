@@ -9,7 +9,6 @@ local row = grafana.row;
 local prometheus = grafana.prometheus;
 local template = grafana.template;
 local graphPanel = grafana.graphPanel;
-local tablePanel = grafana.tablePanel;
 local heatmapPanel = grafana.heatmapPanel;
 local link = grafana.link;
 local _config = (import '../config.libsonnet')._config;
@@ -42,34 +41,6 @@ local clusterTemplate =
     sort=1
   );
 
-local hiddenTimeStyle = {
-  type: 'hidden',
-  pattern: 'Time',
-}
-;
-
-local hiddenNodepoolStyle = {
-  type: 'hidden',
-  pattern: 'nodepool',
-}
-;
-
-local noneValueStyle = {
-  unit: 'none',
-  decimals: 1,
-  pattern: 'Value',
-  type: 'number',
-}
-;
-
-local adminNodeDashboardRedirectStyle = {
-  pattern: 'node',
-  link: true,
-  linkUrl: 'd/gitpod-admin-nodes/gitpod-admin-nodes?var-datasource=$datasource&var-cluster=$__cell_1&var-nodepool=$__cell_3&var-node=$__cell',
-  linkTargetBlank: true,
-}
-;
-
 // Panels
 local runningWorkspacesGraph =
   graphPanel.new(
@@ -91,24 +62,26 @@ local runningWorkspacesGraph =
   .addSeriesOverride({ alias: 'Regular Not Active', color: '#FADE2A' })
 ;
 
-local wsNodeLoadAverageTable =
-  tablePanel.new(
+local wsNodeLoadAverageGraph =
+  graphPanel.new(
+    datasource='$datasource',
     title="$cluster: Workspace node's normalized load average",
     description=
     |||
-      Top 10 nodes with highest normalized load average. Nodes with a high normalized load average do not represent a real problem, it only means that pods should probably not be scheduled to them.
+      Nodes with a high normalized load average do not represent a real problem, it only means that pods should probably not be scheduled to them.
 
       If you'd like to see more details about resource consumption of a particular node, you can do so by clicking at the node name.
     |||,
-    datasource='$datasource',
-    styles=[adminNodeDashboardRedirectStyle, hiddenNodepoolStyle, hiddenTimeStyle, noneValueStyle { alias: 'Normalized load average' }]
+    format='none',
+    fill=1,
+    fillGradient=5,
+    min=0,
+    repeat='cluster',
   )
   .addTarget(prometheus.target(
     |||
-      sort(
-          sum(nodepool:node_load1:normalized{%(clusterLabel)s=~"$cluster", nodepool=~".*workspace.*"}) by (node)
-      )
-    ||| % _config, format='table', instant=true
+      topk(5, sum(nodepool:node_load1:normalized{%(clusterLabel)s=~"$cluster", nodepool=~".*workspace.*"}) by (node))
+    ||| % _config, legendFormat='{{node}}'
   ))
 ;
 
@@ -222,7 +195,7 @@ local clusterScaleSizeGraph =
       )
       .addRow(
         row.new("Workspace node's normalized Load Average")
-        .addPanel(wsNodeLoadAverageTable)
+        .addPanel(wsNodeLoadAverageGraph)
       )
       .addRow(
         row.new('Workspace Startup time')
