@@ -52,7 +52,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 					Spec: corev1.PodSpec{
 						Affinity:           &corev1.Affinity{},
-						PriorityClassName:  "system-node-critical",
+						PriorityClassName:  common.SystemNodeCritical,
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
 						// todo(sje): conditionally add github-app-cert-secret in

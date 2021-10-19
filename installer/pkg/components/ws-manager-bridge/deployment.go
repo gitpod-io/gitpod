@@ -41,7 +41,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Spec: corev1.PodSpec{
 						Affinity:                      &corev1.Affinity{},
 						ServiceAccountName:            Component,
-						PriorityClassName:             "system-node-critical",
+						PriorityClassName:             common.SystemNodeCritical,
 						EnableServiceLinks:            pointer.Bool(false),
 						DNSPolicy:                     "ClusterFirst",
 						RestartPolicy:                 "Always",

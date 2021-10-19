@@ -59,7 +59,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Labels:    labels,
 					},
 					Spec: corev1.PodSpec{
-						PriorityClassName:  "system-node-critical",
+						PriorityClassName:  common.SystemNodeCritical,
 						Affinity:           &corev1.Affinity{},
 						EnableServiceLinks: pointer.Bool(false),
 						ServiceAccountName: Component,

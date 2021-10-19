@@ -80,12 +80,12 @@ A config file is required which can be generated with the init command.`,
 			return fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
 		}
 
-		objs, err := renderable(ctx)
+		objs, err := common.CompositeRenderFunc(renderable, components.CommonObjects)(ctx)
 		if err != nil {
 			return err
 		}
 
-		charts, err := helmCharts(ctx)
+		charts, err := common.CompositeHelmFunc(helmCharts, components.CommonHelmDependencies)(ctx)
 		if err != nil {
 			return err
 		}

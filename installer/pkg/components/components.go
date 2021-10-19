@@ -7,6 +7,8 @@ package components
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	agentsmith "github.com/gitpod-io/gitpod/installer/pkg/components/agent-smith"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/blobserve"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/cluster"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
@@ -39,17 +41,16 @@ var MetaObjects = common.CompositeRenderFunc(
 
 var WorkspaceObjects = common.CompositeRenderFunc(
 	agentsmith.Objects,
+	blobserve.Objects,
 	gitpod.Objects,
+	registryfacade.Objects,
 	wsdaemon.Objects,
 	wsmanager.Objects,
 	wsproxy.Objects,
 	wsscheduler.Objects,
-	registryfacade.Objects,
 )
 
 var FullObjects = common.CompositeRenderFunc(
-	dockerregistry.Objects,
-	common.GlobalObjects,
 	MetaObjects,
 	WorkspaceObjects,
 )
@@ -64,7 +65,17 @@ var MetaHelmDependencies = common.CompositeHelmFunc(
 var WorkspaceHelmDependencies = common.CompositeHelmFunc()
 
 var FullHelmDependencies = common.CompositeHelmFunc(
-	dockerregistry.Helm,
 	MetaHelmDependencies,
 	WorkspaceHelmDependencies,
+)
+
+// Anything in the "common" section are included in all installation types
+
+var CommonObjects = common.CompositeRenderFunc(
+	dockerregistry.Objects,
+	cluster.Objects,
+)
+
+var CommonHelmDependencies = common.CompositeHelmFunc(
+	dockerregistry.Helm,
 )
