@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import { MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
-import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo } from "@gitpod/gitpod-protocol";
+import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
@@ -717,23 +717,37 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
 
 
-    public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", ownerId?: string, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }> {
-        let whereConditions = ['wsi2.id IS NULL'];
+    public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }> {
+        let whereConditions = [];
         let whereConditionParams: any = {};
+        let instanceIdQuery: boolean = false;
 
-        if (!!ownerId) {
-            // If an owner id is provided only search for workspaces belonging to that user.
-            whereConditions.push("ws.ownerId = :ownerId");
-            whereConditionParams.ownerId = ownerId;
+        if (query) {
+            // from most to least specific so we don't generalize accidentally
+            if (query.instanceIdOrWorkspaceId) {
+                whereConditions.push("(wsi.id = :instanceId OR ws.id = :workspaceId)");
+                whereConditionParams.instanceId = query.instanceIdOrWorkspaceId;
+                whereConditionParams.workspaceId = query.instanceIdOrWorkspaceId;
+            } else if (query.instanceId) {
+                // in addition to adding "instanceId" to the "WHERE" clause like for the other workspace-guided queries,
+                // we modify the JOIN condition below to a) select the correct instance and b) make the query faster
+                instanceIdQuery = true;
+
+                whereConditions.push("wsi.id = :instanceId");
+                whereConditionParams.instanceId = query.instanceId;
+            } else if (query.workspaceId) {
+                whereConditions.push("ws.id = :workspaceId");
+                whereConditionParams.workspaceId = query.workspaceId;
+            } else if (query.ownerId) {
+                // If an owner id is provided only search for workspaces belonging to that user.
+                whereConditions.push("ws.ownerId = :ownerId");
+                whereConditionParams.ownerId = query.ownerId;
+            }
         }
 
-        if (!!searchTerm) {
+        if (searchTerm) {
             // If a search term is provided perform a wildcard search in the context url or exact match on the workspace id (aka workspace name) or the instance id.
-            whereConditions.push([
-                `ws.contextURL LIKE '%${searchTerm}%'`,
-                `ws.id = '${searchTerm}'`,
-                `wsi.id = '${searchTerm}'`
-            ].join(' OR '))
+            whereConditions.push(`ws.contextURL LIKE '%${searchTerm}%'`);
         }
 
         let orderField: string = orderBy;
@@ -747,18 +761,16 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             case "ownerId": orderField = "wsi.ownerId"; break;
         }
 
-        // We need to select the latest wsi for a workspace
-        // see https://stackoverflow.com/questions/2111384/sql-join-selecting-the-last-records-in-a-one-to-many-relationship for how this works
+        // We need to select the latest wsi for a workspace. It's the same problem we have in 'find' (the "/workspaces" query, see above), so we use the same approach.
+        // Only twist is that we might be searching for an instance directly ('instanceIdQuery').
         const workspaceRepo = await this.getWorkspaceRepo();
         let qb = workspaceRepo
             .createQueryBuilder('ws')
-            .leftJoinAndMapOne('ws.instance', DBWorkspaceInstance, 'wsi', [
-                'wsi.workspaceId = ws.id'
-            ].join(' AND '))
-            .leftJoinAndMapOne('ignore', DBWorkspaceInstance, 'wsi2', [
-                'wsi2.workspaceId = ws.id',
-                '(wsi.creationTime < wsi2.creationTime OR (wsi.creationTime = wsi2.creationTime AND wsi.id < wsi2.id))'
-            ].join(' AND '))
+            // We need to put the subquery into the join condition (ON) here to be able to reference `ws.id` which is
+            // not possible in a subquery on JOIN (e.g. 'LEFT JOIN (SELECT ... WHERE i.workspaceId = ws.id)')
+            .leftJoinAndMapOne('ws.instance', DBWorkspaceInstance, 'wsi',
+                `${instanceIdQuery ? "wsi.workspaceId = ws.id" : "wsi.id = (SELECT i.id FROM d_b_workspace_instance AS i WHERE i.workspaceId = ws.id ORDER BY i.creationTime DESC LIMIT 1)"}`
+            )
             .where(whereConditions.join(' AND '), whereConditionParams)
             .orderBy(orderField, orderDir)
             .take(limit)
