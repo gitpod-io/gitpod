@@ -15,7 +15,7 @@
               severity: 'warning',
             },
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/GitpodMetaNodeOOMKills.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodMetaNodeOOMKills.md',
               summary: 'A meta node is reporting OOM kills.',
               description: 'Meta node {{ $labels.instance }} is reporting {{ printf "%.2f" $value }} Out Of Memory kills in the last 10 minutes.',
             },
@@ -28,7 +28,7 @@
             },
             'for': '10m',
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/GitpodMetaNodeCPUSaturation.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodMetaNodeCPUSaturation.md',
               summary: 'High CPU Saturation of a meta node.',
               description: 'Meta node {{ $labels.instance }} is reporting {{ printf "%.2f" $value }}% CPU usage for more than 10 minutes.',
             },

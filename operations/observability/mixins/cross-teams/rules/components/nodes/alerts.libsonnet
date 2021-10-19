@@ -16,7 +16,7 @@
             },
             'for': '10m',
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/GitpodNodeRunningOutOfEphemeralStorage.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodNodeRunningOutOfEphemeralStorage.md',
               summary: 'Node almost out of ephemeral storage',
               description: 'Node {{ $labels.node }} is reporting {{ printf "%.2f" $value }}% ephemeral storage left under {{ $labels.mountpoint }}.',
             },

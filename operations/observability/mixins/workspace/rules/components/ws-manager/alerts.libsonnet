@@ -15,7 +15,7 @@
               severity: 'critical',
             },
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/GitpodWsManagerCrashLooping.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsManagerCrashLooping.md',
               summary: 'Ws-manager is crashlooping.',
               description: 'Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 10 minutes.',
             },

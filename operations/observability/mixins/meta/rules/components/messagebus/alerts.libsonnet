@@ -16,7 +16,7 @@
             },
             'for': '2m',
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/GitpodMetaMessagebusTotalQueues.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodMetaMessagebusTotalQueues.md',
               summary: 'A messagebus has too many queues in total.',
               description: 'messagebus {{ $labels.pod }} is reporting {{ printf "%.2f" $value }} queues in total.',
             },
