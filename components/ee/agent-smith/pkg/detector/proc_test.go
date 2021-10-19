@@ -12,6 +12,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
 	"github.com/google/go-cmp/cmp"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs"
 )
@@ -181,45 +182,61 @@ func TestFindWorkspaces(t *testing.T) {
 func TestRunDetector(t *testing.T) {
 	tests := []struct {
 		Name        string
-		Proc        memoryProc
+		Proc        []memoryProc
 		Expectation []Process
 	}{
 		{
 			Name: "happy path",
-			Proc: (func() memoryProc {
-				res := make(map[int]memoryProcEntry)
-				res[1] = memoryProcEntry{P: &process{PID: 1}}
-				res[2] = memoryProcEntry{
-					P:   &process{PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
-					Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
-				}
-				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
-				res[4] = memoryProcEntry{P: &process{PID: 4, Parent: res[3].P, Cmdline: []string{"bad-actor", "has", "args"}}}
-				res[1].P.Children = []*process{res[2].P}
-				res[2].P.Children = []*process{res[3].P}
-				res[3].P.Children = []*process{res[4].P}
-				return res
-			})(),
+			Proc: []memoryProc{
+				(func() memoryProc {
+					res := make(map[int]memoryProcEntry)
+					res[1] = memoryProcEntry{P: &process{Hash: 1, PID: 1}}
+					res[2] = memoryProcEntry{
+						P:   &process{Hash: 2, PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
+						Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
+					}
+					res[3] = memoryProcEntry{P: &process{Hash: 3, PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
+					res[4] = memoryProcEntry{P: &process{Hash: 4, PID: 4, Parent: res[3].P, Cmdline: []string{"bad-actor", "has", "args"}}}
+					res[1].P.Children = []*process{res[2].P}
+					res[2].P.Children = []*process{res[3].P}
+					res[3].P.Children = []*process{res[4].P}
+					return res
+				})(),
+				(func() memoryProc {
+					res := make(map[int]memoryProcEntry)
+					res[1] = memoryProcEntry{P: &process{Hash: 1, PID: 1}}
+					res[2] = memoryProcEntry{
+						P:   &process{Hash: 2, PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
+						Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
+					}
+					res[3] = memoryProcEntry{P: &process{Hash: 3, PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
+					res[4] = memoryProcEntry{P: &process{Hash: 4, PID: 4, Parent: res[3].P, Cmdline: []string{"bad-actor", "has", "args"}}}
+					res[5] = memoryProcEntry{P: &process{Hash: 5, PID: 5, Parent: res[3].P, Cmdline: []string{"another-bad-actor", "has", "args"}}}
+					res[1].P.Children = []*process{res[2].P}
+					res[2].P.Children = []*process{res[3].P}
+					res[3].P.Children = []*process{res[4].P, res[5].P}
+					return res
+				})(),
+			},
 			Expectation: []Process{
-				{Path: "", CommandLine: []string{"supervisor", "run"}, Kind: ProcessSupervisor, Workspace: ws},
 				{Path: "", CommandLine: []string{"bad-actor", "has", "args"}, Kind: ProcessUserWorkload, Workspace: ws},
+				{Path: "", CommandLine: []string{"another-bad-actor", "has", "args"}, Kind: ProcessUserWorkload, Workspace: ws},
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-
+			cache, _ := lru.New(10)
 			ps := make(chan Process)
 			det := ProcfsDetector{
-				indexSizeGuage: prometheus.NewGauge(prometheus.GaugeOpts{Name: "dont"}),
-				proc:           test.Proc,
+				indexSizeGuage:     prometheus.NewGauge(prometheus.GaugeOpts{Name: "dont"}),
+				cacheUseCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{}, []string{"use"}),
+				cache:              cache,
 			}
 
-			var (
-				res []Process
-				wg  sync.WaitGroup
-			)
+			var wg sync.WaitGroup
+			var res []Process
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -227,7 +244,11 @@ func TestRunDetector(t *testing.T) {
 					res = append(res, p)
 				}
 			}()
-			det.run(ps)
+
+			for _, proc := range test.Proc {
+				det.proc = proc
+				det.run(ps)
+			}
 			close(ps)
 			wg.Wait()
 
