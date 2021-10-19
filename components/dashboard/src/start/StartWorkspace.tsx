@@ -291,7 +291,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
             <div>
               <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
             </div>
           </div>
           <div className="mt-10 flex justify-center">
@@ -318,7 +318,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
             </div>
           </div>
           <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />

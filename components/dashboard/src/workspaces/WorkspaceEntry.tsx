@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstanceConditions, WorkspaceInstancePhase } from '@gitpod/gitpod-protocol';
+import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstanceConditions, WorkspaceInstancePhase, ContextURL } from '@gitpod/gitpod-protocol';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import moment from 'moment';
 import React, { useRef, useState } from 'react';
@@ -141,7 +141,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         </ItemField>
         <ItemField className="w-4/12 flex flex-col">
             <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{workspaceDescription}</div>
-            <a href={ws.contextURL}>
+            <a href={ContextURL.parseToURL(ws.contextURL)?.toString()}>
                 <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.contextURL}</div>
             </a>
         </ItemField>
