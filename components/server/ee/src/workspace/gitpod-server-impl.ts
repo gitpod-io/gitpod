@@ -605,7 +605,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
         const span = opentracing.globalTracer().startSpan("adminGetWorkspaces");
         try {
-            return await this.workspaceDb.trace({ span }).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.ownerId, req.searchTerm);
+            return await this.workspaceDb.trace({ span }).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req, req.searchTerm);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
