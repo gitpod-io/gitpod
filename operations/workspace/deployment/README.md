@@ -12,7 +12,7 @@ Broadly these are the steps/things that it does in the given order:
 1. Use [ops repository](https://github.com/gitpod-io/ops) to create Terraform Modules based on the given config
 1. Use terraform to apply these terraform module. This creates workspace cluster/(s) and associated infrastructure
 1. Installs gitpod on the cluster/(s) created in previous step using helm
-1. Run a Dead or Alive check on these clusters
+1. Run a smoke test on these clusters
 1. Register the clusters with right cordoned and govern flag to appropriate meta clusters as defined in the config
 1. Shift Traffic to the new clusters
 

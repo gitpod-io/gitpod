@@ -4,7 +4,7 @@
 
 package prerun
 
-// IPreRun is an interface that should be implemented by all preruns checks
-type IPreRun interface {
+// PreRun is an interface that should be implemented by all preruns checks
+type PreRun interface {
 	Run() error
 }

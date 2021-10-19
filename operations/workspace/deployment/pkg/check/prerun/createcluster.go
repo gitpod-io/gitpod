@@ -12,7 +12,7 @@ import (
 type CreateClusterPreruns struct {
 	Cluster        *common.WorkspaceCluster
 	ProjectContext *common.ProjectContext
-	PreRuns        []*IPreRun
+	PreRuns        []PreRun
 }
 
 // CreatePreRuns creates a set of pre runs to be executed before actual creation

@@ -4,7 +4,7 @@
 
 package step
 
-// IStep is an interface that should be implemented by all steps of cluster lifecycle
-type IStep interface {
+// Step is an interface that should be implemented by all steps of cluster lifecycle
+type Step interface {
 	Run() error
 }
