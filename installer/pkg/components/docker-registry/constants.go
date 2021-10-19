@@ -5,6 +5,7 @@
 package dockerregistry
 
 const (
-	BuiltInRegistrySecret = "builtin-registry-auth"
-	Component             = "docker-registry"
+	BuiltInRegistryAuth  = "builtin-registry-auth"
+	BuiltInRegistryCerts = "builtin-registry-certs"
+	Component            = "docker-registry"
 )

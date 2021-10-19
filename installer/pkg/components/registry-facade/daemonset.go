@@ -46,7 +46,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name: name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: dockerregistry.BuiltInRegistrySecret,
+					SecretName: dockerregistry.BuiltInRegistryAuth,
 				},
 			},
 		})

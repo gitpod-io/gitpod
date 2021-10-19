@@ -5,16 +5,21 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
 )
 
 func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !pointer.BoolDeref(ctx.Config.Database.InCluster, false) {
+	if !enabled(ctx) {
 		return nil, nil
+	}
+
+	rootPassword, err := common.RandomString(20)
+	if err != nil {
+		return nil, err
 	}
 
 	password, err := common.RandomString(20)
@@ -30,7 +35,8 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels:    common.DefaultLabels(Component),
 		},
 		Data: map[string][]byte{
-			"mysql-root-password": []byte(password),
+			"mysql-root-password": []byte(rootPassword),
+			"mysql-password":      []byte(password),
 		},
 	}, &corev1.Secret{
 		TypeMeta: common.TypeMetaSecret,
@@ -40,9 +46,11 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels:    common.DefaultLabels(Component),
 		},
 		Data: map[string][]byte{
-			"host":     []byte("db"),
-			"port":     []byte("3306"),
+			"database": []byte(Database),
+			"host":     []byte(Component),
+			"port":     []byte(fmt.Sprintf("%d", Port)),
 			"password": []byte(password),
+			"username": []byte(Username),
 		},
 	}}, nil
 }

@@ -5,15 +5,45 @@
 package mysql
 
 import (
+	"embed"
+	"fmt"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"io/fs"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"strings"
 )
 
+//go:embed init/*.sql
+var initScriptFiles embed.FS
+
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	// todo(sje): work out how best to load the db init scripts - I'm thinking generate at buildtime to a single .sql file then embed it here
-	var initScripts []byte
+	if !enabled(ctx) {
+		return nil, nil
+	}
+
+	initScripts, err := fs.ReadDir(initScriptFiles, initScriptDir)
+	if err != nil {
+		return nil, err
+	}
+
+	initScriptData := ""
+
+	for _, script := range initScripts {
+		file, err := fs.ReadFile(initScriptFiles, fmt.Sprintf("%s/%s", initScriptDir, script.Name()))
+
+		if err != nil {
+			return nil, err
+		}
+
+		fileStr := string(file)
+		// Replace variables in the script
+		fileStr = strings.Replace(fileStr, "__GITPOD_DB_NAME__", Database, -1)
+
+		// Add the file name for debugging purposes
+		initScriptData += fmt.Sprintf("-- %s\n\n%s", script.Name(), fileStr)
+	}
 
 	return []runtime.Object{
 		&corev1.ConfigMap{
@@ -24,7 +54,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(Component),
 			},
 			Data: map[string]string{
-				"init.sql": string(initScripts),
+				"init.sql": initScriptData,
 			},
 		},
 	}, nil

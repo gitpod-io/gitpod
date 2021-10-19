@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"sigs.k8s.io/yaml"
 	"strings"
 )
 
@@ -105,7 +106,8 @@ type config struct {
 }
 
 func generateParameters(username string, password string, input []parameter) ([]parameter, error) {
-	var params []parameter
+	// Ensures this defaults to [] not null when marshalled to JSON
+	params := make([]parameter, 0)
 
 	for _, item := range input {
 		// Sort out default values
@@ -156,10 +158,7 @@ func generateParameters(username string, password string, input []parameter) ([]
 
 var Helm = common.CompositeHelmFunc(
 	helm.ImportTemplate(charts.RabbitMQ(), helm.TemplateConfig{}, func(cfg *common.RenderContext) (*common.HelmConfig, error) {
-		username, err := common.RandomString(20)
-		if err != nil {
-			return nil, err
-		}
+		username := "gitpod"
 
 		password, err := common.RandomString(20)
 		if err != nil {
@@ -252,6 +251,16 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
+		shovelsTemplate, err := yaml.Marshal(parameters)
+		if err != nil {
+			return nil, err
+		}
+
+		shovelsTemplateFileName, err := helm.KeyFileValue("shovelsTemplate", shovelsTemplate)
+		if err != nil {
+			return nil, err
+		}
+
 		return &common.HelmConfig{
 			Enabled: true,
 			Values: &values.Options{
@@ -266,6 +275,7 @@ var Helm = common.CompositeHelmFunc(
 				// This is too complex to be sent as a string
 				FileValues: []string{
 					loadDefinitionFilename,
+					shovelsTemplateFileName,
 				},
 			},
 		}, nil

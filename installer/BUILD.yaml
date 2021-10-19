@@ -10,6 +10,7 @@ packages:
       - "pkg/components/**/*.crt"
       - "pkg/components/**/*.key"
       - "pkg/components/**/*.pem"
+      - "pkg/components/**/*.sql"
       - "third_party/**/*"
     deps:
       - components/common-go:lib

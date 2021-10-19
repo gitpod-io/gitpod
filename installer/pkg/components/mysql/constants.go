@@ -7,8 +7,12 @@ package mysql
 import "github.com/gitpod-io/gitpod/installer/pkg/common"
 
 const (
-	Component         = "mysql"
+	Component         = "db" // mysql is used by the Helm package
 	InClusterDbSecret = common.InClusterDbSecret
+	Port              = 3306
 	SQLInitScripts    = "db-init-scripts"
 	SQLPasswordName   = "db-password"
+	Username          = "gitpod"
+	Database          = "gitpod"
+	initScriptDir     = "init"
 )
