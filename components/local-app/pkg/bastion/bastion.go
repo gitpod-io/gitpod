@@ -179,6 +179,7 @@ func New(client gitpod.APIInterface, cb Callbacks) *Bastion {
 type WorkspaceUpdateRequest struct {
 	instance *gitpod.WorkspaceInstance
 	done     chan *Workspace
+	errChan  chan error
 }
 
 type Bastion struct {
@@ -252,32 +253,52 @@ func (b *Bastion) FullUpdate() {
 	}
 }
 
-func (b *Bastion) Update(workspaceID string) *Workspace {
+func (b *Bastion) Update(workspaceID string) (*Workspace, error) {
 	ws, err := b.Client.GetWorkspace(b.ctx, workspaceID)
 	if err != nil {
 		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error("cannot get workspace")
-		return nil
+		return nil, xerrors.Errorf("cannot get workspace: %w", err)
 	}
 	if ws.LatestInstance == nil {
-		return nil
+		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error("cannot get workspace last known instance")
+		return nil, xerrors.Errorf("cannot get workspace last known instance: %w", err)
 	}
 	done := make(chan *Workspace)
+	errChan := make(chan error)
 	b.updates <- &WorkspaceUpdateRequest{
 		instance: ws.LatestInstance,
 		done:     done,
+		errChan:  errChan,
 	}
-	return <-done
+	return <-done, <-errChan
 }
 
 func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 	var ws *Workspace
+	var errs []error
 	u := ur.instance
 	defer func() {
 		if ur.done != nil {
 			ur.done <- ws
 			close(ur.done)
 		}
+		if ur.errChan != nil {
+			ur.errChan <- summarizeErrors(errs)
+			close(ur.errChan)
+		}
 	}()
+
+	// handleUpdate handles both "best effort" FullUpdate and the stricter single workspace Update
+	// For the single Update, we need to collect and surface the error, but when doing a FullUpdate
+	// it does not always make sense to log at "error" level, handleWarning is used in those cases.
+	handleError := func(workspaceID, msg string, err error) {
+		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error(msg)
+		errs = append(errs, xerrors.Errorf(msg+": %w", err))
+	}
+	handleWarning := func(workspaceID, msg string, err error) {
+		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Warn(msg)
+		errs = append(errs, xerrors.Errorf(msg+": %w", err))
+	}
 
 	b.workspacesMu.Lock()
 	defer b.workspacesMu.Unlock()
@@ -285,6 +306,7 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 	ws, ok := b.workspaces[u.ID]
 	if !ok {
 		if u.Status.Phase == "stopping" || u.Status.Phase == "stopped" {
+			handleWarning(u.WorkspaceID, "skipping update", xerrors.New("stopped instance"))
 			return
 		}
 		ctx, cancel := context.WithCancel(b.ctx)
@@ -313,14 +335,14 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 		if ws.OwnerToken != "" && !ws.tunnelClientConnected {
 			err := b.connectTunnelClient(ws.ctx, ws)
 			if err != nil {
-				logrus.WithError(err).WithField("workspace", ws.WorkspaceID).Error("tunnel client failed to connect")
+				handleError(ws.WorkspaceID, "tunnel client failed to connect", err)
 			}
 		}
 		if ws.supervisorListener == nil && ws.tunnelClientConnected {
 			var err error
 			ws.supervisorListener, err = b.establishTunnel(ws.ctx, ws, "supervisor", 22999, 0, supervisor.TunnelVisiblity_host)
 			if err != nil {
-				logrus.WithError(err).WithField("workspace", ws.WorkspaceID).Error("cannot establish supervisor tunnel")
+				handleError(ws.WorkspaceID, "cannot establish supervisor tunnel", err)
 			}
 		}
 
@@ -328,7 +350,7 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 			var err error
 			ws.supervisorClient, err = grpc.Dial(ws.supervisorListener.LocalAddr, grpc.WithInsecure())
 			if err != nil {
-				logrus.WithError(err).WithField("workspace", ws.WorkspaceID).Error("error connecting to supervisor")
+				handleError(ws.WorkspaceID, "error connecting to supervisor", err)
 			} else {
 				go func() {
 					<-ws.ctx.Done()
@@ -346,13 +368,13 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 				var err error
 				ws.SSHPrivateFN, ws.SSHPublicKey, err = generateSSHKeys(ws.InstanceID)
 				if err != nil {
-					logrus.WithError(err).WithField("workspaceInstanceID", ws.InstanceID).Error("cannot produce SSH keypair")
+					handleError(ws.WorkspaceID, "cannot produce SSH keypair", err)
 					return
 				}
 
 				ws.localSSHListener, err = b.establishSSHTunnel(ws)
 				if err != nil {
-					logrus.WithError(err).Error("cannot establish SSH tunnel")
+					handleError(ws.WorkspaceID, "cannot produce SSH keypair", err)
 				}
 			}()
 		}
@@ -361,11 +383,26 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 		ws.cancel()
 		delete(b.workspaces, u.ID)
 		b.Callbacks.InstanceUpdate(ws)
+		handleWarning(u.WorkspaceID, "skipping update", xerrors.New("stopped instance"))
 		return
 	}
 
 	b.workspaces[u.ID] = ws
 	b.Callbacks.InstanceUpdate(ws)
+}
+
+func summarizeErrors(errs []error) error {
+	switch len(errs) {
+	case 0:
+		return nil
+	case 1:
+		return errs[0]
+	}
+	messages := make([]string, len(errs), len(errs))
+	for i := range errs {
+		messages[i] = errs[i].Error()
+	}
+	return xerrors.Errorf("multiple errors: %s", strings.Join(messages, ", "))
 }
 
 func generateSSHKeys(instanceID string) (privateKeyFN string, publicKey string, err error) {
@@ -874,7 +911,7 @@ func (b *Bastion) AutoTunnel(instanceID string, enabled bool) {
 	ws.tunnelEnabled = enabled
 	if enabled {
 		if ws.cancelTunnel == nil && b.EnableAutoTunnel {
-			b.Update(ws.WorkspaceID)
+			_, _ = b.Update(ws.WorkspaceID)
 		}
 	} else if ws.cancelTunnel != nil {
 		ws.cancelTunnel()

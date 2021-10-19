@@ -66,12 +66,12 @@ func (s *LocalAppService) AutoTunnel(ctx context.Context, req *api.AutoTunnelReq
 }
 
 func (s *LocalAppService) ResolveSSHConnection(ctx context.Context, req *api.ResolveSSHConnectionRequest) (*api.ResolveSSHConnectionResponse, error) {
-	ws := s.b.Update(req.WorkspaceId)
+	ws, err := s.b.Update(req.WorkspaceId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
 	if ws == nil || ws.InstanceID != req.InstanceId {
 		return nil, status.Error(codes.NotFound, "workspace not found")
-	}
-	if ws.localSSHListener == nil {
-		return nil, status.Error(codes.NotFound, "workspace ssh tunnel not configured")
 	}
 	return &api.ResolveSSHConnectionResponse{
 		Host:       ws.WorkspaceID,
