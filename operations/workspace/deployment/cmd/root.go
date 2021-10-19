@@ -30,9 +30,10 @@ var verbose bool
 var rootCmd = &cobra.Command{
 	Use:   "ws-deployment",
 	Short: "ws-deployment manages the workspace clusters",
-	Short: "ws-deployment manages the the creation of workspace clusters, installation of gitpod in those clusters and traffic shifting",
+	Long:  "ws-deployment manages the the creation of workspace clusters, installation of gitpod in those clusters and traffic shifting",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, jsonLog, verbose)
+		
 	},
 }
 
