@@ -21,7 +21,6 @@ import { ConfigInferenceProvider } from './workspace/config-inference-provider';
 import { IContextParser, IPrefixContextParser } from './workspace/context-parser';
 import { ContextParser } from './workspace/context-parser-service';
 import { SnapshotContextParser } from './workspace/snapshot-context-parser';
-import { GitpodCookie } from './auth/gitpod-cookie';
 import { EnforcementController, EnforcementControllerServerFactory } from './user/enforcement-endpoint';
 import { MessagebusConfiguration } from '@gitpod/gitpod-messagebus/lib/config';
 import { HostContextProvider, HostContextProviderFactory } from './auth/host-context-provider';
@@ -99,7 +98,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(Authenticator).toSelf().inSingletonScope();
     bind(LoginCompletionHandler).toSelf().inSingletonScope();
-    bind(GitpodCookie).toSelf().inSingletonScope();
     bind(TosCookie).toSelf().inSingletonScope();
 
     bind(SessionHandlerProvider).toSelf().inSingletonScope();

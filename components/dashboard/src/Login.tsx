@@ -5,6 +5,7 @@
  */
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
@@ -31,11 +32,11 @@ function Item(props: { icon: string, iconSize?: string, text: string }) {
 }
 
 export function markLoggedIn() {
-    document.cookie = "gitpod-user=loggedIn;max-age=" + 60 * 60 * 24 * 365;
+    document.cookie = GitpodCookie.generateCookie(window.location.hostname);
 }
 
 export function hasLoggedInBefore() {
-    return document.cookie.match("gitpod-user=loggedIn");
+    return GitpodCookie.isPresent(document.cookie);
 }
 
 export function hasVisitedMarketingWebsiteBefore() {

@@ -11,7 +11,6 @@ import * as express from 'express';
 import { Authenticator } from "../auth/authenticator";
 import { Config } from '../config';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { GitpodCookie } from "../auth/gitpod-cookie";
 import { AuthorizationService } from "./authorization-service";
 import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { UserService } from "./user-service";
@@ -37,7 +36,6 @@ export class UserController {
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
     @inject(Config) protected readonly config: Config;
-    @inject(GitpodCookie) protected readonly gitpodCookie: GitpodCookie;
     @inject(TosCookie) protected readonly tosCookie: TosCookie;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(UserService) protected readonly userService: UserService;
@@ -127,27 +125,11 @@ export class UserController {
             }
 
             // clear cookies
-            this.gitpodCookie.unsetCookie(res);
             this.sessionHandlerProvider.clearSessionCookie(res, this.config);
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
             res.redirect(redirectToUrl);
-        });
-        router.get("/refresh-login", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            if (!req.isAuthenticated() || !User.is(req.user)) {
-                res.sendStatus(401);
-                return;
-            }
-
-            // Clean up
-            this.tosCookie.unset(res);
-
-            // This endpoint is necessary as calls over ws (our way of communicating with /api) do not update the browsers cookie
-            req.session!.touch(console.error);  // Update session explicitly, just to be sure
-            // Update `gitpod-user=loggedIn` as well
-            this.gitpodCookie.setCookie(res);
-            res.sendStatus(200);                // Carries up-to-date cookie in 'Set-Cookie' header
         });
         router.get("/auth/workspace-cookie/:instanceID", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!req.isAuthenticated() || !User.is(req.user)) {
