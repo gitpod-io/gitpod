@@ -446,6 +446,10 @@ var (
 		APIVersion: "cert-manager.io/v1",
 		Kind:       "Certificate",
 	}
+	TypeMetaCertificateIssuer = metav1.TypeMeta{
+		APIVersion: "cert-manager.io/v1",
+		Kind:       "Issuer",
+	}
 	TypeMetaSecret = metav1.TypeMeta{
 		APIVersion: "v1",
 		Kind:       "Secret",
@@ -453,6 +457,10 @@ var (
 	TypeMetaPodSecurityPolicy = metav1.TypeMeta{
 		APIVersion: "policy/v1beta1",
 		Kind:       "PodSecurityPolicy",
+	}
+	TypeMetaResourceQuota = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "ResourceQuota",
 	}
 )
 

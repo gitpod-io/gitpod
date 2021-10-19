@@ -317,7 +317,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 							Effect:   corev1.TaintEffect("NoExecute"),
 						},
 					},
-					PriorityClassName:  "system-node-critical",
+					PriorityClassName:  common.SystemNodeCritical,
 					EnableServiceLinks: pointer.Bool(false),
 				},
 			},
