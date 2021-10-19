@@ -40,7 +40,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
+				Name:      fmt.Sprintf("%s-rb", Component),
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
@@ -50,7 +50,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}},
 			RoleRef: rbacv1.RoleRef{
 				Kind:     "ClusterRole",
-				Name:     fmt.Sprintf("%s-ns-ws-daemon", ctx.Namespace),
+				Name:     fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
 				APIGroup: "rbac.authorization.k8s.io",
 			},
 		},

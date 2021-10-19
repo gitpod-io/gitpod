@@ -6,7 +6,6 @@ package wsdaemon
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,7 +36,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 						From: []networkingv1.NetworkPolicyPeer{
 							{
-								PodSelector: &metav1.LabelSelector{MatchLabels: labels},
+								PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(common.WSManagerComponent)},
 							},
 						},
 					},

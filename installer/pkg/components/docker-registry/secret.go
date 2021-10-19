@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	v1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	"time"
 
@@ -64,14 +64,14 @@ func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			"user":              []byte(user),
 			"password":          []byte(password),
 		},
-	}, &v1.Certificate{
+	}, &certmanagerv1.Certificate{
 		TypeMeta: common.TypeMetaCertificate,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      BuiltInRegistryCerts,
 			Namespace: ctx.Namespace,
 			Labels:    common.DefaultLabels(Component),
 		},
-		Spec: v1.CertificateSpec{
+		Spec: certmanagerv1.CertificateSpec{
 			Duration:   oneYear,
 			SecretName: BuiltInRegistryCerts,
 			IssuerRef: cmmeta.ObjectReference{

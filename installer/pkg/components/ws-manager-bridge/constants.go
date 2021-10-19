@@ -4,6 +4,8 @@
 
 package wsmanagerbridge
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component = "ws-manager-bridge"
+	Component = common.WSManagerBridgeComponent
 )
