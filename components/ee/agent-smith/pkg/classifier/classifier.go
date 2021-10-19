@@ -12,10 +12,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/minio/highwayhash"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -259,12 +259,8 @@ func computeHash(r io.ReadSeeker) (string, error) {
 		r.Seek(0, io.SeekStart)
 	}()
 
-	var key = []byte{0x7e, 0x56, 0x05, 0xc7, 0x7f, 0xe6, 0x82, 0x65, 0xa2, 0xb6, 0xe4, 0xaf, 0x56, 0xb8, 0x78, 0x22, 0x0a, 0xd7, 0x51, 0x30, 0x59, 0xad, 0x79, 0xf3, 0x4a, 0x65, 0x79, 0xdc, 0x8c, 0xdb, 0xdd, 0x3c}
-	hash, err := highwayhash.New(key)
-	if err != nil {
-		return "", err
-	}
-	_, err = io.Copy(hash, r)
+	hash := xxhash.New()
+	_, err := io.Copy(hash, r)
 	if err != nil {
 		return "", err
 	}
