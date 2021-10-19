@@ -7,7 +7,6 @@
 import { inject, injectable } from 'inversify';
 import * as express from 'express';
 import { User } from '@gitpod/gitpod-protocol';
-import { GitpodCookie } from './gitpod-cookie';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { Config } from "../config";
 import { AuthFlow } from './auth-provider';
@@ -23,7 +22,6 @@ import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 @injectable()
 export class LoginCompletionHandler {
 
-    @inject(GitpodCookie) protected gitpodCookie: GitpodCookie;
     @inject(Config) protected readonly config: Config;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
@@ -74,9 +72,6 @@ export class LoginCompletionHandler {
         // Clean up the session & avoid loops
         await TosFlow.clear(request.session);
         await AuthFlow.clear(request.session);
-
-        // Create Gitpod 🍪 before the redirect
-        this.gitpodCookie.setCookie(response);
 
         if (authHost) {
 

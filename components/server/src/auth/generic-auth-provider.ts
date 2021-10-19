@@ -18,7 +18,6 @@ import { runInNewContext } from "vm";
 import { AuthFlow, AuthProvider } from "../auth/auth-provider";
 import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
 import { AuthException, EmailAddressAlreadyTakenException, SelectAccountException, UnconfirmedUserException } from "../auth/errors";
-import { GitpodCookie } from "./gitpod-cookie";
 import { Config } from '../config';
 import { getRequestingClientInfo } from "../express-util";
 import { TokenProvider } from '../user/token-provider';
@@ -61,7 +60,6 @@ export class GenericAuthProvider implements AuthProvider {
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserDB) protected userDb: UserDB;
     @inject(Config) protected config: Config;
-    @inject(GitpodCookie) protected gitpodCookie: GitpodCookie;
     @inject(UserService) protected readonly userService: UserService;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
