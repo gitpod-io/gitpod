@@ -6,6 +6,7 @@ package detector
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -14,8 +15,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/procfs"
 )
@@ -39,6 +42,7 @@ func (fs realProcfs) Discover() map[int]*process {
 
 	idx := make(map[int]*process, len(procs))
 
+	digest := make([]byte, 24)
 	for _, p := range procs {
 		cmdline, err := p.CmdLine()
 		if err != nil {
@@ -71,7 +75,12 @@ func (fs realProcfs) Discover() map[int]*process {
 		proc.Kind = ProcessUnknown
 		proc.Path = path
 		parent.Children = append(parent.Children, proc)
-		parent.Leaf = false
+
+		binary.LittleEndian.PutUint64(digest[0:8], uint64(stat.PID))
+		binary.LittleEndian.PutUint64(digest[8:16], uint64(stat.PPID))
+		binary.LittleEndian.PutUint64(digest[16:24], stat.Starttime)
+		proc.Hash = xxhash.Sum64(digest)
+
 		idx[p.PID] = proc
 	}
 	return idx
@@ -96,16 +105,22 @@ type ProcfsDetector struct {
 	mu sync.RWMutex
 	ps chan Process
 
-	indexSizeGuage       prometheus.Gauge
-	workspacesFoundGauge prometheus.Gauge
+	indexSizeGuage     prometheus.Gauge
+	cacheUseCounterVec *prometheus.CounterVec
 
 	startOnce sync.Once
 
-	proc discoverableProcFS
+	proc  discoverableProcFS
+	cache *lru.Cache
 }
 
 func NewProcfsDetector() (*ProcfsDetector, error) {
 	p, err := procfs.NewFS("/proc")
+	if err != nil {
+		return nil, err
+	}
+
+	cache, err := lru.New(2000)
 	if err != nil {
 		return nil, err
 	}
@@ -117,22 +132,25 @@ func NewProcfsDetector() (*ProcfsDetector, error) {
 			Name:      "index_size",
 			Help:      "number of entries in the last procfs scan index",
 		}),
-		workspacesFoundGauge: prometheus.NewGauge(prometheus.GaugeOpts{
+		cacheUseCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "gitpod",
 			Subsystem: "agent_smith_procfs_detector",
-			Name:      "workspaces_found",
-			Help:      "number of workspaces found",
-		}),
-		proc: realProcfs(p),
+			Name:      "cache_use_total",
+			Help:      "process cache statistics",
+		}, []string{"use"}),
+		proc:  realProcfs(p),
+		cache: cache,
 	}, nil
 }
 
 func (det *ProcfsDetector) Describe(d chan<- *prometheus.Desc) {
 	det.indexSizeGuage.Describe(d)
+	det.cacheUseCounterVec.Describe(d)
 }
 
 func (det *ProcfsDetector) Collect(m chan<- prometheus.Metric) {
 	det.indexSizeGuage.Collect(m)
+	det.cacheUseCounterVec.Collect(m)
 }
 
 func (det *ProcfsDetector) start() {
@@ -164,6 +182,7 @@ type process struct {
 	Leaf      bool
 	Cmdline   []string
 	Workspace *common.Workspace
+	Hash      uint64
 }
 
 func (det *ProcfsDetector) run(processes chan<- Process) {
@@ -185,9 +204,15 @@ func (det *ProcfsDetector) run(processes chan<- Process) {
 		if p.Workspace == nil {
 			continue
 		}
-		if p.Kind == ProcessSandbox {
+		if p.Kind != ProcessUserWorkload {
 			continue
 		}
+		if _, ok := det.cache.Get(p.Hash); ok {
+			det.cacheUseCounterVec.WithLabelValues("hit").Inc()
+			continue
+		}
+		det.cacheUseCounterVec.WithLabelValues("miss").Inc()
+		det.cache.Add(p.Hash, struct{}{})
 
 		proc := Process{
 			Path:        p.Path,
