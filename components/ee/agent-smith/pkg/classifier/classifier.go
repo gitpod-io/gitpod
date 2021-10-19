@@ -5,6 +5,7 @@
 package classifier
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,6 +17,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/minio/highwayhash"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -138,7 +140,7 @@ func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signatu
 	return &SignatureMatchClassifier{
 		Signatures:   sig,
 		DefaultLevel: defaultLevel,
-		processMissTotal: prometheus.NewCounter(prometheus.CounterOpts{
+		processMissTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "gitpod_agent_smith",
 			Subsystem: "classifier_signature",
 			Name:      "process_miss_total",
@@ -146,7 +148,7 @@ func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signatu
 			ConstLabels: prometheus.Labels{
 				"classifier_name": name,
 			},
-		}),
+		}, []string{"reason"}),
 		signatureHitTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "gitpod_agent_smith",
 			Subsystem: "classifier_signature",
@@ -156,7 +158,7 @@ func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signatu
 				"classifier_name": name,
 			},
 		}),
-		cacheUseTotal: *prometheus.NewCounterVec(prometheus.CounterOpts{
+		cacheUseTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "gitpod_agent_smith",
 			Subsystem: "classifier_signature",
 			Name:      "cache_use_total",
@@ -169,15 +171,23 @@ func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signatu
 	}
 }
 
+const (
+	// processMissNotFound is the reason we use on the process miss metric when
+	// either the process itself or its executable cannot be found.
+	processMissNotFound         = "not_found"
+	processMissPermissionDenied = "permission_denied"
+	processMissOther            = "other"
+)
+
 // SignatureMatchClassifier matches against binary signatures
 type SignatureMatchClassifier struct {
 	Signatures   []*Signature
 	DefaultLevel Level
 	cache        *lru.Cache
 
-	processMissTotal  prometheus.Counter
+	processMissTotal  *prometheus.CounterVec
 	signatureHitTotal prometheus.Counter
-	cacheUseTotal     prometheus.CounterVec
+	cacheUseTotal     *prometheus.CounterVec
 }
 
 var _ ProcessClassifier = &SignatureMatchClassifier{}
@@ -186,9 +196,21 @@ var sigNoMatch = &Classification{Level: LevelNoMatch, Classifier: ClassifierSign
 
 func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []string) (c *Classification, err error) {
 	r, err := os.Open(executable)
-	if os.IsNotExist(err) {
-		sigcl.processMissTotal.Inc()
-		log.WithField("executable", executable).WithField("cmdline", cmdline).Debug("signature classification miss")
+	if err != nil {
+		var reason string
+		if os.IsNotExist(err) {
+			reason = processMissNotFound
+		} else if errors.Is(err, os.ErrPermission) {
+			reason = processMissPermissionDenied
+		} else {
+			reason = processMissOther
+		}
+		sigcl.processMissTotal.WithLabelValues(reason).Inc()
+		log.WithFields(logrus.Fields{
+			"executable": executable,
+			"cmdline":    cmdline,
+			"reason":     reason,
+		}).WithError(err).Debug("signature classification miss")
 		return sigNoMatch, nil
 	}
 	defer r.Close()

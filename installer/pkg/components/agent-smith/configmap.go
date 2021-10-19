@@ -32,7 +32,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Signatures: []*classifier.Signature{{
 						Name:    "testtarget",
 						Domain:  classifier.DomainProcess,
-						Kind:    classifier.ObjectELF,
+						Kind:    classifier.ObjectELFSymbols,
 						Pattern: []byte(base64.StdEncoding.EncodeToString([]byte("agentSmithTestTarget"))),
 						Regexp:  false,
 					}},

@@ -12,7 +12,6 @@ import (
 	"debug/elf"
 	"io"
 	"regexp"
-	"strings"
 
 	"golang.org/x/xerrors"
 )
@@ -23,8 +22,10 @@ type ObjectKind string
 const (
 	// ObjectAny applies to any object
 	ObjectAny ObjectKind = ""
-	// ObjectELF applies to ELF binaries
-	ObjectELF ObjectKind = "elf"
+	// ObjectELFSymbols applies to ELF binaries
+	ObjectELFSymbols ObjectKind = "elf"
+	// ObjectELFRodata applies to the rodata section of ELF binaries
+	ObjectELFRodata ObjectKind = "elf-rodata"
 )
 
 // Domain describes where to look for the file to can for a signature
@@ -83,7 +84,7 @@ func (s *Signature) Validate() error {
 		}
 		s.compiledRegexp = c
 	}
-	if s.Kind == ObjectELF && (s.Slice.Start != 0 || s.Slice.End != 0) {
+	if s.Kind == ObjectELFSymbols && (s.Slice.Start != 0 || s.Slice.End != 0) {
 		return xerrors.Errorf("cannot use slice with ELF object kind")
 	}
 
@@ -132,7 +133,7 @@ func (s *Signature) Matches(in io.ReaderAt) (bool, error) {
 
 		matches := false
 		switch s.Kind {
-		case ObjectELF:
+		case ObjectELFSymbols, ObjectELFRodata:
 			matches = isELF(head)
 		case ObjectAny:
 			matches = true
@@ -144,8 +145,10 @@ func (s *Signature) Matches(in io.ReaderAt) (bool, error) {
 
 	// match the specific kind
 	switch s.Kind {
-	case ObjectELF:
+	case ObjectELFSymbols:
 		return s.matchELF(in)
+	case ObjectELFRodata:
+		return s.matchELFRodata(in)
 	default:
 		return s.matchAny(in)
 	}
@@ -169,28 +172,47 @@ func isELF(head []byte) bool {
 }
 
 // matchELF matches a signature against an ELF file
-func (s *Signature) matchELF(in io.ReaderAt) (bool, error) {
-	symbols, err := ExtractELFSymbols(in)
+func (s *Signature) matchELFRodata(in io.ReaderAt) (bool, error) {
+	executable, err := elf.NewFile(in)
+	if err != nil {
+		return false, xerrors.Errorf("cannot anaylse ELF file: %w", err)
+	}
+
+	rodata, err := ExtractELFRodata(executable)
 	if err != nil {
 		return false, err
 	}
+	matches, err := s.matches(rodata)
+	if matches || err != nil {
+		return matches, err
+	}
 
+	return false, nil
+}
+
+// matchELF matches a signature against an ELF file
+func (s *Signature) matchELF(in io.ReaderAt) (bool, error) {
+	executable, err := elf.NewFile(in)
+	if err != nil {
+		return false, xerrors.Errorf("cannot anaylse ELF file: %w", err)
+	}
+
+	symbols, err := ExtractELFSymbols(executable)
+	if err != nil {
+		return false, err
+	}
 	for _, sym := range symbols {
-		matches, err := s.matchesString(sym)
+		matches, err := s.matches([]byte(sym))
 		if matches || err != nil {
 			return matches, err
 		}
 	}
+
 	return false, nil
 }
 
 // ExtractELFSymbols extracts all ELF symbol names from an ELF binary
-func ExtractELFSymbols(in io.ReaderAt) ([]string, error) {
-	executable, err := elf.NewFile(in)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot anaylse ELF file: %w", err)
-	}
-
+func ExtractELFSymbols(executable *elf.File) ([]string, error) {
 	var symbols []string
 	syms, err := executable.Symbols()
 	if err != nil && err != elf.ErrNoSymbols {
@@ -208,6 +230,20 @@ func ExtractELFSymbols(in io.ReaderAt) ([]string, error) {
 		symbols = append(symbols, s.Name)
 	}
 	return symbols, nil
+}
+
+// ExtractELFRodata extracts the .rodata section
+func ExtractELFRodata(executable *elf.File) ([]byte, error) {
+	data := executable.Section(".rodata")
+	if data == nil {
+		// not having a .rodata section is no error in the strict sense
+		return nil, nil
+	}
+	bs, err := data.Data()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot get .rodata section: %w", err)
+	}
+	return bs, nil
 }
 
 // matchAny matches a signature against a binary file
@@ -239,7 +275,7 @@ func (s *Signature) matchAny(in io.ReaderAt) (bool, error) {
 }
 
 // matchesString checks if the signature matches a string (respects and caches regexp)
-func (s *Signature) matchesString(str string) (bool, error) {
+func (s *Signature) matches(v []byte) (bool, error) {
 	if s.Regexp {
 		if s.compiledRegexp == nil {
 			var err error
@@ -249,8 +285,8 @@ func (s *Signature) matchesString(str string) (bool, error) {
 			}
 		}
 
-		return s.compiledRegexp.Match([]byte(str)), nil
+		return s.compiledRegexp.Match(v), nil
 	}
 
-	return strings.Contains(str, string(s.Pattern)), nil
+	return bytes.Contains(v, s.Pattern), nil
 }
