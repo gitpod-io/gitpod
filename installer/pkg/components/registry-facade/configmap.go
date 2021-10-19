@@ -40,12 +40,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TLS:         &tls,
 			Store:       "/mnt/cache/registry",
 			RequireAuth: false,
-			// todo(sje): figure out these values
 			StaticLayer: []regfac.StaticLayerCfg{{
-				Ref:  common.ImageName(ctx.Config.Repository, Component, "todo"),
+				Ref:  common.ImageName(ctx.Config.Repository, SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 				Type: "image",
 			}, {
-				Ref:  common.ImageName(ctx.Config.Repository, Component, "todo"),
+				Ref:  common.ImageName(ctx.Config.Repository, DockerUpImage, ctx.VersionManifest.Components.Workspace.DockerUp.Version),
 				Type: "image",
 			}},
 		},

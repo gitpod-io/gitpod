@@ -4,8 +4,10 @@
 
 package wsmanager
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component                  = "ws-manager"
+	Component                  = common.WSManagerComponent
 	RPCPort                    = 8080
 	RPCPortName                = "rpc"
 	TLSSecretNameSecret        = "ws-manager-tls"

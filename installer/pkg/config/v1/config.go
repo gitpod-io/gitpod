@@ -195,6 +195,7 @@ type WorkspaceTemplates struct {
 	Ghost      *corev1.Pod `json:"ghost"`
 	ImageBuild *corev1.Pod `json:"image_build"`
 	Regular    *corev1.Pod `json:"regular"`
+	Probe      *corev1.Pod `json:"probe"`
 }
 
 type Workspace struct {

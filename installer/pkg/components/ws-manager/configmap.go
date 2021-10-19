@@ -7,7 +7,10 @@ package wsmanager
 import (
 	"encoding/json"
 	"fmt"
+	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
+	"k8s.io/utils/pointer"
 	"path/filepath"
+	"sigs.k8s.io/yaml"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/grpc"
@@ -20,7 +23,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/yaml"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -37,12 +39,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return (&q).String()
 	}
 
+	storage, err := common.StorageConfiguration(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	wsmcfg := config.ServiceConfiguration{
-		// todo(sje): put in config values
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
 			SchedulerName:  "workspace-scheduler",
-			SeccompProfile: "",
+			SeccompProfile: "/mnt/dst/workspace_default_not-set.json",
 			DryRun:         false,
 			WorkspaceDaemon: config.WorkspaceDaemonConfiguration{
 				Port: 8080,
@@ -73,13 +79,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			HeartbeatInterval:    util.Duration(30 * time.Second),
 			GitpodHostURL:        "https://" + ctx.Config.Domain,
-			WorkspaceClusterHost: "",
+			WorkspaceClusterHost: fmt.Sprintf("ws.%s", ctx.Config.Domain),
 			InitProbe: config.InitProbeConfiguration{
 				Timeout: (1 * time.Second).String(),
 			},
-			WorkspaceURLTemplate:     "",
-			WorkspacePortURLTemplate: "",
-			WorkspaceHostPath:        "",
+			WorkspaceURLTemplate:     fmt.Sprintf("https://{{ .Prefix }}.ws.%s", ctx.Config.Domain),
+			WorkspacePortURLTemplate: fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.%s", ctx.Config.Domain),
+			WorkspaceHostPath:        wsdaemon.HostWorkspacePath,
 			WorkspacePodTemplate:     templatesCfg,
 			Timeouts: config.WorkspaceTimeoutConfiguration{
 				AfterClose:          util.Duration(2 * time.Minute),
@@ -91,14 +97,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Stopping:            util.Duration(1 * time.Hour),
 				Interrupted:         util.Duration(5 * time.Minute),
 			},
-			EventTraceLog:                "", // todo(sje): make conditional based on config
+			//EventTraceLog:                "", // todo(sje): make conditional based on config
 			ReconnectionInterval:         util.Duration(30 * time.Second),
-			RegistryFacadeHost:           "",
+			RegistryFacadeHost:           fmt.Sprintf("reg.%s:%v", common.RegistryFacadeComponent, common.RegistryFacadeServicePort),
 			EnforceWorkspaceNodeAffinity: true,
 		},
 		Content: struct {
 			Storage storageconfig.StorageConfig `json:"storage"`
-		}{Storage: storageconfig.StorageConfig{}},
+		}{Storage: *storage},
 		RPCServer: struct {
 			Addr string `json:"addr"`
 			TLS  struct {
@@ -108,7 +114,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			} `json:"tls"`
 			RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
 		}{
-			Addr: "8080",
+			Addr: fmt.Sprintf(":%d", RPCPort),
 			TLS: struct {
 				CA          string `json:"ca"`
 				Certificate string `json:"crt"`
@@ -160,6 +166,19 @@ func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemp
 		cfgTpls = &configv1.WorkspaceTemplates{}
 	}
 
+	cfgTpls.Default = &corev1.Pod{
+		Spec: corev1.PodSpec{
+			EnableServiceLinks: pointer.Bool(false),
+			DNSConfig: &corev1.PodDNSConfig{
+				Nameservers: []string{
+					"1.1.1.1",
+					"8.8.8.8",
+				},
+			},
+			DNSPolicy: corev1.DNSNone,
+		},
+	}
+
 	ops := []struct {
 		Name string
 		Path *string
@@ -170,17 +189,16 @@ func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemp
 		{Name: "imagebuild", Path: &cfg.ImagebuildPath, Tpl: cfgTpls.ImageBuild},
 		{Name: "prebuild", Path: &cfg.PrebuildPath, Tpl: cfgTpls.Prebuild},
 		{Name: "regular", Path: &cfg.RegularPath, Tpl: cfgTpls.Regular},
+		{Name: "probe", Path: &cfg.ProbePath, Tpl: cfgTpls.Probe},
 	}
 	for _, op := range ops {
 		if op.Tpl == nil {
 			continue
 		}
-
 		fc, err := yaml.Marshal(op.Tpl)
 		if err != nil {
 			return cfg, nil, fmt.Errorf("unable to marshal %s workspace template: %w", op.Name, err)
 		}
-
 		fn := op.Name + ".yaml"
 		*op.Path = filepath.Join(WorkspaceTemplatePath, fn)
 		tpls[fn] = string(fc)

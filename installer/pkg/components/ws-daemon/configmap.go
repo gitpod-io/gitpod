@@ -27,11 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const (
-	locContainerWorkingArea = "/mnt/workingarea"
-	locNodeWorkingArea      = "/mnt/disks/ssd0/workspaces"
-)
-
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var fsshift wsdapi.FSShiftMethod
 	switch ctx.Config.Workspace.Runtime.FSShiftMethod {
@@ -46,26 +41,38 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	wsdcfg := wsdconfig.Config{
 		Daemon: daemon.Config{
 			Runtime: daemon.RuntimeConfig{
+				KubernetesNamespace: ctx.Namespace,
 				Container: &container.Config{
 					Runtime: container.RuntimeContainerd,
+					Mapping: map[string]string{
+						ctx.Config.Workspace.Runtime.ContainerDRuntimeDir: "/mnt/node0",
+					},
 					Mounts: container.NodeMountsLookupConfig{
-						ProcLoc: "/mnt/rootfs/proc",
+						ProcLoc: "/mnt/mounts",
 					},
 					Containerd: &container.ContainerdConfig{
-						SocketPath: "/mnt/rootfs/run/containerd/containerd.sock",
+						SocketPath: "/mnt/containerd.sock",
 					},
 				},
 			},
 			Content: content.Config{
-				WorkingArea:     locContainerWorkingArea,
-				WorkingAreaNode: locNodeWorkingArea,
+				WorkingArea:     "/mnt/workingarea",
+				WorkingAreaNode: HostWorkspacePath,
+				TmpDir:          "/tmp",
 				UserNamespaces: content.UserNamespacesConfig{
 					FSShift: content.FSShiftMethod(fsshift),
 				},
 				Storage: common.StorageConfig(&ctx.Config),
+				Backup: content.BackupConfig{
+					Timeout:  util.Duration(time.Minute * 5),
+					Attempts: 3,
+				},
+				Initializer: content.InitializerConfig{
+					Command: "/app/content-initializer",
+				},
 			},
 			Uidmapper: iws.UidmapperConfig{
-				ProcLocation: "/mnt/rootfs/proc",
+				ProcLocation: "/proc",
 				RootRange: iws.UIDRange{
 					Start: 33333,
 					Size:  1,
@@ -84,7 +91,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				ControlPeriod:   "15m",
 				SamplingPeriod:  "10s",
-				CGroupsBasePath: "/mnt/rootfs/sys/fs/cgroup",
+				CGroupsBasePath: "/mnt/node-cgroups",
 				ProcessPriorities: map[resources.ProcessType]int{
 					resources.ProcessSupervisor: 0,
 					resources.ProcessTheia:      5,
@@ -94,7 +101,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Hosts: hosts.Config{
 				Enabled:       true,
-				NodeHostsFile: "/mnt/rootfs/etc/hosts",
+				NodeHostsFile: "/mnt/hosts",
 				FixedHosts: map[string][]hosts.Host{
 					"registryFacade": {{
 						Name: fmt.Sprintf("reg.%s", ctx.Config.Domain),
@@ -110,9 +117,17 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Enabled:  true,
 				Interval: util.Duration(5 * time.Minute),
 				Locations: []diskguard.LocationConfig{{
-					Path:          locContainerWorkingArea,
+					Path:          "/mnt/wsdaemon-workingarea",
 					MinBytesAvail: 21474836480,
 				}},
+			},
+		},
+		Service: wsdconfig.AddrTLS{
+			Addr: fmt.Sprintf(":%d", ServicePort),
+			TLS: &wsdconfig.TLS{
+				Authority:   "/certs/ca.crt",
+				Certificate: "/certs/tls.crt",
+				PrivateKey:  "/certs/tls.key",
 			},
 		},
 		Prometheus: wsdconfig.Addr{
