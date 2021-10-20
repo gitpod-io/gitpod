@@ -32,8 +32,7 @@ var bobInitBase = &cobra.Command{
 		wd := args[0]
 		inpt := args[1]
 
-		rawinit := make([]byte, base64.RawStdEncoding.DecodedLen(len(inpt)))
-		_, err := base64.RawStdEncoding.Decode(rawinit, []byte(inpt))
+		rawinit, err := base64.StdEncoding.DecodeString(inpt)
 		if err != nil {
 			log.Fatalf("cannot decode initializer: %v", err)
 		}

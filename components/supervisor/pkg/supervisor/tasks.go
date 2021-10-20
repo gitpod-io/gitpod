@@ -437,8 +437,9 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 			// the older logs and elapsed time (`importParentLogAndGetDuration` is always safe thanks to its initial `os.Stat`).
 			_ = os.Rename(fileName, oldFileName)
 		}
-		file, err := os.Create(fileName)
+
 		var fileWriter *bufio.Writer
+		file, err := os.Create(fileName)
 		if err != nil {
 			terminalLog.WithError(err).Error("cannot create a prebuild log file")
 			fileWriter = bufio.NewWriter(io.Discard)
@@ -451,43 +452,39 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 		// Import any parent prebuild logs and parse their total duration if available
 		parentElapsed := importParentLogAndGetDuration(oldFileName, fileWriter)
 
-		buf := make([]byte, 4096)
-		for {
-			n, err := stdout.Read(buf)
-			if err == io.EOF {
-				elapsed := time.Since(start)
-				if parentElapsed > elapsed {
-					elapsed = parentElapsed
-				}
-				duration := ""
-				if elapsed >= 1*time.Minute {
-					elapsedInMinutes := strconv.Itoa(int(elapsed.Minutes()))
-					duration = "🎉 Well done on saving " + elapsedInMinutes + " minute"
-					if elapsedInMinutes != "1" {
-						duration += "s"
-					}
-					duration += "\r\n"
-				}
-				data := string(buf[:n])
-				fileWriter.Write(buf[:n])
-				if tm.reporter != nil {
-					tm.reporter.write(data, task, terminal)
-				}
+		var writer io.Writer
 
-				endMessage := "\r\n🤙 This task ran as a workspace prebuild\r\n" + duration + "\r\n"
-				fileWriter.WriteString(endMessage)
-				break
+		if os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true" {
+			writer = io.MultiWriter(fileWriter, os.Stdout)
+		} else {
+			writer = fileWriter
+		}
+
+		_, err = io.Copy(writer, stdout)
+		if err != nil {
+			log.WithError(err).Error("cannot copy from terminal")
+		}
+
+		elapsed := time.Since(start)
+		if parentElapsed > elapsed {
+			elapsed = parentElapsed
+		}
+
+		duration := ""
+		if elapsed >= 1*time.Minute {
+			elapsedInMinutes := strconv.Itoa(int(elapsed.Minutes()))
+			duration = "🎉 Well done on saving " + elapsedInMinutes + " minute"
+			if elapsedInMinutes != "1" {
+				duration += "s"
 			}
-			if err != nil {
-				terminalLog.WithError(err).Error("cannot read from a task terminal")
-				return
-			}
-			data := string(buf[:n])
-			fileWriter.Write(buf[:n])
-			if tm.reporter != nil {
-				task.lastOutput = string(buf[:n])
-				tm.reporter.write(data, task, terminal)
-			}
+			duration += "\r\n"
+		}
+
+		endMessage := "\r\n🤙 This task ran as a workspace prebuild\r\n" + duration + "\r\n"
+		_, _ = writer.Write([]byte(endMessage))
+
+		if tm.reporter != nil {
+			task.lastOutput = endMessage
 		}
 	}()
 }

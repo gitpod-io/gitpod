@@ -4,7 +4,9 @@
 
 package main
 
-import "github.com/gitpod-io/gitpod/image-builder/bob/cmd"
+import (
+	"github.com/gitpod-io/gitpod/image-builder/bob/cmd"
+)
 
 func main() {
 	cmd.Execute()

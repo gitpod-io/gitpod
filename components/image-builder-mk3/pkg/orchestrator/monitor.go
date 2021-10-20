@@ -297,7 +297,7 @@ func listenToHeadlessLogs(ctx context.Context, url, authToken string, callback l
 			return true
 		}
 		return false
-	}, 1*time.Second, 10)
+	}, 1*time.Second, 30)
 	if err != nil {
 		return
 	}

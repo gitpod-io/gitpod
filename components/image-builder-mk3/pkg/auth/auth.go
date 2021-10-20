@@ -5,8 +5,6 @@
 package auth
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"os"
 
 	"github.com/docker/cli/cli/config/configfile"
@@ -66,20 +64,6 @@ func (a *DockerConfigFileAuth) Authenticate(registry string) (auth *Authenticati
 
 // Authentication represents docker usable authentication
 type Authentication types.AuthConfig
-
-// ToBase64 produces a base64 encoded JSON string usable as Docker auth
-func (a *Authentication) ToBase64() string {
-	if a == nil {
-		return ""
-	}
-
-	encodedJSON, err := json.Marshal(a)
-	if err != nil {
-		log.WithError(err).Warn("cannot marshal authentication - this might break things down the road")
-		return ""
-	}
-	return base64.URLEncoding.EncodeToString(encodedJSON)
-}
 
 // AllowedAuthFor describes for which repositories authentication may be provided for
 type AllowedAuthFor struct {
