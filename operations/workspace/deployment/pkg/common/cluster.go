@@ -26,6 +26,7 @@ const (
 type MetaCluster struct {
 	Name   string `yaml:"name"`
 	Region string `yaml:"region"`
+	Prefix string `yaml:"prefix"`
 }
 
 // WorkspaceCluster represents a workspace cluster

@@ -30,8 +30,8 @@ func (cs *CreateClusterStep) Run() error {
 		// The directory context must be changed before executing the below path
 		// i.e. the current dir should be the ops repository home so that `deploy/xxx`
 		// exists
-		ScriptPath:     infra.DefaultTFModuleGeneratorScriptPath,
-		ScriptPathArgs: generateDefaultScriptPathArgsString(cs),
+		ScriptPath: infra.DefaultTFModuleGeneratorScriptPath,
+		ScriptArgs: generateDefaultScriptPathArgsString(cs),
 	}
 
 	err := tfModule.CreateTerraformModule()
