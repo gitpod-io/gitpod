@@ -95,6 +95,8 @@ export interface WorkspaceDB {
     findSnapshotById(snapshotId: string): Promise<Snapshot | undefined>;
     findSnapshotsByWorkspaceId(workspaceId: string): Promise<Snapshot[]>;
     storeSnapshot(snapshot: Snapshot): Promise<Snapshot>;
+    deleteSnapshot(snapshotId: string): Promise<void>;
+    updateSnapshot(snapshot: DeepPartial<Snapshot> & Pick<Snapshot, 'id'>): Promise<void>;
 
     storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace>;
     findPrebuiltWorkspaceByCommit(cloneURL: string, commit: string): Promise<PrebuiltWorkspace | undefined>;
