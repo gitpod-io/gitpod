@@ -6,7 +6,7 @@
 
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 
-import { Snapshot } from "@gitpod/gitpod-protocol";
+import { Snapshot, SnapshotState } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
 
@@ -25,6 +25,12 @@ export class DBSnapshot implements Snapshot {
     })
     creationTime: string;
 
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    availableTime?: string;
+
     @Column(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
     @Index("ind_originalWorkspaceId")
     originalWorkspaceId: string;
@@ -35,4 +41,16 @@ export class DBSnapshot implements Snapshot {
     @Column({ nullable: true })
     layoutData?: string;
 
+    @Column({
+        // because we introduced this as an afterthought the default is 'available'
+        default: <SnapshotState> 'available',
+    })
+    @Index("ind_state")
+    state: SnapshotState;
+
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    message?: string;
 }
