@@ -650,6 +650,8 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 	delete(m.probeMap, pod.Name)
 	m.probeMapLock.Unlock()
 
+	cancelProbe()
+
 	return &probeResult, nil
 }
 
