@@ -17,5 +17,6 @@
     'gitpod-component-proxy.json': (import 'dashboards/components/proxy.json'),
     'gitpod-component-server.json': (import 'dashboards/components/server.json'),
     'gitpod-slo-login.json': (import 'dashboards/SLOs/login.json'),
+    'gitpod-meta-overview.json': (import 'dashboards/components/meta-overview.json'),
   },
 }
