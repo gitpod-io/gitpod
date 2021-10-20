@@ -65,7 +65,6 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, nil)
 
-	workspaceIsReady := false
 	client := &http.Client{
 		Timeout: p.Timeout,
 		Transport: &http.Transport{
@@ -73,7 +72,7 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		},
 	}
 
-	for !workspaceIsReady {
+	for {
 		if ctx.Err() != nil {
 			return WorkspaceProbeStopped
 		}
@@ -92,13 +91,12 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		}
 		resp.Body.Close()
 
-		if resp.StatusCode != http.StatusOK {
-			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
-			time.Sleep(p.RetryDelay)
-			continue
+		if resp.StatusCode == http.StatusOK {
+			break
 		}
 
-		break
+		log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
+		time.Sleep(p.RetryDelay)
 	}
 
 	// workspace is actually ready
