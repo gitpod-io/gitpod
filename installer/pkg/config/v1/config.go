@@ -7,6 +7,7 @@ package config
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
@@ -42,6 +43,7 @@ func (v version) Defaults(in interface{}) error {
 		corev1.ResourceMemory: resource.MustParse("2Gi"),
 	}
 	cfg.Workspace.Runtime.FSShiftMethod = FSShiftFuseFS
+	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/run/containerd/io.containerd.runtime.v2.task/k8s.io"
 
 	return nil
@@ -184,6 +186,7 @@ type Resources struct {
 type WorkspaceRuntime struct {
 	FSShiftMethod        FSShiftMethod `json:"fsShiftMethod" validate:"required,fsShiftMethod"`
 	ContainerDRuntimeDir string        `json:"containerdRuntimeDir" validate:"required,startswith=/"`
+	ContainerDSocket     string        `json:"containerdSocket" validate:"required,startswith=/"`
 }
 
 type WorkspaceTemplates struct {
