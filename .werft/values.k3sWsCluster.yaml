@@ -120,13 +120,7 @@ components:
     disabled: false
     replicas: 1
     serviceType: "LoadBalancer"
-    wsManagerProxy:
-      enabled: true
     ports:
-      wsManagerProxy:
-        expose: true
-        containerPort: 8081
-        servicePort: 8081
       httpsProxy:
         expose: true
         containerPort: 9090

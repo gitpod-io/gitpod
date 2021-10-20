@@ -30,12 +30,5 @@
     "builtinPages": {
       "location": "public/"
     }
-  },
-  "wsManagerProxy": {
-    "listenAddress": ":8081",
-    "rateLimiter": {
-        "refillInterval": "10m",
-        "bucketSize": "10"
-    }
   }
 }
