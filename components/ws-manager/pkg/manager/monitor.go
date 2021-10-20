@@ -625,7 +625,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 		return nil, nil
 	}
 
-	ctx, cancelProbe := context.WithCancel(ctx)
+	ctx, cancelProbe := context.WithTimeout(ctx, 30*time.Minute)
 	m.probeMap[pod.Name] = cancelProbe
 	m.probeMapLock.Unlock()
 
