@@ -15,11 +15,8 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/crane"
 
 	"github.com/containerd/console"
-	"github.com/containerd/containerd/reference"
 	"github.com/moby/buildkit/client"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/util/progress/progressui"
@@ -190,103 +187,80 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 }
 
 func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (err error) {
-	// Workaround: buildkit/containerd currently does not support pushing multi-image builds
-	//             with some registries, e.g. gcr.io. Until https://github.com/containerd/containerd/issues/5978
-	//             is resolved, we'll manually copy the image.
-	var craneOpts []crane.Option
-	if gplayerAuth := b.Config.WorkspaceLayerAuth; gplayerAuth != "" {
-		authorizer, err := NewAuthorizerFromEnvVar(gplayerAuth)
-		if err != nil {
-			return err
-		}
-
-		tref, err := reference.Parse(b.Config.TargetRef)
-		if err != nil {
-			return err
-		}
-		user, pass, err := authorizer.Authorize(tref.Hostname())
-		if err != nil {
-			return err
-		}
-
-		craneOpts = append(craneOpts, crane.WithAuth(authn.FromConfig(authn.AuthConfig{
-			Username: user,
-			Password: pass,
-		})))
+	tmpdir, err := os.MkdirTemp("", "bob-*")
+	if err != nil {
+		return err
+	}
+	dockerFN := filepath.Join(tmpdir, "Dockerfile")
+	err = ioutil.WriteFile(dockerFN, []byte("FROM "+b.Config.BaseRef), 0644)
+	if err != nil {
+		return err
 	}
 
-	return crane.Copy(b.Config.BaseRef, b.Config.TargetRef, craneOpts...)
+	var sess []session.Attachable
+	if baselayerAuth := b.Config.BaseLayerAuth; baselayerAuth != "" {
+		auth, err := newAuthProviderFromEnvvar(baselayerAuth)
+		if err != nil {
+			return xerrors.Errorf("invalid base layer authentication: %w", err)
+		}
+		sess = append(sess, auth)
+	}
+	if lauth := b.Config.WorkspaceLayerAuth; lauth != "" {
+		auth, err := newAuthProviderFromEnvvar(lauth)
+		if err != nil {
+			return xerrors.Errorf("invalid workspoace image layer authentication: %w", err)
+		}
+		sess = []session.Attachable{auth}
+	}
+	log.WithField("BaseLayerAuth", b.Config.BaseLayerAuth).WithField("WorkspaceLayerAuth", b.Config.WorkspaceLayerAuth).Warn("using auth")
 
-	// // Note: buildkit does not handle/export image config by default. That's why we need
-	// //       to download it ourselves and explicitely export it.
-	// //       See https://github.com/moby/buildkit/issues/2362 for details.
-	// var sess []session.Attachable
-	// if gplayerAuth := b.Config.WorkspaceLayerAuth; gplayerAuth != "" {
-	// 	auth, err := newAuthProviderFromEnvvar(gplayerAuth)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	sess = append(sess, auth)
+	solveOpt := client.SolveOpt{
+		Frontend: "dockerfile.v0",
+		FrontendAttrs: map[string]string{
+			"filename": "Dockerfile",
+		},
+		LocalDirs: map[string]string{
+			"context":    tmpdir,
+			"dockerfile": tmpdir,
+		},
+		Session:      sess,
+		CacheImports: b.Config.LocalCacheImport(),
+		Exports: []client.ExportEntry{
+			{
+				Type: "image",
+				Attrs: map[string]string{
+					"name": b.Config.TargetRef,
+					"push": "true",
+				},
+			},
+		},
+	}
 
-	// 	authorizer, err := newDockerAuthorizerFromEnvvar(gplayerAuth)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	resolver = docker.NewResolver(docker.ResolverOptions{
-	// 		Authorizer: authorizer,
-	// 	})
-	// } else {
-	// 	resolver = docker.NewResolver(docker.ResolverOptions{})
-	// }
+	eg, ectx := errgroup.WithContext(ctx)
+	ch := make(chan *client.SolveStatus)
+	eg.Go(func() error {
+		_, err := cl.Solve(ectx, nil, solveOpt, ch)
+		if err != nil {
+			// buildkit errors are wrapped to contain the stack - that does not make for a pretty
+			// sight when printing it to the user.
+			if u := errors.Unwrap(err); u != nil {
+				return u
+			}
 
-	// platform := specs.Platform{OS: "linux", Architecture: "amd64"}
-	// _, cfg, err := imageutil.Config(ctx, b.Config.BaseRef, resolver, contentutil.NewBuffer(), nil, &platform)
-	// if err != nil {
-	// 	return err
-	// }
-	// state, err := llb.Image(b.Config.BaseRef).WithImageConfig(cfg)
-	// if err != nil {
-	// 	return err
-	// }
+			return err
+		}
+		return nil
+	})
+	eg.Go(func() error {
+		var c console.Console
+		return progressui.DisplaySolveStatus(ectx, "", c, os.Stdout, ch)
+	})
+	err = eg.Wait()
+	if err != nil {
+		return err
+	}
 
-	// def, err := state.Marshal(ctx, llb.Platform(platform))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// // TODO(cw):
-	// // buildkit does not support setting raw annotations yet (https://github.com/moby/buildkit/issues/1220).
-	// // Once it does, we should set org.opencontainers.image.base.name as defined in https://github.com/opencontainers/image-spec/blob/main/annotations.md
-
-	// solveOpt := client.SolveOpt{
-	// 	Exports: []client.ExportEntry{
-	// 		{
-	// 			Type: "image",
-	// 			Attrs: map[string]string{
-	// 				"name":                  b.Config.TargetRef,
-	// 				"push":                  "true",
-	// 				"containerimage.config": string(cfg),
-	// 			},
-	// 		},
-	// 	},
-	// 	Session:      sess,
-	// 	CacheImports: b.Config.LocalCacheImport(),
-	// }
-
-	// eg, ctx := errgroup.WithContext(ctx)
-	// ch := make(chan *client.SolveStatus)
-	// eg.Go(func() error {
-	// 	_, err := cl.Solve(ctx, def, solveOpt, ch)
-	// 	if err != nil {
-	// 		return xerrors.Errorf("cannot build Gitpod layer: %w", err)
-	// 	}
-	// 	return nil
-	// })
-	// eg.Go(func() error {
-	// 	var c console.Console
-	// 	return progressui.DisplaySolveStatus(ctx, "", c, os.Stdout, ch)
-	// })
-	// return eg.Wait()
+	return nil
 }
 
 func waitForBuildContext(ctx context.Context) error {
