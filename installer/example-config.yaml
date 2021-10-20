@@ -27,4 +27,5 @@ workspace:
       memory: 2Gi
   runtime:
     containerdRuntimeDir: /run/containerd/io.containerd.runtime.v2.task/k8s.io
+    containerdSocket: /run/containerd/containerd.sock
     fsShiftMethod: fuse
