@@ -1,6 +1,7 @@
 # Change Log
 
 ## October 2021
+- Deleted team's name can be reused. ([#6273](https://github.com/gitpod-io/gitpod/pull/6273)) - [@laushinka](https://github.com/laushinka)
 - Validate the cluster is in a state for Gitpod to be installed to ([#6234](https://github.com/gitpod-io/gitpod/pull/6234)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Deleted team's name can be reused. ([#6273](https://github.com/gitpod-io/gitpod/pull/6273)) - [@laushinka](https://github.com/laushinka)
 - [ws-manager] Introduce stoppedByRequest annotation marking workspaces explicitly stopped using a `StopWorkspace` call ([#6218](https://github.com/gitpod-io/gitpod/pull/6218)) - [@csweichel](https://github.com/csweichel)
