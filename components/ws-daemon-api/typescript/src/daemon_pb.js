@@ -1136,7 +1136,8 @@ proto.wsdaemon.TakeSnapshotRequest.prototype.toObject = function(opt_includeInst
  */
 proto.wsdaemon.TakeSnapshotRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, "")
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    returnImmediately: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -1177,6 +1178,10 @@ proto.wsdaemon.TakeSnapshotRequest.deserializeBinaryFromReader = function(msg, r
       var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
+    case 2:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setReturnImmediately(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1213,6 +1218,13 @@ proto.wsdaemon.TakeSnapshotRequest.serializeBinaryToWriter = function(message, w
       f
     );
   }
+  f = message.getReturnImmediately();
+  if (f) {
+    writer.writeBool(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -1231,6 +1243,24 @@ proto.wsdaemon.TakeSnapshotRequest.prototype.getId = function() {
  */
 proto.wsdaemon.TakeSnapshotRequest.prototype.setId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional bool return_immediately = 2;
+ * @return {boolean}
+ */
+proto.wsdaemon.TakeSnapshotRequest.prototype.getReturnImmediately = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.wsdaemon.TakeSnapshotRequest} returns this
+ */
+proto.wsdaemon.TakeSnapshotRequest.prototype.setReturnImmediately = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 
