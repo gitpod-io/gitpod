@@ -24,6 +24,6 @@ var Objects = common.CompositeRenderFunc(
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
-	}, nil),
+	}),
 	common.DefaultServiceAccount(Component),
 )

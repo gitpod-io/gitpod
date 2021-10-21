@@ -15,7 +15,12 @@ var Objects = common.CompositeRenderFunc(
 	role,
 	rolebinding,
 	common.DefaultServiceAccount(Component),
-	common.GenerateService(Component, nil, nil),
+	common.GenerateService(Component, map[string]common.ServicePort{
+		RPCPortName: {
+			ContainerPort: RPCPort,
+			ServicePort:   RPCPort,
+		},
+	}),
 	tlssecret,
 	unprivilegedRolebinding,
 )
