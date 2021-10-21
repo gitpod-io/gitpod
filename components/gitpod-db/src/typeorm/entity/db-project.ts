@@ -19,6 +19,9 @@ export class DBProject {
   name: string;
 
   @Column()
+  slug?: string;
+
+  @Column()
   cloneUrl: string;
 
   @Column({

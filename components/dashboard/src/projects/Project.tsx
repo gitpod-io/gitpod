@@ -26,7 +26,7 @@ export default function () {
     const team = getCurrentTeam(location, teams);
 
     const match = useRouteMatch<{ team: string, resource: string }>("/(t/)?:team/:resource");
-    const projectName = match?.params?.resource;
+    const projectSlug = match?.params?.resource;
 
     const [project, setProject] = useState<Project | undefined>();
 
@@ -61,14 +61,18 @@ export default function () {
     }, [project]);
 
     const updateProject = async () => {
-        if (!teams || !projectName) {
+        if (!teams || !projectSlug) {
             return;
         }
         const projects = (!!team
             ? await getGitpodService().server.getTeamProjects(team.id)
             : await getGitpodService().server.getUserProjects());
 
-        const project = projectName && projects.find(p => p.name === projectName);
+        // Find project matching with slug, otherwise with name
+        const project = projectSlug && projects.find(
+            p => p.slug ? p.slug === projectSlug :
+            p.name === projectSlug);
+
         if (!project) {
             return;
         }
@@ -239,7 +243,7 @@ export default function () {
                                 </div>
                             </ItemField>
                             <ItemField className="flex items-center">
-                                <a className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" href={prebuild ? `/${!!team ? 't/' + team.slug : 'projects'}/${projectName}/${prebuild.info.id}` : 'javascript:void(0)'}>
+                                <a className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" href={prebuild ? `/${!!team ? 't/' + team.slug : 'projects'}/${projectSlug}/${prebuild.info.id}` : 'javascript:void(0)'}>
                                     {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span> </span>)}
                                 </a>
                                 <span className="flex-grow" />

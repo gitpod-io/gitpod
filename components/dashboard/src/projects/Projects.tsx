@@ -85,10 +85,28 @@ export default function () {
         return moment(lastPrebuilds.get(p1.id)?.info?.startedAt || '1970-01-01').diff(moment(lastPrebuilds.get(p0.id)?.info?.startedAt || '1970-01-01'));
     }
 
-    const teamOrUserSlug = !!team ? 't/'+team.slug : 'projects';
     let [ isRemoveModalVisible, setRemoveModalVisible ] = useState(false);
     let [ removeProjectHandler, setRemoveProjectHandler ] = useState<() => void>(()=> () => {})
     let [ willRemoveProject, setWillRemoveProject ] = useState<Project>()
+
+    function renderProjectLink(project: Project): React.ReactElement {
+        let slug = '';
+        const name = project.name;
+
+        if (project.slug) {
+            slug = project.slug;
+        } else {
+            // For existing GitLab projects that don't have a slug yet
+            slug = name;
+        }
+
+        return (
+            <Link to={`/${teamOrUserSlug}/${slug}`}>
+                <span className="text-xl font-semibold">{name}</span>
+            </Link>)
+    }
+
+    const teamOrUserSlug = !!team ? 't/' + team.slug : 'projects';
 
     return <>
 
@@ -137,9 +155,7 @@ export default function () {
                         <div className="h-42 border border-gray-100 dark:border-gray-800 rounded-t-xl">
                             <div className="h-32 p-6">
                                 <div className="flex text-gray-700 dark:text-gray-200 font-medium">
-                                    <Link to={`/${teamOrUserSlug}/${p.name}`}>
-                                        <span className="text-xl font-semibold">{p.name}</span>
-                                    </Link>
+                                    {renderProjectLink(p)}
                                     <span className="flex-grow" />
                                     <div className="justify-end">
                                         <ContextMenu menuEntries={[
