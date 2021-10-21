@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields } from "@gitpod/gitpod-protocol";
+import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -41,6 +41,7 @@ import { Chargebee as chargebee } from '@gitpod/gitpod-payment-endpoint/lib/char
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
+import { SnapshotService } from "./snapshot-service";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodServer> {
@@ -72,6 +73,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
     @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
 
     @inject(Config) protected readonly config: Config;
+
+    @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
     initialize(client: GitpodClient | undefined, user: User, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields): void {
         super.initialize(client, user, accessGuard, clientHeaderFields);
@@ -370,18 +373,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         span.setTag("userId", user.id);
 
         try {
-            const workspace = await this.workspaceDb.trace({ span }).findById(workspaceId);
-            if (!workspace || workspace.ownerId !== user.id) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
-            }
+            const workspace = await this.guardSnaphotAccess(span, user.id, workspaceId);
 
             const instance = await this.workspaceDb.trace({ span }).findRunningInstance(workspaceId);
             if (!instance) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
             }
-
             await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace}, "get");
-            await this.guardAccess({ kind: "snapshot", subject: undefined, workspaceOwnerID: workspace.ownerId, workspaceID: workspace.id }, "create");
 
             const client = await this.workspaceManagerClientProvider.get(instance.region);
             const request = new TakeSnapshotRequest();
@@ -392,18 +390,63 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             const resp = await client.takeSnapshot({ span }, request);
 
             const id = uuidv4()
-            this.workspaceDb.trace({ span }).storeSnapshot({
+            await this.workspaceDb.trace({ span }).storeSnapshot({
                 id,
                 creationTime: new Date().toISOString(),
+                state: 'available',
                 bucketId: resp.getUrl(),
                 originalWorkspaceId: workspaceId,
-                layoutData
+                layoutData,
             });
 
             return id;
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
+        } catch (err) {
+            TraceContext.logError({ span }, err);
+            throw err;
+        } finally {
+            span.finish()
+        }
+    }
+
+    protected async guardSnaphotAccess(span: opentracing.Span, userId: string, workspaceId: string) : Promise<Workspace> {
+        const workspace = await this.workspaceDb.trace({ span }).findById(workspaceId);
+        if (!workspace || workspace.ownerId !== userId) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
+        }
+        await this.guardAccess({ kind: "snapshot", subject: undefined, workspaceOwnerID: workspace.ownerId, workspaceID: workspace.id }, "create");
+
+        return workspace;
+    }
+
+    /**
+     * @param snapshotId
+     * @throws ResponseError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
+     */
+    async waitForSnapshot(snapshotId: string): Promise<void> {
+        this.requireEELicense(Feature.FeatureSnapshot);
+
+        const user = this.checkAndBlockUser("waitForSnapshot");
+
+        const span = opentracing.globalTracer().startSpan("waitForSnapshot");
+        span.setTag("snapshotId", snapshotId);
+        span.setTag("userId", user.id);
+
+        try {
+            const snapshot = await this.workspaceDb.trace({ span }).findSnapshotById(snapshotId);
+            if (!snapshot) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`)
+            }
+            const snapshotWorkspace = await this.guardSnaphotAccess(span, user.id, snapshot.originalWorkspaceId);
+
+            try {
+                await this.snapshotService.driveSnapshot(snapshotWorkspace.ownerId, snapshot);
+            } catch (err) {
+                // wrap in SNAPSHOT_ERROR to signal this call should not be retried.
+                throw new ResponseError(ErrorCodes.SNAPSHOT_ERROR, err.toString());
+            }
+        } catch (err) {
+            TraceContext.logError({ span }, err);
+            throw err;
         } finally {
             span.finish()
         }

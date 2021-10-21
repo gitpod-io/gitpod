@@ -804,6 +804,20 @@ func (mr *MockAPIInterfaceMockRecorder) TakeSnapshot(ctx, options interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TakeSnapshot", reflect.TypeOf((*MockAPIInterface)(nil).TakeSnapshot), ctx, options)
 }
 
+// WaitForSnapshot mocks base method.
+func (m *MockAPIInterface) WaitForSnapshot(ctx context.Context, options *WaitForSnapshotOptions) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForSnapshot", ctx, options)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForSnapshot indicates an expected call of WaitForSnapshot.
+func (mr *MockAPIInterfaceMockRecorder) WaitForSnapshot(ctx, options interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForSnapshot", reflect.TypeOf((*MockAPIInterface)(nil).WaitForSnapshot), ctx, options)
+}
+
 // UninstallUserPlugin mocks base method.
 func (m *MockAPIInterface) UninstallUserPlugin(ctx context.Context, params *UninstallPluginParams) (bool, error) {
 	m.ctrl.T.Helper()
