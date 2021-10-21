@@ -17,7 +17,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	_ "github.com/gitpod-io/gitpod/ws-daemon/nsinsider/pkg/nsenter"
+	_ "github.com/gitpod-io/gitpod/common-go/nsenter"
 )
 
 func main() {
