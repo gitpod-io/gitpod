@@ -58,7 +58,10 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 	}
 
-	r, err := sync.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: req.Id})
+	r, err := sync.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{
+		Id:                req.Id,
+		ReturnImmediately: req.ReturnImmediately,
+	})
 	if err != nil {
 		// err is already a grpc error - no need to faff with that
 		return nil, err

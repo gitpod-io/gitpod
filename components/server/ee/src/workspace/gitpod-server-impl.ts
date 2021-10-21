@@ -386,6 +386,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             const client = await this.workspaceManagerClientProvider.get(instance.region);
             const request = new TakeSnapshotRequest();
             request.setId(instance.id);
+            request.setReturnImmediately(true);
+
+            // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
             const resp = await client.takeSnapshot({ span }, request);
 
             const id = uuidv4()

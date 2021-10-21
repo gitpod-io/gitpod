@@ -706,10 +706,20 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 		snapshotName = rs.Qualify(backupName)
 	}
 
-	err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
-	if err != nil {
-		log.WithError(err).WithField("workspaceId", req.Id).Error("snapshot upload failed")
-		return nil, status.Error(codes.Internal, "cannot upload snapshot")
+	if req.ReturnImmediately {
+		go func() {
+			ctx := context.Background()
+			err := s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+			if err != nil {
+				log.WithError(err).WithField("workspaceId", req.Id).Error("snapshot upload failed")
+			}
+		}()
+	} else {
+		err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+		if err != nil {
+			log.WithError(err).WithField("workspaceId", req.Id).Error("snapshot upload failed")
+			return nil, status.Error(codes.Internal, "cannot upload snapshot")
+		}
 	}
 
 	return &api.TakeSnapshotResponse{

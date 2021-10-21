@@ -190,6 +190,9 @@ message ControlPortResponse {}
 message TakeSnapshotRequest {
     // ID is the unique identifier of the workspace of which to take a snapshot
     string id = 1;
+
+    // return_immediately means we're not waiting until the snapshot is done but return immediately after starting it
+    bool return_immediately = 2;
 }
 
 // TakeSnapshotResponse is the answer to a take snapshot request
