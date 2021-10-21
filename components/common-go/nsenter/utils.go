@@ -15,8 +15,6 @@ import (
 
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 type Namespace int
@@ -75,7 +73,6 @@ func Run(pid int, args []string, addFD []*os.File, enterNamespace ...Namespace) 
 		cmd.ExtraFiles = append(cmd.ExtraFiles, f)
 	}
 
-	log.WithField("env", cmd.Env).WithField("extraFiles", len(cmd.ExtraFiles)).WithField("args", args).WithField("pid", pid).Debug("calling handler")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
