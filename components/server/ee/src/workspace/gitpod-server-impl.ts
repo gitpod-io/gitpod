@@ -41,7 +41,8 @@ import { Chargebee as chargebee } from '@gitpod/gitpod-payment-endpoint/lib/char
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
-import { SnapshotService } from "./snapshot-service";
+import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
+import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodServer> {
@@ -366,7 +367,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         this.requireEELicense(Feature.FeatureSnapshot);
 
         const user = this.checkAndBlockUser("takeSnapshot");
-        const { workspaceId, layoutData } = options;
+        const { workspaceId, dontWait } = options;
 
         const span = opentracing.globalTracer().startSpan("takeSnapshot");
         span.setTag("workspaceId", workspaceId);
@@ -389,17 +390,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
             const resp = await client.takeSnapshot({ span }, request);
 
-            const id = uuidv4()
-            await this.workspaceDb.trace({ span }).storeSnapshot({
-                id,
-                creationTime: new Date().toISOString(),
-                state: 'available',
-                bucketId: resp.getUrl(),
-                originalWorkspaceId: workspaceId,
-                layoutData,
-            });
+            const snapshot = await this.snapshotService.createSnapshot(options, resp.getUrl());
 
-            return id;
+            // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
+            const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
+            if (!dontWait) {
+                // this mimicks the old behavior: wait until the snapshot is through
+                await this.internalDoWaitForWorkspace(waitOpts);
+            } else {
+                // start driving the snapshot immediately
+                SafePromise.catchAndLog(this.internalDoWaitForWorkspace(waitOpts), { userId: user.id, workspaceId: workspaceId})
+            }
+
+            return snapshot.id;
         } catch (err) {
             TraceContext.logError({ span }, err);
             throw err;
@@ -437,18 +440,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
                 throw new ResponseError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`)
             }
             const snapshotWorkspace = await this.guardSnaphotAccess(span, user.id, snapshot.originalWorkspaceId);
-
-            try {
-                await this.snapshotService.driveSnapshot(snapshotWorkspace.ownerId, snapshot);
-            } catch (err) {
-                // wrap in SNAPSHOT_ERROR to signal this call should not be retried.
-                throw new ResponseError(ErrorCodes.SNAPSHOT_ERROR, err.toString());
-            }
+            await this.internalDoWaitForWorkspace({ workspaceOwner: snapshotWorkspace.ownerId, snapshot });
         } catch (err) {
             TraceContext.logError({ span }, err);
             throw err;
         } finally {
             span.finish()
+        }
+    }
+
+    protected async internalDoWaitForWorkspace(opts: WaitForSnapshotOptions) {
+        try {
+            await this.snapshotService.waitForSnapshot(opts);
+        } catch (err) {
+            // wrap in SNAPSHOT_ERROR to signal this call should not be retried.
+            throw new ResponseError(ErrorCodes.SNAPSHOT_ERROR, err.toString());
         }
     }
 
