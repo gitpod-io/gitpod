@@ -29,7 +29,52 @@ jobs:
 
             If you want to contribute on behalf of a company rather than as an individual please leave a comment stating so and we will get in touch.
           custom-pr-sign-comment: "I have read the CLA Document and I hereby sign the CLA"
-          # The following people don't have to sign the CLA
-          # - Gitpod employees
+          # The following GitHub users don't have to sign the CLA
+          # - Gitpod employees (https://github.com/orgs/gitpod-io/teams/team-gitpod/members)
+          # - Bots
           # - Anyone who signed the CLA manually prior to the use of CLA Assistant
-          allowlist: ""
+          #   Filip Troníček (@filiptronicek)
+          #   Jordan Hailey (@jordanhailey)
+          #   Ofer Shaal (@shaal),
+          #   Pudong Zheng (@iQQBot)
+          allowlist: >
+            metcalfc,
+            mads-hartmann,
+            gtsiolis,
+            ghuntley,
+            aledbf,
+            meysholdt,
+            MrSimonEmms,
+            svenefftinge,
+            JanKoehnlein,
+            jankeromnes,
+            atduarte,
+            mikenikles,
+            jldec,
+            AlexTugarev,
+            akosyakov,
+            csweichel,
+            loujaybee,
+            laushinka,
+            wulfthimm,
+            pawlean,
+            JohannesLandgraf,
+            ArthurSens,
+            corneliusludmann,
+            jeanp413,
+            filiptronicek,
+            geropl,
+            princerachit,
+            nisarhassan12,
+            ChristinFrohne,
+            jakobhero,
+            KlasenK,
+            phimae,
+
+            roboquat,
+            autofix-bot,
+
+            filiptronicek,
+            jordanhailey,
+            shaal,
+            iQQBot
