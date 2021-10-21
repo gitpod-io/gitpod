@@ -1254,6 +1254,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Snapshot support is implemented in Gitpod's Enterprise Edition`);
     }
 
+    async waitForSnapshot(snapshotId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Snapshot support is implemented in Gitpod's Enterprise Edition`);
+    }
+
     async getSnapshots(workspaceId: string): Promise<string[]> {
         // this is an EE feature. Throwing an exception here would break the dashboard though.
         return [];

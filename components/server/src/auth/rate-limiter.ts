@@ -109,6 +109,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "sendFeedback": { group: "default", points: 1 },
         "registerGithubApp": { group: "default", points: 1 },
         "takeSnapshot": { group: "default", points: 1 },
+        "waitForSnapshot": { group: "default", points: 1 },
         "getSnapshots": { group: "default", points: 1 },
         "storeLayout": { group: "default", points: 1 },
         "getLayout": { group: "default", points: 1 },

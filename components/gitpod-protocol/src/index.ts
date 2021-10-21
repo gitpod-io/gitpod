@@ -17,3 +17,4 @@ export * from './email-protocol';
 export * from './headless-workspace-log';
 export * from './context-url';
 export * from './teams-projects-protocol';
+export * from './snapshot-url';

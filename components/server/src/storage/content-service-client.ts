@@ -9,7 +9,8 @@ import { DeleteUserContentRequest, DeleteUserContentResponse } from "@gitpod/con
 import { IDEPluginServiceClient } from '@gitpod/content-service/lib/ideplugin_grpc_pb';
 import { PluginDownloadURLRequest, PluginDownloadURLResponse, PluginHashRequest, PluginHashResponse, PluginUploadURLRequest, PluginUploadURLResponse } from "@gitpod/content-service/lib/ideplugin_pb";
 import { WorkspaceServiceClient } from '@gitpod/content-service/lib/workspace_grpc_pb';
-import { DeleteWorkspaceRequest, DeleteWorkspaceResponse, WorkspaceDownloadURLRequest, WorkspaceDownloadURLResponse } from "@gitpod/content-service/lib/workspace_pb";
+import { DeleteWorkspaceRequest, DeleteWorkspaceResponse, WorkspaceDownloadURLRequest, WorkspaceDownloadURLResponse, WorkspaceSnapshotExistsRequest, WorkspaceSnapshotExistsResponse } from "@gitpod/content-service/lib/workspace_pb";
+import { SnapshotUrl } from '@gitpod/gitpod-protocol';
 import { inject, injectable } from "inversify";
 import { StorageClient } from "./storage-client";
 
@@ -118,5 +119,23 @@ export class ContentServiceStorageClient implements StorageClient {
             });
         });
         return response.toObject().hash;
+    }
+
+    public async workspaceSnapshotExists(ownerId: string, workspaceId: string, snapshotUrl: string): Promise<boolean> {
+        const { filename } = SnapshotUrl.parse(snapshotUrl);
+        const response = await new Promise<WorkspaceSnapshotExistsResponse>((resolve, reject) => {
+            const request = new WorkspaceSnapshotExistsRequest();
+            request.setOwnerId(ownerId);
+            request.setWorkspaceId(workspaceId);
+            request.setFilename(filename);
+            this.workspaceServiceClient.workspaceSnapshotExists(request, (err: any, resp: WorkspaceSnapshotExistsResponse) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(resp);
+                }
+            });
+        });
+        return response.getExists();
     }
 }

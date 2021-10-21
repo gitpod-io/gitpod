@@ -51,6 +51,7 @@ import { UserDeletionServiceEE } from "./user/user-deletion-service";
 import { GitHubAppSupport } from "./github/github-app-support";
 import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { Config } from "../../src/config";
+import { SnapshotService } from "./workspace/snapshot-service";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -87,6 +88,7 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
     rebind(BlockedUserFilter).toService(EMailDomainService);
     rebind(UserController).to(UserControllerEE).inSingletonScope();
+    bind(SnapshotService).toSelf().inSingletonScope();
 
     bind(UserDeletionServiceEE).toSelf().inSingletonScope();
     rebind(UserDeletionService).to(UserDeletionServiceEE).inSingletonScope();

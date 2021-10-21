@@ -153,10 +153,15 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     registerGithubApp(installationId: string): Promise<void>;
 
     /**
-     * Stores a new snapshot for the given workspace and bucketId
+     * Stores a new snapshot for the given workspace and bucketId. Returns _before_ the actual snapshot is done. To wait for that, use `waitForSnapshot`.
      * @return the snapshot id
      */
     takeSnapshot(options: GitpodServer.TakeSnapshotOptions): Promise<string>;
+    /**
+     *
+     * @param snapshotId
+     */
+    waitForSnapshot(snapshotId: string): Promise<void>;
 
     /**
      * Returns the list of snapshots that exist for a workspace.
