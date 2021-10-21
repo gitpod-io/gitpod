@@ -109,6 +109,7 @@ func statProc(pid int) (*stat, error) {
 func parseStat(r io.Reader) (res *stat, err error) {
 	var (
 		ppid      uint64
+		foundPPID bool
 		starttime uint64
 		i         = -1
 	)
@@ -126,6 +127,7 @@ func parseStat(r io.Reader) (res *stat, err error) {
 
 		if i == 2 {
 			ppid, err = strconv.ParseUint(string(text), 10, 64)
+			foundPPID = true
 		}
 		if i == 20 {
 			starttime, err = strconv.ParseUint(string(text), 10, 64)
@@ -138,11 +140,14 @@ func parseStat(r io.Reader) (res *stat, err error) {
 			i++
 		}
 	}
+	if err != nil {
+		return nil, err
+	}
 	if err := scan.Err(); err != nil {
 		return nil, err
 	}
 
-	if ppid == 0 || starttime == 0 {
+	if !foundPPID || starttime == 0 {
 		return nil, fmt.Errorf("cannot parse stat")
 	}
 
