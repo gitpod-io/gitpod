@@ -275,6 +275,9 @@ func (b *Bastion) Update(workspaceID string) (*Workspace, error) {
 	return <-done, <-errChan
 }
 
+// handleUpdate handles both best effort `FullUpdate` and the stricter single workspace `Update` callers.
+// For the stricter case, we collect all errors that prevent the update from establishing a
+// tunnel to a "running" instance.
 func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 	var ws *Workspace
 	var errs []error
@@ -290,15 +293,8 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 		}
 	}()
 
-	// handleUpdate handles both "best effort" FullUpdate and the stricter single workspace Update
-	// For the single Update, we need to collect and surface the error, but when doing a FullUpdate
-	// it does not always make sense to log at "error" level, handleWarning is used in those cases.
 	handleError := func(workspaceID, msg string, err error) {
 		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Error(msg)
-		errs = append(errs, xerrors.Errorf(msg+": %w", err))
-	}
-	handleWarning := func(workspaceID, msg string, err error) {
-		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Warn(msg)
 		errs = append(errs, xerrors.Errorf(msg+": %w", err))
 	}
 
@@ -308,7 +304,7 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 	ws, ok := b.workspaces[u.ID]
 	if !ok {
 		if u.Status.Phase == "stopping" || u.Status.Phase == "stopped" {
-			handleWarning(u.WorkspaceID, "skipping update", xerrors.New("stopped instance"))
+			errs = append(errs, xerrors.Errorf("instance %s", u.Status.Phase))
 			return
 		}
 		ctx, cancel := context.WithCancel(b.ctx)
@@ -376,7 +372,7 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 
 				ws.localSSHListener, err = b.establishSSHTunnel(ws)
 				if err != nil {
-					handleError(ws.WorkspaceID, "cannot produce SSH keypair", err)
+					handleError(ws.WorkspaceID, "cannot establish SSH tunnel", err)
 				}
 			}()
 		}
@@ -385,8 +381,10 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 		ws.cancel()
 		delete(b.workspaces, u.ID)
 		b.Callbacks.InstanceUpdate(ws)
-		handleWarning(u.WorkspaceID, "skipping update", xerrors.New("stopped instance"))
+		errs = append(errs, xerrors.Errorf("instance %s", ws.Phase))
 		return
+	default:
+		errs = append(errs, xerrors.Errorf("instance %s", ws.Phase))
 	}
 
 	b.workspaces[u.ID] = ws
