@@ -18,6 +18,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -479,6 +480,18 @@ var ring1Cmd = &cobra.Command{
 			}()
 		}
 
+		if enclave := os.Getenv("WORKSPACEKIT_RING2_ENCLAVE"); enclave != "" {
+			ecmd := exec.Command("/proc/self/exe", append([]string{"nsenter", "--target", strconv.Itoa(cmd.Process.Pid), "--mount"}, strings.Fields(enclave)...)...)
+			ecmd.Stdout = os.Stdout
+			ecmd.Stderr = os.Stderr
+
+			err := ecmd.Start()
+			if err != nil {
+				log.WithError(err).WithField("cmd", enclave).Error("cannot run enclave")
+				return
+			}
+		}
+
 		go func() {
 			err := lift.ServeLift(ctx, lift.DefaultSocketPath)
 			if err != nil {
@@ -672,17 +685,6 @@ var ring2Cmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Error("cannot send seccomp fd")
 			return
-		}
-
-		if enclave := os.Getenv("WORKSPACEKIT_RING2_ENCLAVE"); enclave != "" {
-			cmd := exec.Command(enclave)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			err := cmd.Start()
-			if err != nil {
-				log.WithError(err).WithField("cmd", enclave).Error("cannot run enclave")
-				return
-			}
 		}
 
 		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "run"}, os.Environ())

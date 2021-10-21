@@ -75,6 +75,7 @@ func Run(pid int, args []string, addFD []*os.File, enterNamespace ...Namespace) 
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
 	err := cmd.Run()
 	if err != nil {
 		return xerrors.Errorf("cannot run handler: %w", err)
