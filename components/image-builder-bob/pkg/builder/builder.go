@@ -78,7 +78,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	}
 
 	log.Info("building base image")
-	return buildImage(ctx, b.Config.ContextDir, b.Config.Dockerfile, b.Config.WorkspaceLayerAuth, b.Config.BaseRef, b.Config.TargetRef)
+	return buildImage(ctx, b.Config.ContextDir, b.Config.Dockerfile, b.Config.WorkspaceLayerAuth, b.Config.BaseRef)
 }
 
 func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (err error) {
@@ -97,10 +97,10 @@ func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (e
 		}
 	}
 
-	return buildImage(ctx, contextDir, dockerfile, b.Config.WorkspaceLayerAuth, b.Config.BaseRef, b.Config.TargetRef)
+	return buildImage(ctx, contextDir, dockerfile, b.Config.WorkspaceLayerAuth, b.Config.TargetRef)
 }
 
-func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, source, target string) error {
+func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target string) error {
 	log.Info("waiting for build context")
 	waitctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
