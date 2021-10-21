@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -24,7 +25,6 @@ import (
 )
 
 const (
-	buildkitdSocketPath      = "unix:///run/buildkit/buildkitd.sock"
 	maxConnectionAttempts    = 10
 	initialConnectionTimeout = 2 * time.Second
 )
@@ -37,25 +37,19 @@ type Builder struct {
 // Build runs the actual image build
 func (b *Builder) Build() error {
 	var (
-		cl       *client.Client
-		teardown func() error = func() error { return nil }
-		err      error
+		cl  *client.Client
+		err error
 	)
+	if b.Config.ExternalBuildkitd == "" {
+		return fmt.Errorf("no buildkitd address present")
+	}
 	if b.Config.ExternalBuildkitd != "" {
 		log.WithField("socketPath", b.Config.ExternalBuildkitd).Info("using external buildkit daemon")
 		cl, err = connectToBuildkitd(b.Config.ExternalBuildkitd)
-
-		if err != nil {
-			log.Warn("cannot connect to node-local buildkitd - falling back to pod-local one")
-			cl, teardown, err = StartBuildkit(buildkitdSocketPath)
-		}
-	} else {
-		cl, teardown, err = StartBuildkit(buildkitdSocketPath)
 	}
 	if err != nil {
 		return err
 	}
-	defer teardown()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -196,7 +190,7 @@ func waitForBuildContext(ctx context.Context) error {
 }
 
 // StartBuildkit starts a local buildkit daemon
-func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error, err error) {
+func StartBuildkit(addr string) (cl *client.Client, teardown func() error, err error) {
 	stderr, err := ioutil.TempFile(os.TempDir(), "buildkitd_stderr")
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot create buildkitd log file: %w", err)
@@ -206,9 +200,22 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 		return nil, nil, xerrors.Errorf("cannot create buildkitd log file: %w", err)
 	}
 
+	// Note: as a safety precausion we don't start buildkitd in an environment
+	//       where there's a BOB_ env var present, because that indicates an error
+	//       in bob and buildkitd separation.
+	var bobFound string
+	for _, e := range os.Environ() {
+		if strings.HasPrefix(e, "BOB_") {
+			bobFound = strings.Split(e, "=")[0]
+		}
+	}
+	if bobFound != "" {
+		return nil, nil, xerrors.Errorf("found a BOB_ env var: %s", bobFound)
+	}
+
 	cmd := exec.Command("buildkitd",
 		"--debug",
-		"--addr="+socketPath,
+		"--addr="+addr,
 		"--oci-worker-net=host", "--oci-worker-snapshotter=stargz",
 		"--root=/workspace/buildkit",
 	)
@@ -243,7 +250,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 		stderr.Close()
 		return cmd.Process.Kill()
 	}
-	cl, err = connectToBuildkitd(socketPath)
+	cl, err = connectToBuildkitd(addr)
 	if err != nil {
 		return
 	}

@@ -333,6 +333,13 @@ var ring1Cmd = &cobra.Command{
 			if strings.HasPrefix(e, "WORKSPACEKIT_") {
 				continue
 			}
+			if strings.HasPrefix(e, "BOB_") {
+				// Special service for the image builder: we're not forwarding
+				// BOB_ env vars to ring2. There's code in BOB_ that prevents it
+				// from starting buildkitd when BOB_ env vars are present.
+				// Some of those BOB_ env vars can contain secrets.
+				continue
+			}
 			env = append(env, e)
 		}
 
@@ -481,9 +488,15 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		if enclave := os.Getenv("WORKSPACEKIT_RING2_ENCLAVE"); enclave != "" {
-			ecmd := exec.Command("/proc/self/exe", append([]string{"nsenter", "--target", strconv.Itoa(cmd.Process.Pid), "--mount"}, strings.Fields(enclave)...)...)
+			args := []string{"nsenter", "--target", strconv.Itoa(cmd.Process.Pid)}
+			if os.Getenv("WORKSPACEKIT_RING2_ENCLAVE_MNTNS") != "" {
+				args = append(args, "--mount")
+			}
+			args = append(args, strings.Fields(enclave)...)
+			ecmd := exec.Command("/proc/self/exe", args...)
 			ecmd.Stdout = os.Stdout
 			ecmd.Stderr = os.Stderr
+			ecmd.Env = os.Environ()
 
 			err := ecmd.Start()
 			if err != nil {
