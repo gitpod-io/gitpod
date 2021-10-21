@@ -340,6 +340,8 @@ export namespace GitpodServer {
     export interface TakeSnapshotOptions {
         workspaceId: string;
         layoutData?: string;
+        /* this is here to enable backwards-compatibility and untangling rollout between workspace, IDE and meta */
+        dontWait?: boolean;
     }
     export interface GetUserStorageResourceOptions {
         readonly uri: string;

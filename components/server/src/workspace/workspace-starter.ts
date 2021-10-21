@@ -778,6 +778,7 @@ export class WorkspaceStarter {
             "function:getLayout",
             "function:generateNewGitpodToken",
             "function:takeSnapshot",
+            "function:waitForSnapshot",
             "function:storeLayout",
             "function:stopWorkspace",
             "function:getToken",

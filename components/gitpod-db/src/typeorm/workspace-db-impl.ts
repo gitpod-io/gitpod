@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import { MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
-import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery } from "@gitpod/gitpod-protocol";
+import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery, SnapshotState } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
@@ -548,6 +548,16 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     public async findSnapshotById(snapshotId: string): Promise<Snapshot | undefined> {
         const snapshots = await this.getSnapshotRepo();
         return snapshots.findOne(snapshotId);
+    }
+    public async findSnapshotsWithState(state: SnapshotState, offset: number, limit: number): Promise<{ snapshots: Snapshot[], total: number }> {
+        const snapshotRepo = await this.getSnapshotRepo();
+        const [snapshots, total] = await snapshotRepo.createQueryBuilder("snapshot")
+            .where("snapshot.state = :state", { state })
+            .orderBy("creationTime", "ASC")
+            .offset(offset)
+            .take(limit)
+            .getManyAndCount();
+        return { snapshots, total };
     }
 
     public async storeSnapshot(snapshot: Snapshot): Promise<Snapshot> {

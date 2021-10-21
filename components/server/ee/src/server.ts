@@ -13,12 +13,21 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { GitLabApp } from './prebuilds/gitlab-app';
 import { BitbucketApp } from './prebuilds/bitbucket-app';
 import { GithubApp } from './prebuilds/github-app';
+import { SnapshotService } from './workspace/snapshot-service';
 
 export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Server<C, S> {
     @inject(GraphQLController) protected readonly adminGraphQLController: GraphQLController;
     @inject(GithubApp) protected readonly githubApp: GithubApp;
     @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
     @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
+    @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
+
+    public async init(app: express.Application) {
+        await super.init(app);
+
+        // Start Snapshot Service
+        await this.snapshotService.start();
+    }
 
     protected async registerRoutes(app: express.Application): Promise<void> {
         await super.registerRoutes(app);
@@ -37,6 +46,5 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
 
         log.info("Registered Bitbucket app at " + BitbucketApp.path);
         app.use(BitbucketApp.path, this.bitbucketApp.router);
-
     }
 }
