@@ -53,6 +53,28 @@ function deserialize_contentservice_WorkspaceDownloadURLResponse(buffer_arg) {
   return workspace_pb.WorkspaceDownloadURLResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_contentservice_WorkspaceSnapshotExistsRequest(arg) {
+  if (!(arg instanceof workspace_pb.WorkspaceSnapshotExistsRequest)) {
+    throw new Error('Expected argument of type contentservice.WorkspaceSnapshotExistsRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_contentservice_WorkspaceSnapshotExistsRequest(buffer_arg) {
+  return workspace_pb.WorkspaceSnapshotExistsRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_contentservice_WorkspaceSnapshotExistsResponse(arg) {
+  if (!(arg instanceof workspace_pb.WorkspaceSnapshotExistsResponse)) {
+    throw new Error('Expected argument of type contentservice.WorkspaceSnapshotExistsResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_contentservice_WorkspaceSnapshotExistsResponse(buffer_arg) {
+  return workspace_pb.WorkspaceSnapshotExistsResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 
 var WorkspaceServiceService = exports.WorkspaceServiceService = {
   // WorkspaceDownloadURL provides a URL from where the content of a workspace can be downloaded from
@@ -78,6 +100,18 @@ deleteWorkspace: {
     requestDeserialize: deserialize_contentservice_DeleteWorkspaceRequest,
     responseSerialize: serialize_contentservice_DeleteWorkspaceResponse,
     responseDeserialize: deserialize_contentservice_DeleteWorkspaceResponse,
+  },
+  // WorkspaceSnapshotExists checks whether the snapshot exists or not
+workspaceSnapshotExists: {
+    path: '/contentservice.WorkspaceService/WorkspaceSnapshotExists',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_pb.WorkspaceSnapshotExistsRequest,
+    responseType: workspace_pb.WorkspaceSnapshotExistsResponse,
+    requestSerialize: serialize_contentservice_WorkspaceSnapshotExistsRequest,
+    requestDeserialize: deserialize_contentservice_WorkspaceSnapshotExistsRequest,
+    responseSerialize: serialize_contentservice_WorkspaceSnapshotExistsResponse,
+    responseDeserialize: deserialize_contentservice_WorkspaceSnapshotExistsResponse,
   },
 };
 

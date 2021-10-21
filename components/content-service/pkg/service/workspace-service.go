@@ -113,3 +113,19 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 
 	return &api.DeleteWorkspaceResponse{}, nil
 }
+
+func (cs *WorkspaceService) WorkspaceSnapshotExists(ctx context.Context, req *api.WorkspaceSnapshotExistsRequest) (resp *api.WorkspaceSnapshotExistsResponse, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "WorkspaceObjectExists")
+	span.SetTag("user", req.OwnerId)
+	span.SetTag("workspaceId", req.WorkspaceId)
+	span.SetTag("filename", req.Filename)
+	defer tracing.FinishSpan(span, &err)
+
+	exists, err := cs.s.ObjectExists(ctx, cs.s.Bucket(req.OwnerId), cs.s.BackupObject(req.WorkspaceId, req.Filename))
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+	return &api.WorkspaceSnapshotExistsResponse{
+		Exists: exists,
+	}, nil
+}

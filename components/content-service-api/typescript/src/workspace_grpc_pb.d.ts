@@ -16,6 +16,7 @@ import * as workspace_pb from "./workspace_pb";
 interface IWorkspaceServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     workspaceDownloadURL: IWorkspaceServiceService_IWorkspaceDownloadURL;
     deleteWorkspace: IWorkspaceServiceService_IDeleteWorkspace;
+    workspaceSnapshotExists: IWorkspaceServiceService_IWorkspaceSnapshotExists;
 }
 
 interface IWorkspaceServiceService_IWorkspaceDownloadURL extends grpc.MethodDefinition<workspace_pb.WorkspaceDownloadURLRequest, workspace_pb.WorkspaceDownloadURLResponse> {
@@ -36,12 +37,22 @@ interface IWorkspaceServiceService_IDeleteWorkspace extends grpc.MethodDefinitio
     responseSerialize: grpc.serialize<workspace_pb.DeleteWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<workspace_pb.DeleteWorkspaceResponse>;
 }
+interface IWorkspaceServiceService_IWorkspaceSnapshotExists extends grpc.MethodDefinition<workspace_pb.WorkspaceSnapshotExistsRequest, workspace_pb.WorkspaceSnapshotExistsResponse> {
+    path: "/contentservice.WorkspaceService/WorkspaceSnapshotExists";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_pb.WorkspaceSnapshotExistsRequest>;
+    requestDeserialize: grpc.deserialize<workspace_pb.WorkspaceSnapshotExistsRequest>;
+    responseSerialize: grpc.serialize<workspace_pb.WorkspaceSnapshotExistsResponse>;
+    responseDeserialize: grpc.deserialize<workspace_pb.WorkspaceSnapshotExistsResponse>;
+}
 
 export const WorkspaceServiceService: IWorkspaceServiceService;
 
 export interface IWorkspaceServiceServer extends grpc.UntypedServiceImplementation {
     workspaceDownloadURL: grpc.handleUnaryCall<workspace_pb.WorkspaceDownloadURLRequest, workspace_pb.WorkspaceDownloadURLResponse>;
     deleteWorkspace: grpc.handleUnaryCall<workspace_pb.DeleteWorkspaceRequest, workspace_pb.DeleteWorkspaceResponse>;
+    workspaceSnapshotExists: grpc.handleUnaryCall<workspace_pb.WorkspaceSnapshotExistsRequest, workspace_pb.WorkspaceSnapshotExistsResponse>;
 }
 
 export interface IWorkspaceServiceClient {
@@ -51,6 +62,9 @@ export interface IWorkspaceServiceClient {
     deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
     deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
     deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
+    workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
+    workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class WorkspaceServiceClient extends grpc.Client implements IWorkspaceServiceClient {
@@ -61,4 +75,7 @@ export class WorkspaceServiceClient extends grpc.Client implements IWorkspaceSer
     public deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
+    public workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
+    public workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
 }

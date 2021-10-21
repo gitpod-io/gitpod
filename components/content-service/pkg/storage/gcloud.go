@@ -1013,6 +1013,27 @@ func (p *PresignedGCPStorage) ObjectHash(ctx context.Context, bucket string, obj
 	return hex.EncodeToString(attr.MD5), nil
 }
 
+func (p *PresignedGCPStorage) ObjectExists(ctx context.Context, bucket, obj string) (bool, error) {
+	client, err := newGCPClient(ctx, p.config)
+	if err != nil {
+		return false, err
+	}
+	//nolint:staticcheck
+	defer client.Close()
+
+	_, err = client.Bucket(bucket).Object(obj).Attrs(ctx)
+	if err != nil {
+		if errors.Is(err, gcpstorage.ErrBucketNotExist) {
+			return false, nil
+		}
+		if errors.Is(err, gcpstorage.ErrObjectNotExist) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 // BackupObject returns a backup's object name that a direct downloader would download
 func (p *PresignedGCPStorage) BackupObject(workspaceID string, name string) string {
 	return fmt.Sprintf("workspaces/%s", gcpWorkspaceBackupObjectName(workspaceID, name))

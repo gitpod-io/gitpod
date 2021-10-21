@@ -116,6 +116,10 @@ func (*PresignedNoopStorage) ObjectHash(ctx context.Context, bucket string, obj 
 	return "", nil
 }
 
+func (p *PresignedNoopStorage) ObjectExists(ctx context.Context, bucket, obj string) (bool, error) {
+	return false, nil
+}
+
 // BackupObject returns a backup's object name that a direct downloader would download
 func (*PresignedNoopStorage) BackupObject(workspaceID string, name string) string {
 	return ""

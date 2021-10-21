@@ -256,6 +256,10 @@ func (*testStorage) ObjectHash(ctx context.Context, bucket string, obj string) (
 	return "", nil
 }
 
+func (*testStorage) ObjectExists(ctx context.Context, bucket string, path string) (bool, error) {
+	return false, nil
+}
+
 type roundTripFunc func(req *http.Request) *http.Response
 
 // RoundTrip .

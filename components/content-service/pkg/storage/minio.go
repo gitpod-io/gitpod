@@ -465,6 +465,21 @@ func (s *presignedMinIOStorage) ObjectHash(ctx context.Context, bucket string, o
 	return info.ETag, nil
 }
 
+func (s *presignedMinIOStorage) ObjectExists(ctx context.Context, bucket, obj string) (exists bool, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.ObjectExists")
+	defer tracing.FinishSpan(span, &err)
+
+	_, err = s.client.StatObject(ctx, bucket, obj, minio.StatObjectOptions{})
+	if err != nil {
+		e := translateMinioError(err)
+		if e == ErrNotFound {
+			return false, nil
+		}
+		return false, e
+	}
+	return true, nil
+}
+
 func annotationToAmzMetaHeader(annotation string) string {
 	return http.CanonicalHeaderKey(fmt.Sprintf("X-Amz-Meta-%s", annotation))
 }
