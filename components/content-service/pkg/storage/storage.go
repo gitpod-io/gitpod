@@ -85,6 +85,9 @@ type PresignedAccess interface {
 	// ObjectHash gets a hash value of an object
 	ObjectHash(ctx context.Context, bucket string, obj string) (string, error)
 
+	// ObjectExists tells whether the given object exists or not
+	ObjectExists(ctx context.Context, bucket string, path string) (bool, error)
+
 	// BackupObject returns a backup's object name that a direct downloader would download
 	BackupObject(workspaceID string, name string) string
 
