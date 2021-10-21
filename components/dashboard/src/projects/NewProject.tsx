@@ -170,6 +170,7 @@ export default function NewProject() {
         try {
             await getGitpodService().server.createProject({
                 name: repo.name,
+                slug: (repo.path ? repo.path : repo.name),
                 cloneUrl: repo.cloneUrl,
                 account: repo.account,
                 provider,

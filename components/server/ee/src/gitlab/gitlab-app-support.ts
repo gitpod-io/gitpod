@@ -37,6 +37,7 @@ export class GitLabAppSupport {
         const projectsWithAccess = await api.Projects.all({ min_access_level: "40", perPage: 100 });
         for (const project of projectsWithAccess) {
             const anyProject = project as any;
+            const path = anyProject.path as string;
             const fullPath = anyProject.path_with_namespace as string;
             const cloneUrl = anyProject.http_url_to_repo as string;
             const updatedAt = anyProject.last_activity_at as string;
@@ -45,6 +46,7 @@ export class GitLabAppSupport {
 
             (account === usersGitLabAccount ? ownersRepos : result).push({
                 name: project.name,
+                path,
                 account,
                 cloneUrl,
                 updatedAt,

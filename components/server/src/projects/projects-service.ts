@@ -90,13 +90,14 @@ export class ProjectsService {
         return result;
     }
 
-    async createProject({ name, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams): Promise<Project> {
+    async createProject({ name, slug, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams): Promise<Project> {
         const projects = await this.getProjectsByCloneUrls([cloneUrl]);
         if (projects.length > 0) {
             throw new Error("Project for repository already exists.");
         }
         const project = Project.create({
             name,
+            slug,
             cloneUrl,
             ...(!!userId ? { userId } : { teamId }),
             appInstallationId

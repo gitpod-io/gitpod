@@ -235,6 +235,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
 export interface CreateProjectParams {
     name: string;
+    slug?: string;
     account: string;
     provider: string;
     cloneUrl: string;
@@ -256,6 +257,7 @@ export interface GetProviderRepositoriesParams {
 }
 export interface ProviderRepository {
     name: string;
+    path?: string;
     account: string;
     accountAvatarUrl: string;
     cloneUrl: string;

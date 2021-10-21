@@ -14,6 +14,7 @@ export interface ProjectConfig {
 export interface Project {
     id: string;
     name: string;
+    slug?: string;
     cloneUrl: string;
     teamId?: string;
     userId?: string;
