@@ -18,6 +18,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -477,6 +478,18 @@ var ring1Cmd = &cobra.Command{
 					log.WithError(err).Warn("syscall handler error")
 				}
 			}()
+		}
+
+		if enclave := os.Getenv("WORKSPACEKIT_RING2_ENCLAVE"); enclave != "" {
+			ecmd := exec.Command("/proc/self/exe", append([]string{"nsenter", "--target", strconv.Itoa(cmd.Process.Pid), "--mount"}, strings.Fields(enclave)...)...)
+			ecmd.Stdout = os.Stdout
+			ecmd.Stderr = os.Stderr
+
+			err := ecmd.Start()
+			if err != nil {
+				log.WithError(err).WithField("cmd", enclave).Error("cannot run enclave")
+				return
+			}
 		}
 
 		go func() {
