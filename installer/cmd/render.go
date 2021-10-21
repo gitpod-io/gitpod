@@ -58,10 +58,9 @@ A config file is required which can be generated with the init command.`,
 			}
 		}
 
-		ctx := &common.RenderContext{
-			Config:          *cfg,
-			VersionManifest: versionMF,
-			Namespace:       renderOpts.Namespace,
+		ctx, err := common.NewRenderContext(*cfg, versionMF, renderOpts.Namespace)
+		if err != nil {
+			return err
 		}
 
 		var renderable common.RenderFunc
