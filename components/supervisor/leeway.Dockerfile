@@ -2,6 +2,10 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
+# TODO(aledbf): fix werft job build issue
+# FROM OPENSSH_IMAGE AS openssh
+FROM aledbf/static-openssh:0.50 AS openssh
+
 FROM scratch
 
 # BEWARE: This must be the first layer in the image, s.t. that blobserve
@@ -16,9 +20,9 @@ COPY components-supervisor--app/supervisor \
      components-workspacekit--fuse-overlayfs/fuse-overlayfs \
      components-gitpod-cli--app/gitpod-cli \
      ./
-WORKDIR "/.supervisor/dropbear"
-COPY components-supervisor--dropbear/dropbear \
-     components-supervisor--dropbear/dropbearkey \
-     ./
+
+WORKDIR "/.supervisor/ssh"
+COPY --from=openssh /usr/sbin/sshd .
+COPY --from=openssh /usr/bin/ssh-keygen .
 
 ENTRYPOINT ["/.supervisor/supervisor"]
