@@ -77,8 +77,48 @@ func DependencySortingRenderFunc(f RenderFunc) RenderFunc {
 	}
 }
 
+type GeneratedValues struct {
+	StorageAccessKey string
+	StorageSecretKey string
+}
+
 type RenderContext struct {
 	VersionManifest versions.Manifest
 	Config          config.Config
 	Namespace       string
+	Values          GeneratedValues
+}
+
+// generateValues generates the random values used throughout the context
+// todo(sje): find a way of persisting these values for updates
+func (r *RenderContext) generateValues() error {
+	storageAccessKey, err := RandomString(20)
+	if err != nil {
+		return err
+	}
+	r.Values.StorageAccessKey = storageAccessKey
+
+	storageSecretKey, err := RandomString(20)
+	if err != nil {
+		return err
+	}
+	r.Values.StorageSecretKey = storageSecretKey
+
+	return nil
+}
+
+// NewRenderContext constructor function to create a new RenderContext with the values generated
+func NewRenderContext(cfg config.Config, versionManifest versions.Manifest, namespace string) (*RenderContext, error) {
+	ctx := &RenderContext{
+		Config:          cfg,
+		VersionManifest: versionManifest,
+		Namespace:       namespace,
+	}
+
+	err := ctx.generateValues()
+	if err != nil {
+		return nil, err
+	}
+
+	return ctx, nil
 }
