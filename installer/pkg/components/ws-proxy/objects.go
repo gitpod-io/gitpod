@@ -25,5 +25,5 @@ var Objects = common.CompositeRenderFunc(
 			ContainerPort: MetricsPort,
 			ServicePort:   MetricsPort,
 		},
-	}, nil),
+	}),
 )

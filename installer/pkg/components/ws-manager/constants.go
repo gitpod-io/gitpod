@@ -7,6 +7,7 @@ package wsmanager
 const (
 	Component                  = "ws-manager"
 	RPCPort                    = 8080
+	RPCPortName                = "rpc"
 	TLSSecretNameSecret        = "ws-manager-tls"
 	TLSSecretNameClient        = "ws-manager-client-tls"
 	VolumeConfig               = "config"

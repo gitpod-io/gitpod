@@ -18,6 +18,6 @@ var Objects = common.CompositeRenderFunc(
 			ContainerPort: RPCPort,
 			ServicePort:   RPCPort,
 		},
-	}, nil),
+	}),
 	common.DefaultServiceAccount(Component),
 )

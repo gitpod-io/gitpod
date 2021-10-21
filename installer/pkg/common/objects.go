@@ -33,7 +33,7 @@ type ServicePort struct {
 	ServicePort   int32
 }
 
-func GenerateService(component string, ports map[string]ServicePort, clusterIP *string) RenderFunc {
+func GenerateService(component string, ports map[string]ServicePort, mod ...func(spec *corev1.ServiceSpec)) RenderFunc {
 	return func(cfg *RenderContext) ([]runtime.Object, error) {
 		labels := DefaultLabels(component)
 
@@ -47,9 +47,15 @@ func GenerateService(component string, ports map[string]ServicePort, clusterIP *
 			})
 		}
 
-		specClusterIp := "None"
-		if clusterIP != nil {
-			specClusterIp = *clusterIP
+		spec := &corev1.ServiceSpec{
+			Ports:    servicePorts,
+			Selector: labels,
+			Type:     corev1.ServiceTypeClusterIP,
+		}
+
+		for _, m := range mod {
+			// Apply any custom modifications to the spec
+			m(spec)
 		}
 
 		return []runtime.Object{&corev1.Service{
@@ -59,12 +65,7 @@ func GenerateService(component string, ports map[string]ServicePort, clusterIP *
 				Namespace: cfg.Namespace,
 				Labels:    labels,
 			},
-			Spec: corev1.ServiceSpec{
-				Ports:     servicePorts,
-				Selector:  map[string]string{"Component": component},
-				Type:      corev1.ServiceTypeClusterIP,
-				ClusterIP: specClusterIp,
-			},
+			Spec: *spec,
 		}}, nil
 	}
 }
