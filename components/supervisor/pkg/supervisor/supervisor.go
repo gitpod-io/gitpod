@@ -904,77 +904,17 @@ func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan
 func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	bin, err := os.Executable()
-	if err != nil {
-		log.WithError(err).Error("cannot find executable path")
-		return
-	}
-	dropbear := filepath.Join(filepath.Dir(bin), "dropbear", "dropbear")
-	if _, err := os.Stat(dropbear); err != nil {
-		log.WithError(err).WithField("path", dropbear).Error("cannot locate dropebar binary")
-		return
-	}
-	dropbearkey := filepath.Join(filepath.Dir(bin), "dropbear", "dropbearkey")
-	if _, err := os.Stat(dropbearkey); err != nil {
-		log.WithError(err).WithField("path", dropbearkey).Error("cannot locate dropebarkey")
-		return
-	}
-
-	hostkeyFN, err := ioutil.TempFile("", "hostkey")
-	if err != nil {
-		log.WithError(err).Error("cannot create hostkey file")
-		return
-	}
-	hostkeyFN.Close()
-	os.Remove(hostkeyFN.Name())
-
-	keycmd := exec.Command(dropbearkey, "-t", "rsa", "-f", hostkeyFN.Name())
-	// We need to force HOME because the Gitpod user might not have existed at the start of the container
-	// which makes the container runtime set an invalid HOME value.
-	keycmd.Env = func() []string {
-		env := os.Environ()
-		res := make([]string, 0, len(env))
-		for _, e := range env {
-			if strings.HasPrefix(e, "HOME=") {
-				e = "HOME=/root"
-			}
-			res = append(res, e)
-		}
-		return res
-	}()
-	out, err := keycmd.CombinedOutput()
-	if err != nil {
-		log.WithError(err).WithField("out", string(out)).Error("cannot create hostkey file")
-		return
-	}
-	_ = os.Chown(hostkeyFN.Name(), gitpodUID, gitpodGID)
-
-	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-p", fmt.Sprintf(":%d", cfg.SSHPort), "-r", hostkeyFN.Name())
-	cmd = runAsGitpodUser(cmd)
-	cmd.Env = buildChildProcEnv(cfg, nil)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Start()
-	if err != nil {
-		log.WithError(err).Error("cannot start SSH server")
-		return
-	}
-
-	done := make(chan error, 1)
 	go func() {
-		done <- cmd.Wait()
-	}()
-	select {
-	case <-ctx.Done():
-		if cmd.Process != nil {
-			cmd.Process.Kill()
-		}
-		return
-	case err = <-done:
+		ssh, err := newSSHServer(ctx, cfg)
 		if err != nil {
-			log.WithError(err).Error("SSH server stopped")
+			log.WithError(err).Error("err starting SSH server")
 		}
-	}
+
+		err = ssh.listenAndServe()
+		if err != nil {
+			log.WithError(err).Error("err starting SSH server")
+		}
+	}()
 }
 
 func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst ContentState) {

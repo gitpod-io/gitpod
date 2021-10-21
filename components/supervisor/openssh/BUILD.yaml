@@ -1,0 +1,11 @@
+packages:
+  - name: docker
+    type: docker
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/static-openssh:${version}
+        - ${imageRepoBase}/static-openssh:commit-${__git_commit}
+        - ${imageRepoBase}/static-openssh:latest
