@@ -114,6 +114,8 @@ export interface EmailNotificationSettings {
 
 export type IDESettings = {
     defaultIde?: string
+    useDesktopIde?: boolean
+    defaultDesktopIde?: string
 }
 
 export interface UserPlatform {
