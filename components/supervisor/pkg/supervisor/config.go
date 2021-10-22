@@ -29,12 +29,14 @@ const supervisorConfigFile = "supervisor-config.json"
 //                  there's some configuration that lives with supervisor and its "installation",
 //                  For example the IDE config location depends on if supervisor is served via registry-facade.
 //   2. IDE: Gitpod supports different IDEs, all of which have different configuration needs.
-//   3. Workspace: which depends on the individual workspace, its content and configuration.
+//   3. DesktopIDE: Gitpod supports to connect external IDEs (like desktop IDEs).
+//   4. Workspace: which depends on the individual workspace, its content and configuration.
 
 // Config configures supervisor
 type Config struct {
 	StaticConfig
-	IDEConfig
+	IDE        IDEConfig
+	DesktopIDE *IDEConfig
 	WorkspaceConfig
 }
 
@@ -43,8 +45,13 @@ func (c Config) Validate() error {
 	if err := c.StaticConfig.Validate(); err != nil {
 		return xerrors.Errorf("static supervisor config is invalid: %w", err)
 	}
-	if err := c.IDEConfig.Validate(); err != nil {
+	if err := c.IDE.Validate(); err != nil {
 		return xerrors.Errorf("IDE config is invalid: %w", err)
+	}
+	if c.DesktopIDE != nil {
+		if err := c.DesktopIDE.Validate(); err != nil {
+			return xerrors.Errorf("Desktop IDE config is invalid: %w", err)
+		}
 	}
 	if err := c.WorkspaceConfig.Validate(); err != nil {
 		return xerrors.Errorf("Workspace config is invalid: %w", err)
@@ -55,17 +62,20 @@ func (c Config) Validate() error {
 
 // LogRateLimit returns the log rate limit for the IDE process in kib/sec.
 // If log rate limiting is disbaled, this function returns 0.
-func (c Config) LogRateLimit() int {
-	if c.WorkspaceLogRateLimit < c.IDELogRateLimit {
+func (c Config) IDELogRateLimit(ideConfig *IDEConfig) int {
+	if c.WorkspaceLogRateLimit < ideConfig.LogRateLimit {
 		return c.WorkspaceLogRateLimit
 	}
-	return c.IDELogRateLimit
+	return ideConfig.LogRateLimit
 }
 
 // StaticConfig is the supervisor-wide configuration
 type StaticConfig struct {
 	// IDEConfigLocation is a path in the filesystem where to find the IDE configuration
 	IDEConfigLocation string `json:"ideConfigLocation"`
+
+	// DesktopIDEConfigLocation is a path in the filesystem where to find the desktop IDE configuration
+	DesktopIDEConfigLocation string `json:"desktopIdeConfigLocation"`
 
 	// FrontendLocation is a path in the filesystem where to find supervisor's frontend assets
 	FrontendLocation string `json:"frontendLocation"`
@@ -114,10 +124,13 @@ type IDEConfig struct {
 	// code the workspace is stopped.
 	Entrypoint string `json:"entrypoint"`
 
+	// EntrypointArgs
+	EntrypointArgs []string `json:"entrypointArgs"`
+
 	// LogRateLimit can be used to limit the log output of the IDE process.
 	// Any output that exceeds this limit is silently dropped.
 	// Expressed in kb/sec. Can be overriden by the workspace config (smallest value wins).
-	IDELogRateLimit int `json:"logRateLimit"`
+	LogRateLimit int `json:"logRateLimit"`
 
 	// ReadinessProbe configures the probe used to serve the IDE status
 	ReadinessProbe struct {
@@ -127,7 +140,16 @@ type IDEConfig struct {
 
 		// HTTPProbe configures the HTTP readiness probe.
 		HTTPProbe struct {
-			// Path is the path to make requests to. Defaults to "/"
+			// Schema is either "http" or "https". Defaults to "http".
+			Schema string `json:"schema"`
+
+			// Host is the host to make requests to. Default to "localhost".
+			Host string `json:"host"`
+
+			// Port is the port to make requests to. Default it the IDE port in the supervisor config.
+			Port int `json:"port"`
+
+			// Path is the path to make requests to. Defaults to "/".
 			Path string `json:"path"`
 		} `json:"http"`
 	} `json:"readinessProbe"`
@@ -144,7 +166,7 @@ func (c IDEConfig) Validate() error {
 		return xerrors.Errorf("entrypoint is a directory, but should be a file")
 	}
 
-	if c.IDELogRateLimit < 0 {
+	if c.LogRateLimit < 0 {
 		return xerrors.Errorf("logRateLimit must be >= 0")
 	}
 
@@ -357,6 +379,16 @@ func GetConfig() (*Config, error) {
 		return nil, err
 	}
 
+	var desktopIde *IDEConfig
+	if static.DesktopIDEConfigLocation != "" {
+		if _, err := os.Stat(static.DesktopIDEConfigLocation); !os.IsNotExist((err)) {
+			desktopIde, err = loadIDEConfigFromFile(static.DesktopIDEConfigLocation)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	workspace, err := loadWorkspaceConfigFromEnv()
 	if err != nil {
 		return nil, err
@@ -364,7 +396,8 @@ func GetConfig() (*Config, error) {
 
 	return &Config{
 		StaticConfig:    *static,
-		IDEConfig:       *ide,
+		IDE:             *ide,
+		DesktopIDE:      desktopIde,
 		WorkspaceConfig: *workspace,
 	}, nil
 }
