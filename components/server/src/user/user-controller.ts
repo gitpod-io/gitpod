@@ -495,6 +495,7 @@ export class UserController {
 
         this.analytics.identify({
             userId: user.id,
+            anonymousId: req.cookies.ajs_anonymous_id,
             traits: {
                 "created_at": user.creationDate,
                 "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
