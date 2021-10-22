@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -104,7 +105,7 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 		return
 	}
 
-	go io.Copy(stdin, conn)
+	go io.Copy(stdin, bufio.NewReader(conn))
 	go io.Copy(conn, stdout)
 
 	err = cmd.Start()
