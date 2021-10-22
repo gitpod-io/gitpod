@@ -7,8 +7,6 @@ package supervisor
 import (
 	"context"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -46,6 +44,12 @@ func (s *sshServer) listenAndServe() error {
 		return err
 	}
 
+	bin, err := os.Executable()
+	if err != nil {
+		log.WithError(err).Error("cannot find executable path")
+		return err
+	}
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -55,131 +59,97 @@ func (s *sshServer) listenAndServe() error {
 
 		log.Info("checking for SSH server")
 		s.mu.Lock()
-		if s.cmd == nil {
-			cmd := prepareSSHServer(s.ctx, s.cfg)
-			if cmd != nil {
-				s.cmd = cmd
-			}
+		sshkey := filepath.Join(filepath.Dir(bin), "dropbear", "sshkey")
+		if _, err := os.Stat(sshkey); err != nil {
+			prepareSSHServer(s.ctx, s.cfg)
 		}
 		s.mu.Unlock()
 
-		go s.handleConn(conn)
+		go s.handleConn(s.ctx, s.cfg, conn)
 	}
 }
 
-func (s *sshServer) handleConn(conn net.Conn) {
-	rconn, err := net.Dial("tcp", "127.0.0.1:22")
-	if err != nil {
-		return
-	}
-
-	go pipe(conn, rconn)
-	go pipe(rconn, conn)
-}
-
-func pipe(from, to net.Conn) {
-	doCopy := func(s, c net.Conn, cancel chan<- bool) {
-		_, _ = io.Copy(s, c)
-		cancel <- true
-	}
-
-	cancel := make(chan bool, 2)
-
-	go doCopy(to, from, cancel)
-	go doCopy(from, to, cancel)
-
-	<-cancel
-}
-
-func prepareSSHServer(ctx context.Context, cfg *Config) *exec.Cmd {
+func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) {
 	bin, err := os.Executable()
 	if err != nil {
 		log.WithError(err).Error("cannot find executable path")
-		return nil
+		return
 	}
 
 	dropbear := filepath.Join(filepath.Dir(bin), "dropbear", "dropbear")
 	if _, err := os.Stat(dropbear); err != nil {
 		log.WithError(err).WithField("path", dropbear).Error("cannot locate dropebar binary")
-		return nil
+		return
 	}
 
-	dropbearkey := filepath.Join(filepath.Dir(bin), "dropbear", "dropbearkey")
-	if _, err := os.Stat(dropbearkey); err != nil {
-		log.WithError(err).WithField("path", dropbearkey).Error("cannot locate dropebarkey")
-		return nil
-	}
-
-	hostkeyFN, err := ioutil.TempFile("", "hostkey")
-	if err != nil {
-		log.WithError(err).Error("cannot create hostkey file")
-		return nil
-	}
-	hostkeyFN.Close()
-	os.Remove(hostkeyFN.Name())
-
-	keycmd := exec.Command(dropbearkey, "-t", "rsa", "-f", hostkeyFN.Name())
-	// We need to force HOME because the Gitpod user might not have existed at the start of the container
-	// which makes the container runtime set an invalid HOME value.
-	keycmd.Env = func() []string {
-		env := os.Environ()
-		res := make([]string, 0, len(env))
-		for _, e := range env {
-			if strings.HasPrefix(e, "HOME=") {
-				e = "HOME=/root"
-			}
-			res = append(res, e)
-		}
-		return res
-	}()
-	out, err := keycmd.CombinedOutput()
-	if err != nil {
-		log.WithError(err).WithField("out", string(out)).Error("cannot create hostkey file")
-		return nil
-	}
-	_ = os.Chown(hostkeyFN.Name(), gitpodUID, gitpodGID)
-
-	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-p", "127.0.0.1:22", "-r", hostkeyFN.Name())
+	sshkey := filepath.Join(filepath.Dir(bin), "dropbear", "sshkey")
+	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-i", "-r", sshkey)
 	cmd = runAsGitpodUser(cmd)
 	cmd.Env = buildChildProcEnv(cfg, nil)
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdout = conn
+	cmd.Stdin = conn
+
 	err = cmd.Start()
 	if err != nil {
 		log.WithError(err).Error("cannot start SSH server")
-		return nil
+		conn.Close()
+		return
 	}
 
 	done := make(chan error, 1)
 	go func() {
 		done <- cmd.Wait()
 	}()
+
 	select {
 	case <-ctx.Done():
 		if cmd.Process != nil {
 			_ = cmd.Process.Kill()
+			conn.Close()
 		}
-		return nil
+		return
 	case err = <-done:
 		if err != nil {
 			log.WithError(err).Error("SSH server stopped")
 		}
 	}
-
-	return cmd
 }
 
-func localIP() string {
-	addrs, err := net.InterfaceAddrs()
+func prepareSSHServer(ctx context.Context, cfg *Config) {
+	bin, err := os.Executable()
 	if err != nil {
-		return ""
+		log.WithError(err).Error("cannot find executable path")
+		return
 	}
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
+
+	dropbearkey := filepath.Join(filepath.Dir(bin), "dropbear", "dropbearkey")
+	if _, err := os.Stat(dropbearkey); err != nil {
+		log.WithError(err).WithField("path", dropbearkey).Error("cannot locate dropebarkey")
+		return
+	}
+
+	sshkey := filepath.Join(filepath.Dir(bin), "dropbear", "sshkey")
+	if _, err := os.Stat(sshkey); err != nil {
+		keycmd := exec.Command(dropbearkey, "-t", "rsa", "-f", sshkey)
+		// We need to force HOME because the Gitpod user might not have existed at the start of the container
+		// which makes the container runtime set an invalid HOME value.
+		keycmd.Env = func() []string {
+			env := os.Environ()
+			res := make([]string, 0, len(env))
+			for _, e := range env {
+				if strings.HasPrefix(e, "HOME=") {
+					e = "HOME=/root"
+				}
+				res = append(res, e)
 			}
+			return res
+		}()
+		out, err := keycmd.CombinedOutput()
+		if err != nil {
+			log.WithError(err).WithField("out", string(out)).Error("cannot create hostkey file")
+			return
 		}
+		_ = os.Chown(sshkey, gitpodUID, gitpodGID)
 	}
-	return ""
 }
