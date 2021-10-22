@@ -111,6 +111,23 @@ const (
 	ShutdownReasonExecutionError ShutdownReason = 1
 )
 
+type IDEKind int64
+
+const (
+	WebIDE IDEKind = iota
+	DesktopIDE
+)
+
+func (s IDEKind) String() string {
+	switch s {
+	case WebIDE:
+		return "IDE"
+	case DesktopIDE:
+		return "Desktop IDE"
+	}
+	return "unknown"
+}
+
 // Run serves as main entrypoint to the supervisor
 func Run(options ...RunOption) {
 	exitCode := 0
@@ -174,12 +191,13 @@ func Run(options ...RunOption) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	var (
-		shutdown            = make(chan ShutdownReason, 1)
-		ideReady            = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
-		cstate              = NewInMemoryContentState(cfg.RepoRoot)
-		gitpodService       = createGitpodService(cfg, tokenService)
-		gitpodConfigService = config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
-		portMgmt            = ports.NewManager(
+		shutdown                           = make(chan ShutdownReason, 1)
+		ideReady                           = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
+		desktopIdeReady     *ideReadyState = nil
+		cstate                             = NewInMemoryContentState(cfg.RepoRoot)
+		gitpodService                      = createGitpodService(cfg, tokenService)
+		gitpodConfigService                = config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
+		portMgmt                           = ports.NewManager(
 			createExposedPortsImpl(cfg, gitpodService),
 			&ports.PollingServedPortsObserver{
 				RefreshInterval: 2 * time.Second,
@@ -197,6 +215,9 @@ func Run(options ...RunOption) {
 		analytics           = analytics.NewFromEnvironment()
 		notificationService = NewNotificationService()
 	)
+	if cfg.DesktopIDE != nil {
+		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
+	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
 	go gitpodConfigService.Watch(ctx)
@@ -225,10 +246,11 @@ func Run(options ...RunOption) {
 
 	apiServices := []RegisterableService{
 		&statusService{
-			ContentState: cstate,
-			Ports:        portMgmt,
-			Tasks:        taskManager,
-			ideReady:     ideReady,
+			ContentState:    cstate,
+			Ports:           portMgmt,
+			Tasks:           taskManager,
+			ideReady:        ideReady,
+			desktopIdeReady: desktopIdeReady,
 		},
 		termMuxSrv,
 		RegistrableTokenService{Service: tokenService},
@@ -251,7 +273,11 @@ func Run(options ...RunOption) {
 
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &ideWG, ideReady)
+	go startAndWatchIDE(ctx, cfg, &cfg.IDE, &ideWG, ideReady, WebIDE)
+	if cfg.DesktopIDE != nil {
+		ideWG.Add(1)
+		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, &ideWG, desktopIdeReady, DesktopIDE)
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -483,22 +509,24 @@ func reaper(terminatingReaper <-chan bool) {
 	}
 }
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady *ideReadyState) {
+type ideStatus int
+
+const (
+	statusNeverRan ideStatus = iota
+	statusShouldRun
+	statusShouldShutdown
+)
+
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg *sync.WaitGroup, ideReady *ideReadyState, ide IDEKind) {
 	defer wg.Done()
-	defer log.Debug("startAndWatchIDE shutdown")
+	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
 	if cfg.isHeadless() {
-		ideReady.Set(true)
+		ideReady.Set(true, nil)
 		return
 	}
 
-	type status int
-	const (
-		statusNeverRan status = iota
-		statusShouldRun
-		statusShouldShutdown
-	)
-	s := statusNeverRan
+	ideStatus := statusNeverRan
 
 	var (
 		cmd        *exec.Cmd
@@ -506,63 +534,23 @@ func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideR
 	)
 supervisorLoop:
 	for {
-		if s == statusShouldShutdown {
+		if ideStatus == statusShouldShutdown {
 			break
 		}
 
 		ideStopped = make(chan struct{}, 1)
-		go func() {
-			cmd = prepareIDELaunch(cfg)
-
-			// prepareIDELaunch sets Pdeathsig, which on on Linux, will kill the
-			// child process when the thread dies, not when the process dies.
-			// runtime.LockOSThread ensures that as long as this function is
-			// executing that OS thread will still be around.
-			//
-			// see https://github.com/golang/go/issues/27505#issuecomment-713706104
-			runtime.LockOSThread()
-			defer runtime.UnlockOSThread()
-
-			err := cmd.Start()
-			if err != nil {
-				if s == statusNeverRan {
-					log.WithError(err).Fatal("IDE failed to start")
-				}
-
-				return
-			}
-			s = statusShouldRun
-
-			go func() {
-				runIDEReadinessProbe(cfg)
-				ideReady.Set(true)
-			}()
-
-			err = cmd.Wait()
-			if err != nil && !(strings.Contains(err.Error(), "signal: interrupt") || strings.Contains(err.Error(), "wait: no child processes")) {
-				log.WithError(err).Warn("IDE was stopped")
-
-				ideWasReady := ideReady.Get()
-				if !ideWasReady {
-					log.WithError(err).Fatal("IDE failed to start")
-					return
-				}
-			}
-
-			ideReady.Set(false)
-			close(ideStopped)
-		}()
+		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
 
 		select {
 		case <-ideStopped:
 			// IDE was stopped - let's just restart it after a small delay (in case the IDE doesn't start at all) in the next round
-			if s == statusShouldShutdown {
+			if ideStatus == statusShouldShutdown {
 				break supervisorLoop
 			}
 			time.Sleep(1 * time.Second)
 		case <-ctx.Done():
 			// we've been asked to shut down
-			s = statusShouldShutdown
+			ideStatus = statusShouldShutdown
 			if cmd != nil && cmd.Process != nil {
 				cmd.Process.Signal(os.Interrupt)
 			}
@@ -570,24 +558,78 @@ supervisorLoop:
 		}
 	}
 
-	log.WithField("budget", timeBudgetIDEShutdown.String()).Info("IDE supervisor loop ended - waiting for IDE to come down")
+	log.WithField("ide", ide.String()).WithField("budget", timeBudgetIDEShutdown.String()).Info("IDE supervisor loop ended - waiting for IDE to come down")
 	select {
 	case <-ideStopped:
 		return
 	case <-time.After(timeBudgetIDEShutdown):
-		log.WithField("timeBudgetIDEShutdown", timeBudgetIDEShutdown.String()).Error("IDE did not stop in time - sending SIGKILL")
+		log.WithField("ide", ide.String()).WithField("timeBudgetIDEShutdown", timeBudgetIDEShutdown.String()).Error("IDE did not stop in time - sending SIGKILL")
 		cmd.Process.Signal(syscall.SIGKILL)
 	}
 }
 
-func prepareIDELaunch(cfg *Config) *exec.Cmd {
-	var args []string
-	args = append(args, cfg.WorkspaceRoot)
-	args = append(args, "--port", strconv.Itoa(cfg.IDEPort))
-	args = append(args, "--hostname", "0.0.0.0")
-	log.WithField("args", args).WithField("entrypoint", cfg.Entrypoint).Info("launching IDE")
+func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan struct{}, ideReady *ideReadyState, s *ideStatus, ide IDEKind) {
+	go func() {
+		cmd = prepareIDELaunch(cfg, ideConfig)
 
-	cmd := exec.Command(cfg.Entrypoint, args...)
+		// prepareIDELaunch sets Pdeathsig, which on on Linux, will kill the
+		// child process when the thread dies, not when the process dies.
+		// runtime.LockOSThread ensures that as long as this function is
+		// executing that OS thread will still be around.
+		//
+		// see https://github.com/golang/go/issues/27505#issuecomment-713706104
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+
+		err := cmd.Start()
+		if err != nil {
+			if s == func() *ideStatus { i := statusNeverRan; return &i }() {
+				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed to start")
+			}
+
+			return
+		}
+		s = func() *ideStatus { i := statusShouldRun; return &i }()
+
+		go func() {
+			desktopIDEStatus := runIDEReadinessProbe(cfg, ideConfig, ide)
+			ideReady.Set(true, desktopIDEStatus)
+		}()
+
+		err = cmd.Wait()
+		if err != nil && !(strings.Contains(err.Error(), "signal: interrupt") || strings.Contains(err.Error(), "wait: no child processes")) {
+			log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
+
+			ideWasReady, _ := ideReady.Get()
+			if !ideWasReady {
+				log.WithField("ide", ide.String()).WithError(err).Fatal("IDE failed to start")
+				return
+			}
+		}
+
+		ideReady.Set(false, nil)
+		close(ideStopped)
+	}()
+}
+
+func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
+	args := ideConfig.EntrypointArgs
+
+	// Add default args for IDE (not desktop IDE) to be backwards compatible
+	if ideConfig.Entrypoint == "/ide/startup.sh" && len(args) == 0 {
+		args = append(args, "{WORKSPACEROOT}")
+		args = append(args, "--port", "{IDEPORT}")
+		args = append(args, "--hostname", "{IDEHOSTNAME}")
+	}
+
+	for i := range args {
+		args[i] = strings.ReplaceAll(args[i], "{WORKSPACEROOT}", cfg.WorkspaceRoot)
+		args[i] = strings.ReplaceAll(args[i], "{IDEPORT}", strconv.Itoa(cfg.IDEPort))
+		args[i] = strings.ReplaceAll(args[i], "{IDEHOSTNAME}", "0.0.0.0")
+	}
+	log.WithField("args", args).WithField("entrypoint", ideConfig.Entrypoint).Info("launching IDE")
+
+	cmd := exec.Command(ideConfig.Entrypoint, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		// We need the child process to run in its own process group, s.t. we can suspend and resume
 		// IDE and its children.
@@ -607,7 +649,7 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 	// This would break the JSON parsing of the headless builds.
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if lrr := cfg.LogRateLimit(); lrr > 0 {
+	if lrr := cfg.IDELogRateLimit(ideConfig); lrr > 0 {
 		limit := int64(lrr)
 		cmd.Stdout = dropwriter.Writer(cmd.Stdout, dropwriter.NewBucket(limit*1024*3, limit*1024))
 		cmd.Stderr = dropwriter.Writer(cmd.Stderr, dropwriter.NewBucket(limit*1024*3, limit*1024))
@@ -676,16 +718,33 @@ func buildChildProcEnv(cfg *Config, envvars []string) []string {
 	return env
 }
 
-func runIDEReadinessProbe(cfg *Config) {
-	defer log.Info("IDE is ready")
+func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (desktopIDEStatus *DesktopIDEStatus) {
+	defer log.WithField("ide", ide.String()).Info("IDE is ready")
 
-	switch cfg.ReadinessProbe.Type {
+	defaultIfEmpty := func(value, defaultValue string) string {
+		if len(value) == 0 {
+			return defaultValue
+		}
+		return value
+	}
+
+	defaultIfZero := func(value, defaultValue int) int {
+		if value == 0 {
+			return defaultValue
+		}
+		return value
+	}
+
+	switch ideConfig.ReadinessProbe.Type {
 	case ReadinessProcessProbe:
 		return
 
 	case ReadinessHTTPProbe:
 		var (
-			url    = fmt.Sprintf("http://localhost:%d/%s", cfg.IDEPort, strings.TrimPrefix(cfg.ReadinessProbe.HTTPProbe.Path, "/"))
+			schema = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Schema, "http")
+			host   = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Host, "localhost")
+			port   = defaultIfZero(ideConfig.ReadinessProbe.HTTPProbe.Port, cfg.IDEPort)
+			url    = fmt.Sprintf("%s://%s:%d/%s", schema, host, port, strings.TrimPrefix(ideConfig.ReadinessProbe.HTTPProbe.Path, "/"))
 			client = http.Client{Timeout: 1 * time.Second}
 			tick   = time.NewTicker(500 * time.Millisecond)
 		)
@@ -700,16 +759,32 @@ func runIDEReadinessProbe(cfg *Config) {
 			if err != nil {
 				continue
 			}
-			resp.Body.Close()
+			defer resp.Body.Close()
 
 			if resp.StatusCode == http.StatusOK {
-				log.WithField("status", resp.StatusCode).Infof("IDE readiness took %.3f seconds", time.Since(t0).Seconds())
+				log.WithField("ide", ide.String()).WithField("status", resp.StatusCode).Infof("IDE readiness took %.3f seconds", time.Since(t0).Seconds())
+
+				if ide == DesktopIDE {
+					bodyBytes, err := ioutil.ReadAll(resp.Body)
+					log.WithField("ide", ide.String()).Infof("IDE status probe body: %s", string(bodyBytes))
+					if err != nil {
+						log.WithField("ide", ide.String()).WithError(err).Infof("Error reading response body from IDE status probe.")
+						break
+					}
+					err = json.Unmarshal(bodyBytes, &desktopIDEStatus)
+					if err != nil {
+						log.WithField("ide", ide.String()).WithError(err).WithField("body", bodyBytes).Debugf("Error parsing JSON body from IDE status probe.")
+						break
+					}
+					log.WithField("ide", ide.String()).Infof("Desktop IDE status: %s", desktopIDEStatus)
+				}
 				break
 			}
 
-			log.WithField("status", resp.StatusCode).Info("IDE readiness probe came back with non-200 status code")
+			log.WithField("ide", ide.String()).WithField("status", resp.StatusCode).Info("IDE readiness probe came back with non-200 status code")
 		}
 	}
+	return
 }
 
 func isBlacklistedEnvvar(name string) bool {
