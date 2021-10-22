@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/content-service/api/config"
-	apiconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +17,11 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	storageConfig, err := common.StorageConfiguration(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	cscfg := config.ServiceConfig{
 		Service: config.Service{
 			Addr: fmt.Sprintf(":%d", RPCPort),
@@ -28,8 +32,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PProf: config.PProf{
 			Addr: fmt.Sprintf(":%d", PProfPort),
 		},
-		// todo(sje): work out how to cater for different storages
-		Storage: apiconfig.StorageConfig{},
+		Storage: *storageConfig,
 	}
 
 	fc, err := json.MarshalIndent(cscfg, "", " ")

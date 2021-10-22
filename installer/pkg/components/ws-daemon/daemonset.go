@@ -5,6 +5,7 @@
 package wsdaemon
 
 import (
+	"fmt"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
@@ -57,7 +58,7 @@ fi
 			Command: []string{
 				"/bin/sh",
 				"-c",
-				"cp -f /installer/workspace_default.json /mnt/dst/workspace_default_not-set.json",
+				fmt.Sprintf("cp -f /installer/workspace_default.json /mnt/dst/workspace_default_%s.json", ctx.VersionManifest.Version),
 			},
 			VolumeMounts: []corev1.VolumeMount{{
 				Name:      "hostseccomp",

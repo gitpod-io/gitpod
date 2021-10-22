@@ -7,6 +7,8 @@ package image_builder_mk3
 import (
 	"encoding/json"
 	"fmt"
+	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
+	"k8s.io/utils/pointer"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -21,26 +23,43 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	imgcfg := config.ServiceConfig{
-		Orchestrator: config.Configuration{
-			WorkspaceManager: config.WorkspaceManagerConfig{
-				Address: fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort),
-				TLS: config.TLS{
-					Authority:   "/wsman-certs/ca.crt",
-					Certificate: "/wsman-certs/tls.crt",
-					PrivateKey:  "/wsman-certs/tls.key",
-				},
+	orchestrator := config.Configuration{
+		WorkspaceManager: config.WorkspaceManagerConfig{
+			Address: fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort),
+			TLS: config.TLS{
+				Authority:   "/wsman-certs/ca.crt",
+				Certificate: "/wsman-certs/tls.crt",
+				PrivateKey:  "/wsman-certs/tls.key",
 			},
-			AuthFile:                 PullSecretFile, // todo(sje): make conditional
-			BaseImageRepository:      "",             // todo(sje): get conditional value
-			WorkspaceImageRepository: "",             // todo(sje): get conditional value
-			BuilderImage:             common.ImageName(ctx.Config.Repository, BuilderImage, BuilderImageVersion),
-			BuilderAuthKeyFile:       "/config/authkey",
 		},
+		BuilderImage:       common.ImageName(ctx.Config.Repository, BuilderImage, ctx.VersionManifest.Components.ImageBuilderMk3.BuilderImage.Version),
+		BuilderAuthKeyFile: "/config/authkey",
+	}
+
+	var baseImageRepo string
+	var workspaceImgRepo string
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		// todo(sje): handle external registry
+		registryName := fmt.Sprintf("%s.%s", dockerregistry.RegistryName, ctx.Config.Domain)
+
+		baseImageRepo = fmt.Sprintf("%s/base-images", registryName)
+		workspaceImgRepo = fmt.Sprintf("%s/workspace-images", registryName)
+
+		orchestrator.AuthFile = PullSecretFile
+	} else {
+		// todo(sje): handle outside cluster values for image builder mk3
+		return nil, fmt.Errorf("in cluster container currently only supported option")
+	}
+
+	orchestrator.BaseImageRepository = baseImageRepo
+	orchestrator.WorkspaceImageRepository = workspaceImgRepo
+
+	imgcfg := config.ServiceConfig{
+		Orchestrator: orchestrator,
 		RefCache: config.RefCacheConfig{
 			Interval: util.Duration(time.Hour * 6).String(),
 			Refs: []string{
-				common.ImageName(ctx.Config.Repository, workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
+				fmt.Sprintf("%s:%s", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
 			},
 		},
 		Service: config.Service{

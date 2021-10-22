@@ -90,15 +90,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	// todo(sje) make conditional
 	// todo(sje): allow value to be set via config
-	username, err := common.RandomString(20)
-	if err != nil {
-		return nil, err
+	username := ctx.Values.InternalRegistryUsername
+	if username == "" {
+		return nil, fmt.Errorf("unknown value: internal registry username")
 	}
 
-	// todo(sje): allow value to be set via config
-	password, err := common.RandomString(20)
-	if err != nil {
-		return nil, err
+	password := ctx.Values.InternalRegistryPassword
+	if password == "" {
+		return nil, fmt.Errorf("unknown value: internal registry password")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -108,7 +107,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	dockerRegistry, err := renderTemplate(vhostDockerRegistry, dockerRegistryTpl{
 		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("https://%s", common.DockerRegistryName),
+		ReverseProxy: fmt.Sprintf("https://%s.%s.%s", common.DockerRegistryName, ctx.Namespace, kubeDomain),
 		Username:     username,
 		Password:     base64.StdEncoding.EncodeToString(hashedPassword),
 	})
@@ -118,7 +117,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	openVSX, err := renderTemplate(vhostOpenVSXTmpl, openVSXTpl{
 		Domain:  ctx.Config.Domain,
-		RepoURL: "open-vsx.org", // todo(sje) allow this to be configurable
+		RepoURL: fmt.Sprintf("openvsx-proxy.%s.%s:%d", ctx.Namespace, kubeDomain, 8080), // todo(sje): get port from (future) config
 	})
 	if err != nil {
 		return nil, err

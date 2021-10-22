@@ -5,6 +5,7 @@
 package wsmanagerbridge
 
 import (
+	"fmt"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -50,7 +51,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name: "config",
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+									LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
 								},
 							},
 						}, {
@@ -64,8 +65,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx), *common.MessageBusWaiterContainer(ctx)},
 						Containers: []corev1.Container{{
 							Name:            Component,
-							Args:            []string{"run", "-v", "/mnt/config/config.json"},
-							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Blobserve.Version),
+							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManagerBridge.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -90,7 +90,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							),
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      "config",
-								MountPath: "/mnt/config",
+								MountPath: "/config",
 								ReadOnly:  true,
 							}, {
 								Name:      "ws-manager-client-tls-certs",

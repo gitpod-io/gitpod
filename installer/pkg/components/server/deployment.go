@@ -61,7 +61,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name: "config",
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+									LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
 								},
 							},
 						}, {
@@ -104,6 +104,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
+								common.DatabaseEnv(&ctx.Config),
 								common.TracingEnv(&ctx.Config),
 								common.AnalyticsEnv(&ctx.Config),
 								common.MessageBusEnv(&ctx.Config),
