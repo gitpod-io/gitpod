@@ -22,7 +22,7 @@ packages:
     deps:
       - :app
       - components/supervisor/frontend:app
-      - components/supervisor/openssh:docker
+      #- components/supervisor/openssh:docker
       - components/workspacekit:app
       - components/workspacekit:fuse-overlayfs
       - components/gitpod-cli:app
