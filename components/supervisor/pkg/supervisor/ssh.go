@@ -92,8 +92,6 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 	cmd = runAsGitpodUser(cmd)
 	cmd.Env = buildChildProcEnv(cfg, nil)
 	cmd.Stderr = os.Stderr
-	cmd.Stdout = conn
-	cmd.Stdin = conn
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
