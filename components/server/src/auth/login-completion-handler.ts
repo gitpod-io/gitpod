@@ -77,56 +77,7 @@ export class LoginCompletionHandler {
 
             increaseLoginCounter("succeeded", authHost);
 
-            //fill identities from user
-            let identities: { github_slug?: String, gitlab_slug?: String, bitbucket_slug?: String } = {};
-            user.identities.forEach((value) => {
-                switch(value.authProviderId) {
-                    case "Public-GitHub": {
-                        identities.github_slug = value.authName;
-                        break;
-                    }
-                    case "Public-GitLab": {
-                        identities.gitlab_slug = value.authName;
-                        break;
-                    }
-                    case "Public-Bitbucket": {
-                        identities.bitbucket_slug = value.authName;
-                        break;
-                    }
-                }
-            });
-            const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
-
-            //make new complete identify call for each login
-            this.analytics.identify({
-                anonymousId: request.cookies.ajs_anonymous_id,
-                userId:user.id,
-                context: {
-                    "ip": request.ips[0],
-                    "userAgent": request.get("User-Agent"),
-                    "location": {
-                        "city": request.get("x-glb-client-city"),
-                        "country": request.get("x-glb-client-region"),
-                        "latitude": coords?.length == 2 ? coords[0] : undefined,
-                        "longitude": coords?.length == 2 ? coords[1] : undefined
-                    }
-                },
-                traits: {
-                    ...identities,
-                    "email": User.getPrimaryEmail(user),
-                    "full_name": user.fullName,
-                    "created_at": user.creationDate
-                }
-            });
-
-            //track the login
-            this.analytics.track({
-                userId: user.id,
-                event: "login",
-                properties: {
-                    "loginContext": authHost
-                }
-            });
+            this.trackLogin(user,request,authHost);
         }
         response.redirect(returnTo);
     }
@@ -144,6 +95,59 @@ export class LoginCompletionHandler {
                 }
             }
         }
+    }
+
+    protected trackLogin(user: User, request: express.Request, authHost: string) {
+        //fill identities from user
+        let identities: { github_slug?: String, gitlab_slug?: String, bitbucket_slug?: String } = {};
+        user.identities.forEach((value) => {
+            switch(value.authProviderId) {
+                case "Public-GitHub": {
+                    identities.github_slug = value.authName;
+                    break;
+                }
+                case "Public-GitLab": {
+                    identities.gitlab_slug = value.authName;
+                    break;
+                }
+                case "Public-Bitbucket": {
+                    identities.bitbucket_slug = value.authName;
+                    break;
+                }
+            }
+        });
+        const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
+
+        //make new complete identify call for each login
+        this.analytics.identify({
+            anonymousId: request.cookies.ajs_anonymous_id,
+            userId:user.id,
+            context: {
+                "ip": request.ips[0],
+                "userAgent": request.get("User-Agent"),
+                "location": {
+                    "city": request.get("x-glb-client-city"),
+                    "country": request.get("x-glb-client-region"),
+                    "latitude": coords?.length == 2 ? coords[0] : undefined,
+                    "longitude": coords?.length == 2 ? coords[1] : undefined
+                }
+            },
+            traits: {
+                ...identities,
+                "email": User.getPrimaryEmail(user),
+                "full_name": user.fullName,
+                "created_at": user.creationDate
+            }
+        });
+
+        //track the login
+        this.analytics.track({
+            userId: user.id,
+            event: "login",
+            properties: {
+                "loginContext": authHost
+            }
+        });
     }
 }
 export namespace LoginCompletionHandler {
