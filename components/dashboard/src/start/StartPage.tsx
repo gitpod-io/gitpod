@@ -13,8 +13,9 @@ export enum StartPhase {
   Creating = 2,
   Starting = 3,
   Running = 4,
-  Stopping = 5,
-  Stopped = 6,
+  IdeReady = 5,
+  Stopping = 6,
+  Stopped = 7,
 };
 
 function getPhaseTitle(phase?: StartPhase, error?: StartWorkspaceError) {
@@ -32,6 +33,8 @@ function getPhaseTitle(phase?: StartPhase, error?: StartWorkspaceError) {
       return "Starting";
     case StartPhase.Running:
       return "Starting";
+    case StartPhase.IdeReady:
+      return "Your Workspace is Ready!";
     case StartPhase.Stopping:
       return "Stopping";
     case StartPhase.Stopped:
@@ -84,9 +87,9 @@ export function StartPage(props: StartPageProps) {
   return <div className="w-screen h-screen align-middle">
     <div className="flex flex-col mx-auto items-center text-center h-screen">
       <div className="h-1/3"></div>
-      <img src={gitpodIcon} alt="Gitpod's logo" className={`h-16 flex-shrink-0 ${(error || phase === StartPhase.Stopped) ? '' : 'animate-bounce'}`} />
+      <img src={gitpodIcon} alt="Gitpod's logo" className={`h-16 flex-shrink-0 ${(error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady) ? '' : 'animate-bounce'}`} />
       <h3 className="mt-8 text-xl">{title}</h3>
-      {typeof(phase) === 'number' && phase < StartPhase.Stopping && <ProgressBar phase={phase} error={!!error} />}
+      {typeof(phase) === 'number' && phase < StartPhase.IdeReady && <ProgressBar phase={phase} error={!!error} />}
       {error && <StartError error={error} />}
       {props.children}
     </div>

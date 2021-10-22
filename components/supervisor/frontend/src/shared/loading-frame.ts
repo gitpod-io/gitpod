@@ -22,13 +22,13 @@ window.addEventListener('message', relocateListener, false);
 
 let resolveSessionId: (sessionId: string) => void;
 const sessionId = new Promise<string>(resolve => resolveSessionId = resolve);
-const setSessinoIdListener = (event: MessageEvent) => {
+const setSessionIdListener = (event: MessageEvent) => {
     if (event.origin === serverOrigin && event.data.type == '$setSessionId' && event.data.sessionId) {
-        window.removeEventListener('message', setSessinoIdListener);
+        window.removeEventListener('message', setSessionIdListener);
         resolveSessionId(event.data.sessionId);
     }
 };
-window.addEventListener('message', setSessinoIdListener, false);
+window.addEventListener('message', setSessionIdListener, false);
 
 export function load({ gitpodService }: {
     gitpodService: ReturnType<typeof createGitpodService>

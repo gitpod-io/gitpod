@@ -30,6 +30,8 @@ IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
 const pendingGitpodServiceClient = GitpodServiceClient.create();
 const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve, { once: true }));
+const toStop = new DisposableCollection();
+
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
 
@@ -53,21 +55,23 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
             });
         });
     }
-    const supervisorServiceClinet = new SupervisorServiceClient(gitpodServiceClient);
-    await Promise.all([supervisorServiceClinet.ideReady, supervisorServiceClinet.contentReady, loadingIDE]);
+    const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
+    const [ideStatus] = await Promise.all([supervisorServiceClient.ideReady, supervisorServiceClient.contentReady, loadingIDE]);
     if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
         return;
     }
-    const toStop = new DisposableCollection();
     toStop.pushAll([
         IDEWebSocket.connectWorkspace(),
-        ideService.start(),
         gitpodServiceClient.onDidChangeInfo(() => {
             if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
                 toStop.dispose();
             }
         })
     ]);
+    const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
+    if (!isDesktopIde) {
+        toStop.push(ideService.start());
+    }
     //#endregion
 })();
 
@@ -83,14 +87,46 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
         return;
     }
 
+    const supervisorServiceClient = new SupervisorServiceClient(gitpodServiceClient);
+
+    let hideDesktopIde = false;
+    const serverOrigin = startUrl.url.origin;
+    const hideDesktopIdeEventListener = (event: MessageEvent) => {
+        if (event.origin === serverOrigin && event.data.type == 'openBrowserIde') {
+            window.removeEventListener('message', hideDesktopIdeEventListener);
+            hideDesktopIde = true;
+            toStop.push(ideService.start());
+        }
+    }
+    window.addEventListener('message', hideDesktopIdeEventListener, false);
+    toStop.push({ dispose: () => window.removeEventListener('message', hideDesktopIdeEventListener) });
+
+    let isDesktopIde: undefined | boolean = undefined;
+    let ideStatus: undefined | { desktop: { link: string, label: string } } = undefined;
+
     //#region current-frame
     let current: HTMLElement = loading.frame;
     let stopped = false;
     const nextFrame = () => {
         const instance = gitpodServiceClient.info.latestInstance;
         if (instance) {
-            if (instance.status.phase === 'running' && ideService.state === 'ready') {
-                return document.body;
+            if (instance.status.phase === 'running') {
+                if (!hideDesktopIde) {
+                    if (isDesktopIde == undefined) {
+                        return loading.frame;
+                    }
+                    if (isDesktopIde && !!ideStatus) {
+                        loading.setState({
+                            desktopIdeLink: ideStatus.desktop.link,
+                            desktopIdeLabel: ideStatus.desktop.label || "Open Desktop IDE"
+                        });
+                        // window.open(ideStatus.desktop.link);
+                        return loading.frame;
+                    }
+                }
+                if (ideService.state === 'ready') {
+                    return document.body;
+                }
             }
             if (instance.status.phase === 'stopped') {
                 stopped = true;
@@ -161,6 +197,11 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
         updateCurrentFrame();
         trackIDEStatusRenderedEvent();
     });
+    supervisorServiceClient.ideReady.then(newIdeStatus => {
+        ideStatus = newIdeStatus;
+        isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
+        updateCurrentFrame();
+    }).catch(error => console.error(`Unexpected error from supervisorServiceClient.ideReady: ${error}`));
     window.addEventListener('unload', () => trackStatusRenderedEvent('window-unload'), { capture: true });
     //#endregion
 

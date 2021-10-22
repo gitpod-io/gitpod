@@ -20,7 +20,7 @@ export class SupervisorServiceClient {
         private readonly gitpodServiceClient: GitpodServiceClient
     ) { }
 
-    private async checkReady(kind: 'content' | 'ide' | 'supervisor', delay?: boolean): Promise<void> {
+    private async checkReady(kind: 'content' | 'ide' | 'supervisor', delay?: boolean): Promise<any> {
         if (delay) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
@@ -54,7 +54,7 @@ export class SupervisorServiceClient {
                     return;
                 }
                 if (kind === 'ide' && (result as IDEStatusResponse.AsObject).ok) {
-                    return;
+                    return result;
                 }
             }
             console.debug(`failed to check whether ${kind} is ready, trying again...`, response.status, response.statusText, JSON.stringify(result, undefined, 2));
