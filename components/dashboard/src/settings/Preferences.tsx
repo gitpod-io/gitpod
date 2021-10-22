@@ -5,10 +5,13 @@
  */
 
 import { useContext, useState } from "react";
+import CheckBox from "../components/CheckBox";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import SelectableCard from "../components/SelectableCard";
 import Tooltip from "../components/Tooltip";
 import vscode from '../images/vscode.svg';
+import ideaLogo from '../images/intellijIdeaLogo.svg';
+import golandLogo from '../images/golandLogo.svg';
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
@@ -19,6 +22,7 @@ type Theme = 'light' | 'dark' | 'system';
 export default function Preferences() {
     const { user } = useContext(UserContext);
     const { setIsDark } = useContext(ThemeContext);
+
     const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'code');
     const actuallySetDefaultIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
@@ -28,6 +32,31 @@ export default function Preferences() {
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setDefaultIde(value);
     }
+
+    const desktopIdeFeatureEnabled = !!user?.rolesOrPermissions?.includes('admin');
+
+    const [defaultDesktopIde, setDefaultDesktopIde] = useState<string>(user?.additionalData?.ideSettings?.defaultDesktopIde || 'intellij');
+    const actuallySetDefaultDesktopIde = async (value: string) => {
+        const additionalData = user?.additionalData || {};
+        const settings = additionalData.ideSettings || {};
+        settings.defaultDesktopIde = value;
+        additionalData.ideSettings = settings;
+        await getGitpodService().server.updateLoggedInUser({ additionalData });
+        setDefaultDesktopIde(value);
+    }
+
+    const [useDesktopIde, setUseDesktopIde] = useState<boolean>(user?.additionalData?.ideSettings?.useDesktopIde || false);
+    const actuallySetUseDesktopIde = async (value: boolean) => {
+        const additionalData = user?.additionalData || {};
+        const settings = additionalData.ideSettings || {};
+        settings.useDesktopIde = value;
+        // Make sure that default desktop IDE is set even when the user did not explicitly select one.
+        settings.defaultDesktopIde = defaultDesktopIde;
+        additionalData.ideSettings = settings;
+        await getGitpodService().server.updateLoggedInUser({ additionalData });
+        setUseDesktopIde(value);
+    }
+
     const [theme, setTheme] = useState<Theme>(localStorage.theme || 'light');
     const actuallySetTheme = (theme: Theme) => {
         if (theme === 'dark' || theme === 'system') {
@@ -59,6 +88,29 @@ export default function Preferences() {
                     </SelectableCard>
                 </Tooltip>
             </div>
+            {desktopIdeFeatureEnabled &&
+                <div className="mt-4 space-x-4 flex">
+                    <CheckBox
+                        title="Use Desktop IDE"
+                        desc="Choose whether you would like to open your workspace in a desktop IDE instead."
+                        checked={useDesktopIde}
+                        onChange={(evt) => actuallySetUseDesktopIde(evt.target.checked)} />
+                </div>
+            }
+            {desktopIdeFeatureEnabled && useDesktopIde &&
+                <div className="mt-4 space-x-4 flex">
+                    <SelectableCard className="w-36 h-40" title="IntelliJ IDEA" selected={defaultDesktopIde === 'intellij'} onClick={() => actuallySetDefaultDesktopIde('intellij')}>
+                        <div className="flex justify-center mt-3">
+                        <img className="w-16 filter-grayscale self-center" src={ideaLogo} />
+                        </div>
+                    </SelectableCard>
+                    <SelectableCard className="w-36 h-40" title="GoLand" selected={defaultDesktopIde === 'goland'} onClick={() => actuallySetDefaultDesktopIde('goland')}>
+                        <div className="flex justify-center mt-3">
+                        <img className="w-16 filter-grayscale self-center" src={golandLogo} />
+                        </div>
+                    </SelectableCard>
+                </div>
+            }
             <h3 className="mt-12">Theme</h3>
             <p className="text-base text-gray-500">Early bird or night owl? Choose your side.</p>
             <div className="mt-4 space-x-4 flex">
