@@ -52,9 +52,9 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 )
 
-replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
-
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
+
+replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade => ../registry-facade // leeway
 
