@@ -88,10 +88,17 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 		return
 	}
 
+	socketFD, err := conn.(*net.TCPConn).File()
+	if err != nil {
+		log.WithError(err).Error("cannot start SSH server")
+		return
+	}
+
 	sshkey := filepath.Join(filepath.Dir(bin), "dropbear", "sshkey")
 	cmd := exec.Command("strace", dropbear, "-F", "-E", "-w", "-s", "-i", "-r", sshkey)
 	cmd = runAsGitpodUser(cmd)
 	cmd.Env = buildChildProcEnv(cfg, nil)
+	cmd.ExtraFiles = []*os.File{socketFD}
 	cmd.Stderr = os.Stderr
 
 	stdin, err := cmd.StdinPipe()
