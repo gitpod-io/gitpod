@@ -493,9 +493,16 @@ export class UserController {
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
 
+        //mask IP
+        const octets = req.ips[0].split('.');
+        const maskedIp = octets?.length == 4 ? octets.slice(0,3).concat(["0"]).join(".") : undefined;
+
         this.analytics.identify({
             userId: user.id,
             anonymousId: req.cookies.ajs_anonymous_id,
+            context: {
+                ip: maskedIp
+            },
             traits: {
                 "created_at": user.creationDate,
                 "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
