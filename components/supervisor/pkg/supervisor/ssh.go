@@ -7,6 +7,7 @@ package supervisor
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -78,6 +79,8 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 		return
 	}
 
+	defer conn.Close()
+
 	dropbear := filepath.Join(filepath.Dir(bin), "dropbear", "dropbear")
 	if _, err := os.Stat(dropbear); err != nil {
 		log.WithError(err).WithField("path", dropbear).Error("cannot locate dropebar binary")
@@ -92,10 +95,23 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 	cmd.Stdout = conn
 	cmd.Stdin = conn
 
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		log.WithError(err).Error("cannot create StdinPipe")
+		return
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.WithError(err).Error("cannot create StdoutPipe")
+		return
+	}
+
+	go io.Copy(stdin, conn)
+	go io.Copy(conn, stdout)
+
 	err = cmd.Start()
 	if err != nil {
 		log.WithError(err).Error("cannot start SSH server")
-		conn.Close()
 		return
 	}
 
@@ -108,7 +124,6 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 	case <-ctx.Done():
 		if cmd.Process != nil {
 			_ = cmd.Process.Kill()
-			conn.Close()
 		}
 		return
 	case err = <-done:
