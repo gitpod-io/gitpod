@@ -11,9 +11,12 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:4d3faa3322a7ecba8248986d0bc1a5293b20fdcc3cf1deb5c2bf6fd80c124d12",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/theia:cw-no-plis.17",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/theia:cw-no-plis.17",
             "url": "https://green-mosquito-gvkloyfy.ws-dev.cw-no-plis.staging.gitpod-dev.com",
-            "timeout": "30m"
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/theia:cw-no-plis.17"
+            }
         },
         "phase": 6,
         "conditions": {

@@ -289,7 +289,10 @@ func (wspd *WorkspaceManagerPrescaleDriver) startGhostWorkspaces(ctx context.Con
 					Email:    "none@gitpod.io",
 					Username: "gitpod-ghost",
 				},
-				IdeImage: wspd.Config.IDEImage,
+				DeprecatedIdeImage: wspd.Config.IDEImage,
+				IdeImage: &api.IDEImage{
+					WebRef: wspd.Config.IDEImage,
+				},
 				Initializer: &csapi.WorkspaceInitializer{
 					Spec: &csapi.WorkspaceInitializer_Empty{
 						Empty: &csapi.EmptyInitializer{},

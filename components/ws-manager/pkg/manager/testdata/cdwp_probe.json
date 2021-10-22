@@ -9,7 +9,9 @@
         },
         "servicePrefix": "foobarservice",
         "spec": {
-            "ideImage": "eu.gcr.io/gitpod-core-dev/buid/theia-ide:someversion",
+            "ideImage": {
+                "webRef": "eu.gcr.io/gitpod-core-dev/buid/theia-ide:someversion"
+            },
             "workspaceImage": "eu.gcr.io/gitpod-dev/workspace-images/ac1c0755007966e4d6e090ea821729ac747d22ac/eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
             "initializer": {
                 "snapshot": {

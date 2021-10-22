@@ -19,7 +19,8 @@
                 {
                     "port": 8080
                 }
-            ]
+            ],
+            "ide_image": {}
         },
         "phase": 4,
         "conditions": {

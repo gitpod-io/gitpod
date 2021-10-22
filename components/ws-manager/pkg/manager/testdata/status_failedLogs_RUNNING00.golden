@@ -11,7 +11,7 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:5c7c2d28d53990d0ec6b76f73918b2a9af6eb2dbd060822986abad1ba9512aaf",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/theia-ide:cw-debug-registry-facade.6",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/theia-ide:cw-debug-registry-facade.6",
             "url": "https://ba826db9-9d93-4f3b-a10e-8bc08bbb99f1.ws-dev.cw-debug-registry-facade.staging.gitpod-dev.com",
             "exposed_ports": [
                 {
@@ -20,7 +20,10 @@
                     "url": "https://8080-ba826db9-9d93-4f3b-a10e-8bc08bbb99f1.ws-dev.cw-debug-registry-facade.staging.gitpod-dev.com"
                 }
             ],
-            "timeout": "30m"
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/theia-ide:cw-debug-registry-facade.6"
+            }
         },
         "phase": 4,
         "conditions": {

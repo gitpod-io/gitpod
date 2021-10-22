@@ -11,7 +11,8 @@
         },
         "spec": {
             "workspace_image": "registry.staging-cw-minio-core.svc.cluster.local/workspace-images/aadf89d3be804eeb2cab063f217a1b57dd984be5/registry.hub.docker.com/gitpod/workspace-full:sha256-1f5a29431048784d1e133769db5918bd6ea1e5b7530f04013f2d55026478e766",
-            "url": "http://ba66e4d4-3eae-4c9c-83da-75b6dbc2f592.cw-minio-core.staging.gitpod.io"
+            "url": "http://ba66e4d4-3eae-4c9c-83da-75b6dbc2f592.cw-minio-core.staging.gitpod.io",
+            "ide_image": {}
         },
         "phase": 2,
         "conditions": {

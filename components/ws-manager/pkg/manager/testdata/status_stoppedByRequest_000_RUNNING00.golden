@@ -11,7 +11,7 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:3bd5ce12f7acd1ff19494a25aa2ff01ff9a7b938567c84d52ce6aa0b2bd40092",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-7107fb8bde0b1f92265402ad5fa09a51022b14dd",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-7107fb8bde0b1f92265402ad5fa09a51022b14dd",
             "url": "https://lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com",
             "exposed_ports": [
                 {
@@ -29,7 +29,10 @@
                     "url": "https://9229-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com"
                 }
             ],
-            "timeout": "60m"
+            "timeout": "60m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-7107fb8bde0b1f92265402ad5fa09a51022b14dd"
+            }
         },
         "phase": 4,
         "conditions": {

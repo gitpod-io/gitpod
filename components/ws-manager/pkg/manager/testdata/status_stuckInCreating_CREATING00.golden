@@ -12,7 +12,8 @@
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:51186696bfea6fc9fc5882b2fcd69c42b8f2cf93c8139f20b24566ae6c3eedcb",
             "url": "https://afccd13d-fc9c-4fd2-a27e-3bd8f4e138f6.ws-eu01.gitpod.io",
-            "timeout": "30m"
+            "timeout": "30m",
+            "ide_image": {}
         },
         "phase": 4,
         "conditions": {

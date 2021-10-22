@@ -151,8 +151,11 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 		},
 		Type: wsmanapi.WorkspaceType_REGULAR,
 		Spec: &wsmanapi.StartWorkspaceSpec{
-			WorkspaceImage:    workspaceImage,
-			IdeImage:          ideImage,
+			WorkspaceImage:     workspaceImage,
+			DeprecatedIdeImage: ideImage,
+			IdeImage: &wsmanapi.IDEImage{
+				WebRef: ideImage,
+			},
 			CheckoutLocation:  "/",
 			WorkspaceLocation: "/",
 			Timeout:           "30m",

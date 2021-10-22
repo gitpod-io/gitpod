@@ -12,7 +12,8 @@
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:0fc76cd1c6eda009603bed31928a1cfaf53e455b27d6b3260c3d75022bd4d784",
             "url": "https://ab451d8b-7a3a-42ec-b173-20a0e49773d4.ws-eu01.gitpod.io",
-            "timeout": "60m"
+            "timeout": "60m",
+            "ide_image": {}
         },
         "conditions": {
             "failed": "Evicted: Pod The node was low on resource: [DiskPressure]. ",

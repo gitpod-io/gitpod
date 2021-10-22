@@ -1,7 +1,9 @@
 {
     "$schema": "./cdwp-schema.json",
     "spec": {
-        "ideImage": "eu.gcr.io/gitpod-core-dev/buid/theia-ide:someversion",
+        "ideImage": {
+            "webRef": "eu.gcr.io/gitpod-core-dev/buid/theia-ide:someversion"
+        },
         "workspaceImage": "eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
         "initializer": {
             "snapshot": {

@@ -11,7 +11,7 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:01abb31dd76a1e2885ea1d5c3b06a4ead10ae362ee21348428835d0c8b286e3a",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
             "url": "https://silver-dormouse-is733prg.ws-us14.gitpod.io",
             "exposed_ports": [
                 {
@@ -19,7 +19,10 @@
                     "url": "https://3000-silver-dormouse-is733prg.ws-us14.gitpod.io"
                 }
             ],
-            "timeout": "30m"
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb"
+            }
         },
         "phase": 6,
         "conditions": {

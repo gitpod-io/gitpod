@@ -11,10 +11,13 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:295486e99855b59cf8d32b8d9b6c3c0abcf4b76acb8e511f7c919b0341c60f35",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-c77d5c144ba894ff5ae71a25af7fe3af4d4bd398",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-c77d5c144ba894ff5ae71a25af7fe3af4d4bd398",
             "headless": true,
             "url": "https://sapphire-alligator-jakcgz44.ws-dev.csweichel-don-t-abort-prebuild-4964.staging.gitpod-dev.com",
-            "type": 1
+            "type": 1,
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-c77d5c144ba894ff5ae71a25af7fe3af4d4bd398"
+            }
         },
         "phase": 5,
         "conditions": {

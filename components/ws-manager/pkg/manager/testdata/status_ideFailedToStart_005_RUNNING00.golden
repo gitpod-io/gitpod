@@ -11,9 +11,12 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:aeed577d8b4785088120a7d24d056ee2d553a69d2bcc413a572e82a3039cd6cd",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
             "url": "https://rose-donkey-wfapr095.ws-eu14.gitpod.io",
-            "timeout": "30m"
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb"
+            }
         },
         "phase": 4,
         "conditions": {
