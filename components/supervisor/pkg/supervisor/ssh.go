@@ -106,7 +106,7 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 	}
 
 	go io.Copy(stdin, bufio.NewReader(conn))
-	go io.Copy(conn, stdout)
+	go io.Copy(bufio.NewWriter(conn), stdout)
 
 	err = cmd.Start()
 	if err != nil {
