@@ -5,6 +5,7 @@
 package workspace
 
 const (
+	Component                    = "workspace"
 	ContainerPort                = 23000
 	DefaultWorkspaceImage        = "gitpod/workspace-full"
 	DefaultWorkspaceImageVersion = "latest"
