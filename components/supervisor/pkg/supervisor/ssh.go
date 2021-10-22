@@ -14,6 +14,8 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/xerrors"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
@@ -51,12 +53,18 @@ func (s *sshServer) listenAndServe() error {
 			continue
 		}
 
-		log.Info("checking for SSH server")
 		s.mu.Lock()
 		sshkey := filepath.Join(filepath.Dir(bin), "dropbear", "sshkey")
 		if _, err := os.Stat(sshkey); err != nil {
-			prepareSSHServer(s.ctx, s.cfg)
+			err := prepareSSHServer(s.ctx, s.cfg)
+			if err != nil {
+				log.WithError(err).Error("unexpected error creating SSH key")
+				conn.Close()
+				s.mu.Unlock()
+				continue
+			}
 		}
+
 		s.mu.Unlock()
 
 		go s.handleConn(s.ctx, s.cfg, conn)
@@ -110,40 +118,41 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 	}
 }
 
-func prepareSSHServer(ctx context.Context, cfg *Config) {
+func prepareSSHServer(ctx context.Context, cfg *Config) error {
 	bin, err := os.Executable()
 	if err != nil {
-		log.WithError(err).Error("cannot find executable path")
-		return
+		return xerrors.Errorf("cannot find executable path: %w", err)
 	}
 
 	dropbearkey := filepath.Join(filepath.Dir(bin), "dropbear", "dropbearkey")
 	if _, err := os.Stat(dropbearkey); err != nil {
-		log.WithError(err).WithField("path", dropbearkey).Error("cannot locate dropebarkey")
-		return
+		return xerrors.Errorf("cannot locate dropebarkey in path %v", dropbearkey)
 	}
 
 	sshkey := filepath.Join(filepath.Dir(bin), "dropbear", "sshkey")
-	if _, err := os.Stat(sshkey); err != nil {
-		keycmd := exec.Command(dropbearkey, "-t", "rsa", "-f", sshkey)
-		// We need to force HOME because the Gitpod user might not have existed at the start of the container
-		// which makes the container runtime set an invalid HOME value.
-		keycmd.Env = func() []string {
-			env := os.Environ()
-			res := make([]string, 0, len(env))
-			for _, e := range env {
-				if strings.HasPrefix(e, "HOME=") {
-					e = "HOME=/root"
-				}
-				res = append(res, e)
-			}
-			return res
-		}()
-		out, err := keycmd.CombinedOutput()
-		if err != nil {
-			log.WithError(err).WithField("out", string(out)).Error("cannot create hostkey file")
-			return
-		}
-		_ = os.Chown(sshkey, gitpodUID, gitpodGID)
+	if _, err := os.Stat(sshkey); err == nil {
+		return nil
 	}
+
+	keycmd := exec.Command(dropbearkey, "-t", "rsa", "-f", sshkey)
+	// We need to force HOME because the Gitpod user might not have existed at the start of the container
+	// which makes the container runtime set an invalid HOME value.
+	keycmd.Env = func() []string {
+		env := os.Environ()
+		res := make([]string, 0, len(env))
+		for _, e := range env {
+			if strings.HasPrefix(e, "HOME=") {
+				e = "HOME=/root"
+			}
+			res = append(res, e)
+		}
+		return res
+	}()
+
+	_, err = keycmd.CombinedOutput()
+	if err != nil && !(err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes") {
+		return xerrors.Errorf("cannot create hostkey file: %w", err)
+	}
+
+	return os.Chown(sshkey, gitpodUID, gitpodGID)
 }
