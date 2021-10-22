@@ -15,6 +15,7 @@ import { AuthProviderService } from './auth-provider-service';
 import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
+import { trackLogin } from '../analytics';
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -77,7 +78,7 @@ export class LoginCompletionHandler {
 
             increaseLoginCounter("succeeded", authHost);
 
-            this.trackLogin(user,request,authHost);
+            trackLogin(user,request,authHost,this.analytics);
         }
         response.redirect(returnTo);
     }
@@ -95,63 +96,6 @@ export class LoginCompletionHandler {
                 }
             }
         }
-    }
-
-    protected trackLogin(user: User, request: express.Request, authHost: string) {
-        //fill identities from user
-        let identities: { github_slug?: String, gitlab_slug?: String, bitbucket_slug?: String } = {};
-        user.identities.forEach((value) => {
-            switch(value.authProviderId) {
-                case "Public-GitHub": {
-                    identities.github_slug = value.authName;
-                    break;
-                }
-                case "Public-GitLab": {
-                    identities.gitlab_slug = value.authName;
-                    break;
-                }
-                case "Public-Bitbucket": {
-                    identities.bitbucket_slug = value.authName;
-                    break;
-                }
-            }
-        });
-        const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
-
-        //mask IP
-        const octets = request.ips[0].split('.');
-        const maskedIp = octets?.length == 4 ? octets.slice(0,3).concat(["0"]).join(".") : undefined;
-
-        //make new complete identify call for each login
-        this.analytics.identify({
-            anonymousId: request.cookies.ajs_anonymous_id,
-            userId:user.id,
-            context: {
-                "ip": maskedIp,
-                "userAgent": request.get("User-Agent"),
-                "location": {
-                    "city": request.get("x-glb-client-city"),
-                    "country": request.get("x-glb-client-region"),
-                    "latitude": coords?.length == 2 ? coords[0] : undefined,
-                    "longitude": coords?.length == 2 ? coords[1] : undefined
-                }
-            },
-            traits: {
-                ...identities,
-                "email": User.getPrimaryEmail(user),
-                "full_name": user.fullName,
-                "created_at": user.creationDate
-            }
-        });
-
-        //track the login
-        this.analytics.track({
-            userId: user.id,
-            event: "login",
-            properties: {
-                "loginContext": authHost
-            }
-        });
     }
 }
 export namespace LoginCompletionHandler {

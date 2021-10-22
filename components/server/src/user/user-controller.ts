@@ -29,6 +29,7 @@ import { increaseLoginCounter } from '../../src/prometheus-metrics';
 import * as uuidv4 from 'uuid/v4';
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
+import { trackSignup } from '../analytics';
 
 @injectable()
 export class UserController {
@@ -493,30 +494,8 @@ export class UserController {
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
 
-        //mask IP
-        const octets = req.ips[0].split('.');
-        const maskedIp = octets?.length == 4 ? octets.slice(0,3).concat(["0"]).join(".") : undefined;
+        trackSignup(user,req,this.analytics);
 
-        this.analytics.identify({
-            userId: user.id,
-            anonymousId: req.cookies.ajs_anonymous_id,
-            context: {
-                ip: maskedIp
-            },
-            traits: {
-                "created_at": user.creationDate,
-                "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
-                "unsubscribed_changelog": !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
-                "unsubscribed_devx": !user.additionalData?.emailNotificationSettings?.allowsDevXMail
-            }
-        });
-        this.analytics.track({
-            userId: user.id,
-            event: "signup",
-            properties: {
-                "auth_provider": user.identities[0].authProviderId,
-            }
-        });
         await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
     }
 
