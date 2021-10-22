@@ -2042,6 +2042,21 @@ public final class Status {
      * @return The ok.
      */
     boolean getOk();
+
+    /**
+     * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+     * @return Whether the desktop field is set.
+     */
+    boolean hasDesktop();
+    /**
+     * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+     * @return The desktop.
+     */
+    io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus getDesktop();
+    /**
+     * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+     */
+    io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder getDesktopOrBuilder();
   }
   /**
    * Protobuf type {@code supervisor.IDEStatusResponse}
@@ -2093,6 +2108,19 @@ public final class Status {
               ok_ = input.readBool();
               break;
             }
+            case 18: {
+              io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder subBuilder = null;
+              if (desktop_ != null) {
+                subBuilder = desktop_.toBuilder();
+              }
+              desktop_ = input.readMessage(io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(desktop_);
+                desktop_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
             default: {
               if (!parseUnknownField(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -2125,6 +2153,724 @@ public final class Status {
               io.gitpod.supervisor.api.Status.IDEStatusResponse.class, io.gitpod.supervisor.api.Status.IDEStatusResponse.Builder.class);
     }
 
+    public interface DesktopStatusOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:supervisor.IDEStatusResponse.DesktopStatus)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>string link = 1;</code>
+       * @return The link.
+       */
+      java.lang.String getLink();
+      /**
+       * <code>string link = 1;</code>
+       * @return The bytes for link.
+       */
+      com.google.protobuf.ByteString
+          getLinkBytes();
+
+      /**
+       * <code>string label = 2;</code>
+       * @return The label.
+       */
+      java.lang.String getLabel();
+      /**
+       * <code>string label = 2;</code>
+       * @return The bytes for label.
+       */
+      com.google.protobuf.ByteString
+          getLabelBytes();
+    }
+    /**
+     * Protobuf type {@code supervisor.IDEStatusResponse.DesktopStatus}
+     */
+    public static final class DesktopStatus extends
+        com.google.protobuf.GeneratedMessageV3 implements
+        // @@protoc_insertion_point(message_implements:supervisor.IDEStatusResponse.DesktopStatus)
+        DesktopStatusOrBuilder {
+    private static final long serialVersionUID = 0L;
+      // Use DesktopStatus.newBuilder() to construct.
+      private DesktopStatus(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+        super(builder);
+      }
+      private DesktopStatus() {
+        link_ = "";
+        label_ = "";
+      }
+
+      @java.lang.Override
+      @SuppressWarnings({"unused"})
+      protected java.lang.Object newInstance(
+          UnusedPrivateParameter unused) {
+        return new DesktopStatus();
+      }
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+        return this.unknownFields;
+      }
+      private DesktopStatus(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        this();
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                link_ = s;
+                break;
+              }
+              case 18: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                label_ = s;
+                break;
+              }
+              default: {
+                if (!parseUnknownField(
+                    input, unknownFields, extensionRegistry, tag)) {
+                  done = true;
+                }
+                break;
+              }
+            }
+          }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(
+              e).setUnfinishedMessage(this);
+        } finally {
+          this.unknownFields = unknownFields.build();
+          makeExtensionsImmutable();
+        }
+      }
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Status.internal_static_supervisor_IDEStatusResponse_DesktopStatus_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.class, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder.class);
+      }
+
+      public static final int LINK_FIELD_NUMBER = 1;
+      private volatile java.lang.Object link_;
+      /**
+       * <code>string link = 1;</code>
+       * @return The link.
+       */
+      @java.lang.Override
+      public java.lang.String getLink() {
+        java.lang.Object ref = link_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs = 
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          link_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>string link = 1;</code>
+       * @return The bytes for link.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getLinkBytes() {
+        java.lang.Object ref = link_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          link_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int LABEL_FIELD_NUMBER = 2;
+      private volatile java.lang.Object label_;
+      /**
+       * <code>string label = 2;</code>
+       * @return The label.
+       */
+      @java.lang.Override
+      public java.lang.String getLabel() {
+        java.lang.Object ref = label_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs = 
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          label_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>string label = 2;</code>
+       * @return The bytes for label.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getLabelBytes() {
+        java.lang.Object ref = label_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          label_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (!getLinkBytes().isEmpty()) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 1, link_);
+        }
+        if (!getLabelBytes().isEmpty()) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 2, label_);
+        }
+        unknownFields.writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (!getLinkBytes().isEmpty()) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, link_);
+        }
+        if (!getLabelBytes().isEmpty()) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, label_);
+        }
+        size += unknownFields.getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus)) {
+          return super.equals(obj);
+        }
+        io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus other = (io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus) obj;
+
+        if (!getLink()
+            .equals(other.getLink())) return false;
+        if (!getLabel()
+            .equals(other.getLabel())) return false;
+        if (!unknownFields.equals(other.unknownFields)) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + LINK_FIELD_NUMBER;
+        hash = (53 * hash) + getLink().hashCode();
+        hash = (37 * hash) + LABEL_FIELD_NUMBER;
+        hash = (53 * hash) + getLabel().hashCode();
+        hash = (29 * hash) + unknownFields.hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code supervisor.IDEStatusResponse.DesktopStatus}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:supervisor.IDEStatusResponse.DesktopStatus)
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.supervisor.api.Status.internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.supervisor.api.Status.internal_static_supervisor_IDEStatusResponse_DesktopStatus_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.class, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder.class);
+        }
+
+        // Construct using io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessageV3
+                  .alwaysUseFieldBuilders) {
+          }
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          link_ = "";
+
+          label_ = "";
+
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.supervisor.api.Status.internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus getDefaultInstanceForType() {
+          return io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus build() {
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus buildPartial() {
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus result = new io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus(this);
+          result.link_ = link_;
+          result.label_ = label_;
+          onBuilt();
+          return result;
+        }
+
+        @java.lang.Override
+        public Builder clone() {
+          return super.clone();
+        }
+        @java.lang.Override
+        public Builder setField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+          return super.setField(field, value);
+        }
+        @java.lang.Override
+        public Builder clearField(
+            com.google.protobuf.Descriptors.FieldDescriptor field) {
+          return super.clearField(field);
+        }
+        @java.lang.Override
+        public Builder clearOneof(
+            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+          return super.clearOneof(oneof);
+        }
+        @java.lang.Override
+        public Builder setRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            int index, java.lang.Object value) {
+          return super.setRepeatedField(field, index, value);
+        }
+        @java.lang.Override
+        public Builder addRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            java.lang.Object value) {
+          return super.addRepeatedField(field, value);
+        }
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus) {
+            return mergeFrom((io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus other) {
+          if (other == io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.getDefaultInstance()) return this;
+          if (!other.getLink().isEmpty()) {
+            link_ = other.link_;
+            onChanged();
+          }
+          if (!other.getLabel().isEmpty()) {
+            label_ = other.label_;
+            onChanged();
+          }
+          this.mergeUnknownFields(other.unknownFields);
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus parsedMessage = null;
+          try {
+            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            parsedMessage = (io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus) e.getUnfinishedMessage();
+            throw e.unwrapIOException();
+          } finally {
+            if (parsedMessage != null) {
+              mergeFrom(parsedMessage);
+            }
+          }
+          return this;
+        }
+
+        private java.lang.Object link_ = "";
+        /**
+         * <code>string link = 1;</code>
+         * @return The link.
+         */
+        public java.lang.String getLink() {
+          java.lang.Object ref = link_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            link_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>string link = 1;</code>
+         * @return The bytes for link.
+         */
+        public com.google.protobuf.ByteString
+            getLinkBytes() {
+          java.lang.Object ref = link_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            link_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>string link = 1;</code>
+         * @param value The link to set.
+         * @return This builder for chaining.
+         */
+        public Builder setLink(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  
+          link_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string link = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearLink() {
+          
+          link_ = getDefaultInstance().getLink();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string link = 1;</code>
+         * @param value The bytes for link to set.
+         * @return This builder for chaining.
+         */
+        public Builder setLinkBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          
+          link_ = value;
+          onChanged();
+          return this;
+        }
+
+        private java.lang.Object label_ = "";
+        /**
+         * <code>string label = 2;</code>
+         * @return The label.
+         */
+        public java.lang.String getLabel() {
+          java.lang.Object ref = label_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            label_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>string label = 2;</code>
+         * @return The bytes for label.
+         */
+        public com.google.protobuf.ByteString
+            getLabelBytes() {
+          java.lang.Object ref = label_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            label_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>string label = 2;</code>
+         * @param value The label to set.
+         * @return This builder for chaining.
+         */
+        public Builder setLabel(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  
+          label_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string label = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearLabel() {
+          
+          label_ = getDefaultInstance().getLabel();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string label = 2;</code>
+         * @param value The bytes for label to set.
+         * @return This builder for chaining.
+         */
+        public Builder setLabelBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          
+          label_ = value;
+          onChanged();
+          return this;
+        }
+        @java.lang.Override
+        public final Builder setUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return super.setUnknownFields(unknownFields);
+        }
+
+        @java.lang.Override
+        public final Builder mergeUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return super.mergeUnknownFields(unknownFields);
+        }
+
+
+        // @@protoc_insertion_point(builder_scope:supervisor.IDEStatusResponse.DesktopStatus)
+      }
+
+      // @@protoc_insertion_point(class_scope:supervisor.IDEStatusResponse.DesktopStatus)
+      private static final io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus();
+      }
+
+      public static io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<DesktopStatus>
+          PARSER = new com.google.protobuf.AbstractParser<DesktopStatus>() {
+        @java.lang.Override
+        public DesktopStatus parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return new DesktopStatus(input, extensionRegistry);
+        }
+      };
+
+      public static com.google.protobuf.Parser<DesktopStatus> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<DesktopStatus> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
     public static final int OK_FIELD_NUMBER = 1;
     private boolean ok_;
     /**
@@ -2134,6 +2880,32 @@ public final class Status {
     @java.lang.Override
     public boolean getOk() {
       return ok_;
+    }
+
+    public static final int DESKTOP_FIELD_NUMBER = 2;
+    private io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus desktop_;
+    /**
+     * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+     * @return Whether the desktop field is set.
+     */
+    @java.lang.Override
+    public boolean hasDesktop() {
+      return desktop_ != null;
+    }
+    /**
+     * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+     * @return The desktop.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus getDesktop() {
+      return desktop_ == null ? io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.getDefaultInstance() : desktop_;
+    }
+    /**
+     * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder getDesktopOrBuilder() {
+      return getDesktop();
     }
 
     private byte memoizedIsInitialized = -1;
@@ -2153,6 +2925,9 @@ public final class Status {
       if (ok_ != false) {
         output.writeBool(1, ok_);
       }
+      if (desktop_ != null) {
+        output.writeMessage(2, getDesktop());
+      }
       unknownFields.writeTo(output);
     }
 
@@ -2165,6 +2940,10 @@ public final class Status {
       if (ok_ != false) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(1, ok_);
+      }
+      if (desktop_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getDesktop());
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -2183,6 +2962,11 @@ public final class Status {
 
       if (getOk()
           != other.getOk()) return false;
+      if (hasDesktop() != other.hasDesktop()) return false;
+      if (hasDesktop()) {
+        if (!getDesktop()
+            .equals(other.getDesktop())) return false;
+      }
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -2197,6 +2981,10 @@ public final class Status {
       hash = (37 * hash) + OK_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
           getOk());
+      if (hasDesktop()) {
+        hash = (37 * hash) + DESKTOP_FIELD_NUMBER;
+        hash = (53 * hash) + getDesktop().hashCode();
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2332,6 +3120,12 @@ public final class Status {
         super.clear();
         ok_ = false;
 
+        if (desktopBuilder_ == null) {
+          desktop_ = null;
+        } else {
+          desktop_ = null;
+          desktopBuilder_ = null;
+        }
         return this;
       }
 
@@ -2359,6 +3153,11 @@ public final class Status {
       public io.gitpod.supervisor.api.Status.IDEStatusResponse buildPartial() {
         io.gitpod.supervisor.api.Status.IDEStatusResponse result = new io.gitpod.supervisor.api.Status.IDEStatusResponse(this);
         result.ok_ = ok_;
+        if (desktopBuilder_ == null) {
+          result.desktop_ = desktop_;
+        } else {
+          result.desktop_ = desktopBuilder_.build();
+        }
         onBuilt();
         return result;
       }
@@ -2409,6 +3208,9 @@ public final class Status {
         if (other == io.gitpod.supervisor.api.Status.IDEStatusResponse.getDefaultInstance()) return this;
         if (other.getOk() != false) {
           setOk(other.getOk());
+        }
+        if (other.hasDesktop()) {
+          mergeDesktop(other.getDesktop());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -2468,6 +3270,125 @@ public final class Status {
         ok_ = false;
         onChanged();
         return this;
+      }
+
+      private io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus desktop_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder> desktopBuilder_;
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       * @return Whether the desktop field is set.
+       */
+      public boolean hasDesktop() {
+        return desktopBuilder_ != null || desktop_ != null;
+      }
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       * @return The desktop.
+       */
+      public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus getDesktop() {
+        if (desktopBuilder_ == null) {
+          return desktop_ == null ? io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.getDefaultInstance() : desktop_;
+        } else {
+          return desktopBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       */
+      public Builder setDesktop(io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus value) {
+        if (desktopBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          desktop_ = value;
+          onChanged();
+        } else {
+          desktopBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       */
+      public Builder setDesktop(
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder builderForValue) {
+        if (desktopBuilder_ == null) {
+          desktop_ = builderForValue.build();
+          onChanged();
+        } else {
+          desktopBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       */
+      public Builder mergeDesktop(io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus value) {
+        if (desktopBuilder_ == null) {
+          if (desktop_ != null) {
+            desktop_ =
+              io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.newBuilder(desktop_).mergeFrom(value).buildPartial();
+          } else {
+            desktop_ = value;
+          }
+          onChanged();
+        } else {
+          desktopBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       */
+      public Builder clearDesktop() {
+        if (desktopBuilder_ == null) {
+          desktop_ = null;
+          onChanged();
+        } else {
+          desktop_ = null;
+          desktopBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder getDesktopBuilder() {
+        
+        onChanged();
+        return getDesktopFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder getDesktopOrBuilder() {
+        if (desktopBuilder_ != null) {
+          return desktopBuilder_.getMessageOrBuilder();
+        } else {
+          return desktop_ == null ?
+              io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.getDefaultInstance() : desktop_;
+        }
+      }
+      /**
+       * <code>.supervisor.IDEStatusResponse.DesktopStatus desktop = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder> 
+          getDesktopFieldBuilder() {
+        if (desktopBuilder_ == null) {
+          desktopBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatus.Builder, io.gitpod.supervisor.api.Status.IDEStatusResponse.DesktopStatusOrBuilder>(
+                  getDesktop(),
+                  getParentForChildren(),
+                  isClean());
+          desktop_ = null;
+        }
+        return desktopBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -12448,6 +13369,11 @@ public final class Status {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_IDEStatusResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_IDEStatusResponse_DesktopStatus_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_ContentStatusRequest_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -12530,68 +13456,71 @@ public final class Status {
       "nnotations.proto\032\nport.proto\"\031\n\027Supervis" +
       "orStatusRequest\"&\n\030SupervisorStatusRespo" +
       "nse\022\n\n\002ok\030\001 \001(\010\" \n\020IDEStatusRequest\022\014\n\004w" +
-      "ait\030\001 \001(\010\"\037\n\021IDEStatusResponse\022\n\n\002ok\030\001 \001" +
-      "(\010\"$\n\024ContentStatusRequest\022\014\n\004wait\030\001 \001(\010" +
-      "\"U\n\025ContentStatusResponse\022\021\n\tavailable\030\001" +
-      " \001(\010\022)\n\006source\030\002 \001(\0162\031.supervisor.Conten" +
-      "tSource\"\025\n\023BackupStatusRequest\"0\n\024Backup" +
-      "StatusResponse\022\030\n\020canary_available\030\001 \001(\010" +
-      "\"%\n\022PortsStatusRequest\022\017\n\007observe\030\001 \001(\010\"" +
-      "=\n\023PortsStatusResponse\022&\n\005ports\030\001 \003(\0132\027." +
-      "supervisor.PortsStatus\"\203\001\n\017ExposedPortIn" +
-      "fo\022.\n\nvisibility\030\001 \001(\0162\032.supervisor.Port" +
-      "Visibility\022\013\n\003url\030\002 \001(\t\0223\n\non_exposed\030\003 " +
-      "\001(\0162\037.supervisor.OnPortExposedAction\"\304\001\n" +
-      "\020TunneledPortInfo\022\023\n\013target_port\030\001 \001(\r\022/" +
-      "\n\nvisibility\030\002 \001(\0162\033.supervisor.TunnelVi" +
-      "siblity\022:\n\007clients\030\003 \003(\0132).supervisor.Tu" +
-      "nneledPortInfo.ClientsEntry\032.\n\014ClientsEn" +
-      "try\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\r:\0028\001\"\331\001\n\013" +
-      "PortsStatus\022\022\n\nlocal_port\030\001 \001(\r\022\023\n\013globa" +
-      "l_port\030\002 \001(\r\022\016\n\006served\030\004 \001(\010\022,\n\007exposed\030" +
-      "\005 \001(\0132\033.supervisor.ExposedPortInfo\0223\n\rau" +
-      "to_exposure\030\007 \001(\0162\034.supervisor.PortAutoE" +
-      "xposure\022.\n\010tunneled\030\006 \001(\0132\034.supervisor.T" +
-      "unneledPortInfo\"%\n\022TasksStatusRequest\022\017\n" +
-      "\007observe\030\001 \001(\010\"<\n\023TasksStatusResponse\022%\n" +
-      "\005tasks\030\001 \003(\0132\026.supervisor.TaskStatus\"\204\001\n" +
-      "\nTaskStatus\022\n\n\002id\030\001 \001(\t\022$\n\005state\030\002 \001(\0162\025" +
-      ".supervisor.TaskState\022\020\n\010terminal\030\003 \001(\t\022" +
-      "2\n\014presentation\030\004 \001(\0132\034.supervisor.TaskP" +
-      "resentation\"D\n\020TaskPresentation\022\014\n\004name\030" +
-      "\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001(" +
-      "\t*C\n\rContentSource\022\016\n\nfrom_other\020\000\022\017\n\013fr" +
-      "om_backup\020\001\022\021\n\rfrom_prebuild\020\002*?\n\016PortVi" +
-      "sibility\022\026\n\022private_visibility\020\000\022\025\n\021publ" +
-      "ic_visibility\020\001*e\n\023OnPortExposedAction\022\n" +
-      "\n\006ignore\020\000\022\020\n\014open_browser\020\001\022\020\n\014open_pre" +
-      "view\020\002\022\n\n\006notify\020\003\022\022\n\016notify_private\020\004*9" +
-      "\n\020PortAutoExposure\022\n\n\006trying\020\000\022\r\n\tsuccee" +
-      "ded\020\001\022\n\n\006failed\020\002*1\n\tTaskState\022\013\n\007openin" +
-      "g\020\000\022\013\n\007running\020\001\022\n\n\006closed\020\0022\313\006\n\rStatusS" +
-      "ervice\022|\n\020SupervisorStatus\022#.supervisor." +
-      "SupervisorStatusRequest\032$.supervisor.Sup" +
-      "ervisorStatusResponse\"\035\202\323\344\223\002\027\022\025/v1/statu" +
-      "s/supervisor\022\203\001\n\tIDEStatus\022\034.supervisor." +
-      "IDEStatusRequest\032\035.supervisor.IDEStatusR" +
-      "esponse\"9\202\323\344\223\0023\022\016/v1/status/ideZ!\022\037/v1/s" +
-      "tatus/ide/wait/{wait=true}\022\227\001\n\rContentSt" +
-      "atus\022 .supervisor.ContentStatusRequest\032!" +
-      ".supervisor.ContentStatusResponse\"A\202\323\344\223\002" +
-      ";\022\022/v1/status/contentZ%\022#/v1/status/cont" +
-      "ent/wait/{wait=true}\022l\n\014BackupStatus\022\037.s" +
-      "upervisor.BackupStatusRequest\032 .supervis" +
-      "or.BackupStatusResponse\"\031\202\323\344\223\002\023\022\021/v1/sta" +
-      "tus/backup\022\225\001\n\013PortsStatus\022\036.supervisor." +
-      "PortsStatusRequest\032\037.supervisor.PortsSta" +
-      "tusResponse\"C\202\323\344\223\002=\022\020/v1/status/portsZ)\022" +
-      "\'/v1/status/ports/observe/{observe=true}" +
-      "0\001\022\225\001\n\013TasksStatus\022\036.supervisor.TasksSta" +
-      "tusRequest\032\037.supervisor.TasksStatusRespo" +
-      "nse\"C\202\323\344\223\002=\022\020/v1/status/tasksZ)\022\'/v1/sta" +
-      "tus/tasks/observe/{observe=true}0\001BF\n\030io" +
-      ".gitpod.supervisor.apiZ*github.com/gitpo" +
-      "d-io/gitpod/supervisor/apib\006proto3"
+      "ait\030\001 \001(\010\"\213\001\n\021IDEStatusResponse\022\n\n\002ok\030\001 " +
+      "\001(\010\022<\n\007desktop\030\002 \001(\0132+.supervisor.IDESta" +
+      "tusResponse.DesktopStatus\032,\n\rDesktopStat" +
+      "us\022\014\n\004link\030\001 \001(\t\022\r\n\005label\030\002 \001(\t\"$\n\024Conte" +
+      "ntStatusRequest\022\014\n\004wait\030\001 \001(\010\"U\n\025Content" +
+      "StatusResponse\022\021\n\tavailable\030\001 \001(\010\022)\n\006sou" +
+      "rce\030\002 \001(\0162\031.supervisor.ContentSource\"\025\n\023" +
+      "BackupStatusRequest\"0\n\024BackupStatusRespo" +
+      "nse\022\030\n\020canary_available\030\001 \001(\010\"%\n\022PortsSt" +
+      "atusRequest\022\017\n\007observe\030\001 \001(\010\"=\n\023PortsSta" +
+      "tusResponse\022&\n\005ports\030\001 \003(\0132\027.supervisor." +
+      "PortsStatus\"\203\001\n\017ExposedPortInfo\022.\n\nvisib" +
+      "ility\030\001 \001(\0162\032.supervisor.PortVisibility\022" +
+      "\013\n\003url\030\002 \001(\t\0223\n\non_exposed\030\003 \001(\0162\037.super" +
+      "visor.OnPortExposedAction\"\304\001\n\020TunneledPo" +
+      "rtInfo\022\023\n\013target_port\030\001 \001(\r\022/\n\nvisibilit" +
+      "y\030\002 \001(\0162\033.supervisor.TunnelVisiblity\022:\n\007" +
+      "clients\030\003 \003(\0132).supervisor.TunneledPortI" +
+      "nfo.ClientsEntry\032.\n\014ClientsEntry\022\013\n\003key\030" +
+      "\001 \001(\t\022\r\n\005value\030\002 \001(\r:\0028\001\"\331\001\n\013PortsStatus" +
+      "\022\022\n\nlocal_port\030\001 \001(\r\022\023\n\013global_port\030\002 \001(" +
+      "\r\022\016\n\006served\030\004 \001(\010\022,\n\007exposed\030\005 \001(\0132\033.sup" +
+      "ervisor.ExposedPortInfo\0223\n\rauto_exposure" +
+      "\030\007 \001(\0162\034.supervisor.PortAutoExposure\022.\n\010" +
+      "tunneled\030\006 \001(\0132\034.supervisor.TunneledPort" +
+      "Info\"%\n\022TasksStatusRequest\022\017\n\007observe\030\001 " +
+      "\001(\010\"<\n\023TasksStatusResponse\022%\n\005tasks\030\001 \003(" +
+      "\0132\026.supervisor.TaskStatus\"\204\001\n\nTaskStatus" +
+      "\022\n\n\002id\030\001 \001(\t\022$\n\005state\030\002 \001(\0162\025.supervisor" +
+      ".TaskState\022\020\n\010terminal\030\003 \001(\t\0222\n\014presenta" +
+      "tion\030\004 \001(\0132\034.supervisor.TaskPresentation" +
+      "\"D\n\020TaskPresentation\022\014\n\004name\030\001 \001(\t\022\017\n\007op" +
+      "en_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001(\t*C\n\rConten" +
+      "tSource\022\016\n\nfrom_other\020\000\022\017\n\013from_backup\020\001" +
+      "\022\021\n\rfrom_prebuild\020\002*?\n\016PortVisibility\022\026\n" +
+      "\022private_visibility\020\000\022\025\n\021public_visibili" +
+      "ty\020\001*e\n\023OnPortExposedAction\022\n\n\006ignore\020\000\022" +
+      "\020\n\014open_browser\020\001\022\020\n\014open_preview\020\002\022\n\n\006n" +
+      "otify\020\003\022\022\n\016notify_private\020\004*9\n\020PortAutoE" +
+      "xposure\022\n\n\006trying\020\000\022\r\n\tsucceeded\020\001\022\n\n\006fa" +
+      "iled\020\002*1\n\tTaskState\022\013\n\007opening\020\000\022\013\n\007runn" +
+      "ing\020\001\022\n\n\006closed\020\0022\313\006\n\rStatusService\022|\n\020S" +
+      "upervisorStatus\022#.supervisor.SupervisorS" +
+      "tatusRequest\032$.supervisor.SupervisorStat" +
+      "usResponse\"\035\202\323\344\223\002\027\022\025/v1/status/superviso" +
+      "r\022\203\001\n\tIDEStatus\022\034.supervisor.IDEStatusRe" +
+      "quest\032\035.supervisor.IDEStatusResponse\"9\202\323" +
+      "\344\223\0023\022\016/v1/status/ideZ!\022\037/v1/status/ide/w" +
+      "ait/{wait=true}\022\227\001\n\rContentStatus\022 .supe" +
+      "rvisor.ContentStatusRequest\032!.supervisor" +
+      ".ContentStatusResponse\"A\202\323\344\223\002;\022\022/v1/stat" +
+      "us/contentZ%\022#/v1/status/content/wait/{w" +
+      "ait=true}\022l\n\014BackupStatus\022\037.supervisor.B" +
+      "ackupStatusRequest\032 .supervisor.BackupSt" +
+      "atusResponse\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022" +
+      "\225\001\n\013PortsStatus\022\036.supervisor.PortsStatus" +
+      "Request\032\037.supervisor.PortsStatusResponse" +
+      "\"C\202\323\344\223\002=\022\020/v1/status/portsZ)\022\'/v1/status" +
+      "/ports/observe/{observe=true}0\001\022\225\001\n\013Task" +
+      "sStatus\022\036.supervisor.TasksStatusRequest\032" +
+      "\037.supervisor.TasksStatusResponse\"C\202\323\344\223\002=" +
+      "\022\020/v1/status/tasksZ)\022\'/v1/status/tasks/o" +
+      "bserve/{observe=true}0\001BF\n\030io.gitpod.sup" +
+      "ervisor.apiZ*github.com/gitpod-io/gitpod" +
+      "/supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -12622,7 +13551,13 @@ public final class Status {
     internal_static_supervisor_IDEStatusResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_IDEStatusResponse_descriptor,
-        new java.lang.String[] { "Ok", });
+        new java.lang.String[] { "Ok", "Desktop", });
+    internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor =
+      internal_static_supervisor_IDEStatusResponse_descriptor.getNestedTypes().get(0);
+    internal_static_supervisor_IDEStatusResponse_DesktopStatus_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor,
+        new java.lang.String[] { "Link", "Label", });
     internal_static_supervisor_ContentStatusRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_supervisor_ContentStatusRequest_fieldAccessorTable = new

@@ -86,6 +86,13 @@ message IDEStatusRequest {
 }
 message IDEStatusResponse {
     bool ok = 1;
+
+    message DesktopStatus {
+        string link = 1;
+        string label = 2;
+    }
+
+    DesktopStatus desktop = 2;
 }
 
 message ContentStatusRequest {
