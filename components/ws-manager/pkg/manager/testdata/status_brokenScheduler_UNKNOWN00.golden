@@ -11,7 +11,8 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images/b24b4698d67f493b801d17196870fd8a422ffa1e/eu.gcr.io/gitpod-dev/workspace-full:sha256-4bcfae6785bcfa55f3fd693af74b3ceeb032e26c99c60b64bc9fe06980efcd23",
-            "url": "http://a9949b21-d6d8-443a-85f5-44f5ac3065c0.ws-eu.cw-scheduler.staging.gitpod.io"
+            "url": "http://a9949b21-d6d8-443a-85f5-44f5ac3065c0.ws-eu.cw-scheduler.staging.gitpod.io",
+            "ide_image": {}
         },
         "conditions": {
             "failed": "MatchNodeSelector: Pod Predicate MatchNodeSelector failed",

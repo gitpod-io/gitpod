@@ -289,11 +289,16 @@ func mapWorkspaceStatusToInfo(status *wsapi.WorkspaceStatus) *WorkspaceInfo {
 		})
 	}
 
+	ideImage := status.Spec.DeprecatedIdeImage
+	if len(status.Spec.IdeImage.WebRef) > 0 {
+		ideImage = status.Spec.IdeImage.WebRef
+	}
+
 	return &WorkspaceInfo{
 		WorkspaceID:   status.Metadata.MetaId,
 		InstanceID:    status.Id,
 		URL:           status.Spec.Url,
-		IDEImage:      status.Spec.IdeImage,
+		IDEImage:      ideImage,
 		IDEPublicPort: getPortStr(status.Spec.Url),
 		Ports:         portInfos,
 		Auth:          status.Auth,

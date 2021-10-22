@@ -236,9 +236,15 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		labels[k] = v
 	}
 
+	ideRef := startContext.Request.Spec.DeprecatedIdeImage
+	if len(startContext.Request.Spec.IdeImage.WebRef) > 0 {
+		ideRef = startContext.Request.Spec.IdeImage.WebRef
+	}
+
 	spec := regapi.ImageSpec{
-		BaseRef: startContext.Request.Spec.WorkspaceImage,
-		IdeRef:  startContext.Request.Spec.IdeImage,
+		BaseRef:       startContext.Request.Spec.WorkspaceImage,
+		IdeRef:        ideRef,
+		DesktopIdeRef: startContext.Request.Spec.IdeImage.DesktopRef,
 	}
 	imageSpec, err := spec.ToBase64()
 	if err != nil {

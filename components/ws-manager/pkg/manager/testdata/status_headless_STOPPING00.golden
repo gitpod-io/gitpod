@@ -15,11 +15,14 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:2cf747867ff804ee0edc0a2607cb8ca06242083a",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:2cf747867ff804ee0edc0a2607cb8ca06242083a",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:2cf747867ff804ee0edc0a2607cb8ca06242083a",
             "headless": true,
             "url": "https://0dd5700a790e7ca2-95291c91f6e61c2e-e06ba50b.ws-dev.cw-imgbuilder-mk3-rebase.staging.gitpod-dev.com",
             "type": 4,
-            "timeout": "1h0m0s"
+            "timeout": "1h0m0s",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:2cf747867ff804ee0edc0a2607cb8ca06242083a"
+            }
         },
         "phase": 5,
         "conditions": {

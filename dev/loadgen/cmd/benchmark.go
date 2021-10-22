@@ -62,7 +62,10 @@ var benchmarkCommand = &cobra.Command{
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{
-				IdeImage:         scenario.IDEImage,
+				DeprecatedIdeImage: scenario.IDEImage,
+				IdeImage: &api.IDEImage{
+					WebRef: scenario.IDEImage,
+				},
 				Admission:        api.AdmissionLevel_ADMIT_OWNER_ONLY,
 				CheckoutLocation: "gitpod",
 				Git: &api.GitSpec{

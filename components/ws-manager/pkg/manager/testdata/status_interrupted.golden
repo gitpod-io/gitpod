@@ -21,7 +21,8 @@
                     "port": 8080,
                     "target": 38080
                 }
-            ]
+            ],
+            "ide_image": {}
         },
         "phase": 7,
         "conditions": {

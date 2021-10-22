@@ -19,7 +19,8 @@
                     "visibility": 1
                 }
             ],
-            "timeout": "30m"
+            "timeout": "30m",
+            "ide_image": {}
         },
         "phase": 4,
         "conditions": {

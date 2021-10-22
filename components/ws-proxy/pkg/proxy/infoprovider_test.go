@@ -200,7 +200,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			existing: existing{},
 			args: args{
 				newInfo: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					InstanceID:    testWorkspaceStatus.Id,
@@ -218,7 +218,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			expected: expected{
 				info: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					InstanceID:    testWorkspaceStatus.Id,
@@ -259,7 +259,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			args: args{
 				newInfo: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: different ID
@@ -304,7 +304,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			args: args{
 				newInfo: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: different ID
@@ -349,7 +349,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			args: args{
 				newInfo: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: same ID
@@ -368,7 +368,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			expected: expected{
 				info: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: same ID
@@ -400,7 +400,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 					testWorkspaceInfo.WorkspaceID: {
 						testWorkspaceInfo.InstanceID: testWorkspaceInfo,
 						"e63cb5ff-f4e4-4065-8554-b431a32c0001": &WorkspaceInfo{
-							IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+							IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 							Auth:          testWorkspaceStatus.Auth,
 							IDEPublicPort: "443",
 							// NOTE: different ID
@@ -427,7 +427,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			args: args{
 				newInfo: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: different ID
@@ -446,7 +446,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			expected: expected{
 				info: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: different ID
@@ -478,7 +478,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 					testWorkspaceInfo.WorkspaceID: {
 						testWorkspaceInfo.InstanceID: testWorkspaceInfo,
 						"e63cb5ff-f4e4-4065-8554-b431a32c0001": &WorkspaceInfo{
-							IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+							IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 							Auth:          testWorkspaceStatus.Auth,
 							IDEPublicPort: "443",
 							// NOTE: different ID
@@ -505,7 +505,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			args: args{
 				newInfo: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "444",
 					// NOTE: different ID
@@ -524,7 +524,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			expected: expected{
 				info: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "444",
 					// NOTE: different ID
@@ -560,7 +560,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 					testWorkspaceInfo.WorkspaceID: {
 						testWorkspaceInfo.InstanceID: testWorkspaceInfo,
 						"e63cb5ff-f4e4-4065-8554-b431a32c0001": &WorkspaceInfo{
-							IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+							IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 							Auth:          testWorkspaceStatus.Auth,
 							IDEPublicPort: "443",
 							// NOTE: different ID
@@ -605,7 +605,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 				infos: instanceInfosByWorkspace{
 					testWorkspaceInfo.WorkspaceID: {
 						"e63cb5ff-f4e4-4065-8554-b431a32c0001": &WorkspaceInfo{
-							IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+							IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 							Auth:          testWorkspaceStatus.Auth,
 							IDEPublicPort: "443",
 							// NOTE: different ID
@@ -622,7 +622,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 							StartedAt:   startedNow,
 						},
 						"e63cb5ff-f4e4-4065-8554-b431a32c0002": &WorkspaceInfo{
-							IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+							IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 							Auth:          testWorkspaceStatus.Auth,
 							IDEPublicPort: "443",
 							// NOTE: different ID
@@ -649,7 +649,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			args: args{
 				newInfo: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: different ID
@@ -668,7 +668,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			expected: expected{
 				info: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: different ID
@@ -699,7 +699,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 				infos: instanceInfosByWorkspace{
 					testWorkspaceInfo.WorkspaceID: {
 						"e63cb5ff-f4e4-4065-8554-b431a32c0001": &WorkspaceInfo{
-							IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+							IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 							Auth:          testWorkspaceStatus.Auth,
 							IDEPublicPort: "443",
 							// NOTE: different ID
@@ -716,7 +716,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 							StartedAt:   startedNow,
 						},
 						"e63cb5ff-f4e4-4065-8554-b431a32c0002": &WorkspaceInfo{
-							IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+							IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 							Auth:          testWorkspaceStatus.Auth,
 							IDEPublicPort: "443",
 							// NOTE: different ID
@@ -743,7 +743,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			args: args{
 				newInfo: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: different ID
@@ -762,7 +762,7 @@ func Test_workspaceInfoCache_Insert(t *testing.T) {
 			},
 			expected: expected{
 				info: &WorkspaceInfo{
-					IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+					IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 					Auth:          testWorkspaceStatus.Auth,
 					IDEPublicPort: "443",
 					// NOTE: different ID
@@ -899,7 +899,7 @@ func Test_workspaceInfoCache_Delete(t *testing.T) {
 					testWorkspaceInfo.WorkspaceID: {
 						testWorkspaceInfo.InstanceID: testWorkspaceInfo,
 						"e63cb5ff-f4e4-4065-8554-b431a32c0001": &WorkspaceInfo{
-							IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+							IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 							Auth:          testWorkspaceStatus.Auth,
 							IDEPublicPort: "443",
 							// NOTE: different ID
@@ -993,7 +993,7 @@ var (
 		},
 		Phase: wsapi.WorkspacePhase_RUNNING,
 		Spec: &wsapi.WorkspaceSpec{
-			IdeImage: "testWorkspaceIDEImage",
+			IdeImage: &wsapi.IDEImage{WebRef: "testWorkspaceIDEImage"},
 			Headless: false,
 			Type:     wsapi.WorkspaceType_REGULAR,
 			Url:      "https://e63cb5ff-f4e4-4065-8554-b431a32c2714.ws-eu02.gitpod.io",
@@ -1008,7 +1008,7 @@ var (
 		},
 	}
 	testWorkspaceInfo = &WorkspaceInfo{
-		IDEImage:      testWorkspaceStatus.Spec.IdeImage,
+		IDEImage:      testWorkspaceStatus.Spec.IdeImage.WebRef,
 		Auth:          testWorkspaceStatus.Auth,
 		IDEPublicPort: "443",
 		InstanceID:    testWorkspaceStatus.Id,

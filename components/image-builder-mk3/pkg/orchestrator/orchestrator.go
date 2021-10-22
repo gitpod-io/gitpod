@@ -358,11 +358,14 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				Owner: buildWorkspaceOwnerID,
 			},
 			Spec: &wsmanapi.StartWorkspaceSpec{
-				CheckoutLocation:  ".",
-				Initializer:       initializer,
-				Timeout:           maxBuildRuntime.String(),
-				WorkspaceImage:    o.Config.BuilderImage,
-				IdeImage:          o.Config.BuilderImage,
+				CheckoutLocation:   ".",
+				Initializer:        initializer,
+				Timeout:            maxBuildRuntime.String(),
+				WorkspaceImage:     o.Config.BuilderImage,
+				DeprecatedIdeImage: o.Config.BuilderImage,
+				IdeImage: &wsmanapi.IDEImage{
+					WebRef: o.Config.BuilderImage,
+				},
 				WorkspaceLocation: contextPath,
 				Envvars: []*wsmanapi.EnvironmentVariable{
 					{Name: "BOB_TARGET_REF", Value: wsrefstr},
