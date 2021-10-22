@@ -17,6 +17,7 @@ interface RawIDEConfig {
     ideVersion: string;
     ideImageRepo: string;
     ideImageAliases?: { [index: string]: string };
+    desktopIdeImageAliases?: { [index: string]: string };
 }
 const scheme = {
     "type": "object",
@@ -30,7 +31,11 @@ const scheme = {
         "ideImageAliases": {
             "type": "object",
             "additionalProperties": { "type": "string" }
-        }
+        },
+        "desktopIdeImageAliases": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+        },
     },
     "required": [
         "ideVersion",
@@ -42,7 +47,7 @@ export interface IDEConfig {
     ideVersion: string;
     ideImageRepo: string;
     ideImageAliases: { [index: string]: string };
-
+    desktopIdeImageAliases: { [index: string]: string };
     ideImage: string;
 }
 
@@ -112,6 +117,9 @@ export class IDEConfigService {
                     ideImageAliases: {
                         ...raw.ideImageAliases,
                         "theia": ideImage,
+                    },
+                    desktopIdeImageAliases: {
+                        ...raw.desktopIdeImageAliases
                     }
                 }
             }
