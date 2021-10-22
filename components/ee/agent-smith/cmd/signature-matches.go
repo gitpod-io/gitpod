@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -19,7 +20,35 @@ import (
 var signatureMatchesCmd = &cobra.Command{
 	Use:   "matches <binary>",
 	Short: "Finds all signatures that match the binary",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		f, err := os.OpenFile(args[0], os.O_RDONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		if cfgFile == "" {
+			log.Info("no config present - reading signature from STDIN")
+			var sig classifier.Signature
+			err := json.NewDecoder(os.Stdin).Decode(&sig)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			match, err := sig.Matches(f)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if !match {
+				fmt.Println("no match")
+				os.Exit(1)
+			}
+			fmt.Println(sig)
+			return
+		}
+
 		cfg, err := config.GetConfig(cfgFile)
 		if err != nil {
 			log.WithError(err).Fatal("cannot get config")
@@ -27,12 +56,6 @@ var signatureMatchesCmd = &cobra.Command{
 		if cfg.Blocklists == nil {
 			log.WithError(err).Fatal("no signatures configured")
 		}
-
-		f, err := os.OpenFile(args[0], os.O_RDONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
 
 		var res []*classifier.Signature
 		for _, bl := range cfg.Blocklists.Levels() {
