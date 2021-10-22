@@ -85,7 +85,7 @@ func (s *sshServer) handleConn(ctx context.Context, cfg *Config, conn net.Conn) 
 	}
 
 	sshkey := filepath.Join(filepath.Dir(bin), "dropbear", "sshkey")
-	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-i", "-r", sshkey)
+	cmd := exec.Command("strace", dropbear, "-F", "-E", "-w", "-s", "-i", "-r", sshkey)
 	cmd = runAsGitpodUser(cmd)
 	cmd.Env = buildChildProcEnv(cfg, nil)
 	cmd.Stderr = os.Stderr
