@@ -2043,11 +2043,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     public async identifyUser(event: RemoteIdentifyMessage): Promise<void> {
         //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
-        if (!this.user) {
-            return;
-        }
+        const user = this.checkUser("IdentifyUser");
+
         const msg: IdentifyMessage = {
-            userId: this.user.id,
+            userId: user.id,
             traits: event.traits,
             context: event.context
         };
