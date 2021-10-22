@@ -394,6 +394,9 @@ func (src *SpecMappedImagedSource) Envs(ctx context.Context, spec *api.ImageSpec
 	if err != nil {
 		return nil, err
 	}
+	if lsrc == nil {
+		return []EnvModifier{}, nil
+	}
 	return lsrc.Envs(ctx, spec)
 }
 
@@ -403,6 +406,9 @@ func (src *SpecMappedImagedSource) GetLayer(ctx context.Context, spec *api.Image
 	if err != nil {
 		return nil, err
 	}
+	if lsrc == nil {
+		return []AddonLayer{}, nil
+	}
 	return lsrc.GetLayer(ctx, spec)
 }
 
@@ -410,6 +416,9 @@ func (src *SpecMappedImagedSource) GetLayer(ctx context.Context, spec *api.Image
 func (src *SpecMappedImagedSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
 	lsrc, err := src.getDelegate(ctx, spec)
 	if err != nil {
+		return false
+	}
+	if lsrc == nil {
 		return false
 	}
 	return lsrc.HasBlob(ctx, spec, dgst)
@@ -430,6 +439,9 @@ func (src *SpecMappedImagedSource) getDelegate(ctx context.Context, spec *api.Im
 	ref, err := src.RefSource(spec)
 	if err != nil {
 		return nil, err
+	}
+	if ref == "" {
+		return nil, nil
 	}
 
 	if s, ok := src.cache.Get(ref); ok {
