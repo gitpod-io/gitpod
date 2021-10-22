@@ -118,12 +118,16 @@ export class LoginCompletionHandler {
         });
         const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
 
+        //mask IP
+        const octets = request.ips[0].split('.');
+        const maskedIp = octets?.length == 4 ? octets.slice(0,3).concat(["0"]).join(".") : undefined;
+
         //make new complete identify call for each login
         this.analytics.identify({
             anonymousId: request.cookies.ajs_anonymous_id,
             userId:user.id,
             context: {
-                "ip": request.ips[0],
+                "ip": maskedIp,
                 "userAgent": request.get("User-Agent"),
                 "location": {
                     "city": request.get("x-glb-client-city"),
