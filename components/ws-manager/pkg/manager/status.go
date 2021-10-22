@@ -241,16 +241,18 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 	}
 
 	var (
-		wsImage  = workspaceContainer.Image
-		ideImage string
+		wsImage         = workspaceContainer.Image
+		ideImage        string
+		desktopIdeImage string
 	)
 	if ispec, ok := wso.Pod.Annotations[workspaceImageSpecAnnotation]; ok {
 		spec, err := regapi.ImageSpecFromBase64(ispec)
 		if err != nil {
-			return nil, xerrors.Errorf("invalid iamge spec: %w", err)
+			return nil, xerrors.Errorf("invalid image spec: %w", err)
 		}
 		wsImage = spec.BaseRef
 		ideImage = spec.IdeRef
+		desktopIdeImage = spec.DesktopIdeRef
 	}
 
 	ownerToken, ok := wso.Pod.Annotations[ownerTokenAnnotation]
@@ -267,12 +269,13 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		StatusVersion: m.clock.Tick(),
 		Metadata:      getWorkspaceMetadata(wso.Pod),
 		Spec: &api.WorkspaceSpec{
-			Headless:       wso.IsWorkspaceHeadless(),
-			WorkspaceImage: wsImage,
-			IdeImage:       ideImage,
-			Url:            wsurl,
-			Type:           tpe,
-			Timeout:        timeout,
+			Headless:        wso.IsWorkspaceHeadless(),
+			WorkspaceImage:  wsImage,
+			IdeImage:        ideImage,
+			DesktopIdeImage: desktopIdeImage,
+			Url:             wsurl,
+			Type:            tpe,
+			Timeout:         timeout,
 		},
 		Conditions: &api.WorkspaceConditions{
 			Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],

@@ -290,6 +290,9 @@ message WorkspaceSpec {
 
     // The intervals in which a heartbeat must be received for the workspace not to time out
     string timeout = 7;
+
+    // desktop_ide_image is the name of the Docker image used as desktop IDE
+    string desktop_ide_image = 8;
 }
 
 // PortSpec describes a networking port exposed on a workspace
@@ -472,6 +475,9 @@ message StartWorkspaceSpec {
 
     // admission controlls who can access the workspace and its ports.
     AdmissionLevel admission = 11;
+
+    // desktop_ide_image is the Docker image name of the desktop IDE image
+    string desktop_ide_image = 12;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces

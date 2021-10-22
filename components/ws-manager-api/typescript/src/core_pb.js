@@ -4808,7 +4808,8 @@ proto.wsman.WorkspaceSpec.toObject = function(includeInstance, msg) {
     exposedPortsList: jspb.Message.toObjectList(msg.getExposedPortsList(),
     proto.wsman.PortSpec.toObject, includeInstance),
     type: jspb.Message.getFieldWithDefault(msg, 6, 0),
-    timeout: jspb.Message.getFieldWithDefault(msg, 7, "")
+    timeout: jspb.Message.getFieldWithDefault(msg, 7, ""),
+    desktopIdeImage: jspb.Message.getFieldWithDefault(msg, 8, "")
   };
 
   if (includeInstance) {
@@ -4873,6 +4874,10 @@ proto.wsman.WorkspaceSpec.deserializeBinaryFromReader = function(msg, reader) {
     case 7:
       var value = /** @type {string} */ (reader.readString());
       msg.setTimeout(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setDesktopIdeImage(value);
       break;
     default:
       reader.skipField();
@@ -4950,6 +4955,13 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       7,
+      f
+    );
+  }
+  f = message.getDesktopIdeImage();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
       f
     );
   }
@@ -5099,6 +5111,24 @@ proto.wsman.WorkspaceSpec.prototype.getTimeout = function() {
  */
 proto.wsman.WorkspaceSpec.prototype.setTimeout = function(value) {
   return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+
+/**
+ * optional string desktop_ide_image = 8;
+ * @return {string}
+ */
+proto.wsman.WorkspaceSpec.prototype.getDesktopIdeImage = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.WorkspaceSpec} returns this
+ */
+proto.wsman.WorkspaceSpec.prototype.setDesktopIdeImage = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
 };
 
 
@@ -6418,7 +6448,8 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     workspaceLocation: jspb.Message.getFieldWithDefault(msg, 8, ""),
     git: (f = msg.getGit()) && proto.wsman.GitSpec.toObject(includeInstance, f),
     timeout: jspb.Message.getFieldWithDefault(msg, 10, ""),
-    admission: jspb.Message.getFieldWithDefault(msg, 11, 0)
+    admission: jspb.Message.getFieldWithDefault(msg, 11, 0),
+    desktopIdeImage: jspb.Message.getFieldWithDefault(msg, 12, "")
   };
 
   if (includeInstance) {
@@ -6504,6 +6535,10 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
     case 11:
       var value = /** @type {!proto.wsman.AdmissionLevel} */ (reader.readEnum());
       msg.setAdmission(value);
+      break;
+    case 12:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setDesktopIdeImage(value);
       break;
     default:
       reader.skipField();
@@ -6612,6 +6647,13 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
   if (f !== 0.0) {
     writer.writeEnum(
       11,
+      f
+    );
+  }
+  f = message.getDesktopIdeImage();
+  if (f.length > 0) {
+    writer.writeString(
+      12,
       f
     );
   }
@@ -6910,6 +6952,24 @@ proto.wsman.StartWorkspaceSpec.prototype.getAdmission = function() {
  */
 proto.wsman.StartWorkspaceSpec.prototype.setAdmission = function(value) {
   return jspb.Message.setProto3EnumField(this, 11, value);
+};
+
+
+/**
+ * optional string desktop_ide_image = 12;
+ * @return {string}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getDesktopIdeImage = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 12, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.setDesktopIdeImage = function(value) {
+  return jspb.Message.setProto3StringField(this, 12, value);
 };
 
 
