@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
@@ -35,9 +36,25 @@ var signatureNewCmd = &cobra.Command{
 			fns = []string{fn}
 		}
 
+		kinds := map[string]classifier.ObjectKind{
+			"elf-symbols":   classifier.ObjectELFSymbols,
+			"elf-rodata":    classifier.ObjectELFRodata,
+			"expensive-any": classifier.ObjectAny,
+		}
+		kindv := cmd.Flags().Lookup("kind").Value.String()
+		kind, ok := kinds[kindv]
+		if !ok {
+			fmt.Fprintf(os.Stderr, "unknown kind: %s\n", kindv)
+			fmt.Fprintf(os.Stderr, "valid choices are (--kind):\n")
+			for k := range kinds {
+				fmt.Fprintf(os.Stderr, "\t%s\n", k)
+			}
+			os.Exit(1)
+		}
+
 		sig := classifier.Signature{
 			Name:    args[0],
-			Kind:    classifier.ObjectKind(cmd.Flags().Lookup("kind").Value.String()),
+			Kind:    kind,
 			Pattern: []byte(cmd.Flags().Lookup("pattern").Value.String()),
 			Regexp:  cmd.Flags().Lookup("regexp").Value.String() == "true",
 			Slice: classifier.Slice{
@@ -45,6 +62,7 @@ var signatureNewCmd = &cobra.Command{
 				End:   se,
 			},
 			Filename: fns,
+			Domain:   classifier.DomainProcess,
 		}
 		err = sig.Validate()
 		if err != nil {
