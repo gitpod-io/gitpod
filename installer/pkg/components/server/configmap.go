@@ -7,10 +7,8 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,7 +26,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		HostURL:               fmt.Sprintf("https://%s", ctx.Config.Domain),
 		InstallationShortname: ctx.Namespace, // todo(sje): is this needed?
 		Stage:                 "production",  // todo(sje): is this needed?
-		License:               "",
+		License:               "",            // todo(sje): how do we populate this?
 		WorkspaceHeartbeat: WorkspaceHeartbeat{
 			IntervalSeconds: 60,
 			TimeoutSeconds:  300,
@@ -42,10 +40,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MaxAgeMs: 259200000,
 			Secret:   "Important!Really-Change-This-Key!", // todo(sje): how best to do this?
 		},
-		GitHubApp: GitHubApp{ // todo(sje): conditionally apply
-			Enabled:        false,
-			AuthProviderId: "Public-GitHub",
-		},
 		DefinitelyGpDisabled: false,
 		WorkspaceGarbageCollection: WorkspaceGarbageCollection{
 			ChunkLimit:                 1000,
@@ -55,8 +49,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MinAgeDays:                 14,
 			MinAgePrebuildDays:         7,
 		},
-		EnableLocalApp:                  true,
+		EnableLocalApp:                  false,
 		AuthProviderConfigs:             ctx.Config.AuthProviders,
+		BuiltinAuthProvidersConfigured:  len(ctx.Config.AuthProviders) > 0,
 		DisableDynamicAuthProviderLogin: false,
 		BrandingConfig: BrandingConfig{
 			Logo:     "/images/gitpod-ddd.svg",

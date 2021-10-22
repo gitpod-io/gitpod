@@ -78,8 +78,10 @@ func DependencySortingRenderFunc(f RenderFunc) RenderFunc {
 }
 
 type GeneratedValues struct {
-	StorageAccessKey string
-	StorageSecretKey string
+	StorageAccessKey         string
+	StorageSecretKey         string
+	InternalRegistryUsername string
+	InternalRegistryPassword string
 }
 
 type RenderContext struct {
@@ -103,6 +105,18 @@ func (r *RenderContext) generateValues() error {
 		return err
 	}
 	r.Values.StorageSecretKey = storageSecretKey
+
+	internalRegistryUsername, err := RandomString(20)
+	if err != nil {
+		return err
+	}
+	r.Values.InternalRegistryUsername = internalRegistryUsername
+
+	internalRegistryPassword, err := RandomString(20)
+	if err != nil {
+		return err
+	}
+	r.Values.InternalRegistryPassword = internalRegistryPassword
 
 	return nil
 }

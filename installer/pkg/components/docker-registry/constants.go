@@ -8,4 +8,5 @@ const (
 	BuiltInRegistryAuth  = "builtin-registry-auth"
 	BuiltInRegistryCerts = "builtin-registry-certs"
 	Component            = "docker-registry"
+	RegistryName         = "registry"
 )

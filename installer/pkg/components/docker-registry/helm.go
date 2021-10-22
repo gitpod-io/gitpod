@@ -21,6 +21,7 @@ var Helm = common.CompositeHelmFunc(
 			Enabled: pointer.BoolDeref(cfg.Config.ContainerRegistry.InCluster, false),
 			Values: &values.Options{
 				Values: []string{
+					helm.KeyValue("docker-registry.fullnameOverride", RegistryName),
 					helm.KeyValue("docker-registry.service.port", strconv.Itoa(proxy.ContainerHTTPSPort)),
 					helm.KeyValue("docker-registry.tlsSecretName", proxy.RegistryTLSCertSecret),
 				},

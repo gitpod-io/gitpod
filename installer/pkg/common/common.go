@@ -61,6 +61,16 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 
 	return []corev1.EnvVar{
 		{Name: "GITPOD_DOMAIN", Value: cfg.Domain},
+		{Name: "GITPOD_INSTALLATION_LONGNAME", Value: cfg.Domain},  // todo(sje): figure out these values
+		{Name: "GITPOD_INSTALLATION_SHORTNAME", Value: cfg.Domain}, // todo(sje): figure out these values
+		{Name: "GITPOD_REGION", Value: cfg.Metadata.Region},
+		{Name: "HOST_URL", Value: "https://" + cfg.Domain},
+		{Name: "KUBE_NAMESPACE", ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: "metadata.namespace",
+			},
+		}},
+		{Name: "KUBE_DOMAIN", Value: "svc.cluster.local"},
 		{Name: "LOG_LEVEL", Value: strings.ToLower(logLevel)},
 	}
 }
@@ -102,7 +112,7 @@ func AnalyticsEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}}
 }
 
-func MessageBusEnv(cfg *config.Config) (res []corev1.EnvVar) {
+func MessageBusEnv(_ *config.Config) (res []corev1.EnvVar) {
 	clusterObj := corev1.LocalObjectReference{Name: InClusterMessageQueueName}
 	tlsObj := corev1.LocalObjectReference{Name: InClusterMessageQueueTLS}
 
@@ -174,13 +184,21 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 			Key:                  "password",
 		}},
 	}, {
+		Name: "DB_USERNAME",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: obj,
+			Key:                  "username",
+		}},
+	}, {
 		// todo(sje): conditional
 		Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
 		Value: "false",
 	}, {
 		Name: "DB_ENCRYPTION_KEYS",
-		// todo(sje): either Value or ValueFrom
-		Value: "todo",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: obj,
+			Key:                  "encryptionKeys",
+		}},
 		//ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
 		//	LocalObjectReference: corev1.LocalObjectReference{
 		//		Name: "",
@@ -193,7 +211,7 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "database-waiter",
-		Image: ImageName(ctx.Config.Repository, "service-waiter", "latest"),
+		Image: ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
 		Args: []string{
 			"-v",
 			"database",
@@ -211,7 +229,7 @@ func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "msgbus-waiter",
-		Image: ImageName(ctx.Config.Repository, "service-waiter", "latest"),
+		Image: ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
 		Args: []string{
 			"-v",
 			"messagebus",
@@ -250,10 +268,10 @@ func KubeRBACProxyContainer() *corev1.Container {
 			},
 		},
 		Resources: corev1.ResourceRequirements{Requests: corev1.ResourceList{
-			corev1.ResourceName("cpu"):    resource.MustParse("1m"),
-			corev1.ResourceName("memory"): resource.MustParse("30Mi"),
+			corev1.ResourceCPU:    resource.MustParse("1m"),
+			corev1.ResourceMemory: resource.MustParse("30Mi"),
 		}},
-		TerminationMessagePolicy: corev1.TerminationMessagePolicy("FallbackToLogsOnError"),
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		SecurityContext: &corev1.SecurityContext{
 			RunAsUser:    pointer.Int64(65532),
 			RunAsGroup:   pointer.Int64(65532),

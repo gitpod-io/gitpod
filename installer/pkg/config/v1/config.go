@@ -19,7 +19,15 @@ func init() {
 
 type version struct{}
 
-func (v version) Factory() interface{} { return &Config{} }
+func (v version) Factory() interface{} {
+	return &Config{
+		AuthProviders: []AuthProviderConfigs{},
+		BlockNewUsers: BlockNewUsers{
+			Enabled:  false,
+			Passlist: []string{},
+		},
+	}
+}
 func (v version) Defaults(in interface{}) error {
 	cfg, ok := in.(*Config)
 	if !ok {
@@ -72,7 +80,7 @@ type Config struct {
 
 	Workspace Workspace `json:"workspace" validate:"required"`
 
-	AuthProviders []AuthProviderConfigs `json:"authProviders,omitempty"`
+	AuthProviders []AuthProviderConfigs `json:"authProviders"`
 	BlockNewUsers BlockNewUsers         `json:"blockNewUsers"`
 }
 
@@ -232,7 +240,7 @@ type AuthProviderConfigs struct {
 
 type BlockNewUsers struct {
 	Enabled  bool     `json:"enabled"`
-	Passlist []string `json:"passlist,omitempty"`
+	Passlist []string `json:"passlist"`
 }
 
 type OAuth struct {
