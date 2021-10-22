@@ -27,6 +27,7 @@ packages:
       - components/registry-facade:lib
       - components/ws-daemon-api/go:lib
       - components/ws-proxy:lib
+      - components/openvsx-proxy:lib
     env:
       - CGO_ENABLED=0
     config:

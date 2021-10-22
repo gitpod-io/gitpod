@@ -398,6 +398,10 @@ var (
 		APIVersion: "v1",
 		Kind:       "namespace",
 	}
+	TypeMetaStatefulSet = metav1.TypeMeta{
+		APIVersion: "apps/v1",
+		Kind:       "StatefulSet",
+	}
 	TypeMetaConfigmap = metav1.TypeMeta{
 		APIVersion: "v1",
 		Kind:       "ConfigMap",

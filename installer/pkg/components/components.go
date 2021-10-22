@@ -17,10 +17,12 @@ import (
 	jaegeroperator "github.com/gitpod-io/gitpod/installer/pkg/components/jaeger-operator"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/mysql"
+	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/rabbitmq"
 	registryfacade "github.com/gitpod-io/gitpod/installer/pkg/components/registry-facade"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsmanagerbridge "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-bridge"
@@ -34,6 +36,7 @@ var MetaObjects = common.CompositeRenderFunc(
 	dashboard.Objects,
 	imagebuildermk3.Objects,
 	mysql.Objects,
+	openvsxproxy.Objects,
 	rabbitmq.Objects,
 	server.Objects,
 	wsmanagerbridge.Objects,
@@ -44,6 +47,7 @@ var WorkspaceObjects = common.CompositeRenderFunc(
 	blobserve.Objects,
 	gitpod.Objects,
 	registryfacade.Objects,
+	workspace.Objects,
 	wsdaemon.Objects,
 	wsmanager.Objects,
 	wsproxy.Objects,
