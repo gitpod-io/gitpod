@@ -19,9 +19,8 @@ import (
 
 func newSSHServer(ctx context.Context, cfg *Config) *sshServer {
 	return &sshServer{
-		ctx:       ctx,
-		cfg:       cfg,
-		ipAddress: localIP(),
+		ctx: ctx,
+		cfg: cfg,
 	}
 }
 
@@ -29,17 +28,12 @@ type sshServer struct {
 	ctx context.Context
 	cfg *Config
 
-	ipAddress string
-
-	cmd *exec.Cmd
-	mu  sync.Mutex
+	mu sync.Mutex
 }
 
 // ListenAndServe listens on the TCP network address laddr and then handle packets on incoming connections.
 func (s *sshServer) listenAndServe() error {
-	addr := fmt.Sprintf("%v:%v", s.ipAddress, s.cfg.SSHPort)
-	log.WithField("address", addr).Info("starting TCP listener")
-	listener, err := net.Listen("tcp", addr)
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.cfg.SSHPort))
 	if err != nil {
 		return err
 	}
