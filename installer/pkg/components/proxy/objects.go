@@ -4,7 +4,10 @@
 
 package proxy
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	corev1 "k8s.io/api/core/v1"
+)
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
@@ -24,6 +27,8 @@ var Objects = common.CompositeRenderFunc(
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
+	}, func(spec *corev1.ServiceSpec) {
+		spec.Type = corev1.ServiceTypeLoadBalancer
 	}),
 	common.DefaultServiceAccount(Component),
 )
