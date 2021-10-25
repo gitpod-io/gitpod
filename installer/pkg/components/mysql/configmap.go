@@ -40,6 +40,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		fileStr := string(file)
 		// Replace variables in the script
 		fileStr = strings.Replace(fileStr, "__GITPOD_DB_NAME__", Database, -1)
+		fileStr = strings.Replace(fileStr, "__GITPOD_USERNAME__", Username, -1)
 
 		// Add the file name for debugging purposes
 		initScriptData += fmt.Sprintf("-- %s\n\n%s", script.Name(), fileStr)

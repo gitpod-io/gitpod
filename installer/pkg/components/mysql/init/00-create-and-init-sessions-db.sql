@@ -14,3 +14,6 @@ CREATE TABLE IF NOT EXISTS sessions (
    `_lastModified` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
    PRIMARY KEY (`session_id`)
 );
+
+-- Grant privileges
+GRANT ALL ON `gitpod-sessions`.* TO "__GITPOD_USERNAME__"@"%";
