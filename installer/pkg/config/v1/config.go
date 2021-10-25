@@ -198,10 +198,15 @@ type WorkspaceTemplates struct {
 	Probe      *corev1.Pod `json:"probe"`
 }
 
+type WorkspaceComponent struct {
+	ServiceAnnotations map[string]string `json:"serviceAnnotations,omitempty"`
+}
+
 type Workspace struct {
-	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
-	Resources Resources           `json:"resources" validate:"required"`
-	Templates *WorkspaceTemplates `json:"templates,omitempty"`
+	Runtime    WorkspaceRuntime              `json:"runtime" validate:"required"`
+	Resources  Resources                     `json:"resources" validate:"required"`
+	Templates  *WorkspaceTemplates           `json:"templates,omitempty"`
+	Components map[string]WorkspaceComponent `json:"components,omitempty"`
 }
 
 type FSShiftMethod string
