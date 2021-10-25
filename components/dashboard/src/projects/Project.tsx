@@ -173,7 +173,7 @@ export default function () {
 
     return <>
         <Header title="Branches" subtitle={<h2 className="tracking-wide">View recent active branches for <a className="gp-link" href={project?.cloneUrl!}>{toRemoteURL(project?.cloneUrl || '')}</a>.</h2>} />
-        <div className="lg:px-28 px-10">
+        <div className="app-container">
             {showAuthBanner ? (
                 <div className="mt-8 rounded-xl text-gray-500 bg-gray-50 dark:bg-gray-800 flex-col">
                     <div className="p-8 text-center">

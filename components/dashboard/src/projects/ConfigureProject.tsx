@@ -211,7 +211,7 @@ export default function () {
 
     return <>
         <Header title="Configuration" subtitle="View and edit project configuration." />
-        <div className="lg:px-28 px-10 mt-8 flex space-x-4">
+        <div className="app-container mt-8 flex space-x-4">
             <div className="flex-1 h-96 rounded-xl overflow-hidden relative flex flex-col">
                 <div className="flex bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 px-6 pt-3">
                     <TabMenuItem name=".gitpod.yml" selected={selectedEditor === '.gitpod.yml'} onClick={() => setSelectedEditor('.gitpod.yml')} />

@@ -151,7 +151,7 @@ export default function () {
 
     return <>
         <Header title="Prebuilds" subtitle={`View recent prebuilds for active branches.`} />
-        <div className="lg:px-28 px-10">
+        <div className="app-container">
             <div className="flex mt-8">
                 <div className="flex">
                     <div className="py-4">

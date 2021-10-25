@@ -33,6 +33,9 @@
         @apply text-sm text-gray-400 dark:text-gray-600;
     }
 
+    .app-container {
+        @apply lg:px-28 px-10;
+    }
     .btn-login {
         @apply rounded-md border-none bg-gray-100 hover:bg-gray-200 text-gray-500 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-600;
     }
