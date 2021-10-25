@@ -81,6 +81,9 @@ func (o *OpenVSXProxy) ModifyResponse(r *http.Response) error {
 			return nil
 		}
 		r.Header = cached.Header
+		if v := r.Header.Get("Access-Control-Allow-Origin"); v != "" && v != "*" {
+			r.Header.Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+		}
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(cached.Body))
 		r.ContentLength = int64(len(cached.Body))
 		r.StatusCode = cached.StatusCode

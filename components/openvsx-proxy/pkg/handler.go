@@ -85,6 +85,9 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 								}
 							}
 						}
+						if v := rw.Header().Get("Access-Control-Allow-Origin"); v != "" && v != "*" {
+							rw.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+						}
 						rw.Header().Set("X-Cache", "HIT")
 						rw.WriteHeader(cached.StatusCode)
 						rw.Write(cached.Body)
