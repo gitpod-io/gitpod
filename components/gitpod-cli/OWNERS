@@ -3,7 +3,7 @@ options:
   no_parent_owners: true
 
 approvers:
-  - engineering-workspace
+  - engineering-ide
 
 labels:
-  - "team: workspace"
+  - "team: IDE"
