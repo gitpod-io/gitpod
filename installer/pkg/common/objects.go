@@ -60,12 +60,18 @@ func GenerateService(component string, ports map[string]ServicePort, mod ...func
 			m(spec)
 		}
 
+		var annotations map[string]string
+		if componentConfig, found := cfg.Config.Workspace.Components[component]; found {
+			annotations = componentConfig.ServiceAnnotations
+		}
+
 		return []runtime.Object{&corev1.Service{
 			TypeMeta: TypeMetaService,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      component,
-				Namespace: cfg.Namespace,
-				Labels:    labels,
+				Name:        component,
+				Namespace:   cfg.Namespace,
+				Labels:      labels,
+				Annotations: annotations,
 			},
 			Spec: *spec,
 		}}, nil
