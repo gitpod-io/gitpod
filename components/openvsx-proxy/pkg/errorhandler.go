@@ -62,6 +62,9 @@ func (o *OpenVSXProxy) ErrorHandler(rw http.ResponseWriter, r *http.Request, e e
 			}
 		}
 	}
+	if v := rw.Header().Get("Access-Control-Allow-Origin"); v != "" && v != "*" {
+		rw.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+	}
 	rw.WriteHeader(cached.StatusCode)
 	rw.Write(cached.Body)
 	log.WithFields(logFields).Info("used cached response due to a proxy error")
