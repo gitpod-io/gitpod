@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/gitpod"
 	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
 	jaegeroperator "github.com/gitpod-io/gitpod/installer/pkg/components/jaeger-operator"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/mysql"
 	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
@@ -35,6 +36,7 @@ var MetaObjects = common.CompositeRenderFunc(
 	proxy.Objects,
 	dashboard.Objects,
 	imagebuildermk3.Objects,
+	migrations.Objects,
 	mysql.Objects,
 	openvsxproxy.Objects,
 	rabbitmq.Objects,

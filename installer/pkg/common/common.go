@@ -466,6 +466,10 @@ var (
 		APIVersion: "v1",
 		Kind:       "ResourceQuota",
 	}
+	TypeMetaBatchJob = metav1.TypeMeta{
+		APIVersion: "batch/v1",
+		Kind:       "Job",
+	}
 )
 
 type TLS struct {
