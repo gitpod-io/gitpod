@@ -14,7 +14,6 @@ packages:
       - dev:all-app
       - installer:app
       - components/gitpod-protocol:all
-      - components/ide/jetbrains/backend-plugin:plugin
       - operations/observability/mixins:lint
   - name: docker-versions
     type: docker
@@ -41,6 +40,8 @@ packages:
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/ide/code:docker
+      - components/ide/jetbrains/image:intellij
+      - components/ide/jetbrains/image:goland
       - components/ide/theia:docker
       - components/image-builder:docker
       - components/image-builder-mk3:docker

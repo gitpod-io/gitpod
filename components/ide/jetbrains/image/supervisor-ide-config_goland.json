@@ -1,0 +1,11 @@
+{
+    "entrypoint": "/ide-desktop/startup.sh",
+    "entrypointArgs": [ "Open GoLand IDE" ],
+    "readinessProbe": {
+        "type": "http",
+        "http": {
+            "port": 24000,
+            "path": "/status"
+        }
+      }
+}

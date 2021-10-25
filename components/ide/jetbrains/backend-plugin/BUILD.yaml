@@ -11,8 +11,11 @@ packages:
       - "gradle/wrapper/*"
       - "gradlew"
       - "settings.gradle.kts"
+    argdeps:
+      - INTELLIJ_PLUGIN_PLATFORM_VERSION
     env:
       - JAVA_HOME=/home/gitpod/.sdkman/candidates/java/current
+      - INTELLIJ_PLUGIN_PLATFORM_VERSION=${INTELLIJ_PLUGIN_PLATFORM_VERSION}
     config:
       commands:
         - ["./gradlew", "-PsupervisorApiProjectPath=components-supervisor-api-java--lib/", "-PgitpodProtocolProjectPath=components-gitpod-protocol-java--lib/", "buildPlugin"]
