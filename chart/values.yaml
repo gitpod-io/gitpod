@@ -401,6 +401,11 @@ components:
       imageName: "ide/code"
       stableVersion: "commit-7107fb8bde0b1f92265402ad5fa09a51022b14dd"
       insidersVersion: "nightly"
+    desktopIdeImages:
+      intellij:
+        imageName: "ide/intellij"
+      goland:
+        imageName: "ide/goland"
     supervisor:
       imageName: "supervisor"
     dockerUp:

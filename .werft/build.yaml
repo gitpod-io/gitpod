@@ -138,6 +138,9 @@ pod:
         secretKeyRef:
           name: codecov
           key: token
+    envFrom:
+    - secretRef:
+        name: jetbrains-secrets
     command:
       - bash
       - -c

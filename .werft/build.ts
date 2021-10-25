@@ -148,7 +148,8 @@ export async function build(context, version) {
     if (withContrib || publishRelease) {
         exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} contrib:all`);
     }
-    exec(`leeway build --docker-build-options network=host --werft=true -c remote ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
+    const jetbrainsArgs = `-DINTELLIJ_PLUGIN_PLATFORM_VERSION=${process.env.INTELLIJ_PLUGIN_PLATFORM_VERSION} -DINTELLIJ_BACKEND_URL=${process.env.INTELLIJ_BACKEND_URL} -DGOLAND_BACKEND_URL=${process.env.GOLAND_BACKEND_URL}`;
+    exec(`leeway build --docker-build-options network=host --werft=true -c remote ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} ${jetbrainsArgs} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");
