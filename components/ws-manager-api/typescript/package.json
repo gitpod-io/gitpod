@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@types/google-protobuf": "^3.7.4",
-    "@types/node": "^10",
+    "@types/node": "^16.11.0",
     "grpc-tools": "^1.11.2",
     "grpc_tools_node_protoc_ts": "^5.3.1",
     "typescript-formatter": "^7.2.2",

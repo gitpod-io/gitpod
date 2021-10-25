@@ -4,7 +4,7 @@
     "version": "0.0.0",
     "license": "UNLICENSED",
     "devDependencies": {
-        "@types/node": "^10.14.8",
+        "@types/node": "^16.11.0",
         "@types/shelljs": "^0.8.8",
         "concurrently": "^5.3.0",
         "envfile": "^2.1.1",
