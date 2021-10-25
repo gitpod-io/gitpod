@@ -20,30 +20,38 @@ RUN mkdir gp-code \
 WORKDIR /gp-code
 RUN yarn --frozen-lockfile --network-timeout 180000
 RUN yarn --cwd ./extensions compile
-RUN yarn gulp gitpod-min
+RUN yarn gulp vscode-web-min
+RUN yarn gulp vscode-reh-linux-x64-min
 
-# grant write permissions for built-in extensions
-RUN chmod -R ugo+w /gitpod-pkg-server/extensions
+# config for first layer needed by blobserve
+# we also remove `static/` from resource urls as that's needed by blobserve,
+# this custom urls will be then replaced by blobserve.
+# Check pkg/blobserve/blobserve.go, `inlineVars` method
+RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
+    && sed -i -e 's#static/##g' /vscode-web/index.html
 
-# cli config
+# cli config: alises to gitpod-code
+# can't use relative symlink as they break when copied to the image below
 COPY bin /ide/bin
 RUN chmod -R ugo+x /ide/bin
 
+# grant write permissions for built-in extensions
+RUN chmod -R ugo+w /vscode-reh-linux-x64/extensions
 
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
-COPY --from=code_installer --chown=33333:33333 /gitpod-pkg-web/ /ide/
-COPY --from=code_installer --chown=33333:33333 /gitpod-pkg-server/ /ide/
+COPY --from=code_installer --chown=33333:33333 /vscode-web/ /ide/
+COPY --from=code_installer --chown=33333:33333 /vscode-reh-linux-x64/ /ide/
 COPY --chown=33333:33333 startup.sh supervisor-ide-config.json /ide/
 
-# cli config
 COPY --from=code_installer --chown=33333:33333 /ide/bin /ide/bin
+
 ENV GITPOD_ENV_APPEND_PATH /ide/bin:
 
 # editor config
-ENV GITPOD_ENV_SET_EDITOR /ide/bin/code
+ENV GITPOD_ENV_SET_EDITOR /ide/bin/gitpod-code
 ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GP_OPEN_EDITOR "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"
-ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide/bin/code --preview"
-ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide/bin/code --openExternal"
+ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide/bin/gitpod-code --preview"
+ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide/bin/gitpod-code --openExternal"
