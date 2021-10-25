@@ -1,0 +1,52 @@
+packages:
+  - name: docker
+    type: generic
+    argdeps:
+      - version
+    deps:
+      - :intellij
+      - :goland
+  - name: intellij
+    type: docker
+    srcs:
+      - "startup.sh"
+      - "supervisor-ide-config_intellij.json"
+      - "status/go.mod"
+      - "status/main.go"
+    deps:
+      - components/ide/jetbrains/backend-plugin:plugin
+    argdeps:
+      - imageRepoBase
+      - INTELLIJ_BACKEND_URL
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.intellij
+      buildArgs:
+        JETBRAINS_BACKEND_URL: ${INTELLIJ_BACKEND_URL}
+        SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
+      image:
+        - ${imageRepoBase}/ide/intellij:${version}
+        - ${imageRepoBase}/ide/intellij:commit-${__git_commit}
+  - name: goland
+    type: docker
+    srcs:
+      - "startup.sh"
+      - "supervisor-ide-config_goland.json"
+      - "status/go.mod"
+      - "status/main.go"
+    deps:
+      - components/ide/jetbrains/backend-plugin:plugin
+    argdeps:
+      - imageRepoBase
+      - GOLAND_BACKEND_URL
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.goland
+      buildArgs:
+        JETBRAINS_BACKEND_URL: ${GOLAND_BACKEND_URL}
+        SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
+      image:
+        - ${imageRepoBase}/ide/goland:${version}
+        - ${imageRepoBase}/ide/goland:commit-${__git_commit}
