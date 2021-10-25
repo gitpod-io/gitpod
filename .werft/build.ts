@@ -227,14 +227,12 @@ export async function build(context, version) {
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
-    const monitoringDomain = `${destname}.preview.gitpod-dev.com`;
     const url = `https://${domain}`;
     const deploymentConfig: DeploymentConfig = {
         version,
         destname,
         namespace,
         domain,
-        monitoringDomain,
         url,
         analytics,
         cleanSlateDeployment,
@@ -253,7 +251,6 @@ interface DeploymentConfig {
     destname: string;
     namespace: string;
     domain: string;
-    monitoringDomain: string,
     url: string;
     k3sWsCluster?: boolean;
     analytics?: string;
@@ -269,7 +266,7 @@ interface DeploymentConfig {
  */
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
-    const { version, destname, namespace, domain, monitoringDomain, url, k3sWsCluster } = deploymentConfig;
+    const { version, destname, namespace, domain, url, k3sWsCluster } = deploymentConfig;
     const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts("", [
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
@@ -399,8 +396,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         await installMonitoring();
-        exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
-        exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
+        exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana.${domain}/dashboards`);
+        exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus.${domain}/graph`);
     } else {
         exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
         exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
@@ -557,13 +554,17 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         installMonitoringSatelliteParams.satelliteNamespace = namespace
         installMonitoringSatelliteParams.clusterName = namespace
         installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
-        installMonitoringSatelliteParams.previewDomain = monitoringDomain
+        installMonitoringSatelliteParams.previewDomain = domain
         await installMonitoringSatellite(installMonitoringSatelliteParams);
     }
 
 
     async function issueMetaCerts() {
         let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
+        if (deploymentConfig.withObservability) {
+            additionalSubdomains.push("grafana.")
+            additionalSubdomains.push("prometheus.")
+        }
         var metaClusterCertParams = new IssueCertificateParams();
         metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
         metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
