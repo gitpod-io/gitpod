@@ -1352,8 +1352,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
 
         const envvar: UserEnvVar = {
-            ...variable,
             id: variable.id || uuidv4(),
+            name: variable.name,
+            repositoryPattern: variable.repositoryPattern,
+            value: variable.value,
             userId,
         };
         await this.guardAccess({ kind: 'envVar', subject: envvar }, typeof variable.id === 'string' ? 'update' : 'create');
