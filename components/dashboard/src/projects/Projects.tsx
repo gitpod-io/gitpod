@@ -100,7 +100,7 @@ export default function () {
 
         )}
         {projects.length > 0 && (
-            <div className="lg:px-28 px-10">
+            <div className="app-container">
                 <div className="mt-8 pb-2 flex border-b border-gray-200 dark:border-gray-800">
                     <div className="flex">
                         <div className="py-4">

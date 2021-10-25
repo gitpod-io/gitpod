@@ -143,7 +143,7 @@ export default function () {
         {workspaceModel?.initialized && (
             activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ?
                 <>
-                    <div className="lg:px-28 px-10 py-2 flex">
+                    <div className="app-container py-2 flex">
                         <div className="flex">
                             <div className="py-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="16" height="16"><path fill="#A8A29E" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" /></svg>
@@ -167,7 +167,7 @@ export default function () {
                         </div>
                         <button onClick={showStartWSModal} className="ml-2">New Workspace</button>
                     </div>
-                    <ItemsList className="lg:px-28 px-10">
+                    <ItemsList className="app-container">
                         <div className="border-t border-gray-200 dark:border-gray-800"></div>
                         {
                             teamsWorkspaceModel?.initialized && <ActiveTeamWorkspaces teams={teams} teamProjects={teamsProjects} teamWorkspaces={teamsActiveWorkspaces} />
@@ -191,7 +191,7 @@ export default function () {
                     </ItemsList>
                 </>
                 :
-                <div className="lg:px-28 px-10 flex flex-col space-y-2">
+                <div className="app-container flex flex-col space-y-2">
                     <div className="px-6 py-3 flex flex-col text-gray-400 border-t border-gray-200 dark:border-gray-800">
                         {teamsWorkspaceModel?.initialized && <ActiveTeamWorkspaces teams={teams} teamProjects={teamsProjects} teamWorkspaces={teamsActiveWorkspaces} />}
                         <div className="flex flex-col items-center justify-center h-96 w-96 mx-auto">

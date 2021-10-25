@@ -99,7 +99,7 @@ export default function () {
 
     return <>
         <Header title={renderTitle()} subtitle={renderSubtitle()} />
-        <div className="lg:px-28 px-10 mt-8">
+        <div className="app-container mt-8">
             <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
                 <div className="h-96 flex">
                     <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId} onInstanceUpdate={onInstanceUpdate} />
