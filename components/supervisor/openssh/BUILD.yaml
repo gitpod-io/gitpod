@@ -1,11 +1,13 @@
 packages:
-  - name: docker
+  - name: app
+    type: generic
+    deps:
+      - :docker-build
+    config:
+      commands:
+        - ["sh", "-c", "find . | grep layer.tar | xargs tar xfv"]
+        - ["rm", "-rf", "components-supervisor-openssh--docker-build"]
+  - name: docker-build
     type: docker
-    argdeps:
-      - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
-      image:
-        - ${imageRepoBase}/static-openssh:${version}
-        - ${imageRepoBase}/static-openssh:commit-${__git_commit}
-        - ${imageRepoBase}/static-openssh:latest

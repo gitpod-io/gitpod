@@ -2,10 +2,6 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-# TODO(aledbf): fix werft job build issue
-# FROM OPENSSH_IMAGE AS openssh
-FROM aledbf/static-openssh:0.50 AS openssh
-
 FROM scratch
 
 # BEWARE: This must be the first layer in the image, s.t. that blobserve
@@ -22,7 +18,7 @@ COPY components-supervisor--app/supervisor \
      ./
 
 WORKDIR "/.supervisor/ssh"
-COPY --from=openssh /usr/sbin/sshd .
-COPY --from=openssh /usr/bin/ssh-keygen .
+COPY components-supervisor-openssh--app/usr/sbin/sshd .
+COPY components-supervisor-openssh--app/usr/bin/ssh-keygen .
 
 ENTRYPOINT ["/.supervisor/supervisor"]

@@ -87,8 +87,8 @@ pod:
     - name: LEEWAY_WORKSPACE_ROOT
       value: /workspace
     - name: LEEWAY_REMOTE_CACHE_BUCKET
-      {{- if eq .Repository.Ref "refs/heads/main" }}
-      value: gitpod-core-leeway-cache-main
+      {{- if eq .Repository.Ref "refs/heads/master" }}
+      value: gitpod-core-leeway-cache-master
       {{- else }}
       value: gitpod-core-leeway-cache-branch
       {{- end }}
@@ -138,9 +138,6 @@ pod:
         secretKeyRef:
           name: codecov
           key: token
-    envFrom:
-    - secretRef:
-        name: jetbrains-secrets
     command:
       - bash
       - -c
@@ -157,6 +154,7 @@ pod:
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
 
-        npx ts-node .werft/build.ts
+        leeway build components/supervisor/openssh:app
+        # npx ts-node .werft/build.ts
 sidecars:
 - testdb
