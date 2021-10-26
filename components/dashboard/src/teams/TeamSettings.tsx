@@ -74,7 +74,7 @@ export default function TeamSettings() {
                 <li className="ml-5">All <b>members</b> of this team will lose access to this team, associated projects and workspaces.</li>
             </ol>
             <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">Type <CodeText>{team?.slug}</CodeText> to confirm</p>
-            <input className="w-full" type="text" onChange={e => setTeamSlug(e.target.value)}></input>
+            <input autoFocus className="w-full" type="text" onChange={e => setTeamSlug(e.target.value)}></input>
         </ConfirmationModal>
     </>
 }
