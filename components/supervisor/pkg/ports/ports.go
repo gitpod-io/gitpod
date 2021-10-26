@@ -525,7 +525,7 @@ func (pm *Manager) updateSlirp() {
 	for _, served := range pm.served {
 		err := pm.Slirp.Expose(served.Port)
 		if err != nil {
-			log.WithError(err).Debug("cannot expose port for slirp")
+			log.WithError(err).Info("cannot expose port for slirp")
 		}
 	}
 }
