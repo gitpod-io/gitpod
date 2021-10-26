@@ -206,6 +206,10 @@
                     }
                 }
             }
+        },
+        "experimentalNetwork": {
+            "type": "boolean",
+            "description": "Experimental network configuration in workspaces"
         }
     },
     "additionalProperties": false
