@@ -559,6 +559,9 @@ export interface WorkspaceConfig {
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
 
+    /** tailscale demo */
+    experimentalNetwork?: boolean;
+
     /**
      * Where the config object originates from.
      *
