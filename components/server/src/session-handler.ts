@@ -5,8 +5,8 @@
  */
 
 import * as express from 'express';
-import * as session from 'express-session'
-import { SessionOptions } from 'express-session'
+import * as session from 'express-session';
+import { SessionOptions } from 'express-session';
 import * as uuidv4 from "uuid/v4"
 import { injectable, inject , postConstruct } from 'inversify';
 
@@ -15,7 +15,6 @@ const MySQLStore = mysqlstore(session);
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { Config as DBConfig } from '@gitpod/gitpod-db/lib/config';
 import { Config } from './config';
-
 
 @injectable()
 export class SessionHandlerProvider {

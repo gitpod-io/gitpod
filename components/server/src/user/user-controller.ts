@@ -78,7 +78,7 @@ export class UserController {
 
             // Make sure, the session is stored before we initialize the OAuth flow
             try {
-                await saveSession(req);
+                await saveSession(req.session);
             } catch (error) {
                 increaseLoginCounter("failed", "unknown")
                 log.error(`Login failed due to session save error; redirecting to /sorry`, { req, error, clientInfo });

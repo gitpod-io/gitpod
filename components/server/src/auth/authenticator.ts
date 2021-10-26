@@ -36,7 +36,7 @@ export class Authenticator {
         // Setup passport
         this.passportInitialize = passport.initialize();
         this.passportSession = passport.session();
-        passport.serializeUser((user: User, done) => {
+        passport.serializeUser<string>((user: User, done) => {
             if (user) {
                 done(null, user.id);
             } else {
@@ -95,15 +95,14 @@ export class Authenticator {
             log.info({ sessionId: req.sessionID }, `User is already authenticated. Continue.`, { 'login-flow': true });
             return next();
         }
-        let returnTo: string | undefined = req.query.returnTo;
+        let returnTo: string | undefined = req.query.returnTo?.toString();
         if (returnTo) {
             log.info({ sessionId: req.sessionID }, `Stored returnTo URL: ${returnTo}`, { 'login-flow': true });
         }
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
         returnTo = returnTo || workspaceUrl;
-
-        const host: string = req.query.host;
+        const host: string = req.query.host?.toString() || "";
         const authProvider = host && await this.getAuthProviderForHost(host);
         if (!host || !authProvider) {
             log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { req, 'login-flow': true });
@@ -153,8 +152,8 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
-        const returnTo: string = req.query.returnTo || this.config.hostUrl.asDashboard().toString();
-        const host: string | undefined = req.query.host;
+        const returnTo: string = req.query.returnTo?.toString() || this.config.hostUrl.asDashboard().toString();
+        const host: string | undefined = req.query.host?.toString();
 
         const authProvider = host && await this.getAuthProviderForHost(host);
 
@@ -185,9 +184,9 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
-        const returnTo: string | undefined = req.query.returnTo;
-        const host: string | undefined = req.query.host;
-        const scopes: string = req.query.scopes || "";
+        const returnTo: string | undefined = req.query.returnTo?.toString();
+        const host: string | undefined = req.query.host?.toString();
+        const scopes: string = req.query.scopes?.toString() || "";
         const override = req.query.override === 'true';
         const authProvider = host && await this.getAuthProviderForHost(host);
         if (!returnTo || !host || !authProvider) {
