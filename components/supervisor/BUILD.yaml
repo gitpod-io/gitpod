@@ -22,14 +22,12 @@ packages:
     deps:
       - :app
       - components/supervisor/frontend:app
-      #- components/supervisor/openssh:docker
+      - components/supervisor/openssh:app
       - components/workspacekit:app
       - components/workspacekit:fuse-overlayfs
       - components/gitpod-cli:app
     argdeps:
       - imageRepoBase
-    prep:
-      - ["sh", "-c", "sed -i -e 's#OPENSSH_IMAGE#'${imageRepoBase}/static-openssh:${version}'#g' Dockerfile"]
     config:
       dockerfile: leeway.Dockerfile
       metadata:
