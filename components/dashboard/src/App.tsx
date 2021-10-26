@@ -19,6 +19,7 @@ import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { useHistory } from 'react-router-dom';
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from './Analytics';
 import { User } from '@gitpod/gitpod-protocol';
+import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -177,8 +178,13 @@ function App() {
     }
 
     if (isGitpodIo() && window.location.pathname === '/' && window.location.hash === '' && !loading && !user) {
-        window.location.href = `https://www.gitpod.io`;
-        return <div></div>;
+        if (!GitpodCookie.isPresent(document.cookie)) {
+            window.location.href = `https://www.gitpod.io`;
+            return <div></div>;
+        } else {
+            // explicitly render the Login page when the session is out-of-sync with the Gitpod cookie
+            return (<Login />);
+        }
     }
 
     if (loading) {
