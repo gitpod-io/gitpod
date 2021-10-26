@@ -733,6 +733,7 @@ export class WorkspaceStarter {
         const startWorkspaceSpecIDEImage = new IDEImage();
         startWorkspaceSpecIDEImage.setWebRef(ideImage);
         spec.setIdeImage(startWorkspaceSpecIDEImage);
+        spec.setDeprecatedIdeImage(ideImage);
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
