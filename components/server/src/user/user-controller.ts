@@ -26,7 +26,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
 
@@ -225,6 +225,7 @@ export class UserController {
                 }
 
                 const rt = req.query.returnTo;
+                // @ts-ignore Type 'ParsedQs' is not assignable
                 if (!rt || !rt.startsWith("localhost:")) {
                     log.error(`auth/local-app: invalid returnTo URL: "${rt}"`)
                     res.sendStatus(400);
@@ -589,6 +590,7 @@ export class UserController {
     }
 
     protected getSafeReturnToParam(req: express.Request) {
+        // @ts-ignore Type 'ParsedQs' is not assignable
         const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
         if (!returnToURL) {
             log.debug({ sessionId: req.sessionID }, "Empty redirect URL");

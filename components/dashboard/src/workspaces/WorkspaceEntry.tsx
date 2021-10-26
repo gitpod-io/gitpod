@@ -7,7 +7,7 @@
 import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstanceConditions, WorkspaceInstancePhase, ContextURL } from '@gitpod/gitpod-protocol';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import moment from 'moment';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Modal from '../components/Modal';
 import { ContextMenuEntry } from '../components/ContextMenu';

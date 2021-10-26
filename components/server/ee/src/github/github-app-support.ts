@@ -53,12 +53,12 @@ export class GitHubAppSupport {
         const listReposForInstallation = async (installation: RestEndpointMethodTypes["apps"]["getUserInstallation"]["response"]) => {
             const sub = await probot.auth(installation.data.id);
             try {
-                const accessibleRepos = (await sub.paginate(sub.rest.apps.listReposAccessibleToInstallation, { per_page: 100 }));
+                const { repositories: accessibleRepos } = (await sub.paginate(sub.rest.apps.listReposAccessibleToInstallation, { per_page: 100 }));
                 return accessibleRepos.map(r => {
-                    return {
+                    return <ProviderRepository>{
                         name: r.name,
                         cloneUrl: r.clone_url,
-                        account: r.owner.login,
+                        account: r.owner?.login,
                         accountAvatarUrl: r.owner?.avatar_url,
                         updatedAt: r.updated_at,
                         installationId: installation.data.id,

@@ -26,7 +26,7 @@ import * as crypto from 'crypto';
 import { inject, injectable } from 'inversify';
 import * as opentracing from 'opentracing';
 import { URL } from 'url';
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { Disposable, ResponseError } from 'vscode-jsonrpc';
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from '../auth/auth-provider-service';

@@ -7,7 +7,7 @@
 import { ProbotOctokit } from 'probot';
 import { injectable, inject } from 'inversify';
 import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid';
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -50,10 +50,7 @@ export class PrebuildStatusMaintainer implements Disposable {
         span.setTag("pws-state", pws.state);
 
         try {
-            const githubApi = await this.githubApiProvider(installationId);
-            if (!githubApi) {
-                throw new Error("unable to authenticate GitHub app");
-            }
+            const githubApi = await this.getGitHubApi(installationId);
 
             if (pws.state == 'queued' || pws.state == "building") {
                 await this.workspaceDB.trace({span}).attachUpdatableToPrebuild(pws.id, {
@@ -142,18 +139,14 @@ export class PrebuildStatusMaintainer implements Disposable {
         const span = TraceContext.startSpan("doUpdate", ctx);
 
         try {
-            const github = await this.githubApiProvider(updatatable.installationId);
-            if (!github) {
-                log.error("unable to authenticate GitHub app - this leaves user-facing checks dangling.");
-                return;
-            }
+            const githubApi = await this.getGitHubApi(updatatable.installationId);
 
             if (!!updatatable.contextUrl) {
                 const conclusion = this.getConclusionFromPrebuildState(pws);
 
                 let found = true;
                 try {
-                    await github!.repos.createCommitStatus({
+                    await githubApi.repos.createCommitStatus({
                         owner: updatatable.owner,
                         repo: updatatable.repo,
                         context: "Gitpod",
@@ -187,6 +180,14 @@ export class PrebuildStatusMaintainer implements Disposable {
         }
     }
 
+    protected async getGitHubApi(installationId: string): Promise<InstanceType<typeof ProbotOctokit>> {
+        const api = await this.githubApiProvider(installationId);
+        if (!api) {
+            throw new Error("unable to authenticate GitHub app");
+        }
+        return (api as InstanceType<typeof ProbotOctokit>);
+    }
+
     protected async periodicUpdatableCheck() {
         const unresolvedUpdatables = await this.workspaceDB.trace({}).getUnresolvedUpdatables();
 
@@ -208,5 +209,4 @@ export class PrebuildStatusMaintainer implements Disposable {
             this.periodicChecker = undefined;
         }
     }
-
 }

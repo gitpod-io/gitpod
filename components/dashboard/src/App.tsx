@@ -215,7 +215,7 @@ function App() {
     window.addEventListener("hashchange", () => {
         // Refresh on hash change if the path is '/' (new context URL)
         if (window.location.pathname === '/') {
-            window.location.reload(true);
+            window.location.reload();
         }
     }, false);
 

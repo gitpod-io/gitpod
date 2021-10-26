@@ -42,5 +42,4 @@ export class ClientDataPrometheusAdapterImpl implements IClientDataPrometheusAda
     storePrebuildQueueLength(cloneURL: string, queueLength: number): void {
         this.prebuildQueueSizeGauge.set({ cloneURL, region: this.config.installationShortname }, queueLength);
     }
-
 }

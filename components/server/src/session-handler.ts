@@ -10,7 +10,8 @@ import { SessionOptions } from 'express-session'
 import * as uuidv4 from "uuid/v4"
 import { injectable, inject , postConstruct } from 'inversify';
 
-import * as MySQLStore from 'express-mysql-session';
+import * as mysqlstore from 'express-mysql-session';
+const MySQLStore = mysqlstore(session);
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { Config as DBConfig } from '@gitpod/gitpod-db/lib/config';
 import { Config } from './config';
