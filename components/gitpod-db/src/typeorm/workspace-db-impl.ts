@@ -167,19 +167,22 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             qb.andWhere("ws.pinned = true");
         }
         const projectIds = typeof options.projectId === 'string' ? [options.projectId] : options.projectId;
-        if (Array.isArray(projectIds)) {
+        if (projectIds !== undefined) {
             if (projectIds.length === 0 && !options.includeWithoutProject) {
                 // user passed an empty array of projectids and also is not interested in unassigned workspaces -> no results
                 return [];
             }
             qb.andWhere(new Brackets(qb => {
+                // there is a schema mismatch: we use a transformer to map to empty string, but have a column-default of NULL.
+                // Thus all legacy workspaces (before the introduction of projectId) have a NULL in this column; all afterwards an empty string.
+                const emptyProjectId = "(ws.projectId IS NULL OR ws.projectId = '')";
                 if (projectIds.length > 0) {
                     qb.where('ws.projectId IN (:pids)', { pids: projectIds });
                     if (options.includeWithoutProject) {
-                        qb.orWhere("ws.projectId IS NULL");
+                        qb.orWhere(emptyProjectId);
                     }
                 } else if (options.includeWithoutProject) {
-                    qb.where("ws.projectId IS NULL");
+                    qb.where(emptyProjectId);
                 }
             }));
         }

@@ -5,13 +5,20 @@
  */
 
 
-// The following is copied from https://github.com/typeorm/typeorm/blob/0.1.19/src/naming-strategy/DefaultNamingStrategy.ts for the sake of backwards compatibility (license: MIT)
-// Only small adjustment is in "indexName" to adjust for interface change
+// The following is copied (license: MIT) from https://github.com/typeorm/typeorm/blob/master/src/naming-strategy/DefaultNamingStrategy.ts
+// to be able to adjust it to be backwards compatible with https://github.com/typeorm/typeorm/blob/0.1.19/src/naming-strategy/DefaultNamingStrategy.ts
+// by replacing calls to "snakeCase" with "snakeCase_0_1_20" (cmp. https://github.com/typeorm/typeorm/blob/0.1.19/src/util/StringUtils.ts#L13-L20).
 
 import { Table } from "typeorm";
 import { NamingStrategyInterface } from "typeorm/naming-strategy/NamingStrategyInterface";
 import { RandomGenerator } from "typeorm/util/RandomGenerator";
-import { camelCase, snakeCase, titleCase } from "typeorm/util/StringUtils";
+import { camelCase, titleCase } from "typeorm/util/StringUtils";
+
+
+const snakeCase_0_1_20 = (str: string) => {
+    return str.replace(/(?:^|\.?)([A-Z])/g, (x, y) => "_" + y.toLowerCase())
+        .replace(/^_/, "");
+}
 
 /**
  * Naming strategy that is used by default.
@@ -31,7 +38,7 @@ export class DefaultNamingStrategy implements NamingStrategyInterface {
      * @param userSpecifiedName For example if user specified a table name in a decorator, e.g. @Entity("name")
      */
     tableName(targetName: string, userSpecifiedName: string | undefined): string {
-        return userSpecifiedName ? userSpecifiedName : snakeCase(targetName);
+        return userSpecifiedName ? userSpecifiedName : snakeCase_0_1_20(targetName);
     }
 
     /**
@@ -142,7 +149,7 @@ export class DefaultNamingStrategy implements NamingStrategyInterface {
         secondTableName: string,
         firstPropertyName: string,
         secondPropertyName: string): string {
-        return snakeCase(firstTableName + "_" + firstPropertyName.replace(/\./gi, "_") + "_" + secondTableName);
+        return snakeCase_0_1_20(firstTableName + "_" + firstPropertyName.replace(/\./gi, "_") + "_" + secondTableName);
     }
 
     joinTableColumnDuplicationPrefix(columnName: string, index: number): string {

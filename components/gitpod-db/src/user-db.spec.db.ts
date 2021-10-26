@@ -18,6 +18,25 @@ import { DBUser } from './typeorm/entity/db-user';
 import { DBWorkspace } from './typeorm/entity/db-workspace';
 import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
 
+
+const _IDENTITY1: Identity = {
+    authProviderId: "GitHub",
+    authId: "1234",
+    authName: "gero",
+    deleted: false,
+    primaryEmail: undefined,
+    readonly: false
+};
+const _IDENTITY2: Identity = {
+    authProviderId: "GitHub",
+    authId: "4321",
+    authName: "gero",
+    deleted: false,
+    primaryEmail: undefined,
+    readonly: false
+};
+const WRONG_ID = '123';    // no uuid
+
 @suite class UserDBSpec {
 
     db = testContainer.get<TypeORMUserDBImpl>(TypeORMUserDBImpl);
@@ -41,27 +60,9 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
         await mnr.getRepository(DBWorkspaceInstance).delete({});
     }
 
-    readonly _IDENTITY1: Identity = {
-        authProviderId: "GitHub",
-        authId: "1234",
-        authName: "gero",
-        deleted: false,
-        primaryEmail: undefined,
-        readonly: false
-    };
-    readonly _IDENTITY2: Identity = {
-        authProviderId: "GitHub",
-        authId: "4321",
-        authName: "gero",
-        deleted: false,
-        primaryEmail: undefined,
-        readonly: false
-    };
-    readonly _WRONG_ID = '123';    // no uuid
     // Copy to avoid pollution
-    get IDENTITY1() { return Object.assign({}, this._IDENTITY1); }
-    get IDENTITY2() { return Object.assign({}, this._IDENTITY2); }
-    get WRONG_ID() { return Object.assign({}, this._WRONG_ID); }
+    get IDENTITY1() { return Object.assign({}, _IDENTITY1); }
+    get IDENTITY2() { return Object.assign({}, _IDENTITY2); }
 
     @test(timeout(10000))
     public async createUserAndFindById() {
@@ -80,8 +81,8 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
     public async createUserAndNotFindByWrongId() {
         let user = await this.db.newUser();
         user.identities.push(this.IDENTITY2);
-        user = await this.db.storeUser(user)
-        expect(await this.db.findUserById(this.WRONG_ID)).to.be.undefined;
+        user = await this.db.storeUser(user);
+        expect(await this.db.findUserById(WRONG_ID)).to.be.undefined;
     }
 
     @test(timeout(10000))

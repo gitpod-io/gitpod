@@ -6,7 +6,7 @@
 
 import { injectable, inject, optional } from "inversify";
 
-import { Connection, createConnection, ConnectionOptions, getConnectionManager, PrimaryColumnOptions } from "typeorm";
+import { Connection, createConnection, ConnectionOptions, getConnectionManager, ColumnOptions } from "typeorm";
 import { Config } from "../config";
 import { DefaultNamingStrategy } from "./naming-strategy";
 
@@ -15,11 +15,11 @@ export const TypeORMOptions = Symbol('TypeORMOptions');
 @injectable()
 export class TypeORM {
     static readonly DEFAULT_CONNECTION_NAME = 'default';
-    static readonly UUID_COLUMN_TYPE: PrimaryColumnOptions = {
+    static readonly UUID_COLUMN_TYPE: ColumnOptions = {
         type: 'char',
         length: 36
     };
-    static readonly WORKSPACE_ID_COLUMN_TYPE: PrimaryColumnOptions = {
+    static readonly WORKSPACE_ID_COLUMN_TYPE: ColumnOptions = {
         type: 'char',
         length: 36
     };

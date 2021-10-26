@@ -314,7 +314,7 @@ export class TypeORMUserDBImpl implements UserDB {
         }
         const res = await userRepo.query(query);
         const count = res[0].cnt;
-        return count;
+        return Number.parseInt(count);
     }
 
     public async setEnvVar(envVar: UserEnvVar): Promise<void> {
