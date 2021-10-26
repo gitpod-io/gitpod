@@ -32,18 +32,25 @@ const (
 )
 
 // NewManager creates a new port manager
-func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, config ConfigInterace, tunneled TunneledPortsInterface, internalPorts ...uint32) *Manager {
+func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, config ConfigInterace, tunneled TunneledPortsInterface, slirp SlirpClient, internalPorts ...uint32) *Manager {
 	state := make(map[uint32]*managedPort)
 	internal := make(map[uint32]struct{})
 	for _, p := range internalPorts {
 		internal[p] = struct{}{}
 	}
 
+	if slirp != nil {
+		for _, p := range internalPorts {
+			slirp.Expose(p)
+		}
+	}
+
 	return &Manager{
-		E: exposed,
-		S: served,
-		C: config,
-		T: tunneled,
+		E:     exposed,
+		S:     served,
+		C:     config,
+		T:     tunneled,
+		Slirp: slirp,
 
 		forceUpdates: make(chan struct{}, 1),
 
@@ -75,10 +82,11 @@ type autoExposure struct {
 // Manager brings together served and exposed ports. It keeps track of which port is exposed, which one is served,
 // auto-exposes ports and proxies ports served on localhost only.
 type Manager struct {
-	E ExposedPortsInterface
-	S ServedPortsObserver
-	C ConfigInterace
-	T TunneledPortsInterface
+	E     ExposedPortsInterface
+	S     ServedPortsObserver
+	C     ConfigInterace
+	T     TunneledPortsInterface
+	Slirp SlirpClient
 
 	forceUpdates chan struct{}
 
@@ -263,6 +271,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 		if !reflect.DeepEqual(pm.served, newServed) {
 			pm.served = newServed
 			pm.updateProxies()
+			pm.updateSlirp()
 			pm.autoTunnel(ctx)
 		}
 	}
@@ -506,6 +515,19 @@ func (pm *Manager) autoTunnel(ctx context.Context) {
 	}
 	for _, localPort := range autoTunneled {
 		pm.autoTunneled[localPort] = struct{}{}
+	}
+}
+
+func (pm *Manager) updateSlirp() {
+	if pm.Slirp == nil {
+		return
+	}
+
+	for _, served := range pm.served {
+		err := pm.Slirp.Expose(served.Port)
+		if err != nil {
+			log.WithError(err).Debug("cannot expose port for slirp")
+		}
 	}
 }
 
