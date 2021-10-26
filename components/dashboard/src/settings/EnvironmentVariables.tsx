@@ -59,7 +59,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
             </div> : null}
             <div>
                 <h4>Name</h4>
-                <input className="w-full" type="text" value={ev.name} onChange={(v) => { update({name: v.target.value}) }} />
+                <input autoFocus className="w-full" type="text" value={ev.name} onChange={(v) => { update({name: v.target.value}) }} />
             </div>
             <div className="mt-4">
                 <h4>Value</h4>

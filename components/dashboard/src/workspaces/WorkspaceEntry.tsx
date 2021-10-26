@@ -175,7 +175,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                         {errorMessage}
                     </div>
                     : null}
-                <input className="w-full truncate" type="text" defaultValue={workspaceDescription} ref={renameInputRef} />
+                <input autoFocus className="w-full truncate" type="text" defaultValue={workspaceDescription} ref={renameInputRef} />
                 <div className="mt-1">
                     <p className="text-gray-500">Change the description to make it easier to go back to a workspace.</p>
                     <p className="text-gray-500">Workspace URLs and endpoints will remain the same.</p>
