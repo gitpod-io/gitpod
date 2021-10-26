@@ -156,7 +156,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async addMemberToTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
-        const team = await teamRepo.findOneById(teamId);
+        const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
             throw new Error('A team with this ID could not be found');
         }
@@ -176,7 +176,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void> {
         const teamRepo = await this.getTeamRepo();
-        const team = await teamRepo.findOneById(teamId);
+        const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
             throw new Error('A team with this ID could not be found');
         }
@@ -191,7 +191,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async removeMemberFromTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
-        const team = await teamRepo.findOneById(teamId);
+        const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
             throw new Error('A team with this ID could not be found');
         }
@@ -206,7 +206,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async findTeamMembershipInviteById(inviteId: string): Promise<TeamMembershipInvite> {
         const inviteRepo = await this.getMembershipInviteRepo();
-        const invite = await inviteRepo.findOneById(inviteId);
+        const invite = await inviteRepo.findOne(inviteId);
         if (!invite) {
             throw new Error('No invite found for the given ID.');
         }

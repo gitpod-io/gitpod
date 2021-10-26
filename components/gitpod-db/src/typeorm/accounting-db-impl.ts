@@ -116,11 +116,11 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
 
     async findSubscriptionById(id: string): Promise<Subscription | undefined> {
         const repo = await this.getSubscriptionRepo();
-        return repo.findOneById(id);
+        return repo.findOne(id);
     }
 
     async deleteSubscription(subscription: Subscription): Promise<void> {
-        return await (await this.getSubscriptionRepo()).delete(subscription as DBSubscription);
+        await (await this.getSubscriptionRepo()).delete(subscription as DBSubscription);
     }
 
     async findActiveSubscriptionByPlanID(planID: string, date: string): Promise<Subscription[]> {

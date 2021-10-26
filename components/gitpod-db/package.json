@@ -24,10 +24,10 @@
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
     "@jmondi/oauth2-server": "^1.1.0",
-    "mysql": "^2.15.0",
+    "mysql": "^2.18.1",
     "reflect-metadata": "^0.1.13",
     "the-big-username-blacklist": "^1.5.2",
-    "typeorm": "0.1.20"
+    "typeorm": "0.2.22"
   },
   "devDependencies": {
     "@types/chai": "^4.2.2",

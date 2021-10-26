@@ -50,7 +50,7 @@ export class TheiaPluginDBImpl implements TheiaPluginDB {
 
     async findById(id: string): Promise<TheiaPlugin | undefined> {
         const repo = await this.getTheiaPluginRepo();
-        return repo.findOneById(id);
+        return repo.findOne(id);
     }
 
     async findByPluginId(pluginId: string): Promise<TheiaPlugin[]> {
