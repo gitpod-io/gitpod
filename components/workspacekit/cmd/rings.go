@@ -249,6 +249,11 @@ var ring1Cmd = &cobra.Command{
 			fsshift = api.FSShiftMethod(v)
 		}
 
+		var (
+			wrapNetns         = os.Getenv("WORKSPACEKIT_USE_NETNS") == "true"
+			slirp4netnsSocket string
+		)
+
 		type mnte struct {
 			Target string
 			Source string
@@ -257,7 +262,6 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		var mnts []mnte
-
 		switch fsshift {
 		case api.FSShiftMethod_FUSE:
 			mnts = append(mnts,
@@ -304,6 +308,17 @@ var ring1Cmd = &cobra.Command{
 			)
 		}
 
+		if wrapNetns {
+			f, err := ioutil.TempDir("", "wskit-slirp4netns")
+			if err != nil {
+				log.WithError(err).Error("cannot create slirp4netns socket tempdir")
+				return
+			}
+
+			slirp4netnsSocket = filepath.Join(f, "slirp4netns.sock")
+			mnts = append(mnts, mnte{Target: "/.supervisor/slirp4netns.sock", Source: f, Flags: unix.MS_BIND | unix.MS_REC})
+		}
+
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
 			_ = os.MkdirAll(dst, 0644)
@@ -344,10 +359,17 @@ var ring1Cmd = &cobra.Command{
 		}
 		defer skt.Close()
 
+		var (
+			cloneFlags uintptr = syscall.CLONE_NEWNS | syscall.CLONE_NEWPID
+		)
+		if wrapNetns {
+			cloneFlags = cloneFlags | syscall.CLONE_NEWNET
+		}
+
 		cmd := exec.Command("/proc/self/exe", "ring2", socketFN)
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID,
+			Cloneflags: cloneFlags,
 		}
 		cmd.Dir = ring2Root
 		cmd.Stdin = os.Stdin
@@ -428,6 +450,31 @@ var ring1Cmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Error("ring2 did not connect successfully")
 			return
+		}
+
+		if wrapNetns {
+			slirpCmd := exec.Command("slirp4netns",
+				"--configure",
+				"--mtu=65520",
+				"--disable-host-loopback",
+				"--api-socket", slirp4netnsSocket,
+				strconv.Itoa(cmd.Process.Pid),
+				"tap0",
+			)
+			slirpCmd.SysProcAttr = &syscall.SysProcAttr{
+				Pdeathsig: syscall.SIGKILL,
+			}
+			slirpCmd.Stdin = os.Stdin
+			slirpCmd.Stdout = os.Stdout
+			slirpCmd.Stderr = os.Stderr
+
+			err = slirpCmd.Start()
+			if err != nil {
+				log.WithError(err).Error("cannot start slirp4netns")
+				return
+			}
+			//nolint:errcheck
+			defer slirpCmd.Process.Kill()
 		}
 
 		log.Info("signaling to child process")
