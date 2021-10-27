@@ -17,13 +17,12 @@ packages:
       - components/ide/jetbrains/backend-plugin:plugin
     argdeps:
       - imageRepoBase
-      - INTELLIJ_BACKEND_URL
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.intellij
       buildArgs:
-        JETBRAINS_BACKEND_URL: ${INTELLIJ_BACKEND_URL}
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/code-with-me/remote-dev/ideaIU-213.4958.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
       image:
         - ${imageRepoBase}/ide/intellij:${version}
