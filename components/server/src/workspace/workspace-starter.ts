@@ -323,6 +323,21 @@ export class WorkspaceStarter {
             }
         }
 
+        const useDesktopIdeChoice = user.additionalData?.ideSettings?.useDesktopIde || false;
+        if (useDesktopIdeChoice) {
+            const desktopIdeChoice = user.additionalData?.ideSettings?.defaultDesktopIde;
+            if (!!desktopIdeChoice) {
+                const mappedImage = ideConfig.desktopIdeImageAliases[desktopIdeChoice];
+                if (!!mappedImage) {
+                    configuration.desktopIdeImage = mappedImage;
+                } else if (this.authService.hasPermission(user, "ide-settings")) {
+                    // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
+                    // For now, this feature requires special permissions.
+                    configuration.desktopIdeImage = desktopIdeChoice;
+                }
+            }
+        }
+
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
         featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
@@ -732,6 +747,7 @@ export class WorkspaceStarter {
         spec.setInitializer((await initializerPromise).initializer);
         const startWorkspaceSpecIDEImage = new IDEImage();
         startWorkspaceSpecIDEImage.setWebRef(ideImage);
+        startWorkspaceSpecIDEImage.setDesktopRef(instance.configuration?.desktopIdeImage || "");
         spec.setIdeImage(startWorkspaceSpecIDEImage);
         spec.setDeprecatedIdeImage(ideImage);
         spec.setWorkspaceImage(instance.workspaceImage);
