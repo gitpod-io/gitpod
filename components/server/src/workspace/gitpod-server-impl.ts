@@ -828,7 +828,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 } else {
                     if (await services.repositoryService.canInstallAutomatedPrebuilds(user, cloneUrl)) {
                         console.log('Installing automated prebuilds for ' + cloneUrl);
-                        services.repositoryService.installAutomatedPrebuilds(user, cloneUrl);
+                        await services.repositoryService.installAutomatedPrebuilds(user, cloneUrl);
                     }
                 }
             }
