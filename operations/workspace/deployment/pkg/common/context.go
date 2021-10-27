@@ -16,6 +16,12 @@ type ProjectContext struct {
 	Bucket        string `yaml:"bucket"`
 }
 
+// GitpodContext is a wraper over data that is required
+// to install gitpod on a cluster
+type GitpodContext struct {
+	VersionsManifestFilePath string
+}
+
 // ClusterContext contains the context to access the cluster
 type ClusterContext struct {
 	KubeconfigPath string

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os/exec"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-deployment/pkg/orchestrate"
@@ -31,6 +32,10 @@ var deployCmd = &cobra.Command{
 	Short: "Creates a new workspace cluster and installs gitpod on it",
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
+
+		verifyVersionsManifestFilePath(versionsManifestFile)
+
+		rand.Seed(time.Now().UnixNano())
 		randomId := fmt.Sprintf("%d", rand.Intn(200)+100)
 		cfg.InitializeWorkspaceClusterNames(randomId) // TODO(prs):revisit and update this
 		log.Log.Infof("%+v", cfg)

@@ -22,7 +22,7 @@ Broadly these are the steps/things that it does in the given order:
 
 Use the below command to get started:
 ```sh
-go run main.go deploy --config /path/to/config.yaml
+go run main.go deploy --config /path/to/config.yaml --versions-manifest /path/to/versions.yaml
 ```
 
 ## Overall Flow Diagram
@@ -36,7 +36,6 @@ This is the flow that we are building to achive automated gitpod deployment:
     version: v1
     project:
       id: gitpod-dev-staging
-      environment: dev-staging
       gcpSACredFile: /mnt/secrets/gcp-sa/service-account.json
       network: gitpod-dev-staging
       dnsZone: gitpod-dev-staging-com
