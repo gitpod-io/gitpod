@@ -211,7 +211,7 @@
                             {
                                 "matchExpressions": [
                                     {
-                                        "key": "gitpod.io/workloads/workspace/headless",
+                                        "key": "gitpod.io/workload_workspace_headless",
                                         "operator": "Exists"
                                     }
                                 ]

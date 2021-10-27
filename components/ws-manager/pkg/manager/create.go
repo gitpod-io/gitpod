@@ -339,7 +339,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 						{
 							MatchExpressions: []corev1.NodeSelectorRequirement{
 								{
-									Key:      "gitpod.io/workloads/workspace/" + workloadType,
+									Key:      "gitpod.io/workload_workspace_" + workloadType,
 									Operator: corev1.NodeSelectorOpExists,
 								},
 							},

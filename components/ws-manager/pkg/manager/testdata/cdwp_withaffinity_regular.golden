@@ -207,7 +207,7 @@
                             {
                                 "matchExpressions": [
                                     {
-                                        "key": "gitpod.io/workloads/workspace/regular",
+                                        "key": "gitpod.io/workload_workspace_regular",
                                         "operator": "Exists"
                                     }
                                 ]
