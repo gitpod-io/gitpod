@@ -58,7 +58,29 @@ function isGitpodIo() {
 }
 
 function isWebsiteSlug(pathName: string) {
-    const slugs = ['chat', 'code-of-conduct', 'features', 'screencasts', 'blog', 'docs', 'changelog', 'pricing', 'self-hosted', 'gitpod-vs-github-codespaces', 'support', 'about', 'careers', 'contact', 'media-kit', 'imprint', 'terms', 'privacy', 'values']
+    const slugs = [
+        'about',
+        'blog',
+        'careers',
+        'changelog',
+        'chat',
+        'code-of-conduct',
+        'contact',
+        'docs',
+        'features',
+        'for',
+        'gitpod-vs-github-codespaces',
+        'imprint',
+        'media-kit',
+        'pricing',
+        'privacy',
+        'security',
+        'screencasts',
+        'self-hosted',
+        'support',
+        'terms',
+        'values'
+    ]
     return slugs.some(slug => pathName.startsWith('/' + slug + '/') || pathName === ('/' + slug));
 }
 
