@@ -6,6 +6,7 @@
 
 import AlertBox from "./AlertBox";
 import Modal from "./Modal";
+import { useRef, useEffect } from "react";
 
 export default function ConfirmationModal(props: {
     title?: string;
@@ -50,13 +51,24 @@ export default function ConfirmationModal(props: {
         </button>,
     ]
 
+    const buttonDisabled = useRef(props.buttonDisabled);
+    useEffect(() => {
+        buttonDisabled.current = props.buttonDisabled;
+    })
+
     return (
         <Modal
             title={props.title || "Confirm"}
             buttons={buttons}
             visible={props.visible === undefined ? true : props.visible}
             onClose={props.onClose}
-            onEnter={() => { props.onConfirm(); return true; }}
+            onEnter={() => {
+                if (buttonDisabled.current) {
+                    return false
+                }
+                props.onConfirm();
+                return true;
+            }}
         >
             {child}
         </Modal>
