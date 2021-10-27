@@ -389,6 +389,7 @@ func configureGit(cfg *Config) {
 	for _, s := range settings {
 		cmd := exec.Command("git", append([]string{"config", "--global"}, s...)...)
 		cmd = runAsGitpodUser(cmd)
+		cmd.Env = buildChildProcEnv(cfg, nil)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
