@@ -5,13 +5,14 @@
 package step
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-deployment/pkg/common"
-	"github.com/gitpod-io/gitpod/ws-deployment/pkg/runner"
 	"golang.org/x/xerrors"
 )
 
@@ -75,8 +76,23 @@ func generateDefaultScriptArgs(context *common.ProjectContext, cluster *common.W
 }
 
 func applyTerraformModules(context *common.ProjectContext, cluster *common.WorkspaceCluster) error {
+	credFileEnvVar := fmt.Sprintf("GOOGLE_APPLICATION_CREDENTIALS=%s", context.GCPSACredFile)
+	if _, err := os.Stat(context.GCPSACredFile); errors.Is(err, os.ErrNotExist) {
+		// reset this to empty string so that we can fallback to default
+		// gcloud context. This is useful in local development and execution
+		// scenarios
+		credFileEnvVar = ""
+	}
+
 	tfModulesDir := fmt.Sprintf(DefaultGeneratedTFModulePathTemplate, cluster.Name)
+
 	commandToRun := fmt.Sprintf("cd %s && terraform init && terraform apply -auto-approve", tfModulesDir)
-	err := runner.ShellRunWithDefaultConfig("/bin/sh", []string{"-c", commandToRun})
-	return err
+	cmd := exec.Command("/bin/sh", "-c", commandToRun)
+	// Set the env variable
+	cmd.Env = append(os.Environ(), credFileEnvVar)
+	// we will route the output to standard devices
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }
