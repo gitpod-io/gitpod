@@ -212,4 +212,7 @@ export interface WorkspaceInstanceConfiguration {
 
     // ideImage is the ref of the IDE image this instance uses.
     ideImage: string;
+
+    // desktopIdeImage is the ref of the desktop IDE image this instance uses.
+    desktopIdeImage?: string
 }
