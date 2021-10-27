@@ -13,4 +13,6 @@ trap "jobs -p | xargs -r kill" SIGINT SIGTERM EXIT
 export CWM_NON_INTERACTIVE=1
 export CWM_HOST_PASSWORD=gitpod
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
-/ide-desktop/backend/bin/remote-dev-server.sh cwmHost "$GITPOD_REPO_ROOT"
+/ide-desktop/backend/bin/remote-dev-server.sh cwmHost "$GITPOD_REPO_ROOT" > >(sed 's/^/JetBrains remote-dev-server.sh (out): /') 2> >(sed 's/^/JetBrains remote-dev-server.sh (err): /' >&2)
+
+echo "Desktop IDE startup script exited"

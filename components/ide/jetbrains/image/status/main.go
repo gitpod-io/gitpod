@@ -26,6 +26,8 @@ func main() {
 		label = os.Args[2]
 	}
 
+	errlog := log.New(os.Stderr, "JetBrains IDE status: ", log.LstdFlags)
+
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		var (
 			url    = "http://localhost:63342/codeWithMe/unattendedHostStatus?token=gitpod"
@@ -40,12 +42,13 @@ func main() {
 
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			errlog.Printf("Error reading body: %v\n", err)
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			// log.Printf("Desktop IDE status proxy: getting non-200 status - %d\n%s\n", resp.StatusCode, bodyBytes)
+			errlog.Printf("Getting non-200 status - %d\n%s\n", resp.StatusCode, bodyBytes)
 			http.Error(w, string(bodyBytes), resp.StatusCode)
 			return
 		}
@@ -60,10 +63,12 @@ func main() {
 		err = json.Unmarshal(bodyBytes, &jsonResp)
 
 		if err != nil {
+			errlog.Printf("Error parsing JSON body from IDE status probe: %v\n", err)
 			http.Error(w, "Error parsing JSON body from IDE status probe.", http.StatusServiceUnavailable)
 			return
 		}
 		if len(jsonResp.Projects) != 1 {
+			errlog.Printf("projects size != 1\n")
 			http.Error(w, "projects size != 1", http.StatusServiceUnavailable)
 			return
 		}
