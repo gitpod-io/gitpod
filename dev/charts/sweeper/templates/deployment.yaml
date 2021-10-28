@@ -31,7 +31,21 @@ spec:
           env:
           - name: WERFT_HOST
             value: "werft.werft.svc.cluster.local:7777"
+{{- if .Values.githubToken.secret }}
+          - name: "{{ .Values.githubToken.envVar }}"
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.githubToken.secret }}"
+                key: "{{ .Values.githubToken.key }}"
+{{- end }}
           args:
+{{- if .Values.githubToken.secret }}
+          - --tokenEnvVarName
+          - "{{ .Values.githubToken.envVar }}"
+{{- end }}
+          {{- range .Values.args }}
+          - {{ . }}
+          {{- end }}
           - -c
           - {{ .Values.command | quote }}
           ports:
