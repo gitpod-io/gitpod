@@ -505,16 +505,16 @@ public final class Token {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getHostBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(host_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, host_);
       }
       for (int i = 0; i < scope_.size(); i++) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, scope_.getRaw(i));
       }
-      if (!getDescriptionBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(description_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, description_);
       }
-      if (!getKindBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 4, kind_);
       }
       unknownFields.writeTo(output);
@@ -526,7 +526,7 @@ public final class Token {
       if (size != -1) return size;
 
       size = 0;
-      if (!getHostBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(host_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, host_);
       }
       {
@@ -537,10 +537,10 @@ public final class Token {
         size += dataSize;
         size += 1 * getScopeList().size();
       }
-      if (!getDescriptionBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(description_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, description_);
       }
-      if (!getKindBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, kind_);
       }
       size += unknownFields.getSerializedSize();
@@ -1552,10 +1552,10 @@ public final class Token {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getTokenBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(token_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, token_);
       }
-      if (!getUserBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(user_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, user_);
       }
       for (int i = 0; i < scope_.size(); i++) {
@@ -1570,10 +1570,10 @@ public final class Token {
       if (size != -1) return size;
 
       size = 0;
-      if (!getTokenBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(token_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, token_);
       }
-      if (!getUserBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(user_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, user_);
       }
       {
@@ -2658,13 +2658,13 @@ public final class Token {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getHostBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(host_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, host_);
       }
       for (int i = 0; i < scope_.size(); i++) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, scope_.getRaw(i));
       }
-      if (!getTokenBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(token_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, token_);
       }
       if (expiryDate_ != null) {
@@ -2673,7 +2673,7 @@ public final class Token {
       if (reuse_ != io.gitpod.supervisor.api.Token.TokenReuse.REUSE_NEVER.getNumber()) {
         output.writeEnum(5, reuse_);
       }
-      if (!getKindBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 6, kind_);
       }
       unknownFields.writeTo(output);
@@ -2685,7 +2685,7 @@ public final class Token {
       if (size != -1) return size;
 
       size = 0;
-      if (!getHostBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(host_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, host_);
       }
       {
@@ -2696,7 +2696,7 @@ public final class Token {
         size += dataSize;
         size += 1 * getScopeList().size();
       }
-      if (!getTokenBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(token_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, token_);
       }
       if (expiryDate_ != null) {
@@ -2707,7 +2707,7 @@ public final class Token {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(5, reuse_);
       }
-      if (!getKindBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, kind_);
       }
       size += unknownFields.getSerializedSize();
@@ -4142,8 +4142,8 @@ public final class Token {
               break;
             }
             case 16: {
-              tokenCase_ = 2;
               token_ = input.readBool();
+              tokenCase_ = 2;
               break;
             }
             case 26: {
@@ -4357,7 +4357,7 @@ public final class Token {
         output.writeBool(
             2, (boolean)((java.lang.Boolean) token_));
       }
-      if (!getKindBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, kind_);
       }
       unknownFields.writeTo(output);
@@ -4377,7 +4377,7 @@ public final class Token {
           .computeBoolSize(
               2, (boolean)((java.lang.Boolean) token_));
       }
-      if (!getKindBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, kind_);
       }
       size += unknownFields.getSerializedSize();
@@ -5695,7 +5695,7 @@ public final class Token {
       @java.lang.Override
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (!getKindBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 1, kind_);
         }
         unknownFields.writeTo(output);
@@ -5707,7 +5707,7 @@ public final class Token {
         if (size != -1) return size;
 
         size = 0;
-        if (!getKindBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, kind_);
         }
         size += unknownFields.getSerializedSize();

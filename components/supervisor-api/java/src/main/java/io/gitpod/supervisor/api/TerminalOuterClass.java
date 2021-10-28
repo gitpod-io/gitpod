@@ -1205,7 +1205,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public boolean containsEnv(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       return internalGetEnv().getMap().containsKey(key);
     }
     /**
@@ -1232,7 +1232,7 @@ public final class TerminalOuterClass {
     public java.lang.String getEnvOrDefault(
         java.lang.String key,
         java.lang.String defaultValue) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetEnv().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -1244,7 +1244,7 @@ public final class TerminalOuterClass {
 
     public java.lang.String getEnvOrThrow(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetEnv().getMap();
       if (!map.containsKey(key)) {
@@ -1286,7 +1286,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public boolean containsAnnotations(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       return internalGetAnnotations().getMap().containsKey(key);
     }
     /**
@@ -1313,7 +1313,7 @@ public final class TerminalOuterClass {
     public java.lang.String getAnnotationsOrDefault(
         java.lang.String key,
         java.lang.String defaultValue) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetAnnotations().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -1325,7 +1325,7 @@ public final class TerminalOuterClass {
 
     public java.lang.String getAnnotationsOrThrow(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetAnnotations().getMap();
       if (!map.containsKey(key)) {
@@ -1447,7 +1447,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getWorkdirBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workdir_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, workdir_);
       }
       com.google.protobuf.GeneratedMessageV3
@@ -1462,7 +1462,7 @@ public final class TerminalOuterClass {
           internalGetAnnotations(),
           AnnotationsDefaultEntryHolder.defaultEntry,
           3);
-      if (!getShellBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(shell_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 4, shell_);
       }
       for (int i = 0; i < shellArgs_.size(); i++) {
@@ -1480,7 +1480,7 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getWorkdirBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workdir_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, workdir_);
       }
       for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
@@ -1503,7 +1503,7 @@ public final class TerminalOuterClass {
         size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, annotations__);
       }
-      if (!getShellBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(shell_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, shell_);
       }
       {
@@ -2007,7 +2007,7 @@ public final class TerminalOuterClass {
       @java.lang.Override
       public boolean containsEnv(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         return internalGetEnv().getMap().containsKey(key);
       }
       /**
@@ -2034,7 +2034,7 @@ public final class TerminalOuterClass {
       public java.lang.String getEnvOrDefault(
           java.lang.String key,
           java.lang.String defaultValue) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetEnv().getMap();
         return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -2046,7 +2046,7 @@ public final class TerminalOuterClass {
 
       public java.lang.String getEnvOrThrow(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetEnv().getMap();
         if (!map.containsKey(key)) {
@@ -2066,7 +2066,7 @@ public final class TerminalOuterClass {
 
       public Builder removeEnv(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         internalGetMutableEnv().getMutableMap()
             .remove(key);
         return this;
@@ -2085,8 +2085,11 @@ public final class TerminalOuterClass {
       public Builder putEnv(
           java.lang.String key,
           java.lang.String value) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
-        if (value == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
+        if (value == null) {
+  throw new NullPointerException("map value");
+}
+
         internalGetMutableEnv().getMutableMap()
             .put(key, value);
         return this;
@@ -2135,7 +2138,7 @@ public final class TerminalOuterClass {
       @java.lang.Override
       public boolean containsAnnotations(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         return internalGetAnnotations().getMap().containsKey(key);
       }
       /**
@@ -2162,7 +2165,7 @@ public final class TerminalOuterClass {
       public java.lang.String getAnnotationsOrDefault(
           java.lang.String key,
           java.lang.String defaultValue) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetAnnotations().getMap();
         return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -2174,7 +2177,7 @@ public final class TerminalOuterClass {
 
       public java.lang.String getAnnotationsOrThrow(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetAnnotations().getMap();
         if (!map.containsKey(key)) {
@@ -2194,7 +2197,7 @@ public final class TerminalOuterClass {
 
       public Builder removeAnnotations(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         internalGetMutableAnnotations().getMutableMap()
             .remove(key);
         return this;
@@ -2213,8 +2216,11 @@ public final class TerminalOuterClass {
       public Builder putAnnotations(
           java.lang.String key,
           java.lang.String value) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
-        if (value == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
+        if (value == null) {
+  throw new NullPointerException("map value");
+}
+
         internalGetMutableAnnotations().getMutableMap()
             .put(key, value);
         return this;
@@ -2816,7 +2822,7 @@ public final class TerminalOuterClass {
       if (terminal_ != null) {
         output.writeMessage(1, getTerminal());
       }
-      if (!getStarterTokenBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(starterToken_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, starterToken_);
       }
       unknownFields.writeTo(output);
@@ -2832,7 +2838,7 @@ public final class TerminalOuterClass {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, getTerminal());
       }
-      if (!getStarterTokenBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(starterToken_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, starterToken_);
       }
       size += unknownFields.getSerializedSize();
@@ -3555,7 +3561,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
       unknownFields.writeTo(output);
@@ -3567,7 +3573,7 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
       }
       size += unknownFields.getSerializedSize();
@@ -4904,7 +4910,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public boolean containsAnnotations(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       return internalGetAnnotations().getMap().containsKey(key);
     }
     /**
@@ -4931,7 +4937,7 @@ public final class TerminalOuterClass {
     public java.lang.String getAnnotationsOrDefault(
         java.lang.String key,
         java.lang.String defaultValue) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetAnnotations().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -4943,7 +4949,7 @@ public final class TerminalOuterClass {
 
     public java.lang.String getAnnotationsOrThrow(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetAnnotations().getMap();
       if (!map.containsKey(key)) {
@@ -4985,22 +4991,22 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
       for (int i = 0; i < command_.size(); i++) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, command_.getRaw(i));
       }
-      if (!getTitleBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(title_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, title_);
       }
       if (pid_ != 0L) {
         output.writeInt64(4, pid_);
       }
-      if (!getInitialWorkdirBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(initialWorkdir_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 5, initialWorkdir_);
       }
-      if (!getCurrentWorkdirBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(currentWorkdir_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 6, currentWorkdir_);
       }
       com.google.protobuf.GeneratedMessageV3
@@ -5021,7 +5027,7 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
       }
       {
@@ -5032,17 +5038,17 @@ public final class TerminalOuterClass {
         size += dataSize;
         size += 1 * getCommandList().size();
       }
-      if (!getTitleBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(title_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, title_);
       }
       if (pid_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(4, pid_);
       }
-      if (!getInitialWorkdirBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(initialWorkdir_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, initialWorkdir_);
       }
-      if (!getCurrentWorkdirBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(currentWorkdir_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, currentWorkdir_);
       }
       for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
@@ -5921,7 +5927,7 @@ public final class TerminalOuterClass {
       @java.lang.Override
       public boolean containsAnnotations(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         return internalGetAnnotations().getMap().containsKey(key);
       }
       /**
@@ -5948,7 +5954,7 @@ public final class TerminalOuterClass {
       public java.lang.String getAnnotationsOrDefault(
           java.lang.String key,
           java.lang.String defaultValue) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetAnnotations().getMap();
         return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -5960,7 +5966,7 @@ public final class TerminalOuterClass {
 
       public java.lang.String getAnnotationsOrThrow(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetAnnotations().getMap();
         if (!map.containsKey(key)) {
@@ -5980,7 +5986,7 @@ public final class TerminalOuterClass {
 
       public Builder removeAnnotations(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         internalGetMutableAnnotations().getMutableMap()
             .remove(key);
         return this;
@@ -5999,8 +6005,11 @@ public final class TerminalOuterClass {
       public Builder putAnnotations(
           java.lang.String key,
           java.lang.String value) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
-        if (value == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
+        if (value == null) {
+  throw new NullPointerException("map value");
+}
+
         internalGetMutableAnnotations().getMutableMap()
             .put(key, value);
         return this;
@@ -6274,7 +6283,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
       unknownFields.writeTo(output);
@@ -6286,7 +6295,7 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
       }
       size += unknownFields.getSerializedSize();
@@ -8053,7 +8062,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
       unknownFields.writeTo(output);
@@ -8065,7 +8074,7 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
       }
       size += unknownFields.getSerializedSize();
@@ -8580,13 +8589,13 @@ public final class TerminalOuterClass {
               done = true;
               break;
             case 10: {
-              outputCase_ = 1;
               output_ = input.readBytes();
+              outputCase_ = 1;
               break;
             }
             case 16: {
-              outputCase_ = 2;
               output_ = input.readInt32();
+              outputCase_ = 2;
               break;
             }
             case 26: {
@@ -9684,7 +9693,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
       if (!stdin_.isEmpty()) {
@@ -9699,7 +9708,7 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
       }
       if (!stdin_.isEmpty()) {
@@ -10759,8 +10768,8 @@ public final class TerminalOuterClass {
               break;
             }
             case 24: {
-              priorityCase_ = 3;
               priority_ = input.readBool();
+              priorityCase_ = 3;
               break;
             }
             case 34: {
@@ -11000,7 +11009,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
       if (priorityCase_ == 2) {
@@ -11022,7 +11031,7 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
       }
       if (priorityCase_ == 2) {
@@ -12426,10 +12435,10 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
-      if (!getTitleBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(title_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, title_);
       }
       unknownFields.writeTo(output);
@@ -12441,10 +12450,10 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
       }
-      if (!getTitleBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(title_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, title_);
       }
       size += unknownFields.getSerializedSize();
@@ -13682,7 +13691,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public boolean containsChanged(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       return internalGetChanged().getMap().containsKey(key);
     }
     /**
@@ -13717,7 +13726,7 @@ public final class TerminalOuterClass {
     public java.lang.String getChangedOrDefault(
         java.lang.String key,
         java.lang.String defaultValue) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetChanged().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -13733,7 +13742,7 @@ public final class TerminalOuterClass {
 
     public java.lang.String getChangedOrThrow(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.String> map =
           internalGetChanged().getMap();
       if (!map.containsKey(key)) {
@@ -13807,7 +13816,7 @@ public final class TerminalOuterClass {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, alias_);
       }
       com.google.protobuf.GeneratedMessageV3
@@ -13828,7 +13837,7 @@ public final class TerminalOuterClass {
       if (size != -1) return size;
 
       size = 0;
-      if (!getAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(alias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, alias_);
       }
       for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
@@ -14293,7 +14302,7 @@ public final class TerminalOuterClass {
       @java.lang.Override
       public boolean containsChanged(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         return internalGetChanged().getMap().containsKey(key);
       }
       /**
@@ -14328,7 +14337,7 @@ public final class TerminalOuterClass {
       public java.lang.String getChangedOrDefault(
           java.lang.String key,
           java.lang.String defaultValue) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetChanged().getMap();
         return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -14344,7 +14353,7 @@ public final class TerminalOuterClass {
 
       public java.lang.String getChangedOrThrow(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.String> map =
             internalGetChanged().getMap();
         if (!map.containsKey(key)) {
@@ -14368,7 +14377,7 @@ public final class TerminalOuterClass {
 
       public Builder removeChanged(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         internalGetMutableChanged().getMutableMap()
             .remove(key);
         return this;
@@ -14391,8 +14400,11 @@ public final class TerminalOuterClass {
       public Builder putChanged(
           java.lang.String key,
           java.lang.String value) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
-        if (value == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
+        if (value == null) {
+  throw new NullPointerException("map value");
+}
+
         internalGetMutableChanged().getMutableMap()
             .put(key, value);
         return this;

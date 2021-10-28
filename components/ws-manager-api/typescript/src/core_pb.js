@@ -19,7 +19,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
 goog.object.extend(proto, content$service$api_initializer_pb);

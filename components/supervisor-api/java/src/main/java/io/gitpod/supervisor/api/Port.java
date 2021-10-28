@@ -377,7 +377,7 @@ public final class Port {
       if (visibility_ != io.gitpod.supervisor.api.Port.TunnelVisiblity.none.getNumber()) {
         output.writeEnum(3, visibility_);
       }
-      if (!getClientIdBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(clientId_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 4, clientId_);
       }
       unknownFields.writeTo(output);
@@ -401,7 +401,7 @@ public final class Port {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(3, visibility_);
       }
-      if (!getClientIdBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(clientId_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, clientId_);
       }
       size += unknownFields.getSerializedSize();
@@ -2366,8 +2366,8 @@ public final class Port {
               break;
             }
             case 18: {
-              outputCase_ = 2;
               output_ = input.readBytes();
+              outputCase_ = 2;
               break;
             }
             default: {

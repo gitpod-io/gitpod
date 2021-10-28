@@ -1168,10 +1168,10 @@ public final class Info {
       @java.lang.Override
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (!getEndpointBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(endpoint_)) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 1, endpoint_);
         }
-        if (!getHostBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(host_)) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 2, host_);
         }
         unknownFields.writeTo(output);
@@ -1183,10 +1183,10 @@ public final class Info {
         if (size != -1) return size;
 
         size = 0;
-        if (!getEndpointBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(endpoint_)) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, endpoint_);
         }
-        if (!getHostBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(host_)) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, host_);
         }
         size += unknownFields.getSerializedSize();
@@ -1958,10 +1958,10 @@ public final class Info {
       @java.lang.Override
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (!getOwnerBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(owner_)) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 1, owner_);
         }
-        if (!getNameBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 2, name_);
         }
         unknownFields.writeTo(output);
@@ -1973,10 +1973,10 @@ public final class Info {
         if (size != -1) return size;
 
         size = 0;
-        if (!getOwnerBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(owner_)) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, owner_);
         }
-        if (!getNameBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, name_);
         }
         size += unknownFields.getSerializedSize();
@@ -3195,13 +3195,13 @@ public final class Info {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getWorkspaceIdBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceId_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, workspaceId_);
       }
-      if (!getInstanceIdBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(instanceId_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, instanceId_);
       }
-      if (!getCheckoutLocationBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(checkoutLocation_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, checkoutLocation_);
       }
       if (workspaceLocationCase_ == 4) {
@@ -3210,28 +3210,28 @@ public final class Info {
       if (workspaceLocationCase_ == 5) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 5, workspaceLocation_);
       }
-      if (!getUserHomeBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userHome_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 6, userHome_);
       }
       if (gitpodApi_ != null) {
         output.writeMessage(7, getGitpodApi());
       }
-      if (!getGitpodHostBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(gitpodHost_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 8, gitpodHost_);
       }
-      if (!getWorkspaceContextUrlBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceContextUrl_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 9, workspaceContextUrl_);
       }
       if (repository_ != null) {
         output.writeMessage(10, getRepository());
       }
-      if (!getWorkspaceClusterHostBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceClusterHost_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 11, workspaceClusterHost_);
       }
-      if (!getWorkspaceUrlBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceUrl_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 12, workspaceUrl_);
       }
-      if (!getIdeAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(ideAlias_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 13, ideAlias_);
       }
       if (idePort_ != 0) {
@@ -3246,13 +3246,13 @@ public final class Info {
       if (size != -1) return size;
 
       size = 0;
-      if (!getWorkspaceIdBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceId_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, workspaceId_);
       }
-      if (!getInstanceIdBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(instanceId_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, instanceId_);
       }
-      if (!getCheckoutLocationBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(checkoutLocation_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, checkoutLocation_);
       }
       if (workspaceLocationCase_ == 4) {
@@ -3261,30 +3261,30 @@ public final class Info {
       if (workspaceLocationCase_ == 5) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, workspaceLocation_);
       }
-      if (!getUserHomeBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userHome_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, userHome_);
       }
       if (gitpodApi_ != null) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, getGitpodApi());
       }
-      if (!getGitpodHostBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(gitpodHost_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, gitpodHost_);
       }
-      if (!getWorkspaceContextUrlBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceContextUrl_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, workspaceContextUrl_);
       }
       if (repository_ != null) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(10, getRepository());
       }
-      if (!getWorkspaceClusterHostBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceClusterHost_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, workspaceClusterHost_);
       }
-      if (!getWorkspaceUrlBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workspaceUrl_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(12, workspaceUrl_);
       }
-      if (!getIdeAliasBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(ideAlias_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(13, ideAlias_);
       }
       if (idePort_ != 0) {

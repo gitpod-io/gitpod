@@ -433,7 +433,7 @@ public final class Notification {
       if (level_ != io.gitpod.supervisor.api.Notification.NotifyRequest.Level.ERROR.getNumber()) {
         output.writeEnum(1, level_);
       }
-      if (!getMessageBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, message_);
       }
       for (int i = 0; i < actions_.size(); i++) {
@@ -452,7 +452,7 @@ public final class Notification {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(1, level_);
       }
-      if (!getMessageBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, message_);
       }
       {
@@ -1266,7 +1266,7 @@ public final class Notification {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getActionBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(action_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, action_);
       }
       unknownFields.writeTo(output);
@@ -1278,7 +1278,7 @@ public final class Notification {
       if (size != -1) return size;
 
       size = 0;
-      if (!getActionBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(action_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, action_);
       }
       size += unknownFields.getSerializedSize();
