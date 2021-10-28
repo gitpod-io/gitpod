@@ -205,6 +205,51 @@ func TestSwitchedSetpointController(t *testing.T) {
 	}
 }
 
+func TestTimeOfDayMarshalJSON(t *testing.T) {
+	tests := []struct {
+		Input       time.Time
+		Expectation string
+		Error       string
+	}{
+		{time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC), "00:00:00", ""},
+		{time.Date(0, 1, 1, 23, 59, 59, 0, time.UTC), "23:59:59", ""},
+		{time.Date(0, 1, 1, 12, 0, 0, 0, time.UTC), "12:00:00", ""},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Expectation, func(t *testing.T) {
+			input := TimeOfDay(test.Input)
+			b, err := json.Marshal(input)
+
+			var errmsg string
+			if err != nil {
+				errmsg = err.Error()
+			}
+			if errmsg != test.Error {
+				t.Fatalf("unepxected error: want %v, got %v", test.Error, errmsg)
+				return
+			}
+			if err != nil {
+				return
+			}
+
+			e, err := json.Marshal(test.Expectation)
+			if err != nil {
+				t.Fatal(err.Error())
+				return
+			}
+
+			marshalled := string(b)
+			expectation := string(e)
+
+			if marshalled != expectation {
+				t.Fatalf("unexpected result: want %v, got %v", expectation, marshalled)
+				return
+			}
+		})
+	}
+}
+
 func TestTimeOfDayUnmarshalJSON(t *testing.T) {
 	tests := []struct {
 		Input       string

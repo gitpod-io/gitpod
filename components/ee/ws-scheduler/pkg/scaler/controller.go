@@ -6,6 +6,7 @@ package scaler
 
 import (
 	"context"
+	"encoding/json"
 	"sort"
 	"strings"
 	"time"
@@ -94,6 +95,17 @@ func (f *ConstantSetpointController) Control(ctx context.Context, workspaceCount
 
 // TimeOfDay is a time during the day. It unmarshals from JSON as hh:mm:ss string.
 type TimeOfDay time.Time
+
+// MarshalJSON converts the TimeOfDay into a string
+func (t TimeOfDay) MarshalJSON() ([]byte, error) {
+	str := time.Time(t).String()
+	res, err := time.Parse("2006-01-02 15:04:05 -0700 MST", str)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(res.Format("15:04:05"))
+}
 
 // UnmarshalJSON unmarshales a time of day
 func (t *TimeOfDay) UnmarshalJSON(data []byte) error {
