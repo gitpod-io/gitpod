@@ -398,9 +398,9 @@ func summarizeErrors(errs []error) error {
 	case 1:
 		return errs[0]
 	}
-	messages := make([]string, len(errs), len(errs))
-	for i := range errs {
-		messages[i] = errs[i].Error()
+	messages := []string{}
+	for _, e := range errs {
+		messages = append(messages, e.Error())
 	}
 	return xerrors.Errorf("multiple errors: %s", strings.Join(messages, ", "))
 }
