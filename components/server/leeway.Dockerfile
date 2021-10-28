@@ -2,20 +2,20 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM node:12.22.6-slim as builder
+FROM node:16.13.0-slim as builder
 
-RUN apt-get update && apt-get install -y build-essential python
+RUN apt-get update && apt-get install -y build-essential python3
 
 COPY components-server--app /installer/
 
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM golang:1.17 as oci-tool-builder
+FROM golang:1.17.2 as oci-tool-builder
 RUN go install github.com/csweichel/oci-tool@latest
 
-FROM node:12.22.6-slim
-
+FROM node:16.13.0-slim
+ENV NODE_OPTIONS=--unhandled-rejections=warn
 # Using ssh-keygen for RSA keypair generation
 RUN apt-get update && apt-get install -yq \
         openssh-client \
