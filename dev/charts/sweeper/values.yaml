@@ -9,6 +9,13 @@ image:
   pullPolicy: Always
 
 command: ""
+args: []
+
+githubToken:
+  envVar: GITHUB_TOKEN
+  # secret:
+  # key:
+
 
 serviceAccountName: server
 

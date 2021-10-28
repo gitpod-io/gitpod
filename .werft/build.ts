@@ -451,7 +451,33 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.log('helm', 'installing Sweeper');
         const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
         werft.log('helm', `Sweeper version: ${sweeperVersion}`);
-        exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" sweeper ../dev/charts/sweeper`);
+
+        // prepare args
+        const refsPrefix = "refs/heads/";
+        const owner: string = context.Repository.owner;
+        const repo: string = context.Repository.repo;
+        let branch: string = context.Repository.ref;
+        if (branch.startsWith(refsPrefix)) {
+            branch = branch.substring(refsPrefix.length);
+        }
+        const args = {
+            "period": "10m",
+            "timeout": "48h",   // period of inactivity that triggers a removal
+            branch,             // the branch to check for deletion
+            owner,
+            repo,
+        };
+        const argsStr = Object.entries(args).map(([k, v]) => `\"--${k}\", \"${v}\"`).join(", ");
+        const allArgsStr = `--set args="{${argsStr}}" --set githubToken.secret=github-sweeper-read-branches --set githubToken.key=token`;
+
+        // copy GH token into namespace
+        exec(`kubectl --namespace werft get secret github-sweeper-read-branches -o yaml \
+            | yq w - metadata.namespace ${namespace} \
+            | yq d - metadata.uid \
+            | yq d - metadata.resourceVersion \
+            | yq d - metadata.creationTimestamp \
+            | kubectl apply -f -`);
+        exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ../dev/charts/sweeper`);
     }
 
     function installGitpodOnK3sWsCluster(commonFlags: string, pathToKubeConfig: string, wsProxyIP: string) {
