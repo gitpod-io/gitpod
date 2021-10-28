@@ -2362,10 +2362,10 @@ public final class Status {
       @java.lang.Override
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (!getLinkBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(link_)) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 1, link_);
         }
-        if (!getLabelBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(label_)) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 2, label_);
         }
         unknownFields.writeTo(output);
@@ -2377,10 +2377,10 @@ public final class Status {
         if (size != -1) return size;
 
         size = 0;
-        if (!getLinkBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(link_)) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, link_);
         }
-        if (!getLabelBytes().isEmpty()) {
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(label_)) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, label_);
         }
         size += unknownFields.getSerializedSize();
@@ -7100,7 +7100,7 @@ public final class Status {
       if (visibility_ != io.gitpod.supervisor.api.Status.PortVisibility.private_visibility.getNumber()) {
         output.writeEnum(1, visibility_);
       }
-      if (!getUrlBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(url_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, url_);
       }
       if (onExposed_ != io.gitpod.supervisor.api.Status.OnPortExposedAction.ignore.getNumber()) {
@@ -7119,7 +7119,7 @@ public final class Status {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(1, visibility_);
       }
-      if (!getUrlBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(url_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, url_);
       }
       if (onExposed_ != io.gitpod.supervisor.api.Status.OnPortExposedAction.ignore.getNumber()) {
@@ -7998,7 +7998,7 @@ public final class Status {
     @java.lang.Override
     public boolean containsClients(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       return internalGetClients().getMap().containsKey(key);
     }
     /**
@@ -8033,7 +8033,7 @@ public final class Status {
     public int getClientsOrDefault(
         java.lang.String key,
         int defaultValue) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.Integer> map =
           internalGetClients().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -8049,7 +8049,7 @@ public final class Status {
 
     public int getClientsOrThrow(
         java.lang.String key) {
-      if (key == null) { throw new java.lang.NullPointerException(); }
+      if (key == null) { throw new NullPointerException("map key"); }
       java.util.Map<java.lang.String, java.lang.Integer> map =
           internalGetClients().getMap();
       if (!map.containsKey(key)) {
@@ -8586,7 +8586,7 @@ public final class Status {
       @java.lang.Override
       public boolean containsClients(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         return internalGetClients().getMap().containsKey(key);
       }
       /**
@@ -8621,7 +8621,7 @@ public final class Status {
       public int getClientsOrDefault(
           java.lang.String key,
           int defaultValue) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.Integer> map =
             internalGetClients().getMap();
         return map.containsKey(key) ? map.get(key) : defaultValue;
@@ -8637,7 +8637,7 @@ public final class Status {
 
       public int getClientsOrThrow(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         java.util.Map<java.lang.String, java.lang.Integer> map =
             internalGetClients().getMap();
         if (!map.containsKey(key)) {
@@ -8661,7 +8661,7 @@ public final class Status {
 
       public Builder removeClients(
           java.lang.String key) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         internalGetMutableClients().getMutableMap()
             .remove(key);
         return this;
@@ -8684,7 +8684,7 @@ public final class Status {
       public Builder putClients(
           java.lang.String key,
           int value) {
-        if (key == null) { throw new java.lang.NullPointerException(); }
+        if (key == null) { throw new NullPointerException("map key"); }
         
         internalGetMutableClients().getMutableMap()
             .put(key, value);
@@ -11752,13 +11752,13 @@ public final class Status {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getIdBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(id_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, id_);
       }
       if (state_ != io.gitpod.supervisor.api.Status.TaskState.opening.getNumber()) {
         output.writeEnum(2, state_);
       }
-      if (!getTerminalBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(terminal_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, terminal_);
       }
       if (presentation_ != null) {
@@ -11773,14 +11773,14 @@ public final class Status {
       if (size != -1) return size;
 
       size = 0;
-      if (!getIdBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(id_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, id_);
       }
       if (state_ != io.gitpod.supervisor.api.Status.TaskState.opening.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(2, state_);
       }
-      if (!getTerminalBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(terminal_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, terminal_);
       }
       if (presentation_ != null) {
@@ -12746,13 +12746,13 @@ public final class Status {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getNameBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
       }
-      if (!getOpenInBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(openIn_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, openIn_);
       }
-      if (!getOpenModeBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(openMode_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, openMode_);
       }
       unknownFields.writeTo(output);
@@ -12764,13 +12764,13 @@ public final class Status {
       if (size != -1) return size;
 
       size = 0;
-      if (!getNameBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
       }
-      if (!getOpenInBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(openIn_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, openIn_);
       }
-      if (!getOpenModeBytes().isEmpty()) {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(openMode_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, openMode_);
       }
       size += unknownFields.getSerializedSize();

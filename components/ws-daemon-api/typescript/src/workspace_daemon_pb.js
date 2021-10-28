@@ -19,7 +19,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 goog.exportSymbol('proto.iws.FSShiftMethod', null, global);
 goog.exportSymbol('proto.iws.MountProcRequest', null, global);
