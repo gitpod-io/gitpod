@@ -45,5 +45,8 @@ export default function () {
                 <button className="secondary" onClick={() => history.push('/')}>Cancel</button>
             </div>
         </form>
+        <p className="text-center w-full mt-12 text-gray-500">
+            <strong>Teams &amp; Projects</strong> are currently in Beta. <a href="https://github.com/gitpod-io/gitpod/issues/5095" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a>
+        </p>
     </div>;
 }
