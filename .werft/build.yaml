@@ -87,8 +87,8 @@ pod:
     - name: LEEWAY_WORKSPACE_ROOT
       value: /workspace
     - name: LEEWAY_REMOTE_CACHE_BUCKET
-      {{- if eq .Repository.Ref "refs/heads/master" }}
-      value: gitpod-core-leeway-cache-master
+      {{- if eq .Repository.Ref "refs/heads/main" }}
+      value: gitpod-core-leeway-cache-main
       {{- else }}
       value: gitpod-core-leeway-cache-branch
       {{- end }}
