@@ -43,8 +43,10 @@ const TASKS = {
   - init: pip install -r requirements.txt
     command: python main.py`,
     Other: `tasks:
-  - init: # TODO: install dependencies, build project
-    command: # TODO: start app`
+  - init: |
+      echo 'TODO: build project'
+    command: |
+      echo 'TODO: start app'`
 }
 
 // const IMAGES = {
@@ -75,6 +77,7 @@ export default function () {
     const { isDark } = useContext(ThemeContext);
 
     const [showAuthBanner, setShowAuthBanner] = useState<{ host: string } | undefined>(undefined);
+    const [buttonNewWorkspaceEnabled, setButtonNewWorkspaceEnabled] = useState<boolean>(true);
 
     useEffect(() => {
         // Disable editing while loading, or when the config comes from Git.
@@ -164,11 +167,10 @@ export default function () {
         });
     };
 
-    const buildProject = async (event: React.MouseEvent) => {
+    const buildProject = async () => {
         if (!project) {
             return;
         }
-        // (event.target as HTMLButtonElement).disabled = true;
         setEditorMessage(null);
         if (!!startPrebuildResult) {
             setStartPrebuildResult(undefined);
@@ -208,6 +210,26 @@ export default function () {
     }
 
     useEffect(() => { document.title = 'Configure Project — Gitpod' }, []);
+
+    const onNewWorkspace = async () => {
+        setButtonNewWorkspaceEnabled(false);
+        const redirectToNewWorkspace = () => {
+            // instead of `history.push` we want forcibly to redirect here in order to avoid a following redirect from `/` -> `/projects` (cf. App.tsx)
+            const url = new URL(window.location.toString());
+            url.pathname = "/";
+            url.hash = project?.cloneUrl!;
+            window.location.href = url.toString();
+        }
+
+        if (prebuildInstance?.status.phase === "stopped" && !prebuildInstance?.status.conditions.failed && !prebuildInstance?.status.conditions.headlessTaskFailed) {
+            redirectToNewWorkspace();
+            return;
+        }
+        if (!prebuildWasTriggered) {
+            await buildProject();
+        }
+        redirectToNewWorkspace();
+    }
 
     return <>
         <Header title="Configuration" subtitle="View and edit project configuration." />
@@ -257,14 +279,12 @@ export default function () {
                 <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
                     {prebuildWasTriggered && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} />}
                     <div className="flex-grow" />
-                    {((!isDetecting && isEditorDisabled) || (prebuildInstance?.status.phase === "stopped" && !prebuildInstance?.status.conditions.failed && !prebuildInstance?.status.conditions.headlessTaskFailed))
-                        ? <a className="my-auto" href={`/#${project?.cloneUrl}`}><button className="secondary">New Workspace</button></a>
-                        : <button disabled={true} className="secondary">New Workspace</button>}
                     {(prebuildWasTriggered && prebuildInstance?.status.phase !== "stopped")
                         ? <button className="danger flex items-center space-x-2" disabled={prebuildWasCancelled || (prebuildInstance?.status.phase !== "initializing" && prebuildInstance?.status.phase !== "running")} onClick={cancelPrebuild}>
                             <span>Cancel Prebuild</span>
                         </button>
-                        : <button disabled={isDetecting} onClick={buildProject}>Run Prebuild</button>}
+                        : <button disabled={isDetecting} className="secondary" onClick={buildProject}>Run Prebuild</button>}
+                    <button disabled={isDetecting && buttonNewWorkspaceEnabled} onClick={onNewWorkspace}>New Workspace</button>
                 </div>
             </div>
         </div>
