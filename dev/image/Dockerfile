@@ -88,7 +88,7 @@ RUN cd /usr/bin && curl -fsSL https://github.com/c4milo/github-release/releases/
 ### Protobuf
 RUN set -ex \
     && tmpdir=$(mktemp -d) \
-    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.17.3/protoc-3.17.3-linux-x86_64.zip \
+    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.19.1/protoc-3.19.1-linux-x86_64.zip \
     && mkdir -p /usr/lib/protoc && cd /usr/lib/protoc && unzip $tmpdir/protoc.zip \
     && chmod -R o+r+x /usr/lib/protoc/include \
     && chmod -R +x /usr/lib/protoc/bin \
