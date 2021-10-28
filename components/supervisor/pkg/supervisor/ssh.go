@@ -91,6 +91,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oHostKey " + s.sshkey,
 		"-oPidFile /dev/null",
 		"-oUseDNS no", // Disable DNS lookups.
+		"-oSubsystem sftp internal-sftp",
 	}
 
 	if os.Getenv("SUPERVISOR_DEBUG_ENABLE") != "" {
