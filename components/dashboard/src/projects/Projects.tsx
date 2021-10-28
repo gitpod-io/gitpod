@@ -17,6 +17,7 @@ import { ThemeContext } from "../theme-context";
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { toRemoteURL } from "./render-utils";
 import ContextMenu from "../components/ContextMenu";
+import ConfirmationModal from "../components/ConfirmationModal"
 import { prebuildStatusIcon } from "./Prebuilds";
 
 export default function () {
@@ -68,6 +69,7 @@ export default function () {
     }
 
     const onRemoveProject = async (p: Project) => {
+        setRemoveModalVisible(false)
         await getGitpodService().server.deleteProject(p.id);
         await updateProjects();
     }
@@ -84,8 +86,24 @@ export default function () {
     }
 
     const teamOrUserSlug = !!team ? 't/'+team.slug : 'projects';
+    let [ isRemoveModalVisible, setRemoveModalVisible ] = useState(false);
+    let [ removeProjectHandler, setRemoveProjectHandler ] = useState<() => void>(()=> () => {})
+    let [ willRemoveProject, setWillRemoveProject ] = useState<Project>()
 
     return <>
+
+        {isRemoveModalVisible && <ConfirmationModal
+            title="Remove Project"
+            areYouSureText="Are you sure you want to remove this project from this team? Team members will also lose access to this project."
+            children={{
+                name: willRemoveProject?.name ?? "",
+                description: willRemoveProject?.cloneUrl ?? "",
+            }}
+            buttonText="Remove Project"
+            visible={isRemoveModalVisible}
+            onClose={() => setRemoveModalVisible(false)}
+            onConfirm={removeProjectHandler}
+        />}
         <Header title="Projects" subtitle="Manage recently added projects." />
         {projects.length === 0 && (
             <div>
@@ -133,7 +151,13 @@ export default function () {
                                             {
                                                 title: "Remove Project",
                                                 customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
-                                                onClick: () => onRemoveProject(p)
+                                                onClick: () => {
+                                                    setWillRemoveProject(p)
+                                                    setRemoveProjectHandler(() => () => {
+                                                        onRemoveProject(p)
+                                                    })
+                                                    setRemoveModalVisible(true)
+                                                }
                                             },
                                         ]} />
                                     </div>
