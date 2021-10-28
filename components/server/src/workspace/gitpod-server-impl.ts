@@ -826,10 +826,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 if (!hostContext || !services) {
                     console.error('Unknown host: ' + host);
                 } else {
-                    if (await services.repositoryService.canInstallAutomatedPrebuilds(user, cloneUrl)) {
-                        console.log('Installing automated prebuilds for ' + cloneUrl);
-                        await services.repositoryService.installAutomatedPrebuilds(user, cloneUrl);
-                    }
+                    // on purpose to not await on that installation process, because it‘s not required of workspace start
+                    // See https://github.com/gitpod-io/gitpod/pull/6420#issuecomment-953499632 for more detail
+                    (async () => {
+                        if (await services.repositoryService.canInstallAutomatedPrebuilds(user, cloneUrl)) {
+                            console.log('Installing automated prebuilds for ' + cloneUrl);
+                            await services.repositoryService.installAutomatedPrebuilds(user, cloneUrl);
+                        }
+                    })().catch((e) => console.error('Install automated prebuilds failed', e))
                 }
             }
 
