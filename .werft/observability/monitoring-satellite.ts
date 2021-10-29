@@ -58,18 +58,8 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     ensureIngressesReadiness(params)
 }
 
-async function ensureCorrectInstallationOrder() {
-    const werft = getGlobalWerftInstance()
-
-    // Adds a label to the namespace metadata.
-    // This label is used by ServiceMonitor's namespaceSelector, so Prometheus
-    // only scrape metrics from its own namespace.
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/namespace.yaml', {silent: true})
-
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/podsecuritypolicy-restricted.yaml', {silent: true})
-    werft.log(sliceName, 'installing prometheus-operator')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/prometheus-operator/', {silent: true})
-    exec('kubectl rollout status deployment prometheus-operator', {slice: sliceName})
+async function ensureCorrectInstallationOrder(){
+    installSetup()
 
     deployPrometheus()
     deployGrafana()
@@ -216,4 +206,31 @@ function ingressReady(namespace: string, name: string): boolean {
     }
     werft.log(sliceName, `${name} ingress not ready.`)
     return false
+}
+
+/**
+ * installSetup creates or replaces everything that is needed to run monitoring-satellite.
+ * This setup includes Custom Resource Definitions(CRDs), kubernetes operators and namespaces.
+ */
+function installSetup() {
+    const werft = getGlobalWerftInstance()
+
+    // Adds a label to the namespace metadata.
+    // This label is used by ServiceMonitor's namespaceSelector, so Prometheus
+    // only scrape metrics from its own namespace.
+    exec('kubectl apply -f observability/monitoring-satellite/manifests/namespace.yaml', {silent: true})
+    exec('kubectl apply -f observability/monitoring-satellite/manifests/podsecuritypolicy-restricted.yaml', {silent: true})
+
+    const crdExists = exec('kubectl get customresourcedefinitions.apiextensions.k8s.io alertmanagers.monitoring.coreos.com', {silent: true}).code == 0
+    if (crdExists) {
+        werft.log(sliceName, "CRDs already exists, replacing CRDs'")
+        exec('for yaml in $(find observability/monitoring-satellite/manifests/prometheus-operator/ -type f -name "*CustomResourceDefinition.yaml"); do cat $yaml | kubectl delete -f -; done', {slice: sliceName})
+    }
+    exec('find observability/monitoring-satellite/manifests/prometheus-operator/ -type f -name "*CustomResourceDefinition.yaml" | kubectl create -f -', {slice: sliceName})
+    // Making sure CRDs got installed
+    exec('until kubectl get servicemonitors.monitoring.coreos.com --all-namespaces ; do date; sleep 1; echo ""; done', {silent: true})
+
+    werft.log(sliceName, 'installing prometheus-operator')
+    exec('for yaml in $(find observability/monitoring-satellite/manifests/prometheus-operator/ -type f ! -name "*CustomResourceDefinition.yaml"); do cat $yaml | kubectl apply -f -; done', {silent: true})
+    exec('kubectl rollout status deployment prometheus-operator', {slice: sliceName})
 }
