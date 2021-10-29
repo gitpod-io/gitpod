@@ -2,93 +2,97 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-version: main.1640
+version: main.1732
 components:
   agentSmith:
-    version: pd-add-missing-go-dep2-fork.0
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   blobserve:
-    version: commit-4e89f0f82d746317af800032439f7c790edfaec8
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   contentService:
-    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   dashboard:
-    version: commit-0c4c21259571ce3eaf3cbeb60e2b559ecc899dee
+    version: commit-d75a88003668aa699b61bc8a5ba7f76f67c3c9c1
 
   dbMigrations:
-    version: commit-4425adc68e4141544adb783867a3e398359f8ecc
+    version: commit-d75a88003668aa699b61bc8a5ba7f76f67c3c9c1
 
   dbSync:
-    version: commit-4425adc68e4141544adb783867a3e398359f8ecc
+    version: commit-d75a88003668aa699b61bc8a5ba7f76f67c3c9c1
 
   imageBuilder:
-    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   imageBuilderMk3:
     builderImage:
-      version: 93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+      version: aeebb3aec50715754842e767732963693f1a5679
 
-    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   integrationTest:
-    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   kedge:
-    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   openVsxProxy:
-    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   paymentEndpoint:
-    version: commit-4425adc68e4141544adb783867a3e398359f8ecc
+    version: commit-d75a88003668aa699b61bc8a5ba7f76f67c3c9c1
 
   proxy:
-    version: commit-cb09a691840416451c628515ddc35e721759ebc3
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   registryFacade:
-    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   server:
-    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
+    version: commit-d75a88003668aa699b61bc8a5ba7f76f67c3c9c1
 
   serviceWaiter:
-    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   workspace:
     codeImage:
-      version: commit-5c97db5258faab662b945211469f0d2d715cb44a
+      version: commit-aeebb3aec50715754842e767732963693f1a5679
 
-    codeImageStable:
-      version: not-a-valid-version
+    desktopIdeImages:
+      goland:
+        version: commit-aeebb3aec50715754842e767732963693f1a5679
+
+      intellij:
+        version: commit-aeebb3aec50715754842e767732963693f1a5679
 
     dockerUp:
-      version: commit-cb09a691840416451c628515ddc35e721759ebc3
+      version: commit-aeebb3aec50715754842e767732963693f1a5679
 
     supervisor:
-      version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+      version: commit-d75a88003668aa699b61bc8a5ba7f76f67c3c9c1
 
     theiaImage:
-      version: commit-cb09a691840416451c628515ddc35e721759ebc3
+      version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   wsDaemon:
     userNamespaces:
       seccompProfileInstaller:
-        version: commit-cb09a691840416451c628515ddc35e721759ebc3
+        version: commit-aeebb3aec50715754842e767732963693f1a5679
 
       shiftfsModuleLoader:
-        version: commit-cb09a691840416451c628515ddc35e721759ebc3
+        version: commit-aeebb3aec50715754842e767732963693f1a5679
 
-    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   wsManager:
-    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   wsManagerBridge:
-    version: commit-4425adc68e4141544adb783867a3e398359f8ecc
+    version: commit-d75a88003668aa699b61bc8a5ba7f76f67c3c9c1
 
   wsProxy:
-    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
 
   wsScheduler:
-    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+    version: commit-aeebb3aec50715754842e767732963693f1a5679
