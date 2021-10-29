@@ -1,0 +1,14 @@
+--- a/session.c	2021-10-29 07:07:35.794323753 +0000
++++ b/session.c	2021-10-29 07:23:07.420640891 +0000
+@@ -1126,6 +1126,11 @@
+ 		    options.permit_user_env_allowlist);
+ 	}
+
++	snprintf(buf, sizeof buf, "%.200s/%s/supervisor_env",
++		    pw->pw_dir, _PATH_SSH_USER_DIR);
++		read_environment_file(&env, &envsize, buf,
++		    options.permit_user_env_allowlist);
++
+ #ifdef USE_PAM
+ 	/*
+ 	 * Pull in any environment variables that may have
