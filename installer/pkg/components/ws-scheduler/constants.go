@@ -4,6 +4,8 @@
 
 package wsscheduler
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component = "ws-scheduler"
+	Component = common.WSSchedulerComponent
 )

@@ -1,88 +1,94 @@
-version: not-a-valid-version
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+version: main.1640
 components:
   agentSmith:
-    version: not-a-valid-version
+    version: pd-add-missing-go-dep2-fork.0
 
   blobserve:
-    version: not-a-valid-version
+    version: commit-4e89f0f82d746317af800032439f7c790edfaec8
 
   contentService:
-    version: not-a-valid-version
+    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
 
   dashboard:
-    version: not-a-valid-version
+    version: commit-0c4c21259571ce3eaf3cbeb60e2b559ecc899dee
 
   dbMigrations:
-    version: not-a-valid-version
+    version: commit-4425adc68e4141544adb783867a3e398359f8ecc
 
   dbSync:
-    version: not-a-valid-version
+    version: commit-4425adc68e4141544adb783867a3e398359f8ecc
 
   imageBuilder:
-    version: not-a-valid-version
+    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
 
   imageBuilderMk3:
     builderImage:
-      version: not-a-valid-version
+      version: 93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
 
-    version: not-a-valid-version
+    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
 
   integrationTest:
-    version: not-a-valid-version
+    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
 
   kedge:
-    version: not-a-valid-version
+    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
+
+  openVsxProxy:
+    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
 
   paymentEndpoint:
-    version: not-a-valid-version
+    version: commit-4425adc68e4141544adb783867a3e398359f8ecc
 
   proxy:
-    version: not-a-valid-version
+    version: commit-cb09a691840416451c628515ddc35e721759ebc3
 
   registryFacade:
-    version: not-a-valid-version
+    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
 
   server:
-    version: not-a-valid-version
+    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
 
   serviceWaiter:
-    version: not-a-valid-version
+    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
 
   workspace:
     codeImage:
-      version: not-a-valid-version
+      version: commit-5c97db5258faab662b945211469f0d2d715cb44a
 
     codeImageStable:
       version: not-a-valid-version
 
     dockerUp:
-      version: not-a-valid-version
+      version: commit-cb09a691840416451c628515ddc35e721759ebc3
 
     supervisor:
-      version: not-a-valid-version
+      version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
 
     theiaImage:
-      version: not-a-valid-version
+      version: commit-cb09a691840416451c628515ddc35e721759ebc3
 
   wsDaemon:
     userNamespaces:
       seccompProfileInstaller:
-        version: not-a-valid-version
+        version: commit-cb09a691840416451c628515ddc35e721759ebc3
 
       shiftfsModuleLoader:
-        version: not-a-valid-version
+        version: commit-cb09a691840416451c628515ddc35e721759ebc3
 
-    version: not-a-valid-version
+    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
 
   wsManager:
-    version: not-a-valid-version
+    version: commit-1d7d20c9cb289a047b8559b2141adf73ecf3876f
 
   wsManagerBridge:
-    version: not-a-valid-version
+    version: commit-4425adc68e4141544adb783867a3e398359f8ecc
 
   wsProxy:
-    version: not-a-valid-version
+    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab
 
   wsScheduler:
-    version: not-a-valid-version
-
+    version: commit-93170cc9bf3c9c08dc9c50c5522b480cfc27e5ab

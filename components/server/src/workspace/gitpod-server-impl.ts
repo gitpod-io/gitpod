@@ -18,7 +18,7 @@ import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } 
 import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { PageMessage, RemotePageMessage, RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
+import { IdentifyMessage, PageMessage, RemoteIdentifyMessage, RemotePageMessage, RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
 import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { ControlPortRequest, DescribeWorkspaceRequest, MarkActiveRequest, PortSpec, PortVisibility as ProtoPortVisibility, StopWorkspacePolicy, StopWorkspaceRequest } from '@gitpod/ws-manager/lib/core_pb';
@@ -828,7 +828,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 } else {
                     if (await services.repositoryService.canInstallAutomatedPrebuilds(user, cloneUrl)) {
                         console.log('Installing automated prebuilds for ' + cloneUrl);
-                        services.repositoryService.installAutomatedPrebuilds(user, cloneUrl);
+                        await services.repositoryService.installAutomatedPrebuilds(user, cloneUrl);
                     }
                 }
             }
@@ -1352,8 +1352,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
 
         const envvar: UserEnvVar = {
-            ...variable,
             id: variable.id || uuidv4(),
+            name: variable.name,
+            repositoryPattern: variable.repositoryPattern,
+            value: variable.value,
             userId,
         };
         await this.guardAccess({ kind: 'envVar', subject: envvar }, typeof variable.id === 'string' ? 'update' : 'create');
@@ -1559,7 +1561,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const user = this.checkAndBlockUser("deleteTeam");
         await this.guardTeamOperation(teamId, "delete");
 
-        await this.teamDB.deleteTeam(teamId);
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach(project => {
             this.deleteProject(project.id);
@@ -1567,8 +1568,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
         const teamMembers = await this.teamDB.findMembersByTeam(teamId);
         teamMembers.forEach(member => {
-            this.removeTeamMember(teamId, userId);
+            this.removeTeamMember(teamId, member.userId);
         })
+
+        await this.teamDB.deleteTeam(teamId);
 
         return this.analytics.track({
             userId: user.id,
@@ -1617,6 +1620,11 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     public async triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult> {
         this.checkAndBlockUser("triggerPrebuild");
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Triggering Prebuilds is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    public async cancelPrebuild(projectId: string, prebuildId: string): Promise<void> {
+        this.checkAndBlockUser("cancelPrebuild");
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Cancelling Prebuilds is implemented in Gitpod's Enterprise Edition`);
     }
 
     public async setProjectConfiguration(projectId: string, configString: string): Promise<void> {
@@ -2031,6 +2039,18 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             }
             this.analytics.page(msg);
         }
+    }
+
+    public async identifyUser(event: RemoteIdentifyMessage): Promise<void> {
+        //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
+        const user = this.checkUser("IdentifyUser");
+
+        const msg: IdentifyMessage = {
+            userId: user.id,
+            traits: event.traits,
+            context: event.context
+        };
+        this.analytics.identify(msg);
     }
 
     async getTerms(): Promise<Terms> {

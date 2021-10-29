@@ -21,7 +21,7 @@ func unprivilegedRolebinding(ctx *common.RenderContext) ([]runtime.Object, error
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
+				Name:      fmt.Sprintf("%s-unpriviledged", Component),
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},

@@ -1,0 +1,160 @@
+# debug using `werft run github -f -s .werft/build.js -j .werft/build.yaml -a debug=true`
+pod:
+  serviceAccount: werft
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: dev/workload
+            operator: In
+            values:
+            - "builds"
+  volumes:
+  - name: monitoring-satellite-preview-token
+    secret:
+      secretName: monitoring-satellite-preview-token
+  - name: gcp-sa
+    secret:
+      secretName: gcp-sa-gitpod-dev-deployer
+  - name: gcp-sa-release
+    secret:
+      secretName: gcp-sa-gitpod-release-deployer
+  - name: gpsh-coredev-license
+    secret:
+      secretName: gpsh-coredev-license
+  - name: payment-provider-secret
+    secret:
+      secretName: payment-provider-secret
+  - name: payment-webhook-secret
+    secret:
+      secretName: payment-webhook-secret
+  - name: go-build-cache
+    hostPath:
+      path: /mnt/disks/ssd0/go-build-cache
+      type: DirectoryOrCreate
+  # - name: deploy-key
+  #   secret:
+  #     secretName: deploy-key
+  # - name: github-ssh-key
+  #   secret:
+  #     secretName: github-ssh-key
+  #     defaultMode: 0600
+  # - name: gitpod-test-tokens
+  #   secret:
+  #     secretName: gitpod-test-tokens
+  containers:
+  - name: testdb
+    image: mysql:5.7
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: test
+    # Using the same port as in our Gitpod workspaces here
+    - name: MYSQL_TCP_PORT
+      value: 23306
+  - name: build
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:as-migrate-mixins.73
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: monitoring-satellite-preview-token
+      mountPath: /mnt/secrets/monitoring-satellite-preview-token
+    - name: gcp-sa
+      mountPath: /mnt/secrets/gcp-sa
+      readOnly: true
+    - name: gcp-sa-release
+      mountPath: /mnt/secrets/gcp-sa-release
+      readOnly: true
+    - name: gpsh-coredev-license
+      mountPath: /mnt/secrets/gpsh-coredev
+      readOnly: true
+    - name: payment-webhook-secret
+      mountPath: /mnt/secrets/payment-webhook-config
+      readOnly: true
+    - name: payment-provider-secret
+      mountPath: /mnt/secrets/payment-provider-config
+      readOnly: true
+    - name: go-build-cache
+      mountPath: /go-build-cache
+      readOnly: false
+    # - name: deploy-key
+    #   mountPath: /mnt/secrets/deploy-key
+    #   readOnly: true
+    # - name: github-ssh-key
+    #   mountPath: /mnt/secrets/github-ssh-key
+    #   readOnly: true
+    env:
+    - name: LEEWAY_WORKSPACE_ROOT
+      value: /workspace
+    - name: LEEWAY_REMOTE_CACHE_BUCKET
+      {{- if eq .Repository.Ref "refs/heads/master" }}
+      value: gitpod-core-leeway-cache-master
+      {{- else }}
+      value: gitpod-core-leeway-cache-branch
+      {{- end }}
+    - name: GOPROXY
+      value: http://athens-athens-proxy.athens.svc.cluster.local:9999
+    - name: GOCACHE
+      value: /go-build-cache
+    - name: WERFT_HOST
+      value: "werft.werft.svc.cluster.local:7777"
+    - name: NODENAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: NPM_AUTH_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: npm-auth-token
+          key: npm-auth-token.json
+    - name: SLACK_NOTIFICATION_PATH
+      valueFrom:
+        secretKeyRef:
+          name: slack-path
+          key: slackPath
+    # used for GitHub releases (NOTE: for some reasons the token contains a trailing \n, is trimmed below)
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-sh-release-token
+          key: token
+    # - name: GITPOD_TEST_TOKEN_GITHUB
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: gitpod-test-tokens
+    #       key: github-test-token.json
+    # - name: GITPOD_TEST_TOKEN_GITLAB
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: gitpod-test-tokens
+    #       key: gitlab-test-token.json
+    # - name: GITPOD_TEST_TOKEN_BITBUCKET
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: gitpod-test-tokens
+    #       key: bitbucket-test-token.json
+    - name: CODECOV_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: codecov
+          key: token
+    command:
+      - bash
+      - -c
+      - |
+        sleep 1
+        set -Eeuo pipefail
+
+        sudo chown gitpod:gitpod $GOCACHE
+        export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
+
+        export DOCKER_HOST=tcp://$NODENAME:2475
+        sudo chown -R gitpod:gitpod /workspace
+
+        (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
+        printf '{{ toJson . }}' > context.json
+
+        leeway build components/supervisor/openssh:app
+        # npx ts-node .werft/build.ts
+sidecars:
+- testdb

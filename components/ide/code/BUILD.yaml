@@ -1,16 +1,33 @@
 packages:
   - name: docker
     type: docker
+    deps:
+      - :docker-base
     srcs:
       - "startup.sh"
       - "supervisor-ide-config.json"
       - "bin/*"
     argdeps:
       - imageRepoBase
+      - codeCommit
+    prep:
+      - ["sh", "-c", "sed -i -e 's#BUILDER_BASE#'$(cat components-ide-code--docker-base/imgnames.txt)'#g' Dockerfile"]
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.codeImage
+      buildArgs:
+        CODE_COMMIT: ${codeCommit}
       image:
         - ${imageRepoBase}/ide/code:${version}
         - ${imageRepoBase}/ide/code:commit-${__git_commit}
+  - name: docker-base
+    type: docker
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: base.Dockerfile
+      metadata:
+        helm-component: workspace.codeImage
+      image:
+        - ${imageRepoBase}/ide/code-base:commit-${__git_commit}

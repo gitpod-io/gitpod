@@ -42,7 +42,7 @@ var buildCmd = &cobra.Command{
 
 			// make sure we're running long enough to have our logs read
 			if dt := time.Since(t0); dt < 5*time.Second {
-				time.Sleep(dt)
+				time.Sleep(10 * time.Second)
 			}
 
 			return

@@ -12,14 +12,14 @@ var Objects = common.CompositeRenderFunc(
 	networkpolicy,
 	rolebinding,
 	common.GenerateService(Component, map[string]common.ServicePort{
-		"rpc": {
+		RPCServiceName: {
 			ContainerPort: RPCPort,
 			ServicePort:   RPCPort,
 		},
-		"metrics": {
+		PrometheusName: {
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
-	}, nil),
+	}),
 	common.DefaultServiceAccount(Component),
 )

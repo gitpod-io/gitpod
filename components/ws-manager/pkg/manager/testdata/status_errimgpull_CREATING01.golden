@@ -11,9 +11,12 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
-            "ide_image": "foobar",
+            "deprecated_ide_image": "foobar",
             "url": "http://f29012c4-c6b9-4bd1-9c48-151bdeec6940.ws-dev.cw-registry.staging.gitpod-dev.com",
-            "timeout": "30m"
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "foobar"
+            }
         },
         "phase": 6,
         "conditions": {

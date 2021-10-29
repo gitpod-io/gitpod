@@ -19,6 +19,12 @@ body:
     description: Describe the steps to reproduce the issue
   validations:
     required: true
+- type: input
+  id: workspace
+  attributes:
+    label: Workspace affected
+    description: Does this issue affect a specific workspace?
+    placeholder: e.g. kumquat-goose-831fpnxf
 - type: textarea
   id: expected-behavior
   attributes:

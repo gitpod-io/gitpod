@@ -21,8 +21,8 @@ packages:
       - "supervisor-config.json"
     deps:
       - :app
-      - :dropbear
       - components/supervisor/frontend:app
+      - components/supervisor/openssh:app
       - components/workspacekit:app
       - components/workspacekit:fuse-overlayfs
       - components/gitpod-cli:app
@@ -35,13 +35,3 @@ packages:
       image:
         - ${imageRepoBase}/supervisor:${version}
         - ${imageRepoBase}/supervisor:commit-${__git_commit}
-  - name: dropbear
-    type: generic
-    config:
-      commands:
-        - ["curl", "-OL", "https://matt.ucc.asn.au/dropbear/dropbear-2020.81.tar.bz2"]
-        - ["tar", "xjf", "dropbear-2020.81.tar.bz2"]
-        - ["sh", "-c", "cd dropbear-2020.81; ./configure --enable-static && sed -i '/clearenv();/d' svr-chansession.c && sed -i '/addnewvar(\"PATH\", DEFAULT_PATH);/d' svr-chansession.c && sed -i 's/filestat.st_mode & (S_IWGRP | S_IWOTH)/0/g' svr-authpubkey.c && make"]
-        - ["mv", "dropbear-2020.81/dropbear", "dropbear"]
-        - ["mv", "dropbear-2020.81/dropbearkey", "dropbearkey"]
-        - ["rm", "-rf", "dropbear-2020.81*"]

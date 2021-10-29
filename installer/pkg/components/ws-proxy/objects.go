@@ -13,17 +13,17 @@ var Objects = common.CompositeRenderFunc(
 	rolebinding,
 	common.DefaultServiceAccount(Component),
 	common.GenerateService(Component, map[string]common.ServicePort{
-		"httpProxy": {
+		HTTPProxyPortName: {
 			ContainerPort: HTTPProxyPort,
 			ServicePort:   HTTPProxyPort,
 		},
-		"httpsProxy": {
+		HTTPSProxyPortName: {
 			ContainerPort: HTTPSProxyPort,
 			ServicePort:   HTTPSProxyPort,
 		},
-		"metrics": {
+		MetricsPortName: {
 			ContainerPort: MetricsPort,
 			ServicePort:   MetricsPort,
 		},
-	}, nil),
+	}),
 )

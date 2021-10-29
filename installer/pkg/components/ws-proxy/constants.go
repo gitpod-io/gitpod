@@ -4,11 +4,16 @@
 
 package wsproxy
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component      = "ws-proxy"
-	HostHeader     = "x-wsproxy-host"
-	HTTPProxyPort  = 8080
-	HTTPSProxyPort = 9090
-	MetricsPort    = 9500
-	ProbePort      = 60088
+	Component          = common.WSProxyComponent
+	HostHeader         = "x-wsproxy-host"
+	HTTPProxyPort      = 8080
+	HTTPProxyPortName  = "http-proxy"
+	HTTPSProxyPort     = 9090
+	HTTPSProxyPortName = "https-proxy"
+	MetricsPort        = 9500
+	MetricsPortName    = "metrics"
+	ProbePort          = 60088
 )

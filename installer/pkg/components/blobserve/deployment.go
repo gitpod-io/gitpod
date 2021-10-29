@@ -6,7 +6,7 @@ package blobserve
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-
+	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -18,14 +18,42 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	// todo(sje): get value from workspace pull secret
-	var pullSecret corev1.VolumeMount
-	var pullSecretVolume corev1.Volume
-	pullSecretVolume = corev1.Volume{
-		Name: "pull-secret",
-		VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
-			SecretName: "",
-		}},
+	volumes := []corev1.Volume{{
+		Name:         "cache",
+		VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+	}, {
+		Name: "config",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+			},
+		},
+	}}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "config",
+			MountPath: "/mnt/config",
+			ReadOnly:  true,
+		}, {
+			Name:      "cache",
+			MountPath: "/mnt/cache",
+		},
+	}
+
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		volumeName := "pull-secret"
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
+				SecretName: dockerregistry.BuiltInRegistryAuth,
+			}},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: "/mnt/pull-secret.json",
+			SubPath:   ".dockerconfigjson",
+		})
 	}
 
 	return []runtime.Object{
@@ -37,9 +65,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    labels,
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"Component": Component},
-				},
+				Selector: &metav1.LabelSelector{MatchLabels: labels},
 				// todo(sje): receive config value
 				Replicas: pointer.Int32(1),
 				Strategy: common.DeploymentStrategy,
@@ -53,22 +79,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Affinity:           &corev1.Affinity{},
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
-						Volumes: []corev1.Volume{{
-							Name:         "cache",
-							VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
-						}, {
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-								},
-							},
-						}, pullSecretVolume},
+						Volumes:            volumes,
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "-v", "/mnt/config/config.json"},
 							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Blobserve.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
+							Ports: []corev1.ContainerPort{{
+								Name:          ServicePortName,
+								ContainerPort: ContainerPort,
+							}},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
@@ -83,14 +103,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								common.DefaultEnv(&ctx.Config),
 								common.TracingEnv(&ctx.Config),
 							),
-							VolumeMounts: []corev1.VolumeMount{{
-								Name:      "config",
-								MountPath: "/mnt/config",
-								ReadOnly:  true,
-							}, {
-								Name:      "cache",
-								MountPath: "/mnt/cache",
-							}, pullSecret},
+							VolumeMounts: volumeMounts,
 						}, *common.KubeRBACProxyContainer()},
 					},
 				},

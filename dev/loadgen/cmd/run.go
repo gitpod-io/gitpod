@@ -51,7 +51,10 @@ var runCmd = &cobra.Command{
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{
-				IdeImage:         "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8c1466008dedabe79d82cbb91931a16f7ce7994c",
+				DeprecatedIdeImage: "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8c1466008dedabe79d82cbb91931a16f7ce7994c",
+				IdeImage: &api.IDEImage{
+					WebRef: "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8c1466008dedabe79d82cbb91931a16f7ce7994c",
+				},
 				Admission:        api.AdmissionLevel_ADMIT_OWNER_ONLY,
 				CheckoutLocation: "gitpod",
 				Git: &api.GitSpec{

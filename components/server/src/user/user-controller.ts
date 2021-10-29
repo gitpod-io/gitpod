@@ -11,7 +11,7 @@ import * as express from 'express';
 import { Authenticator } from "../auth/authenticator";
 import { Config } from '../config';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { GitpodCookie } from "../auth/gitpod-cookie";
+import { SafePromise } from '@gitpod/gitpod-protocol/lib/util/safe-promise';
 import { AuthorizationService } from "./authorization-service";
 import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { UserService } from "./user-service";
@@ -30,6 +30,7 @@ import { increaseLoginCounter } from '../../src/prometheus-metrics';
 import * as uuidv4 from 'uuid/v4';
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
+import { trackSignup } from '../analytics';
 
 @injectable()
 export class UserController {
@@ -37,7 +38,6 @@ export class UserController {
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
     @inject(Config) protected readonly config: Config;
-    @inject(GitpodCookie) protected readonly gitpodCookie: GitpodCookie;
     @inject(TosCookie) protected readonly tosCookie: TosCookie;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(UserService) protected readonly userService: UserService;
@@ -127,27 +127,11 @@ export class UserController {
             }
 
             // clear cookies
-            this.gitpodCookie.unsetCookie(res);
             this.sessionHandlerProvider.clearSessionCookie(res, this.config);
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
             res.redirect(redirectToUrl);
-        });
-        router.get("/refresh-login", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            if (!req.isAuthenticated() || !User.is(req.user)) {
-                res.sendStatus(401);
-                return;
-            }
-
-            // Clean up
-            this.tosCookie.unset(res);
-
-            // This endpoint is necessary as calls over ws (our way of communicating with /api) do not update the browsers cookie
-            req.session!.touch(console.error);  // Update session explicitly, just to be sure
-            // Update `gitpod-user=loggedIn` as well
-            this.gitpodCookie.setCookie(res);
-            res.sendStatus(200);                // Carries up-to-date cookie in 'Set-Cookie' header
         });
         router.get("/auth/workspace-cookie/:instanceID", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!req.isAuthenticated() || !User.is(req.user)) {
@@ -510,21 +494,9 @@ export class UserController {
 
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
-        this.analytics.track({
-            userId: user.id,
-            event: "signup",
-            properties: {
-                "auth_provider": user.identities[0].authProviderId,
-                "email": User.getPrimaryEmail(user),
-                "name": user.identities[0].authName,
-                "full_name": user.fullName,
-                "created_at": user.creationDate,
-                "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
-                "unsubscribed_changelog": !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
-                "unsubscribed_devx": !user.additionalData?.emailNotificationSettings?.allowsDevXMail,
-                "blocked": user.blocked
-            }
-        });
+
+        /* no await */ SafePromise.catchAndLog(trackSignup(user, req, this.analytics), { userId: user.id });
+
         await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
     }
 

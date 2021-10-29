@@ -61,10 +61,10 @@ data:
         "contentServiceAddr": {{ $comp.contentServiceAddr | quote }},
         "imageBuilderAddr": {{ $comp.imageBuilderAddr | quote }},
         "codeSync": {{ $comp.codeSync | toJson }},
-        {{- if .Values.vsxRegistry.proxy }}
+        {{- if not .Values.components.openVsxProxy.disabled }}
         "vsxRegistryUrl": "https://open-vsx.{{ .Values.hostname }}",
         {{- else }}
-        "vsxRegistryUrl": "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}",
+        "vsxRegistryUrl": "{{ .Values.components.openVsxProxy.vsxRegistryUrl | default "https://open-vsx.org" }}",
         {{- end }}
         "enablePayment": {{ $comp.enablePayment }},
         "insecureNoDomain": {{ $comp.insecureNoDomain }},

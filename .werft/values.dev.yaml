@@ -29,9 +29,6 @@ resources:
     # => 32Gi / 100 ~ 328Mi => 350Mi
     memory: 350Mi
 
-vsxRegistry:
-  proxy: true
-
 components:
 
   agentSmith:
@@ -72,6 +69,8 @@ components:
       memory: 350Mi
 
   workspace:
+    codeImage:
+      insidersVersion: null
     # configure GCP registry
     pullSecret:
       secretName: gcp-sa-registry-auth
@@ -108,6 +107,9 @@ components:
                 cpu: 1m
                 ephemeral-storage: 5Gi
                 memory: 4608Mi  # = 2 * 2304Mi
+  openVsxProxy:
+    disabled: false
+    replicas: 2
 
   # Allow per-branch ingress from another, in-cluster proxy
   proxy:
@@ -192,12 +194,6 @@ components:
     name: "ws-proxy"
     disabled: false
     replicas: 1
-    wsManagerProxy:
-      enabled: true
-    ports:
-      wsManagerProxy:
-        expose: true
-        containerPort: 8081
     resources:
       # in preview envs, we want deployments to push scale-up early
       memory: 350Mi

@@ -6,6 +6,7 @@
 
 import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
+import CodeText from "../components/CodeText";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -59,7 +60,6 @@ export default function TeamSettings() {
 
         <ConfirmationModal
             title="Delete Team"
-            areYouSureText="You are about to permanently delete this team including all associated data with this team."
             buttonText="Delete Team"
             buttonDisabled={teamSlug !== team!.slug}
             visible={modal}
@@ -67,13 +67,14 @@ export default function TeamSettings() {
             onClose={close}
             onConfirm={deleteTeam}
         >
+            <p className="text-base text-gray-500">You are about to permanently delete <b>{team?.slug}</b> including all associated data with this team.</p>
             <ol className="text-gray-500 text-m list-outside list-decimal">
                 <li className="ml-5">All <b>projects</b> added in this team will be deleted and cannot be restored afterwards.</li>
                 <li className="ml-5">All <b>workspaces</b> opened for projects within this team will be deleted for all team members and cannot be restored afterwards.</li>
                 <li className="ml-5">All <b>members</b> of this team will lose access to this team, associated projects and workspaces.</li>
             </ol>
-            <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">Type your team's URL slug to confirm</p>
-            <input className="w-full" type="text" onChange={e => setTeamSlug(e.target.value)}></input>
+            <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">Type <CodeText>{team?.slug}</CodeText> to confirm</p>
+            <input autoFocus className="w-full" type="text" onChange={e => setTeamSlug(e.target.value)}></input>
         </ConfirmationModal>
     </>
 }

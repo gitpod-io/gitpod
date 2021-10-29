@@ -308,6 +308,9 @@ export default function NewProject() {
                         )}
                     </div>
             )}
+            <p className="text-left w-full mt-12 text-gray-500">
+                <strong>Teams &amp; Projects</strong> are currently in Beta. <a href="https://github.com/gitpod-io/gitpod/issues/5095" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a> or open a <a href="/workspaces" className="gp-link">New Workspace</a> with an example repository.
+            </p>
         </>
         );
 

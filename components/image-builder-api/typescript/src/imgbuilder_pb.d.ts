@@ -362,6 +362,8 @@ export class LogsRequest extends jspb.Message {
     setBuildRef(value: string): LogsRequest;
     getCensored(): boolean;
     setCensored(value: boolean): LogsRequest;
+    getBuildId(): string;
+    setBuildId(value: string): LogsRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): LogsRequest.AsObject;
@@ -377,6 +379,7 @@ export namespace LogsRequest {
     export type AsObject = {
         buildRef: string,
         censored: boolean,
+        buildId: string,
     }
 }
 
@@ -450,6 +453,8 @@ export class BuildInfo extends jspb.Message {
     setStatus(value: BuildStatus): BuildInfo;
     getStartedAt(): number;
     setStartedAt(value: number): BuildInfo;
+    getBuildId(): string;
+    setBuildId(value: string): BuildInfo;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildInfo.AsObject;
@@ -467,6 +472,7 @@ export namespace BuildInfo {
         baseRef: string,
         status: BuildStatus,
         startedAt: number,
+        buildId: string,
     }
 }
 

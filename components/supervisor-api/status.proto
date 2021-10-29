@@ -10,6 +10,7 @@ import "google/api/annotations.proto";
 import "port.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
 
 // StatusService provides status feedback for the various in-workspace services.
 service StatusService {
@@ -85,6 +86,13 @@ message IDEStatusRequest {
 }
 message IDEStatusResponse {
     bool ok = 1;
+
+    message DesktopStatus {
+        string link = 1;
+        string label = 2;
+    }
+
+    DesktopStatus desktop = 2;
 }
 
 message ContentStatusRequest {

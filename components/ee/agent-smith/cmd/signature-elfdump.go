@@ -5,14 +5,19 @@
 package cmd
 
 import (
-	"fmt"
+	"debug/elf"
+	"encoding/json"
 	"log"
 	"os"
-	"strings"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/spf13/cobra"
 )
+
+var signatureElfdumpOpts struct {
+	Symbols bool
+	Rodata  bool
+}
 
 // signatureElfdumpCmd represents the signatureElfdump command
 var signatureElfdumpCmd = &cobra.Command{
@@ -25,15 +30,35 @@ var signatureElfdumpCmd = &cobra.Command{
 		}
 		defer f.Close()
 
-		syms, err := signature.ExtractELFSymbols(f)
+		var result struct {
+			Symbols []string `json:"symbols"`
+			Rodata  []byte   `json:"rodata"`
+		}
+
+		executable, err := elf.NewFile(f)
+		if err != nil {
+			log.Fatalf("cannot anaylze ELF file: %v", err)
+			return
+		}
+
+		result.Symbols, err = classifier.ExtractELFSymbols(executable)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println(strings.Join(syms, "\n"))
+		result.Rodata, err = classifier.ExtractELFRodata(executable)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		enc.Encode(result)
 	},
 }
 
 func init() {
 	signatureCmd.AddCommand(signatureElfdumpCmd)
+	signatureElfdumpCmd.Flags().BoolVar(&signatureElfdumpOpts.Symbols, "symbols", true, "extract ELF symbols")
+	signatureElfdumpCmd.Flags().BoolVar(&signatureElfdumpOpts.Rodata, "rodata", true, "extract ELF rodata")
 }

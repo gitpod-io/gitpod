@@ -53,7 +53,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-gokart.18
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:as-migrate-mixins.73
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -87,8 +87,8 @@ pod:
     - name: LEEWAY_WORKSPACE_ROOT
       value: /workspace
     - name: LEEWAY_REMOTE_CACHE_BUCKET
-      {{- if eq .Repository.Ref "refs/heads/master" }}
-      value: gitpod-core-leeway-cache-master
+      {{- if eq .Repository.Ref "refs/heads/main" }}
+      value: gitpod-core-leeway-cache-main
       {{- else }}
       value: gitpod-core-leeway-cache-branch
       {{- end }}
@@ -138,6 +138,9 @@ pod:
         secretKeyRef:
           name: codecov
           key: token
+    envFrom:
+    - secretRef:
+        name: jetbrains-secrets
     command:
       - bash
       - -c
@@ -148,7 +151,7 @@ pod:
         sudo chown gitpod:gitpod $GOCACHE
         export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
 
-        export DOCKER_HOST=tcp://$NODENAME:2375
+        export DOCKER_HOST=tcp://$NODENAME:2475
         sudo chown -R gitpod:gitpod /workspace
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep

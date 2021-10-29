@@ -202,3 +202,25 @@ RUN sudo curl -fsSL https://uploader.codecov.io/latest/codecov-linux -o /usr/loc
 # Install pre-commit https://pre-commit.com/#install
 RUN sudo install-packages shellcheck \
     && sudo pip3 install pre-commit
+
+# Install observability-related binaries
+ARG PROM_VERSION="2.30.0"
+RUN curl -LO https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
+    tar -xzvf prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
+    sudo mv prometheus-${PROM_VERSION}.linux-amd64/promtool /usr/local/bin/promtool && \
+    rm -rf prometheus-${PROM_VERSION}.linux-amd64/
+
+ARG JSONNET_BUNDLER_VERSION="0.4.0"
+RUN curl -L -o jb https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v${JSONNET_BUNDLER_VERSION}/jb-linux-amd64 && \
+    chmod +x jb && sudo mv jb /usr/local/bin
+
+ARG JSONNET_VERSION="0.17.0"
+RUN curl -LO https://github.com/google/go-jsonnet/releases/download/v${JSONNET_VERSION}/go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz && \
+    tar -xzvf go-jsonnet_${JSONNET_VERSION}_Linux_x86_64.tar.gz && \
+    sudo mv jsonnet /usr/local/bin/jsonnet && \
+    sudo mv jsonnetfmt /usr/local/bin/jsonnetfmt
+
+ARG GOJSONTOYAML_VERSION="0.1.0"
+RUN curl -LO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONTOYAML_VERSION}/gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
+    tar -xzvf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
+    sudo mv gojsontoyaml /usr/local/bin/gojsontoyaml

@@ -1,0 +1,93 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.openVsxProxy -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if and (not $comp.disabled) (not $comp.deployDisabled) -}}
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: openvsx-proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: openvsx-proxy
+    kind: statefulset
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: openvsx-proxy
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  serviceName: openvsx-proxy
+  replicas: {{ $comp.replicas | default 1 }}
+  template:
+    metadata:
+      name: openvsx-proxy
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: openvsx-proxy
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccount: openvsx-proxy
+      containers:
+      - name: openvsx-proxy
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args:
+        - /config/config.json
+        readinessProbe:
+          httpGet:
+            path: /openvsx-proxy-status
+            port: 8080
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        volumeMounts:
+        - name: config
+          mountPath: "/config"
+{{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $comp) | indent 8 }}
+{{ if $comp.enableRedis }}
+      - name: redis
+        image: redis:6.2
+        command:
+        - redis-server
+        - "/config/redis.conf"
+        env:
+        - name: MASTER
+          value: "true"
+        ports:
+        - containerPort: 6379
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /data
+          name: redis-data
+{{ end }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+{{ toYaml .Values.defaults | indent 6 }}
+
+{{ if $comp.enableRedis }}
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: openvsx-proxy
+        kind: volumeclaim
+        stage: {{ .Values.installation.stage }}
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 8Gi
+{{ end }}
+
+{{ end }}

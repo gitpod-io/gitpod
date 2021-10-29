@@ -7,7 +7,7 @@
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, AdmissionPreference, AdmissionPreferenceUserLevel, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -23,6 +23,7 @@ import {
     UpdateRequest,
     UpdateResponse,
     AdmissionConstraint as GRPCAdmissionConstraint,
+    AdmissionPreference as GRPCAdmissionPreference,
 } from '@gitpod/ws-manager-bridge-api/lib';
 import { GetWorkspacesRequest } from '@gitpod/ws-manager/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
@@ -111,6 +112,7 @@ export class ClusterService implements IClusterServiceServer {
                 };
 
                 const admissionConstraints = call.request.getAdmissionConstraintsList().map(mapAdmissionConstraint).filter(c => !!c) as AdmissionConstraint[];
+                const admissionPreferences = call.request.getAdmissionPreferenceList().map(mapAdmissionPreference).filter(c => !!c) as AdmissionPreference[];
 
                 const newCluster: WorkspaceCluster = {
                     name: req.name,
@@ -120,7 +122,8 @@ export class ClusterService implements IClusterServiceServer {
                     maxScore: 100,
                     govern,
                     tls,
-                    admissionConstraints
+                    admissionConstraints,
+                    admissionPreferences,
                 };
 
                 // try to connect to validate the config. Throws an exception if it fails.
@@ -164,8 +167,8 @@ export class ClusterService implements IClusterServiceServer {
                 if (call.request.hasCordoned()) {
                     cluster.state = mapCordoned(req.cordoned);
                 }
-                if (call.request.hasAdmissionConstraints()) {
-                    const mod = call.request.getAdmissionConstraints()!;
+                if (call.request.hasAdmissionConstraint()) {
+                    const mod = call.request.getAdmissionConstraint()!;
                     const c = mapAdmissionConstraint(mod.getConstraint());
                     if (!!c) {
                         if (mod.getAdd()) {
@@ -184,6 +187,35 @@ export class ClusterService implements IClusterServiceServer {
                                             return false;
                                         }
                                         break;
+                                    case "has-user-level":
+                                        if (v.level === (c as AdmissionConstraintHasUserLevel).level) {
+                                            return false;
+                                        }
+                                }
+                                return true;
+                            })
+                        }
+                    }
+                }
+                if (call.request.hasAdmissionPreference()) {
+                    const mod = call.request.getAdmissionPreference();
+                    const c = mapAdmissionPreference(mod?.getPreference());
+                    if (!!mod && !!c) {
+                        if (mod.getAdd()) {
+                            cluster.admissionPreferences = (cluster.admissionPreferences || []).concat([c]);
+                        } else {
+                            cluster.admissionPreferences = cluster.admissionPreferences?.filter(v => {
+                                if (v.type !== c.type) {
+                                    return true;
+                                }
+
+                                switch (v.type) {
+                                    case "user-level":
+                                        if (v.level == (c as AdmissionPreferenceUserLevel).level) {
+                                            return false;
+                                        }
+                                    default:
+                                        return true;
                                 }
                                 return true;
                             })
@@ -281,10 +313,21 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 perm.setPermission(c.permission);
                 constraint.setHasPermission(perm);
                 break;
+            case "has-user-level":
+                constraint.setHasUserLevel(c.level);
             default:
                 return;
         }
-        clusterStatus.addAdmissionConstraints(constraint);
+        clusterStatus.addAdmissionConstraint(constraint);
+    });
+    ws.admissionPreferences?.forEach(p => {
+        const pref = new GRPCAdmissionPreference();
+        switch (p.type) {
+            case "user-level":
+                pref.setUserLevel(p.level);
+                break;
+        }
+        clusterStatus.addAdmissionPreference(pref);
     });
     return clusterStatus;
 }
@@ -305,6 +348,25 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
 
         return <AdmissionConstraintHasRole>{type: "has-permission", permission};
     }
+    if (c.hasHasUserLevel()) {
+        const level = c.getHasUserLevel();
+        if (!level) {
+            return;
+        }
+        return <AdmissionConstraintHasUserLevel>{type: "has-user-level", level };
+    }
+    return;
+}
+
+function mapAdmissionPreference(c: GRPCAdmissionPreference | undefined): AdmissionPreference | undefined {
+    if (!c) {
+        return;
+    }
+
+    if (c.hasUserLevel()) {
+        return <AdmissionPreference>{ type: "user-level", level: c.getUserLevel() };
+    }
+
     return;
 }
 

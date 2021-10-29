@@ -10,9 +10,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/agent"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
@@ -24,33 +23,33 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	ascfg := config.ServiceConfig{
-		PProfAddr:      "localhost:6060",
-		PrometheusAddr: "localhost:9500",
+		PProfAddr:      fmt.Sprintf("localhost:%d", PProfPort),
+		PrometheusAddr: fmt.Sprintf("localhost:%d", PrometheusPort),
 		HostURL:        fmt.Sprintf("https://%s", ctx.Config.Domain),
-		Config: agent.Config{
-			Blacklists: &agent.Blacklists{
-				Very: &agent.PerLevelBlacklist{
-					Signatures: []*signature.Signature{{
+		Config: config.Config{
+			Blocklists: &config.Blocklists{
+				Very: &config.PerLevelBlocklist{
+					Signatures: []*classifier.Signature{{
 						Name:    "testtarget",
-						Domain:  signature.DomainProcess,
-						Kind:    signature.ObjectELF,
+						Domain:  classifier.DomainProcess,
+						Kind:    classifier.ObjectELFSymbols,
 						Pattern: []byte(base64.StdEncoding.EncodeToString([]byte("agentSmithTestTarget"))),
 						Regexp:  false,
 					}},
 				},
 			},
-			EgressTraffic: &agent.EgressTraffic{
+			EgressTraffic: &config.EgressTraffic{
 				WindowDuration: util.Duration(time.Minute * 2),
-				ExcessiveLevel: &agent.PerLevelEgressTraffic{
+				ExcessiveLevel: &config.PerLevelEgressTraffic{
 					BaseBudget: resource.MustParse("300Mi"),
 					Threshold:  resource.MustParse("100Mi"),
 				},
-				VeryExcessiveLevel: &agent.PerLevelEgressTraffic{
+				VeryExcessiveLevel: &config.PerLevelEgressTraffic{
 					BaseBudget: resource.MustParse("2Gi"),
 					Threshold:  resource.MustParse("250Mi"),
 				},
 			},
-			Kubernetes: agent.Kubernetes{Enabled: true},
+			Kubernetes: config.Kubernetes{Enabled: true},
 		},
 	}
 
@@ -61,7 +60,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	return []runtime.Object{
 		&corev1.ConfigMap{
-			TypeMeta: common.TypeMetaNetworkPolicy,
+			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
 				Namespace: ctx.Namespace,

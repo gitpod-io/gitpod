@@ -11,7 +11,8 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images/edf0748dca3905f46a5fcf841db2a36f277d9b79/eu.gcr.io/gitpod-dev/workspace-full:sha256-4543f6df3549a443f1109779878540a635163ef86da30c959464a61256bfc569",
-            "url": "http://d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3.ws-eu.cw-fail-on-mount-failure.staging.gitpod.io"
+            "url": "http://d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3.ws-eu.cw-fail-on-mount-failure.staging.gitpod.io",
+            "ide_image": {}
         },
         "phase": 1,
         "conditions": {

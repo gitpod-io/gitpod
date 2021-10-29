@@ -7,7 +7,6 @@ package wsmanager
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -28,11 +27,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    labels,
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						"Component": Component,
-					},
-				},
+				Selector: &metav1.LabelSelector{MatchLabels: labels},
 				// todo(sje): receive config value
 				Replicas: pointer.Int32(1),
 				Strategy: common.DeploymentStrategy,
@@ -43,7 +38,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Labels:    labels,
 					},
 					Spec: corev1.PodSpec{
-						PriorityClassName:  "system-node-critical",
+						PriorityClassName:  common.SystemNodeCritical,
 						Affinity:           &corev1.Affinity{},
 						EnableServiceLinks: pointer.Bool(false),
 						ServiceAccountName: Component,
@@ -62,7 +57,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 							Ports: []corev1.ContainerPort{{
-								Name:          "rpc",
+								Name:          RPCPortName,
 								ContainerPort: RPCPort,
 							}},
 							SecurityContext: &corev1.SecurityContext{
@@ -79,7 +74,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ReadOnly:  true,
 							}, {
 								Name:      VolumeWorkspaceTemplate,
-								MountPath: "/workspace-template",
+								MountPath: WorkspaceTemplatePath,
 								ReadOnly:  true,
 							}, {
 								Name:      wsdaemon.VolumeTLSCerts,
@@ -91,36 +86,36 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ReadOnly:  true,
 							}},
 						}},
-						Volumes: []corev1.Volume{{
-							Name: VolumeConfig,
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+						Volumes: []corev1.Volume{
+							{
+								Name: VolumeConfig,
+								VolumeSource: corev1.VolumeSource{
+									ConfigMap: &corev1.ConfigMapVolumeSource{
+										LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+									},
 								},
 							},
-						}, {
-							Name: wsdaemon.VolumeTLSCerts,
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsdaemon.TLSSecretName,
+							{
+								Name: VolumeWorkspaceTemplate,
+								VolumeSource: corev1.VolumeSource{
+									ConfigMap: &corev1.ConfigMapVolumeSource{
+										LocalObjectReference: corev1.LocalObjectReference{Name: WorkspaceTemplateConfigMap},
+									},
 								},
 							},
-						}, {
-							Name: VolumeTLSCerts,
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: TLSSecretNameSecret,
+							{
+								Name: wsdaemon.VolumeTLSCerts,
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{SecretName: wsdaemon.TLSSecretName},
 								},
 							},
-						}, {
-							Name: VolumeWorkspaceTemplate,
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "workspace-template",
-									}},
+							{
+								Name: VolumeTLSCerts,
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretNameSecret},
+								},
 							},
-						}},
+						},
 					},
 				},
 			},

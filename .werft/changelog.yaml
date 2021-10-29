@@ -13,7 +13,7 @@ pod:
             - "builds"
   containers:
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.24
+    image: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.31
     workingDir: /workspace
     imagePullPolicy: Always
     env:

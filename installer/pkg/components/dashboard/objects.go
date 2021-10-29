@@ -11,10 +11,10 @@ var Objects = common.CompositeRenderFunc(
 	networkpolicy,
 	rolebinding,
 	common.GenerateService(Component, map[string]common.ServicePort{
-		"http": {
+		PortName: {
 			ContainerPort: ContainerPort,
 			ServicePort:   ServicePort,
 		},
-	}, nil),
+	}),
 	common.DefaultServiceAccount(Component),
 )

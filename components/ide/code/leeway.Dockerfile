@@ -2,67 +2,56 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-# we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
-# ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
-ARG NODE_VERSION=14.17.6
+# BUILDER_BASE is a placeholder, will be replaced before build time
+# Check BUILD.yaml
+FROM BUILDER_BASE as code_installer
 
-FROM ubuntu:18.04 as code_installer
-
-RUN apt-get update \
-    # see https://github.com/microsoft/vscode/blob/42e271dd2e7c8f320f991034b62d4c703afb3e28/.github/workflows/ci.yml#L94
-    && apt-get -y install --no-install-recommends libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1 \
-    && apt-get -y install --no-install-recommends git curl build-essential libssl-dev ca-certificates python \
-    # Clean up
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
-
-ARG NODE_VERSION
-ENV NVM_DIR /root/.nvm
-RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | sh \
-    && . $NVM_DIR/nvm.sh  \
-    && nvm install $NODE_VERSION \
-    && nvm alias default $NODE_VERSION \
-    && npm install -g yarn node-gyp
-ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+ARG CODE_COMMIT
 
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD 1
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD 1
 
-ENV GP_CODE_COMMIT 4f904fdab938aa6a1d0be4f74727addfe1130380
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
     && git remote add origin https://github.com/gitpod-io/vscode \
-    && git fetch origin $GP_CODE_COMMIT --depth=1 \
+    && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
 RUN yarn --frozen-lockfile --network-timeout 180000
 RUN yarn --cwd ./extensions compile
-RUN yarn gulp gitpod-min
+RUN yarn gulp vscode-web-min
+RUN yarn gulp vscode-reh-linux-x64-min
 
-# grant write permissions for built-in extensions
-RUN chmod -R ugo+w /gitpod-pkg-server/extensions
+# config for first layer needed by blobserve
+# we also remove `static/` from resource urls as that's needed by blobserve,
+# this custom urls will be then replaced by blobserve.
+# Check pkg/blobserve/blobserve.go, `inlineVars` method
+RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
+    && sed -i -e 's#static/##g' /vscode-web/index.html
 
-# cli config
+# cli config: alises to gitpod-code
+# can't use relative symlink as they break when copied to the image below
 COPY bin /ide/bin
 RUN chmod -R ugo+x /ide/bin
 
+# grant write permissions for built-in extensions
+RUN chmod -R ugo+w /vscode-reh-linux-x64/extensions
 
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
-COPY --from=code_installer --chown=33333:33333 /gitpod-pkg-web/ /ide/
-COPY --from=code_installer --chown=33333:33333 /gitpod-pkg-server/ /ide/
+COPY --from=code_installer --chown=33333:33333 /vscode-web/ /ide/
+COPY --from=code_installer --chown=33333:33333 /vscode-reh-linux-x64/ /ide/
 COPY --chown=33333:33333 startup.sh supervisor-ide-config.json /ide/
 
-# cli config
 COPY --from=code_installer --chown=33333:33333 /ide/bin /ide/bin
+
 ENV GITPOD_ENV_APPEND_PATH /ide/bin:
 
 # editor config
-ENV GITPOD_ENV_SET_EDITOR /ide/bin/code
+ENV GITPOD_ENV_SET_EDITOR /ide/bin/gitpod-code
 ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GP_OPEN_EDITOR "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"
-ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide/bin/code --preview"
-ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide/bin/code --openExternal"
+ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide/bin/gitpod-code --preview"
+ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide/bin/gitpod-code --openExternal"

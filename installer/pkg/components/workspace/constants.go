@@ -5,7 +5,11 @@
 package workspace
 
 const (
+	ContainerPort                = 23000
 	DefaultWorkspaceImage        = "gitpod/workspace-full"
 	DefaultWorkspaceImageVersion = "latest"
 	IDEImageRepo                 = "ide/code" // todo(sje): does this need to be config driven?
+	DockerUpImage                = "docker-up"
+	SupervisorImage              = "supervisor"
+	SupervisorPort               = 22999
 )

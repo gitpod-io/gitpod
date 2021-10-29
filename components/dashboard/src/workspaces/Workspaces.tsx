@@ -5,18 +5,18 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { Project, WhitelistedRepository, Workspace, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { Project, Team, WhitelistedRepository, Workspace, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Header from "../components/Header";
 import DropDown from "../components/DropDown";
 import { WorkspaceModel } from "./workspace-model";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartWorkspaceModal, WsStartEntry } from "./StartWorkspaceModal";
-import { Item, ItemField, ItemsList } from "../components/ItemsList";
+import { ItemsList } from "../components/ItemsList";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { useLocation, useRouteMatch } from "react-router";
 import { toRemoteURL } from "../projects/render-utils";
-import { useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 
 export interface WorkspacesProps {
 }
@@ -41,10 +41,20 @@ export default function () {
     const [repos, setRepos] = useState<WhitelistedRepository[]>([]);
     const [isTemplateModelOpen, setIsTemplateModelOpen] = useState<boolean>(false);
     const [workspaceModel, setWorkspaceModel] = useState<WorkspaceModel>();
+    const [teamsProjects, setTeamsProjects] = useState<Project[]>([]);
+    const [teamsWorkspaceModel, setTeamsWorkspaceModel] = useState<WorkspaceModel|undefined>();
+    const [teamsActiveWorkspaces, setTeamsActiveWorkspaces] = useState<WorkspaceInfo[]>([]);
 
     const newProjectUrl = !!team ? `/new?team=${team.slug}` : '/new';
     const onNewProject = () => {
         history.push(newProjectUrl);
+    }
+
+    const fetchTeamsProjects = async () => {
+        const projectsPerTeam = await Promise.all((teams || []).map(t => getGitpodService().server.getTeamProjects(t.id)));
+        const allTeamsProjects = projectsPerTeam.flat(1);
+        setTeamsProjects(allTeamsProjects);
+        return allTeamsProjects;
     }
 
     useEffect(() => {
@@ -73,6 +83,9 @@ export default function () {
                 workspaceModel = new WorkspaceModel(setActiveWorkspaces, setInactiveWorkspaces, getGitpodService().server.getTeamProjects(team?.id).then(projects => projects.map(p => p.id)), false);
             } else {
                 workspaceModel = new WorkspaceModel(setActiveWorkspaces, setInactiveWorkspaces, getGitpodService().server.getUserProjects().then(projects => projects.map(p => p.id)), true);
+                // Don't await
+                const teamsProjectIdsPromise = fetchTeamsProjects().then(tp => tp.map(p => p.id));
+                setTeamsWorkspaceModel(new WorkspaceModel(setTeamsActiveWorkspaces, () => {}, teamsProjectIdsPromise, false));
             }
             setWorkspaceModel(workspaceModel);
         })();
@@ -130,7 +143,7 @@ export default function () {
         {workspaceModel?.initialized && (
             activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ?
                 <>
-                    <div className="lg:px-28 px-10 py-2 flex">
+                    <div className="app-container py-2 flex">
                         <div className="flex">
                             <div className="py-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="16" height="16"><path fill="#A8A29E" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" /></svg>
@@ -154,8 +167,11 @@ export default function () {
                         </div>
                         <button onClick={showStartWSModal} className="ml-2">New Workspace</button>
                     </div>
-                    <ItemsList className="lg:px-28 px-10">
+                    <ItemsList className="app-container">
                         <div className="border-t border-gray-200 dark:border-gray-800"></div>
+                        {
+                            teamsWorkspaceModel?.initialized && <ActiveTeamWorkspaces teams={teams} teamProjects={teamsProjects} teamWorkspaces={teamsActiveWorkspaces} />
+                        }
                         {
                             activeWorkspaces.map(e => {
                                 return <WorkspaceEntry key={e.workspace.id} desc={e} model={workspaceModel} stopWorkspace={wsId => getGitpodService().server.stopWorkspace(wsId)} />
@@ -165,12 +181,7 @@ export default function () {
                             activeWorkspaces.length > 0 && <div className="py-6"></div>
                         }
                         {
-                            inactiveWorkspaces.length === 0 ? null :
-                                <Item className="w-full bg-gray-50 py-3 px-3 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-800">
-                                    <ItemField className=" flex flex-col">
-                                        <div className="text-gray-400 text-sm text-center">Unpinned workspaces that have been inactive for more than 14 days will be automatically deleted. <a className="gp-link" href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more</a></div>
-                                    </ItemField>
-                                </Item>
+                            inactiveWorkspaces.length > 0 && <div className="p-3 text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-center">Unpinned workspaces that have been inactive for more than 14 days will be automatically deleted. <a className="gp-link" href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more</a></div>
                         }
                         {
                             inactiveWorkspaces.map(e => {
@@ -180,9 +191,10 @@ export default function () {
                     </ItemsList>
                 </>
                 :
-                <div className="lg:px-28 px-10 flex flex-col space-y-2">
-                    <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 dark:border-gray-800 h-96">
-                        <div className="flex flex-col items-center w-96 m-auto">
+                <div className="app-container flex flex-col space-y-2">
+                    <div className="px-6 py-3 flex flex-col text-gray-400 border-t border-gray-200 dark:border-gray-800">
+                        {teamsWorkspaceModel?.initialized && <ActiveTeamWorkspaces teams={teams} teamProjects={teamsProjects} teamWorkspaces={teamsActiveWorkspaces} />}
+                        <div className="flex flex-col items-center justify-center h-96 w-96 mx-auto">
                             {!!team && projects.length === 0
                             ?<>
                                 <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Projects</h3>
@@ -215,4 +227,27 @@ export default function () {
                 : []} />
     </>;
 
+}
+
+function ActiveTeamWorkspaces(props: { teams?: Team[], teamProjects: Project[], teamWorkspaces: WorkspaceInfo[] }) {
+    if (!props.teams || props.teamWorkspaces.length === 0) {
+        return <></>;
+    }
+    return <div className="p-3 text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm flex items-center justify-center space-x-1">
+        <div className="mr-2 rounded-full w-3 h-3 bg-green-500" />
+        <span>There are currently more active workspaces in the following teams:</span>
+        <span>{
+            props.teams
+                .map(t => {
+                    const projects = props.teamProjects.filter(p => p.teamId === t.id);
+                    const count = props.teamWorkspaces.filter(w => projects.some(p => p.id === w.workspace.projectId)).length;
+                    if (count < 1) {
+                        return undefined;
+                    }
+                    return <Link className="gp-link" to={`/t/${t.slug}/workspaces`}>{t.name}</Link>;
+                })
+                .filter(t => !!t)
+                .map((t, i) => <>{i > 0 && <span>, </span>}{t}</>)
+        }</span>
+    </div>;
 }

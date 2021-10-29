@@ -37,7 +37,7 @@ export default function () {
             <div className="border rounded-xl p-6 border-gray-100 dark:border-gray-800">
                 <h3 className="text-center text-xl mb-6">What's your team's name?</h3>
                 <h4>Team Name</h4>
-                <input className={`w-full${!!creationError ? ' error' : ''}`} type="text" onChange={event => name = event.target.value} />
+                <input autoFocus className={`w-full${!!creationError ? ' error' : ''}`} type="text" onChange={event => name = event.target.value} />
                 {!!creationError && <p className="text-gitpod-red">{creationError.message.replace(/Request \w+ failed with message: /, '')}</p>}
             </div>
             <div className="flex flex-row-reverse space-x-2 space-x-reverse mt-2">
@@ -45,5 +45,8 @@ export default function () {
                 <button className="secondary" onClick={() => history.push('/')}>Cancel</button>
             </div>
         </form>
+        <p className="text-center w-full mt-12 text-gray-500">
+            <strong>Teams &amp; Projects</strong> are currently in Beta. <a href="https://github.com/gitpod-io/gitpod/issues/5095" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a>
+        </p>
     </div>;
 }

@@ -208,6 +208,8 @@ env:
 {{- $gp := .gp -}}
 - name: DB_HOST
   value: "{{ $gp.db.host }}"
+- name: DB_USERNAME
+  value: "{{ $gp.db.username }}"
 - name: DB_PORT
   value: "{{ $gp.db.port }}"
 - name: DB_PASSWORD

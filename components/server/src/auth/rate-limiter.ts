@@ -10,8 +10,8 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 
 export const accessCodeSyncStorage = 'accessCodeSyncStorage';
-export const accesHeadlessLogs = 'accesHeadlessLogs';
-type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accesHeadlessLogs;
+export const accessHeadlessLogs = 'accessHeadlessLogs';
+type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs;
 type GroupsConfig = {
     [key: string]: {
         points: number,
@@ -34,7 +34,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         default: {
             points: 60000, // 1,000 calls per user per second
             durationsSec: 60,
-        },
+        }
     }
     const defaultFunctions: FunctionsConfig = {
         "getLoggedInUser": { group: "default", points: 1 },
@@ -97,6 +97,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "findPrebuilds":  { group: "default", points: 1 },
         "getProjectOverview":  { group: "default", points: 1 },
         "triggerPrebuild":  { group: "default", points: 1 },
+        "cancelPrebuild":  { group: "default", points: 1 },
         "setProjectConfiguration":  { group: "default", points: 1 },
         "fetchProjectRepositoryConfiguration":  { group: "default", points: 1 },
         "guessProjectConfiguration":  { group: "default", points: 1 },
@@ -135,7 +136,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
 
         "accessCodeSyncStorage": { group: "default", points: 1 },
 
-        accesHeadlessLogs: { group: "default", points: 1 },
+        accessHeadlessLogs: { group: "default", points: 1 },
 
         "adminAddStudentEmailDomain":  { group: "default", points: 1 },
         "adminGetAccountStatement":  { group: "default", points: 1 },
@@ -168,7 +169,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "tsReactivateSlot":  { group: "default", points: 1 },
         "tsReassignSlot":  { group: "default", points: 1 },
         "trackEvent":  { group: "default", points: 1 },
-        "trackLocation": { group: "default", points: 1}
+        "trackLocation": { group: "default", points: 1},
+        "identifyUser": { group: "default", points: 1}
     };
 
     return {

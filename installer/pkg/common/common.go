@@ -23,12 +23,22 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+// Valid characters for affinities are alphanumeric, -, _, . and one / as a subdomain prefix
 const (
-	AffinityLabelMeta              = "gitpod.io/workload_meta"
-	AffinityLabelWorkspaceServices = "gitpod.io/workload_workspace_services"
-	AffinityLabelWorkspaces        = "gitpod.io/workload_workspaces"
-	AffinityLabelHeadless          = "gitpod.io/workload_headless"
+	AffinityLabelMeta               = "gitpod.io/workload_meta"
+	AffinityLabelIDE                = "gitpod.io/workload_ide"
+	AffinityLabelWorkspaceServices  = "gitpod.io/workload_workspace_services"
+	AffinityLabelWorkspacesRegular  = "gitpod.io/workload_workspace_regular"
+	AffinityLabelWorkspacesHeadless = "gitpod.io/workload_workspace_headless"
 )
+
+var AffinityList = []string{
+	AffinityLabelMeta,
+	AffinityLabelIDE,
+	AffinityLabelWorkspaceServices,
+	AffinityLabelWorkspacesRegular,
+	AffinityLabelWorkspacesHeadless,
+}
 
 func DefaultLabels(component string) map[string]string {
 	return map[string]string{
@@ -60,10 +70,10 @@ func TracingEnv(cfg *config.Config) (res []corev1.EnvVar) {
 		return
 	}
 
-	if cfg.Observability.Tracing.Endpoint != nil {
-		res = append(res, corev1.EnvVar{Name: "JAEGER_ENDPOINT", Value: *cfg.Observability.Tracing.Endpoint})
-	} else if cfg.Observability.Tracing.AgentHost != nil {
-		res = append(res, corev1.EnvVar{Name: "JAEGER_AGENT_HOST", Value: *cfg.Observability.Tracing.Endpoint})
+	if ep := cfg.Observability.Tracing.Endpoint; ep != nil {
+		res = append(res, corev1.EnvVar{Name: "JAEGER_ENDPOINT", Value: *ep})
+	} else if v := cfg.Observability.Tracing.AgentHost; v != nil {
+		res = append(res, corev1.EnvVar{Name: "JAEGER_AGENT_HOST", Value: *v})
 	} else {
 		// TODO(cw): think about proper error handling here.
 		//			 Returning an error would be the appropriate thing to do,
@@ -92,45 +102,128 @@ func AnalyticsEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}}
 }
 
-// todo(sje): figure out how to put in the MessageBus config
 func MessageBusEnv(cfg *config.Config) (res []corev1.EnvVar) {
-	return []corev1.EnvVar{}
-}
+	clusterObj := corev1.LocalObjectReference{Name: InClusterMessageQueueName}
+	tlsObj := corev1.LocalObjectReference{Name: InClusterMessageQueueTLS}
 
-// todo(sje): provide values from config
-func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	return []corev1.EnvVar{{
-		Name:  "DB_HOST",
-		Value: "",
-	}, {
-		Name:  "DB_PORT",
-		Value: "",
-	}, {
-		Name:  "DB_PASSWORD",
-		Value: "",
-	}, {
-		// todo(sje): conditional
-		Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
-		Value: "",
-	}, {
-		Name: "DB_ENCRYPTION_KEYS",
-		// todo(sje): either Value or ValueFrom
-		Value: "",
+		Name: "MESSAGEBUS_USERNAME",
 		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: corev1.LocalObjectReference{
-				Name: "",
-			},
-			Key: "keys",
+			LocalObjectReference: clusterObj,
+			Key:                  "username",
+		}},
+	}, {
+		Name: "MESSAGEBUS_PASSWORD",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: clusterObj,
+			Key:                  "password",
+		}},
+	}, {
+		Name: "MESSAGEBUS_CA",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: tlsObj,
+			Key:                  "ca.crt",
+		}},
+	}, {
+		Name: "MESSAGEBUS_CERT",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: tlsObj,
+			Key:                  "tls.crt",
+		}},
+	}, {
+		Name: "MESSAGEBUS_KEY",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: tlsObj,
+			Key:                  "tls.key",
 		}},
 	}}
 }
 
-func DatabaseWaiterContainer() *corev1.Container {
-	return &corev1.Container{}
+func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
+	var name string
+
+	if pointer.BoolDeref(cfg.Database.InCluster, false) {
+		// Cluster provided internally
+		name = InClusterDbSecret
+	} else if cfg.Database.RDS.Certificate.Name != "" {
+		// AWS
+		name = cfg.Database.RDS.Certificate.Name
+	} else if cfg.Database.CloudSQL.Certificate.Name != "" {
+		// GCP
+		name = cfg.Database.CloudSQL.Certificate.Name
+	}
+
+	obj := corev1.LocalObjectReference{Name: name}
+
+	return []corev1.EnvVar{{
+		Name: "DB_HOST",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: obj,
+			Key:                  "host",
+		}},
+	}, {
+		Name: "DB_PORT",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: obj,
+			Key:                  "port",
+		}},
+	}, {
+		Name: "DB_PASSWORD",
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: obj,
+			Key:                  "password",
+		}},
+	}, {
+		// todo(sje): conditional
+		Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
+		Value: "false",
+	}, {
+		Name: "DB_ENCRYPTION_KEYS",
+		// todo(sje): either Value or ValueFrom
+		Value: "todo",
+		//ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+		//	LocalObjectReference: corev1.LocalObjectReference{
+		//		Name: "",
+		//	},
+		//	Key: "keys",
+		//}},
+	}}
 }
 
-func MessageBusWaiterContainer() *corev1.Container {
-	return &corev1.Container{}
+func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
+	return &corev1.Container{
+		Name:  "database-waiter",
+		Image: ImageName(ctx.Config.Repository, "service-waiter", "latest"),
+		Args: []string{
+			"-v",
+			"database",
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged: pointer.Bool(false),
+			RunAsUser:  pointer.Int64(31001),
+		},
+		Env: MergeEnv(
+			DatabaseEnv(&ctx.Config),
+		),
+	}
+}
+
+func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
+	return &corev1.Container{
+		Name:  "msgbus-waiter",
+		Image: ImageName(ctx.Config.Repository, "service-waiter", "latest"),
+		Args: []string{
+			"-v",
+			"messagebus",
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged: pointer.Bool(false),
+			RunAsUser:  pointer.Int64(31001),
+		},
+		Env: MergeEnv(
+			MessageBusEnv(&ctx.Config),
+		),
+	}
 }
 
 func KubeRBACProxyContainer() *corev1.Container {
@@ -176,7 +269,7 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 			MatchExpressions: []corev1.NodeSelectorRequirement{
 				{
 					Key:      lbl,
-					Operator: corev1.NodeSelectorOperator("Exists"),
+					Operator: corev1.NodeSelectorOpExists,
 				},
 			},
 		})
@@ -301,6 +394,10 @@ var DeploymentStrategy = appsv1.DeploymentStrategy{
 
 // TODO(cw): find a better way to do this. Those values must exist in the appropriate places already.
 var (
+	TypeMetaNamespace = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "namespace",
+	}
 	TypeMetaConfigmap = metav1.TypeMeta{
 		APIVersion: "v1",
 		Kind:       "ConfigMap",
@@ -333,6 +430,10 @@ var (
 		APIVersion: "rbac.authorization.k8s.io/v1",
 		Kind:       "RoleBinding",
 	}
+	TypeMetaRole = metav1.TypeMeta{
+		APIVersion: "rbac.authorization.k8s.io/v1",
+		Kind:       "Role",
+	}
 	TypeMetaNetworkPolicy = metav1.TypeMeta{
 		APIVersion: "networking.k8s.io/v1",
 		Kind:       "NetworkPolicy",
@@ -345,6 +446,10 @@ var (
 		APIVersion: "cert-manager.io/v1",
 		Kind:       "Certificate",
 	}
+	TypeMetaCertificateIssuer = metav1.TypeMeta{
+		APIVersion: "cert-manager.io/v1",
+		Kind:       "Issuer",
+	}
 	TypeMetaSecret = metav1.TypeMeta{
 		APIVersion: "v1",
 		Kind:       "Secret",
@@ -352,6 +457,10 @@ var (
 	TypeMetaPodSecurityPolicy = metav1.TypeMeta{
 		APIVersion: "policy/v1beta1",
 		Kind:       "PodSecurityPolicy",
+	}
+	TypeMetaResourceQuota = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "ResourceQuota",
 	}
 )
 

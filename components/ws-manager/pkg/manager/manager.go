@@ -6,14 +6,10 @@ package manager
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -153,13 +149,34 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	defer tracing.FinishSpan(span, &err)
 
 	// Make sure the objects we're about to create do not exist already
-	exists, err := m.workspaceExists(ctx, req.Id)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot start workspace: %w", err)
+	switch req.Type {
+	case api.WorkspaceType_IMAGEBUILD:
+		wss, err := m.GetWorkspaces(ctx, &api.GetWorkspacesRequest{
+			MustMatch: &api.MetadataFilter{
+				Annotations: req.Metadata.Annotations,
+			},
+		})
+		if err != nil {
+			return nil, xerrors.Errorf("cannot start workspace: %w", err)
+		}
+
+		if len(wss.Status) >= 1 {
+			status := wss.Status[0]
+			return &api.StartWorkspaceResponse{
+				Url:        status.Spec.Url,
+				OwnerToken: status.Metadata.Owner,
+			}, nil
+		}
+	default:
+		exists, err := m.workspaceExists(ctx, req.Id)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot start workspace: %w", err)
+		}
+		if exists {
+			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+		}
 	}
-	if exists {
-		return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
-	}
+
 	span.LogKV("event", "workspace does not exist")
 	err = validateStartWorkspaceRequest(req)
 	if err != nil {
@@ -361,7 +378,8 @@ func (m *Manager) StopWorkspace(ctx context.Context, req *api.StopWorkspaceReque
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
 	}
 
-	if err := m.stopWorkspace(ctx, req.Id, gracePeriod); err != nil {
+	err = m.markWorkspace(ctx, req.Id, addMark(stoppedByRequestAnnotation, gracePeriod.String()))
+	if err != nil {
 		return nil, err
 	}
 
@@ -1194,39 +1212,17 @@ func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Fa
 	// TODO(cw): add client-side gRPC metrics
 	grpcOpts := common_grpc.DefaultClientOptions()
 	if cfg.TLS.Authority != "" || cfg.TLS.Certificate != "" && cfg.TLS.PrivateKey != "" {
-		ca := cfg.TLS.Authority
-		crt := cfg.TLS.Certificate
-		key := cfg.TLS.PrivateKey
-
-		// Telepresence (used for debugging only) requires special paths to load files from
-		if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
-			ca = filepath.Join(root, ca)
-			crt = filepath.Join(root, crt)
-			key = filepath.Join(root, key)
-		}
-
-		rootCA, err := os.ReadFile(ca)
+		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+			cfg.TLS.Authority, cfg.TLS.Certificate, cfg.TLS.PrivateKey,
+			common_grpc.WithSetRootCAs(true),
+			common_grpc.WithServerName("wsdaemon"),
+		)
 		if err != nil {
-			return nil, xerrors.Errorf("could not read ca certificate: %s", err)
-		}
-		certPool := x509.NewCertPool()
-		if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
-			return nil, xerrors.Errorf("failed to append ca certs")
+			log.WithField("config", cfg.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
+			return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
 		}
 
-		certificate, err := tls.LoadX509KeyPair(crt, key)
-		if err != nil {
-			log.WithField("config", cfg.TLS).Error("Cannot load ws-daemon certs - this is a configuration issue.")
-			return nil, xerrors.Errorf("cannot load ws-daemon certs: %w", err)
-		}
-
-		creds := credentials.NewTLS(&tls.Config{
-			ServerName:   "wsdaemon",
-			Certificates: []tls.Certificate{certificate},
-			RootCAs:      certPool,
-			MinVersion:   tls.VersionTLS12,
-		})
-		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 	} else {
 		grpcOpts = append(grpcOpts, grpc.WithInsecure())
 	}

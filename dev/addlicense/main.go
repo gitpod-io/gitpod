@@ -224,7 +224,7 @@ func licenseHeader(path string, tmpl *template.Template, data *copyrightData) ([
 		return nil, nil
 	case ".c", ".h":
 		lic, err = prefix(tmpl, data, "/*", " * ", " */")
-	case ".js", ".mjs", ".cjs", ".jsx", ".tsx", ".css", ".tf", ".ts":
+	case ".js", ".mjs", ".cjs", ".jsx", ".tsx", ".css", ".tf", ".ts", ".jsonnet", ".libsonnet":
 		lic, err = prefix(tmpl, data, "/**", " * ", " */")
 	case ".cc", ".cpp", ".cs", ".go", ".hh", ".hpp", ".java", ".m", ".mm", ".proto", ".rs", ".scala", ".swift", ".dart", ".groovy", ".kt", ".kts":
 		lic, err = prefix(tmpl, data, "", "// ", "")

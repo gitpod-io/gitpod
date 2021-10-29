@@ -6,6 +6,7 @@ package blobserve
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	wsproxy "github.com/gitpod-io/gitpod/installer/pkg/components/ws-proxy"
 
 	networkingv1 "k8s.io/api/networking/v1"
@@ -34,7 +35,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 				}},
 				From: []networkingv1.NetworkPolicyPeer{{
 					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						"component": "proxy", // todo(sje): get variable from the (future) proxy package
+						"component": proxy.Component,
 					}},
 				}, {
 					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{

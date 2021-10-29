@@ -30,6 +30,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		ImagebuildTemplate *corev1.Pod                   `json:"imagebuildTemplate,omitempty"`
 		RegularTemplate    *corev1.Pod                   `json:"regularTemplate,omitempty"`
 		ResourceRequests   *config.ResourceConfiguration `json:"resourceRequests,omitempty"`
+		EnforceAffinity    bool                          `json:"enforceAffinity,omitempty"`
 	}
 	type gold struct {
 		Pod   corev1.Pod `json:"reason,omitempty"`
@@ -40,19 +41,23 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		T:    t,
 		Path: "testdata/cdwp_*.json",
 		Test: func(t *testing.T, input interface{}) interface{} {
-			manager := forTestingOnlyGetManager(t)
 			fixture := input.(*fixture)
+
+			mgmtCfg := forTestingOnlyManagerConfig()
+			if fixture.EnforceAffinity {
+				mgmtCfg.EnforceWorkspaceNodeAffinity = true
+			}
 			if fixture.ResourceRequests != nil {
 				var (
-					cfg  = manager.Config
-					cont = cfg.Container
+					cont = mgmtCfg.Container
 					ws   = cont.Workspace
 				)
 				ws.Requests = *fixture.ResourceRequests
 				cont.Workspace = ws
-				cfg.Container = cont
-				manager.Config = cfg
+				mgmtCfg.Container = cont
 			}
+
+			manager := &Manager{Config: mgmtCfg}
 
 			// create in-memory file system
 			mapFS := fstest.MapFS{}

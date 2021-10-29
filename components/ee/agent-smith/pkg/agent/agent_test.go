@@ -14,34 +14,36 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestGetPenalty(t *testing.T) {
 	tests := []struct {
 		Desc         string
-		Default      EnforcementRules
-		Repo         EnforcementRules
+		Default      config.EnforcementRules
+		Repo         config.EnforcementRules
 		Infringement []Infringement
-		Penalties    []PenaltyKind
+		Penalties    []config.PenaltyKind
 	}{
 		{
 			Desc:         "audit only",
-			Default:      EnforcementRules{GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit): PenaltyStopWorkspace},
-			Infringement: []Infringement{{Kind: GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit)}},
-			Penalties:    []PenaltyKind{PenaltyStopWorkspace},
+			Default:      config.EnforcementRules{config.GradeKind(config.InfringementExec, common.SeverityAudit): config.PenaltyStopWorkspace},
+			Infringement: []Infringement{{Kind: config.GradeKind(config.InfringementExec, common.SeverityAudit)}},
+			Penalties:    []config.PenaltyKind{config.PenaltyStopWorkspace},
 		},
 		{
 			Desc:         "repo only",
-			Repo:         EnforcementRules{GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit): PenaltyStopWorkspace},
-			Infringement: []Infringement{{Kind: GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit)}},
-			Penalties:    []PenaltyKind{PenaltyStopWorkspace},
+			Repo:         config.EnforcementRules{config.GradeKind(config.InfringementExec, common.SeverityAudit): config.PenaltyStopWorkspace},
+			Infringement: []Infringement{{Kind: config.GradeKind(config.InfringementExec, common.SeverityAudit)}},
+			Penalties:    []config.PenaltyKind{config.PenaltyStopWorkspace},
 		},
 		{
 			Desc:         "repo override",
-			Default:      EnforcementRules{GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit): PenaltyStopWorkspace},
-			Repo:         EnforcementRules{GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit): PenaltyNone},
-			Infringement: []Infringement{{Kind: GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit)}},
+			Default:      config.EnforcementRules{config.GradeKind(config.InfringementExec, common.SeverityAudit): config.PenaltyStopWorkspace},
+			Repo:         config.EnforcementRules{config.GradeKind(config.InfringementExec, common.SeverityAudit): config.PenaltyNone},
+			Infringement: []Infringement{{Kind: config.GradeKind(config.InfringementExec, common.SeverityAudit)}},
 			Penalties:    nil,
 		},
 	}
@@ -59,21 +61,21 @@ func TestGetPenalty(t *testing.T) {
 }
 
 func TestFindEnforcementRules(t *testing.T) {
-	ra := EnforcementRules{GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit): PenaltyLimitCPU}
-	rb := EnforcementRules{GradeKind(InfringementExcessiveEgress, InfringementSeverityAudit): PenaltyLimitCPU}
+	ra := config.EnforcementRules{config.GradeKind(config.InfringementExec, common.SeverityAudit): config.PenaltyLimitCPU}
+	rb := config.EnforcementRules{config.GradeKind(config.InfringementExcessiveEgress, common.SeverityAudit): config.PenaltyLimitCPU}
 	tests := []struct {
 		Desc        string
-		Rules       map[string]EnforcementRules
+		Rules       map[string]config.EnforcementRules
 		RemoteURL   string
-		Expectation EnforcementRules
+		Expectation config.EnforcementRules
 	}{
-		{"direct match", map[string]EnforcementRules{"foo": ra, "bar": rb}, "foo", ra},
-		{"no match", map[string]EnforcementRules{"foo*": ra, "bar": rb}, "not found", nil},
-		{"star", map[string]EnforcementRules{"foo*": ra, "bar": rb}, "foobar", ra},
-		{"prefix match", map[string]EnforcementRules{"*foo": ra, "bar": rb}, "hello/foo", ra},
-		{"suffix match", map[string]EnforcementRules{"foo*": ra, "bar": rb}, "foobar", ra},
-		{"case-insensitive match", map[string]EnforcementRules{"foo*": ra, "bar": rb}, "Foobar", ra},
-		{"submatch", map[string]EnforcementRules{"*foo*": ra, "bar": rb}, "hello/foo/bar", ra},
+		{"direct match", map[string]config.EnforcementRules{"foo": ra, "bar": rb}, "foo", ra},
+		{"no match", map[string]config.EnforcementRules{"foo*": ra, "bar": rb}, "not found", nil},
+		{"star", map[string]config.EnforcementRules{"foo*": ra, "bar": rb}, "foobar", ra},
+		{"prefix match", map[string]config.EnforcementRules{"*foo": ra, "bar": rb}, "hello/foo", ra},
+		{"suffix match", map[string]config.EnforcementRules{"foo*": ra, "bar": rb}, "foobar", ra},
+		{"case-insensitive match", map[string]config.EnforcementRules{"foo*": ra, "bar": rb}, "Foobar", ra},
+		{"submatch", map[string]config.EnforcementRules{"*foo*": ra, "bar": rb}, "hello/foo/bar", ra},
 	}
 
 	for _, test := range tests {
@@ -88,8 +90,8 @@ func TestFindEnforcementRules(t *testing.T) {
 }
 
 func BenchmarkFindEnforcementRules(b *testing.B) {
-	ra := EnforcementRules{GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit): PenaltyLimitCPU}
-	rules := map[string]EnforcementRules{
+	ra := config.EnforcementRules{config.GradeKind(config.InfringementExec, common.SeverityAudit): config.PenaltyLimitCPU}
+	rules := map[string]config.EnforcementRules{
 		"*foo*": ra,
 		"bar":   ra, "bar1": ra, "bar2": ra, "bar3": ra, "bar4": ra, "bar5": ra, "bar6": ra,
 		"foo1*": ra, "foo2*": ra, "foo3*": ra, "foo4*": ra, "foo5*": ra, "foo6*": ra, "foo7*": ra,
@@ -150,7 +152,7 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 				pidCreationTime: simpleTime,
 			},
 			want: &Infringement{
-				Kind:        GradedInfringementKind(InfringementExcessiveEgress),
+				Kind:        config.GradedInfringementKind(config.InfringementExcessiveEgress),
 				Description: "egress traffic is 12.805 megabytes over limit",
 			},
 			egressTrafficCheckHandler: func(pid int) (int64, error) {
@@ -168,7 +170,7 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 				pidCreationTime: simpleTime,
 			},
 			want: &Infringement{
-				Kind:        GradedInfringementKind(InfringementVeryExcessiveEgress),
+				Kind:        config.GradeKind(config.InfringementExcessiveEgress, common.SeverityVery),
 				Description: "egress traffic is 188686.863 megabytes over limit",
 			},
 			egressTrafficCheckHandler: func(pid int) (int64, error) {
@@ -186,7 +188,7 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 				pidCreationTime: simpleTime,
 			},
 			want: &Infringement{
-				Kind:        GradedInfringementKind(InfringementVeryExcessiveEgress),
+				Kind:        config.GradeKind(config.InfringementExcessiveEgress, common.SeverityVery),
 				Description: "egress traffic is 188686.863 megabytes over limit",
 			},
 			egressTrafficCheckHandler: func(pid int) (int64, error) {
@@ -207,7 +209,7 @@ func TestCeckEgressTrafficCallback(t *testing.T) {
 				t.Errorf("cannot read config: %v", err)
 				return
 			}
-			var cfg Config
+			var cfg config.Config
 			err = json.Unmarshal(fc, &cfg)
 			if err != nil {
 				t.Errorf("cannot unmarshal config: %v", err)

@@ -268,13 +268,22 @@ message WorkspaceStatus {
     WorkspaceAuthentication auth = 9;
 }
 
+    // IDEImage configures the IDE images a workspace will use
+    message IDEImage {
+        // web_ref is a reference to an OCI image used for serving the web-based IDE
+        string web_ref = 1;
+        // desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
+        string desktop_ref = 2;
+    }
+
 // WorkspaceSpec is the specification of a workspace at runtime
 message WorkspaceSpec {
     // workspace_image is the name of the Docker image this workspace runs
     string workspace_image = 1;
 
-    // ide_image is the name of the Docker image used as IDE
-    string ide_image = 2;
+    // deprecated_ide_image is a field present for backwards compatibility and the same
+    // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
+    string deprecated_ide_image = 2;
 
     // headless marks this workspace a headless one - headless workspaces are not intended for users but for automation
     bool headless = 3;
@@ -290,6 +299,9 @@ message WorkspaceSpec {
 
     // The intervals in which a heartbeat must be received for the workspace not to time out
     string timeout = 7;
+
+    // ide_image is the name of the Docker image used as IDE
+    IDEImage ide_image = 8;
 }
 
 // PortSpec describes a networking port exposed on a workspace
@@ -350,6 +362,9 @@ message WorkspaceConditions {
 
     // headless_task_failed indicates that a headless workspace task failed
     string headless_task_failed = 10;
+
+    // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
+    WorkspaceConditionBool stopped_by_request = 11;
 }
 
 // WorkspaceConditionBool is a trinary bool: true/false/empty
@@ -440,8 +455,9 @@ message StartWorkspaceSpec {
     // workspace_image is the Docker image name of the workspace container
     string workspace_image = 1;
 
-    // ide_image is the Docker image name of the IDE image
-    string ide_image = 2;
+    // deprecated_ide_image is a field present for backwards compatibility and the same
+    // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
+    string deprecated_ide_image = 2;
 
     // feature_flags provide a means for starting variants of workspaces (e.g. a privileged one)
     repeated WorkspaceFeatureFlag feature_flags = 3;
@@ -469,6 +485,9 @@ message StartWorkspaceSpec {
 
     // admission controlls who can access the workspace and its ports.
     AdmissionLevel admission = 11;
+
+    // ide_image is the Docker image name of the IDE image
+    IDEImage ide_image = 12;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces

@@ -20,7 +20,7 @@ export default function ConfirmationModal(props: {
 }) {
 
     const child: React.ReactChild[] = [
-        <p className="mt-3 mb-3 text-base text-gray-500">{props.areYouSureText || "Are you sure?"}</p>,
+        <p className="mt-3 mb-3 text-base text-gray-500">{props.areYouSureText}</p>,
     ]
 
     if (props.warningText) {
@@ -33,7 +33,7 @@ export default function ConfirmationModal(props: {
             child.push(
                 <div className="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-xl group">
                     <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{props.children.name}</p>
-                    {props.children.description && <p className="text-gray-500">{props.children.description}</p>}
+                    {props.children.description && <p className="text-gray-500 truncate">{props.children.description}</p>}
                 </div>
             )
         } else if (Array.isArray(props.children)) {

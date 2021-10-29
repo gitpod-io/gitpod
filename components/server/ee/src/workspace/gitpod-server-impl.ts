@@ -605,7 +605,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
         const span = opentracing.globalTracer().startSpan("adminGetWorkspaces");
         try {
-            return await this.workspaceDb.trace({ span }).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.ownerId, req.searchTerm);
+            return await this.workspaceDb.trace({ span }).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req, req.searchTerm);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
@@ -1552,6 +1552,29 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         });
 
         return prebuild;
+    }
+
+    async cancelPrebuild(projectId: string, prebuildId: string): Promise<void> {
+        const user = this.checkAndBlockUser("cancelPrebuild");
+
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+        }
+        await this.guardProjectOperation(user, projectId, "update");
+
+        const span = opentracing.globalTracer().startSpan("cancelPrebuild");
+        span.setTag("userId", user.id);
+        span.setTag("projectId", projectId);
+        span.setTag("prebuildId", prebuildId);
+
+        const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByID(prebuildId);
+        if (!prebuild) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Prebuild not found");
+        }
+        // Explicitly stopping the prebuild workspace now automaticaly cancels the prebuild
+        // TODO(janx): Make access guards compatible with teams
+        await this.stopWorkspace(prebuild.buildWorkspaceId);
     }
 
     public async createProject(params: CreateProjectParams): Promise<Project> {

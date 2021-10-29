@@ -7,6 +7,7 @@ package wsproxy
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -24,8 +25,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// todo(sje): wsManagerProxy seems to be unused
 	wspcfg := config.Config{
 		Ingress: proxy.HostBasedIngressConfig{
-			HttpAddress:  string(rune(HTTPProxyPort)),
-			HttpsAddress: string(rune(HTTPSProxyPort)),
+			HttpAddress:  fmt.Sprintf(":%d", HTTPProxyPort),
+			HttpsAddress: fmt.Sprintf(":%d", HTTPSProxyPort),
 			Header:       HostHeader,
 		},
 		Proxy: proxy.Config{
@@ -44,21 +45,27 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			BlobServer: &proxy.BlobServerConfig{
 				Scheme: "http",
-				// todo(sje): get blob service port from (future) blob service package
-				Host: fmt.Sprintf("blobserve.%s.svc.cluster.local:{{ .Values.components.blobserve.ports.service.servicePort }}", ctx.Namespace),
+				Host:   fmt.Sprintf("blobserve.%s.svc.cluster.local:%d", ctx.Namespace, common.BlobServeServicePort),
 			},
-			// todo(sje): import gitpod values from (future) gitpod package
 			GitpodInstallation: &proxy.GitpodInstallation{
-				Scheme: "http",
+				Scheme:                   "https",
+				HostName:                 ctx.Config.Domain,
+				WorkspaceHostSuffix:      fmt.Sprintf(".ws.%s", ctx.Config.Domain),
+				WorkspaceHostSuffixRegex: fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain),
 			},
-			// todo(sje): import wspod config from (future) workspace package
-			WorkspacePodConfig: &proxy.WorkspacePodConfig{},
+			WorkspacePodConfig: &proxy.WorkspacePodConfig{
+				ServiceTemplate:     fmt.Sprintf("http://ws-{{ .workspaceID }}-theia.%s.svc.cluster.local:{{ .port }}", ctx.Namespace),
+				PortServiceTemplate: fmt.Sprintf("http://ws-{{ .workspaceID }}-ports.%s.svc.cluster.local:{{ .port }}", ctx.Namespace),
+				TheiaPort:           workspace.ContainerPort,
+				SupervisorPort:      workspace.SupervisorPort,
+				SupervisorImage:     common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+			},
 			BuiltinPages: proxy.BuiltinPagesConfig{
 				Location: "/app/public",
 			},
 		},
 		WorkspaceInfoProviderConfig: proxy.WorkspaceInfoProviderConfig{
-			WsManagerAddr:     fmt.Sprintf("ws-manager:%d", wsmanager.RPCPort),
+			WsManagerAddr:     fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort),
 			ReconnectInterval: util.Duration(time.Second * 3),
 			TLS: struct {
 				CA   string `json:"ca"`
@@ -82,7 +89,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	return []runtime.Object{
 		&corev1.ConfigMap{
-			TypeMeta: common.TypeMetaNetworkPolicy,
+			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
 				Namespace: ctx.Namespace,

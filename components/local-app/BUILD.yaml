@@ -4,10 +4,14 @@ packages:
     config:
       commands: [["echo"]]
     deps:
-      - :app-linux
-      - :app-darwin
-      - :app-windows
-  - name: app-linux
+      - :app-linux-amd64
+      - :app-linux-arm64
+      - :app-darwin-amd64
+      - :app-darwin-arm64
+      - :app-windows-386
+      - :app-windows-amd64
+      - :app-windows-arm64
+  - name: app-linux-amd64
     type: go
     srcs:
       - go.mod
@@ -21,11 +25,31 @@ packages:
     env:
       - CGO_ENABLED=0
       - GOOS=linux
+      - GOARCH=amd64
     prep:
       - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
-  - name: app-darwin
+  - name: app-linux-arm64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - :version
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+      - GOARCH=arm64
+    prep:
+      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
+    config:
+      packaging: app
+  - name: app-darwin-amd64
     type: go
     srcs:
       - go.mod
@@ -39,11 +63,31 @@ packages:
     env:
       - CGO_ENABLED=0
       - GOOS=darwin
+      - GOARCH=amd64
     prep:
       - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:
       packaging: app
-  - name: app-windows
+  - name: app-darwin-arm64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - :version
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=darwin
+      - GOARCH=arm64
+    prep:
+      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
+    config:
+      packaging: app
+  - name: app-windows-amd64
     type: go
     srcs:
       - go.mod
@@ -57,6 +101,45 @@ packages:
     env:
       - CGO_ENABLED=0
       - GOOS=windows
+      - GOARCH=amd64
+    prep:
+      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
+    config:
+      packaging: app
+  - name: app-windows-386
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - :version
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=windows
+      - GOARCH=386
+    prep:
+      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
+    config:
+      packaging: app
+  - name: app-windows-arm64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - :version
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=windows
+      - GOARCH=arm64
     prep:
       - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
     config:

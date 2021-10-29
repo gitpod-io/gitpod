@@ -19,27 +19,27 @@ import (
 func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 	serverAltNames := []string{
 		fmt.Sprintf("gitpod.%s", ctx.Namespace),
-		fmt.Sprintf("%s.ws-manager.svc", ctx.Namespace),
-		"ws-manager",
-		"ws-manager-dev",
+		fmt.Sprintf("%s.%s.svc", Component, ctx.Namespace),
+		Component,
+		fmt.Sprintf("%s-dev", Component),
 	}
 	clientAltNames := []string{
-		"registry-facade",
-		"server",
-		"ws-manager-bridge",
-		"ws-scheduler",
-		"ws-proxy",
-		"ws-manager",
+		common.RegistryFacadeComponent,
+		common.ServerComponent,
+		common.WSManagerBridgeComponent,
+		common.WSSchedulerComponent,
+		common.WSProxyComponent,
+		Component,
 	}
 
 	sixMonths := &metav1.Duration{Duration: time.Hour * 4380}
-	issuer := "ca-issuer"
+	issuer := common.CertManagerCAIssuer
 
 	return []runtime.Object{
 		&certmanagerv1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
+				Name:      TLSSecretNameSecret,
 				Namespace: ctx.Namespace,
 				Labels:    common.DefaultLabels(Component),
 			},

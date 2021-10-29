@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { UserDB, WorkspaceDB, UserStorageResourcesDB } from '@gitpod/gitpod-db/lib';
+import { UserDB, WorkspaceDB, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
 import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -22,6 +22,7 @@ export class UserDeletionService {
     @inject(UserDB) protected readonly db: UserDB;
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
     @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDb: UserStorageResourcesDB;
+    @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
     @inject(WorkspaceManagerClientProvider) protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
@@ -72,7 +73,9 @@ export class UserDeletionService {
             // UserStorageResourcesDB
             this.userStorageResourcesDb.deleteAllForUser(user.id),
             // Bucket
-            this.deleteUserBucket(id)
+            this.deleteUserBucket(id),
+            // Team memberships
+            this.deleteTeamMemberships(id),
         ]);
 
         // Track the deletion Event for Analytics Purposes
@@ -130,6 +133,11 @@ export class UserDeletionService {
         } catch (error) {
             log.error({ userId }, "Failed to delete user bucket.", error);
         }
+    }
+
+    protected async deleteTeamMemberships(userId: string) {
+        const teams = await this.teamDb.findTeamsByUser(userId);
+        await Promise.all(teams.map(t => this.teamDb.removeMemberFromTeam(userId, t.id)));
     }
 
     anonymizeWorkspace(ws: Workspace) {

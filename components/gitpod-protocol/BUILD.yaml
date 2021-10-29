@@ -1,4 +1,10 @@
 packages:
+  - name: all
+    type: generic
+    deps:
+      - :lib
+      - components/gitpod-protocol/go:lib
+      - components/gitpod-protocol/java:lib
   - name: lib
     type: yarn
     srcs:

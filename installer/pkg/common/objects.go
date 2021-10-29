@@ -5,6 +5,8 @@
 package common
 
 import (
+	"fmt"
+	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,7 +35,7 @@ type ServicePort struct {
 	ServicePort   int32
 }
 
-func GenerateService(component string, ports map[string]ServicePort, clusterIP *string) RenderFunc {
+func GenerateService(component string, ports map[string]ServicePort, mod ...func(spec *corev1.ServiceSpec)) RenderFunc {
 	return func(cfg *RenderContext) ([]runtime.Object, error) {
 		labels := DefaultLabels(component)
 
@@ -47,9 +49,15 @@ func GenerateService(component string, ports map[string]ServicePort, clusterIP *
 			})
 		}
 
-		specClusterIp := "None"
-		if clusterIP != nil {
-			specClusterIp = *clusterIP
+		spec := &corev1.ServiceSpec{
+			Ports:    servicePorts,
+			Selector: labels,
+			Type:     corev1.ServiceTypeClusterIP,
+		}
+
+		for _, m := range mod {
+			// Apply any custom modifications to the spec
+			m(spec)
 		}
 
 		return []runtime.Object{&corev1.Service{
@@ -59,12 +67,32 @@ func GenerateService(component string, ports map[string]ServicePort, clusterIP *
 				Namespace: cfg.Namespace,
 				Labels:    labels,
 			},
-			Spec: corev1.ServiceSpec{
-				Ports:     servicePorts,
-				Selector:  map[string]string{"Component": component},
-				Type:      corev1.ServiceTypeClusterIP,
-				ClusterIP: specClusterIp,
-			},
+			Spec: *spec,
 		}}, nil
 	}
+}
+
+func StorageConfiguration(ctx *RenderContext) (*storageconfig.StorageConfig, error) {
+	accessKey := ctx.Values.StorageAccessKey
+	if accessKey == "" {
+		return nil, fmt.Errorf("unknown value: storage access key")
+	}
+	secretKey := ctx.Values.StorageSecretKey
+	if secretKey == "" {
+		return nil, fmt.Errorf("unknown value: storage secret key")
+	}
+
+	// todo(sje): support non-Minio storage configuration
+	// todo(sje): this has been set up with only the default values - receive configuration
+	return &storageconfig.StorageConfig{
+		Kind:      "minio",
+		BlobQuota: 0,
+		MinIOConfig: storageconfig.MinIOConfig{
+			Endpoint:        fmt.Sprintf("minio.%s", ctx.Config.Domain),
+			AccessKeyID:     accessKey,
+			SecretAccessKey: secretKey,
+			Secure:          false,
+			Region:          "local",
+		},
+	}, nil
 }

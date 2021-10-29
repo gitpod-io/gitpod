@@ -379,6 +379,8 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 
 	src = csapi.WorkspaceInitFromOther
 
+	// Note: it's important that CleanSlate does not remove the location itself, but merely its content.
+	//       If the location were removed that might break the filesystem quota we have put in place prior.
 	if cfg.CleanSlate {
 		// 1. Clean out the workspace directory
 		if _, err := os.Stat(location); os.IsNotExist(err) {

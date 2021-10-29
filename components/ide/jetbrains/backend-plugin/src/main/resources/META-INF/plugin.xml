@@ -1,0 +1,15 @@
+<idea-plugin>
+    <id>io.gitpod.ide.jetbrains.backend</id>
+    <name>Gitpod</name>
+
+    <vendor>Gitpod</vendor>
+
+    <!-- Product and plugin compatibility requirements -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <applicationListeners>
+        <listener class="io.gitpod.ide.jetbrains.backend.listeners.MyApplicationActivationListener"
+                  topic="com.intellij.openapi.application.ApplicationActivationListener" />
+    </applicationListeners>
+</idea-plugin>

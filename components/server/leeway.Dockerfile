@@ -11,6 +11,8 @@ COPY components-server--app /installer/
 WORKDIR /app
 RUN /installer/install.sh
 
+FROM golang:1.17 as oci-tool-builder
+RUN go install github.com/csweichel/oci-tool@latest
 
 FROM node:12.22.6-slim
 
@@ -24,6 +26,9 @@ RUN apt-get update && apt-get install -yq \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 EXPOSE 3000
+
+COPY --from=oci-tool-builder /go /go/
+ENV PATH="/go/bin:${PATH}"
 
 # '--no-log-init': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
 RUN useradd --no-log-init --create-home --uid 31001 --home-dir /app/ unode

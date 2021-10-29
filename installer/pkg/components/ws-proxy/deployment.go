@@ -21,22 +21,22 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	var certSecretsVolume corev1.Volume
-	var certSecretsVolumeMount corev1.VolumeMount
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
 	if ctx.Config.Certificate.Name != "" {
-		certSecretsVolume = corev1.Volume{
+		volumes = append(volumes, corev1.Volume{
 			Name: "config-certificates",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: ctx.Config.Certificate.Name,
 				},
 			},
-		}
+		})
 
-		certSecretsVolumeMount = corev1.VolumeMount{
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "config-certificates",
 			MountPath: "/mnt/certificates",
-		}
+		})
 	}
 
 	return []runtime.Object{
@@ -48,9 +48,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    labels,
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"Component": Component},
-				},
+				Selector: &metav1.LabelSelector{MatchLabels: labels},
 				// todo(sje): receive config value
 				Replicas: pointer.Int32(1),
 				Strategy: common.DeploymentStrategy,
@@ -61,14 +59,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Labels:    labels,
 					},
 					Spec: corev1.PodSpec{
-						PriorityClassName:  "system-node-critical",
+						PriorityClassName:  common.SystemNodeCritical,
 						Affinity:           &corev1.Affinity{},
 						EnableServiceLinks: pointer.Bool(false),
 						ServiceAccountName: Component,
 						SecurityContext: &corev1.PodSecurityContext{
 							RunAsUser: pointer.Int64(31002),
 						},
-						Volumes: []corev1.Volume{{
+						Volumes: append([]corev1.Volume{{
 							Name: "config",
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -82,7 +80,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									SecretName: wsmanager.TLSSecretNameClient,
 								},
 							},
-						}, certSecretsVolume},
+						}}, volumes...),
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "-v", "/config/config.json"},
@@ -95,13 +93,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 							Ports: []corev1.ContainerPort{{
-								Name:          "httpProxy",
+								Name:          HTTPProxyPortName,
 								ContainerPort: HTTPProxyPort,
 							}, {
-								Name:          "httpsProxy",
+								Name:          HTTPSProxyPortName,
 								ContainerPort: HTTPSProxyPort,
 							}, {
-								Name:          "metrics",
+								Name:          MetricsPortName,
 								ContainerPort: MetricsPort,
 							}},
 							SecurityContext: &corev1.SecurityContext{
@@ -135,7 +133,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									},
 								},
 							},
-							VolumeMounts: []corev1.VolumeMount{{
+							VolumeMounts: append([]corev1.VolumeMount{{
 								Name:      "config",
 								MountPath: "/config",
 								ReadOnly:  true,
@@ -143,7 +141,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:      "ws-manager-client-tls-certs",
 								MountPath: "/ws-manager-client-tls-certs",
 								ReadOnly:  true,
-							}, certSecretsVolumeMount},
+							}}, volumeMounts...),
 						}},
 					},
 				},

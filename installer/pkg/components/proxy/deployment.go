@@ -21,38 +21,60 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	var prometheusPort corev1.ContainerPort
 	// todo(sje): make conditional (default to false)
-	prometheusPort = corev1.ContainerPort{
+	prometheusPort := corev1.ContainerPort{
 		ContainerPort: PrometheusPort,
 		Name:          MetricsContainerName,
 	}
 
-	// todo(sje): make conditional if registry enabled
-	var registryVolumes []corev1.Volume
-	var registryVolumeMounts []corev1.VolumeMount
-	registryVolumes = []corev1.Volume{{
-		Name: RegistryAuthSecret,
+	volumes := []corev1.Volume{{
+		Name: "vhosts",
 		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: RegistryAuthSecret,
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
 			},
 		},
 	}, {
-		Name: RegistryTLSCertSecret,
+		Name: "config-certificates",
 		VolumeSource: corev1.VolumeSource{
 			Secret: &corev1.SecretVolumeSource{
-				SecretName: RegistryTLSCertSecret,
+				SecretName: ctx.Config.Certificate.Name,
 			},
 		},
 	}}
-	registryVolumeMounts = []corev1.VolumeMount{{
-		Name:      RegistryAuthSecret,
-		MountPath: "/etc/caddy/registry-auth",
+
+	volumeMounts := []corev1.VolumeMount{{
+		Name:      "vhosts",
+		MountPath: "/etc/caddy/vhosts",
 	}, {
-		Name:      RegistryTLSCertSecret,
-		MountPath: "/etc/caddy/registry-certs",
+		Name:      "config-certificates",
+		MountPath: "/etc/caddy/certificates",
 	}}
+
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		volumes = append(volumes, corev1.Volume{
+			Name: RegistryAuthSecret,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: RegistryAuthSecret,
+				},
+			},
+		}, corev1.Volume{
+			Name: RegistryTLSCertSecret,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: RegistryTLSCertSecret,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      RegistryAuthSecret,
+			MountPath: "/etc/caddy/registry-auth",
+		}, corev1.VolumeMount{
+			Name:      RegistryTLSCertSecret,
+			MountPath: "/etc/caddy/registry-certs",
+		})
+	}
 
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -63,9 +85,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    labels,
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"Component": Component},
-				},
+				Selector: &metav1.LabelSelector{MatchLabels: labels},
 				// todo(sje): receive config value
 				Replicas: pointer.Int32(1),
 				Strategy: common.DeploymentStrategy,
@@ -77,7 +97,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      &corev1.Affinity{},
-						PriorityClassName:             "system-node-critical",
+						PriorityClassName:             common.SystemNodeCritical,
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
 						DNSPolicy:                     "ClusterFirst",
@@ -86,21 +106,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						SecurityContext: &corev1.PodSecurityContext{
 							RunAsNonRoot: pointer.Bool(false),
 						},
-						Volumes: append([]corev1.Volume{{
-							Name: "vhosts",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
-								},
-							},
-						}, {
-							Name: "config-certificates",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: ctx.Config.Certificate.Name,
-								},
-							},
-						}}, registryVolumes...),
+						Volumes: volumes,
 						InitContainers: []corev1.Container{{
 							Name:            "sysctl",
 							Image:           InitContainerImage,
@@ -134,6 +140,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							}},
 							Ports: []corev1.ContainerPort{{
+								ContainerPort: ContainerHTTPPort,
+								Name:          ContainerHTTPName,
+								Protocol:      *common.TCPProtocol,
+							}, {
+								ContainerPort: ContainerHTTPSPort,
+								Name:          ContainerHTTPSName,
+								Protocol:      *common.TCPProtocol,
+							}, {
 								ContainerPort: PrometheusPort,
 								Name:          MetricsContainerName,
 								Protocol:      *common.TCPProtocol,
@@ -182,13 +196,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								SuccessThreshold:    1,
 								FailureThreshold:    3,
 							},
-							VolumeMounts: append([]corev1.VolumeMount{{
-								Name:      "vhosts",
-								MountPath: "/etc/caddy/vhosts",
-							}, {
-								Name:      "config-certificates",
-								MountPath: "/etc/caddy/certificates",
-							}}, registryVolumeMounts...),
+							VolumeMounts: volumeMounts,
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
 								[]corev1.EnvVar{{

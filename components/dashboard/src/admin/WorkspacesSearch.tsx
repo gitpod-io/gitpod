@@ -4,7 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { AdminGetListResult, User, WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
+import { AdminGetListResult, AdminGetWorkspacesQuery, User, WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
+import { matchesInstanceIdOrLegacyWorkspaceIdExactly, matchesNewWorkspaceIdExactly } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import moment from "moment";
 import { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
@@ -30,7 +31,7 @@ export function WorkspaceSearch(props: Props) {
     const location = useLocation();
     const { user } = useContext(UserContext);
     const [searchResult, setSearchResult] = useState<AdminGetListResult<WorkspaceAndInstance>>({ rows: [], total: 0 });
-    const [searchTerm, setSearchTerm] = useState('');
+    const [queryTerm, setQueryTerm] = useState('');
     const [searching, setSearching] = useState(false);
     const [currentWorkspace, setCurrentWorkspaceState] = useState<WorkspaceAndInstance|undefined>(undefined);
 
@@ -67,13 +68,27 @@ export function WorkspaceSearch(props: Props) {
     const search = async () => {
         setSearching(true);
         try {
+            let searchTerm: string | undefined = queryTerm;
+            const query: AdminGetWorkspacesQuery = {
+                ownerId: props?.user?.id,
+            };
+            if (matchesInstanceIdOrLegacyWorkspaceIdExactly(searchTerm)) {
+                query.instanceIdOrWorkspaceId = searchTerm;
+            } else if (matchesNewWorkspaceIdExactly(searchTerm)) {
+                query.workspaceId = searchTerm;
+            }
+            if (query.workspaceId || query.instanceId || query.instanceIdOrWorkspaceId) {
+                searchTerm = undefined;
+            }
+
+            // const searchTerm = searchTerm;
             const result = await getGitpodService().server.adminGetWorkspaces({
-                searchTerm,
                 limit: 100,
                 orderBy: 'instanceCreationTime',
                 offset: 0,
                 orderDir: "desc",
-                ownerId: props?.user?.id
+                ...query,
+                searchTerm,
             });
             setSearchResult(result);
         } finally {
@@ -89,7 +104,7 @@ export function WorkspaceSearch(props: Props) {
                             <path fillRule="evenodd" clipRule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E" />
                         </svg>
                     </div>
-                    <input type="search" placeholder="Search Workspaces" onKeyDown={(ke) => ke.key === 'Enter' && search() } onChange={(v) => { setSearchTerm(v.target.value) }} />
+                    <input type="search" placeholder="Search Workspaces" onKeyDown={(ke) => ke.key === 'Enter' && search() } onChange={(v) => { setQueryTerm(v.target.value) }} />
                 </div>
                 <button disabled={searching} onClick={search}>Search</button>
             </div>

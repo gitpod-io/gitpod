@@ -10,13 +10,10 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"io"
 	"io/ioutil"
 	"os"
@@ -26,7 +23,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -39,6 +38,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/image-builder/api"
 	protocol "github.com/gitpod-io/gitpod/image-builder/api"
+	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/auth"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -96,39 +96,17 @@ func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err e
 	} else {
 		grpcOpts := common_grpc.DefaultClientOptions()
 		if cfg.WorkspaceManager.TLS.Authority != "" || cfg.WorkspaceManager.TLS.Certificate != "" && cfg.WorkspaceManager.TLS.PrivateKey != "" {
-			ca := cfg.WorkspaceManager.TLS.Authority
-			crt := cfg.WorkspaceManager.TLS.Certificate
-			key := cfg.WorkspaceManager.TLS.PrivateKey
-
-			// Telepresence (used for debugging only) requires special paths to load files from
-			if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
-				ca = filepath.Join(root, ca)
-				crt = filepath.Join(root, crt)
-				key = filepath.Join(root, key)
-			}
-
-			rootCA, err := os.ReadFile(ca)
-			if err != nil {
-				return nil, xerrors.Errorf("could not read ca certificate: %s", err)
-			}
-			certPool := x509.NewCertPool()
-			if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
-				return nil, xerrors.Errorf("failed to append ca certs")
-			}
-
-			certificate, err := tls.LoadX509KeyPair(crt, key)
+			tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+				cfg.WorkspaceManager.TLS.Authority, cfg.WorkspaceManager.TLS.Certificate, cfg.WorkspaceManager.TLS.PrivateKey,
+				common_grpc.WithSetRootCAs(true),
+				common_grpc.WithServerName("ws-manager"),
+			)
 			if err != nil {
 				log.WithField("config", cfg.WorkspaceManager.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
 				return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
 			}
 
-			creds := credentials.NewTLS(&tls.Config{
-				ServerName:   "ws-manager",
-				Certificates: []tls.Certificate{certificate},
-				RootCAs:      certPool,
-				MinVersion:   tls.VersionTLS12,
-			})
-			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
+			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 		} else {
 			grpcOpts = append(grpcOpts, grpc.WithInsecure())
 		}
@@ -309,8 +287,13 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	ctx, cancel := context.WithTimeout(&parentCantCancelContext{Delegate: ctx}, maxBuildRuntime)
 	defer cancel()
 
+	randomUUID, err := uuid.NewRandom()
+	if err != nil {
+		return
+	}
+
 	var (
-		buildID        = computeBuildID(wsrefstr)
+		buildID        = randomUUID.String()
 		buildBase      = "false"
 		contextPath    = "."
 		dockerfilePath = "Dockerfile"
@@ -375,11 +358,14 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				Owner: buildWorkspaceOwnerID,
 			},
 			Spec: &wsmanapi.StartWorkspaceSpec{
-				CheckoutLocation:  ".",
-				Initializer:       initializer,
-				Timeout:           maxBuildRuntime.String(),
-				WorkspaceImage:    o.Config.BuilderImage,
-				IdeImage:          o.Config.BuilderImage,
+				CheckoutLocation:   ".",
+				Initializer:        initializer,
+				Timeout:            maxBuildRuntime.String(),
+				WorkspaceImage:     o.Config.BuilderImage,
+				DeprecatedIdeImage: o.Config.BuilderImage,
+				IdeImage: &wsmanapi.IDEImage{
+					WebRef: o.Config.BuilderImage,
+				},
 				WorkspaceLocation: contextPath,
 				Envvars: []*wsmanapi.EnvironmentVariable{
 					{Name: "BOB_TARGET_REF", Value: wsrefstr},
@@ -391,12 +377,13 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
 					{Name: "BOB_AUTH_KEY", Value: string(o.builderAuthKey[:])},
 					{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo -E /app/bob build"}]`},
+					{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Log.Logger.IsLevelEnabled(logrus.DebugLevel))},
 				},
 			},
 			Type: wsmanapi.WorkspaceType_IMAGEBUILD,
 		})
 		return
-	}, retryIfUnavailable1, 1*time.Second, 5)
+	}, retryIfUnavailable1, 1*time.Second, 10)
 	if status.Code(err) == codes.AlreadyExists {
 		// build is already running - do not add it to the list of builds
 	} else if errors.Is(err, errOutOfRetries) {
@@ -488,18 +475,17 @@ func (o *Orchestrator) Logs(req *protocol.LogsRequest, resp protocol.ImageBuilde
 	tracing.LogRequestSafe(span, req)
 
 	rb, err := o.monitor.GetAllRunningBuilds(ctx)
-	var found bool
+	var buildID string
 	for _, bld := range rb {
 		if bld.Info.Ref == req.BuildRef {
-			found = true
+			buildID = bld.Info.BuildId
 			break
 		}
 	}
-	if !found {
+	if buildID == "" {
 		return status.Error(codes.NotFound, "build not found")
 	}
 
-	buildID := computeBuildID(req.BuildRef)
 	logs, cancel := o.registerLogListener(buildID)
 	defer cancel()
 	for {
@@ -671,16 +657,6 @@ func (c *parentCantCancelContext) Value(key interface{}) interface{} {
 	return c.Delegate.Value(key)
 }
 
-func computeBuildID(ref string) string {
-	// The buildID will be used as workspaceID which must not be longer than 63 characters because it's a kubernetes label.
-	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(ref)))
-
-	// Truncating hashes is fine according to NIST - and StackOverflow :)
-	// Note: the buildID is also used as servicePrefix for the StartWorkspace request and must match
-	//       the workspaceIDIdentifier regexp in ws-proxy
-	return fmt.Sprintf("%s-%s-%s", hash[0:16], hash[16:32], hash[32:40])
-}
-
 // source: https://astaxie.gitbooks.io/build-web-application-with-golang/en/09.6.html
 func encrypt(plaintext []byte, key [32]byte) ([]byte, error) {
 	c, err := aes.NewCipher(key[:])
@@ -706,11 +682,12 @@ func (o *Orchestrator) getAuthFor(inp auth.AllowedAuthFor, refs ...string) (res 
 	if err != nil {
 		return
 	}
-	resb, err := json.Marshal(buildauth)
+	resb, err := json.MarshalIndent(buildauth, "", " ")
 	if err != nil {
 		return
 	}
-	res = string(resb)
+
+	res = base64.RawStdEncoding.EncodeToString(resb)
 
 	if len(o.builderAuthKey) > 0 {
 		resb, err = encrypt(resb, o.builderAuthKey)
@@ -718,7 +695,6 @@ func (o *Orchestrator) getAuthFor(inp auth.AllowedAuthFor, refs ...string) (res 
 			return
 		}
 
-		// I know this call is really backwards, but the Encode() API is so difficult to use properly.
 		res = base64.RawStdEncoding.EncodeToString(resb)
 	}
 

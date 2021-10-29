@@ -159,7 +159,7 @@ spec:
             # If the disk has already been created, sleep indefinitely
             if [ -b "${RAID_DEVICE}" ] && [ -d "${RAID_DIR}" ]; then
                 echo "raid array already created!"
-                mount -o noatime "${RAID_DEVICE}" "${RAID_DIR}" || true
+                mount -o noatime,prjquota "${RAID_DEVICE}" "${RAID_DIR}" || true
                 exit 0
             fi
             # Discover how many disks there are
@@ -200,7 +200,7 @@ spec:
             mkfs.xfs "${RAID_DEVICE}"
             # Mount the raid array in a predefined location
             mkdir -p "${RAID_DIR}"
-            mount -o noatime "${RAID_DEVICE}" "${RAID_DIR}"
+            mount -o noatime,prjquota "${RAID_DEVICE}" "${RAID_DIR}"
             ls -l /dev/md*
             cat /proc/mdstat
 {{- end }}

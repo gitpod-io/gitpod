@@ -11,7 +11,7 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:81c4fb602a540d261f210cfc8ba0435b63b24238c1762ec029d8edaec816afb6",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:gpl-headless-log-wsman.25",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:gpl-headless-log-wsman.25",
             "headless": true,
             "url": "https://gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com",
             "exposed_ports": [
@@ -75,7 +75,10 @@
                     "url": "https://13444-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
                 }
             ],
-            "type": 1
+            "type": 1,
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:gpl-headless-log-wsman.25"
+            }
         },
         "phase": 5,
         "conditions": {

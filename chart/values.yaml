@@ -62,6 +62,7 @@ workspaceSizing:
 db:
   host: db
   port: 3306
+  username: gitpod
   password: test
 
 defaults:
@@ -131,10 +132,6 @@ branding:
       - name: Terms of Service
         url: https://www.gitpod.io/terms/
 workspaceScheduler: workspace-scheduler
-
-vsxRegistry:
-  proxy: false
-  host: open-vsx.org
 
 components:
 
@@ -402,7 +399,13 @@ components:
       imageName: "ide/theia"
     codeImage:
       imageName: "ide/code"
-      stableVersion: "commit-8be670686186fcc71076bc95166de1ada9c232d8"
+      stableVersion: "commit-7107fb8bde0b1f92265402ad5fa09a51022b14dd"
+      insidersVersion: "nightly"
+    desktopIdeImages:
+      intellij:
+        imageName: "ide/intellij"
+      goland:
+        imageName: "ide/goland"
     supervisor:
       imageName: "supervisor"
     dockerUp:
@@ -437,6 +440,33 @@ components:
     serviceType: "LoadBalancer"
     serviceSessionAffinity: "None"
     serviceExternalTrafficPolicy: null
+
+  openVsxProxy:
+    disabled: true
+    name: "openvsx-proxy"
+    svcName: "openvsx-proxy"
+    dependsOn:
+    - "openvsx-proxy-configmap.yaml"
+    ports:
+      http:
+        expose: true
+        containerPort: 8080
+        servicePort: 8080
+      metrics:
+        expose: false
+        containerPort: 9500
+    vsxRegistryUrl: https://open-vsx.org
+    # cacheDurationRegular is how long to use a cached value during normal operation (when upstream is reachable)
+    # set it to 0 to disable caching during normal operation and always call upstream when reachable
+    cacheDurationRegular: 5m
+    # cacheDurationBackup is the TTL of a cached value that is used on an upstream outage
+    # this value is used for the in-memory cache only
+    # this value has no effect when enableRedis == true
+    cacheDurationBackup: 72h  # 3 days
+    maxIdleConns: 1000
+    maxIdleConnsPerHost: 1000
+    enableRedis: true
+    redisMaxMemory: 100mb
 
   wsManager:
     name: "ws-manager"

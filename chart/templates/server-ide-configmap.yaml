@@ -11,6 +11,27 @@
 {{ template "gitpod.comp.imageRepo" . }}:{{ $comp.stableVersion }}
 {{- end -}}
 
+{{- define "insider-image-full" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- $comp := .comp -}}
+{{ template "gitpod.comp.imageRepo" . }}:{{- $comp.insidersVersion | default (include "gitpod.comp.version" .) -}}
+{{- end -}}
+
+{{- define "ide-images-aliases"}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+code: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+code-latest: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+{{ end }}
+
+{{- define "desktop-ide-images-aliases"}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+intellij: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
+goland: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+{{ end }}
+
 {{- if $comp.serverIdeConfigDeploy.enabled }}
 apiVersion: v1
 kind: ConfigMap
@@ -26,6 +47,7 @@ data:
     {
         "ideVersion": "{{ .Values.components.workspace.codeImage.stableVersion }}",
         "ideImageRepo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}",
-        "ideImageAliases": {{ (dict "code-latest" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage)) "code" (include "stable-image-full" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson }}
+        "ideImageAliases": {{ (include "ide-images-aliases" (dict "root" . "gp" $.Values)) | fromYaml | toJson }},
+        "desktopIdeImageAliases": {{ (include "desktop-ide-images-aliases" (dict "root" . "gp" $.Values)) | fromYaml | toJson }}
     }
 {{- end }}

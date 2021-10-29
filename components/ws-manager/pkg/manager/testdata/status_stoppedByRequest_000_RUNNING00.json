@@ -1,0 +1,1294 @@
+{
+  "pod": {
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7",
+      "namespace": "staging-cw-fix-6213",
+      "uid": "ede138be-dc8d-4486-920b-abadaff6968b",
+      "resourceVersion": "56318672",
+      "creationTimestamp": "2021-10-14T19:11:23Z",
+      "labels": {
+        "app": "gitpod",
+        "component": "workspace",
+        "gitpod.io/networkpolicy": "default",
+        "gpwsman": "true",
+        "headless": "false",
+        "metaID": "lime-opossum-3jftf65i",
+        "owner": "f4a5920f-303f-4221-bacd-7be9e1dd8e09",
+        "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7",
+        "workspaceType": "regular"
+      },
+      "annotations": {
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
+        "cni.projectcalico.org/podIP": "10.96.5.122/32",
+        "cni.projectcalico.org/podIPs": "10.96.5.122/32",
+        "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
+        "gitpod.io/nodeName": "gke-core-dev-workspace-3-a69c4dd8-jqzs",
+        "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
+        "gitpod.io/stoppedByRequest": "42s",
+        "gitpod/admission": "admit_owner_only",
+        "gitpod/contentInitializer": "[redacted]",
+        "gitpod/customTimeout": "60m",
+        "gitpod/firstUserActivity": "2021-10-14T19:11:43.983492544Z",
+        "gitpod/id": "18f99de5-090f-4318-9759-05f5ef0277f7",
+        "gitpod/imageSpec": "CnRldS5nY3IuaW8vZ2l0cG9kLWNvcmUtZGV2L3JlZ2lzdHJ5L3dvcmtzcGFjZS1pbWFnZXM6M2JkNWNlMTJmN2FjZDFmZjE5NDk0YTI1YWEyZmYwMWZmOWE3YjkzODU2N2M4NGQ1MmNlNmFhMGIyYmQ0MDA5MhJYZXUuZ2NyLmlvL2dpdHBvZC1jb3JlLWRldi9idWlsZC9pZGUvY29kZTpjb21taXQtNzEwN2ZiOGJkZTBiMWY5MjI2NTQwMmFkNWZhMDlhNTEwMjJiMTRkZA==",
+        "gitpod/ownerToken": "Tx5RtJ5f4LWUWvrGJ_-.AJmcTd5MB_8e",
+        "gitpod/servicePrefix": "lime-opossum-3jftf65i",
+        "gitpod/url": "https://lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com",
+        "kubernetes.io/psp": "staging-cw-fix-6213-ns-workspace",
+        "prometheus.io/path": "/metrics",
+        "prometheus.io/port": "23000",
+        "prometheus.io/scrape": "true",
+        "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_cw-fix-6213.1.json"
+      },
+      "finalizers": [
+        "gitpod.io/finalizer"
+      ],
+      "managedFields": [
+        {
+          "manager": "calico",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2021-10-14T19:11:24Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:annotations": {
+                "f:cni.projectcalico.org/podIP": {},
+                "f:cni.projectcalico.org/podIPs": {}
+              }
+            }
+          }
+        },
+        {
+          "manager": "kubelet",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2021-10-14T19:11:32Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:status": {
+              "f:conditions": {
+                "k:{\"type\":\"ContainersReady\"}": {
+                  ".": {},
+                  "f:lastProbeTime": {},
+                  "f:lastTransitionTime": {},
+                  "f:status": {},
+                  "f:type": {}
+                },
+                "k:{\"type\":\"Initialized\"}": {
+                  ".": {},
+                  "f:lastProbeTime": {},
+                  "f:lastTransitionTime": {},
+                  "f:status": {},
+                  "f:type": {}
+                },
+                "k:{\"type\":\"Ready\"}": {
+                  ".": {},
+                  "f:lastProbeTime": {},
+                  "f:lastTransitionTime": {},
+                  "f:status": {},
+                  "f:type": {}
+                }
+              },
+              "f:containerStatuses": {},
+              "f:hostIP": {},
+              "f:phase": {},
+              "f:podIP": {},
+              "f:podIPs": {
+                ".": {},
+                "k:{\"ip\":\"10.96.5.122\"}": {
+                  ".": {},
+                  "f:ip": {}
+                }
+              },
+              "f:startTime": {}
+            }
+          }
+        },
+        {
+          "manager": "ws-manager",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2021-10-14T19:11:57Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:annotations": {
+                ".": {},
+                "f:cluster-autoscaler.kubernetes.io/safe-to-evict": {},
+                "f:container.apparmor.security.beta.kubernetes.io/workspace": {},
+                "f:gitpod.io/nodeName": {},
+                "f:gitpod.io/requiredNodeServices": {},
+                "f:gitpod.io/stoppedByRequest": {},
+                "f:gitpod/admission": {},
+                "f:gitpod/contentInitializer": {},
+                "f:gitpod/customTimeout": {},
+                "f:gitpod/firstUserActivity": {},
+                "f:gitpod/id": {},
+                "f:gitpod/imageSpec": {},
+                "f:gitpod/ownerToken": {},
+                "f:gitpod/servicePrefix": {},
+                "f:gitpod/url": {},
+                "f:prometheus.io/path": {},
+                "f:prometheus.io/port": {},
+                "f:prometheus.io/scrape": {},
+                "f:seccomp.security.alpha.kubernetes.io/pod": {}
+              },
+              "f:finalizers": {
+                ".": {},
+                "v:\"gitpod.io/finalizer\"": {}
+              },
+              "f:labels": {
+                ".": {},
+                "f:app": {},
+                "f:component": {},
+                "f:gitpod.io/networkpolicy": {},
+                "f:gpwsman": {},
+                "f:headless": {},
+                "f:metaID": {},
+                "f:owner": {},
+                "f:workspaceID": {},
+                "f:workspaceType": {}
+              }
+            },
+            "f:spec": {
+              "f:affinity": {
+                ".": {},
+                "f:nodeAffinity": {
+                  ".": {},
+                  "f:requiredDuringSchedulingIgnoredDuringExecution": {
+                    ".": {},
+                    "f:nodeSelectorTerms": {}
+                  }
+                }
+              },
+              "f:automountServiceAccountToken": {},
+              "f:containers": {
+                "k:{\"name\":\"workspace\"}": {
+                  ".": {},
+                  "f:command": {},
+                  "f:env": {
+                    ".": {},
+                    "k:{\"name\":\"GITPOD_CLI_APITOKEN\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_EXTERNAL_EXTENSIONS\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_GIT_USER_EMAIL\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_GIT_USER_NAME\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_HOST\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_IDE_ALIAS\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_INSTANCE_ID\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_INTERVAL\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_MEMORY\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_REPO_ROOT\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_RESOLVED_EXTENSIONS\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_TASKS\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_THEIA_PORT\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_WORKSPACE_CLUSTER_HOST\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_WORKSPACE_CONTEXT\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_WORKSPACE_CONTEXT_URL\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_WORKSPACE_ID\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"GITPOD_WORKSPACE_URL\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"SUPERVISOR_DEBUG_ENABLE\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"THEIA_MINI_BROWSER_HOST_PATTERN\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"THEIA_RATELIMIT_LOG\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"THEIA_SUPERVISOR_ENDPOINT\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"THEIA_SUPERVISOR_TOKENS\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"THEIA_WEBVIEW_EXTERNAL_ENDPOINT\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"THEIA_WORKSPACE_ROOT\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    },
+                    "k:{\"name\":\"VSX_REGISTRY_URL\"}": {
+                      ".": {},
+                      "f:name": {},
+                      "f:value": {}
+                    }
+                  },
+                  "f:image": {},
+                  "f:imagePullPolicy": {},
+                  "f:name": {},
+                  "f:ports": {
+                    ".": {},
+                    "k:{\"containerPort\":23000,\"protocol\":\"TCP\"}": {
+                      ".": {},
+                      "f:containerPort": {},
+                      "f:protocol": {}
+                    }
+                  },
+                  "f:readinessProbe": {
+                    ".": {},
+                    "f:failureThreshold": {},
+                    "f:httpGet": {
+                      ".": {},
+                      "f:path": {},
+                      "f:port": {},
+                      "f:scheme": {}
+                    },
+                    "f:initialDelaySeconds": {},
+                    "f:periodSeconds": {},
+                    "f:successThreshold": {},
+                    "f:timeoutSeconds": {}
+                  },
+                  "f:resources": {
+                    ".": {},
+                    "f:limits": {
+                      ".": {},
+                      "f:cpu": {},
+                      "f:memory": {}
+                    },
+                    "f:requests": {
+                      ".": {},
+                      "f:cpu": {},
+                      "f:ephemeral-storage": {},
+                      "f:memory": {}
+                    }
+                  },
+                  "f:securityContext": {
+                    ".": {},
+                    "f:allowPrivilegeEscalation": {},
+                    "f:capabilities": {
+                      ".": {},
+                      "f:add": {},
+                      "f:drop": {}
+                    },
+                    "f:privileged": {},
+                    "f:readOnlyRootFilesystem": {},
+                    "f:runAsGroup": {},
+                    "f:runAsNonRoot": {},
+                    "f:runAsUser": {}
+                  },
+                  "f:terminationMessagePath": {},
+                  "f:terminationMessagePolicy": {},
+                  "f:volumeMounts": {
+                    ".": {},
+                    "k:{\"mountPath\":\"/.workspace\"}": {
+                      ".": {},
+                      "f:mountPath": {},
+                      "f:mountPropagation": {},
+                      "f:name": {}
+                    },
+                    "k:{\"mountPath\":\"/workspace\"}": {
+                      ".": {},
+                      "f:mountPath": {},
+                      "f:mountPropagation": {},
+                      "f:name": {}
+                    }
+                  }
+                }
+              },
+              "f:dnsConfig": {
+                ".": {},
+                "f:nameservers": {}
+              },
+              "f:dnsPolicy": {},
+              "f:enableServiceLinks": {},
+              "f:imagePullSecrets": {
+                ".": {},
+                "k:{\"name\":\"gcp-sa-registry-auth\"}": {
+                  ".": {},
+                  "f:name": {}
+                }
+              },
+              "f:restartPolicy": {},
+              "f:schedulerName": {},
+              "f:securityContext": {},
+              "f:serviceAccount": {},
+              "f:serviceAccountName": {},
+              "f:terminationGracePeriodSeconds": {},
+              "f:tolerations": {},
+              "f:volumes": {
+                ".": {},
+                "k:{\"name\":\"daemon-mount\"}": {
+                  ".": {},
+                  "f:hostPath": {
+                    ".": {},
+                    "f:path": {},
+                    "f:type": {}
+                  },
+                  "f:name": {}
+                },
+                "k:{\"name\":\"vol-this-workspace\"}": {
+                  ".": {},
+                  "f:hostPath": {
+                    ".": {},
+                    "f:path": {},
+                    "f:type": {}
+                  },
+                  "f:name": {}
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "vol-this-workspace",
+          "hostPath": {
+            "path": "/mnt/disks/raid0/workspaces-staging-cw-fix-6213/18f99de5-090f-4318-9759-05f5ef0277f7",
+            "type": "DirectoryOrCreate"
+          }
+        },
+        {
+          "name": "daemon-mount",
+          "hostPath": {
+            "path": "/mnt/disks/raid0/workspaces-staging-cw-fix-6213/18f99de5-090f-4318-9759-05f5ef0277f7-daemon",
+            "type": "DirectoryOrCreate"
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "workspace",
+          "image": "reg.cw-fix-6213.staging.gitpod-dev.com:30558/remote/18f99de5-090f-4318-9759-05f5ef0277f7",
+          "command": [
+            "/.supervisor/workspacekit",
+            "ring0"
+          ],
+          "ports": [
+            {
+              "containerPort": 23000,
+              "protocol": "TCP"
+            }
+          ],
+          "env": [
+            {
+              "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace/template-typescript-node"
+            },
+            {
+              "name": "GITPOD_CLI_APITOKEN",
+              "value": "KFvk3nE5HJUI40rO5tASwpMPEu82_IsE"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_ID",
+              "value": "lime-opossum-3jftf65i"
+            },
+            {
+              "name": "GITPOD_INSTANCE_ID",
+              "value": "18f99de5-090f-4318-9759-05f5ef0277f7"
+            },
+            {
+              "name": "GITPOD_THEIA_PORT",
+              "value": "23000"
+            },
+            {
+              "name": "THEIA_WORKSPACE_ROOT",
+              "value": "/workspace/template-typescript-node"
+            },
+            {
+              "name": "GITPOD_HOST",
+              "value": "https://cw-fix-6213.staging.gitpod-dev.com"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_URL",
+              "value": "https://lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_CLUSTER_HOST",
+              "value": "ws-dev.cw-fix-6213.staging.gitpod-dev.com"
+            },
+            {
+              "name": "THEIA_SUPERVISOR_ENDPOINT",
+              "value": ":22999"
+            },
+            {
+              "name": "THEIA_WEBVIEW_EXTERNAL_ENDPOINT",
+              "value": "webview-{{hostname}}"
+            },
+            {
+              "name": "THEIA_MINI_BROWSER_HOST_PATTERN",
+              "value": "browser-{{hostname}}"
+            },
+            {
+              "name": "GITPOD_GIT_USER_NAME",
+              "value": "Christian Weichel"
+            },
+            {
+              "name": "GITPOD_GIT_USER_EMAIL",
+              "value": "chris@gitpod.io"
+            },
+            {
+              "name": "GITPOD_IDE_ALIAS",
+              "value": "code"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_CONTEXT_URL",
+              "value": "https://github.com/gitpod-io/template-typescript-node"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_CONTEXT",
+              "value": "{\"isFile\":false,\"path\":\"\",\"title\":\"gitpod-io/template-typescript-node - master\",\"ref\":\"master\",\"refType\":\"branch\",\"revision\":\"91ef21d1e7e39bf7db34e2680cb7e74ce50f63b9\",\"repository\":{\"cloneUrl\":\"https://github.com/gitpod-io/template-typescript-node.git\",\"host\":\"github.com\",\"name\":\"template-typescript-node\",\"owner\":\"gitpod-io\",\"private\":false,\"fork\":{\"parent\":{\"cloneUrl\":\"https://github.com/microsoft/TypeScript-Node-Starter.git\",\"host\":\"github.com\",\"name\":\"TypeScript-Node-Starter\",\"owner\":\"microsoft\",\"private\":false}}}}"
+            },
+            {
+              "name": "GITPOD_TASKS",
+              "value": "[{\"command\":\"mongod\\n\"},{\"init\":\"npm install\\nnpm run build\\n\",\"command\":\"npm run start\\n\"}]"
+            },
+            {
+              "name": "VSX_REGISTRY_URL",
+              "value": "[redacted]"
+            },
+            {
+              "name": "THEIA_SUPERVISOR_TOKENS",
+              "value": "[{\"tokenOTS\":\"https://cw-fix-6213.staging.gitpod-dev.com/api/ots/get/219f93af-6389-41ed-be1f-fafc2ea45ddc\",\"token\":\"ots\",\"kind\":\"gitpod\",\"host\":\"cw-fix-6213.staging.gitpod-dev.com\",\"scope\":[\"function:getWorkspace\",\"function:getLoggedInUser\",\"function:getPortAuthenticationToken\",\"function:getWorkspaceOwner\",\"function:getWorkspaceUsers\",\"function:isWorkspaceOwner\",\"function:controlAdmission\",\"function:setWorkspaceTimeout\",\"function:getWorkspaceTimeout\",\"function:sendHeartBeat\",\"function:getOpenPorts\",\"function:openPort\",\"function:closePort\",\"function:getLayout\",\"function:generateNewGitpodToken\",\"function:takeSnapshot\",\"function:storeLayout\",\"function:stopWorkspace\",\"function:getToken\",\"function:getGitpodTokenScopes\",\"function:getContentBlobUploadUrl\",\"function:getContentBlobDownloadUrl\",\"function:accessCodeSyncStorage\",\"function:guessGitTokenScopes\",\"function:getEnvVars\",\"function:setEnvVar\",\"function:deleteEnvVar\",\"function:trackEvent\",\"resource:workspace::lime-opossum-3jftf65i::get/update\",\"resource:workspaceInstance::18f99de5-090f-4318-9759-05f5ef0277f7::get/update/delete\",\"resource:snapshot::ws-lime-opossum-3jftf65i::create\",\"resource:gitpodToken::*::create\",\"resource:userStorage::*::create/get/update\",\"resource:token::*::get\",\"resource:contentBlob::*::create/get\",\"resource:envVar::gitpod-io/template-typescript-node::create/get/update/delete\"],\"expiryDate\":\"2021-10-15T19:11:23.102Z\",\"reuse\":2}]"
+            },
+            {
+              "name": "GITPOD_RESOLVED_EXTENSIONS",
+              "value": "{\"vscode.bat@1.44.2\":{\"fullPluginName\":\"vscode.bat@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.clojure@1.44.2\":{\"fullPluginName\":\"vscode.clojure@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.coffeescript@1.44.2\":{\"fullPluginName\":\"vscode.coffeescript@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.cpp@1.44.2\":{\"fullPluginName\":\"vscode.cpp@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.csharp@1.44.2\":{\"fullPluginName\":\"vscode.csharp@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"llvm-vs-code-extensions.vscode-clangd@0.1.5\":{\"fullPluginName\":\"llvm-vs-code-extensions.vscode-clangd@0.1.5\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.css@1.51.1\":{\"fullPluginName\":\"vscode.css@1.51.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.css-language-features@1.51.1\":{\"fullPluginName\":\"vscode.css-language-features@1.51.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.debug-auto-launch@1.44.2\":{\"fullPluginName\":\"vscode.debug-auto-launch@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.emmet@1.44.2\":{\"fullPluginName\":\"vscode.emmet@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.fsharp@1.44.2\":{\"fullPluginName\":\"vscode.fsharp@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.go@1.44.2\":{\"fullPluginName\":\"vscode.go@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.groovy@1.44.2\":{\"fullPluginName\":\"vscode.groovy@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.handlebars@1.44.2\":{\"fullPluginName\":\"vscode.handlebars@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.hlsl@1.44.2\":{\"fullPluginName\":\"vscode.hlsl@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.html@1.51.1\":{\"fullPluginName\":\"vscode.html@1.51.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.html-language-features@1.51.1\":{\"fullPluginName\":\"vscode.html-language-features@1.51.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.ini@1.44.2\":{\"fullPluginName\":\"vscode.ini@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.java@1.53.2\":{\"fullPluginName\":\"vscode.java@1.53.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.javascript@1.44.2\":{\"fullPluginName\":\"vscode.javascript@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.json@1.44.2\":{\"fullPluginName\":\"vscode.json@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.json-language-features@1.46.1\":{\"fullPluginName\":\"vscode.json-language-features@1.46.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.less@1.44.2\":{\"fullPluginName\":\"vscode.less@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.log@1.44.2\":{\"fullPluginName\":\"vscode.log@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.lua@1.44.2\":{\"fullPluginName\":\"vscode.lua@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.make@1.44.2\":{\"fullPluginName\":\"vscode.make@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.markdown@1.44.2\":{\"fullPluginName\":\"vscode.markdown@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.npm@1.39.1\":{\"fullPluginName\":\"vscode.npm@1.39.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.objective-c@1.44.2\":{\"fullPluginName\":\"vscode.objective-c@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.perl@1.44.2\":{\"fullPluginName\":\"vscode.perl@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.php@1.44.2\":{\"fullPluginName\":\"vscode.php@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.powershell@1.44.2\":{\"fullPluginName\":\"vscode.powershell@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.pug@1.44.2\":{\"fullPluginName\":\"vscode.pug@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.python@1.47.3\":{\"fullPluginName\":\"vscode.python@1.47.3\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.r@1.44.2\":{\"fullPluginName\":\"vscode.r@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.razor@1.44.2\":{\"fullPluginName\":\"vscode.razor@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.ruby@1.44.2\":{\"fullPluginName\":\"vscode.ruby@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.rust@1.44.2\":{\"fullPluginName\":\"vscode.rust@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.scss@1.44.2\":{\"fullPluginName\":\"vscode.scss@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.shaderlab@1.44.2\":{\"fullPluginName\":\"vscode.shaderlab@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.shellscript@1.44.2\":{\"fullPluginName\":\"vscode.shellscript@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.sql@1.44.2\":{\"fullPluginName\":\"vscode.sql@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.swift@1.44.2\":{\"fullPluginName\":\"vscode.swift@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.typescript@1.44.2\":{\"fullPluginName\":\"vscode.typescript@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.typescript-language-features@1.44.2\":{\"fullPluginName\":\"vscode.typescript-language-features@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.vb@1.44.2\":{\"fullPluginName\":\"vscode.vb@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.xml@1.44.2\":{\"fullPluginName\":\"vscode.xml@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.yaml@1.44.2\":{\"fullPluginName\":\"vscode.yaml@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"redhat.java@0.75.0\":{\"fullPluginName\":\"redhat.java@0.75.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscjava.vscode-java-debug@0.27.1\":{\"fullPluginName\":\"vscjava.vscode-java-debug@0.27.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscjava.vscode-java-dependency@0.18.0\":{\"fullPluginName\":\"vscjava.vscode-java-dependency@0.18.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"ms-vscode.node-debug@1.38.4\":{\"fullPluginName\":\"ms-vscode.node-debug@1.38.4\",\"url\":\"local\",\"kind\":\"builtin\"},\"ms-vscode.node-debug2@1.33.0\":{\"fullPluginName\":\"ms-vscode.node-debug2@1.33.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"ms-python.python@2020.7.96456\":{\"fullPluginName\":\"ms-python.python@2020.7.96456\",\"url\":\"local\",\"kind\":\"builtin\"},\"golang.Go@0.14.4\":{\"fullPluginName\":\"golang.go@0.14.4\",\"url\":\"local\",\"kind\":\"builtin\"},\"redhat.vscode-xml@0.11.0\":{\"fullPluginName\":\"redhat.vscode-xml@0.11.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"redhat.vscode-yaml@0.8.0\":{\"fullPluginName\":\"redhat.vscode-yaml@0.8.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"bmewburn.vscode-intelephense-client@1.4.0\":{\"fullPluginName\":\"bmewburn.vscode-intelephense-client@1.4.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"felixfbecker.php-debug@1.13.0\":{\"fullPluginName\":\"felixfbecker.php-debug@1.13.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"rust-lang.rust@0.7.8\":{\"fullPluginName\":\"rust-lang.rust@0.7.8\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-abyss@1.44.2\":{\"fullPluginName\":\"vscode.theme-abyss@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-kimbie-dark@1.44.2\":{\"fullPluginName\":\"vscode.theme-kimbie-dark@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-monokai@1.44.2\":{\"fullPluginName\":\"vscode.theme-monokai@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-monokai-dimmed@1.44.2\":{\"fullPluginName\":\"vscode.theme-monokai-dimmed@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-quietlight@1.44.2\":{\"fullPluginName\":\"vscode.theme-quietlight@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-red@1.44.2\":{\"fullPluginName\":\"vscode.theme-red@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-solarized-dark@1.44.2\":{\"fullPluginName\":\"vscode.theme-solarized-dark@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-solarized-light@1.44.2\":{\"fullPluginName\":\"vscode.theme-solarized-light@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.theme-tomorrow-night-blue@1.44.2\":{\"fullPluginName\":\"vscode.theme-tomorrow-night-blue@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.vscode-theme-seti@1.44.2\":{\"fullPluginName\":\"vscode.vscode-theme-seti@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.merge-conflict@1.44.2\":{\"fullPluginName\":\"vscode.merge-conflict@1.44.2\",\"url\":\"local\",\"kind\":\"builtin\"},\"ms-vscode.references-view@0.0.47\":{\"fullPluginName\":\"ms-vscode.references-view@0.0.47\",\"url\":\"local\",\"kind\":\"builtin\"},\"EditorConfig.EditorConfig@0.15.1\":{\"fullPluginName\":\"editorconfig.editorconfig@0.15.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.docker@1.47.3\":{\"fullPluginName\":\"vscode.docker@1.47.3\",\"url\":\"local\",\"kind\":\"builtin\"},\"dbaeumer.vscode-eslint\":{\"fullPluginName\":\"dbaeumer.vscode-eslint@2.1.20\",\"url\":\"https://open-vsx.org/api/dbaeumer/vscode-eslint/2.1.20/file/dbaeumer.vscode-eslint-2.1.20.vsix\",\"kind\":\"workspace\"}}"
+            },
+            {
+              "name": "GITPOD_EXTERNAL_EXTENSIONS",
+              "value": "[]"
+            },
+            {
+              "name": "GITPOD_INTERVAL",
+              "value": "30000"
+            },
+            {
+              "name": "GITPOD_MEMORY",
+              "value": "2415"
+            },
+            {
+              "name": "THEIA_RATELIMIT_LOG",
+              "value": "50"
+            },
+            {
+              "name": "SUPERVISOR_DEBUG_ENABLE",
+              "value": "true"
+            }
+          ],
+          "resources": {
+            "limits": {
+              "cpu": "5",
+              "memory": "12Gi"
+            },
+            "requests": {
+              "cpu": "1m",
+              "ephemeral-storage": "5Gi",
+              "memory": "2304Mi"
+            }
+          },
+          "volumeMounts": [
+            {
+              "name": "vol-this-workspace",
+              "mountPath": "/workspace",
+              "mountPropagation": "HostToContainer"
+            },
+            {
+              "name": "daemon-mount",
+              "mountPath": "/.workspace",
+              "mountPropagation": "HostToContainer"
+            }
+          ],
+          "readinessProbe": {
+            "httpGet": {
+              "path": "/_supervisor/v1/status/content/wait/true",
+              "port": 22999,
+              "scheme": "HTTP"
+            },
+            "initialDelaySeconds": 4,
+            "timeoutSeconds": 1,
+            "periodSeconds": 1,
+            "successThreshold": 1,
+            "failureThreshold": 600
+          },
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "imagePullPolicy": "IfNotPresent",
+          "securityContext": {
+            "capabilities": {
+              "add": [
+                "AUDIT_WRITE",
+                "FSETID",
+                "KILL",
+                "NET_BIND_SERVICE",
+                "SYS_PTRACE"
+              ],
+              "drop": [
+                "SETPCAP",
+                "CHOWN",
+                "NET_RAW",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "SYS_CHROOT",
+                "SETFCAP",
+                "SETUID",
+                "SETGID"
+              ]
+            },
+            "privileged": false,
+            "runAsUser": 33333,
+            "runAsGroup": 33333,
+            "runAsNonRoot": true,
+            "readOnlyRootFilesystem": false,
+            "allowPrivilegeEscalation": true
+          }
+        }
+      ],
+      "restartPolicy": "Never",
+      "terminationGracePeriodSeconds": 30,
+      "dnsPolicy": "None",
+      "serviceAccountName": "workspace",
+      "serviceAccount": "workspace",
+      "automountServiceAccountToken": false,
+      "nodeName": "gke-core-dev-workspace-3-a69c4dd8-jqzs",
+      "securityContext": {
+        "supplementalGroups": [
+          1
+        ],
+        "fsGroup": 1,
+        "seccompProfile": {
+          "type": "Localhost",
+          "localhostProfile": "workspace_default_cw-fix-6213.1.json"
+        }
+      },
+      "imagePullSecrets": [
+        {
+          "name": "gcp-sa-registry-auth"
+        }
+      ],
+      "affinity": {
+        "nodeAffinity": {
+          "requiredDuringSchedulingIgnoredDuringExecution": {
+            "nodeSelectorTerms": [
+              {
+                "matchExpressions": [
+                  {
+                    "key": "gitpod.io/workspace_3",
+                    "operator": "Exists"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "schedulerName": "workspace-scheduler",
+      "tolerations": [
+        {
+          "key": "node.kubernetes.io/disk-pressure",
+          "operator": "Exists",
+          "effect": "NoExecute"
+        },
+        {
+          "key": "node.kubernetes.io/memory-pressure",
+          "operator": "Exists",
+          "effect": "NoExecute"
+        },
+        {
+          "key": "node.kubernetes.io/network-unavailable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 30
+        },
+        {
+          "key": "node.kubernetes.io/not-ready",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "node.kubernetes.io/unreachable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        }
+      ],
+      "priority": 0,
+      "dnsConfig": {
+        "nameservers": [
+          "1.1.1.1",
+          "8.8.8.8"
+        ]
+      },
+      "enableServiceLinks": false,
+      "preemptionPolicy": "PreemptLowerPriority"
+    },
+    "status": {
+      "phase": "Running",
+      "conditions": [
+        {
+          "type": "Initialized",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2021-10-14T19:11:23Z"
+        },
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2021-10-14T19:11:32Z"
+        },
+        {
+          "type": "ContainersReady",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2021-10-14T19:11:32Z"
+        },
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2021-10-14T19:11:23Z"
+        }
+      ],
+      "hostIP": "10.132.0.40",
+      "podIP": "10.96.5.122",
+      "podIPs": [
+        {
+          "ip": "10.96.5.122"
+        }
+      ],
+      "startTime": "2021-10-14T19:11:23Z",
+      "containerStatuses": [
+        {
+          "name": "workspace",
+          "state": {
+            "running": {
+              "startedAt": "2021-10-14T19:11:28Z"
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "reg.cw-fix-6213.staging.gitpod-dev.com:30558/remote/18f99de5-090f-4318-9759-05f5ef0277f7:latest",
+          "imageID": "reg.cw-fix-6213.staging.gitpod-dev.com:30558/remote/18f99de5-090f-4318-9759-05f5ef0277f7@sha256:e63a22d715140f43c64e3e5bdc50097572f9014083442fd9c884fc6e9119ba82",
+          "containerID": "containerd://f6cea800d9c3f3ce06ead4b6f5dfbac14ec4e874d83ab337d73a083fccb42546",
+          "started": true
+        }
+      ],
+      "qosClass": "Burstable"
+    }
+  },
+  "theiaService": {
+    "kind": "Service",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "ws-lime-opossum-3jftf65i-theia",
+      "namespace": "staging-cw-fix-6213",
+      "uid": "9a915541-e0ed-40fe-84ff-b62574c03d49",
+      "resourceVersion": "56318342",
+      "creationTimestamp": "2021-10-14T19:11:23Z",
+      "labels": {
+        "app": "gitpod",
+        "component": "workspace",
+        "gpwsman": "true",
+        "headless": "false",
+        "metaID": "lime-opossum-3jftf65i",
+        "owner": "f4a5920f-303f-4221-bacd-7be9e1dd8e09",
+        "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7",
+        "workspaceType": "regular"
+      },
+      "managedFields": [
+        {
+          "manager": "ws-manager",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2021-10-14T19:11:23Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:labels": {
+                ".": {},
+                "f:app": {},
+                "f:component": {},
+                "f:gpwsman": {},
+                "f:headless": {},
+                "f:metaID": {},
+                "f:owner": {},
+                "f:workspaceID": {},
+                "f:workspaceType": {}
+              }
+            },
+            "f:spec": {
+              "f:ports": {
+                ".": {},
+                "k:{\"port\":22999,\"protocol\":\"TCP\"}": {
+                  ".": {},
+                  "f:name": {},
+                  "f:port": {},
+                  "f:protocol": {},
+                  "f:targetPort": {}
+                },
+                "k:{\"port\":23000,\"protocol\":\"TCP\"}": {
+                  ".": {},
+                  "f:name": {},
+                  "f:port": {},
+                  "f:protocol": {},
+                  "f:targetPort": {}
+                }
+              },
+              "f:selector": {
+                ".": {},
+                "f:app": {},
+                "f:component": {},
+                "f:gpwsman": {},
+                "f:headless": {},
+                "f:metaID": {},
+                "f:owner": {},
+                "f:workspaceID": {},
+                "f:workspaceType": {}
+              },
+              "f:sessionAffinity": {},
+              "f:type": {}
+            }
+          }
+        }
+      ]
+    },
+    "spec": {
+      "ports": [
+        {
+          "name": "ide",
+          "protocol": "TCP",
+          "port": 23000,
+          "targetPort": 23000
+        },
+        {
+          "name": "supervisor",
+          "protocol": "TCP",
+          "port": 22999,
+          "targetPort": 22999
+        }
+      ],
+      "selector": {
+        "app": "gitpod",
+        "component": "workspace",
+        "gpwsman": "true",
+        "headless": "false",
+        "metaID": "lime-opossum-3jftf65i",
+        "owner": "f4a5920f-303f-4221-bacd-7be9e1dd8e09",
+        "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7",
+        "workspaceType": "regular"
+      },
+      "clusterIP": "10.100.9.164",
+      "clusterIPs": [
+        "10.100.9.164"
+      ],
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  "portsService": {
+    "kind": "Service",
+    "apiVersion": "v1",
+    "metadata": {
+      "name": "ws-lime-opossum-3jftf65i-ports",
+      "namespace": "staging-cw-fix-6213",
+      "uid": "b005bd53-d5a7-426b-8d24-a343eb61fd45",
+      "resourceVersion": "56318424",
+      "creationTimestamp": "2021-10-14T19:11:23Z",
+      "labels": {
+        "gpwsman": "true",
+        "metaID": "lime-opossum-3jftf65i",
+        "serviceType": "ports",
+        "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7"
+      },
+      "annotations": {
+        "gitpod/port-url-27017": "https://27017-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com",
+        "gitpod/port-url-3000": "https://3000-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com",
+        "gitpod/port-url-9229": "https://9229-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com"
+      },
+      "managedFields": [
+        {
+          "manager": "ws-manager",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2021-10-14T19:11:30Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:annotations": {
+                ".": {},
+                "f:gitpod/port-url-27017": {},
+                "f:gitpod/port-url-3000": {},
+                "f:gitpod/port-url-9229": {}
+              },
+              "f:labels": {
+                ".": {},
+                "f:gpwsman": {},
+                "f:metaID": {},
+                "f:serviceType": {},
+                "f:workspaceID": {}
+              }
+            },
+            "f:spec": {
+              "f:ports": {
+                ".": {},
+                "k:{\"port\":3000,\"protocol\":\"TCP\"}": {
+                  ".": {},
+                  "f:name": {},
+                  "f:port": {},
+                  "f:protocol": {},
+                  "f:targetPort": {}
+                },
+                "k:{\"port\":9229,\"protocol\":\"TCP\"}": {
+                  ".": {},
+                  "f:name": {},
+                  "f:port": {},
+                  "f:protocol": {},
+                  "f:targetPort": {}
+                },
+                "k:{\"port\":27017,\"protocol\":\"TCP\"}": {
+                  ".": {},
+                  "f:name": {},
+                  "f:port": {},
+                  "f:protocol": {},
+                  "f:targetPort": {}
+                }
+              },
+              "f:selector": {
+                ".": {},
+                "f:gpwsman": {},
+                "f:workspaceID": {}
+              },
+              "f:sessionAffinity": {},
+              "f:type": {}
+            }
+          }
+        }
+      ]
+    },
+    "spec": {
+      "ports": [
+        {
+          "name": "p3000-private",
+          "protocol": "TCP",
+          "port": 3000,
+          "targetPort": 3000
+        },
+        {
+          "name": "p27017-private",
+          "protocol": "TCP",
+          "port": 27017,
+          "targetPort": 60000
+        },
+        {
+          "name": "p9229-private",
+          "protocol": "TCP",
+          "port": 9229,
+          "targetPort": 59999
+        }
+      ],
+      "selector": {
+        "gpwsman": "true",
+        "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7"
+      },
+      "clusterIP": "10.100.1.62",
+      "clusterIPs": [
+        "10.100.1.62"
+      ],
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  "events": [
+    {
+      "metadata": {
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7 - scheduleddg9v7",
+        "generateName": "ws-18f99de5-090f-4318-9759-05f5ef0277f7 - scheduled",
+        "namespace": "staging-cw-fix-6213",
+        "uid": "69c6bad9-10f0-4180-bf95-860a092234f9",
+        "resourceVersion": "2806219",
+        "creationTimestamp": "2021-10-14T19:11:23Z",
+        "managedFields": [
+          {
+            "manager": "ws-scheduler",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-10-14T19:11:23Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:count": {},
+              "f:firstTimestamp": {},
+              "f:involvedObject": {
+                "f:kind": {},
+                "f:name": {},
+                "f:namespace": {},
+                "f:uid": {}
+              },
+              "f:lastTimestamp": {},
+              "f:message": {},
+              "f:metadata": {
+                "f:generateName": {}
+              },
+              "f:reason": {},
+              "f:source": {
+                "f:component": {}
+              },
+              "f:type": {}
+            }
+          }
+        ]
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fix-6213",
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7",
+        "uid": "ede138be-dc8d-4486-920b-abadaff6968b"
+      },
+      "reason": "Scheduled",
+      "message": "Placed pod [staging-cw-fix-6213/ws-18f99de5-090f-4318-9759-05f5ef0277f7] on gke-core-dev-workspace-3-a69c4dd8-jqzs\n",
+      "source": {
+        "component": "workspace-scheduler"
+      },
+      "firstTimestamp": "2021-10-14T19:11:23Z",
+      "lastTimestamp": "2021-10-14T19:11:23Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7.16adfb6cc3bc5f12",
+        "namespace": "staging-cw-fix-6213",
+        "uid": "bfde5142-bb26-439a-8c32-d6d8ebc8332a",
+        "resourceVersion": "2806220",
+        "creationTimestamp": "2021-10-14T19:11:24Z",
+        "managedFields": [
+          {
+            "manager": "kubelet",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-10-14T19:11:24Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:count": {},
+              "f:firstTimestamp": {},
+              "f:involvedObject": {
+                "f:apiVersion": {},
+                "f:fieldPath": {},
+                "f:kind": {},
+                "f:name": {},
+                "f:namespace": {},
+                "f:resourceVersion": {},
+                "f:uid": {}
+              },
+              "f:lastTimestamp": {},
+              "f:message": {},
+              "f:reason": {},
+              "f:source": {
+                "f:component": {},
+                "f:host": {}
+              },
+              "f:type": {}
+            }
+          }
+        ]
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fix-6213",
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7",
+        "uid": "ede138be-dc8d-4486-920b-abadaff6968b",
+        "apiVersion": "v1",
+        "resourceVersion": "56318339",
+        "fieldPath": "spec.containers{workspace}"
+      },
+      "reason": "Pulling",
+      "message": "Pulling image \"reg.cw-fix-6213.staging.gitpod-dev.com:30558/remote/18f99de5-090f-4318-9759-05f5ef0277f7\"",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-core-dev-workspace-3-a69c4dd8-jqzs"
+      },
+      "firstTimestamp": "2021-10-14T19:11:24Z",
+      "lastTimestamp": "2021-10-14T19:11:24Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7.16adfb6d7882661b",
+        "namespace": "staging-cw-fix-6213",
+        "uid": "c460c7f6-4269-4fa4-859f-ba7d74fa3ea3",
+        "resourceVersion": "2806225",
+        "creationTimestamp": "2021-10-14T19:11:27Z",
+        "managedFields": [
+          {
+            "manager": "kubelet",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-10-14T19:11:27Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:count": {},
+              "f:firstTimestamp": {},
+              "f:involvedObject": {
+                "f:apiVersion": {},
+                "f:fieldPath": {},
+                "f:kind": {},
+                "f:name": {},
+                "f:namespace": {},
+                "f:resourceVersion": {},
+                "f:uid": {}
+              },
+              "f:lastTimestamp": {},
+              "f:message": {},
+              "f:reason": {},
+              "f:source": {
+                "f:component": {},
+                "f:host": {}
+              },
+              "f:type": {}
+            }
+          }
+        ]
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fix-6213",
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7",
+        "uid": "ede138be-dc8d-4486-920b-abadaff6968b",
+        "apiVersion": "v1",
+        "resourceVersion": "56318339",
+        "fieldPath": "spec.containers{workspace}"
+      },
+      "reason": "Pulled",
+      "message": "Successfully pulled image \"reg.cw-fix-6213.staging.gitpod-dev.com:30558/remote/18f99de5-090f-4318-9759-05f5ef0277f7\" in 3.032846996s",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-core-dev-workspace-3-a69c4dd8-jqzs"
+      },
+      "firstTimestamp": "2021-10-14T19:11:27Z",
+      "lastTimestamp": "2021-10-14T19:11:27Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7.16adfb6da6539c83",
+        "namespace": "staging-cw-fix-6213",
+        "uid": "8d442559-f035-40e8-b49b-8528efd5c9db",
+        "resourceVersion": "2806226",
+        "creationTimestamp": "2021-10-14T19:11:28Z",
+        "managedFields": [
+          {
+            "manager": "kubelet",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-10-14T19:11:28Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:count": {},
+              "f:firstTimestamp": {},
+              "f:involvedObject": {
+                "f:apiVersion": {},
+                "f:fieldPath": {},
+                "f:kind": {},
+                "f:name": {},
+                "f:namespace": {},
+                "f:resourceVersion": {},
+                "f:uid": {}
+              },
+              "f:lastTimestamp": {},
+              "f:message": {},
+              "f:reason": {},
+              "f:source": {
+                "f:component": {},
+                "f:host": {}
+              },
+              "f:type": {}
+            }
+          }
+        ]
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fix-6213",
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7",
+        "uid": "ede138be-dc8d-4486-920b-abadaff6968b",
+        "apiVersion": "v1",
+        "resourceVersion": "56318339",
+        "fieldPath": "spec.containers{workspace}"
+      },
+      "reason": "Created",
+      "message": "Created container workspace",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-core-dev-workspace-3-a69c4dd8-jqzs"
+      },
+      "firstTimestamp": "2021-10-14T19:11:28Z",
+      "lastTimestamp": "2021-10-14T19:11:28Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7.16adfb6dac72186a",
+        "namespace": "staging-cw-fix-6213",
+        "uid": "d8b33274-62ee-4990-85e0-c57a8223f4a0",
+        "resourceVersion": "2806227",
+        "creationTimestamp": "2021-10-14T19:11:28Z",
+        "managedFields": [
+          {
+            "manager": "kubelet",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-10-14T19:11:28Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:count": {},
+              "f:firstTimestamp": {},
+              "f:involvedObject": {
+                "f:apiVersion": {},
+                "f:fieldPath": {},
+                "f:kind": {},
+                "f:name": {},
+                "f:namespace": {},
+                "f:resourceVersion": {},
+                "f:uid": {}
+              },
+              "f:lastTimestamp": {},
+              "f:message": {},
+              "f:reason": {},
+              "f:source": {
+                "f:component": {},
+                "f:host": {}
+              },
+              "f:type": {}
+            }
+          }
+        ]
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fix-6213",
+        "name": "ws-18f99de5-090f-4318-9759-05f5ef0277f7",
+        "uid": "ede138be-dc8d-4486-920b-abadaff6968b",
+        "apiVersion": "v1",
+        "resourceVersion": "56318339",
+        "fieldPath": "spec.containers{workspace}"
+      },
+      "reason": "Started",
+      "message": "Started container workspace",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-core-dev-workspace-3-a69c4dd8-jqzs"
+      },
+      "firstTimestamp": "2021-10-14T19:11:28Z",
+      "lastTimestamp": "2021-10-14T19:11:28Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    }
+  ]
+}

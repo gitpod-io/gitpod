@@ -5,6 +5,7 @@
  */
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
@@ -31,17 +32,21 @@ function Item(props: { icon: string, iconSize?: string, text: string }) {
 }
 
 export function markLoggedIn() {
-    document.cookie = "gitpod-user=loggedIn;max-age=" + 60 * 60 * 24 * 365;
+    document.cookie = GitpodCookie.generateCookie(window.location.hostname);
 }
 
 export function hasLoggedInBefore() {
-    return document.cookie.match("gitpod-user=loggedIn");
+    return GitpodCookie.isPresent(document.cookie);
+}
+
+export function hasVisitedMarketingWebsiteBefore() {
+    return document.cookie.match("gitpod-marketing-website-visited=true");
 }
 
 export function Login() {
     const { setUser } = useContext(UserContext);
     const { setTeams } = useContext(TeamsContext);
-    const showWelcome = !hasLoggedInBefore();
+    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore();
 
     const [ authProviders, setAuthProviders ] = useState<AuthProviderInfo[]>([]);
     const [ errorMessage, setErrorMessage ] = useState<string | undefined>(undefined);
@@ -104,8 +109,8 @@ export function Login() {
             <div id="feature-section-column" className="flex max-w-xl h-full mx-auto pt-6">
                 <div className="flex flex-col px-8 my-auto ml-auto">
                     <div className="mb-12">
-                        <img src={gitpod} className="h-8 block dark:hidden" />
-                        <img src={gitpodDark} className="h-8 hidden dark:block" />
+                        <img src={gitpod} className="h-8 block dark:hidden" alt="Gitpod light theme logo" />
+                        <img src={gitpodDark} className="h-8 hidden dark:block" alt="Gitpod dark theme logo" />
                     </div>
                     <div className="mb-10">
                         <h1 className="text-5xl mb-3">Welcome to Gitpod</h1>
@@ -131,7 +136,7 @@ export function Login() {
                 <div className="flex-grow h-100 flex flex-row items-center justify-center" >
                     <div className="rounded-xl px-10 py-10 mx-auto">
                         <div className="mx-auto pb-8">
-                            <img src={gitpodIcon} className="h-16 mx-auto" />
+                            <img src={gitpodIcon} className="h-16 mx-auto" alt="Gitpod's logo" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
                             <h1 className="text-3xl">Log in{showWelcome ? '' : ' to Gitpod'}</h1>

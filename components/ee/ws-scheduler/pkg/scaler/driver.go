@@ -6,10 +6,6 @@ package scaler
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"os"
-	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -81,43 +77,16 @@ func NewWorkspaceManagerPrescaleDriver(config WorkspaceManagerPrescaleDriverConf
 
 	grpcOpts := common_grpc.DefaultClientOptions()
 	if config.WsManager.TLS != nil {
-		ca := config.WsManager.TLS.CA
-		crt := config.WsManager.TLS.Certificate
-		key := config.WsManager.TLS.PrivateKey
-
-		// Telepresence (used for debugging only) requires special paths to load files from
-		if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
-			ca = filepath.Join(root, ca)
-			crt = filepath.Join(root, crt)
-			key = filepath.Join(root, key)
-		}
-
-		rootCA, err := os.ReadFile(ca)
-		if err != nil {
-			return nil, xerrors.Errorf("could not read ca certificate: %s", err)
-		}
-		certPool := x509.NewCertPool()
-		if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
-			return nil, xerrors.Errorf("failed to append ca certs")
-		}
-
-		certificate, err := tls.LoadX509KeyPair(crt, key)
+		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+			config.WsManager.TLS.CA, config.WsManager.TLS.Certificate, config.WsManager.TLS.PrivateKey,
+			common_grpc.WithSetRootCAs(true),
+		)
 		if err != nil {
 			log.WithField("config", config.WsManager.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
 			return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
 		}
 
-		creds := credentials.NewTLS(&tls.Config{
-			Certificates: []tls.Certificate{certificate},
-			RootCAs:      certPool,
-			MinVersion:   tls.VersionTLS12,
-		})
-		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
-		log.
-			WithField("ca", ca).
-			WithField("cert", crt).
-			WithField("key", key).
-			Debug("using TLS config to connect ws-manager")
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
 	} else {
 		grpcOpts = append(grpcOpts, grpc.WithInsecure())
 	}
@@ -320,7 +289,10 @@ func (wspd *WorkspaceManagerPrescaleDriver) startGhostWorkspaces(ctx context.Con
 					Email:    "none@gitpod.io",
 					Username: "gitpod-ghost",
 				},
-				IdeImage: wspd.Config.IDEImage,
+				DeprecatedIdeImage: wspd.Config.IDEImage,
+				IdeImage: &api.IDEImage{
+					WebRef: wspd.Config.IDEImage,
+				},
 				Initializer: &csapi.WorkspaceInitializer{
 					Spec: &csapi.WorkspaceInitializer_Empty{
 						Empty: &csapi.EmptyInitializer{},

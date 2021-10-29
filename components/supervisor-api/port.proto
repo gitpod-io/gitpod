@@ -9,6 +9,7 @@ package supervisor;
 import "google/api/annotations.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
 
 service PortService {
   // Tunnel notifies clients to install listeners on remote machines.

@@ -287,6 +287,22 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 		}
 
 		return nil
+	} else if status.Conditions.StoppedByRequest == api.WorkspaceConditionBool_TRUE {
+		gracePeriod := stopWorkspaceNormallyGracePeriod
+		if gp, ok := pod.Annotations[stoppedByRequestAnnotation]; ok {
+			dt, err := time.ParseDuration(gp)
+			if err == nil {
+				gracePeriod = dt
+			} else {
+				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Warn("invalid duration on stoppedByRequestAnnotation")
+			}
+		}
+
+		// we're asked to stop the workspace but aren't doing so yet
+		err := m.stopWorkspace(ctx, workspaceID, gracePeriod)
+		if err != nil && !isKubernetesObjNotFoundError(err) {
+			return xerrors.Errorf("cannot stop workspace: %w", err)
+		}
 	}
 
 	if status.Phase == api.WorkspacePhase_CREATING {
@@ -609,7 +625,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 		return nil, nil
 	}
 
-	ctx, cancelProbe := context.WithCancel(ctx)
+	ctx, cancelProbe := context.WithTimeout(ctx, 30*time.Minute)
 	m.probeMap[pod.Name] = cancelProbe
 	m.probeMapLock.Unlock()
 
@@ -633,6 +649,8 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 	m.probeMapLock.Lock()
 	delete(m.probeMap, pod.Name)
 	m.probeMapLock.Unlock()
+
+	cancelProbe()
 
 	return &probeResult, nil
 }
@@ -823,7 +841,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
-	doBackupLogs := !wsk8s.IsGhostWorkspace(wso.Pod)
+	doBackupLogs := tpe == api.WorkspaceType_PREBUILD
 	doSnapshot := tpe == api.WorkspaceType_PREBUILD
 	doFinalize := func() (worked bool, gitStatus *csapi.GitStatus, err error) {
 		m.finalizerMapLock.Lock()

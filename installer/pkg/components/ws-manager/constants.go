@@ -4,12 +4,17 @@
 
 package wsmanager
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component               = "ws-manager"
-	RPCPort                 = 8080
-	TLSSecretNameSecret     = "ws-manager-tls"
-	TLSSecretNameClient     = "ws-manager-client-tls"
-	VolumeConfig            = "config"
-	VolumeTLSCerts          = "tls-certs"
-	VolumeWorkspaceTemplate = "workspace-template"
+	Component                  = common.WSManagerComponent
+	RPCPort                    = 8080
+	RPCPortName                = "rpc"
+	TLSSecretNameSecret        = "ws-manager-tls"
+	TLSSecretNameClient        = "ws-manager-client-tls"
+	VolumeConfig               = "config"
+	VolumeTLSCerts             = "tls-certs"
+	VolumeWorkspaceTemplate    = "workspace-template"
+	WorkspaceTemplatePath      = "/workspace-templates"
+	WorkspaceTemplateConfigMap = "workspace-templates"
 )

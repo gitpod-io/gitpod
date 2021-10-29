@@ -92,6 +92,7 @@ export namespace PrebuildInfo {
 }
 
 export interface StartPrebuildResult {
+    prebuildId: string;
     wsid: string;
     done: boolean;
 }

@@ -4,7 +4,9 @@
 
 package server
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
@@ -14,14 +16,14 @@ var Objects = common.CompositeRenderFunc(
 	role,
 	rolebinding,
 	common.GenerateService(Component, map[string]common.ServicePort{
-		"http": {
+		ContainerPortName: {
 			ContainerPort: ContainerPort,
 			ServicePort:   ServicePort,
 		},
-		"metrics": {
+		PrometheusPortName: {
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
-	}, nil),
+	}),
 	common.DefaultServiceAccount(Component),
 )

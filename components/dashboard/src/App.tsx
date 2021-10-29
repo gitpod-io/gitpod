@@ -19,6 +19,7 @@ import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { useHistory } from 'react-router-dom';
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from './Analytics';
 import { User } from '@gitpod/gitpod-protocol';
+import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -57,7 +58,29 @@ function isGitpodIo() {
 }
 
 function isWebsiteSlug(pathName: string) {
-    const slugs = ['chat', 'code-of-conduct', 'features', 'screencasts', 'blog', 'docs', 'changelog', 'pricing', 'self-hosted', 'gitpod-vs-github-codespaces', 'support', 'about', 'careers', 'contact', 'media-kit', 'imprint', 'terms', 'privacy', 'values']
+    const slugs = [
+        'about',
+        'blog',
+        'careers',
+        'changelog',
+        'chat',
+        'code-of-conduct',
+        'contact',
+        'docs',
+        'features',
+        'for',
+        'gitpod-vs-github-codespaces',
+        'imprint',
+        'media-kit',
+        'pricing',
+        'privacy',
+        'security',
+        'screencasts',
+        'self-hosted',
+        'support',
+        'terms',
+        'values'
+    ]
     return slugs.some(slug => pathName.startsWith('/' + slug + '/') || pathName === ('/' + slug));
 }
 
@@ -177,8 +200,13 @@ function App() {
     }
 
     if (isGitpodIo() && window.location.pathname === '/' && window.location.hash === '' && !loading && !user) {
-        window.location.href = `https://www.gitpod.io`;
-        return <div></div>;
+        if (!GitpodCookie.isPresent(document.cookie)) {
+            window.location.href = `https://www.gitpod.io`;
+            return <div></div>;
+        } else {
+            // explicitly render the Login page when the session is out-of-sync with the Gitpod cookie
+            return (<Login />);
+        }
     }
 
     if (loading) {
@@ -194,7 +222,7 @@ function App() {
     }
     if (window.location.pathname.startsWith('/blocked')) {
         return <div className="mt-48 text-center">
-            <img src={gitpodIcon} className="h-16 mx-auto" />
+            <img src={gitpodIcon} className="h-16 mx-auto" alt="Gitpod's logo" />
             <h1 className="mt-12 text-gray-500 text-3xl">Your account has been blocked.</h1>
             <p className="mt-4 mb-8 text-lg w-96 mx-auto">Please contact support if you think this is an error. See also <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/terms/">terms of service</a>.</p>
             <a className="mx-auto" href="mailto:support@gitpod.io?Subject=Blocked"><button className="secondary">Contact Support</button></a>
@@ -239,7 +267,7 @@ function App() {
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
 
                 <Route path={["/", "/login"]} exact>
-                    <Redirect to="/workspaces" />
+                    <Redirect to="/projects" />
                 </Route>
                 <Route path={["/settings"]} exact>
                     <Redirect to="/account" />
@@ -283,7 +311,7 @@ function App() {
                 {(teams || []).map(team =>
                     <Route path={`/t/${team.slug}`} key={team.slug}>
                         <Route exact path={`/t/${team.slug}`}>
-                            <Redirect to={`/t/${team.slug}/workspaces`} />
+                            <Redirect to={`/t/${team.slug}/projects`} />
                         </Route>
                         <Route exact path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`} render={(props) => {
                             const { maybeProject, resourceOrPrebuild } = props.match.params;

@@ -2,17 +2,19 @@ apiVersion: v1
 blockNewUsers:
   enabled: false
 certificate:
-  kind: ""
-  name: ""
+  kind: secret
+  name: https-certificates
 containerRegistry:
   inCluster: true
 database:
   inCluster: true
-domain: "gitpod.io"
+domain: gitpod.example.com
 imagePullSecrets: null
+jaegerOperator:
+  inCluster: true
 kind: Full
 metadata:
-  region: "eu-west1"
+  region: ""
 objectStorage:
   inCluster: true
 observability:
@@ -25,4 +27,5 @@ workspace:
       memory: 2Gi
   runtime:
     containerdRuntimeDir: /run/containerd/io.containerd.runtime.v2.task/k8s.io
+    containerdSocket: /run/containerd/containerd.sock
     fsShiftMethod: fuse

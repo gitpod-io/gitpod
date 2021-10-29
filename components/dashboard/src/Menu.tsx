@@ -33,7 +33,6 @@ export default function Menu() {
     const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
-    const visibleTeams = teams?.filter(team => { return Boolean(!team.markedDeleted) });
 
     const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/(t/)?:segment1/:segment2?/:segment3?");
     const projectName = (() => {
@@ -77,8 +76,11 @@ export default function Menu() {
         (async () => {
             const members: Record<string, TeamMemberInfo[]> = {};
             await Promise.all(teams.map(async (team) => {
-                const infos = await getGitpodService().server.getTeamMembers(team.id);
-                members[team.id] = infos;
+                try {
+                    members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
+                } catch (error) {
+                    console.error('Could not get members of team', team, error);
+                }
             }));
             setTeamMembers(members);
         })();
@@ -108,8 +110,8 @@ export default function Menu() {
             ];
         }
         // Team menu
-        if (team && teamMembers && teamMembers[team.id]) {
-            const currentUserInTeam = teamMembers[team.id].find(m => m.userId === user?.id);
+        if (team) {
+            const currentUserInTeam = (teamMembers[team.id] || []).find(m => m.userId === user?.id);
 
             const teamSettingsList = [
                 {
@@ -164,8 +166,8 @@ export default function Menu() {
             link: 'https://www.gitpod.io/docs/',
         },
         {
-            title: 'Community',
-            link: 'https://community.gitpod.io/',
+            title: 'Help',
+            link: 'https://www.gitpod.io/support',
         }
     ];
 
@@ -173,7 +175,7 @@ export default function Menu() {
         return (
             <div className="flex p-1 pl-3 ">
                 { projectName && <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
-                    <Link to={team ? `/t/${team.slug}/projects` : "/workspaces"}>
+                    <Link to={team ? `/t/${team.slug}/projects` : `/projects`}>
                         <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>
                     </Link>
                 </div> }
@@ -189,7 +191,7 @@ export default function Menu() {
                             separator: true,
                             link: '/',
                         },
-                        ...(visibleTeams || []).map(t => ({
+                        ...(teams || []).map(t => ({
                             title: t.name,
                             customContent: <div className="w-full text-gray-400 flex flex-col">
                                 <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{t.name}</span>
@@ -242,11 +244,11 @@ export default function Menu() {
     }
 
     return <>
-        <header className={`lg:px-28 px-10 flex flex-col pt-4 space-y-4 ${isMinimalUI || !!prebuildId ? 'pb-4' : ''}`} data-analytics='{"button_type":"menu"}'>
+        <header className={`app-container flex flex-col pt-4 space-y-4 ${isMinimalUI || !!prebuildId ? 'pb-4' : ''}`} data-analytics='{"button_type":"menu"}'>
             <div className="flex h-10">
                 <div className="flex justify-between items-center pr-3">
                     <Link to={gitpodIconUrl()}>
-                        <img src={gitpodIcon} className="h-6" />
+                        <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
                     </Link>
                     {!isMinimalUI && <div className="ml-2 text-base">
                         {renderTeamMenu()}

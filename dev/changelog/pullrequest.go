@@ -7,6 +7,8 @@ package main
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	"github.com/google/go-github/v38/github"
 	logger "github.com/sirupsen/logrus"
@@ -16,7 +18,6 @@ import (
 type PullRequestOptions struct {
 	Title      string
 	Body       string
-	Comment    string
 	Token      string
 	Org        string
 	Repo       string
@@ -44,16 +45,49 @@ var pullRequestCommand = &cobra.Command{
 			logger.WithError(err).Fatal("Error creating pull request")
 		}
 		logger.WithField("url", pr.URL).WithField("pr", pr.Number).Info("PR successfully created")
-		if prOpts.Comment != "" {
-			newComment := &github.IssueComment{
-				Body: &prOpts.Comment,
-			}
-			_, _, err = client.Issues.CreateComment(context, prOpts.Org, prOpts.Repo, *pr.Number, newComment)
-			if err != nil {
-				logger.WithError(err).Fatal("Error creating comment")
-			}
-			logger.WithField("url", pr.URL).WithField("pr", pr.Number).Info("PR approval comment added")
+		comment0 := "/assign"
+		newComment := &github.IssueComment{
+			Body: &comment0,
 		}
+		_, _, err = client.Issues.CreateComment(context, prOpts.Org, prOpts.Repo, *pr.Number, newComment)
+		if err != nil {
+			logger.WithError(err).Fatal("Error creating comment")
+		}
+		logger.WithField("url", pr.URL).WithField("pr", pr.Number).Info("PR approval comment added")
+
+		retries := 0
+
+	out:
+		for {
+			retries++
+			if retries > 60 {
+				logger.WithError(err).Fatal("Timeout waiting for 'size/S' label to be added by prow")
+			}
+			labels, _, err := client.Issues.ListLabelsByIssue(context, prOpts.Org, prOpts.Repo, *pr.Number, &github.ListOptions{
+				Page:    1,
+				PerPage: 20,
+			})
+			if err != nil {
+				logger.WithError(err).Fatal("Error getting labels")
+			}
+			for _, l := range labels {
+				if strings.HasPrefix(*l.Name, "size/") {
+					break out
+				}
+			}
+			time.Sleep(time.Second)
+		}
+
+		comment1 := "/approve no-issue"
+		newComment = &github.IssueComment{
+			Body: &comment1,
+		}
+		_, _, err = client.Issues.CreateComment(context, prOpts.Org, prOpts.Repo, *pr.Number, newComment)
+		if err != nil {
+			logger.WithError(err).Fatal("Error creating comment")
+		}
+		logger.WithField("url", pr.URL).WithField("pr", pr.Number).Info("PR approval comment added")
+
 		labels, _, err := client.Issues.AddLabelsToIssue(context, prOpts.Org, prOpts.Repo, *pr.Number, []string{"lgtm", "approved"})
 		if err != nil {
 			logger.WithError(err).Fatal("Error setting labels")
@@ -78,7 +112,6 @@ func init() {
 	prFlags.StringVarP(&prOpts.HeadBranch, "head", "H", "main", "the head branch for pull requests")
 	prFlags.StringVarP(&prOpts.BaseBranch, "base", "b", "main", "the base branch for pull requests")
 	prFlags.StringVarP(&prOpts.Title, "title", "T", "[changelog] updated changelog", "the title of the PR")
-	prFlags.StringVarP(&prOpts.Body, "body", "B", "Updated the changelog from recent PR descriptions\n\n```release-note\nNONE\n```\n- [x] /werft no-preview\n- [x] /werft no-test", "the body of the PR")
-	prFlags.StringVarP(&prOpts.Comment, "comment", "C", "/approve no-issue", "an additional comment to the PR")
+	prFlags.StringVarP(&prOpts.Body, "body", "B", "Updated the changelog from recent PR descriptions\n\n```release-note\nNONE\n```\n/werft no-preview\n/werft no-test", "the body of the PR")
 	rootCommand.AddCommand(pullRequestCommand)
 }

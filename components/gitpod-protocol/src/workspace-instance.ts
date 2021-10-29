@@ -148,6 +148,9 @@ export interface WorkspaceInstanceConditions {
 
     // headless_task_failed indicates that a headless workspace task failed
     headlessTaskFailed?: string;
+
+    // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
+    stoppedByRequest?: boolean;
 }
 
 // AdmissionLevel describes who can access a workspace instance and its ports.
@@ -209,4 +212,7 @@ export interface WorkspaceInstanceConfiguration {
 
     // ideImage is the ref of the IDE image this instance uses.
     ideImage: string;
+
+    // desktopIdeImage is the ref of the desktop IDE image this instance uses.
+    desktopIdeImage?: string
 }

@@ -11,10 +11,13 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:034fe685a5830014534c14a1bcd7c7b2b0c4e94bc4062de4f91646d95c5f23fd",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
             "headless": true,
             "url": "https://aqua-chimpanzee-35q6f08k.ws-us15.gitpod.io",
-            "type": 1
+            "type": 1,
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb"
+            }
         },
         "phase": 6,
         "conditions": {

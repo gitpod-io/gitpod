@@ -6,7 +6,7 @@ package wsdaemon
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -38,12 +38,12 @@ set -euExo pipefail
 systemctl status kube-container-runtime-monitor.service || true
 if [ "$(systemctl is-active kube-container-runtime-monitor.service)" == "active" ]
 then
-echo "kube-container-runtime-monitor.service is active"
-systemctl stop kube-container-runtime-monitor.service
-systemctl disable kube-container-runtime-monitor.service
-systemctl status kube-container-runtime-monitor.service || true
+	echo "kube-container-runtime-monitor.service is active"
+	systemctl stop kube-container-runtime-monitor.service
+	systemctl disable kube-container-runtime-monitor.service
+	systemctl status kube-container-runtime-monitor.service || true
 else
-echo "kube-container-runtime-monitor.service is not active, not doing anything"
+	echo "kube-container-runtime-monitor.service is not active, not doing anything"
 fi
 `},
 			SecurityContext: &corev1.SecurityContext{
@@ -72,13 +72,13 @@ fi
 				"sh",
 				"-c",
 				`(
-echo "running sysctls" &&
-sysctl -w net.core.somaxconn=4096 &&
-sysctl -w "net.ipv4.ip_local_port_range=5000 65000" &&
-sysctl -w "net.ipv4.tcp_tw_reuse=1" &&
-sysctl -w fs.inotify.max_user_watches=1000000 &&
-sysctl -w "kernel.dmesg_restrict=1" &&
-sysctl -w vm.unprivileged_userfaultfd=0
+	echo "running sysctls" &&
+	sysctl -w net.core.somaxconn=4096 &&
+	sysctl -w "net.ipv4.ip_local_port_range=5000 65000" &&
+	sysctl -w "net.ipv4.tcp_tw_reuse=1" &&
+	sysctl -w fs.inotify.max_user_watches=1000000 &&
+	sysctl -w "kernel.dmesg_restrict=1" &&
+	sysctl -w vm.unprivileged_userfaultfd=0
 ) && echo "done!" || echo "failed!"
 `,
 			},
@@ -125,7 +125,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 						{
 							Name: "working-area",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-								Path: "/mnt/disks/ssd0/workspaces",
+								Path: HostWorkspacePath,
 								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
 							}},
 						},
@@ -136,27 +136,20 @@ sysctl -w vm.unprivileged_userfaultfd=0
 						{
 							Name: "config",
 							VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "ws-daemon-config"},
+								LocalObjectReference: corev1.LocalObjectReference{Name: Component},
 							}},
 						},
 						{
 							Name: "containerd-socket",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-								Path: "/run/containerd/containerd.sock",
+								Path: ctx.Config.Workspace.Runtime.ContainerDSocket,
 								Type: func() *corev1.HostPathType { r := corev1.HostPathSocket; return &r }(),
 							}},
 						},
 						{
 							Name: "node-fs0",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-								Path: "/var/lib",
-								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
-							}},
-						},
-						{
-							Name: "node-fs1",
-							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-								Path: "/run/containerd/io.containerd.runtime.v2.task/k8s.io",
+								Path: ctx.Config.Workspace.Runtime.ContainerDRuntimeDir,
 								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectory; return &r }(),
 							}},
 						},
@@ -204,7 +197,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 					Containers: []corev1.Container{
 						{
 							Name:  Component,
-							Image: "eu.gcr.io/gitpod-core-dev/build/ws-daemon:not-set",
+							Image: common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSDaemon.Version),
 							Args: []string{
 								"run",
 								"-v",
@@ -219,10 +212,18 @@ sysctl -w vm.unprivileged_userfaultfd=0
 							Env: common.MergeEnv(
 								common.DefaultEnv(&cfg),
 								common.TracingEnv(&cfg),
+								[]corev1.EnvVar{{
+									Name: "NODENAME",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
+										},
+									},
+								}},
 							),
 							Resources: corev1.ResourceRequirements{Requests: corev1.ResourceList{
-								corev1.ResourceName("cpu"):    resource.MustParse("1m"),
-								corev1.ResourceName("memory"): resource.MustParse("1Mi"),
+								"cpu":    resource.MustParse("1m"),
+								"memory": resource.MustParse("1Mi"),
 							}},
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -241,10 +242,6 @@ sysctl -w vm.unprivileged_userfaultfd=0
 								{
 									Name:      "node-fs0",
 									MountPath: "/mnt/node0",
-								},
-								{
-									Name:      "node-fs1",
-									MountPath: "/mnt/node1",
 								},
 								{
 									Name:             "node-mounts",
@@ -294,30 +291,30 @@ sysctl -w vm.unprivileged_userfaultfd=0
 						},
 						*common.KubeRBACProxyContainer(),
 					},
-					RestartPolicy:                 corev1.RestartPolicy("Always"),
+					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
-					DNSPolicy:                     corev1.DNSPolicy("ClusterFirst"),
+					DNSPolicy:                     "ClusterFirst",
 					ServiceAccountName:            Component,
 					HostPID:                       true,
-					Affinity:                      common.Affinity(common.AffinityLabelWorkspaces, common.AffinityLabelHeadless),
+					Affinity:                      common.Affinity(common.AffinityLabelWorkspacesRegular, common.AffinityLabelWorkspacesHeadless),
 					Tolerations: []corev1.Toleration{
 						{
 							Key:      "node.kubernetes.io/disk-pressure",
-							Operator: corev1.TolerationOperator("Exists"),
-							Effect:   corev1.TaintEffect("NoExecute"),
+							Operator: "Exists",
+							Effect:   "NoExecute",
 						},
 						{
 							Key:      "node.kubernetes.io/memory-pressure",
-							Operator: corev1.TolerationOperator("Exists"),
-							Effect:   corev1.TaintEffect("NoExecute"),
+							Operator: "Exists",
+							Effect:   "NoExecute",
 						},
 						{
 							Key:      "node.kubernetes.io/out-of-disk",
-							Operator: corev1.TolerationOperator("Exists"),
-							Effect:   corev1.TaintEffect("NoExecute"),
+							Operator: "Exists",
+							Effect:   "NoExecute",
 						},
 					},
-					PriorityClassName:  "system-node-critical",
+					PriorityClassName:  common.SystemNodeCritical,
 					EnableServiceLinks: pointer.Bool(false),
 				},
 			},

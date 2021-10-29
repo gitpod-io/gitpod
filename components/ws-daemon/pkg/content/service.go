@@ -35,6 +35,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 )
 
 // WorkspaceService implements the InitService and WorkspaceService
@@ -65,8 +66,13 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 		return nil, xerrors.Errorf("cannot create working area: %w", err)
 	}
 
+	xfs, err := quota.NewXFS(cfg.WorkingArea)
+	if err != nil {
+		return nil, err
+	}
+
 	// read all session json files
-	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace, wec, uidmapper))
+	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace, wec, uidmapper, xfs))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create session store: %w", err)
 	}
@@ -322,6 +328,10 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	}
 
 	if req.BackupLogs {
+		if sess.RemoteStorageDisabled {
+			return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
+		}
+
 		// Ok, we have to do all the work
 		err = s.uploadWorkspaceLogs(ctx, sess)
 		if err != nil {
@@ -794,39 +804,4 @@ func (c *cannotCancelContext) Err() error {
 
 func (c *cannotCancelContext) Value(key interface{}) interface{} {
 	return c.Delegate.Value(key)
-}
-
-func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceExistenceCheck WorkspaceExistenceCheck, uidmapper *iws.Uidmapper) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
-	var setupWorkspace session.WorkspaceLivecycleHook = func(ctx context.Context, ws *session.Workspace) error {
-		if _, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage]; !ws.RemoteStorageDisabled && !ok {
-			remoteStorage, err := storage.NewDirectAccess(&cfg.Storage)
-			if err != nil {
-				return xerrors.Errorf("cannot use configured storage: %w", err)
-			}
-
-			err = remoteStorage.Init(ctx, ws.Owner, ws.WorkspaceID, ws.InstanceID)
-			if err != nil {
-				return xerrors.Errorf("cannot use configured storage: %w", err)
-			}
-
-			err = remoteStorage.EnsureExists(ctx)
-			if err != nil {
-				return xerrors.Errorf("cannot use configured storage: %w", err)
-			}
-
-			ws.NonPersistentAttrs[session.AttrRemoteStorage] = remoteStorage
-		}
-
-		return nil
-	}
-
-	// startIWS starts the in-workspace service for a workspace. This lifecycle hook is idempotent, hence can - and must -
-	// be called on initialization and ready. The on-ready hook exists only to support ws-daemon restarts.
-	startIWS := iws.ServeWorkspace(uidmapper, api.FSShiftMethod(cfg.UserNamespaces.FSShift))
-
-	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
-		session.WorkspaceInitializing: {setupWorkspace, startIWS},
-		session.WorkspaceReady:        {setupWorkspace, startIWS},
-		session.WorkspaceDisposed:     {iws.StopServingWorkspace},
-	}
 }

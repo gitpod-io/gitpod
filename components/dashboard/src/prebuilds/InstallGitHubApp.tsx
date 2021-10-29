@@ -48,7 +48,7 @@ export default function InstallGitHubApp() {
     const params = new URLSearchParams(location.search);
     const installationId = params.get("installation_id") || undefined;
     if (!installationId) {
-        return <div className="lg:px-28 px-10 flex flex-col space-y-2">
+        return <div className="app-container flex flex-col space-y-2">
             <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 dark:border-gray-800 h-96">
                 <div className="flex flex-col items-center w-96 m-auto">
                     <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Installation ID Found</h3>
@@ -61,7 +61,7 @@ export default function InstallGitHubApp() {
     const goToApp = () => window.location.href = gitpodHostUrl.toString();
 
     return <>
-        <div className="lg:px-28 px-10 flex flex-col space-y-2">
+        <div className="app-container flex flex-col space-y-2">
             <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400">
                 <div className="flex flex-col items-center m-auto max-w-lg mt-40">
                     <h3 className="text-center pb-3 text-gray-500">Install GitHub App</h3>

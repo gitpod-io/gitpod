@@ -236,9 +236,17 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		labels[k] = v
 	}
 
+	ideRef := startContext.Request.Spec.DeprecatedIdeImage
+	var desktopIdeRef string
+	if startContext.Request.Spec.IdeImage != nil && len(startContext.Request.Spec.IdeImage.WebRef) > 0 {
+		ideRef = startContext.Request.Spec.IdeImage.WebRef
+		desktopIdeRef = startContext.Request.Spec.IdeImage.DesktopRef
+	}
+
 	spec := regapi.ImageSpec{
-		BaseRef: startContext.Request.Spec.WorkspaceImage,
-		IdeRef:  startContext.Request.Spec.IdeImage,
+		BaseRef:       startContext.Request.Spec.WorkspaceImage,
+		IdeRef:        ideRef,
+		DesktopIdeRef: desktopIdeRef,
 	}
 	imageSpec, err := spec.ToBase64()
 	if err != nil {
@@ -320,6 +328,30 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		daemonVolumeName = "daemon-mount"
 	)
 
+	workloadType := "regular"
+	if startContext.Headless {
+		workloadType = "headless"
+	}
+	var affinity *corev1.Affinity
+	if m.Config.EnforceWorkspaceNodeAffinity {
+		affinity = &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "gitpod.io/workload_workspace_" + workloadType,
+									Operator: corev1.NodeSelectorOpExists,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -332,6 +364,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			ServiceAccountName:           "workspace",
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
+			Affinity:                     affinity,
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},

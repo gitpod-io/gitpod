@@ -17,7 +17,7 @@ import * as opentracing from 'opentracing';
 import { asyncHandler } from "../express-util";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { isWithFunctionAccessGuard } from "../auth/function-access";
-import { accesHeadlessLogs } from "../auth/rate-limiter";
+import { accessHeadlessLogs } from "../auth/rate-limiter";
 import { BearerAuth } from "../auth/bearer-authenticator";
 import { ProjectsService } from "../projects/projects-service";
 import { HostContextProvider } from "../auth/host-context-provider";
@@ -181,7 +181,7 @@ export class HeadlessLogController {
 
 function authenticateAndAuthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
     const params = { instanceId: req.params.instanceId, terminalId: req.params.terminalId };
-    if (!(isWithFunctionAccessGuard(req) && req.functionGuard?.canAccess(accesHeadlessLogs)) && !(req.isAuthenticated() && User.is(req.user))) {
+    if (!(isWithFunctionAccessGuard(req) && req.functionGuard?.canAccess(accessHeadlessLogs)) && !(req.isAuthenticated() && User.is(req.user))) {
         res.sendStatus(403);
         log.warn("unauthenticated headless log request", params);
         return;

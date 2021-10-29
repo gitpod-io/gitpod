@@ -304,7 +304,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("cannot mount proc")
+		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount proc")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount proc")
 		}
@@ -335,7 +335,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	}
 	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-proc", "--target", nodeStaging)
-	}, enterMountNS(false), enterPidNS(true))
+	}, enterMountNS(false), enterPidNS(true), enterNetNS(true))
 	if err != nil {
 		return nil, xerrors.Errorf("mount new proc at %s: %w", nodeStaging, err)
 	}
@@ -523,7 +523,7 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("cannot mount proc")
+		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount proc")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount proc")
 		}

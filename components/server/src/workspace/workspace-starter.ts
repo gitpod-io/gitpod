@@ -12,7 +12,7 @@ import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { BuildRegistryAuth, BuildRegistryAuthSelective, BuildRegistryAuthTotal, BuildRequest, BuildResponse, BuildSource, BuildSourceDockerfile, BuildSourceReference, BuildStatus, ImageBuilderClientProvider, ResolveBaseImageRequest, ResolveWorkspaceImageRequest } from "@gitpod/image-builder/lib";
-import { StartWorkspaceSpec, WorkspaceFeatureFlag } from "@gitpod/ws-manager/lib";
+import { StartWorkspaceSpec, WorkspaceFeatureFlag, StartWorkspaceResponse, IDEImage } from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { AdmissionLevel, EnvironmentVariable, GitSpec, PortSpec, PortVisibility, StartWorkspaceRequest, WorkspaceMetadata, WorkspaceType } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from 'crypto';
@@ -29,6 +29,7 @@ import { UserService } from "../user/user-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
 import * as path from 'path';
+import * as grpc from "@grpc/grpc-js";
 import { IDEConfig, IDEConfigService } from "../ide-config";
 
 export interface StartWorkspaceOptions {
@@ -170,22 +171,44 @@ export class WorkspaceStarter {
             startRequest.setServicePrefix(workspace.id);
 
             // tell the world we're starting this instance
-            const { manager, installation } = await this.clientProvider.getStartManager(user, workspace, instance);
-            instance.status.phase = "pending";
-            instance.region = installation;
-            await this.workspaceDb.trace({ span }).storeInstance(instance);
-            try {
-                await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
-            } catch (err) {
-                // if sending the notification fails that's no reason to stop the workspace creation.
-                // If the dashboard misses this event it will catch up at the next one.
-                span.log({ "notifyOnInstanceUpdate.error": err });
-                log.warn("cannot send instance update - this should be mostly inconsequential", err);
+            let resp: StartWorkspaceResponse.AsObject | undefined;
+            let exceptInstallation: string[] = [];
+            let lastInstallation = "";
+            for (let i = 0; i < 5; i++) {
+                try {
+                    // getStartManager will throw an exception if there's no cluster available and hence exit the loop
+                    const { manager, installation } = await this.clientProvider.getStartManager(user, workspace, instance, exceptInstallation);
+                    lastInstallation = installation;
+
+                    instance.status.phase = "pending";
+                    instance.region = installation;
+                    await this.workspaceDb.trace({ span }).storeInstance(instance);
+                    try {
+                        await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+                    } catch (err) {
+                        // if sending the notification fails that's no reason to stop the workspace creation.
+                        // If the dashboard misses this event it will catch up at the next one.
+                        span.log({ "notifyOnInstanceUpdate.error": err });
+                        log.debug("cannot send instance update - this should be mostly inconsequential", err);
+                    }
+
+                    // start that thing
+                    log.info({instanceId: instance.id}, 'starting instance');
+                    resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
+                    break;
+                } catch (err: any) {
+                    if ('code' in err && err.code !== grpc.status.OK && lastInstallation !== "") {
+                        log.error({instanceId: instance.id}, "cannot start workspace on cluster, might retry", err, {cluster: lastInstallation});
+                        exceptInstallation.push(lastInstallation);
+                    } else {
+                        throw err;
+                    }
+                }
+            }
+            if (!resp) {
+                throw new Error("cannot start a workspace because no workspace clusters are available");
             }
 
-            // start that thing
-            log.info('starting instance', {instanceId: instance.id});
-            const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
 
             this.analytics.track({
@@ -265,6 +288,7 @@ export class WorkspaceStarter {
                     await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild)
                     await this.messageBus.notifyHeadlessUpdate({span}, workspace.ownerId, workspace.id, <HeadlessWorkspaceEvent>{
                         type: HeadlessWorkspaceEventType.Aborted,
+                        // TODO: `workspaceID: workspace.id` not needed here? (found in ee/src/prebuilds/prebuild-queue-maintainer.ts and ee/src/bridge.ts)
                     });
                 }
             }
@@ -296,6 +320,21 @@ export class WorkspaceStarter {
                 // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
                 // For now, this feature requires special permissions.
                 configuration.ideImage = ideChoice;
+            }
+        }
+
+        const useDesktopIdeChoice = user.additionalData?.ideSettings?.useDesktopIde || false;
+        if (useDesktopIdeChoice) {
+            const desktopIdeChoice = user.additionalData?.ideSettings?.defaultDesktopIde;
+            if (!!desktopIdeChoice) {
+                const mappedImage = ideConfig.desktopIdeImageAliases[desktopIdeChoice];
+                if (!!mappedImage) {
+                    configuration.desktopIdeImage = mappedImage;
+                } else if (this.authService.hasPermission(user, "ide-settings")) {
+                    // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
+                    // For now, this feature requires special permissions.
+                    configuration.desktopIdeImage = desktopIdeChoice;
+                }
             }
         }
 
@@ -613,6 +652,13 @@ export class WorkspaceStarter {
         vsxRegistryUrl.setValue(this.config.vsxRegistryUrl);
         envvars.push(vsxRegistryUrl);
 
+        if (workspace.config.experimentalNetwork) {
+            const useNetnsVar = new EnvironmentVariable();
+            useNetnsVar.setName("WORKSPACEKIT_USE_NETNS");
+            useNetnsVar.setValue("true");
+            envvars.push(useNetnsVar);
+        }
+
         const createGitpodTokenPromise = (async () => {
             const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
             const token = crypto.randomBytes(30).toString('hex');
@@ -699,7 +745,11 @@ export class WorkspaceStarter {
         spec.setGit(this.createGitSpec(workspace, user));
         spec.setPortsList(ports);
         spec.setInitializer((await initializerPromise).initializer);
-        spec.setIdeImage(ideImage);
+        const startWorkspaceSpecIDEImage = new IDEImage();
+        startWorkspaceSpecIDEImage.setWebRef(ideImage);
+        startWorkspaceSpecIDEImage.setDesktopRef(instance.configuration?.desktopIdeImage || "");
+        spec.setIdeImage(startWorkspaceSpecIDEImage);
+        spec.setDeprecatedIdeImage(ideImage);
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));

@@ -20,8 +20,9 @@ import (
 )
 
 var renderOpts struct {
-	ConfigFN  string
-	Namespace string
+	ConfigFN               string
+	Namespace              string
+	ValidateConfigDisabled bool
 }
 
 //go:embed versions.yaml
@@ -40,16 +41,10 @@ A config file is required which can be generated with the init command.`,
   # Install Gitpod into a non-default namespace.
   gitpod-installer render --config config.yaml --namespace gitpod | kubectl apply -f -`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfgFN, _ := cmd.PersistentFlags().GetString("config")
-
-		rawCfg, cfgVersion, err := config.Load(cfgFN)
+		_, cfgVersion, cfg, err := loadConfig(renderOpts.ConfigFN)
 		if err != nil {
-			return fmt.Errorf("error loading config: %w", err)
+			return err
 		}
-		if cfgVersion != config.CurrentVersion {
-			return fmt.Errorf("config version is mismatch: expected %s, got %s", config.CurrentVersion, cfgVersion)
-		}
-		cfg := rawCfg.(*configv1.Config)
 
 		var versionMF versions.Manifest
 		err = yaml.Unmarshal(versionManifest, &versionMF)
@@ -57,27 +52,39 @@ A config file is required which can be generated with the init command.`,
 			return err
 		}
 
-		namespace, _ := cmd.PersistentFlags().GetString("namespace")
+		if !renderOpts.ValidateConfigDisabled {
+			if err = runConfigValidation(cfgVersion, cfg); err != nil {
+				return err
+			}
+		}
 
-		ctx := &common.RenderContext{
-			Config:          *cfg,
-			VersionManifest: versionMF,
-			Namespace:       namespace,
+		ctx, err := common.NewRenderContext(*cfg, versionMF, renderOpts.Namespace)
+		if err != nil {
+			return err
 		}
 
 		var renderable common.RenderFunc
+		var helmCharts common.HelmFunc
 		switch cfg.Kind {
 		case configv1.InstallationFull:
 			renderable = components.FullObjects
+			helmCharts = components.FullHelmDependencies
 		case configv1.InstallationMeta:
 			renderable = components.MetaObjects
+			helmCharts = components.MetaHelmDependencies
 		case configv1.InstallationWorkspace:
 			renderable = components.WorkspaceObjects
+			helmCharts = components.WorkspaceHelmDependencies
 		default:
 			return fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
 		}
 
-		objs, err := renderable(ctx)
+		objs, err := common.CompositeRenderFunc(renderable, components.CommonObjects)(ctx)
+		if err != nil {
+			return err
+		}
+
+		charts, err := common.CompositeHelmFunc(helmCharts, components.CommonHelmDependencies)(ctx)
 		if err != nil {
 			return err
 		}
@@ -91,8 +98,27 @@ A config file is required which can be generated with the init command.`,
 			fmt.Printf("---\n%s\n", string(fc))
 		}
 
+		for _, c := range charts {
+			fmt.Printf("---\n%s\n", c)
+		}
+
 		return nil
 	},
+}
+
+func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *configv1.Config, err error) {
+	rawCfg, cfgVersion, err = config.Load(cfgFN)
+	if err != nil {
+		err = fmt.Errorf("error loading config: %w", err)
+		return
+	}
+	if cfgVersion != config.CurrentVersion {
+		err = fmt.Errorf("config version is mismatch: expected %s, got %s", config.CurrentVersion, cfgVersion)
+		return
+	}
+	cfg = rawCfg.(*configv1.Config)
+
+	return rawCfg, cfgVersion, cfg, err
 }
 
 func init() {
@@ -100,4 +126,5 @@ func init() {
 
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
+	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
 }

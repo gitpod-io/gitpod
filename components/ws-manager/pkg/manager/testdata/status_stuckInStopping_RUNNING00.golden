@@ -11,7 +11,7 @@
         },
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:68c61eb0bb4e8fbafd16b876390fc2c78a7887866ef0bd53534bb8ffc2682bdc",
-            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
             "url": "https://purple-raven-cu9cj532.ws-us14.gitpod.io",
             "exposed_ports": [
                 {
@@ -23,7 +23,10 @@
                     "url": "https://31997-purple-raven-cu9cj532.ws-us14.gitpod.io"
                 }
             ],
-            "timeout": "30m"
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb"
+            }
         },
         "phase": 4,
         "conditions": {

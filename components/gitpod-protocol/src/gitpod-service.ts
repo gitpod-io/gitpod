@@ -28,7 +28,7 @@ import { Emitter } from './util/event';
 import { AccountStatement, CreditAlert } from './accounting-protocol';
 import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
-import { RemotePageMessage, RemoteTrackMessage } from './analytics';
+import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from './analytics';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -134,6 +134,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult>;
+    cancelPrebuild(projectId: string, prebuildId: string): Promise<void>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
     guessProjectConfiguration(projectId: string): Promise<string | undefined>;
@@ -229,6 +230,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      */
     trackEvent(event: RemoteTrackMessage): Promise<void>;
     trackLocation(event: RemotePageMessage): Promise<void>;
+    identifyUser(event: RemoteIdentifyMessage): Promise<void>;
 }
 
 export interface CreateProjectParams {
@@ -265,10 +267,10 @@ export interface ProviderRepository {
 }
 
 export interface ClientHeaderFields{
-    ip?:string;
-    userAgent?:string;
-    dnt?:number;
-    clientRegion?:string;
+    ip?: string;
+    userAgent?: string;
+    dnt?: string;
+    clientRegion?: string;
 }
 
 export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;

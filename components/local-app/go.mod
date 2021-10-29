@@ -30,7 +30,6 @@ require (
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
 	github.com/danieljoos/wincred v1.1.0 // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/godbus/dbus/v5 v5.0.3 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
@@ -49,6 +48,6 @@ require (
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
 
-replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
-
 replace github.com/gitpod-io/gitpod/local-app/api => ../local-app-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway

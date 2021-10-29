@@ -40,9 +40,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    labels,
 			},
 			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"Component": Component},
-				},
+				Selector: &metav1.LabelSelector{MatchLabels: labels},
 				// todo(sje): receive config value
 				Replicas: pointer.Int32(1),
 				Strategy: common.DeploymentStrategy,
@@ -54,7 +52,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 					Spec: corev1.PodSpec{
 						Affinity:           &corev1.Affinity{},
-						PriorityClassName:  "system-node-critical",
+						PriorityClassName:  common.SystemNodeCritical,
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
 						// todo(sje): conditionally add github-app-cert-secret in
@@ -81,7 +79,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 						}},
-						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(), *common.MessageBusWaiterContainer()},
+						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx), *common.MessageBusWaiterContainer(ctx)},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Server.Version),
@@ -96,6 +94,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Privileged: pointer.Bool(false),
 								RunAsUser:  pointer.Int64(31001),
 							},
+							Ports: []corev1.ContainerPort{{
+								Name:          ContainerPortName,
+								ContainerPort: ContainerPort,
+							}, {
+								Name:          PrometheusPortName,
+								ContainerPort: PrometheusPort,
+							}},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),

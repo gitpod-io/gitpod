@@ -27,43 +27,50 @@ func (v version) Defaults(in interface{}) error {
 	}
 
 	cfg.Kind = InstallationFull
+	cfg.Domain = "gitpod.example.com"
 	cfg.Repository = "eu.gcr.io/gitpod-core-dev/build"
 	cfg.Observability = Observability{
-		LogLevel: LogLevel("info"),
+		LogLevel: LogLevelInfo,
 	}
+	cfg.Certificate.Kind = CertificateRefSecret
+	cfg.Certificate.Name = "https-certificates"
 	cfg.Database.InCluster = pointer.Bool(true)
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
 	cfg.ContainerRegistry.InCluster = pointer.Bool(true)
+	cfg.Jaeger.InCluster = pointer.Bool(true)
 	cfg.Workspace.Resources.Requests = corev1.ResourceList{
 		corev1.ResourceCPU:    resource.MustParse("1000m"),
 		corev1.ResourceMemory: resource.MustParse("2Gi"),
 	}
 	cfg.Workspace.Runtime.FSShiftMethod = FSShiftFuseFS
+	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/run/containerd/io.containerd.runtime.v2.task/k8s.io"
 
 	return nil
 }
 
 type Config struct {
-	Kind       InstallationKind `json:"kind"`
-	Domain     string           `json:"domain"`
+	Kind       InstallationKind `json:"kind" validate:"required,installationKind"`
+	Domain     string           `json:"domain" validate:"required,fqdn"`
 	Metadata   Metadata         `json:"metadata"`
-	Repository string           `json:"repository"`
+	Repository string           `json:"repository" validate:"required,ascii"`
 
 	Observability Observability `json:"observability"`
 	Analytics     *Analytics    `json:"analytics,omitempty"`
 
-	Database Database `json:"database"`
+	Database Database `json:"database" validate:"required"`
 
-	ObjectStorage ObjectStorage `json:"objectStorage"`
+	ObjectStorage ObjectStorage `json:"objectStorage" validate:"required"`
 
-	ContainerRegistry ContainerRegistry `json:"containerRegistry"`
+	ContainerRegistry ContainerRegistry `json:"containerRegistry" validate:"required"`
 
-	Certificate ObjectRef `json:"certificate"`
+	Jaeger Jaeger `json:"jaegerOperator" validate:"required"`
+
+	Certificate ObjectRef `json:"certificate" validate:"required"`
 
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
 
-	Workspace Workspace `json:"workspace"`
+	Workspace Workspace `json:"workspace" validate:"required"`
 
 	AuthProviders []AuthProviderConfigs `json:"authProviders,omitempty"`
 	BlockNewUsers BlockNewUsers         `json:"blockNewUsers"`
@@ -74,7 +81,7 @@ type Metadata struct {
 }
 
 type Observability struct {
-	LogLevel LogLevel `json:"logLevel"`
+	LogLevel LogLevel `json:"logLevel" validate:"required,logLevel"`
 	Tracing  *Tracing `json:"tracing,omitempty"`
 }
 
@@ -125,8 +132,8 @@ const (
 )
 
 type ObjectRef struct {
-	Kind CertificateRefKind `json:"kind"`
-	Name string             `json:"name"`
+	Kind CertificateRefKind `json:"kind" validate:"required,certificateKind"`
+	Name string             `json:"name" validate:"required"`
 }
 
 type CertificateRefKind string
@@ -136,28 +143,50 @@ const (
 )
 
 type ContainerRegistry struct {
-	InCluster *bool                      `json:"inCluster,omitempty"`
-	External  *ContainerRegistryExternal `json:"external,omitempty"`
+	InCluster *bool                      `json:"inCluster,omitempty" validate:"required"`
+	External  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
 }
 
 type ContainerRegistryExternal struct {
-	URL         string    `json:"url"`
-	Certificate ObjectRef `json:"certificate"`
+	URL         string    `json:"url" validate:"required"`
+	Certificate ObjectRef `json:"certificate" validate:"required"`
+}
+
+type Jaeger struct {
+	InCluster *bool                   `json:"inCluster,omitempty" validate:"required"`
+	External  *JaegerOperatorExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
+}
+
+type JaegerOperatorExternal struct {
+	Certificate ObjectRef `json:"certificate" validate:"required"`
 }
 
 type LogLevel string
 
+// Taken from github.com/gitpod-io/gitpod/components/gitpod-protocol/src/util/logging.ts
+const (
+	LogLevelTrace   LogLevel = "trace"
+	LogLevelDebug   LogLevel = "debug"
+	LogLevelInfo    LogLevel = "info"
+	LogLevelWarning LogLevel = "warning"
+	LogLevelError   LogLevel = "error"
+	LogLevelFatal   LogLevel = "fatal"
+	LogLevelPanic   LogLevel = "panic"
+)
+
 type Resources struct {
-	Requests      corev1.ResourceList `json:"requests"`
+	// todo(sje): add custom validation to corev1.ResourceList
+	Requests      corev1.ResourceList `json:"requests" validate:"required"`
 	Limits        corev1.ResourceList `json:"limits,omitempty"`
 	DynamicLimits *struct {
-		CPU []resources.Bucket
+		CPU []resources.Bucket // todo(sje): add custom validation
 	} `json:"dynamicLimits,omitempty"`
 }
 
 type WorkspaceRuntime struct {
-	FSShiftMethod        FSShiftMethod `json:"fsShiftMethod"`
-	ContainerDRuntimeDir string        `json:"containerdRuntimeDir"`
+	FSShiftMethod        FSShiftMethod `json:"fsShiftMethod" validate:"required,fsShiftMethod"`
+	ContainerDRuntimeDir string        `json:"containerdRuntimeDir" validate:"required,startswith=/"`
+	ContainerDSocket     string        `json:"containerdSocket" validate:"required,startswith=/"`
 }
 
 type WorkspaceTemplates struct {
@@ -166,11 +195,12 @@ type WorkspaceTemplates struct {
 	Ghost      *corev1.Pod `json:"ghost"`
 	ImageBuild *corev1.Pod `json:"image_build"`
 	Regular    *corev1.Pod `json:"regular"`
+	Probe      *corev1.Pod `json:"probe"`
 }
 
 type Workspace struct {
-	Runtime   WorkspaceRuntime    `json:"runtime"`
-	Resources Resources           `json:"resources"`
+	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
+	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
 }
 

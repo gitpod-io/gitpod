@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-gokart.18
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:as-migrate-mixins.73
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -36,9 +36,12 @@ ports:
   - port: 1234
     onOpen: ignore
 tasks:
-  - name: Prepare Agent Smith BPF dev environment
-    command: leeway run components/ee/agent-smith:qemu
-  - before: scripts/branch-namespace.sh
+  - name: Java
+    init: |
+      leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
+      leeway exec --package components/ide/jetbrains/backend-plugin:plugin -- ./gradlew buildPlugin
+  - name: TypeScript
+    before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
   - name: Go
     init: leeway exec --filter-type go -v -- go mod verify
@@ -55,3 +58,7 @@ vscode:
     - stkb.rewrap
     - zxh404.vscode-proto3
     - matthewpi.caddyfile-support
+    - heptio.jsonnet
+    - timonwong.shellcheck
+    - vscjava.vscode-java-pack
+    - fwcd.kotlin

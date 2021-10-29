@@ -9,6 +9,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	minioComponent "github.com/gitpod-io/gitpod/installer/pkg/components/minio"
 	"text/template"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -81,7 +82,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	minio, err := renderTemplate(vhostMinioTmpl, commonTpl{
 		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("minio.%s.%s:%d", ctx.Namespace, kubeDomain, 9000), // todo(sje): get port from (future) config
+		ReverseProxy: fmt.Sprintf("minio.%s.%s:%d", ctx.Namespace, kubeDomain, minioComponent.ServicePort),
 	})
 	if err != nil {
 		return nil, err

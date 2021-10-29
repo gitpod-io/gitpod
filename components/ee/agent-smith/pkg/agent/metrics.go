@@ -7,20 +7,19 @@ package agent
 import (
 	"sync"
 
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/detector"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const (
-	counterMapStatusStored  = "stored"
-	counterMapStatusDeleted = "deleted"
-)
-
 type metrics struct {
-	penaltyAttempts        *prometheus.CounterVec
-	penaltyFailures        *prometheus.CounterVec
-	signatureCheckMiss     prometheus.Counter
-	signatureCheckFailures prometheus.Counter
-	currentlyMonitoredPIDS *prometheus.CounterVec
+	penaltyAttempts                    *prometheus.CounterVec
+	penaltyFailures                    *prometheus.CounterVec
+	classificationBackpressureInCount  prometheus.GaugeFunc
+	classificationBackpressureOutCount prometheus.GaugeFunc
+	classificationBackpressureInDrop   prometheus.Counter
+
+	mu sync.RWMutex
+	cl []prometheus.Collector
 }
 
 func newAgentMetrics() *metrics {
@@ -42,78 +41,62 @@ func newAgentMetrics() *metrics {
 			Help:      "The total amount of failed attempts that agent-smith is trying to apply a penalty.",
 		}, []string{"penalty", "reason"},
 	)
-	m.signatureCheckMiss = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Namespace: "gitpod",
-			Subsystem: "agent_smith",
-			Name:      "signature_check_missed_total",
-			Help:      "The total amount of times where the processes ended before we could open the executable.",
-		},
-	)
-	m.signatureCheckFailures = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Namespace: "gitpod",
-			Subsystem: "agent_smith",
-			Name:      "signature_check_failed_total",
-			Help:      "The total amount of failed signature check attempts",
-		},
-	)
-	m.currentlyMonitoredPIDS = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "gitpod",
-			Subsystem: "agent_smith",
-			Name:      "monitored_pids",
-			Help:      "Current count of pids under investigation",
-		}, []string{"process_state"},
-	)
+	m.classificationBackpressureInDrop = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "gitpod",
+		Subsystem: "agent_smith",
+		Name:      "classification_backpressure_in_drop_total",
+		Help:      "total count of processes that went unclassified because of backpressure",
+	})
+	m.cl = []prometheus.Collector{
+		m.penaltyAttempts,
+		m.penaltyFailures,
+		m.classificationBackpressureInDrop,
+	}
 	return m
 }
 
-func (m *metrics) Register(reg prometheus.Registerer) error {
-	if m == nil {
-		return nil
-	}
+func (m *metrics) RegisterClassificationQueues(in chan detector.Process, out chan classifiedProcess) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	collectors := []prometheus.Collector{
-		m.penaltyAttempts,
-		m.penaltyFailures,
-		m.signatureCheckMiss,
-		m.signatureCheckFailures,
-		m.currentlyMonitoredPIDS,
-	}
-	for _, c := range collectors {
-		err := reg.Register(c)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	m.classificationBackpressureInCount = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: "gitpod",
+		Subsystem: "agent_smith",
+		Name:      "classification_backpressure_in_count",
+		Help:      "processes queued for classification",
+	}, func() float64 { return float64(len(in)) })
+	m.classificationBackpressureOutCount = prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: "gitpod",
+		Subsystem: "agent_smith",
+		Name:      "classification_backpressure_out_count",
+		Help:      "processes coming out of classification",
+	}, func() float64 { return float64(len(out)) })
 }
 
-type syncMapCounter struct {
-	sync.Map
-	counter *prometheus.CounterVec
-}
-
-func (m *syncMapCounter) WithCounter(c *prometheus.CounterVec) {
-	m.counter = c
-}
-
-func (m *syncMapCounter) Store(key, value interface{}) {
-	m.Map.Store(key, value)
-	if m.counter != nil {
-		m.counter.WithLabelValues(counterMapStatusStored).Inc()
+func (m *metrics) Describe(d chan<- *prometheus.Desc) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.classificationBackpressureInCount != nil {
+		m.classificationBackpressureInCount.Describe(d)
+	}
+	if m.classificationBackpressureOutCount != nil {
+		m.classificationBackpressureOutCount.Describe(d)
+	}
+	for _, c := range m.cl {
+		c.Describe(d)
 	}
 }
 
-func (m *syncMapCounter) Delete(key interface{}) {
-	m.Map.Delete(key)
-	if m.counter != nil {
-		m.counter.WithLabelValues(counterMapStatusDeleted).Inc()
+func (m *metrics) Collect(d chan<- prometheus.Metric) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.classificationBackpressureInCount != nil {
+		m.classificationBackpressureInCount.Collect(d)
 	}
-}
-
-func (m *syncMapCounter) Range(f func(key, value interface{}) bool) {
-	m.Map.Range(f)
+	if m.classificationBackpressureOutCount != nil {
+		m.classificationBackpressureOutCount.Collect(d)
+	}
+	for _, c := range m.cl {
+		c.Collect(d)
+	}
 }

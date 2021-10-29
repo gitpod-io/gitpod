@@ -1,0 +1,37 @@
+{
+    "actions": [
+        {
+            "Func": "stopWorkspace",
+            "Params": {
+                "gracePeriod": 42000000000,
+                "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7"
+            }
+        },
+        {
+            "Func": "modifyFinalizer",
+            "Params": {
+                "add": true,
+                "finalizer": "gitpod.io/finalizer",
+                "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7"
+            }
+        },
+        {
+            "Func": "markWorkspace",
+            "Params": {
+                "annotations": [
+                    {
+                        "Name": "gitpod/traceid",
+                        "Value": "",
+                        "Delete": true
+                    },
+                    {
+                        "Name": "gitpod.io/nodeName",
+                        "Value": "gke-core-dev-workspace-3-a69c4dd8-jqzs",
+                        "Delete": false
+                    }
+                ],
+                "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7"
+            }
+        }
+    ]
+}

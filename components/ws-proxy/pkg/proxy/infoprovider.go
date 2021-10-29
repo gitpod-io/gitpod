@@ -6,10 +6,7 @@ package proxy
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"strconv"
 	"sync"
@@ -143,28 +140,17 @@ func (p *RemoteWorkspaceInfoProvider) Run() (err error) {
 	target := p.Config.WsManagerAddr
 	dialOption := grpc.WithInsecure()
 	if p.Config.TLS.CA != "" && p.Config.TLS.Cert != "" && p.Config.TLS.Key != "" {
-		log.
-			WithField("ca", p.Config.TLS.CA).
-			WithField("cert", p.Config.TLS.Cert).
-			WithField("key", p.Config.TLS.Key).
-			Debug("using TLS config to connect ws-manager")
-		certPool := x509.NewCertPool()
-		ca, err := ioutil.ReadFile(p.Config.TLS.CA)
+		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+			p.Config.TLS.CA, p.Config.TLS.Cert, p.Config.TLS.Key,
+			common_grpc.WithSetRootCAs(true),
+			common_grpc.WithServerName("ws-manager"),
+		)
 		if err != nil {
-			return err
+			log.WithField("config", p.Config.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
+			return xerrors.Errorf("cannot load ws-manager certs: %w", err)
 		}
-		if !certPool.AppendCertsFromPEM(ca) {
-			return xerrors.Errorf("failed appending CA cert")
-		}
-		cert, err := tls.LoadX509KeyPair(p.Config.TLS.Cert, p.Config.TLS.Key)
-		if err != nil {
-			return err
-		}
-		creds := credentials.NewTLS(&tls.Config{
-			Certificates: []tls.Certificate{cert},
-			RootCAs:      certPool,
-		})
-		dialOption = grpc.WithTransportCredentials(creds)
+
+		dialOption = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
 	}
 	conn, client, err := p.Dialer(target, dialOption)
 	if err != nil {
@@ -303,11 +289,16 @@ func mapWorkspaceStatusToInfo(status *wsapi.WorkspaceStatus) *WorkspaceInfo {
 		})
 	}
 
+	ideImage := status.Spec.DeprecatedIdeImage
+	if len(status.Spec.IdeImage.WebRef) > 0 {
+		ideImage = status.Spec.IdeImage.WebRef
+	}
+
 	return &WorkspaceInfo{
 		WorkspaceID:   status.Metadata.MetaId,
 		InstanceID:    status.Id,
 		URL:           status.Spec.Url,
-		IDEImage:      status.Spec.IdeImage,
+		IDEImage:      ideImage,
 		IDEPublicPort: getPortStr(status.Spec.Url),
 		Ports:         portInfos,
 		Auth:          status.Auth,

@@ -42,7 +42,23 @@ go_protoc_gateway() {
         *.proto
 }
 
+local_java_protoc() {
+    # replace Java reserved keywords
+    sed -i 's/private = 0;/private_visibility = 0;/g' status.proto
+    sed -i 's/public = 1;/public_visibility = 1;/g' status.proto
+    protoc \
+        -I /usr/lib/protoc/include -I"$COMPONENTS_DIR" -I. -I"$THIRD_PARTY_INCLUDES" \
+        --plugin=protoc-gen-grpc-java=/tmp/protoc-gen-grpc-java \
+        --grpc-java_out=java/src/main/java \
+        --java_out=java/src/main/java \
+        ./*.proto
+    # revert Java reserved keywords
+    sed -i 's/private_visibility = 0;/private = 0;/g' status.proto
+    sed -i 's/public_visibility = 1;/public = 1;/g' status.proto
+}
+
 install_dependencies
 local_go_protoc "$COMPONENTS_DIR"
 go_protoc_gateway "$COMPONENTS_DIR"
+local_java_protoc "$COMPONENTS_DIR"
 update_license

@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-/ide/node /ide/out/gitpod-cli.js "$@"
+exec /ide/bin/gitpod-code "$@"

@@ -7,8 +7,8 @@
 import { inject, injectable } from 'inversify';
 import * as express from 'express';
 import { User } from '@gitpod/gitpod-protocol';
-import { GitpodCookie } from './gitpod-cookie';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { SafePromise } from '@gitpod/gitpod-protocol/lib/util/safe-promise';
 import { Config } from "../config";
 import { AuthFlow } from './auth-provider';
 import { HostContextProvider } from './host-context-provider';
@@ -16,6 +16,7 @@ import { AuthProviderService } from './auth-provider-service';
 import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
+import { trackLogin } from '../analytics';
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -23,7 +24,6 @@ import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 @injectable()
 export class LoginCompletionHandler {
 
-    @inject(GitpodCookie) protected gitpodCookie: GitpodCookie;
     @inject(Config) protected readonly config: Config;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
@@ -75,25 +75,11 @@ export class LoginCompletionHandler {
         await TosFlow.clear(request.session);
         await AuthFlow.clear(request.session);
 
-        // Create Gitpod 🍪 before the redirect
-        this.gitpodCookie.setCookie(response);
-
         if (authHost) {
 
             increaseLoginCounter("succeeded", authHost);
 
-            //read anonymous ID set by analytics.js
-            let anonymousId = request.cookies.ajs_anonymous_id;
-            //make identify call if anonymous ID was found
-            if (anonymousId) this.analytics.identify({anonymousId: anonymousId.replace(/(^"|"$)/g, ''),userId:user.id});
-            this.analytics.track({
-                userId: user.id,
-                event: "login",
-                properties: {
-                    "loginContext": authHost,
-                    "location": request.headers["x-glb-client-city-lat-long"]
-                }
-            });
+            /* no await */ SafePromise.catchAndLog(trackLogin(user, request, authHost, this.analytics), { userId: user.id });
         }
         response.redirect(returnTo);
     }

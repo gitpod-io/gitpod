@@ -10,7 +10,7 @@ import { TeamSubscription, AssigneeIdentifier, TeamSubscriptionSlot, TeamSubscri
 import { Subscription, AssignedTeamSubscription, CreditDescription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { TeamSubscriptionDB } from '@gitpod/gitpod-db/lib/team-subscription-db';
 import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { ABSOLUTE_MAX_USAGE, Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { SubscriptionModel } from "./subscription-model";
 import { SubscriptionService } from "./subscription-service";
 import { AccountService } from "./account-service";
@@ -209,8 +209,10 @@ export class TeamSubscriptionService {
     protected async calculateRemainingHoursThisPeriod(db: AccountingDB, slot: TeamSubscriptionSlot, currentPeriodStartDate: string, now: string, hoursPerMonth: number) {
         const oldSlotSubscriptionsActiveThisPeriod = (await db.findSubscriptionsByTeamSubscriptionSlotId(slot.id))
             .filter(ts => Subscription.isActive(ts, currentPeriodStartDate));
+        if (oldSlotSubscriptionsActiveThisPeriod.some(s => Plans.getById(s.planId)?.hoursPerMonth === 'unlimited')) {
+            return ABSOLUTE_MAX_USAGE;
+        }
         const userMap = this.groupByUser(oldSlotSubscriptionsActiveThisPeriod);
-
         const calcTotalUsage = async (subscriptions: Subscription[], userId: string) => {
             const statement = await this.accountService.getAccountStatement(userId, now);
             return statement.credits

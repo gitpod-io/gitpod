@@ -596,11 +596,34 @@ export namespace WorkspaceStatus {
     }
 }
 
+export class IDEImage extends jspb.Message {
+    getWebRef(): string;
+    setWebRef(value: string): IDEImage;
+    getDesktopRef(): string;
+    setDesktopRef(value: string): IDEImage;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): IDEImage.AsObject;
+    static toObject(includeInstance: boolean, msg: IDEImage): IDEImage.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: IDEImage, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): IDEImage;
+    static deserializeBinaryFromReader(message: IDEImage, reader: jspb.BinaryReader): IDEImage;
+}
+
+export namespace IDEImage {
+    export type AsObject = {
+        webRef: string,
+        desktopRef: string,
+    }
+}
+
 export class WorkspaceSpec extends jspb.Message {
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): WorkspaceSpec;
-    getIdeImage(): string;
-    setIdeImage(value: string): WorkspaceSpec;
+    getDeprecatedIdeImage(): string;
+    setDeprecatedIdeImage(value: string): WorkspaceSpec;
     getHeadless(): boolean;
     setHeadless(value: boolean): WorkspaceSpec;
     getUrl(): string;
@@ -613,6 +636,11 @@ export class WorkspaceSpec extends jspb.Message {
     setType(value: WorkspaceType): WorkspaceSpec;
     getTimeout(): string;
     setTimeout(value: string): WorkspaceSpec;
+
+    hasIdeImage(): boolean;
+    clearIdeImage(): void;
+    getIdeImage(): IDEImage | undefined;
+    setIdeImage(value?: IDEImage): WorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceSpec.AsObject;
@@ -627,12 +655,13 @@ export class WorkspaceSpec extends jspb.Message {
 export namespace WorkspaceSpec {
     export type AsObject = {
         workspaceImage: string,
-        ideImage: string,
+        deprecatedIdeImage: string,
         headless: boolean,
         url: string,
         exposedPortsList: Array<PortSpec.AsObject>,
         type: WorkspaceType,
         timeout: string,
+        ideImage?: IDEImage.AsObject,
     }
 }
 
@@ -689,6 +718,8 @@ export class WorkspaceConditions extends jspb.Message {
     setFirstUserActivity(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceConditions;
     getHeadlessTaskFailed(): string;
     setHeadlessTaskFailed(value: string): WorkspaceConditions;
+    getStoppedByRequest(): WorkspaceConditionBool;
+    setStoppedByRequest(value: WorkspaceConditionBool): WorkspaceConditions;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceConditions.AsObject;
@@ -712,6 +743,7 @@ export namespace WorkspaceConditions {
         networkNotReady: WorkspaceConditionBool,
         firstUserActivity?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         headlessTaskFailed: string,
+        stoppedByRequest: WorkspaceConditionBool,
     }
 }
 
@@ -801,8 +833,8 @@ export namespace WorkspaceAuthentication {
 export class StartWorkspaceSpec extends jspb.Message {
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): StartWorkspaceSpec;
-    getIdeImage(): string;
-    setIdeImage(value: string): StartWorkspaceSpec;
+    getDeprecatedIdeImage(): string;
+    setDeprecatedIdeImage(value: string): StartWorkspaceSpec;
     clearFeatureFlagsList(): void;
     getFeatureFlagsList(): Array<WorkspaceFeatureFlag>;
     setFeatureFlagsList(value: Array<WorkspaceFeatureFlag>): StartWorkspaceSpec;
@@ -834,6 +866,11 @@ export class StartWorkspaceSpec extends jspb.Message {
     getAdmission(): AdmissionLevel;
     setAdmission(value: AdmissionLevel): StartWorkspaceSpec;
 
+    hasIdeImage(): boolean;
+    clearIdeImage(): void;
+    getIdeImage(): IDEImage | undefined;
+    setIdeImage(value?: IDEImage): StartWorkspaceSpec;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
     static toObject(includeInstance: boolean, msg: StartWorkspaceSpec): StartWorkspaceSpec.AsObject;
@@ -847,7 +884,7 @@ export class StartWorkspaceSpec extends jspb.Message {
 export namespace StartWorkspaceSpec {
     export type AsObject = {
         workspaceImage: string,
-        ideImage: string,
+        deprecatedIdeImage: string,
         featureFlagsList: Array<WorkspaceFeatureFlag>,
         initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
         portsList: Array<PortSpec.AsObject>,
@@ -857,6 +894,7 @@ export namespace StartWorkspaceSpec {
         git?: GitSpec.AsObject,
         timeout: string,
         admission: AdmissionLevel,
+        ideImage?: IDEImage.AsObject,
     }
 }
 

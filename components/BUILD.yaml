@@ -10,13 +10,11 @@ packages:
     deps:
       - :all-docker
       - :docker-versions
-      - dev/blowtorch:app
-      - dev/gpctl:app
-      - dev/loadgen:app
-      - components/local-app-api/typescript-grpcweb:publish
-      - components/gitpod-protocol:publish
-      - components/supervisor-api/typescript-grpc:publish
-      - components/supervisor-api/typescript-grpcweb:publish
+      - :publish-api
+      - dev:all-app
+      - installer:app
+      - components/gitpod-protocol:all
+      - operations/observability/mixins:lint
   - name: docker-versions
     type: docker
     config:
@@ -42,11 +40,14 @@ packages:
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/ide/code:docker
+      - components/ide/jetbrains/image:intellij
+      - components/ide/jetbrains/image:goland
       - components/ide/theia:docker
       - components/image-builder:docker
       - components/image-builder-mk3:docker
       - components/image-builder-bob:docker
       - components/local-app:docker
+      - components/openvsx-proxy:docker
       - components/proxy:docker
       - components/registry-facade:docker
       - components/server:docker
@@ -66,6 +67,13 @@ packages:
         - ["sh", "-c", "echo \"version: ${version}\" > versions.yaml"]
         - ["sh", "-c", "dev-version-manifest--app/version-manifest >> versions.yaml"]
         - ["sh", "-c", "rm -r components* dev-*"]
+  - name: publish-api
+    type: generic
+    deps:
+      - components/gitpod-protocol:publish
+      - components/local-app-api/typescript-grpcweb:publish
+      - components/supervisor-api/typescript-grpc:publish
+      - components/supervisor-api/typescript-grpcweb:publish
   - name: all-apps
     type: generic
     deps:
@@ -79,6 +87,7 @@ packages:
       - components/ee/payment-endpoint:app
       - components/ee/ws-scheduler:app
       - components/image-builder:app
+      - components/openvsx-proxy:app
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
@@ -147,6 +156,7 @@ scripts:
     srcs:
       - components/**/*
       - test/**/*
+      - dev/**/*
     script: |
       leeway exec --filter-type go -v -- go mod tidy -compat=1.17
 

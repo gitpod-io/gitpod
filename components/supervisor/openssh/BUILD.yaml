@@ -1,0 +1,15 @@
+packages:
+  - name: app
+    type: generic
+    deps:
+      - :docker-build
+    config:
+      commands:
+        - ["sh", "-c", "find . | grep layer.tar | xargs tar xfv"]
+        - ["rm", "-rf", "components-supervisor-openssh--docker-build"]
+  - name: docker-build
+    type: docker
+    srcs:
+      - "*.patch"
+    config:
+      dockerfile: leeway.Dockerfile

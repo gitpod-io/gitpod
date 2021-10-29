@@ -35,7 +35,11 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
           setWorkspaceInstance(info.latestInstance);
         }
         disposables.push(getGitpodService().registerClient({
-          onInstanceUpdate: setWorkspaceInstance,
+          onInstanceUpdate: (instance) => {
+            if (props.workspaceId === instance.workspaceId) {
+              setWorkspaceInstance(instance);
+            }
+          },
           onWorkspaceImageBuildLogs: (info: WorkspaceImageBuild.StateInfo, content?: WorkspaceImageBuild.LogContent) => {
             if (!content) {
               return;

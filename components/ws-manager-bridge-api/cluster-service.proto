@@ -21,6 +21,7 @@ message RegisterRequest {
   TlsConfig tls = 3;
   RegistrationHints hints = 4;
   repeated AdmissionConstraint admission_constraints = 5;
+  repeated AdmissionPreference admission_preference = 6;
 }
 
 message RegisterResponse {}
@@ -46,6 +47,13 @@ message AdmissionConstraint {
   oneof constraint {
     FeaturePreview has_feature_preview = 1;
     HasPermission has_permission = 2;
+    string has_user_level = 3;
+  }
+}
+
+message AdmissionPreference {
+  oneof preference {
+    string user_level = 1;
   }
 }
 
@@ -62,7 +70,8 @@ message ClusterStatus {
   int32 score = 4;
   int32 max_score = 5;
   bool governed = 6;
-  repeated AdmissionConstraint admission_constraints = 7;
+  repeated AdmissionConstraint admission_constraint = 7;
+  repeated AdmissionPreference admission_preference = 9;
   bool static = 8;
 }
 
@@ -79,13 +88,19 @@ message UpdateRequest {
     int32 score = 2;
     int32 max_score = 3;
     bool cordoned = 4;
-    ModifyAdmissionConstraint admission_constraints = 5;
+    ModifyAdmissionConstraint admission_constraint = 5;
+    ModifyAdmissionPreference admission_preference = 6;
   }
 }
 
 message ModifyAdmissionConstraint {
   bool add = 1;
   AdmissionConstraint constraint = 2;
+}
+
+message ModifyAdmissionPreference {
+  bool add = 1;
+  AdmissionPreference preference = 2;
 }
 
 message UpdateResponse {}

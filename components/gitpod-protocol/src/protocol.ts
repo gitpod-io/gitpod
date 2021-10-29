@@ -114,6 +114,8 @@ export interface EmailNotificationSettings {
 
 export type IDESettings = {
     defaultIde?: string
+    useDesktopIde?: boolean
+    defaultDesktopIde?: string
 }
 
 export interface UserPlatform {
@@ -558,6 +560,9 @@ export interface WorkspaceConfig {
     gitConfig?: { [config: string]: string };
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
+
+    /** tailscale demo */
+    experimentalNetwork?: boolean;
 
     /**
      * Where the config object originates from.

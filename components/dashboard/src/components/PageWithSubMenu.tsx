@@ -22,7 +22,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
     const location = useLocation();
     return <div className="w-full">
         <Header title={p.title} subtitle={p.subtitle} />
-        <div className='lg:px-28 px-10 flex pt-9'>
+        <div className='app-container flex pt-9'>
             <div>
                 <ul className="flex flex-col text tracking-wide text-gray-500 pt-4 lg:pt-0 w-48 space-y-2">
                     {p.subMenu.map(e => {

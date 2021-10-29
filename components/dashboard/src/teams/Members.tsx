@@ -111,7 +111,7 @@ export default function() {
 
     return <>
         <Header title="Members" subtitle="Manage team members." />
-        <div className="lg:px-28 px-10">
+        <div className="app-container">
             <div className="flex mt-8">
                 <div className="flex">
                     <div className="py-4">

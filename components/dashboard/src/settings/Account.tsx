@@ -42,7 +42,7 @@ export default function Account() {
                 <li className="ml-5">Your subscription will be cancelled. If you obtained a Gitpod subscription through the GitHub marketplace, you need to cancel your plan there.</li>
             </ol>
             <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">Type your email to confirm</p>
-            <input className="w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
+            <input autoFocus className="w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
         </ConfirmationModal>
 
         <PageWithSubMenu subMenu={settingsMenu}  title='Account' subtitle='Manage account and Git configuration.'>

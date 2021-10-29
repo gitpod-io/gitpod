@@ -16,9 +16,9 @@ COPY components-supervisor--app/supervisor \
      components-workspacekit--fuse-overlayfs/fuse-overlayfs \
      components-gitpod-cli--app/gitpod-cli \
      ./
-WORKDIR "/.supervisor/dropbear"
-COPY components-supervisor--dropbear/dropbear \
-     components-supervisor--dropbear/dropbearkey \
-     ./
+
+WORKDIR "/.supervisor/ssh"
+COPY components-supervisor-openssh--app/usr/sbin/sshd .
+COPY components-supervisor-openssh--app/usr/bin/ssh-keygen .
 
 ENTRYPOINT ["/.supervisor/supervisor"]
