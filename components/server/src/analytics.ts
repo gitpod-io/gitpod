@@ -9,7 +9,7 @@ import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 
 export async function trackLogin(user: User, request: Request, authHost: string, analytics: IAnalyticsWriter) {
     //make new complete identify call for each login
-    fullIdentify(user,request,analytics);
+    fullIdentify(user, request, analytics);
 
     //track the login
     analytics.track({
@@ -35,7 +35,7 @@ export async function trackSignup(user: User, request: Request, analytics: IAnal
         });
 }
 
-async function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter) {
+function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter) {
     //makes a full identify call for authenticated users
     const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
     analytics.identify({

@@ -201,3 +201,13 @@ export function bottomErrorHandler(log: (...args: any[]) => void): express.Error
 export function isAnsweredRequest(req: express.Request, res: express.Response) {
     return res.headersSent || req.originalUrl.endsWith(".websocket");
 }
+
+export const takeFirst = (h: string | string[] | undefined): string | undefined => {
+    if (Array.isArray(h)) {
+        if (h.length < 1) {
+            return undefined
+        }
+        return h[0];
+    }
+    return h;
+};

@@ -11,6 +11,7 @@ import * as express from 'express';
 import { Authenticator } from "../auth/authenticator";
 import { Config } from '../config';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { SafePromise } from '@gitpod/gitpod-protocol/lib/util/safe-promise';
 import { AuthorizationService } from "./authorization-service";
 import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { UserService } from "./user-service";
@@ -494,7 +495,7 @@ export class UserController {
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
 
-        trackSignup(user,req,this.analytics);
+        /* no await */ SafePromise.catchAndLog(trackSignup(user, req, this.analytics), { userId: user.id });
 
         await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
     }

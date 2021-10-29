@@ -16,6 +16,7 @@ import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } 
 import { HostContextProvider } from "./auth/host-context-provider";
 import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "./auth/rate-limiter";
 import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, TeamMemberResourceGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "./auth/resource-access";
+import { takeFirst } from "./express-util";
 import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "./prometheus-metrics";
 import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
 
@@ -77,11 +78,11 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
             resourceGuard = { canAccess: async () => false };
         }
 
-        const clientHeaderFields:ClientHeaderFields = {
-            ip: expressReq.ips?.length > 0 ? expressReq.ips[0] : undefined,
+        const clientHeaderFields: ClientHeaderFields = {
+            ip: takeFirst(expressReq.ips),
             userAgent: expressReq.headers["user-agent"],
-            dnt: expressReq.headers.dnt instanceof Array ? expressReq.headers.dnt[0] : expressReq.headers.dnt,
-            clientRegion: expressReq.headers["x-glb-client-region"] instanceof Array ? expressReq.headers["x-glb-client-region"][0]: expressReq.headers["x-glb-client-region"]
+            dnt: takeFirst(expressReq.headers.dnt),
+            clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
         }
 
         gitpodServer.initialize(client, user, resourceGuard, clientHeaderFields);
