@@ -8,6 +8,7 @@ import { inject, injectable } from 'inversify';
 import * as express from 'express';
 import { User } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { SafePromise } from '@gitpod/gitpod-protocol/lib/util/safe-promise';
 import { Config } from "../config";
 import { AuthFlow } from './auth-provider';
 import { HostContextProvider } from './host-context-provider';
@@ -78,7 +79,7 @@ export class LoginCompletionHandler {
 
             increaseLoginCounter("succeeded", authHost);
 
-            trackLogin(user,request,authHost,this.analytics);
+            /* no await */ SafePromise.catchAndLog(trackLogin(user, request, authHost, this.analytics), { userId: user.id });
         }
         response.redirect(returnTo);
     }

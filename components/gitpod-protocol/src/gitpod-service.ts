@@ -267,10 +267,10 @@ export interface ProviderRepository {
 }
 
 export interface ClientHeaderFields{
-    ip?:string;
-    userAgent?:string;
-    dnt?:string;
-    clientRegion?:string;
+    ip?: string;
+    userAgent?: string;
+    dnt?: string;
+    clientRegion?: string;
 }
 
 export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;
