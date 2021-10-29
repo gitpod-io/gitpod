@@ -9,5 +9,7 @@ packages:
         - ["rm", "-rf", "components-supervisor-openssh--docker-build"]
   - name: docker-build
     type: docker
+    srcs:
+      - "*.patch"
     config:
       dockerfile: leeway.Dockerfile

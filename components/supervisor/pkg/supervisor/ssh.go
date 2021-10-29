@@ -27,10 +27,14 @@ func newSSHServer(ctx context.Context, cfg *Config) (*sshServer, error) {
 
 	sshkey := filepath.Join(filepath.Dir(bin), "ssh", "sshkey")
 	if _, err := os.Stat(sshkey); err != nil {
-		err := prepareSSHServer(ctx, sshkey)
+		err := prepareSSHKey(ctx, sshkey)
 		if err != nil {
 			return nil, xerrors.Errorf("unexpected error creating SSH key: %w", err)
 		}
+	}
+	err = writeSSHEnv(cfg)
+	if err != nil {
+		return nil, xerrors.Errorf("unexpected error creating SSH env: %w", err)
 	}
 
 	return &sshServer{
@@ -126,6 +130,8 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		done <- cmd.Wait()
 	}()
 
+	log.Debug("sshd started")
+
 	select {
 	case <-ctx.Done():
 		if cmd.Process != nil {
@@ -139,7 +145,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	}
 }
 
-func prepareSSHServer(ctx context.Context, sshkey string) error {
+func prepareSSHKey(ctx context.Context, sshkey string) error {
 	bin, err := os.Executable()
 	if err != nil {
 		return xerrors.Errorf("cannot find executable path: %w", err)
@@ -175,6 +181,34 @@ func prepareSSHServer(ctx context.Context, sshkey string) error {
 		return xerrors.Errorf("cannot create SSH hostkey file: %w", err)
 	}
 
-	return os.Chown(sshkey, gitpodUID, gitpodGID)
+	err = os.Chown(sshkey, gitpodUID, gitpodGID)
+	if err != nil {
+		return xerrors.Errorf("cannot chown SSH hostkey file: %w", err)
+	}
 
+	return nil
+}
+
+func writeSSHEnv(cfg *Config) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	d := filepath.Join(home, ".ssh")
+	err = os.MkdirAll(d, 0755)
+	if err != nil {
+		return xerrors.Errorf("cannot create $HOME/.ssh: %w", err)
+	}
+
+	fn := filepath.Join(d, "supervisor_env")
+	env := strings.Join(buildChildProcEnv(cfg, nil), "\n")
+	err = os.WriteFile(fn, []byte(env), 0644)
+	if err != nil {
+		return xerrors.Errorf("cannot write %s: %w", fn, err)
+	}
+
+	_ = exec.Command("chown", "-R", fmt.Sprintf("%d:%d", gitpodUID, gitpodGID), d).Run()
+
+	return nil
 }
