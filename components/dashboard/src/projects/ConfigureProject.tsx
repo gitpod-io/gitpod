@@ -76,7 +76,7 @@ export default function () {
     const [prebuildInstance, setPrebuildInstance] = useState<WorkspaceInstance | undefined>();
     const { isDark } = useContext(ThemeContext);
 
-    const [showAuthBanner, setShowAuthBanner] = useState<{ host: string } | undefined>(undefined);
+    const [showAuthBanner, setShowAuthBanner] = useState<{ host: string, scope?: string } | undefined>(undefined);
     const [buttonNewWorkspaceEnabled, setButtonNewWorkspaceEnabled] = useState<boolean>(true);
 
     useEffect(() => {
@@ -103,7 +103,11 @@ export default function () {
             try {
                 await detectProjectConfiguration(project);
             } catch (error) {
-                if (error && error.code === ErrorCodes.NOT_AUTHENTICATED) {
+                if (error && error.message && error.message.includes("NotFound")) {
+                    const host = new URL(project.cloneUrl).hostname;
+                    const scope: string | undefined = host === "github.com" ? "repo" : undefined;
+                    setShowAuthBanner({ host: new URL(project.cloneUrl).hostname, scope });
+                } else if (error && error.code === ErrorCodes.NOT_AUTHENTICATED) {
                     setShowAuthBanner({ host: new URL(project.cloneUrl).hostname });
                 } else {
                     console.error('Getting project configuration failed', error);
@@ -139,12 +143,12 @@ export default function () {
         setGitpodYml(TASKS.Other);
     }
 
-    // @ts-ignore
-    const tryAuthorize = async (host: string, onSuccess: () => void) => {
+    const tryAuthorize = async (params: {host: string, scope?: string, onSuccess: () => void}) => {
         try {
             await openAuthorizeWindow({
-                host,
-                onSuccess,
+                host: params.host,
+                onSuccess: params.onSuccess,
+                scopes: params.scope ? [params.scope] : undefined,
                 onError: (error) => {
                     console.log(error);
                 }
@@ -154,9 +158,9 @@ export default function () {
         }
     };
 
-    const onConfirmShowAuthModal = async (host: string) => {
+    const onConfirmShowAuthModal = async (host: string, scope?: string) => {
         setShowAuthBanner(undefined);
-        await tryAuthorize(host, async () => {
+        await tryAuthorize({host, onSuccess: async () => {
             // update remote session
             await getGitpodService().reconnect();
 
@@ -164,7 +168,7 @@ export default function () {
             if (project) {
                 detectProjectConfiguration(project);
             }
-        });
+        }});
     };
 
     const buildProject = async () => {
@@ -255,9 +259,9 @@ export default function () {
                                     No Access
                                 </div>
                                 <div className="text-center dark:text-gray-400 pb-3">
-                                    Authorize {showAuthBanner.host} <br />to access project configuration.
+                                    Authorize {showAuthBanner.host} <br />{showAuthBanner.scope ? (<>and grant <strong>{showAuthBanner.scope}</strong> permission</>) : ""} to access project configuration.
                                 </div>
-                                <button className={`primary mr-2 py-2`} onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}>Authorize Provider</button>
+                                <button className={`primary mr-2 py-2`} onClick={() => onConfirmShowAuthModal(showAuthBanner.host, showAuthBanner.scope)}>Authorize Provider</button>
                             </div>
                         </div>
                     ) : (<>
