@@ -111,6 +111,10 @@ export default function () {
                     setShowAuthBanner({ host: new URL(project.cloneUrl).hostname });
                 } else {
                     console.error('Getting project configuration failed', error);
+                    setIsDetecting(false);
+                    setIsEditorDisabled(true);
+                    setEditorMessage(<EditorMessage type="warning" heading="Project type could not be detected." message="Fetching project information failed." />);
+                    setGitpodYml(TASKS.Other);
                 }
             }
         })();
@@ -160,7 +164,7 @@ export default function () {
 
     const onConfirmShowAuthModal = async (host: string, scope?: string) => {
         setShowAuthBanner(undefined);
-        await tryAuthorize({host, onSuccess: async () => {
+        await tryAuthorize({host, scope, onSuccess: async () => {
             // update remote session
             await getGitpodService().reconnect();
 
@@ -259,7 +263,7 @@ export default function () {
                                     No Access
                                 </div>
                                 <div className="text-center dark:text-gray-400 pb-3">
-                                    Authorize {showAuthBanner.host} <br />{showAuthBanner.scope ? (<>and grant <strong>{showAuthBanner.scope}</strong> permission</>) : ""} to access project configuration.
+                                    Authorize {showAuthBanner.host} {showAuthBanner.scope ? (<>and grant <strong>{showAuthBanner.scope}</strong> permission</>) : ""}  <br /> to access project configuration.
                                 </div>
                                 <button className={`primary mr-2 py-2`} onClick={() => onConfirmShowAuthModal(showAuthBanner.host, showAuthBanner.scope)}>Authorize Provider</button>
                             </div>
