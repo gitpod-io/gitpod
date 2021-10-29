@@ -1,0 +1,30 @@
+{
+  "spec": {
+    "workspaceImage": "eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
+    "initializer": {
+      "snapshot": {
+        "snapshot": "workspaces/cryptic-id-goes-herg/fd62804b-4cab-11e9-843a-4e645373048e.tar@gitpod-dev-user-christesting"
+      }
+    },
+    "ports": [
+      {
+        "port": 8080,
+        "target": 38080
+      }
+    ],
+    "envvars": [
+      {
+        "name": "foo",
+        "value": "bar"
+      }
+    ],
+    "git": {
+      "username": "usernameGoesHere",
+      "email": "some@user.com"
+    }
+  },
+  "resourceRequests": {
+    "cpu": "5m",
+    "memory": "0Gi"
+  }
+}
