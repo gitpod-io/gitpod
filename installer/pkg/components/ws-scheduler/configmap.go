@@ -7,10 +7,13 @@ package wsscheduler
 import (
 	"encoding/json"
 	"fmt"
-
+	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
+	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +27,7 @@ type config struct {
 		Enabled    bool                                        `json:"enabled"`
 		Driver     scaler.WorkspaceManagerPrescaleDriverConfig `json:"driver"`
 		Controller scaler.ControllerConfig                     `json:"controller"`
-	}
+	} `json:"scaler"`
 	Prometheus struct {
 		Addr string `json:"addr"`
 	} `json:"prometheus"`
@@ -34,19 +37,71 @@ type config struct {
 }
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	// todo(sje): scaler?
+	// todo(sje): check this config
 	scaler := struct {
 		Enabled    bool                                        `json:"enabled"`
 		Driver     scaler.WorkspaceManagerPrescaleDriverConfig `json:"driver"`
 		Controller scaler.ControllerConfig                     `json:"controller"`
-	}{}
+	}{
+		Enabled: true,
+		Controller: scaler.ControllerConfig{
+			Kind: "switchedConstant",
+			Constant: struct {
+				Setpoint int `json:"setpoint"`
+			}{
+				Setpoint: 5,
+			},
+			SwitchedConstant: struct {
+				DefaultSetpoint int                       `json:"default"`
+				Setpoints       []scaler.SwitchedSetpoint `json:"setpoints"`
+			}{
+				DefaultSetpoint: 0,
+				Setpoints: []scaler.SwitchedSetpoint{
+					{
+						Setpoint: 80,
+						Time:     scaler.TimeOfDay(time.Date(0, 1, 1, 6, 0, 0, 0, time.UTC)),
+					},
+					{
+						Setpoint: 0,
+						Time:     scaler.TimeOfDay(time.Date(0, 1, 1, 11, 0, 0, 0, time.UTC)),
+					},
+				},
+			},
+		},
+		Driver: scaler.WorkspaceManagerPrescaleDriverConfig{
+			WsManager: scaler.WorkspaceManagerConfig{
+				Addr: fmt.Sprintf("dns:///%s:%d", wsmanager.Component, wsmanager.RPCPort),
+				TLS: &struct {
+					CA          string `json:"ca"`
+					Certificate string `json:"crt"`
+					PrivateKey  string `json:"key"`
+				}{
+					CA:          "/ws-manager-client-tls-certs/ca.crt",
+					Certificate: "/ws-manager-client-tls-certs/tls.crt",
+					PrivateKey:  "/ws-manager-client-tls-certs/tls.key",
+				},
+			},
+			WorkspaceImage:     fmt.Sprintf("%s:%s", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
+			IDEImage:           fmt.Sprintf("%s%s:%s", ctx.Config.Repository, workspace.IDEImageRepo, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
+			FeatureFlags:       nil,
+			MaxGhostWorkspaces: 80,
+			SchedulerInterval:  util.Duration(time.Second * 5),
+			Renewal: struct {
+				Interval   util.Duration `json:"interval"`
+				Percentage int           `json:"percentage"`
+			}{
+				Interval:   util.Duration(time.Minute * 5),
+				Percentage: 20,
+			},
+		},
+	}
 
 	wsscfg := config{
 		Scheduler: scheduler.Configuration{
 			SchedulerName:     "workspace-scheduler",
 			Namespace:         ctx.Namespace,
 			NodeLabelSelector: map[string]string{},
-			StrategyName:      "DensityAndExperience",
+			StrategyName:      scheduler.StrategyDensityAndExperience,
 			DensityAndExperienceConfig: &scheduler.DensityAndExperienceConfig{
 				WorkspaceFreshPeriodSeconds: 120,
 				NodeFreshWorkspaceLimit:     2,
