@@ -264,16 +264,12 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 		log.WithError(err).Error()
 	}
 
-	args := make([]string, 0)
-	args = append(args, c.RemoteURI)
+	args := []string{"--depth=1", "--no-single-branch", c.RemoteURI}
 
 	for key, value := range c.Config {
 		args = append(args, "--config")
 		args = append(args, strings.TrimSpace(key)+"="+strings.TrimSpace(value))
 	}
-
-	// TODO(cw): re-introduce this when we have a better story for repo forking
-	// args = append(args, "--filter=blob:none")
 
 	args = append(args, ".")
 

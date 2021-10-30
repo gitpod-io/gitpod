@@ -311,6 +311,25 @@ func Run(options ...RunOption) {
 		}()
 	}
 
+	go func() {
+		<-time.After(10 * time.Second)
+
+		start := time.Now()
+		defer func() {
+			log.Debugf("unshallow of local repository took %v", time.Since(start))
+		}()
+
+		cmd := exec.Command("/bin/bash", "-c", `git fetch --depth 20`)
+		cmd.Env = os.Environ()
+		cmd.Dir = os.Getenv("GITPOD_REPO_ROOT")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		if err != nil && !(err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes") {
+			log.WithError(err).Error("git fetch error")
+		}
+	}()
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	select {
