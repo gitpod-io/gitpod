@@ -17,7 +17,6 @@ import (
 // version: v1
 // project:
 //   id: gitpod-dev-staging
-//   environment: dev-staging
 //   gcpSACredFile: /mnt/secrets/gcp-sa/service-account.json
 //   network: gitpod-dev-staging
 //   dnsZone: gitpod-dev-staging-com
@@ -31,13 +30,17 @@ import (
 // - region: europe-west1
 //   prefix: eu
 //   governedBy: dev-stag-meta-eu01
-//   create: true
 //   type: gke
+//   valuesFiles:
+//   - values.dev-staging.yaml
+//   - values.ws-cluster.yaml
 // - region: us-west1
 //   prefix: us
 //   governedBy: dev-stag-meta-us01
-//   create: true
 //   type: gke
+//   valuesFiles:
+//   - values.dev-staging.yaml
+//   - values.ws-cluster.yaml
 type Config struct {
 	Version string                `yaml:"version"`
 	Project common.ProjectContext `yaml:"project"`

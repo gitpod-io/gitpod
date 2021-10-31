@@ -28,4 +28,5 @@ type WorkspaceCluster struct {
 	Prefix      string      `yaml:"prefix"`
 	GovernedBy  string      `yaml:"governedBy"`
 	ClusterType ClusterType `yaml:"type"`
+	ValuesFiles []string    `yaml:"valuesFiles"`
 }
