@@ -30,7 +30,6 @@ func TestFindBindMountCandidates(t *testing.T) {
 				"/workspace",
 				"/etc/hosts",
 				"/etc/hostname",
-				"/etc/resolv.conf",
 			},
 		},
 		{
@@ -42,7 +41,6 @@ func TestFindBindMountCandidates(t *testing.T) {
 				"/sys",
 				"/etc/hosts",
 				"/etc/hostname",
-				"/etc/resolv.conf",
 			},
 		},
 		{
@@ -60,7 +58,6 @@ func TestFindBindMountCandidates(t *testing.T) {
 				"/workspace",
 				"/etc/hosts",
 				"/etc/hostname",
-				"/etc/resolv.conf",
 				"/custom-certs",
 			},
 		},
