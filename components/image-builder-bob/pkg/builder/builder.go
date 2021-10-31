@@ -141,7 +141,8 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 		"--debug",
 		"build",
 		"--progress=plain",
-		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true", //,compression=estargz",
+		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true,compression=estargz",
+		//"--export-cache=type=inline",
 		"--local=context=" + contextdir,
 		//"--export-cache=type=registry,ref=" + target + "-cache",
 		//"--import-cache=type=registry,ref=" + target + "-cache",
@@ -229,9 +230,6 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 			_ = cmd.Process.Kill()
 		}
 
-		stderr.Close()
-		stdout.Close()
-
 		serr, _ := ioutil.ReadFile(stderr.Name())
 		sout, _ := ioutil.ReadFile(stdout.Name())
 
@@ -243,6 +241,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 		stderr.Close()
 		return cmd.Process.Kill()
 	}
+
 	cl, err = connectToBuildkitd(socketPath)
 	if err != nil {
 		return

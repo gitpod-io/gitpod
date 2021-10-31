@@ -8,6 +8,6 @@ set -ex
 export PATH=$PATH:/tests
 
 # shellcheck disable=SC2045
-for i in $(ls /tests/*.test); do
+for i in $(find /tests/ -name "*.test" | sort -R); do
     "$i" "$@";
 done

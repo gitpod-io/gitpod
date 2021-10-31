@@ -170,6 +170,7 @@ func (term *Term) gracefullyShutdownProcess(gracePeriod time.Duration) error {
 			// process is gone now - we're good
 			return nil
 		}
+		log.WithError(err).Warn("unexpected terminal error")
 	case <-time.After(gracePeriod):
 	}
 

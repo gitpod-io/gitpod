@@ -6,7 +6,9 @@ FROM alpine:3.14
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
-  && apk add --no-cache ca-certificates
+  && apk add --no-cache \
+    ca-certificates \
+    coreutils
 
 # convenience scripting tools
 RUN apk add --no-cache bash moreutils

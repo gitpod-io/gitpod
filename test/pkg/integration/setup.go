@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"testing"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -23,6 +24,11 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/flags"
 )
 
+func SkipWithoutUsername(t *testing.T, username string) {
+	if username == "" {
+		t.Skip("Skipping because requires a username")
+	}
+}
 func Setup(ctx context.Context) (string, string, env.Environment) {
 	var (
 		username        string
