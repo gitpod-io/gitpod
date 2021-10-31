@@ -59,6 +59,8 @@ func TestGitHubContexts(t *testing.T) {
 }
 
 func TestGitLabContexts(t *testing.T) {
+	integration.SkipWithoutUsername(t, username)
+
 	tests := []ContextTest{
 		{
 			Name:           "open repository",
@@ -111,8 +113,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					})
 
 					if username == "" && test.ExpectedBranchFunc != nil {
-						t.Logf("skipping '%s' because there is not username configured", test.Name)
-						t.SkipNow()
+						t.Skipf("skipping '%s' because there is not username configured", test.Name)
 					}
 
 					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)

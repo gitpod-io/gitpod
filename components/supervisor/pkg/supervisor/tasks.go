@@ -437,9 +437,8 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 			// the older logs and elapsed time (`importParentLogAndGetDuration` is always safe thanks to its initial `os.Stat`).
 			_ = os.Rename(fileName, oldFileName)
 		}
-
-		var fileWriter *bufio.Writer
 		file, err := os.Create(fileName)
+		var fileWriter *bufio.Writer
 		if err != nil {
 			terminalLog.WithError(err).Error("cannot create a prebuild log file")
 			fileWriter = bufio.NewWriter(io.Discard)

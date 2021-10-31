@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/gitpod-io/gitpod/image-builder/bob/pkg/builder"
+	"github.com/spf13/cobra"
 
 	log "github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/spf13/cobra"
+	"github.com/gitpod-io/gitpod/image-builder/bob/pkg/builder"
 )
 
 // buildCmd represents the build command
@@ -19,6 +19,9 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Runs the image build and is configured using environment variables (see pkg/builder/config.go for details)",
 	Run: func(cmd *cobra.Command, args []string) {
+		log.Init("bob", "", true, false)
+		log := log.WithField("command", "build")
+
 		t0 := time.Now()
 		if os.Geteuid() != 0 {
 			log.Fatal("must run as root")
