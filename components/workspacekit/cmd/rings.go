@@ -343,6 +343,14 @@ var ring1Cmd = &cobra.Command{
 			}
 		}
 
+		// We deliberately do not bind mount `/etc/resolv.conf`, but instead place a copy
+		// so that users in the workspace can modify the file.
+		err = copyResolvConf(ring2Root)
+		if err != nil {
+			log.WithError(err).Error("cannot copy resolv.conf")
+			return
+		}
+
 		env := make([]string, 0, len(os.Environ()))
 		for _, e := range os.Environ() {
 			if strings.HasPrefix(e, "WORKSPACEKIT_") {
@@ -565,7 +573,9 @@ var (
 		"/dev",
 		"/etc/hosts",
 		"/etc/hostname",
-		"/etc/resolv.conf",
+	}
+	rejectMountPaths = map[string]struct{}{
+		"/etc/resolv.conf": {},
 	}
 )
 
@@ -613,6 +623,11 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 			continue
 		}
 
+		// reject known paths
+		if _, ok := rejectMountPaths[path]; ok {
+			continue
+		}
+
 		// test remaining candidates if they're a Kubernetes configMap or secret
 		ln, err := readlink(filepath.Join(path, "..data"))
 		if err != nil {
@@ -625,6 +640,34 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 		mounts = append(mounts, path)
 	}
 	return mounts, scanner.Err()
+}
+
+// copyResolvConf copies /etc/resolv.conf to <ring2root>/etc/resolv.conf
+func copyResolvConf(ring2root string) error {
+	fn := "/etc/resolv.conf"
+	stat, err := os.Stat(fn)
+	if err != nil {
+		return err
+	}
+
+	org, err := os.Open(fn)
+	if err != nil {
+		return err
+	}
+	defer org.Close()
+
+	dst, err := os.OpenFile(filepath.Join(ring2root, fn), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, stat.Mode())
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, org)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
