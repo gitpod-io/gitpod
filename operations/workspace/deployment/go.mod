@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.2.1
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/client-go v0.0.0-00010101000000-000000000000
