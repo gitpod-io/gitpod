@@ -488,8 +488,10 @@ func TestPortsUpdateState(t *testing.T) {
 				t.Fatal(err)
 			}
 			go func() {
-				defer wg.Done()
-				defer sub.Close()
+				defer func() {
+					wg.Done()
+					_ = sub.Close()
+				}()
 
 				for up := range sub.Updates() {
 					updts = append(updts, up)
@@ -562,12 +564,15 @@ type testTunneledPorts struct {
 func (tep *testTunneledPorts) Observe(ctx context.Context) (<-chan []PortTunnelState, <-chan error) {
 	return tep.Changes, tep.Error
 }
+
 func (tep *testTunneledPorts) Tunnel(ctx context.Context, options *TunnelOptions, descs ...*PortTunnelDescription) ([]uint32, error) {
 	return nil, nil
 }
+
 func (tep *testTunneledPorts) CloseTunnel(ctx context.Context, localPorts ...uint32) ([]uint32, error) {
 	return nil, nil
 }
+
 func (tep *testTunneledPorts) EstablishTunnel(ctx context.Context, clientID string, localPort uint32, targetPort uint32) (net.Conn, error) {
 	return nil, nil
 }
@@ -617,7 +622,7 @@ func (tps *testServedPorts) Observe(ctx context.Context) (<-chan []ServedPort, <
 	return tps.Changes, tps.Error
 }
 
-// testing for deadlocks between subscribing and processing events
+// testing for deadlocks between subscribing and processing events.
 func TestPortsConcurrentSubscribe(t *testing.T) {
 	var (
 		subscribes  = 100
@@ -662,7 +667,6 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 
 		var j uint32
 		for {
-
 			select {
 			case <-time.After(50 * time.Millisecond):
 				served.Changes <- []ServedPort{{Port: j}}
@@ -687,7 +691,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 				// update
 				case <-sub.Updates():
 				}
-				sub.Close()
+				_ = sub.Close()
 			}
 			return nil
 		})

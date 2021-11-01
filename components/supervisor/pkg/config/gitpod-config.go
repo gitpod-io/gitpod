@@ -11,9 +11,10 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
 // ConfigInterface provides access to the gitpod config file.
@@ -37,7 +38,7 @@ type ConfigService struct {
 	log *logrus.Entry
 }
 
-// NewConfigService creates a new instance of ConfigService
+// NewConfigService creates a new instance of ConfigService.
 func NewConfigService(configLocation string, locationReady <-chan struct{}, log *logrus.Entry) *ConfigService {
 	return &ConfigService{
 		location:      configLocation,
@@ -47,9 +48,9 @@ func NewConfigService(configLocation string, locationReady <-chan struct{}, log 
 	}
 }
 
-// Observe provides channels triggered whenever the config is changed
+// Observe provides channels triggered whenever the config is changed.
 func (service *ConfigService) Observe(ctx context.Context) <-chan *gitpod.GitpodConfig {
-	var configs = make(chan *gitpod.GitpodConfig)
+	configs := make(chan *gitpod.GitpodConfig)
 	go func() {
 		defer close(configs)
 
@@ -67,7 +68,7 @@ func (service *ConfigService) Observe(ctx context.Context) <-chan *gitpod.Gitpod
 	return configs
 }
 
-// Watch starts the config watching
+// Watch starts the config watching.
 func (service *ConfigService) Watch(ctx context.Context) {
 	service.log.Info("gitpod config watcher: starting...")
 

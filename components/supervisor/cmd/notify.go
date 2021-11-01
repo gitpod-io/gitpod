@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/spf13/cobra"
 )
 
 var notifyCmd = &cobra.Command{

@@ -196,14 +196,14 @@ func writeSSHEnv(cfg *Config) error {
 	}
 
 	d := filepath.Join(home, ".ssh")
-	err = os.MkdirAll(d, 0755)
+	err = os.MkdirAll(d, 0o755)
 	if err != nil {
 		return xerrors.Errorf("cannot create $HOME/.ssh: %w", err)
 	}
 
 	fn := filepath.Join(d, "supervisor_env")
 	env := strings.Join(buildChildProcEnv(cfg, nil), "\n")
-	err = os.WriteFile(fn, []byte(env), 0644)
+	err = os.WriteFile(fn, []byte(env), 0o644)
 	if err != nil {
 		return xerrors.Errorf("cannot write %s: %w", fn, err)
 	}

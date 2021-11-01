@@ -16,12 +16,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
-// TODO(ak) add reverse test
+// TODO(ak) add reverse test.
 func TestLocalPortTunneling(t *testing.T) {
 	updates := make(chan []PortTunnelState, 4)
 	assertUpdate := func(expectation []PortTunnelState) {
@@ -70,10 +71,10 @@ func TestLocalPortTunneling(t *testing.T) {
 		localServer := http.Server{
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				b, _ := ioutil.ReadAll(r.Body)
-				w.Write(append(b, '!'))
+				_, _ = w.Write(append(b, '!'))
 			}),
 		}
-		localServer.Serve(localListener)
+		_ = localServer.Serve(localListener)
 		return nil
 	})
 
@@ -127,11 +128,11 @@ func TestLocalPortTunneling(t *testing.T) {
 		done := make(chan struct{})
 		var once sync.Once
 		go func() {
-			io.Copy(src, dst)
+			_, _ = io.Copy(src, dst)
 			once.Do(func() { close(done) })
 		}()
 		go func() {
-			io.Copy(dst, src)
+			_, _ = io.Copy(dst, src)
 			once.Do(func() { close(done) })
 		}()
 		<-done

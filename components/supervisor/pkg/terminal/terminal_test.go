@@ -215,7 +215,6 @@ func TestAnnotations(t *testing.T) {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
 		})
-
 	}
 }
 

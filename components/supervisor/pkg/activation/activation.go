@@ -17,7 +17,7 @@ import (
 // Callback is called when a listener is written to. Receivers are expected to close socketFD.
 type Callback func(socketFD *os.File) error
 
-// Listen polls on the listener and calls callback when someone writes to it
+// Listen polls on the listener and calls callback when someone writes to it.
 func Listen(ctx context.Context, l net.Listener, activate Callback) error {
 	poller, err := netpoll.New(nil)
 	if err != nil {
@@ -34,9 +34,10 @@ func Listen(ctx context.Context, l net.Listener, activate Callback) error {
 		runc = make(chan bool, 1)
 		once sync.Once
 	)
-	poller.Start(desc, func(ev netpoll.Event) {
+
+	err = poller.Start(desc, func(ev netpoll.Event) {
 		defer once.Do(func() {
-			poller.Stop(desc)
+			_ = poller.Stop(desc)
 
 			close(runc)
 		})
@@ -47,6 +48,9 @@ func Listen(ctx context.Context, l net.Listener, activate Callback) error {
 
 		runc <- true
 	})
+	if err != nil {
+		return err
+	}
 
 	select {
 	case run := <-runc:

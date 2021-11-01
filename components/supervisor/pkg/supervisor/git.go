@@ -22,7 +22,7 @@ type GitTokenProvider struct {
 	gitpodAPI           gitpod.APIInterface
 }
 
-// NewGitTokenProvider creates a new instance of gitTokenProvider
+// NewGitTokenProvider creates a new instance of gitTokenProvider.
 func NewGitTokenProvider(gitpodAPI gitpod.APIInterface, workspaceConfig WorkspaceConfig, notificationService *NotificationService) *GitTokenProvider {
 	return &GitTokenProvider{
 		notificationService: notificationService,
@@ -31,7 +31,7 @@ func NewGitTokenProvider(gitpodAPI gitpod.APIInterface, workspaceConfig Workspac
 	}
 }
 
-// GetToken resolves a token from a git hosting service
+// GetToken resolves a token from a git hosting service.
 func (p *GitTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRequest) (tkn *Token, err error) {
 	if p.gitpodAPI == nil {
 		return nil, nil

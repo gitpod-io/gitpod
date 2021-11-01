@@ -16,21 +16,21 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
 )
 
-// RangeConfig is a port range config
+// RangeConfig is a port range config.
 type RangeConfig struct {
 	*gitpod.PortsItems
 	Start uint32
 	End   uint32
 }
 
-// Configs provides access to port configurations
+// Configs provides access to port configurations.
 type Configs struct {
 	workspaceConfigs     map[uint32]*gitpod.PortConfig
 	instancePortConfigs  map[uint32]*gitpod.PortConfig
 	instanceRangeConfigs []*RangeConfig
 }
 
-// ForEach iterates over all configured ports
+// ForEach iterates over all configured ports.
 func (configs *Configs) ForEach(callback func(port uint32, config *gitpod.PortConfig)) {
 	if configs == nil {
 		return
@@ -48,17 +48,17 @@ func (configs *Configs) ForEach(callback func(port uint32, config *gitpod.PortCo
 	}
 }
 
-// ConfigKind indicates a type of config
+// ConfigKind indicates a type of config.
 type ConfigKind uint8
 
 var (
-	// PortConfigKind is a port based config type
+	// PortConfigKind is a port based config type.
 	PortConfigKind ConfigKind = 0
-	// RangeConfigKind is a range based config type
+	// RangeConfigKind is a range based config type.
 	RangeConfigKind ConfigKind = 1
 )
 
-// Get returns the config for the give port
+// Get returns the config for the give port.
 func (configs *Configs) Get(port uint32) (*gitpod.PortConfig, ConfigKind, bool) {
 	if configs == nil {
 		return nil, PortConfigKind, false
@@ -83,20 +83,20 @@ func (configs *Configs) Get(port uint32) (*gitpod.PortConfig, ConfigKind, bool) 
 	return nil, PortConfigKind, false
 }
 
-// ConfigInterace allows to watch port configurations
+// ConfigInterace allows to watch port configurations.
 type ConfigInterace interface {
 	// Observe provides channels triggered whenever the port configurations are changed.
 	Observe(ctx context.Context) (<-chan *Configs, <-chan error)
 }
 
-// ConfigService allows to watch port configurations
+// ConfigService allows to watch port configurations.
 type ConfigService struct {
 	workspaceID   string
 	configService config.ConfigInterface
 	gitpodAPI     gitpod.APIInterface
 }
 
-// NewConfigService creates a new instance of ConfigService
+// NewConfigService creates a new instance of ConfigService.
 func NewConfigService(workspaceID string, configService config.ConfigInterface, gitpodAPI gitpod.APIInterface) *ConfigService {
 	return &ConfigService{
 		workspaceID:   workspaceID,

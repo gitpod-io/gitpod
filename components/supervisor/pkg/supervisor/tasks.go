@@ -379,7 +379,7 @@ func getHistfileCommand(task *task, commands []*string, contentSource csapi.Work
 	}
 
 	histfile := storeLocation + "/cmd-" + task.Id
-	err := os.WriteFile(histfile, []byte(histfileContent), 0644)
+	err := os.WriteFile(histfile, []byte(histfileContent), 0o644)
 	if err != nil {
 		log.WithField("histfile", histfile).WithError(err).Error("cannot write histfile")
 		return ""

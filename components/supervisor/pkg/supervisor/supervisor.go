@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/procfs"
@@ -50,8 +51,6 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
-
-	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 )
 
 const (
@@ -72,7 +71,7 @@ func RegisterAdditionalService(services ...RegisterableService) {
 	additionalServices = append(additionalServices, services...)
 }
 
-// AddAPIEndpointOpts adds additional grpc server options for the API endpoint
+// AddAPIEndpointOpts adds additional grpc server options for the API endpoint.
 func AddAPIEndpointOpts(opts ...grpc.ServerOption) {
 	apiEndpointOpts = append(apiEndpointOpts, opts...)
 }
@@ -81,10 +80,10 @@ type runOptions struct {
 	Args []string
 }
 
-// RunOption customizes the run behaviour
+// RunOption customizes the run behaviour.
 type RunOption func(*runOptions)
 
-// WithArgs sets the arguments passed to Run
+// WithArgs sets the arguments passed to Run.
 func WithArgs(args []string) RunOption {
 	return func(r *runOptions) {
 		r.Args = args
@@ -97,10 +96,10 @@ const (
 )
 
 const (
-	// KindGitpod marks tokens that provide access to the Gitpod server API
+	// KindGitpod marks tokens that provide access to the Gitpod server API.
 	KindGitpod = "gitpod"
 
-	// KindGit marks any kind of Git access token
+	// KindGit marks any kind of Git access token.
 	KindGit = "git"
 )
 
@@ -128,7 +127,7 @@ func (s IDEKind) String() string {
 	return "unknown"
 }
 
-// Run serves as main entrypoint to the supervisor
+// Run serves as main entrypoint to the supervisor.
 func Run(options ...RunOption) {
 	exitCode := 0
 	defer handleExit(&exitCode)
@@ -438,7 +437,7 @@ func hasMetadataAccess() bool {
 	req.Header.Add("Metadata-Flavor", "Google")
 
 	resp, err := client.Do(req)
-	// We did not see an error. That's a problem becuase that means that users can reach the metadata endpoint.
+	// We did not see an error. That's a problem because that means that users can reach the metadata endpoint.
 	if err == nil {
 		resp.Body.Close()
 		return true
@@ -553,7 +552,7 @@ supervisorLoop:
 			// we've been asked to shut down
 			ideStatus = statusShouldShutdown
 			if cmd != nil && cmd.Process != nil {
-				cmd.Process.Signal(os.Interrupt)
+				_ = cmd.Process.Signal(os.Interrupt)
 			}
 			break supervisorLoop
 		}
@@ -565,7 +564,7 @@ supervisorLoop:
 		return
 	case <-time.After(timeBudgetIDEShutdown):
 		log.WithField("ide", ide.String()).WithField("timeBudgetIDEShutdown", timeBudgetIDEShutdown.String()).Error("IDE did not stop in time - sending SIGKILL")
-		cmd.Process.Signal(syscall.SIGKILL)
+		_ = cmd.Process.Signal(syscall.SIGKILL)
 	}
 }
 
@@ -906,7 +905,7 @@ func tunnelOverWebSocket(tunneled *ports.TunneledPortsService, conn *gitpod.Webs
 		return
 	}
 	go func() {
-		conn.Wait()
+		_ = conn.Wait()
 		sshConn.Close()
 	}()
 	go ssh.DiscardRequests(reqs)
@@ -934,14 +933,14 @@ func tunnelOverSSH(ctx context.Context, tunneled *ports.TunneledPortsService, ne
 	err := proto.Unmarshal(newCh.ExtraData(), tunnelReq)
 	if err != nil {
 		log.WithError(err).Error("tunnel: invalid ssh chan request")
-		newCh.Reject(ssh.Prohibited, err.Error())
+		_ = newCh.Reject(ssh.Prohibited, err.Error())
 		return
 	}
 
 	tunnel, err := tunneled.EstablishTunnel(ctx, tunnelReq.ClientId, tunnelReq.Port, tunnelReq.TargetPort)
 	if err != nil {
 		log.WithError(err).Error("tunnel: failed to establish")
-		newCh.Reject(ssh.Prohibited, err.Error())
+		_ = newCh.Reject(ssh.Prohibited, err.Error())
 		return
 	}
 	log.Debug("tunnel: accepted new connection")
@@ -975,7 +974,7 @@ func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan
 	if success.Failed() {
 		// we signal task failure via kubernetes termination log
 		msg := []byte("headless task failed: " + string(success))
-		err := ioutil.WriteFile("/dev/termination-log", msg, 0644)
+		err := ioutil.WriteFile("/dev/termination-log", msg, 0o644)
 		if err != nil {
 			log.WithError(err).Error("err while writing termination log")
 		}
@@ -1009,7 +1008,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 			return
 		}
 
-		ferr := os.WriteFile("/dev/termination-log", []byte(err.Error()), 0644)
+		ferr := os.WriteFile("/dev/termination-log", []byte(err.Error()), 0o644)
 		if ferr != nil {
 			log.WithError(err).Error("cannot write termination log")
 		}
@@ -1120,7 +1119,6 @@ func processesWithParent(ppid int) (map[int]int, error) {
 
 	children := make(map[int]int)
 	for _, proc := range procs {
-
 		stat, err := proc.Stat()
 		if err != nil {
 			continue
@@ -1185,7 +1183,7 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 			go func(ptyCtx context.Context) {
 				select {
 				case <-ctx.Done():
-					pty.Command.Process.Signal(syscall.SIGTERM)
+					_ = pty.Command.Process.Signal(syscall.SIGTERM)
 				case <-ptyCtx.Done():
 				}
 			}(ptyCtx)

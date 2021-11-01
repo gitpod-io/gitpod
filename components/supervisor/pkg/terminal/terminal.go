@@ -25,21 +25,21 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
-// NewMux creates a new terminal mux
+// NewMux creates a new terminal mux.
 func NewMux() *Mux {
 	return &Mux{
 		terms: make(map[string]*Term),
 	}
 }
 
-// Mux can mux pseudo-terminals
+// Mux can mux pseudo-terminals.
 type Mux struct {
 	aliases []string
 	terms   map[string]*Term
 	mu      sync.RWMutex
 }
 
-// Get returns a terminal for the given alias
+// Get returns a terminal for the given alias.
 func (m *Mux) Get(alias string) (*Term, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -101,7 +101,7 @@ func (m *Mux) Close() error {
 	return err
 }
 
-// CloseTerminal closes a terminal and ends the process that runs in it
+// CloseTerminal closes a terminal and ends the process that runs in it.
 func (m *Mux) CloseTerminal(alias string, gracePeriod time.Duration) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -243,7 +243,7 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 	return res, nil
 }
 
-// TermOptions is a pseudo-terminal configuration
+// TermOptions is a pseudo-terminal configuration.
 type TermOptions struct {
 	// timeout after which a listener is dropped. Use 0 for no timeout.
 	ReadTimeout time.Duration
@@ -261,7 +261,7 @@ type TermOptions struct {
 	LogToStdout bool
 }
 
-// Term is a pseudo-terminal
+// Term is a pseudo-terminal.
 type Term struct {
 	PTY          *os.File
 	Command      *exec.Cmd
@@ -345,7 +345,7 @@ func (term *Term) resolveForegroundCommand() (string, error) {
 	return string(content), nil
 }
 
-// Wait waits for the terminal to exit and returns the resulted process state
+// Wait waits for the terminal to exit and returns the resulted process state.
 func (term *Term) Wait() (*os.ProcessState, error) {
 	<-term.waitDone
 	return term.Command.ProcessState, term.waitErr
@@ -366,9 +366,9 @@ type multiWriter struct {
 }
 
 var (
-	// ErrNotFound means the terminal was not found
+	// ErrNotFound means the terminal was not found.
 	ErrNotFound = errors.New("not found")
-	// ErrReadTimeout happens when a listener takes too long to read
+	// ErrReadTimeout happens when a listener takes too long to read.
 	ErrReadTimeout = errors.New("read timeout")
 )
 
@@ -404,8 +404,7 @@ func (l *multiWriterListener) Done() <-chan struct{} {
 	return l.closeChan
 }
 
-type closedTerminalListener struct {
-}
+type closedTerminalListener struct{}
 
 func (closedTerminalListener) Read(p []byte) (n int, err error) {
 	return 0, io.EOF
@@ -413,7 +412,7 @@ func (closedTerminalListener) Read(p []byte) (n int, err error) {
 
 var closedListener = io.NopCloser(closedTerminalListener{})
 
-// Listen listens in on the multi-writer stream
+// Listen listens in on the multi-writer stream.
 func (mw *multiWriter) Listen() io.ReadCloser {
 	mw.mu.Lock()
 	defer mw.mu.Unlock()

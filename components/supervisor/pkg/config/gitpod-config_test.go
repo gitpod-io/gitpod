@@ -10,10 +10,11 @@ import (
 	"os"
 	"testing"
 
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
 var log = logrus.NewEntry(logrus.StandardLogger())
@@ -116,7 +117,7 @@ vscode:
 					t.Fatal(err)
 				}
 
-				err = os.WriteFile(configService.location, []byte(test.Content), 0600)
+				err = os.WriteFile(configService.location, []byte(test.Content), 0o600)
 				if err != nil {
 					t.Fatal(err)
 				}

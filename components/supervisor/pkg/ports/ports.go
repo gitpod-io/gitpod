@@ -31,7 +31,7 @@ const (
 	proxyPortRangeHi uint32 = 60000
 )
 
-// NewManager creates a new port manager
+// NewManager creates a new port manager.
 func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, config ConfigInterace, tunneled TunneledPortsInterface, slirp SlirpClient, internalPorts ...uint32) *Manager {
 	state := make(map[uint32]*managedPort)
 	internal := make(map[uint32]struct{})
@@ -41,7 +41,7 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 
 	if slirp != nil {
 		for _, p := range internalPorts {
-			slirp.Expose(p)
+			_ = slirp.Expose(p)
 		}
 	}
 
@@ -127,13 +127,13 @@ type managedPort struct {
 	TunneledClients    map[string]uint32
 }
 
-// Subscription is a Subscription to status updates
+// Subscription is a Subscription to status updates.
 type Subscription struct {
 	updates chan []*api.PortsStatus
 	Close   func() error
 }
 
-// Updates returns the updates channel
+// Updates returns the updates channel.
 func (s *Subscription) Updates() <-chan []*api.PortsStatus {
 	return s.updates
 }
@@ -156,7 +156,7 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		pm.mu.Unlock()
 
 		for _, s := range subs {
-			s.Close()
+			_ = s.Close()
 		}
 	}()
 	defer cancel()
@@ -232,7 +232,7 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
-// Status provides the current port status
+// Status provides the current port status.
 func (pm *Manager) Status() []*api.PortsStatus {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
@@ -295,7 +295,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 		case sub.updates <- status:
 		case <-time.After(5 * time.Second):
 			log.Error("ports subscription droped out")
-			sub.Close()
+			_ = sub.Close()
 		}
 	}
 }
@@ -435,7 +435,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 	return state
 }
 
-// clients should guard a call with check whether such port is already exposed or auto exposed
+// clients should guard a call with check whether such port is already exposed or auto exposed.
 func (pm *Manager) autoExpose(ctx context.Context, localPort uint32, globalPort uint32, public bool) *autoExposure {
 	exposing := pm.E.Expose(ctx, localPort, globalPort, public)
 	autoExpose := &autoExposure{
@@ -461,7 +461,7 @@ func (pm *Manager) autoExpose(ctx context.Context, localPort uint32, globalPort 
 	return autoExpose
 }
 
-// RetryAutoExpose retries auto exposing the give port
+// RetryAutoExpose retries auto exposing the give port.
 func (pm *Manager) RetryAutoExpose(ctx context.Context, localPort uint32) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -624,7 +624,7 @@ func (pm *Manager) boundInternally(port uint32) bool {
 	return exists
 }
 
-// Expose exposes a port
+// Expose exposes a port.
 func (pm *Manager) Expose(ctx context.Context, port uint32, targetPort uint32) error {
 	unlock := true
 	pm.mu.RLock()
@@ -704,12 +704,12 @@ func (pm *Manager) CloseTunnel(ctx context.Context, port uint32) error {
 	return err
 }
 
-// EstablishTunnel actually establishes the tunnel
+// EstablishTunnel actually establishes the tunnel.
 func (pm *Manager) EstablishTunnel(ctx context.Context, clientID string, localPort uint32, targetPort uint32) (net.Conn, error) {
 	return pm.T.EstablishTunnel(ctx, clientID, localPort, targetPort)
 }
 
-// AutoTunnel controls enablement of auto tunneling
+// AutoTunnel controls enablement of auto tunneling.
 func (pm *Manager) AutoTunnel(ctx context.Context, enabled bool) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -718,13 +718,13 @@ func (pm *Manager) AutoTunnel(ctx context.Context, enabled bool) {
 }
 
 var (
-	// ErrClosed when the port management is stopped
+	// ErrClosed when the port management is stopped.
 	ErrClosed = errors.New("closed")
-	// ErrTooManySubscriptions when max allowed subscriptions exceed
+	// ErrTooManySubscriptions when max allowed subscriptions exceed.
 	ErrTooManySubscriptions = errors.New("too many subscriptions")
 )
 
-// Subscribe subscribes for status updates
+// Subscribe subscribes for status updates.
 func (pm *Manager) Subscribe() (*Subscription, error) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
