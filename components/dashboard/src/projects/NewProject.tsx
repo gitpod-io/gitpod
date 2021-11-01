@@ -19,6 +19,7 @@ import search from "../icons/search.svg";
 import moment from "moment";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
+import exclamation from "../images/exclamation.svg";
 
 export default function NewProject() {
     const location = useLocation();
@@ -405,6 +406,7 @@ function GitProviders(props: {
     onHostSelected: (host: string, updateUser?: boolean) => void
 }) {
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
+    const [ errorMessage, setErrorMessage ] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         (async () => {
@@ -414,6 +416,8 @@ function GitProviders(props: {
     }, []);
 
     const selectProvider = async (ap: AuthProviderInfo) => {
+        setErrorMessage(undefined);
+
         const token = await getGitpodService().server.getToken({ host: ap.host });
         if (token) {
             props.onHostSelected(ap.host);
@@ -425,8 +429,17 @@ function GitProviders(props: {
             onSuccess: async () => {
                 props.onHostSelected(ap.host, true);
             },
-            onError: (error) => {
-                console.log(error);
+            onError: (payload) => {
+                let errorMessage: string;
+                if (typeof payload === "string") {
+                    errorMessage = payload;
+                } else {
+                    errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                    if (payload.error === "email_taken") {
+                        errorMessage = `Email address already used in another account. Please log in with ${(payload as any).host}.`;
+                    }
+                }
+                setErrorMessage(errorMessage);
             }
         });
     }
@@ -447,6 +460,18 @@ function GitProviders(props: {
                         );
                     })}
                 </div>
+
+                {errorMessage && (
+                    <div className="mt-16 flex space-x-2 py-6 px-6 w-96 justify-between bg-gitpod-kumquat-light rounded-xl">
+                        <div className="pr-3 self-center w-6">
+                            <img src={exclamation} />
+                        </div>
+                        <div className="flex-1 flex flex-col">
+                            <p className="text-gitpod-red text-sm">{errorMessage}</p>
+                        </div>
+                    </div>
+                )}
+
             </div>
         </div>
     )

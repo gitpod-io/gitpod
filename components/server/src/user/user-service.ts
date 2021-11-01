@@ -335,8 +335,10 @@ export class UserService {
         /*
          * /!\ the given email address is used in another user account.
          */
+        const authProviderId = existingUser.identities.find(i => i.primaryEmail === email)?.authProviderId;
+        const host = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === authProviderId)?.authProvider?.info?.host || "unknown";
 
-        throw EmailAddressAlreadyTakenException.create(`Email address is already in use.`);
+        throw EmailAddressAlreadyTakenException.create(`Email address is already in use.`, { host });
     }
 
 }

@@ -343,7 +343,7 @@ export class GenericAuthProvider implements AuthProvider {
                 return this.sendCompletionRedirectWithError(response, err.payload);
             }
             if (EmailAddressAlreadyTakenException.is(err)) {
-                return this.sendCompletionRedirectWithError(response, { error: "email_taken" });
+                return this.sendCompletionRedirectWithError(response, { error: "email_taken", host: err.payload?.host });
             }
 
             let message = 'Authorization failed. Please try again.';
@@ -448,15 +448,12 @@ export class GenericAuthProvider implements AuthProvider {
                 if (!currentGitpodUser) {
 
                     // signup new accounts with email adresses already taken is disallowed
-                    const existingUserWithSameEmail = (await this.userDb.findUsersByEmail(primaryEmail))[0];
-                    if (existingUserWithSameEmail) {
-                        try {
-                            await this.userService.asserNoAccountWithEmail(primaryEmail);
-                        } catch (error) {
-                            log.warn(`Login attempt with matching email address.`, { ...defaultLogPayload, authUser, candidate, clientInfo });
-                            done(error, undefined);
-                            return;
-                        }
+                    try {
+                        await this.userService.asserNoAccountWithEmail(primaryEmail);
+                    } catch (error) {
+                        log.warn(`Login attempt with matching email address.`, { ...defaultLogPayload, authUser, candidate, clientInfo });
+                        done(error, undefined);
+                        return;
                     }
                 }
             }

@@ -93,7 +93,7 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
             try {
                 const payload = JSON.parse(error);
                 if (typeof payload === "object" && payload.error) {
-                    error = { error: payload.error, description: payload.description };
+                    error = { ...payload };
                 }
             } catch (error) {
                 console.log(error);
