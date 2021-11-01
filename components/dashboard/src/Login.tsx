@@ -93,7 +93,7 @@ export function Login() {
                     } else {
                         errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
                         if (payload.error === "email_taken") {
-                            errorMessage = `Email address already exists. Log in using a different provider.`;
+                            errorMessage = `Email address already used in another account. Please log in with ${(payload as any).host}.`;
                         }
                     }
                     setErrorMessage(errorMessage);

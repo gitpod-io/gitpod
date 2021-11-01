@@ -69,12 +69,11 @@ export namespace SelectAccountException {
 }
 
 export interface EmailAddressAlreadyTakenException extends AuthException {
-    payload: string;
 }
 export namespace EmailAddressAlreadyTakenException {
     const type = "EmailAddressAlreadyTakenException";
-    export function create(message: string) {
-        return AuthException.create(type, message, message);
+    export function create(message: string, payload: object | undefined) {
+        return AuthException.create(type, message, payload);
     }
     export function is(error: any): error is EmailAddressAlreadyTakenException {
         return AuthException.is(error) && error.authException === type;
