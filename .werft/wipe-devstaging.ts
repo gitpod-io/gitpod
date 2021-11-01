@@ -4,16 +4,18 @@ import * as fs from 'fs';
 import { deleteExternalIp } from './util/gcloud';
 import * as Tracing from './observability/tracing'
 import { SpanStatusCode } from '@opentelemetry/api';
+import { ExecOptions } from './util/shell';
+import { env } from './util/util';
 
 // Will be set once tracing has been initialized
 let werft: Werft
 
-async function wipePreviewCluster(pathToKubeConfig: string) {
+async function wipePreviewCluster(shellOpts: ExecOptions) {
     const namespace_raw = process.env.NAMESPACE;
     const namespaces: string[] = [];
     if (namespace_raw === "<no value>" || !namespace_raw) {
         werft.log('wipe', "Going to wipe all namespaces");
-        listAllPreviewNamespaces(pathToKubeConfig)
+        listAllPreviewNamespaces(shellOpts)
             .map(ns => namespaces.push(ns));
     } else {
         werft.log('wipe', `Going to wipe namespace ${namespace_raw}`);
@@ -21,7 +23,7 @@ async function wipePreviewCluster(pathToKubeConfig: string) {
     }
 
     for (const namespace of namespaces) {
-        await wipePreviewEnvironment(pathToKubeConfig, "gitpod", namespace, { slice: 'wipe' });
+        await wipePreviewEnvironment("gitpod", namespace, { ...shellOpts, slice: 'wipe' });
     }
 }
 
@@ -31,9 +33,10 @@ async function wipePreviewCluster(pathToKubeConfig: string) {
 // This saves us from writing complex logic of querying meta cluster for registered workspaces
 // Since we use the same namespace to deploy in both dev and k3s cluster, this is safe
 async function k3sCleanup() {
-    if (fs.existsSync("/workspace/k3s-external.yaml")) {
+    const k3sKubeConfig = "/workspace/k3s-external.yaml";
+    if (fs.existsSync(k3sKubeConfig)) {
         werft.log("wipe", "found /workspace/k3s-external.yaml, assuming k3s ws cluster deployment exists, will attempt to wipe it")
-        await wipePreviewCluster("/workspace/k3s-external.yaml")
+        await wipePreviewCluster(env(k3sKubeConfig));
         const namespace_raw = process.env.NAMESPACE;
 
         // Since werft creates static external IP for ws-proxy of k3s using gcloud
@@ -46,7 +49,7 @@ async function k3sCleanup() {
 
 // clean up the dev cluster in gitpod-core-dev
 async function devCleanup() {
-    await wipePreviewCluster("")
+    await wipePreviewCluster(env(""))
 }
 
 // sweeper runs in the dev cluster so we need to delete the k3s cluster first and then delete self contained namespace

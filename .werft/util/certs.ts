@@ -1,4 +1,4 @@
-import { exec } from './shell';
+import { exec, ExecOptions } from './shell';
 import { sleep } from './util';
 
 
@@ -10,20 +10,18 @@ export class IssueCertificateParams {
     domain: string
     ip: string
     additionalSubdomains: string[]
-    pathToKubeConfig: string
     bucketPrefixTail: string
     certNamespace: string
 }
 
 export class InstallCertificateParams {
-    pathToKubeConfig: string
     certName: string
     certSecretName: string
     certNamespace: string
     destinationNamespace: string
 }
 
-export async function issueCertficate(werft, params: IssueCertificateParams) {
+export async function issueCertficate(werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
     var subdomains = [];
     werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
     for (const sd of params.additionalSubdomains) {
@@ -41,7 +39,6 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
 
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
     var cmd = `set -x \
-    && export KUBECONFIG="${params.pathToKubeConfig}" \
     && cd ${params.pathToTerraform} \
     && rm -rf .terraform* \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
@@ -55,13 +52,13 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
 
     werft.log("certificate", "Terraform command for cert creation: " + cmd)
-    exec(cmd, { slice: 'certificate' });
+    exec(cmd, { ...shellOpts, slice: 'certificate' });
 
     werft.log('certificate', `waiting until certificate ${params.certNamespace}/${params.namespace} is ready...`)
     let notReadyYet = true;
     for (let i = 0; i < 90 && notReadyYet; i++) {
         werft.log('certificate', `polling state of ${params.certNamespace}/${params.namespace}...`)
-        const result = exec(`export KUBECONFIG=${params.pathToKubeConfig} && kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
+        const result = exec(`kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { ...shellOpts, silent: true, dontCheckRc: true, async: false });
         if (result != undefined && result.code === 0 && result.stdout === "True") {
             notReadyYet = false;
             break;
@@ -71,10 +68,10 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     }
 }
 
-export async function installCertficate(werft, params: InstallCertificateParams) {
+export async function installCertficate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
     let notReadyYet = true;
     werft.log('certificate', `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
-    const cmd = `export KUBECONFIG=${params.pathToKubeConfig} && kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
+    const cmd = `kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
     | yq d - 'metadata.namespace' \
     | yq d - 'metadata.uid' \
     | yq d - 'metadata.resourceVersion' \
@@ -83,7 +80,7 @@ export async function installCertficate(werft, params: InstallCertificateParams)
     | kubectl apply --namespace=${params.destinationNamespace} -f -`
 
     for (let i = 0; i < 60 && notReadyYet; i++) {
-        const result = exec(cmd, { silent: true, dontCheckRc: true });
+        const result = exec(cmd, { ...shellOpts, silent: true, dontCheckRc: true, async: false });
         if (result != undefined && result.code === 0) {
             notReadyYet = false;
             break;
