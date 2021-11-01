@@ -6,6 +6,7 @@ package common
 
 import (
 	"fmt"
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"io"
 	"math/rand"
 	"strings"
@@ -42,7 +43,9 @@ var AffinityList = []string{
 
 func DefaultLabels(component string) map[string]string {
 	return map[string]string{
-		"component": component,
+		"app":                        AppName,
+		"component":                  component,
+		wsk8s.GitpodNodeServiceLabel: component,
 	}
 }
 

@@ -75,7 +75,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Spec: corev1.PodSpec{
 					PriorityClassName: common.SystemNodeCritical,
 					// todo(sje): do we need affinity?
-					Affinity:                      &corev1.Affinity{},
+					Affinity:                      common.Affinity(common.AffinityLabelWorkspacesRegular, common.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",

@@ -99,7 +99,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			//EventTraceLog:                "", // todo(sje): make conditional based on config
 			ReconnectionInterval:         util.Duration(30 * time.Second),
-			RegistryFacadeHost:           fmt.Sprintf("reg.%s:%v", common.RegistryFacadeComponent, common.RegistryFacadeServicePort),
+			RegistryFacadeHost:           fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
 			EnforceWorkspaceNodeAffinity: true,
 		},
 		Content: struct {
