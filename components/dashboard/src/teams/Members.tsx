@@ -31,6 +31,7 @@ export default function() {
     const [ showInviteModal, setShowInviteModal ] = useState<boolean>(false);
     const [ searchText, setSearchText ] = useState<string>('');
     const [ roleFilter, setRoleFilter ] = useState<TeamMemberRole | undefined>();
+    const [ leaveTeamEnabled, setLeaveTeamEnabled ] = useState<boolean>(false);
 
     useEffect(() => {
         if (!team) {
@@ -45,6 +46,10 @@ export default function() {
             setGenericInvite(invite);
         })();
     }, [ team ]);
+
+    useEffect(() => {
+        setLeaveTeamEnabled(members.length > 1);
+    }, [ members ]);
 
     const ownMemberInfo = members.find(m => m.userId === user?.id);
 
@@ -181,6 +186,7 @@ export default function() {
                                 ? [{
                                     title: 'Leave Team',
                                     customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
+                                    active: leaveTeamEnabled,
                                     onClick: () => removeTeamMember(m.userId)
                                 }]
                                 : (ownMemberInfo?.role === 'owner'
