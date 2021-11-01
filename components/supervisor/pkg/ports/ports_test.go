@@ -225,14 +225,14 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, GlobalPort: 60000},
-				{LocalPort: 3000, GlobalPort: 59999},
+				{LocalPort: 8080, GlobalPort: 59999},
+				{LocalPort: 3000, GlobalPort: 60000},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
 				{
-					{LocalPort: 8080, GlobalPort: 60000, Served: true},
-					{LocalPort: 3000, GlobalPort: 59999, Served: true},
+					{LocalPort: 8080, GlobalPort: 59999, Served: true},
+					{LocalPort: 3000, GlobalPort: 60000, Served: true},
 				},
 			},
 		},

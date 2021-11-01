@@ -14,6 +14,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"reflect"
+	"sort"
 	"sync"
 	"time"
 
@@ -253,17 +254,22 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 	}
 
 	if served != nil {
-		var servedKeys []uint32 // to preserve insertion order
 		servedMap := make(map[uint32]ServedPort)
 		for _, port := range served {
 			current, exists := servedMap[port.Port]
-			if !exists {
-				servedKeys = append(servedKeys, port.Port)
-			}
 			if !exists || (!port.BoundToLocalhost && current.BoundToLocalhost) {
 				servedMap[port.Port] = port
 			}
 		}
+
+		var servedKeys []uint32
+		for k := range servedMap {
+			servedKeys = append(servedKeys, k)
+		}
+		sort.Slice(servedKeys, func(i, j int) bool {
+			return servedKeys[i] < servedKeys[j]
+		})
+
 		var newServed []ServedPort
 		for _, key := range servedKeys {
 			newServed = append(newServed, servedMap[key])
