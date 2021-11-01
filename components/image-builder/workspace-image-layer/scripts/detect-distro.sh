@@ -28,6 +28,14 @@ case "$DISTRO" in
         DISTRO="debian"
         ;;
 
+    "fedora")
+        DISTRO="fedora"
+        ;;
+
+    "rhel" | "centos")
+        DISTRO="rhel"
+        ;;
+
     # NOTICE(Kreyren): Amazonlinux has non-standard /etc/os-release
     "\"amzn\"")
         # Kreyren: Made for https://github.com/gitpod-io/gitpod/issues/1490

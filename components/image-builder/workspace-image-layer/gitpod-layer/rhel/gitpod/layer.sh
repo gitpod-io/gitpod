@@ -10,7 +10,7 @@
 # Required for docker to terminate the build on failure
 set -e
 
-myName="amazonlinux Layer"
+myName="EL Layer"
 
 efixme() {
 	if [ "$IGNORE_FIXME" != 1 ]; then
@@ -42,12 +42,12 @@ die() {
 
 # Expects to be run as root
 if [ "$(id -u)" != 0 ]; then
-	die 3 "Amazonlinux wrapper is not expected to be invoked on non-root"
+	die 3 "EL wrapper is not expected to be invoked on non-root"
 elif [ "$(id -u)" = 0 ]; then
 	# FIXME(Kreyren): Sanitization needed
 	true
 else
-	die 255 "Checking for root acces in amazonlinux layer"
+	die 255 "Checking for root acces in EL layer"
 fi
 
 # Disable root login
