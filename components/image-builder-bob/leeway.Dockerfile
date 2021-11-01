@@ -2,7 +2,8 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM moby/buildkit:nightly
+# FROM moby/buildkit:nightly
+FROM docker:20.10.8
 
 USER root
 RUN apk --no-cache add sudo bash \

@@ -5,9 +5,7 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,12 +13,7 @@ import (
 	log "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/image-builder/bob/pkg/builder"
 
-	"github.com/containerd/console"
-	"github.com/moby/buildkit/client"
-	"github.com/moby/buildkit/client/llb"
-	"github.com/moby/buildkit/util/progress/progressui"
 	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
 )
 
 // daemonCmd represents the build command
@@ -34,7 +27,7 @@ var daemonCmd = &cobra.Command{
 		}
 
 		skt := args[0]
-		cl, teardown, err := builder.StartBuildkit(skt)
+		teardown, err := builder.StartBuildDaemon(skt)
 		if err != nil {
 			log.WithError(err).Fatal("cannot start daemon")
 		}
@@ -47,13 +40,6 @@ var daemonCmd = &cobra.Command{
 			if err != nil {
 				log.WithError(err).Error("cannot unmarshal BOB_CACHE_IMAGES")
 			}
-
-			if len(images) > 0 {
-				err = prewarmCache(cl, images)
-				if err != nil {
-					log.WithError(err).Error("cannot prewarm cache")
-				}
-			}
 		}
 
 		// run until we're told to stop
@@ -63,40 +49,6 @@ var daemonCmd = &cobra.Command{
 		<-sigChan
 		log.Info("Received SIGINT - shutting down")
 	},
-}
-
-func prewarmCache(cl *client.Client, images []string) error {
-	for _, img := range images {
-		bld := llb.Image(img).Run(llb.Shlex("echo"))
-		for idx, img := range images {
-			bld = bld.AddMount(fmt.Sprintf("/mnt/%03d", idx), llb.Image(img)).Run(llb.Shlex("echo"))
-		}
-		pulllb, err := bld.Marshal(context.Background())
-		if err != nil {
-			log.WithError(err).Fatal("cannot produce image pull LLB")
-		}
-
-		log.Info("pulling images")
-		var (
-			ch      = make(chan *client.SolveStatus)
-			eg, ctx = errgroup.WithContext(context.Background())
-		)
-		eg.Go(func() error {
-			_, err := cl.Solve(ctx, pulllb, client.SolveOpt{}, ch)
-			return err
-		})
-		eg.Go(func() error {
-			var c console.Console
-			// not using shared context to not disrupt display but let is finish reporting errors
-			return progressui.DisplaySolveStatus(context.TODO(), "", c, os.Stderr, ch)
-		})
-		err = eg.Wait()
-		if err != nil {
-			return err
-		}
-	}
-	log.Info("done pulling images")
-	return nil
 }
 
 func init() {

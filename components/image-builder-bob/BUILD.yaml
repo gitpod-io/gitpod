@@ -13,6 +13,7 @@ packages:
   - components/common-go:lib
   config:
     packaging: app
+    buildFlags: ["-trimpath", "-ldflags='-buildid= -w -s'", "-tags=docker"]
 - name: docker
   type: docker
   srcs:
