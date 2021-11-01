@@ -229,7 +229,7 @@ fi
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:             "working-area",
-									MountPath:        "/mnt/workingarea",
+									MountPath:        "/mnt/wsdaemon-workingarea",
 									MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationBidirectional; return &r }(),
 								},
 								{

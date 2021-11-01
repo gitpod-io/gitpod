@@ -7,6 +7,7 @@ package common
 // This file exists to break cyclic-dependency errors
 
 const (
+	AppName                   = "gitpod"
 	BlobServeServicePort      = 4000
 	CertManagerCAIssuer       = "ca-issuer"
 	DockerRegistryName        = "registry"

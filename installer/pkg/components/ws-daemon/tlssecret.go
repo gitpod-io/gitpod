@@ -33,6 +33,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 					fmt.Sprintf("gitpod.%s", ctx.Namespace),
 					fmt.Sprintf("%s.%s.svc", Component, ctx.Namespace),
 					Component,
+					"wsdaemon", // Seems this is hardcoded in WSManager
 				},
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  common.CertManagerCAIssuer,
