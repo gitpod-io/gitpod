@@ -37,8 +37,6 @@ type ServicePort struct {
 
 func GenerateService(component string, ports map[string]ServicePort, mod ...func(spec *corev1.ServiceSpec)) RenderFunc {
 	return func(cfg *RenderContext) ([]runtime.Object, error) {
-		labels := DefaultLabels(component)
-
 		var servicePorts []corev1.ServicePort
 		for name, port := range ports {
 			servicePorts = append(servicePorts, corev1.ServicePort{
@@ -51,7 +49,7 @@ func GenerateService(component string, ports map[string]ServicePort, mod ...func
 
 		spec := &corev1.ServiceSpec{
 			Ports:    servicePorts,
-			Selector: labels,
+			Selector: DefaultLabels(component),
 			Type:     corev1.ServiceTypeClusterIP,
 		}
 
@@ -65,12 +63,16 @@ func GenerateService(component string, ports map[string]ServicePort, mod ...func
 			annotations = componentConfig.ServiceAnnotations
 		}
 
+		// kind=service is required for services. It allows Gitpod to find them
+		serviceLabels := DefaultLabels(component)
+		serviceLabels["kind"] = "service"
+
 		return []runtime.Object{&corev1.Service{
 			TypeMeta: TypeMetaService,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        component,
 				Namespace:   cfg.Namespace,
-				Labels:      labels,
+				Labels:      serviceLabels,
 				Annotations: annotations,
 			},
 			Spec: *spec,
