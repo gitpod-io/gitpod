@@ -31,6 +31,7 @@ export default function() {
     const [ showInviteModal, setShowInviteModal ] = useState<boolean>(false);
     const [ searchText, setSearchText ] = useState<string>('');
     const [ roleFilter, setRoleFilter ] = useState<TeamMemberRole | undefined>();
+    const [ leaveTeamEnabled, setLeaveTeamEnabled ] = useState<boolean>(false);
 
     useEffect(() => {
         if (!team) {
@@ -45,6 +46,12 @@ export default function() {
             setGenericInvite(invite);
         })();
     }, [ team ]);
+
+    useEffect(() => {
+        const owners = members.filter(m => m.role === "owner");
+        const isOwner = owners.some(o => o.userId === user?.id);
+        setLeaveTeamEnabled(!isOwner || owners.length > 1);
+    }, [ members ]);
 
     const ownMemberInfo = members.find(m => m.userId === user?.id);
 
@@ -179,9 +186,9 @@ export default function() {
                             <span className="flex-grow" />
                             <ItemFieldContextMenu menuEntries={m.userId === user?.id
                                 ? [{
-                                    title: 'Leave Team',
-                                    customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
-                                    onClick: () => removeTeamMember(m.userId)
+                                    title: leaveTeamEnabled ? 'Leave Team' : 'Remaining owner',
+                                    customFontStyle: leaveTeamEnabled ? 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300' : 'text-gray-400 dark:text-gray-200',
+                                    onClick: () => leaveTeamEnabled && removeTeamMember(m.userId)
                                 }]
                                 : (ownMemberInfo?.role === 'owner'
                                     ? [{
