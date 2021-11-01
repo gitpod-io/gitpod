@@ -10,10 +10,10 @@ import (
 	"time"
 )
 
-// Clock abstracts time for the bucket limiter
+// Clock abstracts time for the bucket limiter.
 type Clock func() time.Time
 
-// NewBucket creates a new bucket limiter with a realtime clock
+// NewBucket creates a new bucket limiter with a realtime clock.
 func NewBucket(capacity, refillRatePerSec int64) *Bucket {
 	return NewBucketClock(capacity, refillRatePerSec, time.Now)
 }
@@ -27,7 +27,7 @@ func NewBucketClock(capacity, refillRatePerSec int64, clock Clock) *Bucket {
 	}
 }
 
-// Bucket implements a token bucket limiter
+// Bucket implements a token bucket limiter.
 type Bucket struct {
 	clock Clock
 
@@ -105,7 +105,7 @@ func (w *writer) Write(buf []byte) (n int, err error) {
 	return
 }
 
-// Writer produces a new rate limited dropping writer
+// Writer produces a new rate limited dropping writer.
 func Writer(dst io.Writer, b *Bucket) io.Writer {
 	return &writer{w: dst, bucket: b}
 }

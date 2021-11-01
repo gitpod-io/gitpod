@@ -32,7 +32,7 @@ const supervisorConfigFile = "supervisor-config.json"
 //   3. DesktopIDE: Gitpod supports to connect external IDEs (like desktop IDEs).
 //   4. Workspace: which depends on the individual workspace, its content and configuration.
 
-// Config configures supervisor
+// Config configures supervisor.
 type Config struct {
 	StaticConfig
 	IDE        IDEConfig
@@ -40,7 +40,7 @@ type Config struct {
 	WorkspaceConfig
 }
 
-// Validate validates the configuration
+// Validate validates the configuration.
 func (c Config) Validate() error {
 	if err := c.StaticConfig.Validate(); err != nil {
 		return xerrors.Errorf("static supervisor config is invalid: %w", err)
@@ -61,7 +61,7 @@ func (c Config) Validate() error {
 }
 
 // LogRateLimit returns the log rate limit for the IDE process in kib/sec.
-// If log rate limiting is disbaled, this function returns 0.
+// If log rate limiting is disabled, this function returns 0.
 func (c Config) IDELogRateLimit(ideConfig *IDEConfig) int {
 	if c.WorkspaceLogRateLimit < ideConfig.LogRateLimit {
 		return c.WorkspaceLogRateLimit
@@ -69,7 +69,7 @@ func (c Config) IDELogRateLimit(ideConfig *IDEConfig) int {
 	return ideConfig.LogRateLimit
 }
 
-// StaticConfig is the supervisor-wide configuration
+// StaticConfig is the supervisor-wide configuration.
 type StaticConfig struct {
 	// IDEConfigLocation is a path in the filesystem where to find the IDE configuration
 	IDEConfigLocation string `json:"ideConfigLocation"`
@@ -87,7 +87,7 @@ type StaticConfig struct {
 	SSHPort int `json:"sshPort"`
 }
 
-// Validate validates this configuration
+// Validate validates this configuration.
 func (c StaticConfig) Validate() error {
 	if c.IDEConfigLocation == "" {
 		return xerrors.Errorf("ideConfigLocation is required")
@@ -105,18 +105,18 @@ func (c StaticConfig) Validate() error {
 	return nil
 }
 
-// ReadinessProbeType determines the IDE readiness probe type
+// ReadinessProbeType determines the IDE readiness probe type.
 type ReadinessProbeType string
 
 const (
-	// ReadinessProcessProbe returns ready once the IDE process has been started
+	// ReadinessProcessProbe returns ready once the IDE process has been started.
 	ReadinessProcessProbe ReadinessProbeType = ""
 
-	// ReadinessHTTPProbe returns ready once a single HTTP request against the IDE was successful
+	// ReadinessHTTPProbe returns ready once a single HTTP request against the IDE was successful.
 	ReadinessHTTPProbe ReadinessProbeType = "http"
 )
 
-// IDEConfig is the IDE specific configuration
+// IDEConfig is the IDE specific configuration.
 type IDEConfig struct {
 	// Entrypoint is the command that gets executed by supervisor to start
 	// the IDE process. If this command exits, supervisor will start it again.
@@ -129,7 +129,7 @@ type IDEConfig struct {
 
 	// LogRateLimit can be used to limit the log output of the IDE process.
 	// Any output that exceeds this limit is silently dropped.
-	// Expressed in kb/sec. Can be overriden by the workspace config (smallest value wins).
+	// Expressed in kb/sec. Can be overridden by the workspace config (smallest value wins).
 	LogRateLimit int `json:"logRateLimit"`
 
 	// ReadinessProbe configures the probe used to serve the IDE status
@@ -155,7 +155,7 @@ type IDEConfig struct {
 	} `json:"readinessProbe"`
 }
 
-// Validate validates this configuration
+// Validate validates this configuration.
 func (c IDEConfig) Validate() error {
 	if c.Entrypoint == "" {
 		return xerrors.Errorf("entrypoint is required")
@@ -202,7 +202,7 @@ type WorkspaceConfig struct {
 
 	// LogRateLimit limits the log output of the IDE process.
 	// Any output that exceeds this limit is silently dropped.
-	// Expressed in kb/sec. Can be overriden by the IDE config (smallest value wins).
+	// Expressed in kb/sec. Can be overridden by the IDE config (smallest value wins).
 	WorkspaceLogRateLimit int `env:"THEIA_RATELIMIT_LOG"`
 
 	// GitUsername makes supervisor configure the global user.name Git setting.
@@ -228,7 +228,7 @@ type WorkspaceConfig struct {
 	// GitpodHeadless controls whether the workspace is running headless
 	GitpodHeadless string `env:"GITPOD_HEADLESS"`
 
-	// DebugEnabled controls whether the supervisor debugging facilities (pprof, grpc tracing) shoudl be enabled
+	// DebugEnabled controls whether the supervisor debugging facilities (pprof, grpc tracing) should be enabled
 	DebugEnable bool `env:"SUPERVISOR_DEBUG_ENABLE"`
 
 	// WorkspaceContext is a context for this workspace
@@ -238,13 +238,13 @@ type WorkspaceConfig struct {
 	WorkspaceClusterHost string `env:"GITPOD_WORKSPACE_CLUSTER_HOST"`
 }
 
-// WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service
+// WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.
 type WorkspaceGitpodToken struct {
 	api.SetTokenRequest
 	TokenOTS string `json:"tokenOTS"`
 }
 
-// TaskConfig defines gitpod task shape
+// TaskConfig defines gitpod task shape.
 type TaskConfig struct {
 	Name     *string                 `json:"name,omitempty"`
 	Before   *string                 `json:"before,omitempty"`
@@ -256,7 +256,7 @@ type TaskConfig struct {
 	OpenMode *string                 `json:"openMode,omitempty"`
 }
 
-// Validate validates this configuration
+// Validate validates this configuration.
 func (c WorkspaceConfig) Validate() error {
 	if !(0 < c.IDEPort && c.IDEPort <= math.MaxUint16) {
 		return xerrors.Errorf("GITPOD_THEIA_PORT must be between 0 and %d", math.MaxUint16)
@@ -322,7 +322,7 @@ func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, er
 	return tks, nil
 }
 
-// GitpodAPIEndpoint produces the data required to connect to the Gitpod API
+// GitpodAPIEndpoint produces the data required to connect to the Gitpod API.
 func (c WorkspaceConfig) GitpodAPIEndpoint() (endpoint, host string, err error) {
 	gphost, err := url.Parse(c.GitpodHost)
 	if err != nil {
@@ -338,12 +338,12 @@ func (c WorkspaceConfig) GitpodAPIEndpoint() (endpoint, host string, err error) 
 	return
 }
 
-// getGitpodTasks returns true if the workspace is headless
+// getGitpodTasks returns true if the workspace is headless.
 func (c WorkspaceConfig) isHeadless() bool {
 	return c.GitpodHeadless == "true"
 }
 
-// getGitpodTasks parses gitpod tasks
+// getGitpodTasks parses gitpod tasks.
 func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
 	if c.GitpodTasks == "" {
 		return
@@ -355,7 +355,7 @@ func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
 	return
 }
 
-// getCommit returns a commit from which this workspace was created
+// getCommit returns a commit from which this workspace was created.
 func (c WorkspaceConfig) getCommit() (commit *gitpod.Commit, err error) {
 	if c.WorkspaceContext == "" {
 		return
@@ -367,7 +367,7 @@ func (c WorkspaceConfig) getCommit() (commit *gitpod.Commit, err error) {
 	return
 }
 
-// GetConfig loads the supervisor configuration
+// GetConfig loads the supervisor configuration.
 func GetConfig() (*Config, error) {
 	static, err := loadStaticConfigFromFile()
 	if err != nil {

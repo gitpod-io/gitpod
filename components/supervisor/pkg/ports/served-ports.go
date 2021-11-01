@@ -17,7 +17,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
-// ServedPort describes a port served by a local service
+// ServedPort describes a port served by a local service.
 type ServedPort struct {
 	Address          string
 	Port             uint32
@@ -31,7 +31,7 @@ type ServedPortsObserver interface {
 	// The list of served ports is always the complete picture, i.e. if a single port changes,
 	// the whole list is returned.
 	// When the observer stops operating (because the context as canceled or an irrecoverable
-	// error occured), the observer will close both channels.
+	// error occurred), the observer will close both channels.
 	Observe(ctx context.Context) (<-chan []ServedPort, <-chan error)
 }
 
@@ -42,7 +42,7 @@ const (
 	fnNetTCP6 = "/proc/net/tcp6"
 )
 
-// PollingServedPortsObserver regularly polls "/proc" to observe port changes
+// PollingServedPortsObserver regularly polls "/proc" to observe port changes.
 type PollingServedPortsObserver struct {
 	RefreshInterval time.Duration
 

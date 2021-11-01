@@ -21,8 +21,10 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 )
 
-var skipCommand = "echo \"skip\""
-var failCommand = "exit 1"
+var (
+	skipCommand = "echo \"skip\""
+	failCommand = "exit 1"
+)
 
 var exampleEnvVarInputs = &map[string]interface{}{
 	"JSON_ENV_VAR":     map[string]interface{}{"property": "some string"},
@@ -33,13 +35,15 @@ var exampleEnvVarInputs = &map[string]interface{}{
 	"NULL_ENV_VAR":     nil,
 	"NUMBER_ENV_VAR":   10,
 }
-var testJSONObjectCommand = `test "$JSON_ENV_VAR" == '{"property":"some string"}'`
-var testEscapedJSONObject = `test "$JSON_ESCAPED_VAR" == '{"property":"some escaped string"}'`
-var testJSONArrayCommand = `test "$JSON_ARRAY_VAR" == "[\"Hello\",\"World\"]"`
-var testStringEnvCommand = `test "$STRING_ENV_VAR" == "stringEnvironmentVariable"`
-var testBooleanEnvCommand = `test "$BOOLEAN_ENV_VAR" == false`
-var testNullEnvCommand = `test "$NULL_ENV_VAR" == null`
-var testNumberEnvCommand = `test "$NUMBER_ENV_VAR" == 10`
+var (
+	testJSONObjectCommand = `test "$JSON_ENV_VAR" == '{"property":"some string"}'`
+	testEscapedJSONObject = `test "$JSON_ESCAPED_VAR" == '{"property":"some escaped string"}'`
+	testJSONArrayCommand  = `test "$JSON_ARRAY_VAR" == "[\"Hello\",\"World\"]"`
+	testStringEnvCommand  = `test "$STRING_ENV_VAR" == "stringEnvironmentVariable"`
+	testBooleanEnvCommand = `test "$BOOLEAN_ENV_VAR" == false`
+	testNullEnvCommand    = `test "$NULL_ENV_VAR" == null`
+	testNumberEnvCommand  = `test "$NUMBER_ENV_VAR" == 10`
+)
 
 func TestTaskManager(t *testing.T) {
 	log.Log.Logger.SetLevel(logrus.FatalLevel)
@@ -172,7 +176,7 @@ func TestTaskManager(t *testing.T) {
 			},
 		},
 		{
-			Desc:        "Null environment varibale is treated as null",
+			Desc:        "Null environment variable is treated as null",
 			Headless:    true,
 			Source:      csapi.WorkspaceInitFromOther,
 			GitpodTasks: &[]TaskConfig{{Init: &testNullEnvCommand, Env: exampleEnvVarInputs}},
@@ -234,7 +238,6 @@ func TestTaskManager(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 type testHeadlessTaskProgressReporter struct {

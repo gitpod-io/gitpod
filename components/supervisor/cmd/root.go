@@ -14,16 +14,16 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "supervisor",
 	Short: "Workspace container init process",
 }
 
 var (
-	// ServiceName is the name we use for tracing/logging
+	// ServiceName is the name we use for tracing/logging.
 	ServiceName = "supervisor"
-	// Version of this service - set during build
+	// Version of this service - set during build.
 	Version = ""
 )
 
@@ -51,5 +51,5 @@ func (fatalTerminationLogHook) Fire(e *logrus.Entry) error {
 		msg += ": " + err.(error).Error()
 	}
 
-	return os.WriteFile("/dev/termination-log", []byte(msg), 0644)
+	return os.WriteFile("/dev/termination-log", []byte(msg), 0o644)
 }

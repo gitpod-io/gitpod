@@ -41,7 +41,11 @@ var callServerCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("GetLoggedInUser")
 		}
-		json.NewEncoder(os.Stdout).Encode(usr)
+
+		err = json.NewEncoder(os.Stdout).Encode(usr)
+		if err != nil {
+			log.WithError(err).Error("encoding user")
+		}
 
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetEscapeHTML(false)
@@ -53,7 +57,10 @@ var callServerCmd = &cobra.Command{
 			log.WithError(err).Fatal("InstanceUpdates")
 		}
 		for u := range updates {
-			enc.Encode(u)
+			err := enc.Encode(u)
+			if err != nil {
+				log.WithError(err).Error("encoding update")
+			}
 		}
 	},
 }

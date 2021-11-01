@@ -46,7 +46,7 @@ var terminalAttachCmd = &cobra.Command{
 				log.Fatal("no terminal available")
 			}
 			if len(resp.Terminals) > 1 {
-				fmt.Fprintln(os.Stderr, "More than one terminal, please choose explicitely:")
+				fmt.Fprintln(os.Stderr, "More than one terminal, please choose explicitly:")
 				for _, r := range resp.Terminals {
 					fmt.Fprintf(os.Stderr, "\t%s\n", r.Alias)
 				}

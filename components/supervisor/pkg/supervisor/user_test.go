@@ -183,6 +183,7 @@ type opsResult struct {
 	User  *user.User
 	Err   error
 }
+
 type ops struct {
 	RLookup        opsResult
 	RLookupId      opsResult
@@ -193,12 +194,15 @@ type ops struct {
 func (o ops) LookupGroup(name string) (grp *user.Group, err error) {
 	return o.RLookupGroup.Group, o.RLookupGroup.Err
 }
+
 func (o ops) LookupGroupId(id string) (grp *user.Group, err error) {
 	return o.RLookupGroupId.Group, o.RLookupGroupId.Err
 }
+
 func (o ops) Lookup(name string) (grp *user.User, err error) {
 	return o.RLookup.User, o.RLookup.Err
 }
+
 func (o ops) LookupId(id string) (grp *user.User, err error) {
 	return o.RLookupId.User, o.RLookupId.Err
 }

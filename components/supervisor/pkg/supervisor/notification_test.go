@@ -11,8 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"google.golang.org/grpc"
+
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 type TestNotificationService_SubscribeServer struct {
@@ -54,7 +55,7 @@ func Test(t *testing.T) {
 		defer subscriber.cancel()
 		go func() {
 			notification := <-subscriber.resps
-			notificationService.Respond(subscriber.context, &api.RespondRequest{
+			_, _ = notificationService.Respond(subscriber.context, &api.RespondRequest{
 				RequestId: notification.RequestId,
 				Response: &api.NotifyResponse{
 					Action: notification.Request.Actions[0],
@@ -62,7 +63,10 @@ func Test(t *testing.T) {
 			})
 		}()
 		go func() {
-			notificationService.Subscribe(&api.SubscribeRequest{}, subscriber)
+			err := notificationService.Subscribe(&api.SubscribeRequest{}, subscriber)
+			if err != nil {
+				t.Errorf("error receiving user action %s", err)
+			}
 		}()
 		notifyResponse, err := notificationService.Notify(subscriber.context, &api.NotifyRequest{
 			Level:   api.NotifyRequest_INFO,
@@ -176,7 +180,7 @@ func Test(t *testing.T) {
 			t.Errorf("notification stream closed")
 		}
 
-		// invalid reponse
+		// invalid response
 		_, err := notificationService.Respond(context.Background(), &api.RespondRequest{
 			RequestId: subscriptionRequest.RequestId,
 			Response: &api.NotifyResponse{
@@ -187,7 +191,7 @@ func Test(t *testing.T) {
 			t.Errorf("expected error on invalid response")
 		}
 
-		// valid reponse
+		// valid response
 		_, err = notificationService.Respond(context.Background(), &api.RespondRequest{
 			RequestId: subscriptionRequest.RequestId,
 			Response: &api.NotifyResponse{
@@ -198,7 +202,7 @@ func Test(t *testing.T) {
 			t.Errorf("error on valid response: %s", err)
 		}
 
-		// stale reponse
+		// stale response
 		_, err = notificationService.Respond(context.Background(), &api.RespondRequest{
 			RequestId: subscriptionRequest.RequestId,
 			Response: &api.NotifyResponse{

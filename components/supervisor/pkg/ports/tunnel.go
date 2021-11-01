@@ -13,8 +13,9 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 type PortTunnelDescription struct {
@@ -43,7 +44,7 @@ type TunneledPortsInterface interface {
 	// The list of tunneled ports is always the complete picture, i.e. if a single port changes,
 	// the whole list is returned.
 	// When the observer stops operating (because the context as canceled or an irrecoverable
-	// error occured), the observer will close both channels.
+	// error occurred), the observer will close both channels.
 	Observe(ctx context.Context) (<-chan []PortTunnelState, <-chan error)
 
 	// Tunnel notifies clients to install listeners on remote machines.
@@ -64,7 +65,7 @@ type TunneledPortsService struct {
 	tunnels map[uint32]*PortTunnel
 }
 
-// NewTunneledPortsService creates a new instance
+// NewTunneledPortsService creates a new instance.
 func NewTunneledPortsService(debugEnable bool) *TunneledPortsService {
 	var mu sync.RWMutex
 	return &TunneledPortsService{
@@ -125,7 +126,7 @@ func (desc *PortTunnelDescription) validate() (err error) {
 	if desc.LocalPort <= 0 || desc.LocalPort > 0xFFFF {
 		return xerrors.Errorf("bad local port: %d", desc.LocalPort)
 	}
-	if desc.TargetPort < 0 || desc.TargetPort > 0xFFFF {
+	if desc.TargetPort > 0xFFFF {
 		return xerrors.Errorf("bad target port: %d", desc.TargetPort)
 	}
 	return nil
@@ -203,7 +204,7 @@ func (p *TunneledPortsService) CloseTunnel(ctx context.Context, localPorts ...ui
 	return closedPorts, err
 }
 
-// EstablishTunnel actually establishes the tunnel
+// EstablishTunnel actually establishes the tunnel.
 func (p *TunneledPortsService) EstablishTunnel(ctx context.Context, clientID string, localPort uint32, targetPort uint32) (net.Conn, error) {
 	p.cond.L.Lock()
 	defer p.cond.L.Unlock()
