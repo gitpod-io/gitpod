@@ -251,22 +251,13 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
     let details = <></>;
     switch (props.prebuildInstance?.status.phase) {
         case undefined: // Fall through
+        case 'preparing': // Fall through
+        case 'pending': // Fall through
+        case 'creating': // Fall through
         case 'unknown':
             status = <div className="flex space-x-1 items-center text-yellow-600">
                 <img className="h-4 w-4" src={StatusPaused} />
                 <span>PENDING</span>
-                </div>;
-            details = <div className="flex space-x-1 items-center text-gray-400">
-                <img className="h-4 w-4 animate-spin" src={Spinner} />
-                <span>Preparing prebuild ...</span>
-                </div>;
-            break;
-        case 'preparing': // Fall through
-        case 'pending': // Fall through
-        case 'creating': // Fall through
-            status = <div className="flex space-x-1 items-center text-yellow-800">
-                <img className="h-4 w-4" src={StatusRunning} />
-                <span>PREPARING</span>
                 </div>;
             details = <div className="flex space-x-1 items-center text-gray-400">
                 <img className="h-4 w-4 animate-spin" src={Spinner} />
