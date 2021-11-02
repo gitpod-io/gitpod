@@ -206,7 +206,7 @@ func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int, lastPr
 				continue
 			}
 			note := strings.TrimSpace(res[1])
-			if note == "NONE" || note == "none" {
+			if strings.ToUpper(note) == "NONE" {
 				continue
 			}
 			notes := strings.Split(note, "\n")
