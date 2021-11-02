@@ -91,7 +91,7 @@ export default function Preferences() {
             {desktopIdeFeatureEnabled &&
                 <div className="mt-4 space-x-4 flex">
                     <CheckBox
-                        title="Use Desktop IDE"
+                        title="Open in Desktop IDE"
                         desc="Choose whether you would like to open your workspace in a desktop IDE instead."
                         checked={useDesktopIde}
                         onChange={(evt) => actuallySetUseDesktopIde(evt.target.checked)} />

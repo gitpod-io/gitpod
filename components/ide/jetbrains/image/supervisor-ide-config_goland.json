@@ -1,6 +1,6 @@
 {
     "entrypoint": "/ide-desktop/startup.sh",
-    "entrypointArgs": [ "Open GoLand IDE" ],
+    "entrypointArgs": [ "Open in GoLand" ],
     "readinessProbe": {
         "type": "http",
         "http": {
