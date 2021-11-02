@@ -6,7 +6,7 @@
 
 import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from 'inversify';
-import { parseRepoUrl } from '../repohost/repo-url';
+import { RepoURL } from '../repohost/repo-url';
 import { RepositoryProvider } from '../repohost/repository-provider';
 import { BitbucketApiFactory } from './bitbucket-api-factory';
 
@@ -19,7 +19,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         const api = await this.apiFactory.create(user);
         const repo = (await api.repositories.get({ workspace: owner, repo_slug: name })).data;
         const cloneUrl = repo.links!.clone!.find((x: any) => x.name === "https")!.href!;
-        const host = parseRepoUrl(cloneUrl)!.host;
+        const host = RepoURL.parseRepoUrl(cloneUrl)!.host;
         const description = repo.description;
         const avatarUrl = repo.owner!.links!.avatar!.href;
         const webUrl = repo.links!.html!.href;

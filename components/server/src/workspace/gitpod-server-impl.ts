@@ -34,7 +34,7 @@ import { HostContextProvider } from '../auth/host-context-provider';
 import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from '../auth/resource-access';
 import { Config } from '../config';
 import { NotFoundError, UnauthorizedError } from '../errors';
-import { parseRepoUrl } from '../repohost/repo-url';
+import { RepoURL } from '../repohost/repo-url';
 import { TermsProvider } from '../terms/terms-provider';
 import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
 import { AuthorizationService } from '../user/authorization-service';
@@ -970,7 +970,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return (await Promise.all(repositories
             .filter(repo => repo.url != undefined)
             .map(async whitelistedRepo => {
-                const repoUrl = parseRepoUrl(whitelistedRepo.url!);
+                const repoUrl = RepoURL.parseRepoUrl(whitelistedRepo.url!);
                 if (!repoUrl) return undefined;
 
                 const { host, owner, repo } = repoUrl;

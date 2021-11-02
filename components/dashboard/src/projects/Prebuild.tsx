@@ -24,7 +24,7 @@ export default function () {
     const team = getCurrentTeam(location, teams);
 
     const match = useRouteMatch<{ team: string, project: string, prebuildId: string }>("/(t/)?:team/:project/:prebuildId");
-    const projectName = match?.params?.project;
+    const projectSlug = match?.params?.project;
     const prebuildId = match?.params?.prebuildId;
 
     const [ prebuild, setPrebuild ] = useState<PrebuildWithStatus | undefined>();
@@ -33,16 +33,20 @@ export default function () {
     const [ isCancellingPrebuild, setIsCancellingPrebuild ] = useState<boolean>(false);
 
     useEffect(() => {
-        if (!teams || !projectName || !prebuildId) {
+        if (!teams || !projectSlug || !prebuildId) {
             return;
         }
         (async () => {
             const projects = (!!team
                 ? await getGitpodService().server.getTeamProjects(team.id)
                 : await getGitpodService().server.getUserProjects());
-            const project = projects.find(p => p.name === projectName);
+
+        const project = projectSlug && projects.find(
+            p => p.slug ? p.slug === projectSlug :
+            p.name === projectSlug);
+
             if (!project) {
-                console.error(new Error(`Project not found! (teamId: ${team?.id}, projectName: ${projectName})`));
+                console.error(new Error(`Project not found! (teamId: ${team?.id}, projectName: ${projectSlug})`));
                 return;
             }
             const prebuilds = await getGitpodService().server.findPrebuilds({
@@ -88,7 +92,7 @@ export default function () {
             setIsRerunningPrebuild(true);
             await getGitpodService().server.triggerPrebuild(prebuild.info.projectId, prebuild.info.branch);
             // TODO: Open a Prebuilds page that's specific to `prebuild.info.branch`?
-            history.push(`/${!!team ? 't/'+team.slug : 'projects'}/${projectName}/prebuilds`);
+            history.push(`/${!!team ? 't/'+team.slug : 'projects'}/${projectSlug}/prebuilds`);
         } catch (error) {
             console.error('Could not rerun prebuild', error);
         } finally {

@@ -34,7 +34,7 @@ export default function () {
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
     const match = useRouteMatch<{ team: string, resource: string }>("/(t/)?:team/:resource");
-    const projectName = match?.params?.resource !== 'workspaces' ? match?.params?.resource : undefined;
+    const projectSlug = match?.params?.resource !== 'workspaces' ? match?.params?.resource : undefined;
     const [projects, setProjects] = useState<Project[]>([]);
     const [activeWorkspaces, setActiveWorkspaces] = useState<WorkspaceInfo[]>([]);
     const [inactiveWorkspaces, setInactiveWorkspaces] = useState<WorkspaceInfo[]>([]);
@@ -59,7 +59,7 @@ export default function () {
 
     useEffect(() => {
         // only show example repos on the global user context
-        if (!team && !projectName) {
+        if (!team && !projectSlug) {
             getGitpodService().server.getFeaturedRepositories().then(setRepos);
         }
         (async () => {
@@ -68,8 +68,8 @@ export default function () {
                 : await getGitpodService().server.getUserProjects());
 
             let project: Project | undefined = undefined;
-            if (projectName) {
-                project = projects.find(p => p.name === projectName);
+            if (projectSlug) {
+                project = projects.find(p => p.slug ? p.slug === projectSlug : p.name === projectSlug);
                 if (project) {
                     setProjects([project]);
                 }
@@ -95,7 +95,7 @@ export default function () {
     const hideStartWSModal = () => setIsTemplateModelOpen(false);
 
     const getRecentSuggestions: () => WsStartEntry[] = () => {
-        if (projectName || team) {
+        if (projectSlug || team) {
             return projects.map(p => {
                 const remoteUrl = toRemoteURL(p.cloneUrl);
                 return {

@@ -9,7 +9,7 @@ import { injectable, inject } from 'inversify';
 import { User, Repository } from "@gitpod/gitpod-protocol"
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
 import { RepositoryProvider } from '../repohost/repository-provider';
-import { parseRepoUrl } from '../repohost/repo-url';
+import { RepoURL } from '../repohost/repo-url';
 import { Branch, CommitInfo } from '@gitpod/gitpod-protocol/src/protocol';
 
 @injectable()
@@ -20,7 +20,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     async getRepo(user: User, owner: string, repo: string): Promise<Repository> {
         const repository = await this.github.getRepository(user, { owner, repo });
         const cloneUrl = repository.clone_url;
-        const host = parseRepoUrl(cloneUrl)!.host;
+        const host = RepoURL.parseRepoUrl(cloneUrl)!.host;
         const description = repository.description;
         const avatarUrl = repository.owner.avatar_url;
         const webUrl = repository.html_url;

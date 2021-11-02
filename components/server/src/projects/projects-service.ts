@@ -9,7 +9,7 @@ import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceD
 import { Branch, CommitContext, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, ProjectConfig, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { FileProvider, parseRepoUrl } from "../repohost";
+import { FileProvider, RepoURL } from "../repohost";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ContextParser } from "../workspace/context-parser-service";
 import { ConfigInferrer } from "./config-inferrer";
@@ -46,13 +46,13 @@ export class ProjectsService {
     }
 
     protected getRepositoryProvider(project: Project) {
-        const parsedUrl = parseRepoUrl(project.cloneUrl);
+        const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const repositoryProvider = parsedUrl && this.hostContextProvider.get(parsedUrl.host)?.services?.repositoryProvider;
         return repositoryProvider;
     }
 
     async getBranchDetails(user: User, project: Project, branchName?: string): Promise<Project.BranchDetails[]> {
-        const parsedUrl = parseRepoUrl(project.cloneUrl);
+        const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
             return [];
         }
@@ -109,7 +109,7 @@ export class ProjectsService {
 
     protected async onDidCreateProject(project: Project) {
         let { userId, teamId, cloneUrl } = project;
-        const parsedUrl = parseRepoUrl(project.cloneUrl);
+        const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if ("gitlab.com" === parsedUrl?.host) {
             const repositoryService = this.hostContextProvider.get(parsedUrl?.host)?.services?.repositoryService;
             if (repositoryService) {
@@ -140,7 +140,7 @@ export class ProjectsService {
         if (!project) {
             return [];
         }
-        const parsedUrl = parseRepoUrl(project.cloneUrl);
+        const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
             return [];
         }
