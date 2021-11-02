@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-deployment/pkg/common"
 	"github.com/gitpod-io/gitpod/ws-deployment/pkg/orchestrate"
 	"github.com/spf13/cobra"
 )
@@ -45,7 +46,20 @@ var deployCmd = &cobra.Command{
 		if err != nil {
 			log.Log.Infof("error while trying to activate service account: %s. Assuming SA is already activated and configured %s", out)
 		}
-		orchestrate.Deploy(&cfg.Project, cfg.WorkspaceClusters)
+
+		// Wrap contexts into common.Context object
+		context := common.Context{
+			Project: &cfg.Project,
+			Gitpod: &common.GitpodContext{
+				VersionsManifestFilePath: versionsManifestFile,
+			},
+			Overrides: &common.Overrides{
+				DryRun:            dryRun,
+				OverwriteExisting: overwriteExisting,
+			},
+		}
+
+		orchestrate.Deploy(&context, cfg.WorkspaceClusters)
 	},
 }
 

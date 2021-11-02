@@ -13,7 +13,7 @@ import (
 )
 
 // Deploy creates given workspace clusters and then deploys gitpod on them
-func Deploy(context *common.ProjectContext, clusters []*common.WorkspaceCluster) error {
+func Deploy(context *common.Context, clusters []*common.WorkspaceCluster) error {
 	eg := new(errgroup.Group)
 	for _, c := range clusters {
 		c := c
@@ -37,12 +37,12 @@ func Deploy(context *common.ProjectContext, clusters []*common.WorkspaceCluster)
 
 // TODO(prs): Add implementation once we have scripts in ops repo tested and
 // install step implemented
-func installGitpod(context *common.ProjectContext, cluster *common.WorkspaceCluster) error {
+func installGitpod(context *common.Context, cluster *common.WorkspaceCluster) error {
 	log.Log.Infof("received request to install gitpod on cluster: %s cannot be processed. Implementation pending", cluster.Name)
 	return nil
 }
 
-func createCluster(context *common.ProjectContext, cluster *common.WorkspaceCluster) error {
+func createCluster(context *common.Context, cluster *common.WorkspaceCluster) error {
 	// TODO(prs): add retry logic below
 	err := step.CreateCluster(context, cluster)
 	if err != nil {
