@@ -1,8 +1,6 @@
 # Change Log
 
 ## November 2021
-- None ([#6481](https://github.com/gitpod-io/gitpod/pull/6481)) - [@princerachit](https://github.com/princerachit)
-- None ([#6470](https://github.com/gitpod-io/gitpod/pull/6470)) - [@princerachit](https://github.com/princerachit)
 - [gpctl] Add debug command to aid in debugging components ([#6480](https://github.com/gitpod-io/gitpod/pull/6480)) - [@csweichel](https://github.com/csweichel)
 
 ## October 2021
@@ -12,9 +10,8 @@
 - Switch from dropbear to OpenSSH ([#6348](https://github.com/gitpod-io/gitpod/pull/6348)) - [@aledbf](https://github.com/aledbf), [@csweichel](https://github.com/csweichel)
 - Always enable the New Workspace button on the Configuration Page. ([#6389](https://github.com/gitpod-io/gitpod/pull/6389)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Successfully install the workspace components to a cluster ([#6323](https://github.com/gitpod-io/gitpod/pull/6323)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
-- None ([#6417](https://github.com/gitpod-io/gitpod/pull/6417)) - [@princerachit](https://github.com/princerachit)
 - Change affinities to match the installer values ([#6428](https://github.com/gitpod-io/gitpod/pull/6428)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
-- None ([#6419](https://github.com/gitpod-io/gitpod/pull/6419)) - [@princerachit](https://github.com/princerachit)
+
 - Experimental support for `CAP_NET_ADMIN` in workspaces ([#6409](https://github.com/gitpod-io/gitpod/pull/6409)) - [@csweichel](https://github.com/csweichel), [@geropl](https://github.com/geropl)
 - Automated workspace deployment framework and design proposal and prelim checkin for workspace cluster creation ([#6338](https://github.com/gitpod-io/gitpod/pull/6338)) - [@princerachit](https://github.com/princerachit)
 - `/admin`: Improve performance of workspace queries ([#6312](https://github.com/gitpod-io/gitpod/pull/6312)) - [@geropl](https://github.com/geropl)
@@ -25,19 +22,15 @@
 - Fixed compile error ([#6193](https://github.com/gitpod-io/gitpod/pull/6193)) - [@meysholdt](https://github.com/meysholdt)
 - Add 'New Workspace' context menu option to all Projects cards ([#6185](https://github.com/gitpod-io/gitpod/pull/6185)) - [@jankeromnes](https://github.com/jankeromnes)
 - [gitpod-protocol] Adjust typescript GRPC options ([#6166](https://github.com/gitpod-io/gitpod/pull/6166)) - [@aledbf](https://github.com/aledbf)
-- None ([#6182](https://github.com/gitpod-io/gitpod/pull/6182)) - [@csweichel](https://github.com/csweichel)
 - Refactor GRPC TLS connection defaults ([#6163](https://github.com/gitpod-io/gitpod/pull/6163)) - [@aledbf](https://github.com/aledbf)
-- None ([#6174](https://github.com/gitpod-io/gitpod/pull/6174)) - [@csweichel](https://github.com/csweichel)
 - Enable setting of DB username with DB_USERNAME envvar ([#6171](https://github.com/gitpod-io/gitpod/pull/6171)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
-- None ([#6159](https://github.com/gitpod-io/gitpod/pull/6159)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+
 - Refactor GRPC TLS connection defaults ([#6163](https://github.com/gitpod-io/gitpod/pull/6163)) - [@aledbf](https://github.com/aledbf)
-- None ([#6174](https://github.com/gitpod-io/gitpod/pull/6174)) - [@csweichel](https://github.com/csweichel)
 - Enable setting of DB username with DB_USERNAME envvar ([#6171](https://github.com/gitpod-io/gitpod/pull/6171)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Update VS Code Web to 1.61.0 ([#6149](https://github.com/gitpod-io/gitpod/pull/6149)) - [@akosyakov](https://github.com/akosyakov)
 - [Projects] Fix collection of accessible GitHub repos ([#6146](https://github.com/gitpod-io/gitpod/pull/6146)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Fall back to another workspace cluster if a workspace start request fails ([#6124](https://github.com/gitpod-io/gitpod/pull/6124)) - [@csweichel](https://github.com/csweichel)
 - [projects] Load the last Prebuilds of all Projects in parallel and make Projects page loading more stable ([#6118](https://github.com/gitpod-io/gitpod/pull/6118)) - [@jankeromnes](https://github.com/jankeromnes)
-- None ([#6114](https://github.com/gitpod-io/gitpod/pull/6114)) - [@princerachit](https://github.com/princerachit)
 - [Dashboard] Fix workspace-project associations for workspaces based on prebuilds. ([#6117](https://github.com/gitpod-io/gitpod/pull/6117)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [dashboard] In /workspaces, indicate when you have active workspaces in your teams ([#6103](https://github.com/gitpod-io/gitpod/pull/6103)) - [@jankeromnes](https://github.com/jankeromnes)
 - Projects in the dashboard are now sorted by most recent pre-build ([#6073](https://github.com/gitpod-io/gitpod/pull/6073)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
