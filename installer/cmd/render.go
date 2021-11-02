@@ -14,7 +14,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 )
@@ -24,9 +23,6 @@ var renderOpts struct {
 	Namespace              string
 	ValidateConfigDisabled bool
 }
-
-//go:embed versions.yaml
-var versionManifest []byte
 
 // renderCmd represents the render command
 var renderCmd = &cobra.Command{
@@ -46,8 +42,7 @@ A config file is required which can be generated with the init command.`,
 			return err
 		}
 
-		var versionMF versions.Manifest
-		err = yaml.Unmarshal(versionManifest, &versionMF)
+		versionMF, err := getVersionManifest()
 		if err != nil {
 			return err
 		}
@@ -58,7 +53,7 @@ A config file is required which can be generated with the init command.`,
 			}
 		}
 
-		ctx, err := common.NewRenderContext(*cfg, versionMF, renderOpts.Namespace)
+		ctx, err := common.NewRenderContext(*cfg, *versionMF, renderOpts.Namespace)
 		if err != nil {
 			return err
 		}

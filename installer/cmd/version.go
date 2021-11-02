@@ -5,8 +5,12 @@
 package cmd
 
 import (
+	"debug/elf"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"sigs.k8s.io/yaml"
 
@@ -18,8 +22,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Display the version information",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var versionMF versions.Manifest
-		err := yaml.Unmarshal(versionManifest, &versionMF)
+		versionMF, err := getVersionManifest()
 		if err != nil {
 			return err
 		}
@@ -33,6 +36,44 @@ var versionCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func getVersionManifest() (*versions.Manifest, error) {
+	var data []byte
+	if rootOpts.VersionMF != "" {
+		var err error
+		data, err = ioutil.ReadFile(rootOpts.VersionMF)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		selfPath, err := os.Executable()
+		if err != nil {
+			return nil, err
+		}
+		selfFile, err := os.Open(selfPath)
+		if err != nil {
+			return nil, err
+		}
+		selfElf, err := elf.NewFile(selfFile)
+		if err != nil {
+			return nil, err
+		}
+		for _, s := range selfElf.Sections {
+			if s.Name == "versionManifest" {
+				data, _ = s.Data()
+			}
+		}
+
+	}
+
+	var res versions.Manifest
+	err := yaml.Unmarshal(data, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }
 
 func init() {
