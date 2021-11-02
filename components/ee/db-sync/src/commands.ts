@@ -33,12 +33,12 @@ export class RunCommand implements ICommand {
     protected readonly replicatorProvider: PeriodicReplicatorProvider;
 
     addOptions(parser: ArgumentParser): void {
-        parser.addArgument("--soft-start", {
+        parser.add_argument("--soft-start", {
             help: "Does not force a synchronization beyond the lastRunTime",
             nargs: 0
         });
-        parser.addArgument("config", {
-            defaultValue: "/db-sync-config.json",
+        parser.add_argument("config", {
+            default: "/db-sync-config.json",
             required: false,
             nargs: '?'
         });
@@ -134,7 +134,7 @@ export class ExportCommand implements ICommand {
     protected readonly tableUpdateProvider: TableUpdateProvider;
 
     addOptions(parser: ArgumentParser): void {
-        parser.addArgument("--table-set");
+        parser.add_argument("--table-set");
     }
 
     async run(args: any): Promise<void> {
@@ -142,7 +142,7 @@ export class ExportCommand implements ICommand {
         const conn = await connect(new Config().mysqlConfig);
 
         const statements = await this.tableUpdateProvider.getAllStatementsForAllTables(conn, args.table_set, args.start_date, args.end_date);
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             writeFile("export.sql", [...statements.deletions, ...statements.updates].join("\n"), (err) => {
                 if(err) {
                     reject(err);

@@ -105,6 +105,7 @@ function websocketRequest(options: TransportOptions): Transport {
       };
 
       ws.onmessage = function (e) {
+        // @ts-ignore This is copied from an external library; we won't fix this here
         options.onChunk(new Uint8Array(Buffer.from(e.data)));
       };
 

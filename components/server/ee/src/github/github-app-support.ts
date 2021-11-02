@@ -53,12 +53,13 @@ export class GitHubAppSupport {
         const listReposForInstallation = async (installation: RestEndpointMethodTypes["apps"]["getUserInstallation"]["response"]) => {
             const sub = await probot.auth(installation.data.id);
             try {
-                const accessibleRepos = (await sub.paginate(sub.rest.apps.listReposAccessibleToInstallation, { per_page: 100 }));
+                // it seems like `sub.paginate` flattens the result and the typings are off. We do the same with the typings to mimic the shape we get.
+                const accessibleRepos = (await sub.paginate(sub.rest.apps.listReposAccessibleToInstallation, { per_page: 100 })) as any as RestEndpointMethodTypes["apps"]["listReposAccessibleToInstallation"]["response"]["data"]["repositories"];
                 return accessibleRepos.map(r => {
-                    return {
+                    return <ProviderRepository>{
                         name: r.name,
                         cloneUrl: r.clone_url,
-                        account: r.owner.login,
+                        account: r.owner?.login,
                         accountAvatarUrl: r.owner?.avatar_url,
                         updatedAt: r.updated_at,
                         installationId: installation.data.id,

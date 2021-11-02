@@ -17,7 +17,7 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import { AdmissionLevel, EnvironmentVariable, GitSpec, PortSpec, PortVisibility, StartWorkspaceRequest, WorkspaceMetadata, WorkspaceType } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from 'crypto';
 import { inject, injectable } from "inversify";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ScopedResourceGuard } from '../auth/resource-access';
 import { Config } from "../config";

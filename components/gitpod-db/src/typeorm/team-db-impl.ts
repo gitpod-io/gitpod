@@ -9,7 +9,7 @@ import { Team, TeamMemberInfo, TeamMemberRole, TeamMembershipInvite, User } from
 import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { TeamDB } from "../team-db";
 import { DBTeam } from "./entity/db-team";
 import { DBTeamMembership } from "./entity/db-team-membership";
@@ -119,7 +119,7 @@ export class TeamDBImpl implements TeamDB {
         }
         const userRepo = await this.getUserRepo();
         const existingUsers = await userRepo.query('SELECT COUNT(id) AS count FROM d_b_user WHERE fullName LIKE ? OR name LIKE ?', [ name, slug ]);
-        if (existingUsers[0].count > 0) {
+        if (Number.parseInt(existingUsers[0].count) > 0) {
             throw new Error('A team cannot have the same name as an existing user');
         }
         const teamRepo = await this.getTeamRepo();
@@ -156,7 +156,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async addMemberToTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
-        const team = await teamRepo.findOneById(teamId);
+        const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
             throw new Error('A team with this ID could not be found');
         }
@@ -176,7 +176,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void> {
         const teamRepo = await this.getTeamRepo();
-        const team = await teamRepo.findOneById(teamId);
+        const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
             throw new Error('A team with this ID could not be found');
         }
@@ -191,7 +191,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async removeMemberFromTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
-        const team = await teamRepo.findOneById(teamId);
+        const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
             throw new Error('A team with this ID could not be found');
         }
@@ -206,7 +206,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async findTeamMembershipInviteById(inviteId: string): Promise<TeamMembershipInvite> {
         const inviteRepo = await this.getMembershipInviteRepo();
-        const invite = await inviteRepo.findOneById(inviteId);
+        const invite = await inviteRepo.findOne(inviteId);
         if (!invite) {
             throw new Error('No invite found for the given ID.');
         }

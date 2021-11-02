@@ -18,8 +18,13 @@ export class NewsletterSubscriptionController {
         const router = express.Router();
 
         router.get("/unsubscribe", async (req: express.Request, res: express.Response) => {
-            const email: string = req.query.email;
-            const newsletterType: string = req.query.type;
+            const email: string | undefined = req.query.email?.toString();
+            const newsletterType: string | undefined = req.query.type?.toString();
+            if (!email || !newsletterType) {
+                res.sendStatus(400);
+                return;
+            }
+
             const acceptedNewsletterTypes: string[] = ["changelog", "devx", "onboarding"];
             const newsletterProperties: {[key:string]: {[key: string]: string}} = {
                 changelog: {

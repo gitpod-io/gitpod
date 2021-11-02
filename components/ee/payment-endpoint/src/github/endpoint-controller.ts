@@ -7,6 +7,7 @@
 import { injectable, inject } from 'inversify';
 import { Config } from '../config';
 import * as Webhooks from '@octokit/webhooks';
+import { createNodeMiddleware } from '@octokit/webhooks';
 import { Application as App } from 'express';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { GithubSubscriptionReconciler } from './subscription-reconciler';
@@ -23,12 +24,12 @@ export class GithubEndpointController {
     @inject(GithubSubscriptionReconciler) protected readonly reconciler: GithubSubscriptionReconciler;
 
     public register(path: string, app: App) {
-        const webhooks = new Webhooks.Webhooks({ path, secret: this.config.githubAppWebhookSecret });
+        const webhooks = new Webhooks.Webhooks({ secret: this.config.githubAppWebhookSecret });
         webhooks.on("marketplace_purchase", evt => {
             log.debug("incoming event", { event: `marketplace_purchase.${evt.payload.action}`, githubUser: evt.payload.marketplace_purchase.account.login });
             this.reconciler.handleIncomingEvent(evt).catch(err => log.error("error while processing GitHub marketplace event", { err, evt }));
         });
-        app.use((req, res, next) => webhooks.middleware(req, res, next));
+        app.use(createNodeMiddleware(webhooks, { path }));
     }
 
 }

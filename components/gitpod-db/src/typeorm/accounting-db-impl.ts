@@ -11,7 +11,7 @@ import { AccountEntry, Subscription, Credit, SubscriptionAndUser } from "@gitpod
 import { EntityManager, Repository } from "typeorm";
 import { DBSubscription, DBSubscriptionAdditionalData, DBPaymentSourceInfo } from "./entity/db-subscription";
 import { injectable, inject } from "inversify";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { DBUser } from "../typeorm/entity/db-user";
 import { TypeORM } from "./typeorm";
 
@@ -116,11 +116,11 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
 
     async findSubscriptionById(id: string): Promise<Subscription | undefined> {
         const repo = await this.getSubscriptionRepo();
-        return repo.findOneById(id);
+        return repo.findOne(id);
     }
 
     async deleteSubscription(subscription: Subscription): Promise<void> {
-        return await (await this.getSubscriptionRepo()).delete(subscription as DBSubscription);
+        await (await this.getSubscriptionRepo()).delete(subscription as DBSubscription);
     }
 
     async findActiveSubscriptionByPlanID(planID: string, date: string): Promise<Subscription[]> {

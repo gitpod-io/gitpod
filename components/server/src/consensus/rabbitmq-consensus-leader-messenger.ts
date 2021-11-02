@@ -8,7 +8,7 @@ import { ConsensusLeaderMessenger, ConsensusLeaderMessageType, RaftMessage, Requ
 import { injectable } from "inversify";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { AbstractMessageBusIntegration, AbstractTopicListener } from "@gitpod/gitpod-messagebus/lib";
-import * as uuid from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from "events";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { CancellationTokenSource } from "vscode-jsonrpc/lib/cancellation";
@@ -28,7 +28,7 @@ export class RabbitMQConsensusLeaderMessenger extends AbstractMessageBusIntegrat
     }
 
     async register(uid?: string | undefined): Promise<string> {
-        uid = uid || uuid();
+        uid = uid || uuidv4();
         await this.doRegister(uid);
         this.registrations.push(uid);
 

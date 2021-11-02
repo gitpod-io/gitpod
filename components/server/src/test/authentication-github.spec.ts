@@ -7,8 +7,7 @@
 import { suite, test } from "mocha-typescript";
 
 import * as chai from 'chai';
-const chaiHttp = require('chai-http');
-
+import chaiHttp = require('chai-http');
 import * as http from "http";
 import * as express from "express";
 import { Server } from "../server"

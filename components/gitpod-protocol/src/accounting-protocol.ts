@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
- import * as uuidv4 from 'uuid/v4';
+ import { v4 as uuidv4 } from 'uuid';
 import { User } from './protocol';
 import { oneMonthLater } from './util/timeutil';
 

@@ -8,6 +8,7 @@
 import * as express from 'express';
 import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { saveSession } from '../express-util';
+import { Session } from '../express';
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
 
@@ -90,19 +91,18 @@ export interface AuthFlow {
     readonly overrideScopes?: boolean;
 }
 export namespace AuthFlow {
-    const storageKey = "authFlow";
-    export function get(session: Express.Session | undefined): AuthFlow | undefined {
+    export function get(session: Session | undefined): AuthFlow | undefined {
         if (session) {
-            return session[storageKey] as AuthFlow | undefined;
+            return session.authFlow;
         }
     }
-    export async function attach(session: Express.Session, authFlow: AuthFlow): Promise<void> {
-        session[storageKey] = authFlow;
+    export async function attach(session: Session, authFlow: AuthFlow): Promise<void> {
+        session.authFlow = authFlow;
         return saveSession(session);
     }
-    export async function clear(session: Express.Session | undefined) {
+    export async function clear(session: Session | undefined) {
         if (session) {
-            session[storageKey] = undefined;
+            session.authFlow = undefined;
             return saveSession(session);
         }
     }

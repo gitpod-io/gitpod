@@ -110,7 +110,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         }
         try {
             const api = await this.api(user);
-            const result = (await api.repositories.getCommit({ workspace: owner, repo_slug: repoName, node: potentialCommitHash }));
+            const result = (await api.repositories.getCommit({ workspace: owner, repo_slug: repoName, commit: potentialCommitHash }));
             return result.data.hash === potentialCommitHash;
         } catch {
             return false;
@@ -146,8 +146,8 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
 
             if (!more.revision) {
                 const commits = (await api.repositories.listCommitsAt({ workspace: owner, repo_slug: repoName, revision: more.ref!, pagelen: 1 })).data;
-                more.revision = commits.values.length > 0 ? commits.values[0].hash : "";
-                if (commits.values.length === 0 && more.ref === repository.defaultBranch) {
+                more.revision = commits.values && commits.values.length > 0 ? commits.values[0].hash : "";
+                if ((!commits.values || commits.values.length === 0) && more.ref === repository.defaultBranch) {
                     // empty repo
                     more.ref = undefined;
                     more.revision = "";
@@ -159,7 +159,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                 more.isFile = false;
                 more.path = "";
             } else if (more.isFile === undefined) {
-                const fileMeta = (await api.repositories.readSrc({ workspace: owner, repo_slug: repoName, format: "meta", node: more.revision!, path: more.path!, pagelen: 1 })).data;
+                const fileMeta = (await api.repositories.readSrc({ workspace: owner, repo_slug: repoName, format: "meta", commit: more.revision!, path: more.path!, pagelen: 1 })).data;
                 more.isFile = (fileMeta as any).type === "commit_file";
             }
 
@@ -269,7 +269,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         return result;
     }
 
-    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[]> {
+    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[] | undefined> {
         const span = TraceContext.startSpan("BitbucketContextParser.fetchCommitHistory", ctx);
         try {
             // TODO(janx): To get more results than Bitbucket API's max pagelen (seems to be 100), pagination should be handled.
@@ -282,7 +282,12 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                 revision: sha,
                 pagelen: maxDepth,
             });
-            return result.data.values.slice(1).map((v: Schema.Commit) => v.hash);
+
+            const commits = result.data.values?.slice(1);
+            if (!commits) {
+                return undefined;
+            }
+            return commits.map((v: Schema.Commit) => v.hash!);
         } catch (e) {
             span.log({ error: e });
             log.error({ userId: user.id }, "Error fetching Bitbucket commit history", e);

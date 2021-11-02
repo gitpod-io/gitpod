@@ -7,7 +7,7 @@
 import { Identity, Token, UserEnvVar, User } from "@gitpod/gitpod-protocol";
 import { AuthUser } from "../auth/auth-provider";
 import { saveSession } from "../express-util";
-
+import { Session } from "../express";
 
 export interface TosFlow {
     flowId?: string;
@@ -43,19 +43,18 @@ export namespace TosFlow {
         }
     }
 
-    const storageKey = "tosFlowInfo";
-    export function get(session: Express.Session | undefined): TosFlow | undefined {
+    export function get(session: Session | undefined): TosFlow | undefined {
         if (session) {
-            return session[storageKey] as TosFlow | undefined;
+            return session.tosFlowInfo;
         }
     }
-    export async function attach(session: Express.Session, tosFlowInfo: TosFlow): Promise<void> {
-        session[storageKey] = tosFlowInfo;
+    export async function attach(session: Session, tosFlowInfo: TosFlow): Promise<void> {
+        session.tosFlowInfo = tosFlowInfo;
         return saveSession(session);
     }
-    export async function clear(session: Express.Session | undefined) {
+    export async function clear(session: Session | undefined) {
         if (session) {
-            session[storageKey] = undefined;
+            session.tosFlowInfo = undefined;
             return saveSession(session);
         }
     }

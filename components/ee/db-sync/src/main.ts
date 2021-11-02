@@ -14,21 +14,20 @@ import { productionContainerModule } from "./container-module";
 log.enableJSONLogging('db-sync', undefined, LogrusLogLevel.getFromEnv());
 
 const parser = new ArgumentParser({
-    version: "0.1.5",
-    addHelp: true,
+    add_help: true,
     description: "Process for synchronising a cache database with a central master"
 });
-const subparser = parser.addSubparsers({
+const subparser = parser.add_subparsers({
     title: 'commands',
     dest: 'cmd'
 });
-parser.addArgument("--start-date", {
+parser.add_argument("--start-date", {
     help: "The date from which to consider data"
 });
-parser.addArgument("--end-date", {
+parser.add_argument("--end-date", {
     help: "The date until which to consider data"
 });
-parser.addArgument("--verbose", {
+parser.add_argument("--verbose", {
     help: "Print verbose output (debug and progress bar)",
     nargs: 0
 });
@@ -38,14 +37,14 @@ container.load(productionContainerModule);
 
 let commands = container.getAll(ICommand) as ICommand[];
 commands.forEach(c => {
-    const cmdparser = subparser.addParser(c.name, {
-        addHelp: true ,
+    const cmdparser = subparser.add_parser(c.name, {
+        add_help: true ,
         help: c.help
     });
     c.addOptions(cmdparser);
 });
 
-const rawArgs = parser.parseKnownArgs();
+const rawArgs = parser.parse_known_args();
 const args = rawArgs[0];
 const cmd = commands.find(c => c.name == args.cmd);
 if(cmd) {

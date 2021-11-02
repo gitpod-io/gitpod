@@ -10,7 +10,7 @@ import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryp
 import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthClient, OAuthScope, OAuthToken, OAuthUser } from "@jmondi/oauth2-server";
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { BUILTIN_WORKSPACE_PROBE_USER_ID, MaybeUser, PartialUserUpdate, UserDB } from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBIdentity } from "./entity/db-identity";
@@ -94,12 +94,12 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async updateUserPartial(partial: PartialUserUpdate): Promise<void> {
         const userRepo = await this.getUserRepo();
-        await userRepo.updateById(partial.id, partial);
+        await userRepo.update(partial.id, partial);
     }
 
     public async findUserById(id: string): Promise<MaybeUser> {
         const userRepo = await this.getUserRepo();
-        return userRepo.findOneById(id);
+        return userRepo.findOne(id);
     }
 
     public async findUserByIdentity(identity: IdentityLookup): Promise<User | undefined> {
@@ -243,12 +243,12 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async findTokenEntryById(uid: string): Promise<TokenEntry | undefined> {
         const repo = await this.getTokenRepo();
-        return repo.findOneById(uid);
+        return repo.findOne(uid);
     }
 
     public async deleteTokenEntryById(uid: string): Promise<void> {
         const repo = await this.getTokenRepo();
-        await repo.deleteById(uid);
+        await repo.delete(uid);
     }
 
     public async deleteExpiredTokenEntries(date: string): Promise<void> {
@@ -264,7 +264,7 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async updateTokenEntry(tokenEntry: Partial<TokenEntry> & Pick<TokenEntry, "uid">): Promise<void> {
         const repo = await this.getTokenRepo();
-        await repo.updateById(tokenEntry.uid, tokenEntry);
+        await repo.update(tokenEntry.uid, tokenEntry);
     }
 
     public async deleteTokens(identity: Identity, shouldDelete?: (entry: TokenEntry) => boolean): Promise<void> {
@@ -314,7 +314,7 @@ export class TypeORMUserDBImpl implements UserDB {
         }
         const res = await userRepo.query(query);
         const count = res[0].cnt;
-        return count;
+        return Number.parseInt(count);
     }
 
     public async setEnvVar(envVar: UserEnvVar): Promise<void> {
@@ -415,7 +415,8 @@ export class TypeORMUserDBImpl implements UserDB {
             // We do not allow changes of name, type, user or scope.
             dbToken = userAndToken.token as GitpodToken & { user: DBUser };
             const repo = await this.getGitpodTokenRepo();
-            return repo.updateById(tokenHash, dbToken);
+            await repo.update(tokenHash, dbToken);
+            return;
         } else {
             var user: MaybeUser;
             if (accessToken.user) {

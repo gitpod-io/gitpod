@@ -17,7 +17,7 @@ import { CodeSyncResourceDB, UserStorageResourcesDB, ALL_SERVER_RESOURCES, Serve
 import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
 import { DeleteRequest, DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import uuid = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 import { accessCodeSyncStorage, UserRateLimiter } from '../auth/rate-limiter';
 import { increaseApiCallUserCounter } from '../prometheus-metrics';
 import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
@@ -79,7 +79,7 @@ export class CodeSyncService {
         const router = express.Router();
         router.use((_, res, next) => {
             // to correlate errors reported by users with errors logged by the server
-            res.setHeader('x-operation-id', uuid.v4());
+            res.setHeader('x-operation-id', uuidv4());
             return next();
         });
         router.use(this.auth.restHandler);
@@ -151,7 +151,7 @@ export class CodeSyncService {
                 res.sendStatus(204);
                 return;
             }
-            let resourceRev = req.params.ref;
+            let resourceRev: string | undefined = req.params.ref;
             if (resourceRev !== fromTheiaRev) {
                 resourceRev = (await this.db.getResource(req.user.id, resourceKey, resourceRev))?.rev;
             }
