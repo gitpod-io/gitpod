@@ -28,7 +28,7 @@ const (
 	DefaultGeneratedTFModulePathTemplate = "deploy/ws-clusters/ws-%s/terraform"
 )
 
-func CreateCluster(context *common.ProjectContext, cluster *common.WorkspaceCluster) error {
+func CreateCluster(context *common.Context, cluster *common.WorkspaceCluster) error {
 	exists, err := doesClusterExist(context, cluster)
 	// If we see an error finding out if cluster exists
 	if err != nil {
@@ -39,7 +39,7 @@ func CreateCluster(context *common.ProjectContext, cluster *common.WorkspaceClus
 		return xerrors.Errorf("cluster '%s' already exists", cluster.Name)
 	}
 	// If there is neither an error nor the cluster exist then continue
-	err = generateTerraformModules(context, cluster)
+	err = generateTerraformModules(context.Project, cluster)
 	if err != nil {
 		return err
 	}
@@ -50,9 +50,13 @@ func CreateCluster(context *common.ProjectContext, cluster *common.WorkspaceClus
 	return nil
 }
 
-func doesClusterExist(context *common.ProjectContext, cluster *common.WorkspaceCluster) (bool, error) {
+func doesClusterExist(context *common.Context, cluster *common.WorkspaceCluster) (bool, error) {
+	if context.Overrides.DryRun || context.Overrides.OverwriteExisting {
+		log.Log.Infof("dry run or overwrite flag is set, will not check for existence of actual cluster")
+		return false, nil
+	}
 	// container clusters describe gp-stag-ws-us11-us-weswt1 --project gitpod-staging --region us-west1
-	out, err := exec.Command("gcloud", "container", "clusters", "describe", cluster.Name, "--project", context.Id, "--region", cluster.Region).CombinedOutput()
+	out, err := exec.Command("gcloud", "container", "clusters", "describe", cluster.Name, "--project", context.Project.Id, "--region", cluster.Region).CombinedOutput()
 	if err == nil {
 		return true, nil
 	}
@@ -75,9 +79,9 @@ func generateDefaultScriptArgs(context *common.ProjectContext, cluster *common.W
 	return []string{"-b", context.Bucket, "-l", cluster.Region, "-n", cluster.Name, "-t", string(cluster.ClusterType), "-g", context.Id, "-w", context.Network, "-d", context.DNSZone}
 }
 
-func applyTerraformModules(context *common.ProjectContext, cluster *common.WorkspaceCluster) error {
-	credFileEnvVar := fmt.Sprintf("GOOGLE_APPLICATION_CREDENTIALS=%s", context.GCPSACredFile)
-	if _, err := os.Stat(context.GCPSACredFile); errors.Is(err, os.ErrNotExist) {
+func applyTerraformModules(context *common.Context, cluster *common.WorkspaceCluster) error {
+	credFileEnvVar := fmt.Sprintf("GOOGLE_APPLICATION_CREDENTIALS=%s", context.Project.GCPSACredFile)
+	if _, err := os.Stat(context.Project.GCPSACredFile); errors.Is(err, os.ErrNotExist) {
 		// reset this to empty string so that we can fallback to default
 		// gcloud context. This is useful in local development and execution
 		// scenarios
@@ -87,6 +91,11 @@ func applyTerraformModules(context *common.ProjectContext, cluster *common.Works
 	tfModulesDir := fmt.Sprintf(DefaultGeneratedTFModulePathTemplate, cluster.Name)
 
 	commandToRun := fmt.Sprintf("cd %s && terraform init && terraform apply -auto-approve", tfModulesDir)
+
+	// only plan if dry run is set
+	if context.Overrides.DryRun {
+		commandToRun = fmt.Sprintf("cd %s && terraform init && terraform plan", tfModulesDir)
+	}
 	cmd := exec.Command("/bin/sh", "-c", commandToRun)
 	// Set the env variable
 	cmd.Env = append(os.Environ(), credFileEnvVar)

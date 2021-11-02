@@ -30,3 +30,15 @@ type WorkspaceCluster struct {
 	ClusterType ClusterType `yaml:"type"`
 	ValuesFiles []string    `yaml:"valuesFiles"`
 }
+
+// Overrides are used to override some of the default behaviour
+// of deployment
+type Overrides struct {
+	// DryRun specifies if the resources should be actually created or not
+	DryRun bool
+	// OverwriteExisting is used to overwrite existing cluster configuration
+	// e.g. if a cluster X already exist and you run the deployment with this
+	// value set, then it will just update the cluster configuration
+	// if this flag is not set then it will error out complaining that the cluster already exists
+	OverwriteExisting bool
+}
