@@ -11,7 +11,7 @@ import io.gitpod.ide.jetbrains.backend.services.HeartbeatService
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.components.service
 
-internal class MyApplicationActivationListener : ApplicationActivationListener {
+class MyApplicationActivationListener : ApplicationActivationListener {
     override fun applicationActivated(ideFrame: IdeFrame) {
         service<HeartbeatService>() // Services are not loaded if not referenced
     }
