@@ -1,6 +1,23 @@
 # Change Log
 
+## November 2021
+- None ([#6481](https://github.com/gitpod-io/gitpod/pull/6481)) - [@princerachit](https://github.com/princerachit)
+- None ([#6470](https://github.com/gitpod-io/gitpod/pull/6470)) - [@princerachit](https://github.com/princerachit)
+- [gpctl] Add debug command to aid in debugging components ([#6480](https://github.com/gitpod-io/gitpod/pull/6480)) - [@csweichel](https://github.com/csweichel)
+
 ## October 2021
+- `/etc/resolv.conf` is now writeable ([#6467](https://github.com/gitpod-io/gitpod/pull/6467)) - [@csweichel](https://github.com/csweichel)
+- Handle private GitHub repos on Config Page ([#6451](https://github.com/gitpod-io/gitpod/pull/6451)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [ws-manager]: Add check for IdeImage not being present in the spec ([#6453](https://github.com/gitpod-io/gitpod/pull/6453)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Switch from dropbear to OpenSSH ([#6348](https://github.com/gitpod-io/gitpod/pull/6348)) - [@aledbf](https://github.com/aledbf), [@csweichel](https://github.com/csweichel)
+- Always enable the New Workspace button on the Configuration Page. ([#6389](https://github.com/gitpod-io/gitpod/pull/6389)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Successfully install the workspace components to a cluster ([#6323](https://github.com/gitpod-io/gitpod/pull/6323)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- None ([#6417](https://github.com/gitpod-io/gitpod/pull/6417)) - [@princerachit](https://github.com/princerachit)
+- Change affinities to match the installer values ([#6428](https://github.com/gitpod-io/gitpod/pull/6428)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- None ([#6419](https://github.com/gitpod-io/gitpod/pull/6419)) - [@princerachit](https://github.com/princerachit)
+- Experimental support for `CAP_NET_ADMIN` in workspaces ([#6409](https://github.com/gitpod-io/gitpod/pull/6409)) - [@csweichel](https://github.com/csweichel), [@geropl](https://github.com/geropl)
+- Automated workspace deployment framework and design proposal and prelim checkin for workspace cluster creation ([#6338](https://github.com/gitpod-io/gitpod/pull/6338)) - [@princerachit](https://github.com/princerachit)
+- `/admin`: Improve performance of workspace queries ([#6312](https://github.com/gitpod-io/gitpod/pull/6312)) - [@geropl](https://github.com/geropl)
 - Deleted team's name can be reused. ([#6273](https://github.com/gitpod-io/gitpod/pull/6273)) - [@laushinka](https://github.com/laushinka)
 - Validate the cluster is in a state for Gitpod to be installed to ([#6234](https://github.com/gitpod-io/gitpod/pull/6234)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Deleted team's name can be reused. ([#6273](https://github.com/gitpod-io/gitpod/pull/6273)) - [@laushinka](https://github.com/laushinka)
