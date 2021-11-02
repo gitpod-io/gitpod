@@ -162,7 +162,7 @@ export default function NewProject() {
         if (!provider) {
             return;
         }
-        const repo = reposInAccounts.find(r => r.account === selectedAccount && r.name === selectedRepo);
+        const repo = reposInAccounts.find(r => r.account === selectedAccount && r.path === selectedRepo);
         if (!repo) {
             console.error("No repo selected!")
             return;
@@ -179,7 +179,7 @@ export default function NewProject() {
                 appInstallationId: String(repo.installationId),
             });
 
-            history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${repo.name}/configure`);
+            history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${repo.path}/configure`);
         } catch (error) {
             const message = (error && error?.message) || "Failed to create new project."
             window.alert(message);
@@ -269,7 +269,7 @@ export default function NewProject() {
                                     <div className="flex justify-end">
                                         <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100">
                                             {!r.inUse ? (
-                                                <button className="primary" onClick={() => setSelectedRepo(r.name)}>Select</button>
+                                                <button className="primary" onClick={() => setSelectedRepo(r.path)}>Select</button>
                                             ) : (
                                                 <p className="my-auto">already taken</p>
                                             )}

@@ -63,6 +63,7 @@ export default function () {
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const routeMatch = useRouteMatch<{ teamSlug: string, projectSlug: string }>("/(t/)?:teamSlug/:projectSlug/configure");
+    const projectSlug = routeMatch?.params.projectSlug;
     const [project, setProject] = useState<Project | undefined>();
     const [gitpodYml, setGitpodYml] = useState<string>('');
     const [dockerfile, setDockerfile] = useState<string>('');
@@ -93,7 +94,11 @@ export default function () {
             const projects = (!!team
                 ? await getGitpodService().server.getTeamProjects(team.id)
                 : await getGitpodService().server.getUserProjects());
-            const project = projects.find(p => p.name === routeMatch?.params.projectSlug);
+
+        const project = projectSlug && projects.find(
+            p => p.slug ? p.slug === projectSlug :
+            p.name === projectSlug);
+
             if (!project) {
                 setIsDetecting(false);
                 setEditorMessage(<EditorMessage type="warning" heading="Couldn't load project information." message="Please try to reload this page." />);
