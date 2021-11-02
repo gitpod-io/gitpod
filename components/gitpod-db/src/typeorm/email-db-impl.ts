@@ -31,7 +31,8 @@ export class TypeORMEMailDBImpl implements EMailDB {
 
     async updatePartial(partial: PartialEMailUpdate): Promise<void> {
         const repo = await this.getEMailRepo();
-        return repo.updateById(partial.uid, partial);
+        await repo.update(partial.uid, partial);
+        return;
     }
 
     async findEMailsToSend(limit: number): Promise<EMail[]> {

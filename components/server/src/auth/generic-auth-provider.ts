@@ -26,6 +26,8 @@ import { AuthProviderService } from './auth-provider-service';
 import { LoginCompletionHandler } from './login-completion-handler';
 import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
+import { OutgoingHttpHeaders } from 'http2';
+
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
  * --
@@ -315,7 +317,7 @@ export class GenericAuthProvider implements AuthProvider {
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
         }
-        const [err, user, flowContext] = result;
+        const [err, userOrIdentity, flowContext] = result;
 
         /*
          * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
@@ -333,7 +335,7 @@ export class GenericAuthProvider implements AuthProvider {
          * - redirect to `returnTo` (from request parameter)
          */
 
-        const context = LogContext.from( { user: User.is(user) ? { userId: user.id } : undefined, request} );
+        const context = LogContext.from( { user: User.is(userOrIdentity) ? { userId: userOrIdentity.id } : undefined, request} );
 
         if (err) {
             await AuthFlow.clear(request.session);
@@ -404,7 +406,8 @@ export class GenericAuthProvider implements AuthProvider {
      * - it's expected to identify missing requirements, e.g. missing terms acceptance
      * - finally, it's expected to call `done` and provide the computed result in order to finalize the auth process
      */
-    protected async verify(req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, done: VerifyCallback) {
+    protected async verify(req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, _done: VerifyCallbackInternal) {
+        const done = _done as VerifyCallback;
         let flowContext: VerifyResult;
         const { strategyName, params: config } = this;
         const clientInfo = getRequestingClientInfo(req);
@@ -647,8 +650,8 @@ interface GenericOAuthStrategyOptions {
     userAgent: string;
 
     scopeSeparator?: string;
-    customHeaders?: any;
-    skipUserProfile?: true;
+    customHeaders?: OutgoingHttpHeaders;
+    skipUserProfile?: any;
     /**
      * Non-spec autorization params.
      */
@@ -658,6 +661,7 @@ interface GenericOAuthStrategyOptions {
 /**
  * Refinement of OAuth2Strategy.VerifyCallback
  */
+type VerifyCallbackInternal = (err?: Error | undefined, user?: User, info?: VerifyResult) => void
 type VerifyCallback = (err?: Error | undefined, user?: User | Identity, info?: VerifyResult) => void
 
 export interface StrategyOptionsWithRequest extends OAuth2Strategy.StrategyOptionsWithRequest, GenericOAuthStrategyOptions { }

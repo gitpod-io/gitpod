@@ -20,6 +20,7 @@ packages:
       - "src/typeorm/entity/*.ts"
       - "src/typeorm/ormconfig.ts"
       - "src/typeorm/typeorm.ts"
+      - "src/typeorm/naming-strategy.ts"
       - "src/typeorm/user-db-impl.ts"
       - "src/typeorm/transformer.ts"
       - "src/config.ts"

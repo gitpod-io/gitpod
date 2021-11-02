@@ -107,12 +107,12 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     }
     public async updatePartial(workspaceId: string, partial: DeepPartial<Workspace>) {
         const workspaceRepo = await this.getWorkspaceRepo();
-        await workspaceRepo.updateById(workspaceId, partial);
+        await workspaceRepo.update(workspaceId, partial);
     }
 
     public async findById(id: string): Promise<MaybeWorkspace> {
         const workspaceRepo = await this.getWorkspaceRepo();
-        return workspaceRepo.findOneById(id);
+        return workspaceRepo.findOne(id);
     }
 
     public async findByInstanceId(instanceId: string): Promise<MaybeWorkspace> {
@@ -167,19 +167,22 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             qb.andWhere("ws.pinned = true");
         }
         const projectIds = typeof options.projectId === 'string' ? [options.projectId] : options.projectId;
-        if (Array.isArray(projectIds)) {
+        if (projectIds !== undefined) {
             if (projectIds.length === 0 && !options.includeWithoutProject) {
                 // user passed an empty array of projectids and also is not interested in unassigned workspaces -> no results
                 return [];
             }
             qb.andWhere(new Brackets(qb => {
+                // there is a schema mismatch: we use a transformer to map to empty string, but have a column-default of NULL.
+                // Thus all legacy workspaces (before the introduction of projectId) have a NULL in this column; all afterwards an empty string.
+                const emptyProjectId = "(ws.projectId IS NULL OR ws.projectId = '')";
                 if (projectIds.length > 0) {
                     qb.where('ws.projectId IN (:pids)', { pids: projectIds });
                     if (options.includeWithoutProject) {
-                        qb.orWhere("ws.projectId IS NULL");
+                        qb.orWhere(emptyProjectId);
                     }
                 } else if (options.includeWithoutProject) {
-                    qb.where("ws.projectId IS NULL");
+                    qb.where(emptyProjectId);
                 }
             }));
         }
@@ -260,7 +263,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         if (!!partial.status) {
             (partial as any).phasePersisted = partial.status.phase;
         }
-        await workspaceInstanceRepo.updateById(instanceId, partial);
+        await workspaceInstanceRepo.update(instanceId, partial);
         return (await this.findInstanceById(instanceId))!;
     }
 
@@ -272,7 +275,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async findInstanceById(workspaceInstanceId: string): Promise<MaybeWorkspaceInstance> {
         const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
-        return workspaceInstanceRepo.findOneById(workspaceInstanceId);
+        return workspaceInstanceRepo.findOne(workspaceInstanceId);
     }
 
     public async findInstances(workspaceId: string): Promise<WorkspaceInstance[]> {
@@ -290,8 +293,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async findCurrentInstance(workspaceId: string): Promise<MaybeWorkspaceInstance> {
         const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
-        workspaceInstanceRepo.findOneById(workspaceId, {})
-        const qb = await workspaceInstanceRepo.createQueryBuilder('wsi')
+        const qb = workspaceInstanceRepo.createQueryBuilder('wsi')
             .where(`wsi.workspaceId = :workspaceId`, { workspaceId })
             .orderBy('creationTime', 'DESC')
             .limit(1);
@@ -545,7 +547,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async findSnapshotById(snapshotId: string): Promise<Snapshot | undefined> {
         const snapshots = await this.getSnapshotRepo();
-        return snapshots.findOneById(snapshotId);
+        return snapshots.findOne(snapshotId);
     }
 
     public async storeSnapshot(snapshot: Snapshot): Promise<Snapshot> {
@@ -588,7 +590,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     }
     public async findPrebuildByID(pwsid: string): Promise<PrebuiltWorkspace | undefined> {
         const repo = await this.getPrebuiltWorkspaceRepo();
-        return await repo.findOneById(pwsid);
+        return await repo.findOne(pwsid);
     }
     public async countRunningPrebuilds(cloneURL: string): Promise<number> {
         const repo = await this.getPrebuiltWorkspaceRepo();
@@ -647,7 +649,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     }
     public async markUpdatableResolved(updatableId: string): Promise<void> {
         const repo = await this.getPrebuiltWorkspaceUpdatableRepo();
-        await repo.updateById(updatableId, { isResolved: true });
+        await repo.update(updatableId, { isResolved: true });
     }
     public async getUnresolvedUpdatables(): Promise<PrebuiltUpdatableAndWorkspace[]> {
         const pwsuRepo = await this.getPrebuiltWorkspaceUpdatableRepo();
@@ -663,7 +665,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined> {
         const layoutDataRepo = await this.getLayoutDataRepo();
-        return layoutDataRepo.findOneById(workspaceId);
+        return layoutDataRepo.findOne(workspaceId);
     }
 
     public async storeLayoutData(layoutData: LayoutData): Promise<LayoutData> {
@@ -678,7 +680,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
      *       around to deleting them.
      */
     public async hardDeleteWorkspace(workspaceId: string): Promise<void> {
-        await (await this.getWorkspaceRepo()).updateById(workspaceId, { deleted: true });
+        await (await this.getWorkspaceRepo()).update(workspaceId, { deleted: true });
         await (await this.getWorkspaceInstanceRepo()).update({ workspaceId }, { deleted: true });
     }
 
@@ -803,7 +805,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     async findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined> {
         const workspaceRepo = await this.getWorkspaceRepo();
-        const workspace = await workspaceRepo.findOneById(id);
+        const workspace = await workspaceRepo.findOne(id);
         if (!workspace) {
              return;
         }

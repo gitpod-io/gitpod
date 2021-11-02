@@ -8,7 +8,7 @@ import { injectable, inject, postConstruct } from "inversify";
 import { Token, Identity, User, TokenEntry } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
-import * as uuid from "uuid/v4";
+import { v4 as uuidv4 } from 'uuid';
 import { TokenProvider } from "./token-provider";
 import { TokenGarbageCollector } from "./token-garbage-collector";
 
@@ -66,7 +66,7 @@ export class TokenService implements TokenProvider {
             tokenEntry => tokenEntry.token.scopes.every(s => scopes.indexOf(s) !== -1)
         );
         const token: Token = {
-            value: uuid(),
+            value: uuidv4(),
             scopes: scopes || [],
             updateDate: new Date().toISOString()
         }
@@ -84,7 +84,7 @@ export class TokenService implements TokenProvider {
     async getFreshPortAuthenticationToken(user: User, workspaceId: string): Promise<Token> {
         const newPortAuthToken = (): Token => {
             return {
-                value: uuid(),
+                value: uuidv4(),
                 scopes: [TokenService.generateWorkspacePortAuthScope(workspaceId)],
                 updateDate: new Date().toISOString(),
                 expiryDate: new Date(Date.now() + TokenService.GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS).toISOString(),

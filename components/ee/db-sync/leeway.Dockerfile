@@ -2,13 +2,14 @@
 # Licensed under the Gitpod Enterprise Source Code License,
 # See License.enterprise.txt in the project root folder.
 
-FROM node:12.22.1-slim as builder
+FROM node:16.13.0-slim as builder
 COPY components-ee-db-sync--app /installer/
 
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM node:12.22.1-slim
+FROM node:16.13.0-slim
+ENV NODE_OPTIONS=--unhandled-rejections=warn
 # '--no-log-init': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
 RUN useradd --no-log-init --create-home --uid 31002 --home-dir /app/ unode
 COPY --from=builder /app /app/

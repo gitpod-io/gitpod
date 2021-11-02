@@ -24,7 +24,8 @@
         "jsx": "react",
         "sourceMap": true,
         "declaration": true,
-        "declarationMap": true
+        "declarationMap": true,
+        "useUnknownInCatchVariables": false
     },
     "include": [
         "src"

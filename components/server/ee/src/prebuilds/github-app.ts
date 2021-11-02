@@ -6,7 +6,6 @@
 
 import { Server, Probot, Context } from 'probot';
 import { getPrivateKey } from '@probot/get-private-key';
-import {WebhookEvent, EventPayloads} from "@octokit/webhooks/dist-types"
 import * as fs from 'fs-extra';
 import { injectable, inject } from 'inversify';
 import { Config } from '../../../src/config';
@@ -32,7 +31,6 @@ import { asyncHandler } from '../../../src/express-util';
  * values.yaml file (GITPOD_GITHUB_APP_WEBHOOK_SECRET) - it's not a bad idea to
  * look at those values to begin with.
  */
-
 @injectable()
 export class GithubApp {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
@@ -73,7 +71,7 @@ export class GithubApp {
     protected async buildApp(app: Probot, options: ApplicationFunctionOptions) {
         this.statusMaintainer.start(async (id) => {
             try {
-                const githubApi = await app.auth(parseInt(id));
+                const githubApi = await app.auth(id);
                 return githubApi;
             } catch (error) {
                 log.error("Failes to authorize GH API for Probot", { error })
@@ -162,7 +160,7 @@ export class GithubApp {
         });
     }
 
-    protected async handlePushEvent(ctx: WebhookEvent<EventPayloads.WebhookPayloadPush> & Omit<Context, keyof WebhookEvent>): Promise<void> {
+    protected async handlePushEvent(ctx: Context<'push'>): Promise<void> {
         const span = TraceContext.startSpan("GithubApp.handlePushEvent", {});
         span.setTag("request", ctx.id);
 
@@ -221,7 +219,7 @@ export class GithubApp {
         return undefined;
     }
 
-    protected async handlePullRequest(ctx: WebhookEvent<EventPayloads.WebhookPayloadPullRequest> & Omit<Context<any>, keyof WebhookEvent<any>>): Promise<void> {
+    protected async handlePullRequest(ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>): Promise<void> {
         const span = TraceContext.startSpan("GithubApp.handlePullRequest", {});
         span.setTag("request", ctx.id);
 
@@ -250,7 +248,7 @@ export class GithubApp {
         }
     }
 
-    protected async onPrAddCheck(tracecContext: TraceContext, config: WorkspaceConfig | undefined, ctx: Context, start: Promise<StartPrebuildResult> | undefined) {
+    protected async onPrAddCheck(tracecContext: TraceContext, config: WorkspaceConfig | undefined, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>, start: Promise<StartPrebuildResult> | undefined) {
         if (!start) {
             return;
         }
@@ -267,7 +265,12 @@ export class GithubApp {
                 return;
             }
 
-            await this.statusMaintainer.registerCheckRun({ span }, ctx.payload.installation.id, pws, {
+            const installationId = ctx.payload.installation?.id;
+            if (!installationId) {
+                log.info("Did not find user for installation. Probably an incomplete app installation.", { repo: ctx.payload.repository, installationId });
+                return;
+            }
+            await this.statusMaintainer.registerCheckRun({ span }, installationId, pws, {
                 ...ctx.repo(),
                 head_sha: ctx.payload.pull_request.head.sha,
                 details_url: this.config.hostUrl.withContext(ctx.payload.pull_request.html_url).toString()
@@ -280,7 +283,7 @@ export class GithubApp {
         }
     }
 
-    protected onPrStartPrebuild(tracecContext: TraceContext, config: WorkspaceConfig | undefined, owner: {user: User, project?: Project}, ctx: WebhookEvent<EventPayloads.WebhookPayloadPullRequest>): Promise<StartPrebuildResult> | undefined {
+    protected onPrStartPrebuild(tracecContext: TraceContext, config: WorkspaceConfig | undefined, owner: {user: User, project?: Project}, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>): Promise<StartPrebuildResult> | undefined {
         const { user, project } = owner;
         const pr = ctx.payload.pull_request;
         const pr_head = pr.head;
@@ -301,7 +304,7 @@ export class GithubApp {
         }
     }
 
-    protected onPrAddBadge(config: WorkspaceConfig | undefined, ctx: Context) {
+    protected onPrAddBadge(config: WorkspaceConfig | undefined, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>) {
         if (!this.appRules.shouldDo(config, 'addBadge')) {
             // we shouldn't add (or update) a button here
             return;
@@ -309,7 +312,10 @@ export class GithubApp {
 
         const pr = ctx.payload.pull_request;
         const contextURL = pr.html_url;
-        const body: string = pr.body;
+        const body: string | null = pr.body;
+        if (!body) {
+            return;
+        }
         const button = `<a href="${this.config.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
         if (body.includes(button)) {
             // the button is already in the comment
@@ -321,7 +327,7 @@ export class GithubApp {
         updatePrPromise.catch(err => log.error(err, "Error while updating PR body", { contextURL }));
     }
 
-    protected async onPrAddComment(config: WorkspaceConfig | undefined, ctx: Context) {
+    protected async onPrAddComment(config: WorkspaceConfig | undefined, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>) {
         if (!this.appRules.shouldDo(config, 'addComment')) {
             return;
         }

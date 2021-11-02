@@ -9,7 +9,7 @@ import { AuthProviderEntry as AuthProviderEntry, User } from "@gitpod/gitpod-pro
 import { AuthProviderParams } from "./auth-provider";
 import { AuthProviderEntryDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { oauthUrls as githubUrls } from "../github/github-urls";
 import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';

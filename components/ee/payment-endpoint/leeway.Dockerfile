@@ -2,14 +2,14 @@
 # Licensed under the Gitpod Enterprise Source Code License,
 # See License.enterprise.txt in the project root folder.
 
-FROM node:12.18.3-slim as builder
+FROM node:16.13.0-slim as builder
 COPY components-ee-payment-endpoint--app /installer/
 
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM node:12.18.3-slim
-
+FROM node:16.13.0-slim
+ENV NODE_OPTIONS=--unhandled-rejections=warn
 EXPOSE 3000
 
 RUN useradd --create-home --uid 31001 --home-dir /app/ unode

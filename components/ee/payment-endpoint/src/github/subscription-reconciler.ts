@@ -10,7 +10,7 @@ import * as fs from 'fs';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import * as jwt from 'jsonwebtoken';
 import { PendingGithubEventDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { GithubSubscriptionMapper, MarketplacePurchaseEvent } from "./subscription-mapper";
+import { GithubSubscriptionMapper, MarketplaceEventAll } from "./subscription-mapper";
 import { User, Queue } from "@gitpod/gitpod-protocol";
 import { UserPaidSubscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
@@ -30,7 +30,7 @@ export class GithubSubscriptionReconciler {
     protected reconciliationTasks = new Queue();
 
 
-    public async handleIncomingEvent(evt: MarketplacePurchaseEvent) {
+    public async handleIncomingEvent(evt: MarketplaceEventAll) {
         const authId: string = evt.payload.marketplace_purchase.account.id.toString();
         const user = await this.userDB.findUserByIdentity({ authProviderId: "Public-GitHub", authId });
         if (user) {
@@ -215,7 +215,7 @@ export class GithubSubscriptionReconciler {
         }), 24 * 60 * 1000); // once a day
     }
 
-    public async reconcileEvent(user: User, evt: MarketplacePurchaseEvent) {
+    public async reconcileEvent(user: User, evt: MarketplaceEventAll) {
         const userId = user.id;
         await this.accountingDB.transaction(async db => {
             const subscriptions = await db.findAllSubscriptionsForUser(userId);
@@ -265,5 +265,5 @@ interface MarketplaceAccountListing {
     login: string;
     email?: string;
     marketplace_pending_change?: any; // this seems broken on the GitHub side
-    marketplace_purchase: Webhooks.EventPayloads.WebhookPayloadMarketplacePurchaseMarketplacePurchase;
+    marketplace_purchase: Webhooks.EmitterWebhookEvent<"marketplace_purchase">["payload"];
 }

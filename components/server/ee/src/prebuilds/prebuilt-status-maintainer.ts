@@ -7,7 +7,7 @@
 import { ProbotOctokit } from 'probot';
 import { injectable, inject } from 'inversify';
 import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid';
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -26,7 +26,7 @@ const MAX_UPDATABLE_AGE = 6 * 60 * 60 * 1000;
 const DEFAULT_STATUS_DESCRIPTION = "Open a prebuilt online workspace in Gitpod";
 const NON_PREBUILT_STATUS_DESCRIPTION = "Open an online workspace in Gitpod";
 
-export type AuthenticatedGithubProvider = (installationId: string) => Promise<InstanceType<typeof ProbotOctokit> | undefined>;
+export type AuthenticatedGithubProvider = (installationId: number) => Promise<InstanceType<typeof ProbotOctokit> | undefined>;
 
 @injectable()
 export class PrebuildStatusMaintainer implements Disposable {
@@ -45,12 +45,12 @@ export class PrebuildStatusMaintainer implements Disposable {
         log.debug("prebuild updatatable status maintainer started");
     }
 
-    public async registerCheckRun(ctx: TraceContext, installationId: string, pws: PrebuiltWorkspace, cri: CheckRunInfo) {
+    public async registerCheckRun(ctx: TraceContext, installationId: number, pws: PrebuiltWorkspace, cri: CheckRunInfo) {
         const span = TraceContext.startSpan("registerCheckRun", ctx);
         span.setTag("pws-state", pws.state);
 
         try {
-            const githubApi = await this.githubApiProvider(installationId);
+            const githubApi = await this.getGitHubApi(installationId);
             if (!githubApi) {
                 throw new Error("unable to authenticate GitHub app");
             }
@@ -61,7 +61,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                     owner: cri.owner,
                     repo: cri.repo,
                     isResolved: false,
-                    installationId,
+                    installationId: installationId.toString(),
                     contextUrl: cri.details_url,
                     prebuiltWorkspaceId: pws.id,
                 });
@@ -142,8 +142,8 @@ export class PrebuildStatusMaintainer implements Disposable {
         const span = TraceContext.startSpan("doUpdate", ctx);
 
         try {
-            const github = await this.githubApiProvider(updatatable.installationId);
-            if (!github) {
+            const githubApi = await this.getGitHubApi(Number.parseInt(updatatable.installationId));
+            if (!githubApi) {
                 log.error("unable to authenticate GitHub app - this leaves user-facing checks dangling.");
                 return;
             }
@@ -153,7 +153,7 @@ export class PrebuildStatusMaintainer implements Disposable {
 
                 let found = true;
                 try {
-                    await github!.repos.createCommitStatus({
+                    await githubApi.repos.createCommitStatus({
                         owner: updatatable.owner,
                         repo: updatatable.repo,
                         context: "Gitpod",
@@ -187,6 +187,14 @@ export class PrebuildStatusMaintainer implements Disposable {
         }
     }
 
+    protected async getGitHubApi(installationId: number): Promise<InstanceType<typeof ProbotOctokit> | undefined> {
+        const api = await this.githubApiProvider(installationId);
+        if (!api) {
+            return undefined
+        }
+        return (api as InstanceType<typeof ProbotOctokit>);
+    }
+
     protected async periodicUpdatableCheck() {
         const unresolvedUpdatables = await this.workspaceDB.trace({}).getUnresolvedUpdatables();
 
@@ -208,5 +216,4 @@ export class PrebuildStatusMaintainer implements Disposable {
             this.periodicChecker = undefined;
         }
     }
-
 }

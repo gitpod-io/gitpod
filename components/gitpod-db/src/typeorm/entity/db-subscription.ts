@@ -137,8 +137,7 @@ export class DBPaymentSourceInfo {
     id: string;
 
     @PrimaryColumn({
-        type: "bigint",
-        length: 13
+        type: "bigint"
     })
     @Index("ind_resourceVersion")   // Necessary for certain operations: https://dev.mysql.com/doc/refman/8.0/en/order-by-optimization.html
     resourceVersion: number;

@@ -7,14 +7,20 @@
 import { injectable, inject } from "inversify";
 import { SubscriptionModel } from "../accounting/subscription-model";
 import * as Webhooks from '@octokit/webhooks';
+import { MarketplacePurchase } from '@octokit/webhooks-types/schema';
 import { User } from "@gitpod/gitpod-protocol";
 import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { Plan, Plans } from "@gitpod/gitpod-protocol/lib/plans";
 
-export type MarketplacePurchaseEvent = Webhooks.WebhookEvent<Webhooks.EventPayloads.WebhookPayloadMarketplacePurchase>;
-export type WebhookPayloadMarketplacePurchaseChanged = Webhooks.EventPayloads.WebhookPayloadMarketplacePurchase & { previous_marketplace_purchase: Webhooks.EventPayloads.WebhookPayloadMarketplacePurchaseMarketplacePurchase };
+export type MarketplaceEventAll = Webhooks.EmitterWebhookEvent<"marketplace_purchase">;
+export type MarketplaceEventPurchased = Webhooks.EmitterWebhookEvent<"marketplace_purchase.purchased">;
+export type MarketplaceEventCancelled = Webhooks.EmitterWebhookEvent<"marketplace_purchase.cancelled">;
+export type MarketplaceEventChanged = Webhooks.EmitterWebhookEvent<"marketplace_purchase.changed">;
+export type MarketplaceEventPendingChange = Webhooks.EmitterWebhookEvent<"marketplace_purchase.pending_change">;
+export type MarketplaceEventPendingChangeCancelled = Webhooks.EmitterWebhookEvent<"marketplace_purchase.pending_change_cancelled">;
+
 interface ChangeContext {
     accountID: number
     effectiveDate: string
@@ -29,7 +35,7 @@ interface ChangeContext {
 export class GithubSubscriptionMapper {
     @inject(UserDB) protected readonly userDB: UserDB;
 
-    public async map(evt: MarketplacePurchaseEvent, model: SubscriptionModel): Promise<boolean> {
+    public async map(evt: MarketplaceEventAll, model: SubscriptionModel): Promise<boolean> {
         const authId = evt.payload.marketplace_purchase.account.id.toString();
         const user = await this.userDB.findUserByIdentity({ authProviderId: "Public-GitHub", authId });
         if (!user) {
@@ -39,19 +45,19 @@ export class GithubSubscriptionMapper {
 
         switch (evt.payload.action) {
             case 'purchased':
-                this.mapPurchasedEvent(user, evt, model);
+                this.mapPurchasedEvent(user, evt as MarketplaceEventPurchased, model);
                 break;
             case 'cancelled':
-                this.mapCancelledEvent(user, evt, model);
+                this.mapCancelledEvent(user, evt as MarketplaceEventCancelled, model);
                 break;
             case 'changed':
-                this.mapChangedEvent(user, evt, model);
+                this.mapChangedEvent(user, evt as MarketplaceEventChanged, model);
                 break;
             case 'pending_change':
-                this.mapPendingChangeEvent(user, evt, model);
+                this.mapPendingChangeEvent(user, evt as MarketplaceEventPendingChange, model);
                 break;
             case 'pending_change_cancelled':
-                this.mapPendingChangeCancelledEvent(user, evt, model);
+                this.mapPendingChangeCancelledEvent(user, evt as MarketplaceEventPendingChangeCancelled, model);
                 break;
             default:
                 log.error({userId: user.id}, "Unknown event type. Not acting on it.", { evt });
@@ -67,12 +73,12 @@ export class GithubSubscriptionMapper {
             startDate,
             planId: plan.chargebeeId, // we identify plans by their chargebeeId
             amount: Plans.getHoursPerMonth(plan),
-            paymentReference: this.toPaymentRef(accountID)
+            paymentReference: this.toPaymentRef(accountID),
         }));
         log.debug({userId: user.id}, "adding newly purchased subscription", { plan });
     }
 
-    protected mapPurchasedEvent(user: User, evt: MarketplacePurchaseEvent, model: SubscriptionModel) {
+    protected mapPurchasedEvent(user: User, evt: MarketplaceEventPurchased, model: SubscriptionModel) {
         const purchase = evt.payload.marketplace_purchase;
         const plan = this.mapGithubToGitpodPlan(purchase.plan);
         if (!plan) {
@@ -95,7 +101,7 @@ export class GithubSubscriptionMapper {
         }
     }
 
-    protected mapCancelledEvent(user: User, evt: MarketplacePurchaseEvent, model: SubscriptionModel) {
+    protected mapCancelledEvent(user: User, evt: MarketplaceEventCancelled, model: SubscriptionModel) {
         this.mapSubscriptionCancel(user.id, evt.payload.effective_date, model);
     }
 
@@ -146,8 +152,8 @@ export class GithubSubscriptionMapper {
         }
     }
 
-    protected mapChangedEvent(user: User, evt: MarketplacePurchaseEvent, model: SubscriptionModel) {
-        const context = this.getChangeContext(evt.payload as WebhookPayloadMarketplacePurchaseChanged, user.id, model);
+    protected mapChangedEvent(user: User, evt: Webhooks.EmitterWebhookEvent<"marketplace_purchase.changed">, model: SubscriptionModel) {
+        const context = this.getChangeContext(evt.payload, user.id, model);
         if (!context) {
             log.debug({userId: user.id}, "cannot get change context", {evt});
             return;
@@ -156,8 +162,8 @@ export class GithubSubscriptionMapper {
         this.mapSubscriptionChange(user, context, model);
     }
 
-    protected mapPendingChangeEvent(user: User, evt: MarketplacePurchaseEvent, model: SubscriptionModel) {
-        const context = this.getChangeContext(evt.payload as WebhookPayloadMarketplacePurchaseChanged, user.id, model);
+    protected mapPendingChangeEvent(user: User, evt: MarketplaceEventPendingChange, model: SubscriptionModel) {
+        const context = this.getChangeContext(evt.payload, user.id, model);
         if (!context) {
             log.debug({userId: user.id}, "cannot get change context", {evt});
             return;
@@ -178,8 +184,8 @@ export class GithubSubscriptionMapper {
         log.debug({userId: user.id}, "marked subscription as pending", { subscription: oldSubscription.uid });
     }
 
-    protected mapPendingChangeCancelledEvent(user: User, evt: MarketplacePurchaseEvent, model: SubscriptionModel) {
-        const context = this.getChangeContext(evt.payload as WebhookPayloadMarketplacePurchaseChanged, user.id, model);
+    protected mapPendingChangeCancelledEvent(user: User, evt: MarketplaceEventPendingChangeCancelled, model: SubscriptionModel) {
+        const context = this.getChangeContext(evt.payload, user.id, model);
         if (!context) {
             log.debug({userId: user.id}, "cannot get change context", {evt});
             return;
@@ -198,7 +204,11 @@ export class GithubSubscriptionMapper {
         }
     }
 
-    protected mapGithubToGitpodPlan(plan: Webhooks.EventPayloads.WebhookPayloadMarketplacePurchaseMarketplacePurchasePlan): Plan | undefined {
+    protected mapGithubToGitpodPlan(plan: MarketplacePurchase["plan"] | undefined): Plan | undefined {
+        if (!plan) {
+            return undefined;
+        }
+
         // GitHub plans are all in USD
         const thisPlan = Plans.getAvailablePlans('USD').filter(p => p.githubId == plan.id);
         if (thisPlan.length == 0) {
@@ -208,9 +218,9 @@ export class GithubSubscriptionMapper {
         return thisPlan[0];
     }
 
-    protected getChangeContext(payload: WebhookPayloadMarketplacePurchaseChanged, userId: string, model: SubscriptionModel): ChangeContext | undefined {
+    protected getChangeContext(payload: MarketplaceEventPendingChange["payload"] | MarketplaceEventChanged["payload"] | MarketplaceEventPendingChangeCancelled["payload"], userId: string, model: SubscriptionModel): ChangeContext | undefined {
         const prevPurchase = payload.previous_marketplace_purchase;
-        const prevPlan = this.mapGithubToGitpodPlan(prevPurchase.plan);
+        const prevPlan = this.mapGithubToGitpodPlan(prevPurchase?.plan);
         if (!prevPlan) {
             log.error({userId}, "Cannot map the previous GitHub plan to our own. Not acting on it.", { payload });
             return;

@@ -30,66 +30,66 @@ export interface LogPayload {
 };
 
 export namespace log {
-    export function error(context: LogContext, message: string, error: Error, payload: LogPayload): void;
-    export function error(context: LogContext, message: string, error: Error): void;
+    export function error(context: LogContext, message: string, error: any, payload: LogPayload): void;
+    export function error(context: LogContext, message: string, error: any): void;
     export function error(context: LogContext, message: string, payload: LogPayload): void;
     export function error(context: LogContext, message: string): void;
-    export function error(context: LogContext, error: Error, payload: LogPayload): void;
-    export function error(context: LogContext, error: Error): void;
-    export function error(message: string, error: Error, payload: LogPayload): void;
-    export function error(message: string, error: Error): void;
+    export function error(context: LogContext, error: any, payload: LogPayload): void;
+    export function error(context: LogContext, error: any): void;
+    export function error(message: string, error: any, payload: LogPayload): void;
+    export function error(message: string, error: any): void;
     export function error(message: string, payload: LogPayload): void;
     export function error(message: string): void;
-    export function error(error: Error, payload: LogPayload): void;
-    export function error(error: Error): void;
+    export function error(error: any, payload: LogPayload): void;
+    export function error(error: any): void;
     export function error(...args: any[]): void {
         errorLog(false, args);
     }
 
-    export function warn(context: LogContext, message: string, error: Error, payload: LogPayload): void;
-    export function warn(context: LogContext, message: string, error: Error): void;
+    export function warn(context: LogContext, message: string, error: any, payload: LogPayload): void;
+    export function warn(context: LogContext, message: string, error: any): void;
     export function warn(context: LogContext, message: string, payload: LogPayload): void;
     export function warn(context: LogContext, message: string): void;
-    export function warn(context: LogContext, error: Error, payload: LogPayload): void;
-    export function warn(context: LogContext, error: Error): void;
-    export function warn(message: string, error: Error, payload: LogPayload): void;
-    export function warn(message: string, error: Error): void;
+    export function warn(context: LogContext, error: any, payload: LogPayload): void;
+    export function warn(context: LogContext, error: any): void;
+    export function warn(message: string, error: any, payload: LogPayload): void;
+    export function warn(message: string, error: any): void;
     export function warn(message: string, payload: LogPayload): void;
     export function warn(message: string): void;
-    export function warn(error: Error, payload: LogPayload): void;
-    export function warn(error: Error): void;
+    export function warn(error: any, payload: LogPayload): void;
+    export function warn(error: any): void;
     export function warn(...args: any[]): void {
         warnLog(false, args);
     }
 
-    export function info(context: LogContext, message: string, error: Error, payload: LogPayload): void;
-    export function info(context: LogContext, message: string, error: Error): void;
+    export function info(context: LogContext, message: string, error: any, payload: LogPayload): void;
+    export function info(context: LogContext, message: string, error: any): void;
     export function info(context: LogContext, message: string, payload: LogPayload): void;
     export function info(context: LogContext, message: string): void;
-    export function info(context: LogContext, error: Error, payload: LogPayload): void;
-    export function info(context: LogContext, error: Error): void;
-    export function info(message: string, error: Error, payload: LogPayload): void;
-    export function info(message: string, error: Error): void;
+    export function info(context: LogContext, error: any, payload: LogPayload): void;
+    export function info(context: LogContext, error: any): void;
+    export function info(message: string, error: any, payload: LogPayload): void;
+    export function info(message: string, error: any): void;
     export function info(message: string, payload: LogPayload): void;
     export function info(message: string): void;
-    export function info(error: Error, payload: LogPayload): void;
-    export function info(error: Error): void;
+    export function info(error: any, payload: LogPayload): void;
+    export function info(error: any): void;
     export function info(...args: any[]): void {
         infoLog(false, args);
     }
 
-    export function debug(context: LogContext, message: string, error: Error, payload: LogPayload): void;
-    export function debug(context: LogContext, message: string, error: Error): void;
+    export function debug(context: LogContext, message: string, error: any, payload: LogPayload): void;
+    export function debug(context: LogContext, message: string, error: any): void;
     export function debug(context: LogContext, message: string, payload: LogPayload): void;
     export function debug(context: LogContext, message: string): void;
-    export function debug(context: LogContext, error: Error, payload: LogPayload): void;
-    export function debug(context: LogContext, error: Error): void;
-    export function debug(message: string, error: Error, payload: LogPayload): void;
-    export function debug(message: string, error: Error): void;
+    export function debug(context: LogContext, error: any, payload: LogPayload): void;
+    export function debug(context: LogContext, error: any): void;
+    export function debug(message: string, error: any, payload: LogPayload): void;
+    export function debug(message: string, error: any): void;
     export function debug(message: string, payload: LogPayload): void;
     export function debug(message: string): void;
-    export function debug(error: Error, payload: LogPayload): void;
-    export function debug(error: Error): void;
+    export function debug(error: any, payload: LogPayload): void;
+    export function debug(error: any): void;
     export function debug(...args: any[]): void {
         debugLog(false, args);
     }

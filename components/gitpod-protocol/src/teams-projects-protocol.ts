@@ -5,7 +5,7 @@
  */
 
 import { PrebuiltWorkspaceState } from "./protocol";
-import uuidv4 = require("uuid/v4");
+import { v4 as uuidv4 } from 'uuid';
 
 export interface ProjectConfig {
     '.gitpod.yml': string;
