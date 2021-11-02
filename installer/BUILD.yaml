@@ -1,5 +1,5 @@
 packages:
-  - name: app
+  - name: raw-app
     type: go
     srcs:
       - go.mod
@@ -32,6 +32,16 @@ packages:
       - CGO_ENABLED=0
     config:
       packaging: app
+  - name: app
+    type: generic
+    deps:
+      - :raw-app
+      - components:all-docker
+    argdeps:
+      - version
+    config:
+      commands:
+        - ["objcopy", "--add-section", "versionManifest=components--all-docker/versions.yaml", "installer--raw-app/installer", "installer"]
   - name: docker
     type: docker
     deps:
