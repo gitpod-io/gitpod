@@ -1,6 +1,6 @@
 {
     "entrypoint": "/ide-desktop/startup.sh",
-    "entrypointArgs": [ "Open IntelliJ IDEA IDE" ],
+    "entrypointArgs": [ "Open in IntelliJ IDEA" ],
     "readinessProbe": {
         "type": "http",
         "http": {

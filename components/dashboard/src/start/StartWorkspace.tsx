@@ -291,8 +291,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
               </div>
             </div>
             <div className="mt-10 justify-center flex space-x-2">
-              <a target="_blank" href={this.state.desktopIde.link}><button>{this.state.desktopIde.label}</button></a>
               <button className="secondary" onClick={() => window.parent.postMessage({ type: 'openBrowserIde' }, '*')}>Open VS Code in Browser</button>
+              <a target="_blank" href={this.state.desktopIde.link}><button>{this.state.desktopIde.label}</button></a>
             </div>
           </div>;
         }
