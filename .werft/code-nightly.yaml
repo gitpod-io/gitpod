@@ -1,5 +1,6 @@
 # debug using `werft run github -j .werft/code-nightly.yaml -s .werft/code-nightly.yaml -f -a debug=true`
 # this werft job is periodically run every night
+pod:
   serviceAccount: werft
   affinity:
     nodeAffinity:
