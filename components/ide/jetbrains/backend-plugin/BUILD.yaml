@@ -11,6 +11,7 @@ packages:
       - "gradle/wrapper/*"
       - "gradlew"
       - "settings.gradle.kts"
+      - "src/main/resources/*"
     argdeps:
       - INTELLIJ_PLUGIN_PLATFORM_VERSION
     env:
