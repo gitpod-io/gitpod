@@ -25,7 +25,7 @@ import (
 const (
 	fmtOriginalService        = "%s-original"
 	fmtProxyDeployment        = "%s-toxiproxy"
-	renamedServiceLabelPrefix = "renamed/"
+	renamedServiceLabelPrefix = "renamed-"
 )
 
 type injectOptions struct {
@@ -133,6 +133,7 @@ func Inject(cfg *rest.Config, namespace, targetService string, options ...Inject
 
 	renamedSpec := oldService.Spec.DeepCopy()
 	renamedSpec.ClusterIP = ""
+	renamedSpec.ClusterIPs = []string{}
 	renamedMeta := oldService.ObjectMeta.DeepCopy()
 	renamedMeta.Name = fmt.Sprintf(fmtOriginalService, oldService.Name)
 	renamedMeta.ResourceVersion = ""
@@ -162,6 +163,7 @@ func Inject(cfg *rest.Config, namespace, targetService string, options ...Inject
 
 	newSpec := oldService.Spec.DeepCopy()
 	newSpec.ClusterIP = ""
+	newSpec.ClusterIPs = []string{}
 	newSpec.Selector = labels
 	newMeta := oldService.ObjectMeta.DeepCopy()
 	if newMeta.Labels == nil {
