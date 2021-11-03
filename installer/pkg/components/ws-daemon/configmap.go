@@ -62,7 +62,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				UserNamespaces: content.UserNamespacesConfig{
 					FSShift: content.FSShiftMethod(fsshift),
 				},
-				Storage: common.StorageConfig(&ctx.Config),
+				Storage: common.StorageConfig(ctx),
 				Backup: content.BackupConfig{
 					Timeout:  util.Duration(time.Minute * 5),
 					Attempts: 3,

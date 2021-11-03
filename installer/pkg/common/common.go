@@ -324,14 +324,14 @@ func ImageName(repo, name, tag string) string {
 	return ref
 }
 
-func StorageConfig(cfg *config.Config) storageconfig.StorageConfig {
+func StorageConfig(context RenderContext) storageconfig.StorageConfig {
 	var res *storageconfig.StorageConfig
-	if cfg.ObjectStorage.CloudStorage != nil {
+	if context.Config.ObjectStorage.CloudStorage != nil {
 		// TODO(cw): where do we get the GCP project from? Is it even still needed?
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.GCloudStorage,
 			GCloudConfig: storageconfig.GCPConfig{
-				Region:             cfg.Metadata.Region,
+				Region:             context.Config.Metadata.Region,
 				Project:            "TODO",
 				CredentialsFile:    "/mnt/secrets/gcp-storage/service-account.json",
 				ParallelUpload:     6,
@@ -339,7 +339,7 @@ func StorageConfig(cfg *config.Config) storageconfig.StorageConfig {
 			},
 		}
 	}
-	if cfg.ObjectStorage.S3 != nil {
+	if context.Config.ObjectStorage.S3 != nil {
 		// TODO(cw): where do we get the AWS secretKey and accessKey from?
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.MinIOStorage,
@@ -348,20 +348,20 @@ func StorageConfig(cfg *config.Config) storageconfig.StorageConfig {
 				AccessKeyID:     "TODO",
 				SecretAccessKey: "TODO",
 				Secure:          true,
-				Region:          cfg.Metadata.Region,
+				Region:          context.Config.Metadata.Region,
 				ParallelUpload:  6,
 			},
 		}
 	}
-	if b := cfg.ObjectStorage.InCluster; b != nil && *b {
+	if b := context.Config.ObjectStorage.InCluster; b != nil && *b {
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.MinIOStorage,
 			MinIOConfig: storageconfig.MinIOConfig{
-				Endpoint:        "minio",
-				AccessKeyID:     "TODO",
-				SecretAccessKey: "TODO",
-				Secure:          true,
-				Region:          cfg.Metadata.Region,
+				Endpoint:        "minio:9000",
+				AccessKeyID:     context.Values.StorageAccessKey,
+				SecretAccessKey: context.Values.StorageSecretKey,
+				Secure:          false,
+				Region:          context.Config.Metadata.Region,
 				ParallelUpload:  6,
 			},
 		}
