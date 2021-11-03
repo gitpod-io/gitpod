@@ -36,5 +36,6 @@ pod:
       sudo chown -R gitpod:gitpod /workspace
       kubectl get secret k3sdev -n werft -ojsonpath='{.data}' | jq -r .[] | base64 -d > /workspace/k3s-external.yaml
 
-      npm install shelljs semver ts-node typescript @types/shelljs @types/node @types/semver
-      npx ts-node .werft/wipe-devstaging.ts
+      cd .werft
+      yarn install
+      npx ts-node ./wipe-devstaging.ts
