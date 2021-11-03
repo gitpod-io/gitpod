@@ -31,11 +31,12 @@ class ControllerStatusProvider {
         val response: Response = try {
             client.get("http://localhost:$PORT/codeWithMe/unattendedHostStatus?token=$cwmToken")
         } catch (e: Exception) {
-            logger.error(e)
-            throw ConnectionFailed(cwmToken)
+            logger.error("Error fetching host status: $e")
+            return ControllerStatus(false, 0)
         }
 
         if (response.projects.isEmpty()) {
+            logger.error("response.projects is empty")
             return ControllerStatus(false, 0)
         }
 
@@ -49,9 +50,6 @@ class ControllerStatusProvider {
         private const val PORT = 63342
 
         data class ControllerStatus(val connected: Boolean, val secondsSinceLastActivity: Int)
-
-        class ConnectionFailed(token: String) :
-            Exception("Couldn't connect to Jetbrains IDE backend at port $PORT with token $token ")
 
         @JsonIgnoreProperties(ignoreUnknown = true)
         private data class Response(
