@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,12 +35,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Port:    ContainerPort,
 			Timeout: util.Duration(time.Second * 5),
 			Repos: map[string]blobserve.Repo{
-				// @todo get the correct values for all the map keys and PrePulls
-				"1": {
-					PrePull: []string{},
-					Workdir: "/theia/theia-app/app/lib",
-				},
-				"2": {
+				common.RepoName(ctx.Config.Repository, workspace.IDEImageRepo): {
 					PrePull: []string{},
 					Workdir: "/ide",
 					Replacements: []blobserve.StringReplacement{{
@@ -72,7 +68,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Replacement: "${supervisor}",
 					}},
 				},
-				"3": {
+				common.RepoName(ctx.Config.Repository, workspace.SupervisorImage): {
 					PrePull: []string{},
 					Workdir: "/.supervisor/frontend",
 				},
