@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/net/nettest"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -25,14 +26,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
-const (
-	// proxyPortRange is the port range in which we'll try to find
-	// ports for proxying localhost-only services.
-	proxyPortRangeLo uint32 = 50000
-	proxyPortRangeHi uint32 = 60000
-)
-
-// NewManager creates a new port manager.
+// NewManager creates a new port manager
 func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, config ConfigInterace, tunneled TunneledPortsInterface, slirp SlirpClient, internalPorts ...uint32) *Manager {
 	state := make(map[uint32]*managedPort)
 	internal := make(map[uint32]struct{})
@@ -42,7 +36,10 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 
 	if slirp != nil {
 		for _, p := range internalPorts {
-			_ = slirp.Expose(p)
+			err := slirp.Expose(p)
+			if err != nil {
+				log.WithError(err).WithField("port", p).Error("cannot expose port")
+			}
 		}
 	}
 
@@ -74,10 +71,9 @@ type localhostProxy struct {
 }
 
 type autoExposure struct {
-	state      api.PortAutoExposure
-	ctx        context.Context
-	globalPort uint32
-	public     bool
+	state  api.PortAutoExposure
+	ctx    context.Context
+	public bool
 }
 
 // Manager brings together served and exposed ports. It keeps track of which port is exposed, which one is served,
@@ -93,7 +89,7 @@ type Manager struct {
 
 	internal     map[uint32]struct{}
 	proxies      map[uint32]*localhostProxy
-	proxyStarter func(LocalhostPort uint32, GlobalPort uint32) (proxy io.Closer, err error)
+	proxyStarter func(port uint32) (proxy io.Closer, err error)
 	autoExposed  map[uint32]*autoExposure
 
 	autoTunneled      map[uint32]struct{}
@@ -120,7 +116,6 @@ type managedPort struct {
 	AutoExposure api.PortAutoExposure
 
 	LocalhostPort uint32
-	GlobalPort    uint32
 
 	Tunneled           bool
 	TunneledTargetPort uint32
@@ -128,13 +123,13 @@ type managedPort struct {
 	TunneledClients    map[string]uint32
 }
 
-// Subscription is a Subscription to status updates.
+// Subscription is a Subscription to status updates
 type Subscription struct {
 	updates chan []*api.PortsStatus
 	Close   func() error
 }
 
-// Updates returns the updates channel.
+// Updates returns the updates channel
 func (s *Subscription) Updates() <-chan []*api.PortsStatus {
 	return s.updates
 }
@@ -161,6 +156,42 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		}
 	}()
 	defer cancel()
+
+	// set a health check for exposed port trough the proxies
+	go func() {
+		tick := time.NewTicker(2 * time.Second)
+		defer tick.Stop()
+
+		for {
+			<-tick.C
+
+			pm.mu.RLock()
+			servedGlobal := make(map[uint32]struct{})
+			for _, p := range pm.served {
+				if !p.BoundToLocalhost {
+					servedGlobal[p.Port] = struct{}{}
+				}
+			}
+			pm.mu.RUnlock()
+
+			for localPort, proxy := range pm.proxies {
+				_, openedGlobal := servedGlobal[localPort]
+				openedLocal := isLocalPortOpen(int(localPort))
+				if !openedLocal && openedGlobal {
+					pm.mu.Lock()
+					delete(pm.proxies, localPort)
+					pm.mu.Unlock()
+
+					err := proxy.Close()
+					if err != nil {
+						log.WithError(err).WithField("localPort", localPort).Warn("cannot stop localhost proxy")
+					} else {
+						log.WithField("localPort", localPort).Info("localhost proxy has been stopped")
+					}
+				}
+			}
+		}
+	}()
 
 	go pm.E.Run(ctx)
 	exposedUpdates, exposedErrors := pm.E.Observe(ctx)
@@ -233,7 +264,7 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
-// Status provides the current port status.
+// Status provides the current port status
 func (pm *Manager) Status() []*api.PortsStatus {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
@@ -274,7 +305,9 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 		for _, key := range servedKeys {
 			newServed = append(newServed, servedMap[key])
 		}
+
 		if !reflect.DeepEqual(pm.served, newServed) {
+			log.WithField("served", newServed).Debug("updating served ports")
 			pm.served = newServed
 			pm.updateProxies()
 			pm.updateSlirp()
@@ -323,7 +356,6 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		}
 		state[port] = &managedPort{
 			LocalhostPort: port,
-			GlobalPort:    exposed.GlobalPort,
 			Exposed:       true,
 			Visibility:    Visibility,
 			URL:           exposed.URL,
@@ -336,6 +368,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		if pm.boundInternally(port) {
 			continue
 		}
+
 		mp, exists := state[port]
 		if !exists {
 			mp = &managedPort{}
@@ -374,13 +407,13 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 			if autoExposed {
 				return
 			}
-			mp.GlobalPort = port
+
 			mp.Visibility = api.PortVisibility_private
 			if config.Visibility == "public" {
 				mp.Visibility = api.PortVisibility_public
 			}
 			public := mp.Visibility == api.PortVisibility_public
-			mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, mp.GlobalPort, public).state
+			mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, public).state
 		})
 	}
 
@@ -402,28 +435,9 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		mp.LocalhostPort = port
 		mp.Served = true
 
-		var exposedGlobalPort uint32
 		autoExposure, autoExposed := pm.autoExposed[port]
 		if autoExposed {
-			exposedGlobalPort = autoExposure.globalPort
 			mp.AutoExposure = autoExposure.state
-		} else if mp.Exposed {
-			exposedGlobalPort = mp.GlobalPort
-		}
-
-		if served.BoundToLocalhost {
-			proxy, exists := pm.proxies[port]
-			if exists {
-				mp.GlobalPort = proxy.proxyPort
-			} else {
-				mp.GlobalPort = 0
-			}
-		} else {
-			// we don't need a proxy - the port is globally bound
-			mp.GlobalPort = port
-		}
-
-		if mp.GlobalPort == 0 || ((mp.Exposed || autoExposed) && mp.GlobalPort == exposedGlobalPort) {
 			continue
 		}
 
@@ -436,38 +450,56 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 			public = exists && config.Visibility == "public"
 		}
 
-		mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, mp.GlobalPort, public).state
+		if mp.Exposed && ((mp.Visibility == api.PortVisibility_public && public) || (mp.Visibility == api.PortVisibility_private && !public)) {
+			continue
+		}
+
+		mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, public).state
 	}
-	return state
+
+	var ports []uint32
+	for port := range state {
+		ports = append(ports, port)
+	}
+
+	sort.Slice(ports, func(i, j int) bool {
+		return ports[i] < ports[j]
+	})
+
+	newState := make(map[uint32]*managedPort)
+	for _, mp := range ports {
+		newState[mp] = state[mp]
+	}
+
+	return newState
 }
 
-// clients should guard a call with check whether such port is already exposed or auto exposed.
-func (pm *Manager) autoExpose(ctx context.Context, localPort uint32, globalPort uint32, public bool) *autoExposure {
-	exposing := pm.E.Expose(ctx, localPort, globalPort, public)
+// clients should guard a call with check whether such port is already exposed or auto exposed
+func (pm *Manager) autoExpose(ctx context.Context, localPort uint32, public bool) *autoExposure {
+	exposing := pm.E.Expose(ctx, localPort, public)
 	autoExpose := &autoExposure{
-		state:      api.PortAutoExposure_trying,
-		ctx:        ctx,
-		globalPort: globalPort,
-		public:     public,
+		state:  api.PortAutoExposure_trying,
+		ctx:    ctx,
+		public: public,
 	}
 	go func() {
 		err := <-exposing
 		if err != nil {
 			if err != context.Canceled {
 				autoExpose.state = api.PortAutoExposure_failed
-				log.WithError(err).WithField("localPort", localPort).WithField("globalPort", globalPort).Warn("cannot auto-expose port")
+				log.WithError(err).WithField("localPort", localPort).Warn("cannot auto-expose port")
 			}
 			return
 		}
 		autoExpose.state = api.PortAutoExposure_succeeded
-		log.WithField("localPort", localPort).WithField("globalPort", globalPort).Info("auto-exposed port")
+		log.WithField("localPort", localPort).Info("auto-exposed port")
 	}()
 	pm.autoExposed[localPort] = autoExpose
-	log.WithField("localPort", localPort).WithField("globalPort", globalPort).Info("auto-exposing port")
+	log.WithField("localPort", localPort).Info("auto-exposing port")
 	return autoExpose
 }
 
-// RetryAutoExpose retries auto exposing the give port.
+// RetryAutoExpose retries auto exposing the give port
 func (pm *Manager) RetryAutoExpose(ctx context.Context, localPort uint32) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -475,7 +507,7 @@ func (pm *Manager) RetryAutoExpose(ctx context.Context, localPort uint32) {
 	if !autoExposed || autoExpose.state != api.PortAutoExposure_failed || autoExpose.ctx.Err() != nil {
 		return
 	}
-	pm.autoExpose(autoExpose.ctx, localPort, autoExpose.globalPort, autoExpose.public)
+	pm.autoExpose(autoExpose.ctx, localPort, autoExpose.public)
 	pm.forceUpdate()
 }
 
@@ -504,6 +536,7 @@ func (pm *Manager) autoTunnel(ctx context.Context) {
 		if pm.boundInternally(served.Port) {
 			continue
 		}
+
 		_, autoTunneled := pm.autoTunneled[served.Port]
 		if !autoTunneled {
 			descs = append(descs, &PortTunnelDescription{
@@ -538,29 +571,13 @@ func (pm *Manager) updateSlirp() {
 }
 
 func (pm *Manager) updateProxies() {
-	opened := make(map[uint32]struct{}, len(pm.served))
+	servedLocal := make(map[uint32]struct{})
+	servedGlobal := make(map[uint32]struct{})
 	for _, p := range pm.served {
-		opened[p.Port] = struct{}{}
-	}
-
-	for localPort, proxy := range pm.proxies {
-		globalPort := proxy.proxyPort
-		_, openedLocal := opened[localPort]
-		_, openedGlobal := opened[globalPort]
-
-		if !openedLocal && openedGlobal {
-			delete(pm.proxies, localPort)
-
-			err := proxy.Close()
-			if err != nil {
-				log.WithError(err).WithField("globalPort", globalPort).WithField("localPort", localPort).Warn("cannot stop localhost proxy")
-			} else {
-				log.WithField("globalPort", globalPort).WithField("localPort", localPort).Info("localhost proxy has been stopped")
-			}
-		}
-
-		if !openedGlobal {
-			delete(pm.internal, globalPort)
+		if p.BoundToLocalhost {
+			servedLocal[p.Port] = struct{}{}
+		} else {
+			servedGlobal[p.Port] = struct{}{}
 		}
 	}
 
@@ -571,34 +588,16 @@ func (pm *Manager) updateProxies() {
 			continue
 		}
 
-		var globalPort uint32
-		for port := proxyPortRangeHi; port >= proxyPortRangeLo; port-- {
-			if _, used := opened[port]; used {
-				continue
-			}
-			if _, used := pm.internal[port]; used {
-				continue
-			}
-
-			globalPort = port
-			break
-		}
-		if globalPort == 0 {
-			log.WithField("port", localPort).Error("cannot find a free proxy port")
-			continue
-		}
-
-		proxy, err := pm.proxyStarter(localPort, globalPort)
+		proxy, err := pm.proxyStarter(localPort)
 		if err != nil {
-			log.WithError(err).WithField("globalPort", globalPort).WithField("localPort", localPort).Warn("cannot start localhost proxy")
+			log.WithError(err).WithField("localPort", localPort).Warn("cannot start localhost proxy")
 			continue
 		}
-		log.WithField("globalPort", globalPort).WithField("localPort", localPort).Info("localhost proxy has been started")
+		log.WithField("localPort", localPort).Info("localhost proxy has been started")
 
-		pm.internal[globalPort] = struct{}{}
 		pm.proxies[localPort] = &localhostProxy{
 			Closer:    proxy,
-			proxyPort: globalPort,
+			proxyPort: localPort,
 		}
 	}
 }
@@ -630,8 +629,8 @@ func (pm *Manager) boundInternally(port uint32) bool {
 	return exists
 }
 
-// Expose exposes a port.
-func (pm *Manager) Expose(ctx context.Context, port uint32, targetPort uint32) error {
+// Expose exposes a port
+func (pm *Manager) Expose(ctx context.Context, port uint32) error {
 	unlock := true
 	pm.mu.RLock()
 	defer func() {
@@ -661,14 +660,10 @@ func (pm *Manager) Expose(ctx context.Context, port uint32, targetPort uint32) e
 	pm.mu.RUnlock()
 	unlock = false
 
-	global := targetPort
-	if global == 0 {
-		global = port
-	}
 	public := exists && config.Visibility != "private"
-	err := <-pm.E.Expose(ctx, port, global, public)
+	err := <-pm.E.Expose(ctx, port, public)
 	if err != nil && err != context.Canceled {
-		log.WithError(err).WithField("port", port).WithField("targetPort", targetPort).Error("cannot expose port")
+		log.WithError(err).WithField("port", port).Error("cannot expose port")
 	}
 	return err
 }
@@ -680,6 +675,7 @@ func (pm *Manager) Tunnel(ctx context.Context, desc *PortTunnelDescription) erro
 	if pm.boundInternally(desc.LocalPort) {
 		return xerrors.New("cannot tunnel internal port")
 	}
+
 	tunneled, err := pm.T.Tunnel(ctx, &TunnelOptions{
 		SkipIfExists: false,
 	}, desc)
@@ -698,9 +694,11 @@ func (pm *Manager) CloseTunnel(ctx context.Context, port uint32) error {
 			pm.mu.RUnlock()
 		}
 	}()
+
 	if pm.boundInternally(port) {
 		return xerrors.New("cannot close internal port tunnel")
 	}
+
 	// we don't need the lock anymore. Let's unlock and make sure the defer doesn't try
 	// the same thing again.
 	pm.mu.RUnlock()
@@ -710,12 +708,12 @@ func (pm *Manager) CloseTunnel(ctx context.Context, port uint32) error {
 	return err
 }
 
-// EstablishTunnel actually establishes the tunnel.
+// EstablishTunnel actually establishes the tunnel
 func (pm *Manager) EstablishTunnel(ctx context.Context, clientID string, localPort uint32, targetPort uint32) (net.Conn, error) {
 	return pm.T.EstablishTunnel(ctx, clientID, localPort, targetPort)
 }
 
-// AutoTunnel controls enablement of auto tunneling.
+// AutoTunnel controls enablement of auto tunneling
 func (pm *Manager) AutoTunnel(ctx context.Context, enabled bool) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -724,13 +722,13 @@ func (pm *Manager) AutoTunnel(ctx context.Context, enabled bool) {
 }
 
 var (
-	// ErrClosed when the port management is stopped.
+	// ErrClosed when the port management is stopped
 	ErrClosed = errors.New("closed")
-	// ErrTooManySubscriptions when max allowed subscriptions exceed.
+	// ErrTooManySubscriptions when max allowed subscriptions exceed
 	ErrTooManySubscriptions = errors.New("too many subscriptions")
 )
 
-// Subscribe subscribes for status updates.
+// Subscribe subscribes for status updates
 func (pm *Manager) Subscribe() (*Subscription, error) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -776,9 +774,8 @@ func (pm *Manager) getStatus() []*api.PortsStatus {
 func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 	mp := pm.state[port]
 	ps := &api.PortsStatus{
-		GlobalPort: mp.GlobalPort,
-		LocalPort:  mp.LocalhostPort,
-		Served:     mp.Served,
+		LocalPort: mp.LocalhostPort,
+		Served:    mp.Served,
 	}
 	if mp.Exposed && mp.URL != "" {
 		ps.Exposed = &api.ExposedPortInfo{
@@ -798,12 +795,19 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 	return ps
 }
 
-func startLocalhostProxy(localPort uint32, globalPort uint32) (io.Closer, error) {
-	host := fmt.Sprintf("localhost:%d", localPort)
+var workspaceIPAdress string
+
+func init() {
+	workspaceIPAdress = defaultRoutableIP()
+}
+func startLocalhostProxy(port uint32) (io.Closer, error) {
+	host := fmt.Sprintf("localhost:%d", port)
+
 	dsturl, err := url.Parse("http://" + host)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot produce proxy destination URL: %w", err)
 	}
+
 	proxy := httputil.NewSingleHostReverseProxy(dsturl)
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
@@ -811,13 +815,14 @@ func startLocalhostProxy(localPort uint32, globalPort uint32) (io.Closer, error)
 		originalDirector(req)
 	}
 	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
-		log.WithError(err).WithField("local-port", localPort).WithField("url", req.URL.String()).Warn("localhost proxy request failed")
+		log.WithError(err).WithField("local-port", port).WithField("url", req.URL.String()).Warn("localhost proxy request failed")
 		rw.WriteHeader(http.StatusBadGateway)
 	}
-	proxyAddr := fmt.Sprintf(":%d", globalPort)
+
+	proxyAddr := fmt.Sprintf("%v:%d", workspaceIPAdress, port)
 	lis, err := net.Listen("tcp", proxyAddr)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot listen on proxy port %d: %w", globalPort, err)
+		return nil, xerrors.Errorf("cannot listen on proxy port %d: %w", port, err)
 	}
 
 	srv := &http.Server{
@@ -829,8 +834,43 @@ func startLocalhostProxy(localPort uint32, globalPort uint32) (io.Closer, error)
 		if err == http.ErrServerClosed {
 			return
 		}
-		log.WithError(err).WithField("local-port", localPort).Error("localhost proxy failed")
+		log.WithError(err).WithField("local-port", port).Error("localhost proxy failed")
 	}()
 
 	return srv, nil
+}
+
+func defaultRoutableIP() string {
+	iface, err := nettest.RoutedInterface("ip", net.FlagUp|net.FlagBroadcast)
+	if err != nil {
+		return ""
+	}
+
+	iface, err = net.InterfaceByName(iface.Name)
+	if err != nil {
+		return ""
+	}
+
+	addresses, err := iface.Addrs()
+	if err != nil {
+		return ""
+	}
+
+	return addresses[0].(*net.IPNet).IP.String()
+}
+
+func isLocalPortOpen(port int) bool {
+	timeout := 1 * time.Second
+	target := fmt.Sprintf("127.0.0.1:%d", port)
+	conn, err := net.DialTimeout("tcp", target, timeout)
+	if err != nil {
+		return false
+	}
+
+	if conn != nil {
+		conn.Close()
+		return true
+	}
+
+	return false
 }
