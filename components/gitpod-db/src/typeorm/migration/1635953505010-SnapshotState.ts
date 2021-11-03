@@ -10,7 +10,7 @@ import { columnExists, indexExists } from "./helper/helper";
 const TABLE_NAME = "d_b_snapshot";
 const INDEX_NAME = "ind_state";
 
-export class SnapshotState1634742450609 implements MigrationInterface {
+export class SnapshotState1635953505010 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (!(await columnExists(queryRunner, TABLE_NAME, "availableTime"))) {
