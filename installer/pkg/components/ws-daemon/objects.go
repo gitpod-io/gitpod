@@ -16,8 +16,8 @@ var Objects = common.CompositeRenderFunc(
 	daemonset,
 	networkpolicy,
 	rolebinding,
-	common.GenerateService(Component, nil, func(spec *corev1.ServiceSpec) {
-		spec.ClusterIP = "None"
+	common.GenerateService(Component, nil, func(service *corev1.Service) {
+		service.Spec.ClusterIP = "None"
 	}),
 	tlssecret,
 )

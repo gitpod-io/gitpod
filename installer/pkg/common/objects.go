@@ -6,6 +6,7 @@ package common
 
 import (
 	"fmt"
+
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +36,7 @@ type ServicePort struct {
 	ServicePort   int32
 }
 
-func GenerateService(component string, ports map[string]ServicePort, mod ...func(spec *corev1.ServiceSpec)) RenderFunc {
+func GenerateService(component string, ports map[string]ServicePort, mod ...func(spec *corev1.Service)) RenderFunc {
 	return func(cfg *RenderContext) ([]runtime.Object, error) {
 		var servicePorts []corev1.ServicePort
 		for name, port := range ports {
@@ -47,36 +48,31 @@ func GenerateService(component string, ports map[string]ServicePort, mod ...func
 			})
 		}
 
-		spec := &corev1.ServiceSpec{
-			Ports:    servicePorts,
-			Selector: DefaultLabels(component),
-			Type:     corev1.ServiceTypeClusterIP,
-		}
-
-		for _, m := range mod {
-			// Apply any custom modifications to the spec
-			m(spec)
-		}
-
-		var annotations map[string]string
-		if componentConfig, found := cfg.Config.Workspace.Components[component]; found {
-			annotations = componentConfig.ServiceAnnotations
-		}
-
 		// kind=service is required for services. It allows Gitpod to find them
 		serviceLabels := DefaultLabels(component)
 		serviceLabels["kind"] = "service"
 
-		return []runtime.Object{&corev1.Service{
+		service := &corev1.Service{
 			TypeMeta: TypeMetaService,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        component,
 				Namespace:   cfg.Namespace,
 				Labels:      serviceLabels,
-				Annotations: annotations,
+				Annotations: make(map[string]string),
 			},
-			Spec: *spec,
-		}}, nil
+			Spec: corev1.ServiceSpec{
+				Ports:    servicePorts,
+				Selector: DefaultLabels(component),
+				Type:     corev1.ServiceTypeClusterIP,
+			},
+		}
+
+		for _, m := range mod {
+			// Apply any custom modifications to the spec
+			m(service)
+		}
+
+		return []runtime.Object{service}, nil
 	}
 }
 
