@@ -25,15 +25,10 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, nil
 	}
 
-	rootPassword, err := common.RandomString(20)
-	if err != nil {
-		return nil, err
-	}
-
-	password, err := common.RandomString(20)
-	if err != nil {
-		return nil, err
-	}
+	// todo(sje): replace these with values persisted across generations
+	// The chart doesn't like it when you change these values
+	rootPassword := "PHejMfsLvfLcG1Drs40h"
+	password := "jBzVMe2w4Yi7GagadsyB"
 
 	encryptionKeys, err := json.MarshalIndent([]EncryptionKey{{
 		Name:     "general",
