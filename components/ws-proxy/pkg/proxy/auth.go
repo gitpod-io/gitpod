@@ -16,7 +16,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
-// WorkspaceAuthHandler rejects requests which are not authenticated or authorized to access a workspace
+// WorkspaceAuthHandler rejects requests which are not authenticated or authorized to access a workspace.
 func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		cookiePrefix := domain
@@ -35,19 +35,22 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 			if wsID == "" {
 				log.Warn("workspace request without workspace ID")
 				resp.WriteHeader(http.StatusForbidden)
+
 				return
 			}
 
-			ws := info.WorkspaceInfo(req.Context(), wsID)
+			ws := info.WorkspaceInfo(wsID)
 			if ws == nil {
 				log.WithField("workspaceId", wsID).Warn("did not find workspace info")
 				resp.WriteHeader(http.StatusNotFound)
+
 				return
 			}
 
 			if ws.Auth != nil && ws.Auth.Admission == api.AdmissionLevel_ADMIT_EVERYONE {
 				// workspace is free for all - no tokens or cookies matter
 				h.ServeHTTP(resp, req)
+
 				return
 			}
 
@@ -64,6 +67,7 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 					for _, p := range ws.Ports {
 						if p.Port == uint32(prt) {
 							isPublic = p.Visibility == api.PortVisibility_PORT_VISIBILITY_PUBLIC
+
 							break
 						}
 					}
@@ -72,6 +76,7 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 				if isPublic {
 					// workspace port is free for all - no tokens or cookies matter
 					h.ServeHTTP(resp, req)
+
 					return
 				}
 
@@ -85,6 +90,7 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 				if err != nil {
 					log.WithField("cookieName", cn).Debug("no owner cookie present")
 					resp.WriteHeader(http.StatusUnauthorized)
+
 					return
 				}
 
@@ -94,12 +100,14 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 			if err != nil {
 				log.WithError(err).Warn("cannot decode owner token")
 				resp.WriteHeader(http.StatusBadRequest)
+
 				return
 			}
 
 			if tkn != ws.Auth.OwnerToken {
 				log.Warn("owner token mismatch")
 				resp.WriteHeader(http.StatusForbidden)
+
 				return
 			}
 

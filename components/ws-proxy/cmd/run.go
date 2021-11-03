@@ -5,28 +5,26 @@
 package cmd
 
 import (
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/bombsimon/logrusr"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
-	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 )
 
-var jsonLog bool
-var verbose bool
+var (
+	jsonLog bool
+	verbose bool
+)
 
-// runCmd represents the run command
+// runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:   "run <config.json>",
 	Short: "Starts ws-proxy",
@@ -37,80 +35,58 @@ var runCmd = &cobra.Command{
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
 
-		common_grpc.SetupLogging()
-		if cfg.PrometheusAddr != "" {
-			reg := prometheus.NewRegistry()
-			reg.MustRegister(
-				collectors.NewGoCollector(),
-				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-				common_grpc.ClientMetrics(),
-			)
+		ctrl.SetLogger(logrusr.NewLogger(log.Log))
 
-			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-
-			go func() {
-				err := http.ListenAndServe(cfg.PrometheusAddr, handler)
-				if err != nil {
-					log.WithError(err).Error("Prometheus metrics server failed")
-				}
-			}()
-			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
+		opts := ctrl.Options{
+			Scheme:                 scheme,
+			Namespace:              cfg.Namespace,
+			HealthProbeBindAddress: cfg.ReadinessProbeAddr,
+			LeaderElection:         false,
 		}
+
+		if cfg.PrometheusAddr != "" {
+			opts.MetricsBindAddress = cfg.PrometheusAddr
+		}
+
+		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), opts)
+		if err != nil {
+			log.WithError(err).Fatal(err, "unable to start manager")
+		}
+
+		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+			log.WithError(err).Fatal("unable to set up health check")
+		}
+		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+			log.WithError(err).Fatal(err, "unable to set up ready check")
+		}
+
 		if cfg.PProfAddr != "" {
 			go pprof.Serve(cfg.PProfAddr)
 		}
 
-		const wsmanConnectionAttempts = 5
-		workspaceInfoProvider := proxy.NewRemoteWorkspaceInfoProvider(cfg.WorkspaceInfoProviderConfig)
-		for i := 0; i < wsmanConnectionAttempts; i++ {
-			err = workspaceInfoProvider.Run()
-			if err == nil {
-				break
-			}
-			if i == wsmanConnectionAttempts-1 {
-				continue
-			}
-
-			log.WithError(err).Error("cannot start workspace info provider - will retry in 10 seconds")
-			time.Sleep(10 * time.Second)
-		}
+		workspaceInfoProvider := proxy.NewRemoteWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
+		err = workspaceInfoProvider.SetupWithManager(mgr)
 		if err != nil {
-			log.WithError(err).Fatal("cannot start workspace info provider")
+			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
 		}
+
 		log.Infof("workspace info provider started")
 
 		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider).MustServe()
-		log.Infof("started proxying on %s", cfg.Ingress.HttpAddress)
-
-		if cfg.ReadinessProbeAddr != "" {
-			go func() {
-				err = http.ListenAndServe(cfg.ReadinessProbeAddr, http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-					if workspaceInfoProvider.Ready() {
-						resp.WriteHeader(http.StatusOK)
-					} else {
-						resp.WriteHeader(http.StatusServiceUnavailable)
-					}
-				}))
-
-				if err != nil {
-					log.WithError(err).Fatal("readiness endpoint server failed")
-				}
-			}()
-		}
+		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
 
 		log.Info("🚪 ws-proxy is up and running")
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		<-sigChan
-		log.Info("received SIGTERM, ws-proxy is stopping...")
+		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+			log.WithError(err).Fatal(err, "problem starting ws-proxy")
+		}
 
-		defer func() {
-			log.Info("ws-proxy stopped.")
-		}()
+		log.Info("Received SIGINT - shutting down")
 	},
 }
 
 func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	rootCmd.AddCommand(runCmd)
 }
+
+var scheme = runtime.NewScheme()

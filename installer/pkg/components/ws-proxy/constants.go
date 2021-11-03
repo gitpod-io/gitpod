@@ -4,7 +4,9 @@
 
 package wsproxy
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
 
 const (
 	Component          = common.WSProxyComponent

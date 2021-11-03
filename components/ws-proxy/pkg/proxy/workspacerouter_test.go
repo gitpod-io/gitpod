@@ -83,7 +83,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			ideRouter, portRouter, blobserveRouter := test.Router(r, &fakeWsInfoProvider{infos: test.Infos})
 			var act Expectation
 			actRecorder := func(w http.ResponseWriter, req *http.Request) {
-				defer w.WriteHeader(200)
+				defer w.WriteHeader(http.StatusOK)
 
 				vars := mux.Vars(req)
 				if vars == nil {

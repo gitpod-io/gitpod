@@ -14,7 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
-// Config is the configuration for a WorkspaceProxy
+// Config is the configuration for a WorkspaceProxy.
 type Config struct {
 	HTTPS struct {
 		Key         string `json:"key"`
@@ -29,7 +29,7 @@ type Config struct {
 	BuiltinPages BuiltinPagesConfig `json:"builtinPages"`
 }
 
-// Validate validates the configuration to catch issues during startup and not at runtime
+// Validate validates the configuration to catch issues during startup and not at runtime.
 func (c *Config) Validate() error {
 	type validatable interface {
 		Validate() error
@@ -49,51 +49,51 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// HostBasedIngressConfig configures the host-based ingress
+// HostBasedIngressConfig configures the host-based ingress.
 type HostBasedIngressConfig struct {
-	HttpAddress  string `json:"httpAddress"`
-	HttpsAddress string `json:"httpsAddress"`
+	HTTPAddress  string `json:"httpAddress"`
+	HTTPSAddress string `json:"httpsAddress"`
 	Header       string `json:"header"`
 }
 
-// Validate validates this config
+// Validate validates this config.
 func (c *HostBasedIngressConfig) Validate() error {
 	if c == nil {
 		return xerrors.Errorf("host based ingress config is mandatory")
 	}
 	return validation.ValidateStruct(c,
-		validation.Field(&c.HttpAddress, validation.Required),
-		validation.Field(&c.HttpsAddress, validation.Required),
+		validation.Field(&c.HTTPAddress, validation.Required),
+		validation.Field(&c.HTTPSAddress, validation.Required),
 		validation.Field(&c.Header, validation.Required),
 	)
 }
 
-// WorkspacePodConfig contains config around the workspace pod
+// WorkspacePodConfig contains config around the workspace pod.
 type WorkspacePodConfig struct {
-	ServiceTemplate     string `json:"serviceTemplate"`
-	PortServiceTemplate string `json:"portServiceTemplate"`
-	TheiaPort           uint16 `json:"theiaPort"`
-	SupervisorPort      uint16 `json:"supervisorPort"`
-	SupervisorImage     string `json:"supervisorImage"`
+	TheiaPort       uint16 `json:"theiaPort"`
+	SupervisorPort  uint16 `json:"supervisorPort"`
+	SupervisorImage string `json:"supervisorImage"`
 }
 
-// Validate validates the configuration to catch issues during startup and not at runtime
+// Validate validates the configuration to catch issues during startup and not at runtime.
 func (c *WorkspacePodConfig) Validate() error {
 	if c == nil {
 		return xerrors.Errorf("WorkspacePodConfig not configured")
 	}
 
 	err := validation.ValidateStruct(c,
-		validation.Field(&c.ServiceTemplate, validation.Required),
-		validation.Field(&c.PortServiceTemplate, validation.Required),
 		validation.Field(&c.TheiaPort, validation.Required),
 		validation.Field(&c.SupervisorPort, validation.Required),
 		validation.Field(&c.SupervisorImage, validation.Required),
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// GitpodInstallation contains config regarding the Gitpod installation
+// GitpodInstallation contains config regarding the Gitpod installation.
 type GitpodInstallation struct {
 	Scheme                   string `json:"scheme"`
 	HostName                 string `json:"hostName"`
@@ -101,7 +101,7 @@ type GitpodInstallation struct {
 	WorkspaceHostSuffixRegex string `json:"workspaceHostSuffixRegex"`
 }
 
-// Validate validates the configuration to catch issues during startup and not at runtime
+// Validate validates the configuration to catch issues during startup and not at runtime.
 func (c *GitpodInstallation) Validate() error {
 	if c == nil {
 		return xerrors.Errorf("GitpodInstallation not configured")
@@ -114,13 +114,13 @@ func (c *GitpodInstallation) Validate() error {
 	)
 }
 
-// BlobServerConfig configures where to serve the IDE from
+// BlobServerConfig configures where to serve the IDE from.
 type BlobServerConfig struct {
 	Scheme string `json:"scheme"`
 	Host   string `json:"host"`
 }
 
-// Validate validates the configuration to catch issues during startup and not at runtime
+// Validate validates the configuration to catch issues during startup and not at runtime.
 func (c *BlobServerConfig) Validate() error {
 	if c == nil {
 		return xerrors.Errorf("BlobServer not configured")
@@ -136,7 +136,7 @@ func (c *BlobServerConfig) Validate() error {
 	return nil
 }
 
-// TransportConfig configures the way how ws-proxy connects to it's backend services
+// TransportConfig configures the way how ws-proxy connects to it's backend services.
 type TransportConfig struct {
 	ConnectTimeout      util.Duration `json:"connectTimeout"`
 	IdleConnTimeout     util.Duration `json:"idleConnTimeout"`
@@ -144,7 +144,7 @@ type TransportConfig struct {
 	MaxIdleConnsPerHost int           `json:"maxIdleConnsPerHost"`
 }
 
-// Validate validates the configuration to catch issues during startup and not at runtime
+// Validate validates the configuration to catch issues during startup and not at runtime.
 func (c *TransportConfig) Validate() error {
 	if c == nil {
 		return xerrors.Errorf("TransportConfig not configured")
@@ -158,12 +158,12 @@ func (c *TransportConfig) Validate() error {
 	)
 }
 
-// BuiltinPagesConfig configures pages served directly by ws-proxy
+// BuiltinPagesConfig configures pages served directly by ws-proxy.
 type BuiltinPagesConfig struct {
 	Location string `json:"location"`
 }
 
-// Validate validates the configuration to catch issues during startup and not at runtime
+// Validate validates the configuration to catch issues during startup and not at runtime.
 func (c *BuiltinPagesConfig) Validate() error {
 	if c == nil {
 		return xerrors.Errorf("BuiltinPagesConfig not configured")
