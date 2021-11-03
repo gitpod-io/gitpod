@@ -14,7 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
-// WorkspaceProxy is the entity which forwards all inbound requests to the relevant workspace pods
+// WorkspaceProxy is the entity which forwards all inbound requests to the relevant workspace pods.
 type WorkspaceProxy struct {
 	Ingress               HostBasedIngressConfig
 	Config                Config
@@ -22,7 +22,7 @@ type WorkspaceProxy struct {
 	WorkspaceInfoProvider WorkspaceInfoProvider
 }
 
-// NewWorkspaceProxy creates a new workspace proxy
+// NewWorkspaceProxy creates a new workspace proxy.
 func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider WorkspaceInfoProvider) *WorkspaceProxy {
 	return &WorkspaceProxy{
 		Ingress:               ingress,
@@ -32,7 +32,7 @@ func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceR
 	}
 }
 
-func redirectToHttps(w http.ResponseWriter, r *http.Request) {
+func redirectToHTTPS(w http.ResponseWriter, r *http.Request) {
 	target := "https://" + r.Host + r.URL.Path
 	if len(r.URL.RawQuery) > 0 {
 		target += "?" + r.URL.RawQuery
@@ -41,14 +41,14 @@ func redirectToHttps(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, target, http.StatusTemporaryRedirect)
 }
 
-// MustServe starts the proxy and ends the process if doing so fails
+// MustServe starts the proxy and ends the process if doing so fails.
 func (p *WorkspaceProxy) MustServe() {
 	handler, err := p.Handler()
 	if err != nil {
 		log.WithError(err).Fatal("cannot initialize proxy - this is likely a configuration issue")
 		return
 	}
-	srv := &http.Server{Addr: p.Ingress.HttpsAddress, Handler: handler}
+	srv := &http.Server{Addr: p.Ingress.HTTPSAddress, Handler: handler}
 
 	var (
 		crt = p.Config.HTTPS.Certificate
@@ -59,7 +59,7 @@ func (p *WorkspaceProxy) MustServe() {
 		key = filepath.Join(tproot, key)
 	}
 	go func() {
-		err := http.ListenAndServe(p.Ingress.HttpAddress, http.HandlerFunc(redirectToHttps))
+		err := http.ListenAndServe(p.Ingress.HTTPAddress, http.HandlerFunc(redirectToHTTPS))
 		if err != nil {
 			log.WithError(err).Fatal("cannot start http proxy")
 		}
@@ -72,7 +72,7 @@ func (p *WorkspaceProxy) MustServe() {
 	}
 }
 
-// Handler returns the HTTP handler that serves the proxy routes
+// Handler returns the HTTP handler that serves the proxy routes.
 func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 	r := mux.NewRouter()
 
@@ -83,10 +83,10 @@ func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 	}
 	ideRouter, portRouter, blobserveRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
 	installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider)
-	err = installWorkspacePortRoutes(portRouter, handlerConfig)
+	err = installWorkspacePortRoutes(portRouter, handlerConfig, p.WorkspaceInfoProvider)
 	if err != nil {
 		return nil, err
 	}
-	installBlobserveRoutes(blobserveRouter, handlerConfig)
+	installBlobserveRoutes(blobserveRouter, handlerConfig, p.WorkspaceInfoProvider)
 	return r, nil
 }

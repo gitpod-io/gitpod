@@ -42,7 +42,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 					Admission:  api.AdmissionLevel_ADMIT_OWNER_ONLY,
 					OwnerToken: ownerToken,
 				},
-				Ports: []PortInfo{{PortSpec: api.PortSpec{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PRIVATE}}},
+				Ports: []*api.PortSpec{{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PRIVATE}},
 			},
 		}
 		publicPortInfos = map[string]*WorkspaceInfo{
@@ -53,7 +53,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 					Admission:  api.AdmissionLevel_ADMIT_OWNER_ONLY,
 					OwnerToken: ownerToken,
 				},
-				Ports: []PortInfo{{PortSpec: api.PortSpec{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}}},
+				Ports: []*api.PortSpec{{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
 			},
 		}
 		admitEveryoneInfos = map[string]*WorkspaceInfo{
@@ -251,7 +251,6 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 	}
 }
 
-func setOwnerTokenCookie(r *http.Request, instanceID, token string) *http.Request {
+func setOwnerTokenCookie(r *http.Request, instanceID, token string) {
 	r.AddCookie(&http.Cookie{Name: "_test_domain_com_ws_" + instanceID + "_owner_", Value: token})
-	return r
 }

@@ -8,19 +8,20 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/spf13/cobra"
 )
 
 var (
-	// ServiceName is the name we use for tracing/logging
+	// ServiceName is the name we use for tracing/logging.
 	ServiceName = "ws-proxy"
-	// Version of this service - set during build
+	// Version of this service - set during build.
 	Version = ""
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "ws-proxy",
 	Short: "This acts as reverse-proxy for all workspace-bound requests",

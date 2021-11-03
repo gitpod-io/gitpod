@@ -40,8 +40,8 @@ var (
 			},
 			IDEPublicPort: "23000",
 			InstanceID:    "1943c611-a014-4f4d-bf5d-14ccf0123c60",
-			Ports: []PortInfo{
-				{PortSpec: api.PortSpec{Port: 28080, Target: 38080, Url: "https://28080-amaranth-smelt-9ba20cc1.test-domain.com/", Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
+			Ports: []*api.PortSpec{
+				{Port: 28080, Url: "https://28080-amaranth-smelt-9ba20cc1.test-domain.com/", Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC},
 			},
 			URL:         "https://amaranth-smelt-9ba20cc1.test-domain.com/",
 			WorkspaceID: "amaranth-smelt-9ba20cc1",
@@ -72,11 +72,9 @@ var (
 			Scheme: "http",
 		},
 		WorkspacePodConfig: &WorkspacePodConfig{
-			ServiceTemplate:     "http://localhost:{{ .port }}",
-			PortServiceTemplate: "http://localhost:{{ .port }}",
-			TheiaPort:           workspacePort,
-			SupervisorPort:      supervisorPort,
-			SupervisorImage:     "gitpod-io/supervisor:latest",
+			TheiaPort:       workspacePort,
+			SupervisorPort:  supervisorPort,
+			SupervisorImage: "gitpod-io/supervisor:latest",
 		},
 		BuiltinPages: BuiltinPagesConfig{
 			Location: "../../public",
@@ -88,6 +86,7 @@ type Target struct {
 	Status  int
 	Handler func(w http.ResponseWriter, r *http.Request, requestCount uint8)
 }
+
 type testTarget struct {
 	Target       *Target
 	RequestCount uint8
@@ -96,12 +95,14 @@ type testTarget struct {
 }
 
 func (tt *testTarget) Close() {
-	tt.listener.Close()
-	tt.server.Shutdown(context.Background())
+	_ = tt.listener.Close()
+	_ = tt.server.Shutdown(context.Background())
 }
 
-// startTestTarget starts a new HTTP server that serves as some test target during the unit tests
+// startTestTarget starts a new HTTP server that serves as some test target during the unit tests.
 func startTestTarget(t *testing.T, host, name string) *testTarget {
+	t.Helper()
+
 	l, err := net.Listen("tcp", host)
 	if err != nil {
 		t.Fatalf("cannot start fake IDE host: %q", err)
@@ -147,7 +148,7 @@ func startTestTarget(t *testing.T, host, name string) *testTarget {
 		}
 		w.WriteHeader(http.StatusOK)
 	})}
-	go srv.Serve(l)
+	go func() { _ = srv.Serve(l) }()
 	tt.server = srv
 
 	return tt
@@ -477,7 +478,7 @@ func TestRoutes(t *testing.T) {
 				Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
 					if requestCount == 0 {
 						w.WriteHeader(http.StatusServiceUnavailable)
-						io.WriteString(w, "timeout")
+						_, _ = io.WriteString(w, "timeout")
 						return
 					}
 					w.WriteHeader(http.StatusOK)
@@ -646,6 +647,10 @@ func TestRoutes(t *testing.T) {
 			cfg := config
 			if test.Config != nil {
 				cfg = *test.Config
+				err := cfg.Validate()
+				if err != nil {
+					t.Fatalf("invalid configuration: %q", err)
+				}
 			}
 			router := HostBasedRouter(hostBasedHeader, wsHostSuffix, wsHostNameRegex)
 			if test.Router != nil {
@@ -653,8 +658,8 @@ func TestRoutes(t *testing.T) {
 			}
 
 			ingress := HostBasedIngressConfig{
-				HttpAddress:  "8080",
-				HttpsAddress: "9090",
+				HTTPAddress:  "8080",
+				HTTPSAddress: "9090",
 				Header:       "",
 			}
 
@@ -695,8 +700,8 @@ type fakeWsInfoProvider struct {
 	infos []WorkspaceInfo
 }
 
-// GetWsInfoByID returns the workspace for the given ID
-func (p *fakeWsInfoProvider) WorkspaceInfo(ctx context.Context, workspaceID string) *WorkspaceInfo {
+// GetWsInfoByID returns the workspace for the given ID.
+func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
 	for _, nfo := range p.infos {
 		if nfo.WorkspaceID == workspaceID {
 			return &nfo
@@ -706,7 +711,7 @@ func (p *fakeWsInfoProvider) WorkspaceInfo(ctx context.Context, workspaceID stri
 	return nil
 }
 
-// WorkspaceCoords returns the workspace coords for a public port
+// WorkspaceCoords returns the workspace coords for a public port.
 func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoords {
 	for _, info := range p.infos {
 		if info.IDEPublicPort == wsProxyPort {
@@ -717,7 +722,7 @@ func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoord
 		}
 
 		for _, portInfo := range info.Ports {
-			if portInfo.PublicPort == wsProxyPort {
+			if fmt.Sprint(portInfo.Port) == wsProxyPort {
 				return &WorkspaceCoords{
 					ID:   info.WorkspaceID,
 					Port: strconv.Itoa(int(portInfo.Port)),
@@ -777,7 +782,6 @@ func TestSensitiveCookieHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-
 			req := httptest.NewRequest("GET", "http://"+domain, nil)
 			if test.Input != "" {
 				req.Header.Set("cookie", test.Input)

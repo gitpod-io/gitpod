@@ -7,12 +7,12 @@ package wsproxy
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"time"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 
@@ -25,8 +25,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// todo(sje): wsManagerProxy seems to be unused
 	wspcfg := config.Config{
 		Ingress: proxy.HostBasedIngressConfig{
-			HttpAddress:  fmt.Sprintf(":%d", HTTPProxyPort),
-			HttpsAddress: fmt.Sprintf(":%d", HTTPSProxyPort),
+			HTTPAddress:  fmt.Sprintf(":%d", HTTPProxyPort),
+			HTTPSAddress: fmt.Sprintf(":%d", HTTPSProxyPort),
 			Header:       HostHeader,
 		},
 		Proxy: proxy.Config{
@@ -54,27 +54,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				WorkspaceHostSuffixRegex: fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain),
 			},
 			WorkspacePodConfig: &proxy.WorkspacePodConfig{
-				ServiceTemplate:     fmt.Sprintf("http://ws-{{ .workspaceID }}-theia.%s.svc.cluster.local:{{ .port }}", ctx.Namespace),
-				PortServiceTemplate: fmt.Sprintf("http://ws-{{ .workspaceID }}-ports.%s.svc.cluster.local:{{ .port }}", ctx.Namespace),
-				TheiaPort:           workspace.ContainerPort,
-				SupervisorPort:      workspace.SupervisorPort,
-				SupervisorImage:     common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+				TheiaPort:       workspace.ContainerPort,
+				SupervisorPort:  workspace.SupervisorPort,
+				SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			},
 			BuiltinPages: proxy.BuiltinPagesConfig{
 				Location: "/app/public",
-			},
-		},
-		WorkspaceInfoProviderConfig: proxy.WorkspaceInfoProviderConfig{
-			WsManagerAddr:     fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort),
-			ReconnectInterval: util.Duration(time.Second * 3),
-			TLS: struct {
-				CA   string `json:"ca"`
-				Cert string `json:"crt"`
-				Key  string `json:"key"`
-			}{
-				CA:   "/ws-manager-client-tls-certs/ca.crt",
-				Cert: "/ws-manager-client-tls-certs/tls.crt",
-				Key:  "/ws-manager-client-tls-certs/tls.key",
 			},
 		},
 		PProfAddr:          ":60060",

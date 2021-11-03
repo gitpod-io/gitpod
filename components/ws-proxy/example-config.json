@@ -1,12 +1,9 @@
 {
+  "namespace": "default",
   "ingress": {
     "address": "8080",
     "https": false,
     "header": "x-wsproxy-host"
-  },
-  "workspaceInfoProviderConfig": {
-    "wsManagerAddr": "ws-manager:8080",
-    "reconnectInterval": "3s"
   },
   "proxy": {
     "transportConfig": {
@@ -22,8 +19,6 @@
       "workspaceHostSuffixRegex": "\\.ws[^\\.]*\\.gpl-portal\\.staging\\.gitpod-dev\\.com"
     },
     "workspacePodConfig": {
-      "serviceTemplate": "http://ws-{{ .workspaceID }}-theia.staging-gpl-portal.svc.cluster.local:{{ .port }}",
-      "portServiceTemplate": "http://ws-{{ .workspaceID }}-ports.staging-gpl-portal.svc.cluster.local:{{ .port }}",
       "theiaPort": 23000,
       "supervisorPort": 22999
     },

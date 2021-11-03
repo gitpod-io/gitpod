@@ -5,7 +5,6 @@
 package proxy
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,7 +21,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
-// ProxyPassConfig is used as intermediate struct to assemble a configurable proxy
+// ProxyPassConfig is used as intermediate struct to assemble a configurable proxy.
 type proxyPassConfig struct {
 	TargetResolver  targetResolver
 	ResponseHandler []responseHandler
@@ -34,19 +33,19 @@ func (ppc *proxyPassConfig) appendResponseHandler(handler responseHandler) {
 	ppc.ResponseHandler = append(ppc.ResponseHandler, handler)
 }
 
-// proxyPassOpt allows to compose ProxyHandler options
+// proxyPassOpt allows to compose ProxyHandler options.
 type proxyPassOpt func(h *proxyPassConfig)
 
-// errorHandler is a function that handles an error that occurred during proxying of a HTTP request
+// errorHandler is a function that handles an error that occurred during proxying of a HTTP request.
 type errorHandler func(http.ResponseWriter, *http.Request, error)
 
-// targetResolver is a function that determines to which target to forward the given HTTP request to
-type targetResolver func(*Config, *http.Request) (*url.URL, error)
+// targetResolver is a function that determines to which target to forward the given HTTP request to.
+type targetResolver func(*Config, WorkspaceInfoProvider, *http.Request) (*url.URL, error)
 
 type responseHandler func(*http.Response, *http.Request) error
 
-// proxyPass is the function that assembles a ProxyHandler from the config, a resolver and various options and returns a http.HandlerFunc
-func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...proxyPassOpt) http.HandlerFunc {
+// proxyPass is the function that assembles a ProxyHandler from the config, a resolver and various options and returns a http.HandlerFunc.
+func proxyPass(config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider, resolver targetResolver, opts ...proxyPassOpt) http.HandlerFunc {
 	h := proxyPassConfig{
 		Transport: config.DefaultTransport,
 	}
@@ -64,7 +63,7 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		targetURL, err := h.TargetResolver(config.Config, req)
+		targetURL, err := h.TargetResolver(config.Config, infoProvider, req)
 		if err != nil {
 			if h.ErrorHandler != nil {
 				h.ErrorHandler(w, req, err)
@@ -74,7 +73,7 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 			return
 		}
 
-		var originalURL = *req.URL
+		originalURL := *req.URL
 
 		// TODO(cw): we should cache the proxy for some time for each target URL
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
@@ -108,9 +107,7 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 				return
 			}
 
-			var dnsError *net.DNSError
-			if !errors.As(err, &dnsError) && !strings.HasPrefix(originalURL.Path, "/_supervisor/") {
-				// skip "no such host" errors (workspace service not available, yet) and not
+			if !strings.HasPrefix(originalURL.Path, "/_supervisor/") {
 				log.WithField("url", originalURL.String()).WithError(err).Debug("proxied request failed")
 			}
 
@@ -175,13 +172,14 @@ func createDefaultTransport(config *TransportConfig) *http.Transport {
 	}
 }
 
-// tell the browser to cache for 1 year and don't ask the server during this period
+// tell the browser to cache for 1 year and don't ask the server during this period.
 func withLongTermCaching() proxyPassOpt {
 	return func(cfg *proxyPassConfig) {
 		cfg.appendResponseHandler(func(resp *http.Response, req *http.Request) error {
 			if resp.StatusCode < http.StatusBadRequest {
 				resp.Header.Set("Cache-Control", "public, max-age=31536000")
 			}
+
 			return nil
 		})
 	}

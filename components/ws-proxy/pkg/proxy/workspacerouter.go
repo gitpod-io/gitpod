@@ -15,35 +15,34 @@ import (
 )
 
 const (
-	// Used as key for storing the workspace port in the requests mux.Vars() map
+	// Used as key for storing the workspace port in the requests mux.Vars() map.
 	workspacePortIdentifier = "workspacePort"
 
-	// Used as key for storing the workspace ID in the requests mux.Vars() map
+	// Used as key for storing the workspace ID in the requests mux.Vars() map.
 	workspaceIDIdentifier = "workspaceID"
 
-	// Used as key for storing the origin to fetch foreign content
+	// Used as key for storing the origin to fetch foreign content.
 	foreignOriginIdentifier = "foreignOrigin"
 
-	// Used as key for storing the path to fetch foreign content
+	// Used as key for storing the path to fetch foreign content.
 	foreignPathIdentifier = "foreignPath"
 
-	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed
+	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed.
 	forwardedHostnameHeader = "x-wsproxy-host"
 
-	// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21)
+	// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21).
 	workspaceIDRegex   = "(?P<" + workspaceIDIdentifier + ">[a-f][0-9a-f]{7}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8})"
 	workspacePortRegex = "(?P<" + workspacePortIdentifier + ">[0-9]+)-"
 )
 
 // WorkspaceRouter is a function that configures subrouters (one for theia, one for the exposed ports) on the given router
 // which resolve workspace coordinates (ID, port?) from each request. The contract is to store those in the request's mux.Vars
-// with the keys workspacePortIdentifier and workspaceIDIdentifier
+// with the keys workspacePortIdentifier and workspaceIDIdentifier.
 type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (ideRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router)
 
-// HostBasedRouter is a WorkspaceRouter that routes simply based on the "Host" header
+// HostBasedRouter is a WorkspaceRouter that routes simply based on the "Host" header.
 func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) WorkspaceRouter {
 	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (*mux.Router, *mux.Router, *mux.Router) {
-
 		allClusterWsHostSuffixRegex := wsHostSuffixRegex
 		if allClusterWsHostSuffixRegex == "" {
 			allClusterWsHostSuffixRegex = wsHostSuffix
@@ -66,7 +65,7 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			hostname := getHostHeader(req)
 			log.Debugf("no match for path %s, host: %s", req.URL.Path, hostname)
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusNotFound)
 		})
 		return ideRouter, portRouter, blobserveRouter
 	}
@@ -182,6 +181,7 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		if foreignPath != "" {
 			m.Vars[foreignPathIdentifier] = foreignPath
 		}
+
 		return true
 	}
 }

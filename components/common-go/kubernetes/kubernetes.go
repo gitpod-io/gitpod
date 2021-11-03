@@ -57,6 +57,22 @@ const (
 	// ContainerIsGoneAnnotation is used as workaround for containerd https://github.com/containerd/containerd/pull/4214
 	// which might cause workspace container status propagation to fail, which in turn would keep a workspace running indefinitely.
 	ContainerIsGoneAnnotation = "gitpod.io/containerIsGone"
+
+	// WorkspaceURLAnnotation is the annotation on the WS pod which contains the public workspace URL.
+	WorkspaceURLAnnotation = "gitpod/url"
+
+	// OwnerTokenAnnotation contains the owner token of the workspace.
+	OwnerTokenAnnotation = "gitpod/ownerToken"
+
+	// WorkspaceAdmissionAnnotation determines the user admission to a workspace, i.e. if it can be accessed by everyone without token.
+	WorkspaceAdmissionAnnotation = "gitpod/admission"
+
+	// WorkspaceImageSpecAnnotation contains the protobuf serialized image spec in base64 encoding. We need to keep this around post-request
+	// to provide this information to the registry facade later in the workspace's lifecycle.
+	WorkspaceImageSpecAnnotation = "gitpod/imageSpec"
+
+	// WorkspaceExposedPorts contains the exposed ports in the workspace
+	WorkspaceExposedPorts = "gitpod/exposedPorts"
 )
 
 // WorkspaceSupervisorEndpoint produces the supervisor endpoint of a workspace.

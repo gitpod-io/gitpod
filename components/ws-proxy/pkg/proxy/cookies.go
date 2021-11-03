@@ -20,7 +20,7 @@ import (
 // readCookies parses all "Cookie" values from the header h and
 // returns the successfully parsed Cookies.
 //
-// if filter isn't empty, only cookies of that name are returned
+// if filter isn't empty, only cookies of that name are returned.
 func readCookies(h http.Header, filter string) []*http.Cookie {
 	lines := h["Cookie"]
 	if len(lines) == 0 {
