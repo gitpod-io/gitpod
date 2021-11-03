@@ -39,7 +39,7 @@ function uninstallHelm(pathToKubeConfig: string, installationName: string, names
         return;
     }
 
-    exec(`export KUBECONFIG=${pathToKubeConfig} && helm --namespace ${namespace} delete ${installationName}`, shellOpts);
+    exec(`export KUBECONFIG=${pathToKubeConfig} && helm --namespace ${namespace} delete ${installationName} --wait`, shellOpts);
 }
 
 function deleteAllWorkspaces(pathToKubeConfig: string, namespace: string, shellOpts: ExecOptions) {
