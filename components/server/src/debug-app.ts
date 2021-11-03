@@ -47,6 +47,7 @@ export class DebugApp {
                 const newLogLevel = levelRequest.level;
                 log.setLogLevel(newLogLevel);
                 log.info("set log level", { newLogLevel });
+                res.status(200).end(JSON.stringify(levelRequest));
             } catch (err) {
                 res.status(500).end(err);
             }
