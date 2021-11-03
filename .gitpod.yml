@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-protoc.4
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway.0
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
