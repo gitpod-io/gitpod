@@ -29,6 +29,7 @@
         "gitpod/ready": "true",
         "gitpod/servicePrefix": "db334047-3c4b-49cc-a5fb-a089bff656e0",
         "gitpod/url": "http://db334047-3c4b-49cc-a5fb-a089bff656e0.ws-dev.cw-registry.staging.gitpod-dev.com",
+        "gitpod/exposedPorts": "CgUIkD8YAQ==",
         "kubernetes.io/psp": "staging-cw-registry-ns-workspace",
         "prometheus.io/path": "/metrics",
         "prometheus.io/port": "23000",

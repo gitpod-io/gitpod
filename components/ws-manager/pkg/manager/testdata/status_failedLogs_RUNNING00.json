@@ -25,6 +25,7 @@
         "gitpod/customTimeout": "30m",
         "gitpod/id": "f07f0f2e-08fb-433a-8282-fef07b596909",
         "gitpod/imageSpec": "CnRldS5nY3IuaW8vZ2l0cG9kLWNvcmUtZGV2L3JlZ2lzdHJ5L3dvcmtzcGFjZS1pbWFnZXM6NWM3YzJkMjhkNTM5OTBkMGVjNmI3NmY3MzkxOGIyYTlhZjZlYjJkYmQwNjA4MjI5ODZhYmFkMWJhOTUxMmFhZhJEZXUuZ2NyLmlvL2dpdHBvZC1jb3JlLWRldi9idWlsZC90aGVpYS1pZGU6Y3ctZGVidWctcmVnaXN0cnktZmFjYWRlLjY=",
+        "gitpod/exposedPorts": "Cm8IkD8YASJoaHR0cHM6Ly84MDgwLWJhODI2ZGI5LTlkOTMtNGYzYi1hMTBlLThiYzA4YmJiOTlmMS53cy1kZXYuY3ctZGVidWctcmVnaXN0cnktZmFjYWRlLnN0YWdpbmcuZ2l0cG9kLWRldi5jb20=",
         "gitpod/never-ready": "true",
         "gitpod/ownerToken": "l\u003cM3U,%$Fe3/Y/515B;/*D:1HhQAaq0c",
         "gitpod/servicePrefix": "ba826db9-9d93-4f3b-a10e-8bc08bbb99f1",

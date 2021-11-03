@@ -1,36 +1,4 @@
 {
-    "portsService": {
-        "metadata": {
-            "name": "ws-serviceprefix-ports",
-            "namespace": "default",
-            "creationTimestamp": null,
-            "labels": {
-                "gpwsman": "true",
-                "workspaceID": "foobar"
-            },
-            "annotations": {
-                "gitpod/port-url-3000": "3000-foobar-servicePrefix-gitpod.io"
-            }
-        },
-        "spec": {
-            "ports": [
-                {
-                    "name": "p3000-private",
-                    "protocol": "TCP",
-                    "port": 3000,
-                    "targetPort": 3000
-                }
-            ],
-            "selector": {
-                "gpwsman": "true",
-                "workspaceID": "foobar"
-            },
-            "type": "ClusterIP"
-        },
-        "status": {
-            "loadBalancer": {}
-        }
-    },
     "response": {},
     "postChangeStatus": [
         {

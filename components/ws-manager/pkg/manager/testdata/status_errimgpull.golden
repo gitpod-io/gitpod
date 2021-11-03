@@ -16,9 +16,7 @@
         },
         "phase": 2,
         "conditions": {
-            "failed": "cannot pull image: rpc error: code = Unknown desc = Error response from daemon: Get https://registry.staging-cw-minio-core.svc.cluster.local/v1/_ping: dial tcp: lookup registry.staging-cw-minio-core.svc.cluster.local: no such host",
-            "service_exists": 1,
-            "deployed": 1
+            "failed": "cannot pull image: rpc error: code = Unknown desc = Error response from daemon: Get https://registry.staging-cw-minio-core.svc.cluster.local/v1/_ping: dial tcp: lookup registry.staging-cw-minio-core.svc.cluster.local: no such host"
         },
         "runtime": {
             "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-wl2d",

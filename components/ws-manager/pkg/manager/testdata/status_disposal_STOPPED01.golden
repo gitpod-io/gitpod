@@ -21,8 +21,7 @@
         "phase": 6,
         "conditions": {
             "failed": "last backup failed: testing the backup failure mode. Please contact support if you need the workspace data.",
-            "final_backup_complete": 1,
-            "deployed": 1
+            "final_backup_complete": 1
         },
         "runtime": {
             "node_name": "gke-dev-workload-1-49d27f81-n6zr",

@@ -15,8 +15,7 @@
                 {
                     "name": "p3000-public",
                     "protocol": "TCP",
-                    "port": 3000,
-                    "targetPort": 3000
+                    "port": 3000
                 }
             ],
             "selector": {
@@ -34,7 +33,6 @@
         "expose": true,
         "spec": {
             "port": 8080,
-            "target": 38080,
             "visibility": 1
         }
     }

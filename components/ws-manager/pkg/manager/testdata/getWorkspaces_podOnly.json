@@ -193,11 +193,6 @@
               {
                 "mountPath": "/workspace",
                 "name": "vol-this-workspace"
-              },
-              {
-                "mountPath": "/theia",
-                "name": "vol-this-theia",
-                "readOnly": true
               }
             ]
           }
@@ -243,13 +238,6 @@
           }
         ],
         "volumes": [
-          {
-            "hostPath": {
-              "path": "/mnt/disks/ssd0/theia/theia-master.2049",
-              "type": "Directory"
-            },
-            "name": "vol-this-theia"
-          },
           {
             "hostPath": {
               "path": "/mnt/disks/ssd0/workspaces/d6835d33-116f-4d3f-aeb6-ad628f4004b6",

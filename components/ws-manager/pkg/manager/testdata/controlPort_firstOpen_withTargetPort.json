@@ -4,7 +4,6 @@
         "expose": true,
         "spec": {
             "port": 8080,
-            "target": 38080,
             "visibility": 1
         }
     }

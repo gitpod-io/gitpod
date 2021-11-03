@@ -15,7 +15,6 @@
             "exposed_ports": [
                 {
                     "port": 3000,
-                    "target": 33000,
                     "visibility": 1
                 }
             ],
@@ -23,10 +22,7 @@
             "ide_image": {}
         },
         "phase": 4,
-        "conditions": {
-            "service_exists": 1,
-            "deployed": 1
-        },
+        "conditions": {},
         "runtime": {
             "node_name": "gke-production--gitp-workspace-pool-1-ee6c94af-h6lj",
             "pod_name": "ws-da9ffbf1-a12d-4a58-8593-475394eedb00",

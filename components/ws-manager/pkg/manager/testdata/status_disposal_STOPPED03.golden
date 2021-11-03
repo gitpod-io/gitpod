@@ -32,9 +32,7 @@
         },
         "phase": 6,
         "conditions": {
-            "service_exists": 1,
-            "final_backup_complete": 1,
-            "deployed": 1
+            "final_backup_complete": 1
         },
         "repo": {
             "branch": "master",

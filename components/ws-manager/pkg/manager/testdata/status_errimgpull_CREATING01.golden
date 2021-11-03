@@ -20,8 +20,7 @@
         },
         "phase": 6,
         "conditions": {
-            "failed": "cannot pull image: Back-off pulling image \"reg.gitpod.io:227/i/79be1e8b-a6de-4572-8627-99ef12303a88:latest\"",
-            "deployed": 1
+            "failed": "cannot pull image: Back-off pulling image \"reg.gitpod.io:227/i/79be1e8b-a6de-4572-8627-99ef12303a88:latest\""
         },
         "runtime": {
             "node_name": "gke-gitpod-dev-worker-pool-1-f039fa9e-2jrb",

@@ -15,10 +15,7 @@
             "ide_image": {}
         },
         "phase": 7,
-        "conditions": {
-            "service_exists": 1,
-            "deployed": 1
-        },
+        "conditions": {},
         "message": "container workspace was terminated unexpectedly - workspace is recovering",
         "runtime": {
             "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-rl94",

@@ -34,13 +34,6 @@
     "spec": {
       "volumes": [
         {
-          "name": "vol-this-theia",
-          "hostPath": {
-            "path": "/mnt/disks/ssd0/theia/theia-cw-minio-core.24",
-            "type": "Directory"
-          }
-        },
-        {
           "name": "vol-this-workspace",
           "hostPath": {
             "path": "/workspaces/f9d04251-f057-4287-b7b1-956093140c5d",
@@ -130,11 +123,6 @@
             {
               "name": "vol-this-workspace",
               "mountPath": "/workspace"
-            },
-            {
-              "name": "vol-this-theia",
-              "readOnly": true,
-              "mountPath": "/theia"
             }
           ],
           "livenessProbe": {

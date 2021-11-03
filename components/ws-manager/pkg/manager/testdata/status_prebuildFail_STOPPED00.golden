@@ -82,10 +82,8 @@
         },
         "phase": 6,
         "conditions": {
-            "service_exists": 1,
             "snapshot": "workspaces/gray-lemming-0wlyvzy5/snapshot-1622467387276004249.tar@gitpod-user-a0dfe7e6-351b-4fd8-80c2-5ed45814f44a",
-            "final_backup_complete": 1,
-            "deployed": 1
+            "final_backup_complete": 1
         },
         "runtime": {
             "node_name": "gke-dev-workload-1-49d27f81-3xfh",

@@ -82,9 +82,7 @@
         },
         "phase": 2,
         "conditions": {
-            "pulling_images": 1,
-            "service_exists": 1,
-            "deployed": 1
+            "pulling_images": 1
         },
         "message": "containers are being created",
         "runtime": {

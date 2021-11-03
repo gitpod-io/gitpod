@@ -8,8 +8,7 @@
     },
     "ports": [
         {
-            "port": 8080,
-            "target": 38080
+            "port": 8080
         }
     ],
     "envvars": [

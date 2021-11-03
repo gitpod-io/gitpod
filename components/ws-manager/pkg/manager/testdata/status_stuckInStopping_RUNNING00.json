@@ -981,6 +981,7 @@
                 "prometheus.io/scrape": "true",
                 "gitpod/url": "https://purple-raven-cu9cj532.ws-us14.gitpod.io",
                 "gitpod/imageSpec": "CmZldS5nY3IuaW8vZ2l0cG9kLWRldi93b3Jrc3BhY2UtaW1hZ2VzOjY4YzYxZWIwYmI0ZThmYmFmZDE2Yjg3NjM5MGZjMmM3OGE3ODg3ODY2ZWYwYmQ1MzUzNGJiOGZmYzI2ODJiZGMSWGV1Lmdjci5pby9naXRwb2QtY29yZS1kZXYvYnVpbGQvaWRlL2NvZGU6Y29tbWl0LTA5NDFhMDgwNWRjM2M3MzQ1YzQ1YmQ5MjYzMTdlYWYwNDVkNGI3ZmI=",
+                "gitpod/exposedPorts": "CjkIwD4iNGh0dHBzOi8vODAwMC1wdXJwbGUtcmF2ZW4tY3U5Y2o1MzIud3MtdXMxNC5naXRwb2QuaW8KOwj9+QEiNWh0dHBzOi8vMzE5OTctcHVycGxlLXJhdmVuLWN1OWNqNTMyLndzLXVzMTQuZ2l0cG9kLmlv",
                 "prometheus.io/path": "/metrics",
                 "gitpod/servicePrefix": "purple-raven-cu9cj532",
                 "gitpod/ownerToken": "T.DhLiYyx1ZfeOgyf5zYE4MYLnCMBJ8p",

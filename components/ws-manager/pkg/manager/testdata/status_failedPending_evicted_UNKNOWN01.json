@@ -38,13 +38,6 @@
     "spec": {
       "volumes": [
         {
-          "name": "vol-this-theia",
-          "hostPath": {
-            "path": "/mnt/disks/ssd0/theia/theia-hotfix-2020-02-08.0",
-            "type": "Directory"
-          }
-        },
-        {
           "name": "vol-this-workspace",
           "hostPath": {
             "path": "/mnt/disks/ssd0/workspaces/cecf2a75-7225-4056-a125-fa3144b9c012",
@@ -76,11 +69,6 @@
             {
               "name": "vol-this-workspace",
               "mountPath": "/workspace"
-            },
-            {
-              "name": "vol-this-theia",
-              "readOnly": true,
-              "mountPath": "/theia"
             }
           ],
           "readinessProbe": {

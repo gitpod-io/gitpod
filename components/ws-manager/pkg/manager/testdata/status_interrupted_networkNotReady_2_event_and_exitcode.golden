@@ -15,7 +15,6 @@
             "exposed_ports": [
                 {
                     "port": 8080,
-                    "target": 38080,
                     "visibility": 1
                 }
             ],
@@ -24,8 +23,6 @@
         },
         "phase": 7,
         "conditions": {
-            "service_exists": 1,
-            "deployed": 1,
             "network_not_ready": 1
         },
         "message": "container network not ready - workspace should recover shortly",

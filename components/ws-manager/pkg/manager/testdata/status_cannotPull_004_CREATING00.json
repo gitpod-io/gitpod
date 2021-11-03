@@ -181,6 +181,7 @@
         "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
         "gitpod/never-ready": "true",
         "gitpod/imageSpec": "CmZldS5nY3IuaW8vZ2l0cG9kLWRldi93b3Jrc3BhY2UtaW1hZ2VzOjAxYWJiMzFkZDc2YTFlMjg4NWVhMWQ1YzNiMDZhNGVhZDEwYWUzNjJlZTIxMzQ4NDI4ODM1ZDBjOGIyODZlM2ESWGV1Lmdjci5pby9naXRwb2QtY29yZS1kZXYvYnVpbGQvaWRlL2NvZGU6Y29tbWl0LTA5NDFhMDgwNWRjM2M3MzQ1YzQ1YmQ5MjYzMTdlYWYwNDVkNGI3ZmI=",
+        "gitpod/exposedPorts": "CjwIuBciN2h0dHBzOi8vMzAwMC1zaWx2ZXItZG9ybW91c2UtaXM3MzNwcmcud3MtdXMxNC5naXRwb2QuaW8=",
         "prometheus.io/path": "/metrics",
         "cni.projectcalico.org/podIPs": "10.4.35.173/32",
         "gitpod/contentInitializer": "[redacted]",

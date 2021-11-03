@@ -33,13 +33,6 @@
     "spec": {
       "volumes": [
         {
-          "name": "vol-this-theia",
-          "hostPath": {
-            "path": "/mnt/disks/ssd0/theia/theia-cw-gh-2720.5",
-            "type": "Directory"
-          }
-        },
-        {
           "name": "vol-this-workspace",
           "hostPath": {
             "path": "/mnt/disks/ssd0/workspaces/4bf2e82d-cdc7-4764-b8ad-6973e3c4a629",
@@ -125,11 +118,6 @@
             {
               "name": "vol-this-workspace",
               "mountPath": "/workspace"
-            },
-            {
-              "name": "vol-this-theia",
-              "readOnly": true,
-              "mountPath": "/theia"
             }
           ],
           "livenessProbe": {
@@ -371,37 +359,6 @@
       "message": "Successfully assigned staging-cw-gh-2720/ws-4bf2e82d-cdc7-4764-b8ad-6973e3c4a629 to gke-gitpod-dev-worker-pool-2-184c607e-rl94",
       "source": {
         "component": "default-scheduler"
-      },
-      "firstTimestamp": "2019-07-15T11:10:55Z",
-      "lastTimestamp": "2019-07-15T11:10:55Z",
-      "count": 1,
-      "type": "Normal",
-      "eventTime": null,
-      "reportingComponent": "",
-      "reportingInstance": ""
-    },
-    {
-      "metadata": {
-        "name": "ws-4bf2e82d-cdc7-4764-b8ad-6973e3c4a629.15b19029ffa1d912",
-        "namespace": "staging-cw-gh-2720",
-        "selfLink": "/api/v1/namespaces/staging-cw-gh-2720/events/ws-4bf2e82d-cdc7-4764-b8ad-6973e3c4a629.15b19029ffa1d912",
-        "uid": "375790ec-a6f1-11e9-9f0a-42010a840008",
-        "resourceVersion": "3657306",
-        "creationTimestamp": "2019-07-15T11:10:55Z"
-      },
-      "involvedObject": {
-        "kind": "Pod",
-        "namespace": "staging-cw-gh-2720",
-        "name": "ws-4bf2e82d-cdc7-4764-b8ad-6973e3c4a629",
-        "uid": "374220c1-a6f1-11e9-9f0a-42010a840008",
-        "apiVersion": "v1",
-        "resourceVersion": "118293107"
-      },
-      "reason": "SuccessfulMountVolume",
-      "message": "MountVolume.SetUp succeeded for volume \"vol-this-theia\" ",
-      "source": {
-        "component": "kubelet",
-        "host": "gke-gitpod-dev-worker-pool-2-184c607e-rl94"
       },
       "firstTimestamp": "2019-07-15T11:10:55Z",
       "lastTimestamp": "2019-07-15T11:10:55Z",

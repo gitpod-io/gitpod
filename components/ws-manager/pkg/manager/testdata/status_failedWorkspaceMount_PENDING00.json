@@ -32,13 +32,6 @@
     "spec": {
       "volumes": [
         {
-          "name": "vol-this-theia",
-          "hostPath": {
-            "path": "/mnt/disks/ssd0/theia/theia-cw-fail-on-mount-failure.2/bogus",
-            "type": "Directory"
-          }
-        },
-        {
           "name": "vol-this-workspace",
           "hostPath": {
             "path": "/mnt/disks/ssd0/workspaces/b3242d9b-6920-41b5-8e72-c3d5637ca148",
@@ -139,11 +132,6 @@
             {
               "name": "vol-this-workspace",
               "mountPath": "/workspace"
-            },
-            {
-              "name": "vol-this-theia",
-              "readOnly": true,
-              "mountPath": "/theia"
             }
           ],
           "livenessProbe": {

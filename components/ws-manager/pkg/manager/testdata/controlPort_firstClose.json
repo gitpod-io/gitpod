@@ -15,8 +15,7 @@
                 {
                     "name": "p3000",
                     "protocol": "TCP",
-                    "port": 3000,
-                    "targetPort": 3000
+                    "port": 3000
                 }
             ],
             "selector": {

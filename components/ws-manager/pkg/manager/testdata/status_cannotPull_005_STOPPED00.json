@@ -12,6 +12,7 @@
         "gitpod/contentInitializer": "[redacted]",
         "kubernetes.io/psp": "default-ns-workspace",
         "gitpod/imageSpec": "CmZldS5nY3IuaW8vZ2l0cG9kLWRldi93b3Jrc3BhY2UtaW1hZ2VzOjAxYWJiMzFkZDc2YTFlMjg4NWVhMWQ1YzNiMDZhNGVhZDEwYWUzNjJlZTIxMzQ4NDI4ODM1ZDBjOGIyODZlM2ESWGV1Lmdjci5pby9naXRwb2QtY29yZS1kZXYvYnVpbGQvaWRlL2NvZGU6Y29tbWl0LTA5NDFhMDgwNWRjM2M3MzQ1YzQ1YmQ5MjYzMTdlYWYwNDVkNGI3ZmI=",
+        "gitpod/exposedPorts": "CjwIuBciN2h0dHBzOi8vMzAwMC1zaWx2ZXItZG9ybW91c2UtaXM3MzNwcmcud3MtdXMxNC5naXRwb2QuaW8=",
         "prometheus.io/scrape": "true",
         "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
         "gitpod/url": "https://silver-dormouse-is733prg.ws-us14.gitpod.io",

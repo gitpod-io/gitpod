@@ -21,8 +21,6 @@
         },
         "phase": 5,
         "conditions": {
-            "service_exists": 1,
-            "deployed": 1,
             "headless_task_failed": "headless task failed"
         },
         "message": "headless workspace is stopping",

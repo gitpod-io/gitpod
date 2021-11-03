@@ -38,13 +38,6 @@
     "spec": {
       "volumes": [
         {
-          "name": "vol-this-theia",
-          "hostPath": {
-            "path": "/mnt/disks/ssd0/theia/theia-master.2424",
-            "type": "Directory"
-          }
-        },
-        {
           "name": "vol-this-workspace",
           "hostPath": {
             "path": "/mnt/disks/ssd0/workspaces/2513d0b4-3c18-4735-b32e-1bbdead24b78",
@@ -78,11 +71,6 @@
               "name": "vol-this-workspace",
               "mountPath": "/workspace",
               "mountPropagation": "HostToContainer"
-            },
-            {
-              "name": "vol-this-theia",
-              "readOnly": true,
-              "mountPath": "/theia"
             }
           ],
           "readinessProbe": {

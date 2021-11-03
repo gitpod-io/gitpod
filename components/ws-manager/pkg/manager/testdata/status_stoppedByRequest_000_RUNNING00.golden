@@ -20,12 +20,10 @@
                 },
                 {
                     "port": 27017,
-                    "target": 60000,
                     "url": "https://27017-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com"
                 },
                 {
                     "port": 9229,
-                    "target": 59999,
                     "url": "https://9229-lime-opossum-3jftf65i.ws-dev.cw-fix-6213.staging.gitpod-dev.com"
                 }
             ],
@@ -36,8 +34,6 @@
         },
         "phase": 4,
         "conditions": {
-            "service_exists": 1,
-            "deployed": 1,
             "first_user_activity": {
                 "seconds": 1634238703,
                 "nanos": 983492544
