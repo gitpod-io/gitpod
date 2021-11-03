@@ -6,10 +6,11 @@ package common
 
 import (
 	"fmt"
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"io"
 	"math/rand"
 	"strings"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
@@ -500,12 +501,6 @@ var (
 		Kind:       "Job",
 	}
 )
-
-type TLS struct {
-	Authority   string `json:"ca"`
-	Certificate string `json:"cert"`
-	Key         string `json:"key"`
-}
 
 // validCookieChars contains all characters which may occur in an HTTP Cookie value (unicode \u0021 through \u007E),
 // without the characters , ; and / ... I did not find more details about permissible characters in RFC2965, so I took

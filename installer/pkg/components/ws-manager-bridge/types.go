@@ -4,10 +4,6 @@
 
 package wsmanagerbridge
 
-import (
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
-)
-
 // Configuration from components/ws-manager-bridge/src/config.ts
 type Configuration struct {
 	Installation                        string             `json:"installation"`
@@ -36,12 +32,19 @@ type Timeouts struct {
 type WorkspaceCluster struct {
 	Name                 string                `json:"name"`
 	URL                  string                `json:"url"`
-	TLS                  common.TLS            `json:"tls"`
+	TLS                  WorkspaceClusterTLS   `json:"tls"`
 	State                WorkspaceClusterState `json:"state"`
 	MaxScore             int32                 `json:"maxScore"`
 	Score                int32                 `json:"score"`
 	Govern               bool                  `json:"govern"`
 	AdmissionConstraints []AdmissionConstraint `json:"admissionConstraints"`
+}
+
+// WorkspaceClusterTLS is the struct we use in ws-manager-bridge cluster registrations.
+type WorkspaceClusterTLS struct {
+	Authority   string `json:"ca"`
+	Certificate string `json:"crt"`
+	Key         string `json:"key"`
 }
 
 // WorkspaceClusterState from components/gitpod-protocol/src/workspace-cluster.ts
