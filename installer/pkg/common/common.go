@@ -311,9 +311,6 @@ func ImageName(repo, name, tag string) string {
 	if repo == "" {
 		repo = "docker.io"
 	}
-	if tag == "" {
-		tag = "latest"
-	}
 
 	ref := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(repo, "/"), name, tag)
 	pref, err := reference.ParseNamed(ref)
