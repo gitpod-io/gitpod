@@ -66,7 +66,7 @@ spec:
           periodSeconds: 5
           failureThreshold: 10
           httpGet:
-            path: /
+            path: /readyz
             port: 60088
         livenessProbe:
           initialDelaySeconds: 2
@@ -75,14 +75,11 @@ spec:
           successThreshold: 1
           timeoutSeconds: 2
           httpGet:
-            path: /
+            path: /healthz
             port: 60088
         volumeMounts:
         - name: config
           mountPath: "/config"
-          readOnly: true
-        - mountPath: /ws-manager-client-tls-certs
-          name: ws-manager-client-tls-certs
           readOnly: true
 {{- if $.Values.certificatesSecret.secretName }}
         - name: config-certificates
