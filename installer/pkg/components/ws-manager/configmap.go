@@ -85,7 +85,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			WorkspaceURLTemplate:     fmt.Sprintf("https://{{ .Prefix }}.ws.%s", ctx.Config.Domain),
 			WorkspacePortURLTemplate: fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.%s", ctx.Config.Domain),
-			WorkspaceHostPath:        wsdaemon.HostWorkspacePath,
+			WorkspaceHostPath:        wsdaemon.HostWorkingArea,
 			WorkspacePodTemplate:     templatesCfg,
 			Timeouts: config.WorkspaceTimeoutConfiguration{
 				AfterClose:          util.Duration(2 * time.Minute),

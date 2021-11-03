@@ -5,9 +5,10 @@
 package wsdaemon
 
 const (
-	Component         = "ws-daemon"
-	ServicePort       = 8080
-	HostWorkspacePath = "/var/gitpod/workspaces"
-	TLSSecretName     = "ws-daemon-tls"
-	VolumeTLSCerts    = "ws-daemon-tls-certs"
+	Component            = "ws-daemon"
+	ServicePort          = 8080
+	HostWorkingArea      = "/var/gitpod/workspaces"
+	ContainerWorkingArea = "/mnt/workingarea"
+	TLSSecretName        = "ws-daemon-tls"
+	VolumeTLSCerts       = "ws-daemon-tls-certs"
 )

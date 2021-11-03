@@ -6,6 +6,7 @@ package wsdaemon
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
@@ -126,7 +127,7 @@ fi
 						{
 							Name: "working-area",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-								Path: HostWorkspacePath,
+								Path: HostWorkingArea,
 								Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
 							}},
 						},
@@ -229,7 +230,7 @@ fi
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:             "working-area",
-									MountPath:        "/mnt/wsdaemon-workingarea",
+									MountPath:        ContainerWorkingArea,
 									MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationBidirectional; return &r }(),
 								},
 								{
