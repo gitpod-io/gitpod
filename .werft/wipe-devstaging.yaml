@@ -21,6 +21,14 @@ pod:
     - name: gcp-sa
       mountPath: /mnt/secrets/gcp-sa
       readOnly: true
+    env:
+    - name: HONEYCOMB_DATASET
+      value: "werft"
+    - name: HONEYCOMB_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: honeycomb-api-key
+          key: apikey
     command:
     - bash
     - -c

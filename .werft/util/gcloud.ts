@@ -1,7 +1,10 @@
-import { werft, exec } from './shell';
+import { exec } from './shell';
 import { sleep } from './util';
+import { getGlobalWerftInstance } from './werft';
 
 export async function deleteExternalIp(phase: string, name: string, region = "europe-west1") {
+    const werft = getGlobalWerftInstance()
+
     const ip = getExternalIp(name)
     werft.log(phase, `address describe returned: ${ip}`)
     if (ip.indexOf("ERROR:") != -1 || ip == "") {

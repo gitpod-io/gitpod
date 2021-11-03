@@ -138,6 +138,13 @@ pod:
         secretKeyRef:
           name: codecov
           key: token
+    - name: HONEYCOMB_DATASET
+      value: "werft"
+    - name: HONEYCOMB_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: honeycomb-api-key
+          key: apikey
     envFrom:
     - secretRef:
         name: jetbrains-secrets
