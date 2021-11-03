@@ -24,10 +24,10 @@ type StorageConfig struct {
 	Kind RemoteStorageType `json:"kind"`
 
 	// GCloudConfig configures the Google Bucket remote storage
-	GCloudConfig GCPConfig `json:"gcloud"`
+	GCloudConfig GCPConfig `json:"gcloud,omitempty"`
 
 	// MinIOConfig configures the MinIO remote storage
-	MinIOConfig MinIOConfig `json:"minio"`
+	MinIOConfig MinIOConfig `json:"minio,omitempty"`
 
 	// BackupTrail maintains a number of backups for the same workspace
 	BackupTrail struct {

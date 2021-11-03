@@ -85,7 +85,7 @@ type Config struct {
 }
 
 type Metadata struct {
-	Region string `json:"region"`
+	Region string `json:"region" validate:"required"`
 }
 
 type Observability struct {
