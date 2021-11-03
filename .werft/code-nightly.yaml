@@ -17,7 +17,7 @@ pod:
         secretName: gcp-sa-gitpod-dev-deployer
   containers:
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-dev-reliable-wipe.19
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
