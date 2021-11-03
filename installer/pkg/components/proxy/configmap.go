@@ -82,7 +82,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	minio, err := renderTemplate(vhostMinioTmpl, commonTpl{
 		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("minio.%s.%s:%d", ctx.Namespace, kubeDomain, minioComponent.ServicePort),
+		ReverseProxy: fmt.Sprintf("minio.%s.%s:%d", ctx.Namespace, kubeDomain, minioComponent.ServiceConsolePort),
 	})
 	if err != nil {
 		return nil, err

@@ -8,7 +8,7 @@ import (
 	_ "embed"
 )
 
-// Imported from https://helm.min.io
+// Imported from https://github.com/bitnami/charts/tree/master/bitnami/minio
 
 //go:embed minio/Chart.yaml
 var minioChart []byte

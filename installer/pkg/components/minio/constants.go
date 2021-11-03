@@ -4,6 +4,9 @@
 
 package minio
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	ServicePort = 9000
+	ServiceAPIPort     = common.MinioServiceAPIPort
+	ServiceConsolePort = 9001
 )
