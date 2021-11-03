@@ -17,6 +17,7 @@ COPY migrate.sh /app/migrate.sh
 COPY migrate_gcp.sh /app/migrate_gcp.sh
 COPY typeorm.sh /app/typeorm.sh
 COPY typeorm_gcp.sh /app/typeorm_gcp.sh
+COPY migrate-migrations /app/migrate-migrations
 RUN mkdir /home/jenkins && chown -R 10000 /home/jenkins
 COPY --from=proxy /bin/cloud_sql_proxy /bin/cloud_sql_proxy
 COPY --from=proxy /etc/ssl/certs/ /etc/ssl/certs/

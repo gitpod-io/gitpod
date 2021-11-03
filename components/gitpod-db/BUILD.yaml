@@ -81,6 +81,7 @@ packages:
       - migrate_gcp.sh
       - typeorm.sh
       - typeorm_gcp.sh
+      - migrate-migrations/**
     deps:
       - :migrations
     argdeps:
