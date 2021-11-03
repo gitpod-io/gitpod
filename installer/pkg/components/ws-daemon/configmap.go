@@ -57,7 +57,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Content: content.Config{
 				WorkingArea:     "/mnt/workingarea",
-				WorkingAreaNode: HostWorkspacePath,
+				WorkingAreaNode: HostWorkingArea,
 				TmpDir:          "/tmp",
 				UserNamespaces: content.UserNamespacesConfig{
 					FSShift: content.FSShiftMethod(fsshift),
