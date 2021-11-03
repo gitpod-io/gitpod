@@ -82,6 +82,7 @@ type GeneratedValues struct {
 	StorageSecretKey         string
 	InternalRegistryUsername string
 	InternalRegistryPassword string
+	ImageBuilderAuthKey      string
 }
 
 type RenderContext struct {
@@ -117,6 +118,12 @@ func (r *RenderContext) generateValues() error {
 		return err
 	}
 	r.Values.InternalRegistryPassword = internalRegistryPassword
+
+	imageBuilderAuthKey, err := RandomString(32)
+	if err != nil {
+		return err
+	}
+	r.Values.ImageBuilderAuthKey = imageBuilderAuthKey
 
 	return nil
 }

@@ -24,6 +24,11 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	// Convert to a JSON string
 	fc, err := json.MarshalIndent(wsmanagerbridge.WSManagerList(), "", " ")
 	if err != nil {
@@ -49,6 +54,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:      Component,
 						Namespace: ctx.Namespace,
 						Labels:    labels,
+						Annotations: map[string]string{
+							common.AnnotationConfigChecksum: configHash,
+						},
 					},
 					Spec: corev1.PodSpec{
 						Affinity:           &corev1.Affinity{},

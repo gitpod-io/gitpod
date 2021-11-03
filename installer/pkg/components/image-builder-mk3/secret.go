@@ -15,11 +15,6 @@ import (
 )
 
 func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
-	key, err := common.RandomString(32)
-	if err != nil {
-		return nil, err
-	}
-
 	return []runtime.Object{&corev1.Secret{
 		TypeMeta: common.TypeMetaSecret,
 		ObjectMeta: metav1.ObjectMeta{
@@ -28,7 +23,7 @@ func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels:    common.DefaultLabels(Component),
 		},
 		Data: map[string][]byte{
-			"keyfile": []byte(key),
+			"keyfile": []byte(ctx.Values.ImageBuilderAuthKey),
 		},
 	}}, nil
 }

@@ -5,13 +5,10 @@
 package image_builder_mk3
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 
-	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -22,24 +19,24 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-// todo(sje): work out what to do here - this may be better in common, or to autogenerate on everything
-func getChecksum(path string) string {
-	hash := sha256.Sum256([]byte(path))
-
-	return hex.EncodeToString(hash[:])
-}
-
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	annotations := map[string]string{
-		// todo(sje): put the configmap
-		"checksum/image-builder-mk3-configmap": getChecksum("image-builder-mk3-configmap.yaml"),
+	var hashObj []runtime.Object
+	if objs, err := configmap(ctx); err != nil {
+		return nil, err
+	} else {
+		hashObj = append(hashObj, objs...)
 	}
-
-	// todo(sje): make conditional based on Docker Registry being included
-	// todo(sje): get SHA256Sum of registry secret
-	annotations["checksum/builtin-registry-auth"] = getChecksum("@todo")
+	if objs, err := secret(ctx); err != nil {
+		return nil, err
+	} else {
+		hashObj = append(hashObj, objs...)
+	}
+	configHash, err := common.ObjectHash(hashObj, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
@@ -67,15 +64,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: labels},
-			// todo(sje): receive config value
 			Replicas: pointer.Int32(1),
 			Strategy: common.DeploymentStrategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:        Component,
-					Namespace:   ctx.Namespace,
-					Labels:      labels,
-					Annotations: annotations,
+					Name:      Component,
+					Namespace: ctx.Namespace,
+					Labels:    labels,
+					Annotations: map[string]string{
+						common.AnnotationConfigChecksum: configHash,
+					},
 				},
 				Spec: corev1.PodSpec{
 					Affinity:                      &corev1.Affinity{},
