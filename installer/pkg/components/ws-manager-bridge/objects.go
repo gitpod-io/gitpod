@@ -20,9 +20,9 @@ var Objects = common.CompositeRenderFunc(
 
 func WSManagerList() []WorkspaceCluster {
 	return []WorkspaceCluster{{
-		Name: "", // todo(sje): generate the installation shortname
+		Name: "default",
 		URL:  fmt.Sprintf("dns:///%s:%d", wsmanager.Component, wsmanager.RPCPort),
-		TLS: common.TLS{
+		TLS: WorkspaceClusterTLS{
 			Authority:   "/ws-manager-client-tls-certs/ca.crt",
 			Certificate: "/ws-manager-client-tls-certs/tls.crt",
 			Key:         "/ws-manager-client-tls-certs/tls.key",
