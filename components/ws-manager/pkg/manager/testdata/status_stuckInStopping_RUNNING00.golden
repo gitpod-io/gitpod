@@ -30,9 +30,7 @@
         },
         "phase": 4,
         "conditions": {
-            "failed": "container workspace ran with an error: exit code 1",
-            "service_exists": 1,
-            "deployed": 1
+            "failed": "container workspace ran with an error: exit code 1"
         },
         "runtime": {
             "node_name": "gke-gp-prod-ws-us14-us-workspace-pool-67d93ed3-l67s",

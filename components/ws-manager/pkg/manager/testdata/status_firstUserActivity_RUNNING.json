@@ -27,6 +27,7 @@
         "gitpod/ready": "true",
         "gitpod/servicePrefix": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
         "gitpod/url": "https://c372bd58-ef61-4fc0-9083-bd61ef96ad9f.ws-eu01.gitpod-staging.com",
+        "gitpod/exposedPorts": "CgUIuQoYAQoFCLgXGAEKBQi5FxgBCgUIoB8YAQoFCI1IGAEKBQiMLhgBCgUIwC8YAQoFCI9OGAEKBQjJZRgBCgUI4TwYAQoFCIRpGAE=",
         "kubernetes.io/psp": "default-ns-privileged-unconfined",
         "prometheus.io/path": "/metrics",
         "prometheus.io/port": "23000",
@@ -36,13 +37,6 @@
     },
     "spec": {
       "volumes": [
-        {
-          "name": "vol-this-theia",
-          "hostPath": {
-            "path": "/mnt/disks/ssd0/theia/theia-master.2437",
-            "type": "Directory"
-          }
-        },
         {
           "name": "vol-this-workspace",
           "hostPath": {
@@ -78,11 +72,6 @@
               "name": "vol-this-workspace",
               "mountPath": "/workspace",
               "mountPropagation": "HostToContainer"
-            },
-            {
-              "name": "vol-this-theia",
-              "readOnly": true,
-              "mountPath": "/theia"
             }
           ],
           "readinessProbe": {

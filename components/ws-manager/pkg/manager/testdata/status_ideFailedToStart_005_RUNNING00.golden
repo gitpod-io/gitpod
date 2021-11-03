@@ -20,9 +20,7 @@
         },
         "phase": 4,
         "conditions": {
-            "failed": "IDE failed to start: exit status 127",
-            "service_exists": 1,
-            "deployed": 1
+            "failed": "IDE failed to start: exit status 127"
         },
         "runtime": {
             "node_name": "gke-gp-prod-ws-eu14-eu-workspace-pool-b6e0759a-3lb1",

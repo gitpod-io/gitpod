@@ -12,18 +12,10 @@
         "spec": {
             "workspace_image": "nginx:latest",
             "url": "http://10.0.0.114:8082",
-            "exposed_ports": [
-                {
-                    "port": 8080
-                }
-            ],
             "ide_image": {}
         },
         "phase": 3,
-        "conditions": {
-            "service_exists": 1,
-            "deployed": 1
-        },
+        "conditions": {},
         "message": "workspace initializer is running",
         "runtime": {
             "node_name": "minikube",

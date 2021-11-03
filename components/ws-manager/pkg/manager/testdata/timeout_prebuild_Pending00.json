@@ -36,13 +36,6 @@
                         }
                     },
                     {
-                        "name": "vol-this-theia",
-                        "hostPath": {
-                            "path": "/tmp/theia/theia-xyz",
-                            "type": "Directory"
-                        }
-                    },
-                    {
                         "name": "vol-sync-tmp",
                         "hostPath": {
                             "path": "/tmp/workspaces/sync-tmp",
@@ -131,11 +124,6 @@
                             {
                                 "name": "vol-this-workspace",
                                 "mountPath": "/workspace"
-                            },
-                            {
-                                "name": "vol-this-theia",
-                                "readOnly": true,
-                                "mountPath": "/theia"
                             },
                             {
                                 "name": "default-token-6qnvx",

@@ -21,8 +21,7 @@
         },
         "phase": 6,
         "conditions": {
-            "failed": "cannot initialize workspace: cannot initialize workspace: content initializer failed",
-            "deployed": 1
+            "failed": "cannot initialize workspace: cannot initialize workspace: content initializer failed"
         },
         "runtime": {
             "node_name": "gke-gp-prod-ws-us15-us--headless-pool-64a87cf8-bw7v",

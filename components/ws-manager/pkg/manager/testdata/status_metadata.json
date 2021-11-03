@@ -20,6 +20,7 @@
         "gitpod/id": "foobas",
         "gitpod/servicePrefix": "foobas",
         "gitpod/url": "http://10.0.0.114:8082",
+        "gitpod/exposedPorts": "CgMIkD8=",
         "prometheus.io/path": "/metrics",
         "prometheus.io/port": "23000",
         "prometheus.io/scrape": "true"
@@ -32,13 +33,6 @@
           "hostPath": {
             "path": "/tmp/workspaces/foobas",
             "type": "DirectoryOrCreate"
-          }
-        },
-        {
-          "name": "vol-this-theia",
-          "hostPath": {
-            "path": "/tmp/theia/theia-xyz",
-            "type": "Directory"
           }
         },
         {
@@ -126,10 +120,6 @@
             {
               "name": "vol-this-workspace",
               "mountPath": "/workspace"
-            },
-            {
-              "name": "vol-this-theia",
-              "mountPath": "/theia"
             },
             {
               "name": "default-token-6qnvx",

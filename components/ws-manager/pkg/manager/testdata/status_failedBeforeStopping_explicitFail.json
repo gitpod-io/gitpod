@@ -38,13 +38,6 @@
     "spec": {
       "volumes": [
         {
-          "name": "vol-this-theia",
-          "hostPath": {
-            "path": "/mnt/disks/ssd0/theia/theia-gh-2510.63",
-            "type": "Directory"
-          }
-        },
-        {
           "name": "vol-this-workspace",
           "hostPath": {
             "path": "/mnt/disks/ssd0/workspaces/4f8ea7b8-b87d-42f2-b8dd-1a32fdbdf0d4",
@@ -142,11 +135,6 @@
             {
               "name": "vol-this-workspace",
               "mountPath": "/workspace"
-            },
-            {
-              "name": "vol-this-theia",
-              "readOnly": true,
-              "mountPath": "/theia"
             }
           ],
           "livenessProbe": {
@@ -335,37 +323,6 @@
       },
       "firstTimestamp": "2019-06-19T06:50:09Z",
       "lastTimestamp": "2019-06-19T06:50:09Z",
-      "count": 1,
-      "type": "Normal",
-      "eventTime": null,
-      "reportingComponent": "",
-      "reportingInstance": ""
-    },
-    {
-      "metadata": {
-        "name": "ws-4f8ea7b8-b87d-42f2-b8dd-1a32fdbdf0d4.15a986d87a0f948d",
-        "namespace": "staging-gh-2510",
-        "selfLink": "/api/v1/namespaces/staging-gh-2510/events/ws-4f8ea7b8-b87d-42f2-b8dd-1a32fdbdf0d4.15a986d87a0f948d",
-        "uid": "7b206bc8-925e-11e9-97df-42010a8402a0",
-        "resourceVersion": "3503610",
-        "creationTimestamp": "2019-06-19T06:50:10Z"
-      },
-      "involvedObject": {
-        "kind": "Pod",
-        "namespace": "staging-gh-2510",
-        "name": "ws-4f8ea7b8-b87d-42f2-b8dd-1a32fdbdf0d4",
-        "uid": "7b002c5e-925e-11e9-97df-42010a8402a0",
-        "apiVersion": "v1",
-        "resourceVersion": "109986295"
-      },
-      "reason": "SuccessfulMountVolume",
-      "message": "MountVolume.SetUp succeeded for volume \"vol-this-theia\" ",
-      "source": {
-        "component": "kubelet",
-        "host": "gke-gitpod-dev-worker-pool-2-184c607e-fltt"
-      },
-      "firstTimestamp": "2019-06-19T06:50:10Z",
-      "lastTimestamp": "2019-06-19T06:50:10Z",
       "count": 1,
       "type": "Normal",
       "eventTime": null,

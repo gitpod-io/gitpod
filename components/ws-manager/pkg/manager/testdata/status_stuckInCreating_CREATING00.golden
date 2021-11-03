@@ -17,9 +17,7 @@
         },
         "phase": 4,
         "conditions": {
-            "timeout": "workspace timed out after I've meddled with this test data set",
-            "service_exists": 1,
-            "deployed": 1
+            "timeout": "workspace timed out after I've meddled with this test data set"
         },
         "runtime": {
             "node_name": "gke-production--gitp-workspace-pool-2-a3afc0b4-tmz8",

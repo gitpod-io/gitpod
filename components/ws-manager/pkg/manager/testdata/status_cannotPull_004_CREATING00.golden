@@ -26,9 +26,7 @@
         },
         "phase": 2,
         "conditions": {
-            "failed": "cannot pull image: rpc error: code = FailedPrecondition desc = failed to pull and unpack image \"reg.gitpod.io:31001/remote/5031df46-db5e-43ae-91bd-1448305c001d:latest\": failed commit on ref \"layer-sha256:6633ce2524dfae110cac2159a4f8490d198612d12abc1420486c52fbcf30b8b1\": \"layer-sha256:6633ce2524dfae110cac2159a4f8490d198612d12abc1420486c52fbcf30b8b1\" failed size validation: 33554502 != 64598931: failed precondition",
-            "service_exists": 1,
-            "deployed": 1
+            "failed": "cannot pull image: rpc error: code = FailedPrecondition desc = failed to pull and unpack image \"reg.gitpod.io:31001/remote/5031df46-db5e-43ae-91bd-1448305c001d:latest\": failed commit on ref \"layer-sha256:6633ce2524dfae110cac2159a4f8490d198612d12abc1420486c52fbcf30b8b1\": \"layer-sha256:6633ce2524dfae110cac2159a4f8490d198612d12abc1420486c52fbcf30b8b1\" failed size validation: 33554502 != 64598931: failed precondition"
         },
         "runtime": {
             "node_name": "gke-gp-prod-ws-us14-us-workspace-pool-61eed5be-kq0k",

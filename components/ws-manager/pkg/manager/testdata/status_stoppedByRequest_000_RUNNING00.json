@@ -29,6 +29,7 @@
         "gitpod.io/stoppedByRequest": "42s",
         "gitpod/admission": "admit_owner_only",
         "gitpod/contentInitializer": "[redacted]",
+        "gitpod/exposedPorts": "ClEIuBciTGh0dHBzOi8vMzAwMC1saW1lLW9wb3NzdW0tM2pmdGY2NWkud3MtZGV2LmN3LWZpeC02MjEzLnN0YWdpbmcuZ2l0cG9kLWRldi5jb20KUwiJ0wEiTWh0dHBzOi8vMjcwMTctbGltZS1vcG9zc3VtLTNqZnRmNjVpLndzLWRldi5jdy1maXgtNjIxMy5zdGFnaW5nLmdpdHBvZC1kZXYuY29tClEIjUgiTGh0dHBzOi8vOTIyOS1saW1lLW9wb3NzdW0tM2pmdGY2NWkud3MtZGV2LmN3LWZpeC02MjEzLnN0YWdpbmcuZ2l0cG9kLWRldi5jb20=",
         "gitpod/customTimeout": "60m",
         "gitpod/firstUserActivity": "2021-10-14T19:11:43.983492544Z",
         "gitpod/id": "18f99de5-090f-4318-9759-05f5ef0277f7",

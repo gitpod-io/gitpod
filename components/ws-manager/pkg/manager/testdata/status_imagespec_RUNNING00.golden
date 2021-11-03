@@ -16,7 +16,6 @@
             "exposed_ports": [
                 {
                     "port": 8080,
-                    "target": 38080,
                     "visibility": 1
                 }
             ],
@@ -27,8 +26,6 @@
         },
         "phase": 4,
         "conditions": {
-            "service_exists": 1,
-            "deployed": 1,
             "first_user_activity": {
                 "seconds": 1583767886,
                 "nanos": 855961185

@@ -26,73 +26,59 @@
             "theia_version": "master.2507",
             "ports": [
                 {
-                    "target": 31337,
                     "port": 1337,
                     "visibility": 1
                 },
                 {
                     "port": 3000,
-                    "visibility": 1,
-                    "target": 33000
+                    "visibility": 1
                 },
                 {
                     "port": 3001,
-                    "visibility": 1,
-                    "target": 33001
+                    "visibility": 1
                 },
                 {
-                    "target": 33306,
                     "port": 3306,
                     "visibility": 1
                 },
                 {
                     "port": 4000,
-                    "visibility": 1,
-                    "target": 34000
+                    "visibility": 1
                 },
                 {
                     "visibility": 1,
-                    "target": 35900,
                     "port": 5900
                 },
                 {
                     "port": 6080,
-                    "visibility": 1,
-                    "target": 36080
+                    "visibility": 1
                 },
                 {
-                    "target": 39229,
                     "port": 9229,
                     "visibility": 1
                 },
                 {
                     "port": 5900,
-                    "visibility": 1,
-                    "target": 35900
+                    "visibility": 1
                 },
                 {
-                    "target": 36080,
                     "port": 6080,
                     "visibility": 1
                 },
                 {
                     "port": 9999,
-                    "visibility": 1,
-                    "target": 39999
+                    "visibility": 1
                 },
                 {
                     "port": 13001,
-                    "visibility": 1,
-                    "target": 43001
+                    "visibility": 1
                 },
                 {
                     "visibility": 1,
-                    "target": 37777,
                     "port": 7777
                 },
                 {
                     "visibility": 1,
-                    "target": 43444,
                     "port": 13444
                 }
             ],

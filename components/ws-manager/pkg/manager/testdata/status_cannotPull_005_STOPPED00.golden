@@ -26,9 +26,7 @@
         },
         "phase": 6,
         "conditions": {
-            "failed": "cannot pull image: Back-off pulling image \"reg.gitpod.io:31001/remote/5031df46-db5e-43ae-91bd-1448305c001d\"",
-            "service_exists": 1,
-            "deployed": 1
+            "failed": "cannot pull image: Back-off pulling image \"reg.gitpod.io:31001/remote/5031df46-db5e-43ae-91bd-1448305c001d\""
         },
         "runtime": {
             "node_name": "gke-gp-prod-ws-us14-us-workspace-pool-61eed5be-kq0k",

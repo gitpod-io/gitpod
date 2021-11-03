@@ -12,18 +12,11 @@
         "spec": {
             "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images/ac1c0755007966e4d6e090ea821729ac747d22ac/eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
             "url": "http://10.0.0.114:8082",
-            "exposed_ports": [
-                {
-                    "port": 8080
-                }
-            ],
             "ide_image": {}
         },
         "phase": 2,
         "conditions": {
-            "failed": "container sync completed; containers of a workspace pod are not supposed to do that",
-            "service_exists": 1,
-            "deployed": 1
+            "failed": "container sync completed; containers of a workspace pod are not supposed to do that"
         },
         "message": "containers are starting",
         "runtime": {

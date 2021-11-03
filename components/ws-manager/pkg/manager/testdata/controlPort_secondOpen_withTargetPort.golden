@@ -1,54 +1,8 @@
 {
-    "portsService": {
-        "metadata": {
-            "name": "ws-serviceprefix-ports",
-            "namespace": "default",
-            "creationTimestamp": null,
-            "labels": {
-                "gpwsman": "true",
-                "workspaceID": "foobar",
-                "workspaceType": "regular"
-            },
-            "annotations": {
-                "gitpod/port-url-3000": "3000-foobar-servicePrefix-gitpod.io",
-                "gitpod/port-url-8080": "8080-foobar-servicePrefix-gitpod.io"
-            }
-        },
-        "spec": {
-            "ports": [
-                {
-                    "name": "p3000-public",
-                    "protocol": "TCP",
-                    "port": 3000,
-                    "targetPort": 3000
-                },
-                {
-                    "name": "p8080-public",
-                    "protocol": "TCP",
-                    "port": 8080,
-                    "targetPort": 38080
-                }
-            ],
-            "selector": {
-                "gpwsman": "true",
-                "workspaceID": "foobar"
-            },
-            "type": "ClusterIP"
-        },
-        "status": {
-            "loadBalancer": {}
-        }
-    },
     "response": {},
     "postChangeStatus": [
         {
-            "port": 3000,
-            "visibility": 1,
-            "url": "3000-foobar-servicePrefix-gitpod.io"
-        },
-        {
             "port": 8080,
-            "target": 38080,
             "visibility": 1,
             "url": "8080-foobar-servicePrefix-gitpod.io"
         }

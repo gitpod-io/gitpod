@@ -32,13 +32,6 @@
         "spec": {
             "volumes": [
                 {
-                    "name": "vol-this-theia",
-                    "hostPath": {
-                        "path": "/mnt/disks/ssd0/theia/theia-cw-scheduler.17",
-                        "type": "Directory"
-                    }
-                },
-                {
                     "name": "vol-this-workspace",
                     "hostPath": {
                         "path": "/mnt/disks/ssd0/workspaces/fb291b69-7bbc-4865-a432-33f558f20091",
@@ -143,11 +136,6 @@
                         {
                             "name": "vol-this-workspace",
                             "mountPath": "/workspace"
-                        },
-                        {
-                            "name": "vol-this-theia",
-                            "readOnly": true,
-                            "mountPath": "/theia"
                         }
                     ],
                     "livenessProbe": {

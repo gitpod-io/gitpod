@@ -15,9 +15,7 @@
             "ide_image": {}
         },
         "conditions": {
-            "failed": "MatchNodeSelector: Pod Predicate MatchNodeSelector failed",
-            "service_exists": 1,
-            "deployed": 1
+            "failed": "MatchNodeSelector: Pod Predicate MatchNodeSelector failed"
         },
         "runtime": {
             "node_name": "gke-gitpod-dev-default-pool-b25aa276-3tl2",
