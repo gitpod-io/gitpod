@@ -539,6 +539,7 @@ supervisorLoop:
 		}
 
 		ideStopped = make(chan struct{}, 1)
+		cmd = prepareIDELaunch(cfg, ideConfig)
 		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
 
 		select {
@@ -551,7 +552,9 @@ supervisorLoop:
 		case <-ctx.Done():
 			// we've been asked to shut down
 			ideStatus = statusShouldShutdown
-			if cmd != nil && cmd.Process != nil {
+			if cmd == nil || cmd.Process == nil {
+				log.WithField("ide", ide.String()).Error("cmd or cmd.Process is nil, cannot send Interrupt signal")
+			} else {
 				_ = cmd.Process.Signal(os.Interrupt)
 			}
 			break supervisorLoop
@@ -561,17 +564,20 @@ supervisorLoop:
 	log.WithField("ide", ide.String()).WithField("budget", timeBudgetIDEShutdown.String()).Info("IDE supervisor loop ended - waiting for IDE to come down")
 	select {
 	case <-ideStopped:
+		log.WithField("ide", ide.String()).WithField("budget", timeBudgetIDEShutdown.String()).Info("IDE has been stopped in time")
 		return
 	case <-time.After(timeBudgetIDEShutdown):
 		log.WithField("ide", ide.String()).WithField("timeBudgetIDEShutdown", timeBudgetIDEShutdown.String()).Error("IDE did not stop in time - sending SIGKILL")
-		_ = cmd.Process.Signal(syscall.SIGKILL)
+		if cmd == nil || cmd.Process == nil {
+			log.WithField("ide", ide.String()).Error("cmd or cmd.Process is nil, cannot send SIGKILL")
+		} else {
+			_ = cmd.Process.Signal(syscall.SIGKILL)
+		}
 	}
 }
 
 func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan struct{}, ideReady *ideReadyState, s *ideStatus, ide IDEKind) {
 	go func() {
-		cmd = prepareIDELaunch(cfg, ideConfig)
-
 		// prepareIDELaunch sets Pdeathsig, which on on Linux, will kill the
 		// child process when the thread dies, not when the process dies.
 		// runtime.LockOSThread ensures that as long as this function is
@@ -627,7 +633,7 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 		args[i] = strings.ReplaceAll(args[i], "{IDEPORT}", strconv.Itoa(cfg.IDEPort))
 		args[i] = strings.ReplaceAll(args[i], "{IDEHOSTNAME}", "0.0.0.0")
 	}
-	log.WithField("args", args).WithField("entrypoint", ideConfig.Entrypoint).Info("launching IDE")
+	log.WithField("args", args).WithField("entrypoint", ideConfig.Entrypoint).Info("preparing IDE launch")
 
 	cmd := exec.Command(ideConfig.Entrypoint, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
