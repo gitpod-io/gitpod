@@ -356,6 +356,13 @@ function App() {
     </Route>;
 
     const hash = getURLHash();
+    if (/^(https:\/\/)?github\.dev\//i.test(hash)) {
+        window.location.hash = hash.replace(/^(https:\/\/)?github\.dev\//i, 'https://github.com/')
+        return <div></div>
+    } else if (/^([^\/]+?=[^\/]*?|prebuild)\/(https:\/\/)?github\.dev\//i.test(hash)) {
+        window.location.hash = hash.replace(/^([^\/]+?=[^\/]*?|prebuild)\/(https:\/\/)?github\.dev\//i, '$1/https://github.com/')
+        return <div></div>
+    }
     const isCreation = window.location.pathname === '/' && hash !== '';
     const isWsStart = /\/start\/?/.test(window.location.pathname) && hash !== '';
     if (isWhatsNewShown) {
