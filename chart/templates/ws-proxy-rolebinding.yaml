@@ -20,4 +20,23 @@ roleRef:
   kind: ClusterRole
   name: {{ .Release.Namespace }}-ns-psp:unprivileged
   apiGroup: rbac.authorization.k8s.io
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ws-proxy-api
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-proxy
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ws-proxy
+subjects:
+- kind: ServiceAccount
+  name: ws-proxy
+
 {{ end }}
