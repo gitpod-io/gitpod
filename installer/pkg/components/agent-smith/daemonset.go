@@ -18,12 +18,20 @@ import (
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Component,
 			Namespace: ctx.Namespace,
 			Labels:    labels,
+			Annotations: map[string]string{
+				common.AnnotationConfigChecksum: configHash,
+			},
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: labels},

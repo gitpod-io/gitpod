@@ -6,6 +6,7 @@ package wsmanagerbridge
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -20,6 +21,11 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -30,7 +36,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				// todo(sje): receive config value
 				Replicas: pointer.Int32(1),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
@@ -38,6 +43,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:      Component,
 						Namespace: ctx.Namespace,
 						Labels:    labels,
+						Annotations: map[string]string{
+							common.AnnotationConfigChecksum: configHash,
+						},
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      &corev1.Affinity{},

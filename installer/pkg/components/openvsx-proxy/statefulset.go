@@ -6,6 +6,7 @@ package openvsx_proxy
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -19,6 +20,11 @@ import (
 func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 	// todo(sje): add redis
+
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
 
 	return []runtime.Object{&appsv1.StatefulSet{
 		TypeMeta: common.TypeMetaStatefulSet,
@@ -39,6 +45,9 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:      Component,
 					Namespace: ctx.Namespace,
 					Labels:    labels,
+					Annotations: map[string]string{
+						common.AnnotationConfigChecksum: configHash,
+					},
 				},
 				Spec: v1.PodSpec{
 					Affinity:                      &v1.Affinity{},

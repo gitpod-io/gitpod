@@ -20,6 +20,11 @@ import (
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
 
@@ -71,6 +76,9 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   Component,
 					Labels: labels,
+					Annotations: map[string]string{
+						common.AnnotationConfigChecksum: configHash,
+					},
 				},
 				Spec: corev1.PodSpec{
 					PriorityClassName: common.SystemNodeCritical,

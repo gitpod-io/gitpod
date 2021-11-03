@@ -5,12 +5,14 @@
 package common
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"math/rand"
 	"strings"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"sigs.k8s.io/yaml"
 
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
@@ -21,6 +23,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
@@ -392,6 +395,26 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	res.BlobQuota = 5 * 1024 * 1024 * 1024
 
 	return *res
+}
+
+// ObjectHash marshals the objects to YAML and produces a sha256 hash of the output.
+// This function is useful for restarting pods when the config changes.
+// Takes an error as argument to make calling it more conventient. If that error is not nil,
+// it's passed right through
+func ObjectHash(objs []runtime.Object, err error) (string, error) {
+	if err != nil {
+		return "", err
+	}
+
+	hash := sha256.New()
+	for _, o := range objs {
+		b, err := yaml.Marshal(o)
+		if err != nil {
+			return "", err
+		}
+		_, _ = hash.Write(b)
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 var (

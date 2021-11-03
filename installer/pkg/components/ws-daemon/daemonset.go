@@ -23,6 +23,11 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := ctx.Config
 	labels := common.DefaultLabels(Component)
 
+	configHash, err := common.ObjectHash(configmap(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	initContainers := []corev1.Container{
 		{
 			Name:  "disable-kube-health-monitor",
@@ -114,6 +119,7 @@ fi
 					Labels: labels,
 					Annotations: map[string]string{
 						"seccomp.security.alpha.kubernetes.io/shiftfs-module-loader": "unconfined",
+						common.AnnotationConfigChecksum:                              configHash,
 					},
 				},
 				Spec: corev1.PodSpec{
