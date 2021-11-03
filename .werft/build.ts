@@ -1,7 +1,7 @@
 import * as shell from 'shelljs';
 import * as fs from 'fs';
-import * as path from 'path';
-import { werft, exec, gitTag } from './util/shell';
+import { exec } from './util/shell';
+import { Werft } from './util/werft';
 import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
@@ -11,6 +11,11 @@ import { sleep } from './util/util';
 import * as gpctl from './util/gpctl';
 import { createHash } from "crypto";
 import { InstallMonitoringSatelliteParams, installMonitoringSatellite, observabilityStaticChecks } from './observability/monitoring-satellite';
+import { SpanStatusCode } from '@opentelemetry/api';
+import * as Tracing from './observability/tracing'
+
+// Will be set once tracing has been initialized
+let werft: Werft
 
 const readDir = util.promisify(fs.readdir)
 
@@ -19,14 +24,29 @@ const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
 const context = JSON.parse(fs.readFileSync('context.json').toString());
 
 const version = parseVersion(context);
-build(context, version)
+
+
+Tracing.initialize()
+    .then(() => {
+        werft = new Werft("build")
+    })
+    .then(() => build(context, version))
+    .then(() => werft.endAllSpans())
     .catch((err) => {
+        werft.rootSpan.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: err
+        })
+        werft.endAllSpans()
+
         if (context.Repository.ref === "refs/heads/main") {
             reportBuildFailureInSlack(context, err, () => process.exit(1));
         } else {
-            process.exit(1);
+            console.log('Error', err)
+            // Explicitly not using process.exit as we need to flush tracing, see tracing.js
+            process.exitCode = 1
         }
-    });
+    })
 
 // Werft phases
 const phases = {
@@ -50,7 +70,6 @@ export function parseVersion(context) {
 
 export async function build(context, version) {
     werft.phase('validate-changes', 'validating changes');
-
     try {
         exec(`pre-commit run --all-files --show-diff-on-failure`);
         werft.done('validate-changes');
@@ -109,7 +128,7 @@ export async function build(context, version) {
     const withPayment= "with-payment" in buildConfig;
     const withObservability = "with-observability" in buildConfig;
 
-    werft.log("job config", JSON.stringify({
+    const jobConfig = {
         buildConfig,
         version,
         mainBuild,
@@ -128,7 +147,13 @@ export async function build(context, version) {
         cleanSlateDeployment,
         installEELicense,
         withObservability,
-    }));
+    }
+    werft.log("job config", JSON.stringify(jobConfig));
+    werft.rootSpan.setAttributes(Object.fromEntries(Object.entries(jobConfig).map((kv) => {
+        const [key, value] = kv
+        return [`werft.job.config.${key}`, value]
+    })))
+    werft.rootSpan.setAttribute('werft.job.config.branch', context.Repository.ref)
 
     /**
      * Build
@@ -221,7 +246,6 @@ export async function build(context, version) {
     if (noPreview) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview or publish-release is set");
-
         return
     }
 

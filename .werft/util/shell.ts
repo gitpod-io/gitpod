@@ -1,23 +1,7 @@
 import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { ChildProcess } from 'child_process';
-
-// werft helps produce werft related log output
-export const werft = {
-    phase: (name, desc?: string) => console.log(`[${name}|PHASE] ${desc || name}`),
-    log: (slice, msg) => console.log(`[${slice}] ${msg}`),
-    logOutput: (slice, cmd) => {
-        console.log(cmd.toString().split("\n").map(l => `[${slice}] ${l}`).join("\n"))
-    },
-    fail: (slice, err) => {
-        console.log(`[${slice}|FAIL] ${err}`);
-        throw err;
-    },
-    done: (slice) => console.log(`[${slice}|DONE]`),
-    result: (description: string, channel: string, value: string) => {
-        exec(`werft log result -d "${description}" -c "${channel}" ${value}`);
-    },
-}
+import { getGlobalWerftInstance } from './werft';
 
 export type ExecOptions = shell.ExecOptions & {
     slice?: string;
@@ -35,6 +19,8 @@ export function exec(command: string, options: ExecOptions & { async?: false }):
 export function exec(command: string, options: ExecOptions & { async: true }): Promise<ExecResult>;
 export function exec(command: string, options: ExecOptions): shell.ShellString | ChildProcess;
 export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.ShellString | Promise<ExecResult> {
+    const werft = getGlobalWerftInstance()
+
     if (options && options.slice) {
         options.silent = true;
     }
