@@ -15,7 +15,7 @@ export default function FromReferrer() {
         url.pathname = "/";
         url.hash = contextUrl;
         window.location.href = url.toString();
-        return <></>;
+        return <div></div>;
     }
 
     return <div className="app-container flex flex-col space-y-2">
@@ -26,7 +26,7 @@ export default function FromReferrer() {
                     <p>
                         It looks like you are trying to open a workspace, but the referrer URL is empty or has an incomplete path.
                         This happens when the Git hoster or browser doesn't send the referrer header.
-                        <br/> Please prefix the repository URL with <pre>https://gitpod.io/#</pre> in order to start a workspace. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a>
+                        <br/> Please prefix the repository URL with <pre>https://{window.location.host}/#</pre> in order to start a workspace. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a>
                     </p>
                 </div>
                 <span>
