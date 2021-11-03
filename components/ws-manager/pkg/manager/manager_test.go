@@ -17,7 +17,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -60,7 +59,6 @@ func TestControlPort(t *testing.T) {
 	}
 	type gold struct {
 		Error            string                   `json:"error,omitempty"`
-		PortsService     *corev1.Service          `json:"portsService,omitempty"`
 		Response         *api.ControlPortResponse `json:"response,omitempty"`
 		PostChangeStatus []*api.PortSpec          `json:"postChangeStatus,omitempty"`
 	}
@@ -109,31 +107,6 @@ func TestControlPort(t *testing.T) {
 
 			// wait for informer sync of any change introduced by ControlPort
 			time.Sleep(500 * time.Millisecond)
-
-			var svc corev1.Service
-			_ = manager.Clientset.Get(context.Background(), types.NamespacedName{
-				Namespace: manager.Config.Namespace,
-				Name:      getPortsServiceName(startCtx.Request.ServicePrefix),
-			}, &svc)
-
-			cleanTemporalAttributes := func(svc *corev1.Service) *corev1.Service {
-				// only process services from the API server
-				if svc.ResourceVersion == "" {
-					return nil
-				}
-
-				copy := svc.DeepCopy()
-				copy.ObjectMeta.SelfLink = ""
-				copy.ObjectMeta.ResourceVersion = ""
-				copy.ObjectMeta.SetCreationTimestamp(metav1.Time{})
-				copy.ObjectMeta.UID = ""
-				copy.Spec.ClusterIP = ""
-				copy.Spec.SessionAffinity = ""
-
-				return copy
-			}
-
-			result.PortsService = cleanTemporalAttributes(&svc)
 
 			return &result
 		},

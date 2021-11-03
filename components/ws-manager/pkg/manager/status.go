@@ -18,8 +18,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -52,10 +52,8 @@ func init() {
 
 // workspaceObjects contains all Kubernetes objects required to compute the status of a workspace
 type workspaceObjects struct {
-	Pod          *corev1.Pod     `json:"pod"`
-	TheiaService *corev1.Service `json:"theiaService,omitempty"`
-	PortsService *corev1.Service `json:"portsService,omitempty"`
-	Events       []corev1.Event  `json:"events,omitempty"`
+	Pod    *corev1.Pod    `json:"pod"`
+	Events []corev1.Event `json:"events,omitempty"`
 }
 
 // GetOWI produces the owner, workspace, instance tripple that we use for tracing and logging
@@ -158,48 +156,14 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 		return xerrors.Errorf("completeWorkspaceObjects: need either pod or lifecycle independent state")
 	}
 
-	// find our service prefix to see if the services still exist
-	servicePrefix := ""
-	if wso.Pod != nil {
-		servicePrefix = wso.Pod.Annotations[servicePrefixAnnotation]
-	}
-	if servicePrefix == "" {
-		return xerrors.Errorf("completeWorkspaceObjects: no service prefix found")
-	}
-	if wso.TheiaService == nil {
-		var service corev1.Service
-		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getTheiaServiceName(servicePrefix)}, &service)
-		if err == nil {
-			wso.TheiaService = &service
-		}
-
-		if !isKubernetesObjNotFoundError(err) && err != nil {
+	if wso.Events == nil {
+		events, err := m.RawClient.CoreV1().Events(m.Config.Namespace).Search(scheme, wso.Pod)
+		if err != nil {
 			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
 		}
-	}
-	if wso.PortsService == nil {
-		var service corev1.Service
-		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getPortsServiceName(servicePrefix)}, &service)
-		if err == nil {
-			wso.PortsService = &service
-		}
 
-		if !isKubernetesObjNotFoundError(err) && err != nil {
-			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-		}
-	}
-
-	// find pod events - this only makes sense if we still have a pod
-	if wso.Pod != nil {
-		if wso.Events == nil && wso.Pod != nil {
-			events, err := m.RawClient.CoreV1().Events(m.Config.Namespace).Search(scheme, wso.Pod)
-			if err != nil {
-				return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-			}
-
-			wso.Events = make([]corev1.Event, len(events.Items))
-			copy(wso.Events, events.Items)
-		}
+		wso.Events = make([]corev1.Event, len(events.Items))
+		copy(wso.Events, events.Items)
 	}
 
 	return nil
@@ -222,9 +186,9 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		return nil, xerrors.Errorf("workspace pod for %s is degenerate - does not have workspace container", id)
 	}
 
-	wsurl, ok := wso.Pod.Annotations[workspaceURLAnnotation]
+	wsurl, ok := wso.Pod.Annotations[kubernetes.WorkspaceURLAnnotation]
 	if !ok {
-		return nil, xerrors.Errorf("pod %s has no %s annotation", wso.Pod.Name, workspaceURLAnnotation)
+		return nil, xerrors.Errorf("pod %s has no %s annotation", wso.Pod.Name, kubernetes.WorkspaceURLAnnotation)
 	}
 
 	tpe, err := wso.WorkspaceType()
@@ -245,7 +209,7 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		ideImage        string
 		desktopIdeImage string
 	)
-	if ispec, ok := wso.Pod.Annotations[workspaceImageSpecAnnotation]; ok {
+	if ispec, ok := wso.Pod.Annotations[kubernetes.WorkspaceImageSpecAnnotation]; ok {
 		spec, err := regapi.ImageSpecFromBase64(ispec)
 		if err != nil {
 			return nil, xerrors.Errorf("invalid image spec: %w", err)
@@ -255,12 +219,12 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		desktopIdeImage = spec.DesktopIdeRef
 	}
 
-	ownerToken, ok := wso.Pod.Annotations[ownerTokenAnnotation]
+	ownerToken, ok := wso.Pod.Annotations[kubernetes.OwnerTokenAnnotation]
 	if !ok {
 		log.WithFields(wso.GetOWI()).Warn("pod has no owner token. is this a legacy pod?")
 	}
 	admission := api.AdmissionLevel_ADMIT_OWNER_ONLY
-	if av, ok := api.AdmissionLevel_value[strings.ToUpper(wso.Pod.Annotations[workspaceAdmissionAnnotation])]; ok {
+	if av, ok := api.AdmissionLevel_value[strings.ToUpper(wso.Pod.Annotations[kubernetes.WorkspaceAdmissionAnnotation])]; ok {
 		admission = api.AdmissionLevel(av)
 	}
 
@@ -299,42 +263,6 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		return nil, xerrors.Errorf("cannot get workspace status: %w", err)
 	}
 
-	exposedPorts := []*api.PortSpec{}
-	if wso.PortsService != nil {
-		service := wso.PortsService
-
-		for _, p := range service.Spec.Ports {
-			port := &api.PortSpec{
-				Port:       uint32(p.Port),
-				Target:     uint32(p.TargetPort.IntValue()),
-				Visibility: portNameToVisibility(p.Name),
-				Url:        service.Annotations[fmt.Sprintf("gitpod/port-url-%d", p.Port)],
-			}
-
-			// enforce the cannonical form where target defaults to port
-			if port.Port == port.Target {
-				port.Target = 0
-			}
-
-			exposedPorts = append(exposedPorts, port)
-		}
-	}
-	status.Spec.ExposedPorts = exposedPorts
-
-	var serviceExists api.WorkspaceConditionBool
-	if wso.TheiaService != nil || wso.PortsService != nil {
-		serviceExists = api.WorkspaceConditionBool_TRUE
-	} else {
-		serviceExists = api.WorkspaceConditionBool_FALSE
-	}
-	status.Conditions.ServiceExists = serviceExists
-
-	if wso.Pod == nil {
-		status.Conditions.Deployed = api.WorkspaceConditionBool_FALSE
-	} else {
-		status.Conditions.Deployed = api.WorkspaceConditionBool_TRUE
-	}
-
 	return status, nil
 }
 
@@ -367,6 +295,8 @@ func getWorkspaceMetadata(pod *corev1.Pod) *api.WorkspaceMetadata {
 
 func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspaceObjects) error {
 	pod := wso.Pod
+
+	result.Spec.ExposedPorts = extractExposedPorts(pod).Ports
 
 	// check failure states, i.e. determine value of result.Failed
 	failure, phase := extractFailure(wso)
@@ -666,9 +596,7 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 		}
 
 		// ideally we do not just use evt.Message as failure reason because it contains internal paths and is not useful for the user
-		if strings.Contains(evt.Message, theiaVolumeName) {
-			return "cannot mount Theia", nil
-		} else if strings.Contains(evt.Message, workspaceVolumeName) {
+		if strings.Contains(evt.Message, workspaceVolumeName) {
 			return "cannot mount workspace", nil
 		} else {
 			// if this happens we did not do a good job because that means we've introduced another volume to the pod
