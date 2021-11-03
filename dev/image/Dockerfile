@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full-vnc:latest
 
-ENV TRIGGER_REBUILD 14
+ENV TRIGGER_REBUILD 16
 ENV WORKSPACE_KERNEL 5.4.0-1051-gke
 
 USER root
@@ -27,7 +27,7 @@ RUN curl -fsSL https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 > $CLO
 
 ### Helm3 ###
 RUN mkdir -p /tmp/helm/ \
-    && curl -fsSL https://get.helm.sh/helm-v3.6.0-linux-amd64.tar.gz | tar -xzvC /tmp/helm/ --strip-components=1 \
+    && curl -fsSL https://get.helm.sh/helm-v3.7.1-linux-amd64.tar.gz | tar -xzvC /tmp/helm/ --strip-components=1 \
     && cp /tmp/helm/helm /usr/local/bin/helm \
     && cp /tmp/helm/helm /usr/local/bin/helm3 \
     && rm -rf /tmp/helm/ \
