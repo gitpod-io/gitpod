@@ -14,6 +14,7 @@ const (
 	InClusterDbSecret         = "mysql"
 	InClusterMessageQueueName = "rabbitmq"
 	InClusterMessageQueueTLS  = "messagebus-certificates-secret-core"
+	MinioServiceAPIPort       = 9000
 	MonitoringChart           = "monitoring"
 	ProxyComponent            = "proxy"
 	RegistryFacadeComponent   = "registry-facade"

@@ -8,5 +8,5 @@ name: minio
 version: 1.0.0
 dependencies:
   - name: minio
-    version: 8.0.10
-    repository: https://helm.min.io
+    version: 9.0.6
+    repository: https://charts.bitnami.com/bitnami
