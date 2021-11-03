@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -44,7 +45,7 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		tracing.FinishSpan(span, &err)
 	}()
 
-	ispec, ok := pod.Annotations[workspaceImageSpecAnnotation]
+	ispec, ok := pod.Annotations[kubernetes.WorkspaceImageSpecAnnotation]
 	if !ok {
 		return nil, status.Error(codes.FailedPrecondition, "workspace has no image spec")
 	}

@@ -22,12 +22,11 @@ import (
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -420,11 +419,6 @@ func (m *Monitor) doHousekeeping(ctx context.Context) {
 	if err != nil {
 		m.OnError(err)
 	}
-
-	err = m.deleteDanglingServices(ctx)
-	if err != nil {
-		m.OnError(err)
-	}
 }
 
 // writeEventTraceLog writes an event trace log if one is configured. This function is written in
@@ -601,9 +595,9 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 	if !ok {
 		return nil, xerrors.Errorf("pod %s has no %s annotation", pod.Name, workspaceIDAnnotation)
 	}
-	wsurl, ok := pod.Annotations[workspaceURLAnnotation]
+	wsurl, ok := pod.Annotations[kubernetes.WorkspaceURLAnnotation]
 	if !ok {
-		return nil, xerrors.Errorf("pod %s has no %s annotation", pod.Name, workspaceURLAnnotation)
+		return nil, xerrors.Errorf("pod %s has no %s annotation", pod.Name, kubernetes.WorkspaceURLAnnotation)
 	}
 	workspaceURL, err := url.Parse(wsurl)
 	if err != nil {
@@ -975,63 +969,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			tracing.LogError(span, backupError)
 		}
 	}
-}
-
-// deleteDanglingServices removes services for which there is no corresponding workspace pod anymore
-func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
-	var services corev1.ServiceList
-	err := m.manager.Clientset.List(ctx, &services, workspaceObjectListOptions(m.manager.Config.Namespace))
-	if err != nil {
-		return xerrors.Errorf("deleteDanglingServices: %w", err)
-	}
-
-	var zero int64 = 0
-	propagationPolicy := metav1.DeletePropagationForeground
-
-	for _, service := range services.Items {
-		var endpoints corev1.Endpoints
-		err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: service.Namespace, Name: service.Name}, &endpoints)
-		if err != nil {
-			return xerrors.Errorf("deleteDanglingServices: %w", err)
-		}
-
-		hasReadyEndpoint := false
-		for _, s := range endpoints.Subsets {
-			hasReadyEndpoint = len(s.Addresses) > 0
-		}
-		if hasReadyEndpoint {
-			continue
-		}
-
-		workspaceID, ok := endpoints.Labels[wsk8s.WorkspaceIDLabel]
-		if !ok {
-			m.OnError(xerrors.Errorf("service endpoint %s does not have %s label", service.Name, wsk8s.WorkspaceIDLabel))
-			continue
-		}
-
-		_, err = m.manager.findWorkspacePod(ctx, workspaceID)
-		if !isKubernetesObjNotFoundError(err) {
-			continue
-		}
-
-		if m.manager.Config.DryRun {
-			log.WithFields(log.OWI("", "", workspaceID)).WithField("name", service.Name).Info("should have deleted dangling service but this is a dry run")
-			continue
-		}
-
-		// this relies on the Kubernetes convention that endpoints have the same name as their services
-		err = m.manager.Clientset.Delete(ctx, &service, &client.DeleteOptions{
-			GracePeriodSeconds: &zero,
-			PropagationPolicy:  &propagationPolicy,
-		})
-		if err != nil && !isKubernetesObjNotFoundError(err) {
-			m.OnError(xerrors.Errorf("deleteDanglingServices: %w", err))
-			continue
-		}
-		log.WithFields(log.OWI("", "", workspaceID)).WithField("name", service.Name).Info("deleted dangling service")
-	}
-
-	return nil
 }
 
 // markTimedoutWorkspaces finds workspaces which haven't been active recently and marks them as timed out

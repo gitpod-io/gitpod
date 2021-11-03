@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -109,7 +110,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 	// lowercase is just for vanity's sake
 	val = strings.ToLower(val)
 
-	err = m.markWorkspace(ctx, req.Id, addMark(workspaceAdmissionAnnotation, val))
+	err = m.markWorkspace(ctx, req.Id, addMark(kubernetes.WorkspaceAdmissionAnnotation, val))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot change workspace admission level: %q", err)
 	}

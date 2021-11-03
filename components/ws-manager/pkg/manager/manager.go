@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -26,11 +25,7 @@ import (
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
@@ -81,8 +76,6 @@ type startWorkspaceContext struct {
 }
 
 const (
-	// theiaVolume is the name of the theia volume
-	theiaVolumeName = "vol-this-theia"
 	// workspaceVolume is the name of the workspace volume
 	workspaceVolumeName = "vol-this-workspace"
 	// workspaceDir is the path within all containers where workspaceVolume is mounted to
@@ -216,72 +209,6 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	okResponse := &api.StartWorkspaceResponse{
 		Url:        startContext.WorkspaceURL,
 		OwnerToken: startContext.OwnerToken,
-	}
-
-	// mandatory Theia service
-	servicePrefix := getServicePrefix(req)
-	theiaServiceName := getTheiaServiceName(servicePrefix)
-	theiaServiceLabels := make(map[string]string, len(startContext.Labels)+1)
-	for k, v := range startContext.Labels {
-		theiaServiceLabels[k] = v
-	}
-	theiaServiceLabels[wsk8s.ServiceTypeLabel] = "ide"
-	theiaService := corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      theiaServiceName,
-			Namespace: m.Config.Namespace,
-			Labels:    startContext.Labels,
-		},
-		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceTypeClusterIP,
-			Ports: []corev1.ServicePort{
-				{
-					Name: "ide",
-					Port: startContext.IDEPort,
-				},
-				{
-					Name: "supervisor",
-					Port: startContext.SupervisorPort,
-				},
-			},
-			Selector: startContext.Labels,
-		},
-	}
-
-	var errorFn = func(err error) bool {
-		return strings.Contains(err.Error(), "object is being deleted")
-	}
-	// in some scenarios we could be recreating a service being deleted
-	err = retry.OnError(wait.Backoff{
-		Steps:    4,
-		Duration: 1 * time.Second,
-		Factor:   5.0,
-		Jitter:   0.1,
-	}, errorFn, func() error {
-		return m.Clientset.Create(ctx, &theiaService)
-	})
-	if err != nil {
-		clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
-		// could not create Theia service
-		return nil, xerrors.Errorf("cannot create workspace's Theia service: %w", err)
-	}
-
-	span.LogKV("event", "theia service created")
-
-	// if we have ports configured already, create the ports service
-	if len(req.Spec.Ports) > 0 {
-		portService, err := m.createPortsService(req.Id, servicePrefix, req.Metadata.MetaId, req.Spec.Ports)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
-		}
-
-		err = m.Clientset.Create(ctx, portService)
-		if err != nil {
-			clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
-			// could not create ports service
-			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
-		}
-		span.LogKV("event", "ports service created")
 	}
 
 	m.metrics.OnWorkspaceStarted(req.Type)
@@ -420,40 +347,8 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	workspaceSpan := opentracing.StartSpan("workspace-stop", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
 	tracing.ApplyOWI(workspaceSpan, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 
-	servicePrefix, ok := pod.Annotations[servicePrefixAnnotation]
-	if !ok {
-		return xerrors.Errorf("stopWorkspace: pod %s has no %s annotation", pod.Name, servicePrefixAnnotation)
-	}
-
 	gracePeriodSeconds := int64(gracePeriod.Seconds())
 	propagationPolicy := metav1.DeletePropagationForeground
-
-	theiaServiceErr := m.Clientset.Delete(ctx,
-		&corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      getTheiaServiceName(servicePrefix),
-				Namespace: m.Config.Namespace,
-			},
-		},
-		&client.DeleteOptions{
-			GracePeriodSeconds: &gracePeriodSeconds,
-			PropagationPolicy:  &propagationPolicy,
-		},
-	)
-	span.LogKV("event", "theia service deleted")
-
-	portsServiceErr := m.Clientset.Delete(ctx, &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getPortsServiceName(servicePrefix),
-			Namespace: m.Config.Namespace,
-		},
-	},
-		&client.DeleteOptions{
-			GracePeriodSeconds: &gracePeriodSeconds,
-			PropagationPolicy:  &propagationPolicy,
-		},
-	)
-	span.LogKV("event", "ports service deleted")
 
 	podErr := m.Clientset.Delete(ctx,
 		&corev1.Pod{
@@ -472,12 +367,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	if podErr != nil {
 		return xerrors.Errorf("stopWorkspace: %w", podErr)
 	}
-	if theiaServiceErr != nil && !isKubernetesObjNotFoundError(theiaServiceErr) {
-		return xerrors.Errorf("stopWorkspace: %w", theiaServiceErr)
-	}
-	if portsServiceErr != nil && !isKubernetesObjNotFoundError(portsServiceErr) {
-		return xerrors.Errorf("stopWorkspace: %w", portsServiceErr)
-	}
+
 	return nil
 }
 
@@ -511,14 +401,6 @@ func (m *Manager) findWorkspacePod(ctx context.Context, workspaceID string) (*co
 //nolint:unused,deadcode
 func getPodID(workspaceType, workspaceID string) string {
 	return fmt.Sprintf("%s-%s", strings.TrimSpace(strings.ToLower(workspaceType)), strings.TrimSpace(workspaceID))
-}
-
-func getPortsServiceName(servicePrefix string) string {
-	return fmt.Sprintf("ws-%s-ports", strings.TrimSpace(strings.ToLower(servicePrefix)))
-}
-
-func getTheiaServiceName(servicePrefix string) string {
-	return fmt.Sprintf("ws-%s-theia", strings.TrimSpace(strings.ToLower(servicePrefix)))
 }
 
 // MarkActive records a workspace as being active which prevents it from timing out
@@ -619,13 +501,12 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		return nil, xerrors.Errorf("workspace pod %s has no service prefix annotation", pod.Name)
 	}
 
-	var service corev1.Service
 	notifyStatusChange := func() error {
 		// by modifying the ports service we have changed the workspace status. However, this status change is not propagated
 		// through the regular monitor mechanism as we did not modify the pod itself. We have to send out a status update
 		// outselves. Doing it ourselves lets us synchronize the status update with probing for actual availability, not just
 		// the service modification in Kubernetes.
-		wso := workspaceObjects{Pod: pod, PortsService: &service}
+		wso := workspaceObjects{Pod: pod}
 		err := m.completeWorkspaceObjects(ctx, &wso)
 		if err != nil {
 			return xerrors.Errorf("cannot update status: %w", err)
@@ -639,69 +520,13 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		return nil
 	}
 
-	metaID := pod.ObjectMeta.Annotations[wsk8s.MetaIDLabel]
 	// dunno why in k8s IP ports are int32 not uint16
-	port := int32(req.Spec.Port)
-	// get ports service if it exists
-	err = m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getPortsServiceName(servicePrefix)}, &service)
-	if isKubernetesObjNotFoundError(err) {
-		if !req.Expose {
-			// we're not asked to expose the port so there's nothing left to do here
-			return &api.ControlPortResponse{}, nil
-		}
+	port := req.Spec.Port
 
-		// service does not exist - create it
-		newService, err := m.createPortsService(req.Id, metaID, servicePrefix, []*api.PortSpec{req.Spec})
-		if err != nil {
-			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
-		}
-		err = m.Clientset.Create(ctx, newService, &client.CreateOptions{})
-		if err != nil {
-			return nil, xerrors.Errorf("cannot create service: %w", err)
-		}
-		span.LogKV("event", "port service created")
+	exposedPorts := extractExposedPorts(pod)
 
-		service = *newService
-
-		// the KubeDNS need a short while to pick up the new service. When we can resolve the service name, so can the proxy
-		// which means the user won't get an error if they try to access the port.
-		host := fmt.Sprintf("%s.%s", service.Name, m.Config.Namespace)
-		for {
-			if m.Config.InitProbe.Disabled {
-				// In tests we'd like to mock net.LookupHost(host) instead of disabling the probe,
-				// but we can't (see https://github.com/golang/go/issues/12503 and https://groups.google.com/forum/#!topic/golang-codereviews/6jmR0F6BZVU)
-				break
-			}
-
-			_, err = net.LookupHost(host)
-			// There's no direct way to check if the host wasn't found in Go1.12: https://go-review.googlesource.com/c/go/+/168597/
-			// Thus we assume any error means we can't resolve the host yet.
-			if err == nil {
-				break
-			}
-
-			// abort if the context deadline is exceeded
-			if err := ctx.Err(); err != nil {
-				return nil, err
-			}
-		}
-		span.LogKV("event", "host available")
-
-		// we've successfully exposed the port by creating the service
-		err = notifyStatusChange()
-		if err != nil {
-			return nil, err
-		}
-		return &api.ControlPortResponse{}, nil
-	}
-	if err != nil {
-		return nil, xerrors.Errorf("cannot control port: %w", err)
-	}
-
-	// the service exists - let's modify it
-	spec := &service.Spec
 	existingPortSpecIdx := -1
-	for i, p := range service.Spec.Ports {
+	for i, p := range exposedPorts.Ports {
 		if p.Port == port {
 			existingPortSpecIdx = i
 			break
@@ -709,97 +534,58 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	}
 
 	if req.Expose && existingPortSpecIdx < 0 {
-		// port is not exposed yet - patch the service
-		portSpec := corev1.ServicePort{
-			Name:     portSpecToName(req.Spec),
-			Port:     port,
-			Protocol: corev1.ProtocolTCP,
+		// port is not exposed yet - patch the pod
+		url, err := config.RenderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, config.PortURLContext{
+			Host:          m.Config.GitpodHostURL,
+			ID:            req.Id,
+			IngressPort:   fmt.Sprint(port),
+			Prefix:        servicePrefix,
+			WorkspacePort: fmt.Sprint(port),
+		})
+		if err != nil {
+			return nil, xerrors.Errorf("cannot render public URL for %d: %w", port, err)
 		}
-		if req.Spec.Target != 0 {
-			portSpec.TargetPort = intstr.FromInt(int(req.Spec.Target))
+
+		portSpec := &api.PortSpec{
+			Port:       uint32(port),
+			Visibility: req.Spec.Visibility,
+			Url:        url,
 		}
-		spec.Ports = append(spec.Ports, portSpec)
+
+		exposedPorts.Ports = append(exposedPorts.Ports, portSpec)
 	} else if req.Expose && existingPortSpecIdx >= 0 {
-		service.Spec.Ports[existingPortSpecIdx].TargetPort = intstr.FromInt(int(req.Spec.Target))
-		service.Spec.Ports[existingPortSpecIdx].Name = portSpecToName(req.Spec)
+		exposedPorts.Ports[existingPortSpecIdx].Visibility = req.Spec.Visibility
 	} else if !req.Expose && existingPortSpecIdx < 0 {
 		// port isn't exposed already - we're done here
 		return &api.ControlPortResponse{}, nil
 	} else if !req.Expose && existingPortSpecIdx >= 0 {
 		// port is exposed but shouldn't be - remove it from the port list
-		spec.Ports = append(spec.Ports[:existingPortSpecIdx], spec.Ports[existingPortSpecIdx+1:]...)
+		exposedPorts.Ports = append(exposedPorts.Ports[:existingPortSpecIdx], exposedPorts.Ports[existingPortSpecIdx+1:]...)
 	}
 
-	if len(spec.Ports) == 0 {
-		// we don't have any ports exposed anymore: remove the service
-		propagationPolicy := metav1.DeletePropagationForeground
-		var zero int64 = 0
-		err = m.Clientset.Delete(ctx, &service, &client.DeleteOptions{
-			GracePeriodSeconds: &zero,
-			PropagationPolicy:  &propagationPolicy,
-		})
-
-		span.LogKV("event", "port service deleted")
-	} else {
-		// we've made it here which means we need to actually patch the service
-		service.Spec = *spec
-
-		for _, p := range service.Spec.Ports {
-			url, err := config.RenderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, config.PortURLContext{
-				Host:          m.Config.GitpodHostURL,
-				ID:            req.Id,
-				IngressPort:   fmt.Sprint(p.Port),
-				Prefix:        servicePrefix,
-				WorkspacePort: fmt.Sprint(p.Port),
-			})
-			if err != nil {
-				return nil, xerrors.Errorf("cannot render public URL for %d: %w", p.Port, err)
-			}
-			if service.Annotations == nil {
-				service.Annotations = map[string]string{}
-			}
-			service.Annotations[fmt.Sprintf("gitpod/port-url-%d", p.Port)] = url
-		}
-
-		err = m.Clientset.Update(ctx, &service)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot update service: %w", err)
-		}
-		span.LogKV("event", "port service updated")
-	}
+	// update pod annotation
+	data, err := exposedPorts.ToBase64()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot control port: %w", err)
+		return nil, xerrors.Errorf("cannot update status: %w", err)
+	}
+
+	if pod.Annotations[wsk8s.WorkspaceExposedPorts] != data {
+		log.WithField("ports", exposedPorts).Debug("updating exposed ports")
+		pod.Annotations[wsk8s.WorkspaceExposedPorts] = data
+
+		// update pod
+		err = m.Clientset.Update(ctx, pod)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot update workspace pod: %w", err)
+		}
 	}
 
 	err = notifyStatusChange()
 	if err != nil {
 		return nil, err
 	}
+
 	return &api.ControlPortResponse{}, nil
-}
-
-// portSpecToName generates a port name from the given PortSpec
-func portSpecToName(spec *api.PortSpec) string {
-	api.PortVisibility_PORT_VISIBILITY_PUBLIC.EnumDescriptor()
-	visibilityStr := strings.ToLower(strings.TrimPrefix(spec.Visibility.String(), "PORT_VISIBILITY_"))
-	return fmt.Sprintf("p%d-%s", spec.Port, visibilityStr)
-}
-
-// portNameToVisibility parses the port name with the pattern defined in PortSpecToName and return the ports visibility (or default value if not specified)
-func portNameToVisibility(s string) api.PortVisibility {
-	parts := strings.Split(s, "-")
-	if len(parts) != 2 {
-		// old or wrong port name: return default
-		return api.PortVisibility_PORT_VISIBILITY_PRIVATE
-	}
-
-	// parse (or public as fallback: important for backwards compatibility during rollout)
-	visibilitStr := fmt.Sprintf("PORT_VISIBILITY_%s", strings.ToUpper(parts[1]))
-	i32Value, present := api.PortVisibility_value[visibilitStr]
-	if !present {
-		return api.PortVisibility_PORT_VISIBILITY_PRIVATE
-	}
-	return api.PortVisibility(i32Value)
 }
 
 // DescribeWorkspace investigates a workspace and returns its status, and configuration
@@ -1082,10 +868,9 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (objs []workspaceO
 	}
 
 	var (
-		wsoIndex          = make(map[string]*workspaceObjects)
-		theiaServiceIndex = make(map[string]*workspaceObjects)
-		portServiceIndex  = make(map[string]*workspaceObjects)
+		wsoIndex = make(map[string]*workspaceObjects)
 	)
+
 	for _, pod := range pods.Items {
 		id, ok := pod.Annotations[workspaceIDAnnotation]
 		if !ok {
@@ -1100,24 +885,6 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (objs []workspaceO
 		wso := &workspaceObjects{Pod: &podcopy}
 
 		wsoIndex[id] = wso
-		if sp, ok := pod.Annotations[servicePrefixAnnotation]; ok {
-			theiaServiceIndex[getTheiaServiceName(sp)] = wso
-			portServiceIndex[getPortsServiceName(sp)] = wso
-		}
-	}
-
-	for _, service := range services.Items {
-		// don't references to loop variables - they magically change their value
-		serviceCopy := service
-
-		if wso, ok := theiaServiceIndex[service.Name]; ok {
-			wso.TheiaService = &serviceCopy
-			continue
-		}
-		if wso, ok := portServiceIndex[service.Name]; ok {
-			wso.PortsService = &serviceCopy
-			continue
-		}
 	}
 
 	var i int
@@ -1126,6 +893,7 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (objs []workspaceO
 		result[i] = *wso
 		i++
 	}
+
 	return result, nil
 }
 
@@ -1278,4 +1046,13 @@ func checkWSDaemonEndpoint(namespace string, clientset client.Client) func(strin
 
 		return false
 	}
+}
+
+func extractExposedPorts(pod *corev1.Pod) *api.ExposedPorts {
+	if data, ok := pod.Annotations[wsk8s.WorkspaceExposedPorts]; ok {
+		ports, _ := api.ExposedPortsFromBase64(data)
+		return ports
+	}
+
+	return &api.ExposedPorts{}
 }
