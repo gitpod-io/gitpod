@@ -9,18 +9,21 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // debugLogCmd represents the debugLogCmd command
 var debugLogCmd = &cobra.Command{
-	Use:   "log <component>",
-	Short: "Enables the debug log level for a component",
-	Args:  cobra.ExactArgs(1),
+	Use:     "log <component>",
+	Short:   "Enables the debug log level for a component",
+	Args:    cobra.ExactArgs(1),
+	Aliases: []string{"logs"},
 	Run: func(cmd *cobra.Command, args []string) {
 		comp := args[0]
 		if comp == "supervisor" {
@@ -37,31 +40,25 @@ var debugLogCmd = &cobra.Command{
 				return err
 			}
 
-			freePort, err := GetFreePort()
+			pods, err := util.FindPodsForComponent(clientSet, namespace, comp)
 			if err != nil {
 				return err
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			var failed bool
+			for _, podName := range pods {
+				err := enableLogDebug(podName, cfg, namespace)
+				if err != nil {
+					log.WithError(err).Error("cannot enable debug logging")
+					failed = true
+					continue
+				}
 
-			port := fmt.Sprintf("%d:6060", freePort)
-			podName, err := util.FindAnyPodForComponent(clientSet, namespace, comp)
-			if err != nil {
-				return err
-			}
-			readychan, errchan := util.ForwardPort(ctx, cfg, namespace, podName, port)
-			select {
-			case <-readychan:
-			case err := <-errchan:
-				return err
-			case <-ctx.Done():
-				return ctx.Err()
+				fmt.Println(podName)
 			}
 
-			_, err = http.Post(fmt.Sprintf("http://localhost:%d/debug/logging", freePort), "", bytes.NewReader([]byte(`{"level":"debug"}`)))
-			if err != nil {
-				return err
+			if failed {
+				os.Exit(1)
 			}
 
 			return nil
@@ -71,6 +68,29 @@ var debugLogCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 	},
+}
+
+func enableLogDebug(podName string, cfg *rest.Config, namespace string) error {
+	freePort, err := GetFreePort()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	port := fmt.Sprintf("%d:6060", freePort)
+	readychan, errchan := util.ForwardPort(ctx, cfg, namespace, podName, port)
+	select {
+	case <-readychan:
+	case err := <-errchan:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	_, err = http.Post(fmt.Sprintf("http://localhost:%d/debug/logging", freePort), "application/json", bytes.NewReader([]byte(`{"level":"debug"}`)))
+	return err
 }
 
 func init() {
