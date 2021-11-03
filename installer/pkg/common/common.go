@@ -306,13 +306,22 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 	}
 }
 
-func ImageName(repo, name, tag string) string {
-	// Use convention if empty values found
+func RepoName(repo, name string) string {
+	var ref string
 	if repo == "" {
-		repo = "docker.io"
+		ref = name
+	} else {
+		ref = fmt.Sprintf("%s/%s", strings.TrimSuffix(repo, "/"), name)
 	}
+	pref, err := reference.ParseNormalizedNamed(ref)
+	if err != nil {
+		panic(fmt.Sprintf("cannot parse image repo %s: %v", ref, err))
+	}
+	return pref.String()
+}
 
-	ref := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(repo, "/"), name, tag)
+func ImageName(repo, name, tag string) string {
+	ref := fmt.Sprintf("%s:%s", RepoName(repo, name), tag)
 	pref, err := reference.ParseNamed(ref)
 	if err != nil {
 		panic(fmt.Sprintf("cannot parse image ref %s: %v", ref, err))
@@ -324,7 +333,7 @@ func ImageName(repo, name, tag string) string {
 	return ref
 }
 
-func StorageConfig(context RenderContext) storageconfig.StorageConfig {
+func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	var res *storageconfig.StorageConfig
 	if context.Config.ObjectStorage.CloudStorage != nil {
 		// TODO(cw): where do we get the GCP project from? Is it even still needed?
