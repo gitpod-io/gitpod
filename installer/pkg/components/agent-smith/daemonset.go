@@ -33,8 +33,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					// todo(sje): do we need affinity?
-					Affinity:                      &corev1.Affinity{},
+					Affinity:                      common.Affinity(common.AffinityLabelWorkspacesRegular, common.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					HostPID:                       true,
 					EnableServiceLinks:            pointer.Bool(false),
