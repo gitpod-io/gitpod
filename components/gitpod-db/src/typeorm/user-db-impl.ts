@@ -92,8 +92,12 @@ export class TypeORMUserDBImpl implements UserDB {
         return await userRepo.save(dbUser);
     }
 
-    public async updateUserPartial(partial: PartialUserUpdate): Promise<void> {
+    public async updateUserPartial(_partial: PartialUserUpdate): Promise<void> {
         const userRepo = await this.getUserRepo();
+        const partial = { ..._partial };
+        // .update does not update across one-to-many relations, which is also not what we want here (see type PartialUserUpdate)
+        // Still, sometimes it's convenient to pass in a full-blown "User" here. To make that work as expected, we're ignoring "identities" here.
+        delete (partial as any).identities;
         await userRepo.update(partial.id, partial);
     }
 
