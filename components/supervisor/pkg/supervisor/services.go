@@ -697,7 +697,7 @@ func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
 
 // ExposePort exposes a port.
 func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequest) (*api.ExposePortResponse, error) {
-	err := c.portsManager.Expose(ctx, req.Port, req.TargetPort)
+	err := c.portsManager.Expose(ctx, req.Port)
 	return &api.ExposePortResponse{}, err
 }
 

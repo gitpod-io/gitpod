@@ -50,19 +50,22 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "basic locally served",
 			Changes: []Change{
 				{Served: []ServedPort{{"0100007F", 8080, true}}},
-				{Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 60000, URL: "foobar"}}},
+				{Exposed: []ExposedPort{{LocalPort: 8080, URL: "foobar"}}},
 				{Served: []ServedPort{{"0100007F", 8080, true}, {"00000000", 60000, false}}},
 				{Served: []ServedPort{{"00000000", 60000, false}}},
 				{Served: []ServedPort{}},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, GlobalPort: 60000},
+				{LocalPort: 8080},
+				{LocalPort: 60000},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: false, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: false, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}, {LocalPort: 60000, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: false, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -72,26 +75,26 @@ func TestPortsUpdateState(t *testing.T) {
 				{Served: []ServedPort{}},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, GlobalPort: 8080},
+				{LocalPort: 8080},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true}},
 				{},
 			},
 		},
 		{
 			Desc: "basic port publically exposed",
 			Changes: []Change{
-				{Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 8080, Public: false, URL: "foobar"}}},
-				{Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 8080, Public: true, URL: "foobar"}}},
+				{Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}}},
+				{Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}}},
 				{Served: []ServedPort{{Port: 8080}}},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
 			},
 		},
 		{
@@ -116,8 +119,8 @@ func TestPortsUpdateState(t *testing.T) {
 				}},
 				{
 					Exposed: []ExposedPort{
-						{LocalPort: 8080, GlobalPort: 8080, Public: true, URL: "8080-foobar"},
-						{LocalPort: 9229, GlobalPort: 9229, Public: false, URL: "9229-foobar"},
+						{LocalPort: 8080, Public: true, URL: "8080-foobar"},
+						{LocalPort: 9229, Public: false, URL: "9229-foobar"},
 					},
 				},
 				{
@@ -128,20 +131,19 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, GlobalPort: 8080},
-				{LocalPort: 9229, GlobalPort: 9229},
-				{LocalPort: 9229, GlobalPort: 60000},
+				{LocalPort: 8080},
+				{LocalPort: 9229},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080}, {LocalPort: 9229, GlobalPort: 9229}},
+				[]*api.PortsStatus{{LocalPort: 8080}, {LocalPort: 9229}},
 				[]*api.PortsStatus{
-					{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
-					{LocalPort: 9229, GlobalPort: 9229, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
+					{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
+					{LocalPort: 9229, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
 				},
 				[]*api.PortsStatus{
-					{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
-					{LocalPort: 9229, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
+					{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
+					{LocalPort: 9229, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
 				},
 			},
 		},
@@ -155,17 +157,20 @@ func TestPortsUpdateState(t *testing.T) {
 					}},
 				}},
 				{Served: []ServedPort{{"0100007F", 4040, true}}},
-				{Exposed: []ExposedPort{{LocalPort: 4040, GlobalPort: 60000, Public: true, URL: "4040-foobar"}}},
+				{Exposed: []ExposedPort{{LocalPort: 4040, Public: true, URL: "4040-foobar"}}},
 				{Served: []ServedPort{{"0100007F", 4040, true}, {"00000000", 60000, false}}},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 4040, GlobalPort: 60000},
+				{LocalPort: 4040},
+				{LocalPort: 60000},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 4040, GlobalPort: 60000, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 4040, Served: true}},
+				[]*api.PortsStatus{{LocalPort: 4040, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}}},
 				[]*api.PortsStatus{
-					{LocalPort: 4040, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
+					{LocalPort: 4040, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
+					{LocalPort: 60000, Served: true},
 				},
 			},
 		},
@@ -178,22 +183,19 @@ func TestPortsUpdateState(t *testing.T) {
 					}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 8080, Public: false, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 8080, Public: true, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}},
 				},
 				{
 					Served: []ServedPort{{"0100007F", 8080, true}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 60000, Public: true, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{"0100007F", 8080, true}, {"00000000", 60000, false}},
-				},
-				{
-					Served: []ServedPort{{"00000000", 60000, false}},
+					Served: []ServedPort{{"0100007F", 8080, true}},
 				},
 				{
 					Served: []ServedPort{},
@@ -203,18 +205,16 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, GlobalPort: 8080, Public: false},
-				{LocalPort: 8080, GlobalPort: 60000, Public: true},
-				{LocalPort: 8080, GlobalPort: 8080, Public: true},
+				{LocalPort: 8080, Public: false},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080}},
+				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 			},
 		},
 		{
@@ -225,14 +225,14 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, GlobalPort: 59999},
-				{LocalPort: 3000, GlobalPort: 60000},
+				{LocalPort: 8080},
+				{LocalPort: 3000},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
 				{
-					{LocalPort: 8080, GlobalPort: 59999, Served: true},
-					{LocalPort: 3000, GlobalPort: 60000, Served: true},
+					{LocalPort: 8080, Served: true},
+					{LocalPort: 3000, Served: true},
 				},
 			},
 		},
@@ -248,17 +248,17 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"00000000", 8080, false}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 8080, Public: false, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, GlobalPort: 8080},
+				{LocalPort: 8080},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 8080, GlobalPort: 8080}},
-				{{LocalPort: 8080, GlobalPort: 8080, Served: true}},
-				{{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+				{{LocalPort: 8080}},
+				{{LocalPort: 8080, Served: true}},
+				{{LocalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 			},
 		},
 		{
@@ -268,24 +268,22 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"0100007F", 5900, true}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 60000, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
 					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000", 5900, false}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 5900, GlobalPort: 60000},
-				{LocalPort: 5900, GlobalPort: 5900},
+				{LocalPort: 5900},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, GlobalPort: 60000, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true}},
+				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -298,21 +296,19 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000", 5900, false}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 60000, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 5900, GlobalPort: 60000},
-				{LocalPort: 5900, GlobalPort: 5900},
+				{LocalPort: 5900},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, GlobalPort: 60000, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true}},
+				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -322,19 +318,19 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"00000000", 5900, false}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
 					Served: []ServedPort{{"00000000", 5900, false}, {"0100007F", 5900, true}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 5900, GlobalPort: 5900},
+				{LocalPort: 5900},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true}},
+				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -347,16 +343,16 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"00000000", 5900, false}, {"0100007F", 5900, true}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 5900, GlobalPort: 5900},
+				{LocalPort: 5900},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true}},
+				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -366,19 +362,19 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"0100007F", 5900, true}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 60000, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
 					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000000000000000010000000000", 5900, true}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 5900, GlobalPort: 60000},
+				{LocalPort: 5900},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, GlobalPort: 60000, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true}},
+				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -391,16 +387,16 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000000000000000010000000000", 5900, true}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 60000, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 5900, GlobalPort: 60000},
+				{LocalPort: 5900},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, GlobalPort: 60000, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true}},
+				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -410,19 +406,19 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"00000000", 5900, false}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
 					Served: []ServedPort{{"00000000", 5900, false}, {"00000000000000000000000000000000", 5900, false}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 5900, GlobalPort: 5900},
+				{LocalPort: 5900},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true}},
+				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -435,16 +431,16 @@ func TestPortsUpdateState(t *testing.T) {
 					Served: []ServedPort{{"00000000", 5900, false}, {"00000000000000000000000000000000", 5900, false}},
 				},
 				{
-					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 5900, GlobalPort: 5900},
+				{LocalPort: 5900},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
-				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, Served: true}},
+				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 	}
@@ -474,7 +470,7 @@ func TestPortsUpdateState(t *testing.T) {
 				pm    = NewManager(exposed, served, config, tunneled, nil, test.InternalPorts...)
 				updts [][]*api.PortsStatus
 			)
-			pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
+			pm.proxyStarter = func(port uint32) (io.Closer, error) {
 				return io.NopCloser(nil), nil
 			}
 
@@ -488,10 +484,8 @@ func TestPortsUpdateState(t *testing.T) {
 				t.Fatal(err)
 			}
 			go func() {
-				defer func() {
-					wg.Done()
-					_ = sub.Close()
-				}()
+				defer wg.Done()
+				defer sub.Close()
 
 				for up := range sub.Updates() {
 					updts = append(updts, up)
@@ -564,15 +558,12 @@ type testTunneledPorts struct {
 func (tep *testTunneledPorts) Observe(ctx context.Context) (<-chan []PortTunnelState, <-chan error) {
 	return tep.Changes, tep.Error
 }
-
 func (tep *testTunneledPorts) Tunnel(ctx context.Context, options *TunnelOptions, descs ...*PortTunnelDescription) ([]uint32, error) {
 	return nil, nil
 }
-
 func (tep *testTunneledPorts) CloseTunnel(ctx context.Context, localPorts ...uint32) ([]uint32, error) {
 	return nil, nil
 }
-
 func (tep *testTunneledPorts) EstablishTunnel(ctx context.Context, clientID string, localPort uint32, targetPort uint32) (net.Conn, error) {
 	return nil, nil
 }
@@ -601,14 +592,13 @@ func (tep *testExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 func (tep *testExposedPorts) Run(ctx context.Context) {
 }
 
-func (tep *testExposedPorts) Expose(ctx context.Context, local, global uint32, public bool) <-chan error {
+func (tep *testExposedPorts) Expose(ctx context.Context, local uint32, public bool) <-chan error {
 	tep.mu.Lock()
 	defer tep.mu.Unlock()
 
 	tep.Exposures = append(tep.Exposures, ExposedPort{
-		GlobalPort: global,
-		LocalPort:  local,
-		Public:     public,
+		LocalPort: local,
+		Public:    public,
 	})
 	return nil
 }
@@ -622,7 +612,7 @@ func (tps *testServedPorts) Observe(ctx context.Context) (<-chan []ServedPort, <
 	return tps.Changes, tps.Error
 }
 
-// testing for deadlocks between subscribing and processing events.
+// testing for deadlocks between subscribing and processing events
 func TestPortsConcurrentSubscribe(t *testing.T) {
 	var (
 		subscribes  = 100
@@ -645,7 +635,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 		}
 		pm = NewManager(exposed, served, config, tunneled, nil)
 	)
-	pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
+	pm.proxyStarter = func(local uint32) (io.Closer, error) {
 		return io.NopCloser(nil), nil
 	}
 
@@ -667,6 +657,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 
 		var j uint32
 		for {
+
 			select {
 			case <-time.After(50 * time.Millisecond):
 				served.Changes <- []ServedPort{{Port: j}}
@@ -691,7 +682,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 				// update
 				case <-sub.Updates():
 				}
-				_ = sub.Close()
+				sub.Close()
 			}
 			return nil
 		})
