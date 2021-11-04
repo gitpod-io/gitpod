@@ -6,10 +6,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/spf13/cobra"
-	"os"
-	"strings"
 )
 
 var validateConfigOpts struct {
@@ -21,6 +22,9 @@ var validateConfigCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Validate the deployment configuration",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if validateConfigOpts.Config == "" {
+			log.Fatal("missing --config")
+		}
 		_, cfgVersion, cfg, err := loadConfig(validateConfigOpts.Config)
 		if err != nil {
 			return err
@@ -29,8 +33,6 @@ var validateConfigCmd = &cobra.Command{
 		if err = runConfigValidation(cfgVersion, cfg); err != nil {
 			return err
 		}
-
-		fmt.Println("Gitpod installer configuration valid")
 
 		return nil
 	},
@@ -44,26 +46,12 @@ func runConfigValidation(version string, cfg interface{}) error {
 		return err
 	}
 
-	validationErrs, err := config.Validate(apiVersion, cfg)
+	res, err := config.Validate(apiVersion, cfg)
 	if err != nil {
 		return err
 	}
-
-	if len(validationErrs) > 0 {
-		for _, v := range validationErrs {
-			switch v.Tag() {
-			case "required":
-				fmt.Printf("Field '%s' is required", v.Namespace())
-			case "required_if", "required_unless", "required_with":
-				tag := strings.Replace(v.Tag(), "_", " ", -1)
-				fmt.Printf("Field '%s' is %s '%s'", v.Namespace(), tag, v.Param())
-			case "startswith":
-				fmt.Printf("Field '%s' must start with '%s'", v.Namespace(), v.Param())
-			default:
-				// General error message
-				fmt.Printf("Field '%s' failed %s validation", v.Namespace(), v.Tag())
-			}
-		}
+	res.Marshal(os.Stdout)
+	if len(res.Fatal) > 0 {
 		return fmt.Errorf("configuration invalid")
 	}
 

@@ -40,7 +40,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Observability = Observability{
 		LogLevel: LogLevelInfo,
 	}
-	cfg.Certificate.Kind = CertificateRefSecret
+	cfg.Certificate.Kind = ObjectRefSecret
 	cfg.Certificate.Name = "https-certificates"
 	cfg.Database.InCluster = pointer.Bool(true)
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
@@ -58,7 +58,7 @@ func (v version) Defaults(in interface{}) error {
 }
 
 type Config struct {
-	Kind       InstallationKind `json:"kind" validate:"required,installationKind"`
+	Kind       InstallationKind `json:"kind" validate:"required,installation_kind"`
 	Domain     string           `json:"domain" validate:"required,fqdn"`
 	Metadata   Metadata         `json:"metadata"`
 	Repository string           `json:"repository" validate:"required,ascii"`
@@ -89,7 +89,7 @@ type Metadata struct {
 }
 
 type Observability struct {
-	LogLevel LogLevel `json:"logLevel" validate:"required,logLevel"`
+	LogLevel LogLevel `json:"logLevel" validate:"required,log_level"`
 	Tracing  *Tracing `json:"tracing,omitempty"`
 }
 
@@ -128,8 +128,8 @@ type ObjectStorageS3 struct {
 }
 
 type ObjectStorageCloudStorage struct {
-	ServiceAccount ObjectRef `json:"serviceAccount"`
-	Project        string    `json:"project"`
+	ServiceAccount ObjectRef `json:"serviceAccount" validate:"required"`
+	Project        string    `json:"project" validate:"required"`
 }
 
 type InstallationKind string
@@ -141,14 +141,14 @@ const (
 )
 
 type ObjectRef struct {
-	Kind CertificateRefKind `json:"kind" validate:"required,certificateKind"`
-	Name string             `json:"name" validate:"required"`
+	Kind ObjectRefKind `json:"kind" validate:"required,objectref_kind"`
+	Name string        `json:"name" validate:"required"`
 }
 
-type CertificateRefKind string
+type ObjectRefKind string
 
 const (
-	CertificateRefSecret CertificateRefKind = "secret"
+	ObjectRefSecret ObjectRefKind = "secret"
 )
 
 type ContainerRegistry struct {
@@ -193,7 +193,7 @@ type Resources struct {
 }
 
 type WorkspaceRuntime struct {
-	FSShiftMethod        FSShiftMethod `json:"fsShiftMethod" validate:"required,fsShiftMethod"`
+	FSShiftMethod        FSShiftMethod `json:"fsShiftMethod" validate:"required,fs_shift_method"`
 	ContainerDRuntimeDir string        `json:"containerdRuntimeDir" validate:"required,startswith=/"`
 	ContainerDSocket     string        `json:"containerdSocket" validate:"required,startswith=/"`
 }

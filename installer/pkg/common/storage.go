@@ -18,12 +18,11 @@ import (
 func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	var res *storageconfig.StorageConfig
 	if context.Config.ObjectStorage.CloudStorage != nil {
-		// TODO(cw): where do we get the GCP project from? Is it even still needed?
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.GCloudStorage,
 			GCloudConfig: storageconfig.GCPConfig{
 				Region:             context.Config.Metadata.Region,
-				Project:            "TODO",
+				Project:            context.Config.ObjectStorage.CloudStorage.Project,
 				CredentialsFile:    "/mnt/secrets/gcp-storage/service-account.json",
 				ParallelUpload:     6,
 				MaximumBackupCount: 3,
