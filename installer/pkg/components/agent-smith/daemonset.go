@@ -5,6 +5,7 @@
 package agentsmith
 
 import (
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -41,7 +42,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.Affinity(common.AffinityLabelWorkspacesRegular, common.AffinityLabelWorkspacesHeadless),
+					Affinity:                      common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					HostPID:                       true,
 					EnableServiceLinks:            pointer.Bool(false),

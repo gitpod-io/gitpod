@@ -7,6 +7,7 @@ package wsdaemon
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
@@ -287,7 +288,7 @@ fi
 		DNSPolicy:                     "ClusterFirst",
 		ServiceAccountName:            Component,
 		HostPID:                       true,
-		Affinity:                      common.Affinity(common.AffinityLabelWorkspacesRegular, common.AffinityLabelWorkspacesHeadless),
+		Affinity:                      common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 		Tolerations: []corev1.Toleration{
 			{
 				Key:      "node.kubernetes.io/disk-pressure",

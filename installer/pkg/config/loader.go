@@ -6,8 +6,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"io/ioutil"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/go-playground/validator/v10"
 
 	"sigs.k8s.io/yaml"
 )
@@ -42,6 +44,9 @@ type ConfigVersion interface {
 
 	// LoadValidationFuncs loads the custom validation functions
 	LoadValidationFuncs(*validator.Validate) error
+
+	// ClusterValidation introduces configuration specific cluster validation checks
+	ClusterValidation(cfg interface{}) cluster.ValidationChecks
 }
 
 // AddVersion adds a new version.

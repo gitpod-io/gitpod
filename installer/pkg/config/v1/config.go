@@ -114,7 +114,8 @@ type DatabaseRDS struct {
 }
 
 type DatabaseCloudSQL struct {
-	Certificate ObjectRef `json:"certificate"`
+	ServiceAccount ObjectRef `json:"serviceAccount"`
+	Project        string    `json:"project" validate:"required"`
 }
 
 type ObjectStorage struct {

@@ -5,6 +5,7 @@
 package registryfacade
 
 import (
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
@@ -83,7 +84,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Spec: corev1.PodSpec{
 					PriorityClassName: common.SystemNodeCritical,
 					// todo(sje): do we need affinity?
-					Affinity:                      common.Affinity(common.AffinityLabelWorkspacesRegular, common.AffinityLabelWorkspacesHeadless),
+					Affinity:                      common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",
