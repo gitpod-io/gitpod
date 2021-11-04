@@ -185,11 +185,6 @@ export type WorkspaceInstanceConditions = {
    * condition can only be set during PhaseCreating
    */
   pullingImages?: Maybe<Scalars['Boolean']>;
-  /**
-   *  ServiceExists denotes if the workspace theia-/ports- services exist. This
-   * condition will be true if either of the two services exist.
-   */
-  serviceExists?: Maybe<Scalars['Boolean']>;
   /**  deployed marks that a workspace instance was sent/deployed at a workspace manager  */
   deployed?: Maybe<Scalars['Boolean']>;
   /**  Whether the workspace start triggered an image build  */
@@ -401,7 +396,6 @@ export type WorkspaceInstanceConditionsResolvers<ContextType = Context, ParentTy
   failed?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
   timeout?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
   pullingImages?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>,
-  serviceExists?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>,
   deployed?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>,
   neededImageBuild?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>,
   firstUserActivity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,

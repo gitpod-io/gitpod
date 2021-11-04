@@ -134,9 +134,6 @@ export interface WorkspaceInstanceConditions {
     // PullingImages marks if the workspace is currently pulling its images. This condition can only be set during PhaseCreating
     pullingImages?: boolean
 
-    // ServiceExists denotes if the workspace theia-/ports- services exist. This condition will be true if either of the two services exist.
-    serviceExists?: boolean
-
     // deployed marks that a workspace instance was sent/deployed at a workspace manager
     deployed?: boolean;
 
@@ -163,9 +160,6 @@ export type PortVisibility = 'public' | 'private';
 export interface WorkspaceInstancePort {
     // The outward-facing port number
     port: number;
-
-    // An optional inward-facing port number. If not present we'll use port.
-    targetPort?: number;
 
     // The visiblity of this port. Optional for backwards compatibility.
     visibility?: PortVisibility;

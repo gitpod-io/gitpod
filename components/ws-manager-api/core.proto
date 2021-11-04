@@ -312,8 +312,8 @@ message PortSpec {
     // port is the outward-facing port
     uint32 port = 1;
 
-    // target is the inward-facing target port
-    uint32 target = 2;
+    // DEPRECATED target is the inward-facing target port
+    reserved 2;
 
     // visibility defines the visibility of the port
     PortVisibility visibility = 3;
@@ -344,8 +344,8 @@ message WorkspaceConditions {
     // pulling_images marks if the workspace is currently pulling its images. This condition can only be set during PhaseCreating
     WorkspaceConditionBool pulling_images = 3;
 
-    // service_exists denotes if the workspace theia-/ports- services exist. This condition will be true if either of the two services exist.
-    WorkspaceConditionBool service_exists = 4;
+    // DEPRECATED service_exists denotes if the workspace theia-/ports- services exist. This condition will be true if either of the two services exist.
+    reserved 4;
 
     // snapshot contains a snapshot URL if a snapshot was produced prior to shutting the workspace down. This condition is only used for headless workspaces.
     string snapshot = 5;
@@ -556,4 +556,10 @@ enum WorkspaceType {
 
     // Imagebuild workspaces build a workspace, incl. their Gitpod layer. They run headless and have no direct user-interaction.
     IMAGEBUILD = 4;
+}
+
+// ExposedPorts describes the exposed ports of a workspace
+message ExposedPorts {
+    // ports is the set of ports which ought to be exposed to the internet
+    repeated PortSpec ports = 1;
 }

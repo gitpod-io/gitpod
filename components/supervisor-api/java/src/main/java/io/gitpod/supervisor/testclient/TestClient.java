@@ -54,7 +54,7 @@ public class TestClient {
             PortsStatusResponse portStatusResponse = response.next();
             System.out.println("portsCount: " + portStatusResponse.getPortsCount());
             for (PortsStatus portStatus : portStatusResponse.getPortsList()) {
-                System.out.println("l:" + portStatus.getLocalPort() + " g:" + portStatus.getGlobalPort());
+                System.out.println("l:" + portStatus.getLocalPort());
                 System.out.println("visibitilty: " + portStatus.getExposed().getVisibility());
             }
         }

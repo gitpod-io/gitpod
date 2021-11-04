@@ -20,6 +20,6 @@ message ExposePortRequest {
   // local port
   uint32 port = 1;
   // external port if missing the the same as port
-  uint32 target_port = 2;
+  reserved 2;
 }
 message ExposePortResponse {}

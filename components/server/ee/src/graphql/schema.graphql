@@ -170,9 +170,6 @@ type WorkspaceInstanceConditions {
     """ PullingImages marks if the workspace is currently pulling its images. This condition can only be set during PhaseCreating """
     pullingImages: Boolean
 
-    """ ServiceExists denotes if the workspace theia-/ports- services exist. This condition will be true if either of the two services exist. """
-    serviceExists: Boolean
-
     """ deployed marks that a workspace instance was sent/deployed at a workspace manager """
     deployed: Boolean
 

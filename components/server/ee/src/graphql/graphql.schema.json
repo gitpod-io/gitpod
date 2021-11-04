@@ -1071,18 +1071,6 @@
             "deprecationReason": null
           },
           {
-            "name": "serviceExists",
-            "description": " ServiceExists denotes if the workspace theia-/ports- services exist. This condition will be true if either of the two services exist. ",
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "deployed",
             "description": " deployed marks that a workspace instance was sent/deployed at a workspace manager ",
             "args": [],
