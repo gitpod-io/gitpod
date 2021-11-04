@@ -115,7 +115,7 @@ type DatabaseRDS struct {
 
 type DatabaseCloudSQL struct {
 	ServiceAccount ObjectRef `json:"serviceAccount"`
-	Project        string    `json:"project" validate:"required"`
+	ConnectionName string    `json:"connectionName" validate:"required"`
 }
 
 type ObjectStorage struct {

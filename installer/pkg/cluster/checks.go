@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -99,10 +100,10 @@ func checkContainerDRuntime(ctx context.Context, config *rest.Config, namespace 
 }
 
 // CheckSecret produces a new check for an in-cluster secret
-func CheckSecret(name string, validator func(*corev1.Secret) ([]ValidationError, error)) ValidationCheck {
+func CheckSecret(name, desc string, validator func(*corev1.Secret) ([]ValidationError, error)) ValidationCheck {
 	return ValidationCheck{
-		Name:        name + " is present and valid",
-		Description: "ensures the " + name + " secret is present and contains the required data",
+		Name:        fmt.Sprintf("%s: %s is present and valid", desc, name),
+		Description: fmt.Sprintf("%s: ensures the %s secret is present and contains the required data", desc, name),
 		Check: func(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
 			client, err := clientsetFromContext(ctx, config)
 			if err != nil {

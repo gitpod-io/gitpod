@@ -7,22 +7,19 @@ package mysql
 import (
 	"embed"
 	"fmt"
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"io/fs"
+	"strings"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"strings"
 )
 
 //go:embed init/*.sql
 var initScriptFiles embed.FS
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !enabled(ctx) {
-		return nil, nil
-	}
-
 	initScripts, err := fs.ReadDir(initScriptFiles, initScriptDir)
 	if err != nil {
 		return nil, err

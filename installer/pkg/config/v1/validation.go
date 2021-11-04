@@ -72,10 +72,10 @@ func (v version) LoadValidationFuncs(validate *validator.Validate) error {
 func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 	cfg := rcfg.(*Config)
 
-	var res cluster.ValidationChecks
+	var checks cluster.ValidationChecks
 	if cfg.ObjectStorage.CloudStorage != nil {
 		secretName := cfg.ObjectStorage.CloudStorage.ServiceAccount.Name
-		res = append(res, cluster.CheckSecret(secretName, func(s *corev1.Secret) ([]cluster.ValidationError, error) {
+		checks = append(checks, cluster.CheckSecret(secretName, "CloudStorage", func(s *corev1.Secret) ([]cluster.ValidationError, error) {
 			key := "service-account.json"
 			if _, exists := s.Data[key]; !exists {
 				return []cluster.ValidationError{
@@ -90,5 +90,31 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		}))
 	}
 
-	return res
+	if cfg.Database.CloudSQL != nil {
+		secretName := cfg.Database.CloudSQL.ServiceAccount.Name
+		checks = append(checks, cluster.CheckSecret(secretName, "CloudSQL", func(s *corev1.Secret) ([]cluster.ValidationError, error) {
+			keys := []string{
+				"service-account.json",
+				"username",
+				"password",
+				"encryptionKeys",
+			}
+
+			var res []cluster.ValidationError
+			for _, key := range keys {
+				_, exists := s.Data[key]
+				if exists {
+					continue
+				}
+				res = append(res, cluster.ValidationError{
+					Message: fmt.Sprintf("secret %s has no %s entry", secretName, key),
+					Type:    cluster.ValidationStatusError,
+				})
+			}
+
+			return res, nil
+		}))
+	}
+
+	return checks
 }
