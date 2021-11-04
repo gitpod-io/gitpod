@@ -83,6 +83,7 @@ type GeneratedValues struct {
 	InternalRegistryUsername string
 	InternalRegistryPassword string
 	ImageBuilderAuthKey      string
+	MessageBusPassword       string
 }
 
 type RenderContext struct {
@@ -124,6 +125,12 @@ func (r *RenderContext) generateValues() error {
 		return err
 	}
 	r.Values.ImageBuilderAuthKey = imageBuilderAuthKey
+
+	messageBusPassword, err := RandomString(20)
+	if err != nil {
+		return err
+	}
+	r.Values.MessageBusPassword = messageBusPassword
 
 	return nil
 }

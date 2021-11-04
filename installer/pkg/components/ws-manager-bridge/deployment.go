@@ -6,7 +6,6 @@ package wsmanagerbridge
 
 import (
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -21,7 +20,23 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	configHash, err := common.ObjectHash(configmap(ctx))
+	var hashObj []runtime.Object
+	if objs, err := configmap(ctx); err != nil {
+		return nil, err
+	} else {
+		hashObj = append(hashObj, objs...)
+	}
+
+	hashObj = append(hashObj, &corev1.Pod{Spec: corev1.PodSpec{
+		Containers: []corev1.Container{{
+			Env: []corev1.EnvVar{{
+				Name:  "MESSAGEBUS_PASSWORD",
+				Value: ctx.Values.MessageBusPassword,
+			}},
+		}},
+	}})
+
+	configHash, err := common.ObjectHash(hashObj, nil)
 	if err != nil {
 		return nil, err
 	}

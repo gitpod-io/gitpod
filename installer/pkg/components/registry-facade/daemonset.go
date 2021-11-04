@@ -21,9 +21,11 @@ import (
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	configHash, err := common.ObjectHash(configmap(ctx))
-	if err != nil {
+	var hashObj []runtime.Object
+	if objs, err := configmap(ctx); err != nil {
 		return nil, err
+	} else {
+		hashObj = append(hashObj, objs...)
 	}
 
 	var volumes []corev1.Volume
@@ -62,6 +64,16 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: "/mnt/pull-secret.json",
 			SubPath:   ".dockerconfigjson",
 		})
+
+		if objs, err := common.DockerRegistryHash(ctx); err != nil {
+			return nil, err
+		} else {
+			hashObj = append(hashObj, objs...)
+		}
+	}
+	configHash, err := common.ObjectHash(hashObj, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return []runtime.Object{&appsv1.DaemonSet{

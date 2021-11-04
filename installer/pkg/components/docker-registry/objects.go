@@ -9,5 +9,6 @@ import (
 )
 
 var Objects = common.CompositeRenderFunc(
+	certificate,
 	secret,
 )

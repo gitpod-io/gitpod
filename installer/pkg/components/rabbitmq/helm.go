@@ -160,10 +160,7 @@ var Helm = common.CompositeHelmFunc(
 	helm.ImportTemplate(charts.RabbitMQ(), helm.TemplateConfig{}, func(cfg *common.RenderContext) (*common.HelmConfig, error) {
 		username := "gitpod"
 
-		password, err := common.RandomString(20)
-		if err != nil {
-			return nil, err
-		}
+		password := cfg.Values.MessageBusPassword
 
 		parameters, err := generateParameters(username, password, []parameter{})
 		if err != nil {
