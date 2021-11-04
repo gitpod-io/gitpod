@@ -33,10 +33,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	} else {
 		hashObj = append(hashObj, objs...)
 	}
-	configHash, err := common.ObjectHash(hashObj, nil)
-	if err != nil {
-		return nil, err
-	}
 
 	var volumes []corev1.Volume
 	var volumeMounts []corev1.VolumeMount
@@ -53,6 +49,15 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				SecretName: dockerregistry.BuiltInRegistryAuth,
 			}},
 		})
+		if objs, err := common.DockerRegistryHash(ctx); err != nil {
+			return nil, err
+		} else {
+			hashObj = append(hashObj, objs...)
+		}
+	}
+	configHash, err := common.ObjectHash(hashObj, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return []runtime.Object{&appsv1.Deployment{

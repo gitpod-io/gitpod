@@ -8,10 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
-	"time"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,8 +45,6 @@ func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	oneYear := &metav1.Duration{Duration: time.Hour * 24 * 365}
-
 	return []runtime.Object{&corev1.Secret{
 		TypeMeta: common.TypeMetaSecret,
 		ObjectMeta: metav1.ObjectMeta{
@@ -63,25 +57,6 @@ func secret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			".dockerconfigjson": config,
 			"user":              []byte(user),
 			"password":          []byte(password),
-		},
-	}, &certmanagerv1.Certificate{
-		TypeMeta: common.TypeMetaCertificate,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      BuiltInRegistryCerts,
-			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
-		},
-		Spec: certmanagerv1.CertificateSpec{
-			Duration:   oneYear,
-			SecretName: BuiltInRegistryCerts,
-			IssuerRef: cmmeta.ObjectReference{
-				Name:  common.CertManagerCAIssuer,
-				Kind:  "Issuer",
-				Group: "cert-manager.io",
-			},
-			DNSNames: []string{
-				fmt.Sprintf("registry.%s.svc.cluster.local", ctx.Namespace),
-			},
 		},
 	}}, nil
 }

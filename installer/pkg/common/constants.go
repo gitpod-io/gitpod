@@ -17,6 +17,12 @@ const (
 	MinioServiceAPIPort       = 9000
 	MonitoringChart           = "monitoring"
 	ProxyComponent            = "proxy"
+	ProxyContainerHTTPPort    = 80
+	ProxyContainerHTTPName    = "http"
+	ProxyContainerHTTPSPort   = 443
+	ProxyContainerHTTPSName   = "https"
+	RegistryAuthSecret        = "builtin-registry-auth"
+	RegistryTLSCertSecret     = "builtin-registry-certs"
 	RegistryFacadeComponent   = "registry-facade"
 	RegistryFacadeServicePort = 3000
 	ServerComponent           = "server"

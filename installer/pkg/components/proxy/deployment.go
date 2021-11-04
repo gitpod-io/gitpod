@@ -6,7 +6,6 @@ package proxy
 
 import (
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,9 +20,11 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	configHash, err := common.ObjectHash(configmap(ctx))
-	if err != nil {
+	var hashObj []runtime.Object
+	if objs, err := configmap(ctx); err != nil {
 		return nil, err
+	} else {
+		hashObj = append(hashObj, objs...)
 	}
 
 	prometheusPort := corev1.ContainerPort{
@@ -78,6 +79,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name:      RegistryTLSCertSecret,
 			MountPath: "/etc/caddy/registry-certs",
 		})
+
+		if objs, err := common.DockerRegistryHash(ctx); err != nil {
+			return nil, err
+		} else {
+			hashObj = append(hashObj, objs...)
+		}
+	}
+
+	configHash, err := common.ObjectHash(hashObj, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return []runtime.Object{

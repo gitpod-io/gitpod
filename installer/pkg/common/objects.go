@@ -99,3 +99,22 @@ func StorageConfiguration(ctx *RenderContext) (*storageconfig.StorageConfig, err
 		},
 	}, nil
 }
+
+// DockerRegistryHash creates a sample pod spec that can be converted into a hash for annotations
+func DockerRegistryHash(ctx *RenderContext) ([]runtime.Object, error) {
+	if !pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		return nil, nil
+	}
+
+	return []runtime.Object{&corev1.Pod{Spec: corev1.PodSpec{
+		Containers: []corev1.Container{{
+			Env: []corev1.EnvVar{{
+				Name:  "DOCKER_REGISTRY_USERNAME",
+				Value: ctx.Values.InternalRegistryUsername,
+			}, {
+				Name:  "DOCKER_REGISTRY_PASSWORD",
+				Value: ctx.Values.InternalRegistryPassword,
+			}},
+		}},
+	}}}, nil
+}
