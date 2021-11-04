@@ -153,13 +153,13 @@ const (
 )
 
 type ContainerRegistry struct {
-	InCluster *bool                      `json:"inCluster,omitempty" validate:"required"`
+	InCluster *bool                      `json:"inCluster,omitempty"`
 	External  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
 }
 
 type ContainerRegistryExternal struct {
-	URL         string    `json:"url" validate:"required"`
-	Certificate ObjectRef `json:"certificate" validate:"required"`
+	Repo        string    `json:"repo" validate:"required,oci_repo"`
+	Credentials ObjectRef `json:"credentials" validate:"required"`
 }
 
 type Jaeger struct {

@@ -15,17 +15,23 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-var Helm = common.CompositeHelmFunc(
-	helm.ImportTemplate(charts.DockerRegistry(), helm.TemplateConfig{}, func(cfg *common.RenderContext) (*common.HelmConfig, error) {
-		return &common.HelmConfig{
-			Enabled: pointer.BoolDeref(cfg.Config.ContainerRegistry.InCluster, false),
-			Values: &values.Options{
-				Values: []string{
-					helm.KeyValue("docker-registry.fullnameOverride", RegistryName),
-					helm.KeyValue("docker-registry.service.port", strconv.Itoa(proxy.ContainerHTTPSPort)),
-					helm.KeyValue("docker-registry.tlsSecretName", proxy.RegistryTLSCertSecret),
+var Helm common.HelmFunc = func(ctx *common.RenderContext) ([]string, error) {
+	if !pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		return nil, nil
+	}
+
+	return common.CompositeHelmFunc(
+		helm.ImportTemplate(charts.DockerRegistry(), helm.TemplateConfig{}, func(cfg *common.RenderContext) (*common.HelmConfig, error) {
+			return &common.HelmConfig{
+				Enabled: pointer.BoolDeref(cfg.Config.ContainerRegistry.InCluster, false),
+				Values: &values.Options{
+					Values: []string{
+						helm.KeyValue("docker-registry.fullnameOverride", RegistryName),
+						helm.KeyValue("docker-registry.service.port", strconv.Itoa(proxy.ContainerHTTPSPort)),
+						helm.KeyValue("docker-registry.tlsSecretName", proxy.RegistryTLSCertSecret),
+					},
 				},
-			},
-		}, nil
-	}),
-)
+			}, nil
+		}),
+	)(ctx)
+}

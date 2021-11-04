@@ -5,6 +5,8 @@
 package registryfacade
 
 import (
+	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
@@ -56,12 +58,28 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		})
-
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      name,
 			MountPath: "/mnt/pull-secret.json",
 			SubPath:   ".dockerconfigjson",
 		})
+	} else if ctx.Config.ContainerRegistry.External != nil {
+		name := "pull-secret"
+		volumes = append(volumes, corev1.Volume{
+			Name: name,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.ContainerRegistry.External.Credentials.Name,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      name,
+			MountPath: "/mnt/pull-secret.json",
+			SubPath:   "dockerconfig.json",
+		})
+	} else {
+		return nil, fmt.Errorf("invalid container registry configuration")
 	}
 
 	return []runtime.Object{&appsv1.DaemonSet{

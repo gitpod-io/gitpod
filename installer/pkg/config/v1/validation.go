@@ -7,6 +7,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/containerd/containerd/reference"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/go-playground/validator/v10"
@@ -57,6 +58,10 @@ func (v version) LoadValidationFuncs(validate *validator.Validate) error {
 			_, ok := LogLevelList[LogLevel(fl.Field().String())]
 			return ok
 		},
+		"oci_repo": func(fl validator.FieldLevel) bool {
+			_, err := reference.Parse(fl.Field().String())
+			return err == nil
+		},
 	}
 	for n, f := range funcs {
 		err := validate.RegisterValidation(n, f)
@@ -77,6 +82,23 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		secretName := cfg.ObjectStorage.CloudStorage.ServiceAccount.Name
 		res = append(res, cluster.CheckSecret(secretName, func(s *corev1.Secret) ([]cluster.ValidationError, error) {
 			key := "service-account.json"
+			if _, exists := s.Data[key]; !exists {
+				return []cluster.ValidationError{
+					{
+						Message: fmt.Sprintf("secret %s has no %s entry", secretName, key),
+						Type:    cluster.ValidationStatusError,
+					},
+				}, nil
+			}
+
+			return nil, nil
+		}))
+	}
+
+	if cfg.ContainerRegistry.External != nil {
+		secretName := cfg.ContainerRegistry.External.Credentials.Name
+		res = append(res, cluster.CheckSecret(secretName, func(s *corev1.Secret) ([]cluster.ValidationError, error) {
+			key := "dockerconfig.json"
 			if _, exists := s.Data[key]; !exists {
 				return []cluster.ValidationError{
 					{
