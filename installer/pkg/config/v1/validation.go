@@ -24,8 +24,8 @@ var LogLevelList = map[LogLevel]struct{}{
 	LogLevelPanic:   {},
 }
 
-var CertificateRefKindList = map[CertificateRefKind]struct{}{
-	CertificateRefSecret: {},
+var ObjectRefKindList = map[ObjectRefKind]struct{}{
+	ObjectRefSecret: {},
 }
 
 var FSShiftMethodList = map[FSShiftMethod]struct{}{
@@ -35,34 +35,29 @@ var FSShiftMethodList = map[FSShiftMethod]struct{}{
 
 // LoadValidationFuncs load custom validation functions for this version of the config API
 func (v version) LoadValidationFuncs(validate *validator.Validate) error {
-	var err error
-
-	if err = validate.RegisterValidation("certificateKind", func(fl validator.FieldLevel) bool {
-		_, ok := CertificateRefKindList[CertificateRefKind(fl.Field().String())]
-		return ok
-	}); err != nil {
-		return err
+	funcs := map[string]validator.Func{
+		"objectref_kind": func(fl validator.FieldLevel) bool {
+			_, ok := ObjectRefKindList[ObjectRefKind(fl.Field().String())]
+			return ok
+		},
+		"fs_shift_method": func(fl validator.FieldLevel) bool {
+			_, ok := FSShiftMethodList[FSShiftMethod(fl.Field().String())]
+			return ok
+		},
+		"installation_kind": func(fl validator.FieldLevel) bool {
+			_, ok := InstallationKindList[InstallationKind(fl.Field().String())]
+			return ok
+		},
+		"log_level": func(fl validator.FieldLevel) bool {
+			_, ok := LogLevelList[LogLevel(fl.Field().String())]
+			return ok
+		},
 	}
-
-	if err = validate.RegisterValidation("fsShiftMethod", func(fl validator.FieldLevel) bool {
-		_, ok := FSShiftMethodList[FSShiftMethod(fl.Field().String())]
-		return ok
-	}); err != nil {
-		return err
-	}
-
-	if err = validate.RegisterValidation("installationKind", func(fl validator.FieldLevel) bool {
-		_, ok := InstallationKindList[InstallationKind(fl.Field().String())]
-		return ok
-	}); err != nil {
-		return err
-	}
-
-	if err = validate.RegisterValidation("logLevel", func(fl validator.FieldLevel) bool {
-		_, ok := LogLevelList[LogLevel(fl.Field().String())]
-		return ok
-	}); err != nil {
-		return err
+	for n, f := range funcs {
+		err := validate.RegisterValidation(n, f)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

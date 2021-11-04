@@ -48,8 +48,19 @@ A config file is required which can be generated with the init command.`,
 		}
 
 		if !renderOpts.ValidateConfigDisabled {
-			if err = runConfigValidation(cfgVersion, cfg); err != nil {
+			apiVersion, err := config.LoadConfigVersion(cfgVersion)
+			if err != nil {
 				return err
+			}
+			res, err := config.Validate(apiVersion, cfg)
+			if err != nil {
+				return err
+			}
+
+			if !res.Valid {
+				res.Marshal(os.Stderr)
+				fmt.Fprintln(os.Stderr, "configuration is invalid")
+				os.Exit(1)
 			}
 		}
 
