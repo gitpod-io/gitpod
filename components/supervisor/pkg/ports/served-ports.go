@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -112,6 +113,11 @@ func (p *PollingServedPortsObserver) Observe(ctx context.Context) (<-chan []Serv
 	return reschan, errchan
 }
 
+const (
+	v6Localhost = "00000000000000000000000001000000"
+	v4Localhost = "0100007F"
+)
+
 func readNetTCPFile(fc io.Reader, listeningOnly bool) (ports []ServedPort, err error) {
 	scanner := bufio.NewScanner(fc)
 	for scanner.Scan() {
@@ -129,7 +135,7 @@ func readNetTCPFile(fc io.Reader, listeningOnly bool) (ports []ServedPort, err e
 		}
 		addr, prt := segs[0], segs[1]
 
-		globallyBound := addr == "00000000" || addr == "00000000000000000000000000000000"
+		locallyBound := addr == v4Localhost || addr == v6Localhost
 		port, err := strconv.ParseUint(prt, 16, 32)
 		if err != nil {
 			log.WithError(err).WithField("port", prt).Warn("cannot parse port entry from /proc/net/tcp* file")
@@ -137,9 +143,22 @@ func readNetTCPFile(fc io.Reader, listeningOnly bool) (ports []ServedPort, err e
 		}
 
 		ports = append(ports, ServedPort{
-			BoundToLocalhost: !globallyBound,
+			BoundToLocalhost: locallyBound,
 			Address:          addr,
 			Port:             uint32(port),
+		})
+
+		sort.Slice(ports, func(i, j int) bool {
+			sortedByAddress := ports[i].Address > ports[j].Address
+			if ports[i].Address == ports[j].Address {
+				sortedByPort := ports[i].Port < ports[j].Port
+				return sortedByPort
+			}
+			return sortedByAddress
+		})
+
+		sort.Slice(ports, func(i, j int) bool {
+			return ports[i].Port < ports[j].Port
 		})
 	}
 	if err = scanner.Err(); err != nil {
