@@ -47,6 +47,7 @@ func LoadMock() *Config {
 			InCluster: pointer.Bool(true),
 		},
 		Certificate: ObjectRef{
+			Kind: ObjectRefSecret,
 			Name: "https-certs",
 		},
 		Workspace: Workspace{

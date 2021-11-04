@@ -5,42 +5,57 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var validateClusterOpts struct {
-	Kube kubeConfig
+	Kube   kubeConfig
+	Config string
 }
 
 // validateClusterCmd represents the cluster command
 var validateClusterCmd = &cobra.Command{
 	Use:   "cluster",
-	Short: "Validate the cluster configuration",
+	Short: "Validate the cluster setup",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := checkKubeConfig(&validateClusterOpts.Kube); err != nil {
 			return err
 		}
 
-		res, err := clientcmd.BuildConfigFromFlags("", validateClusterOpts.Kube.Config)
+		clientcfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			&clientcmd.ClientConfigLoadingRules{ExplicitPath: validateClusterOpts.Kube.Config},
+			&clientcmd.ConfigOverrides{},
+		)
+		res, err := clientcfg.ClientConfig()
+		if err != nil {
+			return err
+		}
+		namespace, _, err := clientcfg.Namespace()
 		if err != nil {
 			return err
 		}
 
-		clientset, err := kubernetes.NewForConfig(res)
+		result, err := cluster.ClusterChecks.Validate(context.Background(), res, namespace)
 		if err != nil {
 			return err
 		}
 
-		result, err := cluster.Validate(clientset, res)
-		if err != nil {
-			return err
+		if validateClusterOpts.Config != "" {
+			res, err := runClusterConfigValidation(context.Background(), res, namespace)
+			if err != nil {
+				return err
+			}
+
+			result.Items = append(result.Items, res.Items...)
 		}
 
 		jsonOut, err := json.MarshalIndent(result, "", "  ")
@@ -63,8 +78,21 @@ var validateClusterCmd = &cobra.Command{
 	},
 }
 
+func runClusterConfigValidation(ctx context.Context, restConfig *rest.Config, namespace string) (*cluster.ValidationResult, error) {
+	_, version, cfg, err := loadConfig(validateClusterOpts.Config)
+	if err != nil {
+		return nil, err
+	}
+	apiVersion, err := config.LoadConfigVersion(version)
+	if err != nil {
+		return nil, err
+	}
+	return apiVersion.ClusterValidation(cfg).Validate(ctx, restConfig, namespace)
+}
+
 func init() {
 	validateCmd.AddCommand(validateClusterCmd)
 
-	validateClusterCmd.PersistentFlags().StringVar(&validateClusterOpts.Kube.Config, "kubeconfig", "", "Path to the kubeconfig file")
+	validateClusterCmd.PersistentFlags().StringVar(&validateClusterOpts.Kube.Config, "kubeconfig", "", "path to the kubeconfig file")
+	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Config, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
 }

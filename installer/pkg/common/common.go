@@ -26,23 +26,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// Valid characters for affinities are alphanumeric, -, _, . and one / as a subdomain prefix
-const (
-	AffinityLabelMeta               = "gitpod.io/workload_meta"
-	AffinityLabelIDE                = "gitpod.io/workload_ide"
-	AffinityLabelWorkspaceServices  = "gitpod.io/workload_workspace_services"
-	AffinityLabelWorkspacesRegular  = "gitpod.io/workload_workspace_regular"
-	AffinityLabelWorkspacesHeadless = "gitpod.io/workload_workspace_headless"
-)
-
-var AffinityList = []string{
-	AffinityLabelMeta,
-	AffinityLabelIDE,
-	AffinityLabelWorkspaceServices,
-	AffinityLabelWorkspacesRegular,
-	AffinityLabelWorkspacesHeadless,
-}
-
 func DefaultLabels(component string) map[string]string {
 	return map[string]string{
 		"app":                        AppName,
@@ -160,12 +143,14 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	if pointer.BoolDeref(cfg.Database.InCluster, false) {
 		// Cluster provided internally
 		name = InClusterDbSecret
-	} else if cfg.Database.RDS.Certificate.Name != "" {
+	} else if cfg.Database.RDS != nil && cfg.Database.RDS.Certificate.Name != "" {
 		// AWS
 		name = cfg.Database.RDS.Certificate.Name
-	} else if cfg.Database.CloudSQL.Certificate.Name != "" {
+	} else if cfg.Database.CloudSQL != nil && cfg.Database.CloudSQL.ServiceAccount.Name != "" {
 		// GCP
-		name = cfg.Database.CloudSQL.Certificate.Name
+		name = cfg.Database.CloudSQL.ServiceAccount.Name
+	} else {
+		panic("invalid database configuration")
 	}
 
 	obj := corev1.LocalObjectReference{Name: name}
