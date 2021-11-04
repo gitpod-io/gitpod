@@ -50,6 +50,7 @@ components:
       enabled: true
       passlist:
       - "gitpod.io"
+      - "shaal@3paces.com"
     resources:
       # in preview envs, we want deployments to push scale-up early
       memory: 350Mi
