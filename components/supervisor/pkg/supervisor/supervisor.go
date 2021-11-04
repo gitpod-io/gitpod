@@ -312,16 +312,16 @@ func Run(options ...RunOption) {
 	}
 
 	go func() {
-		<-time.After(10 * time.Second)
+		<-cstate.ContentReady()
 
 		start := time.Now()
 		defer func() {
 			log.Debugf("unshallow of local repository took %v", time.Since(start))
 		}()
 
-		cmd := exec.Command("/bin/bash", "-c", `git fetch --depth 20`)
-		cmd.Env = os.Environ()
-		cmd.Dir = os.Getenv("GITPOD_REPO_ROOT")
+		cmd := runAsGitpodUser(exec.Command("git", "fetch", "--depth", "20"))
+		cmd.Env = buildChildProcEnv(cfg, nil)
+		cmd.Dir = cfg.RepoRoot
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
