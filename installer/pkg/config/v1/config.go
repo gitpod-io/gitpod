@@ -128,7 +128,8 @@ type ObjectStorageS3 struct {
 }
 
 type ObjectStorageCloudStorage struct {
-	Certificate ObjectRef `json:"certificate"`
+	ServiceAccount ObjectRef `json:"serviceAccount"`
+	Project        string    `json:"project"`
 }
 
 type InstallationKind string
