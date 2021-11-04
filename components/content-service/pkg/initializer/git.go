@@ -148,6 +148,13 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 			return err
 		}
 	} else if ws.TargetMode == RemoteCommit {
+		// We did a shallow clone before, hence need to fetch the commit we are about to check out.
+		// Because we don't want to make the "git fetch" mechanism in supervisor more complicated,
+		// we'll just fetch the 20 commits right away.
+		if err := ws.Git(ctx, "fetch", "origin", ws.CloneTarget, "--depth=20"); err != nil {
+			return err
+		}
+
 		// checkout specific commit
 		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
 			return err
