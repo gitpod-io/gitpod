@@ -63,8 +63,8 @@ packages:
       - dev/version-manifest:app
     config:
       commands:
-        - ["sh", "-c", "echo \"commit: ${__git_commit}\" > commit.yaml"]
-        - ["sh", "-c", "echo \"version: ${version}\" > versions.yaml"]
+        - ["sh", "-c", "echo \"commit: ${__git_commit}\" > versions.yaml"]
+        - ["sh", "-c", "echo \"version: ${version}\" >> versions.yaml"]
         - ["sh", "-c", "dev-version-manifest--app/version-manifest >> versions.yaml"]
         - ["sh", "-c", "rm -r components* dev-*"]
   - name: publish-api
