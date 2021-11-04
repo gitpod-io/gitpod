@@ -1029,7 +1029,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             const status = desc.getStatus()!;
             const ports = status.getSpec()!.getExposedPortsList().map(p => <WorkspaceInstancePort>{
                 port: p.getPort(),
-                targetPort: p.getTarget(),
                 url: p.getUrl(),
                 visibility: this.portVisibilityFromProto(p.getVisibility())
             });
@@ -1063,11 +1062,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             req.setId(runningInstance.id);
             const spec = new PortSpec();
             spec.setPort(port.port);
-            if (!!port.targetPort) {
-                spec.setTarget(port.targetPort);
-            } else {
-                spec.setTarget(port.port);
-            }
             spec.setVisibility(this.portVisibilityToProto(port.visibility))
             req.setSpec(spec);
             req.setExpose(true);

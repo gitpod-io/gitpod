@@ -8776,12 +8776,6 @@ public final class Status {
     int getLocalPort();
 
     /**
-     * <code>uint32 global_port = 2;</code>
-     * @return The globalPort.
-     */
-    int getGlobalPort();
-
-    /**
      * <pre>
      * served is true if there is a process in the workspace that serves this port.
      * </pre>
@@ -8921,11 +8915,6 @@ public final class Status {
               localPort_ = input.readUInt32();
               break;
             }
-            case 16: {
-
-              globalPort_ = input.readUInt32();
-              break;
-            }
             case 32: {
 
               served_ = input.readBool();
@@ -9012,17 +9001,6 @@ public final class Status {
     @java.lang.Override
     public int getLocalPort() {
       return localPort_;
-    }
-
-    public static final int GLOBAL_PORT_FIELD_NUMBER = 2;
-    private int globalPort_;
-    /**
-     * <code>uint32 global_port = 2;</code>
-     * @return The globalPort.
-     */
-    @java.lang.Override
-    public int getGlobalPort() {
-      return globalPort_;
     }
 
     public static final int SERVED_FIELD_NUMBER = 4;
@@ -9166,9 +9144,6 @@ public final class Status {
       if (localPort_ != 0) {
         output.writeUInt32(1, localPort_);
       }
-      if (globalPort_ != 0) {
-        output.writeUInt32(2, globalPort_);
-      }
       if (served_ != false) {
         output.writeBool(4, served_);
       }
@@ -9193,10 +9168,6 @@ public final class Status {
       if (localPort_ != 0) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(1, localPort_);
-      }
-      if (globalPort_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(2, globalPort_);
       }
       if (served_ != false) {
         size += com.google.protobuf.CodedOutputStream
@@ -9231,8 +9202,6 @@ public final class Status {
 
       if (getLocalPort()
           != other.getLocalPort()) return false;
-      if (getGlobalPort()
-          != other.getGlobalPort()) return false;
       if (getServed()
           != other.getServed()) return false;
       if (hasExposed() != other.hasExposed()) return false;
@@ -9259,8 +9228,6 @@ public final class Status {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + LOCAL_PORT_FIELD_NUMBER;
       hash = (53 * hash) + getLocalPort();
-      hash = (37 * hash) + GLOBAL_PORT_FIELD_NUMBER;
-      hash = (53 * hash) + getGlobalPort();
       hash = (37 * hash) + SERVED_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
           getServed());
@@ -9409,8 +9376,6 @@ public final class Status {
         super.clear();
         localPort_ = 0;
 
-        globalPort_ = 0;
-
         served_ = false;
 
         if (exposedBuilder_ == null) {
@@ -9454,7 +9419,6 @@ public final class Status {
       public io.gitpod.supervisor.api.Status.PortsStatus buildPartial() {
         io.gitpod.supervisor.api.Status.PortsStatus result = new io.gitpod.supervisor.api.Status.PortsStatus(this);
         result.localPort_ = localPort_;
-        result.globalPort_ = globalPort_;
         result.served_ = served_;
         if (exposedBuilder_ == null) {
           result.exposed_ = exposed_;
@@ -9517,9 +9481,6 @@ public final class Status {
         if (other == io.gitpod.supervisor.api.Status.PortsStatus.getDefaultInstance()) return this;
         if (other.getLocalPort() != 0) {
           setLocalPort(other.getLocalPort());
-        }
-        if (other.getGlobalPort() != 0) {
-          setGlobalPort(other.getGlobalPort());
         }
         if (other.getServed() != false) {
           setServed(other.getServed());
@@ -9613,37 +9574,6 @@ public final class Status {
       public Builder clearLocalPort() {
         
         localPort_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int globalPort_ ;
-      /**
-       * <code>uint32 global_port = 2;</code>
-       * @return The globalPort.
-       */
-      @java.lang.Override
-      public int getGlobalPort() {
-        return globalPort_;
-      }
-      /**
-       * <code>uint32 global_port = 2;</code>
-       * @param value The globalPort to set.
-       * @return This builder for chaining.
-       */
-      public Builder setGlobalPort(int value) {
-        
-        globalPort_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>uint32 global_port = 2;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearGlobalPort() {
-        
-        globalPort_ = 0;
         onChanged();
         return this;
       }
@@ -13475,52 +13405,52 @@ public final class Status {
       "y\030\002 \001(\0162\033.supervisor.TunnelVisiblity\022:\n\007" +
       "clients\030\003 \003(\0132).supervisor.TunneledPortI" +
       "nfo.ClientsEntry\032.\n\014ClientsEntry\022\013\n\003key\030" +
-      "\001 \001(\t\022\r\n\005value\030\002 \001(\r:\0028\001\"\331\001\n\013PortsStatus" +
-      "\022\022\n\nlocal_port\030\001 \001(\r\022\023\n\013global_port\030\002 \001(" +
-      "\r\022\016\n\006served\030\004 \001(\010\022,\n\007exposed\030\005 \001(\0132\033.sup" +
-      "ervisor.ExposedPortInfo\0223\n\rauto_exposure" +
-      "\030\007 \001(\0162\034.supervisor.PortAutoExposure\022.\n\010" +
-      "tunneled\030\006 \001(\0132\034.supervisor.TunneledPort" +
-      "Info\"%\n\022TasksStatusRequest\022\017\n\007observe\030\001 " +
-      "\001(\010\"<\n\023TasksStatusResponse\022%\n\005tasks\030\001 \003(" +
-      "\0132\026.supervisor.TaskStatus\"\204\001\n\nTaskStatus" +
-      "\022\n\n\002id\030\001 \001(\t\022$\n\005state\030\002 \001(\0162\025.supervisor" +
-      ".TaskState\022\020\n\010terminal\030\003 \001(\t\0222\n\014presenta" +
-      "tion\030\004 \001(\0132\034.supervisor.TaskPresentation" +
-      "\"D\n\020TaskPresentation\022\014\n\004name\030\001 \001(\t\022\017\n\007op" +
-      "en_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001(\t*C\n\rConten" +
-      "tSource\022\016\n\nfrom_other\020\000\022\017\n\013from_backup\020\001" +
-      "\022\021\n\rfrom_prebuild\020\002*?\n\016PortVisibility\022\026\n" +
-      "\022private_visibility\020\000\022\025\n\021public_visibili" +
-      "ty\020\001*e\n\023OnPortExposedAction\022\n\n\006ignore\020\000\022" +
-      "\020\n\014open_browser\020\001\022\020\n\014open_preview\020\002\022\n\n\006n" +
-      "otify\020\003\022\022\n\016notify_private\020\004*9\n\020PortAutoE" +
-      "xposure\022\n\n\006trying\020\000\022\r\n\tsucceeded\020\001\022\n\n\006fa" +
-      "iled\020\002*1\n\tTaskState\022\013\n\007opening\020\000\022\013\n\007runn" +
-      "ing\020\001\022\n\n\006closed\020\0022\313\006\n\rStatusService\022|\n\020S" +
-      "upervisorStatus\022#.supervisor.SupervisorS" +
-      "tatusRequest\032$.supervisor.SupervisorStat" +
-      "usResponse\"\035\202\323\344\223\002\027\022\025/v1/status/superviso" +
-      "r\022\203\001\n\tIDEStatus\022\034.supervisor.IDEStatusRe" +
-      "quest\032\035.supervisor.IDEStatusResponse\"9\202\323" +
-      "\344\223\0023\022\016/v1/status/ideZ!\022\037/v1/status/ide/w" +
-      "ait/{wait=true}\022\227\001\n\rContentStatus\022 .supe" +
-      "rvisor.ContentStatusRequest\032!.supervisor" +
-      ".ContentStatusResponse\"A\202\323\344\223\002;\022\022/v1/stat" +
-      "us/contentZ%\022#/v1/status/content/wait/{w" +
-      "ait=true}\022l\n\014BackupStatus\022\037.supervisor.B" +
-      "ackupStatusRequest\032 .supervisor.BackupSt" +
-      "atusResponse\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022" +
-      "\225\001\n\013PortsStatus\022\036.supervisor.PortsStatus" +
-      "Request\032\037.supervisor.PortsStatusResponse" +
-      "\"C\202\323\344\223\002=\022\020/v1/status/portsZ)\022\'/v1/status" +
-      "/ports/observe/{observe=true}0\001\022\225\001\n\013Task" +
-      "sStatus\022\036.supervisor.TasksStatusRequest\032" +
-      "\037.supervisor.TasksStatusResponse\"C\202\323\344\223\002=" +
-      "\022\020/v1/status/tasksZ)\022\'/v1/status/tasks/o" +
-      "bserve/{observe=true}0\001BF\n\030io.gitpod.sup" +
-      "ervisor.apiZ*github.com/gitpod-io/gitpod" +
-      "/supervisor/apib\006proto3"
+      "\001 \001(\t\022\r\n\005value\030\002 \001(\r:\0028\001\"\312\001\n\013PortsStatus" +
+      "\022\022\n\nlocal_port\030\001 \001(\r\022\016\n\006served\030\004 \001(\010\022,\n\007" +
+      "exposed\030\005 \001(\0132\033.supervisor.ExposedPortIn" +
+      "fo\0223\n\rauto_exposure\030\007 \001(\0162\034.supervisor.P" +
+      "ortAutoExposure\022.\n\010tunneled\030\006 \001(\0132\034.supe" +
+      "rvisor.TunneledPortInfoJ\004\010\002\020\003\"%\n\022TasksSt" +
+      "atusRequest\022\017\n\007observe\030\001 \001(\010\"<\n\023TasksSta" +
+      "tusResponse\022%\n\005tasks\030\001 \003(\0132\026.supervisor." +
+      "TaskStatus\"\204\001\n\nTaskStatus\022\n\n\002id\030\001 \001(\t\022$\n" +
+      "\005state\030\002 \001(\0162\025.supervisor.TaskState\022\020\n\010t" +
+      "erminal\030\003 \001(\t\0222\n\014presentation\030\004 \001(\0132\034.su" +
+      "pervisor.TaskPresentation\"D\n\020TaskPresent" +
+      "ation\022\014\n\004name\030\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\t" +
+      "open_mode\030\003 \001(\t*C\n\rContentSource\022\016\n\nfrom" +
+      "_other\020\000\022\017\n\013from_backup\020\001\022\021\n\rfrom_prebui" +
+      "ld\020\002*?\n\016PortVisibility\022\026\n\022private_visibi" +
+      "lity\020\000\022\025\n\021public_visibility\020\001*e\n\023OnPortE" +
+      "xposedAction\022\n\n\006ignore\020\000\022\020\n\014open_browser" +
+      "\020\001\022\020\n\014open_preview\020\002\022\n\n\006notify\020\003\022\022\n\016noti" +
+      "fy_private\020\004*9\n\020PortAutoExposure\022\n\n\006tryi" +
+      "ng\020\000\022\r\n\tsucceeded\020\001\022\n\n\006failed\020\002*1\n\tTaskS" +
+      "tate\022\013\n\007opening\020\000\022\013\n\007running\020\001\022\n\n\006closed" +
+      "\020\0022\313\006\n\rStatusService\022|\n\020SupervisorStatus" +
+      "\022#.supervisor.SupervisorStatusRequest\032$." +
+      "supervisor.SupervisorStatusResponse\"\035\202\323\344" +
+      "\223\002\027\022\025/v1/status/supervisor\022\203\001\n\tIDEStatus" +
+      "\022\034.supervisor.IDEStatusRequest\032\035.supervi" +
+      "sor.IDEStatusResponse\"9\202\323\344\223\0023\022\016/v1/statu" +
+      "s/ideZ!\022\037/v1/status/ide/wait/{wait=true}" +
+      "\022\227\001\n\rContentStatus\022 .supervisor.ContentS" +
+      "tatusRequest\032!.supervisor.ContentStatusR" +
+      "esponse\"A\202\323\344\223\002;\022\022/v1/status/contentZ%\022#/" +
+      "v1/status/content/wait/{wait=true}\022l\n\014Ba" +
+      "ckupStatus\022\037.supervisor.BackupStatusRequ" +
+      "est\032 .supervisor.BackupStatusResponse\"\031\202" +
+      "\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013PortsStatus" +
+      "\022\036.supervisor.PortsStatusRequest\032\037.super" +
+      "visor.PortsStatusResponse\"C\202\323\344\223\002=\022\020/v1/s" +
+      "tatus/portsZ)\022\'/v1/status/ports/observe/" +
+      "{observe=true}0\001\022\225\001\n\013TasksStatus\022\036.super" +
+      "visor.TasksStatusRequest\032\037.supervisor.Ta" +
+      "sksStatusResponse\"C\202\323\344\223\002=\022\020/v1/status/ta" +
+      "sksZ)\022\'/v1/status/tasks/observe/{observe" +
+      "=true}0\001BF\n\030io.gitpod.supervisor.apiZ*gi" +
+      "thub.com/gitpod-io/gitpod/supervisor/api" +
+      "b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -13617,7 +13547,7 @@ public final class Status {
     internal_static_supervisor_PortsStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_PortsStatus_descriptor,
-        new java.lang.String[] { "LocalPort", "GlobalPort", "Served", "Exposed", "AutoExposure", "Tunneled", });
+        new java.lang.String[] { "LocalPort", "Served", "Exposed", "AutoExposure", "Tunneled", });
     internal_static_supervisor_TasksStatusRequest_descriptor =
       getDescriptor().getMessageTypes().get(13);
     internal_static_supervisor_TasksStatusRequest_fieldAccessorTable = new

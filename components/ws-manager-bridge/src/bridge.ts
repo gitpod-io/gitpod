@@ -144,7 +144,6 @@ export class WorkspaceManagerBridge implements Disposable {
                 instance.status.exposedPorts = status.spec.exposedPortsList.map(p => {
                     return <WorkspaceInstancePort>{
                         port: p.port,
-                        targetPort: !!p.target ? p.target : undefined,
                         visibility: mapPortVisibility(p.visibility),
                         url: p.url,
                     };
@@ -161,7 +160,6 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.status.timeout = status.spec.timeout;
             instance.status.conditions.failed = status.conditions.failed;
             instance.status.conditions.pullingImages = toBool(status.conditions.pullingImages!);
-            instance.status.conditions.serviceExists = toBool(status.conditions.serviceExists!);
             instance.status.conditions.deployed = toBool(status.conditions.deployed);
             instance.status.conditions.timeout = status.conditions.timeout;
             instance.status.conditions.firstUserActivity = mapFirstUserActivity(rawStatus.getConditions()!.getFirstUserActivity());

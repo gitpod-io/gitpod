@@ -671,8 +671,6 @@ export namespace WorkspaceSpec {
 export class PortSpec extends jspb.Message {
     getPort(): number;
     setPort(value: number): PortSpec;
-    getTarget(): number;
-    setTarget(value: number): PortSpec;
     getVisibility(): PortVisibility;
     setVisibility(value: PortVisibility): PortSpec;
     getUrl(): string;
@@ -691,7 +689,6 @@ export class PortSpec extends jspb.Message {
 export namespace PortSpec {
     export type AsObject = {
         port: number,
-        target: number,
         visibility: PortVisibility,
         url: string,
     }
@@ -704,8 +701,6 @@ export class WorkspaceConditions extends jspb.Message {
     setTimeout(value: string): WorkspaceConditions;
     getPullingImages(): WorkspaceConditionBool;
     setPullingImages(value: WorkspaceConditionBool): WorkspaceConditions;
-    getServiceExists(): WorkspaceConditionBool;
-    setServiceExists(value: WorkspaceConditionBool): WorkspaceConditions;
     getSnapshot(): string;
     setSnapshot(value: string): WorkspaceConditions;
     getFinalBackupComplete(): WorkspaceConditionBool;
@@ -739,7 +734,6 @@ export namespace WorkspaceConditions {
         failed: string,
         timeout: string,
         pullingImages: WorkspaceConditionBool,
-        serviceExists: WorkspaceConditionBool,
         snapshot: string,
         finalBackupComplete: WorkspaceConditionBool,
         deployed: WorkspaceConditionBool,
@@ -944,6 +938,28 @@ export namespace EnvironmentVariable {
     export type AsObject = {
         name: string,
         value: string,
+    }
+}
+
+export class ExposedPorts extends jspb.Message {
+    clearPortsList(): void;
+    getPortsList(): Array<PortSpec>;
+    setPortsList(value: Array<PortSpec>): ExposedPorts;
+    addPorts(value?: PortSpec, index?: number): PortSpec;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ExposedPorts.AsObject;
+    static toObject(includeInstance: boolean, msg: ExposedPorts): ExposedPorts.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ExposedPorts, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ExposedPorts;
+    static deserializeBinaryFromReader(message: ExposedPorts, reader: jspb.BinaryReader): ExposedPorts;
+}
+
+export namespace ExposedPorts {
+    export type AsObject = {
+        portsList: Array<PortSpec.AsObject>,
     }
 }
 

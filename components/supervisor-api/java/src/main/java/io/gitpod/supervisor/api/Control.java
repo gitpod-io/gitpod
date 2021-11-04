@@ -31,16 +31,6 @@ public final class Control {
      * @return The port.
      */
     int getPort();
-
-    /**
-     * <pre>
-     * external port if missing the the same as port
-     * </pre>
-     *
-     * <code>uint32 target_port = 2;</code>
-     * @return The targetPort.
-     */
-    int getTargetPort();
   }
   /**
    * Protobuf type {@code supervisor.ExposePortRequest}
@@ -92,11 +82,6 @@ public final class Control {
               port_ = input.readUInt32();
               break;
             }
-            case 16: {
-
-              targetPort_ = input.readUInt32();
-              break;
-            }
             default: {
               if (!parseUnknownField(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -144,21 +129,6 @@ public final class Control {
       return port_;
     }
 
-    public static final int TARGET_PORT_FIELD_NUMBER = 2;
-    private int targetPort_;
-    /**
-     * <pre>
-     * external port if missing the the same as port
-     * </pre>
-     *
-     * <code>uint32 target_port = 2;</code>
-     * @return The targetPort.
-     */
-    @java.lang.Override
-    public int getTargetPort() {
-      return targetPort_;
-    }
-
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -176,9 +146,6 @@ public final class Control {
       if (port_ != 0) {
         output.writeUInt32(1, port_);
       }
-      if (targetPort_ != 0) {
-        output.writeUInt32(2, targetPort_);
-      }
       unknownFields.writeTo(output);
     }
 
@@ -191,10 +158,6 @@ public final class Control {
       if (port_ != 0) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(1, port_);
-      }
-      if (targetPort_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(2, targetPort_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -213,8 +176,6 @@ public final class Control {
 
       if (getPort()
           != other.getPort()) return false;
-      if (getTargetPort()
-          != other.getTargetPort()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -228,8 +189,6 @@ public final class Control {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + PORT_FIELD_NUMBER;
       hash = (53 * hash) + getPort();
-      hash = (37 * hash) + TARGET_PORT_FIELD_NUMBER;
-      hash = (53 * hash) + getTargetPort();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -365,8 +324,6 @@ public final class Control {
         super.clear();
         port_ = 0;
 
-        targetPort_ = 0;
-
         return this;
       }
 
@@ -394,7 +351,6 @@ public final class Control {
       public io.gitpod.supervisor.api.Control.ExposePortRequest buildPartial() {
         io.gitpod.supervisor.api.Control.ExposePortRequest result = new io.gitpod.supervisor.api.Control.ExposePortRequest(this);
         result.port_ = port_;
-        result.targetPort_ = targetPort_;
         onBuilt();
         return result;
       }
@@ -445,9 +401,6 @@ public final class Control {
         if (other == io.gitpod.supervisor.api.Control.ExposePortRequest.getDefaultInstance()) return this;
         if (other.getPort() != 0) {
           setPort(other.getPort());
-        }
-        if (other.getTargetPort() != 0) {
-          setTargetPort(other.getTargetPort());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -517,49 +470,6 @@ public final class Control {
       public Builder clearPort() {
         
         port_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int targetPort_ ;
-      /**
-       * <pre>
-       * external port if missing the the same as port
-       * </pre>
-       *
-       * <code>uint32 target_port = 2;</code>
-       * @return The targetPort.
-       */
-      @java.lang.Override
-      public int getTargetPort() {
-        return targetPort_;
-      }
-      /**
-       * <pre>
-       * external port if missing the the same as port
-       * </pre>
-       *
-       * <code>uint32 target_port = 2;</code>
-       * @param value The targetPort to set.
-       * @return This builder for chaining.
-       */
-      public Builder setTargetPort(int value) {
-        
-        targetPort_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * external port if missing the the same as port
-       * </pre>
-       *
-       * <code>uint32 target_port = 2;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearTargetPort() {
-        
-        targetPort_ = 0;
         onChanged();
         return this;
       }
@@ -1053,14 +963,13 @@ public final class Control {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\rcontrol.proto\022\nsupervisor\"6\n\021ExposePor" +
-      "tRequest\022\014\n\004port\030\001 \001(\r\022\023\n\013target_port\030\002 " +
-      "\001(\r\"\024\n\022ExposePortResponse2_\n\016ControlServ" +
-      "ice\022M\n\nExposePort\022\035.supervisor.ExposePor" +
-      "tRequest\032\036.supervisor.ExposePortResponse" +
-      "\"\000BF\n\030io.gitpod.supervisor.apiZ*github.c" +
-      "om/gitpod-io/gitpod/supervisor/apib\006prot" +
-      "o3"
+      "\n\rcontrol.proto\022\nsupervisor\"\'\n\021ExposePor" +
+      "tRequest\022\014\n\004port\030\001 \001(\rJ\004\010\002\020\003\"\024\n\022ExposePo" +
+      "rtResponse2_\n\016ControlService\022M\n\nExposePo" +
+      "rt\022\035.supervisor.ExposePortRequest\032\036.supe" +
+      "rvisor.ExposePortResponse\"\000BF\n\030io.gitpod" +
+      ".supervisor.apiZ*github.com/gitpod-io/gi" +
+      "tpod/supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -1071,7 +980,7 @@ public final class Control {
     internal_static_supervisor_ExposePortRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_ExposePortRequest_descriptor,
-        new java.lang.String[] { "Port", "TargetPort", });
+        new java.lang.String[] { "Port", });
     internal_static_supervisor_ExposePortResponse_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_supervisor_ExposePortResponse_fieldAccessorTable = new

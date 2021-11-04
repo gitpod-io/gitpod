@@ -702,10 +702,7 @@ export class WorkspaceStarter {
             portIndex.add(p.port);
 
             const spec = new PortSpec();
-            let target = p.port;
-
             spec.setPort(p.port);
-            spec.setTarget(target);
             spec.setVisibility(p.visibility == 'public' ? PortVisibility.PORT_VISIBILITY_PUBLIC : PortVisibility.PORT_VISIBILITY_PRIVATE);
             return spec;
         }).filter(spec => !!spec) as PortSpec[];

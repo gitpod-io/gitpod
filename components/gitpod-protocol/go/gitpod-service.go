@@ -1747,7 +1747,6 @@ type WorkspaceInstanceConditions struct {
 	FirstUserActivity string `json:"firstUserActivity,omitempty"`
 	NeededImageBuild  bool   `json:"neededImageBuild,omitempty"`
 	PullingImages     bool   `json:"pullingImages,omitempty"`
-	ServiceExists     bool   `json:"serviceExists,omitempty"`
 	Timeout           string `json:"timeout,omitempty"`
 }
 
@@ -1795,7 +1794,6 @@ type GetWorkspaceTimeoutResult struct {
 // WorkspaceInstancePort is the WorkspaceInstancePort message type
 type WorkspaceInstancePort struct {
 	Port       float64 `json:"port,omitempty"`
-	TargetPort float64 `json:"targetPort,omitempty"`
 	URL        string  `json:"url,omitempty"`
 	Visibility string  `json:"visibility,omitempty"`
 }
