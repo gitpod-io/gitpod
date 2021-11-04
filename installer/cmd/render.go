@@ -85,26 +85,33 @@ A config file is required which can be generated with the init command.`,
 			return fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
 		}
 
-		objs, err := common.CompositeRenderFunc(renderable, components.CommonObjects)(ctx)
+		objs, err := common.CompositeRenderFunc(components.CommonObjects, renderable)(ctx)
 		if err != nil {
 			return err
 		}
 
-		charts, err := common.CompositeHelmFunc(helmCharts, components.CommonHelmDependencies)(ctx)
-		if err != nil {
-			return err
-		}
-
+		k8s := make([]string, 0)
 		for _, o := range objs {
 			fc, err := yaml.Marshal(o)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("---\n%s\n", string(fc))
+			k8s = append(k8s, fmt.Sprintf("---\n%s\n", string(fc)))
 		}
 
-		for _, c := range charts {
+		charts, err := common.CompositeHelmFunc(components.CommonHelmDependencies, helmCharts)(ctx)
+		if err != nil {
+			return err
+		}
+		k8s = append(k8s, charts...)
+
+		sortedCharts, err := common.DependencySortingRenderFunc(k8s)
+		if err != nil {
+			return err
+		}
+
+		for _, c := range sortedCharts {
 			fmt.Printf("---\n%s\n", c)
 		}
 
