@@ -167,10 +167,6 @@ func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig P
 			}
 		}
 
-		return append(templates, []string{
-			fmt.Sprintf("# %s Helm chart", settings.Config.Name),
-			rel.Manifest, // This already starts with "---" - consider stripping this out
-			fmt.Sprintf("# End of %s chart", settings.Config.Name),
-		}...), nil
+		return append(templates, rel.Manifest), nil
 	}
 }
