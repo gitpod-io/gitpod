@@ -12,9 +12,6 @@ import (
 	"strings"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"sigs.k8s.io/yaml"
-
-	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	"github.com/docker/distribution/reference"
@@ -26,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/yaml"
 )
 
 // Valid characters for affinities are alphanumeric, -, _, . and one / as a subdomain prefix
@@ -334,67 +332,6 @@ func ImageName(repo, name, tag string) string {
 	}
 
 	return ref
-}
-
-func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
-	var res *storageconfig.StorageConfig
-	if context.Config.ObjectStorage.CloudStorage != nil {
-		// TODO(cw): where do we get the GCP project from? Is it even still needed?
-		res = &storageconfig.StorageConfig{
-			Kind: storageconfig.GCloudStorage,
-			GCloudConfig: storageconfig.GCPConfig{
-				Region:             context.Config.Metadata.Region,
-				Project:            "TODO",
-				CredentialsFile:    "/mnt/secrets/gcp-storage/service-account.json",
-				ParallelUpload:     6,
-				MaximumBackupCount: 3,
-			},
-		}
-	}
-	if context.Config.ObjectStorage.S3 != nil {
-		// TODO(cw): where do we get the AWS secretKey and accessKey from?
-		res = &storageconfig.StorageConfig{
-			Kind: storageconfig.MinIOStorage,
-			MinIOConfig: storageconfig.MinIOConfig{
-				Endpoint:        "some-magic-amazon-value?",
-				AccessKeyID:     "TODO",
-				SecretAccessKey: "TODO",
-				Secure:          true,
-				Region:          context.Config.Metadata.Region,
-				ParallelUpload:  6,
-			},
-		}
-	}
-	if b := context.Config.ObjectStorage.InCluster; b != nil && *b {
-		res = &storageconfig.StorageConfig{
-			Kind: storageconfig.MinIOStorage,
-			MinIOConfig: storageconfig.MinIOConfig{
-				Endpoint:        "minio:9000",
-				AccessKeyID:     context.Values.StorageAccessKey,
-				SecretAccessKey: context.Values.StorageSecretKey,
-				Secure:          false,
-				Region:          context.Config.Metadata.Region,
-				ParallelUpload:  6,
-			},
-		}
-	}
-
-	if res == nil {
-		panic("no valid storage configuration set")
-	}
-
-	// todo(sje): create exportable type
-	res.BackupTrail = struct {
-		Enabled   bool `json:"enabled"`
-		MaxLength int  `json:"maxLength"`
-	}{
-		Enabled:   true,
-		MaxLength: 3,
-	}
-	// 5 GiB
-	res.BlobQuota = 5 * 1024 * 1024 * 1024
-
-	return *res
 }
 
 // ObjectHash marshals the objects to YAML and produces a sha256 hash of the output.
