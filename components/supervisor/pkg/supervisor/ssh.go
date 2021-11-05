@@ -13,13 +13,15 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
-func newSSHServer(ctx context.Context, cfg *Config) (*sshServer, error) {
+func newSSHServer(ctx context.Context, cfg *Config, gitpodService *gitpod.APIoverJSONRPC) (*sshServer, error) {
 	bin, err := os.Executable()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot find executable path: %w", err)
@@ -38,9 +40,10 @@ func newSSHServer(ctx context.Context, cfg *Config) (*sshServer, error) {
 	}
 
 	return &sshServer{
-		ctx:    ctx,
-		cfg:    cfg,
-		sshkey: sshkey,
+		ctx:           ctx,
+		cfg:           cfg,
+		sshkey:        sshkey,
+		gitpodService: gitpodService,
 	}, nil
 }
 
@@ -49,6 +52,8 @@ type sshServer struct {
 	cfg *Config
 
 	sshkey string
+
+	gitpodService *gitpod.APIoverJSONRPC
 }
 
 // ListenAndServe listens on the TCP network address laddr and then handle packets on incoming connections.
@@ -125,23 +130,45 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		return
 	}
 
-	done := make(chan error, 1)
+	done := make(chan struct{})
 	go func() {
-		done <- cmd.Wait()
+		err := cmd.Wait()
+		if err != nil {
+			log.WithError(err).Error("SSH server stopped")
+		}
+		close(done)
+	}()
+
+	go func() {
+		for ctx.Err() == nil {
+			err := s.gitpodService.SendHeartBeat(ctx, &gitpod.SendHeartBeatOptions{
+				InstanceID: s.cfg.WorkspaceInstanceID,
+				WasClosed:  false,
+			})
+			if err != nil {
+				log.WithError(err).Error("SSH server send heart beat error")
+			}
+			timer := time.NewTimer(30 * time.Second)
+			select {
+			case <-timer.C:
+				continue
+			case <-done:
+				break
+			}
+		}
+		// send closed flag
+		_ = s.gitpodService.SendHeartBeat(ctx, &gitpod.SendHeartBeatOptions{
+			InstanceID: s.cfg.WorkspaceInstanceID,
+			WasClosed:  true,
+		})
+		log.Info("SSH server send heart beat finish")
 	}()
 
 	log.Debug("sshd started")
 
-	select {
-	case <-ctx.Done():
-		if cmd.Process != nil {
-			_ = cmd.Process.Kill()
-		}
-		return
-	case err = <-done:
-		if err != nil {
-			log.WithError(err).Error("SSH server stopped")
-		}
+	<-ctx.Done()
+	if cmd.Process != nil {
+		_ = cmd.Process.Kill()
 	}
 }
 

@@ -284,7 +284,7 @@ func Run(options ...RunOption) {
 	wg.Add(1)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, apiEndpointOpts...)
 	wg.Add(1)
-	go startSSHServer(ctx, cfg, &wg)
+	go startSSHServer(ctx, cfg, gitpodService, &wg)
 	wg.Add(1)
 	tasksSuccessChan := make(chan taskSuccess, 1)
 	go taskManager.Run(ctx, &wg, tasksSuccessChan)
@@ -366,6 +366,7 @@ func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.API
 			"function:openPort",
 			"function:getOpenPorts",
 			"function:guessGitTokenScopes",
+			"function:sendHeartBeat",
 		},
 	})
 	if err != nil {
@@ -1007,11 +1008,11 @@ func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan
 	shutdown <- ShutdownReasonSuccess
 }
 
-func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
+func startSSHServer(ctx context.Context, cfg *Config, gitpodService *gitpod.APIoverJSONRPC, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	go func() {
-		ssh, err := newSSHServer(ctx, cfg)
+		ssh, err := newSSHServer(ctx, cfg, gitpodService)
 		if err != nil {
 			log.WithError(err).Error("err starting SSH server")
 		}
