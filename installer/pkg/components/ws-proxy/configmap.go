@@ -24,6 +24,7 @@ import (
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// todo(sje): wsManagerProxy seems to be unused
 	wspcfg := config.Config{
+		Namespace: ctx.Namespace,
 		Ingress: proxy.HostBasedIngressConfig{
 			HTTPAddress:  fmt.Sprintf(":%d", HTTPProxyPort),
 			HTTPSAddress: fmt.Sprintf(":%d", HTTPSProxyPort),
