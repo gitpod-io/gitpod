@@ -30,6 +30,8 @@ packages:
       - components/openvsx-proxy:lib
     env:
       - CGO_ENABLED=0
+    prep:
+      - ["sh", "-c", "ls -d third_party/charts/*/ | while read f; do echo \"cd $f && helm dep up && cd -\"; done | sh"]
     config:
       packaging: app
   - name: app

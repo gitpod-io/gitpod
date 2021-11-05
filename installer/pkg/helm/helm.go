@@ -8,6 +8,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
 	"helm.sh/helm/v3/pkg/action"
@@ -15,9 +20,6 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 // TemplateConfig
@@ -60,7 +62,7 @@ func installDependencies(settings Settings) error {
 
 	err := man.Update()
 	if err != nil {
-		return err
+		return fmt.Errorf("error pulling Helm dependency for %s: %w", settings.Chart, err)
 	}
 
 	return nil
@@ -92,26 +94,29 @@ func runInstall(settings Settings, client *action.Install) (*release.Release, er
 	return client.RunWithContext(getContext(settings), chartRequested, vals)
 }
 
-func writeCharts(chart *charts.Chart) (*string, error) {
+func writeCharts(chart *charts.Chart) (string, error) {
 	dir, err := os.MkdirTemp("", chart.Name)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	if err := os.WriteFile(fmt.Sprintf("%s/%s", dir, "Chart.yaml"), chart.Chart, 0644); err != nil {
-		return nil, err
+	err = chart.Export(dir)
+	if err != nil {
+		return "", err
 	}
 
-	if err := os.WriteFile(fmt.Sprintf("%s/%s", dir, "values.yaml"), chart.Values, 0644); err != nil {
-		return nil, err
-	}
-
-	return &dir, nil
+	return dir, nil
 }
 
 // ImportTemplate allows for Helm charts to be imported into the installer manifest
 func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig PkgConfig) common.HelmFunc {
-	return func(cfg *common.RenderContext) ([]string, error) {
+	return func(cfg *common.RenderContext) (r []string, err error) {
+		defer func() {
+			if err != nil {
+				err = fmt.Errorf("cannot import template %s: %w", chart.Name, err)
+			}
+		}()
+
 		helmConfig, err := pkgConfig(cfg)
 		if err != nil {
 			return nil, err
@@ -132,12 +137,15 @@ func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig P
 				Name:      chart.Name,
 				Namespace: cfg.Namespace,
 			},
-			*dir,
+			dir,
 			helmConfig.Values,
 		)
 
-		if err := installDependencies(settings); err != nil {
-			return nil, err
+		if _, err := os.Stat(filepath.Join(dir, "charts")); err != nil {
+			err = installDependencies(settings)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		client := action.NewInstall(settings.ActionConfig)
@@ -161,10 +169,12 @@ func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig P
 
 		// Fetch any additional Kubernetes files that need applying
 		var templates []string
-		if len(chart.KubeObjects) > 0 {
-			for _, obj := range chart.KubeObjects {
-				templates = append(templates, string(obj))
+		for _, obj := range chart.AdditionalFiles {
+			b, err := chart.Content.ReadFile(obj)
+			if err != nil {
+				return nil, err
 			}
+			templates = append(templates, string(b))
 		}
 
 		return append(templates, rel.Manifest), nil

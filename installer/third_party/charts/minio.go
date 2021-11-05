@@ -5,21 +5,18 @@
 package charts
 
 import (
-	_ "embed"
+	"embed"
 )
 
 // Imported from https://github.com/bitnami/charts/tree/master/bitnami/minio
 
-//go:embed minio/Chart.yaml
-var minioChart []byte
-
-//go:embed minio/values.yaml
-var minioValues []byte
+//go:embed minio/*
+var minio embed.FS
 
 func Minio() *Chart {
 	return &Chart{
-		Name:   "Minio",
-		Chart:  minioChart,
-		Values: minioValues,
+		Name:     "Minio",
+		Location: "minio/",
+		Content:  &minio,
 	}
 }
