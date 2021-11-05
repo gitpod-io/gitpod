@@ -56,7 +56,7 @@ pod:
         gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa/service-account.json"
         gcloud auth configure-docker --quiet
 
-        headCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/release/1.62)
+        headCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/main)
 
         cd /workspace/components/ide/code
         leeway build -Dversion=nightly -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DcodeCommit=$headCommit .:docker
