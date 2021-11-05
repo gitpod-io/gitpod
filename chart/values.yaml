@@ -399,7 +399,7 @@ components:
       imageName: "ide/theia"
     codeImage:
       imageName: "ide/code"
-      stableVersion: "commit-7107fb8bde0b1f92265402ad5fa09a51022b14dd"
+      stableVersion: "commit-636ef165f4255931c23fb2948e81c73cc75c4fb9"
       insidersVersion: "nightly"
     desktopIdeImages:
       intellij:
