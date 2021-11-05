@@ -5,21 +5,18 @@
 package charts
 
 import (
-	_ "embed"
+	"embed"
 )
 
 // Imported from https://github.com/bitnami/charts/tree/master/bitnami/mysql
 
-//go:embed mysql/Chart.yaml
-var mysqlChart []byte
-
-//go:embed mysql/values.yaml
-var mysqlValues []byte
+//go:embed mysql/*
+var mysql embed.FS
 
 func MySQL() *Chart {
 	return &Chart{
-		Name:   "MySQL",
-		Chart:  mysqlChart,
-		Values: mysqlValues,
+		Name:     "MySQL",
+		Location: "mysql/",
+		Content:  &mysql,
 	}
 }

@@ -5,21 +5,18 @@
 package charts
 
 import (
-	_ "embed"
+	"embed"
 )
 
 // Imported from https://github.com/twuni/docker-registry.helm
 
-//go:embed docker-registry/Chart.yaml
-var dockerRegistryChart []byte
-
-//go:embed docker-registry/values.yaml
-var dockerRegistryValues []byte
+//go:embed docker-registry/*
+var dockerRegistry embed.FS
 
 func DockerRegistry() *Chart {
 	return &Chart{
-		Name:   "docker-registry",
-		Chart:  dockerRegistryChart,
-		Values: dockerRegistryValues,
+		Name:     "docker-registry",
+		Location: "docker-registry/",
+		Content:  &dockerRegistry,
 	}
 }

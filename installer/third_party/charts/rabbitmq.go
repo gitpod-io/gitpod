@@ -5,21 +5,18 @@
 package charts
 
 import (
-	_ "embed"
+	"embed"
 )
 
 // Imported from https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq
 
-//go:embed rabbitmq/Chart.yaml
-var rabbitMQChart []byte
-
-//go:embed rabbitmq/values.yaml
-var rabbitMQValues []byte
+//go:embed rabbitmq/*
+var rabbitMQ embed.FS
 
 func RabbitMQ() *Chart {
 	return &Chart{
-		Name:   "RabbitMQ",
-		Chart:  rabbitMQChart,
-		Values: rabbitMQValues,
+		Name:     "RabbitMQ",
+		Location: "rabbitmq/",
+		Content:  &rabbitMQ,
 	}
 }
