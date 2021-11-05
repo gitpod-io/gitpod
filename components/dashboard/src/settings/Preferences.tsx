@@ -6,12 +6,15 @@
 
 import { useContext, useState } from "react";
 import CheckBox from "../components/CheckBox";
+import CodeText from "../components/CodeText";
+import InfoBox from "../components/InfoBox";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import PillLabel from "../components/PillLabel";
 import SelectableCard from "../components/SelectableCard";
 import Tooltip from "../components/Tooltip";
-import vscode from '../images/vscode.svg';
-import ideaLogo from '../images/intellijIdeaLogo.svg';
 import golandLogo from '../images/golandLogo.svg';
+import ideaLogo from '../images/intellijIdeaLogo.svg';
+import vscode from '../images/vscode.svg';
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
@@ -82,7 +85,7 @@ export default function Preferences() {
                         <div className="flex justify-center mt-3">
                             <img className="w-16 filter-grayscale self-center" src={vscode} />
                         </div>
-                        <span className="mt-2 ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-orange-100 text-orange-700 dark:bg-orange-600 dark:text-orange-100 font-semibold">INSIDERS</span>
+                        <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Insiders</PillLabel>
                     </SelectableCard>
                 </Tooltip>
             </div>
@@ -93,20 +96,26 @@ export default function Preferences() {
                     checked={useDesktopIde}
                     onChange={(evt) => actuallySetUseDesktopIde(evt.target.checked)} />
             </div>
-            {useDesktopIde &&
+            {useDesktopIde && <>
                 <div className="mt-4 space-x-4 flex">
                     <SelectableCard className="w-36 h-40" title="IntelliJ IDEA" selected={defaultDesktopIde === 'intellij'} onClick={() => actuallySetDefaultDesktopIde('intellij')}>
                         <div className="flex justify-center mt-3">
-                        <img className="w-16 filter-grayscale self-center" src={ideaLogo} />
+                            <img className="w-16 filter-grayscale self-center" src={ideaLogo} />
                         </div>
+                        <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel>
                     </SelectableCard>
                     <SelectableCard className="w-36 h-40" title="GoLand" selected={defaultDesktopIde === 'goland'} onClick={() => actuallySetDefaultDesktopIde('goland')}>
                         <div className="flex justify-center mt-3">
-                        <img className="w-16 filter-grayscale self-center" src={golandLogo} />
+                            <img className="w-16 filter-grayscale self-center" src={golandLogo} />
                         </div>
+                        <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel>
                     </SelectableCard>
                 </div>
-            }
+                <InfoBox className="my-5">While in beta, when you open a workspace using a JetBrains IDE you will need to use the following password: <CodeText>gitpod</CodeText></InfoBox>
+                <p className="text-left w-full text-gray-500">
+                    The <strong>JetBrains desktop IDEs</strong> are currently in beta. <a href="https://github.com/gitpod-io/gitpod/issues/6576" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a> · <a href="https://www.gitpod.io/docs/integrations/jetbrains" target="_blank" rel="noopener" className="gp-link">Documentation</a>
+                </p>
+            </>}
             <h3 className="mt-12">Theme</h3>
             <p className="text-base text-gray-500">Early bird or night owl? Choose your side.</p>
             <div className="mt-4 space-x-4 flex">
