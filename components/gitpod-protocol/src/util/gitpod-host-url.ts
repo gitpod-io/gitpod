@@ -85,7 +85,7 @@ export class GitpodHostUrl {
     }
 
     asDashboard(): GitpodHostUrl {
-        return this.with(url => ({ pathname: '/projects' }));
+        return this.with(url => ({ pathname: '/' }));
     }
 
     asLogin(): GitpodHostUrl {
