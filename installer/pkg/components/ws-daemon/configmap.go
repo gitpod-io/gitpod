@@ -117,7 +117,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Enabled:  true,
 				Interval: util.Duration(5 * time.Minute),
 				Locations: []diskguard.LocationConfig{{
-					Path:          "/mnt/wsdaemon-workingarea",
+					Path:          "/mnt/workingarea",
 					MinBytesAvail: 21474836480,
 				}},
 			},
