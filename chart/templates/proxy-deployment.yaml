@@ -105,6 +105,9 @@ spec:
 {{- end }}
         - name: config-certificates
           mountPath: "/etc/caddy/certificates"
+        {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+        {{- end }}
 {{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $comp) | indent 8 }}
         - name: PROXY_DOMAIN
           value: "{{ $.Values.hostname }}"
@@ -123,5 +126,8 @@ spec:
       - name: config-certificates
         secret:
           secretName: {{ $.Values.certificatesSecret.secretName }}
+      {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
+      {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

@@ -64,6 +64,9 @@ spec:
         secret:
           secretName: {{ $sec.secret }}
 {{- end }}
+      {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
+      {{- end }}
       enableServiceLinks: false
       containers:
       - name: dind
@@ -80,6 +83,9 @@ spec:
         - mountPath: /etc/docker/certs.d/{{- if eq $sec.name "builtin" -}}{{ template "gitpod.builtinRegistry.name" $this.root }}{{ else }}{{ $sec.name }}{{ end }}
           name: docker-tls-certs-{{ $idx }}
 {{- end }}
+        {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+        {{- end }}
 {{- if $comp.dindResources }}
         resources:
 {{ toYaml $comp.dindResources | indent 10 }}
@@ -105,6 +111,9 @@ spec:
           name: pull-secret
 {{- end }}
 {{- end }}
+        {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+        {{- end }}
         resources:
           requests:
             cpu: {{ $.Values.resources.default.cpu }}

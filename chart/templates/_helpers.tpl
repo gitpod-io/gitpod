@@ -357,6 +357,39 @@ storage:
 {{- end -}}
 {{- end -}}
 
+{{/* custom ca bundle volume and volumeMount */}}
+{{- define "gitpod.caBundleVolume" -}}
+{{- if .Values.fullCABundleSecretName -}}
+- name: ca-bundle-certs
+  secret:
+    secretName: {{ .Values.fullCABundleSecretName }}
+{{- end -}}
+{{- end -}}
+
+{{- define "gitpod.caBundleVolumeMount" -}}
+{{- if .Values.fullCABundleSecretName -}}
+- name: ca-bundle-certs
+  mountPath: /etc/ssl/certs/ca-certificates.crt
+  subPath: ca-certificates.crt
+{{- end -}}
+{{- end -}}
+
+{{- define "gitpod.extraCABundleVolume" -}}
+{{- if .Values.extraCABundleSecretName -}}
+- name: extra-certs
+  secret:
+    secretName: {{ .Values.extraCABundleSecretName }}
+{{- end -}}
+{{- end -}}
+
+{{- define "gitpod.extraCABundleVolumeMount" -}}
+{{- if .Values.extraCABundleSecretName -}}
+- name: extra-certs
+  mountPath: /etc/ssl/certs/extra/ca-certificates.crt
+  subPath: ca-certificates.crt
+{{- end -}}
+{{- end -}}
+
 {{- define "gitpod.kube-rbac-proxy" -}}
 - name: kube-rbac-proxy
   image: quay.io/brancz/kube-rbac-proxy:v0.11.0

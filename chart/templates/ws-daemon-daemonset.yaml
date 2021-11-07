@@ -101,6 +101,9 @@ spec:
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
+{{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
+{{- end }}
       enableServiceLinks: false
 {{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
       initContainers:
@@ -267,6 +270,9 @@ spec:
           name: tls-certs
 {{- if $comp.volumeMounts }}
 {{ toYaml $comp.volumeMounts | indent 8 }}
+{{- end }}
+{{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
 {{- end }}
         args: ["run", "--config", "/config/config.json"]
         image: {{ template "gitpod.comp.imageFull" $this }}

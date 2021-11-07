@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -567,6 +568,14 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	// TODO(ak) remove THEIA_WEBVIEW_EXTERNAL_ENDPOINT and THEIA_MINI_BROWSER_HOST_PATTERN when Theia is removed
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
+
+	if _, err := os.Stat("/etc/ssl/certs/extra/ca-certificates.crt"); err == nil {
+		crt, err := os.ReadFile("/etc/ssl/certs/extra/ca-certificates.crt")
+		if err == nil {
+			base64Crt := base64.RawStdEncoding.EncodeToString(crt)
+			result = append(result, corev1.EnvVar{Name: "GITPOD_EXTRA_CA_BUNDLE", Value: base64Crt})
+		}
+	}
 
 	// We don't require that Git be configured for workspaces
 	if spec.Git != nil {

@@ -56,6 +56,9 @@ spec:
       - name: workspace-template
         configMap:
           name: workspace-template
+      {{- if .Values.extraCABundleSecretName }}
+{{ include "gitpod.extraCABundleVolume" . | indent 6 }}
+      {{- end }}
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
@@ -81,6 +84,9 @@ spec:
         - mountPath: /certs
           name: tls-certs
           readOnly: true
+        {{- if .Values.extraCABundleSecretName }}
+{{ include "gitpod.extraCABundleVolumeMount" . | indent 8 }}
+        {{- end }}
 {{- if $comp.volumeMounts }}
 {{ toYaml $comp.volumeMounts | indent 8 }}
 {{- end }}

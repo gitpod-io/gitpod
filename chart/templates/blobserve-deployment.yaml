@@ -65,6 +65,9 @@ spec:
           mountPath: /mnt/pull-secret.json
           subPath: .dockerconfigjson
         {{- end }}
+        {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+        {{- end }}
 {{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       volumes:
       - name: cache
@@ -76,6 +79,9 @@ spec:
       - name: pull-secret
         secret:
           secretName: {{ .Values.components.workspace.pullSecret.secretName }}
+      {{- end }}
+      {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
       {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

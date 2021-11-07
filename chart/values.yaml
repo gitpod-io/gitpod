@@ -761,3 +761,5 @@ cert-manager:
     certificate:
       selfSigned: true
       secretName: gitpod-ca-certificate
+
+# fullCABundleSecretName: full-ca-bundle

@@ -60,6 +60,9 @@ spec:
       - name: wsman-tls-certs
         secret:
           secretName: {{ .Values.components.wsManager.tls.server.secretName }}
+      {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
+      {{- end }}
       enableServiceLinks: false
       containers:
 {{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
@@ -86,6 +89,9 @@ spec:
           name: pull-secret
 {{- end }}
 {{- end }}
+        {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+        {{- end }}
         resources:
           requests:
             cpu: {{ $.Values.resources.default.cpu }}

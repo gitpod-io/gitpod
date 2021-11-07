@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -148,6 +149,7 @@ func Run(options ...RunOption) {
 		return
 	}
 
+	mergeExtraCABundle()
 	err = AddGitpodUserIfNotExists()
 	if err != nil {
 		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
@@ -350,6 +352,21 @@ func Run(options ...RunOption) {
 	terminateChildProcesses()
 
 	wg.Wait()
+}
+
+func mergeExtraCABundle() {
+	if c := os.Getenv("GITPOD_EXTRA_CA_BUNDLE"); c != "" {
+		crt, err := base64.RawStdEncoding.DecodeString(c)
+		if err != nil {
+			return
+		}
+		file, err := os.OpenFile("/etc/ssl/certs/ca-certificates.crt", os.O_WRONLY|os.O_APPEND, 0622)
+		if err != nil {
+			return
+		}
+		_, _ = file.Write(crt)
+		_ = file.Close()
+	}
 }
 
 func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.APIoverJSONRPC {

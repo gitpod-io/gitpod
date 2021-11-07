@@ -71,6 +71,9 @@ spec:
         - name: https-certificates
           mountPath: "/mnt/certificates"
         {{- end }}
+        {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+        {{- end }}
 {{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       volumes:
       - name: cache
@@ -90,6 +93,9 @@ spec:
       - name: https-certificates
         secret:
           secretName: {{ .Values.certificatesSecret.secretName }}
+      {{- end }}
+      {{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
       {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

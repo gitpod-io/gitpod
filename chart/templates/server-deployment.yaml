@@ -105,6 +105,9 @@ spec:
           mountPath: "{{ dir $comp.githubApp.certPath }}"
           readOnly: true
 {{- end }}
+{{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+{{- end }}
 {{- if $comp.serverContainer.volumeMounts }}
 {{ toYaml $comp.serverContainer.volumeMounts | indent 8 }}
 {{- end }}
@@ -144,6 +147,9 @@ spec:
 {{- end }}
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
+{{- if .Values.fullCABundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
 {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
