@@ -16,6 +16,7 @@ const (
 	InClusterMessageQueueTLS  = "messagebus-certificates-secret-core"
 	MinioServiceAPIPort       = 9000
 	MonitoringChart           = "monitoring"
+	MySQLComponent            = "db" // mysql is used by the Helm package
 	ProxyComponent            = "proxy"
 	ProxyContainerHTTPPort    = 80
 	ProxyContainerHTTPName    = "http"

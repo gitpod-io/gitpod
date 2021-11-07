@@ -110,7 +110,7 @@ type Database struct {
 }
 
 type DatabaseRDS struct {
-	Certificate ObjectRef `json:"certificate"`
+	Certificate *ObjectRef `json:"certificate"`
 }
 
 type DatabaseCloudSQL struct {

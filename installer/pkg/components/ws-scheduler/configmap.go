@@ -84,7 +84,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			WorkspaceImage:     common.ImageName("", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
 			IDEImage:           common.ImageName(ctx.Config.Repository, workspace.IDEImageRepo, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
 			FeatureFlags:       nil,
-			MaxGhostWorkspaces: 10,
+			MaxGhostWorkspaces: 0,
 			SchedulerInterval:  util.Duration(time.Second * 5),
 			Renewal: struct {
 				Interval   util.Duration `json:"interval"`
