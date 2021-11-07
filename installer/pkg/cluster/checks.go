@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -98,8 +99,32 @@ func checkContainerDRuntime(ctx context.Context, config *rest.Config, namespace 
 	return res, nil
 }
 
+type checkSecretOpts struct {
+	RequiredFields []string
+	Validator      func(*corev1.Secret) ([]ValidationError, error)
+}
+
+type CheckSecretOpt func(*checkSecretOpts)
+
+func CheckSecretRequiredData(entries ...string) CheckSecretOpt {
+	return func(cso *checkSecretOpts) {
+		cso.RequiredFields = append(cso.RequiredFields, entries...)
+	}
+}
+
+func CheckSecretRule(validator func(*corev1.Secret) ([]ValidationError, error)) CheckSecretOpt {
+	return func(cso *checkSecretOpts) {
+		cso.Validator = validator
+	}
+}
+
 // CheckSecret produces a new check for an in-cluster secret
-func CheckSecret(name string, validator func(*corev1.Secret) ([]ValidationError, error)) ValidationCheck {
+func CheckSecret(name string, opts ...CheckSecretOpt) ValidationCheck {
+	var cfg checkSecretOpts
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	return ValidationCheck{
 		Name:        name + " is present and valid",
 		Description: "ensures the " + name + " secret is present and contains the required data",
@@ -121,7 +146,26 @@ func CheckSecret(name string, validator func(*corev1.Secret) ([]ValidationError,
 				return nil, err
 			}
 
-			return validator(secret)
+			var res []ValidationError
+			for _, k := range cfg.RequiredFields {
+				_, ok := secret.Data[k]
+				if !ok {
+					res = append(res, ValidationError{
+						Message: fmt.Sprintf("secret %s has no %s entry", name, k),
+						Type:    ValidationStatusError,
+					})
+				}
+			}
+
+			if cfg.Validator != nil {
+				vres, err := cfg.Validator(secret)
+				if err != nil {
+					return nil, err
+				}
+				res = append(res, vres...)
+			}
+
+			return res, nil
 		},
 	}
 }
