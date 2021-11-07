@@ -79,10 +79,20 @@ func main() {
 		logger.Fatalf("Docker socket already exists at %s.\nIn a Gitpod workspace Docker will start automatically when used.\nIf all else fails, please remove %s and try again.", dockerSocketFN, dockerSocketFN)
 	}
 
+	if os.Getenv("DOCKER_NOT_USE_NETNS") == "true" {
+		log = logger.WithField("service", "runWithinNetns")
+		_ = ensurePrerequisites()
+		err = runWithinNetns(false)
+		if err != nil {
+			log.WithError(err).Fatal("failed")
+		}
+		return
+	}
+
 	switch cmd {
 	case "child":
 		log = logger.WithField("service", "runWithinNetns")
-		err = runWithinNetns()
+		err = runWithinNetns(true)
 	default:
 		log = logger.WithField("service", "runOutsideNetns")
 		err = runOutsideNetns()
@@ -93,29 +103,33 @@ func main() {
 	}
 }
 
-func runWithinNetns() (err error) {
+func runWithinNetns(runInChildProcess bool) (err error) {
 	listenFDs, _ := strconv.Atoi(os.Getenv("LISTEN_FDS"))
 
-	// magic file descriptor 3+listenFDs was passed in from the parent using ExtraFiles
-	fd := os.NewFile(uintptr(3+listenFDs), "")
-	defer fd.Close()
+	if runInChildProcess {
+		// magic file descriptor 3+listenFDs was passed in from the parent using ExtraFiles
+		fd := os.NewFile(uintptr(3+listenFDs), "")
+		defer fd.Close()
 
-	log.Debug("waiting for parent")
-	var msg message
-	_, err = msgutil.UnmarshalFromReader(fd, &msg)
-	if err != nil {
-		return err
+		log.Debug("waiting for parent")
+		var msg message
+		_, err = msgutil.UnmarshalFromReader(fd, &msg)
+		if err != nil {
+			return err
+		}
+		if msg.Stage != 1 {
+			return xerrors.Errorf("expected stage 1 message, got %+q", msg)
+		}
+		log.Debug("parent is ready")
 	}
-	if msg.Stage != 1 {
-		return xerrors.Errorf("expected stage 1 message, got %+q", msg)
-	}
-	log.Debug("parent is ready")
 
 	args := []string{
 		"--experimental",
 		"--rootless",
 		"--data-root=/workspace/.docker-root",
-		"--userland-proxy", "--userland-proxy-path=" + filepath.Join(opts.BinDir, "slirp-docker-proxy"),
+	}
+	if os.Getenv("DOCKER_NOT_USE_NETNS") != "true" {
+		args = append(args, "--userland-proxy", "--userland-proxy-path="+filepath.Join(opts.BinDir, "slirp-docker-proxy"))
 	}
 	if opts.Verbose {
 		args = append(args,
