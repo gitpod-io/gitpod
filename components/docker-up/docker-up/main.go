@@ -40,6 +40,7 @@ var opts struct {
 	AutoInstall          bool
 	UserAccessibleSocket bool
 	Verbose              bool
+	DontWrapNetNS        bool
 }
 
 //go:embed docker.tgz
@@ -62,6 +63,7 @@ func main() {
 	pflag.StringVar(&opts.BinDir, "bin-dir", filepath.Dir(self), "directory where runc-facade and slirp-docker-proxy are found")
 	pflag.BoolVar(&opts.AutoInstall, "auto-install", true, "auto-install prerequisites (docker, slirp4netns)")
 	pflag.BoolVar(&opts.UserAccessibleSocket, "user-accessible-socket", true, "chmod the Docker socket to make it user accessible")
+	pflag.BoolVar(&opts.DontWrapNetNS, "dont-wrap-netns", os.Getenv("WORKSPACEKIT_WRAP_NETNS") == "true", "wrap the Docker daemon in a network namespace")
 	pflag.Parse()
 
 	logger := logrus.New()
@@ -79,9 +81,17 @@ func main() {
 		logger.Fatalf("Docker socket already exists at %s.\nIn a Gitpod workspace Docker will start automatically when used.\nIf all else fails, please remove %s and try again.", dockerSocketFN, dockerSocketFN)
 	}
 
-	if os.Getenv("DOCKER_NOT_USE_NETNS") == "true" {
+	if opts.DontWrapNetNS {
 		log = logger.WithField("service", "runWithinNetns")
-		_ = ensurePrerequisites()
+
+		// we don't need to wrap the daemon in a network namespace, hence don't need slirp4netns
+		delete(prerequisites, "slirp4netns")
+
+		err = ensurePrerequisites()
+		if err != nil {
+			log.WithError(err).Fatal("failed")
+		}
+
 		err = runWithinNetns(false)
 		if err != nil {
 			log.WithError(err).Fatal("failed")
@@ -128,7 +138,7 @@ func runWithinNetns(runInChildProcess bool) (err error) {
 		"--rootless",
 		"--data-root=/workspace/.docker-root",
 	}
-	if os.Getenv("DOCKER_NOT_USE_NETNS") != "true" {
+	if !opts.DontWrapNetNS {
 		args = append(args, "--userland-proxy", "--userland-proxy-path="+filepath.Join(opts.BinDir, "slirp-docker-proxy"))
 	}
 	if opts.Verbose {
@@ -280,16 +290,16 @@ func runOutsideNetns() error {
 	return nil
 }
 
-func ensurePrerequisites() error {
-	commands := map[string]func() error{
-		"dockerd":        installDocker,
-		"docker-compose": installDockerCompose,
-		"iptables":       installIptables,
-		"slirp4netns":    installSlirp4netns,
-	}
+var prerequisites = map[string]func() error{
+	"dockerd":        installDocker,
+	"docker-compose": installDockerCompose,
+	"iptables":       installIptables,
+	"slirp4netns":    installSlirp4netns,
+}
 
+func ensurePrerequisites() error {
 	var pkgs []func() error
-	for cmd, pkg := range commands {
+	for cmd, pkg := range prerequisites {
 		if pth, _ := exec.LookPath(cmd); pth == "" {
 			log.WithField("command", cmd).Warn("missing prerequisite")
 			pkgs = append(pkgs, pkg)

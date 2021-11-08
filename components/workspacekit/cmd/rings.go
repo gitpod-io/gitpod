@@ -359,7 +359,7 @@ var ring1Cmd = &cobra.Command{
 			env = append(env, e)
 		}
 		if wrapNetns {
-			env = append(env, "DOCKER_NOT_USE_NETNS=true")
+			env = append(env, "WORKSPACEKIT_WRAP_NETNS=true")
 		}
 
 		socketFN := filepath.Join(os.TempDir(), fmt.Sprintf("workspacekit-ring1-%d.unix", time.Now().UnixNano()))
