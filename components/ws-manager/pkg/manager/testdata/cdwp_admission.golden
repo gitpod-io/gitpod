@@ -22,7 +22,7 @@
                 "gitpod/admission": "admit_everyone",
                 "gitpod/contentInitializer": "GmcKZXdvcmtzcGFjZXMvY3J5cHRpYy1pZC1nb2VzLWhlcmcvZmQ2MjgwNGItNGNhYi0xMWU5LTg0M2EtNGU2NDUzNzMwNDhlLnRhckBnaXRwb2QtZGV2LXVzZXItY2hyaXN0ZXN0aW5n",
                 "gitpod/id": "test",
-                "gitpod/imageSpec": "CrwBZXUuZ2NyLmlvL2dpdHBvZC1kZXYvd29ya3NwYWNlLWltYWdlcy9hYzFjMDc1NTAwNzk2NmU0ZDZlMDkwZWE4MjE3MjlhYzc0N2QyMmFjL2V1Lmdjci5pby9naXRwb2QtZGV2L3dvcmtzcGFjZS1iYXNlLWltYWdlcy9naXRodWIuY29tL3R5cGVmb3gvZ2l0cG9kOjgwYTdkNDI3YTFmY2QzNDZkNDIwNjAzZDgwYTMxZDU3Y2Y3NWE3YWYSNGV1Lmdjci5pby9naXRwb2QtY29yZS1kZXYvYnVpZC90aGVpYS1pZGU6c29tZXZlcnNpb24iM2V1Lmdjci5pby9naXRwb2QtY29yZS1kZXYvYnVpZC9pbnRlbGxpajpzb21ldmVyc2lvbg==",
+                "gitpod/imageSpec": "CrwBZXUuZ2NyLmlvL2dpdHBvZC1kZXYvd29ya3NwYWNlLWltYWdlcy9hYzFjMDc1NTAwNzk2NmU0ZDZlMDkwZWE4MjE3MjlhYzc0N2QyMmFjL2V1Lmdjci5pby9naXRwb2QtZGV2L3dvcmtzcGFjZS1iYXNlLWltYWdlcy9naXRodWIuY29tL3R5cGVmb3gvZ2l0cG9kOjgwYTdkNDI3YTFmY2QzNDZkNDIwNjAzZDgwYTMxZDU3Y2Y3NWE3YWYSNGV1Lmdjci5pby9naXRwb2QtY29yZS1kZXYvYnVpZC90aGVpYS1pZGU6c29tZXZlcnNpb24iM2V1Lmdjci5pby9naXRwb2QtY29yZS1kZXYvYnVpZC9pbnRlbGxpajpzb21ldmVyc2lvbio1ZXUuZ2NyLmlvL2dpdHBvZC1jb3JlLWRldi9idWlkL3N1cGVydmlzb3I6c29tZXZlcnNpb24=",
                 "gitpod/never-ready": "true",
                 "gitpod/ownerToken": "%7J'[Of/8NDiWE+9F,I6^Jcj_1\u0026}-F8p",
                 "gitpod/servicePrefix": "foobarservice",

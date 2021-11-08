@@ -604,6 +604,8 @@ export class IDEImage extends jspb.Message {
     setWebRef(value: string): IDEImage;
     getDesktopRef(): string;
     setDesktopRef(value: string): IDEImage;
+    getSupervisorRef(): string;
+    setSupervisorRef(value: string): IDEImage;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): IDEImage.AsObject;
@@ -619,6 +621,7 @@ export namespace IDEImage {
     export type AsObject = {
         webRef: string,
         desktopRef: string,
+        supervisorRef: string,
     }
 }
 
