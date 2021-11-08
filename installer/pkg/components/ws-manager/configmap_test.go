@@ -14,6 +14,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 func TestBuildWorkspaceTemplates(t *testing.T) {
@@ -22,9 +23,10 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		Data      map[string]bool
 	}
 	tests := []struct {
-		Name        string
-		Config      *configv1.WorkspaceTemplates
-		Expectation Expectation
+		Name              string
+		Config            *configv1.WorkspaceTemplates
+		ContainerRegistry *configv1.ContainerRegistry
+		Expectation       Expectation
 	}{
 		{
 			Name: "no templates",
@@ -124,7 +126,15 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 				objs []runtime.Object
 				err  error
 			)
-			act.TplConfig, objs, err = buildWorkspaceTemplates(&common.RenderContext{Config: configv1.Config{Workspace: configv1.Workspace{Templates: test.Config}}})
+
+			if test.ContainerRegistry == nil {
+				test.ContainerRegistry = &configv1.ContainerRegistry{InCluster: pointer.Bool(true)}
+			}
+
+			act.TplConfig, objs, err = buildWorkspaceTemplates(&common.RenderContext{Config: configv1.Config{
+				ContainerRegistry: *test.ContainerRegistry,
+				Workspace:         configv1.Workspace{Templates: test.Config},
+			}})
 			if err != nil {
 				t.Error(err)
 			}

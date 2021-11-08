@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	minioComponent "github.com/gitpod-io/gitpod/installer/pkg/components/minio"
+	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
 	"text/template"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -18,6 +19,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 //go:embed templates/configmap/vhost.docker-registry.tpl
@@ -88,36 +90,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	// todo(sje) make conditional
-	// todo(sje): allow value to be set via config
-	username := ctx.Values.InternalRegistryUsername
-	if username == "" {
-		return nil, fmt.Errorf("unknown value: internal registry username")
-	}
-
-	password := ctx.Values.InternalRegistryPassword
-	if password == "" {
-		return nil, fmt.Errorf("unknown value: internal registry password")
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
-
-	dockerRegistry, err := renderTemplate(vhostDockerRegistry, dockerRegistryTpl{
-		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("https://%s.%s.%s", common.DockerRegistryName, ctx.Namespace, kubeDomain),
-		Username:     username,
-		Password:     base64.StdEncoding.EncodeToString(hashedPassword),
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	openVSX, err := renderTemplate(vhostOpenVSXTmpl, openVSXTpl{
 		Domain:  ctx.Config.Domain,
-		RepoURL: fmt.Sprintf("openvsx-proxy.%s.%s:%d", ctx.Namespace, kubeDomain, 8080), // todo(sje): get port from (future) config
+		RepoURL: fmt.Sprintf("openvsx-proxy.%s.%s:%d", ctx.Namespace, kubeDomain, openvsxproxy.ServicePort),
 	})
 	if err != nil {
 		return nil, err
@@ -140,6 +115,43 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	data := map[string]string{
+		"vhost.empty":            *empty,
+		"vhost.minio":            *minio,
+		"vhost.open-vsx":         *openVSX,
+		"vhost.payment-endpoint": *paymentEndpoint,
+		"vhost.kedge":            *kedge,
+	}
+
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		username := ctx.Values.InternalRegistryUsername
+		if username == "" {
+			return nil, fmt.Errorf("unknown value: internal registry username")
+		}
+
+		password := ctx.Values.InternalRegistryPassword
+		if password == "" {
+			return nil, fmt.Errorf("unknown value: internal registry password")
+		}
+
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+
+		dockerRegistry, err := renderTemplate(vhostDockerRegistry, dockerRegistryTpl{
+			Domain:       ctx.Config.Domain,
+			ReverseProxy: fmt.Sprintf("https://%s.%s.%s", common.DockerRegistryName, ctx.Namespace, kubeDomain),
+			Username:     username,
+			Password:     base64.StdEncoding.EncodeToString(hashedPassword),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		data["vhost.docker-registry"] = *dockerRegistry
+	}
+
 	return []runtime.Object{
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
@@ -148,14 +160,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Namespace: ctx.Namespace,
 				Labels:    common.DefaultLabels(Component),
 			},
-			Data: map[string]string{
-				"vhost.empty":            *empty,
-				"vhost.minio":            *minio,
-				"vhost.docker-registry":  *dockerRegistry,
-				"vhost.open-vsx":         *openVSX,
-				"vhost.payment-endpoint": *paymentEndpoint,
-				"vhost.kedge":            *kedge,
-			},
+			Data: data,
 		},
 	}, nil
 }

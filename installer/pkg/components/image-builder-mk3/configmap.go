@@ -9,6 +9,7 @@ import (
 	"fmt"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	"k8s.io/utils/pointer"
+	"strings"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -23,6 +24,15 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	var registryName string
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		registryName = fmt.Sprintf("%s.%s", dockerregistry.RegistryName, ctx.Config.Domain)
+	} else if ctx.Config.ContainerRegistry.External != nil {
+		registryName = strings.TrimSuffix(ctx.Config.ContainerRegistry.External.URL, "/")
+	} else {
+		return nil, fmt.Errorf("%s: invalid container registry config", Component)
+	}
+
 	orchestrator := config.Configuration{
 		WorkspaceManager: config.WorkspaceManagerConfig{
 			Address: fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort),
@@ -32,27 +42,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				PrivateKey:  "/wsman-certs/tls.key",
 			},
 		},
-		BuilderImage:       common.ImageName(ctx.Config.Repository, BuilderImage, ctx.VersionManifest.Components.ImageBuilderMk3.BuilderImage.Version),
-		BuilderAuthKeyFile: "/config/authkey",
+		AuthFile:                 PullSecretFile,
+		BaseImageRepository:      fmt.Sprintf("%s/base-images", registryName),
+		BuilderImage:             common.ImageName(ctx.Config.Repository, BuilderImage, ctx.VersionManifest.Components.ImageBuilderMk3.BuilderImage.Version),
+		BuilderAuthKeyFile:       "/config/authkey",
+		WorkspaceImageRepository: fmt.Sprintf("%s/workspace-images", registryName),
 	}
-
-	var baseImageRepo string
-	var workspaceImgRepo string
-	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
-		// todo(sje): handle external registry
-		registryName := fmt.Sprintf("%s.%s", dockerregistry.RegistryName, ctx.Config.Domain)
-
-		baseImageRepo = fmt.Sprintf("%s/base-images", registryName)
-		workspaceImgRepo = fmt.Sprintf("%s/workspace-images", registryName)
-
-		orchestrator.AuthFile = PullSecretFile
-	} else {
-		// todo(sje): handle outside cluster values for image builder mk3
-		return nil, fmt.Errorf("in cluster container currently only supported option")
-	}
-
-	orchestrator.BaseImageRepository = baseImageRepo
-	orchestrator.WorkspaceImageRepository = workspaceImgRepo
 
 	imgcfg := config.ServiceConfig{
 		Orchestrator: orchestrator,
