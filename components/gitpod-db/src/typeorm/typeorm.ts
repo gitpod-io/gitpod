@@ -58,7 +58,7 @@ export class TypeORM {
     protected readonly _options: ConnectionOptions;
 
     constructor(@inject(Config) protected readonly config: Config,
-        @inject(TypeORMOptions) @optional() protected readonly options: Partial<ConnectionOptions>) {
+        @inject(TypeORMOptions) @optional() protected readonly options?: Partial<ConnectionOptions>) {
         options = options || {};
         this._options = {
             ...TypeORM.defaultOptions(__dirname),

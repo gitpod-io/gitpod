@@ -5,9 +5,7 @@
 
 set -euo pipefail
 
-# perform migration of 'migrations' table
-/app/typeorm.sh query "$(sed '/^--/d' < /app/migrate-migrations/0_2_0_up_procedure.sql)"
-/app/typeorm.sh query "CALL migrations_0_2_0_up();"
-/app/typeorm.sh query "DROP PROCEDURE IF EXISTS migrations_0_2_0_up;"
+# migrate 'migrations' table
+yarn --cwd /app/node_modules/@gitpod/gitpod-db run migrate-migrations
 
 /app/typeorm.sh migrations:run
