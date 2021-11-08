@@ -779,7 +779,7 @@ export namespace ExternalImageConfigFile {
 
 export interface WorkspaceContext {
     title: string;
-    normalizedContextURL?: string;
+    normalizedContextURL?: string; // TODO: make this NOT optional
     forceCreateNewWorkspace?: boolean;
     forceImageBuild?: boolean;
 }

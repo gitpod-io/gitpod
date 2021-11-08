@@ -100,6 +100,7 @@ export class PrebuildManager {
                 actual,
                 project,
                 branch,
+                normalizedContextURL: contextURL
             };
 
             if (this.shouldPrebuildIncrementally(actual.repository.cloneUrl)) {
@@ -109,7 +110,7 @@ export class PrebuildManager {
 
             log.debug("Created prebuild context", prebuildContext);
 
-            const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, contextURL);
+            const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext);
             const prebuildPromise = this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
 
             // const canBuildNow = await this.prebuildRateLimiter.canBuildNow({ span }, user, cloneURL);

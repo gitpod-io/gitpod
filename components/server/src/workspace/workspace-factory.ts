@@ -24,19 +24,19 @@ export class WorkspaceFactory {
     @inject(ConfigProvider) protected configProvider: ConfigProvider;
     @inject(ImageSourceProvider) protected imageSourceProvider: ImageSourceProvider;
 
-    public async createForContext(ctx: TraceContext, user: User, context: WorkspaceContext, normalizedContextURL: string): Promise<Workspace> {
+    public async createForContext(ctx: TraceContext, user: User, context: WorkspaceContext): Promise<Workspace> {
         if (SnapshotContext.is(context)) {
             return this.createForSnapshot(ctx, user, context);
         } else if (CommitContext.is(context)) {
-            return this.createForCommit(ctx, user, context, normalizedContextURL);
+            return this.createForCommit(ctx, user, context);
         } else if (WorkspaceProbeContext.is(context)) {
-            return this.createForWorkspaceProbe(ctx, user, context, normalizedContextURL);
+            return this.createForWorkspaceProbe(ctx, user, context);
         }
         log.error({userId: user.id}, "Couldn't create workspace for context", context);
         throw new Error("Couldn't create workspace for context");
     }
 
-    protected async createForWorkspaceProbe(ctx: TraceContext, user: User, context: WorkspaceProbeContext, contextURL: string): Promise<Workspace> {
+    protected async createForWorkspaceProbe(ctx: TraceContext, user: User, context: WorkspaceProbeContext): Promise<Workspace> {
         const span = TraceContext.startSpan("createForWorkspaceProbe", ctx);
 
         try {
@@ -64,7 +64,7 @@ export class WorkspaceFactory {
                 ownerId: user.id,
                 config,
                 context,
-                contextURL,
+                contextURL: context.normalizedContextURL!,
                 imageSource,
                 description: "workspace probe",
             };
@@ -133,7 +133,7 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async createForCommit(ctx: TraceContext, user: User, context: CommitContext, normalizedContextURL: string) {
+    protected async createForCommit(ctx: TraceContext, user: User, context: CommitContext) {
         const span = TraceContext.startSpan("createForCommit", ctx);
 
         try {
@@ -171,7 +171,7 @@ export class WorkspaceFactory {
                 id,
                 type: "regular",
                 creationTime: new Date().toISOString(),
-                contextURL: normalizedContextURL,
+                contextURL: context.normalizedContextURL!,
                 projectId,
                 description: this.getDescription(context),
                 ownerId: user.id,
