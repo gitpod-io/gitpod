@@ -39,6 +39,7 @@ var opts struct {
 	BinDir               string
 	AutoInstall          bool
 	UserAccessibleSocket bool
+	WrapInNetNS          bool
 	Verbose              bool
 }
 
@@ -62,6 +63,7 @@ func main() {
 	pflag.StringVar(&opts.BinDir, "bin-dir", filepath.Dir(self), "directory where runc-facade and slirp-docker-proxy are found")
 	pflag.BoolVar(&opts.AutoInstall, "auto-install", true, "auto-install prerequisites (docker, slirp4netns)")
 	pflag.BoolVar(&opts.UserAccessibleSocket, "user-accessible-socket", true, "chmod the Docker socket to make it user accessible")
+	pflag.BoolVar(&opts.WrapInNetNS, "wrap-in-netns", os.Getenv("WORKSPACEKIT_WRAP_NETNS") == "true", "wrap dockerd in a network namespace")
 	pflag.Parse()
 
 	logger := logrus.New()
@@ -115,7 +117,9 @@ func runWithinNetns() (err error) {
 		"--experimental",
 		"--rootless",
 		"--data-root=/workspace/.docker-root",
-		"--userland-proxy", "--userland-proxy-path=" + filepath.Join(opts.BinDir, "slirp-docker-proxy"),
+	}
+	if opts.WrapInNetNS {
+		args = append(args, "--userland-proxy", "--userland-proxy-path="+filepath.Join(opts.BinDir, "slirp-docker-proxy"))
 	}
 	if opts.Verbose {
 		args = append(args,
@@ -204,8 +208,7 @@ func runOutsideNetns() error {
 
 	cmd := exec.Command("/proc/self/exe", append(os.Args[1:], "child")...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig:    syscall.SIGKILL,
-		Unshareflags: syscall.CLONE_NEWNET,
+		Pdeathsig: syscall.SIGKILL,
 	}
 	if fds, err := strconv.Atoi(os.Getenv("LISTEN_FDS")); err == nil {
 		for i := 0; i < fds; i++ {
@@ -219,9 +222,13 @@ func runOutsideNetns() error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Env = append(os.Environ(),
-		"DOCKERUP_SLIRP4NETNS_SOCKET="+slirpAPI.Name(),
-	)
+
+	if opts.WrapInNetNS {
+		cmd.SysProcAttr.Unshareflags = syscall.CLONE_NEWNET
+		cmd.Env = append(os.Environ(),
+			"DOCKERUP_SLIRP4NETNS_SOCKET="+slirpAPI.Name(),
+		)
+	}
 
 	err = cmd.Start()
 	if err != nil {
@@ -230,27 +237,29 @@ func runOutsideNetns() error {
 	sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
 	defer sigproxysignal.StopCatch(sigc)
 
-	slirpCmd := exec.Command("slirp4netns",
-		"--configure",
-		"--mtu=65520",
-		"--disable-host-loopback",
-		"--api-socket", slirpAPI.Name(),
-		strconv.Itoa(cmd.Process.Pid),
-		"tap0",
-	)
-	slirpCmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGKILL,
-	}
-	slirpCmd.Stdin = os.Stdin
-	slirpCmd.Stdout = os.Stdout
-	slirpCmd.Stderr = os.Stderr
+	if opts.WrapInNetNS {
+		slirpCmd := exec.Command("slirp4netns",
+			"--configure",
+			"--mtu=65520",
+			"--disable-host-loopback",
+			"--api-socket", slirpAPI.Name(),
+			strconv.Itoa(cmd.Process.Pid),
+			"tap0",
+		)
+		slirpCmd.SysProcAttr = &syscall.SysProcAttr{
+			Pdeathsig: syscall.SIGKILL,
+		}
+		slirpCmd.Stdin = os.Stdin
+		slirpCmd.Stdout = os.Stdout
+		slirpCmd.Stderr = os.Stderr
 
-	err = slirpCmd.Start()
-	if err != nil {
-		return err
+		err = slirpCmd.Start()
+		if err != nil {
+			return err
+		}
+		//nolint:errcheck
+		defer slirpCmd.Process.Kill()
 	}
-	//nolint:errcheck
-	defer slirpCmd.Process.Kill()
 
 	_, err = msgutil.MarshalToWriter(pipeW, message{Stage: 1})
 	if err != nil {

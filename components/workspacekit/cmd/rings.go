@@ -254,6 +254,14 @@ var ring1Cmd = &cobra.Command{
 			slirp4netnsSocket string
 		)
 
+		env := make([]string, 0, len(os.Environ()))
+		for _, e := range os.Environ() {
+			if strings.HasPrefix(e, "WORKSPACEKIT_") {
+				continue
+			}
+			env = append(env, e)
+		}
+
 		type mnte struct {
 			Target string
 			Source string
@@ -317,6 +325,7 @@ var ring1Cmd = &cobra.Command{
 
 			slirp4netnsSocket = filepath.Join(f, "slirp4netns.sock")
 			mnts = append(mnts, mnte{Target: "/.supervisor/slirp4netns.sock", Source: f, Flags: unix.MS_BIND | unix.MS_REC})
+			env = append(env, "WORKSPACEKIT_WRAP_NETNS=true")
 		}
 
 		for _, m := range mnts {
@@ -349,14 +358,6 @@ var ring1Cmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Error("cannot copy resolv.conf")
 			return
-		}
-
-		env := make([]string, 0, len(os.Environ()))
-		for _, e := range os.Environ() {
-			if strings.HasPrefix(e, "WORKSPACEKIT_") {
-				continue
-			}
-			env = append(env, e)
 		}
 
 		socketFN := filepath.Join(os.TempDir(), fmt.Sprintf("workspacekit-ring1-%d.unix", time.Now().UnixNano()))
