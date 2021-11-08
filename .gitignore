@@ -60,3 +60,6 @@ components/ws-proxy/ws-proxy
 
 # Logs
 components/server/*.log
+
+# IntelliJ
+.idea/
