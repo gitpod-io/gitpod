@@ -25,7 +25,7 @@ jobs:
           custom-notsigned-prcomment: |
             Thank you for your submission, we really appreciate it.
 
-            Like many open-source projects, we ask that you sign our [Contributor License Agreement](https://gitpod-io.github.io/cla/CLA.md) before we can accept your contribution. You can sign the CLA by just posting a Pull Request Comment same as the below format.
+            Like many open-source projects, we ask that you sign our [Contributor License Agreement](https://www.gitpod.io/cla) before we can accept your contribution. You can sign the CLA by just posting a Pull Request Comment same as the below format.
 
             If you want to contribute on behalf of a company rather than as an individual please leave a comment stating so and we will get in touch.
           custom-pr-sign-comment: "I have read the CLA Document and I hereby sign the CLA"
