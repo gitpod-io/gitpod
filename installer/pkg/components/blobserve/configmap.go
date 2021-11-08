@@ -78,7 +78,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MaxSize:  MaxSizeBytes,
 			},
 		},
-		// todo(sje): make conditional on the workspace having a pull secret
 		AuthCfg:        "/mnt/pull-secret.json",
 		PProfAddr:      ":6060",
 		PrometheusAddr: "127.0.0.1:9500",

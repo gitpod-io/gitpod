@@ -5,6 +5,7 @@
 package blobserve
 
 import (
+	"fmt"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	appsv1 "k8s.io/api/apps/v1"
@@ -18,6 +19,16 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
+	volumeName := "pull-secret"
+	var secretName string
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		secretName = dockerregistry.BuiltInRegistryAuth
+	} else if ctx.Config.ContainerRegistry.External != nil {
+		secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
+	} else {
+		return nil, fmt.Errorf("%s: invalid container registry config", Component)
+	}
+
 	var hashObj []runtime.Object
 	if objs, err := configmap(ctx); err != nil {
 		return nil, err
@@ -25,48 +36,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		hashObj = append(hashObj, objs...)
 	}
 
-	volumes := []corev1.Volume{{
-		Name:         "cache",
-		VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
-	}, {
-		Name: "config",
-		VolumeSource: corev1.VolumeSource{
-			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-			},
-		},
-	}}
-
-	volumeMounts := []corev1.VolumeMount{
-		{
-			Name:      "config",
-			MountPath: "/mnt/config",
-			ReadOnly:  true,
-		}, {
-			Name:      "cache",
-			MountPath: "/mnt/cache",
-		},
-	}
-
-	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
-		volumeName := "pull-secret"
-		volumes = append(volumes, corev1.Volume{
-			Name: volumeName,
-			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
-				SecretName: dockerregistry.BuiltInRegistryAuth,
-			}},
-		})
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      volumeName,
-			MountPath: "/mnt/pull-secret.json",
-			SubPath:   ".dockerconfigjson",
-		})
-
-		if objs, err := common.DockerRegistryHash(ctx); err != nil {
-			return nil, err
-		} else {
-			hashObj = append(hashObj, objs...)
-		}
+	if objs, err := common.DockerRegistryHash(ctx); err != nil {
+		return nil, err
+	} else {
+		hashObj = append(hashObj, objs...)
 	}
 
 	configHash, err := common.ObjectHash(hashObj, nil)
@@ -99,7 +72,22 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Affinity:           &corev1.Affinity{},
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
-						Volumes:            volumes,
+						Volumes: []corev1.Volume{{
+							Name:         "cache",
+							VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+						}, {
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+								},
+							},
+						}, {
+							Name: volumeName,
+							VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
+								SecretName: secretName,
+							}},
+						}},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "-v", "/mnt/config/config.json"},
@@ -123,7 +111,18 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								common.DefaultEnv(&ctx.Config),
 								common.TracingEnv(&ctx.Config),
 							),
-							VolumeMounts: volumeMounts,
+							VolumeMounts: []corev1.VolumeMount{{
+								Name:      "config",
+								MountPath: "/mnt/config",
+								ReadOnly:  true,
+							}, {
+								Name:      "cache",
+								MountPath: "/mnt/cache",
+							}, {
+								Name:      volumeName,
+								MountPath: "/mnt/pull-secret.json",
+								SubPath:   ".dockerconfigjson",
+							}},
 						}, *common.KubeRBACProxyContainer()},
 					},
 				},
