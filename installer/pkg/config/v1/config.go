@@ -105,11 +105,11 @@ type Tracing struct {
 
 type Database struct {
 	InCluster *bool             `json:"inCluster,omitempty"`
-	RDS       *DatabaseRDS      `json:"rds,omitempty"`
+	External  *DatabaseExternal `json:"external,omitempty"`
 	CloudSQL  *DatabaseCloudSQL `json:"cloudSQL,omitempty"`
 }
 
-type DatabaseRDS struct {
+type DatabaseExternal struct {
 	Certificate ObjectRef `json:"certificate"`
 }
 

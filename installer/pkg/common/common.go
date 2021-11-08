@@ -143,9 +143,9 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	if pointer.BoolDeref(cfg.Database.InCluster, false) {
 		// Cluster provided internally
 		name = InClusterDbSecret
-	} else if cfg.Database.RDS != nil && cfg.Database.RDS.Certificate.Name != "" {
+	} else if cfg.Database.External != nil && cfg.Database.External.Certificate.Name != "" {
 		// AWS
-		name = cfg.Database.RDS.Certificate.Name
+		name = cfg.Database.External.Certificate.Name
 	} else if cfg.Database.CloudSQL != nil && cfg.Database.CloudSQL.ServiceAccount.Name != "" {
 		// GCP
 		name = cfg.Database.CloudSQL.ServiceAccount.Name
