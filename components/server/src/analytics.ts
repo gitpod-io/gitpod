@@ -39,7 +39,7 @@ function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter)
     //makes a full identify call for authenticated users
     const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
     analytics.identify({
-        anonymousId: request.cookies.ajs_anonymous_id,
+        anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
         userId:user.id,
         context: {
             "ip": maskIp(request.ips[0]),
@@ -87,4 +87,13 @@ function resolveIdentities(user: User) {
         }
     });
     return identities;
+}
+
+function stripCookie(cookie: string) {
+    if (cookie && cookie.length >= 2 && cookie.charAt(0) == '"' && cookie.charAt(cookie.length - 1) == '"') {
+        return cookie.substring(1, cookie.length - 1);
+    }
+    else {
+        return cookie;
+    }
 }
