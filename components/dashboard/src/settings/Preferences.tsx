@@ -33,8 +33,6 @@ export default function Preferences() {
         setDefaultIde(value);
     }
 
-    const desktopIdeFeatureEnabled = !!user?.rolesOrPermissions?.includes('admin');
-
     const [defaultDesktopIde, setDefaultDesktopIde] = useState<string>(user?.additionalData?.ideSettings?.defaultDesktopIde || 'intellij');
     const actuallySetDefaultDesktopIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
@@ -88,16 +86,14 @@ export default function Preferences() {
                     </SelectableCard>
                 </Tooltip>
             </div>
-            {desktopIdeFeatureEnabled &&
-                <div className="mt-4 space-x-4 flex">
-                    <CheckBox
-                        title="Open in Desktop IDE"
-                        desc="Choose whether you would like to open your workspace in a desktop IDE instead."
-                        checked={useDesktopIde}
-                        onChange={(evt) => actuallySetUseDesktopIde(evt.target.checked)} />
-                </div>
-            }
-            {desktopIdeFeatureEnabled && useDesktopIde &&
+            <div className="mt-4 space-x-4 flex">
+                <CheckBox
+                    title="Open in Desktop IDE"
+                    desc="Choose whether you would like to open your workspace in a desktop IDE instead."
+                    checked={useDesktopIde}
+                    onChange={(evt) => actuallySetUseDesktopIde(evt.target.checked)} />
+            </div>
+            {useDesktopIde &&
                 <div className="mt-4 space-x-4 flex">
                     <SelectableCard className="w-36 h-40" title="IntelliJ IDEA" selected={defaultDesktopIde === 'intellij'} onClick={() => actuallySetDefaultDesktopIde('intellij')}>
                         <div className="flex justify-center mt-3">
