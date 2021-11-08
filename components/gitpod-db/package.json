@@ -14,6 +14,7 @@
     "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
     "wait-for-db": "node ./lib/wait-for-db.js",
     "typeorm": "typeorm -f lib/typeorm/ormconfig",
+    "migrate-migrations": "node ./lib/migrate-migrations.js",
     "clean": "yarn run rimraf lib",
     "clean:node": "yarn run rimraf node_modules",
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock"

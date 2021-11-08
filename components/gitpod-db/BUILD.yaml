@@ -17,6 +17,7 @@ packages:
     type: yarn
     srcs:
       - "src/typeorm/migration/**/*.ts"
+      - "src/typeorm/migrate-migrations-0_2_0.ts"
       - "src/typeorm/entity/*.ts"
       - "src/typeorm/ormconfig.ts"
       - "src/typeorm/typeorm.ts"
@@ -25,6 +26,7 @@ packages:
       - "src/typeorm/transformer.ts"
       - "src/config.ts"
       - "src/wait-for-db.ts"
+      - "src/migrate-migrations.ts"
       - "src/user-db.ts"
       - "package.json"
     deps:
@@ -73,6 +75,9 @@ packages:
         - ["sh", "-c", "find chart-config-db-init--init-scripts -name \"*.sql\" | sort | xargs cat | mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER"]
         # Run DB migrations
         - ["sh", "-c", "mkdir -p mig; cd mig; ../components-gitpod-db--migrations/install.sh"]
+        # migrate 'migrations'
+        - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "run", "migrate-migrations"]
+        # Run actual migrations
         - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "typeorm", "migrations:run"]
   - name: docker
     type: docker
@@ -81,7 +86,6 @@ packages:
       - migrate_gcp.sh
       - typeorm.sh
       - typeorm_gcp.sh
-      - migrate-migrations/**
     deps:
       - :migrations
     argdeps:
