@@ -96,24 +96,7 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 
 	var layerSources []LayerSource
 
-	ideRefSource := func(s *api.ImageSpec) (ref string, err error) {
-		return s.IdeRef, nil
-	}
-	ideLayerSource, err := NewSpecMappedImageSource(newResolver, ideRefSource)
-	if err != nil {
-		return nil, err
-	}
-	layerSources = append(layerSources, ideLayerSource)
-
-	desktopIdeRefSource := func(s *api.ImageSpec) (ref string, err error) {
-		return s.DesktopIdeRef, nil
-	}
-	desktopIdeLayerSource, err := NewSpecMappedImageSource(newResolver, desktopIdeRefSource)
-	if err != nil {
-		return nil, err
-	}
-	layerSources = append(layerSources, desktopIdeLayerSource)
-
+	// static layers
 	log.Info("preparing static layer")
 	staticLayer := NewRevisioningLayerSource(CompositeLayerSource{})
 	layerSources = append(layerSources, staticLayer)
@@ -124,6 +107,38 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		}
 		staticLayer.Update(l)
 	}
+
+	// IDE layer
+	ideRefSource := func(s *api.ImageSpec) (ref string, err error) {
+		return s.IdeRef, nil
+	}
+	ideLayerSource, err := NewSpecMappedImageSource(newResolver, ideRefSource)
+	if err != nil {
+		return nil, err
+	}
+	layerSources = append(layerSources, ideLayerSource)
+
+	// desktop IDE layer
+	desktopIdeRefSource := func(s *api.ImageSpec) (ref string, err error) {
+		return s.DesktopIdeRef, nil
+	}
+	desktopIdeLayerSource, err := NewSpecMappedImageSource(newResolver, desktopIdeRefSource)
+	if err != nil {
+		return nil, err
+	}
+	layerSources = append(layerSources, desktopIdeLayerSource)
+
+	// supervisor layer
+	supervisorRefSource := func(s *api.ImageSpec) (ref string, err error) {
+		return s.SupervisorRef, nil
+	}
+	supervisorLayerSource, err := NewSpecMappedImageSource(newResolver, supervisorRefSource)
+	if err != nil {
+		return nil, err
+	}
+	layerSources = append(layerSources, supervisorLayerSource)
+
+	// content layer
 	clsrc, err := NewContentLayerSource()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create content layer source: %w", err)

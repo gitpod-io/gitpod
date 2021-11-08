@@ -12,8 +12,10 @@ message ImageSpec {
     string ide_ref = 2;
     // content_layer describe the last few layers which provide the workspace's content
     repeated ContentLayer content_layer = 3;
-    // desktop_ide_ref point to an image denotign the desktop IDE to use
+    // desktop_ide_ref points to an image denotign the desktop IDE to use
     string desktop_ide_ref = 4;
+    // supervisor_ref points to an image denotign the supervisor to use
+    string supervisor_ref = 5;
 }
 
 // ContentLayer is a layer that provides a workspace's content
