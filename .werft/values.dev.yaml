@@ -13,7 +13,7 @@ imagePullPolicy: Always
 
 authProviders: []
 tracing:
-  endoint: http://jaeger-collector:14268/api/traces
+  endoint: http://otel-collector:14268/api/traces
   samplerType: const
   samplerParam: "1"
 
