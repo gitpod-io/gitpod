@@ -106,13 +106,27 @@ A config file is required which can be generated with the init command.`,
 		}
 		k8s = append(k8s, charts...)
 
-		sortedCharts, err := common.DependencySortingRenderFunc(k8s)
+		// convert everything to individual objects
+		runtimeObjs, err := common.YamlToRuntimeObject(k8s)
 		if err != nil {
 			return err
 		}
 
-		for _, c := range sortedCharts {
-			fmt.Printf("---\n%s\n", c)
+		// generate a config map with every component installed
+		runtimeObjsAndConfig, err := common.GenerateInstallationConfigMap(ctx, runtimeObjs)
+		if err != nil {
+			return err
+		}
+
+		// sort the objects and return the plain YAML
+		sortedObjs, err := common.DependencySortingRenderFunc(runtimeObjsAndConfig)
+		if err != nil {
+			return err
+		}
+
+		// output the YAML to stdout
+		for _, c := range sortedObjs {
+			fmt.Printf("---\n# %s/%s %s\n%s\n", c.TypeMeta.APIVersion, c.TypeMeta.Kind, c.Metadata.Name, c.Content)
 		}
 
 		return nil
