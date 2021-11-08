@@ -15,7 +15,7 @@ export class Config {
         // defaults to be used only in tests
         const dbSetup = {
             host: process.env.DB_HOST || 'localhost',
-            port: getEnvVarParsed('DB_PORT', Number.parseInt, '23306'),
+            port: getEnvVarParsed('DB_PORT', Number.parseInt, '3306'),
             username: process.env.DB_USERNAME || 'gitpod',
             password: process.env.DB_PASSWORD || 'test',
             database: process.env.DB_NAME || 'gitpod'
@@ -49,11 +49,11 @@ export class Config {
 }
 
 export interface DatabaseConfig {
-    host: string;
-    port: number;
-    database: string;
-    username: string;
-    password: string;
+    host?: string;
+    port?: number;
+    database?: string;
+    username?: string;
+    password?: string;
 }
 
 export interface DeletedEntryGCConfig {
