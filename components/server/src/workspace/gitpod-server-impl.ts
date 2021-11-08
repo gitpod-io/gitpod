@@ -732,7 +732,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return ws;
     }
 
-    private async findRunningInstancesForContext(ctx: TraceContext, contextPromise: Promise<WorkspaceContext>, contextUrl: string, runningInstancesPromise: Promise<WorkspaceInstance[]>): Promise<WorkspaceInfo[]> {
+    private async findRunningInstancesForContext(ctx: TraceContext, context: WorkspaceContext, runningInstancesPromise: Promise<WorkspaceInstance[]>): Promise<WorkspaceInfo[]> {
         const span = TraceContext.startSpan("findRunningInstancesForContext", ctx);
         try {
             const runningInstances = (await runningInstancesPromise).filter(instance => instance.status.phase !== 'stopping');
@@ -749,14 +749,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 return result;
             }));
 
-            let context: WorkspaceContext;
-            try {
-                context = await contextPromise;
-            } catch {
-                return [];
-            }
             const sameContext = (ws: WorkspaceInfo) => {
-                return ws.workspace.contextURL === contextUrl &&
+                return ws.workspace.contextURL === context.normalizedContextURL &&
                     CommitContext.is(ws.workspace.context) &&
                     CommitContext.is(context) &&
                     ws.workspace.context.revision === context.revision
@@ -779,7 +773,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     public async createWorkspace(options: GitpodServer.CreateWorkspaceOptions): Promise<WorkspaceCreationResult> {
         const contextUrl = options.contextUrl;
         const mode = options.mode || CreateWorkspaceMode.Default;
-        let normalizedContextUrl: string = "";
         let logContext: LogContext = {};
 
         const span = opentracing.globalTracer().startSpan("createWorkspace");
@@ -797,16 +790,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             // Credit check runs in parallel with the other operations up until we start consuming resources.
             // Make sure to await for the creditCheck promise in the right places.
             const runningInstancesPromise = this.workspaceDb.trace({ span }).findRegularRunningInstances(user.id);
-            normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
-            let runningForContextPromise: Promise<WorkspaceInfo[]> = Promise.resolve([]);
-            const contextPromise = this.contextParser.handle(ctx, user, normalizedContextUrl);
+            let context = await this.contextParser.handle(ctx, user, contextUrl);
+            let runningForContextPromise = Promise.resolve<WorkspaceInfo[]>([]);
             if (mode === CreateWorkspaceMode.SelectIfRunning) {
-                runningForContextPromise = this.findRunningInstancesForContext(ctx, contextPromise, normalizedContextUrl, runningInstancesPromise);
+                runningForContextPromise = this.findRunningInstancesForContext(ctx, context, runningInstancesPromise);
             }
 
             // make sure we've checked that the user has enough credit before consuming any resources.
             // Be sure to check this before prebuilds and create workspace, too!
-            let context = await contextPromise;
             await Promise.all([
                 this.mayStartWorkspace({ span }, user, runningInstancesPromise),
             ]);
@@ -853,7 +844,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 context = prebuiltWorkspace;
             }
 
-            const workspace = await this.workspaceFactory.createForContext({ span }, user, context, normalizedContextUrl);
+            const workspace = await this.workspaceFactory.createForContext({ span }, user, context);
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
             } catch (err) {
@@ -889,7 +880,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             }
             log.debug(logContext, error);
             throw new ResponseError(ErrorCodes.CONTEXT_PARSE_ERROR, (error && error.message) ? error.message
-                : `Cannot create workspace for URL: ${normalizedContextUrl}`);
+                : `Cannot create workspace for URL: ${contextUrl}`);
         } finally {
             span.finish();
         }

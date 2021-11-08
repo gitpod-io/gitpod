@@ -23,7 +23,7 @@ export class ContextParser {
         return result;
     }
 
-    public normalizeContextURL(contextURL: string): string {
+    private normalizeContextURL(contextURL: string): string {
         for (const parser of [...this.prefixParser, ...this.allContextParsers]) {
             const normalizedURL = parser.normalize && parser.normalize(contextURL);
             if (normalizedURL) {
@@ -53,6 +53,9 @@ export class ContextParser {
             if (!result) {
                 throw new Error(`Couldn't parse context '${contextURL}'.`);
             }
+
+            // TODO: Make the parsers return the context with normalizedContextURL set
+            result.normalizedContextURL = contextURL;
 
             if (prefixResult) {
                 result = await prefixResult.parser.handle(user, prefixResult.prefix, result);
