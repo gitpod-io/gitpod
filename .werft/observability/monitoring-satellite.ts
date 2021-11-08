@@ -221,12 +221,12 @@ function installSetup() {
     exec('kubectl apply -f observability/monitoring-satellite/manifests/namespace.yaml', {silent: true})
     exec('kubectl apply -f observability/monitoring-satellite/manifests/podsecuritypolicy-restricted.yaml', {silent: true})
 
-    const crdExists = exec('kubectl get customresourcedefinitions.apiextensions.k8s.io alertmanagers.monitoring.coreos.com', {silent: true}).code == 0
+    const crdExists = exec('kubectl get customresourcedefinitions.apiextensions.k8s.io alertmanagers.monitoring.coreos.com', {silent: true, dontCheckRc: true}).code == 0
     if (crdExists) {
         werft.log(sliceName, "CRDs already exists, replacing CRDs'")
         exec('for yaml in $(find observability/monitoring-satellite/manifests/prometheus-operator/ -type f -name "*CustomResourceDefinition.yaml"); do cat $yaml | kubectl delete -f -; done', {slice: sliceName})
     }
-    exec('find observability/monitoring-satellite/manifests/prometheus-operator/ -type f -name "*CustomResourceDefinition.yaml" | kubectl create -f -', {slice: sliceName})
+    exec('for yaml in $(find observability/monitoring-satellite/manifests/prometheus-operator/ -type f -name "*CustomResourceDefinition.yaml"); do cat $yaml | kubectl create -f -; done', {slice: sliceName})
     // Making sure CRDs got installed
     exec('until kubectl get servicemonitors.monitoring.coreos.com --all-namespaces ; do date; sleep 1; echo ""; done', {silent: true})
 
