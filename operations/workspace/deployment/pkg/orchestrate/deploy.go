@@ -35,11 +35,15 @@ func Deploy(context *common.Context, clusters []*common.WorkspaceCluster) error 
 	return nil
 }
 
-// TODO(prs): Add implementation once we have scripts in ops repo tested and
-// install step implemented
 func installGitpod(context *common.Context, cluster *common.WorkspaceCluster) error {
-	log.Log.Infof("received request to install gitpod on cluster: %s cannot be processed. Implementation pending", cluster.Name)
-	return nil
+	log.Log.Infof("installing gitpod on cluster %s", cluster.Name)
+	err := step.InstallGitpod(context, cluster)
+	if err != nil {
+		log.Log.Errorf("installation of gitpod on cluster: %s failed: %s", cluster.Name, err)
+	} else {
+		log.Log.Infof("installation of gitpod on cluster %s succeeded", cluster.Name)
+	}
+	return err
 }
 
 func createCluster(context *common.Context, cluster *common.WorkspaceCluster) error {

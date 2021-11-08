@@ -5,10 +5,14 @@
 package step
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-deployment/pkg/common"
-	"github.com/gitpod-io/gitpod/ws-deployment/pkg/runner"
 )
 
 const (
@@ -17,12 +21,30 @@ const (
 	DefaultGitpodInstallationScript = "dev/build-ws-cluster/install-gitpod.sh"
 )
 
-func InstallGitpod(context *common.ProjectContext, gitpodContext *common.GitpodContext, cluster *common.WorkspaceCluster) error {
-	err := runner.ShellRunWithDefaultConfig(DefaultGitpodInstallationScript, []string{"-g", context.Id, "-l", cluster.Region, "-n", cluster.Name, "-a", getValuesFilesArgString(gitpodContext)})
-	return err
+func InstallGitpod(context *common.Context, cluster *common.WorkspaceCluster) error {
+	if context.Overrides.DryRun {
+		log.Log.Infof("dry run not supported for gitpod installation. skipping...")
+		return nil
+	}
+	credFileEnvVar := fmt.Sprintf("GOOGLE_APPLICATION_CREDENTIALS=%s", context.Project.GCPSACredFile)
+	if _, err := os.Stat(context.Project.GCPSACredFile); errors.Is(err, os.ErrNotExist) {
+		// reset this to empty string so that we can fallback to default
+		// gcloud context. This is useful in local development and execution
+		// scenarios
+		credFileEnvVar = ""
+	}
+
+	cmd := exec.Command(DefaultGitpodInstallationScript, "-g", context.Project.Id, "-l", cluster.Region, "-n", cluster.Name, "-v", context.Gitpod.VersionsManifestFilePath, "-a", getValuesFilesArgString(cluster.ValuesFiles))
+	// Set the env variable
+	cmd.Env = append(os.Environ(), credFileEnvVar)
+	// we will route the output to standard devices
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+
 }
 
-func getValuesFilesArgString(gitpodContext *common.GitpodContext) string {
+func getValuesFilesArgString(valuesFiles []string) string {
 	// the first file name should also have -f before it so we add
 	// it explicitly here
 	//
@@ -30,5 +52,5 @@ func getValuesFilesArgString(gitpodContext *common.GitpodContext) string {
 	// [v1.yaml, v2.yaml. v3.yaml]
 	// we get
 	// -f v1.yaml -f v2.yaml -f v3.yaml
-	return " -f " + strings.Join(gitpodContext.ValuesFiles, " -f ")
+	return " -f " + strings.Join(valuesFiles, " -f ")
 }
