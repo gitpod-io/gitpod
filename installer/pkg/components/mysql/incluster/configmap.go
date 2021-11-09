@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package mysql
+package incluster
 
 import (
 	"embed"
@@ -19,10 +19,6 @@ import (
 var initScriptFiles embed.FS
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !enabled(ctx) {
-		return nil, nil
-	}
-
 	initScripts, err := fs.ReadDir(initScriptFiles, initScriptDir)
 	if err != nil {
 		return nil, err

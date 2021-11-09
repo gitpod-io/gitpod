@@ -6,23 +6,30 @@ package mysql
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/mysql/incluster"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 )
 
-func enabled(cfg *common.RenderContext) bool {
+func inClusterEnabled(cfg *common.RenderContext) bool {
 	return pointer.BoolDeref(cfg.Config.Database.InCluster, false)
 }
 
 var Objects = common.CompositeRenderFunc(
-	configmap,
-	secrets,
-	service,
 	common.CompositeRenderFunc(func(cfg *common.RenderContext) ([]runtime.Object, error) {
-		if !enabled(cfg) {
-			return nil, nil
+		if inClusterEnabled(cfg) {
+			return incluster.Objects(cfg)
+		}
+		return nil, nil
+	}),
+)
+
+var Helm = common.CompositeHelmFunc(
+	common.CompositeHelmFunc(func(cfg *common.RenderContext) ([]string, error) {
+		if inClusterEnabled(cfg) {
+			return incluster.Helm(cfg)
 		}
 
-		return common.DefaultServiceAccount(Component)(cfg)
+		return nil, nil
 	}),
 )

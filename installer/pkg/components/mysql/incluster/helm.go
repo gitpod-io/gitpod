@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package mysql
+package incluster
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -14,7 +14,7 @@ import (
 var Helm = common.CompositeHelmFunc(
 	helm.ImportTemplate(charts.MySQL(), helm.TemplateConfig{}, func(cfg *common.RenderContext) (*common.HelmConfig, error) {
 		return &common.HelmConfig{
-			Enabled: enabled(cfg),
+			Enabled: true,
 			Values: &values.Options{
 				Values: []string{
 					helm.KeyValue("mysql.auth.existingSecret", SQLPasswordName),
