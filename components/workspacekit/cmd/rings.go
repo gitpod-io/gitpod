@@ -464,7 +464,7 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		if wrapNetns {
-			slirpCmd := exec.Command("slirp4netns",
+			slirpCmd := exec.Command(filepath.Join(filepath.Dir(ring2Opts.SupervisorPath), "slirp4netns"),
 				"--configure",
 				"--mtu=65520",
 				"--disable-host-loopback",
