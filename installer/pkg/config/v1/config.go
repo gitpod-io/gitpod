@@ -115,7 +115,7 @@ type DatabaseExternal struct {
 
 type DatabaseCloudSQL struct {
 	ServiceAccount ObjectRef `json:"serviceAccount"`
-	Project        string    `json:"project" validate:"required"`
+	Instance       string    `json:"instance" validate:"required"`
 }
 
 type ObjectStorage struct {
