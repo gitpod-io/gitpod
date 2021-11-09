@@ -6,7 +6,7 @@ FROM ubuntu:18.04
 
 # we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
 # ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
-ARG NODE_VERSION=14.17.6
+ARG NODE_VERSION=14.18.1
 
 RUN apt-get update \
     # see https://github.com/microsoft/vscode/blob/42e271dd2e7c8f320f991034b62d4c703afb3e28/.github/workflows/ci.yml#L94
