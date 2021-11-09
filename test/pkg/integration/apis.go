@@ -430,9 +430,22 @@ func (c *ComponentAPI) DB() (*sql.DB, error) {
 	return db, nil
 }
 func (c *ComponentAPI) findDBConfig() (*DBConfig, error) {
-	config, err := FindDBConfigFromPodEnv("server", c.namespace, c.client)
-	if err != nil {
-		return nil, err
+	// this is for the saas
+	envDbConfig, err := FindDBConfigFromPodEnv("server", c.namespace, c.client)
+
+	// this is for the self hosted installer
+	secretDbConfig, secretErr := FindDBConfigFromSecret(c.namespace, c.client, "mysql")
+
+	var config *DBConfig
+
+	if envDbConfig != nil {
+		config = envDbConfig
+	} else if secretDbConfig != nil {
+		config = secretDbConfig
+	}
+
+	if (err != nil || secretErr != nil) && config == nil {
+		return nil, xerrors.Errorf("error parsing DB config from ENV var or secret! Env: %s, Secret: %s", err, secretErr)
 	}
 
 	// here we _assume_ that "config" points to a service: find us a concrete DB pod to forward to
@@ -504,6 +517,35 @@ func (c *ComponentAPI) findDBConfig() (*DBConfig, error) {
 	config.Host = "127.0.0.1"
 
 	return config, nil
+}
+
+func FindDBConfigFromSecret(namespace string, client klient.Client, secretName string) (*DBConfig, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var secret corev1.Secret
+	err := client.Resources().Get(ctx, secretName, namespace, &secret)
+	if err != nil {
+		return nil, err
+	}
+
+	host := string(secret.Data["host"])
+	password := string(secret.Data["password"])
+	portStr := string(secret.Data["port"])
+
+	pPort, err := strconv.ParseUint(portStr, 10, 16)
+	if err != nil {
+		return nil, xerrors.Errorf("error parsing DB_PORT from secret '%s' in namespace %s!", secretName, namespace)
+	}
+
+	port := int32(pPort)
+
+	config := DBConfig{
+		Host:     host,
+		Port:     port,
+		Password: password,
+	}
+	return &config, nil
 }
 
 func FindDBConfigFromPodEnv(componentName string, namespace string, client klient.Client) (*DBConfig, error) {
