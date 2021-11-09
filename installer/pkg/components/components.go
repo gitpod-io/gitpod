@@ -11,13 +11,13 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/cluster"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/gitpod"
 	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
 	jaegeroperator "github.com/gitpod-io/gitpod/installer/pkg/components/jaeger-operator"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/mysql"
 	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/rabbitmq"
@@ -35,9 +35,9 @@ var MetaObjects = common.CompositeRenderFunc(
 	contentservice.Objects,
 	proxy.Objects,
 	dashboard.Objects,
+	database.Objects,
 	imagebuildermk3.Objects,
 	migrations.Objects,
-	mysql.Objects,
 	openvsxproxy.Objects,
 	rabbitmq.Objects,
 	server.Objects,
@@ -62,8 +62,8 @@ var FullObjects = common.CompositeRenderFunc(
 )
 
 var MetaHelmDependencies = common.CompositeHelmFunc(
+	database.Helm,
 	jaegeroperator.Helm,
-	mysql.Helm,
 	minio.Helm,
 	rabbitmq.Helm,
 )

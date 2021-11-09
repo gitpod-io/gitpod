@@ -2,12 +2,12 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package mysql
+package database
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/mysql/cloudsql"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/mysql/incluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/database/cloudsql"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/database/incluster"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 )
