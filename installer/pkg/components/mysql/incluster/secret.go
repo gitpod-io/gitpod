@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package mysql
+package incluster
 
 import (
 	"encoding/json"
@@ -21,10 +21,6 @@ type EncryptionKey struct {
 }
 
 func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !enabled(ctx) {
-		return nil, nil
-	}
-
 	// todo(sje): replace these with values persisted across generations
 	// The chart doesn't like it when you change these values
 	rootPassword := "PHejMfsLvfLcG1Drs40h"

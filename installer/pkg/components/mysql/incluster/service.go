@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package mysql
+package incluster
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -15,10 +15,6 @@ import (
 // service this doesn't use the common.GenerateService function
 // because it's more complex than this caters for
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
-	if !enabled(ctx) {
-		return nil, nil
-	}
-
 	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{&corev1.Service{
