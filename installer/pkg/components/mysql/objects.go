@@ -6,10 +6,15 @@ package mysql
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/mysql/cloudsql"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/mysql/incluster"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 )
+
+func cloudSqlEnabled(cfg *common.RenderContext) bool {
+	return !pointer.BoolDeref(cfg.Config.Database.InCluster, false) && cfg.Config.Database.CloudSQL != nil
+}
 
 func inClusterEnabled(cfg *common.RenderContext) bool {
 	return pointer.BoolDeref(cfg.Config.Database.InCluster, false)
@@ -19,6 +24,9 @@ var Objects = common.CompositeRenderFunc(
 	common.CompositeRenderFunc(func(cfg *common.RenderContext) ([]runtime.Object, error) {
 		if inClusterEnabled(cfg) {
 			return incluster.Objects(cfg)
+		}
+		if cloudSqlEnabled(cfg) {
+			return cloudsql.Objects(cfg)
 		}
 		return nil, nil
 	}),
