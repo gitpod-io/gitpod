@@ -14,7 +14,7 @@ packages:
       - ["sh", "-c", "pkg-config --atleast-version=2.5.0 libseccomp || (echo \"requires libseccomp > 2.5.0\"; exit 1)"]
     config:
       packaging: app
-      buildCommand: ["go", "build", "-ldflags", "-w -extldflags \"-static\""]
+      buildCommand: ["go", "build", "-ldflags", "-w -extldflags \"-static\" -X 'github.com/gitpod-io/gitpod/workspacekit/cmd.Version=commit-${__git_commit}'"]
   - name: fuse-overlayfs
     type: generic
     config:

@@ -17,7 +17,7 @@ packages:
       - GOOS=linux
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid="]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid= -X 'github.com/gitpod-io/gitpod/ws-proxy/cmd.Version=commit-${__git_commit}'"]
   - name: docker
     type: docker
     srcs:

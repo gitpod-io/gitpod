@@ -15,6 +15,8 @@ packages:
     env:
       - CGO_ENABLED=0
       - GOOS=linux
+    config:
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/supervisor/cmd.Version=commit-${__git_commit}'"]
   - name: docker
     type: docker
     srcs:

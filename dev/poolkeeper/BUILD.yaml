@@ -12,6 +12,7 @@ packages:
       - components/common-go:lib
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/poolkeeper/cmd.Version=commit-${__git_commit}'"]
   - name: docker
     type: docker
     deps:
