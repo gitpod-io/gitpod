@@ -17,6 +17,7 @@ import (
 var nsenterOpts struct {
 	Target  int
 	MountNS bool
+	NetNS   bool
 }
 
 var nsenterCmd = &cobra.Command{
@@ -37,6 +38,9 @@ var nsenterCmd = &cobra.Command{
 		if nsenterOpts.MountNS {
 			ns = append(ns, nsenter.NamespaceMount)
 		}
+		if nsenterOpts.NetNS {
+			ns = append(ns, nsenter.NamespaceNet)
+		}
 		err := nsenter.Run(nsenterOpts.Target, args, nil, ns...)
 		if err != nil {
 			log.Fatal(err)
@@ -49,4 +53,5 @@ func init() {
 
 	nsenterCmd.Flags().IntVar(&nsenterOpts.Target, "target", 0, "target PID")
 	nsenterCmd.Flags().BoolVar(&nsenterOpts.MountNS, "mount", false, "enter mount namespace")
+	nsenterCmd.Flags().BoolVar(&nsenterOpts.NetNS, "net", false, "enter network namespace")
 }

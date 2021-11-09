@@ -47,6 +47,7 @@ func Run(pid int, args []string, addFD []*os.File, enterNamespace ...Namespace) 
 	stdioFdCount := 3
 	cmd := exec.Command("/proc/self/exe", append([]string{"handler"}, args...)...)
 	cmd.ExtraFiles = append(cmd.ExtraFiles, addFD...)
+	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "_LIBNSENTER_INIT=1")
 	for _, ns := range nss {
 		var enter bool

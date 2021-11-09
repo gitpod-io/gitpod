@@ -65,8 +65,13 @@ func (c *TLSConfig) ServerOption() (grpc.ServerOption, error) {
 type Configuration struct {
 	WorkspaceManager WorkspaceManagerConfig `json:"wsman"`
 
-	// AuthFile points to a Docker configuration file from which we draw registry authentication
-	AuthFile string `json:"authFile"`
+	// PullSecret names a Kubernetes secret which contains a `.dockerconfigjson` entry
+	// carrying the Docker authentication credentials to interact with the baseImageRepository
+	// and workspaceImageRepository.
+	PullSecret string `json:"pullSecret,omitempty"`
+
+	// PullSecretFile points to a mount of the .dockerconfigjson file of the PullSecret.
+	PullSecretFile string `json:"pullSecretFile,omitempty"`
 
 	// BaseImageRepository configures repository where we'll push base images to.
 	BaseImageRepository string `json:"baseImageRepository"`
@@ -77,10 +82,6 @@ type Configuration struct {
 
 	// BuilderImage is an image ref to the workspace builder image
 	BuilderImage string `json:"builderImage"`
-
-	// BuilderAuthKeyFile points to a keyfile shared by the builder workspaces and this service.
-	// The key is used to encypt authentication data shipped across environment varibales.
-	BuilderAuthKeyFile string `json:"builderAuthKeyFile,omitempty"`
 }
 
 type TLS struct {
