@@ -138,64 +138,94 @@ func MessageBusEnv(_ *config.Config) (res []corev1.EnvVar) {
 }
 
 func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
-	var name string
+	var (
+		secretRef corev1.LocalObjectReference
+		envvars   []corev1.EnvVar
+	)
 
 	if pointer.BoolDeref(cfg.Database.InCluster, false) {
-		// Cluster provided internally
-		name = InClusterDbSecret
+		secretRef = corev1.LocalObjectReference{Name: InClusterDbSecret}
+		envvars = append(envvars,
+			corev1.EnvVar{
+				Name: "DB_HOST",
+				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: secretRef,
+					Key:                  "host",
+				}},
+			},
+			corev1.EnvVar{
+				Name: "DB_PORT",
+				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: secretRef,
+					Key:                  "port",
+				}},
+			},
+		)
 	} else if cfg.Database.External != nil && cfg.Database.External.Certificate.Name != "" {
-		// AWS
-		name = cfg.Database.External.Certificate.Name
+		// External DB
+		secretRef = corev1.LocalObjectReference{Name: cfg.Database.External.Certificate.Name}
+		envvars = append(envvars,
+			corev1.EnvVar{
+				Name: "DB_HOST",
+				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: secretRef,
+					Key:                  "host",
+				}},
+			},
+			corev1.EnvVar{
+				Name: "DB_PORT",
+				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: secretRef,
+					Key:                  "port",
+				}},
+			},
+		)
 	} else if cfg.Database.CloudSQL != nil && cfg.Database.CloudSQL.ServiceAccount.Name != "" {
 		// GCP
-		name = cfg.Database.CloudSQL.ServiceAccount.Name
+		secretRef = corev1.LocalObjectReference{Name: cfg.Database.CloudSQL.ServiceAccount.Name}
+		envvars = append(envvars,
+			corev1.EnvVar{
+				Name:  "DB_HOST",
+				Value: "cloudsqlproxy",
+			},
+			corev1.EnvVar{
+				Name:  "DB_PORT",
+				Value: "3306",
+			},
+		)
 	} else {
 		panic("invalid database configuration")
 	}
 
-	obj := corev1.LocalObjectReference{Name: name}
+	envvars = append(envvars,
+		corev1.EnvVar{
+			Name: "DB_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: secretRef,
+				Key:                  "password",
+			}},
+		},
+		corev1.EnvVar{
+			Name: "DB_USERNAME",
+			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: secretRef,
+				Key:                  "username",
+			}},
+		},
+		corev1.EnvVar{
+			Name: "DB_ENCRYPTION_KEYS",
+			ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: secretRef,
+				Key:                  "encryptionKeys",
+			}},
+		},
+		corev1.EnvVar{
+			Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
+			Value: "false",
+		},
+	)
 
-	return []corev1.EnvVar{{
-		Name: "DB_HOST",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: obj,
-			Key:                  "host",
-		}},
-	}, {
-		Name: "DB_PORT",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: obj,
-			Key:                  "port",
-		}},
-	}, {
-		Name: "DB_PASSWORD",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: obj,
-			Key:                  "password",
-		}},
-	}, {
-		Name: "DB_USERNAME",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: obj,
-			Key:                  "username",
-		}},
-	}, {
-		// todo(sje): conditional
-		Name:  "DB_DELETED_ENTRIES_GC_ENABLED",
-		Value: "false",
-	}, {
-		Name: "DB_ENCRYPTION_KEYS",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: obj,
-			Key:                  "encryptionKeys",
-		}},
-		//ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-		//	LocalObjectReference: corev1.LocalObjectReference{
-		//		Name: "",
-		//	},
-		//	Key: "keys",
-		//}},
-	}}
+	return envvars
 }
 
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
