@@ -28,6 +28,7 @@ packages:
       - GOOS=linux
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/content-service/cmd.Version=commit-${__git_commit}'"]
   - name: docker
     type: docker
     deps:
