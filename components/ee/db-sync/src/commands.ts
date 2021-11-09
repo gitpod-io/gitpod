@@ -35,11 +35,10 @@ export class RunCommand implements ICommand {
     addOptions(parser: ArgumentParser): void {
         parser.add_argument("--soft-start", {
             help: "Does not force a synchronization beyond the lastRunTime",
-            nargs: 0
+            action: "store_true",
         });
         parser.add_argument("config", {
             default: "/db-sync-config.json",
-            required: false,
             nargs: '?'
         });
     }

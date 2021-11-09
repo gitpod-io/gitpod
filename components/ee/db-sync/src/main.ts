@@ -29,7 +29,7 @@ parser.add_argument("--end-date", {
 });
 parser.add_argument("--verbose", {
     help: "Print verbose output (debug and progress bar)",
-    nargs: 0
+    action: "store_true",
 });
 
 const container = new Container();
