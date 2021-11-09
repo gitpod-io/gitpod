@@ -84,28 +84,25 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (err error) {
 	log.Info("building workspace image")
 
-	contextDir := b.Config.ContextDir
-	dockerfile := b.Config.Dockerfile
-
-	if _, err := os.Stat(dockerfile); os.IsNotExist(err) {
-		contextDir = "/workspace"
-		dockerfile = "Dockerfile"
-
-		err = ioutil.WriteFile(filepath.Join(contextDir, "Dockerfile"), []byte(fmt.Sprintf("FROM %v", b.Config.BaseRef)), 0644)
-		if err != nil {
-			return xerrors.Errorf("unexpected error creating temporal directory: %w", err)
-		}
+	contextDir, err := os.MkdirTemp("", "wsimg-*")
+	if err != nil {
+		return err
 	}
 
-	return buildImage(ctx, contextDir, dockerfile, b.Config.WorkspaceLayerAuth, b.Config.TargetRef)
+	err = ioutil.WriteFile(filepath.Join(contextDir, "Dockerfile"), []byte(fmt.Sprintf("FROM %v", b.Config.BaseRef)), 0644)
+	if err != nil {
+		return xerrors.Errorf("unexpected error creating temporal directory: %w", err)
+	}
+
+	return buildImage(ctx, contextDir, filepath.Join(contextDir, "Dockerfile"), b.Config.WorkspaceLayerAuth, b.Config.TargetRef)
 }
 
-func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target string) error {
+func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target string) (err error) {
 	log.Info("waiting for build context")
 	waitctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 
-	err := waitForBuildContext(waitctx)
+	err = waitForBuildContext(waitctx)
 	if err != nil {
 		return err
 	}
@@ -138,10 +135,10 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 	}
 
 	buildctlArgs := []string{
-		"--debug",
+		// "--debug",
 		"build",
 		"--progress=plain",
-		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true,compression=estargz",
+		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true",
 		//"--export-cache=type=inline",
 		"--local=context=" + contextdir,
 		//"--export-cache=type=registry,ref=" + target + "-cache",
@@ -152,6 +149,7 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 	}
 
 	buildctlCmd := exec.Command("buildctl", buildctlArgs...)
+
 	buildctlCmd.Stderr = os.Stderr
 	buildctlCmd.Stdout = os.Stdout
 
@@ -163,7 +161,8 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 		return err
 	}
 
-	if err := buildctlCmd.Wait(); err != nil {
+	err = buildctlCmd.Wait()
+	if err != nil {
 		return err
 	}
 
@@ -220,6 +219,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot start buildkitd: %w", err)
 	}
+	log.WithField("stderr", stderr.Name()).WithField("stdout", stdout.Name()).Debug("buildkitd started")
 
 	defer func() {
 		if err == nil {

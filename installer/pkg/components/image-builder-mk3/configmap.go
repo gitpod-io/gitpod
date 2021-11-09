@@ -7,20 +7,20 @@ package image_builder_mk3
 import (
 	"encoding/json"
 	"fmt"
-	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
-	"k8s.io/utils/pointer"
 	"strings"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -33,6 +33,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("%s: invalid container registry config", Component)
 	}
 
+	secretName, err := pullSecretName(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	orchestrator := config.Configuration{
 		WorkspaceManager: config.WorkspaceManagerConfig{
 			Address: fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort),
@@ -42,10 +47,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				PrivateKey:  "/wsman-certs/tls.key",
 			},
 		},
-		AuthFile:                 PullSecretFile,
+		PullSecret:               secretName,
+		PullSecretFile:           PullSecretFile,
 		BaseImageRepository:      fmt.Sprintf("%s/base-images", registryName),
 		BuilderImage:             common.ImageName(ctx.Config.Repository, BuilderImage, ctx.VersionManifest.Components.ImageBuilderMk3.BuilderImage.Version),
-		BuilderAuthKeyFile:       "/config/authkey",
 		WorkspaceImageRepository: fmt.Sprintf("%s/workspace-images", registryName),
 	}
 

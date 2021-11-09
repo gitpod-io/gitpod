@@ -19,6 +19,18 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+func pullSecretName(ctx *common.RenderContext) (string, error) {
+	var secretName string
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		secretName = dockerregistry.BuiltInRegistryAuth
+	} else if ctx.Config.ContainerRegistry.External != nil {
+		secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
+	} else {
+		return "", fmt.Errorf("%s: invalid container registry config", Component)
+	}
+	return secretName, nil
+}
+
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
@@ -28,19 +40,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	} else {
 		hashObj = append(hashObj, objs...)
 	}
-	if objs, err := secret(ctx); err != nil {
-		return nil, err
-	} else {
-		hashObj = append(hashObj, objs...)
-	}
 
-	var secretName string
-	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
-		secretName = dockerregistry.BuiltInRegistryAuth
-	} else if ctx.Config.ContainerRegistry.External != nil {
-		secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
-	} else {
-		return nil, fmt.Errorf("%s: invalid container registry config", Component)
+	secretName, err := pullSecretName(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	if objs, err := common.DockerRegistryHash(ctx); err != nil {
@@ -81,33 +84,32 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
-					Volumes: []corev1.Volume{{
-						Name: "configuration",
-						VolumeSource: corev1.VolumeSource{
-							ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+					Volumes: append([]corev1.Volume{
+						{
+							Name: "configuration",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+								},
 							},
 						},
-					}, {
-						Name: "authkey",
-						VolumeSource: corev1.VolumeSource{
-							Secret: &corev1.SecretVolumeSource{
-								SecretName: fmt.Sprintf("%s-authkey", Component),
+						{
+							Name: "wsman-tls-certs",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: wsmanager.TLSSecretNameClient,
+								},
 							},
 						},
-					}, {
-						Name: "wsman-tls-certs",
-						VolumeSource: corev1.VolumeSource{
-							Secret: &corev1.SecretVolumeSource{
-								SecretName: wsmanager.TLSSecretNameClient,
+						{
+							Name: "pull-secret",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: secretName,
+								},
 							},
 						},
-					}, {
-						Name: "pull-secret",
-						VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
-							SecretName: secretName,
-						}},
-					}},
+					}),
 					Containers: []corev1.Container{{
 						Name:            Component,
 						Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
@@ -135,23 +137,23 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Privileged: pointer.Bool(false),
 							RunAsUser:  pointer.Int64(33333),
 						},
-						VolumeMounts: []corev1.VolumeMount{{
-							Name:      "configuration",
-							MountPath: "/config/image-builder.json",
-							SubPath:   "image-builder.json",
-						}, {
-							Name:      "authkey",
-							MountPath: "/config/authkey",
-							SubPath:   "keyfile",
-						}, {
-							Name:      "wsman-tls-certs",
-							MountPath: "/wsman-certs",
-							ReadOnly:  true,
-						}, {
-							Name:      "pull-secret",
-							MountPath: PullSecretFile,
-							SubPath:   ".dockerconfigjson",
-						}},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "configuration",
+								MountPath: "/config/image-builder.json",
+								SubPath:   "image-builder.json",
+							},
+							{
+								Name:      "wsman-tls-certs",
+								MountPath: "/wsman-certs",
+								ReadOnly:  true,
+							},
+							{
+								Name:      "pull-secret",
+								MountPath: PullSecretFile,
+								SubPath:   ".dockerconfigjson",
+							},
+						},
 					}, *common.KubeRBACProxyContainer()},
 				},
 			},

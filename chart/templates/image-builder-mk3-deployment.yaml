@@ -47,9 +47,6 @@ spec:
       - name: configuration
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
-      - name: authkey
-        secret:
-          secretName: image-builder-mk3-authkey
       {{- if (default $compImgbldr.registry).secretName }}
       - name: pull-secret
         secret:
@@ -79,9 +76,6 @@ spec:
         - mountPath: /config/image-builder.json
           subPath: "image-builder.json"
           name: configuration
-        - mountPath: /config/authkey
-          subPath: "keyfile"
-          name: authkey
         - mountPath: /wsman-certs
           name: wsman-tls-certs
           readOnly: true

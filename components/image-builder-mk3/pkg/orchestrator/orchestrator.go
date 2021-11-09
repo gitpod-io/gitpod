@@ -6,16 +6,10 @@ package orchestrator
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -59,8 +53,8 @@ const (
 // NewOrchestratingBuilder creates a new orchestrating image builder
 func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err error) {
 	var authentication auth.RegistryAuthenticator
-	if cfg.AuthFile != "" {
-		fn := cfg.AuthFile
+	if cfg.PullSecretFile != "" {
+		fn := cfg.PullSecretFile
 		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 			fn = filepath.Join(tproot, fn)
 		}
@@ -69,25 +63,6 @@ func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err e
 		if err != nil {
 			return
 		}
-	}
-
-	var builderAuthKey [32]byte
-	if cfg.BuilderAuthKeyFile != "" {
-		fn := cfg.BuilderAuthKeyFile
-		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
-			fn = filepath.Join(tproot, fn)
-		}
-
-		var data []byte
-		data, err = ioutil.ReadFile(fn)
-		if err != nil {
-			return
-		}
-		if len(data) != 32 {
-			err = xerrors.Errorf("builder auth key must be exactly 32 bytes long")
-			return
-		}
-		copy(builderAuthKey[:], data)
 	}
 
 	var wsman wsmanapi.WorkspaceManagerClient
@@ -126,12 +101,11 @@ func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err e
 		},
 		RefResolver: &resolve.StandaloneRefResolver{},
 
-		wsman:          wsman,
-		buildListener:  make(map[string]map[buildListener]struct{}),
-		logListener:    make(map[string]map[logListener]struct{}),
-		censorship:     make(map[string][]string),
-		builderAuthKey: builderAuthKey,
-		metrics:        newMetrics(),
+		wsman:         wsman,
+		buildListener: make(map[string]map[buildListener]struct{}),
+		logListener:   make(map[string]map[logListener]struct{}),
+		censorship:    make(map[string][]string),
+		metrics:       newMetrics(),
 	}
 	o.monitor = newBuildMonitor(o, o.wsman)
 
@@ -147,11 +121,10 @@ type Orchestrator struct {
 
 	wsman wsmanapi.WorkspaceManagerClient
 
-	builderAuthKey [32]byte
-	buildListener  map[string]map[buildListener]struct{}
-	logListener    map[string]map[logListener]struct{}
-	censorship     map[string][]string
-	mu             sync.RWMutex
+	buildListener map[string]map[buildListener]struct{}
+	logListener   map[string]map[logListener]struct{}
+	censorship    map[string][]string
+	mu            sync.RWMutex
 
 	monitor *buildMonitor
 
@@ -316,15 +289,6 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	}
 	contextPath = filepath.Join("/workspace", strings.TrimPrefix(contextPath, "/workspace"))
 
-	baseLayerAuth, err := o.getAuthFor(reqauth)
-	if err != nil {
-		return
-	}
-	gplayerAuth, err := o.getAuthFor(reqauth.ExplicitlyAll(), wsrefstr, baseref)
-	if err != nil {
-		return
-	}
-
 	o.censor(buildID, []string{
 		wsrefstr,
 		baseref,
@@ -368,15 +332,22 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				},
 				WorkspaceLocation: contextPath,
 				Envvars: []*wsmanapi.EnvironmentVariable{
-					{Name: "BOB_TARGET_REF", Value: wsrefstr},
-					{Name: "BOB_BASE_REF", Value: baseref},
+					{Name: "BOB_TARGET_REF", Value: "localhost:8080/target:latest"},
+					{Name: "BOB_BASE_REF", Value: "localhost:8080/base:latest"},
 					{Name: "BOB_BUILD_BASE", Value: buildBase},
-					{Name: "BOB_BASELAYER_AUTH", Value: baseLayerAuth},
-					{Name: "BOB_WSLAYER_AUTH", Value: gplayerAuth},
 					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
-					{Name: "BOB_AUTH_KEY", Value: string(o.builderAuthKey[:])},
 					{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo -E /app/bob build"}]`},
+					{Name: "WORKSPACEKIT_RING2_ENCLAVE", Value: "/app/bob proxy"},
+					{Name: "WORKSPACEKIT_BOBPROXY_BASEREF", Value: baseref},
+					{Name: "WORKSPACEKIT_BOBPROXY_TARGETREF", Value: wsrefstr},
+					{
+						Name: "WORKSPACEKIT_BOBPROXY_AUTH",
+						Secret: &wsmanapi.EnvironmentVariable_SecretKeyRef{
+							SecretName: o.Config.PullSecret,
+							Key:        ".dockerconfigjson",
+						},
+					},
 					{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Log.Logger.IsLevelEnabled(logrus.DebugLevel))},
 				},
 			},
@@ -655,50 +626,6 @@ func (c *parentCantCancelContext) Err() error {
 
 func (c *parentCantCancelContext) Value(key interface{}) interface{} {
 	return c.Delegate.Value(key)
-}
-
-// source: https://astaxie.gitbooks.io/build-web-application-with-golang/en/09.6.html
-func encrypt(plaintext []byte, key [32]byte) ([]byte, error) {
-	c, err := aes.NewCipher(key[:])
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(c)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	return gcm.Seal(nonce, nonce, plaintext, nil), nil
-}
-
-func (o *Orchestrator) getAuthFor(inp auth.AllowedAuthFor, refs ...string) (res string, err error) {
-	buildauth, err := inp.GetImageBuildAuthFor(o.Auth, refs)
-	if err != nil {
-		return
-	}
-	resb, err := json.MarshalIndent(buildauth, "", " ")
-	if err != nil {
-		return
-	}
-
-	res = base64.RawStdEncoding.EncodeToString(resb)
-
-	if len(o.builderAuthKey) > 0 {
-		resb, err = encrypt(resb, o.builderAuthKey)
-		if err != nil {
-			return
-		}
-
-		res = base64.RawStdEncoding.EncodeToString(resb)
-	}
-
-	return
 }
 
 type buildListener chan *api.BuildResponse
