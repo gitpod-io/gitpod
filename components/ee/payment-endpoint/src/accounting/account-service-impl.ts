@@ -9,7 +9,6 @@ import { inject, injectable } from "inversify";
 import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
 import { UserDB, WorkspaceDB, WorkspaceInstanceSessionWithWorkspace } from '@gitpod/gitpod-db/lib';
 import { hoursToMilliseconds, millisecondsToHours, oneMonthLater, rightBefore, oldest, earliest, durationInHours, isDateSmallerOrEqual, durationInMillis, addMillis } from "@gitpod/gitpod-protocol/lib/util/timeutil";
-import { CommitContext, PrebuiltWorkspaceContext, WorkspaceContext } from "@gitpod/gitpod-protocol";
 import { AccountEntry, Subscription, AccountStatement, AccountEntryFixedPeriod, SessionDescription, CreditDescription, Debit, DebitAccountEntryKind, Credit, LossDebit } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
@@ -272,7 +271,6 @@ export class AccountServiceImpl implements AccountService {
                         contextUrl: s.workspace.contextURL,
                         workspaceId: s.workspace.id,
                         workspaceInstanceId: wsi.id,
-                        private: this.isPrivateRepoContext(s.workspace.context)
                     }
                 };
             });
@@ -280,8 +278,7 @@ export class AccountServiceImpl implements AccountService {
 
     /**
      * 1. We bill regular workspaces
-     * 2. Prebuilds are for free, except
-     *   a. prebuilds for private repositories: those are billed just like regular workspaces
+     * 2. Prebuilds are for free
      * @param session
      * @returns Whether the given session is billed as regular workspace
      */
@@ -296,18 +293,13 @@ export class AccountServiceImpl implements AccountService {
             return false;
         }
 
-        // prebuilds on private repos get billed, public repos are free
+        // no prebuilds get billed
         if (s.workspace.type == "prebuild") {
-            return this.isPrivateRepoContext(s.workspace.context);
+            return false;
         }
 
         log.warn("unknown workspace type - cannot decide if this workspace ought to be billed or not", s);
         return false;
-    }
-
-    protected isPrivateRepoContext(ctx: WorkspaceContext): boolean {
-        return CommitContext.is(ctx) && ctx.repository.private === true
-            || (PrebuiltWorkspaceContext.is(ctx) && this.isPrivateRepoContext(ctx.originalContext));
     }
 
     /**

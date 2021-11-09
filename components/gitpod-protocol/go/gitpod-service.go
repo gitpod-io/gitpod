@@ -2168,12 +2168,6 @@ type UserFeatureSettings struct {
 	// Permanent feature flags are added to each and every workspace instance
 	// this user starts.
 	PermanentWSFeatureFlags []string `json:"permanentWSFeatureFlags,omitempty"`
-
-	// This field is used as marker to grant users a free trial for using private repositories,
-	// independent of any subscription or Chargebee.
-	//   - it is set when the user uses their first private repo
-	//   - whether the trial is expired or not is juged by the UserService
-	PrivateRepoTrialStartDate string `json:"privateRepoTrialStartDate,omitempty"`
 }
 
 // UserPlatform is the UserPlatform message type
