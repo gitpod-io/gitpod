@@ -5,7 +5,4 @@
 
 set -euo pipefail
 
-# migrate 'migrations' table
-yarn --cwd /app/node_modules/@gitpod/gitpod-db run migrate-migrations
-
 /app/typeorm.sh migrations:run
