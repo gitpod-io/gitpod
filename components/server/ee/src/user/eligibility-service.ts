@@ -8,7 +8,7 @@ import { inject, injectable } from "inversify";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { TokenProvider } from "../../../src/user/token-provider";
-import { User, WorkspaceTimeoutDuration, WorkspaceInstance, WorkspaceContext, CommitContext, PrebuiltWorkspaceContext } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceTimeoutDuration, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { RemainingHours } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Plans, MAX_PARALLEL_WORKSPACES } from "@gitpod/gitpod-protocol/lib/plans";
@@ -43,7 +43,6 @@ export interface GitHubEducationPack {
 
 @injectable()
 export class EligibilityService {
-    static readonly DURATION_30_DAYS_MILLIS = 30 * 24 * 60 * 60 * 1000;
 
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
@@ -165,11 +164,6 @@ export class EligibilityService {
         return subscriptions.map(s => Plans.getParallelWorkspacesById(s.planId)).reduce((p, v) => Math.max(p, v));
     }
 
-    protected isPrivateRepoContext(ctx: WorkspaceContext): boolean {
-        return CommitContext.is(ctx) && ctx.repository.private === true
-            || (PrebuiltWorkspaceContext.is(ctx) && this.isPrivateRepoContext(ctx.originalContext));
-    }
-
     protected async checkEnoughCreditForWorkspaceStart(userId: string, date: Date, runningInstances: Promise<WorkspaceInstance[]>): Promise<boolean> {
         // As retrieving a full AccountStatement is expensive we want to cache it as much as possible.
         const cachedAccountStatement = this.accountStatementProvider.getCachedStatement();
@@ -197,95 +191,6 @@ export class EligibilityService {
         const diffInMillis = new Date(cachedStatement.endDate).getTime() - new Date(date).getTime();
         const maxPossibleUsage = millisecondsToHours(diffInMillis) * MAX_PARALLEL_WORKSPACES;
         return cachedStatement.remainingHours - maxPossibleUsage;
-    }
-
-    /**
-     * Whether the given user may open a workspace on the given context.
-     * A user may open private repos always.
-     * We previously limited private repo access to subscribed users.
-     * @param user
-     * @param context
-     * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
-     */
-    async mayOpenContext(user: User, context: WorkspaceContext, date: Date): Promise<boolean> {
-        return true;
-    }
-
-    /**
-     * A user may open private repos if they either:
-     *  - not started their free "private repo trial" yet
-     *  - is has been no longer than 30 days since they started their "private repo trial"
-     *  - has a paid subscription
-     *  - has assigned team subscription
-     * @param user
-     * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
-     */
-    async mayOpenPrivateRepo(user: User | string, date: Date = new Date()): Promise<boolean> {
-        if (!this.config.enablePayment) {
-            // when payment is disabled users can do everything
-            return true;
-        }
-
-        user = await this.getUser(user);
-        const freeTrialTimeStart = this.getPrivateRepoTrialStart(user);
-        if (freeTrialTimeStart === undefined) {
-            // Not started their free trial yet
-            return true;
-        }
-
-        if (EligibilityService.DURATION_30_DAYS_MILLIS + freeTrialTimeStart.getTime() - date.getTime() > 0) {
-            // Has already started free trial but still is within 30 days
-            return true;
-        }
-
-        return this.subscriptionService.hasActivePaidSubscription(user.id, date);
-    }
-
-    /**
-     * Marks the users free private repo trial as started _now_ (if not already set)
-     * @param user
-     * @param now
-     */
-    protected async ensureFreePrivateRepoTrialStarted(user: User, now: string): Promise<void> {
-        // If user has not yet started his free private repo trial yet: do that
-        if (!user.featureFlags) {
-            user.featureFlags = {};
-        }
-        if (!user.featureFlags.privateRepoTrialStartDate) {
-            user.featureFlags.privateRepoTrialStartDate = now;
-            // Issue an update only for the field in question to make sure our "async update" does not race
-            // with updates to any other fields
-            await this.userDb.updateUserPartial({
-                id: user.id,
-                featureFlags: user.featureFlags
-            });
-        }
-    }
-
-    protected getPrivateRepoTrialStart(user: User): Date | undefined {
-        const freeTrialStartDate = user.featureFlags && user.featureFlags.privateRepoTrialStartDate;
-        if (!freeTrialStartDate) {
-            // Not started his free trial yet
-            return undefined;
-        }
-        return new Date(freeTrialStartDate);
-    }
-
-    /**
-     * End date for the users free private trial or `undefined` if the trial hasn't started or the user already has a paid subscription.
-     *
-     * @param user
-     * @param date The date for which we want to know how much time the user has left (depends on active subscription)
-     */
-    async getPrivateRepoTrialEndDate(user: User, date: Date = new Date()): Promise<Date | undefined> {
-        const start = this.getPrivateRepoTrialStart(user);
-        if (start === undefined) {
-            return undefined;
-        }
-        if (await this.subscriptionService.hasActivePaidSubscription(user.id, date)) {
-            return undefined;
-        }
-        return new Date(EligibilityService.DURATION_30_DAYS_MILLIS + start.getTime());
     }
 
     /**

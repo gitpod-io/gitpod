@@ -90,7 +90,6 @@ export interface SessionDescription {
     contextUrl: string;
     workspaceId: string;
     workspaceInstanceId: string;
-    private: boolean;
 }
 export namespace SessionDescription {
     export function is(obj: any): obj is SessionDescription {
@@ -99,7 +98,6 @@ export namespace SessionDescription {
             && obj.hasOwnProperty('contextUrl')
             && obj.hasOwnProperty('workspaceId')
             && obj.hasOwnProperty('workspaceInstanceId')
-            && obj.hasOwnProperty('private');
     }
 }
 

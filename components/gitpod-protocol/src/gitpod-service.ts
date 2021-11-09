@@ -193,8 +193,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * gitpod.io concerns
      */
     isStudent(): Promise<boolean>;
-    getPrivateRepoTrialEndDate(): Promise<string | undefined>;
-
     /**
      *
      */
@@ -212,7 +210,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     getShowPaymentUI(): Promise<boolean>;
     isChargebeeCustomer(): Promise<boolean>;
-    mayAccessPrivateRepo(): Promise<boolean>;
 
     subscriptionUpgradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void>;
     subscriptionDowngradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void>;

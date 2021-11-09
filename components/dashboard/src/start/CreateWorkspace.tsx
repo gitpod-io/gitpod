@@ -133,12 +133,6 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           return;
         case ErrorCodes.NOT_FOUND:
           return <RepositoryNotFoundView error={error} />;
-        case ErrorCodes.PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS:
-          // HACK: Hide the error (behind the modal)
-          error = undefined;
-          phase = StartPhase.Stopped;
-          statusMessage = <LimitReachedPrivateRepoModal />;
-          break;
         case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
           // HACK: Hide the error (behind the modal)
           error = undefined;
@@ -231,12 +225,6 @@ function LimitReachedParallelWorkspacesModal() {
   </LimitReachedModal>;
 }
 
-function LimitReachedPrivateRepoModal() {
-  return <LimitReachedModal>
-    <p className="mt-1 mb-2 text-base">Gitpod is free for public repositories. To work with private repositories, please upgrade to a compatible paid plan.</p>
-  </LimitReachedModal>;
-}
-
 function LimitReachedOutOfHours() {
   return <LimitReachedModal>
     <p className="mt-1 mb-2 text-base">You have reached the limit of monthly workspace hours for your account. Please upgrade to get more hours for your workspaces.</p>
@@ -254,11 +242,6 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
       console.log('userIsOwner', userIsOwner);
       console.log('userScopes', userScopes);
       console.log('lastUpdate', lastUpdate);
-
-      if ((await getGitpodService().server.mayAccessPrivateRepo()) === false) {
-        setStatusMessage(<LimitReachedPrivateRepoModal />);
-        return;
-      }
 
       const authProvider = (await getGitpodService().server.getAuthProviders()).find(p => p.host === host);
       if (!authProvider) {

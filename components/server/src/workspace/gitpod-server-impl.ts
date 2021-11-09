@@ -809,7 +809,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             let context = await contextPromise;
             await Promise.all([
                 this.mayStartWorkspace({ span }, user, runningInstancesPromise),
-                this.mayOpenContext(user, context)
             ]);
 
             // if we're forced to use the default config, mark the context as such
@@ -948,18 +947,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
      * @param runningInstances
      */
     protected async mayStartWorkspace(ctx: TraceContext, user: User, runningInstances: Promise<WorkspaceInstance[]>): Promise<void> {
-    }
-
-    /**
-     * Extension point for implementing eligibility checks. Throws a ResponseError if not eligible.
-     * @param user
-     * @param context
-     */
-    protected async mayOpenContext(user: User, context: WorkspaceContext): Promise<void> {
-    }
-
-    public async mayAccessPrivateRepo(): Promise<boolean> {
-        return true;
     }
 
     public async getFeaturedRepositories(): Promise<WhitelistedRepository[]> {
@@ -2080,9 +2067,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async isStudent(): Promise<boolean> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getPrivateRepoTrialEndDate(): Promise<string | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getAccountStatement(options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement | undefined> {

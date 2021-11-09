@@ -132,12 +132,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         ))
     }
 
-    // eligibility checks and extension points
-    public async mayAccessPrivateRepo(): Promise<boolean> {
-        const user = this.checkAndBlockUser("mayAccessPrivateRepo");
-        return this.eligibilityService.mayOpenPrivateRepo(user, new Date());
-    }
-
     protected async mayStartWorkspace(ctx: TraceContext, user: User, runningInstances: Promise<WorkspaceInstance[]>): Promise<void> {
         await super.mayStartWorkspace(ctx, user, runningInstances);
 
@@ -156,17 +150,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             throw e;
         } finally {
             span.finish();
-        }
-    }
-
-
-
-    protected async mayOpenContext(user: User, context: WorkspaceContext): Promise<void> {
-        await super.mayOpenContext(user, context);
-
-        const mayOpenContext = await this.eligibilityService.mayOpenContext(user, context, new Date())
-        if (!mayOpenContext) {
-            throw new ResponseError(ErrorCodes.PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS, `You do not have a plan that allows for opening private repositories.`);
         }
     }
 
@@ -922,17 +905,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const user = this.checkUser('getAppliedCoupons');
         const couponIds = await this.couponComputer.getAppliedCouponIds(user, new Date());
         return this.getChargebeePlanCoupons(couponIds);
-    }
-
-    public async getPrivateRepoTrialEndDate(): Promise<string | undefined> {
-        const user = this.checkUser("getPrivateTrialInfo");
-
-        const endDate = await this.eligibilityService.getPrivateRepoTrialEndDate(user);
-        if (!endDate) {
-            return undefined;
-        } else {
-            return endDate.toISOString();
-        }
     }
 
     // chargebee
