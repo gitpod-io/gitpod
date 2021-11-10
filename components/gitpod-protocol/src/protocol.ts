@@ -779,7 +779,8 @@ export namespace ExternalImageConfigFile {
 
 export interface WorkspaceContext {
     title: string;
-    normalizedContextURL?: string; // TODO: make this NOT optional
+    /** This contains the URL portion of the contextURL (which might contain other modifiers as well). It's optional because it's not set for older workspaces. */
+    normalizedContextURL?: string;
     forceCreateNewWorkspace?: boolean;
     forceImageBuild?: boolean;
 }
