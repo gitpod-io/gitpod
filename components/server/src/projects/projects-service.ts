@@ -185,7 +185,6 @@ export class ProjectsService {
         if (!project) {
             throw new Error("Project not found");
         }
-
         const normalizedContextUrl = this.contextParser.normalizeContextURL(project.cloneUrl);
         const commitContext = (await this.contextParser.handle(ctx, user, normalizedContextUrl)) as CommitContext;
         const { host } = commitContext.repository;
