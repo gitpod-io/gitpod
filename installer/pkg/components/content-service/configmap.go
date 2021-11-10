@@ -17,11 +17,6 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	storageConfig, err := common.StorageConfiguration(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	cscfg := config.ServiceConfig{
 		Service: config.Service{
 			Addr: fmt.Sprintf(":%d", RPCPort),
@@ -32,7 +27,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PProf: config.PProf{
 			Addr: fmt.Sprintf(":%d", PProfPort),
 		},
-		Storage: *storageConfig,
+		Storage: common.StorageConfig(ctx),
 	}
 
 	fc, err := json.MarshalIndent(cscfg, "", " ")

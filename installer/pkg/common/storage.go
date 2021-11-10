@@ -6,7 +6,6 @@ package common
 
 import (
 	"fmt"
-
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 
 	corev1 "k8s.io/api/core/v1"
@@ -47,7 +46,7 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.MinIOStorage,
 			MinIOConfig: storageconfig.MinIOConfig{
-				Endpoint:        "minio:9000",
+				Endpoint:        fmt.Sprintf("minio.%s.svc.cluster.local:%d", context.Namespace, MinioServiceAPIPort),
 				AccessKeyID:     context.Values.StorageAccessKey,
 				SecretAccessKey: context.Values.StorageSecretKey,
 				Secure:          false,
