@@ -14,7 +14,7 @@ jaegerOperator:
   inCluster: true
 kind: Full
 metadata:
-  region: "foobar"
+  region: "local"
 objectStorage:
   inCluster: true
 observability:

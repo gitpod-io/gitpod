@@ -50,7 +50,7 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 				AccessKeyID:     context.Values.StorageAccessKey,
 				SecretAccessKey: context.Values.StorageSecretKey,
 				Secure:          false,
-				Region:          context.Config.Metadata.Region,
+				Region:          "local", // Local Minio requires this value - workspace allocation fails if not set to this
 				ParallelUpload:  6,
 			},
 		}
