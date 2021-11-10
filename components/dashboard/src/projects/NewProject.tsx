@@ -162,16 +162,18 @@ export default function NewProject() {
         if (!provider) {
             return;
         }
-        const repo = reposInAccounts.find(r => r.account === selectedAccount && r.path === selectedRepo);
+        const repo = reposInAccounts.find(r => r.account === selectedAccount && (r.path ? r.path === selectedRepo : r.name === selectedRepo));
         if (!repo) {
             console.error("No repo selected!")
             return;
         }
 
+        const repoSlug = repo.path || repo.name;
+
         try {
             await getGitpodService().server.createProject({
                 name: repo.name,
-                slug: (repo.path ? repo.path : repo.name),
+                slug: repoSlug,
                 cloneUrl: repo.cloneUrl,
                 account: repo.account,
                 provider,
@@ -179,7 +181,7 @@ export default function NewProject() {
                 appInstallationId: String(repo.installationId),
             });
 
-            history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${repo.path}/configure`);
+            history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${repoSlug}/configure`);
         } catch (error) {
             const message = (error && error?.message) || "Failed to create new project."
             window.alert(message);
@@ -269,7 +271,7 @@ export default function NewProject() {
                                     <div className="flex justify-end">
                                         <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100">
                                             {!r.inUse ? (
-                                                <button className="primary" onClick={() => setSelectedRepo(r.path)}>Select</button>
+                                                <button className="primary" onClick={() => setSelectedRepo(r.path || r.name)}>Select</button>
                                             ) : (
                                                 <p className="my-auto">already taken</p>
                                             )}
