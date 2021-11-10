@@ -410,8 +410,14 @@ func symlinkBinaries(cfg *Config) {
 			from = filepath.Join(base, k)
 			to   = filepath.Join("/usr/bin", v)
 		)
+
+		// remove possibly existing symlink target
+		if err = os.Remove(to); err != nil && !os.IsNotExist(err) {
+			log.WithError(err).WithField("to", to).Warn("cannot remove possibly existing symlink target")
+		}
+
 		err = os.Symlink(from, to)
-		if err != nil && !os.IsExist(err) {
+		if err != nil {
 			log.WithError(err).WithField("from", from).WithField("to", to).Warn("cannot create symlink")
 		}
 	}
