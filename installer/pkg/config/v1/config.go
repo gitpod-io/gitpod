@@ -43,6 +43,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Certificate.Kind = ObjectRefSecret
 	cfg.Certificate.Name = "https-certificates"
 	cfg.Database.InCluster = pointer.Bool(true)
+	cfg.Metadata.Region = "local"
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
 	cfg.ContainerRegistry.InCluster = pointer.Bool(true)
 	cfg.Jaeger.InCluster = pointer.Bool(true)
