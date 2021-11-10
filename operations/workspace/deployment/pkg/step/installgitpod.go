@@ -34,13 +34,23 @@ func InstallGitpod(context *common.Context, cluster *common.WorkspaceCluster) er
 		credFileEnvVar = ""
 	}
 
-	cmd := exec.Command(DefaultGitpodInstallationScript, "-g", context.Project.Id, "-l", cluster.Region, "-n", cluster.Name, "-v", context.Gitpod.VersionsManifestFilePath, "-a", getValuesFilesArgString(cluster.ValuesFiles))
-	// Set the env variable
-	cmd.Env = append(os.Environ(), credFileEnvVar)
-	// we will route the output to standard devices
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	var err error
+	// Script execution is prone to failure and recover on retry
+	// So only retry part of the code
+	for attempt := 0; attempt <= context.Overrides.RetryAttempt; attempt++ {
+		cmd := exec.Command(DefaultGitpodInstallationScript, "-g", context.Project.Id, "-l", cluster.Region, "-n", cluster.Name, "-v", context.Gitpod.VersionsManifestFilePath, "-a", getValuesFilesArgString(cluster.ValuesFiles))
+		// Set the env variable
+		cmd.Env = append(os.Environ(), credFileEnvVar)
+		// we will route the output to standard devices
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		err = cmd.Run()
+		if err == nil {
+			break
+		}
+	}
+	return err
 
 }
 

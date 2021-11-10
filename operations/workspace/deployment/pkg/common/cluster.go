@@ -12,6 +12,8 @@ const (
 	ClusterTypeGKE ClusterType = "gke"
 	// ClusterTypeK3s represents a kubernetes cluster created using k3s distribution on GCP
 	ClusterTypeK3s ClusterType = "k3s"
+	// DefaultRetryAttempts is the default value of retry attempts
+	DefaultRetryAttempts = 2
 )
 
 // MetaCluster represents a meta cluster
@@ -41,4 +43,6 @@ type Overrides struct {
 	// value set, then it will just update the cluster configuration
 	// if this flag is not set then it will error out complaining that the cluster already exists
 	OverwriteExisting bool
+	// RetryAttempt is used to specify maximum retry attempts that can be made if error occurs
+	RetryAttempt int
 }

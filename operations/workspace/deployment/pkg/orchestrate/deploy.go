@@ -47,7 +47,6 @@ func installGitpod(context *common.Context, cluster *common.WorkspaceCluster) er
 }
 
 func createCluster(context *common.Context, cluster *common.WorkspaceCluster) error {
-	// TODO(prs): add retry logic below
 	err := step.CreateCluster(context, cluster)
 	if err != nil {
 		log.Log.Infof("error creating cluster %s: %s", cluster.Name, err)
