@@ -82,14 +82,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	minio, err := renderTemplate(vhostMinioTmpl, commonTpl{
-		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("minio.%s.%s:%d", ctx.Namespace, kubeDomain, minioComponent.ServiceConsolePort),
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	openVSX, err := renderTemplate(vhostOpenVSXTmpl, openVSXTpl{
 		Domain:  ctx.Config.Domain,
 		RepoURL: fmt.Sprintf("openvsx-proxy.%s.%s:%d", ctx.Namespace, kubeDomain, openvsxproxy.ServicePort),
@@ -117,10 +109,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	data := map[string]string{
 		"vhost.empty":            *empty,
-		"vhost.minio":            *minio,
 		"vhost.open-vsx":         *openVSX,
 		"vhost.payment-endpoint": *paymentEndpoint,
 		"vhost.kedge":            *kedge,
+	}
+
+	if ctx.Config.ObjectStorage.CloudStorage == nil {
+		// Don't expose Minio if using cloud storage
+		minio, err := renderTemplate(vhostMinioTmpl, commonTpl{
+			Domain:       ctx.Config.Domain,
+			ReverseProxy: fmt.Sprintf("minio.%s.%s:%d", ctx.Namespace, kubeDomain, minioComponent.ServiceConsolePort),
+		})
+		if err != nil {
+			return nil, err
+		}
+		data["vhost.minio"] = *minio
 	}
 
 	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
