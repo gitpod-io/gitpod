@@ -47,7 +47,6 @@ export class WorkspaceHealthMonitoring {
                 title: "Workspace Probe",
                 responseURL,
                 responseToken,
-                normalizedContextURL: ""
             };
 
             log.debug("Created workspace probe context", context);

@@ -614,7 +614,9 @@ export class WorkspaceStarter {
 
         const contextUrlEnv = new EnvironmentVariable();
         contextUrlEnv.setName('GITPOD_WORKSPACE_CONTEXT_URL');
-        contextUrlEnv.setValue(workspace.context.normalizedContextURL!);
+        // Beware that `workspace.contextURL` is not normalized so it might contain other modifiers
+        // making it not a valid URL
+        contextUrlEnv.setValue(workspace.context.normalizedContextURL || workspace.contextURL);
         envvars.push(contextUrlEnv);
 
         const contextEnv = new EnvironmentVariable();
