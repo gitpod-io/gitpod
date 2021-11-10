@@ -45,6 +45,8 @@ export default function NewProject() {
                 setProvider("gitlab.com");
             } else if (user.identities.find(i => i.authProviderId === "Public-GitHub")) {
                 setProvider("github.com");
+            } else if (user.identities.find(i => i.authProviderId === "Public-Bitbucket")) {
+                setProvider("bitbucket.org");
             }
         }
     }, [user]);
@@ -85,7 +87,7 @@ export default function NewProject() {
     }, [selectedAccount]);
 
     useEffect(() => {
-        if (!provider) {
+        if (!provider || isBitbucket()) {
             return;
         }
         (async () => {
@@ -95,11 +97,12 @@ export default function NewProject() {
     }, [provider]);
 
     const isGitHub = () => provider === "github.com";
+    const isBitbucket = () => provider == "bitbucket.org";
 
     const updateReposInAccounts = async (installationId?: string) => {
         setLoaded(false);
         setReposInAccounts([]);
-        if (!provider) {
+        if (!provider || isBitbucket()) {
             return [];
         }
         try {
@@ -156,7 +159,7 @@ export default function NewProject() {
     }
 
     const createProject = async (teamOrUser: Team | User, selectedRepo: string) => {
-        if (!provider) {
+        if (!provider || isBitbucket()) {
             return;
         }
         const repo = reposInAccounts.find(r => r.account === selectedAccount && (r.path ? r.path === selectedRepo : r.name === selectedRepo));
@@ -335,11 +338,11 @@ export default function NewProject() {
             setProvider(host);
         }
 
-        if (!loaded) {
+        if (!loaded && !isBitbucket()) {
             return renderLoadingState();
         }
 
-        if (showGitProviders) {
+        if (showGitProviders || isBitbucket()) {
             return (<GitProviders onHostSelected={onGitProviderSeleted} />);
         }
 
@@ -387,15 +390,34 @@ export default function NewProject() {
         </>)
     };
 
+    const renderBitbucketWarning = () => {
+        return (
+            <div className="mt-16 flex space-x-2 py-6 px-6 w-96 justify-betweeen bg-gitpod-kumquat-light rounded-xl">
+            <div className="pr-3 self-center w-6">
+                <img src={exclamation} />
+            </div>
+            <div className="flex-1 flex flex-col">
+                <p className="text-gitpod-red text-sm">Bitbucket support for projects is not available yet. Follow <a className="gp-link" href="https://github.com/gitpod-io/gitpod/issues/5980">#5980</a> for updates.</p>
+            </div>
+        </div>);
+    }
+
+    const renderSelectRepoHeading = () => {
+        return <p className="text-gray-500 text-center text-base">Select a Git repository on <strong>{provider}</strong>. (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>
+    }
+
     return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
         <h1>New Project</h1>
-        <p className="text-gray-500 text-center text-base">Select a Git repository on <strong>{provider}</strong>. (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>
+
+        {isBitbucket() || renderSelectRepoHeading()}
 
         {!selectedRepo && renderSelectRepository()}
 
         {selectedRepo && !selectedTeamOrUser && renderSelectTeam()}
 
         {selectedRepo && selectedTeamOrUser && (<div></div>)}
+
+        {isBitbucket() && renderBitbucketWarning()}
 
     </div>);
 
