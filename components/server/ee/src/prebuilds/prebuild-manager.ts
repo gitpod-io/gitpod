@@ -100,7 +100,7 @@ export class PrebuildManager {
                 actual,
                 project,
                 branch,
-                normalizedContextURL: contextURL
+                normalizedContextURL: actual.normalizedContextURL
             };
 
             if (this.shouldPrebuildIncrementally(actual.repository.cloneUrl)) {
