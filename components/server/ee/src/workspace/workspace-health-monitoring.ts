@@ -51,7 +51,7 @@ export class WorkspaceHealthMonitoring {
             };
 
             log.debug("Created workspace probe context", context);
-            const workspace = await this.workspaceFactory.createForContext({span}, user, context);
+            const workspace = await this.workspaceFactory.createForContext({span}, user, context, "");
             await this.workspaceStarter.startWorkspace({span}, workspace, user, [], {rethrow: true});
         } catch (err) {
             TraceContext.logError({span}, err);
