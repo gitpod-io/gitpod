@@ -520,22 +520,27 @@ func FindDBConfigFromPodEnv(componentName string, namespace string, client klien
 	}
 	pod := list.Items[0]
 
-	var password string
+	var password, host string
 	var port int32
-	var host string
 OuterLoop:
 	for _, c := range pod.Spec.Containers {
 		for _, v := range c.Env {
+			var findErr error
 			if v.Name == "DB_PASSWORD" {
-				password = v.Value
+				password, findErr = FindValueFromEnvVar(v, client, namespace)
 			} else if v.Name == "DB_PORT" {
-				pPort, err := strconv.ParseUint(v.Value, 10, 16)
+				var portStr string
+				portStr, findErr = FindValueFromEnvVar(v, client, namespace)
+				pPort, err := strconv.ParseUint(portStr, 10, 16)
 				if err != nil {
 					return nil, xerrors.Errorf("error parsing DB_PORT '%s' on pod %s!", v.Value, pod.Name)
 				}
 				port = int32(pPort)
 			} else if v.Name == "DB_HOST" {
-				host = v.Value
+				host, findErr = FindValueFromEnvVar(v, client, namespace)
+			}
+			if findErr != nil {
+				return nil, findErr
 			}
 			if password != "" && port != 0 && host != "" {
 				break OuterLoop
@@ -551,6 +556,38 @@ OuterLoop:
 		Password: password,
 	}
 	return &config, nil
+}
+
+func FindValueFromEnvVar(ev corev1.EnvVar, client klient.Client, namespace string) (string, error) {
+	// we have a value, just return it
+	if ev.Value != "" {
+		return ev.Value, nil
+	}
+
+	if ev.ValueFrom == nil {
+		return "", xerrors.Errorf("Neither Value or ValueFrom exist for %s", ev.Name)
+	}
+
+	// value doesn't exist for ENV VARs set by config or secret
+	// instead, valueFrom will contain a reference to the backing config or secret
+	// secret references look like:
+	// '{"name":"DB_PORT","valueFrom":{"secretKeyRef":{"name":"mysql","key":"port"}}}'
+	if ev.ValueFrom.SecretKeyRef != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var secret corev1.Secret
+		secretRef := ev.ValueFrom.SecretKeyRef
+		err := client.Resources().Get(ctx, secretRef.Name, namespace, &secret)
+		if err != nil {
+			return "", err
+		}
+
+		secretValue := string(secret.Data[secretRef.Key])
+		return secretValue, nil
+	} else {
+		return "", xerrors.Errorf("A secret reference was expected for %s", ev.Name)
+	}
 }
 
 // APIImageBuilderOpt configures the image builder API access
