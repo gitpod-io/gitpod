@@ -5,8 +5,6 @@
 package common
 
 import (
-	"fmt"
-	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -73,31 +71,6 @@ func GenerateService(component string, ports map[string]ServicePort, mod ...func
 
 		return []runtime.Object{service}, nil
 	}
-}
-
-func StorageConfiguration(ctx *RenderContext) (*storageconfig.StorageConfig, error) {
-	accessKey := ctx.Values.StorageAccessKey
-	if accessKey == "" {
-		return nil, fmt.Errorf("unknown value: storage access key")
-	}
-	secretKey := ctx.Values.StorageSecretKey
-	if secretKey == "" {
-		return nil, fmt.Errorf("unknown value: storage secret key")
-	}
-
-	// todo(sje): support non-Minio storage configuration
-	// todo(sje): this has been set up with only the default values - receive configuration
-	return &storageconfig.StorageConfig{
-		Kind:      "minio",
-		BlobQuota: 0,
-		MinIOConfig: storageconfig.MinIOConfig{
-			Endpoint:        fmt.Sprintf("minio.%s.svc.cluster.local:%d", ctx.Namespace, MinioServiceAPIPort),
-			AccessKeyID:     accessKey,
-			SecretAccessKey: secretKey,
-			Secure:          false,
-			Region:          "local",
-		},
-	}, nil
 }
 
 // DockerRegistryHash creates a sample pod spec that can be converted into a hash for annotations

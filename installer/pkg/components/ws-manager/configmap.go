@@ -39,11 +39,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return (&q).String()
 	}
 
-	storage, err := common.StorageConfiguration(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	wsmcfg := config.ServiceConfiguration{
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
@@ -104,7 +99,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Content: struct {
 			Storage storageconfig.StorageConfig `json:"storage"`
-		}{Storage: *storage},
+		}{Storage: common.StorageConfig(ctx)},
 		RPCServer: struct {
 			Addr string `json:"addr"`
 			TLS  struct {

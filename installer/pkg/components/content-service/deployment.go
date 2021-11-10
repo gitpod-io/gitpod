@@ -23,6 +23,68 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	podSpec := corev1.PodSpec{
+		Affinity:                      &corev1.Affinity{},
+		ServiceAccountName:            Component,
+		EnableServiceLinks:            pointer.Bool(false),
+		DNSPolicy:                     "ClusterFirst",
+		RestartPolicy:                 "Always",
+		TerminationGracePeriodSeconds: pointer.Int64(30),
+		Volumes: []corev1.Volume{{
+			Name: "config",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+				},
+			},
+		}},
+		Containers: []corev1.Container{{
+			Name:            Component,
+			Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ContentService.Version),
+			ImagePullPolicy: corev1.PullIfNotPresent,
+			Args: []string{
+				"run",
+				"--config",
+				"/config/config.json",
+			},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					"cpu":    resource.MustParse("100m"),
+					"memory": resource.MustParse("32Mi"),
+				},
+			},
+			Ports: []corev1.ContainerPort{{
+				Name:          RPCServiceName,
+				ContainerPort: RPCPort,
+			}, {
+				ContainerPort: PrometheusPort,
+				Name:          PrometheusName,
+			}},
+			SecurityContext: &corev1.SecurityContext{
+				Privileged: pointer.Bool(false),
+				RunAsUser:  pointer.Int64(1000),
+			},
+			Env: common.MergeEnv(
+				common.DefaultEnv(&ctx.Config),
+				common.TracingEnv(&ctx.Config),
+				[]corev1.EnvVar{{
+					Name:  "GRPC_GO_RETRY",
+					Value: "on",
+				}},
+			),
+			VolumeMounts: []corev1.VolumeMount{{
+				Name:      "config",
+				MountPath: "/config",
+				ReadOnly:  true,
+			}},
+		}},
+	}
+
+	err = common.AddStorageMounts(ctx, &podSpec, Component)
+	if err != nil {
+		return nil, err
+	}
+
 	return []runtime.Object{
 		&v1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -44,62 +106,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							common.AnnotationConfigChecksum: configHash,
 						},
 					},
-					Spec: corev1.PodSpec{
-						Affinity:                      &corev1.Affinity{},
-						ServiceAccountName:            Component,
-						EnableServiceLinks:            pointer.Bool(false),
-						DNSPolicy:                     "ClusterFirst",
-						RestartPolicy:                 "Always",
-						TerminationGracePeriodSeconds: pointer.Int64(30),
-						Volumes: []corev1.Volume{{
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-								},
-							},
-						}},
-						Containers: []corev1.Container{{
-							Name:            Component,
-							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ContentService.Version),
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Args: []string{
-								"run",
-								"--config",
-								"/config/config.json",
-							},
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									"cpu":    resource.MustParse("100m"),
-									"memory": resource.MustParse("32Mi"),
-								},
-							},
-							Ports: []corev1.ContainerPort{{
-								Name:          RPCServiceName,
-								ContainerPort: RPCPort,
-							}, {
-								ContainerPort: PrometheusPort,
-								Name:          PrometheusName,
-							}},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(false),
-								RunAsUser:  pointer.Int64(1000),
-							},
-							Env: common.MergeEnv(
-								common.DefaultEnv(&ctx.Config),
-								common.TracingEnv(&ctx.Config),
-								[]corev1.EnvVar{{
-									Name:  "GRPC_GO_RETRY",
-									Value: "on",
-								}},
-							),
-							VolumeMounts: []corev1.VolumeMount{{
-								Name:      "config",
-								MountPath: "/config",
-								ReadOnly:  true,
-							}},
-						}},
-					},
+					Spec: podSpec,
 				},
 			},
 		},
