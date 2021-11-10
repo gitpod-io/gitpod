@@ -43,11 +43,15 @@ func CreateCluster(context *common.Context, cluster *common.WorkspaceCluster) er
 	if err != nil {
 		return err
 	}
-	err = applyTerraformModules(context, cluster)
-	if err != nil {
-		return err
+	// Terraform apply step is prone to failure and recover on retry
+	// So only retry this step
+	for attempt := 0; attempt <= context.Overrides.RetryAttempt; attempt++ {
+		err = applyTerraformModules(context, cluster)
+		if err == nil {
+			break
+		}
 	}
-	return nil
+	return err
 }
 
 func doesClusterExist(context *common.Context, cluster *common.WorkspaceCluster) (bool, error) {

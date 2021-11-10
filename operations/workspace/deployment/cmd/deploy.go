@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"os/exec"
 	"time"
 
@@ -56,10 +57,15 @@ var deployCmd = &cobra.Command{
 			Overrides: &common.Overrides{
 				DryRun:            dryRun,
 				OverwriteExisting: overwriteExisting,
+				RetryAttempt:      common.DefaultRetryAttempts,
 			},
 		}
 
-		orchestrate.Deploy(&context, cfg.WorkspaceClusters)
+		err = orchestrate.Deploy(&context, cfg.WorkspaceClusters)
+		if err != nil {
+			log.Errorf("deploy command failed: %s", err)
+			os.Exit(1)
+		}
 	},
 }
 
