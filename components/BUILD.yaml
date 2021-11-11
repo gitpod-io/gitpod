@@ -40,6 +40,8 @@ packages:
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/ide/code:docker
+      - components/ide/code-desktop:docker
+      - components/ide/code-desktop:docker-insiders
       - components/ide/jetbrains/image:intellij
       - components/ide/jetbrains/image:goland
       - components/ide/theia:docker

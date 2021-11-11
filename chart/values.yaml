@@ -402,6 +402,10 @@ components:
       stableVersion: "commit-636ef165f4255931c23fb2948e81c73cc75c4fb9"
       insidersVersion: "nightly"
     desktopIdeImages:
+      codeDesktop:
+        imageName: "ide/code-desktop"
+      codeDesktopInsiders:
+        imageName: "ide/code-desktop-insiders"
       intellij:
         imageName: "ide/intellij"
       goland:
