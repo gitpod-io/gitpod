@@ -528,9 +528,15 @@ OuterLoop:
 			var findErr error
 			if v.Name == "DB_PASSWORD" {
 				password, findErr = FindValueFromEnvVar(v, client, namespace)
+				if findErr != nil {
+					return nil, findErr
+				}
 			} else if v.Name == "DB_PORT" {
 				var portStr string
 				portStr, findErr = FindValueFromEnvVar(v, client, namespace)
+				if findErr != nil {
+					return nil, findErr
+				}
 				pPort, err := strconv.ParseUint(portStr, 10, 16)
 				if err != nil {
 					return nil, xerrors.Errorf("error parsing DB_PORT '%s' on pod %s!", v.Value, pod.Name)
@@ -538,9 +544,9 @@ OuterLoop:
 				port = int32(pPort)
 			} else if v.Name == "DB_HOST" {
 				host, findErr = FindValueFromEnvVar(v, client, namespace)
-			}
-			if findErr != nil {
-				return nil, findErr
+				if findErr != nil {
+					return nil, findErr
+				}
 			}
 			if password != "" && port != 0 && host != "" {
 				break OuterLoop
