@@ -9,7 +9,7 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import settingsMenu from "./settings-menu";
+import { getMenu } from "./settings-menu";
 
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
@@ -79,6 +79,9 @@ export default function Notifications() {
             setDevXMail(newIsDevXMail);
         }
     }
+
+    const [settingsMenu, setSettingsMenu] = useState<{title: string,link: string[]}[]>([])
+    getMenu().then(setSettingsMenu)
 
     return (
     <div>

@@ -9,7 +9,7 @@ import { useContext, useState } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
-import settingsMenu from "./settings-menu";
+import { getMenu } from "./settings-menu";
 import ConfirmationModal from "../components/ConfirmationModal";
 import CodeText from "../components/CodeText";
 
@@ -27,6 +27,10 @@ export default function Account() {
     };
 
     const close = () => setModal(false);
+
+    const [settingsMenu, setSettingsMenu] = useState<{title: string,link: string[]}[]>([])
+    getMenu().then(setSettingsMenu)
+
     return <div>
         <ConfirmationModal
             title="Delete Account"

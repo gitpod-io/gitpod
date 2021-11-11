@@ -11,7 +11,7 @@ import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/
 import Modal from "../components/Modal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
-import settingsMenu from "./settings-menu";
+import { getMenu } from "./settings-menu";
 import CodeText from "../components/CodeText";
 
 interface EnvVarModalProps {
@@ -181,7 +181,8 @@ export default function EnvVars() {
         return '';
     };
 
-
+    const [settingsMenu, setSettingsMenu] = useState<{title: string,link: string[]}[]>([])
+    getMenu().then(setSettingsMenu)
 
     return <PageWithSubMenu subMenu={settingsMenu} title='Variables' subtitle='Configure environment variables for all workspaces.'>
         {isAddEnvVarModalVisible && <AddEnvVarModal

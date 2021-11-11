@@ -18,11 +18,13 @@ import copy from '../images/copy.svg';
 import exclamation from '../images/exclamation.svg';
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { poll, PollOptions } from "../utils";
-import settingsMenu from "./settings-menu";
+import { getMenu } from "./settings-menu";
 import { Disposable } from "@gitpod/gitpod-protocol";
 
 export default function Teams() {
-
+    const [settingsMenu, setSettingsMenu] = useState<{title: string,link: string[]}[]>([])
+    getMenu().then(setSettingsMenu)
+    
     return (<div>
         <PageWithSubMenu subMenu={settingsMenu} title='Teams' subtitle='View and manage subscriptions for your team with one centralized billing.'>
             <AllTeams />

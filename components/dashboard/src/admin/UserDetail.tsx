@@ -23,6 +23,7 @@ export default function UserDetail(p: { user: User }) {
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
     const [viewAccountStatement, setViewAccountStatement] = useState(false);
     const [isStudent, setIsStudent] = useState<boolean>();
+    const [isShowPayment, setIsShowPayment] = useState<boolean>();
     const [editFeatureFlags, setEditFeatureFlags] = useState(false);
     const [editRoles, setEditRoles] = useState(false);
     const userRef = useRef(user);
@@ -31,6 +32,7 @@ export default function UserDetail(p: { user: User }) {
 
     useEffect(() => {
         setUser(p.user);
+        getGitpodService().server.getShowPaymentUI().then(setIsShowPayment).catch(console.error)
         getGitpodService().server.adminGetAccountStatement(p.user.id).then(
             as =>
                 setAccountStatement(as)
@@ -101,9 +103,9 @@ export default function UserDetail(p: { user: User }) {
                     <img className="rounded-full h-28 w-28" alt={user.fullName} src={user.avatarUrl} />
                 </div>
                 <div className="flex flex-col w-full">
-                    <div className="flex w-full mt-6">
+                    <div className="grid w-full mt-6 grid-cols-3">
                         <Property name="Sign Up Date">{moment(user.creationDate).format('MMM D, YYYY')}</Property>
-                        <Property name="Remaining Hours"
+                        {isShowPayment ? <Property name="Remaining Hours"
                             actions={
                                 accountStatement && [{
                                     label: 'View Account Statement',
@@ -116,8 +118,8 @@ export default function UserDetail(p: { user: User }) {
                                     }
                                 }]
                             }
-                        >{accountStatement?.remainingHours ? accountStatement?.remainingHours.toString() : '---'}</Property>
-                        <Property
+                        >{accountStatement?.remainingHours ? accountStatement?.remainingHours.toString() : '---'}</Property> : null}
+                        {isShowPayment ? <Property
                             name="Plan"
                             actions={accountStatement && [{
                                 label: (isProfessionalOpenSource ? 'Disable' : 'Enable') + ' Professional OSS',
@@ -126,9 +128,7 @@ export default function UserDetail(p: { user: User }) {
                                     setAccountStatement(await getGitpodService().server.adminGetAccountStatement(user.id));
                                 }
                             }]}
-                        >{accountStatement?.subscriptions ? accountStatement.subscriptions.filter(s => Subscription.isActive(s, new Date().toISOString())).map(s => Plans.getById(s.planId)?.name).join(', ') : '---'}</Property>
-                    </div>
-                    <div className="flex w-full mt-6">
+                        >{accountStatement?.subscriptions ? accountStatement.subscriptions.filter(s => Subscription.isActive(s, new Date().toISOString())).map(s => Plans.getById(s.planId)?.name).join(', ') : '---'}</Property> : null}
                         <Property name="Feature Flags"
                             actions={[{
                                 label: 'Edit Feature Flags',
@@ -145,12 +145,12 @@ export default function UserDetail(p: { user: User }) {
                                 }
                             }]}
                         >{user.rolesOrPermissions?.join(', ') || '---'}</Property>
-                        <Property name="Student"
+                        {isShowPayment ? <Property name="Student"
                             actions={ !isStudent ? [{
                                 label: `Make '${emailDomain}' a student domain`,
                                 onClick: addStudentDomain
                             }] :  undefined}
-                        >{isStudent === undefined ? '---' : (isStudent ? 'Enabled' : 'Disabled')}</Property>
+                        >{isStudent === undefined ? '---' : (isStudent ? 'Enabled' : 'Disabled')}</Property> : null}
                     </div>
                 </div>
             </div>
@@ -193,7 +193,7 @@ function Label(p: { text: string, color: string }) {
 }
 
 export function Property(p: { name: string, children: string | ReactChild, actions?: { label: string, onClick: () => void }[] }) {
-    return <div className="ml-3 flex flex-col w-4/12 truncate">
+    return <div className="ml-3 truncate">
         <div className="text-base text-gray-500 truncate">
             {p.name}
         </div>

@@ -18,7 +18,7 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import Tooltip from "../components/Tooltip";
-import settingsMenu from "./settings-menu";
+import { getMenu } from "./settings-menu";
 
 type PlanWithOriginalPrice = Plan & { originalPrice?: number };
 type Pending = { pendingSince: number };
@@ -424,6 +424,9 @@ export default function () {
         planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={targetPlan} isCurrent={!!isUnleashedTsAssigned} onUpgrade={onUpgrade} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
     }
 
+    const [settingsMenu, setSettingsMenu] = useState<{title: string,link: string[]}[]>([])
+    getMenu().then(setSettingsMenu)
+    
     return <div>
         <PageWithSubMenu subMenu={settingsMenu}  title='Plans' subtitle='Manage account usage and billing.'>
             {showPaymentUI && <div className="w-full text-center">

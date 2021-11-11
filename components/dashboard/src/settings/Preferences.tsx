@@ -18,7 +18,7 @@ import vscode from '../images/vscode.svg';
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
-import settingsMenu from "./settings-menu";
+import { getMenu } from "./settings-menu";
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -69,6 +69,9 @@ export default function Preferences() {
         setIsDark(isDark);
         setTheme(theme);
     }
+
+    const [settingsMenu, setSettingsMenu] = useState<{title: string,link: string[]}[]>([])
+    getMenu().then(setSettingsMenu)
 
     return <div>
         <PageWithSubMenu subMenu={settingsMenu} title='Preferences' subtitle='Configure user preferences.'>
