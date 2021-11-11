@@ -16,6 +16,7 @@ packages:
       - GOOS=linux
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/openvsx-proxy/cmd.Version=commit-${__git_commit}'"]
   - name: lib
     type: go
     deps:
