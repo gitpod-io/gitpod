@@ -15,7 +15,6 @@ defaultVariant:
   config:
     go:
       lintCommand: ["sh", "-c", "gokart scan && golangci-lint run --disable govet,errcheck,typecheck,staticcheck --allow-parallel-runners --timeout 5m"]
-      buildCommand: ["go", "build", "-trimpath", "-ldflags='-buildid= -w -s'"]
 
 variants:
 - name: oss

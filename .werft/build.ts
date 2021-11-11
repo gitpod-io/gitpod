@@ -225,7 +225,7 @@ export async function build(context, version) {
                 continue
             }
             let flag = file.substring(0, file.length - "-coverage.out".length);
-            exec(`codecov -N "${parent_commit}" --flags=${flag} --file "${coverageOutput}/${file}"`);
+            exec(`codecov -N "${parent_commit}" --flags=${flag} --file "${coverageOutput}/${file}"`, {slice: "coverage"});
         }
 
         werft.done('coverage');
