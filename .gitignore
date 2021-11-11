@@ -16,6 +16,7 @@ lerna-debug.log
 .env
 .tmp
 .sass-cache
+.idea
 
 # build artifacts
 .terraform/
