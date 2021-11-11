@@ -154,8 +154,7 @@ spec:
             RAID_DEVICE="/dev/md42"
             RAID_DIR="/mnt/hostfs{{ $comp.hostWorkspaceArea }}"
             DISK_DEV_PREFIX="/dev/sd"
-            ls -l /dev/md*
-            cat /proc/mdstat
+
             # If the disk has already been created, sleep indefinitely
             if [ -b "${RAID_DEVICE}" ] && [ -d "${RAID_DIR}" ]; then
                 echo "raid array already created!"
