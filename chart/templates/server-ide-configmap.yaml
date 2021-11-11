@@ -28,6 +28,8 @@ code-latest: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp
 {{- define "desktop-ide-images-aliases"}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
+code-desktop: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktop)) }}
+code-desktop-insiders: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktopInsiders)) }}
 intellij: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
 goland: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
 {{ end }}

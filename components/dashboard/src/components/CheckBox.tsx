@@ -7,7 +7,7 @@
 
 function CheckBox(props: {
     name?: string,
-    title: string,
+    title: string | React.ReactNode,
     desc: string,
     checked: boolean,
     disabled?: boolean,

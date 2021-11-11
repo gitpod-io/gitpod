@@ -15,6 +15,7 @@ import Tooltip from "../components/Tooltip";
 import golandLogo from '../images/golandLogo.svg';
 import ideaLogo from '../images/intellijIdeaLogo.svg';
 import vscode from '../images/vscode.svg';
+import vscodeInsiders from '../images/vscodeInsiders.svg';
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
@@ -36,7 +37,7 @@ export default function Preferences() {
         setDefaultIde(value);
     }
 
-    const [defaultDesktopIde, setDefaultDesktopIde] = useState<string>(user?.additionalData?.ideSettings?.defaultDesktopIde || 'intellij');
+    const [defaultDesktopIde, setDefaultDesktopIde] = useState<string>(user?.additionalData?.ideSettings?.defaultDesktopIde || 'code-desktop');
     const actuallySetDefaultDesktopIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
         const settings = additionalData.ideSettings || {};
@@ -83,7 +84,7 @@ export default function Preferences() {
                 <Tooltip content={'Early access version, still subject to testing.'} >
                     <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code-latest'} onClick={() => actuallySetDefaultIde('code-latest')}>
                         <div className="flex justify-center mt-3">
-                            <img className="w-16 filter-grayscale self-center" src={vscode} />
+                            <img className="w-16 filter-grayscale self-center" src={vscodeInsiders} />
                         </div>
                         <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Insiders</PillLabel>
                     </SelectableCard>
@@ -91,27 +92,36 @@ export default function Preferences() {
             </div>
             <div className="mt-4 space-x-4 flex">
                 <CheckBox
-                    title="Open in Desktop IDE"
+                    title={<div>Open in Desktop IDE <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel></div>}
                     desc="Choose whether you would like to open your workspace in a desktop IDE instead."
                     checked={useDesktopIde}
                     onChange={(evt) => actuallySetUseDesktopIde(evt.target.checked)} />
             </div>
             {useDesktopIde && <>
                 <div className="mt-4 space-x-4 flex">
+                    <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultDesktopIde === 'code-desktop'} onClick={() => actuallySetDefaultDesktopIde('code-desktop')}>
+                        <div className="flex justify-center mt-3">
+                            <img className="w-16 filter-grayscale self-center" src={vscode} />
+                        </div>
+                    </SelectableCard>
+                    <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultDesktopIde === 'code-desktop-insiders'} onClick={() => actuallySetDefaultDesktopIde('code-desktop-insiders')}>
+                        <div className="flex justify-center mt-3">
+                            <img className="w-16 filter-grayscale self-center" src={vscodeInsiders} />
+                        </div>
+                        <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Insiders</PillLabel>
+                    </SelectableCard>
                     <SelectableCard className="w-36 h-40" title="IntelliJ IDEA" selected={defaultDesktopIde === 'intellij'} onClick={() => actuallySetDefaultDesktopIde('intellij')}>
                         <div className="flex justify-center mt-3">
                             <img className="w-16 filter-grayscale self-center" src={ideaLogo} />
                         </div>
-                        <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel>
                     </SelectableCard>
                     <SelectableCard className="w-36 h-40" title="GoLand" selected={defaultDesktopIde === 'goland'} onClick={() => actuallySetDefaultDesktopIde('goland')}>
                         <div className="flex justify-center mt-3">
                             <img className="w-16 filter-grayscale self-center" src={golandLogo} />
                         </div>
-                        <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel>
                     </SelectableCard>
                 </div>
-                <InfoBox className="my-5">While in beta, when you open a workspace using a JetBrains IDE you will need to use the following password: <CodeText>gitpod</CodeText></InfoBox>
+                <InfoBox className="my-5 max-w-2xl">While in beta, when you open a workspace using a JetBrains IDE you will need to use the following password: <CodeText>gitpod</CodeText></InfoBox>
                 <p className="text-left w-full text-gray-500">
                     The <strong>JetBrains desktop IDEs</strong> are currently in beta. <a href="https://github.com/gitpod-io/gitpod/issues/6576" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a> · <a href="https://www.gitpod.io/docs/integrations/jetbrains" target="_blank" rel="noopener" className="gp-link">Documentation</a>
                 </p>
