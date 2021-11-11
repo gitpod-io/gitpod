@@ -927,6 +927,11 @@ export class EnvironmentVariable extends jspb.Message {
     getValue(): string;
     setValue(value: string): EnvironmentVariable;
 
+    hasSecret(): boolean;
+    clearSecret(): void;
+    getSecret(): EnvironmentVariable.SecretKeyRef | undefined;
+    setSecret(value?: EnvironmentVariable.SecretKeyRef): EnvironmentVariable;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): EnvironmentVariable.AsObject;
     static toObject(includeInstance: boolean, msg: EnvironmentVariable): EnvironmentVariable.AsObject;
@@ -941,7 +946,33 @@ export namespace EnvironmentVariable {
     export type AsObject = {
         name: string,
         value: string,
+        secret?: EnvironmentVariable.SecretKeyRef.AsObject,
     }
+
+
+    export class SecretKeyRef extends jspb.Message {
+        getSecretName(): string;
+        setSecretName(value: string): SecretKeyRef;
+        getKey(): string;
+        setKey(value: string): SecretKeyRef;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): SecretKeyRef.AsObject;
+        static toObject(includeInstance: boolean, msg: SecretKeyRef): SecretKeyRef.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: SecretKeyRef, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): SecretKeyRef;
+        static deserializeBinaryFromReader(message: SecretKeyRef, reader: jspb.BinaryReader): SecretKeyRef;
+    }
+
+    export namespace SecretKeyRef {
+        export type AsObject = {
+            secretName: string,
+            key: string,
+        }
+    }
+
 }
 
 export class ExposedPorts extends jspb.Message {

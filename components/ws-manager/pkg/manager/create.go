@@ -577,15 +577,32 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	// User-defined env vars (i.e. those coming from the request)
 	if spec.Envvars != nil {
 		for _, e := range spec.Envvars {
-			if e.Name == "GITPOD_WORKSPACE_CONTEXT" || e.Name == "GITPOD_WORKSPACE_CONTEXT_URL" || e.Name == "GITPOD_TASKS" || e.Name == "GITPOD_RESOLVED_EXTENSIONS" || e.Name == "GITPOD_EXTERNAL_EXTENSIONS" || e.Name == "GITPOD_IDE_ALIAS" {
-				result = append(result, corev1.EnvVar{Name: e.Name, Value: e.Value})
-				continue
-			} else if strings.HasPrefix(e.Name, "GITPOD_") {
-				// we don't allow env vars starting with GITPOD_ and those that we do allow we've listed above
-				continue
+			switch e.Name {
+			case "GITPOD_WORKSPACE_CONTEXT",
+				"GITPOD_WORKSPACE_CONTEXT_URL",
+				"GITPOD_TASKS",
+				"GITPOD_RESOLVED_EXTENSIONS",
+				"GITPOD_EXTERNAL_EXTENSIONS",
+				"GITPOD_IDE_ALIAS":
+				// these variables are allowed - don't skip them
+			default:
+				if strings.HasPrefix(e.Name, "GITPOD_") {
+					// we don't allow env vars starting with GITPOD_ and those that we do allow we've listed above
+					continue
+				}
 			}
 
-			result = append(result, corev1.EnvVar{Name: e.Name, Value: e.Value})
+			env := corev1.EnvVar{Name: e.Name, Value: e.Value}
+			if len(e.Value) == 0 && e.Secret != nil {
+				env.ValueFrom = &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{Name: e.Secret.SecretName},
+						Key:                  e.Secret.Key,
+					},
+				}
+			}
+
+			result = append(result, env)
 		}
 	}
 
@@ -606,7 +623,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	// remove empty env vars
 	cleanResult := make([]corev1.EnvVar, 0)
 	for _, v := range result {
-		if v.Name == "" || v.Value == "" {
+		if v.Name == "" || (v.Value == "" && v.ValueFrom == nil) {
 			continue
 		}
 

@@ -536,8 +536,18 @@ message GitSpec {
 
 // EnvironmentVariable describes an env var as key/value pair
 message EnvironmentVariable {
+    message SecretKeyRef {
+        string secret_name = 1;
+        string key = 2;
+    }
+
     string name = 1;
     string value = 2;
+
+    // Pulls the value from a secret in the cluster.
+    // Use this field with great caution: if the name is wrong or Kubernetes cannot find the secret,
+    // your workspace will not start. Value takes precedence over this field.
+    SecretKeyRef secret = 3;
 }
 
 // WorkspaceType specifies the purpose/use of a workspace. Different workspace types are handled differently by all parts of the system.
