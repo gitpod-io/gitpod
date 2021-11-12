@@ -16,8 +16,10 @@ for i in $(find /tests/ -name "*.test" | sort -R); do
     TEST_STATUS=$?
     if [ "$TEST_STATUS" -ne "0" ]; then
         FAILURE_COUNT=$((FAILURE_COUNT+1))
+        echo "Test failed at $(date)"
+    else
+        echo "Test succeeded at $(date)"
     fi;
-    echo "Test completed at $(date)"
 done
 
 if [ "$FAILURE_COUNT" -ne "0" ]; then
@@ -26,4 +28,4 @@ if [ "$FAILURE_COUNT" -ne "0" ]; then
     exit $FAILURE_COUNT
 fi;
 
-echo "Test suite finished at $(date)"
+echo "Test suite ended with success at $(date)"
