@@ -8,7 +8,8 @@ FROM alpine:3.14
 RUN  apk upgrade --no-cache \
   && apk add --no-cache \
     ca-certificates \
-    coreutils
+    coreutils \
+    curl
 
 # convenience scripting tools
 RUN apk add --no-cache bash moreutils
