@@ -62,6 +62,56 @@ import { DBIdentity } from './typeorm/entity/db-identity';
         expect(members[0].primaryEmail).to.eq('tom@example.com');
     }
 
+    @test(timeout(15000))
+    public async findTeamWhenUserIsSoleOwner() {
+        const user = await this.userDb.newUser();
+        user.identities.push({ authProviderId: 'GitHub', authId: '2345', authName: 'Nana', primaryEmail: 'nana@example.com' });
+        await this.userDb.storeUser(user);
+
+        const ownTeam = await this.db.createTeam(user.id, 'My Own Team');
+
+        const teams = await this.db.findTeamsByUserAsSoleOwner(user.id);
+
+        expect(teams.length).to.eq(1);
+        expect(teams[0].id).to.eq(ownTeam.id);
+
+    }
+
+    @test(timeout(10000))
+    public async findTeamWhenUserIsSoleOwnerWithMembers() {
+        const user = await this.userDb.newUser();
+        user.identities.push({ authProviderId: 'GitHub', authId: '2345', authName: 'Nana', primaryEmail: 'nana@example.com' });
+        await this.userDb.storeUser(user);
+        const user2 = await this.userDb.newUser();
+        user2.identities.push({ authProviderId: 'GitLab', authId: '4567', authName: 'Dudu', primaryEmail: 'dudu@example.com' });
+        await this.userDb.storeUser(user2);
+
+        const ownTeam = await this.db.createTeam(user.id, 'My Own Team With Members');
+        await this.db.addMemberToTeam(user2.id, ownTeam.id);
+        const teams = await this.db.findTeamsByUserAsSoleOwner(user.id);
+
+        expect(teams.length).to.eq(1);
+        expect(teams[0].id).to.eq(ownTeam.id);
+
+    }
+
+    @test(timeout(10000))
+    public async findNoTeamWhenCoOwned() {
+        const user = await this.userDb.newUser();
+        user.identities.push({ authProviderId: 'GitHub', authId: '2345', authName: 'Nana', primaryEmail: 'nana@example.com' });
+        await this.userDb.storeUser(user);
+        const user2 = await this.userDb.newUser();
+        user2.identities.push({ authProviderId: 'GitLab', authId: '4567', authName: 'Dudu', primaryEmail: 'dudu@example.com' });
+        await this.userDb.storeUser(user2);
+
+        const jointTeam = await this.db.createTeam(user.id, 'Joint Team');
+        await this.db.addMemberToTeam(user2.id, jointTeam.id);
+        await this.db.setTeamMemberRole(user2.id, jointTeam.id, 'owner');
+
+        const teams = await this.db.findTeamsByUserAsSoleOwner(user.id);
+
+        expect(teams.length).to.eq(0);
+    }
 }
 
 module.exports = new TeamDBSpec()

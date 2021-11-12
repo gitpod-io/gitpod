@@ -103,7 +103,22 @@ export class TeamDBImpl implements TeamDB {
         const membershipRepo = await this.getMembershipRepo();
         const memberships = await membershipRepo.find({ userId, deleted: false });
         const teams = await teamRepo.findByIds(memberships.map(m => m.teamId));
-        return teams.filter(t => !t.deleted);
+        return teams.filter(t => !t.markedDeleted);
+    }
+
+    public async findTeamsByUserAsSoleOwner(userId: string): Promise<Team[]> {
+        // Find the memberships of this user,
+        // and among the memberships, get the teams where the user is the sole owner
+        const soleOwnedTeams = [];
+        const userTeams = await this.findTeamsByUser(userId);
+        for (const team of userTeams) {
+            const memberships = await this.findMembersByTeam(team.id);
+            const ownerships = memberships.filter(m => m.role === 'owner');
+            if (ownerships.length === 1 && ownerships[0].userId === userId) {
+                soleOwnedTeams.push(team);
+            }
+        }
+        return soleOwnedTeams;
     }
 
     public async createTeam(userId: string, name: string): Promise<Team> {
