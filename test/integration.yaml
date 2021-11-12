@@ -2,23 +2,29 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
     name: integration-svc
-    namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
     name: integration-role
-    namespace: default
 rules:
     - apiGroups:
         - ''
       resources:
         - 'pods'
         - 'secrets'
+        - 'services'
+        - 'configmaps'
       verbs:
         - 'list'
         - 'get'
-        - 'watch'
+    - apiGroups:
+        - ''
+      resources:
+        - 'pods/portforward'
+      verbs:
+        - 'create'
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -27,7 +33,6 @@ metadata:
 subjects:
     - kind: ServiceAccount
       name: integration-svc
-      namespace: default
 roleRef:
     kind: Role
     name: integration-role
