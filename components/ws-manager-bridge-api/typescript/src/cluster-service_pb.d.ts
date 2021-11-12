@@ -423,6 +423,8 @@ export namespace UpdateResponse {
 export class DeregisterRequest extends jspb.Message {
     getName(): string;
     setName(value: string): DeregisterRequest;
+    getForce(): boolean;
+    setForce(value: boolean): DeregisterRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeregisterRequest.AsObject;
@@ -437,6 +439,7 @@ export class DeregisterRequest extends jspb.Message {
 export namespace DeregisterRequest {
     export type AsObject = {
         name: string,
+        force: boolean,
     }
 }
 

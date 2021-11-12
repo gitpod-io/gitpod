@@ -3266,7 +3266,8 @@ proto.workspacemanagerbridge.DeregisterRequest.prototype.toObject = function(opt
  */
 proto.workspacemanagerbridge.DeregisterRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    name: jspb.Message.getFieldWithDefault(msg, 1, "")
+    name: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    force: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -3307,6 +3308,10 @@ proto.workspacemanagerbridge.DeregisterRequest.deserializeBinaryFromReader = fun
       var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
+    case 2:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setForce(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -3343,6 +3348,13 @@ proto.workspacemanagerbridge.DeregisterRequest.serializeBinaryToWriter = functio
       f
     );
   }
+  f = message.getForce();
+  if (f) {
+    writer.writeBool(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -3361,6 +3373,24 @@ proto.workspacemanagerbridge.DeregisterRequest.prototype.getName = function() {
  */
 proto.workspacemanagerbridge.DeregisterRequest.prototype.setName = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional bool force = 2;
+ * @return {boolean}
+ */
+proto.workspacemanagerbridge.DeregisterRequest.prototype.getForce = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.workspacemanagerbridge.DeregisterRequest} returns this
+ */
+proto.workspacemanagerbridge.DeregisterRequest.prototype.setForce = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 
