@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { UserDB, WorkspaceDB, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
+import { UserDB, WorkspaceDB, UserStorageResourcesDB, TeamDB, ProjectDB } from '@gitpod/gitpod-db/lib';
 import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -23,6 +23,7 @@ export class UserDeletionService {
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
     @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDb: UserStorageResourcesDB;
     @inject(TeamDB) protected readonly teamDb: TeamDB;
+    @inject(ProjectDB) protected readonly projectDb: ProjectDB;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
     @inject(WorkspaceManagerClientProvider) protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
@@ -74,8 +75,12 @@ export class UserDeletionService {
             this.userStorageResourcesDb.deleteAllForUser(user.id),
             // Bucket
             this.deleteUserBucket(id),
+            // Teams owned only by this user
+            this.deleteSoleOwnedTeams(id),
             // Team memberships
             this.deleteTeamMemberships(id),
+            // User projects
+            this.deleteUserProjects(id),
         ]);
 
         // Track the deletion Event for Analytics Purposes
@@ -138,6 +143,23 @@ export class UserDeletionService {
     protected async deleteTeamMemberships(userId: string) {
         const teams = await this.teamDb.findTeamsByUser(userId);
         await Promise.all(teams.map(t => this.teamDb.removeMemberFromTeam(userId, t.id)));
+    }
+
+    protected async deleteSoleOwnedTeams(userId: string) {
+        const ownedTeams = await this.teamDb.findTeamsByUserAsSoleOwner(userId);
+
+        for (const team of ownedTeams) {
+            const teamProjects = await this.projectDb.findTeamProjects(team.id);
+            await Promise.all(teamProjects.map(project => this.projectDb.markDeleted(project.id)));
+        }
+
+        await Promise.all(ownedTeams.map(t => this.teamDb.deleteTeam(t.id)));
+    }
+
+    protected async deleteUserProjects(id: string) {
+        const userProjects = await this.projectDb.findUserProjects(id);
+
+        await Promise.all(userProjects.map(project => this.projectDb.markDeleted(project.id)));
     }
 
     anonymizeWorkspace(ws: Workspace) {

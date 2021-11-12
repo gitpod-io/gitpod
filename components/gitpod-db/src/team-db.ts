@@ -11,6 +11,7 @@ export interface TeamDB {
     findTeamById(teamId: string): Promise<Team | undefined>;
     findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]>;
     findTeamsByUser(userId: string): Promise<Team[]>;
+    findTeamsByUserAsSoleOwner(userId: string): Promise<Team[]>;
     createTeam(userId: string, name: string): Promise<Team>;
     addMemberToTeam(userId: string, teamId: string): Promise<void>;
     setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void>;
