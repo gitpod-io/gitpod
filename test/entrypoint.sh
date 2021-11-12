@@ -17,9 +17,13 @@ for i in $(find /tests/ -name "*.test" | sort -R); do
     if [ "$TEST_STATUS" -ne "0" ]; then
         FAILURE_COUNT=$((FAILURE_COUNT+1))
     fi;
+    echo "Test completed at $(date)"
 done
 
 if [ "$FAILURE_COUNT" -ne "0" ]; then
     # exit with the number of test binaries that failed
+    echo "Test suite ended with failure at $(date)"
     exit $FAILURE_COUNT
 fi;
+
+echo "Test suite finished at $(date)"
