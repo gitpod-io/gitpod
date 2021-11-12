@@ -15,6 +15,10 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager-bridge/api"
 )
 
+var clustersDeregisterOpts struct {
+	Force bool
+}
+
 // clustersDeregisterCmd represents the clustersDeregisterCmd command
 var clustersDeregisterCmd = &cobra.Command{
 	Use:   "deregister --name [cluster name]",
@@ -31,7 +35,7 @@ var clustersDeregisterCmd = &cobra.Command{
 		defer conn.Close()
 
 		name := getClusterName()
-		_, err = client.Deregister(ctx, &api.DeregisterRequest{Name: name})
+		_, err = client.Deregister(ctx, &api.DeregisterRequest{Name: name, Force: clustersDeregisterOpts.Force})
 		if err != nil && err != io.EOF {
 			log.Fatal(err)
 		}
@@ -42,4 +46,5 @@ var clustersDeregisterCmd = &cobra.Command{
 
 func init() {
 	clustersCmd.AddCommand(clustersDeregisterCmd)
+	clustersDeregisterCmd.Flags().BoolVar(&clustersDeregisterOpts.Force, "force", false, "⚠️💥 force cluster deregistration even if there are still instances running. Use with great caution: this will break people's experience.")
 }

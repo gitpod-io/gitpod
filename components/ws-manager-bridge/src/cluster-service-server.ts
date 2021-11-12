@@ -240,7 +240,8 @@ export class ClusterService implements IClusterServiceServer {
 
                 const instances = await this.workspaceDB.findRegularRunningInstances();
                 const relevantInstances = instances.filter(i => i.region === req.name);
-                if (relevantInstances.length > 0) {
+                if (!req.force && relevantInstances.length > 0) {
+                    log.info({}, "forced cluster deregistration even though there are still instances running", {cluster: req.name});
                     throw new GRPCError(grpc.status.FAILED_PRECONDITION, `cluster is not empty (${relevantInstances.length} instances remaining)`);
                 }
 

@@ -107,6 +107,7 @@ message UpdateResponse {}
 
 message DeregisterRequest {
   string name = 1;
+  bool force = 2;
 }
 
 message DeregisterResponse {}
