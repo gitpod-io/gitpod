@@ -32,11 +32,25 @@ Example command:
 werft job run github -j .werft/run-integration-tests.yaml -a namespace=staging-gpl-2658-int-tests -a version=gpl-2658-int-tests.57 -f
 ```
 
-### Manually against a Kubernetes cluster
+### Manually
 
-You may want to run tests to assert whether your Gitpod installation is successfully integrated.
+You may want to run tests to assert whether a Gitpod installation is successfully integrated.
 
-To test your Gitpod installation:
+#### Using a pod
+
+This approach is best for when you want to validate a deployed environment.
+
+1. Create a service account, role, and role-binding for integration testing.
+   * [`kubectl apply -f ./integration.yaml`](./integration.yaml)
+2. Run a pod to execute the tests like so:
+
+  ```bash
+  kubectl run --image=eu.gcr.io/gitpod-core-dev/build/integration-tests:main.1826 -it integ-tests --serviceaccount=integration-svc -- /bin/sh
+  ```
+
+#### Go test
+
+This approach is best for when you're actively developing Gitpod.
 
 1. Set your kubectl context to the cluster you want to test
 2. Integrate the Gitpod installation with OAuth for Github and/or Gitlab, otherwise related tests may fail
