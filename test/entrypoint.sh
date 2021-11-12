@@ -15,7 +15,7 @@ for i in $(find /tests/ -name "*.test" | sort -R); do
     "$i" "$@";
     TEST_STATUS=$?
     if [ "$TEST_STATUS" -ne "0" ]; then
-        FAILURE_COUNT=$FAILURE_COUNT+1
+        FAILURE_COUNT=$((FAILURE_COUNT+1))
     fi;
 done
 
