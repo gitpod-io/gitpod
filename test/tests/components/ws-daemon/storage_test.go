@@ -23,6 +23,7 @@ func TestCreateBucket(t *testing.T) {
 		Assess("it should create a bucket", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
+			t.Logf("Starting TestCreateBucket")
 
 			rsa, closer, err := integration.Instrument(integration.ComponentWorkspaceDaemon, "daemon", cfg.Namespace(), cfg.Client(),
 				integration.WithWorkspacekitLift(false),
@@ -32,6 +33,7 @@ func TestCreateBucket(t *testing.T) {
 				t.Fatal(err)
 			}
 			integration.DeferCloser(t, closer)
+			t.Logf("Closer deferred")
 
 			var resp agent.CreateBucketResponse
 			err = rsa.Call("DaemonAgent.CreateBucket", agent.CreateBucketRequest{
