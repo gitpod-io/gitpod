@@ -33,7 +33,8 @@ const (
 var (
 	workspaces = []WorkspaceInfo{
 		{
-			IDEImage: "gitpod-io/ide:latest",
+			IDEImage:        "gitpod-io/ide:latest",
+			SupervisorImage: "gitpod-io/supervisor:latest",
 			Auth: &api.WorkspaceAuthentication{
 				Admission:  api.AdmissionLevel_ADMIT_OWNER_ONLY,
 				OwnerToken: "owner-token",
@@ -72,9 +73,8 @@ var (
 			Scheme: "http",
 		},
 		WorkspacePodConfig: &WorkspacePodConfig{
-			TheiaPort:       workspacePort,
-			SupervisorPort:  supervisorPort,
-			SupervisorImage: "gitpod-io/supervisor:latest",
+			TheiaPort:      workspacePort,
+			SupervisorPort: supervisorPort,
 		},
 		BuiltinPages: BuiltinPagesConfig{
 			Location: "../../public",
@@ -203,7 +203,6 @@ func TestRoutes(t *testing.T) {
 		Desc        string
 		Config      *Config
 		Request     *http.Request
-		Workspaces  []WorkspaceInfo
 		Router      RouterFactory
 		Targets     *Targets
 		IgnoreBody  bool

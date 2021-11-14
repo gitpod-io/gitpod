@@ -49,7 +49,8 @@ type WorkspaceInfo struct {
 	InstanceID  string
 	URL         string
 
-	IDEImage string
+	IDEImage        string
+	SupervisorImage string
 
 	// (parsed from URL)
 	IDEPublicPort string
@@ -148,15 +149,16 @@ func mapPodToWorkspaceInfo(pod *corev1.Pod) *WorkspaceInfo {
 	workspaceURL := pod.Annotations[kubernetes.WorkspaceURLAnnotation]
 
 	return &WorkspaceInfo{
-		WorkspaceID:   pod.Labels[kubernetes.MetaIDLabel],
-		InstanceID:    pod.Labels[kubernetes.WorkspaceIDLabel],
-		URL:           workspaceURL,
-		IDEImage:      imageSpec.IdeRef,
-		IDEPublicPort: getPortStr(workspaceURL),
-		IPAddress:     pod.Status.PodIP,
-		Ports:         extractExposedPorts(pod).Ports,
-		Auth:          &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ownerToken},
-		StartedAt:     pod.CreationTimestamp.Time,
+		WorkspaceID:     pod.Labels[kubernetes.MetaIDLabel],
+		InstanceID:      pod.Labels[kubernetes.WorkspaceIDLabel],
+		URL:             workspaceURL,
+		IDEImage:        imageSpec.IdeRef,
+		IDEPublicPort:   getPortStr(workspaceURL),
+		SupervisorImage: imageSpec.SupervisorRef,
+		IPAddress:       pod.Status.PodIP,
+		Ports:           extractExposedPorts(pod).Ports,
+		Auth:            &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ownerToken},
+		StartedAt:       pod.CreationTimestamp.Time,
 	}
 }
 
