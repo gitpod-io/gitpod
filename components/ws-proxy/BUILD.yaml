@@ -51,3 +51,6 @@ packages:
       - GOOS=linux
     config:
       packaging: library
+      # it's already tested in :app and running both tests for :app and :lib in
+      # parallel leads to port already in use errors
+      dontTest: true

@@ -163,6 +163,7 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("SupervisorIDEHostHandler"))
+	r.Use(ir.workspaceMustExistHandler)
 	// strip the frontend prefix, just for good measure
 	r.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
@@ -171,17 +172,27 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 		})
 	})
 	// always hit the blobserver to ensure that blob is downloaded
-	r.NewRoute().HandlerFunc(proxyPass(ir.Config, ir.InfoProvider, func(cfg *Config, _ WorkspaceInfoProvider, req *http.Request) (*url.URL, error) {
-		return resolveSupervisorURL(cfg), nil
+	r.NewRoute().HandlerFunc(proxyPass(ir.Config, ir.InfoProvider, func(cfg *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (*url.URL, error) {
+		info := getWorkspaceInfoFromContext(req.Context())
+		return resolveSupervisorURL(cfg, info, req)
 	}, func(h *proxyPassConfig) {
 		h.Transport = &blobserveTransport{
 			transport: h.Transport,
 			Config:    ir.Config.Config,
 			resolveImage: func(t *blobserveTransport, req *http.Request) string {
-				var (
-					image = ir.Config.Config.WorkspacePodConfig.SupervisorImage
-					path  = strings.TrimPrefix(req.URL.Path, "/"+image)
-				)
+				info := getWorkspaceInfoFromContext(req.Context())
+				if info == nil && len(ir.Config.Config.WorkspacePodConfig.SupervisorImage) == 0 {
+					// no workspace information available - cannot resolve supervisor image
+					return ""
+				}
+
+				// use the config value for backwards compatibility when info.SupervisorImage is not set
+				image := ir.Config.Config.WorkspacePodConfig.SupervisorImage
+				if info != nil && len(info.SupervisorImage) > 0 {
+					image = info.SupervisorImage
+				}
+
+				path := strings.TrimPrefix(req.URL.Path, "/"+image)
 				if path == "/worker-proxy.js" {
 					// worker must be served from the same origin
 					return ""
@@ -192,12 +203,23 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 	}))
 }
 
-func resolveSupervisorURL(cfg *Config) *url.URL {
+func resolveSupervisorURL(cfg *Config, info *WorkspaceInfo, req *http.Request) (*url.URL, error) {
+	if info == nil && len(cfg.WorkspacePodConfig.SupervisorImage) == 0 {
+		log.WithFields(log.OWI("", getWorkspaceCoords(req).ID, "")).Warn("no workspace info available - cannot resolve supervisor route")
+		return nil, xerrors.Errorf("no workspace information available - cannot resolve supervisor route")
+	}
+
+	// use the config value for backwards compatibility when info.SupervisorImage is not set
+	supervisorImage := cfg.WorkspacePodConfig.SupervisorImage
+	if info != nil && len(info.SupervisorImage) > 0 {
+		supervisorImage = info.SupervisorImage
+	}
+
 	var dst url.URL
 	dst.Scheme = cfg.BlobServer.Scheme
 	dst.Host = cfg.BlobServer.Host
-	dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
-	return &dst
+	dst.Path = "/" + supervisorImage
+	return &dst, nil
 }
 
 type BlobserveInlineVars struct {
@@ -234,8 +256,13 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 				// but it has to know exposed URLs in the context of current workspace cluster
 				// so first we ask blobserve to preload the supervisor image
 				// and if it is successful we pass exposed URLs to IDE and supervisor to blobserve for inlining
-				supervisorURL := resolveSupervisorURL(t.Config).String() + "/main.js"
-				preloadSupervisorReq, err := http.NewRequest("GET", supervisorURL, nil)
+				supervisorURL, err := resolveSupervisorURL(t.Config, info, req)
+				if err != nil {
+					log.WithError(err).Error("could not preload supervisor")
+					return image
+				}
+				supervisorURLString := supervisorURL.String() + "/main.js"
+				preloadSupervisorReq, err := http.NewRequest("GET", supervisorURLString, nil)
 				if err != nil {
 					log.WithField("supervisorURL", supervisorURL).WithError(err).Error("could not preload supervisor")
 					return image
@@ -251,9 +278,15 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 					return image
 				}
 
+				// use the config value for backwards compatibility when info.SupervisorImage is not set
+				supervisorImage := t.Config.WorkspacePodConfig.SupervisorImage
+				if len(info.SupervisorImage) > 0 {
+					supervisorImage = info.SupervisorImage
+				}
+
 				inlineVars := &BlobserveInlineVars{
 					IDE:             t.asBlobserveURL(image, ""),
-					SupervisorImage: t.asBlobserveURL(t.Config.WorkspacePodConfig.SupervisorImage, ""),
+					SupervisorImage: t.asBlobserveURL(supervisorImage, ""),
 				}
 				inlinveVarsValue, err := json.Marshal(inlineVars)
 				if err != nil {
