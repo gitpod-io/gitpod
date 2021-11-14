@@ -4,6 +4,11 @@
 
 package common
 
+import (
+	"crypto/rand"
+	"math/big"
+)
+
 // ClusterType is the type of cluster to be created e.g. k3s, gke etc
 type ClusterType string
 
@@ -14,6 +19,8 @@ const (
 	ClusterTypeK3s ClusterType = "k3s"
 	// DefaultRetryAttempts is the default value of retry attempts
 	DefaultRetryAttempts = 2
+	// TokenCharset contains characters that can be used to create a random token
+	TokenCharset = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 // MetaCluster represents a meta cluster
@@ -45,4 +52,20 @@ type Overrides struct {
 	OverwriteExisting bool
 	// RetryAttempt is used to specify maximum retry attempts that can be made if error occurs
 	RetryAttempt int
+}
+
+func stringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			panic(err)
+		}
+		b[i] = charset[num.Uint64()]
+	}
+	return string(b)
+}
+
+func CreateRandomTokenString(length int) string {
+	return stringWithCharset(length, TokenCharset)
 }

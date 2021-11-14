@@ -26,6 +26,19 @@ func InstallGitpod(context *common.Context, cluster *common.WorkspaceCluster) er
 		log.Log.Infof("dry run not supported for gitpod installation. skipping...")
 		return nil
 	}
+	if cluster.ClusterType == common.ClusterTypeGKE {
+		return installGitpodOnGKECluster(context, cluster)
+	} else {
+		return installGitpodOnK3sCluster(context, cluster)
+	}
+}
+
+func installGitpodOnK3sCluster(context *common.Context, cluster *common.WorkspaceCluster) error {
+	log.Infof("gitpod installation on k3s not supported yet")
+	return nil
+}
+
+func installGitpodOnGKECluster(context *common.Context, cluster *common.WorkspaceCluster) error {
 	credFileEnvVar := fmt.Sprintf("GOOGLE_APPLICATION_CREDENTIALS=%s", context.Project.GCPSACredFile)
 	if _, err := os.Stat(context.Project.GCPSACredFile); errors.Is(err, os.ErrNotExist) {
 		// reset this to empty string so that we can fallback to default
