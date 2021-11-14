@@ -95,7 +95,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: v1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				Replicas: pointer.Int32(1),
+				Replicas: common.Replicas(ctx),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{

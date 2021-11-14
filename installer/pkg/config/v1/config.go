@@ -200,6 +200,10 @@ type WorkspaceRuntime struct {
 	ContainerDSocket     string        `json:"containerdSocket" validate:"required,startswith=/"`
 }
 
+type Replicas struct {
+	Default *int32 `json:"default"`
+}
+
 type WorkspaceTemplates struct {
 	Default    *corev1.Pod `json:"default"`
 	Prebuild   *corev1.Pod `json:"prebuild"`
@@ -210,6 +214,7 @@ type WorkspaceTemplates struct {
 }
 
 type Workspace struct {
+	Replicas  *Replicas           `json:"replicas"`
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
 	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`

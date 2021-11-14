@@ -35,8 +35,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				// todo(sje): receive config value
-				Replicas: pointer.Int32(1),
+				Replicas: common.Replicas(ctx),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      Component,

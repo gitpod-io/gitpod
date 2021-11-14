@@ -509,3 +509,17 @@ func RandomString(length int) (string, error) {
 	}
 	return string(b), nil
 }
+
+func Replicas(ctx *RenderContext) *int32 {
+	var defaultReplicas *int32
+
+	// Get the default replicas
+	if ctx.Config.Workspace.Replicas != nil && ctx.Config.Workspace.Replicas.Default != nil {
+		defaultReplicas = ctx.Config.Workspace.Replicas.Default
+	} else {
+		// Not set - default to 2
+		defaultReplicas = pointer.Int32(2)
+	}
+
+	return defaultReplicas
+}

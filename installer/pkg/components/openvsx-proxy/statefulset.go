@@ -38,8 +38,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MatchLabels: labels,
 			},
 			ServiceName: Component,
-			// todo(sje): receive config value
-			Replicas: pointer.Int32(1),
+			Replicas:    common.Replicas(ctx),
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      Component,
