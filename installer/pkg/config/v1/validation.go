@@ -87,5 +87,10 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("credentials.json", "encryptionKeys", "password", "username")))
 	}
 
+	if cfg.Database.External != nil {
+		secretName := cfg.Database.External.Certificate.Name
+		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("encryptionKeys", "host", "password", "port", "username")))
+	}
+
 	return res
 }
