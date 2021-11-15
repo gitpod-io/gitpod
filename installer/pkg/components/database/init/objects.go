@@ -2,12 +2,14 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package cloudsql
+package init
 
-const (
-	Component    = "cloudsqlproxy"
-	ImageRepo    = "b.gcr.io/cloudsql-docker"
-	ImageName    = "gce-proxy"
-	ImageVersion = "1.11"
-	Port         = 3306
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
+
+var Objects = common.CompositeRenderFunc(
+	configmap,
+	job,
+	common.DefaultServiceAccount(Component),
 )

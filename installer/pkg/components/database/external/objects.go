@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package cloudsql
+package external
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -10,13 +10,5 @@ import (
 )
 
 var Objects = common.CompositeRenderFunc(
-	deployment,
 	dbinit.Objects,
-	common.DefaultServiceAccount(Component),
-	common.GenerateService(Component, map[string]common.ServicePort{
-		Component: {
-			ContainerPort: Port,
-			ServicePort:   Port,
-		},
-	}),
 )

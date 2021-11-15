@@ -4,7 +4,7 @@
 
 // This runs the init scripts in a non-inCluster DB instance
 
-package cloudsql
+package init
 
 import (
 	"fmt"
@@ -35,9 +35,9 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 					ServiceAccountName: Component,
 					EnableServiceLinks: pointer.Bool(false),
 					Volumes: []corev1.Volume{{
-						Name: SQLInitScripts,
+						Name: sqlInitScripts,
 						VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{Name: SQLInitScripts},
+							LocalObjectReference: corev1.LocalObjectReference{Name: sqlInitScripts},
 						}},
 					}},
 					// The init container is designed to emulate Helm hooks
@@ -55,7 +55,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 							"mysql -h $DB_HOST --port $DB_PORT -u $DB_USERNAME -p$DB_PASSWORD < /db-init-scripts/init.sql",
 						},
 						VolumeMounts: []corev1.VolumeMount{{
-							Name:      SQLInitScripts,
+							Name:      sqlInitScripts,
 							MountPath: "/db-init-scripts",
 							ReadOnly:  true,
 						}},
