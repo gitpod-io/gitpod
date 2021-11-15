@@ -90,27 +90,24 @@ export default function NewProject() {
         }
         (async () => {
             updateOrgsState();
-            const repos = await updateReposInAccounts();
-            const first = repos[0];
-            if (first) {
-                setSelectedAccount(first.account);
-            }
-            setLoaded(true);
+            await updateReposInAccounts();
         })();
     }, [provider]);
 
     const isGitHub = () => provider === "github.com";
 
     const updateReposInAccounts = async (installationId?: string) => {
+        setLoaded(false);
+        setReposInAccounts([]);
         if (!provider) {
             return [];
         }
         try {
             const repos = await getGitpodService().server.getProviderRepositoriesForUser({ provider, hints: { installationId } });
             setReposInAccounts(repos);
+            setLoaded(true);
             return repos;
         } catch (error) {
-            setReposInAccounts([]);
             console.log(error);
         }
         return [];
@@ -318,7 +315,7 @@ export default function NewProject() {
         </>
         );
 
-        const renderEmptyState = () => (<div>
+        const renderLoadingState = () => (<div>
             <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
                 <div>
                     <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
@@ -339,7 +336,7 @@ export default function NewProject() {
         }
 
         if (!loaded) {
-            return renderEmptyState();
+            return renderLoadingState();
         }
 
         if (showGitProviders) {
