@@ -513,7 +513,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
         try {
             const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
-            await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+            if (workspace.type === 'prebuild') {
+                // If this is a team prebuild, any team member can stop it.
+                const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+                await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers }, "get");
+            } else {
+                // If this is not a prebuild, or it's a personal prebuild, only the workspace owner can stop it.
+                await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+            }
 
             this.internalStopWorkspace({ span }, workspace).catch(err => {
                 log.error(logCtx, "stopWorkspace error: ", err);
@@ -538,7 +545,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         // that is logged in).
         // The guard check happens in guardAdminAccess(...) for admin users.
         if (!admin) {
-            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
+            if (workspace.type === 'prebuild') {
+                // If this is a team prebuild, any team member can stop it.
+                const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+                await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace, teamMembers }, "update");
+            } else {
+                // If this is not a prebuild, or it's a personal prebuild, only the workspace owner can stop it.
+                await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
+            }
         }
         await this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, policy);
     }

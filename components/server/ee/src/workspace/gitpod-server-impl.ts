@@ -1597,7 +1597,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Prebuild not found");
         }
         // Explicitly stopping the prebuild workspace now automaticaly cancels the prebuild
-        // TODO(janx): Make access guards compatible with teams
         await this.stopWorkspace(prebuild.buildWorkspaceId);
     }
 
