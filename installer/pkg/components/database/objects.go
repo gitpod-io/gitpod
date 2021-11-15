@@ -7,6 +7,7 @@ package database
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database/cloudsql"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/database/external"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database/incluster"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
@@ -14,6 +15,10 @@ import (
 
 func cloudSqlEnabled(cfg *common.RenderContext) bool {
 	return !pointer.BoolDeref(cfg.Config.Database.InCluster, false) && cfg.Config.Database.CloudSQL != nil
+}
+
+func externalEnabled(cfg *common.RenderContext) bool {
+	return !pointer.BoolDeref(cfg.Config.Database.InCluster, false) && cfg.Config.Database.External != nil
 }
 
 func inClusterEnabled(cfg *common.RenderContext) bool {
@@ -27,6 +32,9 @@ var Objects = common.CompositeRenderFunc(
 		}
 		if cloudSqlEnabled(cfg) {
 			return cloudsql.Objects(cfg)
+		}
+		if externalEnabled(cfg) {
+			return external.Objects(cfg)
 		}
 		return nil, nil
 	}),

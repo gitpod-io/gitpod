@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package cloudsql
+package init
 
 import (
 	"embed"
@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-//go:embed init/*.sql
+//go:embed files/*.sql
 var initScriptFiles embed.FS
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -42,7 +42,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      SQLInitScripts,
+				Name:      sqlInitScripts,
 				Namespace: ctx.Namespace,
 				Labels:    common.DefaultLabels(Component),
 			},
