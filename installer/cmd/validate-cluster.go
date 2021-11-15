@@ -55,6 +55,18 @@ var validateClusterCmd = &cobra.Command{
 				return err
 			}
 
+			// Update the status
+			switch res.Status {
+			case cluster.ValidationStatusError:
+				// Always change the status if error
+				result.Status = cluster.ValidationStatusError
+			case cluster.ValidationStatusWarning:
+				// Only put to warning if status is ok
+				if result.Status == cluster.ValidationStatusOk {
+					result.Status = cluster.ValidationStatusWarning
+				}
+			}
+
 			result.Items = append(result.Items, res.Items...)
 		}
 
