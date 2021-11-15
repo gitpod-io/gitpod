@@ -77,5 +77,15 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("service-account.json")))
 	}
 
+	if cfg.ContainerRegistry.External != nil {
+		secretName := cfg.ContainerRegistry.External.Certificate.Name
+		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData(".dockerconfigjson")))
+	}
+
+	if cfg.Database.CloudSQL != nil {
+		secretName := cfg.Database.CloudSQL.ServiceAccount.Name
+		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("credentials.json", "encryptionKeys", "password", "username")))
+	}
+
 	return res
 }
