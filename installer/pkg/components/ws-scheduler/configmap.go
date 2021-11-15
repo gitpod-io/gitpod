@@ -83,6 +83,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			WorkspaceImage:     common.ImageName("", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
 			IDEImage:           common.ImageName(ctx.Config.Repository, workspace.IDEImageRepo, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
+			SupervisorImage:    common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			FeatureFlags:       nil,
 			MaxGhostWorkspaces: 10,
 			SchedulerInterval:  util.Duration(time.Second * 5),

@@ -50,7 +50,8 @@ data:
                     }
                 },
                 "workspaceImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}",
-                "ideImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}",
+                "ideImage": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}:{{ .Values.components.workspace.codeImage.stableVersion }}",
+                "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}",
                 "maxGhostWorkspaces": {{ $comp.scaler.maxGhostWorkspaces | default 0 }},
                 "schedulerInterval": "{{ $comp.scaler.schedulerInterval | default "5s" }}",
                 "renewal": {
