@@ -22,7 +22,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.intellij
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/code-with-me/remote-dev/ideaIU-213.4958.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/ideaIU-213.5744.18.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
       image:
         - ${imageRepoBase}/ide/intellij:${version}
@@ -44,7 +44,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.goland
       buildArgs:
-        JETBRAINS_BACKEND_URL: ${GOLAND_BACKEND_URL}
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-213.5744.26.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
       image:
         - ${imageRepoBase}/ide/goland:${version}
