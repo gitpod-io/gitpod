@@ -18,6 +18,7 @@ interface RawIDEConfig {
     ideImageRepo: string;
     ideImageAliases?: { [index: string]: string };
     desktopIdeImageAliases?: { [index: string]: string };
+    supervisorImage: string;
 }
 const scheme = {
     "type": "object",
@@ -36,10 +37,14 @@ const scheme = {
             "type": "object",
             "additionalProperties": { "type": "string" }
         },
+        "supervisorImage": {
+            "type": "string"
+        },
     },
     "required": [
         "ideVersion",
-        "ideImageRepo"
+        "ideImageRepo",
+        "supervisorImage",
     ]
 };
 
@@ -49,6 +54,7 @@ export interface IDEConfig {
     ideImageAliases: { [index: string]: string };
     desktopIdeImageAliases: { [index: string]: string };
     ideImage: string;
+    supervisorImage: string;
 }
 
 @injectable()
@@ -120,7 +126,7 @@ export class IDEConfigService {
                     },
                     desktopIdeImageAliases: {
                         ...raw.desktopIdeImageAliases
-                    }
+                    },
                 }
             }
 

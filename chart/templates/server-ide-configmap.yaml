@@ -48,6 +48,7 @@ data:
         "ideVersion": "{{ .Values.components.workspace.codeImage.stableVersion }}",
         "ideImageRepo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}",
         "ideImageAliases": {{ (include "ide-images-aliases" (dict "root" . "gp" $.Values)) | fromYaml | toJson }},
-        "desktopIdeImageAliases": {{ (include "desktop-ide-images-aliases" (dict "root" . "gp" $.Values)) | fromYaml | toJson }}
+        "desktopIdeImageAliases": {{ (include "desktop-ide-images-aliases" (dict "root" . "gp" $.Values)) | fromYaml | toJson }},
+        "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}"
     }
 {{- end }}
