@@ -22,6 +22,12 @@ func NewProxy(host *url.URL, aliases map[string]Repo) (*Proxy, error) {
 	if host.Host == "" || host.Scheme == "" {
 		return nil, fmt.Errorf("host Host or Scheme are missing")
 	}
+	for k, v := range aliases {
+		// We need to translate the default hosts for the Docker registry.
+		// If we don't do this, pulling from docker.io will fail.
+		v.Host, _ = docker.DefaultHost(v.Host)
+		aliases[k] = v
+	}
 	return &Proxy{
 		Host:    *host,
 		Aliases: aliases,
