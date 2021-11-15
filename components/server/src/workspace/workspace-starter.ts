@@ -309,6 +309,7 @@ export class WorkspaceStarter {
         const configuration: WorkspaceInstanceConfiguration = {
             theiaVersion: ideConfig.ideVersion,
             ideImage: ideConfig.ideImage,
+            supervisorImage: ideConfig.supervisorImage,
         };
 
         const ideChoice = user.additionalData?.ideSettings?.defaultIde;
@@ -747,6 +748,7 @@ export class WorkspaceStarter {
         const startWorkspaceSpecIDEImage = new IDEImage();
         startWorkspaceSpecIDEImage.setWebRef(ideImage);
         startWorkspaceSpecIDEImage.setDesktopRef(instance.configuration?.desktopIdeImage || "");
+        startWorkspaceSpecIDEImage.setSupervisorRef(instance.configuration?.supervisorImage || "");
         spec.setIdeImage(startWorkspaceSpecIDEImage);
         spec.setDeprecatedIdeImage(ideImage);
         spec.setWorkspaceImage(instance.workspaceImage);

@@ -209,4 +209,7 @@ export interface WorkspaceInstanceConfiguration {
 
     // desktopIdeImage is the ref of the desktop IDE image this instance uses.
     desktopIdeImage?: string
+
+    // supervisorImage is the ref of the supervisor image this instance uses.
+    supervisorImage?: string;
 }
