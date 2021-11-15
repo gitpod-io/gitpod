@@ -34,11 +34,12 @@ const (
 
 // WorkspaceManagerPrescaleDriverConfig configures a ws-manager based prescale driver
 type WorkspaceManagerPrescaleDriverConfig struct {
-	WsManager      WorkspaceManagerConfig     `json:"wsman"`
-	GhostOwner     string                     `json:"ghostOwner"`
-	WorkspaceImage string                     `json:"workspaceImage"`
-	IDEImage       string                     `json:"ideImage"`
-	FeatureFlags   []api.WorkspaceFeatureFlag `json:"featureFlags"`
+	WsManager       WorkspaceManagerConfig     `json:"wsman"`
+	GhostOwner      string                     `json:"ghostOwner"`
+	WorkspaceImage  string                     `json:"workspaceImage"`
+	IDEImage        string                     `json:"ideImage"`
+	SupervisorImage string                     `json:"supervisorImage"`
+	FeatureFlags    []api.WorkspaceFeatureFlag `json:"featureFlags"`
 
 	MaxGhostWorkspaces int           `json:"maxGhostWorkspaces"`
 	SchedulerInterval  util.Duration `json:"schedulerInterval"`
@@ -291,7 +292,8 @@ func (wspd *WorkspaceManagerPrescaleDriver) startGhostWorkspaces(ctx context.Con
 				},
 				DeprecatedIdeImage: wspd.Config.IDEImage,
 				IdeImage: &api.IDEImage{
-					WebRef: wspd.Config.IDEImage,
+					WebRef:        wspd.Config.IDEImage,
+					SupervisorRef: wspd.Config.SupervisorImage,
 				},
 				Initializer: &csapi.WorkspaceInitializer{
 					Spec: &csapi.WorkspaceInitializer_Empty{
