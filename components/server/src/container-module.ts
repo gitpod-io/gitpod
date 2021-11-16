@@ -45,7 +45,7 @@ import { ImageSourceProvider } from './workspace/image-source-provider';
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { TokenGarbageCollector } from './user/token-garbage-collector';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
-import { WebsocketConnectionManager } from './websocket-connection-manager';
+import { WebsocketConnectionManager } from './websocket/websocket-connection-manager';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodServer, GitpodClient } from '@gitpod/gitpod-protocol';
 import { HostContainerMapping } from './auth/host-container-mapping';
