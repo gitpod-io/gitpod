@@ -358,6 +358,13 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 		return nil, err
 	}
 
+	// now that we've moved the mount (which we've done with OPEN_TREE_CLONE), we'll
+	// need to unmount the mask mounts again to not leave them dangling.
+	var masks []string
+	masks = append(masks, procDefaultMaskedPaths...)
+	masks = append(masks, procDefaultReadonlyPaths...)
+	cleanupMaskedMount(wbs.Session.OWI(), nodeStaging, masks)
+
 	return &api.MountProcResponse{}, nil
 }
 
@@ -571,6 +578,8 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 		return nil, err
 	}
 
+	cleanupMaskedMount(wbs.Session.OWI(), nodeStaging, sysfsDefaultMaskedPaths)
+
 	return &api.MountProcResponse{}, nil
 }
 
@@ -592,6 +601,38 @@ func moveMount(instanceID string, targetPid int, source, target string) error {
 		return xerrors.Errorf("cannot move mount: %w", err)
 	}
 	return nil
+}
+
+// cleanupMaskedMount will unmount and remove the paths joined with the basedir.
+// Errors are logged instead of returned.
+// This is useful for when we've moved the mount (which we've done with OPEN_TREE_CLONE), we'll
+// need to unmount the mask mounts again to not leave them dangling.
+func cleanupMaskedMount(owi map[string]interface{}, base string, paths []string) {
+	for _, mask := range paths {
+		// Note: if errors happen while unmounting or removing the masks this does not mean
+		//       that the final unmount won't happen. I.e. we can ignore those errors here
+		//       because they would not be actionable anyways. Only if the final removal or
+		//       unmount fails did we leak a mount.
+
+		fn := filepath.Join(base, mask)
+		err := unix.Unmount(fn, 0)
+		if err != nil {
+			continue
+		}
+		_ = os.RemoveAll(fn)
+	}
+
+	err := unix.Unmount(base, 0)
+	if err != nil {
+		log.WithError(err).WithField("fn", base).WithFields(owi).Warn("cannot unmount dangling base mount")
+		return
+	}
+
+	err = os.RemoveAll(base)
+	if err != nil {
+		log.WithError(err).WithField("fn", base).WithFields(owi).Warn("cannot remove dangling base mount")
+		return
+	}
 }
 
 type nsinsiderOpts struct {
