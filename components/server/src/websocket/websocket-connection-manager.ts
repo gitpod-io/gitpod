@@ -12,13 +12,13 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EventEmitter } from "events";
 import * as express from "express";
 import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "vscode-jsonrpc";
-import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "./auth/function-access";
-import { HostContextProvider } from "./auth/host-context-provider";
-import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "./auth/rate-limiter";
-import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, TeamMemberResourceGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "./auth/resource-access";
-import { takeFirst } from "./express-util";
-import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "./prometheus-metrics";
-import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
+import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "../auth/function-access";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "../auth/rate-limiter";
+import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, TeamMemberResourceGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "../auth/resource-access";
+import { takeFirst } from "../express-util";
+import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "../prometheus-metrics";
+import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 
 export type GitpodServiceFactory<C extends GitpodClient, S extends GitpodServer> = () => GitpodServerImpl<C, S>;
 

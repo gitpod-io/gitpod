@@ -29,7 +29,7 @@ import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
 import { MonitoringEndpointsApp } from './monitoring-endpoints';
-import { WebsocketConnectionManager } from './websocket-connection-manager';
+import { WebsocketConnectionManager } from './websocket/websocket-connection-manager';
 import { DeletedEntryGC, PeriodicDbDeleter, TypeORM } from '@gitpod/gitpod-db/lib';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
