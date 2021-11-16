@@ -80,8 +80,16 @@ export default function () {
         </div>)
     };
 
-    const onInstanceUpdate = (instance: WorkspaceInstance) => {
+    const onInstanceUpdate = async (instance: WorkspaceInstance) => {
         setPrebuildInstance(instance);
+        if (!prebuild) {
+            return;
+        }
+        const prebuilds = await getGitpodService().server.findPrebuilds({
+            projectId: prebuild.info.projectId,
+            prebuildId
+        });
+        setPrebuild(prebuilds[0]);
     }
 
     const rerunPrebuild = async () => {
@@ -132,7 +140,7 @@ export default function () {
                             <span>Rerun Prebuild ({prebuild.info.branch})</span>
                         </button>
                         : (prebuild?.status === 'building'
-                            ? <button className="danger flex items-center space-x-2" disabled={isCancellingPrebuild} onClick={cancelPrebuild}>
+                            ? <button className="danger flex items-center space-x-2" disabled={isCancellingPrebuild || (prebuildInstance?.status.phase !== "initializing" && prebuildInstance?.status.phase !== "running")} onClick={cancelPrebuild}>
                                 {isCancellingPrebuild && <img className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />}
                                 <span>Cancel Prebuild</span>
                             </button>
