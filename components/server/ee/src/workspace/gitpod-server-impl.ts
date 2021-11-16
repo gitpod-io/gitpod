@@ -77,8 +77,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
-    initialize(client: GitpodClient | undefined, user: User, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields): void {
+    initialize(client: GitpodClient | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields): void {
         super.initialize(client, user, accessGuard, clientHeaderFields);
+
         this.listenToCreditAlerts();
         this.listenForPrebuildUpdates();
     }

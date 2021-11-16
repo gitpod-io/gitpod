@@ -24,6 +24,59 @@ export type GitpodServiceFactory<C extends GitpodClient, S extends GitpodServer>
 
 const EVENT_CONNECTION_CREATED = "EVENT_CONNECTION_CREATED";
 const EVENT_CONNECTION_CLOSED = "EVENT_CONNECTION_CLOSED";
+const EVENT_CLIENT_CONTEXT_CREATED = "EVENT_CLIENT_CONTEXT_CREATED";
+const EVENT_CLIENT_CONTEXT_CLOSED = "EVENT_CLIENT_CONTEXT_CLOSED";
+
+/** TODO(gpl) Refine this list */
+export type WebsocketClientType = "browser" | "go-client";
+export namespace WebsocketClientType {
+    export function getClientType(req: express.Request): WebsocketClientType | undefined {
+        const userAgent = req.headers["user-agent"];
+
+        if (!userAgent) {
+            return undefined;
+        }
+        if (userAgent.startsWith("Go-http-client")) {
+            return "go-client";
+        }
+        if (userAgent.startsWith("Mozilla")) {
+            return "browser";
+        }
+        return undefined;
+    }
+}
+export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
+
+export class WebsocketClientContext<C extends GitpodClient, S extends GitpodServer> {
+    constructor(
+        /**
+         * We try to be as specific as we can when identifying client connections.
+         * If we now the userId, this will be the userId. If we just have a session, this is the sessionId (prefixed by `session-`).
+         * If it's a
+         */
+        public readonly clientId: string,
+
+        public readonly authLevel: WebsocketAuthenticationLevel
+    ) {}
+
+    /** This list of endpoints serving client connections 1-1 */
+    protected servers: GitpodServerImpl<C, S>[] = [];
+
+    addEndpoint(server: GitpodServerImpl<C, S>) {
+        this.servers.push(server);
+    }
+
+    removeEndpoint(server: GitpodServerImpl<C, S>) {
+        const index = this.servers.findIndex(s => s.uuid === server.uuid);
+        if (index !== -1) {
+            this.servers.splice(index);
+        }
+    }
+
+    hasNoEndpointsLeft(): boolean {
+        return this.servers.length === 0;
+    }
+}
 
 /**
  * Establishes and manages JsonRpc-over-websocket connections from frontends to GitpodServerImpl instances
@@ -33,7 +86,7 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
 
     protected readonly jsonRpcConnectionHandler: JsonRpcConnectionHandler<C>;
     protected readonly events = new EventEmitter();
-    protected readonly servers: GitpodServerImpl<C, S>[] = [];
+    protected readonly contexts: Map<string, WebsocketClientContext<C, S>> = new Map();
 
     constructor(
         protected readonly serverFactory: GitpodServiceFactory<C, S>,
@@ -59,9 +112,10 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
     protected createProxyTarget(client: JsonRpcProxy<C>, request?: object): GitpodServerImpl<C, S> {
         const expressReq = request as express.Request;
         const session = expressReq.session;
+        const user: User | undefined = expressReq.user;
 
+        const clientContext = this.getOrCreateClientContext(expressReq);
         const gitpodServer = this.serverFactory();
-        const user = expressReq.user as User;
 
         let resourceGuard: ResourceAccessGuard;
         let explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
@@ -83,19 +137,23 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
             userAgent: expressReq.headers["user-agent"],
             dnt: takeFirst(expressReq.headers.dnt),
             clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
-        }
+        };
 
         gitpodServer.initialize(client, user, resourceGuard, clientHeaderFields);
         client.onDidCloseConnection(() => {
-            increaseApiConnectionClosedCounter();
             gitpodServer.dispose();
+            increaseApiConnectionClosedCounter();
+            this.events.emit(EVENT_CONNECTION_CLOSED, gitpodServer, expressReq);
 
-            this.removeServer(gitpodServer);
-            this.events.emit(EVENT_CONNECTION_CLOSED, gitpodServer);
+            clientContext.removeEndpoint(gitpodServer);
+            if (clientContext.hasNoEndpointsLeft()) {
+                this.contexts.delete(clientContext.clientId);
+                this.events.emit(EVENT_CLIENT_CONTEXT_CLOSED, clientContext);
+            }
         });
-        this.servers.push(gitpodServer);
+        clientContext.addEndpoint(gitpodServer);
 
-        this.events.emit(EVENT_CONNECTION_CREATED, gitpodServer);
+        this.events.emit(EVENT_CONNECTION_CREATED, gitpodServer, expressReq);
 
         return new Proxy<GitpodServerImpl<C, S>>(gitpodServer, {
             get: (target, property: keyof GitpodServerImpl<C, S>) => {
@@ -106,39 +164,62 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
         });
     }
 
-    protected createRateLimiter(request?: object): RateLimiter {
-        const expressReq = request as express.Request;
-        const user = expressReq.user as User;
+    protected getOrCreateClientContext(expressReq: express.Request): WebsocketClientContext<C, S> {
+        const { clientId, authLevel } = this.getClientId(expressReq);
+        let ctx = this.contexts.get(clientId);
+        if (!ctx) {
+            ctx = new WebsocketClientContext(clientId, authLevel);
+            this.contexts.set(clientId, ctx);
+            this.events.emit(EVENT_CLIENT_CONTEXT_CREATED, ctx);
+        }
+        return ctx;
+    }
+
+    protected getClientId(expressReq: express.Request): { clientId: string, authLevel: WebsocketAuthenticationLevel } {
+        const user = expressReq.user;
         const sessionId = expressReq.session?.id;
-        const id = user?.id || (!!sessionId ? `session-${sessionId}` : undefined) || "anonymous";
-        return {
-            user: id,
-            consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(id, method),
+        if (user?.id) {
+            return { clientId: user.id, authLevel: "user" };
+        } else if (!!sessionId) {
+            return { clientId: `session-${sessionId}`, authLevel: "session" };
+        } else {
+            return { clientId: "anonymous", authLevel: "anonymous" };
         }
     }
 
-    public get currentConnectionCount(): number {
-        return this.servers.length;
+    protected createRateLimiter(expressReq?: object): RateLimiter {
+        const { clientId } = this.getClientId(expressReq as express.Request);
+        return {
+            user: clientId,
+            consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(clientId, method),
+        }
     }
 
-    public onConnectionCreated(l: (server: GitpodServerImpl<C, S>) => void): Disposable {
+    public onConnectionCreated(l: (server: GitpodServerImpl<C, S>, req: express.Request) => void): Disposable {
         this.events.on(EVENT_CONNECTION_CREATED, l)
         return {
             dispose: () => this.events.off(EVENT_CONNECTION_CREATED, l)
         }
     }
 
-    public onConnectionClosed(l: (server: GitpodServerImpl<C, S>) => void): Disposable {
+    public onConnectionClosed(l: (server: GitpodServerImpl<C, S>, req: express.Request) => void): Disposable {
         this.events.on(EVENT_CONNECTION_CLOSED, l)
         return {
             dispose: () => this.events.off(EVENT_CONNECTION_CLOSED, l)
         }
     }
 
-    protected removeServer(oddServer: GitpodServerImpl<C, S>) {
-        const index = this.servers.findIndex(s => s.uuid === oddServer.uuid);
-        if (index !== -1) {
-            this.servers.splice(index);
+    public onClientContextCreated(l: (ctx: WebsocketClientContext<C, S>) => void): Disposable {
+        this.events.on(EVENT_CLIENT_CONTEXT_CREATED, l)
+        return {
+            dispose: () => this.events.off(EVENT_CLIENT_CONTEXT_CREATED, l)
+        }
+    }
+
+    public onClientContextClosed(l: (ctx: WebsocketClientContext<C, S>) => void): Disposable {
+        this.events.on(EVENT_CLIENT_CONTEXT_CLOSED, l)
+        return {
+            dispose: () => this.events.off(EVENT_CLIENT_CONTEXT_CLOSED, l)
         }
     }
 }

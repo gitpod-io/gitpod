@@ -29,7 +29,7 @@ import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
 import { MonitoringEndpointsApp } from './monitoring-endpoints';
-import { WebsocketConnectionManager } from './websocket/websocket-connection-manager';
+import { WebsocketClientType, WebsocketConnectionManager } from './websocket/websocket-connection-manager';
 import { DeletedEntryGC, PeriodicDbDeleter, TypeORM } from '@gitpod/gitpod-db/lib';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
@@ -216,6 +216,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         // Report current websocket connections
         this.installWebsocketConnectionGauge();
+        this.installWebsocketClientContextGauge();
 
         // Connect to message bus
         await this.messagebus.connect();
@@ -308,8 +309,19 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         const gauge = new prom.Gauge({
             name: `server_websocket_connection_count`,
             help: 'Currently served websocket connections',
+            labelNames: ["clientType"],
         });
-        this.websocketConnectionHandler.onConnectionCreated(() => gauge.inc());
-        this.websocketConnectionHandler.onConnectionClosed(() => gauge.dec());
+        this.websocketConnectionHandler.onConnectionCreated((_, req) => gauge.inc({ clientType: WebsocketClientType.getClientType(req) || "undefined" }));
+        this.websocketConnectionHandler.onConnectionClosed((_, req) => gauge.dec({ clientType: WebsocketClientType.getClientType(req) || "undefined" }));
+    }
+
+    protected installWebsocketClientContextGauge() {
+        const gauge = new prom.Gauge({
+            name: `server_websocket_client_context_count`,
+            help: 'Currently served client contexts',
+            labelNames: ["authLevel"],
+        });
+        this.websocketConnectionHandler.onClientContextCreated((ctx) => gauge.inc({ authLevel: ctx.authLevel }));
+        this.websocketConnectionHandler.onClientContextClosed((ctx) => gauge.dec({ authLevel: ctx.authLevel }));
     }
 }
