@@ -47,7 +47,7 @@ export class EnforcementController {
             another architecture is not necessary.
         */
         const server = this.serverFactory()
-        server.initialize(undefined, user, resourceAccessGuard, undefined);
+        server.initialize(undefined, user, resourceAccessGuard, {});
         return server;
     }
 

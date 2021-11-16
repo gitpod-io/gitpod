@@ -99,30 +99,31 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
-    protected client: Client | undefined;
-    protected user?: User;
-    protected readonly disposables = new DisposableCollection();
-    protected headlessLogRegistry = new Map<string, boolean>();
+    protected clientHeaderFields: ClientHeaderFields;
     protected resourceAccessGuard: ResourceAccessGuard;
-    protected clientHeaderFields: ClientHeaderFields | undefined;
+    protected client: Client | undefined;
+
+    protected user: User | undefined;
+
+    protected readonly disposables = new DisposableCollection();
 
     dispose(): void {
         this.disposables.dispose();
     }
 
-    initialize(client: Client | undefined, user: User, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields | undefined): void {
+    initialize(client: Client | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields): void {
         if (client) {
             this.disposables.push(Disposable.create(() => this.client = undefined));
         }
         this.client = client;
         this.user = user;
         this.resourceAccessGuard = accessGuard;
+        this.clientHeaderFields = clientHeaderFields;
 
-        log.debug({ userId: this.user?.id }, `clientRegion: ${clientHeaderFields?.clientRegion}`);
+        log.debug({ userId: this.user?.id }, `clientRegion: ${clientHeaderFields.clientRegion}`);
         log.debug({ userId: this.user?.id }, 'initializeClient');
 
         this.listenForWorkspaceInstanceUpdates();
-        this.clientHeaderFields = clientHeaderFields;
     }
 
     protected listenForWorkspaceInstanceUpdates(): void {

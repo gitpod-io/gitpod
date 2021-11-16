@@ -270,7 +270,7 @@ export interface ProviderRepository {
     inUse?: boolean;
 }
 
-export interface ClientHeaderFields{
+export interface ClientHeaderFields {
     ip?: string;
     userAgent?: string;
     dnt?: string;

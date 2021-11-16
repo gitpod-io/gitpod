@@ -593,13 +593,98 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "server_websocket_connection_count{cluster=~\"$cluster\", pod=~\"$pod\"}",
+          "expr": "sum (server_websocket_connection_count{cluster=~\"$cluster\", pod=~\"$pod\"}) by (cluster, pod)",
           "interval": "",
-          "legendFormat": "{{pod}} {{cluster}}",
+          "legendFormat": "{{cluster}} {{pod}}",
           "refId": "A"
         }
       ],
       "title": "Websocket connections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "$datasource",
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 18
+      },
+      "id": 64,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(server_websocket_connection_count) by (cluster, clientType)",
+          "interval": "",
+          "legendFormat": "{{cluster}} {{clientType}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Websocket Clients",
       "type": "timeseries"
     },
     {
@@ -613,8 +698,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 8,
-        "y": 18
+        "x": 0,
+        "y": 26
       },
       "hiddenSeries": false,
       "id": 48,
@@ -747,8 +832,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 16,
-        "y": 18
+        "x": 8,
+        "y": 26
       },
       "id": 62,
       "options": {
@@ -828,9 +913,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 26
+        "y": 34
       },
       "id": 63,
       "options": {
@@ -862,7 +947,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 42
       },
       "id": 50,
       "panels": [
@@ -1117,7 +1202,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 43
       },
       "id": 16,
       "panels": [],
@@ -2203,7 +2288,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 44
       },
       "id": 22,
       "panels": [
@@ -2780,5 +2865,5 @@
   "timezone": "utc",
   "title": "Gitpod / Component / server",
   "uid": "server",
-  "version": 4
+  "version": 5
 }
