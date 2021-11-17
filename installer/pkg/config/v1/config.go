@@ -123,6 +123,7 @@ type ObjectStorage struct {
 	InCluster    *bool                      `json:"inCluster,omitempty"`
 	S3           *ObjectStorageS3           `json:"s3,omitempty"`
 	CloudStorage *ObjectStorageCloudStorage `json:"cloudStorage,omitempty"`
+	Azure        *ObjectStorageAzure        `json:"azure,omitempty"`
 }
 
 type ObjectStorageS3 struct {
@@ -132,6 +133,10 @@ type ObjectStorageS3 struct {
 type ObjectStorageCloudStorage struct {
 	ServiceAccount ObjectRef `json:"serviceAccount" validate:"required"`
 	Project        string    `json:"project" validate:"required"`
+}
+
+type ObjectStorageAzure struct {
+	Credentials ObjectRef `json:"credentials"`
 }
 
 type InstallationKind string
