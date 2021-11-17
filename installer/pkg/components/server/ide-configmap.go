@@ -16,19 +16,30 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func ideconfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+func CodeImageStableVersion(ctx *common.RenderContext) string {
 	stableVersion := ctx.VersionManifest.Components.Workspace.CodeImageStable.Version
 	if stableVersion == "" {
 		stableVersion = ctx.VersionManifest.Components.Workspace.CodeImage.Version
 	}
+	return stableVersion
+}
 
+func ideconfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	stableVersion := CodeImageStableVersion(ctx)
 	idecfg := IDEConfig{
 		IDEVersion:   stableVersion,
-		IDEImageRepo: workspace.IDEImageRepo,
+		IDEImageRepo: workspace.CodeIDEImage,
 		IDEImageAliases: map[string]string{
-			"code":        common.ImageName(ctx.Config.Repository, workspace.IDEImageRepo, stableVersion),
-			"code-latest": common.ImageName(ctx.Config.Repository, workspace.IDEImageRepo, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
+			"code":        common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, stableVersion),
+			"code-latest": common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
 		},
+		DesktopIDEImageAliases: map[string]string{
+			"code-desktop":          common.ImageName(ctx.Config.Repository, workspace.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
+			"code-desktop-insiders": common.ImageName(ctx.Config.Repository, workspace.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
+			"intellij:":             common.ImageName(ctx.Config.Repository, workspace.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
+			"goland":                common.ImageName(ctx.Config.Repository, workspace.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
+		},
+		SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 	}
 
 	fc, err := json.MarshalIndent(idecfg, "", " ")

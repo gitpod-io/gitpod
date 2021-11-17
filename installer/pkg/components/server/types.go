@@ -10,9 +10,11 @@ import "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 // IDEConfig RawIDEConfig interface from components/server/src/ide-config.ts
 type IDEConfig struct {
-	IDEVersion      string            `json:"ideVersion"`
-	IDEImageRepo    string            `json:"ideImageRepo"`
-	IDEImageAliases map[string]string `json:"ideImageAliases"`
+	IDEVersion             string            `json:"ideVersion"`
+	IDEImageRepo           string            `json:"ideImageRepo"`
+	IDEImageAliases        map[string]string `json:"ideImageAliases"`
+	DesktopIDEImageAliases map[string]string `json:"deskoptIdeImageAliases"`
+	SupervisorImage        string            `json:"supervisorImage"`
 }
 
 // ConfigSerialized interface from components/server/src/config.ts

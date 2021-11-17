@@ -7,13 +7,15 @@ package wsscheduler
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +40,9 @@ type config struct {
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// todo(sje): check this config
+
+	codeImageStableVersion := server.CodeImageStableVersion(ctx)
+
 	scaler := struct {
 		Enabled    bool                                        `json:"enabled"`
 		Driver     scaler.WorkspaceManagerPrescaleDriverConfig `json:"driver"`
@@ -82,7 +87,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			WorkspaceImage:     common.ImageName("", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
-			IDEImage:           common.ImageName(ctx.Config.Repository, workspace.IDEImageRepo, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
+			IDEImage:           common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, codeImageStableVersion),
 			SupervisorImage:    common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			FeatureFlags:       nil,
 			MaxGhostWorkspaces: 10,

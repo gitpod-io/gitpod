@@ -9,7 +9,11 @@ const (
 	ContainerPort                = 23000
 	DefaultWorkspaceImage        = "gitpod/workspace-full"
 	DefaultWorkspaceImageVersion = "latest"
-	IDEImageRepo                 = "ide/code" // todo(sje): does this need to be config driven?
+	CodeIDEImage                 = "ide/code" // todo(sje): does this need to be config driven?
+	CodeDesktopIDEImage          = "ide/code-desktop"
+	CodeDesktopInsidersIDEImage  = "ide/code-desktop-insiders"
+	IntelliJDesktopIDEImage      = "ide/intellij"
+	GoLandDesktopIdeImage        = "ide/goland"
 	DockerUpImage                = "docker-up"
 	SupervisorImage              = "supervisor"
 	SupervisorPort               = 22999
