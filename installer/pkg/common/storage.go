@@ -7,12 +7,23 @@ package common
 import (
 	"fmt"
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
+	"k8s.io/utils/pointer"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/pointer"
 )
 
 // StorageConfig produces config service configuration from the installer config
+
+func useMinio(context *RenderContext) bool {
+	// Minio is used for in-cluster storage and as a facade to non-GCP providers
+	if pointer.BoolDeref(context.Config.ObjectStorage.InCluster, false) {
+		return true
+	}
+	if context.Config.ObjectStorage.Azure != nil {
+		return true
+	}
+	return false
+}
 
 func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	var res *storageconfig.StorageConfig
@@ -28,21 +39,8 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 			},
 		}
 	}
-	if context.Config.ObjectStorage.S3 != nil {
-		// TODO(cw): where do we get the AWS secretKey and accessKey from?
-		res = &storageconfig.StorageConfig{
-			Kind: storageconfig.MinIOStorage,
-			MinIOConfig: storageconfig.MinIOConfig{
-				Endpoint:        "some-magic-amazon-value?",
-				AccessKeyID:     "TODO",
-				SecretAccessKey: "TODO",
-				Secure:          true,
-				Region:          context.Config.Metadata.Region,
-				ParallelUpload:  6,
-			},
-		}
-	}
-	if b := context.Config.ObjectStorage.InCluster; b != nil && *b {
+
+	if useMinio(context) {
 		res = &storageconfig.StorageConfig{
 			Kind: storageconfig.MinIOStorage,
 			MinIOConfig: storageconfig.MinIOConfig{
@@ -120,14 +118,10 @@ func AddStorageMounts(ctx *RenderContext, pod *corev1.PodSpec, container ...stri
 		return nil
 	}
 
-	if ctx.Config.ObjectStorage.S3 != nil {
-		return nil
-	}
-
-	if pointer.BoolDeref(ctx.Config.ObjectStorage.InCluster, false) {
+	if useMinio(ctx) {
 		// builtin storage needs no extra mounts
 		return nil
 	}
 
-	return fmt.Errorf("no valid storage confniguration set")
+	return fmt.Errorf("no valid storage configuration set")
 }
