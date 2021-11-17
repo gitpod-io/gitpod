@@ -18,9 +18,8 @@ var Helm = common.CompositeHelmFunc(
 			Enabled: pointer.BoolDeref(cfg.Config.Jaeger.InCluster, false),
 			Values: &values.Options{
 				Values: []string{
-					"installCRDs=true",
-					"crd.install=false",
-					"rbac.clusterRole=true",
+					helm.KeyValue("jaeger-operator.crd.install", "true"),
+					helm.KeyValue("jaeger-operator.rbac.clusterRole", "true"),
 				},
 			},
 		}, nil
