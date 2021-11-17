@@ -5,12 +5,18 @@
 package integration
 
 import (
+	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -37,10 +43,6 @@ import (
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
-)
-
-var (
-	errNoSuitableUser = xerrors.Errorf("no suitable user found: make sure there's at least one non-builtin user in the database (e.g. login)")
 )
 
 // API provides access to the individual component's API
@@ -96,16 +98,61 @@ type ComponentAPI struct {
 	imgbldStatusMu         sync.Mutex
 }
 
+type EncryptionKeyMetadata struct {
+	Name    string
+	Version int
+}
+
+type EncryptionKey struct {
+	Metadata EncryptionKeyMetadata
+	Material []byte
+}
+
 type DBConfig struct {
-	Host        string
-	Port        int32
-	ForwardPort *ForwardPort
-	Password    string
+	Host           string
+	Port           int32
+	ForwardPort    *ForwardPort
+	Password       string
+	EncryptionKeys EncryptionKey
 }
 
 type ForwardPort struct {
 	PodName    string
 	RemotePort int32
+}
+
+type KeyParams struct {
+	Iv string
+}
+
+type EncryptedData struct {
+	Data      string
+	KeyParams KeyParams
+}
+
+func EncryptValue(value []byte, key []byte) *EncryptedData {
+	PKCS5Padding := func(ciphertext []byte, blockSize int, after int) []byte {
+		padding := (blockSize - len(ciphertext)%blockSize)
+		padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+		return append(ciphertext, padtext...)
+	}
+
+	iv := []byte("1234567890123456")
+
+	block, _ := aes.NewCipher(key)
+	mode := cipher.NewCBCEncrypter(block, iv)
+
+	paddedValue := PKCS5Padding(value, aes.BlockSize, len(value))
+	ciphertext := make([]byte, len(paddedValue))
+	mode.CryptBlocks(ciphertext, paddedValue)
+
+	returnVal := EncryptedData{
+		Data: base64.StdEncoding.EncodeToString(ciphertext),
+		KeyParams: KeyParams{
+			Iv: base64.StdEncoding.EncodeToString(iv),
+		},
+	}
+	return &returnVal
 }
 
 // Supervisor provides a gRPC connection to a workspace's supervisor
@@ -229,14 +276,65 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterfac
 	return res, nil
 }
 
-func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
-	var row *sql.Row
+func (c *ComponentAPI) GitpodSessionCookie(userId string, secretKey string) (*http.Cookie, error) {
+	var res *http.Cookie
+	err := func() error {
+		config, err := GetServerConfig(c.namespace, c.client)
+		if err != nil {
+			return err
+		}
 
+		hostURL := config.HostURL
+		if hostURL == "" {
+			return xerrors.Errorf("server config: empty HostURL")
+		}
+
+		endpoint, err := url.Parse(hostURL)
+		if err != nil {
+			return err
+		}
+
+		origin := fmt.Sprintf("%s://%s/", "https", endpoint.Hostname())
+
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
+
+		req, _ := http.NewRequest("GET", hostURL+fmt.Sprintf("/api/login/ots/%s/%s", userId, secretKey), nil)
+		req.Header.Set("Origin", origin)
+		req.Header.Set("Cache-Control", "no-store")
+
+		httpresp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+
+		cookies := httpresp.Cookies()
+		if len(cookies) > 0 {
+			res = cookies[0]
+		}
+
+		return nil
+	}()
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, xerrors.Errorf("Server did not provide a session cookie")
+	}
+
+	return res, nil
+}
+
+func (c *ComponentAPI) GetUserId(user string) (userId string, err error) {
 	db, err := c.DB()
 	if err != nil {
 		return "", err
 	}
 
+	var row *sql.Row
 	if user == "" {
 		row = db.QueryRow(`SELECT id FROM d_b_user WHERE NOT id = "` + gitpodBuiltinUserID + `" AND blocked = FALSE AND markedDeleted = FALSE`)
 	} else {
@@ -246,10 +344,19 @@ func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
 	var id string
 	err = row.Scan(&id)
 	if err == sql.ErrNoRows {
-		return "", errNoSuitableUser
+		return "", xerrors.Errorf("no suitable user found: make sure there's at least one non-builtin user in the database (e.g. login)")
 	}
 	if err != nil {
 		return "", xerrors.Errorf("cannot look for users: %w", err)
+	}
+
+	return id, nil
+}
+
+func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
+	id, err := c.GetUserId(user)
+	if err != nil {
+		return "", err
 	}
 
 	rawTkn, err := uuid.NewRandom()
@@ -265,6 +372,10 @@ func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
 	// see https://github.com/gitpod-io/gitpod/blob/master/components/gitpod-protocol/src/protocol.ts#L274
 	const tokenTypeMachineAuthToken = 1
 
+	db, err := c.DB()
+	if err != nil {
+		return "", err
+	}
 	_, err = db.Exec("INSERT INTO d_b_gitpod_token (tokenHash, name, type, userId, scopes, created) VALUES (?, ?, ?, ?, ?, ?)",
 		hashVal,
 		fmt.Sprintf("integration-test-%d", time.Now().UnixNano()),
@@ -283,6 +394,72 @@ func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
 	})
 
 	return tkn, nil
+}
+
+func (c *ComponentAPI) CreateGitpodOneTimeSecret(value string) (id string, err error) {
+	dbConfig, err := FindDBConfigFromPodEnv("server", c.namespace, c.client)
+	if err != nil {
+		return "", err
+	}
+
+	db, err := c.DB()
+	if err != nil {
+		return "", err
+	}
+
+	rawUuid, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	id = rawUuid.String()
+
+	// Double Marshalling to be compatible with EncryptionServiceImpl
+	valueBytes, err := json.Marshal(value)
+	if err != nil {
+		return "", err
+	}
+	valueBytes2, err := json.Marshal(string(valueBytes))
+	if err != nil {
+		return "", err
+	}
+
+	type EncriptedDBData struct {
+		Data      string `json:"data"`
+		KeyParams struct {
+			Iv string `json:"iv"`
+		} `json:"keyParams"`
+		KeyMetadata struct {
+			Name    string `json:"name"`
+			Version int    `json:"version"`
+		} `json:"keyMetadata"`
+	}
+	encryptedData := EncryptValue(valueBytes2, dbConfig.EncryptionKeys.Material)
+	encrypted := EncriptedDBData{}
+	encrypted.Data = encryptedData.Data
+	encrypted.KeyParams.Iv = encryptedData.KeyParams.Iv
+	encrypted.KeyMetadata.Name = dbConfig.EncryptionKeys.Metadata.Name
+	encrypted.KeyMetadata.Version = dbConfig.EncryptionKeys.Metadata.Version
+	encryptedJson, err := json.Marshal(encrypted)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = db.Exec("INSERT INTO d_b_one_time_secret (id, value, expirationTime, deleted) VALUES (?, ?, ?, ?)",
+		id,
+		string(encryptedJson),
+		time.Now().Add(30*time.Minute).UTC().Format("2006-01-02 15:04:05.999999"),
+		false,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	c.appendCloser(func() error {
+		_, err := db.Exec("DELETE FROM d_b_one_time_secret WHERE id = ?", id)
+		return err
+	})
+
+	return id, nil
 }
 
 // WorkspaceManager provides access to ws-manager
@@ -400,9 +577,30 @@ func (c *ComponentAPI) BlobService() (csapi.BlobServiceClient, error) {
 	return c.contentServiceStatus.BlobServiceClient, nil
 }
 
+type dbOpts struct {
+	Database string
+}
+
+// DNOpt configures DB access
+type DBOpt func(*dbOpts)
+
+// DBName forces a particular database
+func DBName(name string) DBOpt {
+	return func(o *dbOpts) {
+		o.Database = name
+	}
+}
+
 // DB provides access to the Gitpod database.
 // Callers must never close the DB.
-func (c *ComponentAPI) DB() (*sql.DB, error) {
+func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
+	opts := dbOpts{
+		Database: "gitpod",
+	}
+	for _, o := range options {
+		o(&opts)
+	}
+
 	config, err := c.findDBConfig()
 	if err != nil {
 		return nil, err
@@ -421,7 +619,7 @@ func (c *ComponentAPI) DB() (*sql.DB, error) {
 		c.appendCloser(func() error { cancel(); return nil })
 	}
 
-	db, err := sql.Open("mysql", fmt.Sprintf("gitpod:%s@tcp(%s:%d)/gitpod", config.Password, config.Host, config.Port))
+	db, err := sql.Open("mysql", fmt.Sprintf("gitpod:%s@tcp(%s:%d)/%s", config.Password, config.Host, config.Port, opts.Database))
 	if err != nil {
 		return nil, err
 	}
@@ -429,6 +627,7 @@ func (c *ComponentAPI) DB() (*sql.DB, error) {
 	c.appendCloser(db.Close)
 	return db, nil
 }
+
 func (c *ComponentAPI) findDBConfig() (*DBConfig, error) {
 	config, err := FindDBConfigFromPodEnv("server", c.namespace, c.client)
 	if err != nil {
@@ -521,6 +720,7 @@ func FindDBConfigFromPodEnv(componentName string, namespace string, client klien
 	pod := list.Items[0]
 
 	var password, host string
+	var dbEncryptionKeys *EncryptionKey
 	var port int32
 OuterLoop:
 	for _, c := range pod.Spec.Containers {
@@ -530,6 +730,30 @@ OuterLoop:
 				password, findErr = FindValueFromEnvVar(v, client, namespace)
 				if findErr != nil {
 					return nil, findErr
+				}
+			} else if v.Name == "DB_ENCRYPTION_KEYS" {
+				raw, findErr := FindValueFromEnvVar(v, client, namespace)
+				if findErr != nil {
+					return nil, findErr
+				}
+
+				var k []struct {
+					Name     string `json:"name"`
+					Version  int    `json:"version"`
+					Material []byte `json:"material"`
+				}
+				err = json.Unmarshal([]byte(raw), &k)
+				if err != nil {
+					return nil, err
+				}
+				if len(k) > 0 {
+					dbEncryptionKeys = &EncryptionKey{
+						Metadata: EncryptionKeyMetadata{
+							Name:    k[0].Name,
+							Version: k[0].Version,
+						},
+						Material: k[0].Material,
+					}
 				}
 			} else if v.Name == "DB_PORT" {
 				var portStr string
@@ -548,18 +772,19 @@ OuterLoop:
 					return nil, findErr
 				}
 			}
-			if password != "" && port != 0 && host != "" {
+			if password != "" && port != 0 && host != "" && dbEncryptionKeys != nil {
 				break OuterLoop
 			}
 		}
 	}
-	if password == "" || port == 0 || host == "" {
+	if password == "" || port == 0 || host == "" || dbEncryptionKeys == nil {
 		return nil, xerrors.Errorf("could not find complete DBConfig on pod %s!", pod.Name)
 	}
 	config := DBConfig{
-		Host:     host,
-		Port:     port,
-		Password: password,
+		Host:           host,
+		Port:           port,
+		Password:       password,
+		EncryptionKeys: *dbEncryptionKeys,
 	}
 	return &config, nil
 }
