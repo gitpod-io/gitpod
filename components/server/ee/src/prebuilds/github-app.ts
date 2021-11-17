@@ -13,7 +13,6 @@ import { AppInstallationDB, TracedWorkspaceDB, DBWithTracing, UserDB, WorkspaceD
 import * as express from 'express';
 import { log, LogContext, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WorkspaceConfig, User, Project, StartPrebuildResult } from '@gitpod/gitpod-protocol';
-import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { GithubAppRules } from './github-app-rules';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { PrebuildManager } from './prebuild-manager';
@@ -38,7 +37,6 @@ export class GithubApp {
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-    @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
     @inject(GithubAppRules) protected readonly appRules: GithubAppRules;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
 

@@ -40,8 +40,6 @@ import { ChargebeeCouponComputer } from "./user/coupon-computer";
 import { ChargebeeService } from "./user/chargebee-service";
 import { EligibilityService } from "./user/eligibility-service";
 import { AccountStatementProvider } from "./user/account-statement-provider";
-import { MessageBusIntegration } from "../../src/workspace/messagebus-integration";
-import { MessageBusIntegrationEE } from "./workspace/messagebus-integration";
 import { WorkspaceStarterEE } from "./workspace/workspace-starter";
 import { WorkspaceStarter } from "../../src/workspace/workspace-starter";
 import { UserDeletionService } from "../../src/user/user-deletion-service";
@@ -83,7 +81,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(AccountStatementProvider).toSelf().inRequestScope();
 
     // various
-    rebind(MessageBusIntegration).to(MessageBusIntegrationEE).inSingletonScope();
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
     rebind(BlockedUserFilter).toService(EMailDomainService);

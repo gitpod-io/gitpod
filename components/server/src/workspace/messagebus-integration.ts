@@ -14,6 +14,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { CancellationTokenSource } from "vscode-ws-jsonrpc";
 import { increaseMessagebusTopicReads } from '../prometheus-metrics';
+import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 
 export class WorkspaceInstanceUpdateListener extends AbstractTopicListener<WorkspaceInstance> {
 
@@ -34,6 +35,17 @@ export class PrebuildUpdateListener extends AbstractTopicListener<PrebuildWithSt
 
     topic() {
         return `prebuild.update.${this.projectId ? `project-${this.projectId}` : "*"}`;
+    }
+}
+
+export class CreditAlertListener extends AbstractTopicListener<CreditAlert> {
+
+    constructor(protected messageBusHelper: MessageBusHelper, listener: TopicListener<CreditAlert>, protected readonly userId?: string) {
+        super(messageBusHelper.workspaceExchange, listener);
+    }
+
+    topic() {
+        return this.messageBusHelper.getWsTopicForListening(this.userId, undefined, "credit");
     }
 }
 
@@ -128,6 +140,18 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         callback: (ctx: TraceContext, evt: PrebuildWithStatus) => void,
         projectId?: string): Disposable {
         const listener = new PrebuildUpdateListener(this.messageBusHelper, callback, projectId);
+        const cancellationTokenSource = new CancellationTokenSource()
+        this.listen(listener, cancellationTokenSource.token);
+        return Disposable.create(() => cancellationTokenSource.cancel())
+    }
+
+    /**
+     * Listens for all workspace updates for a particular user or all users.
+     *
+     * @param userId the ID of the user for whos workspaces we should listen for updates
+     */
+    listenToCreditAlerts(userId: string | undefined, callback: (ctx: TraceContext, alert: CreditAlert) => void): Disposable {
+        const listener = new CreditAlertListener(this.messageBusHelper, callback, userId);
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);
         return Disposable.create(() => cancellationTokenSource.cancel())
