@@ -32,7 +32,7 @@ import { MonitoringEndpointsApp } from './monitoring-endpoints';
 import { WebsocketConnectionManager } from './websocket-connection-manager';
 import { DeletedEntryGC, PeriodicDbDeleter, TypeORM } from '@gitpod/gitpod-db/lib';
 import { OneTimeSecretServer } from './one-time-secret-server';
-import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
+import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
 import { BearerAuth, isBearerAuthError } from './auth/bearer-authenticator';
 import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
@@ -42,6 +42,7 @@ import { HeadlessLogController, HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config } from './config';
 import { DebugApp } from './debug-app';
+import { LocalMessageBroker } from './messaging/local-message-broker';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -55,6 +56,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(EnforcementController) protected readonly enforcementController: EnforcementController;
     @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager<C, S>;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
+    @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
     @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
     @inject(MonitoringEndpointsApp) protected readonly monitoringEndpointsApp: MonitoringEndpointsApp;
     @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService;
@@ -80,6 +82,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected httpServer?: http.Server;
     protected monitoringApp?: express.Application;
     protected monitoringHttpServer?: http.Server;
+    protected disposables = new DisposableCollection();
 
     public async init(app: express.Application) {
         log.setVersion(this.config.version);
@@ -220,6 +223,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Connect to message bus
         await this.messagebus.connect();
 
+        // Start local message broker
+        await this.localMessageBroker.start();
+        this.disposables.push(Disposable.create(() => this.localMessageBroker.stop().catch(log.error)));
+
         // Start concensus quorum
         await this.consensusMessenger.connect();
         await this.qorum.start();
@@ -289,6 +296,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         await this.debugApp.stop();
         await this.stopServer(this.monitoringHttpServer);
         await this.stopServer(this.httpServer);
+        this.disposables.dispose();
         log.info('server stopped.');
     }
 

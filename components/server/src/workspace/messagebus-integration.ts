@@ -137,8 +137,8 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
     }
 
     listenForPrebuildUpdates(
-        callback: (ctx: TraceContext, evt: PrebuildWithStatus) => void,
-        projectId?: string): Disposable {
+        projectId: string | undefined,
+        callback: (ctx: TraceContext, evt: PrebuildWithStatus) => void): Disposable {
         const listener = new PrebuildUpdateListener(this.messageBusHelper, callback, projectId);
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);

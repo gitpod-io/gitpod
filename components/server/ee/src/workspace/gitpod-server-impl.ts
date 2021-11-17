@@ -41,6 +41,7 @@ import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
+import { LocalMessageBroker } from "../../../src/messaging/message-exchange";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodServer> {
@@ -48,6 +49,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
     @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;
+
+    @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
 
     // per-user state
     @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
@@ -75,6 +78,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
     initialize(client: GitpodClient | undefined, user: User, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields): void {
         super.initialize(client, user, accessGuard, clientHeaderFields);
+
         this.listenToCreditAlerts();
         this.listenForPrebuildUpdates();
     }
@@ -83,11 +87,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         // 'registering for prebuild updates for all projects this user has access to
         const projects = await this.getAccessibleProjects();
         for (const projectId of projects) {
-            this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdates(
+            this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
+                projectId,
                 (ctx: TraceContext, update: PrebuildWithStatus) => {
                     this.client?.onPrebuildUpdate(update);
-                },
-                projectId
+                }
             ));
         }
 
@@ -116,7 +120,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         if (!this.user || !this.client) {
             return;
         }
-        this.disposables.push(this.messageBusIntegration.listenToCreditAlerts(
+        this.disposables.push(this.localMessageBroker.listenToCreditAlerts(
             this.user.id,
             async (ctx: TraceContext, creditAlert: CreditAlert) => {
                 this.client?.onCreditAlert(creditAlert);
@@ -125,7 +129,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
                     runningInstances.forEach(async instance => await this.stopWorkspace(instance.workspaceId));
                 }
             }
-        ))
+        ));
     }
 
     protected async mayStartWorkspace(ctx: TraceContext, user: User, runningInstances: Promise<WorkspaceInstance[]>): Promise<void> {
@@ -1600,11 +1604,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const project = await super.createProject(params);
 
         // update client registration for the logged in user
-        this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdates(
+        this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
+            project.id,
             (ctx: TraceContext, update: PrebuildWithStatus) => {
                 this.client?.onPrebuildUpdate(update);
-            },
-            project.id
+            }
         ));
         return project;
     }
