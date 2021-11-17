@@ -36,6 +36,8 @@ export interface LocalMessageBroker {
     listenToCreditAlerts(userId: string, listener: CreditAlertListener): Disposable;
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable;
+
+    listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable;
 }
 
 /**
@@ -62,6 +64,7 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
     protected prebuildUpdateListeners: Map<string, PrebuildUpdateListener[]> = new Map();
     protected creditAlertsListeners: Map<string, CreditAlertListener[]> = new Map();
     protected headlessWorkspaceEventListeners: Map<string, HeadlessWorkspaceEventListener[]> = new Map();
+    protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
 
     protected readonly disposables = new DisposableCollection();
 
@@ -104,6 +107,23 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
                 }
             }
         ));
+        this.disposables.push(this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
+            undefined,
+            (ctx: TraceContext, instance: WorkspaceInstance, userId: string | undefined) => {
+                if (!userId) {
+                    return;
+                }
+
+                const listeners = this.workspaceInstanceUpdateListeners.get(userId) || [];
+                for (const l of listeners) {
+                    try {
+                        l(ctx, instance);
+                    } catch (err) {
+                        log.error({ userId, instanceId: instance.id }, err);
+                    }
+                }
+            }
+        ));
     }
 
     async stop() {
@@ -121,6 +141,10 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
         // we're being cheap here in re-using a map where it just needs to be a plain array.
         return this.doRegister(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY, listener, this.headlessWorkspaceEventListeners);
+    }
+
+    listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable {
+        return this.doRegister(userId, listener, this.workspaceInstanceUpdateListeners);
     }
 
     protected doRegister<L>(key: string, listener: L, listenersStore: Map<string, L[]>): Disposable {

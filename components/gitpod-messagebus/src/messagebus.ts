@@ -30,11 +30,16 @@ export interface MessageBusHelper {
     /**
      * Computes the topic name of for listening to a workspace.
      *
-     * @param userid the ID of the user the workspace belongs to
+     * @param userId the ID of the user the workspace belongs to
      * @param wsid an ID of a specific workspace we want to listen to, or none if we want to listen to all workspaces
      * @param subtopic a specific area of interest one might want to listen to
      */
-    getWsTopicForListening(userid: string | undefined, wsid: string | undefined, subtopic: WorkspaceSubtopic | undefined): string;
+    getWsTopicForListening(userId: string | undefined, wsid: string | undefined, subtopic: WorkspaceSubtopic | undefined): string;
+
+    /**
+     * Parses the userId from a workspace topic
+     */
+    parseWsTopicBase(topic: string | undefined): { userId: string | undefined };
 
     /**
      * Computes the topic name of for publishing messages about a workspace.
@@ -67,6 +72,8 @@ export interface WorkspaceInstanceTopic {
     subtopic: string
 }
 
+const ASTERISK = "*";
+
 @injectable()
 export class MessageBusHelperImpl implements MessageBusHelper {
     readonly workspaceExchange = MessageBusHelperImpl.WORKSPACE_EXCHANGE;
@@ -89,8 +96,23 @@ export class MessageBusHelperImpl implements MessageBusHelper {
         return this.getWsTopicBase(userid, wsid) + `.${subtopic || "#"}`;
     }
 
+    parseWsTopicBase(topic: string | undefined): { userId: string | undefined } {
+        if (!topic) {
+            return { userId: undefined };
+        }
+        const parts = topic.split(".");
+        if (parts.length < 1) {
+            return { userId: undefined };
+        }
+        const userId = parts[0];
+        if (userId === ASTERISK) {
+            return { userId: undefined };
+        }
+        return { userId };
+    }
+
     protected getWsTopicBase(userid: string | undefined, wsid: string | undefined) {
-        return `${userid || "*"}.${wsid || "*"}`;
+        return `${userid || ASTERISK}.${wsid || ASTERISK}`;
     }
 
     /**
@@ -431,6 +453,9 @@ export abstract class AbstractMessageBusIntegration {
 export interface TopicListener<T> {
     (ctx: TraceContext, data: T): void
 }
+interface InternalTopicListener<T> extends TopicListener<T> {
+    (ctx: TraceContext, data: T, routingKey: string): void
+}
 export interface MessagebusListener extends Disposable {
     establish(channel: Channel): Promise<void>;
 
@@ -440,7 +465,7 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
     protected consumerTag?: string;
     protected queueName?: string;
 
-    constructor(protected readonly exchangeName: string, protected readonly listener: TopicListener<T>) { }
+    constructor(protected readonly exchangeName: string, protected readonly listener: InternalTopicListener<T>) { }
 
     async establish(channel: Channel): Promise<void> {
         const topic = this.topic();
@@ -479,7 +504,8 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
         }
 
         let msg: any | undefined;
-        try {            const content = message.content;
+        try {
+            const content = message.content;
             const jsonContent = JSON.parse(content.toString());
             msg = jsonContent as T;
         } catch (e) {
@@ -491,7 +517,7 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
             const span = !!spanCtx ? globalTracer().startSpan(`/messagebus/${this.exchangeName}`, { references: [childOf(spanCtx!)] }) : undefined;
 
             try {
-                this.listener({ span }, msg);
+                this.listener({ span }, msg, message.fields.routingKey);
             } catch (e) {
                 log.error('Error while executing message handler', e, { message });
             }
