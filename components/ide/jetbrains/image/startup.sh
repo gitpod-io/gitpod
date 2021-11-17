@@ -10,6 +10,12 @@ trap "jobs -p | xargs -r kill" SIGINT SIGTERM EXIT
 
 /ide-desktop/status 24000 "$1" &
 
+echo "Desktop IDE: Waiting for the content initializer ..."
+until curl -sS "$SUPERVISOR_ADDR"/_supervisor/v1/status/content/wait/true | grep '"available":true' > /dev/null; do
+    sleep 1
+done
+echo "Desktop IDE: Content available."
+
 export CWM_NON_INTERACTIVE=1
 export CWM_HOST_PASSWORD=gitpod
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
