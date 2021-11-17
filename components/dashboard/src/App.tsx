@@ -142,7 +142,7 @@ function App() {
 
     useEffect(() => {
         const updateTheme = () => {
-            const isDark = localStorage.theme === 'dark' || (localStorage.theme === 'system' && window.matchMedia("(prefers-color-scheme: dark)").matches);
+            const isDark = localStorage.theme === 'dark' || (!localStorage.theme && window.matchMedia("(prefers-color-scheme: dark)").matches);
             setIsDark(isDark);
         }
         updateTheme();
