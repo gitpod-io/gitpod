@@ -83,6 +83,7 @@ import { IDEConfigService } from './ide-config';
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { IClientCallMetrics } from '@gitpod/content-service/lib/client-call-metrics';
 import { DebugApp } from './debug-app';
+import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from './messaging/local-message-broker';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -121,6 +122,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
     bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
     bind(MessageBusIntegration).toSelf().inSingletonScope();
+    bind(LocalMessageBroker).to(LocalRabbitMQBackedMessageBroker).inSingletonScope();
 
     bind(IClientDataPrometheusAdapter).to(ClientDataPrometheusAdapterImpl).inSingletonScope();
 

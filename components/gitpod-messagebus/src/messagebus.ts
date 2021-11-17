@@ -479,8 +479,7 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
         }
 
         let msg: any | undefined;
-        try {
-            const content = message.content;
+        try {            const content = message.content;
             const jsonContent = JSON.parse(content.toString());
             msg = jsonContent as T;
         } catch (e) {

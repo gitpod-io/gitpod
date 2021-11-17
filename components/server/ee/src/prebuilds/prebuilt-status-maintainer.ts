@@ -8,11 +8,11 @@ import { ProbotOctokit } from 'probot';
 import { injectable, inject } from 'inversify';
 import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
 import { v4 as uuidv4 } from 'uuid';
-import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { PrebuiltWorkspaceUpdatable, PrebuiltWorkspace, Disposable } from '@gitpod/gitpod-protocol';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import { LocalMessageBroker } from '../../../src/messaging/local-message-broker';
 
 export interface CheckRunInfo {
     owner: string;
@@ -31,7 +31,7 @@ export type AuthenticatedGithubProvider = (installationId: number) => Promise<In
 @injectable()
 export class PrebuildStatusMaintainer implements Disposable {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-    @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
+    @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
     protected githubApiProvider: AuthenticatedGithubProvider;
     protected messagebusListener?: Disposable;
     protected periodicChecker?: NodeJS.Timer;
@@ -40,7 +40,7 @@ export class PrebuildStatusMaintainer implements Disposable {
         // set github before registering the msgbus listener - otherwise an incoming message and the github set might race
         this.githubApiProvider = githubApiProvider;
 
-        this.messagebusListener = this.messagebus.listenForPrebuildUpdatableQueue((ctx, msg) => this.handlePrebuildFinished(ctx, msg));
+        this.messagebusListener = this.localMessageBroker.listenForPrebuildUpdatableEvents((ctx, msg) => this.handlePrebuildFinished(ctx, msg));
         this.periodicChecker = setInterval(this.periodicUpdatableCheck.bind(this), 60 * 1000) as any as NodeJS.Timer;
         log.debug("prebuild updatatable status maintainer started");
     }
