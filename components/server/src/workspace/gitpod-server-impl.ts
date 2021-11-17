@@ -44,7 +44,6 @@ import { UserService } from '../user/user-service';
 import { IClientDataPrometheusAdapter } from './client-data-prometheus-adapter';
 import { ContextParser } from './context-parser-service';
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
-import { MessageBusIntegration } from './messagebus-integration';
 import { WorkspaceDeletionService } from './workspace-deletion-service';
 import { WorkspaceFactory } from './workspace-factory';
 import { WorkspaceStarter } from './workspace-starter';
@@ -52,6 +51,7 @@ import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-
 import { HeadlessLogService } from "./headless-log-service";
 import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
+import { LocalMessageBroker } from "../messaging/local-message-broker";
 
 @injectable()
 export class GitpodServerImpl<Client extends GitpodClient, Server extends GitpodServer> implements GitpodServer, Disposable {
@@ -60,7 +60,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(WorkspaceFactory) protected readonly workspaceFactory: WorkspaceFactory;
     @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
-    @inject(MessageBusIntegration) protected readonly messageBusIntegration: MessageBusIntegration;
+    @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
     @inject(ContextParser) protected contextParser: ContextParser;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
@@ -150,7 +150,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
         // TODO(cw): the instance update is not subject to resource access guards, hence provides instance info
         //           to clients who might not otherwise have access to that information.
-        this.disposables.push(this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
+        this.disposables.push(this.localMessageBroker.listenForWorkspaceInstanceUpdates(
             this.user.id,
             (ctx: TraceContext, instance: WorkspaceInstance) => withTrace(ctx, () => this.client?.onInstanceUpdate(this.censorInstance(instance)))
         ));
