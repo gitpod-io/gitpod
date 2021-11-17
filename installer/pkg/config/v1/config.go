@@ -81,7 +81,7 @@ type Config struct {
 
 	Workspace Workspace `json:"workspace" validate:"required"`
 
-	AuthProviders []AuthProviderConfigs `json:"authProviders"`
+	AuthProviders []AuthProviderConfigs `json:"authProviders" validate:"dive"`
 	BlockNewUsers BlockNewUsers         `json:"blockNewUsers"`
 }
 
@@ -224,9 +224,12 @@ const (
 
 // todo(sje): I don't know if we want to put this in the config YAML
 type AuthProviderConfigs struct {
+	ID                  string            `json:"id" validate:"required"`
+	Host                string            `json:"host" validate:"required"`
+	Type                string            `json:"type" validate:"required"`
 	BuiltIn             string            `json:"builtin"`
 	Verified            string            `json:"verified"`
-	OAuth               OAuth             `json:"oauth"`
+	OAuth               OAuth             `json:"oauth" validate:"required"`
 	Params              map[string]string `json:"params"`
 	HiddenOnDashboard   bool              `json:"hiddenOnDashboard"`
 	LoginContextMatcher string            `json:"loginContextMatcher"`
@@ -242,9 +245,9 @@ type BlockNewUsers struct {
 }
 
 type OAuth struct {
-	ClientId            string            `json:"clientId"`
-	ClientSecret        string            `json:"clientSecret"`
-	CallBackUrl         string            `json:"callBackUrl"`
+	ClientId            string            `json:"clientId" validate:"required"`
+	ClientSecret        string            `json:"clientSecret" validate:"required"`
+	CallBackUrl         string            `json:"callBackUrl" validate:"required"`
 	AuthorizationUrl    string            `json:"authorizationUrl"`
 	TokenUrl            string            `json:"tokenUrl"`
 	Scope               string            `json:"scope"`
