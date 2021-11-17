@@ -95,6 +95,7 @@
     "@types/base-64": "^1.0.0",
     "@types/body-parser": "^1.19.1",
     "@types/chai": "^4.2.21",
+    "@types/cookie": "^0.4.1",
     "@types/cookie-parser": "^1.4.2",
     "@types/cors": "^2.8.12",
     "@types/deep-equal": "^1.0.1",
