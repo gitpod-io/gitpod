@@ -58,14 +58,14 @@ export default function Preferences() {
         setUseDesktopIde(value);
     }
 
-    const [theme, setTheme] = useState<Theme>(localStorage.theme || 'light');
+    const [theme, setTheme] = useState<Theme>(localStorage.theme || 'system');
     const actuallySetTheme = (theme: Theme) => {
-        if (theme === 'dark' || theme === 'system') {
+        if (theme === 'dark' || theme === 'light') {
             localStorage.theme = theme;
         } else {
             localStorage.removeItem('theme');
         }
-        const isDark = localStorage.theme === 'dark' || (localStorage.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const isDark = localStorage.theme === 'dark' || (!localStorage.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
         setIsDark(isDark);
         setTheme(theme);
     }
