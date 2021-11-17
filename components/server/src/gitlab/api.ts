@@ -54,7 +54,7 @@ export class GitLabApi {
                 //         "description": "404 Commit Not Found"
                 //     }
 
-                return new GitLab.ApiError(`GitLab Request Error: ${error?.description}`, error);
+                return new GitLab.ApiError(`GitLab Request Error: ${JSON.stringify(error.description)}`, error);
             }
             log.error(`GitLab request error`, error);
             throw error;

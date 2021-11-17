@@ -19,6 +19,7 @@ import { toRemoteURL } from "./render-utils";
 import ContextMenu from "../components/ContextMenu";
 import ConfirmationModal from "../components/ConfirmationModal"
 import { prebuildStatusIcon } from "./Prebuilds";
+import { UserContext } from "../user-context";
 
 export default function () {
     const location = useLocation();
@@ -225,5 +226,34 @@ export default function () {
                 </div>
             </div>
         )}
+        <NewRepositoryFromTemplate />
     </>;
+}
+
+function NewRepositoryFromTemplate() {
+    const { user } = useContext(UserContext);
+    const [ templateUrl, setTemplateUrl ] = useState<string>('');
+    const [ repoOwner, setRepoOwner ] = useState<string>(user?.name || '');
+    const [ repoName, setRepoName ] = useState<string>('');
+
+    const create = async () => {
+        try {
+            const repository = await getGitpodService().server.createRepositoryFromTemplate({
+                owner: repoOwner,
+                repo: repoName,
+                templateUrl,
+            });
+            console.log('created repository:', repository);
+        } catch (error) {
+            console.error('could not create repository:', error);
+        }
+    }
+
+    return <div className="app-container">
+        <h1>Create Git Repository</h1>
+        <label>Template URL: <input type="text" value={templateUrl} onChange={e => setTemplateUrl(e.target.value)} /></label>
+        <label>Git scope: <input type="text" value={repoOwner} onChange={e => setRepoOwner(e.target.value)} /></label>
+        <label>Repository name: <input type="text" value={repoName} onChange={e => setRepoName(e.target.value)} /></label>
+        <button onClick={create}>Create</button>
+    </div>;
 }

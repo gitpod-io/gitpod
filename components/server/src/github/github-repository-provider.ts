@@ -28,6 +28,17 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         return { host, owner, name: repo, cloneUrl, description, avatarUrl, webUrl, defaultBranch };
     }
 
+    async createRepositoryFromTemplate(user: User, owner: string, repo: string, templateUrl: string): Promise<Repository> {
+        const { owner: template_owner, repo: template_repo } = RepoURL.parseRepoUrl(templateUrl)!;
+        await this.github.createRepositoryFromTemplate(user, {
+            owner,
+            name: repo,
+            template_owner,
+            template_repo,
+        });
+        return this.getRepo(user, owner, repo);
+    }
+
     async getBranch(user: User, owner: string, repo: string, branch: string): Promise<Branch> {
         const result = await this.github.getBranch(user, { repo, owner, branch });
         return result;

@@ -240,8 +240,14 @@ export class GitHubRestApi {
     }
 
     public async getRepository(user: User, params: RestEndpointMethodTypes["repos"]["get"]["parameters"]): Promise<Repository> {
-        const key = `getRepository:${params.owner}/${params.owner}:${user.id}`;
+        const key = `getRepository:${params.owner}/${params.repo}:${user.id}`;
         const response = await this.runWithCache(key, user, (api) => api.repos.get(params));
+        return response.data;
+    }
+
+    public async createRepositoryFromTemplate(user: User, params: RestEndpointMethodTypes["repos"]["createUsingTemplate"]["parameters"]): Promise<Repository> {
+        const key = `createRepositoryFromTemplate:${params.template_owner}/${params.template_repo}:${params.owner}/${params.name}:${user.id}`;
+        const response = await this.runWithCache(key, user, (api) => api.repos.createUsingTemplate(params));
         return response.data;
     }
 

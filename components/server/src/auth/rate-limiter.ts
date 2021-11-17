@@ -91,6 +91,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "deleteTeam": { group: "default", points: 1 },
         "getProviderRepositoriesForUser":  { group: "default", points: 1 },
         "createProject":  { group: "default", points: 1 },
+        "createRepositoryFromTemplate":  { group: "default", points: 1 },
         "getTeamProjects": { group: "default", points: 1 },
         "getUserProjects": { group: "default", points: 1 },
         "deleteProject":  { group: "default", points: 1 },

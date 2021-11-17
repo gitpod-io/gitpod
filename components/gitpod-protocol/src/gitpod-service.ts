@@ -9,7 +9,7 @@ import {
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
-    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes
+    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, Repository
 } from './protocol';
 import {
     Team, TeamMemberInfo,
@@ -128,6 +128,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
     createProject(params: CreateProjectParams): Promise<Project>;
+    createRepositoryFromTemplate(params: CreateRepositoryFromTemplateParams): Promise<Repository>;
     deleteProject(projectId: string): Promise<void>;
     getTeamProjects(teamId: string): Promise<Project[]>;
     getUserProjects(): Promise<Project[]>;
@@ -244,6 +245,11 @@ export interface CreateProjectParams {
     teamId?: string;
     userId?: string;
     appInstallationId: string;
+}
+export interface CreateRepositoryFromTemplateParams {
+    owner: string;
+    repo: string;
+    templateUrl: string;
 }
 export interface FindPrebuildsParams {
     projectId: string;

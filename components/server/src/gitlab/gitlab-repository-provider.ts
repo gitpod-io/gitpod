@@ -33,6 +33,29 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         return { host, owner, name, cloneUrl, description, avatarUrl, webUrl, defaultBranch };
     }
 
+    async createRepositoryFromTemplate(user: User, owner: string, repo: string, templateUrl: string): Promise<Repository> {
+        const { owner: template_owner, repo: template_repo } = RepoURL.parseRepoUrl(templateUrl)!;
+        const template = await this.gitlab.run<GitLab.Project>(user, async g => {
+            return g.Projects.show(`${template_owner}/${template_repo}`);
+        });
+        if (GitLab.ApiError.is(template)) {
+            throw template;
+        }
+        const project = await this.gitlab.run<GitLab.Project>(user, async g => {
+            return g.Projects.create({
+                name: repo,
+                template_name: template.name,
+                // use_custom_template: true,
+                // template_project_id: template.id,
+                // group_with_project_templates_id: template.namespace.id,
+            });
+        });
+        if (GitLab.ApiError.is(project)) {
+            throw project;
+        }
+        return this.getRepo(user, owner, project.path);
+    }
+
     async getBranch(user: User, owner: string, repo: string, branch: string): Promise<Branch> {
         const response = await this.gitlab.run<GitLab.Branch>(user, async g => {
             return g.Branches.show(`${owner}/${repo}`, branch);
