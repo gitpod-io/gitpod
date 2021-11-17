@@ -20,8 +20,6 @@ import { LicenseValidationResult, GetLicenseInfoResult, LicenseFeature } from '@
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { ResourceAccessGuard } from "../../../src/auth/resource-access";
-import { MessageBusIntegration } from "../../../src/workspace/messagebus-integration";
-import { MessageBusIntegrationEE } from "./messagebus-integration";
 import { AccountStatement, CreditAlert, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { EligibilityService } from "../user/eligibility-service";
 import { AccountStatementProvider } from "../user/account-statement-provider";
@@ -50,8 +48,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
     @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;
-
-    @inject(MessageBusIntegration) protected readonly messageBusIntegration: MessageBusIntegrationEE;
 
     // per-user state
     @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
