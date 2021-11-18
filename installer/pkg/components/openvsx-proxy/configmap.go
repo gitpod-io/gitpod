@@ -19,7 +19,7 @@ import (
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// todo(sje): enable redis config
 	imgcfg := openvsx.Config{
-		LogDebug:             true,
+		LogDebug:             false,
 		CacheDurationRegular: util.Duration(time.Minute),
 		CacheDurationBackup:  util.Duration(time.Hour * 72),
 		URLUpstream:          "https://open-vsx.org", // todo(sje): make configurable
