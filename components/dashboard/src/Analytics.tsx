@@ -35,7 +35,7 @@ export const getAnonymousId = (): string => {
   }
   else {
     anonymousId = v4();
-    Cookies.set('ajs_anonymous_id', anonymousId);
+    Cookies.set('ajs_anonymous_id', anonymousId, {domain: '.'+window.location.hostname, expires: 365});
   };
   return anonymousId;
 }
