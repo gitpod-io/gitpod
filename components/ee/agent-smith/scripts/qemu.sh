@@ -12,7 +12,8 @@ fi
 
 set -euo pipefail
 
-outdir="/root/_output"
+script_dirname="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+outdir="${script_dirname}/_output"
 
 
 rm -Rf ~/.ssh
@@ -20,7 +21,7 @@ sudo cp -r "${outdir}/.ssh" ~/.ssh
 sudo chown -R "$(id -u):$(id -g)" ~/.ssh
 
 sudo qemu-system-x86_64 -kernel "${vmlinuz}" \
--boot c -m 2049M -hda "${outdir}/bionic-server-cloudimg-amd64.qcow2" \
+-boot c -m 2049M -hda "${outdir}/bionic-server-cloudimg-amd64.img" \
 -net user \
 -smp 2 \
 -append "root=/dev/sda rw console=ttyS0,115200 acpi=off nokaslr" \

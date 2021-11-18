@@ -10,15 +10,10 @@ ENV WORKSPACE_KERNEL 5.4.0-1051-gke
 USER root
 
 ### QEMU (x86) and workspace kernel development tools
-RUN install-packages qemu qemu-system-x86 linux-image-$WORKSPACE_KERNEL libguestfs-tools openssh-sftp-server
-RUN ln -s /usr/lib/sftp-server /usr/libexec/sftp-server
+RUN install-packages qemu qemu-system-x86 linux-image-$WORKSPACE_KERNEL libguestfs-tools sshpass
 
 ### Clang and LLVM
 RUN install-packages clang-7 llvm-7
-
-### Build QEMU VM
-COPY config prepare-bpf-dev-environment.sh code workspace.mount workspace.automount /root/
-RUN /root/prepare-bpf-dev-environment.sh
 
 ### cloud_sql_proxy ###
 ARG CLOUD_SQL_PROXY=/usr/local/bin/cloud_sql_proxy
