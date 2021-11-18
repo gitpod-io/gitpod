@@ -41,8 +41,9 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
      * Team Subscriptions
      */
 
-    async storeTeamSubscriptionEntry(ts: TeamSubscription): Promise<TeamSubscription> {
-        return (await this.getRepo()).save(ts);
+    async storeTeamSubscriptionEntry(ts: TeamSubscription): Promise<void> {
+        const repo = await this.getRepo();
+        await repo.save(ts);
     }
 
     async findTeamSubscriptionById(id: string): Promise<TeamSubscription | undefined> {
