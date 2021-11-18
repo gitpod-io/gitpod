@@ -75,7 +75,7 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 					minDate := time.Now().Add(-time.Duration(o.Config.CacheDurationRegular))
 					if t.After(minDate) {
 						hitCacheRegular = true
-						log.WithFields(logFields).Infof("cached value is younger than %s - using cached value", o.Config.CacheDurationRegular)
+						log.WithFields(logFields).Debugf("cached value is younger than %s - using cached value", o.Config.CacheDurationRegular)
 						for k, v := range cached.Header {
 							for i, val := range v {
 								if i == 0 {
@@ -95,7 +95,7 @@ func (o *OpenVSXProxy) Handler(p *httputil.ReverseProxy) func(http.ResponseWrite
 						o.metrics.DurationRequestProcessingHistogram.Observe(time.Since(start).Seconds())
 						return
 					} else {
-						log.WithFields(logFields).Infof("cached value is older than %s - ignoring cached value", o.Config.CacheDurationRegular)
+						log.WithFields(logFields).Debugf("cached value is older than %s - ignoring cached value", o.Config.CacheDurationRegular)
 					}
 				}
 			}

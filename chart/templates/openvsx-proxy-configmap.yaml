@@ -14,7 +14,7 @@ metadata:
 data:
   config.json: |
     {
-      "log_debug": true,
+      "log_debug": false,
       "cache_duration_regular": "{{ .Values.components.openVsxProxy.cacheDurationRegular | default "1m" }}",
       "cache_duration_backup": "{{ .Values.components.openVsxProxy.cacheDurationBackup | default "72h" }}",
       "url_upstream": "{{ .Values.components.openVsxProxy.vsxRegistryUrl | default "https://open-vsx.org" }}",
