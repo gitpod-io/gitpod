@@ -65,7 +65,7 @@ export default function Preferences() {
         } else {
             localStorage.removeItem('theme');
         }
-        const isDark = localStorage.theme === 'dark' || (!localStorage.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const isDark = localStorage.theme === 'dark' || (localStorage.theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         setIsDark(isDark);
         setTheme(theme);
     }
