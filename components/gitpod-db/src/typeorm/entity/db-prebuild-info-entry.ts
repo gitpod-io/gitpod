@@ -16,7 +16,7 @@ export class DBPrebuildInfo  {
     prebuildId: string;
 
     @Column({
-        type: 'simple-json',
+        type: 'text',
         transformer: (() => {
             return {
                 to(value: any): any {
@@ -27,6 +27,7 @@ export class DBPrebuildInfo  {
                         const obj = JSON.parse(value);
                         return PrebuildInfo.is(obj) ? obj : undefined;
                     } catch (error) {
+                        return undefined;
                     }
                 }
             };
