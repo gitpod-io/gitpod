@@ -11,6 +11,7 @@ import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import * as opentracing from 'opentracing';
 import * as grpc from "@grpc/grpc-js";
 import { Disposable } from "@gitpod/gitpod-protocol";
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 export function withTracing(ctx: TraceContext) {
     const metadata = new grpc.Metadata();
@@ -46,7 +47,7 @@ async function linearBackoffRetry<Res>(run: (attempt: number) => Promise<Res>, a
                 throw err;
             }
 
-            console.warn(`ws-manager unavailable - retrying in ${delayMS}ms`);
+            log.warn(`ws-manager unavailable - retrying in ${delayMS}ms`, err);
             await new Promise((retry, _) => setTimeout(retry, delayMS));
         }
 
@@ -55,7 +56,7 @@ async function linearBackoffRetry<Res>(run: (attempt: number) => Promise<Res>, a
         }
     }
 
-    console.error(`ws-manager unavailable - no more attempts left`);
+    log.error(`ws-manager unavailable - no more attempts left`);
     throw error;
 }
 
