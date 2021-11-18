@@ -127,7 +127,8 @@ type ObjectStorage struct {
 }
 
 type ObjectStorageS3 struct {
-	Certificate ObjectRef `json:"certificate"`
+	Endpoint    string    `json:"endpoint" validate:"required"`
+	Credentials ObjectRef `json:"credentials" validate:"required"`
 }
 
 type ObjectStorageCloudStorage struct {
@@ -136,7 +137,7 @@ type ObjectStorageCloudStorage struct {
 }
 
 type ObjectStorageAzure struct {
-	Credentials ObjectRef `json:"credentials"`
+	Credentials ObjectRef `json:"credentials" validate:"required"`
 }
 
 type InstallationKind string
