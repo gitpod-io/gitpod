@@ -8,5 +8,10 @@ RUN apk add --no-cache git bash ca-certificates
 COPY components-ee-kedge--app/kedge /app/
 RUN chmod +x /app/kedge
 
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 ENTRYPOINT [ "/app/kedge" ]
 CMD [ "-v", "help" ]

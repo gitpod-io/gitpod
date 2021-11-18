@@ -34,3 +34,9 @@ FROM caddy/caddy:2.4.0-alpine
 
 COPY components-dashboard--static/conf/Caddyfile /etc/caddy/Caddyfile
 COPY --from=compress /www /www
+
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}

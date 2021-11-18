@@ -36,4 +36,10 @@ COPY --from=builder /caddy /usr/bin/caddy
 COPY conf/Caddyfile /etc/caddy/Caddyfile
 COPY conf/vhost.empty /etc/caddy/vhosts/vhost.empty
 
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
+
 CMD [ "caddy", "run", "-watch", "-config", "/etc/caddy/Caddyfile" ]

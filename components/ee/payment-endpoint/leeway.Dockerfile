@@ -16,4 +16,10 @@ RUN useradd --create-home --uid 31001 --home-dir /app/ unode
 COPY --from=builder /app /app/
 USER unode
 WORKDIR /app/node_modules/@gitpod/gitpod-payment-endpoint
+
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 CMD exec yarn start

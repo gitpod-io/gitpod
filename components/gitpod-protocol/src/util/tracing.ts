@@ -174,8 +174,13 @@ export class TracingManager {
             serviceName,
         }
         const t = initTracerFromEnv(config, {
-            logger: console
+            logger: console,
+            tags: {
+                'service.build.commit': process.env.GITPOD_BUILD_GIT_COMMIT,
+                'service.build.version': process.env.GITPOD_BUILD_VERSION,
+            }
         });
+
         if (opts) {
             if (opts.perOpSampling) {
                 (t as any)._sampler = new PerOperationSampler((t as any)._sampler, opts.perOpSampling);
