@@ -7,6 +7,7 @@
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 import { AdmissionConstraint, AdmissionPreference, TLSConfig, WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @Entity()
 export class DBWorkspaceCluster implements WorkspaceCluster {
@@ -20,7 +21,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     url: string;
 
     @Column({
-        type: "simple-json",
+        type: "text",
         transformer: (() => {
             const defaultValue = {};
             const jsonifiedDefault = JSON.stringify(defaultValue);
@@ -33,11 +34,20 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
                     return JSON.stringify(value);
                 },
                 // <tls> | "{}" => tls | undefined
+                // also: "" | NULL => undefined (to make sure to not break on odd DB values)
                 from(value: any): any {
-                    if (value === jsonifiedDefault) {
+                    if (!value || value === jsonifiedDefault) {
                         return undefined;
                     }
-                    return JSON.parse(value);
+
+                    try {
+                        return JSON.parse(value);
+                    } catch (err) {
+                        // ideally we want typeorm to skip this complete row, but can't.
+                        // errors make the whole query fail: too risky here!
+                        log.error("error parsing value ws-cluster from DB", err, { value });
+                        return undefined;
+                    }
                 }
             };
         })()
@@ -61,7 +71,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     govern: boolean;
 
     @Column({
-        type: "simple-json",
+        type: "text",
         transformer: (() => {
             const defaultValue: AdmissionConstraint[] = [];
             const jsonifiedDefault = JSON.stringify(defaultValue);
@@ -72,8 +82,21 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
                     }
                     return JSON.stringify(value);
                 },
+                // "[...]" | "[]" => []
+                // also: "" | NULL => undefined (to make sure to not break on odd DB values)
                 from(value: any): any {
-                    return JSON.parse(value);
+                    if (!value) {
+                        return undefined;
+                    }
+
+                    try {
+                        return JSON.parse(value);
+                    } catch (err) {
+                        // ideally we want typeorm to skip this complete row, but can't.
+                        // errors make the whole query fail: too risky here!
+                        log.error("error parsing value ws-cluster from DB", err, { value });
+                        return undefined;
+                    }
                 }
             };
         })()
@@ -81,7 +104,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     admissionConstraints?: AdmissionConstraint[];
 
     @Column({
-        type: "simple-json",
+        type: "text",
         transformer: (() => {
             const defaultValue: AdmissionPreference[] = [];
             const jsonifiedDefault = JSON.stringify(defaultValue);
@@ -92,11 +115,20 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
                     }
                     return JSON.stringify(value);
                 },
+                // "[...]" | "[]" => []
+                // also: "" | NULL => undefined (to make sure to not break on odd DB values)
                 from(value: any): any {
                     if (!value) {
                         return undefined;
                     }
-                    return JSON.parse(value);
+                    try {
+                        return JSON.parse(value);
+                    } catch (err) {
+                        // ideally we want typeorm to skip this complete row, but can't.
+                        // errors make the whole query fail: too risky here!
+                        log.error("error parsing value ws-cluster from DB", err, { value });
+                        return undefined;
+                    }
                 }
             };
         })()
