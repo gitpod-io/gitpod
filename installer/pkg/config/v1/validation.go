@@ -82,6 +82,11 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("accountName", "accountKey")))
 	}
 
+	if cfg.ObjectStorage.S3 != nil {
+		secretName := cfg.ObjectStorage.S3.Credentials.Name
+		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("accessKeyId", "secretAccessKey")))
+	}
+
 	if cfg.ContainerRegistry.External != nil {
 		secretName := cfg.ContainerRegistry.External.Certificate.Name
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData(".dockerconfigjson")))
