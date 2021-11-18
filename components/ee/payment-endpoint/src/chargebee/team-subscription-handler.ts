@@ -14,9 +14,11 @@ import { getCancelledAt, getStartDate } from './chargebee-subscription-helper';
 import { Chargebee as chargebee } from './chargebee-types';
 import { EventHandler } from './chargebee-event-handler';
 import { TeamSubscriptionService } from "../accounting/team-subscription-service";
+import { Config } from '../config';
 
 @injectable()
 export class TeamSubscriptionHandler implements EventHandler<chargebee.SubscriptionEventV2> {
+    @inject(Config) protected readonly config: Config;
     @inject(TeamSubscriptionDB) protected readonly db: TeamSubscriptionDB;
     @inject(TeamSubscriptionService) protected readonly service: TeamSubscriptionService;
 
@@ -58,16 +60,22 @@ export class TeamSubscriptionHandler implements EventHandler<chargebee.Subscript
                 paymentReference: chargebeeSubscription.id
             });
             if (subs.length === 0) {
+                // Sanity check: If we try to create too many slots here we OOM, so we error instead.
+                const quantity = chargebeeSubscription.plan_quantity;
+                if (quantity > this.config.maxTeamSlotsOnCreation) {
+                    throw new Error(`(TS ${chargebeeSubscription.id}): nr of slots on creation (${quantity}) is higher than configured maximum (${this.config.maxTeamSlotsOnCreation}). Skipping creation!`);
+                }
+
                 const ts = TeamSubscription.create({
                     userId,
                     paymentReference: chargebeeSubscription.id,
                     planId: chargebeeSubscription.plan_id,
                     startDate: getStartDate(chargebeeSubscription),
                     endDate: chargebeeSubscription.cancelled_at ? getCancelledAt(chargebeeSubscription) : undefined,
-                    quantity: chargebeeSubscription.plan_quantity
+                    quantity
                 });
                 await db.storeTeamSubscriptionEntry(ts);
-                await this.service.addSlots(ts, chargebeeSubscription.plan_quantity);
+                await this.service.addSlots(ts, quantity);
             } else {
                 const oldSubscription = subs.find(s => s.paymentReference === chargebeeSubscription.id);
                 if (!oldSubscription) {

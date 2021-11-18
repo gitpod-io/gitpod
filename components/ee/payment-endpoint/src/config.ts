@@ -36,6 +36,8 @@ export GITPOD_GITHUB_APP_MKT_NAME=gitpod-draft-development-app
     readonly githubAppAppID: number = process.env.GITPOD_GITHUB_APP_ID ? parseInt(process.env.GITPOD_GITHUB_APP_ID) : 0;
     readonly githubAppWebhookSecret: string = process.env.GITPOD_GITHUB_APP_WEBHOOK_SECRET || "unknown";
     readonly githubAppCertPath: string = process.env.GITPOD_GITHUB_APP_CERT_PATH || "unknown";
+
+    readonly maxTeamSlotsOnCreation: number = !!process.env.TS_MAX_SLOTS_ON_CREATION ? parseInt(process.env.TS_MAX_SLOTS_ON_CREATION) : 1000;
 }
 
 export interface ChargebeeWebhook {
