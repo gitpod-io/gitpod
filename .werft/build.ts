@@ -450,7 +450,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         const nodeAffinityValues = [
             "values.nodeAffinities_1.yaml",
             "values.nodeAffinities_2.yaml",
-            "values.nodeAffinities_3.yaml",
+            "values.nodeAffinities_0.yaml",
         ]
 
         if (k3sWsCluster) {
