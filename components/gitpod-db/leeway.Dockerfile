@@ -23,3 +23,8 @@ COPY --from=proxy /etc/ssl/certs/ /etc/ssl/certs/
 COPY --chown=10000:10000 --from=builder /app /app/
 WORKDIR /app/node_modules/@gitpod/gitpod-db
 
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}

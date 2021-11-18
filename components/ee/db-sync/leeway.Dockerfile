@@ -16,4 +16,10 @@ COPY --from=builder /app /app/
 USER unode
 WORKDIR /app/node_modules/@gitpod/db-sync
 ENTRYPOINT [ "yarn", "start" ]
+
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 CMD [ "run", "--soft-start" ]

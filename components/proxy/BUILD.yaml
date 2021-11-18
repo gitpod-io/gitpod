@@ -7,6 +7,8 @@ packages:
     argdeps:
       - imageRepoBase
     config:
+      buildArgs:
+        VERSION: ${version}
       dockerfile: Dockerfile
       metadata:
         helm-component: proxy

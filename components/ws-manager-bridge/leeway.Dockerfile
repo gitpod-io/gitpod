@@ -16,4 +16,10 @@ RUN useradd --no-log-init --create-home --uid 31002 --home-dir /app/ unode
 COPY --from=builder /app /app/
 USER unode
 WORKDIR /app/node_modules/@gitpod/ws-manager-bridge
+
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 CMD exec yarn start-ee
