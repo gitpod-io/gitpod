@@ -12,9 +12,6 @@ USER root
 ### QEMU (x86) and workspace kernel development tools
 RUN install-packages qemu qemu-system-x86 linux-image-$WORKSPACE_KERNEL libguestfs-tools sshpass
 
-### Clang and LLVM
-RUN install-packages clang-7 llvm-7
-
 ### cloud_sql_proxy ###
 ARG CLOUD_SQL_PROXY=/usr/local/bin/cloud_sql_proxy
 RUN curl -fsSL https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 > $CLOUD_SQL_PROXY \
