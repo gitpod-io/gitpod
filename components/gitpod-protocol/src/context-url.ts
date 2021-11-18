@@ -5,7 +5,6 @@
  */
 
 export namespace ContextURL {
-  export const INCREMENTAL_PREBUILD_PREFIX = "incremental-prebuild";
   export const PREBUILD_PREFIX = "prebuild";
   export const IMAGEBUILD_PREFIX = "imagebuild";
 
@@ -36,7 +35,6 @@ export namespace ContextURL {
 
     const firstSegment = segments[0];
     if (firstSegment === PREBUILD_PREFIX ||
-        firstSegment === INCREMENTAL_PREBUILD_PREFIX ||
         firstSegment === IMAGEBUILD_PREFIX) {
       return segmentsToURL(1);
     }
