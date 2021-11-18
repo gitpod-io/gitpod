@@ -1,0 +1,38 @@
+{
+  "enforceAffinity": true,
+  "defaultTemplate": {
+      "spec": {
+          "affinity": {
+              "nodeAffinity": {
+                  "requiredDuringSchedulingIgnoredDuringExecution": {
+                      "nodeSelectorTerms": [
+                          {
+                              "matchExpressions": [
+                                  {
+                                      "key": "foobar",
+                                      "operator": "Exists"
+                                  }
+                              ]
+                          }
+                      ]
+                  }
+              }
+          }
+      }
+  },
+  "spec": {
+      "ideImage": {
+          "webRef": "eu.gcr.io/gitpod-core-dev/buid/theia-ide:someversion"
+      },
+      "workspaceImage": "some-ref",
+      "initializer": {
+          "snapshot": {
+              "snapshot": "workspaces/cryptic-id-goes-herg/fd62804b-4cab-11e9-843a-4e645373048e.tar@gitpod-dev-user-christesting"
+          }
+      },
+      "git": {
+          "username": "usernameGoesHere",
+          "email": "some@user.com"
+      }
+  }
+}
