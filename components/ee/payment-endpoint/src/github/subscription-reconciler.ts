@@ -94,6 +94,10 @@ export class GithubSubscriptionReconciler {
                     'User-Agent': 'gitpod/payment'
                 }
             });
+            if (!resp.ok) {
+                log.error(`Error getting accounts for plan ${plan.name} from GitHub: '${resp.statusText}'`, { plan, statusText: resp.statusText, status: resp.status });
+                break;
+            }
 
             const items: MarketplaceAccountListing[] = JSON.parse(await resp.text());
             if (items.length == 0) {
