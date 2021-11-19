@@ -22,6 +22,10 @@ const readDir = util.promisify(fs.readdir)
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
 
+// used by both deploys (helm and Installer)
+const PROXY_SECRET_NAME = "proxy-config-certificates";
+const IMAGE_PULL_SECRET_NAME = "gcp-sa-registry-auth";
+
 const context = JSON.parse(fs.readFileSync('context.json').toString());
 
 const version = parseVersion(context);
@@ -297,15 +301,60 @@ interface DeploymentConfig {
 
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev")
-    // werft.log("deploy", "hello world");
 
     try {
+        // TODO: project name is set conditionally in other spots, read why and centralize in a function if needed
+        const PROJECT_NAME="gitpod-core-dev";
+        const CONTAINER_REGISTRY_URL=`gcr.io/${PROJECT_NAME}`;
+        const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
+
+        // werft.log("deploy", "hello world");
         exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${deploymentConfig.version} -c "cat /app/installer" > /tmp/installer`, {slice: "init"});
         exec(`chmod +x /tmp/installer`, {slice: "init"});
         exec(`/tmp/installer init > config.yaml`, {slice: "init"});
+
+         // TODO: blockNewUsers enabled (yes?) & passlist (gitpod.io) -- I assume this lets devs use preview environments from their @gitpod.io emails
+
+        exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, {slice: "prep"});
+        exec(`yq w -i config.yaml containerRegistry.inCluster ${false}`, {slice: "prep"});
+        exec(`yq w -i config.yaml containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, {slice: "prep"});
+        exec(`yq w -i config.yaml containerRegistry.external.certificate.kind ${"secret"}`, {slice: "prep"});
+
+        // TODO: how are these two different?
+        exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, {slice: "prep"});
+        exec(`yq w -i config.yaml imagePullSecrets[+] ${IMAGE_PULL_SECRET_NAME}`, {slice: "prep"});
+
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: "prep"});
-        exec(`cat config.yaml`, {slice: "config"});
-        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: "prep"});
+        exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: "prep"});
+
+        // werft.log("deploy", "Sharing current state of the config, before secret values are added to it.")
+        // exec(`cat config.yaml`, {slice: "config"});
+
+        //
+        // IMPORTANT
+        // do not "cat" out the config.yaml again after this
+        // werft builds and their output are, and the config contains client IDs and Secrets at this point
+
+        werft.log("authProviders", "copy authProviders")
+        try {
+            exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
+                    | yq r - data.authProviders \
+                    | base64 -d -w 0 \
+                    > authProviders`, { slice: "authProviders" });
+            exec(`yq merge --inplace config.yaml ./authProviders`, { slice: "authProviders" })
+            werft.done('authProviders');
+        } catch (err) {
+            werft.fail('authProviders', err);
+        }
+
+        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: "render"});
+
+        // exec(`yq w -i k8s.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: "prep"});
+
+        // TODO: post processing with yq for hostPort, and node pools
+
+        // TODO: post processing for the custom yaml in values.dev.yaml, which has very specific tuning used at helm upgrade --install
+
     } catch (err) {
         werft.fail('prep', err);
         throw err;
@@ -394,7 +443,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     // core-dev specific section start
     werft.log("secret", "copy secret into namespace")
     try {
-        const auth = exec(`echo -n "_json_key:$(kubectl get secret gcp-sa-registry-auth --namespace=keys -o yaml \
+        const auth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
                         | yq r - data['.dockerconfigjson'] \
                         | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
         fs.writeFileSync("chart/gcp-sa-registry-auth",
@@ -616,7 +665,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         const metaInstallCertParams = new InstallCertificateParams()
         metaInstallCertParams.certName = certName
         metaInstallCertParams.certNamespace = "certs"
-        metaInstallCertParams.certSecretName = "proxy-config-certificates"
+        metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
         metaInstallCertParams.destinationNamespace = namespace
         await installCertficate(werft, metaInstallCertParams, metaEnv());
     }
@@ -625,7 +674,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         const wsInstallCertParams = new InstallCertificateParams()
         wsInstallCertParams.certName = namespace
         wsInstallCertParams.certNamespace = "certmanager"
-        wsInstallCertParams.certSecretName = "proxy-config-certificates"
+        wsInstallCertParams.certSecretName = PROXY_SECRET_NAME
         wsInstallCertParams.destinationNamespace = namespace
         await installCertficate(werft, wsInstallCertParams, k3sEnv());
     }
