@@ -5,6 +5,8 @@ import { getGlobalWerftInstance } from './werft';
 
 export const IS_PREVIEW_APP_LABEL: string = "isPreviewApp";
 
+export const helmInstallName = "gitpod";
+
 export function setKubectlContextNamespace(namespace: string, shellOpts: ExecOptions) {
     [
         `kubectl config current-context`,
@@ -12,22 +14,44 @@ export function setKubectlContextNamespace(namespace: string, shellOpts: ExecOpt
     ].forEach(cmd => exec(cmd, shellOpts));
 }
 
+export async function wipePreviewEnvironmentAndNamespace(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
+    // wipe preview envs built with installer
+    await wipePreviewEnvironmentInstaller(namespace, shellOpts);
+
+    // wipe preview envs previously built with helm
+    await wipePreviewEnvironmentHelm(helmInstallName, namespace, shellOpts)
+
+    deleteAllWorkspaces(namespace, shellOpts);
+
+    await deleteAllUnnamespacedObjects(namespace, shellOpts);
+
+    deleteNamespace(true, namespace, shellOpts);
+}
+
 export async function wipeAndRecreateNamespace(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
-    await wipePreviewEnvironment(helmInstallName, namespace, shellOpts);
+    await wipePreviewEnvironmentAndNamespace(helmInstallName, namespace, shellOpts);
 
     createNamespace(namespace, shellOpts);
 }
 
-export async function wipePreviewEnvironment(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
+export async function wipePreviewEnvironmentHelm(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
     // uninstall helm first so that:
     //  - ws-scaler can't create new ghosts in the meantime
     //  - ws-manager can't start new probes/workspaces
     uninstallHelm(helmInstallName, namespace, shellOpts)
+}
 
-    deleteAllWorkspaces(namespace, shellOpts);
-    await deleteAllUnnamespacedObjects(namespace, shellOpts);
+async function wipePreviewEnvironmentInstaller(namespace: string, shellOpts: ExecOptions) {
+    const slice = shellOpts.slice || "installer";
+    const werft = getGlobalWerftInstance();
 
-    deleteNamespace(true, namespace, shellOpts);
+    const hasGitpodConfigmap = (exec(`kubectl -n ${namespace} get configmap gitpod-app`, { slice, dontCheckRc: true })).code === 0;
+    if (hasGitpodConfigmap) {
+        werft.log(slice, `${namespace} has Gitpod configmap, proceeding with removal`);
+        exec(`./.werft/util/uninstall-gitpod.sh ${namespace}`, { slice });
+    } else {
+        werft.log(slice, `There is no Gitpod configmap, moving on`);
+    }
 }
 
 function uninstallHelm(installationName: string, namespace: string, shellOpts: ExecOptions) {
@@ -43,6 +67,7 @@ function uninstallHelm(installationName: string, namespace: string, shellOpts: E
     exec(`helm --namespace ${namespace} delete ${installationName} --wait`, shellOpts);
 }
 
+// Delete pods for running workspaces, even if they are stuck in terminating because of the finalizer decorator
 function deleteAllWorkspaces(namespace: string, shellOpts: ExecOptions) {
     const objs = exec(`kubectl get pod -l component=workspace --namespace ${namespace} --no-headers -o=custom-columns=:metadata.name`, { ...shellOpts, async: false })
         .split("\n")
@@ -74,13 +99,14 @@ async function deleteAllUnnamespacedObjects(namespace: string, shellOpts: ExecOp
 
     const promisedDeletes: Promise<any>[] = [];
     for (const resType of ["clusterrole", "clusterrolebinding", "podsecuritypolicy"]) {
-        werft.log(slice, `Deleting old ${resType}s...`);
+        werft.log(slice, `Searching and filtering ${resType}s...`);
         const objs = exec(`kubectl get ${resType} --no-headers -o=custom-columns=:metadata.name`, { ...shellOpts, slice, async: false })
             .split("\n")
             .map(o => o.trim())
             .filter(o => o.length > 0)
             .filter(o => o.startsWith(`${namespace}-ns-`)); // "{{ .Release.Namespace }}-ns-" is the prefix-pattern we use throughout our helm resources for un-namespaced resources
 
+        werft.log(slice, `Deleting old ${resType}s...`);
         for (const obj of objs) {
             promisedDeletes.push(exec(`kubectl delete ${resType} ${obj}`, { ...shellOpts, slice, async: true }) as Promise<any>);
         }
@@ -127,7 +153,7 @@ export function deleteNamespace(wait: boolean, namespace: string, shellOpts: Exe
     }
 }
 
-export function deleteNonNamespaceObjects(namespace: string, destname: string, shellOpts: ExecOptions) {
+export async function deleteNonNamespaceObjects(namespace: string, destname: string, shellOpts: ExecOptions) {
     exec(`/usr/local/bin/helm3 delete gitpod-${destname} || echo gitpod-${destname} was not installed yet`, { ...shellOpts });
 
     let objs = [];
@@ -141,9 +167,11 @@ export function deleteNonNamespaceObjects(namespace: string, destname: string, s
         )
     )
 
+    const promisedDeletes: Promise<any>[] = [];
     objs.forEach(o => {
-        exec(`kubectl delete ${o.kind} ${o.obj}`, shellOpts);
+        promisedDeletes.push(exec(`kubectl delete ${o.kind} ${o.obj}`, {...shellOpts, async: true}) as Promise<any>);
     });
+    await Promise.all(promisedDeletes);
 }
 
 export interface PortRange {

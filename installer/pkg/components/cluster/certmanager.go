@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	v1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -22,8 +23,9 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&v1.Issuer{
 			TypeMeta: common.TypeMetaCertificateIssuer,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   caIssuer,
-				Labels: common.DefaultLabels(Component),
+				Name:      caIssuer,
+				Labels:    common.DefaultLabels(Component),
+				Namespace: ctx.Namespace,
 			},
 			Spec: v1.IssuerSpec{IssuerConfig: v1.IssuerConfig{
 				SelfSigned: &v1.SelfSignedIssuer{},

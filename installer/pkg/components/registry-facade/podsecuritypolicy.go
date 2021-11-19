@@ -6,6 +6,7 @@ package registryfacade
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	"k8s.io/api/policy/v1beta1"
@@ -17,9 +18,8 @@ func podsecuritypolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&v1beta1.PodSecurityPolicy{
 		TypeMeta: common.TypeMetaPodSecurityPolicy,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
-			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Name:   fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
+			Labels: common.DefaultLabels(Component),
 			Annotations: map[string]string{
 				"seccomp.security.alpha.kubernetes.io/allowedProfileNames": "runtime/default",
 				"apparmor.security.beta.kubernetes.io/allowedProfileNames": "runtime/default",
