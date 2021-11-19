@@ -296,13 +296,13 @@ interface DeploymentConfig {
 }
 
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
-    werft.phase("deploy", "hello world")
-    werft.log("deploy", "hello world");
+    werft.phase("deploy", "deploying to dev")
+    // werft.log("deploy", "hello world");
 
     try {
-        exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${deploymentConfig.version} -c "cat /app/installer" > /tmp/installer`, {slice: "prep"});
-        exec(`chmod +x /tmp/installer`, {slice: "prep"});
-        exec(`/tmp/installer init > config.yaml`, {slice: "prep"});
+        exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${deploymentConfig.version} -c "cat /app/installer" > /tmp/installer`, {slice: "init"});
+        exec(`chmod +x /tmp/installer`, {slice: "init"});
+        exec(`/tmp/installer init > config.yaml`, {slice: "init"});
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: "prep"});
         exec(`cat config.yaml`, {slice: "config"});
         exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: "prep"});
