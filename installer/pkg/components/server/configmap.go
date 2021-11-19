@@ -7,6 +7,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	corev1 "k8s.io/api/core/v1"
@@ -54,7 +55,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MinAgeDays:                 14,
 			MinAgePrebuildDays:         7,
 		},
-		EnableLocalApp:                  false,
+		EnableLocalApp:                  true,
 		AuthProviderConfigs:             ctx.Config.AuthProviders,
 		BuiltinAuthProvidersConfigured:  len(ctx.Config.AuthProviders) > 0,
 		DisableDynamicAuthProviderLogin: false,

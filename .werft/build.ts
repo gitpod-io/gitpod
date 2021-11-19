@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec, ExecOptions } from './util/shell';
 import { Werft } from './util/werft';
-import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
+import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName } from './util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
@@ -21,6 +21,10 @@ let werft: Werft
 const readDir = util.promisify(fs.readdir)
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
+
+// used by both deploys (helm and Installer)
+const PROXY_SECRET_NAME = "proxy-config-certificates";
+const IMAGE_PULL_SECRET_NAME = "gcp-sa-registry-auth";
 
 const context = JSON.parse(fs.readFileSync('context.json').toString());
 
@@ -51,7 +55,23 @@ Tracing.initialize()
 
 // Werft phases
 const phases = {
+    PREDEPLOY: 'predeploy',
+    DEPLOY: 'deploy',
     TRIGGER_INTEGRATION_TESTS: 'trigger integration tests',
+}
+
+// Werft slices for deploy phase via installer
+const installerSlices = {
+    FIND_FREE_HOST_PORTS: "find free ports",
+    IMAGE_PULL_SECRET: "image pull secret",
+    ISSUE_CERTIFICATES: "install certs",
+    CLEAN_ENV_STATE: "clean envirionment",
+    SET_CONTEXT: "set namespace",
+    INSTALLER_INIT: "installer init",
+    INSTALLER_RENDER: "installer render",
+    INSTALLER_POST_PROCESSING: "installer post processing",
+    APPLY_INSTALL_MANIFESTS: "installer apply",
+    DEPLOYMENT_WAITING: "monitor server deployment"
 }
 
 export function parseVersion(context) {
@@ -121,6 +141,7 @@ export async function build(context, version) {
     const installEELicense = !("without-ee-license" in buildConfig);
     const withPayment= "with-payment" in buildConfig;
     const withObservability = "with-observability" in buildConfig;
+    const withHelm = "with-helm" in buildConfig;
 
     const jobConfig = {
         buildConfig,
@@ -140,6 +161,7 @@ export async function build(context, version) {
         cleanSlateDeployment,
         installEELicense,
         withObservability,
+        withHelm,
     }
     werft.log("job config", JSON.stringify(jobConfig));
     werft.rootSpan.setAttributes(Object.fromEntries(Object.entries(jobConfig).map((kv) => {
@@ -260,7 +282,41 @@ export async function build(context, version) {
         withPayment,
         withObservability,
     };
-    await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+
+    werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
+    // the context namespace is not set at this point
+    const hasGitpodHelmInstall = exec(`helm status ${helmInstallName} -n ${deploymentConfig.namespace}`, {slice: "check for Helm install", dontCheckRc: true}).code === 0;
+    const hasGitpodInstallerInstall = exec(`kubectl get configmap gitpod-app -n ${deploymentConfig.namespace}`, {slice: "check for Installer install", dontCheckRc: true}).code === 0;
+    werft.log("result of installation checks", `has Helm install: ${hasGitpodHelmInstall}, has Installer install: ${hasGitpodInstallerInstall}`);
+
+    if (withHelm) {
+        werft.log("using Helm", "with-helm was specified.");
+        // you want helm, but left behind a Gitpod Installer installation, force a clean slate
+        if (hasGitpodInstallerInstall && !deploymentConfig.cleanSlateDeployment) {
+            werft.log("warning!", "with-helm was specified, there's an Installer install, but, `with-clean-slate-deployment=false`, forcing to true.");
+            deploymentConfig.cleanSlateDeployment = true;
+        }
+        werft.done(phases.PREDEPLOY);
+        werft.phase(phases.DEPLOY, "deploying")
+        await deployToDevWithHelm(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+    } // scenario: you pushed code to an existing preview environment built with Helm, and didn't with-clean-slate-deployment=true'
+    else if (hasGitpodHelmInstall && !deploymentConfig.cleanSlateDeployment) {
+        werft.log("using Helm", "with-helm was not specified, but, a Helm installation exists, and this is not a clean slate deployment.");
+        werft.log("tip", "Set 'with-clean-slate-deployment=true' if you wish to remove the Helm install and use the Installer.");
+        werft.done(phases.PREDEPLOY);
+        werft.phase(phases.DEPLOY, "deploying to dev with Helm");
+        await deployToDevWithHelm(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+    } else {
+        // you get here if
+        // ...it's a new install with no flag overrides or
+        // ...it's an existing install and a Helm install doesn't exist or
+        // ...you have a prexisting Helm install, set 'with-clean-slate-deployment=true', but did not specifiy 'with-helm=true'
+        // Why? The installer is supposed to be a default so we all dog-food it.
+        // But, its new, so this may help folks transition with less issues.
+        werft.done(phases.PREDEPLOY);
+        werft.phase(phases.DEPLOY, "deploying to dev with Installer");
+        await deployToDevWithInstaller(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+    }
     await triggerIntegrationTests(deploymentConfig.version, deploymentConfig.namespace, context.Owner, !withIntegrationTests)
 }
 
@@ -279,18 +335,260 @@ interface DeploymentConfig {
     withObservability: boolean;
 }
 
-/**
- * Deploy dev
- */
-export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
-    werft.phase("deploy", "deploying to dev");
-    const { version, destname, namespace, domain, monitoringDomain, url } = deploymentConfig;
+/*
+* Deploy a preview environment using the Installer
+*/
+export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
+    // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
+    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/post-process.sh -a with-clean-slate-deployment=true
+    const { version, destname, namespace, domain, monitoringDomain, url, withObservability } = deploymentConfig;
+
+    // find free ports
+    werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Check for some free ports.");
     const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
         { start: 31001, end: 32000 },
-    ], metaEnv({ slice: 'hostports' }));
-    const helmInstallName = "gitpod";
+    ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
+    werft.log(installerSlices.FIND_FREE_HOST_PORTS,
+        `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}, and nodeExporterPort ${nodeExporterPort}.`);
+    werft.done(installerSlices.FIND_FREE_HOST_PORTS);
+
+    // clean environment state
+    try {
+        if (deploymentConfig.cleanSlateDeployment) {
+            werft.log(installerSlices.CLEAN_ENV_STATE, "Clean the preview environment slate...");
+            // re-create namespace
+            await cleanStateEnv(metaEnv());
+
+        } else {
+            werft.log(installerSlices.CLEAN_ENV_STATE, "Clean the preview environment slate...");
+            createNamespace(namespace, metaEnv({ slice: installerSlices.CLEAN_ENV_STATE }));
+        }
+        werft.done(installerSlices.CLEAN_ENV_STATE);
+    } catch (err) {
+        werft.fail(installerSlices.CLEAN_ENV_STATE, err);
+    }
+
+    // Now we want to execute further kubectl operations only in the created namespace
+    setKubectlContextNamespace(namespace, metaEnv({ slice: installerSlices.SET_CONTEXT }));
+
+    // trigger certificate issuing
+    try {
+        werft.log(installerSlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
+
+        // trigger certificate issuing
+        await issueMetaCerts(namespace, domain);
+        await installMetaCertificates(namespace);
+        werft.done(installerSlices.ISSUE_CERTIFICATES);
+    } catch (err) {
+        werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+    }
+
+    // add the image pull secret to the namespcae if it doesn't exist
+    const hasPullSecret = (exec(`kubectl get secret ${IMAGE_PULL_SECRET_NAME} -n ${namespace}`, {slice: installerSlices.IMAGE_PULL_SECRET, dontCheckRc: true, silent: true })).code === 0;
+    if (!hasPullSecret) {
+        try {
+            werft.log(installerSlices.IMAGE_PULL_SECRET, "Adding the image pull secret to the namespace");
+            const auth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
+                | yq r - data['.dockerconfigjson'] \
+                | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
+            const dockerConfig = { auths: { "eu.gcr.io": { auth: auth } } };
+            fs.writeFileSync(`./${IMAGE_PULL_SECRET_NAME}`, JSON.stringify(dockerConfig));
+            exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`);
+            werft.done(installerSlices.IMAGE_PULL_SECRET);
+        }
+        catch (err) {
+            werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
+        }
+    }
+
+    // download and init with the installer
+    try {
+        werft.log(installerSlices.INSTALLER_INIT, "Downloading installer and initializing config file");
+        exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${version} -c "cat /app/installer" > /tmp/installer`, {slice: installerSlices.INSTALLER_INIT});
+        exec(`chmod +x /tmp/installer`, {slice: installerSlices.INSTALLER_INIT});
+        exec(`/tmp/installer init > config.yaml`, {slice: installerSlices.INSTALLER_INIT});
+        werft.done(installerSlices.INSTALLER_INIT);
+    } catch (err) {
+        werft.fail(installerSlices.INSTALLER_INIT, err)
+    }
+
+    // prepare a proper config file
+    try {
+        werft.log(installerSlices.INSTALLER_RENDER, "Post process the base installer config file and render k8s manifests");
+        const PROJECT_NAME="gitpod-core-dev";
+        const CONTAINER_REGISTRY_URL=`eu.gcr.io/${PROJECT_NAME}/build/`;
+        const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
+
+        // get some values we need to customize the config and write them to file
+        exec(`yq r ./.werft/values.dev.yaml components.server.blockNewUsers \
+        | yq prefix - 'blockNewUsers' > ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
+        exec(`yq r ./.werft/values.variant.cpuLimits.yaml workspaceSizing | yq prefix - 'workspace' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
+
+        // merge values from files
+        exec(`yq m -i --overwrite config.yaml ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
+        exec(`yq m -i config.yaml ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
+
+        // write some values inline
+        exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.inCluster false`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.external.certificate.kind secret`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml jaegerOperator.inCluster false`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: installerSlices.INSTALLER_RENDER});
+
+        if ((deploymentConfig.analytics || "").startsWith("segment|")) {
+            exec(`yq w -i config.yaml analytics.writer segment`, {slice: installerSlices.INSTALLER_RENDER});
+            exec(`yq w -i config.yaml analytics.segmentKey ${deploymentConfig.analytics!.substring("segment|".length)}`, {slice: installerSlices.INSTALLER_RENDER});
+        } else if (!!deploymentConfig.analytics) {
+            exec(`yq w -i config.yaml analytics.writer ${deploymentConfig.analytics!}`, {slice: installerSlices.INSTALLER_RENDER});
+        }
+
+        if (withObservability) {
+            // TODO: there's likely more to do...
+            const tracingEndpoint = exec(`yq r ./.werft/values.tracing.yaml tracing.endpoint`,{slice: installerSlices.INSTALLER_RENDER}).stdout.trim();
+            exec(`yq w -i config.yaml observability.tracing.endpoint ${tracingEndpoint}`, {slice: installerSlices.INSTALLER_RENDER});
+        }
+
+        // TODO: Remove this after #6867 is done
+        werft.log("authProviders", "copy authProviders")
+        try {
+            exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
+                    | yq r - data.authProviders \
+                    | base64 -d -w 0 \
+                    > ./authProviders`, { silent: true });
+            exec(`yq merge --inplace config.yaml ./authProviders`, { silent: true })
+            werft.done('authProviders');
+        } catch (err) {
+            werft.fail('authProviders', err);
+        }
+
+        // validate the config and cluster
+        exec(`/tmp/installer validate config -c config.yaml`, {slice: installerSlices.INSTALLER_RENDER});
+
+        // TODO: Ignore cluster validation errors (our k8s version is too old in core-dev)
+        // consider removing '|| true' after we've left core-dev and are using K3s for preview envs
+        exec(`/tmp/installer validate cluster -c config.yaml || true`, {slice: installerSlices.INSTALLER_RENDER});
+
+        // render the k8s manifest
+        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, { silent: true });
+        werft.done(installerSlices.INSTALLER_RENDER);
+    } catch (err) {
+        werft.fail(installerSlices.INSTALLER_RENDER, err)
+    }
+
+    try {
+        werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Let's post process some k8s manifests...");
+        const nodepoolIndex = getNodePoolIndex(namespace);
+
+        if (deploymentConfig.installEELicense) {
+            werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Adding the EE License...");
+            exec(`cp /mnt/secrets/gpsh-coredev/license /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+            // post-process.sh looks for /tmp/license, and if it exists, adds it to the configmap
+        } else {
+            exec(`touch /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+        }
+        exec(`touch /tmp/defaultFeatureFlags`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+        if (workspaceFeatureFlags && workspaceFeatureFlags.length > 0) {
+            werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Adding feature flags...");
+            workspaceFeatureFlags.forEach(featureFlag => {
+                exec(`echo \'"${featureFlag}"\' >> /tmp/defaultFeatureFlags`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+            })
+            // post-process.sh looks for /tmp/defaultFeatureFlags
+            // each "flag" string gets added to the configmap
+        }
+
+        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+        werft.done(installerSlices.INSTALLER_POST_PROCESSING);
+    } catch (err) {
+        werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
+    }
+
+    werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
+    try {
+        // errors could result in outputing a secret to the werft log when kubernetes patches existing objects...
+        exec(`kubectl apply -f k8s.yaml`,{ slice: installerSlices.APPLY_INSTALL_MANIFESTS, silent: true });
+        werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
+    } catch (err) {
+        werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
+    } finally {
+        // produce the result independently of install succeding, so that in case fails we still have the URL.
+        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
+    }
+
+    try {
+        werft.log(installerSlices.DEPLOYMENT_WAITING, "Server not ready. Let the waiting...commence!");
+        exec(`kubectl rollout status deployment/server --timeout=5m`,{ slice: installerSlices.DEPLOYMENT_WAITING });
+        werft.done(installerSlices.DEPLOYMENT_WAITING);
+    } catch (err) {
+        werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
+    }
+
+    // TODO: Fix sweeper, it does not appear to be doing clean-up
+    werft.log('sweeper', 'installing Sweeper');
+    const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
+    werft.log('sweeper', `Sweeper version: ${sweeperVersion}`);
+
+    // prepare args
+    const refsPrefix = "refs/heads/";
+    const owner: string = context.Repository.owner;
+    const repo: string = context.Repository.repo;
+    let branch: string = context.Repository.ref;
+    if (branch.startsWith(refsPrefix)) {
+        branch = branch.substring(refsPrefix.length);
+    }
+    const args = {
+        "period": "10m",
+        "timeout": "48h",   // period of inactivity that triggers a removal
+        branch,             // the branch to check for deletion
+        owner,
+        repo,
+    };
+    const argsStr = Object.entries(args).map(([k, v]) => `\"--${k}\", \"${v}\"`).join(", ");
+    const allArgsStr = `--set args="{${argsStr}}" --set githubToken.secret=github-sweeper-read-branches --set githubToken.key=token`;
+
+    // copy GH token into namespace
+    exec(`kubectl --namespace werft get secret github-sweeper-read-branches -o yaml \
+        | yq w - metadata.namespace ${namespace} \
+        | yq d - metadata.uid \
+        | yq d - metadata.resourceVersion \
+        | yq d - metadata.creationTimestamp \
+        | kubectl apply -f -`);
+    exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
+
+    werft.done(phases.DEPLOY);
+
+    async function cleanStateEnv(shellOpts: ExecOptions) {
+        await wipeAndRecreateNamespace(helmInstallName, namespace, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
+        // cleanup non-namespace objects
+        werft.log(installerSlices.CLEAN_ENV_STATE, "removing old unnamespaced objects - this might take a while");
+        try {
+            await deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice:  installerSlices.CLEAN_ENV_STATE });
+            werft.done(installerSlices.CLEAN_ENV_STATE);
+        } catch (err) {
+            werft.fail(installerSlices.CLEAN_ENV_STATE, err);
+        }
+    }
+}
+
+/**
+ * Deploy dev
+ */
+export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
+    const { version, destname, namespace, domain, monitoringDomain, url } = deploymentConfig;
+    // find free ports
+    werft.log("find free ports", "Check for some free ports.");
+    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
+        { start: 10000, end: 11000 },
+        { start: 30000, end: 31000 },
+        { start: 31001, end: 32000 },
+    ], metaEnv({ slice: "find free ports", silent: true }));
+    werft.log("find free ports",
+        `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}, and nodeExporterPort ${nodeExporterPort}.`);
+    werft.done("find free ports");
 
     // trigger certificate issuing
     werft.log('certificate', "organizing a certificate for the preview environment...");
@@ -311,8 +609,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         // trigger certificate issuing
         werft.log('certificate', "organizing a certificate for the preview environment...");
-        await issueMetaCerts();
-        await installMetaCertificates();
+        await issueMetaCerts(namespace, domain);
+        await installMetaCertificates(namespace);
         werft.done('certificate');
 
         werft.done('prep');
@@ -323,7 +621,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     // core-dev specific section start
     werft.log("secret", "copy secret into namespace")
     try {
-        const auth = exec(`echo -n "_json_key:$(kubectl get secret gcp-sa-registry-auth --namespace=keys -o yaml \
+        const auth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
                         | yq r - data['.dockerconfigjson'] \
                         | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
         fs.writeFileSync("chart/gcp-sa-registry-auth",
@@ -391,11 +689,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         flags += ` --set components.wsDaemon.servicePort=${wsdaemonPortMeta}`;
         flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePortMeta}`;
 
-        const nodeAffinityValues = [
-            "values.nodeAffinities_1.yaml",
-            "values.nodeAffinities_2.yaml",
-            "values.nodeAffinities_0.yaml",
-        ]
+        const nodeAffinityValues = getNodeAffinities();
+
         if (storage === "gcp") {
             exec("kubectl get secret gcp-sa-gitpod-dev-deployer -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -");
             flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
@@ -406,7 +701,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             is used to generate a pseudo-random number that consistent as long as the branchname persists.
             We use it to reduce the number of preview-environments accumulating on a singe nodepool.
          */
-        const nodepoolIndex = parseInt(createHash('sha256').update(namespace).digest('hex').substring(0,5),16) % nodeAffinityValues.length;
+        const nodepoolIndex = getNodePoolIndex(namespace);
 
         exec(`helm dependencies up`);
         exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
@@ -496,21 +791,11 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         // cleanup non-namespace objects
         werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
         try {
-            deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice: 'predeploy cleanup' });
+            await deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice: 'predeploy cleanup' });
             werft.done('predeploy cleanup');
         } catch (err) {
             werft.fail('predeploy cleanup', err);
         }
-    }
-
-    async function installMetaCertificates() {
-        const certName = namespace;
-        const metaInstallCertParams = new InstallCertificateParams()
-        metaInstallCertParams.certName = certName
-        metaInstallCertParams.certNamespace = "certs"
-        metaInstallCertParams.certSecretName = "proxy-config-certificates"
-        metaInstallCertParams.destinationNamespace = namespace
-        await installCertficate(werft, metaInstallCertParams, metaEnv());
     }
 
     async function installMonitoring() {
@@ -523,23 +808,33 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         installMonitoringSatelliteParams.previewDomain = monitoringDomain
         await installMonitoringSatellite(installMonitoringSatelliteParams);
     }
-
-
-    async function issueMetaCerts() {
-        let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
-        var metaClusterCertParams = new IssueCertificateParams();
-        metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
-        metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-        metaClusterCertParams.namespace = namespace;
-        metaClusterCertParams.certNamespace = "certs";
-        metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
-        metaClusterCertParams.domain = domain;
-        metaClusterCertParams.ip = getCoreDevIngressIP();
-        metaClusterCertParams.bucketPrefixTail = ""
-        metaClusterCertParams.additionalSubdomains = additionalSubdomains
-        await issueCertficate(werft, metaClusterCertParams, metaEnv());
-    }
 }
+
+export async function issueMetaCerts(namespace: string, domain: string) {
+    let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
+    var metaClusterCertParams = new IssueCertificateParams();
+    metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
+    metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
+    metaClusterCertParams.namespace = namespace;
+    metaClusterCertParams.certNamespace = "certs";
+    metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
+    metaClusterCertParams.domain = domain;
+    metaClusterCertParams.ip = getCoreDevIngressIP();
+    metaClusterCertParams.bucketPrefixTail = ""
+    metaClusterCertParams.additionalSubdomains = additionalSubdomains
+    await issueCertficate(werft, metaClusterCertParams, metaEnv());
+}
+
+async function installMetaCertificates(namespace: string) {
+    const certName = namespace;
+    const metaInstallCertParams = new InstallCertificateParams()
+    metaInstallCertParams.certName = certName
+    metaInstallCertParams.certNamespace = "certs"
+    metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
+    metaInstallCertParams.destinationNamespace = namespace
+    await installCertficate(werft, metaInstallCertParams, metaEnv());
+}
+
 // returns the static IP address
 function getCoreDevIngressIP(): string {
     return "104.199.27.246";
@@ -597,6 +892,25 @@ async function publishHelmChart(imageRepoBase: string, version: string) {
     ].forEach(cmd => {
         exec(cmd, { slice: 'publish-charts' });
     });
+}
+
+/*  A hash is caclulated from the branch name and a subset of that string is parsed to a number x,
+        x mod the number of different nodepool-sets defined in the files listed in nodeAffinityValues
+        is used to generate a pseudo-random number that consistent as long as the branchname persists.
+        We use it to reduce the number of preview-environments accumulating on a singe nodepool.
+     */
+function getNodePoolIndex(namespace: string): number {
+    const nodeAffinityValues = getNodeAffinities();
+
+    return parseInt(createHash('sha256').update(namespace).digest('hex').substring(0,5),16) % nodeAffinityValues.length;
+}
+
+function getNodeAffinities(): string[] {
+    return [
+        "values.nodeAffinities_1.yaml",
+        "values.nodeAffinities_2.yaml",
+        "values.nodeAffinities_0.yaml",
+    ]
 }
 
 function metaEnv(_parent?: ExecOptions): ExecOptions {
