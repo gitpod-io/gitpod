@@ -128,6 +128,7 @@ export async function build(context, version) {
     const installEELicense = !("without-ee-license" in buildConfig);
     const withPayment= "with-payment" in buildConfig;
     const withObservability = "with-observability" in buildConfig;
+    const withHelm = "with-helm" in buildConfig;
 
     const jobConfig = {
         buildConfig,
@@ -148,6 +149,7 @@ export async function build(context, version) {
         cleanSlateDeployment,
         installEELicense,
         withObservability,
+        withHelm,
     }
     werft.log("job config", JSON.stringify(jobConfig));
     werft.rootSpan.setAttributes(Object.fromEntries(Object.entries(jobConfig).map((kv) => {
@@ -269,7 +271,11 @@ export async function build(context, version) {
         withPayment,
         withObservability,
     };
-    await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+    if (withHelm) {
+        await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+    } else {
+        await deployToDevWithInstaller(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
+    }
     await triggerIntegrationTests(deploymentConfig.version, deploymentConfig.namespace, context.Owner, !withIntegrationTests)
 }
 
@@ -287,6 +293,24 @@ interface DeploymentConfig {
     installEELicense: boolean;
     withPayment: boolean;
     withObservability: boolean;
+}
+
+export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
+    werft.phase("deploy", "hello world")
+    werft.log("deploy", "hello world");
+
+    try {
+        exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${deploymentConfig.version} -c "cat /app/installer" > /tmp/installer`, {slice: "prep"});
+        exec(`chmod +x /tmp/installer`, {slice: "prep"});
+        exec(`/tmp/installer init > config.yaml`, {slice: "prep"});
+        exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: "prep"});
+        exec(`cat config.yaml`, {slice: "config"});
+        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: "prep"});
+    } catch (err) {
+        werft.fail('prep', err);
+        throw err;
+    }
+    werft.done('deploy');
 }
 
 /**
