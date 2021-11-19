@@ -21,7 +21,7 @@ RUN curl -fsSL https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 > $CLO
 RUN mkdir -p /tmp/helm/ \
     && curl -fsSL https://get.helm.sh/helm-v3.7.1-linux-amd64.tar.gz | tar -xzvC /tmp/helm/ --strip-components=1 \
     && cp /tmp/helm/helm /usr/local/bin/helm \
-    && cp /tmp/helm/helm /usr/local/bin/helm3 \
+    && ln -s /usr/local/bin/helm /usr/local/bin/helm3 \
     && rm -rf /tmp/helm/ \
     && helm completion bash > /usr/share/bash-completion/completions/helm
 
