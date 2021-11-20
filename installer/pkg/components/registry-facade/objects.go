@@ -4,7 +4,9 @@
 
 package registryfacade
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
 
 var Objects = common.CompositeRenderFunc(
 	clusterrole,
@@ -13,6 +15,7 @@ var Objects = common.CompositeRenderFunc(
 	networkpolicy,
 	podsecuritypolicy,
 	rolebinding,
+	certificate,
 	common.GenerateService(Component, map[string]common.ServicePort{
 		ContainerPortName: {
 			ContainerPort: ContainerPort,

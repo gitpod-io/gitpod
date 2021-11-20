@@ -6,6 +6,7 @@ package common
 
 import (
 	"fmt"
+
 	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
 	"k8s.io/utils/pointer"
 
@@ -124,4 +125,13 @@ func AddStorageMounts(ctx *RenderContext, pod *corev1.PodSpec, container ...stri
 	}
 
 	return fmt.Errorf("no valid storage configuration set")
+}
+
+func NewEmptyDirVolume(name string) *corev1.Volume {
+	return &corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	}
 }
