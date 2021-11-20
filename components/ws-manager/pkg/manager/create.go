@@ -282,6 +282,22 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		prefix = "ghost"
 	case api.WorkspaceType_IMAGEBUILD:
 		prefix = "imagebuild"
+		// mount self-signed gitpod CA certificate to ensure
+		// we can push images to the in-cluster registry
+		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts,
+			corev1.VolumeMount{
+				Name:      "gitpod-ca-certificate",
+				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
+				SubPath:   "ca.crt",
+				ReadOnly:  true,
+			},
+		)
+
+		// signal workspacekit to mount required files to push in-cluster registry
+		workspaceContainer.Env = append(workspaceContainer.Env, corev1.EnvVar{
+			Name:  "GITPOD_WORKSPACEKIT_BIND_MOUNTS",
+			Value: `["/usr/local/share/ca-certificates/gitpod-ca.crt"]`,
+		})
 	default:
 		prefix = "ws"
 	}
@@ -439,6 +455,32 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		default:
 			return nil, xerrors.Errorf("unknown feature flag: %v", feature)
 		}
+	}
+
+	if req.Type == api.WorkspaceType_IMAGEBUILD {
+		pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+			Name: "gitpod-ca-certificate",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "builtin-registry-facade-cert",
+					Items: []corev1.KeyToPath{
+						{Key: "ca.crt", Path: "ca.crt"},
+					},
+				},
+			},
+		}, corev1.Volume{
+			Name: "image-builder-mk3-config",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "image-builder-mk3-config",
+					},
+					Items: []corev1.KeyToPath{
+						{Key: "buildkitd.toml", Path: "buildkitd.toml"},
+					},
+				},
+			},
+		})
 	}
 
 	return &pod, nil

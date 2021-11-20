@@ -6,6 +6,7 @@ package registryfacade
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
@@ -95,6 +96,41 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DNSPolicy:                     "ClusterFirst",
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
+					InitContainers: []corev1.Container{
+						*common.InternalCAContainer(ctx, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
+						{
+							Name:            "update-containerd-certificates",
+							Image:           common.ImageName("ghcr.io/gitpod-io", "gitpod-ca-updater", "latest"),
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Command:         []string{"sh", "-c", "$(SETUP_SCRIPT)"},
+							SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
+							Env: []corev1.EnvVar{
+								{
+									Name: "GITPOD_CA_CERT",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											Key: "ca.crt",
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: common.RegistryFacadeTLSCertSecret,
+											},
+										},
+									},
+								},
+								{
+									// Install gitpod ca.crt in containerd to allow pulls from the host
+									// https://github.com/containerd/containerd/blob/main/docs/hosts.md
+									Name:  "SETUP_SCRIPT",
+									Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "hostfs",
+									MountPath: "/mnt/dst",
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{{
 						Name:            Component,
 						Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
@@ -138,8 +174,13 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Name:      name,
 							MountPath: "/mnt/pull-secret.json",
 							SubPath:   ".dockerconfigjson",
-						}}, volumeMounts...),
-					}, *common.KubeRBACProxyContainer()},
+						},
+							*common.InternalCAVolumeMount(),
+						}, volumeMounts...),
+					},
+
+						*common.KubeRBACProxyContainer(),
+					},
 					Volumes: append([]corev1.Volume{{
 						Name:         "cache",
 						VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
@@ -162,7 +203,15 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								SecretName: secretName,
 							},
 						},
-					}}, volumes...),
+					}, {
+						Name: "hostfs",
+						VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+							Path: "/",
+						}},
+					},
+						*common.InternalCAVolume(),
+						*common.NewEmptyDirVolume("cacerts"),
+					}, volumes...),
 				},
 			},
 		},
