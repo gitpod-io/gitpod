@@ -8,6 +8,7 @@ package init
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +28,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 		TypeMeta:   common.TypeMetaBatchJob,
 		ObjectMeta: objectMeta,
 		Spec: batchv1.JobSpec{
+			TTLSecondsAfterFinished: pointer.Int32(60),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: objectMeta,
 				Spec: corev1.PodSpec{
