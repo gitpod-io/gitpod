@@ -27,7 +27,8 @@
       { "path": "dev/gpctl" },
       { "path": "dev/loadgen" },
       { "path": "dev/poolkeeper" },
-      { "path": "dev/sweeper" }
+      { "path": "dev/sweeper" },
+      { "path": "installer" }
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",
