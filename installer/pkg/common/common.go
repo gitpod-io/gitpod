@@ -267,9 +267,9 @@ func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 func KubeRBACProxyContainer() *corev1.Container {
 	return &corev1.Container{
 		Name:  "kube-rbac-proxy",
-		Image: "quay.io/brancz/kube-rbac-proxy:v0.9.0",
+		Image: "quay.io/brancz/kube-rbac-proxy:v0.11.0",
 		Args: []string{
-			"--v=10",
+			"--v=5",
 			"--logtostderr",
 			"--insecure-listen-address=[$(IP)]:9500",
 			"--upstream=http://127.0.0.1:9500/",
