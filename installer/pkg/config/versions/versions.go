@@ -16,6 +16,7 @@ type Versioned struct {
 type Components struct {
 	AgentSmith      Versioned `json:"agentSmith"`
 	Blobserve       Versioned `json:"blobserve"`
+	CAUpdater       Versioned `json:"caUpdater"`
 	ContentService  Versioned `json:"contentService"`
 	Dashboard       Versioned `json:"dashboard"`
 	DBMigrations    Versioned `json:"dbMigrations"`

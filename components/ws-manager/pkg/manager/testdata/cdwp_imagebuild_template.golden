@@ -61,18 +61,6 @@
                             }
                         ]
                     }
-                },
-                {
-                    "name": "image-builder-mk3-config",
-                    "configMap": {
-                        "name": "image-builder-mk3-config",
-                        "items": [
-                            {
-                                "key": "buildkitd.toml",
-                                "path": "buildkitd.toml"
-                            }
-                        ]
-                    }
                 }
             ],
             "containers": [
@@ -156,10 +144,6 @@
                         {
                             "name": "GITPOD_HEADLESS",
                             "value": "true"
-                        },
-                        {
-                            "name": "GITPOD_WORKSPACEKIT_BIND_MOUNTS",
-                            "value": "[\"/usr/local/share/ca-certificates/gitpod-ca.crt\"]"
                         },
                         {
                             "name": "some-envvar",
