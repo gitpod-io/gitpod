@@ -303,18 +303,19 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     werft.phase("deploy", "deploying to dev")
 
     try {
-        // TODO: project name is set conditionally in other spots, read why and centralize in a function, if needed
         const PROJECT_NAME="gitpod-core-dev";
-        const CONTAINER_REGISTRY_URL=`gcr.io/${PROJECT_NAME}`;
+        const CONTAINER_REGISTRY_URL=`eu.gcr.io/${PROJECT_NAME}/build`;
         const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
 
         // werft.log("deploy", "hello world");
         exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${deploymentConfig.version} -c "cat /app/installer" > /tmp/installer`, {slice: "init"});
         exec(`chmod +x /tmp/installer`, {slice: "init"});
-        exec(`/tmp/installer init > config.yaml`, {slice: "init"});
+        exec(`/tmp/installer init > base-config.yaml`, {slice: "init"});
 
-         // TODO: blockNewUsers enabled (yes?) & passlist (gitpod.io)
-         // Do we need to set either of these for core-dev? I assume this lets devs use preview environments from their @gitpod.io emails
+        // add block users from values.dev.yaml
+        exec(`yq r ./.werft/values.dev.yaml components.server.blockNewUsers \
+        | yq prefix - 'blockNewUsers' \
+        | yq m --overwrite base-config.yaml - > config.yaml`, { slice: "prep" });
 
         exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, {slice: "prep"});
         exec(`yq w -i config.yaml containerRegistry.inCluster ${false}`, {slice: "prep"});
@@ -326,25 +327,24 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: "prep"});
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: "prep"});
 
-        // werft.log("deploy", "Sharing current state of the config, before secret values are added to it.")
-        // exec(`cat config.yaml`, {slice: "config"});
+        exec(`cat config.yaml`, {slice: "config"});
 
         //
         // IMPORTANT
         // do not "cat" out the config.yaml after merging in authProviders
         // TODO: consider using secret name for authProviders via Installer config
 
-        werft.log("authProviders", "copy authProviders")
-        try {
-            exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
-                    | yq r - data.authProviders \
-                    | base64 -d -w 0 \
-                    > authProviders`, { slice: "authProviders" });
-            exec(`yq merge --inplace config.yaml ./authProviders`, { slice: "authProviders" })
-            werft.done('authProviders');
-        } catch (err) {
-            werft.fail('authProviders', err);
-        }
+        // werft.log("authProviders", "copy authProviders")
+        // try {
+        //     exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
+        //             | yq r - data.authProviders \
+        //             | base64 -d -w 0 \
+        //             > authProviders`, { slice: "authProviders" });
+        //     exec(`yq merge --inplace config.yaml ./authProviders`, { slice: "authProviders" })
+        //     werft.done('authProviders');
+        // } catch (err) {
+        //     werft.fail('authProviders', err);
+        // }
 
         exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: "render"});
 
