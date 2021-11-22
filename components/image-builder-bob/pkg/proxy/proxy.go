@@ -153,6 +153,17 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 		// Total hack: we need a place to modify the request before retrying, and this log
 		//             hook seems to be the only place. We need to modify the request, because
 		//             maybe we just added the host authorizer in the previous CheckRetry call.
+		//
+		//			   The ReverseProxy sets the X-Forwarded-For header with the host machine
+		//			   address. If on a cluster with IPV6 enabled, this will be "::1" (IPV6 equivalent
+		//			   of "127.0.0.1"). This can have the knock-on effect of receiving an IPV6
+		//			   URL, e.g. auth.ipv6.docker.com instead of auth.docker.com which may not
+		//			   exist. By forcing the value to be "127.0.0.1", we ensure consistency
+		//			   across clusters.
+		//
+		// 			   @link https://golang.org/src/net/http/httputil/reverseproxy.go
+		r.Header.Set("X-Forwarded-For", "127.0.0.1")
+
 		_ = repo.Auth.Authorize(r.Context(), r)
 	}
 	client.ResponseLogHook = func(l retryablehttp.Logger, r *http.Response) {}
