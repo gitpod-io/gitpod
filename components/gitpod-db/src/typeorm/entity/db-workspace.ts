@@ -11,6 +11,8 @@ import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
 
 @Entity()
+@Index("ind_contentDeletion", ["contentDeletedTime", "creationTime"])
+@Index("ind_softDeletion", ["softDeletedTime", "softDeleted"])
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBWorkspace implements Workspace {
     @PrimaryColumn(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
