@@ -97,15 +97,11 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					InitContainers: []corev1.Container{
-						*common.InternalCAContainer(ctx, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
-						{
-							Name:            "update-containerd-certificates",
-							Image:           common.ImageName("ghcr.io/gitpod-io", "gitpod-ca-updater", "latest"),
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Command:         []string{"sh", "-c", "$(SETUP_SCRIPT)"},
-							SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
-							Env: []corev1.EnvVar{
-								{
+						*common.InternalCAContainer(ctx),
+						*common.InternalCAContainer(ctx, func(c *corev1.Container) {
+							c.Name = "update-containerd-certificates"
+							c.Env = append(c.Env,
+								corev1.EnvVar{
 									Name: "GITPOD_CA_CERT",
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
@@ -116,20 +112,21 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 										},
 									},
 								},
-								{
+								corev1.EnvVar{
 									// Install gitpod ca.crt in containerd to allow pulls from the host
 									// https://github.com/containerd/containerd/blob/main/docs/hosts.md
 									Name:  "SETUP_SCRIPT",
 									Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
 								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
+							)
+							c.VolumeMounts = append(c.VolumeMounts,
+								corev1.VolumeMount{
 									Name:      "hostfs",
 									MountPath: "/mnt/dst",
 								},
-							},
-						},
+							)
+							c.Command = []string{"sh", "-c", "$(SETUP_SCRIPT)"}
+						}),
 					},
 					Containers: []corev1.Container{{
 						Name:            Component,

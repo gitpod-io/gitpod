@@ -35,11 +35,11 @@ func InternalCAVolume() *corev1.Volume {
 // adding the internal Gitpod self-generated CA.
 // This is required for components that communicate with registry-facade
 // and cannot use certificates signed by unknown authority, like containerd or buildkit
-func InternalCAContainer(ctx *RenderContext, component, version string) *corev1.Container {
-	return &corev1.Container{
+func InternalCAContainer(ctx *RenderContext, mod ...func(*corev1.Container)) *corev1.Container {
+	res := &corev1.Container{
 		Name: "update-ca-certificates",
 		// It's not possible to use images based on alpine due to errors running update-ca-certificates
-		Image:           ImageName("ghcr.io/gitpod-io", "gitpod-ca-updater", "latest"),
+		Image:           ImageName(ctx.Config.Repository, "ca-updater", ctx.VersionManifest.Components.CAUpdater.Version),
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Command: []string{
 			"bash", "-c",
@@ -57,4 +57,10 @@ func InternalCAContainer(ctx *RenderContext, component, version string) *corev1.
 			},
 		},
 	}
+
+	for _, m := range mod {
+		m(res)
+	}
+
+	return res
 }

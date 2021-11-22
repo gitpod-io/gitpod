@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -o errexit
+
+if [ $# = 0 ]; then
+  echo >&2 "No packages specified"
+  exit 1
+fi
+
+# Set a runlevel to avoid invoke-rc.d warnings
+# http://manpages.ubuntu.com/manpages/focal/man8/runlevel.8.html#environment
+# shellcheck disable=SC2034
+RUNLEVEL=1
+
+# shellcheck disable=SC2034
+DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -yq --no-install-recommends "$@"
+
+apt-get clean -y
+
+rm -rf \
+   /var/cache/debconf/* \
+   /var/lib/apt/lists/* \
+   /tmp/* \
+   /var/tmp/*

@@ -114,7 +114,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						*common.NewEmptyDirVolume("cacerts"),
 					}),
 					InitContainers: []corev1.Container{
-						*common.InternalCAContainer(ctx, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
+						*common.InternalCAContainer(ctx),
 					},
 					Containers: []corev1.Container{{
 						Name:            Component,

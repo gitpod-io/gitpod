@@ -292,12 +292,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				ReadOnly:  true,
 			},
 		)
-
-		// signal workspacekit to mount required files to push in-cluster registry
-		workspaceContainer.Env = append(workspaceContainer.Env, corev1.EnvVar{
-			Name:  "GITPOD_WORKSPACEKIT_BIND_MOUNTS",
-			Value: `["/usr/local/share/ca-certificates/gitpod-ca.crt"]`,
-		})
 	default:
 		prefix = "ws"
 	}
@@ -465,18 +459,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 					SecretName: "builtin-registry-facade-cert",
 					Items: []corev1.KeyToPath{
 						{Key: "ca.crt", Path: "ca.crt"},
-					},
-				},
-			},
-		}, corev1.Volume{
-			Name: "image-builder-mk3-config",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "image-builder-mk3-config",
-					},
-					Items: []corev1.KeyToPath{
-						{Key: "buildkitd.toml", Path: "buildkitd.toml"},
 					},
 				},
 			},
