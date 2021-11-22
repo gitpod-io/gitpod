@@ -304,7 +304,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     try {
         const PROJECT_NAME="gitpod-core-dev";
-        const CONTAINER_REGISTRY_URL=`eu.gcr.io/${PROJECT_NAME}/build`;
+        const CONTAINER_REGISTRY_URL=`eu.gcr.io/${PROJECT_NAME}/build/`;
         const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
 
         // werft.log("deploy", "hello world");
@@ -327,32 +327,49 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: "prep"});
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: "prep"});
 
-        exec(`cat config.yaml`, {slice: "config"});
-
         //
         // IMPORTANT
         // do not "cat" out the config.yaml after merging in authProviders
-        // TODO: consider using secret name for authProviders via Installer config
+        // exec(`cat config.yaml`, {slice: "config"});
 
-        // werft.log("authProviders", "copy authProviders")
-        // try {
-        //     exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
-        //             | yq r - data.authProviders \
-        //             | base64 -d -w 0 \
-        //             > authProviders`, { slice: "authProviders" });
-        //     exec(`yq merge --inplace config.yaml ./authProviders`, { slice: "authProviders" })
-        //     werft.done('authProviders');
-        // } catch (err) {
-        //     werft.fail('authProviders', err);
-        // }
+        werft.log("authProviders", "copy authProviders")
+        try {
+            exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
+                    | yq r - data.authProviders \
+                    | base64 -d -w 0 \
+                    > authProviders`, { slice: "authProviders" });
+            exec(`yq merge --inplace config.yaml ./authProviders`, { slice: "authProviders" })
+            werft.done('authProviders');
+        } catch (err) {
+            werft.fail('authProviders', err);
+        }
 
         exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: "render"});
 
-        // exec(`yq w -i k8s.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: "prep"});
+        // TODO: post processing needed k8s.yaml based on values.dev.yaml, which has specific tuning used at helm upgrade --install
 
-        // TODO: post processing with yq for hostPort, and node pools
+        // we planned on the following post processing
+        // 1. hostPorts for registry-facade and ws-daemon (we planned on this)
+        // 2. node pools names (we planned on this, Mo asked we rotate between the 3)
 
-        // TODO: post processing for the custom yaml in values.dev.yaml, which has very specific tuning used at helm upgrade --install
+        // additional post processing needs (found while auditing values.dev.yaml), this is unplanned
+        // 1. set resources.default.memory to 350Mi, so we fill up nodes under the 110 pods per node limit
+        // 2. set imagePullPolicy to always (currently ifNotPresent for most things)
+        // 3. component have overrides which need to be considered
+        // 4. there are other global settings which needed to be considered (not at component level)
+        // 5. add proxy-config-certificates certificate to the deploy namespace, previously done by helm chart, a prerequisite for installer
+
+        // questions
+        // 1. what is the rabbit mq shovel? it is set in values.dev.yaml
+
+        // no post processing needed
+        // mysql, which just has resource customizations in values.dev.yaml, use ootb installer
+        // minio, we're using Minio per the config
+        // cert-manager, it's already in the cluster
+        // docker-registry, we're using GCP per the config
+
+        // avoid for now (for later)
+        // tracing
 
     } catch (err) {
         werft.fail('prep', err);
