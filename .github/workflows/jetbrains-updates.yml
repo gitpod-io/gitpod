@@ -61,7 +61,7 @@ jobs:
           data=$(curl -sSL "https://data.services.jetbrains.com/products?code=GO&release.type=eap%2Crc&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000")
           link=$(echo "$data" | jq -r '.[0].releases[0].downloads.linux.link')
           build=$(echo "$data" | jq -r '.[0].releases[0].build')
-          build2=$(echo "$build" sed 's/\./-/g')
+          build2=$(echo "$build" | sed 's/\./-/g')
           echo "::set-output name=result::$link"
           echo "::set-output name=version::$build"
           echo "::set-output name=version2::$build2"
