@@ -28,6 +28,7 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
         default: '',
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
+    @Index("ind_projectId")
     projectId?: string;
 
     @Column({
