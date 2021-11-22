@@ -6,10 +6,13 @@ package proxy
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 
@@ -163,6 +166,19 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 		//
 		// 			   @link https://golang.org/src/net/http/httputil/reverseproxy.go
 		r.Header.Set("X-Forwarded-For", "127.0.0.1")
+
+		s, _ := NewAuthorizerFromEnvVar(os.Getenv("WORKSPACEKIT_BOBPROXY_AUTH"))
+		user, pass, _ := s.Authorize(r.Host)
+
+		token := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", user, pass)))
+
+		log.WithFields(logrus.Fields{
+			"user":  user,
+			"pass":  pass,
+			"token": token,
+		})
+
+		r.Header.Set("Authorization", "Basic "+token)
 
 		_ = repo.Auth.Authorize(r.Context(), r)
 	}
