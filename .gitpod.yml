@@ -12,12 +12,6 @@ ports:
     onOpen: ignore
   - port: 4000
     onOpen: ignore
-  - port: 5900
-    onOpen: ignore
-    visibility: private
-  - port: 6080
-    onOpen: ignore
-    visibility: private
   - port: 9229
     onOpen: ignore
 # Go proxy
@@ -30,11 +24,6 @@ ports:
     onOpen: ignore
 # Dev Theia
   - port: 13444
-# qemu
-  - port: 2222
-    onOpen: ignore
-  - port: 1234
-    onOpen: ignore
 tasks:
   - name: Java
     init: |

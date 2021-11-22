@@ -2,15 +2,11 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full-vnc:latest
+FROM gitpod/workspace-full:latest
 
 ENV TRIGGER_REBUILD 16
-ENV WORKSPACE_KERNEL 5.4.0-1051-gke
 
 USER root
-
-### QEMU (x86) and workspace kernel development tools
-RUN install-packages qemu qemu-system-x86 linux-image-$WORKSPACE_KERNEL libguestfs-tools sshpass
 
 ### cloud_sql_proxy ###
 ARG CLOUD_SQL_PROXY=/usr/local/bin/cloud_sql_proxy
@@ -27,7 +23,7 @@ RUN mkdir -p /tmp/helm/ \
 
 ### kubernetes ###
 RUN mkdir -p /usr/local/kubernetes/ && \
-    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.20.10/kubernetes.tar.gz \
+    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.22.4/kubernetes.tar.gz \
     | tar -xzvC /usr/local/kubernetes/ --strip-components=1 \
     && KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh \
     && chown gitpod:gitpod -R /usr/local/kubernetes
@@ -38,7 +34,7 @@ ENV PATH=$PATH:/usr/local/kubernetes/cluster/:/usr/local/kubernetes/client/bin/
 RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     # really 'xenial'
     && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && install-packages kubectl=1.20.0-00 \
+    && install-packages kubectl=1.22.4-00 \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
