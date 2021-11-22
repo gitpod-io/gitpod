@@ -145,9 +145,6 @@ pod:
         secretKeyRef:
           name: honeycomb-api-key
           key: apikey
-    envFrom:
-    - secretRef:
-        name: jetbrains-secrets
     command:
       - bash
       - -c
