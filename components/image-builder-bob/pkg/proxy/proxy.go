@@ -131,6 +131,7 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 	}
 	rp := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: "https", Host: repo.Host})
 
+	attempt := 0
 	client := retryablehttp.NewClient()
 	client.RetryMax = 3
 	client.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
@@ -139,6 +140,26 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			return false, err
 		}
 		if resp.StatusCode == http.StatusUnauthorized {
+			// Total hack: dependent upon whether on connecting to a public or private registry, additional
+			//             credentials (eg, the username/password) must be provided to gain access for the
+			//             action (pull/push) we want to achieve. This is why we don't always do this as, if
+			//             pulling from a public Docker registry and we have credentials for a private cloud
+			//             registry, the username/password we have will be (correctly) rejected.
+			//
+			//             As all registries seem to return a "Bearer" schema, the auth treats that as if
+			//             we want to send as a bearer token in the authorization header. That appears to
+			//             not be work whereas forcing to use HTTP Basic auth does. By changing the scheme
+			//             type from "Bearer" to "Basic" works reliably.
+			//
+			//             @link https://docs.docker.com/registry/spec/auth/oauth/
+			if attempt > 1 {
+				authKey := http.CanonicalHeaderKey("WWW-Authenticate")
+				if auth := resp.Header.Get(authKey); auth != "" {
+					token := strings.Split(auth, " ")
+					resp.Header.Set(authKey, fmt.Sprintf("Basic %s", token[1]))
+				}
+			}
+
 			err := repo.Auth.AddResponses(context.Background(), []*http.Response{resp})
 			if err != nil {
 				log.WithError(err).WithField("URL", resp.Request.URL.String()).Warn("cannot add responses although response was Unauthorized")
@@ -146,6 +167,9 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			}
 			return true, nil
 		}
+
+		// Increment the attempt number
+		attempt++
 
 		return false, nil
 	}
