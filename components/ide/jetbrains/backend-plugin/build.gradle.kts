@@ -54,7 +54,7 @@ dependencies {
 // Read more: https://github.com/JetBrains/gradle-intellij-plugin
 intellij {
     pluginName.set(properties("pluginName"))
-    version.set(System.getenv("INTELLIJ_PLUGIN_PLATFORM_VERSION"))
+    version.set(properties("platformVersion"))
     type.set(properties("platformType"))
     instrumentCode.set(false)
     downloadSources.set(properties("platformDownloadSources").toBoolean())
