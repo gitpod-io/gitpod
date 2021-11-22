@@ -139,91 +139,49 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								"sysctl -w net.core.somaxconn=32768; sysctl -w net.ipv4.ip_local_port_range='1024 65000'",
 							},
 						}},
-						Containers: []corev1.Container{{
-							Name:            "kube-rbac-proxy",
-							Image:           KubeRBACProxyImage,
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Args: []string{
-								"--v=10",
-								"--logtostderr",
-								fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", PrometheusPort),
-								"--upstream=http://127.0.0.1:9545/",
-							},
-							Env: []corev1.EnvVar{{
-								Name: "IP",
-								ValueFrom: &corev1.EnvVarSource{
-									FieldRef: &corev1.ObjectFieldSelector{
-										APIVersion: "v1",
-										FieldPath:  "status.podIP",
+						Containers: []corev1.Container{
+							{
+								Name:            Component,
+								Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Proxy.Version),
+								ImagePullPolicy: corev1.PullIfNotPresent,
+								Resources: corev1.ResourceRequirements{
+									Requests: corev1.ResourceList{
+										"cpu":    resource.MustParse("100m"),
+										"memory": resource.MustParse("200Mi"),
 									},
 								},
-							}},
-							Ports: []corev1.ContainerPort{{
-								ContainerPort: ContainerHTTPPort,
-								Name:          ContainerHTTPName,
-								Protocol:      *common.TCPProtocol,
-							}, {
-								ContainerPort: ContainerHTTPSPort,
-								Name:          ContainerHTTPSName,
-								Protocol:      *common.TCPProtocol,
-							}, {
-								ContainerPort: PrometheusPort,
-								Name:          MetricsContainerName,
-								Protocol:      *common.TCPProtocol,
-							}},
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									"cpu":    resource.MustParse("1m"),
-									"memory": resource.MustParse("30Mi"),
+								Ports: []corev1.ContainerPort{{
+									ContainerPort: ContainerHTTPPort,
+									Name:          "http",
+								}, {
+									ContainerPort: ContainerHTTPSPort,
+									Name:          "https",
+								}, prometheusPort},
+								SecurityContext: &corev1.SecurityContext{
+									Privileged: pointer.Bool(false),
 								},
-							},
-							SecurityContext: &corev1.SecurityContext{
-								RunAsGroup:   pointer.Int64(65532),
-								RunAsNonRoot: pointer.Bool(true),
-								RunAsUser:    pointer.Int64(65532),
-							},
-						}, {
-							Name:            Component,
-							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Proxy.Version),
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									"cpu":    resource.MustParse("100m"),
-									"memory": resource.MustParse("200Mi"),
-								},
-							},
-							Ports: []corev1.ContainerPort{{
-								ContainerPort: ContainerHTTPPort,
-								Name:          "http",
-							}, {
-								ContainerPort: ContainerHTTPSPort,
-								Name:          "https",
-							}, prometheusPort},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(false),
-							},
-							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/ready",
-										Port: intstr.IntOrString{IntVal: ReadinessPort},
+								ReadinessProbe: &corev1.Probe{
+									Handler: corev1.Handler{
+										HTTPGet: &corev1.HTTPGetAction{
+											Path: "/ready",
+											Port: intstr.IntOrString{IntVal: ReadinessPort},
+										},
 									},
+									InitialDelaySeconds: 5,
+									PeriodSeconds:       5,
+									TimeoutSeconds:      1,
+									SuccessThreshold:    1,
+									FailureThreshold:    3,
 								},
-								InitialDelaySeconds: 5,
-								PeriodSeconds:       5,
-								TimeoutSeconds:      1,
-								SuccessThreshold:    1,
-								FailureThreshold:    3,
-							},
-							VolumeMounts: volumeMounts,
-							Env: common.MergeEnv(
-								common.DefaultEnv(&ctx.Config),
-								[]corev1.EnvVar{{
-									Name:  "PROXY_DOMAIN",
-									Value: ctx.Config.Domain,
-								}},
-							),
-						}},
+								VolumeMounts: volumeMounts,
+								Env: common.MergeEnv(
+									common.DefaultEnv(&ctx.Config),
+									[]corev1.EnvVar{{
+										Name:  "PROXY_DOMAIN",
+										Value: ctx.Config.Domain,
+									}},
+								),
+							}, *common.KubeRBACProxyContainer()},
 					},
 				},
 			},
