@@ -58,6 +58,7 @@ export class DBSubscription implements Subscription {
         default: '',
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
+    @Index('ind_teamSubscriptionSlotId')
     teamSubscriptionSlotId?: string;
 
     @Column({
