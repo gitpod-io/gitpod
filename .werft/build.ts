@@ -303,7 +303,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     werft.phase("deploy", "deploying to dev")
 
     try {
-        // TODO: project name is set conditionally in other spots, read why and centralize in a function if needed
+        // TODO: project name is set conditionally in other spots, read why and centralize in a function, if needed
         const PROJECT_NAME="gitpod-core-dev";
         const CONTAINER_REGISTRY_URL=`gcr.io/${PROJECT_NAME}`;
         const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
@@ -313,16 +313,15 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`chmod +x /tmp/installer`, {slice: "init"});
         exec(`/tmp/installer init > config.yaml`, {slice: "init"});
 
-         // TODO: blockNewUsers enabled (yes?) & passlist (gitpod.io) -- I assume this lets devs use preview environments from their @gitpod.io emails
+         // TODO: blockNewUsers enabled (yes?) & passlist (gitpod.io)
+         // Do we need to set either of these for core-dev? I assume this lets devs use preview environments from their @gitpod.io emails
 
         exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, {slice: "prep"});
         exec(`yq w -i config.yaml containerRegistry.inCluster ${false}`, {slice: "prep"});
         exec(`yq w -i config.yaml containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, {slice: "prep"});
         exec(`yq w -i config.yaml containerRegistry.external.certificate.kind ${"secret"}`, {slice: "prep"});
 
-        // TODO: how are these two different?
         exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, {slice: "prep"});
-        exec(`yq w -i config.yaml imagePullSecrets[+] ${IMAGE_PULL_SECRET_NAME}`, {slice: "prep"});
 
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: "prep"});
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: "prep"});
@@ -332,8 +331,8 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
         //
         // IMPORTANT
-        // do not "cat" out the config.yaml again after this
-        // werft builds and their output are, and the config contains client IDs and Secrets at this point
+        // do not "cat" out the config.yaml after merging in authProviders
+        // TODO: consider using secret name for authProviders via Installer config
 
         werft.log("authProviders", "copy authProviders")
         try {
