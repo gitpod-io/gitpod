@@ -28,7 +28,7 @@ func TestGitpodConfig(t *testing.T) {
 		{
 			Desc: "parsing",
 			Content: `
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-6665-slim-image.4
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-slim-dev-image.0
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -47,7 +47,7 @@ vscode:
     - hangxingliu.vscode-nginx-conf-hint@0.1.0:UATTe2sTFfCYWQ3jw4IRsw==
     - zxh404.vscode-proto3@0.4.2:ZnPmyF/Pb8AIWeCqc83gPw==`,
 			Expectation: &gitpod.GitpodConfig{
-				Image:             "eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-6665-slim-image.4",
+				Image:             "eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-slim-dev-image.0",
 				WorkspaceLocation: "gitpod/gitpod-ws.code-workspace",
 				CheckoutLocation:  "gitpod",
 				Ports: []*gitpod.PortsItems{
