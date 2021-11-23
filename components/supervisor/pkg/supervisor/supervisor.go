@@ -310,24 +310,26 @@ func Run(options ...RunOption) {
 		}()
 	}
 
-	go func() {
-		<-cstate.ContentReady()
+	if !cfg.isHeadless() {
+		go func() {
+			<-cstate.ContentReady()
 
-		start := time.Now()
-		defer func() {
-			log.Debugf("unshallow of local repository took %v", time.Since(start))
+			start := time.Now()
+			defer func() {
+				log.Debugf("unshallow of local repository took %v", time.Since(start))
+			}()
+
+			cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
+			cmd.Env = buildChildProcEnv(cfg, nil)
+			cmd.Dir = cfg.RepoRoot
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err := cmd.Run()
+			if err != nil && !(err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes") {
+				log.WithError(err).Error("git fetch error")
+			}
 		}()
-
-		cmd := runAsGitpodUser(exec.Command("git", "fetch", "--depth", "20"))
-		cmd.Env = buildChildProcEnv(cfg, nil)
-		cmd.Dir = cfg.RepoRoot
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err := cmd.Run()
-		if err != nil && !(err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes") {
-			log.WithError(err).Error("git fetch error")
-		}
-	}()
+	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
