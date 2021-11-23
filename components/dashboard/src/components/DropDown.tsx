@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import Arrow from './Arrow';
 import ContextMenu from './ContextMenu';
 
 export interface DropDownProps {
@@ -17,10 +18,6 @@ export interface DropDownProps {
 export interface DropDownEntry {
     title: string,
     onClick: ()=>void
-}
-
-function Arrow(props: {up: boolean}) {
-    return <span className="mx-2 border-gray-400 dark:border-gray-600 group-hover:border-gray-600 dark:group-hover:border-gray-400" style={{ marginTop: 2, marginBottom: 2, padding: 3, borderWidth: '0 2px 2px 0', display: 'inline-block', transform: `rotate(${props.up ? '-135deg' : '45deg'})`}}></span>
 }
 
 function DropDown(props: DropDownProps) {

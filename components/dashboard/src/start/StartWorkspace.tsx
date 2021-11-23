@@ -4,15 +4,17 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import EventEmitter from "events";
-import React, { useEffect, Suspense } from "react";
-import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild, ContextURL } from "@gitpod/gitpod-protocol";
+import { ContextURL, DisposableCollection, WithPrebuild, Workspace, WorkspaceImageBuild, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import EventEmitter from "events";
+import React, { Suspense, useEffect } from "react";
+import { v4 } from 'uuid';
+import Arrow from "../components/Arrow";
+import ContextMenu from "../components/ContextMenu";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
+import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
-import { watchHeadlessLogs } from "../components/PrebuildLogs";
-import { v4 } from 'uuid';
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
@@ -291,7 +293,23 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
               </div>
             </div>
             <div className="mt-10 justify-center flex space-x-2">
-              <button className="secondary" onClick={() => window.parent.postMessage({ type: 'openBrowserIde' }, '*')}>Open VS Code in Browser</button>
+              <ContextMenu menuEntries={[
+                {
+                  title: 'Open in Browser',
+                  onClick: () => window.parent.postMessage({ type: 'openBrowserIde' }, '*'),
+                },
+                {
+                  title: 'Stop Workspace',
+                  onClick: () => getGitpodService().server.stopWorkspace(this.props.workspaceId),
+                },
+                {
+                  title: 'Go to Dashboard',
+                  href: gitpodHostUrl.asDashboard().toString(),
+                  target: "_parent",
+                },
+              ]} >
+                <button className="secondary">More Actions...<Arrow up={false} /></button>
+              </ContextMenu>
               <a target="_blank" href={this.state.desktopIde.link}><button>{this.state.desktopIde.label}</button></a>
             </div>
           </div>;
