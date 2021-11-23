@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec, ExecOptions } from './util/shell';
 import { Werft } from './util/werft';
-import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
+import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, wipeAndRecreateNamespaceNoHelm } from './util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
@@ -55,8 +55,21 @@ Tracing.initialize()
 
 // Werft phases
 const phases = {
+    DEPLOY: 'deploy',
     TRIGGER_INTEGRATION_TESTS: 'trigger integration tests',
     REGISTER_K3S_WS_CLUSTER: "register k3s ws cluster"
+}
+
+// Werft slices for deploy phase
+const installerSlices = {
+    FIND_FREE_HOST_PORTS: "Find free ports",
+    ISSUE_CERTIFICATES: "Install certs",
+    CLEAN_ENV_STATE: "Clean envirionment",
+    SET_CONTEXT: "Set namespace",
+    INSTALLER_INIT: "Installer init",
+    INSTALLER_RENDER: "Installer render",
+    INSTALLER_POST_PROCESSING: "Installer post processing",
+    APPLY_INSTALL_MANIFESTS: "Installing Gitpod"
 }
 
 export function parseVersion(context) {
@@ -299,38 +312,87 @@ interface DeploymentConfig {
     withObservability: boolean;
 }
 
+/*
+* Deploy a preview environment using the Installer
+*
+* TODO: add support for tracing, use with-helm for now
+* TODO: removed k3sWsCluster, use with-helm for now
+*/
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
-    werft.phase("deploy", "deploying to dev")
+    werft.phase(phases.DEPLOY, "deploying to dev")
+
+    const { version, destname, namespace, domain, monitoringDomain, url } = deploymentConfig;
+
+    // trigger certificate issuing
+    // TODO: this doesn't appear to do anything and is temporarily commented out
+    // werft.log(deploySlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
+    // let namespaceRecreatedResolve = undefined;
+    // let namespaceRecreatedPromise = new Promise((resolve) => {
+    //     namespaceRecreatedResolve = resolve;
+    // });
+
+    // clean environment state
+    try {
+        if (deploymentConfig.cleanSlateDeployment) {
+            // re-create namespace
+            //  TODO: test me
+            await cleanStateEnv(metaEnv());
+
+        } else {
+            createNamespace(namespace, metaEnv({ slice: installerSlices.CLEAN_ENV_STATE }));
+        }
+    } catch (err) {
+        werft.fail(installerSlices.CLEAN_ENV_STATE, err);
+    }
 
     try {
+        // Now we want to execute further kubectl operations only in the created namespace
+        setKubectlContextNamespace(namespace, metaEnv({ slice: installerSlices.SET_CONTEXT }));
+        // trigger certificate issuing
+        werft.log(installerSlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
+        await issueMetaCerts(namespace, domain);
+        await installMetaCertificates(namespace);
+        werft.done(installerSlices.ISSUE_CERTIFICATES);
+    } catch (err) {
+        werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+    }
+
+    try {
+        werft.log(installerSlices.INSTALLER_INIT, "Downloading installer and initializing config file");
+        exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${version} -c "cat /app/installer" > /tmp/installer`, {slice: installerSlices.INSTALLER_INIT});
+        exec(`chmod +x /tmp/installer`, {slice: installerSlices.INSTALLER_INIT});
+        exec(`/tmp/installer init > config.yaml`, {slice: installerSlices.INSTALLER_INIT});
+    } catch (err) {
+        werft.fail(installerSlices.INSTALLER_INIT, err)
+    }
+
+    try {
+        werft.log(installerSlices.INSTALLER_RENDER, "Post process the base installer config file and render k8s manifests");
         const PROJECT_NAME="gitpod-core-dev";
         const CONTAINER_REGISTRY_URL=`eu.gcr.io/${PROJECT_NAME}/build/`;
         const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
 
-        // werft.log("deploy", "hello world");
-        exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${deploymentConfig.version} -c "cat /app/installer" > /tmp/installer`, {slice: "init"});
-        exec(`chmod +x /tmp/installer`, {slice: "init"});
-        exec(`/tmp/installer init > base-config.yaml`, {slice: "init"});
-
         // add block users from values.dev.yaml
         exec(`yq r ./.werft/values.dev.yaml components.server.blockNewUsers \
-        | yq prefix - 'blockNewUsers' \
-        | yq m --overwrite base-config.yaml - > config.yaml`, { slice: "prep" });
+        | yq prefix - 'blockNewUsers' > ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
+        exec(`yq m -i --overwrite config.yaml ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
 
-        exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, {slice: "prep"});
-        exec(`yq w -i config.yaml containerRegistry.inCluster ${false}`, {slice: "prep"});
-        exec(`yq w -i config.yaml containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, {slice: "prep"});
-        exec(`yq w -i config.yaml containerRegistry.external.certificate.kind ${"secret"}`, {slice: "prep"});
+        exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
 
-        exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, {slice: "prep"});
+        exec(`yq w -i config.yaml containerRegistry.inCluster ${false}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.external.certificate.kind ${"secret"}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
 
-        exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: "prep"});
-        exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: "prep"});
+        exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: installerSlices.INSTALLER_RENDER});
+
+        exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: installerSlices.INSTALLER_RENDER});
 
         //
         // IMPORTANT
         // do not "cat" out the config.yaml after merging in authProviders
-        // exec(`cat config.yaml`, {slice: "config"});
+        // comment me out before running in werft!
+        // exec(`cat config.yaml`, {slice: "troubleshoot-config"});
 
         werft.log("authProviders", "copy authProviders")
         try {
@@ -344,38 +406,73 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             werft.fail('authProviders', err);
         }
 
-        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: "render"});
-
-        // TODO: post processing needed k8s.yaml based on values.dev.yaml, which has specific tuning used at helm upgrade --install
-
-        // we planned on the following post processing
-        // 1. hostPorts for registry-facade and ws-daemon (we planned on this)
-        // 2. node pools names (we planned on this, Mo asked we rotate between the 3)
-
-        // additional post processing needs (found while auditing values.dev.yaml), this is unplanned
-        // 1. set resources.default.memory to 350Mi, so we fill up nodes under the 110 pods per node limit
-        // 2. set imagePullPolicy to always (currently ifNotPresent for most things)
-        // 3. component have overrides which need to be considered
-        // 4. there are other global settings which needed to be considered (not at component level)
-        // 5. add proxy-config-certificates certificate to the deploy namespace, previously done by helm chart, a prerequisite for installer
-
-        // questions
-        // 1. what is the rabbit mq shovel? it is set in values.dev.yaml
-
-        // no post processing needed
-        // mysql, which just has resource customizations in values.dev.yaml, use ootb installer
-        // minio, we're using Minio per the config
-        // cert-manager, it's already in the cluster
-        // docker-registry, we're using GCP per the config
-
-        // avoid for now (for later)
-        // tracing
+        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: installerSlices.INSTALLER_RENDER});
 
     } catch (err) {
-        werft.fail('prep', err);
+        werft.fail(installerSlices.INSTALLER_RENDER, err)
         throw err;
     }
-    werft.done('deploy');
+
+    try {
+        werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Post process k8s manifest.");
+        werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Check for some free ports.");
+        // find free ports
+        const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
+            { start: 10000, end: 11000 },
+            { start: 30000, end: 31000 },
+            { start: 31001, end: 32000 },
+        ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
+        werft.log(installerSlices.FIND_FREE_HOST_PORTS,
+            `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}, and nodeExporterPort ${nodeExporterPort}.`);
+
+        // TODO: set hostPort for ws-daemon and registry-facade
+
+        // TODO: Set config for Server
+        //          theiaPluginsBucketNameOverride: gitpod-core-dev-plugins
+        //          enableLocalApp = true
+        // TODO: Set node pool given a predictable index
+        // getNodePoolIndex(namespace);
+
+        // TODO: Ensure workloads go to the right type of node
+        // https://github.com/gitpod-io/gitpod/issues/6842
+        // this is important for registry-face, agent-smith, and ws-daemon
+        // TODO: ws-manager's template should denote where to put workspace and image build workspaces - where is it pointing?
+
+        // TODO: the pods in my namespace have been alive for 27h...do we need to install and configure sweeper?
+
+        // FIXME: Need to walk through the addDeploymentFlags method for potential land mines
+        //  license
+        //  charge bees
+        //  raid
+        //  feature flags
+        //  CPU limits
+        //  analytics
+    } catch (err) {
+        werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
+        throw err;
+    }
+
+    // TODO: do the actual install
+    werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing Gitpod.");
+
+    werft.done(phases.DEPLOY);
+
+    async function cleanStateEnv(shellOpts: ExecOptions) {
+        // uninstall Gitpod given the installation's configmap
+        exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"} | kubectl delete -f -`, {slice: installerSlices.CLEAN_ENV_STATE });
+        exec(`kubectl -n ${namespace} delete pvc data-mysql-0 minio || true`, {slice: installerSlices.CLEAN_ENV_STATE });
+        // TODO: check to see if anything lingers after this point ... mysql, minio, jaeger apps
+
+        await wipeAndRecreateNamespaceNoHelm(namespace, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE })
+        // cleanup non-namespace objects
+        werft.log(installerSlices.CLEAN_ENV_STATE, "removing old unnamespaced objects - this might take a while");
+        try {
+            deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice:  installerSlices.CLEAN_ENV_STATE });
+            werft.done(installerSlices.CLEAN_ENV_STATE);
+        } catch (err) {
+            werft.fail(installerSlices.CLEAN_ENV_STATE, err);
+        }
+    }
 }
 
 /**
@@ -443,8 +540,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         // trigger certificate issuing
         werft.log('certificate', "organizing a certificate for the preview environment...");
-        await issueMetaCerts();
-        await installMetaCertificates();
+        await issueMetaCerts(namespace, domain);
+        await installMetaCertificates(namespace);
         if (k3sWsCluster) {
             await issueK3sWsCerts(k3sWsProxyIP);
             await installWsCertificates();
@@ -539,17 +636,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         flags += ` --set components.wsDaemon.servicePort=${wsdaemonPortMeta}`;
         flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePortMeta}`;
 
-        const nodeAffinityValues = [
-            "values.nodeAffinities_1.yaml",
-            "values.nodeAffinities_2.yaml",
-            "values.nodeAffinities_0.yaml",
-        ]
+        const nodeAffinityValues = getNodeAffinities();
 
-        if (k3sWsCluster) {
-            // we do not need meta cluster ws components when k3s ws is enabled
-            // TODO: Add flags to disable ws component in the meta cluster
-            flags += ` --set components.server.wsmanSkipSelf=true`
-        }
         if (storage === "gcp") {
             exec("kubectl get secret gcp-sa-gitpod-dev-deployer -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -");
             flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
@@ -560,7 +648,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             is used to generate a pseudo-random number that consistent as long as the branchname persists.
             We use it to reduce the number of preview-environments accumulating on a singe nodepool.
          */
-        const nodepoolIndex = parseInt(createHash('sha256').update(namespace).digest('hex').substring(0,5),16) % nodeAffinityValues.length;
+        const nodepoolIndex = getNodePoolIndex(namespace);
 
         exec(`helm dependencies up`);
         exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
@@ -676,16 +764,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         }
     }
 
-    async function installMetaCertificates() {
-        const certName = namespace;
-        const metaInstallCertParams = new InstallCertificateParams()
-        metaInstallCertParams.certName = certName
-        metaInstallCertParams.certNamespace = "certs"
-        metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
-        metaInstallCertParams.destinationNamespace = namespace
-        await installCertficate(werft, metaInstallCertParams, metaEnv());
-    }
-
     async function installWsCertificates() {
         const wsInstallCertParams = new InstallCertificateParams()
         wsInstallCertParams.certName = namespace
@@ -707,20 +785,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     }
 
 
-    async function issueMetaCerts() {
-        let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
-        var metaClusterCertParams = new IssueCertificateParams();
-        metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
-        metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-        metaClusterCertParams.namespace = namespace;
-        metaClusterCertParams.certNamespace = "certs";
-        metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
-        metaClusterCertParams.domain = domain;
-        metaClusterCertParams.ip = getCoreDevIngressIP();
-        metaClusterCertParams.bucketPrefixTail = ""
-        metaClusterCertParams.additionalSubdomains = additionalSubdomains
-        await issueCertficate(werft, metaClusterCertParams, metaEnv());
-    }
+
 
     async function issueK3sWsCerts(ip: string) {
         let additionalSubdomains: string[] = ["reg.", "*.ws-k3s.", "ws-k3s."]
@@ -738,6 +803,32 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     }
 
 }
+
+export async function issueMetaCerts(namespace: string, domain: string) {
+    let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
+    var metaClusterCertParams = new IssueCertificateParams();
+    metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
+    metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
+    metaClusterCertParams.namespace = namespace;
+    metaClusterCertParams.certNamespace = "certs";
+    metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
+    metaClusterCertParams.domain = domain;
+    metaClusterCertParams.ip = getCoreDevIngressIP();
+    metaClusterCertParams.bucketPrefixTail = ""
+    metaClusterCertParams.additionalSubdomains = additionalSubdomains
+    await issueCertficate(werft, metaClusterCertParams, metaEnv());
+}
+
+async function installMetaCertificates(namespace: string) {
+    const certName = namespace;
+    const metaInstallCertParams = new InstallCertificateParams()
+    metaInstallCertParams.certName = certName
+    metaInstallCertParams.certNamespace = "certs"
+    metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
+    metaInstallCertParams.destinationNamespace = namespace
+    await installCertficate(werft, metaInstallCertParams, metaEnv());
+}
+
 // returns the static IP address
 function getCoreDevIngressIP(): string {
     return "104.199.27.246";
@@ -841,6 +932,25 @@ async function publishHelmChart(imageRepoBase: string, version: string) {
     ].forEach(cmd => {
         exec(cmd, { slice: 'publish-charts' });
     });
+}
+
+/*  A hash is caclulated from the branch name and a subset of that string is parsed to a number x,
+        x mod the number of different nodepool-sets defined in the files listed in nodeAffinityValues
+        is used to generate a pseudo-random number that consistent as long as the branchname persists.
+        We use it to reduce the number of preview-environments accumulating on a singe nodepool.
+     */
+function getNodePoolIndex(namespace: string): number {
+    const nodeAffinityValues = getNodeAffinities();
+
+    return parseInt(createHash('sha256').update(namespace).digest('hex').substring(0,5),16) % nodeAffinityValues.length;
+}
+
+function getNodeAffinities(): string[] {
+    return [
+        "values.nodeAffinities_1.yaml",
+        "values.nodeAffinities_2.yaml",
+        "values.nodeAffinities_0.yaml",
+    ]
 }
 
 function metaEnv(_parent?: ExecOptions): ExecOptions {

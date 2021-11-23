@@ -18,12 +18,25 @@ export async function wipeAndRecreateNamespace(helmInstallName: string, namespac
     createNamespace(namespace, shellOpts);
 }
 
+export async function wipeAndRecreateNamespaceNoHelm(namespace: string, shellOpts: ExecOptions) {
+    await wipePreviewEnvironmentNoHelm(namespace, shellOpts);
+
+    createNamespace(namespace, shellOpts);
+}
+
 export async function wipePreviewEnvironment(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
     // uninstall helm first so that:
     //  - ws-scaler can't create new ghosts in the meantime
     //  - ws-manager can't start new probes/workspaces
     uninstallHelm(helmInstallName, namespace, shellOpts)
 
+    deleteAllWorkspaces(namespace, shellOpts);
+    await deleteAllUnnamespacedObjects(namespace, shellOpts);
+
+    deleteNamespace(true, namespace, shellOpts);
+}
+
+async function wipePreviewEnvironmentNoHelm(namespace: string, shellOpts: ExecOptions) {
     deleteAllWorkspaces(namespace, shellOpts);
     await deleteAllUnnamespacedObjects(namespace, shellOpts);
 
@@ -43,6 +56,7 @@ function uninstallHelm(installationName: string, namespace: string, shellOpts: E
     exec(`helm --namespace ${namespace} delete ${installationName} --wait`, shellOpts);
 }
 
+// Delete pods for running workspaces, even if they are stuck in terminating because of the finalizer decorator
 function deleteAllWorkspaces(namespace: string, shellOpts: ExecOptions) {
     const objs = exec(`kubectl get pod -l component=workspace --namespace ${namespace} --no-headers -o=custom-columns=:metadata.name`, { ...shellOpts, async: false })
         .split("\n")
