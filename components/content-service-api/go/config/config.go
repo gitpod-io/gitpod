@@ -103,10 +103,12 @@ type GCPConfig struct {
 
 // MinIOConfig MinIOconfigures the MinIO remote storage backend
 type MinIOConfig struct {
-	Endpoint        string `json:"endpoint"`
-	AccessKeyID     string `json:"accessKey"`
-	SecretAccessKey string `json:"secretKey"`
-	Secure          bool   `json:"secure,omitempty"`
+	Endpoint            string `json:"endpoint"`
+	AccessKeyID         string `json:"accessKey"`
+	AccessKeyIdFile     string `json:"accessKeyFile"`
+	SecretAccessKey     string `json:"secretKey"`
+	SecretAccessKeyFile string `json:"secretKeyFile"`
+	Secure              bool   `json:"secure,omitempty"`
 
 	Region         string `json:"region"`
 	ParallelUpload uint   `json:"parallelUpload,omitempty"`
