@@ -38,6 +38,7 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         const template = await this.gitlab.run<GitLab.Project>(user, async g => {
             return g.Projects.show(`${template_owner}/${template_repo}`);
         });
+        log.warn(`GitLab template: ${JSON.stringify(template, null, 2)}`);
         if (GitLab.ApiError.is(template)) {
             throw template;
         }
