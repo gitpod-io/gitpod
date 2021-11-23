@@ -104,6 +104,10 @@ export class GitpodHostUrl {
         return this.with(url => ({ pathname: '/settings' }));
     }
 
+    asPreferences(): GitpodHostUrl {
+        return this.with(url => ({ pathname: '/preferences' }));
+    }
+
     asGraphQLApi(): GitpodHostUrl {
         return this.with(url => ({ pathname: '/graphql/' }));
     }
