@@ -187,6 +187,7 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 		//
 		// 			   @link https://golang.org/src/net/http/httputil/reverseproxy.go
 		r.Header.Set("X-Forwarded-For", "127.0.0.1")
+		log.WithField("headers", r.Header).Info("sje headers")
 
 		_ = repo.Auth().Authorize(r.Context(), r)
 	}
