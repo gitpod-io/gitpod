@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React from 'react';
+import React, { HTMLAttributeAnchorTarget } from 'react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -26,6 +26,7 @@ export interface ContextMenuEntry {
     onClick?: (event: React.MouseEvent) => void;
     href?: string;
     link?: string;
+    target?: HTMLAttributeAnchorTarget;
 }
 
 function ContextMenu(props: ContextMenuProps) {
@@ -91,11 +92,11 @@ function ContextMenu(props: ContextMenuProps) {
                             </div>
                             const key = `entry-${menuId}-${index}-${e.title}`;
                             if (e.link) {
-                                return <Link key={key} to={e.link} onClick={e.onClick}>
+                                return <Link key={key} to={e.link} onClick={e.onClick} target={e.target}>
                                     {entry}
                                 </Link>;
                             } else if (e.href) {
-                                return <a key={key} href={e.href} onClick={e.onClick}>
+                                return <a key={key} href={e.href} onClick={e.onClick} target={e.target}>
                                     {entry}
                                 </a>;
                             } else {
