@@ -47,7 +47,7 @@ type Repo struct {
 	Host string
 	Repo string
 	Tag  string
-	Auth docker.Authorizer
+	Auth func() docker.Authorizer
 }
 
 func rewriteURL(u *url.URL, fromRepo, toRepo, host, tag string) {
@@ -100,7 +100,7 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rewriteURL(r.URL, alias, repo.Repo, repo.Host, repo.Tag)
 	r.Host = r.URL.Host
 
-	err := repo.Auth.Authorize(ctx, r)
+	err := repo.Auth().Authorize(ctx, r)
 	if err != nil {
 		log.WithError(err).Error("cannot authorize request")
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -152,15 +152,15 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			//             type from "Bearer" to "Basic" works reliably.
 			//
 			//             @link https://docs.docker.com/registry/spec/auth/oauth/
-			if attempt > 1 {
-				authKey := http.CanonicalHeaderKey("WWW-Authenticate")
-				if auth := resp.Header.Get(authKey); auth != "" {
-					token := strings.Split(auth, " ")
-					resp.Header.Set(authKey, fmt.Sprintf("Basic %s", token[1]))
-				}
-			}
+			//if attempt > 1 {
+			//	authKey := http.CanonicalHeaderKey("WWW-Authenticate")
+			//	if auth := resp.Header.Get(authKey); auth != "" {
+			//		token := strings.Split(auth, " ")
+			//		resp.Header.Set(authKey, fmt.Sprintf("Basic %s", token[1]))
+			//	}
+			//}
 
-			err := repo.Auth.AddResponses(context.Background(), []*http.Response{resp})
+			err := repo.Auth().AddResponses(context.Background(), []*http.Response{resp})
 			if err != nil {
 				log.WithError(err).WithField("URL", resp.Request.URL.String()).Warn("cannot add responses although response was Unauthorized")
 				return false, nil
@@ -188,7 +188,7 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 		// 			   @link https://golang.org/src/net/http/httputil/reverseproxy.go
 		r.Header.Set("X-Forwarded-For", "127.0.0.1")
 
-		_ = repo.Auth.Authorize(r.Context(), r)
+		_ = repo.Auth().Authorize(r.Context(), r)
 	}
 	client.ResponseLogHook = func(l retryablehttp.Logger, r *http.Response) {}
 

@@ -52,19 +52,22 @@ var proxyCmd = &cobra.Command{
 			targettag = r.Tag()
 		}
 
-		auth := docker.NewDockerAuthorizer(docker.WithAuthCreds(authP.Authorize))
 		prx, err := proxy.NewProxy(&url.URL{Host: "localhost:8080", Scheme: "http"}, map[string]proxy.Repo{
 			"base": {
 				Host: reference.Domain(baseref),
 				Repo: reference.Path(baseref),
 				Tag:  basetag,
-				Auth: auth,
+				Auth: func() docker.Authorizer {
+					return docker.NewDockerAuthorizer(docker.WithAuthCreds(authP.Authorize))
+				},
 			},
 			"target": {
 				Host: reference.Domain(targetref),
 				Repo: reference.Path(targetref),
 				Tag:  targettag,
-				Auth: auth,
+				Auth: func() docker.Authorizer {
+					return docker.NewDockerAuthorizer(docker.WithAuthCreds(authP.Authorize))
+				},
 			},
 		})
 		if err != nil {
