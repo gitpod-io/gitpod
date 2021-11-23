@@ -47,7 +47,7 @@ type Repo struct {
 	Host string
 	Repo string
 	Tag  string
-	Auth docker.Authorizer
+	Auth func() docker.Authorizer
 }
 
 func rewriteURL(u *url.URL, fromRepo, toRepo, host, tag string) {
@@ -100,7 +100,7 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rewriteURL(r.URL, alias, repo.Repo, repo.Host, repo.Tag)
 	r.Host = r.URL.Host
 
-	err := repo.Auth.Authorize(ctx, r)
+	err := repo.Auth().Authorize(ctx, r)
 	if err != nil {
 		log.WithError(err).Error("cannot authorize request")
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -160,7 +160,7 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			//	}
 			//}
 
-			err := repo.Auth.AddResponses(context.Background(), []*http.Response{resp})
+			err := repo.Auth().AddResponses(context.Background(), []*http.Response{resp})
 			if err != nil {
 				log.WithError(err).WithField("URL", resp.Request.URL.String()).Warn("cannot add responses although response was Unauthorized")
 				return false, nil
@@ -189,7 +189,8 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 		r.Header.Set("X-Forwarded-For", "127.0.0.1")
 		log.WithField("headers", r.Header).Info("sje headers")
 
-		_ = repo.Auth.Authorize(r.Context(), r)
+		_ = repo.Auth().Authorize(r.Context(), r)
+		log.WithField("headers", r.Header).Info("sje headers 2")
 	}
 	client.ResponseLogHook = func(l retryablehttp.Logger, r *http.Response) {}
 
