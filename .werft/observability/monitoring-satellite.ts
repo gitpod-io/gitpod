@@ -51,6 +51,7 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     --ext-str tracing_enabled="true" \
     --ext-str honeycomb_api_key="${process.env.HONEYCOMB_API_KEY}" \
     --ext-str honeycomb_dataset="preview-environments" \
+    --ext-str jaeger_endpoint="" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
     find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
 
