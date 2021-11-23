@@ -312,6 +312,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
               </ContextMenu>
               <a target="_blank" href={this.state.desktopIde.link}><button>{this.state.desktopIde.label}</button></a>
             </div>
+            <div className="text-sm text-gray-400 dark:text-gray-500 mt-5">These IDE options are based on <a className="gp-link" href={gitpodHostUrl.asPreferences().toString()} target="_parent">your user preferences</a>.</div>
           </div>;
         }
 
