@@ -48,6 +48,7 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     --ext-str prometheus_dns_name="prometheus-${params.previewDomain}" \
     --ext-str grafana_dns_name="grafana-${params.previewDomain}" \
     --ext-str node_affinity_label="gitpod.io/workload_services" \
+    --ext-str tracing_enabled="true" \
     --ext-str honeycomb_api_key="${process.env.HONEYCOMB_API_KEY}" \
     --ext-str honeycomb_dataset="preview-environments" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
@@ -61,49 +62,23 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
 }
 
 async function ensureCorrectInstallationOrder(){
-    installSetup()
+    const werft = getGlobalWerftInstance()
 
-    deployPrometheus()
-    deployGrafana()
-    deployNodeExporter()
-    deployKubeStateMetrics()
+    werft.log(sliceName, 'installing monitoring-satellite')
+    exec('cd observability && hack/deploy-satellite.sh', {slice: sliceName})
+
     deployGitpodServiceMonitors()
-    deployKubernetesServiceMonitors()
-    deployOpenTelemetryCollector()
+    checkReadiness()
 }
 
-async function deployPrometheus() {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, 'installing prometheus')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/prometheus/', {silent: true})
-    // Prometheus usually takes some time to be created. We sleep to give the operator some time
-    // to create the StatefulSet.
-    exec('sleep 20 && kubectl rollout status statefulset prometheus-k8s', {slice: sliceName})
-}
-
-async function deployGrafana() {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, 'installing grafana')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/grafana/', {silent: true})
+async function checkReadiness() {
+    // For some reason prometheus' statefulset always take quite some time to get created
+    // Therefore we wait a couple of seconds
+    exec('sleep 30 && kubectl rollout status statefulset prometheus-k8s', {slice: sliceName})
     exec('kubectl rollout status deployment grafana', {slice: sliceName})
-}
-
-async function deployNodeExporter() {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, 'installing node-exporter')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/node-exporter/', {silent: true})
-    exec('kubectl rollout status daemonset node-exporter', {slice: sliceName})
-}
-
-async function deployKubeStateMetrics() {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, 'installing kube-state-metrics')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/kube-state-metrics/', {silent: true})
     exec('kubectl rollout status deployment kube-state-metrics', {slice: sliceName})
+    exec('kubectl rollout status deployment otel-collector', {slice: sliceName})
+    exec('kubectl rollout status daemonset node-exporter', {slice: sliceName})
 }
 
 async function deployGitpodServiceMonitors() {
@@ -111,20 +86,6 @@ async function deployGitpodServiceMonitors() {
 
     werft.log(sliceName, 'installing gitpod ServiceMonitor resources')
     exec('kubectl apply -f observability/monitoring-satellite/manifests/gitpod/', {silent: true})
-}
-
-async function deployKubernetesServiceMonitors() {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, 'installing Kubernetes ServiceMonitor resources')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/kubernetes/', {silent: true})
-}
-
-async function deployOpenTelemetryCollector() {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, 'installing OpenTelemetry-Collector resources')
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/otelCollector/', { silent: true })
 }
 
 export function observabilityStaticChecks() {
@@ -216,29 +177,4 @@ function ingressReady(namespace: string, name: string): boolean {
     }
     werft.log(sliceName, `${name} ingress not ready.`)
     return false
-}
-
-/**
- * installSetup creates or replaces everything that is needed to run monitoring-satellite.
- * This setup includes Custom Resource Definitions(CRDs), kubernetes operators and namespaces.
- */
-function installSetup() {
-    const werft = getGlobalWerftInstance()
-
-    // Adds a label to the namespace metadata.
-    // This label is used by ServiceMonitor's namespaceSelector, so Prometheus
-    // only scrape metrics from its own namespace.
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/namespace.yaml', {silent: true})
-    exec('kubectl apply -f observability/monitoring-satellite/manifests/podsecuritypolicy-restricted.yaml', {silent: true})
-
-    const CRDs = exec(`find observability/monitoring-satellite/manifests/prometheus-operator/ -type f -name "*CustomResourceDefinition.yaml"`, {silent: true}).stdout.trim().split('\n')
-    CRDs.forEach(crd => {
-        exec(`kubectl replace -f ${crd} || kubectl create -f ${crd}`, {slice: sliceName})
-    });
-    // Making sure CRDs got installed
-    exec('until kubectl get servicemonitors.monitoring.coreos.com --all-namespaces ; do date; sleep 1; echo ""; done', {silent: true})
-
-    werft.log(sliceName, 'installing prometheus-operator')
-    exec('for yaml in $(find observability/monitoring-satellite/manifests/prometheus-operator/ -type f ! -name "*CustomResourceDefinition.yaml"); do cat $yaml | kubectl apply -f -; done', {silent: true})
-    exec('kubectl rollout status deployment prometheus-operator', {slice: sliceName})
 }
