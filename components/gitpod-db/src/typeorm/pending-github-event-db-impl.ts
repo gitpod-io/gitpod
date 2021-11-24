@@ -38,7 +38,7 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
 
     public async delete(evt: PendingGithubEvent) {
         // pending events is not synchronized via DB sync so we can delete it
-        (await this.getRepo()).delete(evt);
+        (await this.getRepo()).delete(evt.id);
     }
 
     public async findWithUser(type: string): Promise<PendingGithubEventWithUser[]> {
