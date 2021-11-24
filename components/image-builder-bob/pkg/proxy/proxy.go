@@ -18,6 +18,8 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
+const authKey = "authKey"
+
 func NewProxy(host *url.URL, aliases map[string]Repo) (*Proxy, error) {
 	if host.Host == "" || host.Scheme == "" {
 		return nil, fmt.Errorf("host Host or Scheme are missing")
@@ -47,7 +49,7 @@ type Repo struct {
 	Host string
 	Repo string
 	Tag  string
-	Auth docker.Authorizer
+	Auth func() docker.Authorizer
 }
 
 func rewriteURL(u *url.URL, fromRepo, toRepo, host, tag string) {
@@ -100,15 +102,17 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rewriteURL(r.URL, alias, repo.Repo, repo.Host, repo.Tag)
 	r.Host = r.URL.Host
 
-	err := repo.Auth.Authorize(ctx, r)
+	auth := repo.Auth()
+	r = r.WithContext(context.WithValue(ctx, authKey, auth))
+
+	err := auth.Authorize(ctx, r)
 	if err != nil {
 		log.WithError(err).Error("cannot authorize request")
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
 
-	reqdbg, _ := httputil.DumpRequest(r, false)
-	log.WithField("req", string(reqdbg)).Info("serving request")
+	log.WithField("req", r.URL.Path).Info("serving request")
 
 	r.RequestURI = ""
 	proxy.reverse(alias).ServeHTTP(w, r)
@@ -138,8 +142,12 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			log.WithError(err).Warn("saw error during CheckRetry")
 			return false, err
 		}
+		auth, ok := ctx.Value(authKey).(docker.Authorizer)
+		if !ok || auth == nil {
+			return false, nil
+		}
 		if resp.StatusCode == http.StatusUnauthorized {
-			err := repo.Auth.AddResponses(context.Background(), []*http.Response{resp})
+			err := auth.AddResponses(context.Background(), []*http.Response{resp})
 			if err != nil {
 				log.WithError(err).WithField("URL", resp.Request.URL.String()).Warn("cannot add responses although response was Unauthorized")
 				return false, nil
@@ -164,7 +172,11 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 		// 			   @link https://golang.org/src/net/http/httputil/reverseproxy.go
 		r.Header.Set("X-Forwarded-For", "127.0.0.1")
 
-		_ = repo.Auth.Authorize(r.Context(), r)
+		auth, ok := r.Context().Value(authKey).(docker.Authorizer)
+		if !ok || auth == nil {
+			return
+		}
+		_ = auth.Authorize(r.Context(), r)
 	}
 	client.ResponseLogHook = func(l retryablehttp.Logger, r *http.Response) {}
 
