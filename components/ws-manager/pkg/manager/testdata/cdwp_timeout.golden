@@ -33,7 +33,10 @@
                 "prometheus.io/port": "23000",
                 "prometheus.io/scrape": "true",
                 "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace-default"
-            }
+            },
+            "finalizers": [
+                "gitpod.io/finalizer"
+            ]
         },
         "spec": {
             "volumes": [
