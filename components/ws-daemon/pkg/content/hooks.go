@@ -71,6 +71,11 @@ func hookSetupRemoteStorage(cfg Config) session.WorkspaceLivecycleHook {
 
 // hookSetupWorkspaceLocation recreates the workspace location
 func hookSetupWorkspaceLocation(ctx context.Context, ws *session.Workspace) error {
+	if ws.FullWorkspaceBackup {
+		// nothing to do here for FWB. FWB workspaces don't have a location.
+		return nil
+	}
+
 	location := ws.Location
 
 	// 1. Clean out the workspace directory
