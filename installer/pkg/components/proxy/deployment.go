@@ -6,6 +6,7 @@ package proxy
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
@@ -115,7 +116,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      &corev1.Affinity{},
+						Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
 						PriorityClassName:             common.SystemNodeCritical,
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),

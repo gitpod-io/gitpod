@@ -8,6 +8,7 @@ package init
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	batchv1 "k8s.io/api/batch/v1"
@@ -32,7 +33,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: objectMeta,
 				Spec: corev1.PodSpec{
-					Affinity:           &corev1.Affinity{},
+					Affinity:           common.Affinity(cluster.AffinityLabelMeta),
 					RestartPolicy:      corev1.RestartPolicyNever,
 					ServiceAccountName: Component,
 					EnableServiceLinks: pointer.Bool(false),

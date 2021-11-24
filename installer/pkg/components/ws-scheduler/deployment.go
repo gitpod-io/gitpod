@@ -5,6 +5,7 @@
 package wsscheduler
 
 import (
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
@@ -47,7 +48,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				Spec: corev1.PodSpec{
 					PriorityClassName:  common.SystemNodeCritical,
-					Affinity:           &corev1.Affinity{},
+					Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
 					EnableServiceLinks: pointer.Bool(false),
 					ServiceAccountName: Component,
 					SecurityContext: &corev1.PodSecurityContext{
