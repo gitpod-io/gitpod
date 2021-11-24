@@ -6,6 +6,7 @@ package image_builder_mk3
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
@@ -78,7 +79,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      &corev1.Affinity{},
+					Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",

@@ -5,6 +5,7 @@
 package content_service
 
 import (
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	v1 "k8s.io/api/apps/v1"
@@ -24,7 +25,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	podSpec := corev1.PodSpec{
-		Affinity:                      &corev1.Affinity{},
+		Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
 		ServiceAccountName:            Component,
 		EnableServiceLinks:            pointer.Bool(false),
 		DNSPolicy:                     "ClusterFirst",

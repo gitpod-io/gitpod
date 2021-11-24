@@ -6,6 +6,7 @@ package wsmanagerbridge
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -63,7 +64,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      &corev1.Affinity{},
+						Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
 						ServiceAccountName:            Component,
 						PriorityClassName:             common.SystemNodeCritical,
 						EnableServiceLinks:            pointer.Bool(false),

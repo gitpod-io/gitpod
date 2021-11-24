@@ -7,6 +7,7 @@ package rabbitmq
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
@@ -258,6 +259,16 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
+		affinity, err := helm.AffinityYaml(cluster.AffinityLabelMeta)
+		if err != nil {
+			return nil, err
+		}
+
+		affinityTemplate, err := helm.KeyFileValue("rabbitmq.affinity", affinity)
+		if err != nil {
+			return nil, err
+		}
+
 		return &common.HelmConfig{
 			Enabled: true,
 			Values: &values.Options{
@@ -271,6 +282,7 @@ var Helm = common.CompositeHelmFunc(
 				},
 				// This is too complex to be sent as a string
 				FileValues: []string{
+					affinityTemplate,
 					loadDefinitionFilename,
 					shovelsTemplateFileName,
 				},

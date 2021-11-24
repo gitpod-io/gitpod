@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sigs.k8s.io/yaml"
 	"syscall"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -106,6 +107,18 @@ func writeCharts(chart *charts.Chart) (string, error) {
 	}
 
 	return dir, nil
+}
+
+// AffinityYaml convert an affinity into a YAML byte array
+func AffinityYaml(orLabels ...string) ([]byte, error) {
+	affinities := common.Affinity(orLabels...)
+
+	marshal, err := yaml.Marshal(affinities)
+	if err != nil {
+		return nil, err
+	}
+
+	return marshal, nil
 }
 
 // ImportTemplate allows for Helm charts to be imported into the installer manifest

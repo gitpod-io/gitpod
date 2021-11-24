@@ -6,6 +6,7 @@ package openvsx_proxy
 
 import (
 	"fmt"
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	appsv1 "k8s.io/api/apps/v1"
@@ -50,7 +51,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Spec: v1.PodSpec{
-					Affinity:                      &v1.Affinity{},
+					Affinity:                      common.Affinity(cluster.AffinityLabelIDE),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",

@@ -5,6 +5,7 @@
 package wsmanager
 
 import (
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,7 +26,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	podSpec := corev1.PodSpec{
 		PriorityClassName:  common.SystemNodeCritical,
-		Affinity:           &corev1.Affinity{},
+		Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
 		EnableServiceLinks: pointer.Bool(false),
 		ServiceAccountName: Component,
 		SecurityContext: &corev1.PodSecurityContext{
