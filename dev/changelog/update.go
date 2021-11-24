@@ -36,9 +36,9 @@ var updateCommand = &cobra.Command{
 	Long:  "parses the latest entry from the existing changelog file, gets more recent PRs from GitHub and prepends their release note entries.",
 	Short: "Generate markdown for your changelogs from release-note blocks.",
 	Run: func(c *cobra.Command, args []string) {
-		existingNotes, lastPrNumber, lastPrDate := ParseFile(opts.ChangelogFile)
+		existingNotes, lastPrNumber, lastPrMonth := ParseFile(opts.ChangelogFile)
 		client := NewClient(opts.Token)
-		notes, err := GetReleaseNotes(client, opts, lastPrNumber, lastPrDate)
+		notes, err := GetReleaseNotes(client, opts, lastPrNumber, lastPrMonth)
 		if err != nil {
 			logger.WithError(err).Fatal("error retrieving PRs")
 		}
@@ -47,7 +47,7 @@ var updateCommand = &cobra.Command{
 			return
 		}
 		logger.Infof("Adding %d release note entries", len(notes))
-		WriteFile(opts.ChangelogFile, notes, existingNotes, lastPrDate)
+		WriteFile(opts.ChangelogFile, notes, existingNotes, lastPrMonth)
 	},
 }
 
@@ -67,9 +67,9 @@ var (
 	dateLineRegexp = regexp.MustCompile(`## (\w* \d*)`)
 )
 
-func ParseFile(path string) (existingNotes []string, lastPrNumber int, lastPrDate time.Time) {
+func ParseFile(path string) (existingNotes []string, lastPrNumber int, lastPrMonth time.Time) {
 	lastPrNumber = 0
-	lastPrDate = time.Unix(0, 0)
+	lastPrMonth = time.Unix(0, 0)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return
 	}
@@ -83,12 +83,12 @@ func ParseFile(path string) (existingNotes []string, lastPrNumber int, lastPrDat
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		dateMatch := dateLineRegexp.FindStringSubmatch(scanner.Text())
-		if len(dateMatch) > 1 && lastPrDate == time.Unix(0, 0) {
-			lastPrDate, err = time.Parse("January 2006", dateMatch[1])
+		if len(dateMatch) > 1 && lastPrMonth == time.Unix(0, 0) {
+			lastPrMonth, err = time.Parse("January 2006", dateMatch[1])
 			if err != nil {
 				logger.Warnf("Ignoring invalid date line %s", dateMatch[1])
 			} else {
-				logger.Infof("Last PR date %s", lastPrDate.Format("January 2006"))
+				logger.Infof("Last PR month %s", lastPrMonth.Format("January 2006"))
 			}
 		}
 		prMatch := noteLineRegexp.FindStringSubmatch(scanner.Text())
@@ -134,16 +134,26 @@ var releaseNoteRegexp = regexp.MustCompile("(?s)```release-note\\b(.+?)```")
 const defaultGitHubBaseURI = "https://github.com"
 
 // Get returns the list of release notes found for the given parameters.
-func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int, lastPrDate time.Time) ([]ReleaseNote, error) {
+func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int, lastPrMonth time.Time) ([]ReleaseNote, error) {
 	var (
 		ctx          = context.Background()
 		releaseNotes = []ReleaseNote{}
 		processed    = make(map[int]void)
 	)
+	lastPrDate := lastPrMonth
+	if lastPrNr != 0 {
+		lastPr, _, err := c.PullRequests.Get(ctx, opts.Org, opts.Repo, lastPrNr)
+		if err != nil {
+			return nil, err
+		}
+		lastPrDate = lastPr.GetMergedAt()
+	}
+	logger.Infof("Will stop processing for PRs updated before %s", lastPrDate.Format("2006-01-02 15:04:05"))
+
 	listingOpts := &github.PullRequestListOptions{
 		State:     "closed",
 		Base:      opts.Branch,
-		Sort:      "created",
+		Sort:      "updated",
 		Direction: "desc",
 		ListOptions: github.ListOptions{
 			// All GitHub paginated queries start at page 1 !?
@@ -167,13 +177,20 @@ func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int, lastPr
 			if _, exists := processed[num]; exists {
 				continue
 			}
-			if p.GetMergedAt().Before(lastPrDate) {
-				continue
-			}
-			processed[num] = member
-			if num == lastPrNr {
+			// the changelog is sorted by merge date, but the GitHub results can only be
+			// sorted by last update. So it's a bit tricky to find out when to stop, as we
+			// sometimes comment on already merged PRs.
+			if p.GetUpdatedAt().Before(lastPrDate) {
+				// PRs are sorted by last update, so from here all PRs have already been
+				// processed in prior runs
 				return releaseNotes, nil
 			}
+			if p.GetMergedAt().Before(lastPrDate) {
+				// PR has already been processed, but it could have been updated after merge
+				continue
+			}
+
+			processed[num] = member
 
 			isMerged, _, err := c.PullRequests.IsMerged(ctx, opts.Org, opts.Repo, num)
 			if _, ok := err.(*github.RateLimitError); ok {
