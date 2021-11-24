@@ -5,11 +5,13 @@
 package proxy
 
 import (
+	"crypto/tls"
 	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"github.com/klauspost/cpuid/v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
@@ -48,7 +50,18 @@ func (p *WorkspaceProxy) MustServe() {
 		log.WithError(err).Fatal("cannot initialize proxy - this is likely a configuration issue")
 		return
 	}
-	srv := &http.Server{Addr: p.Ingress.HTTPSAddress, Handler: handler}
+	srv := &http.Server{
+		Addr:    p.Ingress.HTTPSAddress,
+		Handler: handler,
+		TLSConfig: &tls.Config{
+			CipherSuites:             optimalDefaultCipherSuites(),
+			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+			MinVersion:               tls.VersionTLS12,
+			MaxVersion:               tls.VersionTLS12,
+			PreferServerCipherSuites: true,
+			NextProtos:               []string{"h2", "http/1.1"},
+		},
+	}
 
 	var (
 		crt = p.Config.HTTPS.Certificate
@@ -89,4 +102,33 @@ func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 	}
 	installBlobserveRoutes(blobserveRouter, handlerConfig, p.WorkspaceInfoProvider)
 	return r, nil
+}
+
+// cipher suites assuming AES-NI (hardware acceleration for AES).
+var defaultCipherSuitesWithAESNI = []uint16{
+	tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+}
+
+// defaultCipherSuites assuming lack of AES-NI (NO hardware acceleration for AES).
+var defaultCipherSuitesWithoutAESNI = []uint16{
+	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+	tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+}
+
+// optimalDefaultCipherSuites returns an appropriate cipher
+// suite to use depending on the hardware support for AES.
+func optimalDefaultCipherSuites() []uint16 {
+	if cpuid.CPU.Supports(cpuid.AESNI) {
+		return defaultCipherSuitesWithAESNI
+	}
+	return defaultCipherSuitesWithoutAESNI
 }
