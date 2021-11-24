@@ -365,6 +365,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			Namespace:   m.Config.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
+			Finalizers:  []string{"gitpod.io/finalizer"},
 		},
 		Spec: corev1.PodSpec{
 			AutomountServiceAccountToken: &boolFalse,
