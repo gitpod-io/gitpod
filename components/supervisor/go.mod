@@ -36,6 +36,8 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
+require golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
+
 require (
 	cloud.google.com/go v0.83.0 // indirect
 	cloud.google.com/go/storage v1.15.0 // indirect
@@ -83,7 +85,6 @@ require (
 	go.uber.org/atomic v1.8.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023 // indirect
 	golang.org/x/oauth2 v0.0.0-20210615190721-d04028783cf1 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
