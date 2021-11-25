@@ -42,7 +42,7 @@
     "build:clean": "yarn clean && yarn build",
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",
-    "watch": "yarn tsc -w",
+    "watch": "leeway exec --package .:app --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
     "clean": "yarn run rimraf lib",
     "clean:node": "yarn run rimraf node_modules",
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",

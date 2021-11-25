@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { AccountingDB } from "../accounting-db";
+import { AccountingDB, TransactionalAccountingDBFactory } from "../accounting-db";
 import { DBAccountEntry } from "./entity/db-account-entry";
 import { User } from "@gitpod/gitpod-protocol";
 import { AccountEntry, Subscription, Credit, SubscriptionAndUser } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
@@ -19,12 +19,19 @@ import { TypeORM } from "./typeorm";
 export class TypeORMAccountingDBImpl implements AccountingDB {
 
     @inject(TypeORM) typeORM: TypeORM;
+    @inject(TransactionalAccountingDBFactory) protected readonly transactionalFactory: TransactionalAccountingDBFactory;
 
-    async transaction<T>(code: (db: AccountingDB) => Promise<T>): Promise<T> {
+    async transaction<T>(closure: (db: AccountingDB) => Promise<T>, closures?: ((manager: EntityManager) => Promise<any>)[]): Promise<T> {
         const manager = await this.getEntityManager();
         return await manager.transaction(async manager => {
-            return await code(new TransactionalAccountingDBImpl(manager));
-        })
+            const transactionDB = this.transactionalFactory(manager);
+            const result = await closure(transactionDB);
+
+            for (const c of (closures || [])) {
+                await c(manager);
+            }
+            return result;
+        });
     }
 
     protected async getEntityManager() {
