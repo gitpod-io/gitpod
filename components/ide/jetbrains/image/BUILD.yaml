@@ -43,7 +43,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.goland
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-213.5744.26.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-213.5744.124.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
       image:
         - ${imageRepoBase}/ide/goland:${version}
