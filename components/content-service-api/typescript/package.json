@@ -7,7 +7,7 @@
     "build": "mkdir -p lib; tsc && cp -f src/*.js src/*d.ts lib"
   },
   "files": [
-    ".",
+    "src",
     "lib"
   ],
   "dependencies": {

@@ -58,13 +58,9 @@ import { MonitoringEndpointsApp } from './monitoring-endpoints';
 import { BearerAuth } from './auth/bearer-authenticator';
 import { TermsProvider } from './terms/terms-provider';
 import { TosCookie } from './user/tos-cookie';
-import { ContentServiceClient } from '@gitpod/content-service/lib/content_grpc_pb';
-import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
-import { WorkspaceServiceClient } from '@gitpod/content-service/lib/workspace_grpc_pb';
 import * as grpc from "@grpc/grpc-js";
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { ContentServiceStorageClient } from './storage/content-service-client';
-import { IDEPluginServiceClient } from '@gitpod/content-service/lib/ideplugin_grpc_pb';
 import { GitTokenScopeGuesser } from './workspace/git-token-scope-guesser';
 import { GitTokenValidator } from './workspace/git-token-validator';
 import { newAnalyticsWriterFromEnv } from '@gitpod/gitpod-protocol/lib/util/analytics';
@@ -74,7 +70,6 @@ import { AdditionalContentPrefixContextParser } from './workspace/additional-con
 import { HeadlessLogService } from './workspace/headless-log-service';
 import { HeadlessLogController } from './workspace/headless-log-controller';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
-import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-log_grpc_pb';
 import { ProjectsService } from './projects/projects-service';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config, ConfigFile } from './config';
@@ -84,6 +79,7 @@ import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messagi
 import { IClientCallMetrics } from '@gitpod/content-service/lib/client-call-metrics';
 import { DebugApp } from './debug-app';
 import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from './messaging/local-message-broker';
+import { contentServiceBinder } from '@gitpod/content-service/lib/sugar';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -193,30 +189,18 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(TermsProvider).toSelf().inSingletonScope();
 
-    const grpcOptions: grpc.ClientOptions = {
-        ...defaultGRPCOptions,
-    };
-
-    bind(ContentServiceClient).toDynamicValue(ctx => {
+    // binds all content services
+    (contentServiceBinder((ctx) => {
         const config = ctx.container.get<Config>(Config);
-        return new ContentServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
-    });
-    bind(BlobServiceClient).toDynamicValue(ctx => {
-        const config = ctx.container.get<Config>(Config);
-        return new BlobServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
-    });
-    bind(WorkspaceServiceClient).toDynamicValue(ctx => {
-        const config = ctx.container.get<Config>(Config);
-        return new WorkspaceServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
-    });
-    bind(IDEPluginServiceClient).toDynamicValue(ctx => {
-        const config = ctx.container.get<Config>(Config);
-        return new IDEPluginServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
-    });
-    bind(HeadlessLogServiceClient).toDynamicValue(ctx => {
-        const config = ctx.container.get<Config>(Config);
-        return new HeadlessLogServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure(), grpcOptions);
-    });
+        const options: grpc.ClientOptions = {
+            ...defaultGRPCOptions,
+        };
+        return {
+            address: config.contentServiceAddr,
+            credentials: grpc.credentials.createInsecure(),
+            options,
+        }
+    }))(bind, unbind, isBound, rebind);
 
     bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
 
