@@ -48,24 +48,33 @@ export class CachingImageBuilderClientProvider implements ImageBuilderClientProv
     @inject(ImageBuilderClientCallMetrics) @optional()
     protected readonly clientCallMetrics: IClientCallMetrics;
 
-    // gRPC connections maintain their connectivity themselves, i.e. they reconnect when neccesary.
-    // They can also be used concurrently, even across services.
+    // gRPC connections can be used concurrently, even across services.
     // Thus it makes sense to cache them rather than create a new connection for each request.
     protected connectionCache: PromisifiedImageBuilderClient | undefined;
 
     getDefault() {
-        let interceptor: grpc.Interceptor[] = [];
+        let interceptors: grpc.Interceptor[] = [];
         if (this.clientCallMetrics) {
-            interceptor = [ createClientCallMetricsInterceptor(this.clientCallMetrics) ];
+            interceptors = [ createClientCallMetricsInterceptor(this.clientCallMetrics) ];
         }
 
-        if (!this.connectionCache || !this.connectionCache.isConnectionAlive()) {
-            this.connectionCache = new PromisifiedImageBuilderClient(
+        const createClient = () => {
+            return new PromisifiedImageBuilderClient(
                 new ImageBuilderClient(this.clientConfig.address, grpc.credentials.createInsecure()),
-                interceptor
+                interceptors
             );
+        };
+        let connection = this.connectionCache;
+        if (!connection) {
+            connection = createClient();
+        } else if (!connection.isConnectionAlive()) {
+            connection.dispose();
+
+            connection = createClient();
         }
-        return this.connectionCache!;
+
+        this.connectionCache = connection;
+        return connection;
     }
 
 }
@@ -213,6 +222,10 @@ export class PromisifiedImageBuilderClient {
                 }
             });
         })
+    }
+
+    public dispose() {
+        this.client.close();
     }
 
     protected getDefaultUnaryOptions(): Partial<grpc.CallOptions> {
