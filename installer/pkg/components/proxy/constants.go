@@ -13,7 +13,7 @@ const (
 	ContainerHTTPSPort    = common.ProxyContainerHTTPSPort
 	ContainerHTTPSName    = common.ProxyContainerHTTPSName
 	PrometheusPort        = 9500
-	InitContainerImage    = "alpine:3.14"
+	InitContainerImage    = "alpine:3.15"
 	KubeRBACProxyImage    = "quay.io/brancz/kube-rbac-proxy:v0.11.0"
 	MetricsContainerName  = "metrics"
 	ReadinessPort         = 8003

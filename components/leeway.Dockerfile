@@ -2,5 +2,5 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:3.14
+FROM alpine:3.15
 COPY components--all-docker/versions.yaml /

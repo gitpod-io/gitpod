@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:3.14
+FROM alpine:3.15
 
 WORKDIR /app
 COPY components-local-app--app/components-local-app--app-linux-amd64/local-app local-app-linux

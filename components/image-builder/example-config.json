@@ -6,7 +6,7 @@
         "baseImageRepository": "eu.gcr.io/gitpod-dev/base-images",
         "workspaceImageRepository": "eu.gcr.io/gitpod-dev/workspace-images",
         "imageBuildSalt": "001",
-        "alpineImage": "alpine:3.14",
+        "alpineImage": "alpine:3.15",
         "selfBuildBaseImage": ""
     },
     "pprof": {

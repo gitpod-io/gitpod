@@ -27,7 +27,7 @@ func TestDockerRegistryResolver(t *testing.T) {
 		Err    error
 	}{
 		{"alpine:latest", "docker.io/library/alpine:latest", nil},
-		{"alpine:3.14", "docker.io/library/alpine:3.14", nil},
+		{"alpine:3.15", "docker.io/library/alpine:3.15", nil},
 		{"gitpod/workspace-full:build-branch-master", "docker.io/gitpod/workspace-full:build-branch-master", nil},
 		{"gitpod/does-not-exist", "docker.io/gitpod/does-not-exist", xerrors.Errorf("does not exist")},
 	}

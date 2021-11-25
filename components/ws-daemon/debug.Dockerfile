@@ -2,7 +2,7 @@ FROM golang:1.16-alpine AS debugger
 RUN apk add --no-cache git
 RUN go get -u github.com/go-delve/delve/cmd/dlv
 
-FROM alpine:3.14
+FROM alpine:3.15
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
