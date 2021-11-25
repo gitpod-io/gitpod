@@ -171,7 +171,7 @@ export default function NewProject() {
         const repoSlug = repo.path || repo.name;
 
         try {
-            await getGitpodService().server.createProject({
+            const project = await getGitpodService().server.createProject({
                 name: repo.name,
                 slug: repoSlug,
                 cloneUrl: repo.cloneUrl,
@@ -181,7 +181,7 @@ export default function NewProject() {
                 appInstallationId: String(repo.installationId),
             });
 
-            history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${repoSlug}/configure`);
+            history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${project.slug}/configure`);
         } catch (error) {
             const message = (error && error?.message) || "Failed to create new project."
             window.alert(message);

@@ -95,9 +95,17 @@ export class ProjectsService {
         if (projects.length > 0) {
             throw new Error("Project for repository already exists.");
         }
+        // If the desired project slug already exists in this team or user account, add a unique suffix to avoid collisions.
+        let uniqueSlug = slug;
+        let uniqueSuffix = 0;
+        const existingProjects = await (!!userId ? this.getUserProjects(userId) : this.getTeamProjects(teamId!));
+        while (existingProjects.some(p => p.slug === uniqueSlug)) {
+            uniqueSuffix++;
+            uniqueSlug = `${slug}-${uniqueSuffix}`;
+        }
         const project = Project.create({
             name,
-            slug,
+            slug: uniqueSlug,
             cloneUrl,
             ...(!!userId ? { userId } : { teamId }),
             appInstallationId
