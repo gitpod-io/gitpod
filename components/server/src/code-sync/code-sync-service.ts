@@ -14,7 +14,6 @@ import { inject, injectable } from 'inversify';
 import { BearerAuth } from '../auth/bearer-authenticator';
 import { isWithFunctionAccessGuard } from '../auth/function-access';
 import { CodeSyncResourceDB, UserStorageResourcesDB, ALL_SERVER_RESOURCES, ServerResource, SyncResource } from '@gitpod/gitpod-db/lib';
-import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
 import { DeleteRequest, DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +21,7 @@ import { accessCodeSyncStorage, UserRateLimiter } from '../auth/rate-limiter';
 import { increaseApiCallUserCounter } from '../prometheus-metrics';
 import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
 import { Config } from '../config';
+import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/sugar';
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defautltRevLimit = 20;
@@ -62,8 +62,8 @@ export class CodeSyncService {
     @inject(BearerAuth)
     private readonly auth: BearerAuth;
 
-    @inject(BlobServiceClient)
-    private readonly blobs: BlobServiceClient;
+    @inject(CachingBlobServiceClientProvider)
+    private readonly blobsProvider: CachingBlobServiceClientProvider;
 
     @inject(CodeSyncResourceDB)
     private readonly db: CodeSyncResourceDB;
@@ -188,7 +188,8 @@ export class CodeSyncService {
                 request.setName(toObjectName(resourceKey, resourceRev));
                 request.setContentType(contentType);
                 try {
-                    const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(this.blobs.downloadUrl.bind(this.blobs))(request);
+                    const blobsClient = this.blobsProvider.getDefault();
+                    const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(blobsClient.downloadUrl.bind(blobsClient))(request);
                     const response = await fetch(urlResponse.getUrl(), {
                         headers: {
                             'content-type': contentType
@@ -235,7 +236,8 @@ export class CodeSyncService {
                 request.setOwnerId(userId);
                 request.setName(toObjectName(resourceKey, rev));
                 request.setContentType(contentType);
-                const urlResponse = await util.promisify<UploadUrlRequest, UploadUrlResponse>(this.blobs.uploadUrl.bind(this.blobs))(request);
+                const blobsClient = this.blobsProvider.getDefault();
+                const urlResponse = await util.promisify<UploadUrlRequest, UploadUrlResponse>(blobsClient.uploadUrl.bind(blobsClient))(request);
                 const url = urlResponse.getUrl();
                 const content = req.body as string;
                 const response = await fetch(url, {
@@ -255,7 +257,9 @@ export class CodeSyncService {
                 const request = new DeleteRequest();
                 request.setOwnerId(userId);
                 request.setExact(oldObject);
-                this.blobs.delete(request, (err: ServiceError | null) => {
+
+                const blobsClient = this.blobsProvider.getDefault();
+                blobsClient.delete(request, (err: ServiceError | null) => {
                     if (err) {
                         if (err.code === status.NOT_FOUND) {
                             // we're good here
@@ -284,7 +288,8 @@ export class CodeSyncService {
                 request.setOwnerId(userId);
                 request.setPrefix(objectPrefix);
                 try {
-                    await util.promisify(this.blobs.delete.bind(this.blobs))(request);
+                    const blobsClient = this.blobsProvider.getDefault();
+                    await util.promisify(blobsClient.delete.bind(blobsClient))(request);
                 } catch (e) {
                     log.error({ userId }, 'code sync: failed to delete', e);
                 }

@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
 import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields } from '@gitpod/gitpod-protocol';
@@ -52,6 +51,7 @@ import { HeadlessLogService } from "./headless-log-service";
 import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
+import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/sugar';
 
 @injectable()
 export class GitpodServerImpl<Client extends GitpodClient, Server extends GitpodServer> implements GitpodServer, Disposable {
@@ -89,7 +89,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
 
-    @inject(BlobServiceClient) protected readonly blobServiceClient: BlobServiceClient;
+    @inject(CachingBlobServiceClientProvider) protected readonly blobServiceClientProvider: CachingBlobServiceClientProvider;
 
     @inject(GitTokenScopeGuesser) protected readonly gitTokenScopeGuesser: GitTokenScopeGuesser;
 
@@ -1682,7 +1682,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         uploadUrlRequest.setOwnerId(user.id);
 
         const uploadUrlPromise = new Promise<UploadUrlResponse>((resolve, reject) => {
-            this.blobServiceClient.uploadUrl(uploadUrlRequest, (err: any, resp: UploadUrlResponse) => {
+            const client = this.blobServiceClientProvider.getDefault();
+            client.uploadUrl(uploadUrlRequest, (err: any, resp: UploadUrlResponse) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -1708,7 +1709,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         downloadUrlRequest.setOwnerId(user.id);
 
         const downloadUrlPromise = new Promise<DownloadUrlResponse>((resolve, reject) => {
-            this.blobServiceClient.downloadUrl(downloadUrlRequest, (err: any, resp: DownloadUrlResponse) => {
+            const client = this.blobServiceClientProvider.getDefault();
+            client.downloadUrl(downloadUrlRequest, (err: any, resp: DownloadUrlResponse) => {
                 if (err) {
                     reject(err);
                 } else {

@@ -20,9 +20,9 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TextDecoder } from "util";
 import { WebsocketTransport } from "../util/grpc-web-ws-transport";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-log_grpc_pb';
 import { ListLogsRequest, ListLogsResponse, LogDownloadURLRequest, LogDownloadURLResponse } from '@gitpod/content-service/lib/headless-log_pb';
 import { HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./headless-log-controller";
+import { CachingHeadlessLogServiceClientProvider } from "@gitpod/content-service/lib/sugar";
 
 @injectable()
 export class HeadlessLogService {
@@ -30,7 +30,7 @@ export class HeadlessLogService {
 
     @inject(WorkspaceDB) protected readonly db: WorkspaceDB;
     @inject(Config) protected readonly config: Config;
-    @inject(HeadlessLogServiceClient) protected readonly headlessLogClient: HeadlessLogServiceClient;
+    @inject(CachingHeadlessLogServiceClientProvider) protected readonly headlessLogClientProvider: CachingHeadlessLogServiceClientProvider;
 
     public async getHeadlessLogURLs(userId: string, wsi: WorkspaceInstance, ownerId: string, maxTimeoutSecs: number = 30): Promise<HeadlessLogUrls | undefined> {
         if (isSupervisorAvailableSoon(wsi)) {
@@ -52,7 +52,8 @@ export class HeadlessLogService {
         req.setWorkspaceId(wsi.workspaceId);
         req.setInstanceId(wsi.id);
         const response = await new Promise<ListLogsResponse>((resolve, reject) => {
-            this.headlessLogClient.listLogs(req, (err: grpc.ServiceError | null, response: ListLogsResponse) => {
+            const client = this.headlessLogClientProvider.getDefault();
+            client.listLogs(req, (err: grpc.ServiceError | null, response: ListLogsResponse) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -140,7 +141,8 @@ export class HeadlessLogService {
                 req.setWorkspaceId(wsi.workspaceId);
                 req.setInstanceId(wsi.id);
                 req.setTaskId(taskId);
-                this.headlessLogClient.logDownloadURL(req, (err: grpc.ServiceError | null, response: LogDownloadURLResponse) => {
+                const client = this.headlessLogClientProvider.getDefault();
+                client.logDownloadURL(req, (err: grpc.ServiceError | null, response: LogDownloadURLResponse) => {
                     if (err) {
                         reject(err);
                     } else {
