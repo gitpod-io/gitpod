@@ -37,10 +37,12 @@ while [ "$i" -le "$DOCS" ]; do
       # i.e. gitpod.io/workspace_0=true
 
       # meta has one pool of nodes.
-      
+
       # TODO: ws-manager's template should denote where to put workspace and image build workspaces
       # test and see where workspaces spin up
    WORKSPACE_COMPONENTS=("image-builder" "image-builder-mk3 blobserve registry-facade" "ws-daemon" "agent-smith")
+
+   # shellcheck disable=SC2076
    if [[ " ${WORKSPACE_COMPONENTS[*]} " =~ " ${NAME} " ]] && { [[ "$KIND" == "Deployment" ]] || [[ "$KIND" == "DaemonSet" ]]; }; then
       LABEL="gitpod.io/workspace_$NODE_POOL_INDEX=true"
       echo "setting $LABEL for $NAME"
