@@ -26,8 +26,8 @@ import { AppInstallationDB } from './app-installation-db';
 import { TheiaPluginDBImpl } from './typeorm/theia-plugin-db-impl';
 import { TheiaPluginDB } from './theia-plugin-db';
 import { TypeORMOneTimeSecretDBImpl } from './typeorm/one-time-secret-db-impl';
-import { PendingGithubEventDB } from './pending-github-event-db';
-import { TypeORMPendingGithubEventDBImpl } from './typeorm/pending-github-event-db-impl';
+import { PendingGithubEventDB, TransactionalPendingGithubEventDBFactory } from './pending-github-event-db';
+import { TransactionalPendingGithubEventDBImpl, TypeORMPendingGithubEventDBImpl } from './typeorm/pending-github-event-db-impl';
 import { GitpodTableDescriptionProvider, TableDescriptionProvider } from './tables';
 import { PeriodicDbDeleter } from './periodic-deleter';
 import { TermsAcceptanceDB } from './terms-acceptance-db';
@@ -39,7 +39,7 @@ import { AuthCodeRepositoryDB } from './typeorm/auth-code-repository-db';
 import { AuthProviderEntryDB } from './auth-provider-entry-db';
 import { AuthProviderEntryDBImpl } from './typeorm/auth-provider-entry-db-impl';
 import { TeamSubscriptionDB } from './team-subscription-db';
-import { AccountingDB } from './accounting-db';
+import { AccountingDB, TransactionalAccountingDBFactory } from './accounting-db';
 import { EmailDomainFilterDB } from './email-domain-filter-db';
 import { EduEmailDomainDB } from './edu-email-domain-db';
 import { EMailDB } from './email-db';
@@ -49,11 +49,12 @@ import { TypeORMEMailDBImpl } from './typeorm/email-db-impl';
 import { EduEmailDomainDBImpl } from './typeorm/edu-email-domain-db-impl';
 import { EmailDomainFilterDBImpl } from './typeorm/email-domain-filter-db-impl';
 import { TeamSubscriptionDBImpl } from './typeorm/team-subscription-db-impl';
-import { TypeORMAccountingDBImpl } from './typeorm/accounting-db-impl';
+import { TransactionalAccountingDBImpl, TypeORMAccountingDBImpl } from './typeorm/accounting-db-impl';
 import { TeamDB } from './team-db';
 import { TeamDBImpl } from './typeorm/team-db-impl';
 import { ProjectDB } from './project-db';
 import { ProjectDBImpl } from './typeorm/project-db-impl';
+import { EntityManager } from 'typeorm';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -93,6 +94,11 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
 
     bind(TypeORMPendingGithubEventDBImpl).toSelf().inSingletonScope();
     bind(PendingGithubEventDB).toService(TypeORMPendingGithubEventDBImpl);
+    bind(TransactionalPendingGithubEventDBFactory).toFactory(ctx => {
+        return (manager: EntityManager) => {
+            return new TransactionalPendingGithubEventDBImpl(manager);
+        }
+    });
 
     encryptionModule(bind, unbind, isBound, rebind);
     bind(KeyProviderConfig).toDynamicValue(ctx => {
@@ -119,6 +125,11 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
 
     // com concerns
     bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();
+    bind(TransactionalAccountingDBFactory).toFactory(ctx => {
+        return (manager: EntityManager) => {
+            return new TransactionalAccountingDBImpl(manager);
+        }
+    });
     bind(TeamSubscriptionDB).to(TeamSubscriptionDBImpl).inSingletonScope();
     bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
     bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
