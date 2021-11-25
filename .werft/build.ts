@@ -468,8 +468,8 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     }
 
     // TODO: uncomment me when ready to test the install
-    // werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing Gitpod.");
-    // exec(`kubectl apply -f k8s.yaml -n ${namespace}`,{slice: installerSlices.INSTALL_GITPOD});
+    werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
+    exec(`kubectl apply -f k8s.yaml -n ${namespace}`,{slice: installerSlices.INSTALL_GITPOD});
 
     // TODO: the pods in my namespace have been alive for 27h...do we need to install and configure sweeper?
 
@@ -485,8 +485,12 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     async function cleanStateEnv(shellOpts: ExecOptions) {
         // uninstall Gitpod given the installation's configmap
-        exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"} | kubectl delete -f -`, {slice: installerSlices.CLEAN_ENV_STATE });
-        exec(`kubectl -n ${namespace} delete pvc data-mysql-0 minio || true`, {slice: installerSlices.CLEAN_ENV_STATE });
+        const hasGitpodConfigmap = exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"}`, {slice: installerSlices.CLEAN_ENV_STATE }).code === 0;
+        if (hasGitpodConfigmap) {
+            exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"} | kubectl delete -f -`, {slice: installerSlices.CLEAN_ENV_STATE });
+            exec(`kubectl -n ${namespace} delete pvc data-mysql-0 minio || true`, {slice: installerSlices.CLEAN_ENV_STATE });
+        }
+
         // TODO: check to see if anything lingers after this point ... mysql, minio, jaeger, etc.
 
         await wipeAndRecreateNamespaceNoHelm(namespace, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE })
