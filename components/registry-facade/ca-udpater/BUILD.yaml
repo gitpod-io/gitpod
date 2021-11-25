@@ -10,4 +10,5 @@ packages:
       metadata:
         helm-component: caUpdater
       image:
+        - ${imageRepoBase}/ca-updater:${version}
         - ${imageRepoBase}/ca-updater:commit-${__git_commit}
