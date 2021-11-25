@@ -39,6 +39,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: v1.CertificateSpec{
 				IsCA:       true,
+				Duration:   common.InternalCertDuration,
 				CommonName: caName,
 				SecretName: caName,
 				PrivateKey: &v1.CertificatePrivateKey{

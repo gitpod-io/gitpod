@@ -6,8 +6,6 @@ package registryfacade
 
 import (
 	"fmt"
-	"time"
-
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 
@@ -17,8 +15,6 @@ import (
 )
 
 func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
-	oneYear := &metav1.Duration{Duration: time.Hour * 24 * 365}
-
 	return []runtime.Object{&certmanagerv1.Certificate{
 		TypeMeta: common.TypeMetaCertificate,
 		ObjectMeta: metav1.ObjectMeta{
@@ -27,7 +23,7 @@ func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels:    common.DefaultLabels(Component),
 		},
 		Spec: certmanagerv1.CertificateSpec{
-			Duration:   oneYear,
+			Duration:   common.InternalCertDuration,
 			SecretName: common.RegistryFacadeTLSCertSecret,
 			IssuerRef: cmmeta.ObjectReference{
 				Name:  common.CertManagerCAIssuer,

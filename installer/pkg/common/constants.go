@@ -4,6 +4,11 @@
 
 package common
 
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
+)
+
 // This file exists to break cyclic-dependency errors
 
 const (
@@ -34,4 +39,8 @@ const (
 	WSSchedulerComponent        = "ws-scheduler"
 
 	AnnotationConfigChecksum = "gitpod.io/checksum_config"
+)
+
+var (
+	InternalCertDuration = &metav1.Duration{Duration: time.Hour * 24 * 90}
 )
