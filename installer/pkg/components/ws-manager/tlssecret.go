@@ -6,8 +6,6 @@ package wsmanager
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
@@ -32,7 +30,6 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Component,
 	}
 
-	sixMonths := &metav1.Duration{Duration: time.Hour * 4380}
 	issuer := common.CertManagerCAIssuer
 
 	return []runtime.Object{
@@ -44,7 +41,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: certmanagerv1.CertificateSpec{
-				Duration:   sixMonths,
+				Duration:   common.InternalCertDuration,
 				SecretName: TLSSecretNameSecret,
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
@@ -62,7 +59,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: certmanagerv1.CertificateSpec{
-				Duration:   sixMonths,
+				Duration:   common.InternalCertDuration,
 				SecretName: TLSSecretNameClient,
 				DNSNames:   clientAltNames,
 				IssuerRef: cmmeta.ObjectReference{
