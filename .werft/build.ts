@@ -374,13 +374,15 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
     }
 
-    // copy the image pull secret
-    try {
-        werft.log(installerSlices.IMAGE_PULL_SECRET, "Adding the image pull secret to the namespace");
-        const auth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
-            | yq r - data['.dockerconfigjson'] \
-            | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
-        fs.writeFileSync(`./${IMAGE_PULL_SECRET_NAME}`,
+    const hasPullSecret = exec(`PULL_SECRET_EXISTS="$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --ignore-not-found | wc -l)";echo -n $(($PULL_SECRET_EXISTS))`, {slice: installerSlices.IMAGE_PULL_SECRET }).stdout.trim();
+    if (parseInt(hasPullSecret) === 0) {
+        // copy the image pull secret
+        try {
+            werft.log(installerSlices.IMAGE_PULL_SECRET, "Adding the image pull secret to the namespace");
+            const auth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
+                | yq r - data['.dockerconfigjson'] \
+                | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
+            fs.writeFileSync(`./${IMAGE_PULL_SECRET_NAME}`,
             `{
     "auths": {
         "eu.gcr.io": {
@@ -388,10 +390,11 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         }
     }
 }`);
-        exec(`kubectl delete secret ${IMAGE_PULL_SECRET_NAME} -n ${namespace}`);
-        exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`);
-    } catch (err) {
-        werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
+            exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`);
+        }
+        catch (err) {
+            werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
+        }
     }
 
     // download and init with the installer
@@ -485,8 +488,8 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     async function cleanStateEnv(shellOpts: ExecOptions) {
         // uninstall Gitpod given the installation's configmap
-        const hasGitpodConfigmap = exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"}`, {slice: installerSlices.CLEAN_ENV_STATE }).code === 0;
-        if (hasGitpodConfigmap) {
+        const hasGitpodConfigmap = exec(`GITPOD_CONFIG_EXISTS="$(kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"} --ignore-not-found | wc -l)";echo -n $(($GITPOD_CONFIG_EXISTS))`, {slice: installerSlices.CLEAN_ENV_STATE }).stdout.trim();
+        if (parseInt(hasGitpodConfigmap) > 0) {
             exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"} | kubectl delete -f -`, {slice: installerSlices.CLEAN_ENV_STATE });
             exec(`kubectl -n ${namespace} delete pvc data-mysql-0 minio || true`, {slice: installerSlices.CLEAN_ENV_STATE });
         }
