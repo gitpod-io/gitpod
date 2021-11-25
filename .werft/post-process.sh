@@ -44,7 +44,7 @@ while [ "$i" -le "$DOCS" ]; do
 
    # shellcheck disable=SC2076
    if [[ " ${WORKSPACE_COMPONENTS[*]} " =~ " ${NAME} " ]] && { [[ "$KIND" == "Deployment" ]] || [[ "$KIND" == "DaemonSet" ]]; }; then
-      LABEL="gitpod.io/workspace_$NODE_POOL_INDEX=true"
+      LABEL="gitpod.io/workspace_$NODE_POOL_INDEX"
       echo "setting $LABEL for $NAME"
       touch "$NAME"pool.yaml
       # create a matching expression
@@ -53,7 +53,7 @@ while [ "$i" -le "$DOCS" ]; do
       # append it
       yq m --arrays=overwrite -i k8s.yaml -d "$i" "$NAME"pool.yaml
    elif [[ "$KIND" == "DaemonSet" ]] || [[ "$KIND" == "Deployment" ]] || [[ "$KIND" == "StatefulSet" ]] || [[ "$KIND" == "Job" ]]; then
-      LABEL="gitpod.io/workload_meta=true"
+      LABEL="gitpod.io/workload_meta"
       echo "setting $LABEL for $NAME"
       touch "$NAME"pool.yaml
       # create a matching expression
