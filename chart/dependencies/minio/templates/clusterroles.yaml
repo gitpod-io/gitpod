@@ -1,0 +1,20 @@
+{{- if and .Values.securityContext.enabled .Values.persistence.enabled (.Capabilities.APIVersions.Has "security.openshift.io/v1") }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "minio.serviceAccountName" . }}
+  labels:
+    app: {{ template "minio.name" . }}
+    chart: {{ template "minio.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  resourceNames:
+  - {{ template "minio.fullname" . }}
+  verbs:
+  - use
+{{- end }}

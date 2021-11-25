@@ -1,0 +1,16 @@
+apiVersion: v1
+appVersion: master
+description: High Performance, Kubernetes Native Object Storage
+home: https://min.io
+icon: https://min.io/resources/img/logo/MINIO_wordmark.png
+keywords:
+- storage
+- object-storage
+- S3
+maintainers:
+- email: dev@minio.io
+  name: MinIO, Inc
+name: minio
+sources:
+- https://github.com/minio/minio
+version: 8.0.10

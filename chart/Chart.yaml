@@ -15,7 +15,7 @@ dependencies:
   condition: docker-registry.enabled
 - name: minio
   version: 8.0.10
-  repository: https://helm.min.io/
+  repository: "file://dependencies/minio"
   condition: minio.enabled
 - name: mysql
   version: 8.6.2
