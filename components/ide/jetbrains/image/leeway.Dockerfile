@@ -7,7 +7,7 @@ WORKDIR /app
 COPY status/* /app/
 RUN go build -o status
 
-FROM alpine:3.14 as download
+FROM alpine:3.15 as download
 ARG JETBRAINS_BACKEND_URL
 WORKDIR /workdir
 RUN apk add --no-cache --upgrade curl gzip tar unzip

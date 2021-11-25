@@ -226,7 +226,7 @@ components:
       requests:
         cpu: 100m
         memory: 128Mi
-    alpineImage: alpine:3.14
+    alpineImage: alpine:3.15
     selfBuildBaseImage: ""
     ports:
       rpc:
@@ -237,7 +237,7 @@ components:
     name: "image-builder-mk3"
     dependsOn:
     - "image-builder-mk3-configmap.yaml"
-    alpineImage: alpine:3.14
+    alpineImage: alpine:3.15
     builderImage:
       imageName: "image-builder-mk3/bob"
     ports:
