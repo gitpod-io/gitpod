@@ -72,6 +72,7 @@ function isWebsiteSlug(pathName: string) {
         'gitpod-vs-github-codespaces',
         'imprint',
         'media-kit',
+        'memes',
         'pricing',
         'privacy',
         'security',
