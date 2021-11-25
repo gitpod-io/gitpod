@@ -4,6 +4,7 @@
 - Apply node affinities to components ([#6862](https://github.com/gitpod-io/gitpod/pull/6862)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Apply node affinities to components ([#6862](https://github.com/gitpod-io/gitpod/pull/6862)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Apply node affinities to components ([#6862](https://github.com/gitpod-io/gitpod/pull/6862)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Apply node affinities to components ([#6862](https://github.com/gitpod-io/gitpod/pull/6862)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - add `GIT_AUTHOR_EMAIL` to the environment variables mentioned in account settings ([#6031](https://github.com/gitpod-io/gitpod/pull/6031)) - [@DetachHead](https://github.com/DetachHead)
 - The “Your Workspace is Ready” page for desktop IDEs now has “Stop Workspace” and “Go to Dashboard” actions. ([#6847](https://github.com/gitpod-io/gitpod/pull/6847)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - make DB layer more robust against odd DB values ([#6775](https://github.com/gitpod-io/gitpod/pull/6775)) - [@geropl](https://github.com/geropl)
