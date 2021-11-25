@@ -22,7 +22,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.intellij
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/ideaIU-213.5744.18.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/ideaIU-213.5744.125.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
       image:
         - ${imageRepoBase}/ide/intellij:${version}
