@@ -17,6 +17,13 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const (
+	// Allow pre-release range as GCP (and potentially others) use the patch for
+	// additional information, which get interpreted as pre-release (eg, 1.2.3-rc4)
+	kernelVersionConstraint     = ">= 5.4.0-0"
+	kubernetesVersionConstraint = ">= 1.21.0-0"
+)
+
 // checkAffinityLabels validates that the nodes have all the required affinity labels applied
 // It assumes all the values are `true`
 func checkAffinityLabels(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
@@ -99,6 +106,65 @@ func checkContainerDRuntime(ctx context.Context, config *rest.Config, namespace 
 	return res, nil
 }
 
+func checkKubernetesVersion(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
+	// Allow pre-releases in case provider appends anything to the version
+	constraint, err := semver.NewConstraint(kubernetesVersionConstraint)
+	if err != nil {
+		return nil, err
+	}
+
+	server, err := serverVersion(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []ValidationError
+
+	serverVersion, err := semver.NewVersion(server.GitVersion)
+	if err != nil {
+		res = append(res, ValidationError{
+			Message: err.Error() + " Kubernetes version: " + server.GitVersion,
+			Type:    ValidationStatusWarning,
+		})
+	}
+	valid := constraint.Check(serverVersion)
+	if !valid {
+		res = append(res, ValidationError{
+			Message: "Kubernetes version " + server.GitVersion + " does not satisfy " + kubernetesVersionConstraint,
+			Type:    ValidationStatusError,
+		})
+	}
+
+	nodes, err := listNodesFromContext(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range nodes {
+		kubeletVersion := node.Status.NodeInfo.KubeletVersion
+
+		version, err := semver.NewVersion(kubeletVersion)
+		if err != nil {
+			// This means that the given version doesn't conform to semver format - user must decide
+			res = append(res, ValidationError{
+				Message: err.Error() + " Kubernetes version: " + kubeletVersion,
+				Type:    ValidationStatusWarning,
+			})
+			break
+		}
+
+		valid := constraint.Check(version)
+
+		if !valid {
+			res = append(res, ValidationError{
+				Message: "Kubelet version " + kubeletVersion + " does not satisfy " + kubernetesVersionConstraint + " on node: " + node.Name,
+				Type:    ValidationStatusError,
+			})
+		}
+	}
+
+	return res, nil
+}
+
 type checkSecretOpts struct {
 	RequiredFields []string
 	Validator      func(*corev1.Secret) ([]ValidationError, error)
@@ -169,12 +235,6 @@ func CheckSecret(name string, opts ...CheckSecretOpt) ValidationCheck {
 		},
 	}
 }
-
-const (
-	// Allow pre-release range as GCP (and potentially others) use the patch for
-	// additional information, which get interpreted as pre-release (eg, 1.2.3-rc4)
-	kernelVersionConstraint = ">= 5.4.0-0"
-)
 
 // checkKernelVersion checks the nodes are using the correct linux Kernel version
 func checkKernelVersion(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {

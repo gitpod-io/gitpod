@@ -6,10 +6,11 @@ package cluster
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // https://github.com/kubernetes/client-go/issues/242
 	"k8s.io/client-go/rest"
@@ -58,6 +59,11 @@ var ClusterChecks = ValidationChecks{
 		Name:        "containerd enabled",
 		Check:       checkContainerDRuntime,
 		Description: "all cluster nodes run containerd",
+	},
+	{
+		Name:        "Kubernetes version",
+		Description: "all cluster nodes run kubernetes version " + kubernetesVersionConstraint,
+		Check:       checkKubernetesVersion,
 	},
 	{
 		Name:        "affinity labels",
@@ -160,4 +166,21 @@ func clientsetFromContext(ctx context.Context, config *rest.Config) (kubernetes.
 		return res, nil
 	}
 	return kubernetes.NewForConfig(config)
+}
+
+func serverVersion(ctx context.Context, config *rest.Config) (*version.Info, error) {
+	client, err := clientsetFromContext(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+	body, err := client.CoreV1().RESTClient().Get().AbsPath("/version").Do(ctx).Raw()
+	if err != nil {
+		return nil, err
+	}
+	var info version.Info
+	err = json.Unmarshal(body, &info)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse the server version: %v", err)
+	}
+	return &info, nil
 }
