@@ -162,6 +162,7 @@ const (
 type ContainerRegistry struct {
 	InCluster *bool                      `json:"inCluster,omitempty" validate:"required"`
 	External  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
+	S3Storage *S3Storage                 `json:"s3storage"`
 }
 
 type ContainerRegistryExternal struct {
@@ -169,6 +170,10 @@ type ContainerRegistryExternal struct {
 	Certificate ObjectRef `json:"certificate" validate:"required"`
 }
 
+type S3Storage struct {
+	Bucket      string    `json:"bucket" validate:"required"`
+	Certificate ObjectRef `json:"certificate" validate:"required"`
+}
 type Jaeger struct {
 	InCluster *bool                   `json:"inCluster,omitempty" validate:"required"`
 	External  *JaegerOperatorExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
