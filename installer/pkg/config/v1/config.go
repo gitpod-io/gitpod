@@ -53,7 +53,7 @@ func (v version) Defaults(in interface{}) error {
 	}
 	cfg.Workspace.Runtime.FSShiftMethod = FSShiftFuseFS
 	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
-	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/run/containerd/io.containerd.runtime.v2.task/k8s.io"
+	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 
 	return nil
 }
