@@ -37,7 +37,7 @@ A config file is required which can be generated with the init command.`,
   # Install Gitpod into a non-default namespace.
   gitpod-installer render --config config.yaml --namespace gitpod | kubectl apply -f -`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, cfgVersion, cfg, err := loadConfig(renderOpts.ConfigFN)
+		_, cfgVersion, cfg, err := loadConfig(migrateOpts.ConfigFN)
 		if err != nil {
 			return err
 		}

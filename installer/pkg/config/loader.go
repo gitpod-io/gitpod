@@ -17,6 +17,15 @@ import (
 // CurrentVersion points to the latest config version
 const CurrentVersion = "v1"
 
+type migrationReg struct {
+	From, To string
+}
+
+var (
+	versions   map[string]ConfigVersion
+	migrations map[migrationReg]Migration
+)
+
 // NewDefaultConfig returns a new instance of the current config struct,
 // with all defaults filled in.
 func NewDefaultConfig() (interface{}, error) {
@@ -50,7 +59,7 @@ type ConfigVersion interface {
 }
 
 // AddVersion adds a new version.
-// Expected to be called from the init package of a config package.
+// Expected to be called from the init function of a config package.
 func AddVersion(version string, v ConfigVersion) {
 	if versions == nil {
 		versions = make(map[string]ConfigVersion)
@@ -58,11 +67,19 @@ func AddVersion(version string, v ConfigVersion) {
 	versions[version] = v
 }
 
-var (
-	ErrInvalidType = fmt.Errorf("invalid type")
-)
+// AddMigration adds a migration between two versions.
+// Expected to be called from the init function of a config package.
+func AddMigration(fromVersion, toVersion string, mig Migration) {
+	if migrations == nil {
+		migrations = make(map[migrationReg]Migration)
+	}
+	migrations[migrationReg{fromVersion, toVersion}] = mig
+}
 
-var versions map[string]ConfigVersion
+var (
+	ErrInvalidType              = fmt.Errorf("invalid type")
+	ErrNoMigrationPathAvailable = fmt.Errorf("no migration path available")
+)
 
 func LoadConfigVersion(version string) (ConfigVersion, error) {
 	v, ok := versions[version]
@@ -112,4 +129,33 @@ func Marshal(version string, cfg interface{}) ([]byte, error) {
 	}
 
 	return []byte(fmt.Sprintf("apiVersion: %s\n%s", version, string(b))), nil
+}
+
+// Migrate migrates a configuration from one version to another.
+func Migrate(fromVersion, toVersion string, old, new interface{}) error {
+	if migrations == nil {
+		return ErrNoMigrationPathAvailable
+	}
+
+	migration, ok := migrations[migrationReg{fromVersion, toVersion}]
+	if !ok {
+		return ErrNoMigrationPathAvailable
+	}
+
+	return migration(old, new)
+}
+
+// Migrate translates the from config to the new version.
+// From is expected to be a pointer to the old config version.
+// To is expected to be a pointer to the new config version.
+//
+// If the migration cannot happen automatically, return an NoAutomaticValidationError
+type Migration func(from, to interface{}) error
+
+type NoAutomaticValidationError struct {
+	Message string `json:"message"`
+}
+
+func (e NoAutomaticValidationError) Error() string {
+	return e.Message
 }
