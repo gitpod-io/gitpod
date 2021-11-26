@@ -1,6 +1,9 @@
 # Change Log
 
 ## November 2021
+- [ws-proxy] Improve TLS default configuration ([#6870](https://github.com/gitpod-io/gitpod/pull/6870)) - [@aledbf](https://github.com/aledbf)
+- Change Minio to forked version ([#6892](https://github.com/gitpod-io/gitpod/pull/6892)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Apply node affinities to components ([#6862](https://github.com/gitpod-io/gitpod/pull/6862)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Apply node affinities to components ([#6862](https://github.com/gitpod-io/gitpod/pull/6862)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Apply node affinities to components ([#6862](https://github.com/gitpod-io/gitpod/pull/6862)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Apply node affinities to components ([#6862](https://github.com/gitpod-io/gitpod/pull/6862)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
