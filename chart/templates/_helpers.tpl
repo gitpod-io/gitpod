@@ -259,9 +259,9 @@ env:
 {{- $comp := .comp -}}
 {{- $tracing := $comp.tracing | default $gp.tracing -}}
 {{- if $tracing }}
-{{- if $tracing.endoint }}
+{{- if $tracing.endpoint }}
 - name: JAEGER_ENDPOINT
-  value: {{ $tracing.endoint }}
+  value: {{ $tracing.endpoint }}
 {{- else }}
 - name: JAEGER_AGENT_HOST
   valueFrom:
