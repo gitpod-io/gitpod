@@ -218,7 +218,7 @@ func (rc *ReconnectingWebsocket) connect(ctx context.Context) *WebsocketConnecti
 		if resp != nil {
 			statusCode = resp.StatusCode
 		}
-		rc.log.WithField("url", rc.url).WithField("headers", rc.reqHeader).Info("websocket handshake")
+		rc.log.WithField("url", rc.url).Info("websocket handshake")
 
 		rc.log.WithError(err).
 			WithField("url", rc.url).
