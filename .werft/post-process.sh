@@ -1,18 +1,23 @@
 #!/bin/bash
 
 # to test, follow these steps
-# 1. render k8s manifests from an installer config
-# 2. get the result this echos, MATCHES="$(cat k8s.yaml | grep -- '---' | wc -l)";echo -n $((($MATCHES - 1) / 2))
-# 3. pass in the echoed result (not $MATCHES) from #2 as the value for DOCS, pass in fake values for the PORTS and index
-# 4. call this script
+# 1. generate a config ./installer init > config.yaml
+# 2. generate a k8s manifest from the config ./installer render -n foo -c config.yaml > k8s.yaml
+# 2. call this script like so ./.werft/post-process.sh 1234 5678 2
 
 set -e
 
-DOCS=$1
-REG_DAEMON_PORT=$2
-WS_DAEMON_PORT=$3
-NODE_POOL_INDEX=$4
+REG_DAEMON_PORT=$1
+WS_DAEMON_PORT=$2
+NODE_POOL_INDEX=$3
 i=0
+
+# count YAML like lines in the k8s manifest file
+# all K8s objects are duplicated in a config map, as a giant string
+# exclude the objects in the config map so we can determine how many YAML docs to loop through
+MATCHES="$(grep -c -- --- k8s.yaml)"
+# get the read number of K8s manifest docs
+DOCS="$(((MATCHES - 1) / 2))"
 
 echo "Use node pool index $NODE_POOL_INDEX"
 
@@ -63,11 +68,11 @@ while [ "$i" -le "$DOCS" ]; do
       yq m --arrays=overwrite -i k8s.yaml -d "$i" "$NAME"pool.yaml
    fi
 
-   # TODO: Set config for Server
-   #           theiaPluginsBucketNameOverride: gitpod-core-dev-plugins
-   #           enableLocalApp = true
-
    i=$((i + 1))
 done
+
+THEIA_BUCKET_NAME=$(yq r ./.werft/values.dev.yaml components.server.theiaPluginsBucketNameOverride)
+EXPRESSION="s/\"theiaPluginsBucketNameOverride\": \"\"/\"theiaPluginsBucketNameOverride\": \"$THEIA_BUCKET_NAME\"/"
+sed -i "$EXPRESSION" k8s.yaml
 
 exit

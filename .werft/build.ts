@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec, ExecOptions } from './util/shell';
 import { Werft } from './util/werft';
-import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, wipeAndRecreateNamespaceNoHelm } from './util/kubectl';
+import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName } from './util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
@@ -60,7 +60,7 @@ const phases = {
     REGISTER_K3S_WS_CLUSTER: "register k3s ws cluster"
 }
 
-// Werft slices for deploy phase
+// Werft slices for deploy phase via installer
 const installerSlices = {
     FIND_FREE_HOST_PORTS: "find free ports",
     IMAGE_PULL_SECRET: "image pull secret",
@@ -321,8 +321,8 @@ interface DeploymentConfig {
 * TODO: removed k3sWsCluster, if needed, use with-helm for now
 */
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
-    // to test changes locally, sideload the files you haven't pushed like so
-    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/post-process.sh
+    // to test this function, change files in your workspace, and sideload (-s) changed files into werft like so
+    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/post-process.sh -a with-clean-slate-deployment=true
 
     werft.phase(phases.DEPLOY, "deploying to dev")
 
@@ -337,17 +337,20 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
     werft.log(installerSlices.FIND_FREE_HOST_PORTS,
         `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}, and nodeExporterPort ${nodeExporterPort}.`);
+    werft.done(installerSlices.FIND_FREE_HOST_PORTS);
 
     // clean environment state
     try {
         if (deploymentConfig.cleanSlateDeployment) {
+            werft.log(installerSlices.CLEAN_ENV_STATE, "Clean the preview environment slate...");
             // re-create namespace
-            //  TODO: test me
             await cleanStateEnv(metaEnv());
 
         } else {
+            werft.log(installerSlices.CLEAN_ENV_STATE, "Clean the preview environment slate...");
             createNamespace(namespace, metaEnv({ slice: installerSlices.CLEAN_ENV_STATE }));
         }
+        werft.done(installerSlices.CLEAN_ENV_STATE);
     } catch (err) {
         werft.fail(installerSlices.CLEAN_ENV_STATE, err);
     }
@@ -374,9 +377,9 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
     }
 
-    const hasPullSecret = exec(`PULL_SECRET_EXISTS="$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --ignore-not-found | wc -l)";echo -n $(($PULL_SECRET_EXISTS))`, {slice: installerSlices.IMAGE_PULL_SECRET }).stdout.trim();
-    if (parseInt(hasPullSecret) === 0) {
-        // copy the image pull secret
+    // add the image pull secret to the namespcae if it doesn't exist
+    const hasPullSecret = (exec(`kubectl get secret ${IMAGE_PULL_SECRET_NAME} -n ${namespace}`, {slice: installerSlices.IMAGE_PULL_SECRET, dontCheckRc: true, silent: true })).code === 0;
+    if (!hasPullSecret) {
         try {
             werft.log(installerSlices.IMAGE_PULL_SECRET, "Adding the image pull secret to the namespace");
             const auth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
@@ -391,6 +394,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     }
 }`);
             exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`);
+            werft.done(installerSlices.IMAGE_PULL_SECRET);
         }
         catch (err) {
             werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
@@ -403,6 +407,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${version} -c "cat /app/installer" > /tmp/installer`, {slice: installerSlices.INSTALLER_INIT});
         exec(`chmod +x /tmp/installer`, {slice: installerSlices.INSTALLER_INIT});
         exec(`/tmp/installer init > config.yaml`, {slice: installerSlices.INSTALLER_INIT});
+        werft.done(installerSlices.INSTALLER_INIT);
     } catch (err) {
         werft.fail(installerSlices.INSTALLER_INIT, err)
     }
@@ -414,27 +419,26 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         const CONTAINER_REGISTRY_URL=`eu.gcr.io/${PROJECT_NAME}/build/`;
         const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
 
-        // add block users from values.dev.yaml
+        // get some values we need to customize the config and write them to file
         exec(`yq r ./.werft/values.dev.yaml components.server.blockNewUsers \
         | yq prefix - 'blockNewUsers' > ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
+        exec(`yq r ./.werft/values.variant.cpuLimits.yaml workspaceSizing | yq prefix - 'workspace' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
+
+        // merge values from files
         exec(`yq m -i --overwrite config.yaml ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
+        exec(`yq m -i config.yaml ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
 
+        // write some values inline
         exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
-
         exec(`yq w -i config.yaml containerRegistry.inCluster ${false}`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml containerRegistry.external.certificate.kind ${"secret"}`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
-
-        // TODO: tracing is ignored for now
-        // exec(`yq w -i config.yaml jaegerOperator.inCluster ${false}`, {slice: installerSlices.INSTALLER_RENDER});
-
-        exec(`yq r ./.werft/values.variant.cpuLimits.yaml workspaceSizing | yq prefix - 'workspace' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq m -i config.yaml ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
-
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: installerSlices.INSTALLER_RENDER});
-
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: installerSlices.INSTALLER_RENDER});
+
+        // TODO: need to circle back to tracing
+        // exec(`yq w -i config.yaml jaegerOperator.inCluster ${false}`, {slice: installerSlices.INSTALLER_RENDER});
 
         // TODO: Remove this after #6867 is done
         werft.log("authProviders", "copy authProviders")
@@ -443,38 +447,46 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
                     | yq r - data.authProviders \
                     | base64 -d -w 0 \
                     > ./authProviders`, { silent: true });
-            exec(`yq merge --inplace config.yaml ./authProviders`, { slice: "authProviders" })
+            exec(`yq merge --inplace config.yaml ./authProviders`, { silent: true })
             werft.done('authProviders');
         } catch (err) {
             werft.fail('authProviders', err);
         }
 
-        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, {slice: installerSlices.INSTALLER_RENDER});
+        // validate the config and cluster
+        exec(`/tmp/installer validate config -c config.yaml`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`/tmp/installer validate cluster -c config.yaml`, {slice: installerSlices.INSTALLER_RENDER});
 
+        // render the k8s manifest
+        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, { silent: true });
+        werft.done(installerSlices.INSTALLER_RENDER);
     } catch (err) {
         werft.fail(installerSlices.INSTALLER_RENDER, err)
-        throw err;
     }
 
     try {
         werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Let's post process some k8s manifests...");
-        // counts the # of lines containing ---, not necessarily a true count for YAML docs
-        // The YAML includes duplication, a configmap has copies of all YAML
-        // This gets the "real" # of docs by subtracting 1 (the config map) and then dividing by two
-        const K8S_DOCS = exec(`MATCHES="$(cat k8s.yaml | grep -- '---' | wc -l)";echo -n $((($MATCHES - 1) / 2))`).stdout.trim()
         const nodepoolIndex = getNodePoolIndex(namespace);
         exec(`chmod +x ./.werft/post-process.sh`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
-        exec(`./.werft/post-process.sh ${K8S_DOCS} ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex}`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
+        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex}`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
+        werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
         werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
-        throw err;
     }
 
-    // TODO: uncomment me when ready to test the install
     werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
-    exec(`kubectl apply -f k8s.yaml -n ${namespace}`,{slice: installerSlices.INSTALL_GITPOD});
+    try {
+        // TODO: Consider setting dontCheckRc to true, to avoid the warnings through by kubectl apply, if we cannot fix another way
+        exec(`kubectl apply -f k8s.yaml`,{ silent: true });
+        werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
+    } catch (err) {
+        werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
+    } finally {
+        // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
+        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
+    }
 
-    // TODO: the pods in my namespace have been alive for 27h...do we need to install and configure sweeper?
+    // TODO: the pods in my namespace have been alive for 27h...each deployment needs a sweeper installation, this is done now via helm.
 
     // TODO: There is a method used by the current deploy, addDeploymentFlags, which uses helm flags to set many things for the install.
     // We're not honoring them now, such as:
@@ -487,16 +499,8 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     werft.done(phases.DEPLOY);
 
     async function cleanStateEnv(shellOpts: ExecOptions) {
-        // uninstall Gitpod given the installation's configmap
-        const hasGitpodConfigmap = exec(`GITPOD_CONFIG_EXISTS="$(kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"} --ignore-not-found | wc -l)";echo -n $(($GITPOD_CONFIG_EXISTS))`, {slice: installerSlices.CLEAN_ENV_STATE }).stdout.trim();
-        if (parseInt(hasGitpodConfigmap) > 0) {
-            exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"} | kubectl delete -f -`, {slice: installerSlices.CLEAN_ENV_STATE });
-            exec(`kubectl -n ${namespace} delete pvc data-mysql-0 minio || true`, {slice: installerSlices.CLEAN_ENV_STATE });
-        }
-
         // TODO: check to see if anything lingers after this point ... mysql, minio, jaeger, etc.
-
-        await wipeAndRecreateNamespaceNoHelm(namespace, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE })
+        await wipeAndRecreateNamespace(helmInstallName, namespace, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
         // cleanup non-namespace objects
         werft.log(installerSlices.CLEAN_ENV_STATE, "removing old unnamespaced objects - this might take a while");
         try {
@@ -523,7 +527,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
     ], k3sEnv({ slice: 'hostports' }));
-    const helmInstallName = "gitpod";
 
     // trigger certificate issuing
     werft.log('certificate', "organizing a certificate for the preview environment...");
