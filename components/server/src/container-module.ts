@@ -67,6 +67,7 @@ import { newAnalyticsWriterFromEnv } from '@gitpod/gitpod-protocol/lib/util/anal
 import { OAuthController } from './oauth-server/oauth-controller';
 import { ImageBuildPrefixContextParser } from './workspace/imagebuild-prefix-context-parser';
 import { AdditionalContentPrefixContextParser } from './workspace/additional-content-prefix-context-parser';
+import { ArchiveContextParser } from './workspace/archive-context-parser';
 import { HeadlessLogService } from './workspace/headless-log-service';
 import { HeadlessLogController } from './workspace/headless-log-controller';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
@@ -151,6 +152,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(IPrefixContextParser).to(EnvvarPrefixParser).inSingletonScope();
     bind(IPrefixContextParser).to(ImageBuildPrefixContextParser).inSingletonScope();
     bind(IPrefixContextParser).to(AdditionalContentPrefixContextParser).inSingletonScope();
+    bind(ArchiveContextParser).toSelf().inSingletonScope();
+    bind(IContextParser).to(ArchiveContextParser).inSingletonScope();
 
     bind(GitTokenScopeGuesser).toSelf().inSingletonScope();
     bind(GitTokenValidator).toSelf().inSingletonScope();

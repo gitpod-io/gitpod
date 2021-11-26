@@ -32,7 +32,8 @@ export abstract class AbstractContextParser implements IContextParser {
         if (url.startsWith(`${this.host}/`)) {
             url = `https://${url}`;
         }
-        if (url.startsWith(`https://${this.host}/`)) {
+        // FIXME(janx): Here, GitHubContextParser "steals" GitHub .zip URLs from ArchiveContextParser
+        if (url.startsWith(`https://${this.host}/`) && !url.endsWith('.zip')) {
             return url;
         }
         return undefined;

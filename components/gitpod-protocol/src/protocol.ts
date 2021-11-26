@@ -895,6 +895,16 @@ export namespace WorkspaceProbeContext {
     }
 }
 
+export interface ArchiveContext extends WorkspaceContext {
+    archiveUrl: string;
+}
+
+export namespace ArchiveContext {
+    export function is(context: any): context is ArchiveContext {
+        return context && 'archiveUrl' in context;
+    }
+}
+
 export type RefType = "branch" | "tag" | "revision";
 export namespace RefType {
     export const getRefType = (commit: Commit): RefType => {

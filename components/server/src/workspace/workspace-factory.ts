@@ -5,13 +5,14 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
-import { AdditionalContentContext, CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
+import { AdditionalContentContext, ArchiveContext, CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { inject, injectable } from 'inversify';
 import { ResponseError } from 'vscode-jsonrpc';
+import { Config } from '../config';
 import { ConfigProvider } from './config-provider';
 import { ImageSourceProvider } from './image-source-provider';
 
@@ -21,6 +22,7 @@ export class WorkspaceFactory {
     @inject(TracedWorkspaceDB) protected readonly db: DBWithTracing<WorkspaceDB>;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(Config) protected config: Config;
     @inject(ConfigProvider) protected configProvider: ConfigProvider;
     @inject(ImageSourceProvider) protected imageSourceProvider: ImageSourceProvider;
 
@@ -31,9 +33,45 @@ export class WorkspaceFactory {
             return this.createForCommit(ctx, user, context, normalizedContextURL);
         } else if (WorkspaceProbeContext.is(context)) {
             return this.createForWorkspaceProbe(ctx, user, context, normalizedContextURL);
+        } else if (ArchiveContext.is(context)) {
+            return this.createForArchive(ctx, user, context, normalizedContextURL);
         }
         log.error({userId: user.id}, "Couldn't create workspace for context", context);
         throw new Error("Couldn't create workspace for context");
+    }
+
+    protected async createForArchive(ctx: TraceContext, user: User, context: ArchiveContext, contextURL: string): Promise<Workspace> {
+        const span = TraceContext.startSpan("createForArchive", ctx);
+
+        try {
+            const config: WorkspaceConfig = {
+                image: this.config.workspaceDefaults.workspaceImage,
+                tasks: [
+                    {
+                        init: `wget ${contextURL} -O /tmp/archive.zip && unzip /tmp/archive.zip && rm /tmp/archive.zip`,
+                    }
+                ]
+            };
+
+            const id = await generateWorkspaceID();
+            const newWs: Workspace = {
+                id,
+                type: "regular",
+                creationTime: new Date().toISOString(),
+                contextURL,
+                description: this.getDescription(context),
+                ownerId: user.id,
+                context,
+                config
+            };
+            await this.db.trace({span}).store(newWs);
+            return newWs;
+        } catch (error) {
+            TraceContext.logError({ span }, error);
+            throw error;
+        } finally {
+            span.finish();
+        }
     }
 
     protected async createForWorkspaceProbe(ctx: TraceContext, user: User, context: WorkspaceProbeContext, contextURL: string): Promise<Workspace> {
