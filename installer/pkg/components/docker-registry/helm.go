@@ -23,15 +23,31 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
+		registryValues := []string{
+			helm.KeyValue(fmt.Sprintf("docker-registry.podAnnotations.%s", strings.Replace(common.AnnotationConfigChecksum, ".", "\\.", -1)), secretHash),
+			helm.KeyValue("docker-registry.fullnameOverride", RegistryName),
+			helm.KeyValue("docker-registry.service.port", strconv.Itoa(common.ProxyContainerHTTPSPort)),
+			helm.KeyValue("docker-registry.tlsSecretName", BuiltInRegistryCerts),
+		}
+
+		inCluster := pointer.BoolDeref(cfg.Config.ContainerRegistry.InCluster, false)
+		s3Storage := cfg.Config.ContainerRegistry.S3Storage
+
+		if inCluster && s3Storage != nil {
+			registryValues = append(registryValues,
+				helm.KeyValue("docker-registry.s3.region", cfg.Config.Metadata.Region),
+				helm.KeyValue("docker-registry.s3.bucket", s3Storage.Bucket),
+				helm.KeyValue("docker-registry.s3.encrypt", "true"),
+				helm.KeyValue("docker-registry.s3.secure", "true"),
+				helm.KeyValue("docker-registry.storage", "s3"),
+				helm.KeyValue("docker-registry.secrets.s3.secretRef", s3Storage.Certificate.Name),
+			)
+		}
+
 		return &common.HelmConfig{
-			Enabled: pointer.BoolDeref(cfg.Config.ContainerRegistry.InCluster, false),
+			Enabled: inCluster,
 			Values: &values.Options{
-				Values: []string{
-					helm.KeyValue(fmt.Sprintf("docker-registry.podAnnotations.%s", strings.Replace(common.AnnotationConfigChecksum, ".", "\\.", -1)), secretHash),
-					helm.KeyValue("docker-registry.fullnameOverride", RegistryName),
-					helm.KeyValue("docker-registry.service.port", strconv.Itoa(common.ProxyContainerHTTPSPort)),
-					helm.KeyValue("docker-registry.tlsSecretName", BuiltInRegistryCerts),
-				},
+				Values: registryValues,
 			},
 		}, nil
 	}),
