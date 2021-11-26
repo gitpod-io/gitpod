@@ -31,7 +31,7 @@ function CheckBox(props: {
         />
         <div className="flex flex-col ml-2">
             <label htmlFor={checkboxId} className="text-gray-800 dark:text-gray-100 text-md font-semibold cursor-pointer tracking-wide">{props.title}</label>
-            <div className="text-gray-400 text-md">{props.desc}</div>
+            <div className="text-gray-500 dark:text-gray-400 text-md">{props.desc}</div>
         </div>
     </div>
 }
