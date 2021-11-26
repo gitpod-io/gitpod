@@ -2,15 +2,34 @@ packages:
 - name: app
   type: go
   srcs:
-  - "**/*.go"
+  - "cmd/*.go"
+  - "pkg/**/*.go"
+  - "main.go"
   - "go.mod"
   - "go.sum"
   env:
   - CGO_ENABLED=0
   - GOOS=linux
-  - GOPROXY=
   deps:
   - components/common-go:lib
+  prep:
+  - ["go", "mod", "tidy"]
+  config:
+    packaging: app
+- name: runc-facade
+  type: go
+  srcs:
+  - "cmd/runc-facade/*.go"
+  - "go.mod"
+  - "go.sum"
+  env:
+  - CGO_ENABLED=0
+  - GOOS=linux
+  deps:
+  - components/common-go:lib
+  prep:
+    - ["mv", "cmd/runc-facade/main.go", "main.go"]
+    - ["go", "mod", "tidy"]
   config:
     packaging: app
 - name: docker
@@ -20,6 +39,7 @@ packages:
   - ide-startup.sh
   deps:
   - :app
+  - :runc-facade
   config:
     argdeps:
         - imageRepoBase
