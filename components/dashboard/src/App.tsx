@@ -189,7 +189,7 @@ function App() {
                 curr = curr.parentNode as HTMLElement;
             }
         }
-        window.addEventListener("click", handleButtonOrAnchorTracking);
+        window.addEventListener("click", handleButtonOrAnchorTracking, true);
         return () => window.removeEventListener("click", handleButtonOrAnchorTracking, true);
     }, []);
 
