@@ -3,7 +3,7 @@ dependencies:
   repository: https://helm.twun.io
   version: 1.11.0
 - name: minio
-  repository: https://helm.min.io/
+  repository: file://dependencies/minio
   version: 8.0.10
 - name: mysql
   repository: https://charts.bitnami.com/bitnami
@@ -11,5 +11,5 @@ dependencies:
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
   version: 8.16.0
-digest: sha256:41e884d1cb856ba710d523a2c833faccec5fa86e1a910573460b4f33ea4294a6
-generated: "2021-06-19T19:28:34.554728436-04:00"
+digest: sha256:774cb30f3a24d3686aabccc3a04c00529dff72ed0ee25b027655d48cb3b7f95c
+generated: "2021-11-26T07:27:07.255023294Z"
