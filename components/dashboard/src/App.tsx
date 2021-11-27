@@ -21,6 +21,7 @@ import { trackButtonOrAnchor, trackPathChange, trackLocation } from './Analytics
 import { User } from '@gitpod/gitpod-protocol';
 import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 import { Experiment } from './experiments';
+import ProjectSettings from './projects/ProjectSettings';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -298,6 +299,9 @@ function App() {
                     <Route exact path="/projects" component={Projects} />
                     <Route exact path="/projects/:projectName/:resourceOrPrebuild?" render={(props) => {
                         const { resourceOrPrebuild } = props.match.params;
+                        if (resourceOrPrebuild === "settings") {
+                            return <ProjectSettings />;
+                        }
                         if (resourceOrPrebuild === "configure") {
                             return <ConfigureProject />;
                         }
@@ -336,6 +340,9 @@ function App() {
                             }
                             if (resourceOrPrebuild === "configure") {
                                 return <ConfigureProject />;
+                            }
+                            if (resourceOrPrebuild === "settings") {
+                                return <ProjectSettings />;
                             }
                             if (resourceOrPrebuild === "workspaces") {
                                 return <Workspaces />;

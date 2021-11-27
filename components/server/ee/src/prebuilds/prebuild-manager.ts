@@ -106,7 +106,7 @@ export class PrebuildManager {
                 normalizedContextURL: actual.normalizedContextURL
             };
 
-            if (this.shouldPrebuildIncrementally(actual.repository.cloneUrl)) {
+            if (this.shouldPrebuildIncrementally(actual.repository.cloneUrl, project)) {
                 const maxDepth = this.config.incrementalPrebuilds.commitHistory;
                 prebuildContext.commitHistory = await contextParser.fetchCommitHistory({ span }, user, contextURL, commit, maxDepth);
             }
@@ -184,7 +184,10 @@ export class PrebuildManager {
         return true;
     }
 
-    protected shouldPrebuildIncrementally(cloneUrl: string): boolean {
+    protected shouldPrebuildIncrementally(cloneUrl: string, project?: Project): boolean {
+        if (project?.settings?.useIncrementalPrebuilds) {
+            return true;
+        }
         const trimRepoUrl = (url: string) => url.replace(/\/$/, '').replace(/\.git$/, '');
         const repoUrl = trimRepoUrl(cloneUrl);
         return this.config.incrementalPrebuilds.repositoryPasslist.some(url => trimRepoUrl(url) === repoUrl);
