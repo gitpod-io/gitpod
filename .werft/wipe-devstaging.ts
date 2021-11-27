@@ -1,5 +1,5 @@
 import { Werft } from './util/werft'
-import { wipePreviewEnvironmentHelm, listAllPreviewNamespaces, helmInstallName } from './util/kubectl';
+import { wipePreviewEnvironmentAndNamespace, listAllPreviewNamespaces, helmInstallName } from './util/kubectl';
 import * as fs from 'fs';
 import { deleteExternalIp } from './util/gcloud';
 import * as Tracing from './observability/tracing'
@@ -23,7 +23,7 @@ async function wipePreviewCluster(shellOpts: ExecOptions) {
     }
 
     for (const namespace of namespaces) {
-        await wipePreviewEnvironmentHelm(helmInstallName, namespace, { ...shellOpts, slice: 'wipe' });
+        await wipePreviewEnvironmentAndNamespace(helmInstallName, namespace, { ...shellOpts, slice: 'wipe' });
     }
 }
 

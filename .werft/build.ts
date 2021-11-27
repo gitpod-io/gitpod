@@ -318,7 +318,7 @@ interface DeploymentConfig {
 * Deploy a preview environment using the Installer
 *
 * TODO: add support for tracing, if needed, use with-helm for now
-* TODO: removed k3sWsCluster, if needed, use with-helm for now
+* TODO: add support for k3sWsCluster, if needed, use with-helm for now
 */
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     // to test this function, change files in your workspace, and sideload (-s) changed files into werft like so
@@ -354,13 +354,6 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     } catch (err) {
         werft.fail(installerSlices.CLEAN_ENV_STATE, err);
     }
-
-    // TODO: this doesn't appear to do anything and is temporarily commented out
-    // werft.log(deploySlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
-    // let namespaceRecreatedResolve = undefined;
-    // let namespaceRecreatedPromise = new Promise((resolve) => {
-    //     namespaceRecreatedResolve = resolve;
-    // });
 
     // Now we want to execute further kubectl operations only in the created namespace
     setKubectlContextNamespace(namespace, metaEnv({ slice: installerSlices.SET_CONTEXT }));
@@ -476,7 +469,6 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
     try {
-        // TODO: Consider setting dontCheckRc to true, to avoid the warnings through by kubectl apply, if we cannot fix another way
         exec(`kubectl apply -f k8s.yaml`,{ silent: true });
         werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
     } catch (err) {
@@ -504,7 +496,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         // cleanup non-namespace objects
         werft.log(installerSlices.CLEAN_ENV_STATE, "removing old unnamespaced objects - this might take a while");
         try {
-            deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice:  installerSlices.CLEAN_ENV_STATE });
+            await deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice:  installerSlices.CLEAN_ENV_STATE });
             werft.done(installerSlices.CLEAN_ENV_STATE);
         } catch (err) {
             werft.fail(installerSlices.CLEAN_ENV_STATE, err);
@@ -793,7 +785,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         // cleanup non-namespace objects
         werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
         try {
-            deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice: 'predeploy cleanup' });
+            await deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice: 'predeploy cleanup' });
             werft.done('predeploy cleanup');
         } catch (err) {
             werft.fail('predeploy cleanup', err);
