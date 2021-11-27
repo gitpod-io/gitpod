@@ -103,6 +103,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "guessProjectConfiguration":  { group: "default", points: 1 },
         "fetchRepositoryConfiguration": { group: "default", points: 1 },
         "guessRepositoryConfiguration": { group: "default", points: 1 },
+        "updateProjectSettings":  { group: "default", points: 1 },
         "getContentBlobUploadUrl": { group: "default", points: 1 },
         "getContentBlobDownloadUrl": { group: "default", points: 1 },
         "getGitpodTokens": { group: "default", points: 1 },

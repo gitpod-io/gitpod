@@ -24,6 +24,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
 
   useEffect(() => {
     const disposables = new DisposableCollection();
+    setWorkspaceInstance(undefined);
     (async () => {
       if (!props.workspaceId) {
         return;
@@ -120,7 +121,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     if (workspaceInstance?.status.conditions.failed) {
       setError(new Error(workspaceInstance.status.conditions.failed));
     }
-  }, [ workspaceInstance?.status.phase ]);
+  }, [ props.workspaceId, workspaceInstance?.status.phase ]);
 
   return <Suspense fallback={<div />}>
     <WorkspaceLogs classes="h-full w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />

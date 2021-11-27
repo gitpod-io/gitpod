@@ -8,7 +8,7 @@
 function CheckBox(props: {
     name?: string,
     title: string | React.ReactNode,
-    desc: string,
+    desc: string | React.ReactNode,
     checked: boolean,
     disabled?: boolean,
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void

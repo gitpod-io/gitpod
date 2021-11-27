@@ -169,6 +169,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
         await this.db.trace({span}).storePrebuildInfo({
             id: pws.id,
             buildWorkspaceId: pws.buildWorkspaceId,
+            basedOnPrebuildId: ws.basedOnPrebuildId,
             teamId,
             userId,
             projectName,

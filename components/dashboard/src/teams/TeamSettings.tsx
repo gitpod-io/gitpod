@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { Team } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import CodeText from "../components/CodeText";
@@ -12,6 +13,15 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
+
+export function getTeamSettingsMenu(team?: Team) {
+    return [
+        {
+            title: 'Team',
+            link: [`/t/${team?.slug}/settings`],
+        },
+    ];
+}
 
 export default function TeamSettings() {
     const [modal, setModal] = useState(false);
@@ -44,15 +54,8 @@ export default function TeamSettings() {
         document.location.href = gitpodHostUrl.asDashboard().toString();
     };
 
-    const settingsMenu = [
-        {
-            title: 'General',
-            link: [`/t/${team?.slug}/settings`]
-        }
-    ]
-
     return <>
-        <PageWithSubMenu subMenu={settingsMenu} title='General' subtitle='Manage general team settings.'>
+        <PageWithSubMenu subMenu={getTeamSettingsMenu(team)} title="Settings" subtitle="Manage general team settings.">
             <h3>Delete Team</h3>
             <p className="text-base text-gray-500 pb-4">Deleting this team will also remove all associated data with this team, including projects and workspaces. Deleted teams cannot be restored!</p>
             <button className="danger secondary" onClick={() => setModal(true)}>Delete Team</button>

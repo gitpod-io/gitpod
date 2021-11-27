@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Branch, CommitContext, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, ProjectConfig, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
+import { Branch, CommitContext, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, ProjectConfig, User, WorkspaceConfig, ProjectSettings } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { FileProvider, RepoURL } from "../repohost";
@@ -227,6 +227,19 @@ export class ProjectsService {
         }
         const configString = `tasks:\n  - ${config.tasks.map(task => Object.entries(task).map(([phase, command]) => `${phase}: ${command}`).join('\n    ')).join('\n  - ')}`;
         return configString;
+    }
+
+    async updateProjectSettings(projectId: string, partialSettings: Partial<ProjectSettings>): Promise<void> {
+        const project = await this.getProject(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+        const settings = project.settings || {};
+        let key: keyof ProjectSettings;
+        for (key in partialSettings) {
+            settings[key] = partialSettings[key];
+        }
+        return this.projectDB.setProjectSettings(projectId, settings);
     }
 
 }

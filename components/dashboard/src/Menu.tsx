@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User, TeamMemberInfo } from "@gitpod/gitpod-protocol";
+import { User, TeamMemberInfo, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLocation, useRouteMatch } from "react-router";
@@ -21,6 +21,8 @@ import ContextMenu from "./components/ContextMenu";
 import Separator from "./components/Separator";
 import PillMenuItem from "./components/PillMenuItem";
 import TabMenuItem from "./components/TabMenuItem";
+import { getTeamSettingsMenu } from "./teams/TeamSettings";
+import { getProjectSettingsMenu } from "./projects/ProjectSettings";
 
 interface Entry {
     title: string,
@@ -35,14 +37,14 @@ export default function Menu() {
     const location = useLocation();
 
     const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/(t/)?:segment1/:segment2?/:segment3?");
-    const projectName = (() => {
+    const projectSlug = (() => {
         const resource = match?.params?.segment2;
         if (resource && !["projects", "members", "users", "workspaces", "settings"].includes(resource)) {
             return resource;
         }
     })();
     const prebuildId = (() => {
-        const resource = projectName && match?.params?.segment3;
+        const resource = projectSlug && match?.params?.segment3;
         if (resource !== "workspaces" && resource !== "prebuilds" && resource !== "settings" && resource !== "configure") {
             return resource;
         }
@@ -89,24 +91,25 @@ export default function Menu() {
     const teamOrUserSlug = !!team ? '/t/' + team.slug : '/projects';
     const leftMenu: Entry[] = (() => {
         // Project menu
-        if (projectName) {
+        if (projectSlug) {
             return [
                 {
                     title: 'Branches',
-                    link: `${teamOrUserSlug}/${projectName}`
+                    link: `${teamOrUserSlug}/${projectSlug}`,
                 },
                 {
                     title: 'Workspaces',
-                    link: `${teamOrUserSlug}/${projectName}/workspaces`
+                    link: `${teamOrUserSlug}/${projectSlug}/workspaces`,
                 },
                 {
                     title: 'Prebuilds',
-                    link: `${teamOrUserSlug}/${projectName}/prebuilds`
+                    link: `${teamOrUserSlug}/${projectSlug}/prebuilds`,
                 },
                 {
-                    title: 'Configuration',
-                    link: `${teamOrUserSlug}/${projectName}/configure`
-                }
+                    title: 'Settings',
+                    link: `${teamOrUserSlug}/${projectSlug}/settings`,
+                    alternatives: getProjectSettingsMenu({ slug: projectSlug } as Project, team).flatMap(e => e.link),
+                },
             ];
         }
         // Team menu
@@ -132,6 +135,7 @@ export default function Menu() {
                 teamSettingsList.push({
                     title: 'Settings',
                     link: `/t/${team.slug}/settings`,
+                    alternatives: getTeamSettingsMenu(team).flatMap(e => e.link),
                 })
             }
 
@@ -174,7 +178,7 @@ export default function Menu() {
     const renderTeamMenu = () => {
         return (
             <div className="flex p-1 pl-3 ">
-                { projectName && <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
+                { projectSlug && <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
                     <Link to={team ? `/t/${team.slug}/projects` : `/projects`}>
                         <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>
                     </Link>
@@ -214,15 +218,15 @@ export default function Menu() {
                         }
                     ]}>
                         <div className="flex h-full px-2 py-1 space-x-3.5">
-                            { !projectName && <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>}
+                            { !projectSlug && <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>}
                             <img className="filter-grayscale" style={{marginTop: 5, marginBottom: 5}} src={CaretUpDown} />
                         </div>
                     </ContextMenu>
                 </div>
-                { projectName && (
+                { projectSlug && (
                     <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
-                        <Link to={`${teamOrUserSlug}/${projectName}${prebuildId ? "/prebuilds" : ""}`}>
-                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{projectName}</span>
+                        <Link to={`${teamOrUserSlug}/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
+                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{projectSlug}</span>
                         </Link>
                     </div>
                 )}

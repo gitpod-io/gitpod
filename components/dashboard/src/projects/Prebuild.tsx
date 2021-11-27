@@ -15,6 +15,7 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { PrebuildInstanceStatus } from "./Prebuilds";
 import { shortCommitMessage } from "./render-utils";
+import { Link } from "react-router-dom";
 
 export default function () {
     const history = useHistory();
@@ -41,21 +42,21 @@ export default function () {
                 ? await getGitpodService().server.getTeamProjects(team.id)
                 : await getGitpodService().server.getUserProjects());
 
-        const project = projectSlug && projects.find(
-            p => p.slug ? p.slug === projectSlug :
-            p.name === projectSlug);
-
+            const project = projectSlug && projects.find(p => !!p.slug
+                ? p.slug === projectSlug
+                : p.name === projectSlug);
             if (!project) {
                 console.error(new Error(`Project not found! (teamId: ${team?.id}, projectName: ${projectSlug})`));
                 return;
             }
+
             const prebuilds = await getGitpodService().server.findPrebuilds({
                 projectId: project.id,
                 prebuildId
             });
             setPrebuild(prebuilds[0]);
         })();
-    }, [ teams ]);
+    }, [prebuildId, projectSlug, team, teams]);
 
     const renderTitle = () => {
         if (!prebuild) {
@@ -77,6 +78,12 @@ export default function () {
             <div className="my-auto">
                 <p className="text-gray-500 dark:text-gray-50">{shortCommitMessage(prebuild.info.changeTitle)}</p>
             </div>
+            {!!prebuild.info.basedOnPrebuildId && <>
+                <p className="mx-2 my-auto">·</p>
+                <div className="my-auto">
+                    <p className="text-gray-500 dark:text-gray-50">Incremental Prebuild (<Link className="gp-link" title={prebuild.info.basedOnPrebuildId} to={`./${prebuild.info.basedOnPrebuildId}`}>base</Link>)</p>
+                </div>
+            </>}
         </div>)
     };
 

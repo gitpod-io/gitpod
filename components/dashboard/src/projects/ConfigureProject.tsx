@@ -11,7 +11,6 @@ import PrebuildLogs from "../components/PrebuildLogs";
 import TabMenuItem from "../components/TabMenuItem";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
-import Header from "../components/Header";
 import Spinner from "../icons/Spinner.svg";
 import NoAccess from "../icons/NoAccess.svg";
 import PrebuildLogsEmpty from "../images/prebuild-logs-empty.svg";
@@ -20,28 +19,12 @@ import { ThemeContext } from "../theme-context";
 import { PrebuildInstanceStatus } from "./Prebuilds";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import { getProjectSettingsMenu } from "./ProjectSettings";
 
 const MonacoEditor = React.lazy(() => import('../components/MonacoEditor'));
 
 const TASKS = {
-    NPM: `tasks:
-  - init: npm install
-    command: npm run start`,
-    Yarn: `tasks:
-  - init: yarn install
-    command: yarn run start`,
-    Go: `tasks:
-  - init: go get && go build ./... && go test ./...
-    command: go run`,
-    Rails: `tasks:
-  - init: bin/setup
-    command: bin/rails server`,
-    Rust: `tasks:
-  - init: cargo build
-    command: cargo watch -x run`,
-    Python: `tasks:
-  - init: pip install -r requirements.txt
-    command: python main.py`,
     Other: `tasks:
   - init: |
       echo 'TODO: build project'
@@ -244,9 +227,8 @@ export default function () {
         redirectToNewWorkspace();
     }
 
-    return <>
-        <Header title="Configuration" subtitle="View and edit project configuration." />
-        <div className="app-container mt-8 flex space-x-4">
+    return <PageWithSubMenu subMenu={getProjectSettingsMenu(project, team)} title="Configuration" subtitle="View and edit project configuration.">
+        <div className="flex space-x-4">
             <div className="flex-1 h-96 rounded-xl overflow-hidden relative flex flex-col">
                 <div className="flex bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 px-6 pt-3">
                     <TabMenuItem name=".gitpod.yml" selected={selectedEditor === '.gitpod.yml'} onClick={() => setSelectedEditor('.gitpod.yml')} />
@@ -301,7 +283,7 @@ export default function () {
                 </div>
             </div>
         </div>
-    </>;
+    </PageWithSubMenu>;
 }
 
 function EditorMessage(props: { heading: string, message: string, type: 'success' | 'warning' }) {
