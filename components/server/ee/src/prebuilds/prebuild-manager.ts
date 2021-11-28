@@ -65,6 +65,9 @@ export class PrebuildManager {
         span.setTag("cloneURL", cloneURL);
         span.setTag("commit", commit);
         try {
+            if (user.blocked) {
+                throw new Error("Blocked users cannot start prebuilds.");
+            }
             const existingPB = await this.workspaceDB.trace({ span }).findPrebuiltWorkspaceByCommit(cloneURL, commit);
             // If the existing prebuild is failed, we want to retrigger it.
             if (!!existingPB && existingPB.state !== 'aborted' && existingPB.state !== 'timeout' && !existingPB.error) {
