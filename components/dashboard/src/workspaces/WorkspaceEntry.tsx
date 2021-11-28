@@ -133,23 +133,23 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         <ItemFieldIcon>
             <WorkspaceStatusIndicator instance={desc?.latestInstance} />
         </ItemFieldIcon>
-        <ItemField className="w-3/12 flex flex-col">
+        <ItemField className="w-3/12 flex flex-col my-auto">
             <a href={startUrl.toString()}><div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.id}</div></a>
             <Tooltip content={project ? 'https://' + project : ''} allowWrap={true}>
                 <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">{project || 'Unknown'}</div></a>
             </Tooltip>
         </ItemField>
-        <ItemField className="w-4/12 flex flex-col">
+        <ItemField className="w-4/12 flex flex-col my-auto">
             <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{workspaceDescription}</div>
             <a href={ContextURL.parseToURL(ws.contextURL)?.toString()}>
                 <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.contextURL}</div>
             </a>
         </ItemField>
-        <ItemField className="w-2/12 flex flex-col">
+        <ItemField className="w-2/12 flex flex-col my-auto">
             <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{currentBranch}</div>
             <div className="mr-auto"><PendingChangesDropdown workspaceInstance={desc.latestInstance} /></div>
         </ItemField>
-        <ItemField className="w-2/12 flex">
+        <ItemField className="w-2/12 flex my-auto">
             <Tooltip content={`Created ${moment(desc.workspace.creationTime).fromNow()}`}>
                 <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
             </Tooltip>
