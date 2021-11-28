@@ -193,13 +193,13 @@ export default function () {
                     </ItemField>
                     <ItemField className="flex items-center my-auto">
                         <div className="truncate">
-                            <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate">{shortCommitMessage(p.info.changeTitle)}</div>
+                            <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate" title={shortCommitMessage(p.info.changeTitle)}>{shortCommitMessage(p.info.changeTitle)}</div>
                             <p>{p.info.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={p.info.changeAuthorAvatar || ''} alt={p.info.changeAuthor} />}Authored {formatDate(p.info.changeDate)} · {p.info.changeHash?.substring(0, 8)}</p>
                         </div>
                     </ItemField>
-                    <ItemField className="flex items-center my-auto">
-                        <div className="flex space-x-2">
-                            <span className="font-medium text-gray-500 dark:text-gray-50">{p.info.branch}</span>
+                    <ItemField className="flex">
+                        <div className="flex space-x-2 truncate">
+                            <span className="font-medium text-gray-500 dark:text-gray-50 truncate" title={p.info.branch}>{p.info.branch}</span>
                         </div>
                         <span className="flex-grow" />
                         <ItemFieldContextMenu menuEntries={prebuildContextMenu(p)} />
