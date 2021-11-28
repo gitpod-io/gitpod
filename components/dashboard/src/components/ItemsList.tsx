@@ -28,12 +28,14 @@ export function Item(props: {
 }
 
 export function ItemField(props: {
-    children?: React.ReactNode;
-    className?: string;
+  children?: React.ReactNode
+  className?: string
 }) {
-    return <div className={`flex-grow my-auto mx-1 ${props.className || ""}`}>
-        {props.children}
-    </div>;
+  return (
+    <div className={`flex-grow mx-1 ${props.className || ""}`}>
+      {props.children}
+    </div>
+  )
 }
 
 export function ItemFieldIcon(props: {

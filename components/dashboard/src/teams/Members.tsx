@@ -149,31 +149,31 @@ export default function() {
             </div>
             <ItemsList className="mt-2">
                 <Item header={true} className="grid grid-cols-3">
-                    <ItemField>
+                    <ItemField className="my-auto">
                         <span className="pl-14">Name</span>
                     </ItemField>
-                    <ItemField className="flex items-center space-x-1">
+                    <ItemField className="flex items-center space-x-1 my-auto">
                         <span>Joined</span>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" className="h-4 w-4" viewBox="0 0 16 16"><path fill="#A8A29E" fill-rule="evenodd" d="M13.366 8.234a.8.8 0 010 1.132l-4.8 4.8a.8.8 0 01-1.132 0l-4.8-4.8a.8.8 0 111.132-1.132L7.2 11.67V2.4a.8.8 0 111.6 0v9.269l3.434-3.435a.8.8 0 011.132 0z" clip-rule="evenodd"/></svg>
                     </ItemField>
-                    <ItemField className="flex items-center">
+                    <ItemField className="flex items-center my-auto">
                         <span className="flex-grow">Role</span>
                     </ItemField>
                 </Item>
                 {filteredMembers.length === 0
                     ? <p className="pt-16 text-center">No members found</p>
                     : filteredMembers.map(m => <Item className="grid grid-cols-3" key={m.userId}>
-                        <ItemField className="flex items-center">
+                        <ItemField className="flex items-center my-auto">
                             <div className="w-14">{m.avatarUrl && <img className="rounded-full w-8 h-8" src={m.avatarUrl || ''} alt={m.fullName} />}</div>
                             <div>
                                 <div className="text-base text-gray-900 dark:text-gray-50 font-medium">{m.fullName}</div>
                                 <p>{m.primaryEmail}</p>
                             </div>
                         </ItemField>
-                        <ItemField>
+                        <ItemField className="my-auto">
                             <span className="text-gray-400">{moment(m.memberSince).fromNow()}</span>
                         </ItemField>
-                        <ItemField className="flex items-center">
+                        <ItemField className="flex items-center my-auto">
                             <span className="text-gray-400 capitalize">{ownMemberInfo?.role !== 'owner'
                                 ? m.role
                                 : <DropDown contextMenuWidth="w-32" activeEntry={m.role} entries={[{

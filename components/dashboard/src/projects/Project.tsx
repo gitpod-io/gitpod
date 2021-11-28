@@ -205,13 +205,13 @@ export default function () {
                 </div>
                 <ItemsList className="mt-2">
                     <Item header={true} className="grid grid-cols-3">
-                        <ItemField>
+                        <ItemField className="my-auto">
                             <span>Branch</span>
                         </ItemField>
-                        <ItemField>
+                        <ItemField className="my-auto">
                             <span>Commit</span>
                         </ItemField>
-                        <ItemField>
+                        <ItemField className="my-auto">
                             <span>Prebuild</span>
                         </ItemField>
                     </Item>
@@ -228,7 +228,7 @@ export default function () {
                         const status = prebuildStatusLabel(prebuild);
 
                         return <Item key={`branch-${index}-${branch.name}`} className="grid grid-cols-3 group">
-                            <ItemField className="flex items-center">
+                            <ItemField className="flex items-center my-auto">
                                 <div>
                                     <a href={branch.url}><div className="text-base text-gray-600 hover:text-gray-800 dark:text-gray-50 dark:hover:text-gray-200 font-medium mb-1">
                                         {branch.name}
@@ -236,13 +236,13 @@ export default function () {
                                     </div></a>
                                 </div>
                             </ItemField>
-                            <ItemField className="flex items-center">
+                            <ItemField className="flex items-center my-auto">
                                 <div className="truncate">
                                     <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate">{shortCommitMessage(branch.changeTitle)}</div>
                                     <p>{avatar}Authored {formatDate(branch.changeDate)} · {branch.changeHash?.substring(0, 8)}</p>
                                 </div>
                             </ItemField>
-                            <ItemField className="flex items-center">
+                            <ItemField className="flex items-center my-auto">
                                 <a className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" href={prebuild ? `/${!!team ? 't/' + team.slug : 'projects'}/${projectSlug}/${prebuild.info.id}` : 'javascript:void(0)'}>
                                     {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span> </span>)}
                                 </a>

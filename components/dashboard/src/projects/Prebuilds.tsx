@@ -171,18 +171,18 @@ export default function () {
             </div>
             <ItemsList className="mt-2">
                 <Item header={true} className="grid grid-cols-3">
-                    <ItemField>
+                    <ItemField className="my-auto">
                         <span>Prebuild</span>
                     </ItemField>
-                    <ItemField>
+                    <ItemField className="my-auto">
                         <span>Commit</span>
                     </ItemField>
-                    <ItemField>
+                    <ItemField className="my-auto">
                         <span>Branch</span>
                     </ItemField>
                 </Item>
                 {prebuilds.filter(filter).sort(prebuildSorter).map((p, index) => <Item key={`prebuild-${p.info.id}`} className="grid grid-cols-3">
-                    <ItemField className="flex items-center">
+                    <ItemField className="flex items-center my-auto">
                         <Link to={`/${!!team ? 't/'+team.slug : 'projects'}/${projectSlug}/${p.info.id}`} className="cursor-pointer">
                             <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1">
                                 <div className="inline-block align-text-bottom mr-2 w-4 h-4">{prebuildStatusIcon(p)}</div>
@@ -191,13 +191,13 @@ export default function () {
                             <p>{p.info.startedByAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={p.info.startedByAvatar || ''} alt={p.info.startedBy} />}Triggered {formatDate(p.info.startedAt)}</p>
                         </Link>
                     </ItemField>
-                    <ItemField className="flex items-center">
+                    <ItemField className="flex items-center my-auto">
                         <div className="truncate">
                             <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate">{shortCommitMessage(p.info.changeTitle)}</div>
                             <p>{p.info.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={p.info.changeAuthorAvatar || ''} alt={p.info.changeAuthor} />}Authored {formatDate(p.info.changeDate)} · {p.info.changeHash?.substring(0, 8)}</p>
                         </div>
                     </ItemField>
-                    <ItemField className="flex items-center">
+                    <ItemField className="flex items-center my-auto">
                         <div className="flex space-x-2">
                             <span className="font-medium text-gray-500 dark:text-gray-50">{p.info.branch}</span>
                         </div>

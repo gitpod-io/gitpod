@@ -214,13 +214,13 @@ export default function EnvVars() {
             </div>
             : <ItemsList>
                 <Item header={true}>
-                    <ItemField className="w-5/12">Name</ItemField>
-                    <ItemField className="w-5/12">Scope</ItemField>
+                    <ItemField className="w-5/12 my-auto">Name</ItemField>
+                    <ItemField className="w-5/12 my-auto">Scope</ItemField>
                 </Item>
                 {envVars.map(variable => {
                     return <Item className="whitespace-nowrap">
-                        <ItemField className="w-5/12 overflow-ellipsis truncate">{variable.name}</ItemField>
-                        <ItemField className="w-5/12 overflow-ellipsis truncate text-sm text-gray-400">{variable.repositoryPattern}</ItemField>
+                        <ItemField className="w-5/12 overflow-ellipsis truncate my-auto">{variable.name}</ItemField>
+                        <ItemField className="w-5/12 overflow-ellipsis truncate text-sm text-gray-400 my-auto">{variable.repositoryPattern}</ItemField>
                         <ItemFieldContextMenu menuEntries={[
                             {
                                 title: 'Edit',
