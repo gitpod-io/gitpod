@@ -63,7 +63,7 @@ export default function () {
         setLastPrebuilds(map);
     }
 
-    const newProjectUrl = !!team ? `/new?team=${team.slug}` : '/new';
+    const newProjectUrl = !!team ? `/new?team=${team.slug}` : '/new?user=1';
     const onNewProject = () => {
         history.push(newProjectUrl);
     }

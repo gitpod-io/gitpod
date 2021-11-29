@@ -59,6 +59,10 @@ export default function NewProject() {
             const team = teams?.find(t => t.slug === teamParam);
             setSelectedTeamOrUser(team);
         }
+        if (params.get("user")) {
+            window.history.replaceState({}, '', window.location.pathname);
+            setSelectedTeamOrUser(user);
+        }
     }, []);
 
     useEffect(() => {
