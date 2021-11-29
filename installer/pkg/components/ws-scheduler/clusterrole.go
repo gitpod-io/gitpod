@@ -21,9 +21,8 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&rbacv1.ClusterRole{
 			TypeMeta: common.TypeMetaClusterRole,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:   fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
+				Labels: labels,
 			},
 			Rules: []rbacv1.PolicyRule{{
 				APIGroups: []string{""},

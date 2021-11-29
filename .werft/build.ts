@@ -478,7 +478,37 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
     }
 
-    // TODO: the pods in my namespace have been alive for 27h...each deployment needs a sweeper installation, this is done now via helm.
+    // TODO: test sweeper is installed
+    werft.log('sweeper', 'installing Sweeper');
+    const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
+    werft.log('sweeper', `Sweeper version: ${sweeperVersion}`);
+
+    // prepare args
+    const refsPrefix = "refs/heads/";
+    const owner: string = context.Repository.owner;
+    const repo: string = context.Repository.repo;
+    let branch: string = context.Repository.ref;
+    if (branch.startsWith(refsPrefix)) {
+        branch = branch.substring(refsPrefix.length);
+    }
+    const args = {
+        "period": "10m",
+        "timeout": "48h",   // period of inactivity that triggers a removal
+        branch,             // the branch to check for deletion
+        owner,
+        repo,
+    };
+    const argsStr = Object.entries(args).map(([k, v]) => `\"--${k}\", \"${v}\"`).join(", ");
+    const allArgsStr = `--set args="{${argsStr}}" --set githubToken.secret=github-sweeper-read-branches --set githubToken.key=token`;
+
+    // copy GH token into namespace
+    exec(`kubectl --namespace werft get secret github-sweeper-read-branches -o yaml \
+        | yq w - metadata.namespace ${namespace} \
+        | yq d - metadata.uid \
+        | yq d - metadata.resourceVersion \
+        | yq d - metadata.creationTimestamp \
+        | kubectl apply -f -`);
+    exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
 
     // TODO: There is a method used by the current deploy, addDeploymentFlags, which uses helm flags to set many things for the install.
     // We're not honoring them now, such as:
