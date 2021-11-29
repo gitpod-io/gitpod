@@ -9,5 +9,11 @@ RUN  apk upgrade --no-cache \
   && apk add --no-cache ca-certificates
 
 COPY components-content-service--app/content-service /app/content-service
+
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 ENTRYPOINT [ "/app/content-service" ]
 CMD [ "-v", "help" ]

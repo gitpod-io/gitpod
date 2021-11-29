@@ -18,4 +18,9 @@ COPY components-local-app--app/components-local-app--app-darwin-arm64/local-app 
 COPY components-local-app--app/components-local-app--app-windows-arm64/local-app.exe local-app-windows-arm64.exe
 COPY components-local-app--app/components-local-app--app-windows-386/local-app.exe local-app-windows-386.exe
 
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 CMD ["/bin/sh", "-c", "cp /app/* /out"]

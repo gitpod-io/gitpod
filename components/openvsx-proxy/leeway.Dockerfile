@@ -9,4 +9,10 @@ RUN  apk upgrade --no-cache \
   && apk add --no-cache ca-certificates
 
 COPY components-openvsx-proxy--app/openvsx-proxy /app/openvsx-proxy
+
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 ENTRYPOINT [ "/app/openvsx-proxy" ]

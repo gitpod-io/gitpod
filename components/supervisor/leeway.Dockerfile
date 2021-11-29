@@ -27,4 +27,10 @@ WORKDIR "/.supervisor/ssh"
 COPY components-supervisor-openssh--app/usr/sbin/sshd .
 COPY components-supervisor-openssh--app/usr/bin/ssh-keygen .
 
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
+
 ENTRYPOINT ["/.supervisor/supervisor"]

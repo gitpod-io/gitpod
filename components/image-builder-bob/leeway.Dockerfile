@@ -23,6 +23,11 @@ RUN mkdir /ide
 COPY ide-startup.sh /ide/startup.sh
 COPY supervisor-ide-config.json /ide/
 
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 # sudo buildctl-daemonless.sh
 ENTRYPOINT [ "/app/bob" ]
 CMD [ "build" ]
