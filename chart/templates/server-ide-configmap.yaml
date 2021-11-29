@@ -18,6 +18,7 @@
 {{ template "gitpod.comp.imageRepo" . }}:{{- $comp.insidersVersion | default (include "gitpod.comp.version" .) -}}
 {{- end -}}
 
+# For backwards compability - remove me soon
 {{- define "ide-images-aliases"}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
@@ -25,6 +26,7 @@ code: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.compone
 code-latest: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
 {{ end }}
 
+# For backwards compability - remove me soon
 {{- define "desktop-ide-images-aliases"}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
@@ -32,6 +34,73 @@ code-desktop: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp"
 code-desktop-insiders: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktopInsiders)) }}
 intellij: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
 goland: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+{{ end }}
+
+{{- define "ide-options" }}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+options:
+
+  # Browser IDEs
+  theia:
+    title: "Theia (legacy)"
+    tooltip: "This entry exists solely for legacy reasons."
+    type: "browser"
+    logo: "invalid"
+    hidden: true
+    image: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+  code:
+    orderKey: "00"
+    title: "VS Code"
+    type: "browser"
+    logo: "vscode"
+    image: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+  code-latest:
+    orderKey: "01"
+    title: "VS Code"
+    type: "browser"
+    logo: "vscode-insiders"
+    tooltip: "Early access version, still subject to testing."
+    label: "Insiders"
+    image: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+    resolveImageDigest: true
+
+  # Desktop IDEs
+  code-desktop:
+    orderKey: "02"
+    title: "VS Code"
+    type: "desktop"
+    logo: "vscode"
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktop)) }}
+  code-desktop-insiders:
+    orderKey: "03"
+    title: "VS Code"
+    type: "desktop"
+    logo: "vscode-insiders"
+    tooltip: "Visual Studio Code Insiders for early adopters."
+    label: "Insiders"
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktopInsiders)) }}
+  intellij:
+    orderKey: "04"
+    title: "IntelliJ IDEA"
+    type: "desktop"
+    logo: "intellij-idea"
+    tooltip: "IntelliJ IDEA from the Early-Access-Programm (EAP)"
+    label: "EAP"
+    notes: ["While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."]
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
+  goland:
+    orderKey: "05"
+    title: "GoLand"
+    type: "desktop"
+    logo: "goland"
+    tooltip: "GoLand from the Early-Access-Programm (EAP)"
+    label: "EAP"
+    notes: ["While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."]
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+
+defaultIde: "code"
+defaultDesktopIde: "code-desktop"
 {{ end }}
 
 {{- if $comp.serverIdeConfigDeploy.enabled }}
@@ -45,12 +114,15 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 data:
+  # ideVersion, ideImageRepo, ideImageAliases, and desktopIdeImageAliases -- For backwards compability - remove me soon
   config.json: |-
     {
         "ideVersion": "{{ .Values.components.workspace.codeImage.stableVersion }}",
         "ideImageRepo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}",
         "ideImageAliases": {{ (include "ide-images-aliases" (dict "root" . "gp" $.Values)) | fromYaml | toJson }},
         "desktopIdeImageAliases": {{ (include "desktop-ide-images-aliases" (dict "root" . "gp" $.Values)) | fromYaml | toJson }},
-        "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}"
+
+        "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}",
+        "ideOptions": {{ (include "ide-options" (dict "root" . "gp" $.Values)) | fromYaml | toJson }}
     }
 {{- end }}

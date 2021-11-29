@@ -4,7 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext, useState } from "react";
+import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { useContext, useEffect, useState } from "react";
 import CheckBox from "../components/CheckBox";
 import InfoBox from "../components/InfoBox";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
@@ -19,131 +20,11 @@ import settingsMenu from "./settings-menu";
 
 type Theme = 'light' | 'dark' | 'system';
 
-/**
- * The available IDE options.
- */
-interface IDEOptions {
-    /**
-     * A list of available IDEs.
-     */
-    options: { [key: string]: IDEOption };
-
-    /**
-     * The default (browser) IDE when the user has not specified one.
-     */
-    defaultIde: string;
-
-    /**
-     * The default desktop IDE when the user has not specified one.
-     */
-    defaultDesktopIde: string;
-}
-
-interface IDEOption {
-    /**
-     * To ensure a stable order one can set an `orderKey`.
-     */
-    orderKey?: string;
-
-    /**
-     * Human readable title text of the IDE (plain text only).
-     */
-    title: string;
-
-    /**
-     * The type of the IDE, currently 'browser' or 'desktop'.
-     */
-    type: 'browser' | 'desktop';
-
-    /**
-    * The logo for the IDE. That could be a key in (see
-    * components/dashboard/src/images/ideLogos.ts) or a URL.
-    */
-    logo: string;
-
-    /**
-     * Text of an optional tooltip (plain text only).
-     */
-    tooltip?: string;
-
-    /**
-     * Text of an optional label next to the IDE option like “Insiders” (plain
-     * text only).
-     */
-    label?: string;
-
-    /**
-     * Notes to the IDE option that are renderd in the preferences when a user
-     * chooses this IDE.
-     */
-    notes?: string[];
-
-    /**
-    * If `true` this IDE option is not visible in the IDE preferences.
-    */
-    hidden?: boolean;
-}
-
-const ideOptions: IDEOptions = {
-    options: {
-        // Browser IDEs
-        "code": {
-            orderKey: "0",
-            title: "VS Code",
-            type: "browser",
-            logo: "vscode",
-        },
-        "code-latest": {
-            orderKey: "1",
-            title: "VS Code",
-            type: "browser",
-            logo: "vscode-insiders",
-            tooltip: "Early access version, still subject to testing.",
-            label: "Insiders",
-        },
-        // Desktop IDEs
-        "code-desktop": {
-            orderKey: "2",
-            title: "VS Code",
-            type: "desktop",
-            logo: "vscode",
-        },
-        "code-desktop-insiders": {
-            orderKey: "3",
-            title: "VS Code",
-            type: "desktop",
-            logo: "vscode-insiders",
-            tooltip: "Visual Studio Code Insiders for early adopters.",
-            label: "Insiders",
-        },
-        "intellij": {
-            orderKey: "4",
-            title: "IntelliJ IDEA",
-            type: "desktop",
-            logo: "intellij-idea",
-            tooltip: "IntelliJ IDEA from the Early-Access-Programm (EAP)",
-            label: "EAP",
-            notes: ["While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."],
-        },
-        "goland": {
-            orderKey: "5",
-            title: "GoLand",
-            type: "desktop",
-            logo: "goland",
-            tooltip: "GoLand from the Early-Access-Programm (EAP)",
-            label: "EAP",
-            notes: ["While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."],
-        },
-    },
-    defaultIde: "code",
-    defaultDesktopIde: "code-desktop",
-};
-
 export default function Preferences() {
     const { user } = useContext(UserContext);
     const { setIsDark } = useContext(ThemeContext);
 
-    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || ideOptions.defaultIde);
+    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || "");
     const actuallySetDefaultIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
         const settings = additionalData.ideSettings || {};
@@ -153,7 +34,7 @@ export default function Preferences() {
         setDefaultIde(value);
     }
 
-    const [defaultDesktopIde, setDefaultDesktopIde] = useState<string>(user?.additionalData?.ideSettings?.defaultDesktopIde || ideOptions.defaultDesktopIde);
+    const [defaultDesktopIde, setDefaultDesktopIde] = useState<string>(user?.additionalData?.ideSettings?.defaultDesktopIde || "");
     const actuallySetDefaultDesktopIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
         const settings = additionalData.ideSettings || {};
@@ -175,6 +56,20 @@ export default function Preferences() {
         setUseDesktopIde(value);
     }
 
+    const [ideOptions, setIdeOptions] = useState<IDEOptions | undefined>(undefined);
+    useEffect(() => {
+        (async () => {
+            const ideopts = await getGitpodService().server.getIDEOptions();
+            setIdeOptions(ideopts);
+            if (!(defaultIde)) {
+                setDefaultIde(ideopts.defaultIde);
+            }
+            if (!defaultDesktopIde) {
+                setDefaultDesktopIde(ideopts.defaultDesktopIde);
+            }
+        })();
+    }, []);
+
     const [theme, setTheme] = useState<Theme>(localStorage.theme || 'system');
     const actuallySetTheme = (theme: Theme) => {
         if (theme === 'dark' || theme === 'light') {
@@ -187,54 +82,56 @@ export default function Preferences() {
         setTheme(theme);
     }
 
-    const browserIdeOptions = orderedIdeOptions(ideOptions, "browser");
-    const desktopIdeOptions = orderedIdeOptions(ideOptions, "desktop");
+    const browserIdeOptions = ideOptions && orderedIdeOptions(ideOptions, "browser");
+    const desktopIdeOptions = ideOptions && orderedIdeOptions(ideOptions, "desktop");
 
     return <div>
         <PageWithSubMenu subMenu={settingsMenu} title='Preferences' subtitle='Configure user preferences.'>
-            <h3>Default IDE</h3>
-            <p className="text-base text-gray-500 dark:text-gray-400">Choose which IDE you want to use.</p>
-            <div className="my-4 space-x-4 flex">
-                {
-                    browserIdeOptions.map(([id, option]) => {
-                        const selected = defaultIde === id;
-                        const onSelect = () => actuallySetDefaultIde(id);
-                        return renderIdeOption(option, selected, onSelect);
-                    })
-                }
-            </div>
-            {ideOptions.options[defaultIde].notes &&
-                <InfoBox className="my-5 max-w-2xl"><ul>
-                    {ideOptions.options[defaultIde].notes?.map((x, idx) => <li className={idx > 0 ? "mt-2" : ""}>{x}</li>)}
-                </ul></InfoBox>
-            }
-            {desktopIdeOptions.length > 0 && <>
-                <div className="mt-4 space-x-4 flex">
-                    <CheckBox
-                        title={<div>Open in Desktop IDE <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel></div>}
-                        desc="Choose whether you would like to open your workspace in a desktop IDE instead."
-                        checked={useDesktopIde}
-                        onChange={(evt) => actuallySetUseDesktopIde(evt.target.checked)} />
-                </div>
-                {useDesktopIde && <>
-                    <div className="my-4 space-x-4 flex">
-                        {
-                            desktopIdeOptions.map(([id, option]) => {
-                                const selected = defaultDesktopIde === id;
-                                const onSelect = () => actuallySetDefaultDesktopIde(id);
-                                return renderIdeOption(option, selected, onSelect);
-                            })
-                        }
-                    </div>
-
-                    {ideOptions.options[defaultDesktopIde].notes &&
-                        <InfoBox className="my-5 max-w-2xl"><ul>
-                            {ideOptions.options[defaultDesktopIde].notes?.map((x, idx) => <li className={idx > 0 ? "mt-2" : ""}>{x}</li>)}
-                        </ul></InfoBox>
+            {ideOptions && browserIdeOptions && <>
+                <h3>Default IDE</h3>
+                <p className="text-base text-gray-500 dark:text-gray-400">Choose which IDE you want to use.</p>
+                <div className="my-4 space-x-4 flex">
+                    {
+                        browserIdeOptions.map(([id, option]) => {
+                            const selected = defaultIde === id;
+                            const onSelect = () => actuallySetDefaultIde(id);
+                            return renderIdeOption(option, selected, onSelect);
+                        })
                     }
-                    <p className="text-left w-full text-gray-500">
-                        The <strong>JetBrains desktop IDEs</strong> are currently in beta. <a href="https://github.com/gitpod-io/gitpod/issues/6576" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a> · <a href="https://www.gitpod.io/docs/integrations/jetbrains" target="_blank" rel="noopener" className="gp-link">Documentation</a>
-                    </p>
+                </div>
+                {ideOptions.options[defaultIde].notes &&
+                    <InfoBox className="my-5 max-w-2xl"><ul>
+                        {ideOptions.options[defaultIde].notes?.map((x, idx) => <li className={idx > 0 ? "mt-2" : ""}>{x}</li>)}
+                    </ul></InfoBox>
+                }
+                {desktopIdeOptions && desktopIdeOptions.length > 0 && <>
+                    <div className="mt-4 space-x-4 flex">
+                        <CheckBox
+                            title={<div>Open in Desktop IDE <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel></div>}
+                            desc="Choose whether you would like to open your workspace in a desktop IDE instead."
+                            checked={useDesktopIde}
+                            onChange={(evt) => actuallySetUseDesktopIde(evt.target.checked)} />
+                    </div>
+                    {useDesktopIde && <>
+                        <div className="my-4 space-x-4 flex">
+                            {
+                                desktopIdeOptions.map(([id, option]) => {
+                                    const selected = defaultDesktopIde === id;
+                                    const onSelect = () => actuallySetDefaultDesktopIde(id);
+                                    return renderIdeOption(option, selected, onSelect);
+                                })
+                            }
+                        </div>
+
+                        {ideOptions.options[defaultDesktopIde].notes &&
+                            <InfoBox className="my-5 max-w-2xl"><ul>
+                                {ideOptions.options[defaultDesktopIde].notes?.map((x, idx) => <li className={idx > 0 ? "mt-2" : ""}>{x}</li>)}
+                            </ul></InfoBox>
+                        }
+                        <p className="text-left w-full text-gray-500">
+                            The <strong>JetBrains desktop IDEs</strong> are currently in beta. <a href="https://github.com/gitpod-io/gitpod/issues/6576" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a> · <a href="https://www.gitpod.io/docs/integrations/jetbrains" target="_blank" rel="noopener" className="gp-link">Documentation</a>
+                        </p>
+                    </>}
                 </>}
             </>}
             <h3 className="mt-12">Theme</h3>

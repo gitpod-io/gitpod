@@ -307,16 +307,15 @@ export class WorkspaceStarter {
         // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
         //           give that value precedence over the default choice.
         const configuration: WorkspaceInstanceConfiguration = {
-            theiaVersion: ideConfig.ideVersion,
-            ideImage: ideConfig.ideImage,
+            ideImage: ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image,
             supervisorImage: ideConfig.supervisorImage,
         };
 
         const ideChoice = user.additionalData?.ideSettings?.defaultIde;
         if (!!ideChoice) {
-            const mappedImage = ideConfig.ideImageAliases[ideChoice];
-            if (!!mappedImage) {
-                configuration.ideImage = mappedImage;
+            const mappedImage = ideConfig.ideOptions.options[ideChoice];
+            if (!!mappedImage && mappedImage.image) {
+                configuration.ideImage = mappedImage.image;
             } else if (this.authService.hasPermission(user, "ide-settings")) {
                 // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
                 // For now, this feature requires special permissions.
@@ -328,9 +327,9 @@ export class WorkspaceStarter {
         if (useDesktopIdeChoice) {
             const desktopIdeChoice = user.additionalData?.ideSettings?.defaultDesktopIde;
             if (!!desktopIdeChoice) {
-                const mappedImage = ideConfig.desktopIdeImageAliases[desktopIdeChoice];
-                if (!!mappedImage) {
-                    configuration.desktopIdeImage = mappedImage;
+                const mappedImage = ideConfig.ideOptions.options[desktopIdeChoice];
+                if (!!mappedImage && mappedImage.image) {
+                    configuration.desktopIdeImage = mappedImage.image;
                 } else if (this.authService.hasPermission(user, "ide-settings")) {
                     // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
                     // For now, this feature requires special permissions.
@@ -606,7 +605,7 @@ export class WorkspaceStarter {
         });
 
         const ideAlias = user.additionalData?.ideSettings?.defaultIde;
-        if (ideAlias && ideConfig.ideImageAliases[ideAlias]) {
+        if (ideAlias && ideConfig.ideOptions.options[ideAlias]) {
             const ideAliasEnv = new EnvironmentVariable();
             ideAliasEnv.setName('GITPOD_IDE_ALIAS');
             ideAliasEnv.setValue(ideAlias);
@@ -734,7 +733,7 @@ export class WorkspaceStarter {
         if (!!instance.configuration?.ideImage) {
             ideImage = instance.configuration?.ideImage;
         } else {
-            ideImage = ideConfig.ideImage;
+            ideImage = ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image;
         }
 
         const spec = new StartWorkspaceSpec();

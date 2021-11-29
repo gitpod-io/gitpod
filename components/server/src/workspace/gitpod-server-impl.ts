@@ -52,6 +52,8 @@ import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/sugar';
+import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
+import { IDEConfigService } from '../ide-config';
 
 @injectable()
 export class GitpodServerImpl<Client extends GitpodClient, Server extends GitpodServer> implements GitpodServer, Disposable {
@@ -96,6 +98,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(HeadlessLogService) protected readonly headlessLogService: HeadlessLogService;
 
     @inject(ProjectsService) protected readonly projectsService: ProjectsService;
+
+    @inject(IDEConfigService) protected readonly ideConfigService: IDEConfigService;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -2065,6 +2069,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return this.termsProvider.getCurrent();
     }
 
+    async getIDEOptions(): Promise<IDEOptions> {
+        const ideConfig = await this.ideConfigService.config;
+        return ideConfig.ideOptions;
+    }
 
     //#region gitpod.io concerns
     //

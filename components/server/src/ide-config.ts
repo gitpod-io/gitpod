@@ -4,58 +4,70 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as fs from 'fs';
+import { Disposable, DisposableCollection, Emitter } from '@gitpod/gitpod-protocol';
+import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
+import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import * as Ajv from 'ajv';
 import * as cp from 'child_process';
 import * as crypto from 'crypto';
-import debounce = require('lodash.debounce')
+import * as fs from 'fs';
 import { injectable } from 'inversify';
-import { Disposable, DisposableCollection, Emitter } from '@gitpod/gitpod-protocol';
-import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
+import debounce = require('lodash.debounce')
 
-interface RawIDEConfig {
-    ideVersion: string;
-    ideImageRepo: string;
-    ideImageAliases?: { [index: string]: string };
-    desktopIdeImageAliases?: { [index: string]: string };
+export interface IDEConfig {
     supervisorImage: string;
+    ideOptions: IDEOptions;
 }
+
 const scheme = {
     "type": "object",
     "properties": {
-        "ideVersion": {
-            "type": "string"
-        },
-        "ideImageRepo": {
-            "type": "string"
-        },
-        "ideImageAliases": {
-            "type": "object",
-            "additionalProperties": { "type": "string" }
-        },
-        "desktopIdeImageAliases": {
-            "type": "object",
-            "additionalProperties": { "type": "string" }
-        },
         "supervisorImage": {
-            "type": "string"
+            "type": "string",
+        },
+        "ideOptions": {
+            "type": "object",
+            "properties": {
+                "options": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "orderKey": { "type": "string" },
+                            "title": { "type": "string" },
+                            "type": { "type": "string" },
+                            "logo": { "type": "string" },
+                            "tooltip": { "type": "string" },
+                            "label": { "type": "string" },
+                            "nodes": { "type": "array", "items": { "type": "string" } },
+                            "hidden": { "type": "boolean" },
+                            "image": { "type": "string" },
+                            "resolveImageDigest": { "type": "boolean" },
+                        },
+                        "required": [
+                            "title",
+                            "type",
+                            "logo",
+                            "image",
+                        ],
+                    }
+                },
+                "defaultIde": { "type": "string" },
+                "defaultDesktopIde": { "type": "string" },
+            },
+            "required": [
+                "options",
+                "defaultIde",
+                "defaultDesktopIde",
+            ],
         },
     },
     "required": [
-        "ideVersion",
-        "ideImageRepo",
         "supervisorImage",
-    ]
+        "ideOptions",
+    ],
 };
-
-export interface IDEConfig {
-    ideVersion: string;
-    ideImageRepo: string;
-    ideImageAliases: { [index: string]: string };
-    desktopIdeImageAliases: { [index: string]: string };
-    ideImage: string;
-    supervisorImage: string;
-}
 
 @injectable()
 export class IDEConfigService {
@@ -77,9 +89,9 @@ export class IDEConfigService {
         }
         this.configPath = filePathTelepresenceAware(configPath);
         this.validate = this.ajv.compile(scheme);
-        this.reconcile();
-        fs.watchFile(this.configPath, () => this.reconcile());
-        setInterval(() => this.reconcile(), 60 * 60 * 1000 /* 1 hour */);
+        this.reconcile("initial");
+        fs.watchFile(this.configPath, () => this.reconcile("file changed"));
+        setInterval(() => this.reconcile("interval"), 60 * 60 * 1000 /* 1 hour */);
     }
 
     get config(): Promise<IDEConfig> {
@@ -95,7 +107,7 @@ export class IDEConfigService {
     }
 
     private contentHash: string | undefined;
-    private reconcile = debounce(async () => {
+    private reconcile = debounce(async (trigger: string) => {
         try {
             let fileContent: string | undefined;
             try {
@@ -107,39 +119,48 @@ export class IDEConfigService {
 
             let value = this.state.value;
 
-            const raw: RawIDEConfig = JSON.parse(fileContent);
+            const newValue: IDEConfig = JSON.parse(fileContent);
             const contentHash = crypto.createHash('sha256').update(fileContent, 'utf8').digest('hex');
             if (this.contentHash !== contentHash) {
                 this.contentHash = contentHash;
 
-                this.validate(raw);
+                this.validate(newValue);
                 if (this.validate.errors) {
                     throw new Error('invalid: ' + this.ajv.errorsText(this.validate.errors));
                 }
-                const ideImage = `${raw.ideImageRepo}:${raw.ideVersion}`;
-                value = {
-                    ...raw,
-                    ideImage: ideImage,
-                    ideImageAliases: {
-                        ...raw.ideImageAliases,
-                        "theia": ideImage,
-                    },
-                    desktopIdeImageAliases: {
-                        ...raw.desktopIdeImageAliases
-                    },
+
+                if (!(newValue.ideOptions.defaultIde in newValue.ideOptions.options)) {
+                    throw new Error(`invalid: There is no IDEOption entry for default IDE '${newValue.ideOptions.defaultIde}'.`);
                 }
+                if (!(newValue.ideOptions.defaultDesktopIde in newValue.ideOptions.options)) {
+                    throw new Error(`invalid: There is no IDEOption entry for default desktop IDE '${newValue.ideOptions.defaultDesktopIde}'.`);
+                }
+                if (newValue.ideOptions.options[newValue.ideOptions.defaultIde].type != "browser") {
+                    throw new Error(`invalid: Default IDE '${newValue.ideOptions.defaultIde}' needs to be of type 'browser' but is '${newValue.ideOptions.options[newValue.ideOptions.defaultIde].type}'.`);
+                }
+                if (newValue.ideOptions.options[newValue.ideOptions.defaultDesktopIde].type != "desktop") {
+                    throw new Error(`invalid: Default desktop IDE '${newValue.ideOptions.defaultDesktopIde}' needs to be of type 'desktop' but is '${newValue.ideOptions.options[newValue.ideOptions.defaultIde].type}'.`);
+                }
+
+                value = newValue;
             }
 
             if (!value) {
                 return;
             }
 
-            try {
-                if (raw.ideImageAliases?.['code-latest']){
-                    value.ideImageAliases['code-latest'] = await this.resolveImageDigest(raw.ideImageAliases?.['code-latest']);
+            for (const [id, option] of Object.entries(newValue.ideOptions.options).filter(([_, x]) => !!x.resolveImageDigest)) {
+                try {
+                    value.ideOptions.options[id].image = await this.resolveImageDigest(option.image);
+                    log.info("ide config: successfully resolved image digest", {
+                        ide: id,
+                        image: option.image,
+                        resolvedImage: value.ideOptions.options[id].image,
+                        trigger,
+                    });
+                } catch (e) {
+                    log.error('ide config: error while resolving image digest', e, { trigger });
                 }
-            } catch (e) {
-                console.error('ide config: error while resolving image digest: ', e);
             }
 
             const key = JSON.stringify(value);
@@ -147,15 +168,15 @@ export class IDEConfigService {
                 return;
             }
 
-            console.log('ide config updated: ' + JSON.stringify(value, undefined, 2));
+            log.info('ide config: updated', { newConfig: JSON.stringify(value, undefined, 2), trigger });
             this.state = { key, value };
             this.onDidChangeEmitter.fire(value);
         } catch (e) {
-            console.error('ide config: failed to reconcile: ', e);
+            log.error('ide config: failed to reconcile', e, { trigger });
         }
     }, 500, { leading: true });
 
-    private resolveImageDigest(imageName:string) {
+    private resolveImageDigest(imageName: string) {
         return new Promise<string>((resolve, reject) => {
             cp.exec(`oci-tool --timeout 30s resolve name ${imageName}`, (error, imageDigest) => {
                 if (error) {
