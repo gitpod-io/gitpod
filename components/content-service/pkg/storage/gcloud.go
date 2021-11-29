@@ -952,6 +952,9 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 		}
 		// if we get any error besides "done" the iterator is broken: make sure we don't use it again.
 		if err != nil {
+			if errors.Is(err, gcpstorage.ErrBucketNotExist) {
+				return ErrNotFound
+			}
 			log.WithField("bucket", bucket).WithError(err).Error("error iterating object")
 			break
 		}
@@ -962,10 +965,6 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 			}
 			log.WithField("bucket", bucket).WithField("object", attrs.Name).WithError(err).Warn("cannot delete object, continue deleting objects")
 		}
-	}
-
-	if errors.Is(err, gcpstorage.ErrBucketNotExist) || errors.Is(err, gcpstorage.ErrObjectNotExist) {
-		return ErrNotFound
 	}
 	return err
 }
@@ -986,6 +985,11 @@ func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (
 
 	err = client.Bucket(bucket).Delete(ctx)
 	if err != nil {
+		if e, ok := err.(*googleapi.Error); ok {
+			if e.Code == http.StatusNotFound {
+				return ErrNotFound
+			}
+		}
 		if errors.Is(err, gcpstorage.ErrBucketNotExist) {
 			return ErrNotFound
 		}
