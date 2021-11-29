@@ -29,6 +29,7 @@ import { AccountStatement, CreditAlert } from './accounting-protocol';
 import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from './analytics';
+import { IDEServer } from './ide-protocol';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -45,7 +46,7 @@ export interface GitpodClient {
 }
 
 export const GitpodServer = Symbol('GitpodServer');
-export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, LicenseService {
+export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, LicenseService, IDEServer {
     // User related API
     getLoggedInUser(): Promise<User>;
     getTerms(): Promise<Terms>;
