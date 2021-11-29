@@ -17,6 +17,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/process"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
@@ -103,7 +104,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		args := []string{"-R", "-L", "gitpod", ws.Location}
 		cmd := exec.Command("chown", args...)
 		res, cerr := cmd.CombinedOutput()
-		if cerr != nil && !(cerr.Error() == "wait: no child processes" || cerr.Error() == "waitid: no child processes") {
+		if cerr != nil && !process.IsNotChildProcess(cerr) {
 			err = git.OpFailedError{
 				Args:       args,
 				ExecErr:    cerr,

@@ -41,6 +41,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/process"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -325,7 +326,7 @@ func Run(options ...RunOption) {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			err := cmd.Run()
-			if err != nil && !(err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes") {
+			if err != nil && !process.IsNotChildProcess(err) {
 				log.WithError(err).Error("git fetch error")
 			}
 		}()
