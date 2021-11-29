@@ -399,9 +399,26 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     }
     // core-dev specific section end
 
+
+    // If observability is enabled, we want to deploy it before installing Gitpod itself.
+    // The reason behind it is because Gitpod components will start sending traces to a non-existent
+    // OpenTelemetry-collector otherwise.
+    werft.log(`observability`, "Running observability static checks.")
+    observabilityStaticChecks()
+    werft.log(`observability`, "Installing monitoring-satellite...")
+    if (deploymentConfig.withObservability) {
+        await installMonitoring();
+        exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
+        exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
+    } else {
+        exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
+        exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
+    }
+    werft.done('observability');
+
     // deployment config
     try {
-        shell.cd("chart");
+        shell.cd("/workspace/chart");
         werft.log('helm', 'installing Gitpod');
 
         const commonFlags = addDeploymentFlags();
@@ -418,19 +435,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
     }
-
-    werft.log(`observability`, "Running observability static checks.")
-    observabilityStaticChecks()
-    werft.log(`observability`, "Installing monitoring-satellite...")
-    if (deploymentConfig.withObservability) {
-        await installMonitoring();
-        exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
-        exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
-    } else {
-        exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
-        exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
-    }
-    werft.done('observability');
 
     if (k3sWsCluster) {
         try {
