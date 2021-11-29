@@ -5,6 +5,7 @@
  */
 
 import { User, WorkspaceAndInstance, ContextURL } from "@gitpod/gitpod-protocol";
+import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -41,15 +42,20 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
             setActivity(false);
         }
     }
+
     const adminLinks = getAdminLinks(workspace);
-    const adminLink = (i: number) => <Property key={'admin-'+i} name={adminLinks[i]?.name || ''}><a className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" href={adminLinks[i]?.url}>{adminLinks[i]?.title || ''}</a></Property>;
+    const adminLink = (i: number) => <Property key={'admin-' + i} name={adminLinks[i]?.name || ''}><a className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" href={adminLinks[i]?.url}>{adminLinks[i]?.title || ''}</a></Property>;
     return <>
         <div className="flex">
             <div className="flex-1">
                 <div className="flex"><h3>{workspace.workspaceId}</h3><span className="my-auto ml-3"><WorkspaceStatusIndicator instance={WorkspaceAndInstance.toInstance(workspace)} /></span></div>
                 <p>{getProject(WorkspaceAndInstance.toWorkspace(workspace))}</p>
             </div>
-            <button className="secondary ml-3" disabled={activity} onClick={reload}>Reload Data</button>
+            <button className="secondary ml-3" onClick={() => {
+                window.location.href = new GitpodHostUrl(window.location.href).with({
+                    pathname: `/workspace-download/get/${workspace.workspaceId}`
+                }).toString();
+            }}>Download Workspace</button>
             <button className="danger ml-3" disabled={activity || workspace.phase === 'stopped'} onClick={stopWorkspace}>Stop Workspace</button>
         </div>
         <div className="flex mt-6">
