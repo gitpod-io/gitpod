@@ -3,13 +3,15 @@
 # to test, follow these steps
 # 1. generate a config ./installer init > config.yaml
 # 2. generate a k8s manifest from the config ./installer render -n foo -c config.yaml > k8s.yaml
-# 2. call this script like so ./.werft/post-process.sh 1234 5678 2
+# 2. call this script like so ./.werft/post-process.sh 1234 5678 2 kyleb-installer-werft (branch name with dashes, no slashes)
 
 set -e
 
 REG_DAEMON_PORT=$1
 WS_DAEMON_PORT=$2
 NODE_POOL_INDEX=$3
+DEV_BRANCH=$4
+
 i=0
 
 # count YAML like lines in the k8s manifest file
@@ -36,6 +38,7 @@ while [ "$i" -le "$DOCS" ]; do
       echo "setting $NAME to $WS_DAEMON_PORT"
       yq w -i k8s.yaml -d "$i" spec.template.spec.containers.[0].ports.[0].hostPort "$WS_DAEMON_PORT"
    fi
+
    # override labels for pod scheduling on nodes
       # the workspace pool depends on $NODE_POOL_INDEX
       # includes: image-builder, image-builder-mk3, registry-facade, ws-daemon, agent-smith
@@ -46,7 +49,6 @@ while [ "$i" -le "$DOCS" ]; do
       # TODO: ws-manager's template should denote where to put workspace and image build workspaces
       # test and see where workspaces spin up
    WORKSPACE_COMPONENTS=("image-builder" "image-builder-mk3 blobserve registry-facade" "ws-daemon" "agent-smith")
-
    # shellcheck disable=SC2076
    if [[ " ${WORKSPACE_COMPONENTS[*]} " =~ " ${NAME} " ]] && { [[ "$KIND" == "Deployment" ]] || [[ "$KIND" == "DaemonSet" ]]; }; then
       LABEL="gitpod.io/workspace_$NODE_POOL_INDEX"
@@ -68,11 +70,26 @@ while [ "$i" -le "$DOCS" ]; do
       yq m --arrays=overwrite -i k8s.yaml -d "$i" "$NAME"pool.yaml
    fi
 
+   # TODO: set ports for clients of the above hostDaemons
+
+   # overrides for server-config
+   if [[ "server-config" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      touch "$NAME"overrides.yaml
+      yq r k8s.yaml -d "$i" data | yq prefix - data > "$NAME"overrides.yaml
+
+      THEIA_BUCKET_NAME=$(yq r ./.werft/values.dev.yaml components.server.theiaPluginsBucketNameOverride)
+      THEIA_BUCKET_NAME_EXPR="s/\"theiaPluginsBucketNameOverride\": \"\"/\"theiaPluginsBucketNameOverride\": \"$THEIA_BUCKET_NAME\"/"
+      sed -i "$THEIA_BUCKET_NAME_EXPR" "$NAME"overrides.yaml
+
+      DEV_BRANCH_EXPR="s/\"devBranch\": \"\"/\"devBranch\": \"$DEV_BRANCH\"/"
+      sed -i "$DEV_BRANCH_EXPR" "$NAME"overrides.yaml
+
+      yq m -i k8s.yaml -d "$i" "$NAME"overrides.yaml
+   fi
+
    i=$((i + 1))
 done
-
-THEIA_BUCKET_NAME=$(yq r ./.werft/values.dev.yaml components.server.theiaPluginsBucketNameOverride)
-EXPRESSION="s/\"theiaPluginsBucketNameOverride\": \"\"/\"theiaPluginsBucketNameOverride\": \"$THEIA_BUCKET_NAME\"/"
-sed -i "$EXPRESSION" k8s.yaml
 
 exit

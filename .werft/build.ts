@@ -322,7 +322,7 @@ interface DeploymentConfig {
 */
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     // to test this function, change files in your workspace, and sideload (-s) changed files into werft like so
-    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/post-process.sh -a with-clean-slate-deployment=true
+    // werft run github -f -j ./.werft/build.yaml  -a with-clean-slate-deployment=true -s ./.werft/build.ts -s ./.werft/post-process.sh
 
     werft.phase(phases.DEPLOY, "deploying to dev")
 
@@ -464,7 +464,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Let's post process some k8s manifests...");
         const nodepoolIndex = getNodePoolIndex(namespace);
         exec(`chmod +x ./.werft/post-process.sh`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
-        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex}`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
+        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
         werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
         werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
@@ -472,7 +472,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
     try {
-        exec(`kubectl apply -f k8s.yaml`,{ silent: true });
+        exec(`kubectl apply -f k8s.yaml`,{ silent: false });
         werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
     } catch (err) {
         werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
