@@ -11,7 +11,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
@@ -40,8 +39,6 @@ type config struct {
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// todo(sje): check this config
-
-	codeImageStableVersion := server.CodeImageStableVersion(ctx)
 
 	scaler := struct {
 		Enabled    bool                                        `json:"enabled"`
@@ -87,7 +84,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			WorkspaceImage:     common.ImageName("", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
-			IDEImage:           common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, codeImageStableVersion),
+			IDEImage:           common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, workspace.CodeIDEImageStableVersion),
 			SupervisorImage:    common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			FeatureFlags:       nil,
 			MaxGhostWorkspaces: 10,
