@@ -9,5 +9,11 @@ RUN  apk upgrade --no-cache \
   && apk add --no-cache ca-certificates
 
 COPY components-ee-ws-scheduler--app/ws-scheduler /app/ws-scheduler
+
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 ENTRYPOINT [ "/app/ws-scheduler" ]
 CMD [ "-v", "help" ]

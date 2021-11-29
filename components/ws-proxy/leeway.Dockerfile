@@ -14,5 +14,11 @@ COPY public /app/public
 RUN chown -R appuser /app
 
 USER appuser
+
+ARG __GIT_COMMIT
+ARG VERSION
+
+ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
+ENV GITPOD_BUILD_VERSION=${VERSION}
 ENTRYPOINT [ "/app/ws-proxy" ]
 CMD [ "-v", "help" ]

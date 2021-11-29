@@ -31,6 +31,8 @@ packages:
     argdeps:
       - imageRepoBase
     config:
+      buildArgs:
+        VERSION: ${version}
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.supervisor

@@ -159,6 +159,8 @@ packages:
     argdeps:
       - imageRepoBase
     config:
+      buildArgs:
+        VERSION: ${version}
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/local-app:${version}

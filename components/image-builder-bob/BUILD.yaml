@@ -41,6 +41,8 @@ packages:
   - :app
   - :runc-facade
   config:
+    buildArgs:
+      VERSION: ${version}
     argdeps:
         - imageRepoBase
     dockerfile: leeway.Dockerfile
