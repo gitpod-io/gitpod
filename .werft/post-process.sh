@@ -3,7 +3,7 @@
 # to test, follow these steps
 # 1. generate a config ./installer init > config.yaml
 # 2. generate a k8s manifest from the config ./installer render -n $(kubens -c) -c config.yaml > k8s.yaml
-# 2. call this script like so ./.werft/post-process.sh 1234 5678 2 kyleb-installer-werft (branch name with dashes, no slashes)
+# 2. call this script like so ./.werft/post-process.sh 1234 5678 2 branch-name (branch name with dashes, no slashes)
 
 set -e
 
@@ -87,7 +87,7 @@ while [ "$i" -le "$DOCS" ]; do
       sed -i "$DEV_BRANCH_EXPR" "$NAME"overrides.yaml
 
       # InstallationShortname
-      # is expected to look like ws-dev.kyleb-installer-werft.staging.gitpod-dev.com
+      # is expected to look like ws-dev.<branch-name-with-dashes>.staging.gitpod-dev.com
       SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
       GITPOD_HOSTNAME=$(yq r ./.werft/values.dev.yaml hostname)
       INSTALL_SHORT_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$GITPOD_HOSTNAME"
@@ -97,7 +97,22 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -i k8s.yaml -d "$i" "$NAME"overrides.yaml
    fi
 
+   # overrides for ws-manager-bridge configmap
+   if [[ "ws-manager-bridge-config" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      touch "$NAME"overrides.yaml
+      yq r k8s.yaml -d "$i" data | yq prefix - data > "$NAME"overrides.yaml
+
+      # simliar to server, except the ConfigMap hierarchy, key, and value are different
+      SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
+      INSTALL_SHORT_NAME_EXPR="s/\"installation\": \"\"/\"installation\": \"$SHORT_NAME\"/"
+      sed -i "$INSTALL_SHORT_NAME_EXPR" "$NAME"overrides.yaml
+      yq m -i k8s.yaml -d "$i" "$NAME"overrides.yaml
+   fi
+
    # overrides for ws-manager configmap
+
 
    i=$((i + 1))
 done
