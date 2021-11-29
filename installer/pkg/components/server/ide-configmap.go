@@ -14,32 +14,101 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
-func CodeImageStableVersion(ctx *common.RenderContext) string {
-	stableVersion := ctx.VersionManifest.Components.Workspace.CodeImageStable.Version
-	if stableVersion == "" {
-		stableVersion = ctx.VersionManifest.Components.Workspace.CodeImage.Version
-	}
-	return stableVersion
-}
-
 func ideconfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	stableVersion := CodeImageStableVersion(ctx)
+	typeBrowser := "browser"
+	typeDesktop := "desktop"
 	idecfg := IDEConfig{
-		IDEVersion:   stableVersion,
-		IDEImageRepo: workspace.CodeIDEImage,
+		IDEVersion:   workspace.CodeIDEImageStableVersion,
+		IDEImageRepo: common.RepoName(ctx.Config.Repository, workspace.CodeIDEImage),
 		IDEImageAliases: map[string]string{
-			"code":        common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, stableVersion),
+			"code":        common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, workspace.CodeIDEImageStableVersion),
 			"code-latest": common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
 		},
 		DesktopIDEImageAliases: map[string]string{
 			"code-desktop":          common.ImageName(ctx.Config.Repository, workspace.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
 			"code-desktop-insiders": common.ImageName(ctx.Config.Repository, workspace.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
-			"intellij:":             common.ImageName(ctx.Config.Repository, workspace.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
+			"intellij":              common.ImageName(ctx.Config.Repository, workspace.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
 			"goland":                common.ImageName(ctx.Config.Repository, workspace.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
 		},
 		SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+		IDEOptions: IDEOptions{
+			Options: map[string]IDEOption{
+				"theia": {
+					Title:   "Theia (legacy)",
+					Tooltip: pointer.String("This entry exists solely for legacy reasons."),
+					Type:    typeBrowser,
+					Logo:    "invalid",
+					Hidden:  pointer.Bool(true),
+					Image:   common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, workspace.CodeIDEImageStableVersion),
+				},
+				"code": {
+					OrderKey: pointer.String("00"),
+					Title:    "VS Code",
+					Type:     typeBrowser,
+					Logo:     "vscode",
+					Image:    common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, workspace.CodeIDEImageStableVersion),
+				},
+				"code-latest": {
+					OrderKey:           pointer.String("01"),
+					Title:              "VS Code",
+					Type:               typeBrowser,
+					Logo:               "vscode-insiders",
+					Tooltip:            pointer.String("Early access version, still subject to testing."),
+					Label:              pointer.String("Insiders"),
+					Image:              common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
+					ResolveImageDigest: pointer.Bool(true),
+				},
+				"code-desktop": {
+					OrderKey: pointer.String("02"),
+					Title:    "VS Code",
+					Type:     typeDesktop,
+					Logo:     "vscode",
+					Image:    common.ImageName(ctx.Config.Repository, workspace.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
+				},
+				"code-desktop-insiders": {
+					OrderKey: pointer.String("03"),
+					Title:    "VS Code",
+					Type:     typeDesktop,
+					Logo:     "vscode-insiders",
+					Tooltip:  pointer.String("Visual Studio Code Insiders for early adopters."),
+					Label:    pointer.String("Insiders"),
+					Image:    common.ImageName(ctx.Config.Repository, workspace.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
+				},
+				"intellij": {
+					OrderKey: pointer.String("04"),
+					Title:    "IntelliJ IDEA",
+					Type:     typeDesktop,
+					Logo:     "intellij-idea",
+					Tooltip:  pointer.String("IntelliJ IDEA from the Early-Access-Programm (EAP)"),
+					Label:    pointer.String("EAP"),
+					Notes:    []string{"While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."},
+					Image:    common.ImageName(ctx.Config.Repository, workspace.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
+				},
+				"goland": {
+					OrderKey: pointer.String("05"),
+					Title:    "GoLand",
+					Type:     typeDesktop,
+					Logo:     "goland",
+					Tooltip:  pointer.String("GoLand from the Early-Access-Programm (EAP)"),
+					Label:    pointer.String("EAP"),
+					Notes:    []string{"While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."},
+					Image:    common.ImageName(ctx.Config.Repository, workspace.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
+				},
+			},
+			DefaultIDE:        "code",
+			DefaultDesktopIDE: "code-desktop",
+		},
+	}
+
+	if idecfg.IDEOptions.Options[idecfg.IDEOptions.DefaultIDE].Type != typeBrowser {
+		return nil, fmt.Errorf("default IDE '%s' does not point to a browser IDE option", idecfg.IDEOptions.DefaultIDE)
+	}
+
+	if idecfg.IDEOptions.Options[idecfg.IDEOptions.DefaultDesktopIDE].Type != typeDesktop {
+		return nil, fmt.Errorf("default desktop IDE '%s' does not point to a desktop IDE option", idecfg.IDEOptions.DefaultIDE)
 	}
 
 	fc, err := json.MarshalIndent(idecfg, "", " ")

@@ -36,7 +36,6 @@ type Components struct {
 	ServiceWaiter    Versioned `json:"serviceWaiter"`
 	Workspace        struct {
 		CodeImage        Versioned `json:"codeImage"`
-		CodeImageStable  Versioned `json:"codeImageStable"`
 		DockerUp         Versioned `json:"dockerUp"`
 		Supervisor       Versioned `json:"supervisor"`
 		DesktopIdeImages struct {
