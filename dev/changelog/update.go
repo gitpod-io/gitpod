@@ -185,7 +185,7 @@ func GetReleaseNotes(c *github.Client, opts *UpdateOptions, lastPrNr int, lastPr
 				// processed in prior runs
 				return releaseNotes, nil
 			}
-			if p.GetMergedAt().Before(lastPrDate) {
+			if p.GetMergedAt().Before(lastPrDate) || p.GetMergedAt().Equal(lastPrDate) {
 				// PR has already been processed, but it could have been updated after merge
 				continue
 			}
