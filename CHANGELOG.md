@@ -5,6 +5,7 @@
 - [dashboard][server] Make all project slugs unique within a team or user account by adding a unique suffix ([#6883](https://github.com/gitpod-io/gitpod/pull/6883)) - [@jankeromnes](https://github.com/jankeromnes)
 - [dashboard][server] Make all project slugs unique within a team or user account by adding a unique suffix ([#6883](https://github.com/gitpod-io/gitpod/pull/6883)) - [@jankeromnes](https://github.com/jankeromnes)
 - [dashboard][server] Make all project slugs unique within a team or user account by adding a unique suffix ([#6883](https://github.com/gitpod-io/gitpod/pull/6883)) - [@jankeromnes](https://github.com/jankeromnes)
+- [dashboard][server] Make all project slugs unique within a team or user account by adding a unique suffix ([#6883](https://github.com/gitpod-io/gitpod/pull/6883)) - [@jankeromnes](https://github.com/jankeromnes)
 - Set internal certs to 90 day duration ([#6893](https://github.com/gitpod-io/gitpod/pull/6893)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - updated Chart.lock ([#6913](https://github.com/gitpod-io/gitpod/pull/6913)) - [@wulfthimm](https://github.com/wulfthimm)
 - [ws-proxy] Improve TLS default configuration ([#6870](https://github.com/gitpod-io/gitpod/pull/6870)) - [@aledbf](https://github.com/aledbf)
