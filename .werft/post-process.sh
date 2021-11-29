@@ -2,7 +2,7 @@
 
 # to test, follow these steps
 # 1. generate a config ./installer init > config.yaml
-# 2. generate a k8s manifest from the config ./installer render -n foo -c config.yaml > k8s.yaml
+# 2. generate a k8s manifest from the config ./installer render -n $(kubens -c) -c config.yaml > k8s.yaml
 # 2. call this script like so ./.werft/post-process.sh 1234 5678 2 kyleb-installer-werft (branch name with dashes, no slashes)
 
 set -e
@@ -86,8 +86,18 @@ while [ "$i" -le "$DOCS" ]; do
       DEV_BRANCH_EXPR="s/\"devBranch\": \"\"/\"devBranch\": \"$DEV_BRANCH\"/"
       sed -i "$DEV_BRANCH_EXPR" "$NAME"overrides.yaml
 
+      # InstallationShortname
+      # is expected to look like ws-dev.kyleb-installer-werft.staging.gitpod-dev.com
+      SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
+      GITPOD_HOSTNAME=$(yq r ./.werft/values.dev.yaml hostname)
+      INSTALL_SHORT_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$GITPOD_HOSTNAME"
+      NAMESPACE=$(kubens -c)
+      INSTALL_SHORT_NAME_EXPR="s/\"installationShortname\": \"$NAMESPACE\"/\"installationShortname\": \"$INSTALL_SHORT_NAME\"/"
+      sed -i "$INSTALL_SHORT_NAME_EXPR" "$NAME"overrides.yaml
       yq m -i k8s.yaml -d "$i" "$NAME"overrides.yaml
    fi
+
+   # overrides for ws-manager configmap
 
    i=$((i + 1))
 done
