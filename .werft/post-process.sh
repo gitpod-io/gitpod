@@ -94,7 +94,7 @@ while [ "$i" -le "$DOCS" ]; do
       NAMESPACE=$(kubens -c)
       INSTALL_SHORT_NAME_EXPR="s/\"installationShortname\": \"$NAMESPACE\"/\"installationShortname\": \"$INSTALL_SHORT_NAME\"/"
       sed -i "$INSTALL_SHORT_NAME_EXPR" "$NAME"overrides.yaml
-      yq m -i k8s.yaml -d "$i" "$NAME"overrides.yaml
+      yq m -x -i k8s.yaml -d "$i" "$NAME"overrides.yaml
    fi
 
    # overrides for ws-manager-bridge configmap
@@ -108,11 +108,8 @@ while [ "$i" -le "$DOCS" ]; do
       SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
       INSTALL_SHORT_NAME_EXPR="s/\"installation\": \"\"/\"installation\": \"$SHORT_NAME\"/"
       sed -i "$INSTALL_SHORT_NAME_EXPR" "$NAME"overrides.yaml
-      yq m -i k8s.yaml -d "$i" "$NAME"overrides.yaml
+      yq m -x -i k8s.yaml -d "$i" "$NAME"overrides.yaml
    fi
-
-   # overrides for ws-manager configmap
-
 
    i=$((i + 1))
 done
