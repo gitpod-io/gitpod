@@ -43,8 +43,9 @@ func (cs *ContentService) DeleteUserContent(ctx context.Context, req *api.Delete
 
 	bucket := cs.s.Bucket(req.OwnerId)
 	err = cs.s.DeleteBucket(ctx, bucket)
+	// TODO
 	if err == storage.ErrNotFound {
-		log.WithFields(log.OWI(req.OwnerId, "", "")).WithError(err).Error("DeleteUserContent: NotFound")
+		log.WithFields(log.OWI(req.OwnerId, "", "")).Debug("DeleteUserContent: NotFound")
 		return &api.DeleteUserContentResponse{}, nil
 	}
 	if err != nil {
