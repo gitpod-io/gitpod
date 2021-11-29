@@ -175,12 +175,7 @@ type S3Storage struct {
 	Certificate ObjectRef `json:"certificate" validate:"required"`
 }
 type Jaeger struct {
-	InCluster *bool                   `json:"inCluster,omitempty" validate:"required"`
-	External  *JaegerOperatorExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
-}
-
-type JaegerOperatorExternal struct {
-	Certificate ObjectRef `json:"certificate" validate:"required"`
+	InCluster *bool `json:"inCluster,omitempty" validate:"required"`
 }
 
 type LogLevel string
