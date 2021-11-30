@@ -299,7 +299,9 @@
   "refresh": "",
   "schemaVersion": 31,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "gitpod-mixin"
+  ],
   "templating": {
     "list": [
       {
