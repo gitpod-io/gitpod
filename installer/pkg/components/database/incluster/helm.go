@@ -33,6 +33,12 @@ var Helm = common.CompositeHelmFunc(
 					helm.KeyValue("mysql.auth.username", Username),
 					helm.KeyValue("mysql.initdbScriptsConfigMap", SQLInitScripts),
 					helm.KeyValue("mysql.serviceAccount.name", Component),
+					helm.ImagePullSecrets("mysql.image.pullSecrets", cfg),
+					helm.KeyValue("mysql.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+					helm.ImagePullSecrets("mysql.metrics.image.pullSecrets", cfg),
+					helm.KeyValue("mysql.metrics.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+					helm.ImagePullSecrets("mysql.volumePermissions.image.pullSecrets", cfg),
+					helm.KeyValue("mysql.volumePermissions.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
 				},
 				// This is too complex to be sent as a string
 				FileValues: []string{

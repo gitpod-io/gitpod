@@ -23,11 +23,21 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
+		repository := fmt.Sprintf("%s/library/registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL))
+
 		registryValues := []string{
 			helm.KeyValue(fmt.Sprintf("docker-registry.podAnnotations.%s", strings.Replace(common.AnnotationConfigChecksum, ".", "\\.", -1)), secretHash),
 			helm.KeyValue("docker-registry.fullnameOverride", RegistryName),
 			helm.KeyValue("docker-registry.service.port", strconv.Itoa(common.ProxyContainerHTTPSPort)),
 			helm.KeyValue("docker-registry.tlsSecretName", BuiltInRegistryCerts),
+			helm.KeyValue("docker-registry.image.repository", repository),
+		}
+
+		if len(cfg.Config.ImagePullSecrets) > 0 {
+			// This chart doesn't add in the "name/value" pair format
+			for k, v := range cfg.Config.ImagePullSecrets {
+				registryValues = append(registryValues, helm.KeyValue(fmt.Sprintf("docker-registry.imagePullSecrets[%d].name", k), v.Name))
+			}
 		}
 
 		inCluster := pointer.BoolDeref(cfg.Config.ContainerRegistry.InCluster, false)

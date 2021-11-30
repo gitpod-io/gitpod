@@ -509,3 +509,17 @@ func RandomString(length int) (string, error) {
 	}
 	return string(b), nil
 }
+
+// ThirdPartyContainerRepo returns the container registry to use for third-party containers.
+// If config registry is set to the Gitpod registry, the third-party registry is returned. If
+// config registry is different, that repository is returned and deployment expected to mirror
+// the images to their registry
+func ThirdPartyContainerRepo(configRegistry string, thirdPartyRegistry string) string {
+	configRegistry = strings.TrimSuffix(configRegistry, "/")
+
+	if configRegistry == GitpodContainerRegistry {
+		return thirdPartyRegistry
+	}
+
+	return configRegistry
+}
