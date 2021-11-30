@@ -89,11 +89,14 @@ while [ "$i" -le "$DOCS" ]; do
       # InstallationShortname
       # is expected to look like ws-dev.<branch-name-with-dashes>.staging.gitpod-dev.com
       SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
-      GITPOD_HOSTNAME=$(yq r ./.werft/values.dev.yaml hostname)
-      INSTALL_SHORT_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$GITPOD_HOSTNAME"
       NAMESPACE=$(kubens -c)
-      INSTALL_SHORT_NAME_EXPR="s/\"installationShortname\": \"$NAMESPACE\"/\"installationShortname\": \"$INSTALL_SHORT_NAME\"/"
+      INSTALL_SHORT_NAME_EXPR="s/\"installationShortname\": \"$NAMESPACE\"/\"installationShortname\": \"$SHORT_NAME\"/"
       sed -i "$INSTALL_SHORT_NAME_EXPR" "$NAME"overrides.yaml
+      # Stage
+      STAGE=$(yq r ./.werft/values.dev.yaml installation.stage)
+      STAGE_EXPR="s/\"stage\": \"production\"/\"stage\": \"$STAGE\"/"
+      sed -i "$STAGE_EXPR" "$NAME"overrides.yaml
+      # Merge the changes
       yq m -x -i k8s.yaml -d "$i" "$NAME"overrides.yaml
    fi
 
