@@ -6,7 +6,6 @@ package wsdaemon
 
 import (
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
@@ -32,7 +31,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	initContainers := []corev1.Container{
 		{
 			Name:  "disable-kube-health-monitor",
-			Image: "ubuntu:20.04",
+			Image: common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, common.DockerRegistryURL), "library/ubuntu", "20.04"),
 			Command: []string{
 				"/usr/bin/nsenter",
 				"-t",
@@ -281,7 +280,7 @@ fi
 					Privileged: pointer.Bool(true),
 				},
 			},
-			*common.KubeRBACProxyContainer(),
+			*common.KubeRBACProxyContainer(ctx),
 		},
 		RestartPolicy:                 "Always",
 		TerminationGracePeriodSeconds: pointer.Int64(30),

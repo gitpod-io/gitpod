@@ -176,7 +176,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}, volumeMounts...),
 					},
 
-						*common.KubeRBACProxyContainer(),
+						*common.KubeRBACProxyContainer(ctx),
 					},
 					Volumes: append([]corev1.Volume{{
 						Name:         "cache",

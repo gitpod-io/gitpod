@@ -78,7 +78,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Privileged: pointer.Bool(true),
 							ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
 						},
-					}, *common.KubeRBACProxyContainer()},
+					}, *common.KubeRBACProxyContainer(ctx)},
 					Volumes: []corev1.Volume{{
 						Name: "config",
 						VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{

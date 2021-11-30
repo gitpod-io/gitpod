@@ -125,7 +125,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								MountPath: "/mnt/pull-secret.json",
 								SubPath:   ".dockerconfigjson",
 							}},
-						}, *common.KubeRBACProxyContainer()},
+						}, *common.KubeRBACProxyContainer(ctx)},
 					},
 				},
 			},

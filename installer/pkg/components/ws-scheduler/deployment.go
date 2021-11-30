@@ -96,7 +96,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							MountPath: "/ws-manager-client-tls-certs",
 							ReadOnly:  true,
 						}},
-					}, *common.KubeRBACProxyContainer()},
+					}, *common.KubeRBACProxyContainer(ctx)},
 				},
 			},
 		},

@@ -47,7 +47,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 					InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
 					Containers: []corev1.Container{{
 						Name:            fmt.Sprintf("%s-session", Component),
-						Image:           fmt.Sprintf("%s:%s", dbSessionsImage, dbSessionsTag),
+						Image:           common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), dbSessionsImage, dbSessionsTag),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Env: common.MergeEnv(
 							common.DatabaseEnv(&ctx.Config),

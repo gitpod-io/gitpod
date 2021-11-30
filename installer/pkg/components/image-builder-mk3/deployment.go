@@ -162,7 +162,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							*common.InternalCAVolumeMount(),
 						},
 					},
-						*common.KubeRBACProxyContainer(),
+						*common.KubeRBACProxyContainer(ctx),
 					},
 				},
 			},

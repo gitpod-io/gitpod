@@ -6,7 +6,7 @@ package init
 
 const (
 	Component       = "dbinit"
-	dbSessionsImage = "mysql"
+	dbSessionsImage = "library/mysql"
 	dbSessionsTag   = "5.7.34"
 	initScriptDir   = "files"
 	sqlInitScripts  = "db-init-scripts"
