@@ -40,14 +40,14 @@ func (Download) CaddyModule() caddy.ModuleInfo {
 
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
 func (m Download) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
+	origReq := r.Context().Value(caddyhttp.OriginalRequestCtxKey).(http.Request)
 
 	query := r.URL.RawQuery
 	if query != "" {
 		query = "?" + query
 	}
 
-	url := fmt.Sprintf("%v%v%v", m.Service, r.URL.Path, query)
+	url := fmt.Sprintf("%v%v%v", m.Service, origReq.URL.Path, query)
 	client := http.Client{Timeout: 5 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -75,12 +75,31 @@ func (m Download) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 		return fmt.Errorf("Bad Request: /workspace-download/get returned with code %v", resp.StatusCode)
 	}
 
-	redirectURL, err := io.ReadAll(resp.Body)
+	upstreamURLBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("Server error: cannot obtain redirect URL")
+		return fmt.Errorf("server error: cannot obtain workspace download URL")
+	}
+	upstreamURL := string(upstreamURLBytes)
+
+	// perform the upstream request here
+	resp, err = http.Get(upstreamURL)
+	if err != nil {
+		caddy.Log().Sugar().Errorf("error starting download of workspace for %v: %v", upstreamURL, err)
+		return caddyhttp.Error(http.StatusInternalServerError, fmt.Errorf("unexpected error downloading workspace"))
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		caddy.Log().Sugar().Errorf("invalid status code downloading workspace for %v: %v", upstreamURL, resp.StatusCode)
+		return caddyhttp.Error(http.StatusInternalServerError, fmt.Errorf("unexpected error downloading workspace"))
 	}
 
-	repl.Set("http."+workspaceDownloadModule+"_url", string(redirectURL))
+	brw := newNoBufferResponseWriter(w)
+	_, err = io.Copy(brw, resp.Body)
+	if err != nil {
+		caddy.Log().Sugar().Errorf("error proxying workspace download for %v: %v", upstreamURL, err)
+		return caddyhttp.Error(http.StatusInternalServerError, fmt.Errorf("unexpected error downloading workspace"))
+	}
 
 	return next.ServeHTTP(w, r)
 }
@@ -129,3 +148,27 @@ var (
 	_ caddyhttp.MiddlewareHandler = (*Download)(nil)
 	_ caddyfile.Unmarshaler       = (*Download)(nil)
 )
+
+type noBufferWriter struct {
+	w       http.ResponseWriter
+	flusher http.Flusher
+}
+
+func newNoBufferResponseWriter(w http.ResponseWriter) *noBufferWriter {
+	writer := &noBufferWriter{
+		w: w,
+	}
+	if flusher, ok := w.(http.Flusher); ok {
+		writer.flusher = flusher
+	}
+	return writer
+}
+
+func (n *noBufferWriter) Write(p []byte) (written int, err error) {
+	written, err = n.w.Write(p)
+	if n.flusher != nil {
+		n.flusher.Flush()
+	}
+
+	return
+}
