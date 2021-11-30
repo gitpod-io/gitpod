@@ -15,10 +15,15 @@ const (
 	AppName                     = "gitpod"
 	BlobServeServicePort        = 4000
 	CertManagerCAIssuer         = "ca-issuer"
+	DockerRegistryURL           = "docker.io"
 	DockerRegistryName          = "registry"
+	GitpodContainerRegistry     = "eu.gcr.io/gitpod-core-dev/build"
 	InClusterDbSecret           = "mysql"
 	InClusterMessageQueueName   = "rabbitmq"
 	InClusterMessageQueueTLS    = "messagebus-certificates-secret-core"
+	KubeRBACProxyRepo           = "quay.io/brancz"
+	KubeRBACProxyImage          = "kube-rbac-proxy"
+	KubeRBACProxyTag            = "v0.11.0"
 	MinioServiceAPIPort         = 9000
 	MonitoringChart             = "monitoring"
 	ProxyComponent              = "proxy"

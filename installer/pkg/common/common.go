@@ -264,10 +264,10 @@ func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 	}
 }
 
-func KubeRBACProxyContainer() *corev1.Container {
+func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "kube-rbac-proxy",
-		Image: "quay.io/brancz/kube-rbac-proxy:v0.11.0",
+		Image: ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 		Args: []string{
 			"--v=5",
 			"--logtostderr",
