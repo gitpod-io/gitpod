@@ -1,6 +1,11 @@
 # Change Log
 
 ## November 2021
+- [installer] Add option to use S3 as docker-registry backend ([#6912](https://github.com/gitpod-io/gitpod/pull/6912)) - [@aledbf](https://github.com/aledbf)
+- Fix typo at Gitpod's helm chart ([#6933](https://github.com/gitpod-io/gitpod/pull/6933)) - [@ArthurSens](https://github.com/ArthurSens)
+- Validate cluster min k8s version ([#6926](https://github.com/gitpod-io/gitpod/pull/6926)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Tweaks to the UI of the Prebuilds tab in the dashboard ([#6907](https://github.com/gitpod-io/gitpod/pull/6907)) - [@trumbitta](https://github.com/trumbitta)
+- Some improvements to the README of the dashboard, aimed at contributors ([#6907](https://github.com/gitpod-io/gitpod/pull/6907)) - [@trumbitta](https://github.com/trumbitta)
 - [dashboard][server] Make all project slugs unique within a team or user account by adding a unique suffix ([#6883](https://github.com/gitpod-io/gitpod/pull/6883)) - [@jankeromnes](https://github.com/jankeromnes)
 - Set internal certs to 90 day duration ([#6893](https://github.com/gitpod-io/gitpod/pull/6893)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - updated Chart.lock ([#6913](https://github.com/gitpod-io/gitpod/pull/6913)) - [@wulfthimm](https://github.com/wulfthimm)
