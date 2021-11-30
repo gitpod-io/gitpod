@@ -28,7 +28,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -103,7 +103,7 @@
       "repeatDirection": "h",
       "targets": [
         {
-          "datasource": "VictoriaMetrics",
+          "datasource": "$datasource",
           "exemplar": true,
           "expr": "sum(\n    rate(container_cpu_usage_seconds_total{container!=\"POD\", cluster=~\"$cluster\", node=~\"$node\", pod=~\"$component-.*\"}[5m])\n) by (pod, cluster, node)",
           "hide": false,
@@ -119,7 +119,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -207,7 +207,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "VictoriaMetrics",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -305,6 +305,27 @@
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
         "allValue": ".*",
         "current": {
           "selected": false,
@@ -315,7 +336,7 @@
             "$__all"
           ]
         },
-        "datasource": "VictoriaMetrics",
+        "datasource": "$datasource",
         "definition": "label_values(up{job=\"messagebus\"}, cluster)",
         "description": null,
         "error": null,
@@ -349,7 +370,7 @@
             "$__all"
           ]
         },
-        "datasource": "VictoriaMetrics",
+        "datasource": "$datasource",
         "definition": "label_values(kube_node_info{cluster=~\"$cluster\", node=~\".*-services-.*\"}, node)",
         "description": null,
         "error": null,
