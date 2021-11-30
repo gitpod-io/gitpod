@@ -181,7 +181,7 @@ export default function () {
             {showAuthBanner ? (
                 <div className="mt-8 rounded-xl text-gray-500 bg-gray-50 dark:bg-gray-800 flex-col">
                     <div className="p-8 text-center">
-                        <img src={NoAccess} title="No Access" className="m-auto mb-4" />
+                        <img src={NoAccess} alt="" title="No Access" className="m-auto mb-4" />
                         <div className="text-center text-gray-600 dark:text-gray-50 pb-3 font-bold">
                             No Access
                         </div>

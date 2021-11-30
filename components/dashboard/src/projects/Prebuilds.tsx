@@ -37,6 +37,7 @@ export default function () {
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const [statusFilter, setStatusFilter] = useState<PrebuiltWorkspaceState | undefined>();
 
+    const [isLoadingPrebuilds, setIsLoadingPrebuilds] = useState<boolean>(true);
     const [prebuilds, setPrebuilds] = useState<PrebuildWithStatus[]>([]);
 
     useEffect(() => {
@@ -47,13 +48,16 @@ export default function () {
             onPrebuildUpdate: (update: PrebuildWithStatus) => {
                 if (update.info.projectId === project.id) {
                     setPrebuilds(prev => [update, ...prev.filter(p => p.info.id !== update.info.id)]);
+                    setIsLoadingPrebuilds(false);
                 }
             }
         });
 
         (async () => {
+            setIsLoadingPrebuilds(true);
             const prebuilds = await getGitpodService().server.findPrebuilds({ projectId: project.id });
             setPrebuilds(prebuilds);
+            setIsLoadingPrebuilds(false);
         })();
 
         return () => {
@@ -78,7 +82,7 @@ export default function () {
                 setProject(newProject);
             }
         })();
-    }, [teams]);
+    }, [projectSlug, team, teams]);
 
     const prebuildContextMenu = (p: PrebuildWithStatus) => {
         const isFailed = p.status === "aborted" || p.status === "timeout" || !!p.error;
@@ -166,7 +170,7 @@ export default function () {
                 <div className="py-3 pl-3">
                     <DropDown prefix="Prebuild Status: " contextMenuWidth="w-32" entries={statusFilterEntries()} />
                 </div>
-                {(!!project && prebuilds.length === 0) &&
+                {(!isLoadingPrebuilds && prebuilds.length === 0) &&
                     <button onClick={() => triggerPrebuild(null)} className="ml-2">Run Prebuild</button>}
             </div>
             <ItemsList className="mt-2">
@@ -181,6 +185,10 @@ export default function () {
                         <span>Branch</span>
                     </ItemField>
                 </Item>
+                {isLoadingPrebuilds && <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16">
+                    <img alt="" className="h-4 w-4 animate-spin" src={Spinner} />
+                    <span>Fetching prebuilds...</span>
+                </div>}
                 {prebuilds.filter(filter).sort(prebuildSorter).map((p, index) => <Item key={`prebuild-${p.info.id}`} className="grid grid-cols-3">
                     <ItemField className="flex items-center my-auto">
                         <Link to={`/${!!team ? 't/'+team.slug : 'projects'}/${projectSlug}/${p.info.id}`} className="cursor-pointer">
