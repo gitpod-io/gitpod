@@ -111,6 +111,13 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$i" "$NAME"overrides.yaml
    fi
 
+   # override details for Minio
+   if [[ "minio" == "$NAME" ]] && [[ "$KIND" == "Deployment" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      yq -d "$i" w -i k8s.yaml spec.template.spec.serviceAccountName ws-daemon
+   fi
+
    i=$((i + 1))
 done
 
