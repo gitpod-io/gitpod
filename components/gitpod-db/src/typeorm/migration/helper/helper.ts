@@ -25,7 +25,7 @@ export async function indexExists(queryRunner: QueryRunner, tableName: string, i
                 AND table_name = '${tableName}'
                 AND index_name = '${indexName}'`
     );
-    return Number.parseInt(countResult[0].cnt) === 1;
+    return Number.parseInt(countResult[0].cnt) > 0; // for composite indexes this seems to return the number of columns involved
 };
 
 export async function columnExists(queryRunner: QueryRunner, tableName: string, columnName: string): Promise<boolean> {
