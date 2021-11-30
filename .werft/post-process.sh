@@ -158,15 +158,13 @@ while [ "$i" -le "$DOCS" ]; do
       STAGING_HOST_NAME=$(yq r ./.werft/values.dev.yaml hostname)
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
-      CURRENT_WS_SUFFIX_REGEX="\\\\.ws[^\\\\.]*\\\\.$DEV_BRANCH.$STAGING_HOST_NAME"
-      NEW_WS_SUFFIX_REGEX="\\\\.ws[^\\\\.]*\\\\.$DEV_BRANCH\\\\.staging.gitpod-dev\\\\.com"
 
       WS_HOST_SUFFIX_EXPR="s/\"workspaceHostSuffix\": \".$CURRENT_WS_HOST_NAME\"/\"workspaceHostSuffix\": \".$NEW_WS_HOST_NAME\"/"
       sed -i "$WS_HOST_SUFFIX_EXPR" "$NAME"overrides.yaml
 
-      # TODO: fix me
-      WS_HOST_SUFFIX_REGEX_EXPR="s|\"workspaceHostSuffixRegex\": \"$CURRENT_WS_SUFFIX_REGEX\"|\"workspaceHostSuffixRegex\": \"$NEW_WS_SUFFIX_REGEX\"|"
-      sed -i "$WS_HOST_SUFFIX_REGEX_EXPR" "$NAME"overrides.yaml
+      CURRENT_WS_SUFFIX_REGEX=$DEV_BRANCH.$STAGING_HOST_NAME
+      # In this, we only do a find replace on a given line if we find workspaceHostSuffixRegex on the line
+      sed -i -e "/workspaceHostSuffixRegex/s/$CURRENT_WS_SUFFIX_REGEX/$DEV_BRANCH\\\\\\\\.staging\\\\\\\\.gitpod-dev\\\\\\\\.com/g" "$NAME"overrides.yaml
 
       yq m -x -i k8s.yaml -d "$i" "$NAME"overrides.yaml
    fi
