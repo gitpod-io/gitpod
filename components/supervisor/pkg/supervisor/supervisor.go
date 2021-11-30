@@ -268,7 +268,10 @@ func Run(options ...RunOption) {
 	// We keep the reaper until the bitter end because:
 	//   - it doesn't need graceful shutdown
 	//   - we want to do as much work as possible (SIGTERM'ing reparented processes during shutdown).
-	go reaper(terminatingReaper)
+	//   - in headless task we can not use reaper, because it breaks headlessTaskFailed report
+	if !cfg.isHeadless() {
+		go reaper(terminatingReaper)
+	}
 
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
@@ -1017,6 +1020,10 @@ func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan
 
 func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 	defer wg.Done()
+
+	if cfg.isHeadless() {
+		return
+	}
 
 	go func() {
 		ssh, err := newSSHServer(ctx, cfg)
