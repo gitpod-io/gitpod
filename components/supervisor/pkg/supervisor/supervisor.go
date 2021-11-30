@@ -503,39 +503,37 @@ func reaper(terminatingReaper <-chan bool) {
 		case terminating = <-terminatingReaper:
 			continue
 		}
-
-		// wait on the process, hence remove it from the process table
-		pid, err := unix.Wait4(-1, nil, 0, nil)
-		// if we've been interrupted, try again until we're done
-		for err == syscall.EINTR {
-			pid, err = unix.Wait4(-1, nil, 0, nil)
-		}
-		if err == unix.ECHILD {
-			// The calling process does not have any unwaited-for children.
-			// Not really an error for us
-			err = nil
-		}
-		if err != nil {
-			log.WithField("pid", pid).WithError(err).Debug("cannot call waitpid() for re-parented child")
-		}
-
-		if !terminating {
-			continue
-		}
-		proc, err := os.FindProcess(pid)
-		if err != nil {
-			log.WithField("pid", pid).WithError(err).Debug("cannot find re-parented process")
-			continue
-		}
-		err = proc.Signal(syscall.SIGTERM)
-		if err != nil {
-			if !strings.Contains(err.Error(), "os: process already finished") {
-				log.WithField("pid", pid).WithError(err).Debug("cannot send SIGTERM to re-parented process")
+		for {
+			// wait on the process, hence remove it from the process table
+			pid, err := unix.Wait4(-1, nil, 0, nil)
+			// if we've been interrupted, try again until we're done
+			for err == syscall.EINTR {
+				pid, err = unix.Wait4(-1, nil, 0, nil)
 			}
-
-			continue
+			// The calling process does not have any unwaited-for children. Let's wait for a SIGCHLD notification.
+			if err == unix.ECHILD {
+				break
+			}
+			if err != nil {
+				log.WithField("pid", pid).WithError(err).Debug("cannot call waitpid() for re-parented child")
+			}
+			if !terminating {
+				continue
+			}
+			proc, err := os.FindProcess(pid)
+			if err != nil {
+				log.WithField("pid", pid).WithError(err).Debug("cannot find re-parented process")
+				continue
+			}
+			err = proc.Signal(syscall.SIGTERM)
+			if err != nil {
+				if !strings.Contains(err.Error(), "os: process already finished") {
+					log.WithField("pid", pid).WithError(err).Debug("cannot send SIGTERM to re-parented process")
+				}
+				continue
+			}
+			log.WithField("pid", pid).Debug("SIGTERM'ed reparented child process")
 		}
-		log.WithField("pid", pid).Debug("SIGTERM'ed reparented child process")
 	}
 }
 
