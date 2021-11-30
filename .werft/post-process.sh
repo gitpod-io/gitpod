@@ -121,6 +121,56 @@ while [ "$i" -le "$DOCS" ]; do
       yq -d "$i" w -i k8s.yaml spec.template.spec.serviceAccountName ws-daemon
    fi
 
+   # overrides for ws-manager
+   if [[ "ws-manager" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      touch "$NAME"overrides.yaml
+      yq r k8s.yaml -d "$i" data | yq prefix - data > "$NAME"overrides.yaml
+
+      # simliar to server, except the ConfigMap hierarchy, key, and value are different
+      SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
+      STAGING_HOST_NAME=$(yq r ./.werft/values.dev.yaml hostname)
+      CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
+      NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
+
+      WS_CLUSTER_HOST_EXPR="s/\"workspaceClusterHost\": \"$CURRENT_WS_HOST_NAME\"/\"workspaceClusterHost\": \"$NEW_WS_HOST_NAME\"/"
+      sed -i "$WS_CLUSTER_HOST_EXPR" "$NAME"overrides.yaml
+
+      WS_PORT_URL_TEMP_EXPR="s|\"portUrlTemplate\": \"https://{{ .WorkspacePort }}-{{ .Prefix }}.$CURRENT_WS_HOST_NAME\"|\"portUrlTemplate\": \"https://{{ .WorkspacePort }}-{{ .Prefix }}.$NEW_WS_HOST_NAME\"|"
+      sed -i "$WS_PORT_URL_TEMP_EXPR" "$NAME"overrides.yaml
+
+      WS_URL_TEMP_EXPR="s|\"urlTemplate\": \"https://{{ .Prefix }}.$CURRENT_WS_HOST_NAME\"|\"urlTemplate\": \"https://{{ .Prefix }}.$NEW_WS_HOST_NAME\"|"
+      sed -i "$WS_URL_TEMP_EXPR" "$NAME"overrides.yaml
+
+      yq m -x -i k8s.yaml -d "$i" "$NAME"overrides.yaml
+   fi
+
+   # overrides for ws-proxy
+   if [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      touch "$NAME"overrides.yaml
+      yq r k8s.yaml -d "$i" data | yq prefix - data > "$NAME"overrides.yaml
+
+      # simliar to server, except the ConfigMap hierarchy, key, and value are different
+      SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
+      STAGING_HOST_NAME=$(yq r ./.werft/values.dev.yaml hostname)
+      CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
+      NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
+      CURRENT_WS_SUFFIX_REGEX="\\\\.ws[^\\\\.]*\\\\.$DEV_BRANCH.$STAGING_HOST_NAME"
+      NEW_WS_SUFFIX_REGEX="\\\\.ws[^\\\\.]*\\\\.$DEV_BRANCH\\\\.staging.gitpod-dev\\\\.com"
+
+      WS_HOST_SUFFIX_EXPR="s/\"workspaceHostSuffix\": \".$CURRENT_WS_HOST_NAME\"/\"workspaceHostSuffix\": \".$NEW_WS_HOST_NAME\"/"
+      sed -i "$WS_HOST_SUFFIX_EXPR" "$NAME"overrides.yaml
+
+      # TODO: fix me
+      WS_HOST_SUFFIX_REGEX_EXPR="s|\"workspaceHostSuffixRegex\": \"$CURRENT_WS_SUFFIX_REGEX\"|\"workspaceHostSuffixRegex\": \"$NEW_WS_SUFFIX_REGEX\"|"
+      sed -i "$WS_HOST_SUFFIX_REGEX_EXPR" "$NAME"overrides.yaml
+
+      yq m -x -i k8s.yaml -d "$i" "$NAME"overrides.yaml
+   fi
+
    i=$((i + 1))
 done
 
