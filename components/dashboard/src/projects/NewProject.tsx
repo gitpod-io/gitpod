@@ -159,7 +159,7 @@ export default function NewProject() {
     }
 
     const createProject = async (teamOrUser: Team | User, selectedRepo: string) => {
-        if (!provider || isBitbucket()) {
+        if (!provider || isBitbucket()) {
             return;
         }
         const repo = reposInAccounts.find(r => r.account === selectedAccount && (r.path ? r.path === selectedRepo : r.name === selectedRepo));

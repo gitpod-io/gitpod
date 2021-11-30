@@ -32,7 +32,7 @@ export class GitlabService extends RepositoryService {
             return false;
         }
         const api = await this.api.create(user);
-        const response = (await api.Projects.show(`${owner}/${repoName}`)) as unknown as GitLab.Project;
+        const response = (await api.Projects.show(`${owner}%2F${repoName}`)) as unknown as GitLab.Project;
         if (GitLab.ApiError.is(response)) {
             throw response;
         }
