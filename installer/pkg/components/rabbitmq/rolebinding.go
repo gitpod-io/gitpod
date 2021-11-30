@@ -6,6 +6,7 @@ package rabbitmq
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,13 +17,13 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&v1.RoleBinding{
 		TypeMeta: common.TypeMetaRoleBinding,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
+			Name:      ComponentAlias,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(ComponentAlias),
 		},
 		Subjects: []v1.Subject{{
 			Kind: "ServiceAccount",
-			Name: Component,
+			Name: ComponentAlias,
 		}},
 		RoleRef: v1.RoleRef{
 			Kind:     "ClusterRole",
