@@ -14,6 +14,16 @@ import (
 
 func DefaultServiceAccount(component string) RenderFunc {
 	return func(cfg *RenderContext) ([]runtime.Object, error) {
+		pullSecrets := make([]corev1.LocalObjectReference, 0)
+
+		if len(cfg.Config.ImagePullSecrets) > 0 {
+			for _, i := range cfg.Config.ImagePullSecrets {
+				pullSecrets = append(pullSecrets, corev1.LocalObjectReference{
+					Name: i.Name,
+				})
+			}
+		}
+
 		return []runtime.Object{
 			&corev1.ServiceAccount{
 				TypeMeta: TypeMetaServiceAccount,
@@ -23,6 +33,7 @@ func DefaultServiceAccount(component string) RenderFunc {
 					Labels:    DefaultLabels(component),
 				},
 				AutomountServiceAccountToken: pointer.Bool(true),
+				ImagePullSecrets:             pullSecrets,
 			},
 		}, nil
 	}
