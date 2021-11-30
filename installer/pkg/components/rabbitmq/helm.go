@@ -279,6 +279,10 @@ var Helm = common.CompositeHelmFunc(
 					helm.KeyValue("rabbitmq.auth.tls.existingSecret", TLSSecret),
 					helm.KeyValue(fmt.Sprintf("rabbitmq.extraSecrets.%s.username", InClusterDbSecret), username),
 					helm.KeyValue(fmt.Sprintf("rabbitmq.extraSecrets.%s.password", InClusterDbSecret), password),
+					helm.ImagePullSecrets("rabbitmq.image.pullSecrets", cfg),
+					helm.KeyValue("rabbitmq.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+					helm.ImagePullSecrets("volumePermissions.image.pullSecrets", cfg),
+					helm.KeyValue("rabbitmq.volumePermissions.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
 				},
 				// This is too complex to be sent as a string
 				FileValues: []string{

@@ -21,8 +21,8 @@ const (
 	InClusterDbSecret           = "mysql"
 	InClusterMessageQueueName   = "rabbitmq"
 	InClusterMessageQueueTLS    = "messagebus-certificates-secret-core"
-	KubeRBACProxyRepo           = "quay.io/brancz"
-	KubeRBACProxyImage          = "kube-rbac-proxy"
+	KubeRBACProxyRepo           = "quay.io"
+	KubeRBACProxyImage          = "brancz/kube-rbac-proxy"
 	KubeRBACProxyTag            = "v0.11.0"
 	MinioServiceAPIPort         = 9000
 	MonitoringChart             = "monitoring"

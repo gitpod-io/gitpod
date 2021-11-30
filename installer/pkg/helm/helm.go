@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sigs.k8s.io/yaml"
+	"strings"
 	"syscall"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -119,6 +120,21 @@ func AffinityYaml(orLabels ...string) ([]byte, error) {
 	}
 
 	return marshal, nil
+}
+
+func ImagePullSecrets(key string, ctx *common.RenderContext) string {
+	if len(ctx.Config.ImagePullSecrets) > 0 {
+		var pullSecrets []string
+		for _, i := range ctx.Config.ImagePullSecrets {
+			pullSecrets = append(pullSecrets, i.Name)
+		}
+
+		// Helm array nomenclature
+		return KeyValue(key, fmt.Sprintf("{%s}", strings.Join(pullSecrets, ",")))
+	}
+
+	// Nothing to be set
+	return ""
 }
 
 // ImportTemplate allows for Helm charts to be imported into the installer manifest
