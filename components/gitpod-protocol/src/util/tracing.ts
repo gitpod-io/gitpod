@@ -40,7 +40,7 @@ export namespace TraceContext {
         return opentracing.globalTracer().startSpan(operation, options);
     }
 
-    export function logError(ctx: TraceContext, err: Error, errorCode?: number) {
+    export function logError(ctx: TraceContext, err: Error) {
         if (!ctx.span) {
             return;
         }
@@ -50,20 +50,24 @@ export namespace TraceContext {
             "stacktrace": err.stack
         })
         ctx.span.setTag("error", true);
-        if (errorCode) {
-            ctx.span.setTag("errorCode", errorCode);
-        }
     }
 
-    export function logAPIError(ctx: TraceContext, err: ResponseError<any>) {
+    export function logJsonRPCError(ctx: TraceContext, method: string, err: ResponseError<any>) {
         if (!ctx.span) {
             return;
         }
         logError(ctx, err);
 
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#json-rpc
         ctx.span.addTags({
-            errorCode: err.code,
-            apiError: true,
+            rpc: {
+                system: "jsonrpc",
+                method,
+                jsonrpc: {
+                    error_code: err.code,
+                    error_message: err.message,
+                },
+            },
         });
     }
 }
