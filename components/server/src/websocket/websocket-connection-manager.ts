@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ClientHeaderFields, Disposable, GitpodClient, GitpodServer, GitpodServerPath, User } from "@gitpod/gitpod-protocol";
+import { ClientHeaderFields, Disposable, GitpodClient as GitpodApiClient, GitpodServerPath, User } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler";
 import { JsonRpcConnectionHandler, JsonRpcProxy, JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
@@ -20,7 +20,7 @@ import { takeFirst } from "../express-util";
 import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "../prometheus-metrics";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 
-export type GitpodServiceFactory<C extends GitpodClient, S extends GitpodServer> = () => GitpodServerImpl<C, S>;
+export type GitpodServiceFactory = () => GitpodServerImpl;
 
 const EVENT_CONNECTION_CREATED = "EVENT_CONNECTION_CREATED";
 const EVENT_CONNECTION_CLOSED = "EVENT_CONNECTION_CLOSED";
@@ -47,7 +47,7 @@ export namespace WebsocketClientType {
 }
 export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
 
-export class WebsocketClientContext<C extends GitpodClient, S extends GitpodServer> {
+export class WebsocketClientContext {
     constructor(
         /**
          * We try to be as specific as we can when identifying client connections.
@@ -60,13 +60,13 @@ export class WebsocketClientContext<C extends GitpodClient, S extends GitpodServ
     ) {}
 
     /** This list of endpoints serving client connections 1-1 */
-    protected servers: GitpodServerImpl<C, S>[] = [];
+    protected servers: GitpodServerImpl[] = [];
 
-    addEndpoint(server: GitpodServerImpl<C, S>) {
+    addEndpoint(server: GitpodServerImpl) {
         this.servers.push(server);
     }
 
-    removeEndpoint(server: GitpodServerImpl<C, S>) {
+    removeEndpoint(server: GitpodServerImpl) {
         const index = this.servers.findIndex(s => s.uuid === server.uuid);
         if (index !== -1) {
             this.servers.splice(index);
@@ -81,18 +81,18 @@ export class WebsocketClientContext<C extends GitpodClient, S extends GitpodServ
 /**
  * Establishes and manages JsonRpc-over-websocket connections from frontends to GitpodServerImpl instances
  */
-export class WebsocketConnectionManager<C extends GitpodClient, S extends GitpodServer> implements ConnectionHandler {
+export class WebsocketConnectionManager implements ConnectionHandler {
     public readonly path = GitpodServerPath;
 
-    protected readonly jsonRpcConnectionHandler: JsonRpcConnectionHandler<C>;
+    protected readonly jsonRpcConnectionHandler: JsonRpcConnectionHandler<GitpodApiClient>;
     protected readonly events = new EventEmitter();
-    protected readonly contexts: Map<string, WebsocketClientContext<C, S>> = new Map();
+    protected readonly contexts: Map<string, WebsocketClientContext> = new Map();
 
     constructor(
-        protected readonly serverFactory: GitpodServiceFactory<C, S>,
+        protected readonly serverFactory: GitpodServiceFactory,
         protected readonly hostContextProvider: HostContextProvider,
         protected readonly rateLimiterConfig: RateLimiterConfig) {
-        this.jsonRpcConnectionHandler = new GitpodJsonRpcConnectionHandler<C>(
+        this.jsonRpcConnectionHandler = new GitpodJsonRpcConnectionHandler<GitpodApiClient>(
             this.path,
             this.createProxyTarget.bind(this),
             this.createAccessGuard.bind(this),
@@ -109,7 +109,7 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
         return (request && (request as WithFunctionAccessGuard).functionGuard) || new AllAccessFunctionGuard();
     }
 
-    protected createProxyTarget(client: JsonRpcProxy<C>, request?: object): GitpodServerImpl<C, S> {
+    protected createProxyTarget(client: JsonRpcProxy<GitpodApiClient>, request?: object): GitpodServerImpl {
         const expressReq = request as express.Request;
         const session = expressReq.session;
         const user: User | undefined = expressReq.user;
@@ -155,8 +155,8 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
 
         this.events.emit(EVENT_CONNECTION_CREATED, gitpodServer, expressReq);
 
-        return new Proxy<GitpodServerImpl<C, S>>(gitpodServer, {
-            get: (target, property: keyof GitpodServerImpl<C, S>) => {
+        return new Proxy<GitpodServerImpl>(gitpodServer, {
+            get: (target, property: keyof GitpodServerImpl) => {
                 if (session) session.touch();
 
                 return target[property];
@@ -164,7 +164,7 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
         });
     }
 
-    protected getOrCreateClientContext(expressReq: express.Request): WebsocketClientContext<C, S> {
+    protected getOrCreateClientContext(expressReq: express.Request): WebsocketClientContext {
         const { clientId, authLevel } = this.getClientId(expressReq);
         let ctx = this.contexts.get(clientId);
         if (!ctx) {
@@ -195,28 +195,28 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
         }
     }
 
-    public onConnectionCreated(l: (server: GitpodServerImpl<C, S>, req: express.Request) => void): Disposable {
+    public onConnectionCreated(l: (server: GitpodServerImpl, req: express.Request) => void): Disposable {
         this.events.on(EVENT_CONNECTION_CREATED, l)
         return {
             dispose: () => this.events.off(EVENT_CONNECTION_CREATED, l)
         }
     }
 
-    public onConnectionClosed(l: (server: GitpodServerImpl<C, S>, req: express.Request) => void): Disposable {
+    public onConnectionClosed(l: (server: GitpodServerImpl, req: express.Request) => void): Disposable {
         this.events.on(EVENT_CONNECTION_CLOSED, l)
         return {
             dispose: () => this.events.off(EVENT_CONNECTION_CLOSED, l)
         }
     }
 
-    public onClientContextCreated(l: (ctx: WebsocketClientContext<C, S>) => void): Disposable {
+    public onClientContextCreated(l: (ctx: WebsocketClientContext) => void): Disposable {
         this.events.on(EVENT_CLIENT_CONTEXT_CREATED, l)
         return {
             dispose: () => this.events.off(EVENT_CLIENT_CONTEXT_CREATED, l)
         }
     }
 
-    public onClientContextClosed(l: (ctx: WebsocketClientContext<C, S>) => void): Disposable {
+    public onClientContextClosed(l: (ctx: WebsocketClientContext) => void): Disposable {
         this.events.on(EVENT_CLIENT_CONTEXT_CLOSED, l)
         return {
             dispose: () => this.events.off(EVENT_CLIENT_CONTEXT_CLOSED, l)

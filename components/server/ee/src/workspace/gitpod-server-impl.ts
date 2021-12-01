@@ -43,7 +43,7 @@ import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
 
 @injectable()
-export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodServer> {
+export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;

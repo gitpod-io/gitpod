@@ -7,7 +7,7 @@
 import * as express from 'express';
 import { injectable, inject } from "inversify";
 import { WorkspaceDB, UserDB } from '@gitpod/gitpod-db/lib';
-import { User, GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
+import { User } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { Config } from '../config';
 import { UserDeletionService } from '../user/user-deletion-service';
@@ -19,7 +19,7 @@ import { GitpodServerImpl } from '../workspace/gitpod-server-impl';
 import { ResourceAccessGuard, OwnerResourceGuard } from '../auth/resource-access';
 
 export const EnforcementControllerServerFactory = Symbol('EnforcementControllerServerFactory');
-export type EnforcementControllerServerFactory = () => GitpodServerImpl<GitpodClient, GitpodServer>;
+export type EnforcementControllerServerFactory = () => GitpodServerImpl;
 
 @injectable()
 export class EnforcementController {
