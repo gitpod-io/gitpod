@@ -121,7 +121,7 @@ scripts:
       done
       cat >> $DST/run.sh <<EOF
       cd $PWD
-      su --pty - gitpod -c "source $DST/env; cd $PWD; TELEPRESENCE_USE_DEPLOYMENT=1 telepresence --swap-deployment server \
+      su --pty - gitpod -c "source $DST/env; cd $PWD; TELEPRESENCE_USE_DEPLOYMENT=1 telepresence --mount $DST/mounts --swap-deployment server \
                    --method inject-tcp \
                    --run yarn start-ee-inspect"
       EOF
