@@ -70,6 +70,22 @@ export namespace TraceContext {
             },
         });
     }
+
+    export function addJsonRPCParameters(ctx: TraceContext, method: string, args: any[]) {
+        if (!ctx.span) {
+            return;
+        }
+
+        ctx.span.addTags({
+            rpc: {
+                system: "jsonrpc",
+                method,
+                jsonrpc: {
+                    parameters: args.slice(),
+                },
+            },
+        });
+    }
 }
 
 @injectable()

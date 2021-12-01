@@ -315,18 +315,19 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
         const span = opentracing.globalTracer().startSpan(method);
         const ctx = { span };
-
-        // some generic data
-        span.addTags({ client: this.clientMetadata });
-        if (this.userId) {
-            span.addTags({
-                user: {
-                    id: this.userId,
-                },
-            });
-        }
-
         try {
+            // generic tracing data
+            span.addTags({ client: this.clientMetadata });
+            if (this.userId) {
+                span.addTags({
+                    user: {
+                        id: this.userId,
+                    },
+                });
+            }
+            TraceContext.addJsonRPCParameters(ctx, method, args);
+
+            // actual call
             const result = await this.target[method](ctx, ...args);    // we can inject TraceContext here because of GitpodServerWithTracing
             increaseApiCallCounter(method, 200);
             return result;
