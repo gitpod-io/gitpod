@@ -11,7 +11,6 @@ import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResu
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import * as opentracing from 'opentracing';
 import { v4 as uuidv4 } from 'uuid';
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseEvaluator, LicenseKeySource } from "@gitpod/licensor/lib";
@@ -132,21 +131,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     protected async mayStartWorkspace(ctx: TraceContext, user: User, runningInstances: Promise<WorkspaceInstance[]>): Promise<void> {
         await super.mayStartWorkspace(ctx, user, runningInstances);
 
-        const span = TraceContext.startSpan("mayStartWorkspace", ctx);
-
-        try {
-            const result = await this.eligibilityService.mayStartWorkspace(user, new Date(), runningInstances);
-            if (!result.enoughCredits) {
-                throw new ResponseError(ErrorCodes.NOT_ENOUGH_CREDIT, `Not enough credits. Please book more.`);
-            }
-            if (!!result.hitParallelWorkspaceLimit) {
-                throw new ResponseError(ErrorCodes.TOO_MANY_RUNNING_WORKSPACES, `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`);
-            }
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
+        const result = await this.eligibilityService.mayStartWorkspace(user, new Date(), runningInstances);
+        if (!result.enoughCredits) {
+            throw new ResponseError(ErrorCodes.NOT_ENOUGH_CREDIT, `Not enough credits. Please book more.`);
+        }
+        if (!!result.hitParallelWorkspaceLimit) {
+            throw new ResponseError(ErrorCodes.TOO_MANY_RUNNING_WORKSPACES, `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`);
         }
     }
 
@@ -176,120 +166,96 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     public async setWorkspaceTimeout(ctx: TraceContext, workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
+        ctx.span?.setTag("workspaceId", workspaceId);
+        ctx.span?.setTag("duration", duration);
+
         this.requireEELicense(Feature.FeatureSetTimeout);
 
         const user = this.checkUser("setWorkspaceTimeout");
-        const span = opentracing.globalTracer().startSpan("setWorkspaceTimeout");
-        span.setTag("workspaceId", workspaceId);
-        span.setTag("userId", user.id);
-        span.setTag("duration", duration);
 
-        try {
-            if (!WorkspaceTimeoutValues.includes(duration)) {
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Invalid duration")
-            }
+        if (!WorkspaceTimeoutValues.includes(duration)) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Invalid duration")
+        }
 
-            if (!(await this.maySetTimeout(user))) {
-                throw new ResponseError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required")
-            }
+        if (!(await this.maySetTimeout(user))) {
+            throw new ResponseError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required")
+        }
 
-            const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
-            const runningInstances = await this.workspaceDb.trace({ span }).findRegularRunningInstances(user.id);
-            const runningInstance = runningInstances.find(i => i.workspaceId === workspaceId);
-            if (!runningInstance) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
-            }
-            await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
+        const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
+        const runningInstance = runningInstances.find(i => i.workspaceId === workspaceId);
+        if (!runningInstance) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
+        }
+        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
 
-            // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
-            const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-            const defaultTimeout = await this.userService.getDefaultWorkspaceTimeout(user);
-            const instancesWithReset = runningInstances.filter(i =>
-                i.workspaceId !== workspaceId &&
-                i.status.timeout !== defaultTimeout &&
-                i.status.phase === "running"
-            );
-            await Promise.all(instancesWithReset.map(i => {
-                const req = new SetTimeoutRequest();
-                req.setId(i.id);
-                req.setDuration(defaultTimeout);
-
-                return client.setTimeout({ span }, req);
-            }));
-
+        // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
+        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const defaultTimeout = await this.userService.getDefaultWorkspaceTimeout(user);
+        const instancesWithReset = runningInstances.filter(i =>
+            i.workspaceId !== workspaceId &&
+            i.status.timeout !== defaultTimeout &&
+            i.status.phase === "running"
+        );
+        await Promise.all(instancesWithReset.map(i => {
             const req = new SetTimeoutRequest();
-            req.setId(runningInstance.id);
-            req.setDuration(duration);
-            await client.setTimeout({ span }, req);
+            req.setId(i.id);
+            req.setDuration(defaultTimeout);
 
-            return {
-                resetTimeoutOnWorkspaces: instancesWithReset.map(i => i.workspaceId)
-            }
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
+            return client.setTimeout(ctx, req);
+        }));
+
+        const req = new SetTimeoutRequest();
+        req.setId(runningInstance.id);
+        req.setDuration(duration);
+        await client.setTimeout(ctx, req);
+
+        return {
+            resetTimeoutOnWorkspaces: instancesWithReset.map(i => i.workspaceId)
         }
     }
 
     public async getWorkspaceTimeout(ctx: TraceContext, workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
+        ctx.span?.setTag("workspaceId", workspaceId);
+
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeatureSetTimeout);
 
         const user = this.checkUser("getWorkspaceTimeout");
-        const span = opentracing.globalTracer().startSpan("getWorkspaceTimeout");
-        span.setTag("workspaceId", workspaceId);
-        span.setTag("userId", user.id);
 
-        try {
-            const canChange = await this.maySetTimeout(user);
+        const canChange = await this.maySetTimeout(user);
 
-            const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
-            const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspaceId);
-            if (!runningInstance) {
-                log.warn({ userId: user.id, workspaceId }, 'Can only get keep-alive for running workspaces');
-                return { duration: "30m", canChange };
-            }
-            await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
-
-            const req = new DescribeWorkspaceRequest();
-            req.setId(runningInstance.id);
-
-            const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-            const desc = await client.describeWorkspace({ span }, req);
-            const duration = desc.getStatus()!.getSpec()!.getTimeout() as WorkspaceTimeoutDuration;
-            return { duration, canChange };
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
+        const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
+        if (!runningInstance) {
+            log.warn({ userId: user.id, workspaceId }, 'Can only get keep-alive for running workspaces');
+            return { duration: "30m", canChange };
         }
+        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
+
+        const req = new DescribeWorkspaceRequest();
+        req.setId(runningInstance.id);
+
+        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const desc = await client.describeWorkspace(ctx, req);
+        const duration = desc.getStatus()!.getSpec()!.getTimeout() as WorkspaceTimeoutDuration;
+        return { duration, canChange };
     }
 
 
-    public async isPrebuildDone(_ctx: TraceContext, pwsid: string): Promise<boolean> {
+    public async isPrebuildDone(ctx: TraceContext, pwsid: string): Promise<boolean> {
+        ctx.span?.setTag("pwsid", pwsid);
+
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeaturePrebuild);
 
-        const span = opentracing.globalTracer().startSpan("isPrebuildDone");
-        span.setTag("pwsid", pwsid);
-        const ctx: TraceContext = { span };
-        try {
-            const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsid);
-            if (!pws) {
-                // there is no prebuild - that's as good one being done
-                return true;
-            }
-
-            return PrebuiltWorkspace.isDone(pws);
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
+        const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsid);
+        if (!pws) {
+            // there is no prebuild - that's as good one being done
+            return true;
         }
+
+        return PrebuiltWorkspace.isDone(pws);
     }
 
     /**
@@ -300,13 +266,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     public async controlAdmission(ctx: TraceContext, id: string, level: "owner" | "everyone"): Promise<void> {
+        ctx.span?.setTag("workspaceId", id);
+        ctx.span?.setTag("level", level);
+
         this.requireEELicense(Feature.FeatureWorkspaceSharing);
 
-        const user = this.checkAndBlockUser('controlAdmission');
-        const span = opentracing.globalTracer().startSpan("controlAdmission");
-        span.setTag("workspaceId", id);
-        span.setTag("userId", user.id);
-        span.setTag("level", level);
+        this.checkAndBlockUser('controlAdmission');
 
         const lvlmap = new Map<string, AdmissionLevel>();
         lvlmap.set("owner", AdmissionLevel.ADMIT_OWNER_ONLY);
@@ -315,84 +280,68 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Invalid admission level.");
         }
 
-        try {
-            const workspace = await this.internalGetWorkspace(id, this.workspaceDb.trace({ span }));
-            await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
+        const workspace = await this.internalGetWorkspace(id, this.workspaceDb.trace(ctx));
+        await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
 
-            const instance = await this.workspaceDb.trace({ span }).findRunningInstance(id);
-            if (instance) {
-                await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "update");
+        const instance = await this.workspaceDb.trace(ctx).findRunningInstance(id);
+        if (instance) {
+            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "update");
 
-                const req = new ControlAdmissionRequest();
-                req.setId(instance.id);
-                req.setLevel(lvlmap.get(level)!);
+            const req = new ControlAdmissionRequest();
+            req.setId(instance.id);
+            req.setLevel(lvlmap.get(level)!);
 
-                const client = await this.workspaceManagerClientProvider.get(instance.region);
-                await client.controlAdmission({ span }, req);
-            }
-
-            await this.workspaceDb.trace({ span }).transaction(async db => {
-                workspace.shareable = level === 'everyone';
-                await db.store(workspace);
-            });
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
+            const client = await this.workspaceManagerClientProvider.get(instance.region);
+            await client.controlAdmission(ctx, req);
         }
+
+        await this.workspaceDb.trace(ctx).transaction(async db => {
+            workspace.shareable = level === 'everyone';
+            await db.store(workspace);
+        });
     }
 
     async takeSnapshot(ctx: TraceContext, options: GitpodServer.TakeSnapshotOptions): Promise<string> {
+        const { workspaceId, dontWait } = options;
+        ctx.span?.setTag("workspaceId", workspaceId);
+
         this.requireEELicense(Feature.FeatureSnapshot);
 
         const user = this.checkAndBlockUser("takeSnapshot");
-        const { workspaceId, dontWait } = options;
 
-        const span = opentracing.globalTracer().startSpan("takeSnapshot");
-        span.setTag("workspaceId", workspaceId);
-        span.setTag("userId", user.id);
+        const workspace = await this.guardSnaphotAccess(ctx, user.id, workspaceId);
 
-        try {
-            const workspace = await this.guardSnaphotAccess(span, user.id, workspaceId);
-
-            const instance = await this.workspaceDb.trace({ span }).findRunningInstance(workspaceId);
-            if (!instance) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
-            }
-            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace}, "get");
-
-            const client = await this.workspaceManagerClientProvider.get(instance.region);
-            const request = new TakeSnapshotRequest();
-            request.setId(instance.id);
-            request.setReturnImmediately(true);
-
-            // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
-            const resp = await client.takeSnapshot({ span }, request);
-
-            const snapshot = await this.snapshotService.createSnapshot(options, resp.getUrl());
-
-            // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
-            const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
-            if (!dontWait) {
-                // this mimicks the old behavior: wait until the snapshot is through
-                await this.internalDoWaitForWorkspace(waitOpts);
-            } else {
-                // start driving the snapshot immediately
-                SafePromise.catchAndLog(this.internalDoWaitForWorkspace(waitOpts), { userId: user.id, workspaceId: workspaceId})
-            }
-
-            return snapshot.id;
-        } catch (err) {
-            TraceContext.logError({ span }, err);
-            throw err;
-        } finally {
-            span.finish()
+        const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
+        if (!instance) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
         }
+        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace}, "get");
+
+        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const request = new TakeSnapshotRequest();
+        request.setId(instance.id);
+        request.setReturnImmediately(true);
+
+        // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
+        const resp = await client.takeSnapshot(ctx, request);
+
+        const snapshot = await this.snapshotService.createSnapshot(options, resp.getUrl());
+
+        // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
+        const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
+        if (!dontWait) {
+            // this mimicks the old behavior: wait until the snapshot is through
+            await this.internalDoWaitForWorkspace(waitOpts);
+        } else {
+            // start driving the snapshot immediately
+            SafePromise.catchAndLog(this.internalDoWaitForWorkspace(waitOpts), { userId: user.id, workspaceId: workspaceId})
+        }
+
+        return snapshot.id;
     }
 
-    protected async guardSnaphotAccess(span: opentracing.Span, userId: string, workspaceId: string) : Promise<Workspace> {
-        const workspace = await this.workspaceDb.trace({ span }).findById(workspaceId);
+    protected async guardSnaphotAccess(ctx: TraceContext, userId: string, workspaceId: string) : Promise<Workspace> {
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (!workspace || workspace.ownerId !== userId) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
@@ -406,27 +355,18 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
      * @throws ResponseError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
      */
     async waitForSnapshot(ctx: TraceContext, snapshotId: string): Promise<void> {
+        ctx.span?.setTag("snapshotId", snapshotId);
+
         this.requireEELicense(Feature.FeatureSnapshot);
 
         const user = this.checkAndBlockUser("waitForSnapshot");
 
-        const span = opentracing.globalTracer().startSpan("waitForSnapshot");
-        span.setTag("snapshotId", snapshotId);
-        span.setTag("userId", user.id);
-
-        try {
-            const snapshot = await this.workspaceDb.trace({ span }).findSnapshotById(snapshotId);
-            if (!snapshot) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`)
-            }
-            const snapshotWorkspace = await this.guardSnaphotAccess(span, user.id, snapshot.originalWorkspaceId);
-            await this.internalDoWaitForWorkspace({ workspaceOwner: snapshotWorkspace.ownerId, snapshot });
-        } catch (err) {
-            TraceContext.logError({ span }, err);
-            throw err;
-        } finally {
-            span.finish()
+        const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(snapshotId);
+        if (!snapshot) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`)
         }
+        const snapshotWorkspace = await this.guardSnaphotAccess(ctx, user.id, snapshot.originalWorkspaceId);
+        await this.internalDoWaitForWorkspace({ workspaceOwner: snapshotWorkspace.ownerId, snapshot });
     }
 
     protected async internalDoWaitForWorkspace(opts: WaitForSnapshotOptions) {
@@ -439,31 +379,22 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async getSnapshots(ctx: TraceContext, workspaceId: string): Promise<string[]> {
+        ctx.span?.setTag("workspaceId", workspaceId);
+
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeatureSnapshot);
 
         const user = this.checkAndBlockUser("getSnapshots");
 
-        const span = opentracing.globalTracer().startSpan("getSnapshots");
-        span.setTag("workspaceId", workspaceId);
-        span.setTag("userId", user.id);
-
-        try {
-            const workspace = await this.workspaceDb.trace({ span }).findById(workspaceId);
-            if (!workspace || workspace.ownerId !== user.id) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
-            }
-
-            const snapshots = await this.workspaceDb.trace({ span }).findSnapshotsByWorkspaceId(workspaceId);
-            await Promise.all(snapshots.map(s => this.guardAccess({ kind: "snapshot", subject: s, workspaceOwnerID: workspace.ownerId }, "get")));
-
-            return snapshots.map(s => s.id);
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish()
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (!workspace || workspace.ownerId !== user.id) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
+
+        const snapshots = await this.workspaceDb.trace(ctx).findSnapshotsByWorkspaceId(workspaceId);
+        await Promise.all(snapshots.map(s => this.guardAccess({ kind: "snapshot", subject: s, workspaceOwnerID: workspace.ownerId }, "get")));
+
+        return snapshots.map(s => s.id);
     }
 
 
@@ -472,16 +403,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminGetUsers", { req }, Permission.ADMIN_USERS);
 
-        const span = opentracing.globalTracer().startSpan("adminGetUsers");
         try {
             const res = await this.userDB.findAllUsers(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.searchTerm);
             res.rows = res.rows.map(this.censorUser);
             return res;
         } catch (e) {
-            TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
-        } finally {
-            span.finish();
         }
     }
 
@@ -491,14 +418,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardAdminAccess("adminGetUser", { id }, Permission.ADMIN_USERS);
 
         let result: User | undefined;
-        const span = opentracing.globalTracer().startSpan("adminGetUser");
         try {
             result = await this.userDB.findUserById(id);
         } catch (e) {
-            TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
-        } finally {
-            span.finish();
         }
 
         if (!result) {
@@ -512,7 +435,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
-        const span = opentracing.globalTracer().startSpan("adminBlockUser");
         try {
             const target = await this.userDB.findUserById(req.id);
             if (!target) {
@@ -522,21 +444,18 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             target.blocked = !!req.blocked;
             await this.userDB.storeUser(target);
 
-            const workspaceDb = this.workspaceDb.trace({ span });
+            const workspaceDb = this.workspaceDb.trace(ctx);
             const workspaces = await workspaceDb.findWorkspacesByUser(req.id);
             const isDefined = <T>(x: T | undefined): x is T => x !== undefined;
             (await Promise.all(workspaces.map((workspace) => workspaceDb.findRunningInstance(workspace.id))))
                 .filter(isDefined)
-                .forEach(instance => this.internalStopWorkspaceInstance({ span }, instance.id, instance.region, StopWorkspacePolicy.IMMEDIATELY));
+                .forEach(instance => this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, StopWorkspacePolicy.IMMEDIATELY));
 
             // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
             // Returning `target` instead (which should be equivalent).
             return this.censorUser(target);
         } catch (e) {
-            TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
-        } finally {
-            span.finish();
         }
     }
 
@@ -545,24 +464,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminDeleteUser", { id }, Permission.ADMIN_USERS);
 
-        const span = opentracing.globalTracer().startSpan("adminDeleteUser");
         try {
             await this.userDeletionService.deleteUser(id);
         } catch (e) {
-            TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
-        } finally {
-            span.finish();
         }
     }
 
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
+        ctx.span?.log(req);
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_USERS);
 
-        const span = opentracing.globalTracer().startSpan("adminModifyRoleOrPermission");
-        span.log(req);
         try {
             const target = await this.userDB.findUserById(req.id);
             if (!target) {
@@ -585,20 +500,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             // Returning the following works at the cost of an additional DB query:
             return this.censorUser((await this.userDB.findUserById(req.id))!);
         } catch (e) {
-            TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
-        } finally {
-            span.finish();
         }
     }
 
     async adminModifyPermanentWorkspaceFeatureFlag(ctx: TraceContext, req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User> {
+        ctx.span?.log(req);
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminModifyPermanentWorkspaceFeatureFlag", { req }, Permission.ADMIN_USERS);
-
-        const span = opentracing.globalTracer().startSpan("adminModifyPermanentWorkspaceFeatureFlag");
-        span.log(req);
         try {
             const target = await this.userDB.findUserById(req.id);
             if (!target) {
@@ -623,10 +534,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             // Returning `target` instead (which should be equivalent).
             return this.censorUser(target);
         } catch (e) {
-            TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
-        } finally {
-            span.finish();
         }
     }
 
@@ -635,14 +543,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
 
-        const span = opentracing.globalTracer().startSpan("adminGetWorkspaces");
         try {
-            return await this.workspaceDb.trace({ span }).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req, req.searchTerm);
+            return await this.workspaceDb.trace(ctx).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req, req.searchTerm);
         } catch (e) {
-            TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
-        } finally {
-            span.finish();
         }
     }
 
@@ -652,14 +556,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardAdminAccess("adminGetWorkspace", { id }, Permission.ADMIN_WORKSPACES);
 
         let result: WorkspaceAndInstance | undefined;
-        const span = opentracing.globalTracer().startSpan("adminGetWorkspace");
         try {
-            result = await this.workspaceDb.trace({ span }).findWorkspaceAndInstance(id);
+            result = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(id);
         } catch (e) {
-            TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
-        } finally {
-            span.finish();
         }
 
         if (!result) {
@@ -673,10 +573,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminForceStopWorkspace", { id }, Permission.ADMIN_WORKSPACES);
 
-        const span = opentracing.globalTracer().startSpan("adminForceStopWorkspace");
-        const workspace = await this.workspaceDb.trace({ span }).findById(id);
+        const workspace = await this.workspaceDb.trace(ctx).findById(id);
         if (workspace) {
-            await this.internalStopWorkspace({ span }, workspace, StopWorkspacePolicy.IMMEDIATELY, true);
+            await this.internalStopWorkspace(ctx, workspace, StopWorkspacePolicy.IMMEDIATELY, true);
         }
     }
 
@@ -685,8 +584,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminRestoreSoftDeletedWorkspace", { id }, Permission.ADMIN_WORKSPACES);
 
-        const span = opentracing.globalTracer().startSpan("adminRestoreSoftDeletedWorkspace");
-        await this.workspaceDb.trace({ span }).transaction(async db => {
+        await this.workspaceDb.trace(ctx).transaction(async db => {
             const ws = await db.findById(id);
             if (!ws) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, `No workspace with id '${id}' found.`);
@@ -714,115 +612,110 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         log.info({ userId: this.user?.id }, "admin access", { authorised: true, method, params });
     }
 
-    protected async findPrebuiltWorkspace(ctx: TraceContext, user: User, context: WorkspaceContext, mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
-        const span = TraceContext.startSpan("findPrebuiltWorkspace", ctx);
-        span.setTag("mode", mode);
-        span.setTag("userId", user.id);
+    protected async findPrebuiltWorkspace(parentCtx: TraceContext, user: User, context: WorkspaceContext, mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
+        const ctx = TraceContext.childContextWithSpan("findPrebuiltWorkspace", parentCtx);
+        ctx.span?.addTags({
+            mode,
+            userId: user.id,
+        });
 
-        try {
-            if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
+        if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
+            return;
+        }
+
+        const logCtx: LogContext = { userId: user.id };
+        const cloneUrl = context.repository.cloneUrl;
+        // Note: findPrebuiltWorkspaceByCommit always returns the last triggered prebuild (so, if you re-trigger a prebuild, the newer one will always be used here)
+        const prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceByCommit(cloneUrl, context.revision);
+        const logPayload = { mode, cloneUrl, commit: context.revision, prebuiltWorkspace };
+        log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
+        if (!prebuiltWorkspace) {
+            return;
+        }
+
+        if (prebuiltWorkspace.state === 'available') {
+            log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${context.revision}`, logPayload);
+            const result: PrebuiltWorkspaceContext = {
+                title: context.title,
+                originalContext: context,
+                prebuiltWorkspace
+            };
+            return result;
+        } else if (prebuiltWorkspace.state === 'queued' || prebuiltWorkspace.state === 'building') {
+            if (mode === CreateWorkspaceMode.ForceNew) {
+                // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
                 return;
+                // TODO(janx): Fall back to parent prebuild instead, if it's available:
+                //   const buildWorkspace = await this.workspaceDb.trace({span}).findById(prebuiltWorkspace.buildWorkspaceId);
+                //   const parentPrebuild = await this.workspaceDb.trace({span}).findPrebuildByID(buildWorkspace.basedOnPrebuildId);
+                // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
             }
 
-            const logCtx: LogContext = { userId: user.id };
-            const cloneUrl = context.repository.cloneUrl;
-            // Note: findPrebuiltWorkspaceByCommit always returns the last triggered prebuild (so, if you re-trigger a prebuild, the newer one will always be used here)
-            const prebuiltWorkspace = await this.workspaceDb.trace({ span }).findPrebuiltWorkspaceByCommit(cloneUrl, context.revision);
-            const logPayload = { mode, cloneUrl, commit: context.revision, prebuiltWorkspace };
-            log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
-            if (!prebuiltWorkspace) {
-                return;
-            }
-
-            if (prebuiltWorkspace.state === 'available') {
-                log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${context.revision}`, logPayload);
-                const result: PrebuiltWorkspaceContext = {
-                    title: context.title,
-                    originalContext: context,
-                    prebuiltWorkspace
-                };
-                return result;
-            } else if (prebuiltWorkspace.state === 'queued' || prebuiltWorkspace.state === 'building') {
-                if (mode === CreateWorkspaceMode.ForceNew) {
-                    // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
-                    return;
-                    // TODO(janx): Fall back to parent prebuild instead, if it's available:
-                    //   const buildWorkspace = await this.workspaceDb.trace({span}).findById(prebuiltWorkspace.buildWorkspaceId);
-                    //   const parentPrebuild = await this.workspaceDb.trace({span}).findPrebuildByID(buildWorkspace.basedOnPrebuildId);
-                    // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
-                }
-
-                const workspaceID = prebuiltWorkspace.buildWorkspaceId;
-                const makeResult = (instanceID: string): WorkspaceCreationResult => {
-                    return <WorkspaceCreationResult>{
-                        runningWorkspacePrebuild: {
-                            prebuildID: prebuiltWorkspace.id,
-                            workspaceID,
-                            instanceID,
-                            starting: 'queued',
-                            sameCluster: false,
-                        }
-                    };
-                };
-
-                const wsi = await this.workspaceDb.trace({}).findCurrentInstance(workspaceID);
-                if (!wsi || wsi.stoppedTime !== undefined) {
-                    if (prebuiltWorkspace.state === 'queued') {
-                        if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
-                            // queued for long than a minute? Let's retrigger
-                            console.warn('Retriggering queued prebuild.', prebuiltWorkspace);
-                            try {
-                                await this.prebuildManager.retriggerPrebuild({ span }, user, workspaceID);
-                            } catch (err) {
-                                console.error(err);
-                            }
-                        }
-                        return makeResult(wsi!.id);
+            const workspaceID = prebuiltWorkspace.buildWorkspaceId;
+            const makeResult = (instanceID: string): WorkspaceCreationResult => {
+                return <WorkspaceCreationResult>{
+                    runningWorkspacePrebuild: {
+                        prebuildID: prebuiltWorkspace.id,
+                        workspaceID,
+                        instanceID,
+                        starting: 'queued',
+                        sameCluster: false,
                     }
+                };
+            };
 
-                    return;
-                }
-                const result = makeResult(wsi.id);
-
-                const inSameCluster = wsi.region === this.config.installationShortname;
-                if (!inSameCluster) {
-                    if (mode === CreateWorkspaceMode.UsePrebuild) {
-                        /* We need to wait for this prebuild to finish before we return from here.
-                        * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
-                        * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
-                        * in this mode we'll poll the database until the prebuild is ready (or we time out).
-                        *
-                        * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
-                        *       Otherwise there's no dbsync inbetween that we might have to wait for.
-                        *
-                        * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
-                        */
-                        const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(prebuiltWorkspace.id, 20000);
-                        if (!finishedPrebuiltWorkspace) {
-                            log.warn(logCtx, "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished", logPayload);
-                            return;
-                        } else {
-                            return { title: context.title, originalContext: context, prebuiltWorkspace: finishedPrebuiltWorkspace } as PrebuiltWorkspaceContext;
+            const wsi = await this.workspaceDb.trace({}).findCurrentInstance(workspaceID);
+            if (!wsi || wsi.stoppedTime !== undefined) {
+                if (prebuiltWorkspace.state === 'queued') {
+                    if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
+                        // queued for long than a minute? Let's retrigger
+                        console.warn('Retriggering queued prebuild.', prebuiltWorkspace);
+                        try {
+                            await this.prebuildManager.retriggerPrebuild(ctx, user, workspaceID);
+                        } catch (err) {
+                            console.error(err);
                         }
                     }
+                    return makeResult(wsi!.id);
                 }
 
-                /* This is the default mode behaviour: we present the running prebuild to the user so that they can see the logs
-                * or choose to force the creation of a workspace.
-                */
-                if (wsi.status.phase != 'running') {
-                    result.runningWorkspacePrebuild!.starting = 'starting';
-                } else {
-                    result.runningWorkspacePrebuild!.starting = 'running';
-                }
-                log.info(logCtx, `Found prebuilding (starting=${result.runningWorkspacePrebuild!.starting}) workspace for ${cloneUrl}:${context.revision}`, logPayload);
-                return result;
+                return;
             }
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
+            const result = makeResult(wsi.id);
+
+            const inSameCluster = wsi.region === this.config.installationShortname;
+            if (!inSameCluster) {
+                if (mode === CreateWorkspaceMode.UsePrebuild) {
+                    /* We need to wait for this prebuild to finish before we return from here.
+                    * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
+                    * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
+                    * in this mode we'll poll the database until the prebuild is ready (or we time out).
+                    *
+                    * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
+                    *       Otherwise there's no dbsync inbetween that we might have to wait for.
+                    *
+                    * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
+                    */
+                    const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(prebuiltWorkspace.id, 20000);
+                    if (!finishedPrebuiltWorkspace) {
+                        log.warn(logCtx, "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished", logPayload);
+                        return;
+                    } else {
+                        return { title: context.title, originalContext: context, prebuiltWorkspace: finishedPrebuiltWorkspace } as PrebuiltWorkspaceContext;
+                    }
+                }
+            }
+
+            /* This is the default mode behaviour: we present the running prebuild to the user so that they can see the logs
+            * or choose to force the creation of a workspace.
+            */
+            if (wsi.status.phase != 'running') {
+                result.runningWorkspacePrebuild!.starting = 'starting';
+            } else {
+                result.runningWorkspacePrebuild!.starting = 'running';
+            }
+            log.info(logCtx, `Found prebuilding (starting=${result.runningWorkspacePrebuild!.starting}) workspace for ${cloneUrl}:${context.revision}`, logPayload);
+            return result;
         }
     }
 
@@ -878,18 +771,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     public async getRemainingUsageHours(ctx: TraceContext, ): Promise<number> {
-        const span = opentracing.globalTracer().startSpan("getRemainingUsageHours");
-
-        try {
-            const user = this.checkUser("getRemainingUsageHours");
-            const runningInstancesPromise = this.workspaceDb.trace({ span }).findRegularRunningInstances(user.id);
-            return this.accountStatementProvider.getRemainingUsageHours(user.id, new Date().toISOString(), runningInstancesPromise);
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
-        }
+        const user = this.checkUser("getRemainingUsageHours");
+        const runningInstancesPromise = this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
+        return this.accountStatementProvider.getRemainingUsageHours(user.id, new Date().toISOString(), runningInstancesPromise);
     }
 
     // (SaaS) – payment/billing
@@ -906,7 +790,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // chargebee
-    async getChargebeeSiteId(): Promise<string> {
+    async getChargebeeSiteId(ctx: TraceContext): Promise<string> {
         this.checkUser('getChargebeeSiteId');
         if (!this.config.chargebeeProviderOptions) {
             log.error("config error: expected chargebeeProviderOptions but found none!");
@@ -1012,48 +896,38 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const user = this.checkUser('checkout');
         const logContext = { userId: user.id };
 
-        const span = opentracing.globalTracer().startSpan("checkout");
-        span.setTag("user", user.id);
-
         // Throws an error if not the case
         await this.ensureIsEligibleForPlan(user, planId);
 
+        const coupon = await this.findAvailableCouponForPlan(user, planId);
+
         try {
-            const coupon = await this.findAvailableCouponForPlan(user, planId);
+            const email = User.getPrimaryEmail(user);
 
-            try {
-                const email = User.getPrimaryEmail(user);
-
-                return new Promise((resolve, reject) => {
-                    this.chargebeeProvider.hosted_page.checkout_new({
-                        customer: {
-                            id: user.id,
-                            email
-                        },
-                        subscription: {
-                            plan_id: planId,
-                            plan_quantity: planQuantity,
-                            coupon
-                        }
-                    }).request((error: any, result: any) => {
-                        if (error) {
-                            log.error(logContext, 'Checkout page error', error);
-                            reject(error);
-                        } else {
-                            log.debug(logContext, 'Checkout page initiated');
-                            resolve(result.hosted_page);
-                        }
-                    });
+            return new Promise((resolve, reject) => {
+                this.chargebeeProvider.hosted_page.checkout_new({
+                    customer: {
+                        id: user.id,
+                        email
+                    },
+                    subscription: {
+                        plan_id: planId,
+                        plan_quantity: planQuantity,
+                        coupon
+                    }
+                }).request((error: any, result: any) => {
+                    if (error) {
+                        log.error(logContext, 'Checkout page error', error);
+                        reject(error);
+                    } else {
+                        log.debug(logContext, 'Checkout page initiated');
+                        resolve(result.hosted_page);
+                    }
                 });
-            } catch (err) {
-                log.error(logContext, 'Checkout error', err);
-                throw err;
-            }
-        } catch (e) {
-            TraceContext.logError({ span }, e);
-            throw e;
-        } finally {
-            span.finish();
+            });
+        } catch (err) {
+            log.error(logContext, 'Checkout error', err);
+            throw err;
         }
     }
 
@@ -1227,7 +1101,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             // Verify assignee:
             //  - must be existing Gitpod user, uniquely identifiable per GitHub/GitLab/Bitbucket name
             //  - in case of Student Subscription: Must be a student
-            const assigneeInfo: FindUserByIdentityStrResult = identityStr ? (await this.findAssignee(logCtx, identityStr)) : (await this.getAssigneeInfo(user));
+            const assigneeInfo: FindUserByIdentityStrResult = identityStr ? (await this.findAssignee(logCtx, identityStr)) : (await this.getAssigneeInfo(ctx, user));
             const { user: assignee, identity: assigneeIdentity, authHost } = assigneeInfo;
             // check here that current user is either the assignee or assigner.
             await this.ensureMayGetAssignedToTS(ts, user, assignee);
@@ -1241,8 +1115,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // Find an (identity, authHost) tuple that uniquely identifies a user (to generate an `identityStr`).
-    protected async getAssigneeInfo(user: User) {
-        const authProviders = await this.getAuthProviders();
+    protected async getAssigneeInfo(ctx: TraceContext, user: User) {
+        const authProviders = await this.getAuthProviders(ctx);
         for (const identity of user.identities) {
             const provider = authProviders.find(p => p.authProviderId === identity.authProviderId);
             if (provider && provider.host) {
@@ -1538,9 +1412,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardProjectOperation(user, projectId, "update");
 
-        const span = opentracing.globalTracer().startSpan("triggerPrebuild");
-        span.setTag("userId", user.id);
-
         const branchDetails = (!!branchName
             ? await this.projectsService.getBranchDetails(user, project, branchName)
             : (await this.projectsService.getBranchDetails(user, project)).filter(b => b.isDefault));
@@ -1550,9 +1421,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         const contextURL = branchDetails[0].url;
 
-        const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
+        const context = await this.contextParser.handle(ctx, user, contextURL) as CommitContext;
 
-        const prebuild = await this.prebuildManager.startPrebuild({ span }, {
+        const prebuild = await this.prebuildManager.startPrebuild(ctx, {
             contextURL,
             cloneURL: project.cloneUrl,
             commit: context.revision,
@@ -1577,6 +1448,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async cancelPrebuild(ctx: TraceContext, projectId: string, prebuildId: string): Promise<void> {
+        ctx.span?.setTag("projectId", projectId);
+        ctx.span?.setTag("prebuildId", prebuildId);
+
         const user = this.checkAndBlockUser("cancelPrebuild");
 
         const project = await this.projectsService.getProject(projectId);
@@ -1585,12 +1459,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardProjectOperation(user, projectId, "update");
 
-        const span = opentracing.globalTracer().startSpan("cancelPrebuild");
-        span.setTag("userId", user.id);
-        span.setTag("projectId", projectId);
-        span.setTag("prebuildId", prebuildId);
-
-        const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByID(prebuildId);
+        const prebuild = await this.workspaceDb.trace(ctx).findPrebuildByID(prebuildId);
         if (!prebuild) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Prebuild not found");
         }
