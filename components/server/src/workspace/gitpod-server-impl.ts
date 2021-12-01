@@ -419,7 +419,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInfo> {
-        // TODO(gpl) Add all parameters as tags generically?
         ctx.span?.setTag("workspaceId", workspaceId);
 
         this.checkUser('getWorkspace');
