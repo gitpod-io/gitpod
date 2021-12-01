@@ -1535,7 +1535,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             // Anyone who can read a team's information (i.e. any team member) can create a new project.
             await this.guardTeamOperation(params.teamId, "get");
         }
-        const project = this.projectsService.createProject(params);
+        const project = this.projectsService.createProject(params, user);
         this.analytics.track({
             userId: user.id,
             event: "project_created",
