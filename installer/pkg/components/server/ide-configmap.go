@@ -97,6 +97,14 @@ func ideconfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Notes:    []string{"While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, workspace.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
 				},
+				"pycharm": {
+					OrderKey: pointer.String("06"),
+					Title:    "PyCharm",
+					Type:     typeDesktop,
+					Logo:     "https://upload.wikimedia.org/wikipedia/commons/1/1d/PyCharm_Icon.svg", // TODO(clu): Serve logo from our own components instead of using this wikimedia URL.
+					Notes:    []string{"While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."},
+					Image:    common.ImageName(ctx.Config.Repository, workspace.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
+				},
 			},
 			DefaultIDE:        "code",
 			DefaultDesktopIDE: "code-desktop",
