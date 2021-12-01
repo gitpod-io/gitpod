@@ -50,7 +50,7 @@ export namespace WebsocketClientType {
 export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
 
 export interface ClientMetadata {
-    clientId: string,
+    id: string,
     authLevel: WebsocketAuthenticationLevel,
 }
 export namespace ClientMetadata {
@@ -58,15 +58,15 @@ export namespace ClientMetadata {
         if (metadata.authLevel !== "user") {
             return undefined;
         }
-        return metadata.clientId;
+        return metadata.id;
     }
     export function from(userId: string | undefined, sessionId?: string): ClientMetadata {
         if (userId) {
-            return { clientId: userId, authLevel: "user" };
+            return { id: userId, authLevel: "user" };
         } else if (sessionId) {
-            return { clientId: `session-${sessionId}`, authLevel: "session" };
+            return { id: `session-${sessionId}`, authLevel: "session" };
         } else {
-            return { clientId: "anonymous", authLevel: "anonymous" };
+            return { id: "anonymous", authLevel: "anonymous" };
         }
     }
 }
@@ -190,7 +190,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
     }
 
     protected getOrCreateClientContext(expressReq: express.Request): WebsocketClientContext {
-        const { clientId, authLevel } = this.getClientId(expressReq);
+        const { id: clientId, authLevel } = this.getClientId(expressReq);
         let ctx = this.contexts.get(clientId);
         if (!ctx) {
             ctx = new WebsocketClientContext(clientId, authLevel);
@@ -208,7 +208,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
     }
 
     protected createRateLimiter(req?: object): RateLimiter {
-        const { clientId } = this.getClientId(req);
+        const { id: clientId } = this.getClientId(req);
         return {
             user: clientId,
             consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(clientId, method),
@@ -313,24 +313,29 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         const ctx = { span };
 
         // some generic data
-        const { clientId } = this.clientMetadata;
-        span.addTags({ clientId });
+        span.addTags({ client: this.clientMetadata });
         if (this.userId) {
-            span.addTags({ userId: this.userId });
+            span.addTags({
+                user: {
+                    id: this.userId,
+                },
+            });
         }
 
         try {
-            const result = await this.target[method]({ span }, ...args);    // we can inject TraceContext here because of GitpodServerWithTracing
+            const result = await this.target[method](ctx, ...args);    // we can inject TraceContext here because of GitpodServerWithTracing
             increaseApiCallCounter(method, 200);
             return result;
         } catch (e) {
             if (e instanceof ResponseError) {
                 increaseApiCallCounter(method, e.code);
-                TraceContext.logAPIError(ctx, e);
+                TraceContext.logJsonRPCError(ctx, method, e);
                 log.info(`Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
             } else {
-                increaseApiCallCounter(method, 500);
-                TraceContext.logError(ctx, e, 500);
+                const err = new ResponseError(500, "internal server error");
+                increaseApiCallCounter(method, err.code);
+                TraceContext.logJsonRPCError(ctx, method, err);
+
                 log.error(`Request ${method} failed with internal server error`, e, { method, args });
             }
             throw e;
