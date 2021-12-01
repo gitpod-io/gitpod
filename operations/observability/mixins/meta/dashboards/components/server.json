@@ -678,7 +678,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(server_websocket_connection_count) by (cluster, clientType)",
+          "expr": "sum(server_websocket_connection_count{cluster=~\"$cluster\", pod=~\"$pod\"}) by (cluster, clientType)",
           "interval": "",
           "legendFormat": "{{cluster}} {{clientType}}",
           "refId": "A"
