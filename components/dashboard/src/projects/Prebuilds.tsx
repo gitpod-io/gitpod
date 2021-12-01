@@ -257,6 +257,11 @@ export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
     }
 }
 
+function formatDuration(milliseconds: number) {
+    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
+    return (hours > 0 ? `${hours}:` : '') + moment(milliseconds).format('mm:ss');
+}
+
 export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInstance }) {
     let status = <></>;
     let details = <></>;
@@ -296,7 +301,7 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
             details = <div className="flex space-x-1 items-center text-gray-400">
                 <img className="h-4 w-4 filter-grayscale" src={StatusRunning} />
                 <span>{!!props.prebuildInstance?.stoppedTime
-                    ? `${Math.round(((new Date(props.prebuildInstance.stoppedTime).getTime()) - (new Date(props.prebuildInstance.creationTime).getTime())) / 1000)}s`
+                    ? formatDuration((new Date(props.prebuildInstance.stoppedTime).getTime()) - (new Date(props.prebuildInstance.creationTime).getTime()))
                     : '...'}</span>
                 </div>;
             break;
