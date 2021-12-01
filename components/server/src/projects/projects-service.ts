@@ -90,7 +90,7 @@ export class ProjectsService {
         return result;
     }
 
-    async createProject({ name, slug, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams): Promise<Project> {
+    async createProject({ name, slug, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams, installer: User): Promise<Project> {
         const projects = await this.getProjectsByCloneUrls([cloneUrl]);
         if (projects.length > 0) {
             throw new Error("Project for repository already exists.");
@@ -111,28 +111,22 @@ export class ProjectsService {
             appInstallationId
         });
         await this.projectDB.storeProject(project);
-        await this.onDidCreateProject(project);
+        await this.onDidCreateProject(project, installer);
         return project;
     }
 
-    protected async onDidCreateProject(project: Project) {
+    protected async onDidCreateProject(project: Project, installer: User) {
         let { userId, teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if ("gitlab.com" === parsedUrl?.host) {
             const repositoryService = this.hostContextProvider.get(parsedUrl?.host)?.services?.repositoryService;
             if (repositoryService) {
-                if (teamId) {
-                    const owner = (await this.teamDB.findMembersByTeam(teamId)).find(m => m.role === "owner");
-                    userId = owner?.userId;
-                }
-                const user = userId && await this.userDB.findUserById(userId);
-                if (user) {
-                    if (await repositoryService.canInstallAutomatedPrebuilds(user, cloneUrl)) {
-                        log.info("Update prebuild installation for project.", { cloneUrl, teamId, userId });
-                        await repositoryService.installAutomatedPrebuilds(user, cloneUrl);
-                    }
-                } else {
-                    log.error("Cannot find user for project.", { cloneUrl })
+                // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
+                // in the project creation flow, we only propose repositories where the user is actually allowed to
+                // install a webhook.
+                if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
+                    log.info("Update prebuild installation for project.", { cloneUrl, teamId, userId, installerId: installer.id });
+                    await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
                 }
             }
         }
