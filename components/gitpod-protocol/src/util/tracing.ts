@@ -20,11 +20,16 @@ export type TraceContextWithSpan = TraceContext & {
 
 
 export namespace TraceContext {
-    export function startSpan(operation: string, ctx: TraceContext): opentracing.Span {
+    export function startSpan(operation: string, parentCtx: TraceContext): opentracing.Span {
         const options: opentracing.SpanOptions = {
-            childOf: ctx.span
+            childOf: parentCtx.span
         }
         return opentracing.globalTracer().startSpan(operation, options);
+    }
+
+    export function childContextWithSpan(operation: string, parentCtx: TraceContext): TraceContextWithSpan {
+        const span = startSpan(operation, parentCtx);
+        return { span };
     }
 
     export function startAsyncSpan(operation: string, ctx: TraceContext): opentracing.Span {
