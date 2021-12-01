@@ -47,7 +47,6 @@ import { TokenGarbageCollector } from './user/token-garbage-collector';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
 import { WebsocketConnectionManager } from './websocket/websocket-connection-manager';
 import { OneTimeSecretServer } from './one-time-secret-server';
-import { GitpodServer, GitpodClient } from '@gitpod/gitpod-protocol';
 import { HostContainerMapping } from './auth/host-container-mapping';
 import { BlockedUserFilter, NoOneBlockedUserFilter } from './auth/blocked-user-filter';
 import { AuthProviderService } from './auth/auth-provider-service';
@@ -124,10 +123,10 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(GitpodServerImpl).toSelf();
     bind(WebsocketConnectionManager).toDynamicValue(ctx => {
-            const serverFactory = () => ctx.container.get<GitpodServerImpl<GitpodClient, GitpodServer>>(GitpodServerImpl);
+            const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
             const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
             const config = ctx.container.get<Config>(Config);
-            return new WebsocketConnectionManager<GitpodClient, GitpodServer>(serverFactory, hostContextProvider, config.rateLimiter);
+            return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
         }
     ).inSingletonScope();
 

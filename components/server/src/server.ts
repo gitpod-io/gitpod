@@ -54,7 +54,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
     @inject(EnforcementController) protected readonly enforcementController: EnforcementController;
-    @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager<C, S>;
+    @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
     @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
     @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
