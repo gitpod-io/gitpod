@@ -9,10 +9,15 @@ import * as opentracing from 'opentracing';
 import { TracingConfig, initTracerFromEnv, Sampler, SamplingDecision } from 'jaeger-client';
 import { initGlobalTracer } from 'opentracing';
 import { injectable } from 'inversify';
+import { ResponseError } from 'vscode-jsonrpc';
 
 export interface TraceContext {
     span?: opentracing.Span
 }
+export type TraceContextWithSpan = TraceContext & {
+    span: opentracing.Span
+}
+
 
 export namespace TraceContext {
     export function startSpan(operation: string, ctx: TraceContext): opentracing.Span {
@@ -30,7 +35,7 @@ export namespace TraceContext {
         return opentracing.globalTracer().startSpan(operation, options);
     }
 
-    export function logError(ctx: TraceContext, err: Error) {
+    export function logError(ctx: TraceContext, err: Error, errorCode?: number) {
         if (!ctx.span) {
             return;
         }
@@ -39,7 +44,22 @@ export namespace TraceContext {
             "error": err.message,
             "stacktrace": err.stack
         })
-        ctx.span.setTag("error", true)
+        ctx.span.setTag("error", true);
+        if (errorCode) {
+            ctx.span.setTag("errorCode", errorCode);
+        }
+    }
+
+    export function logAPIError(ctx: TraceContext, err: ResponseError<any>) {
+        if (!ctx.span) {
+            return;
+        }
+        logError(ctx, err);
+
+        ctx.span.addTags({
+            errorCode: err.code,
+            apiError: true,
+        });
     }
 }
 
@@ -132,3 +152,20 @@ export class PerOperationSampler implements Sampler {
         }
     }
 }
+
+// Augment interfaces with an leading parameter "TraceContext" on every method
+type IsValidArg<T> = T extends object ? keyof T extends never ? false : true : true;
+type AddTraceContext<T> =
+    T extends (a: infer A, b: infer B, c: infer C, d: infer D, e: infer E, f: infer F) => infer R ? (
+        IsValidArg<F> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E, f: F) => R :
+        IsValidArg<E> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E) => R :
+        IsValidArg<D> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D) => R :
+        IsValidArg<C> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C) => R :
+        IsValidArg<B> extends true ? (ctx: TraceContextWithSpan, a: A, b: B) => R :
+        IsValidArg<A> extends true ? (ctx: TraceContextWithSpan, a: A) => R :
+        (ctx: TraceContextWithSpan) => Promise<R>
+    ) : never;
+
+export type InterfaceWithTraceContext<T> = {
+    [P in keyof T]: AddTraceContext<T[P]>
+};

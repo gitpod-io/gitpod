@@ -16,7 +16,7 @@ import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/paymen
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import { InterfaceWithTraceContext, TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { IdentifyMessage, PageMessage, RemoteIdentifyMessage, RemotePageMessage, RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
 import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
@@ -55,8 +55,10 @@ import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/su
 import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
 import { IDEConfigService } from '../ide-config';
 
+export type GitpodServerWithTracing = InterfaceWithTraceContext<GitpodServer>;
+
 @injectable()
-export class GitpodServerImpl implements GitpodServer, Disposable {
+export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(Config) protected readonly config: Config;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
@@ -162,7 +164,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
 
     }
 
-    setClient(client: GitpodApiClient | undefined): void {
+    setClient(ctx: TraceContext, client: GitpodApiClient | undefined): void {
         throw new Error('Unsupported operation. Use initialize.')
     }
 
@@ -241,7 +243,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
     }
 
 
-    public async getLoggedInUser(): Promise<User> {
+    public async getLoggedInUser(ctx: TraceContext): Promise<User> {
         await this.doUpdateUser();
         return this.checkUser("getLoggedInUser");
     }
@@ -280,7 +282,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async updateLoggedInUser(partialUser: Partial<User>): Promise<User> {
+    public async updateLoggedInUser(ctx: TraceContext, partialUser: Partial<User>): Promise<User> {
         const user = this.checkUser('updateLoggedInUser');
         await this.guardAccess({ kind: "user", subject: user }, "update");
 
@@ -369,7 +371,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async getToken(query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined> {
+    public async getToken(ctx: TraceContext, query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined> {
         await this.doUpdateUser();
         const user = this.checkUser("getToken");
         const logCtx = { userId: user.id, host: query.host };
@@ -386,7 +388,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async getPortAuthenticationToken(workspaceId: string): Promise<Token> {
+    public async getPortAuthenticationToken(ctx: TraceContext, workspaceId: string): Promise<Token> {
         const user = this.checkAndBlockUser("getPortAuthenticationToken", { workspaceId });
         const span = opentracing.globalTracer().startSpan("getPortAuthenticationToken");
         span.setTag("workspaceId", workspaceId);
@@ -421,7 +423,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return [];
     }
 
-    public async getWorkspace(id: string): Promise<WorkspaceInfo> {
+    public async getWorkspace(ctx: TraceContext, id: string): Promise<WorkspaceInfo> {
         const user = this.checkUser('getWorkspace');
         const span = opentracing.globalTracer().startSpan("getWorkspace");
         span.setTag("workspaceId", id);
@@ -454,7 +456,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async startWorkspace(workspaceId: string, options: GitpodServer.StartWorkspaceOptions): Promise<StartWorkspaceResult> {
+    public async startWorkspace(ctx: TraceContext, workspaceId: string, options: GitpodServer.StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         const span = opentracing.globalTracer().startSpan("startWorkspace");
         span.setTag("workspaceId", workspaceId);
 
@@ -509,7 +511,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async stopWorkspace(workspaceId: string): Promise<void> {
+    public async stopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         const user = this.checkUser('stopWorkspace', undefined, { workspaceId });
         const logCtx = { userId: user.id, workspaceId };
 
@@ -571,7 +573,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         await client.stopWorkspace(ctx, req);
     }
 
-    public async updateWorkspaceUserPin(id: string, action: "pin" | "unpin" | "toggle"): Promise<void> {
+    public async updateWorkspaceUserPin(ctx: TraceContext, id: string, action: "pin" | "unpin" | "toggle"): Promise<void> {
         const user = this.checkAndBlockUser('updateWorkspacePin');
         const span = opentracing.globalTracer().startSpan("updateWorkspacePin");
         span.setTag("workspaceId", id);
@@ -605,7 +607,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async deleteWorkspace(id: string): Promise<void> {
+    public async deleteWorkspace(ctx: TraceContext, id: string): Promise<void> {
         const user = this.checkAndBlockUser('deleteWorkspace');
         const span = opentracing.globalTracer().startSpan("deleteWorkspace");
         span.setTag("workspaceId", id);
@@ -628,11 +630,11 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async controlAdmission(id: string, level: "owner" | "everyone"): Promise<void> {
+    public async controlAdmission(ctx: TraceContext, id: string, level: "owner" | "everyone"): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Workspace sharing support is implemented in Gitpod's Enterprise Edition`)
     }
 
-    public async setWorkspaceDescription(id: string, description: string): Promise<void> {
+    public async setWorkspaceDescription(ctx: TraceContext, id: string, description: string): Promise<void> {
         const user = this.checkAndBlockUser('setWorkspaceDescription');
         const span = opentracing.globalTracer().startSpan("setWorkspaceDescription");
         span.setTag("workspaceId", id);
@@ -651,7 +653,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async getWorkspaces(options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]> {
+    public async getWorkspaces(ctx: TraceContext, options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]> {
         const user = this.checkUser("getWorkspaces");
 
         const res = await this.workspaceDb.trace({}).find({
@@ -665,7 +667,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return res;
     }
 
-    public async isWorkspaceOwner(workspaceId: string): Promise<boolean> {
+    public async isWorkspaceOwner(ctx: TraceContext, workspaceId: string): Promise<boolean> {
         const user = this.checkUser("isWorkspaceOwner", undefined, { workspaceId });
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
@@ -673,7 +675,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return user.id == workspace.ownerId;
     }
 
-    public async sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void> {
+    public async sendHeartBeat(ctx: TraceContext, options: GitpodServer.SendHeartBeatOptions): Promise<void> {
         const { instanceId } = options;
         const user = this.checkAndBlockUser("sendHeartBeat", undefined, { instanceId });
 
@@ -719,7 +721,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    async getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined> {
+    async getWorkspaceOwner(ctx: TraceContext, workspaceId: string): Promise<UserInfo | undefined> {
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
@@ -732,7 +734,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return { name: owner.name };
     }
 
-    public async getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]> {
+    public async getWorkspaceUsers(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstanceUser[]> {
         this.checkUser("getWorkspaceUsers", undefined, { workspaceId });
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
@@ -791,11 +793,11 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async isPrebuildDone(pwsid: string): Promise<boolean> {
+    public async isPrebuildDone(ctx: TraceContext, pwsid: string): Promise<boolean> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, "Prebuilds are implemented in Gitpod's enterprise edition")
     }
 
-    public async createWorkspace(options: GitpodServer.CreateWorkspaceOptions): Promise<WorkspaceCreationResult> {
+    public async createWorkspace(_ctx: TraceContext, options: GitpodServer.CreateWorkspaceOptions): Promise<WorkspaceCreationResult> {
         const contextUrl = options.contextUrl;
         const mode = options.mode || CreateWorkspaceMode.Default;
         let normalizedContextUrl: string = "";
@@ -1000,15 +1002,15 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
             ))).filter(e => e !== undefined) as WhitelistedRepository[];
     }
 
-    public async setWorkspaceTimeout(workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
+    public async setWorkspaceTimeout(ctx: TraceContext, workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Custom workspace timeout is implemented in Gitpod's Enterprise Edition`);
     }
 
-    public async getWorkspaceTimeout(workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
+    public async getWorkspaceTimeout(ctx: TraceContext, workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Custom workspace timeout is implemented in Gitpod's Enterprise Edition`);
     }
 
-    public async getOpenPorts(workspaceId: string): Promise<WorkspaceInstancePort[]> {
+    public async getOpenPorts(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstancePort[]> {
         const user = this.checkUser("getOpenPorts");
         const span = opentracing.globalTracer().startSpan("getOpenPorts");
         span.setTag("workspaceId", workspaceId);
@@ -1048,7 +1050,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async openPort(workspaceId: string, port: WorkspaceInstancePort): Promise<WorkspaceInstancePort | undefined> {
+    public async openPort(ctx: TraceContext, workspaceId: string, port: WorkspaceInstancePort): Promise<WorkspaceInstancePort | undefined> {
         const user = this.checkAndBlockUser("openPort");
         const span = opentracing.globalTracer().startSpan("openPort");
         span.setTag("workspaceId", workspaceId);
@@ -1102,7 +1104,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async closePort(workspaceId: string, port: number) {
+    public async closePort(ctx: TraceContext, workspaceId: string, port: number) {
         const user = this.checkAndBlockUser("closePort");
         const span = opentracing.globalTracer().startSpan("closePort");
         span.setTag("workspaceId", workspaceId);
@@ -1134,7 +1136,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    async watchWorkspaceImageBuildLogs(workspaceId: string): Promise<void> {
+    async watchWorkspaceImageBuildLogs(ctx: TraceContext, workspaceId: string): Promise<void> {
         const user = this.checkAndBlockUser("watchWorkspaceImageBuildLogs", undefined, { workspaceId });
         const span = opentracing.globalTracer().startSpan("watchWorkspaceImageBuildLogs");
         const logCtx: LogContext = { userId: user.id, workspaceId };
@@ -1183,7 +1185,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    async getHeadlessLog(instanceId: string): Promise<HeadlessLogUrls> {
+    async getHeadlessLog(ctx: TraceContext, instanceId: string): Promise<HeadlessLogUrls> {
         const user = this.checkAndBlockUser('getHeadlessLog', { instanceId });
         const span = opentracing.globalTracer().startSpan("getHeadlessLog");
 
@@ -1216,7 +1218,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return { instance, workspace };
     }
 
-    async getUserStorageResource(options: GitpodServer.GetUserStorageResourceOptions): Promise<string> {
+    async getUserStorageResource(ctx: TraceContext, options: GitpodServer.GetUserStorageResourceOptions): Promise<string> {
         const userId = this.checkUser("getUserStorageResource", { uri: options.uri }).id;
         const uri = options.uri;
 
@@ -1225,7 +1227,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return await this.userStorageResourcesDB.get(userId, uri);
     }
 
-    async updateUserStorageResource(options: GitpodServer.UpdateUserStorageResourceOptions): Promise<void> {
+    async updateUserStorageResource(ctx: TraceContext, options: GitpodServer.UpdateUserStorageResourceOptions): Promise<void> {
         const userId = this.checkAndBlockUser("updateUserStorageResource", { uri: options.uri }).id;
         const uri = options.uri;
         const content = options.content;
@@ -1236,11 +1238,11 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
     }
 
 
-    async sendFeedback(feedback: string): Promise<string | undefined> {
+    async sendFeedback(ctx: TraceContext, feedback: string): Promise<string | undefined> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, 'Sending feedback is not implemented');
     }
 
-    async registerGithubApp(installationId: string): Promise<void> {
+    async registerGithubApp(ctx: TraceContext, installationId: string): Promise<void> {
         const user = this.checkAndBlockUser();
 
         if (!this.config.githubApp?.enabled) {
@@ -1250,15 +1252,15 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         await this.appInstallationDB.recordNewInstallation('github', 'user', installationId, user.id);
     }
 
-    async takeSnapshot(options: GitpodServer.TakeSnapshotOptions): Promise<string> {
+    async takeSnapshot(ctx: TraceContext, options: GitpodServer.TakeSnapshotOptions): Promise<string> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Snapshot support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async waitForSnapshot(snapshotId: string): Promise<void> {
+    async waitForSnapshot(ctx: TraceContext, snapshotId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Snapshot support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async getSnapshots(workspaceId: string): Promise<string[]> {
+    async getSnapshots(ctx: TraceContext, workspaceId: string): Promise<string[]> {
         // this is an EE feature. Throwing an exception here would break the dashboard though.
         return [];
     }
@@ -1266,7 +1268,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
     /**
      * stores/updates layout information for the given workspace
      */
-    async storeLayout(workspaceId: string, layoutData: string): Promise<void> {
+    async storeLayout(ctx: TraceContext, workspaceId: string, layoutData: string): Promise<void> {
         const user = this.checkAndBlockUser("storeLayout");
         const workspace = await this.workspaceDb.trace({}).findById(workspaceId);
         if (!workspace || workspace.ownerId !== user.id) {
@@ -1285,7 +1287,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
     /**
      * retrieves layout information for the given workspace
      */
-    async getLayout(workspaceId: string): Promise<string | undefined> {
+    async getLayout(ctx: TraceContext, workspaceId: string): Promise<string | undefined> {
         this.checkUser("storeLayout");
 
         const workspace = await this.workspaceDb.trace({}).findById(workspaceId);
@@ -1302,7 +1304,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
     }
 
     // Get environment variables (filter by repository pattern precedence)
-    async getEnvVars(): Promise<UserEnvVarValue[]> {
+    async getEnvVars(ctx: TraceContext): Promise<UserEnvVarValue[]> {
         const user = this.checkUser("getEnvVars");
         const result = new Map<string, { value: UserEnvVar, score: number }>();
         for (const value of await this.userDB.getEnvVars(user.id)) {
@@ -1320,7 +1322,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
     }
 
     // Get all environment variables (unfiltered)
-    async getAllEnvVars(): Promise<UserEnvVarValue[]> {
+    async getAllEnvVars(ctx: TraceContext): Promise<UserEnvVarValue[]> {
         const user = this.checkUser("getAllEnvVars");
         const result: UserEnvVarValue[] = [];
         for (const value of await this.userDB.getEnvVars(user.id)) {
@@ -1337,7 +1339,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return result;
     }
 
-    async setEnvVar(variable: UserEnvVarValue): Promise<void> {
+    async setEnvVar(ctx: TraceContext, variable: UserEnvVarValue): Promise<void> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("setEnvVar");
         const userId = user.id;
@@ -1372,7 +1374,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         await this.userDB.setEnvVar(envvar);
     }
 
-    async deleteEnvVar(variable: UserEnvVarValue): Promise<void> {
+    async deleteEnvVar(ctx: TraceContext, variable: UserEnvVarValue): Promise<void> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("deleteEnvVar");
         const userId = user.id;
@@ -1414,7 +1416,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return this.teamDB.findTeamsByUser(user.id);
     }
 
-    public async getTeamMembers(teamId: string): Promise<TeamMemberInfo[]> {
+    public async getTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         this.checkUser("getTeamMembers");
         const team = await this.teamDB.findTeamById(teamId);
         if (!team) {
@@ -1425,7 +1427,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return members;
     }
 
-    public async createTeam(name: string): Promise<Team> {
+    public async createTeam(ctx: TraceContext, name: string): Promise<Team> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("createTeam");
         const team = await this.teamDB.createTeam(user.id, name);
@@ -1442,7 +1444,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return team;
     }
 
-    public async joinTeam(inviteId: string): Promise<Team> {
+    public async joinTeam(ctx: TraceContext, inviteId: string): Promise<Team> {
         const user = this.checkAndBlockUser("joinTeam");
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
@@ -1463,13 +1465,13 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return team!;
     }
 
-    public async setTeamMemberRole(teamId: string, userId: string, role: TeamMemberRole): Promise<void> {
+    public async setTeamMemberRole(ctx: TraceContext, teamId: string, userId: string, role: TeamMemberRole): Promise<void> {
         this.checkAndBlockUser("setTeamMemberRole");
         await this.guardTeamOperation(teamId, "update");
         await this.teamDB.setTeamMemberRole(userId, teamId, role);
     }
 
-    public async removeTeamMember(teamId: string, userId: string): Promise<void> {
+    public async removeTeamMember(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
         const user = this.checkAndBlockUser("removeTeamMember");
         // Users are free to leave any team themselves, but only owners can remove others from their teams.
         await this.guardTeamOperation(teamId, user.id === userId ? "get" : "update");
@@ -1484,7 +1486,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         })
     }
 
-    public async getGenericInvite(teamId: string): Promise<TeamMembershipInvite> {
+    public async getGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         this.checkUser("getGenericInvite");
         await this.guardTeamOperation(teamId, "get");
         const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
@@ -1494,7 +1496,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return this.teamDB.resetGenericInvite(teamId);
     }
 
-    public async resetGenericInvite(teamId: string): Promise<TeamMembershipInvite> {
+    public async resetGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         this.checkAndBlockUser("resetGenericInvite");
         await this.guardTeamOperation(teamId, "update");
         return this.teamDB.resetGenericInvite(teamId);
@@ -1517,7 +1519,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async getProviderRepositoriesForUser(params: { provider: string }): Promise<ProviderRepository[]> {
+    public async getProviderRepositoriesForUser(ctx: TraceContext, params: { provider: string }): Promise<ProviderRepository[]> {
         this.checkAndBlockUser("getProviderRepositoriesForUser");
         // Note: this operation is per-user only, hence needs no resource guard
 
@@ -1525,7 +1527,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return [];
     }
 
-    public async createProject(params: CreateProjectParams): Promise<Project> {
+    public async createProject(ctx: TraceContext, params: CreateProjectParams): Promise<Project> {
         const user = this.checkUser("createProject");
         if (params.userId) {
             if (params.userId !== user.id) {
@@ -1552,7 +1554,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return project;
     }
 
-    public async deleteProject(projectId: string): Promise<void> {
+    public async deleteProject(ctx: TraceContext, projectId: string): Promise<void> {
         const user = this.checkUser("deleteProject");
         await this.guardProjectOperation(user, projectId, "delete");
         this.analytics.track({
@@ -1565,18 +1567,18 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return this.projectsService.deleteProject(projectId);
     }
 
-    public async deleteTeam(teamId: string, userId: string): Promise<void> {
+    public async deleteTeam(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
         const user = this.checkAndBlockUser("deleteTeam");
         await this.guardTeamOperation(teamId, "delete");
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach(project => {
-            this.deleteProject(project.id);
+            this.deleteProject(ctx, project.id);
         })
 
         const teamMembers = await this.teamDB.findMembersByTeam(teamId);
         teamMembers.forEach(member => {
-            this.removeTeamMember(teamId, member.userId);
+            this.removeTeamMember(ctx, teamId, member.userId);
         })
 
         await this.teamDB.deleteTeam(teamId);
@@ -1590,25 +1592,25 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         })
     }
 
-    public async getTeamProjects(teamId: string): Promise<Project[]> {
+    public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {
         this.checkUser("getTeamProjects");
         await this.guardTeamOperation(teamId, "get");
         return this.projectsService.getTeamProjects(teamId);
     }
 
-    public async getUserProjects(): Promise<Project[]> {
+    public async getUserProjects(ctx: TraceContext): Promise<Project[]> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("getUserProjects");
         return this.projectsService.getUserProjects(user.id);
     }
 
-    public async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
+    public async findPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const user = this.checkAndBlockUser("getPrebuilds");
         await this.guardProjectOperation(user, params.projectId, "get");
         return this.projectsService.findPrebuilds(user, params);
     }
 
-    public async getProjectOverview(projectId: string): Promise<Project.Overview | undefined> {
+    public async getProjectOverview(ctx: TraceContext, projectId: string): Promise<Project.Overview | undefined> {
         const user = this.checkAndBlockUser("getProjectOverview");
         const project = await this.projectsService.getProject(projectId);
         if (!project) {
@@ -1625,17 +1627,17 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult> {
+    public async triggerPrebuild(ctx: TraceContext, projectId: string, branchName: string | null): Promise<StartPrebuildResult> {
         this.checkAndBlockUser("triggerPrebuild");
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Triggering Prebuilds is implemented in Gitpod's Enterprise Edition`);
     }
 
-    public async cancelPrebuild(projectId: string, prebuildId: string): Promise<void> {
+    public async cancelPrebuild(ctx: TraceContext, projectId: string, prebuildId: string): Promise<void> {
         this.checkAndBlockUser("cancelPrebuild");
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Cancelling Prebuilds is implemented in Gitpod's Enterprise Edition`);
     }
 
-    public async setProjectConfiguration(projectId: string, configString: string): Promise<void> {
+    public async setProjectConfiguration(ctx: TraceContext, projectId: string, configString: string): Promise<void> {
         const user = this.checkAndBlockUser("setProjectConfiguration");
         await this.guardProjectOperation(user, projectId, "update");
         const parseResult = this.gitpodParser.parse(configString);
@@ -1645,7 +1647,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         await this.projectsService.setProjectConfiguration(projectId, { '.gitpod.yml': configString });
     }
 
-    public async fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined> {
+    public async fetchProjectRepositoryConfiguration(ctx: TraceContext, projectId: string): Promise<string | undefined> {
         const user = this.checkUser("fetchProjectRepositoryConfiguration");
         const span = opentracing.globalTracer().startSpan("fetchProjectRepositoryConfiguration");
         span.setTag("projectId", projectId);
@@ -1661,7 +1663,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async guessProjectConfiguration(projectId: string): Promise<string | undefined> {
+    public async guessProjectConfiguration(ctx: TraceContext, projectId: string): Promise<string | undefined> {
         const user = this.checkUser("guessProjectConfiguration");
         const span = opentracing.globalTracer().startSpan("guessProjectConfiguration");
         span.setTag("projectId", projectId);
@@ -1677,7 +1679,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async getContentBlobUploadUrl(name: string): Promise<string> {
+    public async getContentBlobUploadUrl(ctx: TraceContext, name: string): Promise<string> {
         const user = this.checkAndBlockUser("getContentBlobUploadUrl");
         await this.guardAccess({ kind: "contentBlob", name: name, userID: user.id }, "create");
 
@@ -1704,7 +1706,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async getContentBlobDownloadUrl(name: string): Promise<string> {
+    public async getContentBlobDownloadUrl(ctx: TraceContext, name: string): Promise<string> {
         const user = this.checkAndBlockUser("getContentBlobDownloadUrl");
         await this.guardAccess({ kind: "contentBlob", name: name, userID: user.id }, "get");
 
@@ -1731,14 +1733,14 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async getGitpodTokens(): Promise<GitpodToken[]> {
+    public async getGitpodTokens(ctx: TraceContext): Promise<GitpodToken[]> {
         const user = this.checkAndBlockUser("getGitpodTokens");
         const res = (await this.userDB.findAllGitpodTokensOfUser(user.id)).filter(v => !v.deleted);
         await Promise.all(res.map(tkn => this.guardAccess({ kind: "gitpodToken", subject: tkn }, "get")));
         return res;
     }
 
-    public async generateNewGitpodToken(options: { name?: string, type: GitpodTokenType, scopes?: [] }): Promise<string> {
+    public async generateNewGitpodToken(ctx: TraceContext, options: { name?: string, type: GitpodTokenType, scopes?: string[] }): Promise<string> {
         const user = this.checkAndBlockUser("generateNewGitpodToken");
         const token = crypto.randomBytes(30).toString('hex');
         const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest("hex");
@@ -1756,7 +1758,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return token;
     }
 
-    public async getGitpodTokenScopes(tokenHash: string): Promise<string[]> {
+    public async getGitpodTokenScopes(ctx: TraceContext, tokenHash: string): Promise<string[]> {
         const user = this.checkAndBlockUser("getGitpodTokenScopes");
         let token: GitpodToken | undefined;
         try {
@@ -1772,9 +1774,9 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return token.scopes;
     }
 
-    public async deleteGitpodToken(tokenHash: string): Promise<void> {
+    public async deleteGitpodToken(ctx: TraceContext, tokenHash: string): Promise<void> {
         const user = this.checkAndBlockUser("deleteGitpodToken");
-        const existingTokens = await this.getGitpodTokens(); // all tokens for logged in user
+        const existingTokens = await this.getGitpodTokens(ctx); // all tokens for logged in user
         const tkn = existingTokens.find(token => token.tokenHash === tokenHash);
         if (!tkn) {
             throw new Error(`User ${user.id} tries to delete a token ${tokenHash} that does not exist.`);
@@ -1783,17 +1785,17 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return this.userDB.deleteGitpodToken(tokenHash);
     }
 
-    public async hasPermission(permission: PermissionName): Promise<boolean> {
+    public async hasPermission(ctx: TraceContext, permission: PermissionName): Promise<boolean> {
         const user = this.checkUser("hasPermission");
         return this.authorizationService.hasPermission(user, permission);
     }
 
-    preparePluginUpload(params: PreparePluginUploadParams): Promise<string> {
+    preparePluginUpload(ctx: TraceContext, params: PreparePluginUploadParams): Promise<string> {
         const user = this.checkUser("preparePluginUpload");
         return this.pluginService.preparePluginUpload(params, user.id);
     }
 
-    async resolvePlugins(workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins> {
+    async resolvePlugins(ctx: TraceContext, workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins> {
         this.checkUser("resolvePlugins")
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
@@ -1802,62 +1804,62 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return result.resolved;
     };
 
-    installUserPlugins(params: InstallPluginsParams): Promise<boolean> {
+    installUserPlugins(ctx: TraceContext, params: InstallPluginsParams): Promise<boolean> {
         const userId = this.checkUser("installUserPlugins").id;
         return this.pluginService.installUserPlugins(userId, params);
     }
 
-    uninstallUserPlugin(params: UninstallPluginParams): Promise<boolean> {
+    uninstallUserPlugin(ctx: TraceContext, params: UninstallPluginParams): Promise<boolean> {
         const userId = this.checkUser("uninstallUserPlugin").id;
         return this.pluginService.uninstallUserPlugin(userId, params);
     }
 
-    async guessGitTokenScopes(params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {
+    async guessGitTokenScopes(ctx: TraceContext, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {
         const authProviders = await this.getAuthProviders()
         return this.gitTokenScopeGuesser.guessGitTokenScopes(authProviders.find(p => p.host == params.host), params);
     }
 
-    async adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
+    async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminGetUser(id: string): Promise<User> {
+    async adminGetUser(ctx: TraceContext, id: string): Promise<User> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminBlockUser(req: AdminBlockUserRequest): Promise<User> {
+    async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminDeleteUser(_id: string): Promise<void> {
+    async adminDeleteUser(ctx: TraceContext, _id: string): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User> {
+    async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User> {
+    async adminModifyPermanentWorkspaceFeatureFlag(ctx: TraceContext, req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminGetWorkspaces(req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
+    async adminGetWorkspaces(ctx: TraceContext, req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminGetWorkspace(id: string): Promise<WorkspaceAndInstance> {
+    async adminGetWorkspace(ctx: TraceContext, id: string): Promise<WorkspaceAndInstance> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminForceStopWorkspace(id: string): Promise<void> {
+    async adminForceStopWorkspace(ctx: TraceContext, id: string): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminRestoreSoftDeletedWorkspace(id: string): Promise<void> {
+    async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, id: string): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminSetLicense(key: string): Promise<void> {
+    async adminSetLicense(ctx: TraceContext, key: string): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
@@ -1865,7 +1867,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Licensing is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async licenseIncludesFeature(feature: LicenseFeature): Promise<boolean> {
+    async licenseIncludesFeature(ctx: TraceContext, feature: LicenseFeature): Promise<boolean> {
         return false;
     }
 
@@ -1916,7 +1918,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
     //   for example [foo.bar/gitlab]
     protected validHostNameRegexp = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(\/([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))?$/;
 
-    async updateOwnAuthProvider({ entry }: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry> {
+    async updateOwnAuthProvider(ctx: TraceContext, { entry }: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry> {
         let userId: string;
         try {
             userId = this.checkAndBlockUser("updateOwnAuthProvider").id;
@@ -1970,7 +1972,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         return safeEntry;
     }
 
-    async deleteOwnAuthProvider(params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void> {
+    async deleteOwnAuthProvider(ctx: TraceContext, params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void> {
         let userId: string;
         try {
             userId = this.checkAndBlockUser("deleteOwnAuthProvider").id;
@@ -1991,7 +1993,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async trackEvent(event: RemoteTrackMessage): Promise<void> {
+    public async trackEvent(ctx: TraceContext, event: RemoteTrackMessage): Promise<void> {
         // Beware: DO NOT just event... the message, but consume it individually as the message is coming from
         //         the wire and we have no idea what's in it. Even passing the context and properties directly
         //         is questionable. Considering we're handing down the msg and do not know how the analytics library
@@ -2023,7 +2025,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         };
     }
 
-    public async trackLocation(event: RemotePageMessage): Promise<void> {
+    public async trackLocation(ctx: TraceContext, event: RemotePageMessage): Promise<void> {
         //either an anonymousId was passed, signifying that we want to make a privacy preserving page call...
         if (event.anonymousId) {
             // we are making a reduced page call that respects user's privacy by not using any PII
@@ -2051,7 +2053,7 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
         }
     }
 
-    public async identifyUser(event: RemoteIdentifyMessage): Promise<void> {
+    public async identifyUser(ctx: TraceContext, event: RemoteIdentifyMessage): Promise<void> {
         //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
         const user = this.checkUser("IdentifyUser");
 
@@ -2076,88 +2078,88 @@ export class GitpodServerImpl implements GitpodServer, Disposable {
 
     //#region gitpod.io concerns
     //
-    async adminGetAccountStatement(userId: string): Promise<AccountStatement> {
+    async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async adminSetProfessionalOpenSource(userId: string, shouldGetProfOSS: boolean): Promise<void> {
+    async adminSetProfessionalOpenSource(ctx: TraceContext, userId: string, shouldGetProfOSS: boolean): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async adminIsStudent(userId: string): Promise<boolean> {
+    async adminIsStudent(ctx: TraceContext, userId: string): Promise<boolean> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async adminAddStudentEmailDomain(userId: string, domain: string): Promise<void> {
+    async adminAddStudentEmailDomain(ctx: TraceContext, userId: string, domain: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async adminGrantExtraHours(userId: string, extraHours: number): Promise<void> {
+    async adminGrantExtraHours(ctx: TraceContext, userId: string, extraHours: number): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async isStudent(): Promise<boolean> {
+    async isStudent(ctx: TraceContext): Promise<boolean> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getAccountStatement(options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement | undefined> {
+    async getAccountStatement(ctx: TraceContext, options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getRemainingUsageHours(): Promise<number> {
+    async getRemainingUsageHours(ctx: TraceContext): Promise<number> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getChargebeeSiteId(): Promise<string> {
+    async getChargebeeSiteId(ctx: TraceContext): Promise<string> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async createPortalSession(): Promise<{}> {
+    async createPortalSession(ctx: TraceContext): Promise<{}> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async checkout(planId: string, planQuantity?: number): Promise<{}> {
+    async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getAvailableCoupons(): Promise<PlanCoupon[]> {
+    async getAvailableCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getAppliedCoupons(): Promise<PlanCoupon[]> {
+    async getAppliedCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getShowPaymentUI(): Promise<boolean> {
+    async getShowPaymentUI(ctx: TraceContext): Promise<boolean> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async isChargebeeCustomer(): Promise<boolean> {
+    async isChargebeeCustomer(ctx: TraceContext): Promise<boolean> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async subscriptionUpgradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void> {
+    async subscriptionUpgradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async subscriptionDowngradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void> {
+    async subscriptionDowngradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async subscriptionCancel(subscriptionId: string): Promise<void> {
+    async subscriptionCancel(ctx: TraceContext, subscriptionId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async subscriptionCancelDowngrade(subscriptionId: string): Promise<void> {
+    async subscriptionCancelDowngrade(ctx: TraceContext, subscriptionId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async tsGet(): Promise<TeamSubscription[]> {
+    async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]> {
+    async tsGetSlots(ctx: TraceContext): Promise<TeamSubscriptionSlotResolved[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined> {
+    async tsGetUnassignedSlot(ctx: TraceContext, teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async tsAddSlots(teamSubscriptionId: string, quantity: number): Promise<void> {
+    async tsAddSlots(ctx: TraceContext, teamSubscriptionId: string, quantity: number): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async tsAssignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string | undefined): Promise<void> {
+    async tsAssignSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string | undefined): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async tsReassignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void> {
+    async tsReassignSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
+    async tsDeactivateSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
+    async tsReactivateSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]> {
+    async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     //
