@@ -720,7 +720,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // TODO(gpl) This is not part of our API interface, nor can I find any clients. Remove or re-surrect?
-    // async getLicenseInfo(ctx: TraceContext, ): Promise<GetLicenseInfoResult> {
+    // async getLicenseInfo(ctx: TraceContext): Promise<GetLicenseInfoResult> {
     //     const user = this.checkAndBlockUser("getLicenseInfo");
 
     //     const { key } = await this.licenseKeySource.getKey();

@@ -45,7 +45,7 @@ export class MonitoringEndpointsAppEE extends WorkspaceHealthMonitoring {
     }
 }
 
-async function checkWorkspaceHealth(ctx: TraceContext, workspaceHealthMonitoring: WorkspaceHealthMonitoring, extra: boolean = false, ) {
+async function checkWorkspaceHealth(ctx: TraceContext, workspaceHealthMonitoring: WorkspaceHealthMonitoring, extra: boolean = false) {
     const span = TraceContext.startSpan("checkWorkspaceHealth", ctx);
     const result = await workspaceHealthMonitoring.probeAllRunningWorkspaces({ span });
     const numUnhealthy = result.map(r => r.ok ? 0 : 1).reduce((acc: number, cur: number) => acc + cur as number, 0);
