@@ -15,6 +15,7 @@ const (
 	CodeDesktopInsidersIDEImage  = "ide/code-desktop-insiders"
 	IntelliJDesktopIDEImage      = "ide/intellij"
 	GoLandDesktopIdeImage        = "ide/goland"
+	PyCharmDesktopIdeImage       = "ide/pycharm"
 	DockerUpImage                = "docker-up"
 	SupervisorImage              = "supervisor"
 	SupervisorPort               = 22999

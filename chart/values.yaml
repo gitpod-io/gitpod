@@ -410,6 +410,8 @@ components:
         imageName: "ide/intellij"
       goland:
         imageName: "ide/goland"
+      pycharm:
+        imageName: "ide/pycharm"
     supervisor:
       imageName: "supervisor"
     dockerUp:
