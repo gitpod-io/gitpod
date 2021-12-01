@@ -101,7 +101,7 @@ export class EnforcementController {
             const targetUserID = req.params.userid;
             const server = this.createGitpodServer(callingUser, resourceAccessGuard);
             try {
-                await server.adminBlockUser({ id: targetUserID, blocked: true });
+                await server.adminBlockUser({}, { id: targetUserID, blocked: true });
                 res.sendStatus(200);
             } catch (e) {
                 if (e instanceof ResponseError && e.code === ErrorCodes.NOT_FOUND) {
@@ -145,7 +145,7 @@ export class EnforcementController {
             const targetWsID = req.params.wsid;
             const server = this.createGitpodServer(callingUser, resourceAccessGuard);
             try {
-                await server.adminForceStopWorkspace(targetWsID);
+                await server.adminForceStopWorkspace({}, targetWsID);
 
                 const target = (await this.workspaceDb.findById(targetWsID))!;
                 const owner = await this.userDB.findUserById(target!.ownerId);

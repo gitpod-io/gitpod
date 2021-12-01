@@ -19,6 +19,8 @@ import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, 
 import { takeFirst } from "../express-util";
 import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "../prometheus-metrics";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
+import * as opentracing from 'opentracing';
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -46,6 +48,28 @@ export namespace WebsocketClientType {
     }
 }
 export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
+
+export interface ClientMetadata {
+    clientId: string,
+    authLevel: WebsocketAuthenticationLevel,
+}
+export namespace ClientMetadata {
+    export function getUserId(metadata: ClientMetadata): string | undefined {
+        if (metadata.authLevel !== "user") {
+            return undefined;
+        }
+        return metadata.clientId;
+    }
+    export function from(userId: string | undefined, sessionId?: string): ClientMetadata {
+        if (userId) {
+            return { clientId: userId, authLevel: "user" };
+        } else if (sessionId) {
+            return { clientId: `session-${sessionId}`, authLevel: "session" };
+        } else {
+            return { clientId: "anonymous", authLevel: "anonymous" };
+        }
+    }
+}
 
 export class WebsocketClientContext {
     constructor(
@@ -97,6 +121,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             this.createProxyTarget.bind(this),
             this.createAccessGuard.bind(this),
             this.createRateLimiter.bind(this),
+            this.getClientId.bind(this),
         );
     }
 
@@ -175,20 +200,15 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         return ctx;
     }
 
-    protected getClientId(expressReq: express.Request): { clientId: string, authLevel: WebsocketAuthenticationLevel } {
+    protected getClientId(req?: object): ClientMetadata {
+        const expressReq = req as express.Request;
         const user = expressReq.user;
         const sessionId = expressReq.session?.id;
-        if (user?.id) {
-            return { clientId: user.id, authLevel: "user" };
-        } else if (!!sessionId) {
-            return { clientId: `session-${sessionId}`, authLevel: "session" };
-        } else {
-            return { clientId: "anonymous", authLevel: "anonymous" };
-        }
+        return ClientMetadata.from(user?.id, sessionId);
     }
 
-    protected createRateLimiter(expressReq?: object): RateLimiter {
-        const { clientId } = this.getClientId(expressReq as express.Request);
+    protected createRateLimiter(req?: object): RateLimiter {
+        const { clientId } = this.getClientId(req);
         return {
             user: clientId,
             consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(clientId, method),
@@ -230,12 +250,17 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
         readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object) => any,
         readonly accessGuard: (request?: object) => FunctionAccessGuard,
         readonly rateLimiterFactory: (request?: object) => RateLimiter,
+        readonly getClientId: (request?: object) => ClientMetadata,
     ) {
         super(path, targetFactory);
     }
 
     onConnection(connection: MessageConnection, request?: object): void {
-        const factory = new GitpodJsonRpcProxyFactory<T>(this.accessGuard(request), this.rateLimiterFactory(request));
+        const factory = new GitpodJsonRpcProxyFactory<T>(
+            this.accessGuard(request),
+            this.rateLimiterFactory(request),
+            this.getClientId(request),
+        );
         const proxy = factory.createProxy();
         factory.target = this.targetFactory(proxy, request);
         factory.listen(connection);
@@ -246,11 +271,16 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
 
 class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T> {
 
+    protected userId: string | undefined;
+
     constructor(
         protected readonly accessGuard: FunctionAccessGuard,
         protected readonly rateLimiter: RateLimiter,
+        protected readonly clientMetadata: ClientMetadata,
     ) {
         super();
+
+        this.userId = ClientMetadata.getUserId(clientMetadata);
     }
 
     protected async onRequest(method: string, ...args: any[]): Promise<any> {
@@ -279,19 +309,33 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
 
+        const span = opentracing.globalTracer().startSpan(method);
+        const ctx = { span };
+
+        // some generic data
+        const { clientId } = this.clientMetadata;
+        span.addTags({ clientId });
+        if (this.userId) {
+            span.addTags({ userId: this.userId });
+        }
+
         try {
-            const result = await this.target[method](...args);
+            const result = await this.target[method]({ span }, ...args);    // we can inject TraceContext here because of GitpodServerWithTracing
             increaseApiCallCounter(method, 200);
             return result;
         } catch (e) {
             if (e instanceof ResponseError) {
                 increaseApiCallCounter(method, e.code);
+                TraceContext.logAPIError(ctx, e);
                 log.info(`Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
             } else {
                 increaseApiCallCounter(method, 500);
+                TraceContext.logError(ctx, e, 500);
                 log.error(`Request ${method} failed with internal server error`, e, { method, args });
             }
             throw e;
+        } finally {
+            span.finish();
         }
     }
 

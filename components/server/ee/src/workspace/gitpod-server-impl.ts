@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseEvaluator, LicenseKeySource } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
-import { LicenseValidationResult, GetLicenseInfoResult, LicenseFeature } from '@gitpod/gitpod-protocol/lib/license-protocol';
+import { LicenseValidationResult, LicenseFeature } from '@gitpod/gitpod-protocol/lib/license-protocol';
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { ResourceAccessGuard } from "../../../src/auth/resource-access";
@@ -123,7 +123,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 this.client?.onCreditAlert(creditAlert);
                 if (creditAlert.remainingUsageHours < 1e-6) {
                     const runningInstances = await this.workspaceDb.trace({}).findRegularRunningInstances(creditAlert.userId);
-                    runningInstances.forEach(async instance => await this.stopWorkspace(instance.workspaceId));
+                    runningInstances.forEach(async instance => await this.stopWorkspace({}, instance.workspaceId));
                 }
             }
         ));
@@ -175,7 +175,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return { valid: true };
     }
 
-    public async setWorkspaceTimeout(workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
+    public async setWorkspaceTimeout(ctx: TraceContext, workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
         this.requireEELicense(Feature.FeatureSetTimeout);
 
         const user = this.checkUser("setWorkspaceTimeout");
@@ -233,7 +233,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    public async getWorkspaceTimeout(workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
+    public async getWorkspaceTimeout(ctx: TraceContext, workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeatureSetTimeout);
 
@@ -269,7 +269,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
 
-    public async isPrebuildDone(pwsid: string): Promise<boolean> {
+    public async isPrebuildDone(_ctx: TraceContext, pwsid: string): Promise<boolean> {
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeaturePrebuild);
 
@@ -299,7 +299,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.eligibilityService.maySetTimeout(user);
     }
 
-    public async controlAdmission(id: string, level: "owner" | "everyone"): Promise<void> {
+    public async controlAdmission(ctx: TraceContext, id: string, level: "owner" | "everyone"): Promise<void> {
         this.requireEELicense(Feature.FeatureWorkspaceSharing);
 
         const user = this.checkAndBlockUser('controlAdmission');
@@ -343,7 +343,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async takeSnapshot(options: GitpodServer.TakeSnapshotOptions): Promise<string> {
+    async takeSnapshot(ctx: TraceContext, options: GitpodServer.TakeSnapshotOptions): Promise<string> {
         this.requireEELicense(Feature.FeatureSnapshot);
 
         const user = this.checkAndBlockUser("takeSnapshot");
@@ -405,7 +405,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
      * @param snapshotId
      * @throws ResponseError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
      */
-    async waitForSnapshot(snapshotId: string): Promise<void> {
+    async waitForSnapshot(ctx: TraceContext, snapshotId: string): Promise<void> {
         this.requireEELicense(Feature.FeatureSnapshot);
 
         const user = this.checkAndBlockUser("waitForSnapshot");
@@ -438,7 +438,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async getSnapshots(workspaceId: string): Promise<string[]> {
+    async getSnapshots(ctx: TraceContext, workspaceId: string): Promise<string[]> {
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeatureSnapshot);
 
@@ -467,7 +467,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
 
-    async adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
+    async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetUsers", { req }, Permission.ADMIN_USERS);
@@ -485,7 +485,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminGetUser(id: string): Promise<User> {
+    async adminGetUser(ctx: TraceContext, id: string): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetUser", { id }, Permission.ADMIN_USERS);
@@ -507,7 +507,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.censorUser(result);
     }
 
-    async adminBlockUser(req: AdminBlockUserRequest): Promise<User> {
+    async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
@@ -540,7 +540,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminDeleteUser(id: string): Promise<void> {
+    async adminDeleteUser(ctx: TraceContext, id: string): Promise<void> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminDeleteUser", { id }, Permission.ADMIN_USERS);
@@ -556,7 +556,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User> {
+    async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_USERS);
@@ -592,7 +592,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User> {
+    async adminModifyPermanentWorkspaceFeatureFlag(ctx: TraceContext, req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminModifyPermanentWorkspaceFeatureFlag", { req }, Permission.ADMIN_USERS);
@@ -630,7 +630,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminGetWorkspaces(req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
+    async adminGetWorkspaces(ctx: TraceContext, req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
@@ -646,7 +646,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminGetWorkspace(id: string): Promise<WorkspaceAndInstance> {
+    async adminGetWorkspace(ctx: TraceContext, id: string): Promise<WorkspaceAndInstance> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetWorkspace", { id }, Permission.ADMIN_WORKSPACES);
@@ -668,7 +668,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
-    async adminForceStopWorkspace(id: string): Promise<void> {
+    async adminForceStopWorkspace(ctx: TraceContext, id: string): Promise<void> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminForceStopWorkspace", { id }, Permission.ADMIN_WORKSPACES);
@@ -680,7 +680,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminRestoreSoftDeletedWorkspace(id: string): Promise<void> {
+    async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, id: string): Promise<void> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminRestoreSoftDeletedWorkspace", { id }, Permission.ADMIN_WORKSPACES);
@@ -826,35 +826,36 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminSetLicense(key: string): Promise<void> {
+    async adminSetLicense(ctx: TraceContext, key: string): Promise<void> {
         await this.guardAdminAccess("adminGetWorkspaces", { key }, Permission.ADMIN_API);
 
         await this.licenseDB.store(uuidv4(), key);
         await this.licenseEvaluator.reloadLicense();
     }
 
-    async getLicenseInfo(): Promise<GetLicenseInfoResult> {
-        const user = this.checkAndBlockUser("getLicenseInfo");
+    // TODO(gpl) This is not part of our API interface, nor can I find any clients. Remove or re-surrect?
+    // async getLicenseInfo(ctx: TraceContext, ): Promise<GetLicenseInfoResult> {
+    //     const user = this.checkAndBlockUser("getLicenseInfo");
 
-        const { key } = await this.licenseKeySource.getKey();
-        const { validUntil, seats } = this.licenseEvaluator.inspect();
-        const { valid } = this.licenseEvaluator.validate();
+    //     const { key } = await this.licenseKeySource.getKey();
+    //     const { validUntil, seats } = this.licenseEvaluator.inspect();
+    //     const { valid } = this.licenseEvaluator.validate();
 
-        const isAdmin = this.authorizationService.hasPermission(user, Permission.ADMIN_API);
+    //     const isAdmin = this.authorizationService.hasPermission(user, Permission.ADMIN_API);
 
-        return {
-            isAdmin,
-            licenseInfo: {
-                key: isAdmin ? key : "REDACTED",
-                seats,
-                valid,
-                validUntil
-            }
-        };
-    }
+    //     return {
+    //         isAdmin,
+    //         licenseInfo: {
+    //             key: isAdmin ? key : "REDACTED",
+    //             seats,
+    //             valid,
+    //             validUntil
+    //         }
+    //     };
+    // }
 
-    async licenseIncludesFeature(licenseFeature: LicenseFeature): Promise<boolean> {
-        this.checkAndBlockUser("getLicenseInfo");
+    async licenseIncludesFeature(ctx: TraceContext, licenseFeature: LicenseFeature): Promise<boolean> {
+        this.checkAndBlockUser("licenseIncludesFeature");
 
         let feature: Feature | undefined;
         switch (licenseFeature) {
@@ -870,13 +871,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // (SaaS) – accounting
-    public async getAccountStatement(options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement> {
+    public async getAccountStatement(ctx: TraceContext, options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement> {
         const user = this.checkUser("getAccountStatement");
         const now = options.date || new Date().toISOString();
         return this.accountStatementProvider.getAccountStatement(user.id, now);
     }
 
-    public async getRemainingUsageHours(): Promise<number> {
+    public async getRemainingUsageHours(ctx: TraceContext, ): Promise<number> {
         const span = opentracing.globalTracer().startSpan("getRemainingUsageHours");
 
         try {
@@ -892,16 +893,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // (SaaS) – payment/billing
-    async getAvailableCoupons(): Promise<PlanCoupon[]> {
+    async getAvailableCoupons(ctx: TraceContext, ): Promise<PlanCoupon[]> {
         const user = this.checkUser('getAvailableCoupons');
         const couponIds = await this.couponComputer.getAvailableCouponIds(user);
-        return this.getChargebeePlanCoupons(couponIds);
+        return this.getChargebeePlanCoupons(ctx, couponIds);
     }
 
-    async getAppliedCoupons(): Promise<PlanCoupon[]> {
+    async getAppliedCoupons(ctx: TraceContext, ): Promise<PlanCoupon[]> {
         const user = this.checkUser('getAppliedCoupons');
         const couponIds = await this.couponComputer.getAppliedCouponIds(user, new Date());
-        return this.getChargebeePlanCoupons(couponIds);
+        return this.getChargebeePlanCoupons(ctx, couponIds);
     }
 
     // chargebee
@@ -914,17 +915,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.config.chargebeeProviderOptions.site;
     }
 
-    public async isStudent(): Promise<boolean> {
+    public async isStudent(ctx: TraceContext, ): Promise<boolean> {
         const user = this.checkUser("isStudent");
         return this.eligibilityService.isStudent(user);
     }
 
-    async getShowPaymentUI(): Promise<boolean> {
+    async getShowPaymentUI(ctx: TraceContext): Promise<boolean> {
         this.checkUser('getShowPaymentUI');
         return !!this.config.enablePayment;
     }
 
-    async isChargebeeCustomer(): Promise<boolean> {
+    async isChargebeeCustomer(ctx: TraceContext, ): Promise<boolean> {
         const user = this.checkUser('isChargebeeCustomer');
 
         return await new Promise<boolean>((resolve, reject) => {
@@ -941,7 +942,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
-    protected async getChargebeePlanCoupons(couponIds: string[]) {
+    protected async getChargebeePlanCoupons(ctx: TraceContext, couponIds: string[]) {
         const chargebeeCoupons = await Promise.all(couponIds.map(c => new Promise<chargebee.Coupon | undefined>((resolve, reject) => this.chargebeeProvider.coupon.retrieve(c).request((err, res) => {
             if (!!err) {
                 log.error({}, "could not retrieve coupon: " + err.message, { coupon: c })
@@ -986,7 +987,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
-    async createPortalSession(): Promise<{}> {
+    async createPortalSession(ctx: TraceContext, ): Promise<{}> {
         const user = this.checkUser('createPortalSession');
         const logContext = { userId: user.id };
 
@@ -1007,7 +1008,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
-    async checkout(planId: string, planQuantity?: number): Promise<{}> {
+    async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
         const user = this.checkUser('checkout');
         const logContext = { userId: user.id };
 
@@ -1075,13 +1076,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return applicableCoupon ? applicableCoupon.id : undefined;
     }
 
-    async subscriptionUpgradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void> {
+    async subscriptionUpgradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
         const user = this.checkUser('subscriptionUpgradeTo');
         await this.ensureIsEligibleForPlan(user, chargebeePlanId);
         await this.doUpdateUserPaidSubscription(user.id, subscriptionId, chargebeePlanId, false);
     }
 
-    async subscriptionDowngradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void> {
+    async subscriptionDowngradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
         const user = this.checkUser('subscriptionDowngradeTo');
         await this.ensureIsEligibleForPlan(user, chargebeePlanId);
         await this.doUpdateUserPaidSubscription(user.id, subscriptionId, chargebeePlanId, true);
@@ -1102,13 +1103,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async subscriptionCancel(subscriptionId: string): Promise<void> {
+    async subscriptionCancel(ctx: TraceContext, subscriptionId: string): Promise<void> {
         const user = this.checkUser('subscriptionCancel');
         const chargebeeSubscriptionId = await this.doGetUserPaidSubscription(user.id, subscriptionId);
         await this.chargebeeService.cancelSubscription(chargebeeSubscriptionId, { userId: user.id }, { subscriptionId, chargebeeSubscriptionId });
     }
 
-    async subscriptionCancelDowngrade(subscriptionId: string): Promise<void> {
+    async subscriptionCancelDowngrade(ctx: TraceContext, subscriptionId: string): Promise<void> {
         const user = this.checkUser('subscriptionCancelDowngrade');
         await this.doCancelDowngradeUserPaidSubscription(user.id, subscriptionId);
     }
@@ -1169,17 +1170,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // Team Subscriptions
-    async tsGet(): Promise<TeamSubscription[]> {
+    async tsGet(ctx: TraceContext, ): Promise<TeamSubscription[]> {
         const user = this.checkUser('getTeamSubscriptions');
         return this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
     }
 
-    async tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]> {
+    async tsGetSlots(ctx: TraceContext, ): Promise<TeamSubscriptionSlotResolved[]> {
         const user = this.checkUser('tsGetSlots');
         return this.teamSubscriptionService.findTeamSubscriptionSlotsBy(user.id, new Date());
     }
 
-    async tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined> {
+    async tsGetUnassignedSlot(ctx: TraceContext, teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined> {
         this.checkUser('tsGetUnassignedSlot');
         const slots = await this.teamSubscriptionService.findUnassignedSlots(teamSubscriptionId);
         return slots[0];
@@ -1191,7 +1192,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return slots.filter(TeamSubscriptionSlot.isActive).length;
     }
 
-    async tsAddSlots(teamSubscriptionId: string, addQuantity: number): Promise<void> {
+    async tsAddSlots(ctx: TraceContext, teamSubscriptionId: string, addQuantity: number): Promise<void> {
         const user = this.checkAndBlockUser('tsAddSlots');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
@@ -1216,7 +1217,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async tsAssignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string | undefined): Promise<void> {
+    async tsAssignSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string | undefined): Promise<void> {
         const user = this.checkAndBlockUser('tsAssignSlot');
         // assigning a slot can be done by third users
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, identityStr ? user.id : undefined);
@@ -1268,7 +1269,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.ensureIsEligibleForPlan(assignee, ts.planId);
     }
 
-    async tsReassignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void> {
+    async tsReassignSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void> {
         const user = this.checkAndBlockUser('tsReassignSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
         const logCtx = { userId: user.id };
@@ -1303,7 +1304,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     protected updateTeamSubscriptionQueue = new Queue();
 
-    async tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
+    async tsDeactivateSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
         const user = this.checkAndBlockUser('tsDeactivateSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
@@ -1321,7 +1322,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
-    async tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
+    async tsReactivateSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
         const user = this.checkAndBlockUser('tsReactivateSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
@@ -1339,7 +1340,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
-    async getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]> {
+    async getGithubUpgradeUrls(ctx: TraceContext, ): Promise<GithubUpgradeURL[]> {
         const user = this.checkUser('getGithubUpgradeUrls');
         const ghidentity = user.identities.find(i => i.authProviderId == "Public-GitHub");
         if (!ghidentity) {
@@ -1442,7 +1443,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // (SaaS) – admin
-    async adminGetAccountStatement(userId: string): Promise<AccountStatement> {
+    async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
         const user = this.checkAndBlockUser("adminGetAccountStatement");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1451,7 +1452,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return await this.accountService.getAccountStatement(userId, new Date().toISOString());
     }
 
-    async adminSetProfessionalOpenSource(userId: string, shouldGetProfOSS: boolean): Promise<void> {
+    async adminSetProfessionalOpenSource(ctx: TraceContext, userId: string, shouldGetProfOSS: boolean): Promise<void> {
         const user = this.checkAndBlockUser("adminSetProfessionalOpenSource");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1464,7 +1465,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminIsStudent(userId: string): Promise<boolean> {
+    async adminIsStudent(ctx: TraceContext, userId: string): Promise<boolean> {
         const user = this.checkAndBlockUser("adminIsStudent");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1473,7 +1474,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.eligibilityService.isStudent(userId);
     }
 
-    async adminAddStudentEmailDomain(userId: string, domain: string): Promise<void> {
+    async adminAddStudentEmailDomain(ctx: TraceContext, userId: string, domain: string): Promise<void> {
         const user = this.checkAndBlockUser("adminAddStudentEmailDomain");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1485,7 +1486,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.eduDomainDb.storeDomainEntry(domainEntry);
     }
 
-    async adminGrantExtraHours(userId: string, extraHours: number): Promise<void> {
+    async adminGrantExtraHours(ctx: TraceContext, userId: string, extraHours: number): Promise<void> {
         const user = this.checkAndBlockUser("adminGrantExtraHours");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1495,10 +1496,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // various
-    async sendFeedback(feedback: string): Promise<string | undefined> {
+    async sendFeedback(ctx: TraceContext, feedback: string): Promise<string | undefined> {
         const user = this.checkUser("sendFeedback");
         const now = new Date().toISOString();
-        const remainingUsageHours = await this.getRemainingUsageHours();
+        const remainingUsageHours = await this.getRemainingUsageHours(ctx);
         const stillEnoughCredits = remainingUsageHours > Math.max(...Accounting.LOW_CREDIT_WARNINGS_IN_HOURS);
         log.info({ userId: user.id }, `Feedback: "${feedback}"`, { feedback, stillEnoughCredits });
         if (stillEnoughCredits) {
@@ -1509,7 +1510,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // Projects
-    async getProviderRepositoriesForUser(params: { provider: string, hints?: object }): Promise<ProviderRepository[]> {
+    async getProviderRepositoriesForUser(ctx: TraceContext, params: { provider: string, hints?: object }): Promise<ProviderRepository[]> {
         const user = this.checkAndBlockUser("getProviderRepositoriesForUser");
 
         const repositories: ProviderRepository[] = [];
@@ -1528,7 +1529,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return repositories;
     }
 
-    async triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult> {
+    async triggerPrebuild(ctx: TraceContext, projectId: string, branchName: string | null): Promise<StartPrebuildResult> {
         const user = this.checkAndBlockUser("triggerPrebuild");
 
         const project = await this.projectsService.getProject(projectId);
@@ -1575,7 +1576,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return prebuild;
     }
 
-    async cancelPrebuild(projectId: string, prebuildId: string): Promise<void> {
+    async cancelPrebuild(ctx: TraceContext, projectId: string, prebuildId: string): Promise<void> {
         const user = this.checkAndBlockUser("cancelPrebuild");
 
         const project = await this.projectsService.getProject(projectId);
@@ -1594,11 +1595,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Prebuild not found");
         }
         // Explicitly stopping the prebuild workspace now automaticaly cancels the prebuild
-        await this.stopWorkspace(prebuild.buildWorkspaceId);
+        await this.stopWorkspace(ctx, prebuild.buildWorkspaceId);
     }
 
-    public async createProject(params: CreateProjectParams): Promise<Project> {
-        const project = await super.createProject(params);
+    public async createProject(ctx: TraceContext, params: CreateProjectParams): Promise<Project> {
+        const project = await super.createProject(ctx, params);
 
         // update client registration for the logged in user
         this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
