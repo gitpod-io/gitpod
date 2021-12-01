@@ -7,7 +7,7 @@
 import { useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
-import { AuthProviderInfo, ProviderRepository, Team, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, ProviderRepository, Team, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
 import { TeamsContext } from "../teams/teams-context";
 import { useHistory, useLocation } from "react-router";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
@@ -65,6 +65,24 @@ export default function NewProject() {
         }
     }, []);
 
+    const [ teamMembers, setTeamMembers ] = useState<Record<string, TeamMemberInfo[]>>({});
+    useEffect(() => {
+        if (!teams) {
+            return;
+        }
+        (async () => {
+            const members: Record<string, TeamMemberInfo[]> = {};
+            await Promise.all(teams.map(async (team) => {
+                try {
+                    members[team.id] = await getGitpodService().server.getTeamMembers(team.id);
+                } catch (error) {
+                    console.error('Could not get members of team', team, error);
+                }
+            }));
+            setTeamMembers(members);
+        })();
+    }, [teams]);
+
     useEffect(() => {
         if (selectedTeamOrUser && selectedRepo) {
             createProject(selectedTeamOrUser, selectedRepo);
@@ -91,7 +109,7 @@ export default function NewProject() {
     }, [selectedAccount]);
 
     useEffect(() => {
-        if (!provider || isBitbucket()) {
+        if (!provider || isBitbucket()) {
             return;
         }
         (async () => {
@@ -101,7 +119,7 @@ export default function NewProject() {
     }, [provider]);
 
     const isGitHub = () => provider === "github.com";
-    const isBitbucket = () => provider == "bitbucket.org";
+    const isBitbucket = () => provider === "bitbucket.org";
 
     const updateReposInAccounts = async (installationId?: string) => {
         setLoaded(false);
@@ -163,7 +181,7 @@ export default function NewProject() {
     }
 
     const createProject = async (teamOrUser: Team | User, selectedRepo: string) => {
-        if (!provider || isBitbucket()) {
+        if (!provider || isBitbucket()) {
             return;
         }
         const repo = reposInAccounts.find(r => r.account === selectedAccount && (r.path ? r.path === selectedRepo : r.name === selectedRepo));
@@ -243,6 +261,7 @@ export default function NewProject() {
         const showSearchInput = !!repoSearchFilter || filteredRepos.length > 0;
 
         const renderRepos = () => (<>
+            {!isBitbucket() && <p className="text-gray-500 text-center text-base">Select a Git repository on <strong>{provider}</strong>. (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>}
             <div className={`mt-10 border rounded-xl border-gray-100 dark:border-gray-800 flex-col`}>
                 <div className="px-8 pt-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
                     <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
@@ -357,39 +376,42 @@ export default function NewProject() {
         const userFullName = user?.fullName || user?.name || '...';
         const teamsToRender = teams || [];
         return (<>
-            <h3 className="pb-2 mt-8">Select Team</h3>
-            <h4 className="pb-2">Adding <strong>{selectedRepo}</strong></h4>
-
-            <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-800 flex-col" >
-                <div key={`user-${userFullName}`} className={`w-96 border-b px-8 py-4 flex space-x-2 justify-between dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group dark:border-gray-800 rounded-t-xl`}>
-                    <div className="w-8/12 m-auto overflow-ellipsis truncate">{userFullName}</div>
-                    <div className="w-4/12 flex justify-end">
-                        <div className="flex self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
-                            <button className="primary py-1" onClick={() => setSelectedTeamOrUser(user)}>Select</button>
-                        </div>
+            <p className="mt-2 text-gray-500 text-center text-base">Select team or personal account</p>
+            <div className="mt-14 flex flex-col space-y-2">
+                <label key={`user-${userFullName}`} className={`w-80 px-4 py-3 flex space-x-3 items-center cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={() => setSelectedTeamOrUser(user)}>
+                    <input type="radio" />
+                    <div className="flex-grow overflow-ellipsis truncate flex flex-col">
+                        <span className="font-semibold">{userFullName}</span>
+                        <span className="text-sm text-gray-400">Personal account</span>
                     </div>
-                </div>
+                </label>
                 {teamsToRender.map((t) => (
-                    <div key={`team-${t.name}`} className={`w-96 border-b px-8 py-4 flex space-x-2 justify-between dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group dark:border-gray-800`}>
-                        <div className="w-8/12 m-auto overflow-ellipsis truncate">{t.name}</div>
-                        <div className="w-4/12 flex justify-end">
-                            <div className="flex self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
-                                <button className="primary py-1" onClick={() => setSelectedTeamOrUser(t)}>Select</button>
-                            </div>
+                    <label key={`team-${t.name}`} className={`w-80 px-4 py-3 flex space-x-3 items-center cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800`} onClick={() => setSelectedTeamOrUser(t)}>
+                        <input type="radio" />
+                        <div className="flex-grow overflow-ellipsis truncate flex flex-col">
+                            <span className="font-semibold">{t.name}</span>
+                            <span className="text-sm text-gray-400">{!!teamMembers[t.id]
+                                ? `${teamMembers[t.id].length} member${teamMembers[t.id].length === 1 ? '' : 's'}`
+                                : 'Team'
+                            }</span>
                         </div>
-                    </div>
+                    </label>
                 ))}
-                <div className="w-96 py-4 px-8 flex text-gray-500">
-                    <div className="w-full relative" onClick={() => setShowNewTeam(!showNewTeam)}>
-                        <div className="space-x-2">New Team</div>
+                <label className="w-80 px-4 py-3 flex flex-col cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <div className="flex space-x-3 items-center relative">
+                        <input type="radio" onChange={() => setShowNewTeam(!showNewTeam)} />
+                        <div className="flex-grow overflow-ellipsis truncate flex flex-col">
+                            <span className="font-semibold">Create new team</span>
+                            <span className="text-sm text-gray-400">Collaborate with others</span>
+                        </div>
                         {teamsToRender.length > 0 && (
-                            <img src={CaretDown} title="Select Account" className={`${showNewTeam ? "transform rotate-180" : ""} filter-grayscale absolute top-1/2 right-3 cursor-pointer`} />
+                            <img alt="" src={CaretDown} title="Select Account" className={`${showNewTeam ? "transform rotate-180" : ""} filter-grayscale absolute top-1/2 right-3 cursor-pointer`} />
                         )}
                     </div>
-                </div>
-                {(showNewTeam || teamsToRender.length === 0) && (
-                    <NewTeam className="w-96 px-8 pb-8" onSuccess={(t) => setSelectedTeamOrUser(t)} />
-                )}
+                    {(showNewTeam || teamsToRender.length === 0) && (
+                        <NewTeam onSuccess={(t) => setSelectedTeamOrUser(t)} />
+                    )}
+                </label>
             </div>
         </>)
     };
@@ -406,14 +428,8 @@ export default function NewProject() {
         </div>);
     }
 
-    const renderSelectRepoHeading = () => {
-        return <p className="text-gray-500 text-center text-base">Select a Git repository on <strong>{provider}</strong>. (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>
-    }
-
     return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
         <h1>New Project</h1>
-
-        {isBitbucket() || renderSelectRepoHeading()}
 
         {!selectedRepo && renderSelectRepository()}
 
@@ -504,7 +520,6 @@ function GitProviders(props: {
 
 function NewTeam(props: {
     onSuccess: (team: Team) => void,
-    className?: string,
 }) {
     const { setTeams } = useContext(TeamsContext);
 
@@ -530,15 +545,13 @@ function NewTeam(props: {
         setError(undefined);
     }
 
-    return (
-        <div className={props.className}>
-            <div className="flex flex-row space-x-2">
-                <input type="text" className="py-1 flex-grow w-36" name="new-team-inline" value={teamName} placeholder="team-name" onChange={(e) => onTeamNameChanged(e.target.value)} />
-                <button key={`new-team-inline-create`} disabled={!teamName} onClick={() => onNewTeam()}>Create Team</button>
-            </div>
-            {error && <p className="text-gitpod-red">{error}</p>}
+    return <>
+        <div className="mt-6 mb-1 flex flex-row space-x-2">
+            <input type="text" className="py-1 min-w-0" name="new-team-inline" value={teamName} onChange={(e) => onTeamNameChanged(e.target.value)} />
+            <button key={`new-team-inline-create`} disabled={!teamName} onClick={() => onNewTeam()}>Continue</button>
         </div>
-    )
+        {error && <p className="text-gitpod-red">{error}</p>}
+    </>;
 }
 
 async function openReconfigureWindow(params: { account?: string, onSuccess: (p: any) => void }) {
