@@ -43,7 +43,9 @@ packages:
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
       - components/ide/jetbrains/image:intellij
+      - components/ide/jetbrains/image:intellij-eap
       - components/ide/jetbrains/image:goland
+      - components/ide/jetbrains/image:goland-eap
       - components/ide/theia:docker
       - components/image-builder:docker
       - components/image-builder-mk3:docker

@@ -85,19 +85,33 @@ options:
     title: "IntelliJ IDEA"
     type: "desktop"
     logo: "intellij-idea"
-    tooltip: "IntelliJ IDEA from the Early-Access-Programm (EAP)"
-    label: "EAP"
     notes: ["While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
-  goland:
+  intellij-eap:
     orderKey: "05"
+    title: "IntelliJ IDEA"
+    type: "desktop"
+    logo: "intellij-idea"
+    tooltip: "Latest IntelliJ IDEA, includes Early-Access-Programm (EAP)"
+    label: "EAP"
+    notes: ["While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."]
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellijEap)) }}
+  goland:
+    orderKey: "06"
     title: "GoLand"
     type: "desktop"
     logo: "goland"
-    tooltip: "GoLand from the Early-Access-Programm (EAP)"
-    label: "EAP"
     notes: ["While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+  goland-eap:
+    orderKey: "07"
+    title: "GoLand"
+    type: "desktop"
+    logo: "goland"
+    tooltip: "Latest GoLand, includes Early-Access-Programm (EAP)"
+    label: "EAP"
+    notes: ["While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."]
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.golandEap)) }}
 
 defaultIde: "code"
 defaultDesktopIde: "code-desktop"

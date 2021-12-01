@@ -408,8 +408,12 @@ components:
         imageName: "ide/code-desktop-insiders"
       intellij:
         imageName: "ide/intellij"
+      intellijEap:
+        imageName: "ide/intellij-eap"
       goland:
         imageName: "ide/goland"
+      golandEap:
+        imageName: "ide/goland-eap"
     supervisor:
       imageName: "supervisor"
     dockerUp:

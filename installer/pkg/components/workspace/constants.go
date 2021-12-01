@@ -14,7 +14,9 @@ const (
 	CodeDesktopIDEImage          = "ide/code-desktop"
 	CodeDesktopInsidersIDEImage  = "ide/code-desktop-insiders"
 	IntelliJDesktopIDEImage      = "ide/intellij"
+	IntelliJEAPDesktopIDEImage   = "ide/intellij-eap"
 	GoLandDesktopIdeImage        = "ide/goland"
+	GoLandEAPDesktopIdeImage     = "ide/goland-eap"
 	DockerUpImage                = "docker-up"
 	SupervisorImage              = "supervisor"
 	SupervisorPort               = 22999

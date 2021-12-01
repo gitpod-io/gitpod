@@ -6,95 +6,30 @@ on:
 
 jobs:
   intellij:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Latest Release
-        id: latest-release
-        run: |
-          data=$(curl -sSL "https://data.services.jetbrains.com/products?code=IIU&release.type=eap%2Crc&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000")
-          link=$(echo "$data" | jq -r '.[0].releases[0].downloads.linux.link')
-          build=$(echo "$data" | jq -r '.[0].releases[0].build')
-          build2=$(echo "$build" | sed 's/\./-/g')
-          echo "::set-output name=result::$link"
-          echo "::set-output name=version::$build"
-          echo "::set-output name=version2::$build2"
-      - uses: actions/checkout@v2
-      - name: Used Release
-        id: used-release
-        run: echo "::set-output name=result::$(yq e '.packages[] | select(.name == "intellij") | .config.buildArgs.JETBRAINS_BACKEND_URL' components/ide/jetbrains/image/BUILD.yaml)"
-      - name: No Update Available
-        if: steps.latest-release.outputs.result == steps.used-release.outputs.result
-        run: |
-          echo "Nothing to do."
-          echo "Latest release: ${{ steps.latest-release.outputs.result }}"
-          echo "Used release:   ${{ steps.used-release.outputs.result }}"
-      - name: Update Available
-        if: steps.latest-release.outputs.result != steps.used-release.outputs.result
-        run: |
-          echo "There is an update available!"
-          echo "Latest release: ${{ steps.latest-release.outputs.result }}"
-          echo "Used release:   ${{ steps.used-release.outputs.result }}"
-          yq -i e '(.packages[] | select(.name == "intellij") | .config.buildArgs.JETBRAINS_BACKEND_URL) = "${{ steps.latest-release.outputs.result }}"' components/ide/jetbrains/image/BUILD.yaml
-          git diff
-      - name: Create Pull Request
-        if: steps.latest-release.outputs.result != steps.used-release.outputs.result
-        uses: peter-evans/create-pull-request@v3
-        with:
-          title: "[intellij] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
-          body: |
-            ## Description
-            This PR updates the IntelliJ IDE image to the latest release version.
-
-            ## Release Notes
-            ```release-note
-            Update IntelliJ IDE image to version ${{ steps.latest-release.outputs.version }}.
-            ```
-          commit-message: "[intellij] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
-          branch: "jetbrains/intellij-${{ steps.latest-release.outputs.version2 }}"
-
+    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    with:
+      productName: IntelliJ IDEA
+      productId: intellij
+      productCode: IIU
+      productType: release
+  intellij-eap:
+    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    with:
+      productName: IntelliJ IDEA (EAP)
+      productId: intellij-eap
+      productCode: IIU
+      productType: release%2Ceap%2Crc
   goland:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Latest Release
-        id: latest-release
-        run: |
-          data=$(curl -sSL "https://data.services.jetbrains.com/products?code=GO&release.type=eap%2Crc&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000")
-          link=$(echo "$data" | jq -r '.[0].releases[0].downloads.linux.link')
-          build=$(echo "$data" | jq -r '.[0].releases[0].build')
-          build2=$(echo "$build" | sed 's/\./-/g')
-          echo "::set-output name=result::$link"
-          echo "::set-output name=version::$build"
-          echo "::set-output name=version2::$build2"
-      - uses: actions/checkout@v2
-      - name: Used Release
-        id: used-release
-        run: echo "::set-output name=result::$(yq e '.packages[] | select(.name == "goland") | .config.buildArgs.JETBRAINS_BACKEND_URL' components/ide/jetbrains/image/BUILD.yaml)"
-      - name: No Update Available
-        if: steps.latest-release.outputs.result == steps.used-release.outputs.result
-        run: |
-          echo "Nothing to do."
-          echo "Latest release: ${{ steps.latest-release.outputs.result }}"
-          echo "Used release:   ${{ steps.used-release.outputs.result }}"
-      - name: Update Available
-        if: steps.latest-release.outputs.result != steps.used-release.outputs.result
-        run: |
-          echo "There is an update available!"
-          echo "Latest release: ${{ steps.latest-release.outputs.result }}"
-          echo "Used release:   ${{ steps.used-release.outputs.result }}"
-          yq -i e '(.packages[] | select(.name == "goland") | .config.buildArgs.JETBRAINS_BACKEND_URL) = "${{ steps.latest-release.outputs.result }}"' components/ide/jetbrains/image/BUILD.yaml
-          git diff
-      - name: Create Pull Request
-        if: steps.latest-release.outputs.result != steps.used-release.outputs.result
-        uses: peter-evans/create-pull-request@v3
-        with:
-          title: "[goland] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
-          body: |
-            ## Description
-            This PR updates the GoLand IDE image to the latest release version.
-
-            ## Release Notes
-            ```release-note
-            Update GoLand IDE image to version ${{ steps.latest-release.outputs.version }}.
-            ```
-          commit-message: "[goland] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
-          branch: "jetbrains/goland-${{ steps.latest-release.outputs.version2 }}"
+    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    with:
+      productName: GoLand
+      productId: goland
+      productCode: GO
+      productType: release
+  goland-eap:
+    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    with:
+      productName: GoLand (EAP)
+      productId: goland-eap
+      productCode: GO
+      productType: release%2Ceap%2Crc
