@@ -548,7 +548,9 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         } else if (!!deploymentConfig.analytics) {
             flags += ` --set analytics.writer=${deploymentConfig.analytics!}`;
         }
-
+        if (deploymentConfig.withObservability) {
+            flags += ` -f ../.werft/values.tracing.yaml`;
+        }
         werft.log("helm", "extracting versions");
         try {
             exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
