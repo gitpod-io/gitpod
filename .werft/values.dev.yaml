@@ -12,10 +12,6 @@ version: not-set
 imagePullPolicy: Always
 
 authProviders: []
-tracing:
-  endpoint: http://otel-collector:14268/api/traces
-  samplerType: const
-  samplerParam: "1"
 
 # we hit the "max. 110 pods/node" situation pretty often with our current core-dev setup.
 # the proper way to fix those would be to adjust the CIDR for workload NodePool which is a bit more work.
