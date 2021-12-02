@@ -35,7 +35,7 @@ var proxyCmd = &cobra.Command{
 			log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
 		}
 
-		baseref, err := reference.ParseNamed(proxyOpts.BaseRef)
+		baseref, err := reference.ParseNormalizedNamed(proxyOpts.BaseRef)
 		if err != nil {
 			log.WithError(err).Fatal("cannot parse base ref")
 		}
@@ -43,7 +43,7 @@ var proxyCmd = &cobra.Command{
 		if r, ok := baseref.(reference.NamedTagged); ok {
 			basetag = r.Tag()
 		}
-		targetref, err := reference.ParseNamed(proxyOpts.TargetRef)
+		targetref, err := reference.ParseNormalizedNamed(proxyOpts.TargetRef)
 		if err != nil {
 			log.WithError(err).Fatal("cannot parse target ref")
 		}
