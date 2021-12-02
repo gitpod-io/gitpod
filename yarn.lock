@@ -3212,6 +3212,15 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
+"@types/jaeger-client@^3.18.3":
+  version "3.18.3"
+  resolved "https://registry.yarnpkg.com/@types/jaeger-client/-/jaeger-client-3.18.3.tgz#5420b22990521fb93c749fc0e6e7416dbd60f0c9"
+  integrity sha512-vnc+6P2Sl+vuGVWW3lVqbxfk3rqWOyAp7H9eTMDg6dMJMiTpOrPksTs1wLrV1CZGGaLC0BgzWlywkwyDbOQx6Q==
+  dependencies:
+    "@types/node" "*"
+    opentracing "~0.14.3"
+    prom-client "~11.3.0 || ^12.0.0 || ^13.0.0"
+
 "@types/jest@*":
   version "27.0.2"
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-27.0.2.tgz#ac383c4d4aaddd29bbf2b916d8d105c304a5fcd7"
@@ -13104,7 +13113,7 @@ open@^7.0.2:
     is-docker "^2.0.0"
     is-wsl "^2.1.1"
 
-opentracing@^0.14.4, opentracing@^0.14.5:
+opentracing@^0.14.4, opentracing@^0.14.5, opentracing@~0.14.3:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/opentracing/-/opentracing-0.14.5.tgz#891fa92cd90a24e64f99bc964370227310926c85"
   integrity sha512-XLKtEfHxqrWyF1fzxznsv78w3csW41ucHnjiKnfzZLD5FN8UBDZZL1i4q0FR29zjxXhm+2Hop+5Vr/b8tKIvEg==
@@ -14840,7 +14849,7 @@ progress@^2.0.0, progress@^2.0.1:
   resolved "https://registry.yarnpkg.com/progress/-/progress-2.0.3.tgz#7e8cf8d8f5b8f239c1bc68beb4eb78567d572ef8"
   integrity sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==
 
-prom-client@^13.2.0:
+prom-client@^13.2.0, "prom-client@~11.3.0 || ^12.0.0 || ^13.0.0":
   version "13.2.0"
   resolved "https://registry.yarnpkg.com/prom-client/-/prom-client-13.2.0.tgz#99d13357912dd400f8911b77df19f7b328a93e92"
   integrity sha512-wGr5mlNNdRNzEhRYXgboUU2LxHWIojxscJKmtG3R8f4/KiWqyYgXTLHs0+Ted7tG3zFT7pgHJbtomzZ1L0ARaQ==

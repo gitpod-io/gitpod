@@ -6,7 +6,8 @@
 
 
 import * as opentracing from 'opentracing';
-import { TracingConfig, initTracerFromEnv, Sampler, SamplingDecision } from 'jaeger-client';
+import { TracingConfig, initTracerFromEnv } from 'jaeger-client';
+import { Sampler, SamplingDecision } from './jaeger-client-types';
 import { initGlobalTracer } from 'opentracing';
 import { injectable } from 'inversify';
 import { ResponseError } from 'vscode-jsonrpc';
@@ -20,9 +21,12 @@ export type TraceContextWithSpan = TraceContext & {
 
 
 export namespace TraceContext {
-    export function startSpan(operation: string, parentCtx: TraceContext): opentracing.Span {
-        const options: opentracing.SpanOptions = {
-            childOf: parentCtx.span
+    export function startSpan(operation: string, parentCtx?: TraceContext): opentracing.Span {
+        let options: opentracing.SpanOptions | undefined = undefined;
+        if (parentCtx) {
+            options = {
+                childOf: parentCtx.span
+            };
         }
         return opentracing.globalTracer().startSpan(operation, options);
     }
@@ -59,7 +63,7 @@ export namespace TraceContext {
         logError(ctx, err);
 
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#json-rpc
-        ctx.span.addTags({
+        addNestedTags(ctx, {
             rpc: {
                 system: "jsonrpc",
                 method,
@@ -76,7 +80,7 @@ export namespace TraceContext {
             return;
         }
 
-        ctx.span.addTags({
+        addNestedTags(ctx, {
             rpc: {
                 system: "jsonrpc",
                 method,
@@ -85,6 +89,47 @@ export namespace TraceContext {
                 },
             },
         });
+    }
+
+    /**
+     * Does what one would expect from `span.addTags`: Calls `span.addTag` for all keys in map, recursively for objects.
+     * Example:
+     * ```
+     * TraceContext.addNestedTags(ctx, {
+     *    rpc: {
+     *       system: "jsonrpc",
+     *       jsonrpc: {
+     *          version: "1.0",
+     *          method: "test",
+     *          parameters: ["abc", "def"],
+     *       },
+     *    },
+     * });
+     * ```
+     * gives
+     * rpc.system = "jsonrpc"
+     * rpc.jsonrpc.version = "1.0"
+     * rpc.jsonrpc.method = "test"
+     * rpc.jsonrpc.parameters.0 = "abc"
+     * rpc.jsonrpc.parameters.1 = "def"
+     * @param ctx
+     * @param keyValueMap
+     * @returns
+     */
+    export function addNestedTags(ctx: TraceContext, keyValueMap: { [key: string]: any }, _namespace?: string) {
+        if (!ctx.span) {
+            return;
+        }
+        const namespace = _namespace ? `${_namespace}.` : '';
+
+        for (const k of Object.keys(keyValueMap)) {
+            const v = keyValueMap[k];
+            if (typeof v === 'object') {
+                addNestedTags(ctx, v, `${namespace}${k}`);
+            } else {
+                ctx.span.setTag(`${namespace}${k}`, v);
+            }
+        }
     }
 }
 
@@ -101,7 +146,7 @@ export class TracingManager {
             reporter: {
                 logSpans: false
             },
-            serviceName
+            serviceName,
         }
         const t = initTracerFromEnv(config, {
             logger: console
