@@ -1,26 +1,27 @@
 name: Check for new JetBrains IDE releases
 on:
+  push:
   schedule:
     # At 11:00 on every day-of-week from Monday through Friday.
     - cron: "0 11 * * 1-5"
 
 jobs:
   intellij:
-    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@clu/jetbrains-github-action
     with:
       productName: IntelliJ IDEA
       productId: intellij
       productCode: IIU
       productType: release
   goland:
-    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@clu/jetbrains-github-action
     with:
       productName: GoLand
       productId: goland
       productCode: GO
       productType: release
   pycharm:
-    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@clu/jetbrains-github-action
     with:
       productName: PyCharm
       productId: pycharm
