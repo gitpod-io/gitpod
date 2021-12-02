@@ -8,5 +8,5 @@ name: rabbitmq
 version: 1.0.0
 dependencies:
   - name: rabbitmq
-    version: 8.16.0
+    version: 8.24.6
     repository: https://charts.bitnami.com/bitnami
