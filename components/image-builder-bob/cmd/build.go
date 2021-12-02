@@ -48,7 +48,7 @@ var buildCmd = &cobra.Command{
 				time.Sleep(10 * time.Second)
 			}
 
-			return
+			os.Exit(1)
 		}
 	},
 }
