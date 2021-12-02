@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -97,10 +98,11 @@ type ComponentAPI struct {
 }
 
 type DBConfig struct {
-	Host        string
-	Port        int32
-	ForwardPort *ForwardPort
-	Password    string
+	Host           string
+	Port           int32
+	ForwardPort    *ForwardPort
+	Password       string
+	EncryptionKeys string
 }
 
 type ForwardPort struct {
@@ -520,7 +522,7 @@ func FindDBConfigFromPodEnv(componentName string, namespace string, client klien
 	}
 	pod := list.Items[0]
 
-	var password, host string
+	var password, host, dbEncryptionKeys string
 	var port int32
 OuterLoop:
 	for _, c := range pod.Spec.Containers {
@@ -530,6 +532,22 @@ OuterLoop:
 				password, findErr = FindValueFromEnvVar(v, client, namespace)
 				if findErr != nil {
 					return nil, findErr
+				}
+			} else if v.Name == "DB_ENCRYPTION_KEYS" {
+				raw, findErr := FindValueFromEnvVar(v, client, namespace)
+				if findErr != nil {
+					return nil, findErr
+				}
+
+				var k []struct {
+					Material []byte `json:"material"`
+				}
+				err = json.Unmarshal([]byte(raw), &k)
+				if err != nil {
+					return nil, err
+				}
+				if len(k) > 0 {
+					dbEncryptionKeys = string(k[0].Material)
 				}
 			} else if v.Name == "DB_PORT" {
 				var portStr string
@@ -557,9 +575,10 @@ OuterLoop:
 		return nil, xerrors.Errorf("could not find complete DBConfig on pod %s!", pod.Name)
 	}
 	config := DBConfig{
-		Host:     host,
-		Port:     port,
-		Password: password,
+		Host:           host,
+		Port:           port,
+		Password:       password,
+		EncryptionKeys: dbEncryptionKeys,
 	}
 	return &config, nil
 }
