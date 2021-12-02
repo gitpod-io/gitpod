@@ -2,13 +2,13 @@ name: Changelog
 
 on:
   schedule:
-    - cron: "0 10 * * *"
+    - cron: "0 0 * * *"
 
 jobs:
 
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     container: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.34
 
