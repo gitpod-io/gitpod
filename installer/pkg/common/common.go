@@ -26,11 +26,19 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func DefaultLabels(component string) map[string]string {
+func DefaultLabels(component string, ctx *RenderContext) map[string]string {
 	return map[string]string{
-		"app":                        AppName,
-		"component":                  component,
-		wsk8s.GitpodNodeServiceLabel: component,
+		"app":                          AppName,
+		"component":                    component,
+		wsk8s.GitpodNodeServiceLabel:   component,
+		"app.kubernetes.io/name":       AppName,
+		"app.kubernetes.io/instance":   AppName,
+		"app.kubernetes.io/commit":     ctx.VersionManifest.Commit,
+		"app.kubernetes.io/version":    ctx.VersionManifest.Version,
+		"app.kubernetes.io/component":  component,
+		"app.kubernetes.io/part-of":    AppName,
+		"app.kubernetes.io/managed-by": AppName,
+		"app.kubernetes.io/created-by": "gitpod-installer",
 	}
 }
 

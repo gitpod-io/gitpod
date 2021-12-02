@@ -18,7 +18,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 	objectMeta := metav1.ObjectMeta{
 		Name:      Component,
 		Namespace: ctx.Namespace,
-		Labels:    common.DefaultLabels(Component),
+		Labels:    common.DefaultLabels(Component, ctx),
 	}
 
 	return []runtime.Object{&batchv1.Job{

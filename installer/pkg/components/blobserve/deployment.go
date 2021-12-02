@@ -19,7 +19,7 @@ import (
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(Component, ctx)
 
 	volumeName := "pull-secret"
 	var secretName string

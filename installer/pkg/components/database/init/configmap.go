@@ -44,7 +44,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      sqlInitScripts,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    common.DefaultLabels(Component, ctx),
 			},
 			Data: map[string]string{
 				"init.sql": initScriptData,

@@ -15,7 +15,7 @@ import (
 // service this doesn't use the common.GenerateService function
 // because it's more complex than this caters for
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(Component, ctx)
 
 	return []runtime.Object{&corev1.Service{
 		TypeMeta: common.TypeMetaService,

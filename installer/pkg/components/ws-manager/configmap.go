@@ -140,7 +140,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    common.DefaultLabels(Component, ctx),
 			},
 			Data: map[string]string{
 				"config.json": string(fc),
@@ -205,7 +205,7 @@ func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemp
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      WorkspaceTemplateConfigMap,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    common.DefaultLabels(Component, ctx),
 			},
 			Data: tpls,
 		},

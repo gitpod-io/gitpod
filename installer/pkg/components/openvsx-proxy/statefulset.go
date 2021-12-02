@@ -19,7 +19,7 @@ import (
 )
 
 func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(Component, ctx)
 	// todo(sje): add redis
 
 	configHash, err := common.ObjectHash(configmap(ctx))

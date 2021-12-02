@@ -20,7 +20,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      TLSSecretName,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    common.DefaultLabels(Component, ctx),
 			},
 			Spec: certmanagerv1.CertificateSpec{
 				Duration:   common.InternalCertDuration,

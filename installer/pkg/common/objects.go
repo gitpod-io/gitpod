@@ -20,7 +20,7 @@ func DefaultServiceAccount(component string) RenderFunc {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      component,
 					Namespace: cfg.Namespace,
-					Labels:    DefaultLabels(component),
+					Labels:    DefaultLabels(component, cfg),
 				},
 				AutomountServiceAccountToken: pointer.Bool(true),
 			},
@@ -46,7 +46,7 @@ func GenerateService(component string, ports map[string]ServicePort, mod ...func
 		}
 
 		// kind=service is required for services. It allows Gitpod to find them
-		serviceLabels := DefaultLabels(component)
+		serviceLabels := DefaultLabels(component, cfg)
 		serviceLabels["kind"] = "service"
 
 		service := &corev1.Service{
@@ -59,7 +59,7 @@ func GenerateService(component string, ports map[string]ServicePort, mod ...func
 			},
 			Spec: corev1.ServiceSpec{
 				Ports:    servicePorts,
-				Selector: DefaultLabels(component),
+				Selector: DefaultLabels(component, cfg),
 				Type:     corev1.ServiceTypeClusterIP,
 			},
 		}

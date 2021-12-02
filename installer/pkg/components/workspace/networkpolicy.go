@@ -17,7 +17,7 @@ import (
 )
 
 func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(Component, ctx)
 
 	podSelectorLabels := labels
 	podSelectorLabels["gitpod.io/networkpolicy"] = "default"
@@ -36,28 +36,28 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 				{
 					From: []networkingv1.NetworkPolicyPeer{
 						{
-							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(proxy.Component)},
+							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(proxy.Component, ctx)},
 						},
 					},
 				},
 				{
 					From: []networkingv1.NetworkPolicyPeer{
 						{
-							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(common.WSProxyComponent)},
+							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(common.WSProxyComponent, ctx)},
 						},
 					},
 				},
 				{
 					From: []networkingv1.NetworkPolicyPeer{
 						{
-							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(agentsmith.Component)},
+							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(agentsmith.Component, ctx)},
 						},
 					},
 				},
 				{
 					From: []networkingv1.NetworkPolicyPeer{
 						{
-							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(wsdaemon.Component)},
+							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(wsdaemon.Component, ctx)},
 						},
 					},
 				},
@@ -73,7 +73,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 							NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
 								"chart": common.MonitoringChart,
 							}},
-							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(common.ServerComponent)},
+							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(common.ServerComponent, ctx)},
 						},
 					},
 				},
@@ -93,7 +93,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 				{
 					To: []networkingv1.NetworkPolicyPeer{
 						{
-							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(proxy.Component)},
+							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(proxy.Component, ctx)},
 						},
 					},
 				},

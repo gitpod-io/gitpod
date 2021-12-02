@@ -41,7 +41,7 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      SQLPasswordName,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(Component, ctx),
 		},
 		Data: map[string][]byte{
 			"mysql-root-password": []byte(rootPassword),
@@ -52,7 +52,7 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      InClusterDbSecret,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(Component, ctx),
 		},
 		Data: map[string][]byte{
 			"database":       []byte(Database),

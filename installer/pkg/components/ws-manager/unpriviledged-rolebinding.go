@@ -15,7 +15,7 @@ import (
 )
 
 func unprivilegedRolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(Component, ctx)
 
 	return []runtime.Object{
 		&rbacv1.RoleBinding{

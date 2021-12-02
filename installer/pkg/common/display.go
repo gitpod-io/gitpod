@@ -99,7 +99,7 @@ func GenerateInstallationConfigMap(ctx *RenderContext, objects []RuntimeObject) 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      component,
 			Namespace: ctx.Namespace,
-			Labels:    DefaultLabels(component),
+			Labels:    DefaultLabels(component, ctx),
 		},
 	}
 

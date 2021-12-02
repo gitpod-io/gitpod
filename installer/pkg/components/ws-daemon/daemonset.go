@@ -22,7 +22,7 @@ import (
 
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := ctx.Config
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(Component, ctx)
 
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {

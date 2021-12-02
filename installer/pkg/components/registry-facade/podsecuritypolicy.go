@@ -19,7 +19,7 @@ func podsecuritypolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(Component, ctx),
 			Annotations: map[string]string{
 				"seccomp.security.alpha.kubernetes.io/allowedProfileNames": "runtime/default",
 				"apparmor.security.beta.kubernetes.io/allowedProfileNames": "runtime/default",

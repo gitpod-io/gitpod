@@ -33,7 +33,7 @@ func pullSecretName(ctx *common.RenderContext) (string, error) {
 }
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(Component, ctx)
 
 	var hashObj []runtime.Object
 	if objs, err := configmap(ctx); err != nil {

@@ -32,7 +32,7 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CookieSecret,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(Component, ctx),
 		},
 		Data: map[string][]byte{
 			"rabbitmq-erlang-cookie": []byte(cookieString),
@@ -42,7 +42,7 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      TLSSecret,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(Component, ctx),
 		},
 		Data: map[string][]byte{
 			"ca.crt":  caPem,

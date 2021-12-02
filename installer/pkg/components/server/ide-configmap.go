@@ -126,7 +126,7 @@ func ideconfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-ide-config", Component),
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    common.DefaultLabels(Component, ctx),
 			},
 			Data: map[string]string{
 				"config.json": string(fc),

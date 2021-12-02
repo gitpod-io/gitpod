@@ -23,7 +23,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta: common.TypeMetaCertificateIssuer,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   caIssuer,
-				Labels: common.DefaultLabels(Component),
+				Labels: common.DefaultLabels(Component, ctx),
 			},
 			Spec: v1.IssuerSpec{IssuerConfig: v1.IssuerConfig{
 				SelfSigned: &v1.SelfSignedIssuer{},
@@ -35,7 +35,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      caName,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    common.DefaultLabels(Component, ctx),
 			},
 			Spec: v1.CertificateSpec{
 				IsCA:       true,
@@ -59,7 +59,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      common.CertManagerCAIssuer,
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    common.DefaultLabels(Component, ctx),
 			},
 			Spec: v1.IssuerSpec{IssuerConfig: v1.IssuerConfig{
 				CA: &v1.CAIssuer{SecretName: caName},

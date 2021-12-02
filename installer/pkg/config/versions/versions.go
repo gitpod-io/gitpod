@@ -5,6 +5,7 @@
 package versions
 
 type Manifest struct {
+	Commit     string     `json:"commit"`
 	Version    string     `json:"version"`
 	Components Components `json:"components"`
 }

@@ -84,7 +84,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-config", Component),
 				Namespace: ctx.Namespace,
-				Labels:    common.DefaultLabels(Component),
+				Labels:    common.DefaultLabels(Component, ctx),
 			},
 			Data: map[string]string{
 				"image-builder.json": string(fc),

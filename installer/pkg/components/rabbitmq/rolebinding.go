@@ -18,7 +18,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Component,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(Component, ctx),
 		},
 		Subjects: []v1.Subject{{
 			Kind: "ServiceAccount",

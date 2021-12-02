@@ -20,7 +20,7 @@ func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      common.RegistryFacadeTLSCertSecret,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(Component, ctx),
 		},
 		Spec: certmanagerv1.CertificateSpec{
 			Duration:   common.InternalCertDuration,
