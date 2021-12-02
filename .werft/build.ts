@@ -322,7 +322,7 @@ interface DeploymentConfig {
 */
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     // to test this function, change files in your workspace, and sideload (-s) changed files into werft like so
-    // werft run github -f -j ./.werft/build.yaml  -a with-clean-slate-deployment=true -s ./.werft/build.ts -s ./.werft/post-process.sh
+    // werft run github -f -j ./.werft/build.yaml -s ./.werft/post-process.sh -s ./.werft/build.ts -a with-clean-slate-deployment=true
 
     werft.phase(phases.DEPLOY, "deploying to dev")
 
@@ -430,7 +430,9 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: installerSlices.INSTALLER_RENDER});
 
-        // TODO: need to circle back to tracing
+        // TODO: add analytics
+
+        // TODO: try adding honeycomb, if with-tracing is set
         // exec(`yq w -i config.yaml jaegerOperator.inCluster ${false}`, {slice: installerSlices.INSTALLER_RENDER});
 
         // TODO: Remove this after #6867 is done
@@ -513,13 +515,12 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         | kubectl apply -f -`);
     exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
 
-    // TODO: There is a method used by the current deploy, addDeploymentFlags, which uses helm flags to set many things for the install.
-    // We're not honoring them now, such as:
-    //  adding a license (Simon created #6868)
-    //  intergrating with charge bees (get feedback from meta team)
+    // TODO: Additional post processing needs
+    //  adding a license (Simon created #6868) - ADD THIS IN VIA POST PROCESSING
+    //  intergrating with charge bees (get feedback from meta team) - WON'T FIX NOW
+    //  analytics (get feedback from meta team) - WILL TRY SETTING AS CONFIG
+    //  Server feature flags (get feedback from meta team) - TRY ADDING IN AS POST PROCESSING
     //  disk paths are set for for ws-daemon and image builder (test and see if this works "as is")
-    //  Server feature flags (get feedback from meta team)
-    //  analytics (get feedback from meta team)
 
     werft.done(phases.DEPLOY);
 
