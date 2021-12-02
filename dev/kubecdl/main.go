@@ -26,9 +26,9 @@ var (
 func main() {
 	pflag.Parse()
 
-	node := pflag.Arg(0)
-	if node == "" {
-		logrus.Fatalf("usage: %s [--project|-p GoogleProject] [--kubeconfig|-k ~/.kube/config] <nodeName>", os.Args[0])
+	clusterName := pflag.Arg(0)
+	if clusterName == "" {
+		logrus.Fatalf("usage: %s [--project|-p GoogleProject] [--kubeconfig|-k ~/.kube/config] <clusterName>", os.Args[0])
 	}
 
 	_, err := exec.LookPath("gcloud")
@@ -53,18 +53,21 @@ func main() {
 		kubecfgfn = filepath.Join(home, ".kube", "config")
 	}
 
-	serverIP, err := getServerIP(node, prj)
+	serverIP, err := getServerIP(clusterName, prj)
 	if err != nil {
-		logrus.WithError(err).Fatal("cannot get node IP")
+		logrus.WithError(err).Fatal("cannot get cluster IP")
 	}
-
-	kubecfg, err := getK3sKubeconfig(node, prj)
+	nodeName, zone, err := getNodeName(clusterName, prj)
+	if err != nil {
+		logrus.WithError(err).Fatal("cannot get node name")
+	}
+	kubecfg, err := getK3sKubeconfig(nodeName, zone, prj)
 	if err != nil {
 		logrus.WithError(err).Fatal("cannot get kubeconfig")
 	}
 
 	kubecfg = bytes.ReplaceAll(kubecfg, []byte("127.0.0.1"), []byte(serverIP))
-	kubecfg = bytes.ReplaceAll(kubecfg, []byte("default"), []byte(node))
+	kubecfg = bytes.ReplaceAll(kubecfg, []byte("default"), []byte(clusterName))
 
 	tmpfile, err := os.CreateTemp("", "kubecfg-*.yaml")
 	if err != nil {
@@ -93,40 +96,56 @@ func main() {
 	}
 }
 
-func getServerIP(nodeName, project string) (sererIP string, err error) {
-	var nfo struct {
-		NetworkInterfaces []struct {
-			AccessConfigs []struct {
-				NatIP string `json:"natIP"`
-			} `json:"accessConfigs"`
-		} `json:"networkInterfaces"`
+func getServerIP(clusterName, project string) (sererIP string, err error) {
+	var nfo []struct {
+		IPAddress string
+		Name      string `json:"name"`
 	}
 
-	out, err := exec.Command("gcloud", "compute", "instances", "describe", "--format=json", "--project", project, nodeName).CombinedOutput()
+	out, err := exec.Command("gcloud", "compute", "forwarding-rules", "list", "--format=json", "--project", project).CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to describe node: %s: %w", string(out), err)
+		return "", fmt.Errorf("failed to describe loadbalance: %s: %w", string(out), err)
 	}
 
 	err = json.Unmarshal(out, &nfo)
 	if err != nil {
-		return "", fmt.Errorf("failed to unmarshal node description: %s: %w", string(out), err)
+		return "", fmt.Errorf("failed to unmarshal loadbalance description: %s: %w", string(out), err)
 	}
-
-	for _, iff := range nfo.NetworkInterfaces {
-		for _, n := range iff.AccessConfigs {
-			if n.NatIP == "" {
-				continue
-			}
-
-			return n.NatIP, nil
+	expectName := "server-ws-" + clusterName + "-external"
+	for _, lb := range nfo {
+		if lb.Name == expectName {
+			return lb.IPAddress, nil
 		}
 	}
 
-	return "", fmt.Errorf("did not find public IP for node")
+	return "", fmt.Errorf("did not find public IP for cluster")
 }
 
-func getK3sKubeconfig(nodeName, project string) ([]byte, error) {
-	res, err := exec.Command("gcloud", "compute", "ssh", "--project", project, "--command", "sudo cat /etc/rancher/k3s/k3s.yaml", nodeName).CombinedOutput()
+func getNodeName(clusterName, project string) (nodeName, zone string, err error) {
+	var nfo []struct {
+		Name string `json:"name"`
+		Zone string `json:"zone"`
+	}
+
+	out, err := exec.Command("gcloud", "compute", "instances", "list", "--format=json", "--project", project, "--filter=tags:server-ws-"+clusterName).CombinedOutput()
+	if err != nil {
+		return "", "", fmt.Errorf("failed to describe node instances: %s: %w", string(out), err)
+	}
+
+	err = json.Unmarshal(out, &nfo)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to unmarshal node instances: %s: %w", string(out), err)
+	}
+	if len(nfo) > 0 {
+		z := strings.Split(nfo[0].Zone, "/")
+
+		return nfo[0].Name, z[len(z)-1], nil
+	}
+	return "", "", fmt.Errorf("did not find node for cluster")
+}
+
+func getK3sKubeconfig(nodeName, zone, project string) ([]byte, error) {
+	res, err := exec.Command("gcloud", "compute", "ssh", "--project", project, "--zone", zone, "--command", "sudo cat /etc/rancher/k3s/k3s.yaml", nodeName).CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("cannot ssh into node: %s: %w", string(res), err)
 	}
