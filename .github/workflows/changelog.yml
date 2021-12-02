@@ -30,3 +30,4 @@ jobs:
           GITHUB_USER: roboquat
           GITHUB_EMAIL: roboquat@gitpod.io
           TOKEN: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
+        shell: bash
