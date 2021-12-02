@@ -1,6 +1,19 @@
 # Change Log
 
+## December 2021
+- Add PyCharm desktop IDE. ([#7004](https://github.com/gitpod-io/gitpod/pull/7004)) - [@corneliusludmann](https://github.com/corneliusludmann)
+- changed shell for changelog ([#7018](https://github.com/gitpod-io/gitpod/pull/7018)) - [@wulfthimm](https://github.com/wulfthimm)
+- [server] When adding a project to a team, install the prebuild webhook as the adding user, not as a (random) team owner ([#6991](https://github.com/gitpod-io/gitpod/pull/6991)) - [@jankeromnes](https://github.com/jankeromnes)
+- Remove jaeger operator external ([#6964](https://github.com/gitpod-io/gitpod/pull/6964)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- - fixed cloning bitbucket branches named such as feature/JIRA-123-summary ([#5367](https://github.com/gitpod-io/gitpod/pull/5367)) - [@ghuntley](https://github.com/ghuntley)
+- Workspace download route config set to work with other domains. ([#6988](https://github.com/gitpod-io/gitpod/pull/6988)) - [@laushinka](https://github.com/laushinka)
+- Update alpine to 3.15 ([#6902](https://github.com/gitpod-io/gitpod/pull/6902)) - [@aledbf](https://github.com/aledbf)
+- Change installer default containerd runtime directory ([#6920](https://github.com/gitpod-io/gitpod/pull/6920)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+
 ## November 2021
+- [dashboard] Add loading indicator to Prebuilds page ([#6984](https://github.com/gitpod-io/gitpod/pull/6984)) - [@jankeromnes](https://github.com/jankeromnes)
+- Adjust success criteria dashboard grouping period ([#6971](https://github.com/gitpod-io/gitpod/pull/6971)) - [@aledbf](https://github.com/aledbf)
+- [dashboard] When creating a new Project in your personal account, don't ask under which team to create it ([#6966](https://github.com/gitpod-io/gitpod/pull/6966)) - [@jankeromnes](https://github.com/jankeromnes)
 - [installer] Add option to use S3 as docker-registry backend ([#6912](https://github.com/gitpod-io/gitpod/pull/6912)) - [@aledbf](https://github.com/aledbf)
 - Fix typo at Gitpod's helm chart ([#6933](https://github.com/gitpod-io/gitpod/pull/6933)) - [@ArthurSens](https://github.com/ArthurSens)
 - Validate cluster min k8s version ([#6926](https://github.com/gitpod-io/gitpod/pull/6926)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
