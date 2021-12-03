@@ -37,5 +37,30 @@ const expect = chai.expect
         });
     }
 
+    @test public async testTracingContext_addJsonRPCParameters() {
+        const tracer = new MockTracer();
+        const span = tracer.startSpan('testTracingContext_addJsonRPCParameters');
+        const ctx = { span };
+        TraceContext.addJsonRPCParameters(ctx, {
+            one: "one",
+            two: {
+                name: "two",
+                some: "shape",
+                containing: "PII",
+            },
+            three: "three",
+        });
+
+        const mockSpan = tracer.report().spans[0];
+        expect(mockSpan.tags()).to.deep.equal({
+            "rpc.jsonrpc.parameters.one": "one",
+            "rpc.jsonrpc.parameters.two.containing": "PII",
+            "rpc.jsonrpc.parameters.two.name": "two",
+            "rpc.jsonrpc.parameters.two.some": "shape",
+            "rpc.jsonrpc.parameters.three": "three",
+            "rpc.system": "jsonrpc",
+        });
+    }
+
 }
 module.exports = new TestTracing()

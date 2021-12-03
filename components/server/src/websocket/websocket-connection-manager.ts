@@ -56,22 +56,21 @@ export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
 export interface ClientMetadata {
     id: string,
     authLevel: WebsocketAuthenticationLevel,
+    sessionId?: string;
+    userId?: string;
 }
 export namespace ClientMetadata {
-    export function getUserId(metadata: ClientMetadata): string | undefined {
-        if (metadata.authLevel !== "user") {
-            return undefined;
-        }
-        return metadata.id;
-    }
     export function from(userId: string | undefined, sessionId?: string): ClientMetadata {
+        let id = "anonymous";
+        let authLevel: WebsocketAuthenticationLevel = "anonymous";
         if (userId) {
-            return { id: userId, authLevel: "user" };
+            id = userId;
+            authLevel = "user";
         } else if (sessionId) {
-            return { id: `session-${sessionId}`, authLevel: "session" };
-        } else {
-            return { id: "anonymous", authLevel: "anonymous" };
+            id = `session-${sessionId}`;
+            authLevel = "session";
         }
+        return { id, authLevel, userId, sessionId };
     }
 }
 
@@ -275,16 +274,12 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
 
 class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T> {
 
-    protected userId: string | undefined;
-
     constructor(
         protected readonly accessGuard: FunctionAccessGuard,
         protected readonly rateLimiter: RateLimiter,
         protected readonly clientMetadata: ClientMetadata,
     ) {
         super();
-
-        this.userId = ClientMetadata.getUserId(clientMetadata);
     }
 
     protected async onRequest(method: string, ...args: any[]): Promise<any> {
@@ -317,15 +312,17 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         const ctx = { span };
         try {
             // generic tracing data
-            span.addTags({ client: this.clientMetadata });
-            if (this.userId) {
-                span.addTags({
-                    user: {
-                        id: this.userId,
-                    },
-                });
-            }
-            TraceContext.addJsonRPCParameters(ctx, method, args);
+            TraceContext.addNestedTags(ctx, {
+                client: {
+                    id: this.clientMetadata.id,
+                    authLevel: this.clientMetadata.authLevel,
+                },
+            });
+            TraceContext.setOWI(ctx, {
+                userId: this.clientMetadata.userId,
+                sessionId: this.clientMetadata.sessionId,
+            });
+            TraceContext.setJsonRPCMetadata(ctx, method);
 
             // actual call
             const result = await this.target[method](ctx, ...args);    // we can inject TraceContext here because of GitpodServerWithTracing

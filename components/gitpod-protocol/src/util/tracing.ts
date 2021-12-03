@@ -11,6 +11,7 @@ import { Sampler, SamplingDecision } from './jaeger-client-types';
 import { initGlobalTracer } from 'opentracing';
 import { injectable } from 'inversify';
 import { ResponseError } from 'vscode-jsonrpc';
+import { LogContext } from './logging';
 
 export interface TraceContext {
     span?: opentracing.Span
@@ -56,17 +57,33 @@ export namespace TraceContext {
         ctx.span.setTag("error", true);
     }
 
+    export function setJsonRPCMetadata(ctx: TraceContext, method?: string) {
+        if (!ctx.span) {
+            return;
+        }
+
+        const tags: { [key: string]: any } = {
+            rpc: {
+                system: "jsonrpc",
+                //  version,
+            },
+        };
+        if (method) {
+            tags.rpc.method = method;
+        }
+        addNestedTags(ctx, tags);
+    }
+
     export function logJsonRPCError(ctx: TraceContext, method: string, err: ResponseError<any>) {
         if (!ctx.span) {
             return;
         }
         logError(ctx, err);
 
+        setJsonRPCMetadata(ctx);
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#json-rpc
         addNestedTags(ctx, {
             rpc: {
-                system: "jsonrpc",
-                method,
                 jsonrpc: {
                     error_code: err.code,
                     error_message: err.message,
@@ -75,17 +92,16 @@ export namespace TraceContext {
         });
     }
 
-    export function addJsonRPCParameters(ctx: TraceContext, method: string, args: any[]) {
+    export function addJsonRPCParameters(ctx: TraceContext, params: { [key: string]: any }) {
         if (!ctx.span) {
             return;
         }
 
+        setJsonRPCMetadata(ctx);
         addNestedTags(ctx, {
             rpc: {
-                system: "jsonrpc",
-                method,
                 jsonrpc: {
-                    parameters: args.slice(),
+                    parameters: params,
                 },
             },
         });
@@ -130,6 +146,15 @@ export namespace TraceContext {
                 ctx.span.setTag(`${namespace}${k}`, v);
             }
         }
+    }
+
+    export function setOWI(ctx: TraceContext, owi: LogContext) {
+        if (!ctx.span) {
+            return;
+        }
+        addNestedTags(ctx, {
+            context: owi,
+        });
     }
 }
 
