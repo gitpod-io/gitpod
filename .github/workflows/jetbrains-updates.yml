@@ -27,3 +27,10 @@ jobs:
       productId: pycharm
       productCode: PCP
       productType: release
+  phpstorm:
+    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    with:
+      productName: PhpStorm
+      productId: phpstorm
+      productCode: PS
+      productType: release

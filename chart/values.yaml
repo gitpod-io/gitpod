@@ -412,6 +412,8 @@ components:
         imageName: "ide/goland"
       pycharm:
         imageName: "ide/pycharm"
+      phpstorm:
+        imageName: "ide/phpstorm"
     supervisor:
       imageName: "supervisor"
     dockerUp:

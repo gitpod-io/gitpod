@@ -99,7 +99,15 @@ func ideconfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:     typeDesktop,
 					Logo:     "https://upload.wikimedia.org/wikipedia/commons/1/1d/PyCharm_Icon.svg", // TODO(clu): Serve logo from our own components instead of using this wikimedia URL.
 					Notes:    []string{"While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."},
-					Image:    common.ImageName(ctx.Config.Repository, workspace.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
+					Image:    common.ImageName(ctx.Config.Repository, workspace.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
+				},
+				"phpstorm": {
+					OrderKey: pointer.String("07"),
+					Title:    "PhpStorm",
+					Type:     typeDesktop,
+					Logo:     "https://upload.wikimedia.org/wikipedia/commons/c/c9/PhpStorm_Icon.svg", // TODO(clu): Serve logo from our own components instead of using this wikimedia URL.
+					Notes:    []string{"While in beta, when you open a workspace with PhpStorm you will need to use the password “gitpod”."},
+					Image:    common.ImageName(ctx.Config.Repository, workspace.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
 				},
 			},
 			DefaultIDE:        "code",

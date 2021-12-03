@@ -101,6 +101,13 @@ options:
     logo: "https://upload.wikimedia.org/wikipedia/commons/1/1d/PyCharm_Icon.svg"
     notes: ["While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
+  phpstorm:
+    orderKey: "07"
+    title: "PhpStorm"
+    type: "desktop"
+    logo: "https://upload.wikimedia.org/wikipedia/commons/c/c9/PhpStorm_Icon.svg"
+    notes: ["While in beta, when you open a workspace with PhpStorm you will need to use the password “gitpod”."]
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
 
 defaultIde: "code"
 defaultDesktopIde: "code-desktop"

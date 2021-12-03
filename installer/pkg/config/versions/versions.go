@@ -44,6 +44,7 @@ type Components struct {
 			IntelliJImage            Versioned `json:"intellij"`
 			GoLandImage              Versioned `json:"goland"`
 			PyCharmImage             Versioned `json:"pycharm"`
+			PhpStormImage            Versioned `json:"phpstorm"`
 		} `json:"desktopIdeImages"`
 	} `json:"workspace"`
 	WSDaemon struct {
