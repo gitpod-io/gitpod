@@ -230,9 +230,9 @@ while [ "$i" -le "$DOCS" ]; do
    fi
 
    # TODO: list
-   # honeycomb
-   # license
-   # server feature flags
+   #  adding a license (Simon created #6868) - ADD THIS IN VIA POST PROCESSING
+   #  intergrating with charge bees (get feedback from meta team) - WON'T FIX NOW
+   #  Server feature flags (get feedback from meta team) - TRY ADDING IN AS POST PROCESSING
 
    i=$((i + 1))
 done

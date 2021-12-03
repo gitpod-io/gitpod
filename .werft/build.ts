@@ -316,17 +316,14 @@ interface DeploymentConfig {
 
 /*
 * Deploy a preview environment using the Installer
-*
-* TODO: add support for tracing, if needed, use with-helm for now
-* TODO: add support for k3sWsCluster, if needed, use with-helm for now
 */
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     // to test this function, change files in your workspace, and sideload (-s) changed files into werft like so
-    // werft run github -f -j ./.werft/build.yaml -s ./.werft/post-process.sh -s ./.werft/build.ts -a with-clean-slate-deployment=true
+    // werft run github -f -j ./.werft/build.yaml -s ./.werft/util/kubectl.ts -a with-clean-slate-deployment=true
 
     werft.phase(phases.DEPLOY, "deploying to dev")
 
-    const { version, destname, namespace, domain, monitoringDomain, url } = deploymentConfig;
+    const { version, destname, namespace, domain, monitoringDomain, url, withObservability } = deploymentConfig;
 
     // find free ports
     werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Check for some free ports.");
@@ -432,8 +429,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
         // TODO: add analytics
 
-        // TODO: try adding honeycomb, if with-tracing is set
-        // exec(`yq w -i config.yaml jaegerOperator.inCluster ${false}`, {slice: installerSlices.INSTALLER_RENDER});
+        if (withObservability) {
+            const tracingEndpoint = exec(`yq r ./.werft/values.dev.yaml tracing.endpoint`,{slice: installerSlices.INSTALLER_RENDER}).stdout.trim();
+            exec(`yq w -i config.yaml observability.tracing.endpoint ${tracingEndpoint}`, {slice: installerSlices.INSTALLER_RENDER});
+        }
 
         // TODO: Remove this after #6867 is done
         werft.log("authProviders", "copy authProviders")
@@ -483,7 +482,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
     }
 
-    // TODO: test sweeper is installed
+    // TODO: test sweeper is working (check on Monday)
     werft.log('sweeper', 'installing Sweeper');
     const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
     werft.log('sweeper', `Sweeper version: ${sweeperVersion}`);
@@ -515,17 +514,9 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         | kubectl apply -f -`);
     exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
 
-    // TODO: Additional post processing needs
-    //  adding a license (Simon created #6868) - ADD THIS IN VIA POST PROCESSING
-    //  intergrating with charge bees (get feedback from meta team) - WON'T FIX NOW
-    //  analytics (get feedback from meta team) - WILL TRY SETTING AS CONFIG
-    //  Server feature flags (get feedback from meta team) - TRY ADDING IN AS POST PROCESSING
-    //  disk paths are set for for ws-daemon and image builder (test and see if this works "as is")
-
     werft.done(phases.DEPLOY);
 
     async function cleanStateEnv(shellOpts: ExecOptions) {
-        // TODO: check to see if anything lingers after this point ... mysql, minio, jaeger, etc.
         await wipeAndRecreateNamespace(helmInstallName, namespace, { ...shellOpts, slice: installerSlices.CLEAN_ENV_STATE });
         // cleanup non-namespace objects
         werft.log(installerSlices.CLEAN_ENV_STATE, "removing old unnamespaced objects - this might take a while");
