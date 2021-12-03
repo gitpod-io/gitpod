@@ -7,6 +7,8 @@ packages:
       - :intellij
       - :goland
       - :pycharm
+      - :phpstorm
+
   - name: intellij
     type: docker
     srcs:
@@ -28,6 +30,7 @@ packages:
       image:
         - ${imageRepoBase}/ide/intellij:${version}
         - ${imageRepoBase}/ide/intellij:commit-${__git_commit}
+
   - name: goland
     type: docker
     srcs:
@@ -49,6 +52,7 @@ packages:
       image:
         - ${imageRepoBase}/ide/goland:${version}
         - ${imageRepoBase}/ide/goland:commit-${__git_commit}
+
   - name: pycharm
     type: docker
     srcs:
@@ -70,3 +74,25 @@ packages:
       image:
         - ${imageRepoBase}/ide/pycharm:${version}
         - ${imageRepoBase}/ide/pycharm:commit-${__git_commit}
+
+  - name: phpstorm
+    type: docker
+    srcs:
+      - "startup.sh"
+      - "supervisor-ide-config_phpstorm.json"
+      - "status/go.mod"
+      - "status/main.go"
+    deps:
+      - components/ide/jetbrains/backend-plugin:plugin
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.phpstorm
+      buildArgs:
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/webide/PhpStorm-2021.3.tar.gz"
+        SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
+      image:
+        - ${imageRepoBase}/ide/phpstorm:${version}
+        - ${imageRepoBase}/ide/phpstorm:commit-${__git_commit}
