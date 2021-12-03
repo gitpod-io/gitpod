@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { GitpodServerImpl } from "../../../src/workspace/gitpod-server-impl";
+import { GitpodServerImpl, traceAPIParams, traceWI } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
@@ -121,8 +121,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             async (ctx: TraceContext, creditAlert: CreditAlert) => {
                 this.client?.onCreditAlert(creditAlert);
                 if (creditAlert.remainingUsageHours < 1e-6) {
-                    const runningInstances = await this.workspaceDb.trace({}).findRegularRunningInstances(creditAlert.userId);
-                    runningInstances.forEach(async instance => await this.stopWorkspace({}, instance.workspaceId));
+                    const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(creditAlert.userId);
+                    runningInstances.forEach(async instance => await this.stopWorkspace(ctx, instance.workspaceId));
                 }
             }
         ));
@@ -146,7 +146,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async validateLicense(): Promise<LicenseValidationResult> {
+    async validateLicense(ctx: TraceContext): Promise<LicenseValidationResult> {
         const v = this.licenseEvaluator.validate();
         if (!v.valid) {
             return v;
@@ -166,11 +166,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     public async setWorkspaceTimeout(ctx: TraceContext, workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
-        ctx.span?.setTag("workspaceId", workspaceId);
-        ctx.span?.setTag("duration", duration);
+        traceAPIParams(ctx, { workspaceId, duration });
+        traceWI(ctx, { workspaceId });
 
         this.requireEELicense(Feature.FeatureSetTimeout);
-
         const user = this.checkUser("setWorkspaceTimeout");
 
         if (!WorkspaceTimeoutValues.includes(duration)) {
@@ -216,7 +215,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     public async getWorkspaceTimeout(ctx: TraceContext, workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
-        ctx.span?.setTag("workspaceId", workspaceId);
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
 
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeatureSetTimeout);
@@ -243,13 +243,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
 
-    public async isPrebuildDone(ctx: TraceContext, pwsid: string): Promise<boolean> {
-        ctx.span?.setTag("pwsid", pwsid);
+    public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {
+        traceAPIParams(ctx, { pwsId });
 
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeaturePrebuild);
 
-        const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsid);
+        const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsId);
         if (!pws) {
             // there is no prebuild - that's as good one being done
             return true;
@@ -265,12 +265,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.eligibilityService.maySetTimeout(user);
     }
 
-    public async controlAdmission(ctx: TraceContext, id: string, level: "owner" | "everyone"): Promise<void> {
-        ctx.span?.setTag("workspaceId", id);
-        ctx.span?.setTag("level", level);
+    public async controlAdmission(ctx: TraceContext, workspaceId: string, level: "owner" | "everyone"): Promise<void> {
+        traceAPIParams(ctx, { workspaceId, level });
+        traceWI(ctx, { workspaceId });
 
         this.requireEELicense(Feature.FeatureWorkspaceSharing);
-
         this.checkAndBlockUser('controlAdmission');
 
         const lvlmap = new Map<string, AdmissionLevel>();
@@ -280,10 +279,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Invalid admission level.");
         }
 
-        const workspace = await this.internalGetWorkspace(id, this.workspaceDb.trace(ctx));
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
 
-        const instance = await this.workspaceDb.trace(ctx).findRunningInstance(id);
+        const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (instance) {
             await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "update");
 
@@ -302,11 +301,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async takeSnapshot(ctx: TraceContext, options: GitpodServer.TakeSnapshotOptions): Promise<string> {
+        traceAPIParams(ctx, { options });
         const { workspaceId, dontWait } = options;
-        ctx.span?.setTag("workspaceId", workspaceId);
+        traceWI(ctx, { workspaceId });
 
         this.requireEELicense(Feature.FeatureSnapshot);
-
         const user = this.checkAndBlockUser("takeSnapshot");
 
         const workspace = await this.guardSnaphotAccess(ctx, user.id, workspaceId);
@@ -341,6 +340,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     protected async guardSnaphotAccess(ctx: TraceContext, userId: string, workspaceId: string) : Promise<Workspace> {
+        traceAPIParams(ctx, { userId, workspaceId });
+
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (!workspace || workspace.ownerId !== userId) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
@@ -355,10 +356,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
      * @throws ResponseError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
      */
     async waitForSnapshot(ctx: TraceContext, snapshotId: string): Promise<void> {
-        ctx.span?.setTag("snapshotId", snapshotId);
+        traceAPIParams(ctx, { snapshotId });
 
         this.requireEELicense(Feature.FeatureSnapshot);
-
         const user = this.checkAndBlockUser("waitForSnapshot");
 
         const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(snapshotId);
@@ -379,7 +379,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async getSnapshots(ctx: TraceContext, workspaceId: string): Promise<string[]> {
-        ctx.span?.setTag("workspaceId", workspaceId);
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
 
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeatureSnapshot);
@@ -399,6 +400,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
 
     async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
+        traceAPIParams(ctx, { req });
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetUsers", { req }, Permission.ADMIN_USERS);
@@ -412,14 +415,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    async adminGetUser(ctx: TraceContext, id: string): Promise<User> {
+    async adminGetUser(ctx: TraceContext, userId: string): Promise<User> {
+        traceAPIParams(ctx, { userId });
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        await this.guardAdminAccess("adminGetUser", { id }, Permission.ADMIN_USERS);
+        await this.guardAdminAccess("adminGetUser", { id: userId }, Permission.ADMIN_USERS);
 
         let result: User | undefined;
         try {
-            result = await this.userDB.findUserById(id);
+            result = await this.userDB.findUserById(userId);
         } catch (e) {
             throw new ResponseError(500, e.toString());
         }
@@ -431,163 +436,156 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
+        traceAPIParams(ctx, { req });
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
-        try {
-            const target = await this.userDB.findUserById(req.id);
-            if (!target) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
-            }
-
-            target.blocked = !!req.blocked;
-            await this.userDB.storeUser(target);
-
-            const workspaceDb = this.workspaceDb.trace(ctx);
-            const workspaces = await workspaceDb.findWorkspacesByUser(req.id);
-            const isDefined = <T>(x: T | undefined): x is T => x !== undefined;
-            (await Promise.all(workspaces.map((workspace) => workspaceDb.findRunningInstance(workspace.id))))
-                .filter(isDefined)
-                .forEach(instance => this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, StopWorkspacePolicy.IMMEDIATELY));
-
-            // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
-            // Returning `target` instead (which should be equivalent).
-            return this.censorUser(target);
-        } catch (e) {
-            throw new ResponseError(500, e.toString());
+        const target = await this.userDB.findUserById(req.id);
+        if (!target) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
         }
+
+        target.blocked = !!req.blocked;
+        await this.userDB.storeUser(target);
+
+        const workspaceDb = this.workspaceDb.trace(ctx);
+        const workspaces = await workspaceDb.findWorkspacesByUser(req.id);
+        const isDefined = <T>(x: T | undefined): x is T => x !== undefined;
+        (await Promise.all(workspaces.map((workspace) => workspaceDb.findRunningInstance(workspace.id))))
+            .filter(isDefined)
+            .forEach(instance => this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, StopWorkspacePolicy.IMMEDIATELY));
+
+        // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
+        // Returning `target` instead (which should be equivalent).
+        return this.censorUser(target);
     }
 
-    async adminDeleteUser(ctx: TraceContext, id: string): Promise<void> {
+    async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
+        traceAPIParams(ctx, { userId });
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        await this.guardAdminAccess("adminDeleteUser", { id }, Permission.ADMIN_USERS);
+        await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_USERS);
 
         try {
-            await this.userDeletionService.deleteUser(id);
+            await this.userDeletionService.deleteUser(userId);
         } catch (e) {
             throw new ResponseError(500, e.toString());
         }
     }
 
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
-        ctx.span?.log(req);
+        traceAPIParams(ctx, { req });
 
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_USERS);
 
-        try {
-            const target = await this.userDB.findUserById(req.id);
-            if (!target) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
-            }
-
-            const rolesOrPermissions = new Set((target.rolesOrPermissions || []) as string[]);
-            req.rpp.forEach(e => {
-                if (e.add) {
-                    rolesOrPermissions.add(e.r as string);
-                } else {
-                    rolesOrPermissions.delete(e.r as string)
-                }
-            })
-            target.rolesOrPermissions = Array.from(rolesOrPermissions.values()) as RoleOrPermission[];
-
-            await this.userDB.storeUser(target);
-            // For some reason, neither returning the result of `this.userDB.storeUser(target)` nor returning `target` work.
-            // The response never arrives the caller.
-            // Returning the following works at the cost of an additional DB query:
-            return this.censorUser((await this.userDB.findUserById(req.id))!);
-        } catch (e) {
-            throw new ResponseError(500, e.toString());
+        const target = await this.userDB.findUserById(req.id);
+        if (!target) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
         }
+
+        const rolesOrPermissions = new Set((target.rolesOrPermissions || []) as string[]);
+        req.rpp.forEach(e => {
+            if (e.add) {
+                rolesOrPermissions.add(e.r as string);
+            } else {
+                rolesOrPermissions.delete(e.r as string)
+            }
+        })
+        target.rolesOrPermissions = Array.from(rolesOrPermissions.values()) as RoleOrPermission[];
+
+        await this.userDB.storeUser(target);
+        // For some reason, neither returning the result of `this.userDB.storeUser(target)` nor returning `target` work.
+        // The response never arrives the caller.
+        // Returning the following works at the cost of an additional DB query:
+        return this.censorUser((await this.userDB.findUserById(req.id))!);
     }
 
     async adminModifyPermanentWorkspaceFeatureFlag(ctx: TraceContext, req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User> {
-        ctx.span?.log(req);
+        traceAPIParams(ctx, { req });
 
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminModifyPermanentWorkspaceFeatureFlag", { req }, Permission.ADMIN_USERS);
-        try {
-            const target = await this.userDB.findUserById(req.id);
-            if (!target) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
-            }
-
-            const featureSettings: UserFeatureSettings = target.featureFlags || {};
-            const featureFlags = new Set(featureSettings.permanentWSFeatureFlags || []);
-
-            req.changes.forEach(e => {
-                if (e.add) {
-                    featureFlags.add(e.featureFlag);
-                } else {
-                    featureFlags.delete(e.featureFlag);
-                }
-            });
-            featureSettings.permanentWSFeatureFlags = Array.from(featureFlags);
-            target.featureFlags = featureSettings;
-
-            await this.userDB.storeUser(target);
-            // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
-            // Returning `target` instead (which should be equivalent).
-            return this.censorUser(target);
-        } catch (e) {
-            throw new ResponseError(500, e.toString());
+        const target = await this.userDB.findUserById(req.id);
+        if (!target) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
         }
+
+        const featureSettings: UserFeatureSettings = target.featureFlags || {};
+        const featureFlags = new Set(featureSettings.permanentWSFeatureFlags || []);
+
+        req.changes.forEach(e => {
+            if (e.add) {
+                featureFlags.add(e.featureFlag);
+            } else {
+                featureFlags.delete(e.featureFlag);
+            }
+        });
+        featureSettings.permanentWSFeatureFlags = Array.from(featureFlags);
+        target.featureFlags = featureSettings;
+
+        await this.userDB.storeUser(target);
+        // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
+        // Returning `target` instead (which should be equivalent).
+        return this.censorUser(target);
     }
 
     async adminGetWorkspaces(ctx: TraceContext, req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
+        traceAPIParams(ctx, { req });
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
 
-        try {
-            return await this.workspaceDb.trace(ctx).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req, req.searchTerm);
-        } catch (e) {
-            throw new ResponseError(500, e.toString());
-        }
+        return await this.workspaceDb.trace(ctx).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req, req.searchTerm);
     }
 
-    async adminGetWorkspace(ctx: TraceContext, id: string): Promise<WorkspaceAndInstance> {
+    async adminGetWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceAndInstance> {
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        await this.guardAdminAccess("adminGetWorkspace", { id }, Permission.ADMIN_WORKSPACES);
+        await this.guardAdminAccess("adminGetWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
 
-        let result: WorkspaceAndInstance | undefined;
-        try {
-            result = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(id);
-        } catch (e) {
-            throw new ResponseError(500, e.toString());
-        }
-
+        const result = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(workspaceId);
         if (!result) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
         }
         return result;
     }
 
-    async adminForceStopWorkspace(ctx: TraceContext, id: string): Promise<void> {
+    async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        await this.guardAdminAccess("adminForceStopWorkspace", { id }, Permission.ADMIN_WORKSPACES);
+        await this.guardAdminAccess("adminForceStopWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
 
-        const workspace = await this.workspaceDb.trace(ctx).findById(id);
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (workspace) {
             await this.internalStopWorkspace(ctx, workspace, StopWorkspacePolicy.IMMEDIATELY, true);
         }
     }
 
-    async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, id: string): Promise<void> {
+    async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
+
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        await this.guardAdminAccess("adminRestoreSoftDeletedWorkspace", { id }, Permission.ADMIN_WORKSPACES);
+        await this.guardAdminAccess("adminRestoreSoftDeletedWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
 
         await this.workspaceDb.trace(ctx).transaction(async db => {
-            const ws = await db.findById(id);
+            const ws = await db.findById(workspaceId);
             if (!ws) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `No workspace with id '${id}' found.`);
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `No workspace with id '${workspaceId}' found.`);
             }
             if (!ws.softDeleted) {
                 return;
@@ -614,10 +612,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     protected async findPrebuiltWorkspace(parentCtx: TraceContext, user: User, context: WorkspaceContext, mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
         const ctx = TraceContext.childContextWithSpan("findPrebuiltWorkspace", parentCtx);
-        ctx.span?.addTags({
-            mode,
-            userId: user.id,
-        });
 
         if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
             return;
@@ -664,7 +658,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 };
             };
 
-            const wsi = await this.workspaceDb.trace({}).findCurrentInstance(workspaceID);
+            const wsi = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceID);
             if (!wsi || wsi.stoppedTime !== undefined) {
                 if (prebuiltWorkspace.state === 'queued') {
                     if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
@@ -696,7 +690,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                     *
                     * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
                     */
-                    const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(prebuiltWorkspace.id, 20000);
+                    const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(ctx, prebuiltWorkspace.id, 20000);
                     if (!finishedPrebuiltWorkspace) {
                         log.warn(logCtx, "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished", logPayload);
                         return;
@@ -720,6 +714,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminSetLicense(ctx: TraceContext, key: string): Promise<void> {
+        traceAPIParams(ctx, { key });
+
         await this.guardAdminAccess("adminGetWorkspaces", { key }, Permission.ADMIN_API);
 
         await this.licenseDB.store(uuidv4(), key);
@@ -748,6 +744,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     // }
 
     async licenseIncludesFeature(ctx: TraceContext, licenseFeature: LicenseFeature): Promise<boolean> {
+        traceAPIParams(ctx, { licenseFeature });
+
         this.checkAndBlockUser("licenseIncludesFeature");
 
         let feature: Feature | undefined;
@@ -765,25 +763,27 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     // (SaaS) – accounting
     public async getAccountStatement(ctx: TraceContext, options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement> {
+        traceAPIParams(ctx, { options });
+
         const user = this.checkUser("getAccountStatement");
         const now = options.date || new Date().toISOString();
         return this.accountStatementProvider.getAccountStatement(user.id, now);
     }
 
-    public async getRemainingUsageHours(ctx: TraceContext, ): Promise<number> {
+    public async getRemainingUsageHours(ctx: TraceContext): Promise<number> {
         const user = this.checkUser("getRemainingUsageHours");
         const runningInstancesPromise = this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
         return this.accountStatementProvider.getRemainingUsageHours(user.id, new Date().toISOString(), runningInstancesPromise);
     }
 
     // (SaaS) – payment/billing
-    async getAvailableCoupons(ctx: TraceContext, ): Promise<PlanCoupon[]> {
+    async getAvailableCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
         const user = this.checkUser('getAvailableCoupons');
         const couponIds = await this.couponComputer.getAvailableCouponIds(user);
         return this.getChargebeePlanCoupons(ctx, couponIds);
     }
 
-    async getAppliedCoupons(ctx: TraceContext, ): Promise<PlanCoupon[]> {
+    async getAppliedCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
         const user = this.checkUser('getAppliedCoupons');
         const couponIds = await this.couponComputer.getAppliedCouponIds(user, new Date());
         return this.getChargebeePlanCoupons(ctx, couponIds);
@@ -799,7 +799,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.config.chargebeeProviderOptions.site;
     }
 
-    public async isStudent(ctx: TraceContext, ): Promise<boolean> {
+    public async isStudent(ctx: TraceContext): Promise<boolean> {
         const user = this.checkUser("isStudent");
         return this.eligibilityService.isStudent(user);
     }
@@ -809,7 +809,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return !!this.config.enablePayment;
     }
 
-    async isChargebeeCustomer(ctx: TraceContext, ): Promise<boolean> {
+    async isChargebeeCustomer(ctx: TraceContext): Promise<boolean> {
         const user = this.checkUser('isChargebeeCustomer');
 
         return await new Promise<boolean>((resolve, reject) => {
@@ -827,6 +827,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     protected async getChargebeePlanCoupons(ctx: TraceContext, couponIds: string[]) {
+        traceAPIParams(ctx, { couponIds });
+
         const chargebeeCoupons = await Promise.all(couponIds.map(c => new Promise<chargebee.Coupon | undefined>((resolve, reject) => this.chargebeeProvider.coupon.retrieve(c).request((err, res) => {
             if (!!err) {
                 log.error({}, "could not retrieve coupon: " + err.message, { coupon: c })
@@ -871,7 +873,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
-    async createPortalSession(ctx: TraceContext, ): Promise<{}> {
+    async createPortalSession(ctx: TraceContext): Promise<{}> {
         const user = this.checkUser('createPortalSession');
         const logContext = { userId: user.id };
 
@@ -893,6 +895,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
+        traceAPIParams(ctx, { planId, planQuantity });
+
         const user = this.checkUser('checkout');
         const logContext = { userId: user.id };
 
@@ -951,12 +955,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async subscriptionUpgradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
+        traceAPIParams(ctx, { subscriptionId, chargebeePlanId });
+
         const user = this.checkUser('subscriptionUpgradeTo');
         await this.ensureIsEligibleForPlan(user, chargebeePlanId);
         await this.doUpdateUserPaidSubscription(user.id, subscriptionId, chargebeePlanId, false);
     }
 
     async subscriptionDowngradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
+        traceAPIParams(ctx, { subscriptionId, chargebeePlanId });
+
         const user = this.checkUser('subscriptionDowngradeTo');
         await this.ensureIsEligibleForPlan(user, chargebeePlanId);
         await this.doUpdateUserPaidSubscription(user.id, subscriptionId, chargebeePlanId, true);
@@ -978,12 +986,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async subscriptionCancel(ctx: TraceContext, subscriptionId: string): Promise<void> {
+        traceAPIParams(ctx, { subscriptionId });
+
         const user = this.checkUser('subscriptionCancel');
         const chargebeeSubscriptionId = await this.doGetUserPaidSubscription(user.id, subscriptionId);
         await this.chargebeeService.cancelSubscription(chargebeeSubscriptionId, { userId: user.id }, { subscriptionId, chargebeeSubscriptionId });
     }
 
     async subscriptionCancelDowngrade(ctx: TraceContext, subscriptionId: string): Promise<void> {
+        traceAPIParams(ctx, { subscriptionId });
+
         const user = this.checkUser('subscriptionCancelDowngrade');
         await this.doCancelDowngradeUserPaidSubscription(user.id, subscriptionId);
     }
@@ -1044,17 +1056,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // Team Subscriptions
-    async tsGet(ctx: TraceContext, ): Promise<TeamSubscription[]> {
+    async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
         const user = this.checkUser('getTeamSubscriptions');
         return this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
     }
 
-    async tsGetSlots(ctx: TraceContext, ): Promise<TeamSubscriptionSlotResolved[]> {
+    async tsGetSlots(ctx: TraceContext): Promise<TeamSubscriptionSlotResolved[]> {
         const user = this.checkUser('tsGetSlots');
         return this.teamSubscriptionService.findTeamSubscriptionSlotsBy(user.id, new Date());
     }
 
     async tsGetUnassignedSlot(ctx: TraceContext, teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined> {
+        traceAPIParams(ctx, { teamSubscriptionId });
+
         this.checkUser('tsGetUnassignedSlot');
         const slots = await this.teamSubscriptionService.findUnassignedSlots(teamSubscriptionId);
         return slots[0];
@@ -1067,6 +1081,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async tsAddSlots(ctx: TraceContext, teamSubscriptionId: string, addQuantity: number): Promise<void> {
+        traceAPIParams(ctx, { teamSubscriptionId, addQuantity });
+
         const user = this.checkAndBlockUser('tsAddSlots');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
@@ -1092,6 +1108,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async tsAssignSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string | undefined): Promise<void> {
+        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId });    // identityStr contains PII
+
         const user = this.checkAndBlockUser('tsAssignSlot');
         // assigning a slot can be done by third users
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, identityStr ? user.id : undefined);
@@ -1144,6 +1162,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async tsReassignSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void> {
+        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId });    // identityStr contains PII
+
         const user = this.checkAndBlockUser('tsReassignSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
         const logCtx = { userId: user.id };
@@ -1179,6 +1199,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     protected updateTeamSubscriptionQueue = new Queue();
 
     async tsDeactivateSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
+        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId });
+
         const user = this.checkAndBlockUser('tsDeactivateSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
@@ -1197,6 +1219,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async tsReactivateSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
+        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId });
+
         const user = this.checkAndBlockUser('tsReactivateSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
@@ -1214,7 +1238,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
-    async getGithubUpgradeUrls(ctx: TraceContext, ): Promise<GithubUpgradeURL[]> {
+    async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
         const user = this.checkUser('getGithubUpgradeUrls');
         const ghidentity = user.identities.find(i => i.authProviderId == "Public-GitHub");
         if (!ghidentity) {
@@ -1318,6 +1342,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     // (SaaS) – admin
     async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
+        traceAPIParams(ctx, { userId });
+
         const user = this.checkAndBlockUser("adminGetAccountStatement");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1327,6 +1353,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminSetProfessionalOpenSource(ctx: TraceContext, userId: string, shouldGetProfOSS: boolean): Promise<void> {
+        traceAPIParams(ctx, { userId, shouldGetProfOSS });
+
         const user = this.checkAndBlockUser("adminSetProfessionalOpenSource");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1340,6 +1368,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminIsStudent(ctx: TraceContext, userId: string): Promise<boolean> {
+        traceAPIParams(ctx, { userId });
+
         const user = this.checkAndBlockUser("adminIsStudent");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1349,6 +1379,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminAddStudentEmailDomain(ctx: TraceContext, userId: string, domain: string): Promise<void> {
+        traceAPIParams(ctx, { userId, domain });
+
         const user = this.checkAndBlockUser("adminAddStudentEmailDomain");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1361,6 +1393,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminGrantExtraHours(ctx: TraceContext, userId: string, extraHours: number): Promise<void> {
+        traceAPIParams(ctx, { userId, extraHours });
+
         const user = this.checkAndBlockUser("adminGrantExtraHours");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
@@ -1371,6 +1405,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     // various
     async sendFeedback(ctx: TraceContext, feedback: string): Promise<string | undefined> {
+        traceAPIParams(ctx, { });   // feedback is not interesting here, any may contain names
+
         const user = this.checkUser("sendFeedback");
         const now = new Date().toISOString();
         const remainingUsageHours = await this.getRemainingUsageHours(ctx);
@@ -1385,6 +1421,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     // Projects
     async getProviderRepositoriesForUser(ctx: TraceContext, params: { provider: string, hints?: object }): Promise<ProviderRepository[]> {
+        traceAPIParams(ctx, { params });
+
         const user = this.checkAndBlockUser("getProviderRepositoriesForUser");
 
         const repositories: ProviderRepository[] = [];
@@ -1404,6 +1442,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async triggerPrebuild(ctx: TraceContext, projectId: string, branchName: string | null): Promise<StartPrebuildResult> {
+        traceAPIParams(ctx, { projectId, branchName });
+
         const user = this.checkAndBlockUser("triggerPrebuild");
 
         const project = await this.projectsService.getProject(projectId);
@@ -1448,8 +1488,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async cancelPrebuild(ctx: TraceContext, projectId: string, prebuildId: string): Promise<void> {
-        ctx.span?.setTag("projectId", projectId);
-        ctx.span?.setTag("prebuildId", prebuildId);
+        traceAPIParams(ctx, { projectId, prebuildId });
 
         const user = this.checkAndBlockUser("cancelPrebuild");
 
@@ -1468,6 +1507,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     public async createProject(ctx: TraceContext, params: CreateProjectParams): Promise<Project> {
+        // parameters are already traced in super call
         const project = await super.createProject(ctx, params);
 
         // update client registration for the logged in user
