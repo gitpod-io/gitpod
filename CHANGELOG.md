@@ -1,6 +1,8 @@
 # Change Log
 
 ## December 2021
+- [image-builder] Fix bug with familiar digested base image references ([#7045](https://github.com/gitpod-io/gitpod/pull/7045)) - [@csweichel](https://github.com/csweichel)
+- changed time schedule for changelog ([#7024](https://github.com/gitpod-io/gitpod/pull/7024)) - [@wulfthimm](https://github.com/wulfthimm)
 - Add PyCharm desktop IDE. ([#7004](https://github.com/gitpod-io/gitpod/pull/7004)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - changed shell for changelog ([#7018](https://github.com/gitpod-io/gitpod/pull/7018)) - [@wulfthimm](https://github.com/wulfthimm)
 - [server] When adding a project to a team, install the prebuild webhook as the adding user, not as a (random) team owner ([#6991](https://github.com/gitpod-io/gitpod/pull/6991)) - [@jankeromnes](https://github.com/jankeromnes)
