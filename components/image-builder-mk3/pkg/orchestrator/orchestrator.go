@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/docker/distribution/reference"
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
@@ -306,6 +307,17 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		return false
 	}
 
+	pbaseref, err := reference.Parse(baseref)
+	if err != nil {
+		return xerrors.Errorf("cannot parse baseref: %v", err)
+	}
+	bobBaseref := "localhost:8080/base"
+	if r, ok := pbaseref.(reference.Digested); ok {
+		bobBaseref += "@" + r.Digest().String()
+	} else {
+		bobBaseref += ":latest"
+	}
+
 	var swr *wsmanapi.StartWorkspaceResponse
 	err = retry(ctx, func(ctx context.Context) (err error) {
 		swr, err = o.wsman.StartWorkspace(ctx, &wsmanapi.StartWorkspaceRequest{
@@ -333,7 +345,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				WorkspaceLocation: contextPath,
 				Envvars: []*wsmanapi.EnvironmentVariable{
 					{Name: "BOB_TARGET_REF", Value: "localhost:8080/target:latest"},
-					{Name: "BOB_BASE_REF", Value: "localhost:8080/base:latest"},
+					{Name: "BOB_BASE_REF", Value: bobBaseref},
 					{Name: "BOB_BUILD_BASE", Value: buildBase},
 					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
