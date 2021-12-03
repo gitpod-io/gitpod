@@ -15,13 +15,14 @@ export function setKubectlContextNamespace(namespace: string, shellOpts: ExecOpt
 }
 
 export async function wipePreviewEnvironmentAndNamespace(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
+    deleteAllWorkspaces(namespace, shellOpts);
+
     // wipe preview envs built with installer
     await wipePreviewEnvironmentInstaller(namespace, shellOpts);
 
     // wipe preview envs previously built with helm
     await wipePreviewEnvironmentHelm(helmInstallName, namespace, shellOpts)
 
-    deleteAllWorkspaces(namespace, shellOpts);
     await deleteAllUnnamespacedObjects(namespace, shellOpts);
 
     deleteNamespace(true, namespace, shellOpts);
@@ -44,11 +45,13 @@ async function wipePreviewEnvironmentInstaller(namespace: string, shellOpts: Exe
     const slice = shellOpts.slice || "installer";
     const werft = getGlobalWerftInstance();
 
-    const hasGitpodConfigmap = (exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"}`, { slice, dontCheckRc: true })).code === 0;
+    const hasGitpodConfigmap = (exec(`kubectl -n ${namespace} get configmap gitpod-app`, { slice, dontCheckRc: true })).code === 0;
     if (hasGitpodConfigmap) {
-        werft.log(slice, `Has Gitpod configmap, proceeding with removal`);
-        exec(`kubectl -n ${namespace} get configmap gitpod-app -o jsonpath={".data.app\.yaml"} | kubectl delete -f -`, { slice });
-        exec(`kubectl -n ${namespace} delete pvc data-mysql-0 minio || true`, { slice });
+        werft.log(slice, `${namespace} has Gitpod configmap, proceeding with removal`);
+        exec(`chmod +x ./.werft/util/uninstall-gitpod.sh`, { slice });
+        exec(`./.werft/util/uninstall-gitpod.sh ${namespace}`, { slice });
+    } else {
+        werft.log(slice, `There is no Gitpod configmap, moving on`);
     }
 }
 
