@@ -10,6 +10,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"golang.org/x/xerrors"
 )
 
 // ExposedPort represents an exposed pprt
@@ -33,6 +34,10 @@ type ExposedPortsInterface interface {
 
 	// Expose exposes a port to the internet. Upon successful execution any Observer will be updated.
 	Expose(ctx context.Context, port uint32, public bool) <-chan error
+
+	// TriggerUpdate requests a workspace instance update and sends an update to
+	// the channel that has been returned by Observe()
+	TriggerUpdate(ctx context.Context) error
 }
 
 // NoopExposedPorts implements ExposedPortsInterface but does nothing
@@ -53,6 +58,10 @@ func (*NoopExposedPorts) Expose(ctx context.Context, local uint32, public bool) 
 	return done
 }
 
+func (*NoopExposedPorts) TriggerUpdate(ctx context.Context) error {
+	return nil
+}
+
 // GitpodExposedPorts uses a connection to the Gitpod server to implement
 // the ExposedPortsInterface.
 type GitpodExposedPorts struct {
@@ -65,6 +74,8 @@ type GitpodExposedPorts struct {
 	exposeDelayGrowFactor float64
 
 	requests chan *exposePortRequest
+
+	exposedPorts chan []ExposedPort
 }
 
 type exposePortRequest struct {
@@ -91,13 +102,14 @@ func NewGitpodExposedPorts(workspaceID string, instanceID string, gitpodService 
 
 // Observe starts observing the exposed ports until the context is canceled.
 func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort, <-chan error) {
-	var (
-		reschan = make(chan []ExposedPort)
-		errchan = make(chan error, 1)
-	)
+	errchan := make(chan error, 1)
+	g.exposedPorts = make(chan []ExposedPort)
 
 	go func() {
-		defer close(reschan)
+		defer func() {
+			close(g.exposedPorts)
+			g.exposedPorts = nil
+		}()
 		defer close(errchan)
 
 		updates, err := g.C.InstanceUpdates(ctx, g.InstanceID)
@@ -108,27 +120,51 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 		for {
 			select {
 			case u := <-updates:
-				if u == nil {
+				res := getExposedPorts(u)
+				if res == nil {
 					return
 				}
-
-				res := make([]ExposedPort, len(u.Status.ExposedPorts))
-				for i, p := range u.Status.ExposedPorts {
-					res[i] = ExposedPort{
-						LocalPort: uint32(p.Port),
-						Public:    p.Visibility == "public",
-						URL:       p.URL,
-					}
-				}
-
-				reschan <- res
+				g.exposedPorts <- res
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
 
-	return reschan, errchan
+	return g.exposedPorts, errchan
+}
+
+func getExposedPorts(wsInstance *gitpod.WorkspaceInstance) []ExposedPort {
+	if wsInstance == nil {
+		return nil
+	}
+
+	res := make([]ExposedPort, len(wsInstance.Status.ExposedPorts))
+	for i, p := range wsInstance.Status.ExposedPorts {
+		res[i] = ExposedPort{
+			LocalPort: uint32(p.Port),
+			Public:    p.Visibility == "public",
+			URL:       p.URL,
+		}
+	}
+	return res
+}
+
+func (g *GitpodExposedPorts) TriggerUpdate(ctx context.Context) error {
+	if g.exposedPorts == nil {
+		return nil
+	}
+
+	wsInfo, err := g.C.GetWorkspace(ctx, g.WorkspaceID)
+	if err != nil {
+		return err
+	}
+	res := getExposedPorts(wsInfo.LatestInstance)
+	if res == nil {
+		return xerrors.Errorf("no workspace instance")
+	}
+	g.exposedPorts <- res
+	return nil
 }
 
 // Listen starts listening to expose port requests

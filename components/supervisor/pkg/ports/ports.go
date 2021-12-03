@@ -493,6 +493,26 @@ func (pm *Manager) autoExpose(ctx context.Context, localPort uint32, public bool
 		}
 		autoExpose.state = api.PortAutoExposure_succeeded
 		log.WithField("localPort", localPort).Info("auto-exposed port")
+
+		// wait 1 minute and check if we got the update from the server with exposure information
+		select {
+		case <-time.After(1 * time.Minute):
+			{
+				for _, exp := range pm.exposed {
+					if exp.LocalPort == localPort {
+						// we got the update from server, everything is fine
+						return
+					}
+				}
+				// we haven't seen the exposed update from server
+				log.WithField("localPort", localPort).Warn("we haven't seen an instance update with port exposure info after 1 minute")
+				err = pm.E.TriggerUpdate(ctx)
+				if err != nil {
+					log.WithError(err).WithField("localPort", localPort).Error("cannot trigger a workspace instance update")
+				}
+			}
+		case <-ctx.Done():
+		}
 	}()
 	pm.autoExposed[localPort] = autoExpose
 	log.WithField("localPort", localPort).Info("auto-exposing port")

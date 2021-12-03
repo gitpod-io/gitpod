@@ -603,6 +603,10 @@ func (tep *testExposedPorts) Expose(ctx context.Context, local uint32, public bo
 	return nil
 }
 
+func (*testExposedPorts) TriggerUpdate(ctx context.Context) error {
+	return nil
+}
+
 type testServedPorts struct {
 	Changes chan []ServedPort
 	Error   chan error
