@@ -1,6 +1,9 @@
 # Change Log
 
 ## December 2021
+- Update IntelliJ IDEA IDE image to version 213.5744.223. ([#7033](https://github.com/gitpod-io/gitpod/pull/7033)) - [@corneliusludmann](https://github.com/corneliusludmann)
+- Update GoLand IDE image to version 213.5744.269. ([#7034](https://github.com/gitpod-io/gitpod/pull/7034)) - [@corneliusludmann](https://github.com/corneliusludmann)
+- NODE ([#7040](https://github.com/gitpod-io/gitpod/pull/7040)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [image-builder] Fix bug with familiar digested base image references ([#7045](https://github.com/gitpod-io/gitpod/pull/7045)) - [@csweichel](https://github.com/csweichel)
 - changed time schedule for changelog ([#7024](https://github.com/gitpod-io/gitpod/pull/7024)) - [@wulfthimm](https://github.com/wulfthimm)
 - Add PyCharm desktop IDE. ([#7004](https://github.com/gitpod-io/gitpod/pull/7004)) - [@corneliusludmann](https://github.com/corneliusludmann)
