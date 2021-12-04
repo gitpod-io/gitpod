@@ -229,6 +229,43 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$i" "$NAME"-"$KIND"-overrides.yaml
    fi
 
+   # Remove the jaeger crd from the configmap, this way folks can still use with-helm, if needed
+   if [[ "gitpod-app" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      # Get a copy of the config we're working with
+      yq r k8s.yaml -d "$i" > "$NAME"-"$KIND".yaml
+      # Parse the YAML string from the config map
+      yq r "$NAME"-"$KIND".yaml 'data.[app.yaml]' > "$NAME"-"$KIND"-original.yaml
+      # Loop through the config YAML docs
+      # each doc has a --- after it, except the last one, use a zero based loop
+      CONFIG_MATCHES="$(grep -c -- --- "$NAME"-"$KIND"-original.yaml)"
+      ci=0 # index for going through the original
+      new_ci=0 # index for writing the new config
+      touch "$NAME"-"$KIND"-overrides.yaml # this will contain our "new" config, sans CRD
+      while [ "$ci" -le "$CONFIG_MATCHES" ]; do
+         CONFIG_NAME=$(yq r "$NAME"-"$KIND"-original.yaml -d "$ci" metadata.name)
+         CONFIG_KIND=$(yq r "$NAME"-"$KIND"-original.yaml -d "$ci" kind)
+         if [[ "jaegers.jaegertracing.io" == "$CONFIG_NAME" ]] && [[ "$CONFIG_KIND" == "CustomResourceDefinition" ]]; then
+            echo "Avoiding writing the CRD to the gitpod-app ConfigMap"
+            ci=$((ci + 1))
+            continue
+         fi
+         yq r "$NAME"-"$KIND"-original.yaml -d "$ci" > /tmp/gitpod-app_config_"$ci"
+         if [ "$ci" -gt 0 ]; then
+            # add a document separater
+            echo "---" >> "$NAME"-"$KIND"-overrides.yaml
+         fi
+         cat /tmp/gitpod-app_config_"$ci" >> "$NAME"-"$KIND"-overrides.yaml
+         ci=$((ci + 1))
+         new_ci=$((new_ci + 1))
+      done
+      # merge overrides into base
+      yq w -i "$NAME"-"$KIND".yaml "data.[app.yaml]" -- "$(< "$NAME"-"$KIND"-overrides.yaml)"
+      # merge base into k8s.yaml
+      yq m -x -i -d "$i" k8s.yaml "$NAME"-"$KIND".yaml
+   fi
+
    # TODO: list
    #  adding a license (Simon created #6868) - ADD THIS IN VIA POST PROCESSING
    #  intergrating with charge bees (get feedback from meta team) - WON'T FIX NOW
