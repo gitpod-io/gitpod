@@ -250,7 +250,6 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		var (
-			wrapNetns         = os.Getenv("WORKSPACEKIT_USE_NETNS") == "true"
 			slirp4netnsSocket string
 		)
 
@@ -308,16 +307,14 @@ var ring1Cmd = &cobra.Command{
 			)
 		}
 
-		if wrapNetns {
-			f, err := ioutil.TempDir("", "wskit-slirp4netns")
-			if err != nil {
-				log.WithError(err).Error("cannot create slirp4netns socket tempdir")
-				return
-			}
-
-			slirp4netnsSocket = filepath.Join(f, "slirp4netns.sock")
-			mnts = append(mnts, mnte{Target: "/.supervisor/slirp4netns.sock", Source: f, Flags: unix.MS_BIND | unix.MS_REC})
+		f, err := ioutil.TempDir("", "wskit-slirp4netns")
+		if err != nil {
+			log.WithError(err).Error("cannot create slirp4netns socket tempdir")
+			return
 		}
+
+		slirp4netnsSocket = filepath.Join(f, "slirp4netns.sock")
+		mnts = append(mnts, mnte{Target: "/.supervisor/slirp4netns.sock", Source: f, Flags: unix.MS_BIND | unix.MS_REC})
 
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
@@ -358,9 +355,8 @@ var ring1Cmd = &cobra.Command{
 			}
 			env = append(env, e)
 		}
-		if wrapNetns {
-			env = append(env, "WORKSPACEKIT_WRAP_NETNS=true")
-		}
+
+		env = append(env, "WORKSPACEKIT_WRAP_NETNS=true")
 
 		socketFN := filepath.Join(os.TempDir(), fmt.Sprintf("workspacekit-ring1-%d.unix", time.Now().UnixNano()))
 		skt, err := net.Listen("unix", socketFN)
@@ -371,11 +367,8 @@ var ring1Cmd = &cobra.Command{
 		defer skt.Close()
 
 		var (
-			cloneFlags uintptr = syscall.CLONE_NEWNS | syscall.CLONE_NEWPID
+			cloneFlags uintptr = syscall.CLONE_NEWNS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNET
 		)
-		if wrapNetns {
-			cloneFlags = cloneFlags | syscall.CLONE_NEWNET
-		}
 
 		cmd := exec.Command("/proc/self/exe", "ring2", socketFN)
 		cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -463,30 +456,28 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		if wrapNetns {
-			slirpCmd := exec.Command(filepath.Join(filepath.Dir(ring2Opts.SupervisorPath), "slirp4netns"),
-				"--configure",
-				"--mtu=65520",
-				"--disable-host-loopback",
-				"--api-socket", slirp4netnsSocket,
-				strconv.Itoa(cmd.Process.Pid),
-				"tap0",
-			)
-			slirpCmd.SysProcAttr = &syscall.SysProcAttr{
-				Pdeathsig: syscall.SIGKILL,
-			}
-			slirpCmd.Stdin = os.Stdin
-			slirpCmd.Stdout = os.Stdout
-			slirpCmd.Stderr = os.Stderr
-
-			err = slirpCmd.Start()
-			if err != nil {
-				log.WithError(err).Error("cannot start slirp4netns")
-				return
-			}
-			//nolint:errcheck
-			defer slirpCmd.Process.Kill()
+		slirpCmd := exec.Command(filepath.Join(filepath.Dir(ring2Opts.SupervisorPath), "slirp4netns"),
+			"--configure",
+			"--mtu=65520",
+			"--disable-host-loopback",
+			"--api-socket", slirp4netnsSocket,
+			strconv.Itoa(cmd.Process.Pid),
+			"tap0",
+		)
+		slirpCmd.SysProcAttr = &syscall.SysProcAttr{
+			Pdeathsig: syscall.SIGKILL,
 		}
+		slirpCmd.Stdin = os.Stdin
+		slirpCmd.Stdout = os.Stdout
+		slirpCmd.Stderr = os.Stderr
+
+		err = slirpCmd.Start()
+		if err != nil {
+			log.WithError(err).Error("cannot start slirp4netns")
+			return
+		}
+		//nolint:errcheck
+		defer slirpCmd.Process.Kill()
 
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{

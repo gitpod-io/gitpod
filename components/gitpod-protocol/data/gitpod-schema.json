@@ -209,7 +209,7 @@
         },
         "experimentalNetwork": {
             "type": "boolean",
-            "description": "Experimental network configuration in workspaces"
+            "description": "Experimental network configuration in workspaces (deprecated). Enabled by default"
         }
     },
     "additionalProperties": false
