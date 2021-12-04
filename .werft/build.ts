@@ -71,7 +71,7 @@ const installerSlices = {
     INSTALLER_RENDER: "installer render",
     INSTALLER_POST_PROCESSING: "installer post processing",
     APPLY_INSTALL_MANIFESTS: "installer apply",
-    INSTALL_GITPOD: "install Gitpod"
+    DEPLOYMENT_WAITING: "monitor server deployment"
 }
 
 export function parseVersion(context) {
@@ -318,8 +318,8 @@ interface DeploymentConfig {
 * Deploy a preview environment using the Installer
 */
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
-    // to test this function, change files in your workspace, and sideload (-s) changed files into werft like so
-    // werft run github -f -j ./.werft/build.yaml -s ./.werft/util/kubectl.ts -a with-clean-slate-deployment=true
+    // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
+    // werft run github -f -j ./.werft/build.yaml -a with-clean-slate-deployment=true -a with-observability=true -s ./.werft/util/kubectl.ts
 
     werft.phase(phases.DEPLOY, "deploying to dev")
 
@@ -428,7 +428,6 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: installerSlices.INSTALLER_RENDER});
 
         // TODO: add analytics
-
         if (withObservability) {
             const tracingEndpoint = exec(`yq r ./.werft/values.dev.yaml tracing.endpoint`,{slice: installerSlices.INSTALLER_RENDER}).stdout.trim();
             exec(`yq w -i config.yaml observability.tracing.endpoint ${tracingEndpoint}`, {slice: installerSlices.INSTALLER_RENDER});
@@ -473,13 +472,21 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
     try {
-        exec(`kubectl apply -f k8s.yaml`,{ silent: false });
+        exec(`kubectl apply -f k8s.yaml`,{ slice: installerSlices.APPLY_INSTALL_MANIFESTS });
         werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
     } catch (err) {
         werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
     } finally {
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
+    }
+
+    try {
+        werft.log(installerSlices.DEPLOYMENT_WAITING, "Server not ready. Let the waiting...commence!");
+        exec(`kubectl rollout status deployment/server --timeout=5m`,{ slice: installerSlices.DEPLOYMENT_WAITING });
+        werft.done(installerSlices.DEPLOYMENT_WAITING);
+    } catch (err) {
+        werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
     }
 
     // TODO: test sweeper is working (check on Monday)

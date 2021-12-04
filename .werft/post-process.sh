@@ -266,10 +266,11 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i -d "$i" k8s.yaml "$NAME"-"$KIND".yaml
    fi
 
-   # TODO: list
-   #  adding a license (Simon created #6868) - ADD THIS IN VIA POST PROCESSING
-   #  intergrating with charge bees (get feedback from meta team) - WON'T FIX NOW
-   #  Server feature flags (get feedback from meta team) - TRY ADDING IN AS POST PROCESSING
+   # TODO: Set the components.server.defaultFeatureFlags
+
+   # TODO: these must also be set, and are conditional based on toggles
+   #  without-ee-license - adding a license (Simon created #6868) - ADD THIS IN VIA POST PROCESSING
+   #  with-payment - intergrating with charge bees (get feedback from meta team) - WON'T FIX NOW
 
    i=$((i + 1))
 done
