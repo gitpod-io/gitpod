@@ -109,8 +109,11 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 			select {
 			case u := <-updates:
 				if u == nil {
+					log.WithFields(log.OWI("", g.WorkspaceID, g.InstanceID)).Info("GitpodExposedPorts: instance update is nil")
 					return
 				}
+
+				log.WithFields(log.OWI("", g.WorkspaceID, g.InstanceID)).WithField("instance", u).Info("GitpodExposedPorts: new instance update")
 
 				res := make([]ExposedPort, len(u.Status.ExposedPorts))
 				for i, p := range u.Status.ExposedPorts {
