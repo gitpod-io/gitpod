@@ -6,6 +6,9 @@ package resolve
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"strings"
 	"sync"
 	"time"
@@ -13,12 +16,14 @@ import (
 	"github.com/containerd/containerd/remotes"
 	dockerremote "github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/distribution/reference"
+	"github.com/opencontainers/go-digest"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/auth"
+	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // ErrNotFound is returned when the reference was not found
@@ -79,14 +84,65 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 	}
 
 	nref := pref.String()
+	pref = reference.TrimNamed(pref)
 	span.LogKV("normalized-ref", nref)
 
-	res, _, err = r.Resolve(ctx, nref)
+	res, desc, err := r.Resolve(ctx, nref)
 	if err != nil && strings.Contains(err.Error(), "not found") {
 		err = ErrNotFound
+		return
+	}
+	fetcher, err := r.Fetcher(ctx, res)
+	if err != nil {
+		return
 	}
 
-	return
+	in, err := fetcher.Fetch(ctx, desc)
+	if err != nil {
+		return
+	}
+	defer in.Close()
+	buf, err := ioutil.ReadAll(in)
+	if err != nil {
+		return
+	}
+
+	var mf ociv1.Manifest
+	err = json.Unmarshal(buf, &mf)
+	if err != nil {
+		return "", fmt.Errorf("cannot unmarshal manifest: %w", err)
+	}
+
+	if mf.Config.Size != 0 {
+		pref, err = reference.WithDigest(pref, mf.Config.Digest)
+		if err != nil {
+			return
+		}
+		return pref.String(), nil
+	}
+
+	var mfl ociv1.Index
+	err = json.Unmarshal(buf, &mfl)
+	if err != nil {
+		return
+	}
+
+	var dgst digest.Digest
+	for _, mf := range mfl.Manifests {
+		if fmt.Sprintf("%s-%s", mf.Platform.OS, mf.Platform.Architecture) == "linux-amd64" {
+			dgst = mf.Digest
+			break
+		}
+	}
+	if dgst == "" {
+		return "", fmt.Errorf("no manifest for platform linux-amd64 found")
+	}
+
+	pref, err = reference.WithDigest(pref, dgst)
+	if err != nil {
+		return
+	}
+	return pref.String(), nil
 }
 
 type opts struct {
