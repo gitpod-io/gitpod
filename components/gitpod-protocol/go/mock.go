@@ -805,9 +805,9 @@ func (mr *MockAPIInterfaceMockRecorder) TakeSnapshot(ctx, options interface{}) *
 }
 
 // WaitForSnapshot mocks base method.
-func (m *MockAPIInterface) WaitForSnapshot(ctx context.Context, options *WaitForSnapshotOptions) error {
+func (m *MockAPIInterface) WaitForSnapshot(ctx context.Context, snapshotId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WaitForSnapshot", ctx, options)
+	ret := m.ctrl.Call(m, "WaitForSnapshot", ctx, snapshotId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
