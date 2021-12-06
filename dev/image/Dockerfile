@@ -56,15 +56,15 @@ RUN cd /usr/bin && curl -L https://github.com/praetorian-inc/gokart/releases/dow
 
 # leeway
 ENV LEEWAY_NESTED_WORKSPACE=true
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.8/leeway_0.2.8_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.9/leeway_0.2.9_Linux_x86_64.tar.gz | tar xz
 
 # dazzle
-RUN cd /usr/bin && curl -fsSL https://github.com/32leaves/dazzle/releases/download/v0.0.3/dazzle_0.0.3_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.4/dazzle_0.1.4_Darwin_x86_64.tar.gz| tar xz
 
 # werft CLI
 ENV WERFT_K8S_NAMESPACE=werft
 ENV WERFT_DIAL_MODE=kubernetes
-RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.0.5rc/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
+RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.1.4/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
 
 # yq - jq for YAML files
 # Note: we rely on version 3.x.x in various places, 4.x breaks this!
