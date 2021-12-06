@@ -20,6 +20,7 @@ import { useHistory } from 'react-router-dom';
 import { trackButtonOrAnchor, trackPathChange, trackLocation } from './Analytics';
 import { User } from '@gitpod/gitpod-protocol';
 import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
+import { Experiment } from './experiments';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -167,6 +168,11 @@ function App() {
     }, []);
 
     // listen and notify Segment of client-side path updates
+    useEffect(() => {
+        // Choose which experiments to run for this session/user
+        Experiment.set(Experiment.seed(true));
+    })
+
     useEffect(() => {
         return history.listen((location: any) => {
             const path = window.location.pathname;
