@@ -14,7 +14,7 @@ pod:
       secretName: gcp-sa-gitpod-dev-deployer
   containers:
   - name: wipe-devstaging
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-slim-dev-image.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pd-upgrade-dev-image.1
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
