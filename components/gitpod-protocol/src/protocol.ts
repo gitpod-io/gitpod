@@ -564,12 +564,12 @@ export interface WorkspaceConfig {
     /**
      * Where the config object originates from.
      *
-     * repo - from the repository
-     * project-db - from the "Project" stored in the database
-     * definitly-gp - from github.com/gitpod-io/definitely-gp
-     * derived - computed based on analyzing the repository
-     * additional-content - config comes from additional content, usually provided through the project's configuration
-     * default - our static catch-all default config
+     * - repo - from the repository
+     * - project-db - from the "Project" stored in the database
+     * - definitly-gp - from github.com/gitpod-io/definitely-gp
+     * - derived - computed based on analyzing the repository
+     * - additional-content - config comes from additional content, usually provided through the project's configuration
+     * - default - our static catch-all default config
      */
     _origin?: 'repo' | 'project-db' | 'definitely-gp' | 'derived' | 'additional-content' | 'default';
 
