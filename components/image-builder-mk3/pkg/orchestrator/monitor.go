@@ -372,7 +372,7 @@ func findTaskLogURL(ctx context.Context, ideURL, authToken string) (taskLogURL s
 			// gRPC-web race in supervisor?
 			return true, nil
 		}
-		if resp.StatusCode == http.StatusNotFound {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			// We're too quick to connect - ws-proxy doesn't keep up
 			return true, nil
 		}
