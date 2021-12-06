@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
@@ -487,27 +488,87 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(ctx, req.Id)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot find workspace: %w", err)
-	}
-	if pod == nil {
-		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
-	}
-	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+	// dunno why in k8s IP ports are int32 not uint16
+	port := req.Spec.Port
 
-	servicePrefix, ok := pod.Annotations[servicePrefixAnnotation]
-	if !ok || servicePrefix == "" {
-		return nil, xerrors.Errorf("workspace pod %s has no service prefix annotation", pod.Name)
-	}
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
+		pod, err := m.findWorkspacePod(ctx, req.Id)
+		if err != nil {
+			return xerrors.Errorf("cannot find workspace: %w", err)
+		}
+		if pod == nil {
+			return status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
+		}
+		tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 
-	notifyStatusChange := func() error {
+		exposedPorts := extractExposedPorts(pod)
+		existingPortSpecIdx := -1
+		for i, p := range exposedPorts.Ports {
+			if p.Port == port {
+				existingPortSpecIdx = i
+				break
+			}
+		}
+
+		servicePrefix, ok := pod.Annotations[servicePrefixAnnotation]
+		if !ok || servicePrefix == "" {
+			return xerrors.Errorf("workspace pod %s has no service prefix annotation", pod.Name)
+		}
+
+		if req.Expose && existingPortSpecIdx < 0 {
+			// port is not exposed yet - patch the pod
+			url, err := config.RenderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, config.PortURLContext{
+				Host:          m.Config.GitpodHostURL,
+				ID:            req.Id,
+				IngressPort:   fmt.Sprint(port),
+				Prefix:        servicePrefix,
+				WorkspacePort: fmt.Sprint(port),
+			})
+			if err != nil {
+				return xerrors.Errorf("cannot render public URL for %d: %w", port, err)
+			}
+
+			portSpec := &api.PortSpec{
+				Port:       uint32(port),
+				Visibility: req.Spec.Visibility,
+				Url:        url,
+			}
+
+			exposedPorts.Ports = append(exposedPorts.Ports, portSpec)
+		} else if req.Expose && existingPortSpecIdx >= 0 {
+			exposedPorts.Ports[existingPortSpecIdx].Visibility = req.Spec.Visibility
+		} else if !req.Expose && existingPortSpecIdx < 0 {
+			// port isn't exposed already - we're done here
+			return nil
+		} else if !req.Expose && existingPortSpecIdx >= 0 {
+			// port is exposed but shouldn't be - remove it from the port list
+			exposedPorts.Ports = append(exposedPorts.Ports[:existingPortSpecIdx], exposedPorts.Ports[existingPortSpecIdx+1:]...)
+		}
+
+		// update pod annotation
+		data, err := exposedPorts.ToBase64()
+		if err != nil {
+			return xerrors.Errorf("cannot update status: %w", err)
+		}
+
+		if pod.Annotations[wsk8s.WorkspaceExposedPorts] != data {
+			log.WithField("ports", exposedPorts).Debug("updating exposed ports")
+			pod.Annotations[wsk8s.WorkspaceExposedPorts] = data
+
+			// update pod
+			err = m.Clientset.Update(ctx, pod)
+			if err != nil {
+				// do not wrap error so we don't break the retry mechanism
+				return err
+			}
+		}
+
 		// by modifying the ports service we have changed the workspace status. However, this status change is not propagated
 		// through the regular monitor mechanism as we did not modify the pod itself. We have to send out a status update
 		// outselves. Doing it ourselves lets us synchronize the status update with probing for actual availability, not just
 		// the service modification in Kubernetes.
 		wso := workspaceObjects{Pod: pod}
-		err := m.completeWorkspaceObjects(ctx, &wso)
+		err = m.completeWorkspaceObjects(ctx, &wso)
 		if err != nil {
 			return xerrors.Errorf("cannot update status: %w", err)
 		}
@@ -518,72 +579,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		m.OnChange(ctx, status)
 
 		return nil
-	}
-
-	// dunno why in k8s IP ports are int32 not uint16
-	port := req.Spec.Port
-
-	exposedPorts := extractExposedPorts(pod)
-
-	existingPortSpecIdx := -1
-	for i, p := range exposedPorts.Ports {
-		if p.Port == port {
-			existingPortSpecIdx = i
-			break
-		}
-	}
-
-	if req.Expose && existingPortSpecIdx < 0 {
-		// port is not exposed yet - patch the pod
-		url, err := config.RenderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, config.PortURLContext{
-			Host:          m.Config.GitpodHostURL,
-			ID:            req.Id,
-			IngressPort:   fmt.Sprint(port),
-			Prefix:        servicePrefix,
-			WorkspacePort: fmt.Sprint(port),
-		})
-		if err != nil {
-			return nil, xerrors.Errorf("cannot render public URL for %d: %w", port, err)
-		}
-
-		portSpec := &api.PortSpec{
-			Port:       uint32(port),
-			Visibility: req.Spec.Visibility,
-			Url:        url,
-		}
-
-		exposedPorts.Ports = append(exposedPorts.Ports, portSpec)
-	} else if req.Expose && existingPortSpecIdx >= 0 {
-		exposedPorts.Ports[existingPortSpecIdx].Visibility = req.Spec.Visibility
-	} else if !req.Expose && existingPortSpecIdx < 0 {
-		// port isn't exposed already - we're done here
-		return &api.ControlPortResponse{}, nil
-	} else if !req.Expose && existingPortSpecIdx >= 0 {
-		// port is exposed but shouldn't be - remove it from the port list
-		exposedPorts.Ports = append(exposedPorts.Ports[:existingPortSpecIdx], exposedPorts.Ports[existingPortSpecIdx+1:]...)
-	}
-
-	// update pod annotation
-	data, err := exposedPorts.ToBase64()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot update status: %w", err)
-	}
-
-	if pod.Annotations[wsk8s.WorkspaceExposedPorts] != data {
-		log.WithField("ports", exposedPorts).Debug("updating exposed ports")
-		pod.Annotations[wsk8s.WorkspaceExposedPorts] = data
-
-		// update pod
-		err = m.Clientset.Update(ctx, pod)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot update workspace pod: %w", err)
-		}
-	}
-
-	err = notifyStatusChange()
-	if err != nil {
-		return nil, err
-	}
+	})
 
 	return &api.ControlPortResponse{}, nil
 }
