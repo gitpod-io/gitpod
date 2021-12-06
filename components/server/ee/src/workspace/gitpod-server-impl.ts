@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { GitpodServerImpl, traceAPIParams, traceWI } from "../../../src/workspace/gitpod-server-impl";
+import { GitpodServerImpl, traceAPIParams, traceWI, censor } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
@@ -400,7 +400,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
 
     async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
-        traceAPIParams(ctx, { req });
+        traceAPIParams(ctx, { req: censor(req, "searchTerm") });    // searchTerm may contain PII
 
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
@@ -547,7 +547,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminGetWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceAndInstance> {
         traceAPIParams(ctx, { workspaceId });
-        traceWI(ctx, { workspaceId });
 
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
@@ -562,7 +561,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
-        traceWI(ctx, { workspaceId });
 
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
@@ -576,7 +574,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
-        traceWI(ctx, { workspaceId });
 
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
@@ -714,7 +711,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminSetLicense(ctx: TraceContext, key: string): Promise<void> {
-        traceAPIParams(ctx, { key });
+        traceAPIParams(ctx, { });   // don't trace the actual key
 
         await this.guardAdminAccess("adminGetWorkspaces", { key }, Permission.ADMIN_API);
 
@@ -1162,7 +1159,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async tsReassignSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void> {
-        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId });    // identityStr contains PII
+        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId });    // newIdentityStr contains PII
 
         const user = this.checkAndBlockUser('tsReassignSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);

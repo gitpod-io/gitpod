@@ -57,7 +57,7 @@ import { IDEConfigService } from '../ide-config';
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
 export const traceAPIParams = (ctx: TraceContext, params: { [key: string]: any }) => TraceContext.addJsonRPCParameters(ctx, params);
-export function filter<T>(obj: T, k: keyof T): T { const r = { ...obj }; delete (r as any)[k]; return r; }
+export function censor<T>(obj: T, k: keyof T): T { const r = { ...obj }; delete (r as any)[k]; return r; }
 
 
 export type GitpodServerWithTracing = InterfaceWithTraceContext<GitpodServer>;
@@ -288,7 +288,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async updateLoggedInUser(ctx: TraceContext, partialUser: Partial<User>): Promise<User> {
-        traceAPIParams(ctx, {});    // contrains PII
+        traceAPIParams(ctx, {});    // partialUser contains PII
 
         const user = this.checkUser('updateLoggedInUser');
         await this.guardAccess({ kind: "user", subject: user }, "update");
@@ -1136,7 +1136,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async getHeadlessLog(ctx: TraceContext, instanceId: string): Promise<HeadlessLogUrls> {
         traceAPIParams(ctx, { instanceId });
-        traceWI(ctx, { instanceId });
 
         const user = this.checkAndBlockUser('getHeadlessLog', { instanceId });
 
@@ -1181,7 +1180,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async updateUserStorageResource(ctx: TraceContext, options: GitpodServer.UpdateUserStorageResourceOptions): Promise<void> {
-        traceAPIParams(ctx, { options: filter(options, "content") });   // because may contain PII, and size (arbitrary files are stored here)
+        traceAPIParams(ctx, { options: censor(options, "content") });   // because may contain PII, and size (arbitrary files are stored here)
 
         const { uri, content } = options;
         const userId = this.checkAndBlockUser("updateUserStorageResource", { uri: options.uri }).id;
@@ -1302,7 +1301,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async setEnvVar(ctx: TraceContext, variable: UserEnvVarValue): Promise<void> {
-        traceAPIParams(ctx, { variable: filter(variable, "value") });   // filter content because of PII
+        traceAPIParams(ctx, { variable: censor(variable, "value") });   // filter content because of PII
 
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("setEnvVar");
@@ -1339,7 +1338,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async deleteEnvVar(ctx: TraceContext, variable: UserEnvVarValue): Promise<void> {
-        traceAPIParams(ctx, { variable: filter(variable, "value") });
+        traceAPIParams(ctx, { variable: censor(variable, "value") });
 
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("deleteEnvVar");
@@ -1636,7 +1635,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async setProjectConfiguration(ctx: TraceContext, projectId: string, configString: string): Promise<void> {
-        traceAPIParams(ctx, { projectId }); // filter configString because that might contain secrets
+        traceAPIParams(ctx, { projectId }); // filter configString because of size
 
         const user = this.checkAndBlockUser("setProjectConfiguration");
         await this.guardProjectOperation(user, projectId, "update");
@@ -1810,7 +1809,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async resolvePlugins(ctx: TraceContext, workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins> {
-        traceAPIParams(ctx, { workspaceId, params });
+        traceAPIParams(ctx, {
+            workspaceId,
+            params: {
+                ...censor(params, "config"),
+                config: {
+                    vscode: params?.config?.vscode,
+                },
+            },
+        }); // censor config because of size/potential PII, except of vscode parts
         traceWI(ctx, { workspaceId });
 
         this.checkUser("resolvePlugins")
@@ -1836,7 +1843,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async guessGitTokenScopes(ctx: TraceContext, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {
-        traceAPIParams(ctx, { params: filter(params, "currentToken") });
+        traceAPIParams(ctx, { params: censor(params, "currentToken") });
 
         const authProviders = await this.getAuthProviders(ctx);
         return this.gitTokenScopeGuesser.guessGitTokenScopes(authProviders.find(p => p.host == params.host), params);
