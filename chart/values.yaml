@@ -200,11 +200,8 @@ components:
         servicePort: 3001
     serviceType: ClusterIP
 
-  imageBuilder:
-    name: "image-builder"
-    dependsOn:
-    - "image-builder-configmap.yaml"
-    hostDindData: /var/gitpod/docker
+  imageBuilderMk3:
+    name: "image-builder-mk3"
     registry:
       name: builtin
       secretName: builtin-registry-auth
@@ -220,21 +217,6 @@ components:
     #   - name: builtin
     #     secret: builtin-registry-certs
     registryCerts: []
-    dindImage: docker:19.03-dind
-    dindMtu: ""
-    dindResources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    alpineImage: alpine:3.15
-    selfBuildBaseImage: ""
-    ports:
-      rpc:
-        expose: true
-        containerPort: 8080
-
-  imageBuilderMk3:
-    name: "image-builder-mk3"
     dependsOn:
     - "image-builder-mk3-configmap.yaml"
     alpineImage: alpine:3.15

@@ -47,7 +47,6 @@ packages:
       - components/ide/jetbrains/image:pycharm
       - components/ide/jetbrains/image:phpstorm
       - components/ide/theia:docker
-      - components/image-builder:docker
       - components/image-builder-mk3:docker
       - components/image-builder-bob:docker
       - components/local-app:docker
@@ -91,7 +90,7 @@ packages:
       - components/ee/kedge:app
       - components/ee/payment-endpoint:app
       - components/ee/ws-scheduler:app
-      - components/image-builder:app
+      - components/image-builder-mk3:app
       - components/openvsx-proxy:app
       - components/registry-facade:app
       - components/server:app
