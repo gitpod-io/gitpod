@@ -1,21 +1,27 @@
 #!/bin/bash
 
-# to test, follow these steps
+# to test this script, follow these steps
 # 1. generate a config like so: ./installer init > config.yaml
 # 2. generate a k8s manifest like so: ./installer render -n $(kubens -c) -c config.yaml > k8s.yaml
 # 3. call this script like so: ./.werft/post-process.sh 1234 5678 2 branch-name-dashes-only
 
 set -e
 
+# Required params
 REG_DAEMON_PORT=$1
 WS_DAEMON_PORT=$2
 NODE_POOL_INDEX=$3
 DEV_BRANCH=$4
-
 if [[ -z ${REG_DAEMON_PORT} ]] || [[ -z ${WS_DAEMON_PORT} ]] || [[ -z ${NODE_POOL_INDEX} ]] || [[ -z ${DEV_BRANCH} ]]; then
    echo "One or more input params were invalid: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH}"
    exit 1
 fi
+
+# Optional params
+# default empty string
+LICENSE=$(cat /tmp/license)
+# default none, this is CSV list like: ws-feature-flags=registry_facade,full_workspace_backup
+DEFAULT_FEATURE_FLAGS=$(cat /tmp/defaultFeatureFlags)
 
 i=0
 
@@ -99,6 +105,20 @@ while [ "$i" -le "$DOCS" ]; do
       STAGE=$(yq r ./.werft/values.dev.yaml installation.stage)
       STAGE_EXPR="s/\"stage\": \"production\"/\"stage\": \"$STAGE\"/"
       sed -i "$STAGE_EXPR" "$NAME"overrides.yaml
+      # Install EE license, if it exists
+      # This is a temporary solution until #6868 is resolved
+      if [ "${#LICENSE}" -gt 0 ]; then
+         echo "Installing EE License..."
+         LICENSE_EXPR="s/\"license\": \"\"/\"license\": \"$LICENSE\"/"
+         sed -i "$LICENSE_EXPR" "$NAME"overrides.yaml
+      fi
+      # DEFAULT_FEATURE_FLAGS
+      if [ "${#DEFAULT_FEATURE_FLAGS}" -gt 0 ]; then
+         echo "Adding feature flags"
+         DEFAULT_FEATURE_FLAGS_EXPR="s/\"defaultFeatureFlags\": \"[]\"/\"defaultFeatureFlags\": \"$DEFAULT_FEATURE_FLAGS\"/"
+         sed -i "$DEFAULT_FEATURE_FLAGS_EXPR" "$NAME"overrides.yaml
+      fi
+
       # Merge the changes
       yq m -x -i k8s.yaml -d "$i" "$NAME"overrides.yaml
    fi
@@ -266,11 +286,8 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i -d "$i" k8s.yaml "$NAME"-"$KIND".yaml
    fi
 
-   # TODO: Set the components.server.defaultFeatureFlags
-
-   # TODO: these must also be set, and are conditional based on toggles
-   #  without-ee-license - adding a license (Simon created #6868) - ADD THIS IN VIA POST PROCESSING
-   #  with-payment - intergrating with charge bees (get feedback from meta team) - WON'T FIX NOW
+   # TODO: integrate with chargebees
+   # won't fix now, use Helm
 
    i=$((i + 1))
 done

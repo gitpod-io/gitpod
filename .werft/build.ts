@@ -420,14 +420,21 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
         // write some values inline
         exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
-        exec(`yq w -i config.yaml containerRegistry.inCluster ${false}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.inCluster false`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, {slice: installerSlices.INSTALLER_RENDER});
-        exec(`yq w -i config.yaml containerRegistry.external.certificate.kind ${"secret"}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml containerRegistry.external.certificate.kind secret`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`yq w -i config.yaml jaegerOperator.inCluster false`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: installerSlices.INSTALLER_RENDER});
 
-        // TODO: add analytics
+        if ((deploymentConfig.analytics || "").startsWith("segment|")) {
+            exec(`yq w -i config.yaml analytics.writer segment`, {slice: installerSlices.INSTALLER_RENDER});
+            exec(`yq w -i config.yaml analytics.segmentKey ${deploymentConfig.analytics!.substring("segment|".length)}`, {slice: installerSlices.INSTALLER_RENDER});
+        } else if (!!deploymentConfig.analytics) {
+            exec(`yq w -i config.yaml analytics.writer ${deploymentConfig.analytics!}`, {slice: installerSlices.INSTALLER_RENDER});
+        }
+
         if (withObservability) {
             const tracingEndpoint = exec(`yq r ./.werft/values.dev.yaml tracing.endpoint`,{slice: installerSlices.INSTALLER_RENDER}).stdout.trim();
             exec(`yq w -i config.yaml observability.tracing.endpoint ${tracingEndpoint}`, {slice: installerSlices.INSTALLER_RENDER});
@@ -464,7 +471,19 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Let's post process some k8s manifests...");
         const nodepoolIndex = getNodePoolIndex(namespace);
         exec(`chmod +x ./.werft/post-process.sh`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
-        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
+        exec(`cat ${workspaceFeatureFlags} > /tmp/defaultFeatureFlags`, {slice: installerSlices.INSTALLER_POST_PROCESSING})
+
+        if (deploymentConfig.installEELicense) {
+            exec(`cat /mnt/secrets/gpsh-coredev/license /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+            // post-process.sh looks for /tmp/license, and if it exists, adds it to the configmap
+        }
+        if (workspaceFeatureFlags && workspaceFeatureFlags.length > 0) {
+            fs.writeFileSync("/tmp/defaultFeatureFlags", workspaceFeatureFlags.toString());
+            // post-process.sh looks for /tmp/defaultFeatureFlags, and if it exists, adds it to the configmap
+        }
+
+        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} \
+         ${deploymentConfig.destname}`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
         werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
         werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
