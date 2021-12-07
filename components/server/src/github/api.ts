@@ -10,6 +10,7 @@ import { OctokitResponse } from "@octokit/types"
 import { OctokitOptions } from "@octokit/core/dist-types/types"
 
 import { Branch, CommitInfo, User } from "@gitpod/gitpod-protocol"
+import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 import { injectable, inject } from 'inversify';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { GitHubScope } from './scopes';
@@ -185,7 +186,7 @@ export class GitHubRestApi {
         }
     }
 
-    protected readonly cachedResponses = new Map<string, OctokitResponse<any>>();
+    protected readonly cachedResponses = new GarbageCollectedCache<OctokitResponse<any>>(120, 150);
     public async runWithCache(key: string, user: User, operation: (api: Octokit) => Promise<OctokitResponse<any>>): Promise<OctokitResponse<any>> {
         const result = new Deferred<OctokitResponse<any>>();
         const before = new Date().getTime();
