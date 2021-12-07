@@ -41,6 +41,10 @@ export class GarbageCollectedCache<T> {
         return entry.value;
     }
 
+    public delete(key: string) {
+        this.store.delete(key);
+    }
+
     protected regularlyCollectGarbage() {
         setInterval(() => this.collectGarbage(), this.gcIntervalSeconds * 1000);
     }
