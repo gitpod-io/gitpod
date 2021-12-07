@@ -2,8 +2,7 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.imageBuilderMk3 -}}
-{{ $compImgbldr := .Values.components.imageBuilder -}}
-{{- $this := dict "root" . "gp" $.Values "comp" $comp "compImgbldr" $compImgbldr -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- if not $comp.disabled -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -47,12 +46,12 @@ spec:
       - name: configuration
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
-      {{- if (default $compImgbldr.registry).secretName }}
+      {{- if (default $comp.registry).secretName }}
       - name: pull-secret
         secret:
-          secretName: {{ (default $compImgbldr.registry).secretName }}
+          secretName: {{ (default $comp.registry).secretName }}
       {{- end }}
-{{- range $idx, $sec := (default $comp.registryCerts $compImgbldr.registryCerts) }}
+{{- range $idx, $sec := (default $comp.registryCerts $comp.registryCerts) }}
       - name: docker-tls-certs-{{ $idx }}
         secret:
           secretName: {{ $sec.secret }}
@@ -79,8 +78,8 @@ spec:
         - mountPath: /wsman-certs
           name: wsman-tls-certs
           readOnly: true
-{{- if (default $comp $compImgbldr).registry }}
-{{- if (default $comp $compImgbldr).registry.secretName }}
+{{- if (default $comp $comp).registry }}
+{{- if (default $comp $comp).registry.secretName }}
         - mountPath: /config/pull-secret.json
           subPath: .dockerconfigjson
           name: pull-secret

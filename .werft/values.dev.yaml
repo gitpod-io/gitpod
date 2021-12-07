@@ -137,8 +137,7 @@ components:
       # in preview envs, we want deployments to push scale-up early
       memory: 350Mi
 
-  imageBuilder:
-    hostDindData: "/mnt/disks/ssd0/builder"
+  imageBuilderMk3:
     # configure GCP registry
     registry:
       name: eu.gcr.io/gitpod-core-dev/registry

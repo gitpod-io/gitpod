@@ -130,9 +130,7 @@ components:
         containerPort: 8080
         servicePort: 80
 
-  imageBuilder:
-    disabled: true
-    hostDindData: "/mnt/disks/ssd0/builder"
+  imageBuilderMk3:
     # configure GCP registry
     registry:
       name: eu.gcr.io/gitpod-core-dev/registry

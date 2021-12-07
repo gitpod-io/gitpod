@@ -276,7 +276,7 @@ env:
 {{- end -}}
 
 {{- define "gitpod.builtinRegistry.name" -}}
-{{- if .Values.components.imageBuilder.registry.bypassProxy -}}
+{{- if .Values.components.imageBuilderMk3.registry.bypassProxy -}}
 {{ include "gitpod.builtinRegistry.internal_name" . }}
 {{- else -}}
 registry.{{ .Values.hostname }}

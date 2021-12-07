@@ -2,17 +2,15 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.imageBuilderMk3 -}}
-{{ $compImgbldr := .Values.components.imageBuilder -}}
-{{- $this := dict "root" . "gp" $.Values "comp" $comp "compImgbldr" $compImgbldr -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 
 {{- define "registry-name" -}}
 {{- $comp := .comp -}}
-{{- $compImgbldr := .compImgbldr -}}
 {{- $ := .root -}}
-{{- if eq (default $comp.registry $compImgbldr.registry).name "builtin" -}}
+{{- if eq (default $comp.registry $comp.registry).name "builtin" -}}
 {{ template "gitpod.builtinRegistry.name" $ }}
 {{- else -}}
-{{ (default $comp.registry $compImgbldr.registry).name }}
+{{ (default $comp.registry $comp.registry).name }}
 {{- end -}}
 {{- end -}}
 
@@ -31,8 +29,8 @@ data:
     {
         "orchestrator": {
             "gitpodLayerLoc": "/app/workspace-image-layer.tar.gz",
-            "baseImageRepository": "{{ or (default $comp.registry $compImgbldr.registry).baseImageName (print (include "registry-name" $this) "/base-images") }}",
-            "workspaceImageRepository": "{{ or (default $comp.registry $compImgbldr.registry).workspaceImageName (print (include "registry-name" $this) "/workspace-images") }}",
+            "baseImageRepository": "{{ or (default $comp.registry $comp.registry).baseImageName (print (include "registry-name" $this) "/base-images") }}",
+            "workspaceImageRepository": "{{ or (default $comp.registry $comp.registry).workspaceImageName (print (include "registry-name" $this) "/workspace-images") }}",
             "imageBuildSalt": "{{ $comp.imageBuildSalt | default "" }}",
             {{- if $comp.wsman -}}
             {{ $comp.wsman | fromYaml | toJson }}
@@ -47,8 +45,8 @@ data:
             },
             {{- end -}}
             "builderImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.builderImage) }}",
-            {{- if (default $comp.registry $compImgbldr.registry).secretName -}}"pullSecretFile": "/config/pull-secret.json",{{- end -}}
-            "pullSecret": {{ (default $compImgbldr.registry).secretName | quote }}
+            {{- if (default $comp.registry $comp.registry).secretName -}}"pullSecretFile": "/config/pull-secret.json",{{- end -}}
+            "pullSecret": {{ (default $comp.registry).secretName | quote }}
         },
         "refCache": {
             "interval": "6h",
