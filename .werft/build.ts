@@ -319,7 +319,7 @@ interface DeploymentConfig {
 */
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
-    // werft run github -f -j ./.werft/build.yaml -a with-clean-slate-deployment=true -a with-observability=true -s ./.werft/util/kubectl.ts
+    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/post-process.sh -a with-clean-slate-deployment=true
 
     werft.phase(phases.DEPLOY, "deploying to dev")
 
@@ -436,6 +436,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         }
 
         if (withObservability) {
+            // TODO: there's likely more to do...
             const tracingEndpoint = exec(`yq r ./.werft/values.dev.yaml tracing.endpoint`,{slice: installerSlices.INSTALLER_RENDER}).stdout.trim();
             exec(`yq w -i config.yaml observability.tracing.endpoint ${tracingEndpoint}`, {slice: installerSlices.INSTALLER_RENDER});
         }
@@ -471,19 +472,25 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Let's post process some k8s manifests...");
         const nodepoolIndex = getNodePoolIndex(namespace);
         exec(`chmod +x ./.werft/post-process.sh`,{slice: installerSlices.INSTALLER_POST_PROCESSING});
-        exec(`cat ${workspaceFeatureFlags} > /tmp/defaultFeatureFlags`, {slice: installerSlices.INSTALLER_POST_PROCESSING})
 
         if (deploymentConfig.installEELicense) {
-            exec(`cat /mnt/secrets/gpsh-coredev/license /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+            werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Adding the EE License...");
+            exec(`cp /mnt/secrets/gpsh-coredev/license /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
             // post-process.sh looks for /tmp/license, and if it exists, adds it to the configmap
+        } else {
+            exec(`touch /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
         }
+        exec(`touch /tmp/defaultFeatureFlags`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
         if (workspaceFeatureFlags && workspaceFeatureFlags.length > 0) {
-            fs.writeFileSync("/tmp/defaultFeatureFlags", workspaceFeatureFlags.toString());
-            // post-process.sh looks for /tmp/defaultFeatureFlags, and if it exists, adds it to the configmap
+            werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Adding feature flags...");
+            workspaceFeatureFlags.forEach(featureFlag => {
+                exec(`echo \'"${featureFlag}"\' >> /tmp/defaultFeatureFlags`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+            })
+            // post-process.sh looks for /tmp/defaultFeatureFlags
+            // each "flag" string gets added to the configmap
         }
 
-        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} \
-         ${deploymentConfig.destname}`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
         werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
         werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
@@ -496,7 +503,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     } catch (err) {
         werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
     } finally {
-        // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
+        // produce the result independently of install succeding, so that in case fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
     }
 
@@ -508,7 +515,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
     }
 
-    // TODO: test sweeper is working (check on Monday)
+    // TODO: Fix sweeper, it does not appear to be doing clean-up
     werft.log('sweeper', 'installing Sweeper');
     const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
     werft.log('sweeper', `Sweeper version: ${sweeperVersion}`);
