@@ -1,6 +1,12 @@
 # Change Log
 
 ## December 2021
+- [dashboard] Improve team selection UX in new Project flow ([#7030](https://github.com/gitpod-io/gitpod/pull/7030)) - [@jankeromnes](https://github.com/jankeromnes)
+- [image-builder] Remove the old mk2 version ([#7086](https://github.com/gitpod-io/gitpod/pull/7086)) - [@csweichel](https://github.com/csweichel)
+- [ws-manager] Improve port exposure stability ([#7079](https://github.com/gitpod-io/gitpod/pull/7079)) - [@csweichel](https://github.com/csweichel)
+- Fix x-overflow on the /workspaces page ([#7065](https://github.com/gitpod-io/gitpod/pull/7065)) - [@krystofex](https://github.com/krystofex)
+- Made tracing optional for preview environments ([#7020](https://github.com/gitpod-io/gitpod/pull/7020)) - [@wulfthimm](https://github.com/wulfthimm)
+- Add PhpStorm desktop IDE. ([#7059](https://github.com/gitpod-io/gitpod/pull/7059)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - Update IntelliJ IDEA IDE image to version 213.5744.223. ([#7033](https://github.com/gitpod-io/gitpod/pull/7033)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - Update GoLand IDE image to version 213.5744.269. ([#7034](https://github.com/gitpod-io/gitpod/pull/7034)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - NODE ([#7040](https://github.com/gitpod-io/gitpod/pull/7040)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
