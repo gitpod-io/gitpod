@@ -212,3 +212,6 @@ ARG GOJSONTOYAML_VERSION="0.1.0"
 RUN curl -LO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONTOYAML_VERSION}/gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     tar -xzvf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     sudo mv gojsontoyaml /usr/local/bin/gojsontoyaml
+
+# Copy our own tools
+COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/

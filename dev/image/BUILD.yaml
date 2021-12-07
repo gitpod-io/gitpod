@@ -1,6 +1,9 @@
 packages:
   - name: docker
     type: docker
+    deps:
+      - dev/gpctl:app
+      - dev/kubecdl:app
     argdeps:
       - imageRepoBase
     srcs:
