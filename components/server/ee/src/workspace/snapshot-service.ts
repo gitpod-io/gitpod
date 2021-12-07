@@ -12,6 +12,7 @@ import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
 import { StorageClient } from "../../../src/storage/storage-client";
 import { ConsensusLeaderQorum } from "../../../src/consensus/consensus-leader-quorum";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 const SNAPSHOT_TIMEOUT_SECONDS = 60 * 30;
 const SNAPSHOT_POLL_INTERVAL_SECONDS = 5;
@@ -35,10 +36,7 @@ export class SnapshotService {
     protected readonly runningSnapshots: Map<string, Promise<void>> = new Map();
 
     public async start(): Promise<Disposable> {
-        const timer = setInterval(() => this.pickupAndDriveFromDbIfWeAreLeader().catch(log.error), SNAPSHOT_DB_POLL_INTERVAL_SECONDS * 1000);
-        return {
-            dispose: () => clearInterval(timer)
-        }
+        return repeat(() => this.pickupAndDriveFromDbIfWeAreLeader().catch(log.error), SNAPSHOT_DB_POLL_INTERVAL_SECONDS * 1000);
     }
 
     public async pickupAndDriveFromDbIfWeAreLeader() {

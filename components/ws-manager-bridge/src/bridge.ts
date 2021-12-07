@@ -19,6 +19,7 @@ import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -267,21 +268,22 @@ export class WorkspaceManagerBridge implements Disposable {
 
     protected startController(clientProvider: ClientProvider, controllerIntervalSeconds: number, controllerMaxDisconnectSeconds: number, maxTimeToRunningPhaseSeconds = 60 * 60) {
         let disconnectStarted = Number.MAX_SAFE_INTEGER;
-        const timer = setInterval(async () => {
-            try {
-                const client = await clientProvider();
-                await this.controlInstallationInstances(client, maxTimeToRunningPhaseSeconds);
+        this.disposables.push(
+            repeat(async () => {
+                try {
+                    const client = await clientProvider();
+                    await this.controlInstallationInstances(client, maxTimeToRunningPhaseSeconds);
 
-                disconnectStarted = Number.MAX_SAFE_INTEGER;    // Reset disconnect period
-            } catch (e) {
-                if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
-                    log.warn("error while controlling installation's workspaces", e, { installation: this.cluster.name });
-                } else if (disconnectStarted > Date.now()) {
-                    disconnectStarted = Date.now();
+                    disconnectStarted = Number.MAX_SAFE_INTEGER;    // Reset disconnect period
+                } catch (e) {
+                    if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
+                        log.warn("error while controlling installation's workspaces", e, { installation: this.cluster.name });
+                    } else if (disconnectStarted > Date.now()) {
+                        disconnectStarted = Date.now();
+                    }
                 }
-            }
-        }, controllerIntervalSeconds * 1000);
-        this.disposables.push({ dispose: () => clearTimeout(timer) });
+            }, controllerIntervalSeconds * 1000)
+        );
     }
 
     protected async controlInstallationInstances(client: PromisifiedWorkspaceManagerClient, maxTimeToRunningPhaseSeconds: number) {

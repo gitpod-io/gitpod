@@ -14,6 +14,7 @@ import * as opentracing from 'opentracing';
 import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:
@@ -34,10 +35,7 @@ export class WorkspaceGarbageCollector {
                 dispose: () => {}
             }
         }
-        const timer = setInterval(async () => this.garbageCollectWorkspacesIfLeader(), 30 * 60 * 1000);
-        return {
-            dispose: () => clearInterval(timer)
-        }
+        return repeat(async () => this.garbageCollectWorkspacesIfLeader(), 30 * 60 * 1000);
     }
 
     public async garbageCollectWorkspacesIfLeader() {

@@ -19,6 +19,7 @@ import { Plans, Plan } from "@gitpod/gitpod-protocol/lib/plans";
 import * as Webhooks from '@octokit/webhooks';
 import fetch from "node-fetch";
 import { EntityManager } from 'typeorm';
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 @injectable()
 export class GithubSubscriptionReconciler {
@@ -199,8 +200,8 @@ export class GithubSubscriptionReconciler {
     }
 
     public start() {
-        setInterval(() => this.reconciliationTasks.enqueue(() => this.reconcilePendingEvents()), 1 * 60 * 1000); // every one minute
-        setInterval(() => this.reconciliationTasks.enqueue(async () => {
+        repeat(() => this.reconciliationTasks.enqueue(() => this.reconcilePendingEvents()), 1 * 60 * 1000); // every one minute
+        repeat(() => this.reconciliationTasks.enqueue(async () => {
             try {
                 // it's important we reconcile the latest pending events first before attempting to interpret GitHub's information.
                 await this.reconcilePendingEvents();

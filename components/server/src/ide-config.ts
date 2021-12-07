@@ -8,6 +8,7 @@ import { Disposable, DisposableCollection, Emitter } from '@gitpod/gitpod-protoc
 import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
 import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { repeat } from '@gitpod/gitpod-protocol/lib/util/repeat';
 import * as Ajv from 'ajv';
 import * as cp from 'child_process';
 import * as crypto from 'crypto';
@@ -91,7 +92,7 @@ export class IDEConfigService {
         this.validate = this.ajv.compile(scheme);
         this.reconcile("initial");
         fs.watchFile(this.configPath, () => this.reconcile("file changed"));
-        setInterval(() => this.reconcile("interval"), 60 * 60 * 1000 /* 1 hour */);
+        repeat(() => this.reconcile("interval"), 60 * 60 * 1000 /* 1 hour */);
     }
 
     get config(): Promise<IDEConfig> {

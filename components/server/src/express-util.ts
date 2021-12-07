@@ -11,10 +11,11 @@ import * as express from 'express';
 import * as crypto from 'crypto';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import * as session from 'express-session';
+import { repeat } from '@gitpod/gitpod-protocol/lib/util/repeat';
 
 export const pingPong: WsRequestHandler = (ws, req, next) => {
     let pingSentTimer: any;
-    const timer = setInterval(() => {
+    const disposable = repeat(() => {
         if (ws.readyState !== ws.OPEN) {
             return;
         }
@@ -22,6 +23,7 @@ export const pingPong: WsRequestHandler = (ws, req, next) => {
         pingSentTimer = setTimeout(() => {
             // Happens very often, we do not want to spam the logs here
             ws.terminate();
+            disposable.dispose();
         }, 10000);
         ws.ping();
     }, 30000)
@@ -35,7 +37,7 @@ export const pingPong: WsRequestHandler = (ws, req, next) => {
         ws.pong(data);
     });
     ws.on('close', () => {
-        clearInterval(timer);
+        disposable.dispose();
     })
     next();
 }

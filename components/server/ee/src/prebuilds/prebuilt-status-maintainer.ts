@@ -10,9 +10,10 @@ import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db
 import { v4 as uuidv4 } from 'uuid';
 import { HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { PrebuiltWorkspaceUpdatable, PrebuiltWorkspace, Disposable } from '@gitpod/gitpod-protocol';
+import { PrebuiltWorkspaceUpdatable, PrebuiltWorkspace, Disposable, DisposableCollection } from '@gitpod/gitpod-protocol';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { LocalMessageBroker } from '../../../src/messaging/local-message-broker';
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 export interface CheckRunInfo {
     owner: string;
@@ -33,15 +34,18 @@ export class PrebuildStatusMaintainer implements Disposable {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
     protected githubApiProvider: AuthenticatedGithubProvider;
-    protected messagebusListener?: Disposable;
-    protected periodicChecker?: NodeJS.Timer;
+    protected readonly disposables = new DisposableCollection();
 
     start(githubApiProvider: AuthenticatedGithubProvider): void {
         // set github before registering the msgbus listener - otherwise an incoming message and the github set might race
         this.githubApiProvider = githubApiProvider;
 
-        this.messagebusListener = this.localMessageBroker.listenForPrebuildUpdatableEvents((ctx, msg) => this.handlePrebuildFinished(ctx, msg));
-        this.periodicChecker = setInterval(this.periodicUpdatableCheck.bind(this), 60 * 1000) as any as NodeJS.Timer;
+        this.disposables.push(
+            this.localMessageBroker.listenForPrebuildUpdatableEvents((ctx, msg) => this.handlePrebuildFinished(ctx, msg))
+        );
+        this.disposables.push(
+            repeat(this.periodicUpdatableCheck.bind(this), 60 * 1000)
+        );
         log.debug("prebuild updatatable status maintainer started");
     }
 
@@ -207,13 +211,6 @@ export class PrebuildStatusMaintainer implements Disposable {
     }
 
     dispose(): void {
-        if (this.messagebusListener) {
-            this.messagebusListener.dispose();
-            this.messagebusListener = undefined;
-        }
-        if (this.periodicChecker !== undefined) {
-            clearInterval(this.periodicChecker);
-            this.periodicChecker = undefined;
-        }
+        this.disposables.dispose();
     }
 }
