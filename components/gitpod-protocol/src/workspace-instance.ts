@@ -101,7 +101,7 @@ export type WorkspaceInstancePhase =
     // workspace, the workspace will be in Pending state until that happened.
     "pending" |
 
-    // Creating means the workspace is currently being created. Thati includes downloading the images required
+    // Creating means the workspace is currently being created. That includes downloading the images required
     // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
     // network speed, image size and cache states.
     "creating" |
