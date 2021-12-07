@@ -169,7 +169,7 @@ export function Login() {
                     <div className="rounded-xl px-10 py-10 mx-auto">
                         <div className="mx-auto pb-8">
                             <img src={providerFromContext ? gitpod : gitpodIcon} className="h-14 mx-auto block dark:hidden" alt="Gitpod's logo" />
-                            <img src={gitpodDark} className="h-14 hidden mx-auto dark:block" alt="Gitpod dark theme logo" />
+                            <img src={providerFromContext ? gitpodDark : gitpodIcon} className="h-14 hidden mx-auto dark:block" alt="Gitpod dark theme logo" />
                         </div>
 
                         <div className="mx-auto text-center pb-8 space-y-2">
