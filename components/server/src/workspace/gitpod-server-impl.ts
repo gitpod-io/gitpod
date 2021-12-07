@@ -399,6 +399,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getPortAuthenticationToken(ctx: TraceContext, workspaceId: string): Promise<Token> {
         traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
 
         const user = this.checkAndBlockUser("getPortAuthenticationToken", { workspaceId });
 
@@ -1813,9 +1814,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             workspaceId,
             params: {
                 ...censor(params, "config"),
-                config: {
-                    vscode: params?.config?.vscode,
-                },
+                ...(params.config?.vscode ? {
+                    config: {
+                        vscode: params.config.vscode,
+                    },
+                } : {}),
             },
         }); // censor config because of size/potential PII, except of vscode parts
         traceWI(ctx, { workspaceId });
