@@ -31,6 +31,7 @@ var Helm = common.CompositeHelmFunc(
 			helm.KeyValue("docker-registry.service.port", strconv.Itoa(common.ProxyContainerHTTPSPort)),
 			helm.KeyValue("docker-registry.tlsSecretName", BuiltInRegistryCerts),
 			helm.KeyValue("docker-registry.image.repository", repository),
+			helm.KeyValue("docker-registry.serviceAccount.name", Component),
 		}
 
 		if len(cfg.Config.ImagePullSecrets) > 0 {
