@@ -8,6 +8,7 @@ import { getGitpodService } from "./service/service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import Cookies from "js-cookie";
 import { v4 } from "uuid";
+import { Experiment } from "./experiments";
 
 
 export type Event = "invite_url_requested" | "organisation_authorised";
@@ -17,7 +18,7 @@ export type EventProperties =
     TrackOrgAuthorised
   | TrackInviteUrlRequested
 ;
-type InternalEventProperties = (
+type InternalEventProperties = TrackUIExperiments & (
     EventProperties
   | TrackDashboardClick
   | TrackPathChanged
@@ -45,12 +46,18 @@ interface TrackPathChanged {
   path: string,
 }
 
+interface TrackUIExperiments {
+  ui_experiments?: string[],
+}
+
 //call this to track all events outside of button and anchor clicks
 export const trackEvent = (event: Event, properties: EventProperties) => {
   trackEventInternal(event, properties);
 }
 
 const trackEventInternal = (event: InternalEvent, properties: InternalEventProperties, userKnown?: boolean) => {
+  properties.ui_experiments = Experiment.getAsArray();
+
   getGitpodService().server.trackEvent({
     //if the user is authenticated, let server determine the id. else, pass anonymousId explicitly.
     anonymousId: userKnown ? undefined : getAnonymousId(),
@@ -121,7 +128,7 @@ export const trackPathChange = (props: TrackPathChanged) => {
 }
 
 
-type TrackLocationProperties = {
+type TrackLocationProperties = TrackUIExperiments & {
   referrer: string,
   path: string,
   host: string,
@@ -134,6 +141,7 @@ export const trackLocation = async (userKnown: boolean) => {
     path: window.location.pathname,
     host: window.location.hostname,
     url: window.location.href,
+    ui_experiments: Experiment.getAsArray(),
   };
 
   getGitpodService().server.trackLocation({
