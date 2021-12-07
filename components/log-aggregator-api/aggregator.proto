@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package aggregator;
+option go_package = "github.com/gitpod-io/gitpod/log-aggregator/api";
+
+import "google/api/annotations.proto";
+
+service Aggregator {
+    rpc StartSession(StartSessionRequest) returns (StartSessionResponse) {};
+    rpc CloseSession(CloseSessionRequest) returns (CloseSessionResponse) {};
+
+    rpc Describe(DescribeRequest) returns (DescribeResponse) {};
+    rpc Consume(ConsumeRequest) returns (stream ConsumeResponse) {};
+}
+
+service Ingester {
+    rpc Ingest(IngestRequest) returns (IngestResponse) {
+        option (google.api.http) = {
+            post: "/v1/token/{session}/{stream}"
+        };
+    };
+}
+
+message StartSessionRequest {
+    bool persist = 1;
+}
+message StartSessionResponse {
+    string id = 1;
+    string ingester_url = 2;
+}
+
+message CloseSessionRequest {
+    string id = 1;
+}
+message CloseSessionResponse {}
+
+message DescribeRequest {
+    string id = 1;
+}
+message DescribeResponse {
+    string id = 1;
+    string ingester_url = 2;
+    bool persisted = 3;
+    repeated Stream streams = 4;
+}
+
+message ConsumeRequest {
+    string session = 1;
+    string stream = 2;
+}
+message ConsumeResponse {
+    bytes data = 1;
+}
+
+message Stream {
+    string id = 1;
+    string ingester_url = 2;
+}
+
+message IngestRequest {
+    string session = 1;
+    string stream = 2;
+    bytes content = 3;
+}
+message IngestResponse {}

@@ -18,10 +18,15 @@ install_dependencies() {
 }
 
 go_protoc() {
+    local THIRD_PARTY_INCLUDES=""
+    if [[ -d "third_party" ]]; then
+        export THIRD_PARTY_INCLUDES="-Ithird_party"
+    fi
+
     local ROOT_DIR=$1
     # shellcheck disable=2035
     protoc \
-        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. \
+        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. "$THIRD_PARTY_INCLUDES" \
         --go_out=go \
         --go_opt=paths=source_relative \
         --go-grpc_out=go \
@@ -30,6 +35,11 @@ go_protoc() {
 }
 
 typescript_protoc() {
+    local THIRD_PARTY_INCLUDES=""
+    if [[ -d "third_party" ]]; then
+        export THIRD_PARTY_INCLUDES="-I../third_party"
+    fi
+
     local ROOT_DIR=$1
     local MODULE_DIR
     # Assigning external program output directly
@@ -47,13 +57,13 @@ typescript_protoc() {
         --plugin=protoc-gen-grpc="$MODULE_DIR"/typescript/node_modules/.bin/grpc_tools_node_protoc_plugin \
         --js_out=import_style=commonjs,binary:src \
         --grpc_out=grpc_js:src \
-        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. -I"$MODULE_DIR" \
+        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. -I"$MODULE_DIR" "$THIRD_PARTY_INCLUDES" \
         "$MODULE_DIR"/*.proto
 
     protoc \
         --plugin=protoc-gen-ts="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-ts \
         --ts_out=grpc_js:src \
-        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. -I"$MODULE_DIR" \
+        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. -I"$MODULE_DIR" "$THIRD_PARTY_INCLUDES" \
         "$MODULE_DIR"/*.proto
 
     # shellcheck disable=SC2011

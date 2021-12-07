@@ -1,0 +1,46 @@
+{
+   "folders": [
+      { "path": "../log-aggregator" },
+      { "path": "../log-aggregator-api" },
+      { "path": "../log-aggregator-api/go" }
+   ],
+   "settings": {
+      "typescript.tsdk": "gitpod/node_modules/typescript/lib",
+      "[json]": {
+         "editor.insertSpaces": true,
+         "editor.tabSize": 2
+      },
+      "[yaml]": {
+         "editor.insertSpaces": true,
+         "editor.tabSize": 2
+      },
+      "[go]": {
+         "editor.formatOnSave": true
+      },
+      "[tf]": {
+         "editor.insertSpaces": true,
+         "editor.tabSize": 2
+      },
+      "go.formatTool": "goimports",
+      "go.useLanguageServer": true,
+      "workspace.supportMultiRootWorkspace": true,
+      "database.connections": [
+         {
+            "type": "mysql",
+            "name": "devstaging DB",
+            "host": "127.0.0.1:23306",
+            "username": "gitpod",
+            "database": "gitpod",
+            "password": "test"
+         }
+      ],
+      "launch": {},
+      "files.exclude": {
+         "**/.git": true
+      },
+      "go.lintTool": "golangci-lint",
+      "gopls": {
+         "allowModfileModifications": true
+      }
+   }
+}
