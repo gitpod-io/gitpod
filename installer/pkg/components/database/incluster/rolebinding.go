@@ -2,33 +2,36 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package registryfacade
+package incluster
 
 import (
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
+func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{
-		&rbacv1.ClusterRole{
-			TypeMeta: common.TypeMetaClusterRole,
+		&rbacv1.RoleBinding{
+			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
+				Name:      Component,
 				Namespace: ctx.Namespace,
 				Labels:    common.DefaultLabels(Component),
 			},
-			Rules: []rbacv1.PolicyRule{{
-				APIGroups:     []string{"policy"},
-				Resources:     []string{"podsecuritypolicies"},
-				Verbs:         []string{"use"},
-				ResourceNames: []string{fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component)},
-			}},
+			RoleRef: rbacv1.RoleRef{
+				Kind:     "ClusterRole",
+				Name:     fmt.Sprintf("%s-ns-psp:restricted-root-user", ctx.Namespace),
+				APIGroup: "rbac.authorization.k8s.io",
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind: "ServiceAccount",
+					Name: Component,
+				},
+			},
 		},
 	}, nil
 }

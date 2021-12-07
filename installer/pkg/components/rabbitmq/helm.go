@@ -277,6 +277,7 @@ var Helm = common.CompositeHelmFunc(
 					helm.KeyValue("rabbitmq.auth.password", password),
 					helm.KeyValue("rabbitmq.auth.existingErlangSecret", CookieSecret),
 					helm.KeyValue("rabbitmq.auth.tls.existingSecret", TLSSecret),
+					helm.KeyValue("rabbitmq.serviceAccount.name", Component),
 					helm.KeyValue(fmt.Sprintf("rabbitmq.extraSecrets.%s.username", InClusterDbSecret), username),
 					helm.KeyValue(fmt.Sprintf("rabbitmq.extraSecrets.%s.password", InClusterDbSecret), password),
 					helm.ImagePullSecrets("rabbitmq.image.pullSecrets", cfg),

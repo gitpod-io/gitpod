@@ -11,5 +11,6 @@ import (
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	job,
+	rolebinding,
 	common.DefaultServiceAccount(Component),
 )
