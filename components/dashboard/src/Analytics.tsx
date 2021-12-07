@@ -47,7 +47,7 @@ interface TrackPathChanged {
 }
 
 interface TrackUIExperiments {
-  ui_experiments?: string[],
+  ui_experiments?: {},
 }
 
 //call this to track all events outside of button and anchor clicks
@@ -56,7 +56,7 @@ export const trackEvent = (event: Event, properties: EventProperties) => {
 }
 
 const trackEventInternal = (event: InternalEvent, properties: InternalEventProperties, userKnown?: boolean) => {
-  properties.ui_experiments = Experiment.getAsArray();
+  properties.ui_experiments = Experiment.get();
 
   getGitpodService().server.trackEvent({
     //if the user is authenticated, let server determine the id. else, pass anonymousId explicitly.
@@ -141,7 +141,7 @@ export const trackLocation = async (userKnown: boolean) => {
     path: window.location.pathname,
     host: window.location.hostname,
     url: window.location.href,
-    ui_experiments: Experiment.getAsArray(),
+    ui_experiments: Experiment.get(),
   };
 
   getGitpodService().server.trackLocation({
