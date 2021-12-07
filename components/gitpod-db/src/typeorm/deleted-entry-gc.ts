@@ -7,12 +7,16 @@
 import { injectable, inject } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Config } from "../config";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 
 
 @injectable()
-export class DeletedEntryGC {
+export class DeletedEntryGC implements Disposable {
     @inject(TypeORM) protected readonly typeORM: TypeORM;
     @inject(Config) protected readonly config: Config;
+
+    protected readonly disposables = new DisposableCollection();
 
     public start() {
         const cfg = this.config.deletedEntryGCConfig;
@@ -22,9 +26,15 @@ export class DeletedEntryGC {
         }
 
         console.info(`Deleted Entries GC enabled (running every ${cfg.intervalMS/(60*1000)} minutes)`);
-        setInterval(() => {
-            this.gc().catch(e => console.error("error while removing deleted entries", e));
-        }, cfg.intervalMS);
+        this.disposables.push(
+            repeat(() => {
+                this.gc().catch(e => console.error("error while removing deleted entries", e));
+            }, cfg.intervalMS)
+        );
+    }
+
+    public dispose() {
+        this.disposables.dispose();
     }
 
     protected async gc() {

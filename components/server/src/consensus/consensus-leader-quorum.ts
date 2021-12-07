@@ -9,6 +9,7 @@ import { ConsensusLeaderMessenger, HeartbeatMessage, RequestVoteMessage, CastVot
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 @injectable()
 /* Implements the leader election mechanism of the Raft concensus algorithm:
@@ -19,7 +20,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 export class ConsensusLeaderQorum implements Disposable {
     @inject(ConsensusLeaderMessenger) protected readonly messenger: ConsensusLeaderMessenger;
 
-    protected clock: NodeJS.Timeout | undefined;
     protected messages: RaftMessage[] = [];
     protected readonly disposables: Disposable[] = [];
     protected consensusAchieved = new Deferred<boolean>();
@@ -67,8 +67,7 @@ export class ConsensusLeaderQorum implements Disposable {
         // register with the messenger
         this.uid = await this.messenger.register();
 
-        this.clock = setInterval(() => this.beatClock().catch((err) => log.error("consensus beatClock", err)), this.clockPeriod);
-        this.disposables.push({ dispose: () => clearTimeout(this.clock!) });
+        this.disposables.push(repeat(() => this.beatClock().catch((err) => log.error("consensus beatClock", err)), this.clockPeriod));
         this.disposables.push(this.messenger.on("heartbeat", msg => this.messages.push(msg)));
         this.disposables.push(this.messenger.on("requestVote", msg => this.messages.push(msg)));
         this.disposables.push(this.messenger.on("castVote", msg => this.messages.push(msg)));

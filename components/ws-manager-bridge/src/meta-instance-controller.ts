@@ -7,12 +7,13 @@
 import { inject, injectable } from "inversify";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { RunningWorkspaceInfo } from "@gitpod/gitpod-protocol/lib";
+import { Disposable, DisposableCollection, RunningWorkspaceInfo } from "@gitpod/gitpod-protocol/lib";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { Configuration } from "./config";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 @injectable()
-export class MetaInstanceController {
+export class MetaInstanceController implements Disposable {
     @inject(Configuration)
     protected readonly config: Configuration;
 
@@ -21,6 +22,8 @@ export class MetaInstanceController {
 
     @inject(WorkspaceDB)
     protected readonly workspaceDB: WorkspaceDB;
+
+    protected readonly disposables = new DisposableCollection();
 
     protected async checkAndStopWorkspaces() {
         const instances = await this.workspaceDB.findRunningInstancesWithWorkspaces(this.config.installation, undefined, true);
@@ -75,8 +78,14 @@ export class MetaInstanceController {
             interval: this.config.timeouts.metaInstanceCheckIntervalSeconds
         });
 
-        setInterval(() => {
-            this.checkAndStopWorkspaces();
-        }, this.config.timeouts.metaInstanceCheckIntervalSeconds * 1000);
+        this.disposables.push(
+            repeat(() => {
+                this.checkAndStopWorkspaces();
+            }, this.config.timeouts.metaInstanceCheckIntervalSeconds * 1000)
+        );
+    }
+
+    public dispose() {
+        this.disposables.dispose();
     }
 }

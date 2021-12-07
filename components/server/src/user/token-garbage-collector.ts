@@ -11,6 +11,7 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 @injectable()
 export class TokenGarbageCollector {
@@ -23,7 +24,7 @@ export class TokenGarbageCollector {
 
     public async start(intervalSeconds?: number): Promise<Disposable> {
         const intervalSecs = (intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS);
-        const timer = setInterval(async () => {
+        return repeat(async () => {
             try {
                 if (await this.leaderQuorum.areWeLeader()) {
                     await this.collectExpiredTokenEntries();
@@ -32,9 +33,6 @@ export class TokenGarbageCollector {
                 log.error("token garbage collector", err);
             }
         }, intervalSecs * 1000);
-        return {
-            dispose: () => clearInterval(timer)
-        }
     }
 
     protected async collectExpiredTokenEntries() {

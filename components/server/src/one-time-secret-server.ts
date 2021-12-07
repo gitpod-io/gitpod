@@ -8,29 +8,27 @@ import { injectable, inject } from "inversify";
 import * as express from 'express';
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { OneTimeSecretDB, DBWithTracing, TracedOneTimeSecretDB } from "@gitpod/gitpod-db/lib";
-import { Disposable } from "@gitpod/gitpod-protocol";
+import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 import * as opentracing from 'opentracing';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "./config";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 @injectable()
 export class OneTimeSecretServer implements Disposable {
     @inject(Config) protected readonly config: Config;
     @inject(TracedOneTimeSecretDB) protected readonly oneTimeSecretDB: DBWithTracing<OneTimeSecretDB>;
 
-    protected pruneTimeout: NodeJS.Timeout | undefined;
+    protected readonly disposables = new DisposableCollection();
 
     public startPruningExpiredSecrets() {
-        this.pruneTimeout = setInterval(() => this.oneTimeSecretDB.trace({}).pruneExpired(), 5*60*1000);
+        this.disposables.push(
+            repeat(() => this.oneTimeSecretDB.trace({}).pruneExpired(), 5*60*1000)
+        );
     }
 
     dispose(): void {
-        if (!this.pruneTimeout) {
-            return;
-        }
-
-        clearInterval(this.pruneTimeout);
-        this.pruneTimeout = undefined;
+        this.disposables.dispose();
     }
 
     get apiRouter(): express.Router {

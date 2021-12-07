@@ -4,6 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { repeat } from "./repeat";
+
 
 interface CacheEntry<T> {
     key: string;
@@ -46,7 +48,7 @@ export class GarbageCollectedCache<T> {
     }
 
     protected regularlyCollectGarbage() {
-        setInterval(() => this.collectGarbage(), this.gcIntervalSeconds * 1000);
+        repeat(() => this.collectGarbage(), this.gcIntervalSeconds * 1000);
     }
 
     protected collectGarbage() {
