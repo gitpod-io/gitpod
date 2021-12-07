@@ -61,7 +61,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			RoleRef: rbacv1.RoleRef{
 				Kind:     "ClusterRole",
-				Name:     Component,
+				Name:     fmt.Sprintf("%s-ns-psp:unprivileged", ctx.Namespace),
 				APIGroup: "rbac.authorization.k8s.io",
 			},
 			Subjects: []rbacv1.Subject{{

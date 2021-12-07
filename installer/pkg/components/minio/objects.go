@@ -2,16 +2,14 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package incluster
+package minio
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
+const Component = "minio"
+
 var Objects = common.CompositeRenderFunc(
-	configmap,
 	rolebinding,
-	secrets,
-	service,
-	common.DefaultServiceAccount(Component),
 )

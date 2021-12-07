@@ -12,6 +12,7 @@ import (
 var Objects = common.CompositeRenderFunc(
 	deployment,
 	dbinit.Objects,
+	rolebinding,
 	common.DefaultServiceAccount(Component),
 	common.GenerateService(Component, map[string]common.ServicePort{
 		Component: {

@@ -38,6 +38,7 @@ var MetaObjects = common.CompositeRenderFunc(
 	database.Objects,
 	imagebuildermk3.Objects,
 	migrations.Objects,
+	minio.Objects,
 	openvsxproxy.Objects,
 	rabbitmq.Objects,
 	server.Objects,
