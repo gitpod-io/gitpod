@@ -73,7 +73,7 @@ export namespace Experiment {
         if (arr === null) {
             return undefined;
         }
-        return new Set(arr) as Set<Experiment>;
+        return new Set(JSON.parse(arr)) as Set<Experiment>;
     }
 
     export function getAsArray(): Experiment[] {
