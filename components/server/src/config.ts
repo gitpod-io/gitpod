@@ -53,7 +53,9 @@ export interface ConfigSerialized {
     insecureNoDomain: boolean;
     logLevel: LogrusLogLevel;
 
+    // Use one or other - licenseFile reads from a file and populates license
     license?: string;
+    licenseFile?: string;
 
     workspaceHeartbeat: {
         intervalSeconds: number;
@@ -178,6 +180,11 @@ export namespace ConfigFile {
         if (brandingConfig) {
             brandingConfig = BrandingParser.normalize(brandingConfig);
         }
+        let license = config.license
+        const licenseFile = config.licenseFile
+        if (licenseFile) {
+            license = fs.readFileSync(licenseFile, "utf-8")
+        }
         return {
             ...config,
             stage: translateLegacyStagename(config.stage),
@@ -186,6 +193,7 @@ export namespace ConfigFile {
             builtinAuthProvidersConfigured,
             brandingConfig,
             chargebeeProviderOptions,
+            license,
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,
                 startDate: config.workspaceGarbageCollection.startDate ? new Date(config.workspaceGarbageCollection.startDate).getTime() : Date.now(),
