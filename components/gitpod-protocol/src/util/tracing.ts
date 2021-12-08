@@ -141,10 +141,7 @@ export namespace TraceContext {
         try {
             for (const k of Object.keys(keyValueMap)) {
                 const v = keyValueMap[k];
-                // oh my JavaScript... `typeof null` and `typeof undefined` return `object`
-                if (v !== null
-                    && v !== undefined
-                    && typeof v === 'object') {
+                if (v instanceof Object) {
                     addNestedTags(ctx, v, `${namespace}${k}`);
                 } else {
                     ctx.span.setTag(`${namespace}${k}`, v);
