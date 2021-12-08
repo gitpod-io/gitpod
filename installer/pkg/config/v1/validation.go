@@ -102,5 +102,10 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("encryptionKeys", "host", "password", "port", "username")))
 	}
 
+	if cfg.License != nil {
+		secretName := cfg.License.Name
+		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("license")))
+	}
+
 	return res
 }

@@ -20,13 +20,18 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	license := ""
+	if ctx.Config.License != nil {
+		license = licenseFilePath
+	}
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
 		HostURL:               fmt.Sprintf("https://%s", ctx.Config.Domain),
 		InstallationShortname: ctx.Namespace, // todo(sje): is this needed?
 		Stage:                 "production",  // todo(sje): is this needed?
-		License:               "",            // todo(sje): how do we populate this?
+		LicenseFile:           license,
 		WorkspaceHeartbeat: WorkspaceHeartbeat{
 			IntervalSeconds: 60,
 			TimeoutSeconds:  300,
