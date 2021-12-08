@@ -530,7 +530,7 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		if enclave := os.Getenv("WORKSPACEKIT_RING2_ENCLAVE"); enclave != "" {
-			ecmd := exec.Command("/proc/self/exe", append([]string{"nsenter", "--target", strconv.Itoa(cmd.Process.Pid), "--mount"}, strings.Fields(enclave)...)...)
+			ecmd := exec.Command("/proc/self/exe", append([]string{"nsenter", "--target", strconv.Itoa(cmd.Process.Pid), "--mount", "--net"}, strings.Fields(enclave)...)...)
 			ecmd.Stdout = os.Stdout
 			ecmd.Stderr = os.Stderr
 
