@@ -96,12 +96,12 @@ export default function NewProject() {
                     if (repoConfigString) {
                         setSourceOfConfig("repo");
                     } else {
-                        setSourceOfConfig("db");
                         setGuessedConfigString(await guessedConfigStringPromise || `tasks:
   - init: |
       echo 'TODO: build project'
     command: |
       echo 'TODO: start app'`);
+                        setSourceOfConfig("db");
                     }
                 } catch (error) {
                     console.error('Getting project configuration failed', error);
