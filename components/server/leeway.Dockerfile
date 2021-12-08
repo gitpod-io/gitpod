@@ -15,7 +15,7 @@ FROM golang:1.17.2 as oci-tool-builder
 RUN go install github.com/csweichel/oci-tool@latest
 
 FROM node:16.13.0-slim
-ENV NODE_OPTIONS=--unhandled-rejections=warn
+ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
 # Using ssh-keygen for RSA keypair generation
 RUN apt-get update && apt-get install -yq \
         openssh-client \
