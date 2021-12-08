@@ -37,6 +37,23 @@ const expect = chai.expect
         });
     }
 
+    @test public async testTracingContext_addNestedTags_null() {
+        const tracer = new MockTracer();
+        const span = tracer.startSpan('testTracingContext_addNestedTags_null');
+        TraceContext.addNestedTags({ span }, {
+            someShape: {
+                thisIsNull: null,
+                thisIsUndefined: undefined,
+            },
+        });
+
+        const mockSpan = tracer.report().spans[0];
+        expect(mockSpan.tags()).to.deep.equal({
+            "someShape.thisIsNull": null,
+            "someShape.thisIsUndefined": undefined,
+        });
+    }
+
     @test public async testTracingContext_addJsonRPCParameters() {
         const tracer = new MockTracer();
         const span = tracer.startSpan('testTracingContext_addJsonRPCParameters');

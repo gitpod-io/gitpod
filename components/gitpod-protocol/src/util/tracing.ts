@@ -11,7 +11,7 @@ import { Sampler, SamplingDecision } from './jaeger-client-types';
 import { initGlobalTracer } from 'opentracing';
 import { injectable } from 'inversify';
 import { ResponseError } from 'vscode-jsonrpc';
-import { LogContext } from './logging';
+import { log, LogContext } from './logging';
 
 export interface TraceContext {
     span?: opentracing.Span
@@ -138,13 +138,21 @@ export namespace TraceContext {
         }
         const namespace = _namespace ? `${_namespace}.` : '';
 
-        for (const k of Object.keys(keyValueMap)) {
-            const v = keyValueMap[k];
-            if (typeof v === 'object') {
-                addNestedTags(ctx, v, `${namespace}${k}`);
-            } else {
-                ctx.span.setTag(`${namespace}${k}`, v);
+        try {
+            for (const k of Object.keys(keyValueMap)) {
+                const v = keyValueMap[k];
+                // oh my JavaScript... `typeof null` and `typeof undefined` return `object`
+                if (v !== null
+                    && v !== undefined
+                    && typeof v === 'object') {
+                    addNestedTags(ctx, v, `${namespace}${k}`);
+                } else {
+                    ctx.span.setTag(`${namespace}${k}`, v);
+                }
             }
+        } catch (err) {
+            // general resilience against odd shapes/parameters
+            log.error("Tracing.addNestedTags", err, { namespace });
         }
     }
 
