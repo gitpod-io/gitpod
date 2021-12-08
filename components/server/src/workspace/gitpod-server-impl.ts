@@ -1647,14 +1647,44 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.projectsService.setProjectConfiguration(projectId, { '.gitpod.yml': configString });
     }
 
+    public async fetchRepositoryConfiguration(ctx: TraceContext, cloneUrl: string): Promise<string | undefined> {
+        traceAPIParams(ctx, { cloneUrl });
+        const user = this.checkUser("fetchRepositoryConfiguration");
+        try {
+            return await this.projectsService.fetchRepositoryConfiguration(ctx, user, cloneUrl);
+        } catch (error) {
+            if (UnauthorizedError.is(error)) {
+                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+            }
+            throw error;
+        }
+    }
+
     public async fetchProjectRepositoryConfiguration(ctx: TraceContext, projectId: string): Promise<string | undefined> {
         traceAPIParams(ctx, { projectId });
-
         const user = this.checkUser("fetchProjectRepositoryConfiguration");
 
         await this.guardProjectOperation(user, projectId, "get");
+
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
         try {
-            return await this.projectsService.fetchProjectRepositoryConfiguration(ctx, user, projectId);
+            return await this.projectsService.fetchRepositoryConfiguration(ctx, user, project.cloneUrl);
+        } catch (error) {
+            if (UnauthorizedError.is(error)) {
+                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+            }
+            throw error;
+        }
+    }
+
+    public async guessRepositoryConfiguration(ctx: TraceContext, cloneUrl: string): Promise<string | undefined> {
+        const user = this.checkUser("guessRepositoryConfiguration");
+        try {
+            return await this.projectsService.guessRepositoryConfiguration(ctx, user, cloneUrl);
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
@@ -1665,12 +1695,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async guessProjectConfiguration(ctx: TraceContext, projectId: string): Promise<string | undefined> {
         traceAPIParams(ctx, { projectId });
-
         const user = this.checkUser("guessProjectConfiguration");
-
         await this.guardProjectOperation(user, projectId, "get");
+
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
         try {
-            return await this.projectsService.guessProjectConfiguration(ctx, user, projectId);
+            return await this.projectsService.guessRepositoryConfiguration(ctx, user, project.cloneUrl);
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);

@@ -139,6 +139,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
     guessProjectConfiguration(projectId: string): Promise<string | undefined>;
+    fetchRepositoryConfiguration(cloneUrl: string): Promise<string | undefined>;
+    guessRepositoryConfiguration(cloneUrl: string): Promise<string | undefined>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>
