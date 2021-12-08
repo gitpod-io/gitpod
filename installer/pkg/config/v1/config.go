@@ -83,6 +83,7 @@ type Config struct {
 
 	AuthProviders []AuthProviderConfigs `json:"authProviders" validate:"dive"`
 	BlockNewUsers BlockNewUsers         `json:"blockNewUsers"`
+	License       *ObjectRef            `json:"license,omitempty"`
 }
 
 type Metadata struct {

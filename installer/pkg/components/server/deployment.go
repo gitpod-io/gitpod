@@ -37,6 +37,26 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 	wsmanCfgManager := base64.StdEncoding.EncodeToString(fc)
 
+	volumes := make([]corev1.Volume, 0)
+	volumeMounts := make([]corev1.VolumeMount, 0)
+	if ctx.Config.License != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "gitpod-license-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.License.Name,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "gitpod-license-key",
+			MountPath: licenseFilePath,
+			SubPath:   "license",
+			ReadOnly:  true,
+		})
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -66,28 +86,35 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						EnableServiceLinks: pointer.Bool(false),
 						// todo(sje): conditionally add github-app-cert-secret in
 						// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
-						Volumes: []corev1.Volume{{
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+						Volumes: append(
+							[]corev1.Volume{
+								{
+									Name: "config",
+									VolumeSource: corev1.VolumeSource{
+										ConfigMap: &corev1.ConfigMapVolumeSource{
+											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+										},
+									},
+								},
+								{
+									Name: "ide-config",
+									VolumeSource: corev1.VolumeSource{
+										ConfigMap: &corev1.ConfigMapVolumeSource{
+											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-ide-config", Component)},
+										},
+									},
+								},
+								{
+									Name: "ws-manager-client-tls-certs",
+									VolumeSource: corev1.VolumeSource{
+										Secret: &corev1.SecretVolumeSource{
+											SecretName: wsmanager.TLSSecretNameClient,
+										},
+									},
 								},
 							},
-						}, {
-							Name: "ide-config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-ide-config", Component)},
-								},
-							},
-						}, {
-							Name: "ws-manager-client-tls-certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsmanager.TLSSecretNameClient,
-								},
-							},
-						}},
+							volumes...,
+						),
 						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx), *common.MessageBusWaiterContainer(ctx)},
 						Containers: []corev1.Container{{
 							Name:            Component,
@@ -136,19 +163,26 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							),
 							// todo(sje): conditionally add github-app-cert-secret in
 							// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
-							VolumeMounts: []corev1.VolumeMount{{
-								Name:      "config",
-								MountPath: "/config",
-								ReadOnly:  true,
-							}, {
-								Name:      "ide-config",
-								MountPath: "/ide-config",
-								ReadOnly:  true,
-							}, {
-								Name:      "ws-manager-client-tls-certs",
-								MountPath: "/ws-manager-client-tls-certs",
-								ReadOnly:  true,
-							}},
+							VolumeMounts: append(
+								[]corev1.VolumeMount{
+									{
+										Name:      "config",
+										MountPath: "/config",
+										ReadOnly:  true,
+									},
+									{
+										Name:      "ide-config",
+										MountPath: "/ide-config",
+										ReadOnly:  true,
+									},
+									{
+										Name:      "ws-manager-client-tls-certs",
+										MountPath: "/ws-manager-client-tls-certs",
+										ReadOnly:  true,
+									},
+								},
+								volumeMounts...,
+							),
 						}, *common.KubeRBACProxyContainer(ctx)},
 					},
 				},
