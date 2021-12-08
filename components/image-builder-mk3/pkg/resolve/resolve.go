@@ -114,7 +114,7 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 	}
 
 	if mf.Config.Size != 0 {
-		pref, err = reference.WithDigest(pref, mf.Config.Digest)
+		pref, err = reference.WithDigest(pref, desc.Digest)
 		if err != nil {
 			return
 		}
