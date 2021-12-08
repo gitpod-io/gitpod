@@ -7,9 +7,9 @@
 import { useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
-import { AuthProviderInfo, ProviderRepository, Team, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, Project, ProviderRepository, Team, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
 import { TeamsContext } from "../teams/teams-context";
-import { useHistory, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
 import Plus from "../icons/Plus.svg";
@@ -23,7 +23,6 @@ import exclamation from "../images/exclamation.svg";
 
 export default function NewProject() {
     const location = useLocation();
-    const history = useHistory();
     const { teams } = useContext(TeamsContext);
     const { user, setUser } = useContext(UserContext);
 
@@ -33,11 +32,15 @@ export default function NewProject() {
     const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
     const [noOrgs, setNoOrgs] = useState<boolean>(false);
     const [showGitProviders, setShowGitProviders] = useState<boolean>(false);
-    const [selectedRepo, setSelectedRepo] = useState<string | undefined>(undefined);
+    const [selectedRepo, setSelectedRepo] = useState<ProviderRepository | undefined>(undefined);
     const [selectedTeamOrUser, setSelectedTeamOrUser] = useState<Team | User | undefined>(undefined);
 
     const [showNewTeam, setShowNewTeam] = useState<boolean>(false);
     const [loaded, setLoaded] = useState<boolean>(false);
+
+    const [project, setProject] = useState<Project | undefined>();
+    const [guessedConfigString, setGuessedConfigString] = useState<string | undefined>();
+    const [sourceOfConfig, setSourceOfConfig] = useState<"repo" | "db" | undefined>();
 
     useEffect(() => {
         if (user && provider === undefined) {
@@ -84,6 +87,32 @@ export default function NewProject() {
     }, [teams]);
 
     useEffect(() => {
+        if (selectedRepo) {
+            (async () => {
+
+                try {
+                    const guessedConfigStringPromise = getGitpodService().server.guessRepositoryConfiguration(selectedRepo.cloneUrl);
+                    const repoConfigString = await getGitpodService().server.fetchRepositoryConfiguration(selectedRepo.cloneUrl);
+                    if (repoConfigString) {
+                        setSourceOfConfig("repo");
+                    } else {
+                        setSourceOfConfig("db");
+                        setGuessedConfigString(await guessedConfigStringPromise || `tasks:
+  - init: |
+      echo 'TODO: build project'
+    command: |
+      echo 'TODO: start app'`);
+                    }
+                } catch (error) {
+                    console.error('Getting project configuration failed', error);
+                    setSourceOfConfig(undefined);
+                }
+
+            })();
+        }
+    }, [selectedRepo]);
+
+    useEffect(() => {
         if (selectedTeamOrUser && selectedRepo) {
             createProject(selectedTeamOrUser, selectedRepo);
         }
@@ -117,6 +146,17 @@ export default function NewProject() {
             await updateReposInAccounts();
         })();
     }, [provider]);
+
+    useEffect(() => {
+        if (project && sourceOfConfig) {
+            (async () => {
+                if (guessedConfigString && sourceOfConfig === "db") {
+                    await getGitpodService().server.setProjectConfiguration(project.id, guessedConfigString);
+                }
+                await getGitpodService().server.triggerPrebuild(project.id, null);
+            })();
+        }
+    }, [project, sourceOfConfig]);
 
     const isGitHub = () => provider === "github.com";
     const isBitbucket = () => provider === "bitbucket.org";
@@ -180,16 +220,10 @@ export default function NewProject() {
         }
     }
 
-    const createProject = async (teamOrUser: Team | User, selectedRepo: string) => {
+    const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
         if (!provider || isBitbucket()) {
             return;
         }
-        const repo = reposInAccounts.find(r => r.account === selectedAccount && (r.path ? r.path === selectedRepo : r.name === selectedRepo));
-        if (!repo) {
-            console.error("No repo selected!")
-            return;
-        }
-
         const repoSlug = repo.path || repo.name;
 
         try {
@@ -203,7 +237,7 @@ export default function NewProject() {
                 appInstallationId: String(repo.installationId),
             });
 
-            history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${project.slug}/configure`);
+            setProject(project);
         } catch (error) {
             const message = (error && error?.message) || "Failed to create new project."
             window.alert(message);
@@ -294,7 +328,7 @@ export default function NewProject() {
                                     <div className="flex justify-end">
                                         <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100">
                                             {!r.inUse ? (
-                                                <button className="primary" onClick={() => setSelectedRepo(r.path || r.name)}>Select</button>
+                                                <button className="primary" onClick={() => setSelectedRepo(r)}>Select</button>
                                             ) : (
                                                 <p className="my-auto">already taken</p>
                                             )}
@@ -428,18 +462,53 @@ export default function NewProject() {
         </div>);
     }
 
-    return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
-        <h1>New Project</h1>
+    const onNewWorkspace = async () => {
+        const redirectToNewWorkspace = () => {
+            // instead of `history.push` we want forcibly to redirect here in order to avoid a following redirect from `/` -> `/projects` (cf. App.tsx)
+            const url = new URL(window.location.toString());
+            url.pathname = "/";
+            url.hash = project?.cloneUrl!;
+            window.location.href = url.toString();
+        }
+        redirectToNewWorkspace();
+    }
 
-        {!selectedRepo && renderSelectRepository()}
+    if (!project) {
+        return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
 
-        {selectedRepo && !selectedTeamOrUser && renderSelectTeam()}
+            <>
+                <h1>New Project</h1>
 
-        {selectedRepo && selectedTeamOrUser && (<div></div>)}
+                {!selectedRepo && renderSelectRepository()}
 
-        {isBitbucket() && renderBitbucketWarning()}
+                {selectedRepo && !selectedTeamOrUser && renderSelectTeam()}
 
-    </div>);
+                {selectedRepo && selectedTeamOrUser && (<div></div>)}
+            </>
+
+            {isBitbucket() && renderBitbucketWarning()}
+
+        </div>);
+    } else {
+        const projectLink = User.is(selectedTeamOrUser) ? `/projects/${project.slug}` : `/t/${selectedTeamOrUser?.slug}/${project.slug}`;
+        const location = User.is(selectedTeamOrUser) ? "" : (<> in team <a className="gp-link" href={`/t/${selectedTeamOrUser?.slug}/projects`}>{selectedTeamOrUser?.name}</a></>);
+
+        return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
+
+            <>
+                <h1>Project Created</h1>
+
+                <p className="mt-2 text-gray-500 text-center text-base">Created <a className="gp-link" href={projectLink}>{project.name}</a> {location}
+                </p>
+
+                <div className="mt-12">
+                    <button onClick={onNewWorkspace}>New Workspace</button>
+                </div>
+
+            </>
+
+        </div>);
+    }
 
 }
 
