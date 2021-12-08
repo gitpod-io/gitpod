@@ -45,11 +45,13 @@ export class WsExpressHandler {
             perMessageDeflate: {
                 // don't compress if a message is less than 256kb
                 threshold: 256 * 1024
-            }
+            },
+            // we don't use this feature, so avoid having another potential mem leak
+            clientTracking: false,
         });
         this.wss.on('error', (err) => {
             log.error('Websocket error', err, { ws: this.wss });
-        })
+        });
     }
 
     ws(route: Route, handler: (ws: websocket, request: express.Request) => void, ...handlers: WsHandler[]): void {
