@@ -1,0 +1,31 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installNetworkPolicies -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ide-proxy-deny-all-allow-explicit
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ide-proxy
+    kind: networkpolicy
+    stage: {{ .Values.installation.stage }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: ide-proxy
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 80
+    from:
+    # Allow ingress on port 80 from component:
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" . }}
+          component: proxy
+{{- end -}}
