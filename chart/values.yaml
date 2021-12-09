@@ -398,6 +398,8 @@ components:
         imageName: "ide/phpstorm"
     supervisor:
       imageName: "supervisor"
+    workspacekit:
+      imageName: "workspacekit"
     dockerUp:
       imageName: "docker-up"
     pullSecret:

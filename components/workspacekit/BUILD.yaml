@@ -34,3 +34,19 @@ packages:
     config:
       packaging: library
       dontTest: true
+  - name: docker
+    type: docker
+    deps:
+      - :app
+      - :fuse-overlayfs
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.workspacekit
+      image:
+        - ${imageRepoBase}/workspacekit:${version}
+        - ${imageRepoBase}/workspacekit:commit-${__git_commit}

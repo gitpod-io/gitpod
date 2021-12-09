@@ -40,6 +40,10 @@ data:
                     "type": "image"
                 },
                 {
+                    "ref": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.workspacekit) }}",
+                    "type": "image"
+                },
+                {
                     "ref": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.dockerUp) }}",
                     "type": "image"
                 }

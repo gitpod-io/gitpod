@@ -164,7 +164,7 @@ export function findFreeHostPorts(ranges: PortRange[], shellOpts: ExecOptions): 
     for (const port of hostPorts) {
         alreadyReservedPorts.add(port);
     }
-    werft.log(shellOpts.slice, `already reserved ports: ${Array.from(alreadyReservedPorts.values())}`);
+    werft.log(shellOpts.slice, `already reserved ports: ${Array.from(alreadyReservedPorts.values()).map(p => ""+p).join(", ")}`);
 
     const results: number[] = [];
     for (const range of ranges) {
