@@ -7,11 +7,12 @@ package wsmanager
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"time"
+
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
 	"k8s.io/utils/pointer"
-	"path/filepath"
 	"sigs.k8s.io/yaml"
-	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -60,14 +61,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Container: config.AllContainerConfiguration{
 				Workspace: config.ContainerConfiguration{
 					Requests: config.ResourceConfiguration{
-						CPU:     quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceCPU),
-						Memory:  quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceMemory),
-						Storage: quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceEphemeralStorage),
+						CPU:              quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceCPU),
+						Memory:           quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceMemory),
+						EphemeralStorage: quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceEphemeralStorage),
 					},
 					Limits: config.ResourceConfiguration{
-						CPU:     quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceCPU),
-						Memory:  quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceMemory),
-						Storage: quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceEphemeralStorage),
+						CPU:              quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceCPU),
+						Memory:           quantityString(ctx.Config.Workspace.Resources.Limits, corev1.ResourceMemory),
+						EphemeralStorage: quantityString(ctx.Config.Workspace.Resources.Requests, corev1.ResourceEphemeralStorage),
 					},
 					Image: "OVERWRITTEN-IN-REQUEST",
 				},

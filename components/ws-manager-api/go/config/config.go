@@ -283,10 +283,10 @@ var validResourceConfig = validation.By(func(o interface{}) error {
 			return xerrors.Errorf("cannot parse Memory quantity: %w", err)
 		}
 	}
-	if rc.Storage != "" {
-		_, err := resource.ParseQuantity(rc.Storage)
+	if rc.EphemeralStorage != "" {
+		_, err := resource.ParseQuantity(rc.EphemeralStorage)
 		if err != nil {
-			return xerrors.Errorf("cannot parse Storage quantity: %w", err)
+			return xerrors.Errorf("cannot parse EphemeralStorage quantity: %w", err)
 		}
 	}
 	return nil
@@ -297,7 +297,7 @@ func (r *ResourceConfiguration) ResourceList() (corev1.ResourceList, error) {
 	res := map[corev1.ResourceName]string{
 		corev1.ResourceCPU:              r.CPU,
 		corev1.ResourceMemory:           r.Memory,
-		corev1.ResourceEphemeralStorage: r.Storage,
+		corev1.ResourceEphemeralStorage: r.EphemeralStorage,
 	}
 
 	var l = make(corev1.ResourceList)
@@ -399,7 +399,7 @@ func RenderWorkspacePortURL(urltpl string, ctx PortURLContext) (string, error) {
 
 // ResourceConfiguration configures resources of a pod/container
 type ResourceConfiguration struct {
-	CPU     string `json:"cpu"`
-	Memory  string `json:"memory"`
-	Storage string `json:"storage"`
+	CPU              string `json:"cpu"`
+	Memory           string `json:"memory"`
+	EphemeralStorage string `json:"ephemeral-storage"`
 }

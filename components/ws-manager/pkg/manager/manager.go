@@ -581,7 +581,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		return nil
 	})
 
-	return &api.ControlPortResponse{}, nil
+	return &api.ControlPortResponse{}, err
 }
 
 // DescribeWorkspace investigates a workspace and returns its status, and configuration

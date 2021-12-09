@@ -79,7 +79,7 @@ func TestControlPort(t *testing.T) {
 
 			pod, err := manager.createDefiniteWorkspacePod(startCtx)
 			if err != nil {
-				t.Errorf("cannot create test pod; this is a bug in the unit test itself: %v", err)
+				t.Fatalf("cannot create test pod; this is a bug in the unit test itself: %v", err)
 				return nil
 			}
 
@@ -87,7 +87,7 @@ func TestControlPort(t *testing.T) {
 			if fixture.PortsService != nil {
 				err := manager.Clientset.Create(context.Background(), fixture.PortsService)
 				if err != nil {
-					t.Errorf("cannot create test service; this is a bug in the unit test itself: %v", err)
+					t.Fatalf("cannot create test service; this is a bug in the unit test itself: %v", err)
 					return nil
 				}
 			}
