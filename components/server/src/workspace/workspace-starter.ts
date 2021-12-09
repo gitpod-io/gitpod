@@ -654,6 +654,13 @@ export class WorkspaceStarter {
         vsxRegistryUrl.setValue(this.config.vsxRegistryUrl);
         envvars.push(vsxRegistryUrl);
 
+        if (workspace.config.experimentalNetwork) {
+            const useNetnsVar = new EnvironmentVariable();
+            useNetnsVar.setName("WORKSPACEKIT_USE_NETNS");
+            useNetnsVar.setValue("true");
+            envvars.push(useNetnsVar);
+        }
+
         const createGitpodTokenPromise = (async () => {
             const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
             const token = crypto.randomBytes(30).toString('hex');

@@ -558,7 +558,7 @@ export interface WorkspaceConfig {
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
 
-    /** deprecated. Enabled by default **/
+    /** tailscale demo */
     experimentalNetwork?: boolean;
 
     /**
