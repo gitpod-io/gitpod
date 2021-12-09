@@ -14,7 +14,6 @@ import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
 import Plus from "../icons/Plus.svg";
 import Switch from "../icons/Switch.svg";
-import NoAccess from "../icons/NoAccess.svg";
 import search from "../icons/search.svg";
 import moment from "moment";
 import { UserContext } from "../user-context";
@@ -30,7 +29,6 @@ export default function NewProject() {
     const [reposInAccounts, setReposInAccounts] = useState<ProviderRepository[]>([]);
     const [repoSearchFilter, setRepoSearchFilter] = useState<string>("");
     const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
-    const [noOrgs, setNoOrgs] = useState<boolean>(false);
     const [showGitProviders, setShowGitProviders] = useState<boolean>(false);
     const [selectedRepo, setSelectedRepo] = useState<ProviderRepository | undefined>(undefined);
     const [selectedTeamOrUser, setSelectedTeamOrUser] = useState<Team | User | undefined>(undefined);
@@ -147,7 +145,6 @@ export default function NewProject() {
             return;
         }
         (async () => {
-            updateOrgsState();
             await updateReposInAccounts();
         })();
     }, [selectedProviderHost]);
@@ -183,20 +180,6 @@ export default function NewProject() {
         return [];
     }
 
-    const getToken = async (host: string) => {
-        return getGitpodService().server.getToken({ host });
-    }
-
-    const updateOrgsState = async () => {
-        if (selectedProviderHost && isGitHub()) {
-            try {
-                const ghToken = await getToken(selectedProviderHost);
-                setNoOrgs(ghToken?.scopes.includes("read:org") !== true);
-            } catch {
-            }
-        }
-    }
-
     const reconfigure = () => {
         openReconfigureWindow({
             account: selectedAccount,
@@ -208,21 +191,6 @@ export default function NewProject() {
                 });
             }
         });
-    }
-
-    const grantReadOrgPermissions = async () => {
-        try {
-            await openAuthorizeWindow({
-                host: "github.com",
-                scopes: ["read:org"],
-                onSuccess: () => {
-                    updateReposInAccounts();
-                    updateOrgsState();
-                }
-            })
-        } catch (error) {
-            console.log(error);
-        }
     }
 
     const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
@@ -266,7 +234,15 @@ export default function NewProject() {
             <span className={"pl-2 text-gray-600 dark:text-gray-100 text-base " + (addClasses || "")}>{label}</span>
         </div>)
         const result: ContextMenuEntry[] = [];
-        for (const [ account, props ] of accounts.entries()) {
+
+        if (!selectedAccount && user && user.name && user.avatarUrl) {
+            result.push({
+                title: "user",
+                customContent: renderItemContent(user?.name, user?.avatarUrl),
+                separator: true,
+            })
+        }
+        for (const [account, props] of accounts.entries()) {
             result.push({
                 title: account,
                 customContent: renderItemContent(account, props.avatarUrl, "font-semibold"),
@@ -299,16 +275,29 @@ export default function NewProject() {
 
         const showSearchInput = !!repoSearchFilter || filteredRepos.length > 0;
 
+        const projectText = () => {
+            return <p className="text-gray-500 text-center text-base">Projects allow you to manage prebuilds and workspaces for your repository. <a href="https://www.gitpod.io/docs/teams-and-projects" rel="noopener" className="gp-link">Learn more</a></p>
+        }
+
         const renderRepos = () => (<>
-            {!isBitbucket() && <p className="text-gray-500 text-center text-base">Select a Git repository on <strong>{selectedProviderHost}</strong>. (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>}
-            <div className={`mt-10 border rounded-xl border-gray-100 dark:border-gray-800 flex-col`}>
-                <div className="px-8 pt-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
+            {projectText()}
+            <p className="text-gray-500 text-center text-base mt-12">{loaded && noReposAvailable ? 'Select account on ' : 'Select a Git repository on '}<b>{selectedProviderHost}</b> (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>
+            <div className={`mt-2 flex-col ${noReposAvailable && isGitHub() ? 'w-96' : ''}`}>
+                <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
                     <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
                         <div className="w-full">
-                            {icon && (
-                                <img src={icon} className="rounded-full w-6 h-6 absolute top-1/4 left-4" />
+                            {!selectedAccount && user && user.name && user.avatarUrl && (
+                                <>
+                                    <img src={user?.avatarUrl} className="rounded-full w-6 h-6 absolute my-2.5 left-3" />
+                                    <input className="w-full px-12 cursor-pointer font-semibold" readOnly type="text" value={user?.name}></input>
+                                </>
                             )}
-                            <input className="w-full px-12 cursor-pointer font-semibold" readOnly type="text" value={selectedAccount || ""}></input>
+                            {selectedAccount && (
+                                <>
+                                    <img src={icon ? icon : ""} className="rounded-full w-6 h-6 absolute my-2.5 left-3" />
+                                    <input className="w-full px-12 cursor-pointer font-semibold" readOnly type="text" value={selectedAccount}></input>
+                                </>
+                            )}
                             <img src={CaretDown} title="Select Account" className="filter-grayscale absolute top-1/2 right-3" />
                         </div>
                     </ContextMenu>
@@ -348,49 +337,42 @@ export default function NewProject() {
                     )}
                     {loaded && noReposAvailable && isGitHub() && (<div>
                         <div className="px-12 py-20 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                            <img src={NoAccess} title="No Access" className="m-auto mb-4" />
-                            <h3 className="text-center text-gray-600 dark:text-gray-50 pb-3 font-bold">
-                                No Access
-                            </h3>
                             <span className="dark:text-gray-400">
-                                Authorize GitHub (github.com) or select a different account.
+                                Additional authorization is required for our GitHub App to watch your repositories and trigger prebuilds.
                             </span>
                             <br />
-                            <button className="mt-6" onClick={() => reconfigure()}>Authorize</button>
+                            <button className="mt-6" onClick={() => reconfigure()}>Configure Gitpod App</button>
                         </div>
                     </div>)}
                 </div>
 
             </div>
-            {isGitHub() && (
-                    <div className="pt-3">
-                        <div className="text-gray-500 text-center w-96 mx-8">
-                            Repository not found? <a href="javascript:void(0)" onClick={e => reconfigure()} className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Reconfigure</a>
-                        </div>
-                        {isGitHub() && noOrgs && (
-                            <div className="text-gray-500 mx-auto text-center">
-                                Missing organizations? <a href="javascript:void(0)" onClick={e => grantReadOrgPermissions()} className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Grant permissions</a>
-                            </div>
-                        )}
+            {reposInAccounts.length > 0 && isGitHub() && (
+                <div>
+                    <div className="text-gray-500 text-center w-96 mx-8">
+                        Repository not found? <a href="javascript:void(0)" onClick={e => reconfigure()} className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Reconfigure</a>
                     </div>
+                </div>
             )}
-            <p className="text-left w-full mt-12 text-gray-500">
-                <strong>Teams &amp; Projects</strong> are currently in Beta. <a href="https://github.com/gitpod-io/gitpod/issues/5095" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a> or open a <a href="/workspaces" className="gp-link">New Workspace</a> with an example repository.
+            <p className="text-center w-full mt-12 text-gray-500">
+                <strong>Teams &amp; Projects</strong> are currently in Beta. <a href="https://github.com/gitpod-io/gitpod/issues/5095" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a>
             </p>
         </>
         );
 
-        const renderLoadingState = () => (<div>
-            <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
-                <div>
-                    <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
-                        <h3 className="mb-2 text-gray-400 dark:text-gray-600 animate-pulse">
-                            Loading ...
-                        </h3>
+        const renderLoadingState = () => (
+            <div>
+                {projectText()}
+                <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
+                    <div>
+                        <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
+                            <h3 className="mb-2 text-gray-400 dark:text-gray-600 animate-pulse">
+                                Loading ...
+                            </h3>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>)
+            </div>)
 
         const onGitProviderSeleted = async (host: string, updateUser?: boolean) => {
             if (updateUser) {
@@ -458,13 +440,13 @@ export default function NewProject() {
     const renderBitbucketWarning = () => {
         return (
             <div className="mt-16 flex space-x-2 py-6 px-6 w-96 justify-betweeen bg-gitpod-kumquat-light rounded-xl">
-            <div className="pr-3 self-center w-6">
-                <img src={exclamation} />
-            </div>
-            <div className="flex-1 flex flex-col">
-                <p className="text-gitpod-red text-sm">Bitbucket support for projects is not available yet. Follow <a className="gp-link" href="https://github.com/gitpod-io/gitpod/issues/5980">#5980</a> for updates.</p>
-            </div>
-        </div>);
+                <div className="pr-3 self-center w-6">
+                    <img src={exclamation} />
+                </div>
+                <div className="flex-1 flex flex-col">
+                    <p className="text-gitpod-red text-sm">Bitbucket support for projects is not available yet. Follow <a className="gp-link" href="https://github.com/gitpod-io/gitpod/issues/5980">#5980</a> for updates.</p>
+                </div>
+            </div>);
     }
 
     const onNewWorkspace = async () => {
