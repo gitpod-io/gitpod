@@ -13,7 +13,7 @@ import {
 } from './protocol';
 import {
     Team, TeamMemberInfo,
-    TeamMembershipInvite, Project, TeamMemberRole, PrebuildWithStatus, StartPrebuildResult, ProjectSettings
+    TeamMembershipInvite, Project, TeamMemberRole, PrebuildWithStatus, StartPrebuildResult, PartialProject
 } from './teams-projects-protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
@@ -136,12 +136,12 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     triggerPrebuild(projectId: string, branchName: string | null): Promise<StartPrebuildResult>;
     cancelPrebuild(projectId: string, prebuildId: string): Promise<void>;
-    setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
     guessProjectConfiguration(projectId: string): Promise<string | undefined>;
     fetchRepositoryConfiguration(cloneUrl: string): Promise<string | undefined>;
     guessRepositoryConfiguration(cloneUrl: string): Promise<string | undefined>;
-    updateProjectSettings(projectId: string, partialSettings: Partial<ProjectSettings>): Promise<void>;
+    setProjectConfiguration(projectId: string, configString: string): Promise<void>;
+    updateProjectPartial(partialProject: PartialProject): Promise<void>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>

@@ -70,7 +70,12 @@ export default function () {
         }
         setIsLoading(true);
         try {
-            await getGitpodService().server.updateProjectSettings(project.id, { useIncrementalPrebuilds: !isIncrementalPrebuildsEnabled });
+            await getGitpodService().server.updateProjectPartial({
+                id: project.id,
+                settings: {
+                    useIncrementalPrebuilds: !isIncrementalPrebuildsEnabled,
+                }
+            });
             setIsIncrementalPrebuildsEnabled(!isIncrementalPrebuildsEnabled);
         } finally {
             setIsLoading(false);

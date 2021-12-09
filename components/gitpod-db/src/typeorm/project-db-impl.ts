@@ -9,7 +9,7 @@ import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
-import { Project, ProjectConfig, ProjectSettings } from "@gitpod/gitpod-protocol";
+import { PartialProject, Project } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class ProjectDBImpl implements ProjectDB {
@@ -60,24 +60,13 @@ export class ProjectDBImpl implements ProjectDB {
         return repo.save(project);
     }
 
-    public async setProjectConfiguration(projectId: string, config: ProjectConfig): Promise<void> {
+    public async updateProject(partialProject: PartialProject): Promise<void> {
         const repo = await this.getRepo();
-        const project = await repo.findOne({ id: projectId, markedDeleted: false });
-        if (!project) {
+        const count = await repo.count({ id: partialProject.id, markedDeleted: false });
+        if (count < 1) {
             throw new Error('A project with this ID could not be found');
         }
-        project.config = config;
-        await repo.save(project);
-    }
-
-    public async setProjectSettings(projectId: string, settings: ProjectSettings): Promise<void> {
-        const repo = await this.getRepo();
-        const project = await repo.findOne({ id: projectId, markedDeleted: false });
-        if (!project) {
-            throw new Error('A project with this ID could not be found');
-        }
-        project.settings = settings;
-        await repo.save(project);
+        await repo.update(partialProject.id, partialProject);
     }
 
     public async markDeleted(projectId: string): Promise<void> {

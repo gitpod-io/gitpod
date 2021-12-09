@@ -53,7 +53,7 @@ import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/sugar';
 import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
 import { IDEConfigService } from '../ide-config';
-import { ProjectSettings } from '@gitpod/gitpod-protocol/src/teams-projects-protocol';
+import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-protocol';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -1636,18 +1636,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Cancelling Prebuilds is implemented in Gitpod's Enterprise Edition`);
     }
 
-    public async setProjectConfiguration(ctx: TraceContext, projectId: string, configString: string): Promise<void> {
-        traceAPIParams(ctx, { projectId }); // filter configString because of size
-
-        const user = this.checkAndBlockUser("setProjectConfiguration");
-        await this.guardProjectOperation(user, projectId, "update");
-        const parseResult = this.gitpodParser.parse(configString);
-        if (parseResult.validationErrors) {
-            throw new Error(`This configuration could not be parsed: ${parseResult.validationErrors.join(', ')}`);
-        }
-        await this.projectsService.setProjectConfiguration(projectId, { '.gitpod.yml': configString });
-    }
-
     public async fetchRepositoryConfiguration(ctx: TraceContext, cloneUrl: string): Promise<string | undefined> {
         traceAPIParams(ctx, { cloneUrl });
         const user = this.checkUser("fetchRepositoryConfiguration");
@@ -1714,10 +1702,33 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    public async updateProjectSettings(ctx: TraceContext, projectId: string, partialSettings: Partial<ProjectSettings>): Promise<void> {
-        const user = this.checkUser("updateProjectSettings");
+    public async setProjectConfiguration(ctx: TraceContext, projectId: string, configString: string): Promise<void> {
+        traceAPIParams(ctx, { projectId }); // filter configString because of size
+
+        const user = this.checkAndBlockUser("setProjectConfiguration");
         await this.guardProjectOperation(user, projectId, "update");
-        await this.projectsService.updateProjectSettings(projectId, partialSettings);
+        const parseResult = this.gitpodParser.parse(configString);
+        if (parseResult.validationErrors) {
+            throw new Error(`This configuration could not be parsed: ${parseResult.validationErrors.join(', ')}`);
+        }
+        await this.projectsService.updateProjectPartial({
+            id: projectId,
+            config: { '.gitpod.yml': configString },
+        });
+    }
+
+    public async updateProjectPartial(ctx: TraceContext, partialProject: PartialProject): Promise<void> {
+        const user = this.checkUser("updateProjectPartial");
+        await this.guardProjectOperation(user, partialProject.id, "update");
+
+        const partial: PartialProject = { id: partialProject.id };
+        const allowedFields: (keyof Project)[] = ['settings']; // Don't add 'config' here! Please use `setProjectConfiguration` instead to parse & validate configs
+        for (const f of allowedFields) {
+            if (f in partialProject) {
+                (partial[f] as any) = partialProject[f];
+            }
+        }
+        await this.projectsService.updateProjectPartial(partial);
     }
 
     public async getContentBlobUploadUrl(ctx: TraceContext, name: string): Promise<string> {
