@@ -42,7 +42,6 @@ pod:
 
       export NAMESPACE="{{ .Annotations.namespace }}"
       sudo chown -R gitpod:gitpod /workspace
-      kubectl get secret k3sdev -n werft -ojsonpath='{.data}' | jq -r .[] | base64 -d > /workspace/k3s-external.yaml
 
       cd .werft
       yarn install
