@@ -1,6 +1,14 @@
 # Change Log
 
 ## December 2021
+- Projects: remove the configuration page from New Project wizard. ([#7102](https://github.com/gitpod-io/gitpod/pull/7102)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Jk/api-telemetry ([#7000](https://github.com/gitpod-io/gitpod/pull/7000)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
+- [installer]: fix incorrectly configured pod security policies ([#7106](https://github.com/gitpod-io/gitpod/pull/7106)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Enable experimentalNetwork by default ([#7063](https://github.com/gitpod-io/gitpod/pull/7063)) - [@aledbf](https://github.com/aledbf)
+- Allow to create a workspace snapshot from Gitpod CLI. ([#7097](https://github.com/gitpod-io/gitpod/pull/7097)) - [@iQQBot](https://github.com/iQQBot)
+- Unlogged visitors using a prefix will be shown a more direct login page. ([#7046](https://github.com/gitpod-io/gitpod/pull/7046)) - [@laushinka](https://github.com/laushinka)
+- [installer]: add image pull secrets to gitpod components ([#6983](https://github.com/gitpod-io/gitpod/pull/6983)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [Installer]: create readme ([#6767](https://github.com/gitpod-io/gitpod/pull/6767)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [dashboard] Improve team selection UX in new Project flow ([#7030](https://github.com/gitpod-io/gitpod/pull/7030)) - [@jankeromnes](https://github.com/jankeromnes)
 - [image-builder] Remove the old mk2 version ([#7086](https://github.com/gitpod-io/gitpod/pull/7086)) - [@csweichel](https://github.com/csweichel)
 - [ws-manager] Improve port exposure stability ([#7079](https://github.com/gitpod-io/gitpod/pull/7079)) - [@csweichel](https://github.com/csweichel)
