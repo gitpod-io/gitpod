@@ -1,0 +1,17 @@
+packages:
+  - name: docker
+    type: docker
+    srcs:
+      - "conf/**"
+      - "static/**"
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      metadata:
+        helm-component: ideProxy
+      dockerfile: Dockerfile
+      image:
+        - ${imageRepoBase}/ide-proxy:${version}
+        - ${imageRepoBase}/ide-proxy:commit-${__git_commit}
