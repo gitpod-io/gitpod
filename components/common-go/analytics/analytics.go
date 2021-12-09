@@ -81,24 +81,30 @@ type segmentAnalyticsWriter struct {
 func (s *segmentAnalyticsWriter) Identify(m IdentifyMessage) {
 	defer recover()
 
-	_ = s.Client.Enqueue(segment.Identify{
+	err := s.Client.Enqueue(segment.Identify{
 		AnonymousId: m.AnonymousID,
 		UserId:      m.UserID,
 		Timestamp:   m.Timestamp,
 		Traits:      m.Traits,
 	})
+	if err != nil {
+		log.WithError(err).Warn("analytics: identity failed")
+	}
 }
 
 func (s *segmentAnalyticsWriter) Track(m TrackMessage) {
 	defer recover()
 
-	_ = s.Client.Enqueue(segment.Track{
+	err := s.Client.Enqueue(segment.Track{
 		AnonymousId: m.AnonymousID,
 		UserId:      m.UserID,
 		Event:       m.Event,
 		Timestamp:   m.Timestamp,
 		Properties:  m.Properties,
 	})
+	if err != nil {
+		log.WithError(err).Warn("analytics: track failed")
+	}
 }
 
 func (s *segmentAnalyticsWriter) Close() error {
