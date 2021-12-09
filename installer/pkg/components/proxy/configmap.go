@@ -9,11 +9,12 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	minioComponent "github.com/gitpod-io/gitpod/installer/pkg/components/minio"
-	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
 	"text/template"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	ideProxyComponent "github.com/gitpod-io/gitpod/installer/pkg/components/ide-proxy"
+	minioComponent "github.com/gitpod-io/gitpod/installer/pkg/components/minio"
+	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
 
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
@@ -36,6 +37,9 @@ var vhostMinioTmpl []byte
 
 //go:embed templates/configmap/vhost.open-vsx.tpl
 var vhostOpenVSXTmpl []byte
+
+//go:embed templates/configmap/vhost.ide-proxy.tpl
+var ideProxyTmpl []byte
 
 //go:embed templates/configmap/vhost.payment-endpoint.tpl
 var vhostPaymentEndpointTmpl []byte
@@ -90,6 +94,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	ideProxy, err := renderTemplate(ideProxyTmpl, commonTpl{
+		Domain:       ctx.Config.Domain,
+		ReverseProxy: fmt.Sprintf("ide-proxy.%s.%s:%d", ctx.Namespace, kubeDomain, ideProxyComponent.ServicePort),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	paymentEndpoint, err := renderTemplate(vhostPaymentEndpointTmpl, commonTpl{
 		Domain:       ctx.Config.Domain,
 		ReverseProxy: fmt.Sprintf("payment-endpoint.%s.%s:%d", ctx.Namespace, kubeDomain, 3002), // todo(sje): get port from (future) config
@@ -111,6 +123,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		"vhost.empty":            *empty,
 		"vhost.open-vsx":         *openVSX,
 		"vhost.payment-endpoint": *paymentEndpoint,
+		"vhost.ide-proxy":        *ideProxy,
 		"vhost.kedge":            *kedge,
 	}
 

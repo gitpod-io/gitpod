@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/gitpod"
+	ide_proxy "github.com/gitpod-io/gitpod/installer/pkg/components/ide-proxy"
 	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
 	jaegeroperator "github.com/gitpod-io/gitpod/installer/pkg/components/jaeger-operator"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
@@ -36,6 +37,7 @@ var MetaObjects = common.CompositeRenderFunc(
 	proxy.Objects,
 	dashboard.Objects,
 	database.Objects,
+	ide_proxy.Objects,
 	imagebuildermk3.Objects,
 	migrations.Objects,
 	minio.Objects,

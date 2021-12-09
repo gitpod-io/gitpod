@@ -21,6 +21,7 @@ type Components struct {
 	Dashboard       Versioned `json:"dashboard"`
 	DBMigrations    Versioned `json:"dbMigrations"`
 	DBSync          Versioned `json:"dbSync"`
+	IDEProxy        Versioned `json:"ideProxy"`
 	ImageBuilder    Versioned `json:"imageBuilder"`
 	ImageBuilderMk3 struct {
 		Versioned
