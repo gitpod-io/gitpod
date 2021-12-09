@@ -34,7 +34,7 @@ workspaceSizing:
   requests:
     cpu: "1m"
     memory: "2.25Gi"
-    storage: "5Gi"
+    ephemeral-storage: "5Gi"
   limits:
     cpu: "5"
     memory: "12Gi"
