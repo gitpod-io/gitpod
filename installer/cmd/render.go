@@ -42,92 +42,13 @@ A config file is required which can be generated with the init command.`,
 			return err
 		}
 
-		versionMF, err := getVersionManifest()
+		yaml, err := renderKubernetesObjects(cfgVersion, cfg)
 		if err != nil {
 			return err
 		}
 
-		if !renderOpts.ValidateConfigDisabled {
-			apiVersion, err := config.LoadConfigVersion(cfgVersion)
-			if err != nil {
-				return err
-			}
-			res, err := config.Validate(apiVersion, cfg)
-			if err != nil {
-				return err
-			}
-
-			if !res.Valid {
-				res.Marshal(os.Stderr)
-				fmt.Fprintln(os.Stderr, "configuration is invalid")
-				os.Exit(1)
-			}
-		}
-
-		ctx, err := common.NewRenderContext(*cfg, *versionMF, renderOpts.Namespace)
-		if err != nil {
-			return err
-		}
-
-		var renderable common.RenderFunc
-		var helmCharts common.HelmFunc
-		switch cfg.Kind {
-		case configv1.InstallationFull:
-			renderable = components.FullObjects
-			helmCharts = components.FullHelmDependencies
-		case configv1.InstallationMeta:
-			renderable = components.MetaObjects
-			helmCharts = components.MetaHelmDependencies
-		case configv1.InstallationWorkspace:
-			renderable = components.WorkspaceObjects
-			helmCharts = components.WorkspaceHelmDependencies
-		default:
-			return fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
-		}
-
-		objs, err := common.CompositeRenderFunc(components.CommonObjects, renderable)(ctx)
-		if err != nil {
-			return err
-		}
-
-		k8s := make([]string, 0)
-		for _, o := range objs {
-			fc, err := yaml.Marshal(o)
-			if err != nil {
-				return err
-			}
-
-			k8s = append(k8s, fmt.Sprintf("---\n%s\n", string(fc)))
-		}
-
-		charts, err := common.CompositeHelmFunc(components.CommonHelmDependencies, helmCharts)(ctx)
-		if err != nil {
-			return err
-		}
-		k8s = append(k8s, charts...)
-
-		// convert everything to individual objects
-		runtimeObjs, err := common.YamlToRuntimeObject(k8s)
-		if err != nil {
-			return err
-		}
-
-		// generate a config map with every component installed
-		runtimeObjsAndConfig, err := common.GenerateInstallationConfigMap(ctx, runtimeObjs)
-		if err != nil {
-			return err
-		}
-
-		// sort the objects and return the plain YAML
-		sortedObjs, err := common.DependencySortingRenderFunc(runtimeObjsAndConfig)
-		if err != nil {
-			return err
-		}
-
-		// output the YAML to stdout
-		for _, c := range sortedObjs {
-			fmt.Printf("---\n# %s/%s %s\n", c.TypeMeta.APIVersion, c.TypeMeta.Kind, c.Metadata.Name)
-			fmt.Println(c.Content)
+		for _, item := range yaml {
+			fmt.Println(item)
 		}
 
 		return nil
@@ -147,6 +68,98 @@ func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *confi
 	cfg = rawCfg.(*configv1.Config)
 
 	return rawCfg, cfgVersion, cfg, err
+}
+
+func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string, error) {
+	versionMF, err := getVersionManifest()
+	if err != nil {
+		return nil, err
+	}
+
+	if !renderOpts.ValidateConfigDisabled {
+		apiVersion, err := config.LoadConfigVersion(cfgVersion)
+		if err != nil {
+			return nil, err
+		}
+		res, err := config.Validate(apiVersion, cfg)
+		if err != nil {
+			return nil, err
+		}
+
+		if !res.Valid {
+			res.Marshal(os.Stderr)
+			fmt.Fprintln(os.Stderr, "configuration is invalid")
+			os.Exit(1)
+		}
+	}
+
+	ctx, err := common.NewRenderContext(*cfg, *versionMF, renderOpts.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var renderable common.RenderFunc
+	var helmCharts common.HelmFunc
+	switch cfg.Kind {
+	case configv1.InstallationFull:
+		renderable = components.FullObjects
+		helmCharts = components.FullHelmDependencies
+	case configv1.InstallationMeta:
+		renderable = components.MetaObjects
+		helmCharts = components.MetaHelmDependencies
+	case configv1.InstallationWorkspace:
+		renderable = components.WorkspaceObjects
+		helmCharts = components.WorkspaceHelmDependencies
+	default:
+		return nil, fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
+	}
+
+	objs, err := common.CompositeRenderFunc(components.CommonObjects, renderable)(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	k8s := make([]string, 0)
+	for _, o := range objs {
+		fc, err := yaml.Marshal(o)
+		if err != nil {
+			return nil, err
+		}
+
+		k8s = append(k8s, fmt.Sprintf("---\n%s\n", string(fc)))
+	}
+
+	charts, err := common.CompositeHelmFunc(components.CommonHelmDependencies, helmCharts)(ctx)
+	if err != nil {
+		return nil, err
+	}
+	k8s = append(k8s, charts...)
+
+	// convert everything to individual objects
+	runtimeObjs, err := common.YamlToRuntimeObject(k8s)
+	if err != nil {
+		return nil, err
+	}
+
+	// generate a config map with every component installed
+	runtimeObjsAndConfig, err := common.GenerateInstallationConfigMap(ctx, runtimeObjs)
+	if err != nil {
+		return nil, err
+	}
+
+	// sort the objects and return the plain YAML
+	sortedObjs, err := common.DependencySortingRenderFunc(runtimeObjsAndConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// output the YAML to stdout
+	output := make([]string, 0)
+	for _, c := range sortedObjs {
+		output = append(output, fmt.Sprintf("---\n# %s/%s %s\n%s", c.TypeMeta.APIVersion, c.TypeMeta.Kind, c.Metadata.Name, c.Content))
+	}
+
+	return output, nil
 }
 
 func init() {
