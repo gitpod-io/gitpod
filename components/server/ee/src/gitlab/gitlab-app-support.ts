@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TokenProvider } from "../../../src/user/token-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
@@ -16,15 +16,15 @@ export class GitLabAppSupport {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
 
-    async getProviderRepositoriesForUser(params: { user: User, provider: string, hints?: object }): Promise<ProviderRepository[]> {
-        const token = await this.tokenProvider.getTokenForHost(params.user, "gitlab.com");
+    async getProviderRepositoriesForUser(params: { user: User, provider: AuthProviderInfo }): Promise<ProviderRepository[]> {
+        const token = await this.tokenProvider.getTokenForHost(params.user, params.provider.host);
         const oauthToken = token.value;
-        const api = new Gitlab({ oauthToken });
+        const api = new Gitlab({ oauthToken, host: `https://${params.provider.host}` });
 
         const result: ProviderRepository[] = [];
         const ownersRepos: ProviderRepository[] = [];
 
-        const identity = params.user.identities.find(i => i.authProviderId === "Public-GitLab");
+        const identity = params.user.identities.find(i => i.authProviderId === params.provider.authProviderId);
         if (!identity) {
             return result;
         }
