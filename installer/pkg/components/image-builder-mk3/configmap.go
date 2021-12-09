@@ -59,7 +59,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		RefCache: config.RefCacheConfig{
 			Interval: util.Duration(time.Hour * 6).String(),
 			Refs: []string{
-				fmt.Sprintf("%s:%s", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
+				common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
 			},
 		},
 		Service: config.Service{

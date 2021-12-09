@@ -38,7 +38,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TimeoutSeconds:  300,
 		},
 		WorkspaceDefaults: WorkspaceDefaults{
-			WorkspaceImage:      fmt.Sprintf("%s:%s", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
+			WorkspaceImage:      common.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
 			PreviewFeatureFlags: []NamedWorkspaceFeatureFlag{},
 			DefaultFeatureFlags: []NamedWorkspaceFeatureFlag{},
 		},
