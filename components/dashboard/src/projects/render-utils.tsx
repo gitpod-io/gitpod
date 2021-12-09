@@ -6,7 +6,7 @@
 
 
 export function toRemoteURL(cloneURL: string) {
-    return cloneURL.replace("https://", "").replace(".git", "");
+    return cloneURL.replace(/(^https:\/\/)|(\.git$)/g, "");
 }
 
 export function shortCommitMessage(message: string) {
