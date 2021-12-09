@@ -46,9 +46,9 @@ func forTestingOnlyManagerConfig() config.Configuration {
 					Memory: "1000M",
 				},
 				Requests: config.ResourceConfiguration{
-					CPU:     "899m",
-					Memory:  "999M",
-					Storage: "5Gi",
+					CPU:              "899m",
+					EphemeralStorage: "5Gi",
+					Memory:           "999M",
 				},
 			},
 		},
