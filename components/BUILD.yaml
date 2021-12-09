@@ -64,6 +64,7 @@ packages:
       - components/ws-manager-bridge:docker
       - components/ws-manager:docker
       - components/ws-proxy:docker
+      - components/ide-proxy:docker
       - test:docker
       - dev/version-manifest:app
     config:

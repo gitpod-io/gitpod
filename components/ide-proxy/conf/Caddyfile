@@ -1,0 +1,31 @@
+{
+	auto_https off
+	admin off
+}
+
+:80 {
+	header -Server
+
+	root * /www
+	file_server {
+		precompressed gzip br
+	}
+
+	@static_path {
+		path /*
+	}
+
+	handle @static_path {
+		try_files {path}
+	}
+
+	handle {
+		respond "404 - Not Found" 404
+	}
+}
+
+# health-check
+:8080 {
+	respond /live 200
+	respond /ready 200
+}
