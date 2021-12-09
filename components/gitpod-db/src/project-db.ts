@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Project, ProjectConfig, ProjectSettings } from "@gitpod/gitpod-protocol";
+import { PartialProject, Project } from "@gitpod/gitpod-protocol";
 
 export const ProjectDB = Symbol('ProjectDB');
 export interface ProjectDB {
@@ -14,7 +14,6 @@ export interface ProjectDB {
     findTeamProjects(teamId: string): Promise<Project[]>;
     findUserProjects(userId: string): Promise<Project[]>;
     storeProject(project: Project): Promise<Project>;
-    setProjectConfiguration(projectId: string, config: ProjectConfig): Promise<void>;
-    setProjectSettings(projectId: string, settings: ProjectSettings): Promise<void>;
+    updateProject(partialProject: PartialProject): Promise<void>;
     markDeleted(projectId: string): Promise<void>;
 }

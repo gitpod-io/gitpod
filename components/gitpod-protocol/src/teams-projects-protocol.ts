@@ -6,6 +6,7 @@
 
 import { PrebuiltWorkspaceState } from "./protocol";
 import { v4 as uuidv4 } from 'uuid';
+import { DeepPartial } from "./util/deep-partial";
 
 export interface ProjectConfig {
     '.gitpod.yml': string;
@@ -59,6 +60,8 @@ export namespace Project {
         changeHash: string;
     }
 }
+
+export type PartialProject = DeepPartial<Project> & Pick<Project, 'id'>;
 
 export interface PrebuildWithStatus {
     info: PrebuildInfo;
