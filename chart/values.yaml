@@ -188,6 +188,18 @@ components:
     name: "db-sync"
     disabled: true
 
+  ideProxy:
+    name: "ide-proxy"
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      http:
+        expose: true
+        containerPort: 80
+        servicePort: 80
+    serviceType: ClusterIP
+
   dashboard:
     name: "dashboard"
     resources:

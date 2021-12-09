@@ -64,6 +64,19 @@ data:
     }
 {{- end }}
 
+{{- if not .Values.components.ideProxy.disabled }}
+  vhost.ide: |
+    https://ide-proxy.{$GITPOD_DOMAIN} {
+      import enable_log_debug
+      import remove_server_header
+      import ssl_configuration
+
+      reverse_proxy  {
+        to ide.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:{{.Values.components.ideProxy.ports.http.servicePort}}
+      }
+    }
+{{- end }}
+
 {{- if not .Values.components.paymentEndpoint.disabled }}
   vhost.payment-endpoint: |
     https://payment.{$GITPOD_DOMAIN} {
