@@ -825,6 +825,7 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 func isBlacklistedEnvvar(name string) bool {
 	// exclude blacklisted
 	prefixBlacklist := []string{
+		"GITPOD_ANALYTICS_",
 		"THEIA_SUPERVISOR_",
 		"GITPOD_TOKENS",
 		// The following vars are meant to filter out the kubernetes-injected env vars that we do not know how to turn of (yet)
