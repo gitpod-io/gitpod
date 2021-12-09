@@ -26,7 +26,7 @@ export default function NewProject() {
     const { teams } = useContext(TeamsContext);
     const { user, setUser } = useContext(UserContext);
 
-    const [provider, setProvider] = useState<string | undefined>();
+    const [selectedProviderHost, setSelectedProviderHost] = useState<string | undefined>();
     const [reposInAccounts, setReposInAccounts] = useState<ProviderRepository[]>([]);
     const [repoSearchFilter, setRepoSearchFilter] = useState<string>("");
     const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
@@ -42,15 +42,20 @@ export default function NewProject() {
     const [guessedConfigString, setGuessedConfigString] = useState<string | undefined>();
     const [sourceOfConfig, setSourceOfConfig] = useState<"repo" | "db" | undefined>();
 
+    const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
+
     useEffect(() => {
-        if (user && provider === undefined) {
+        if (user && selectedProviderHost === undefined) {
             if (user.identities.find(i => i.authProviderId === "Public-GitLab")) {
-                setProvider("gitlab.com");
+                setSelectedProviderHost("gitlab.com");
             } else if (user.identities.find(i => i.authProviderId === "Public-GitHub")) {
-                setProvider("github.com");
+                setSelectedProviderHost("github.com");
             } else if (user.identities.find(i => i.authProviderId === "Public-Bitbucket")) {
-                setProvider("bitbucket.org");
+                setSelectedProviderHost("bitbucket.org");
             }
+            (async () => {
+                setAuthProviders(await getGitpodService().server.getAuthProviders());
+            })();
         }
     }, [user]);
 
@@ -138,14 +143,14 @@ export default function NewProject() {
     }, [selectedAccount]);
 
     useEffect(() => {
-        if (!provider || isBitbucket()) {
+        if (!selectedProviderHost || isBitbucket()) {
             return;
         }
         (async () => {
             updateOrgsState();
             await updateReposInAccounts();
         })();
-    }, [provider]);
+    }, [selectedProviderHost]);
 
     useEffect(() => {
         if (project && sourceOfConfig) {
@@ -158,17 +163,17 @@ export default function NewProject() {
         }
     }, [project, sourceOfConfig]);
 
-    const isGitHub = () => provider === "github.com";
-    const isBitbucket = () => provider === "bitbucket.org";
+    const isGitHub = () => selectedProviderHost === "github.com";
+    const isBitbucket = () => selectedProviderHost === "bitbucket.org";
 
     const updateReposInAccounts = async (installationId?: string) => {
         setLoaded(false);
         setReposInAccounts([]);
-        if (!provider || isBitbucket()) {
+        if (!selectedProviderHost || isBitbucket()) {
             return [];
         }
         try {
-            const repos = await getGitpodService().server.getProviderRepositoriesForUser({ provider, hints: { installationId } });
+            const repos = await getGitpodService().server.getProviderRepositoriesForUser({ provider: selectedProviderHost, hints: { installationId } });
             setReposInAccounts(repos);
             setLoaded(true);
             return repos;
@@ -183,9 +188,9 @@ export default function NewProject() {
     }
 
     const updateOrgsState = async () => {
-        if (provider && isGitHub()) {
+        if (selectedProviderHost && isGitHub()) {
             try {
-                const ghToken = await getToken(provider);
+                const ghToken = await getToken(selectedProviderHost);
                 setNoOrgs(ghToken?.scopes.includes("read:org") !== true);
             } catch {
             }
@@ -221,7 +226,7 @@ export default function NewProject() {
     }
 
     const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
-        if (!provider || isBitbucket()) {
+        if (!selectedProviderHost || isBitbucket()) {
             return;
         }
         const repoSlug = repo.path || repo.name;
@@ -232,7 +237,7 @@ export default function NewProject() {
                 slug: repoSlug,
                 cloneUrl: repo.cloneUrl,
                 account: repo.account,
-                provider,
+                provider: selectedProviderHost,
                 ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
                 appInstallationId: String(repo.installationId),
             });
@@ -295,7 +300,7 @@ export default function NewProject() {
         const showSearchInput = !!repoSearchFilter || filteredRepos.length > 0;
 
         const renderRepos = () => (<>
-            {!isBitbucket() && <p className="text-gray-500 text-center text-base">Select a Git repository on <strong>{provider}</strong>. (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>}
+            {!isBitbucket() && <p className="text-gray-500 text-center text-base">Select a Git repository on <strong>{selectedProviderHost}</strong>. (<a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>change</a>)</p>}
             <div className={`mt-10 border rounded-xl border-gray-100 dark:border-gray-800 flex-col`}>
                 <div className="px-8 pt-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
                     <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
@@ -392,7 +397,7 @@ export default function NewProject() {
                 setUser(await getGitpodService().server.getLoggedInUser());
             }
             setShowGitProviders(false);
-            setProvider(host);
+            setSelectedProviderHost(host);
         }
 
         if (!loaded && !isBitbucket()) {
@@ -400,7 +405,7 @@ export default function NewProject() {
         }
 
         if (showGitProviders || isBitbucket()) {
-            return (<GitProviders onHostSelected={onGitProviderSeleted} />);
+            return (<GitProviders onHostSelected={onGitProviderSeleted} authProviders={authProviders} />);
         }
 
         return renderRepos();
@@ -513,17 +518,10 @@ export default function NewProject() {
 }
 
 function GitProviders(props: {
+    authProviders: AuthProviderInfo[],
     onHostSelected: (host: string, updateUser?: boolean) => void
 }) {
-    const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
     const [ errorMessage, setErrorMessage ] = useState<string | undefined>(undefined);
-
-    useEffect(() => {
-        (async () => {
-            const providers = await getGitpodService().server.getAuthProviders();
-            setAuthProviders(providers.filter(p => ["github.com", "gitlab.com"].includes(p.host)));
-        })();
-    }, []);
 
     const selectProvider = async (ap: AuthProviderInfo) => {
         setErrorMessage(undefined);
@@ -554,6 +552,9 @@ function GitProviders(props: {
         });
     }
 
+    // for now we exclude bitbucket.org and GitHub Enterprise
+    const filteredProviders = () => props.authProviders.filter(p => p.host === "github.com" || p.authProviderType === "GitLab");
+
     return (
         <div className="mt-8 border rounded-t-xl border-gray-100 dark:border-gray-800 flex-col">
             <div className="p-6 p-b-0">
@@ -561,7 +562,7 @@ function GitProviders(props: {
                     Select a Git provider first and continue with your repositories.
                 </div>
                 <div className="mt-6 flex flex-col space-y-3 items-center pb-8">
-                    {authProviders.map(ap => {
+                    {filteredProviders().map(ap => {
                         return (
                             <button key={"button" + ap.host} className="btn-login flex-none w-56 h-10 p-0 inline-flex" onClick={() => selectProvider(ap)}>
                                 {iconForAuthProvider(ap.authProviderType)}

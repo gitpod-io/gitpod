@@ -1423,10 +1423,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const user = this.checkAndBlockUser("getProviderRepositoriesForUser");
 
         const repositories: ProviderRepository[] = [];
-        if (params.provider === "github.com") {
+        const providerHost = params.provider;
+        const provider = (await this.getAuthProviders(ctx)).find(ap => ap.host === providerHost);
+
+        if (providerHost === "github.com") {
             repositories.push(...(await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params })));
-        } else if (params.provider === "gitlab.com") {
-            repositories.push(...(await this.gitLabAppSupport.getProviderRepositoriesForUser({ user, ...params })));
+        } else if (provider?.authProviderType === "GitLab") {
+            repositories.push(...(await this.gitLabAppSupport.getProviderRepositoriesForUser({ user, provider })));
         } else {
             log.info({ userId: user.id }, `Unsupported provider: "${params.provider}"`, { params });
         }
