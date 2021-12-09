@@ -19,5 +19,6 @@ const (
 	PhpStormDesktopIdeImage      = "ide/phpstorm"
 	DockerUpImage                = "docker-up"
 	SupervisorImage              = "supervisor"
+	WorkspacekitImage            = "workspacekit"
 	SupervisorPort               = 22999
 )

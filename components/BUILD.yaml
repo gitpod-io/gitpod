@@ -39,16 +39,16 @@ packages:
       - components/ee/payment-endpoint:docker
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
-      - components/ide/code:docker
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
-      - components/ide/jetbrains/image:intellij
+      - components/ide/code:docker
       - components/ide/jetbrains/image:goland
-      - components/ide/jetbrains/image:pycharm
+      - components/ide/jetbrains/image:intellij
       - components/ide/jetbrains/image:phpstorm
+      - components/ide/jetbrains/image:pycharm
       - components/ide/theia:docker
-      - components/image-builder-mk3:docker
       - components/image-builder-bob:docker
+      - components/image-builder-mk3:docker
       - components/local-app:docker
       - components/openvsx-proxy:docker
       - components/proxy:docker
@@ -57,6 +57,7 @@ packages:
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
+      - components/workspacekit:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
       - components/ws-daemon/shiftfs-module-loader:docker
@@ -97,6 +98,7 @@ packages:
       - components/service-waiter:app
       - components/supervisor:app
       - components/supervisor/frontend:app
+      - components/workspacekit:app
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
       - components/ws-manager:app

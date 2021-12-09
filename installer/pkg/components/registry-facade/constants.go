@@ -16,4 +16,5 @@ const (
 	ServicePort       = common.RegistryFacadeServicePort
 	DockerUpImage     = workspace.DockerUpImage
 	SupervisorImage   = workspace.SupervisorImage
+	WorkspacekitImage = workspace.WorkspacekitImage
 )
