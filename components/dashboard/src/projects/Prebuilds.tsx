@@ -242,18 +242,18 @@ export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
     switch (prebuild?.status) {
         case undefined: // Fall through
         case "queued":
-            return <img className="h-4 w-4" src={StatusPaused} />;
+            return <img alt="" className="h-4 w-4" src={StatusPaused} />;
         case "building":
-            return <img className="h-4 w-4" src={StatusRunning} />;
+            return <img alt="" className="h-4 w-4" src={StatusRunning} />;
         case "aborted":
-            return <img className="h-4 w-4" src={StatusCanceled} />;
+            return <img alt="" className="h-4 w-4" src={StatusCanceled} />;
         case "timeout":
-            return <img className="h-4 w-4" src={StatusFailed} />;
+            return <img alt="" className="h-4 w-4" src={StatusFailed} />;
         case "available":
             if (prebuild?.error) {
-                return <img className="h-4 w-4" src={StatusFailed} />;
+                return <img alt="" className="h-4 w-4" src={StatusFailed} />;
             }
-            return <img className="h-4 w-4" src={StatusDone} />;
+            return <img alt="" className="h-4 w-4" src={StatusDone} />;
     }
 }
 
@@ -272,11 +272,11 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
         case 'creating': // Fall through
         case 'unknown':
             status = <div className="flex space-x-1 items-center text-yellow-600">
-                <img className="h-4 w-4" src={StatusPaused} />
+                <img alt="" className="h-4 w-4" src={StatusPaused} />
                 <span>PENDING</span>
                 </div>;
             details = <div className="flex space-x-1 items-center text-gray-400">
-                <img className="h-4 w-4 animate-spin" src={Spinner} />
+                <img alt="" className="h-4 w-4 animate-spin" src={Spinner} />
                 <span>Preparing prebuild ...</span>
                 </div>;
             break;
@@ -285,21 +285,21 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
         case 'interrupted': // Fall through
         case 'stopping':
             status = <div className="flex space-x-1 items-center text-blue-600">
-                <img className="h-4 w-4" src={StatusRunning} />
+                <img alt="" className="h-4 w-4" src={StatusRunning} />
                 <span>RUNNING</span>
                 </div>;
             details = <div className="flex space-x-1 items-center text-gray-400">
-                <img className="h-4 w-4 animate-spin" src={Spinner} />
+                <img alt="" className="h-4 w-4 animate-spin" src={Spinner} />
                 <span>Prebuild in progress ...</span>
                 </div>;
             break;
         case 'stopped':
             status = <div className="flex space-x-1 items-center text-green-600">
-                <img className="h-4 w-4" src={StatusDone} />
+                <img alt="" className="h-4 w-4" src={StatusDone} />
                 <span>READY</span>
                 </div>;
             details = <div className="flex space-x-1 items-center text-gray-400">
-                <img className="h-4 w-4 filter-grayscale" src={StatusRunning} />
+                <img alt="" className="h-4 w-4 filter-grayscale" src={StatusRunning} />
                 <span>{!!props.prebuildInstance?.stoppedTime
                     ? formatDuration((new Date(props.prebuildInstance.stoppedTime).getTime()) - (new Date(props.prebuildInstance.creationTime).getTime()))
                     : '...'}</span>
@@ -308,7 +308,7 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
     }
     if (props.prebuildInstance?.status.conditions.stoppedByRequest) {
         status = <div className="flex space-x-1 items-center text-gray-500">
-            <img className="h-4 w-4" src={StatusCanceled} />
+            <img alt="" className="h-4 w-4" src={StatusCanceled} />
             <span>CANCELED</span>
         </div>;
         details = <div className="flex space-x-1 items-center text-gray-400">
@@ -316,11 +316,19 @@ export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInst
         </div>;
     } else if (props.prebuildInstance?.status.conditions.failed || props.prebuildInstance?.status.conditions.headlessTaskFailed) {
         status = <div className="flex space-x-1 items-center text-gitpod-red">
-            <img className="h-4 w-4" src={StatusFailed} />
+            <img alt="" className="h-4 w-4" src={StatusFailed} />
             <span>FAILED</span>
         </div>;
         details = <div className="flex space-x-1 items-center text-gray-400">
             <span>Prebuild failed</span>
+        </div>;
+    } else if (props.prebuildInstance?.status.conditions.timeout) {
+        status = <div className="flex space-x-1 items-center text-gitpod-red">
+            <img alt="" className="h-4 w-4" src={StatusFailed} />
+            <span>FAILED</span>
+        </div>;
+        details = <div className="flex space-x-1 items-center text-gray-400">
+            <span>Prebuild timed out</span>
         </div>;
     }
     return <div className="flex flex-col space-y-1 justify-center text-sm font-semibold">
