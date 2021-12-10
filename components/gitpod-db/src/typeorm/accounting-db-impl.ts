@@ -260,7 +260,19 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
 
     async storePaymentSourceInfo(info: DBPaymentSourceInfo): Promise<DBPaymentSourceInfo> {
         const repo = await this.getPaymentSourceRepo();
-        return repo.save(info);
+        // see https://github.com/gitpod-io/gitpod/issues/7171
+        // TypeORM seems to have problems with number type primary columns
+        const existing = await repo.findOne({ id: info.id, resourceVersion: info.resourceVersion });
+        if (existing) {
+            for (const prop in info) {
+                if (prop != "resourceVersion") {
+                    (existing as any)[prop] = (info as any)[prop];
+                }
+            }
+            return repo.save(existing);
+        } else {
+            return repo.save(info);
+        }
     }
 }
 
