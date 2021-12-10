@@ -21,7 +21,7 @@ type version struct{}
 
 func (v version) Factory() interface{} {
 	return &Config{
-		AuthProviders: []AuthProviderConfigs{},
+		AuthProviders: []ObjectRef{},
 		BlockNewUsers: BlockNewUsers{
 			Enabled:  false,
 			Passlist: []string{},
@@ -81,9 +81,9 @@ type Config struct {
 
 	Workspace Workspace `json:"workspace" validate:"required"`
 
-	AuthProviders []AuthProviderConfigs `json:"authProviders" validate:"dive"`
-	BlockNewUsers BlockNewUsers         `json:"blockNewUsers"`
-	License       *ObjectRef            `json:"license,omitempty"`
+	AuthProviders []ObjectRef   `json:"authProviders" validate:"dive"`
+	BlockNewUsers BlockNewUsers `json:"blockNewUsers"`
+	License       *ObjectRef    `json:"license,omitempty"`
 }
 
 type Metadata struct {
@@ -229,38 +229,22 @@ const (
 	FSShiftShiftFS FSShiftMethod = "shiftfs"
 )
 
-// todo(sje): I don't know if we want to put this in the config YAML
-type AuthProviderConfigs struct {
-	ID                  string            `json:"id" validate:"required"`
-	Host                string            `json:"host" validate:"required"`
-	Type                string            `json:"type" validate:"required"`
-	BuiltIn             string            `json:"builtin"`
-	Verified            string            `json:"verified"`
-	OAuth               OAuth             `json:"oauth" validate:"required"`
-	Params              map[string]string `json:"params"`
-	HiddenOnDashboard   bool              `json:"hiddenOnDashboard"`
-	LoginContextMatcher string            `json:"loginContextMatcher"`
-	DisallowLogin       bool              `json:"disallowLogin"`
-	RequireTOS          bool              `json:"requireTOS"`
-	Description         string            `json:"description"`
-	Icon                string            `json:"icon"`
-}
-
 type BlockNewUsers struct {
 	Enabled  bool     `json:"enabled"`
 	Passlist []string `json:"passlist"`
 }
 
+// AuthProviderConfigs this only contains what is necessary for validation
+type AuthProviderConfigs struct {
+	ID    string `json:"id" validate:"required"`
+	Host  string `json:"host" validate:"required"`
+	Type  string `json:"type" validate:"required"`
+	OAuth OAuth  `json:"oauth" validate:"required"`
+}
+
+// OAuth this only contains what is necessary for validation
 type OAuth struct {
-	ClientId            string            `json:"clientId" validate:"required"`
-	ClientSecret        string            `json:"clientSecret" validate:"required"`
-	CallBackUrl         string            `json:"callBackUrl" validate:"required"`
-	AuthorizationUrl    string            `json:"authorizationUrl"`
-	TokenUrl            string            `json:"tokenUrl"`
-	Scope               string            `json:"scope"`
-	ScopeSeparator      string            `json:"scopeSeparator"`
-	SettingsUrl         string            `json:"settingsUrl"`
-	AuthorizationParams map[string]string `json:"authorizationParams"`
-	ConfigURL           string            `json:"configURL"`
-	ConfigFn            string            `json:"configFn"`
+	ClientId     string `json:"clientId" validate:"required"`
+	ClientSecret string `json:"clientSecret" validate:"required"`
+	CallBackUrl  string `json:"callBackUrl" validate:"required"`
 }

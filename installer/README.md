@@ -148,21 +148,39 @@ is `true`. External dependencies can be used in their place
 
 ## Auth Providers
 
-> This may move to a secret in future [#6867](https://github.com/gitpod-io/gitpod/issues/6867)
-
 Gitpod must be connected to a Git provider. This can be done via the
-dashboard on first load, or by providing `authProviders` configuration.
+dashboard on first load, or by providing `authProviders` configuration
+as a Kubernetes secret.
+
+### Setting via config
+
+1. Update your configuration file:
 
 ```yaml
 authProviders:
-  - id: Public-GitHub
-    host: github.com
-    type: GitHub
-    oauth:
-      clientId: xxx
-      clientSecret: xxx
-      callBackUrl: https://$DOMAIN/auth/github.com/callback
-      settingsUrl: xxx
+  - kind: secret
+    name: public-github
+```
+
+2. Create a secret file:
+
+```yaml
+# Save this public-github.yaml
+
+id: Public-GitHub
+host: github.com
+type: GitHub
+oauth:
+  clientId: xxx
+  clientSecret: xxx
+  callBackUrl: https://$DOMAIN/auth/github.com/callback
+  settingsUrl: xxx
+```
+
+3. Create the secret:
+
+```shell
+kubectl create secret generic --from-file=provider=./public-github.yaml public-github
 ```
 
 ## In-cluster vs External Dependencies

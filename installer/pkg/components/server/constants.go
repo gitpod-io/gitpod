@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	Component          = common.ServerComponent
-	ContainerPort      = 3000
-	ContainerPortName  = "http"
-	licenseFilePath    = "/gitpod/license"
-	PrometheusPort     = 9500
-	PrometheusPortName = "metrics"
-	ServicePort        = 3000
+	Component            = common.ServerComponent
+	ContainerPort        = 3000
+	ContainerPortName    = "http"
+	authProviderFilePath = "/gitpod/auth-providers"
+	licenseFilePath      = "/gitpod/license"
+	PrometheusPort       = 9500
+	PrometheusPortName   = "metrics"
+	ServicePort          = 3000
 )
