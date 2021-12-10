@@ -37,14 +37,6 @@ export namespace TraceContext {
         return { span };
     }
 
-    export function startAsyncSpan(operation: string, ctx: TraceContext): opentracing.Span {
-        const options: opentracing.SpanOptions = {};
-        if (!!ctx.span) {
-            options.references = [opentracing.followsFrom(ctx.span.context())];
-        }
-        return opentracing.globalTracer().startSpan(operation, options);
-    }
-
     export function logError(ctx: TraceContext, err: Error) {
         if (!ctx.span) {
             return;
