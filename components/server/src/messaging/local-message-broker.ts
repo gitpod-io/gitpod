@@ -72,12 +72,15 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
         this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdates(
             undefined,
             (ctx: TraceContext, update: PrebuildWithStatus) => {
+                TraceContext.setOWI(ctx, { workspaceId: update.info.buildWorkspaceId });
+
                 const listeners = this.prebuildUpdateListeners.get(update.info.projectId) || [];
                 for (const l of listeners) {
                     try {
                         l(ctx, update);
                     } catch (err) {
-                        log.error({ userId: update.info.userId, workspaceId: update.info.buildWorkspaceId }, err, { projectId: update.info.projectId, prebuildId: update.info.id });
+                        TraceContext.setError(ctx, err);
+                        log.error({ userId: update.info.userId, workspaceId: update.info.buildWorkspaceId }, "listenForPrebuildUpdates", err, { projectId: update.info.projectId, prebuildId: update.info.id });
                     }
                 }
             }
@@ -85,24 +88,30 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
         this.disposables.push(this.messageBusIntegration.listenToCreditAlerts(
             undefined,
             (ctx: TraceContext, alert: CreditAlert) => {
+                TraceContext.setOWI(ctx, { userId: alert.userId });
+
                 const listeners = this.creditAlertsListeners.get(alert.userId) || [];
                 for (const l of listeners) {
                     try {
                         l(ctx, alert);
                     } catch (err) {
-                        log.error({ userId: alert.userId }, err, { alert });
+                        TraceContext.setError(ctx, err);
+                        log.error({ userId: alert.userId }, "listenToCreditAlerts", err, { alert });
                     }
                 }
             }
         ));
         this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdatableQueue(
             (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
+                TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
+
                 const listeners = this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
                 for (const l of listeners) {
                     try {
                         l(ctx, evt);
                     } catch (err) {
-                        log.error({ workspaceId: evt.workspaceID }, err);
+                        TraceContext.setError(ctx, err);
+                        log.error({ workspaceId: evt.workspaceID }, "listenForPrebuildUpdatableQueue", err);
                     }
                 }
             }
@@ -110,6 +119,8 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
         this.disposables.push(this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
             undefined,
             (ctx: TraceContext, instance: WorkspaceInstance, userId: string | undefined) => {
+                TraceContext.setOWI(ctx, { userId, instanceId: instance.id });
+
                 if (!userId) {
                     return;
                 }
@@ -119,7 +130,8 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
                     try {
                         l(ctx, instance);
                     } catch (err) {
-                        log.error({ userId, instanceId: instance.id }, err);
+                        TraceContext.setError(ctx, err);
+                        log.error({ userId, instanceId: instance.id }, "listenForWorkspaceInstanceUpdates", err);
                     }
                 }
             }
