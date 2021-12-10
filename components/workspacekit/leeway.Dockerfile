@@ -9,11 +9,10 @@ RUN wget https://github.com/rootless-containers/slirp4netns/releases/download/${
 
 FROM scratch
 
-WORKDIR "/.supervisor"
 COPY components-workspacekit--app/workspacekit \
      components-workspacekit--fuse-overlayfs/fuse-overlayfs \
-     ./
-COPY --from=download /download/slirp4netns .
+     /.supervisor/
+COPY --from=download /download/slirp4netns /.supervisor/
 
 ARG __GIT_COMMIT
 ARG VERSION
