@@ -45,7 +45,7 @@ export class WorkspaceDeletionService {
             await this.db.trace({span}).updatePartial(ws.id, { contentDeletedTime: new Date().toISOString() });
             return successfulDeleted;
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();
@@ -70,7 +70,7 @@ export class WorkspaceDeletionService {
             });
             return successfulDeleted;
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();

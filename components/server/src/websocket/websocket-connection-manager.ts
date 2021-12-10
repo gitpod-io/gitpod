@@ -331,15 +331,15 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         } catch (e) {
             if (e instanceof ResponseError) {
                 increaseApiCallCounter(method, e.code);
-                TraceContext.logJsonRPCError(ctx, method, e);
+                TraceContext.setJsonRPCError(ctx, method, e);
 
                 log.info(`Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
             } else {
-                TraceContext.logError(ctx, e);  // this is a "real" error
+                TraceContext.setError(ctx, e);  // this is a "real" error
 
                 const err = new ResponseError(500, "internal server error");
                 increaseApiCallCounter(method, err.code);
-                TraceContext.logJsonRPCError(ctx, method, err);
+                TraceContext.setJsonRPCError(ctx, method, err);
 
                 log.error(`Request ${method} failed with internal server error`, e, { method, args });
             }

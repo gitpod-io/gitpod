@@ -201,7 +201,7 @@ export class GithubApp {
             this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: repo.clone_url, commit: pl.after, branch, project})
                 .catch(err => log.error(logCtx, "Error while starting prebuild", err, { contextURL }));
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -239,7 +239,7 @@ export class GithubApp {
             this.onPrAddBadge(config, ctx);
             this.onPrAddComment(config, ctx);
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -274,7 +274,7 @@ export class GithubApp {
                 details_url: this.config.hostUrl.withContext(ctx.payload.pull_request.html_url).toString()
             });
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();

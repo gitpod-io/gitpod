@@ -37,7 +37,7 @@ export namespace TraceContext {
         return { span };
     }
 
-    export function logError(ctx: TraceContext, err: Error) {
+    export function setError(ctx: TraceContext, err: Error) {
         if (!ctx.span) {
             return;
         }
@@ -68,7 +68,7 @@ export namespace TraceContext {
         addNestedTags(ctx, tags);
     }
 
-    export function logJsonRPCError(ctx: TraceContext, method: string, err: ResponseError<any>) {
+    export function setJsonRPCError(ctx: TraceContext, method: string, err: ResponseError<any>) {
         if (!ctx.span) {
             return;
         }

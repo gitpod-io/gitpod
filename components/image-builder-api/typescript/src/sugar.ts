@@ -102,7 +102,7 @@ export class PromisifiedImageBuilderClient {
             const span = TraceContext.startSpan(`/image-builder/resolveBaseImage`, ctx);
             this.client.resolveBaseImage(request, withTracing({ span }), this.getDefaultUnaryOptions(), (err, resp) => {
                 if (err) {
-                    TraceContext.logError({ span }, err);
+                    TraceContext.setError({ span }, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -118,7 +118,7 @@ export class PromisifiedImageBuilderClient {
             this.client.resolveWorkspaceImage(request, withTracing({ span }), this.getDefaultUnaryOptions(), (err, resp) => {
                 span.finish();
                 if (err) {
-                    TraceContext.logError({ span }, err);
+                    TraceContext.setError({ span }, err);
                     reject(err);
                 } else {
                     resolve(resp);
@@ -153,7 +153,7 @@ export class PromisifiedImageBuilderClient {
                     buildResult.reject(err);
                 }
 
-                TraceContext.logError({ span }, err);
+                TraceContext.setError({ span }, err);
                 span.finish();
             });
             stream.on('data', (resp: BuildResponse) => {
@@ -193,12 +193,12 @@ export class PromisifiedImageBuilderClient {
                 }
 
                 if (!spanFinished) {
-                    TraceContext.logError({ span }, err);
+                    TraceContext.setError({ span }, err);
                     span.finish();
                 }
             });
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             span.finish();
 
             log.error("failed to start image build", request);

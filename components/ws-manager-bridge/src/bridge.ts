@@ -259,7 +259,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 await lifecycleHandler();
             }
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -341,7 +341,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 properties: { "instanceId": instance.id, "workspaceId": instance.workspaceId }
             });
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();

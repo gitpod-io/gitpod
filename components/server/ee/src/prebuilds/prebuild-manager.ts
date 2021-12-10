@@ -52,7 +52,7 @@ export class PrebuildManager {
             }
             return false;
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -131,7 +131,7 @@ export class PrebuildManager {
             }
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -161,7 +161,7 @@ export class PrebuildManager {
             await this.workspaceStarter.startWorkspace({ span }, workspace, user);
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -202,7 +202,7 @@ export class PrebuildManager {
             const context = await contextParser!.handle({ span }, user, contextURL);
             return await this.configProvider.fetchConfig({ span }, user, context as CommitContext);
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();

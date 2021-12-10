@@ -55,7 +55,7 @@ export class OneTimeSecretServer implements Disposable {
             } catch (err) {
                 log.error("cannot provide one-time secret", err);
                 res.sendStatus(500);
-                TraceContext.logError({ span }, err);
+                TraceContext.setError({ span }, err);
             } finally {
                 span.finish();
             }

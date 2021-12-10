@@ -85,7 +85,7 @@ export class ImageSourceProvider {
 
             return result;
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
