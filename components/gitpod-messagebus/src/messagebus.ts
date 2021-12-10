@@ -520,6 +520,10 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
                 this.listener({ span }, msg, message.fields.routingKey);
             } catch (e) {
                 log.error('Error while executing message handler', e, { message });
+            } finally {
+                if (span) {
+                    span.finish();
+                }
             }
         }
     }

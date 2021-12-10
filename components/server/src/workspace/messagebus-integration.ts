@@ -94,6 +94,10 @@ export class PrebuildUpdatableQueueListener implements MessagebusListener {
                 this.callback({ span }, msg);
             } catch (e) {
                 log.error('Error while executing message handler', e, { message });
+            } finally {
+                if (span) {
+                    span.finish();
+                }
             }
         }
     }
