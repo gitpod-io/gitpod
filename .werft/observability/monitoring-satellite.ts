@@ -39,19 +39,24 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     exec(`cd observability && jb update`, {slice: sliceName})
 
     let jsonnetRenderCmd = `cd observability && jsonnet -c -J vendor -m monitoring-satellite/manifests \
-    --ext-str is_preview="true" \
-    --ext-str alerting_enabled="false" \
-    --ext-str remote_write_enabled="false" \
-    --ext-str namespace="${params.satelliteNamespace}" \
-    --ext-str cluster_name="${params.satelliteNamespace}" \
-    --ext-str node_exporter_port="${params.nodeExporterPort}" \
-    --ext-str prometheus_dns_name="prometheus-${params.previewDomain}" \
-    --ext-str grafana_dns_name="grafana-${params.previewDomain}" \
-    --ext-str node_affinity_label="gitpod.io/workload_services" \
-    --ext-str tracing_enabled="true" \
-    --ext-str honeycomb_api_key="${process.env.HONEYCOMB_API_KEY}" \
-    --ext-str honeycomb_dataset="preview-environments" \
-    --ext-str jaeger_endpoint="" \
+    --ext-code config="{
+        namespace: '${params.satelliteNamespace}',
+        clusterName: '${params.satelliteNamespace}',
+        tracing: {
+            honeycombAPIKey: '${process.env.HONEYCOMB_API_KEY}',
+            honeycombDataset: 'preview-environments',
+        },
+        previewEnvironment: {
+            nodeExporterPort: ${params.nodeExporterPort},
+            prometheusDNS: 'prometheus-${params.previewDomain}',
+            grafanaDNS: 'grafana-${params.previewDomain}',
+        },
+        nodeAffinity: {
+            nodeSelector: {
+                'gitpod.io/workload_services': 'true',
+            },
+        },
+    }" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
     find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
 
