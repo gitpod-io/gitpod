@@ -42,10 +42,12 @@ export namespace TraceContext {
             return;
         }
 
-        ctx.span.log({
-            "error": err.message,
-            "stacktrace": err.stack
-        })
+        TraceContext.addNestedTags(ctx, {
+            error: {
+                message: err.message,
+                stacktrace: err.stack,
+            },
+        });
         ctx.span.setTag("error", true);
     }
 
@@ -70,7 +72,7 @@ export namespace TraceContext {
         if (!ctx.span) {
             return;
         }
-        logError(ctx, err);
+        // not use setError bc this is (most likely) a working operation
 
         setJsonRPCMetadata(ctx);
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#json-rpc
