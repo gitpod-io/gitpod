@@ -175,7 +175,10 @@ export class PrebuildStatusMaintainer implements Disposable {
                         throw err;
                     }
                 }
-                span.log({ 'update': 'done', 'found': found });
+                TraceContext.addNestedTags(ctx, {
+                    update: 'done',
+                    found
+                });
 
                 await this.workspaceDB.trace({span}).markUpdatableResolved(updatatable.id);
                 log.info(`Resolved updatable. Marked check on ${updatatable.contextUrl} as ${conclusion}`);
@@ -200,13 +203,21 @@ export class PrebuildStatusMaintainer implements Disposable {
     }
 
     protected async periodicUpdatableCheck() {
-        const unresolvedUpdatables = await this.workspaceDB.trace({}).getUnresolvedUpdatables();
+        const ctx = TraceContext.childContext("periodicUpdatableCheck", {});
 
-        for (const updatable of unresolvedUpdatables) {
-            if ((Date.now() - Date.parse(updatable.workspace.creationTime)) > MAX_UPDATABLE_AGE) {
-                log.info("found unresolved updatable that's older than MAX_UPDATABLE_AGE and is inconclusive. Resolving.", updatable);
-                await this.doUpdate({}, updatable, updatable.prebuild);
+        try {
+            const unresolvedUpdatables = await this.workspaceDB.trace(ctx).getUnresolvedUpdatables();
+            for (const updatable of unresolvedUpdatables) {
+                if ((Date.now() - Date.parse(updatable.workspace.creationTime)) > MAX_UPDATABLE_AGE) {
+                    log.info("found unresolved updatable that's older than MAX_UPDATABLE_AGE and is inconclusive. Resolving.", updatable);
+                    await this.doUpdate(ctx, updatable, updatable.prebuild);
+                }
             }
+        } catch (err) {
+            TraceContext.logError(ctx, err);
+            throw err;
+        } finally {
+            ctx.span?.finish();
         }
     }
 

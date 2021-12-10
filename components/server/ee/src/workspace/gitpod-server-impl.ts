@@ -608,7 +608,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     protected async findPrebuiltWorkspace(parentCtx: TraceContext, user: User, context: WorkspaceContext, mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
-        const ctx = TraceContext.childContextWithSpan("findPrebuiltWorkspace", parentCtx);
+        const ctx = TraceContext.childContext("findPrebuiltWorkspace", parentCtx);
 
         if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
             return;
