@@ -5,9 +5,13 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"sigs.k8s.io/yaml"
 
 	"github.com/go-playground/validator/v10"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var InstallationKindList = map[InstallationKind]struct{}{
@@ -105,6 +109,45 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 	if cfg.License != nil {
 		secretName := cfg.License.Name
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("license")))
+	}
+
+	if len(cfg.AuthProviders) > 0 {
+		for _, provider := range cfg.AuthProviders {
+			secretName := provider.Name
+			secretKey := "provider"
+			res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData(secretKey), cluster.CheckSecretRule(func(s *corev1.Secret) ([]cluster.ValidationError, error) {
+				errors := make([]cluster.ValidationError, 0)
+				providerData := s.Data[secretKey]
+
+				var provider AuthProviderConfigs
+				err := yaml.Unmarshal(providerData, &provider)
+				if err != nil {
+					return nil, err
+				}
+
+				validate := validator.New()
+				err = v.LoadValidationFuncs(validate)
+				if err != nil {
+					return nil, err
+				}
+
+				err = validate.Struct(provider)
+				if err != nil {
+					validationErrors := err.(validator.ValidationErrors)
+
+					if len(validationErrors) > 0 {
+						for _, v := range validationErrors {
+							errors = append(errors, cluster.ValidationError{
+								Message: fmt.Sprintf("Field '%s' failed %s validation", v.Namespace(), v.Tag()),
+								Type:    cluster.ValidationStatusError,
+							})
+						}
+					}
+				}
+
+				return errors, nil
+			})))
+		}
 	}
 
 	return res

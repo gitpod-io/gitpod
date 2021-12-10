@@ -57,6 +57,27 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
+	if len(ctx.Config.AuthProviders) > 0 {
+		for i, provider := range ctx.Config.AuthProviders {
+			volumeName := fmt.Sprintf("auth-provider-%d", i)
+			volumes = append(volumes, corev1.Volume{
+				Name: volumeName,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: provider.Name,
+					},
+				},
+			})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      volumeName,
+				MountPath: fmt.Sprintf("%s/%s", authProviderFilePath, provider.Name),
+				SubPath:   "provider",
+				ReadOnly:  true,
+			})
+		}
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,

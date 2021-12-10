@@ -55,8 +55,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MinAgeDays:                 14,
 			MinAgePrebuildDays:         7,
 		},
-		EnableLocalApp:                  true,
-		AuthProviderConfigs:             ctx.Config.AuthProviders,
+		EnableLocalApp: true,
+		AuthProviderConfigFiles: func() []string {
+			providers := make([]string, 0)
+
+			for _, provider := range ctx.Config.AuthProviders {
+				providers = append(providers, fmt.Sprintf("%s/%s", authProviderFilePath, provider.Name))
+			}
+
+			return providers
+		}(),
 		BuiltinAuthProvidersConfigured:  len(ctx.Config.AuthProviders) > 0,
 		DisableDynamicAuthProviderLogin: false,
 		BrandingConfig: BrandingConfig{
