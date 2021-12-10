@@ -152,8 +152,10 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 			} else if err != nil {
 				log.WithError(err).Error("cannot maintain workspace count")
 			}
-			// we don't have to wait here until we retry, because the RPC calls
-			// in maintainWorkspaceStatus will wait for us.
+
+			// We want to wait here because otherwise we might bombard ws-manager with
+			// GetWorkspace calls.
+			time.Sleep(10 * time.Second)
 		}
 	}()
 
