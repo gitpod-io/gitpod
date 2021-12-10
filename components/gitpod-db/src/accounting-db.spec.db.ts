@@ -14,7 +14,7 @@ import { DBAccountEntry } from './typeorm/entity/db-account-entry';
 import { TransactionalAccountingDBImpl } from './typeorm/accounting-db-impl';
 import { DBWorkspace } from './typeorm/entity/db-workspace';
 import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
-import { DBSubscription } from './typeorm/entity/db-subscription';
+import { DBPaymentSourceInfo, DBSubscription } from './typeorm/entity/db-subscription';
 import { testContainer } from './test-container';
 import { TypeORM } from './typeorm/typeorm';
 const expect = chai.expect;
@@ -135,6 +135,28 @@ export class AccountingDBSpec {
 
         expectExactlyOne(await this.db.findActiveSubscriptionsForUser(subscription.userId, rightBefore(later)), dbSubscription);
         expect(await this.db.findActiveSubscriptionsForUser(subscription.userId, later)).to.be.an('array').and.empty;
+    }
+
+    // see https://github.com/gitpod-io/gitpod/issues/7171
+    @test public async bug7171() {
+        const paymentSourceInfo : DBPaymentSourceInfo = {
+            id: "bar",
+            resourceVersion: 1,
+            userId: "foo",
+            status: "valid",
+            cardExpiryMonth: 12,
+            cardExpiryYear: 2021
+        };
+        await this.db.storePaymentSourceInfo(paymentSourceInfo);
+        const paymentSourceInfo2 : DBPaymentSourceInfo = {
+            id: "bar",
+            resourceVersion: 1,
+            userId: "foo",
+            status: "expiring",
+            cardExpiryMonth: 12,
+            cardExpiryYear: 2021
+        };
+        await this.db.storePaymentSourceInfo(paymentSourceInfo2);
     }
 }
 
