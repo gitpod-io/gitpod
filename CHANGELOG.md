@@ -1,6 +1,10 @@
 # Change Log
 
 ## December 2021
+- Enable self-managed GitLab instances for Teams & Projects ([#7125](https://github.com/gitpod-io/gitpod/pull/7125)) - [@AlexTugarev](https://github.com/AlexTugarev), [@laushinka](https://github.com/laushinka)
+- Update VS Code Web to 1.63 ([#7133](https://github.com/gitpod-io/gitpod/pull/7133)) - [@jeanp413](https://github.com/jeanp413)
+- [Installer]: add license key to config ([#7120](https://github.com/gitpod-io/gitpod/pull/7120)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [Installer]: Update RabbitMQ chart ([#7041](https://github.com/gitpod-io/gitpod/pull/7041)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Projects: remove the configuration page from New Project wizard. ([#7102](https://github.com/gitpod-io/gitpod/pull/7102)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Jk/api-telemetry ([#7000](https://github.com/gitpod-io/gitpod/pull/7000)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
 - [installer]: fix incorrectly configured pod security policies ([#7106](https://github.com/gitpod-io/gitpod/pull/7106)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
