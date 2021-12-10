@@ -32,7 +32,7 @@ export namespace TraceContext {
         return opentracing.globalTracer().startSpan(operation, options);
     }
 
-    export function childContextWithSpan(operation: string, parentCtx: TraceContext): TraceContextWithSpan {
+    export function childContext(operation: string, parentCtx: TraceContext): TraceContextWithSpan {
         const span = startSpan(operation, parentCtx);
         return { span };
     }
