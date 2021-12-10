@@ -175,9 +175,11 @@ export class PrebuildStatusMaintainer implements Disposable {
                         throw err;
                     }
                 }
-                TraceContext.addNestedTags(ctx, {
-                    update: 'done',
-                    found
+                TraceContext.addNestedTags({ span }, {
+                    doUpdate: {
+                        update: 'done',
+                        found,
+                    },
                 });
 
                 await this.workspaceDB.trace({span}).markUpdatableResolved(updatatable.id);
