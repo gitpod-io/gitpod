@@ -64,7 +64,7 @@ export class WorkspaceGarbageCollector {
             log.info(`wsgc: successfully soft-deleted ${deletes.length} workspaces`);
             span.addTags({ 'nrOfCollectedWorkspaces': deletes.length });
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();
@@ -80,7 +80,7 @@ export class WorkspaceGarbageCollector {
             log.info(`wsgc: successfully deleted the content of ${deletes.length} workspaces`);
             span.addTags({ 'nrOfCollectedWorkspaces': deletes.length });
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();
@@ -96,7 +96,7 @@ export class WorkspaceGarbageCollector {
             log.info(`wsgc: successfully deleted ${deletes.length} prebuilds`);
             span.addTags({ 'nrOfCollectedPrebuilds': deletes.length });
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();

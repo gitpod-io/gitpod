@@ -57,7 +57,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
                 trace: { span },
             });
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();

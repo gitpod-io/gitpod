@@ -133,7 +133,7 @@ export class WorkspaceStarter {
 
             return await this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, ideConfig, userEnvVars, options.rethrow, forceRebuild);
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -232,7 +232,7 @@ export class WorkspaceStarter {
 
             return { instanceID: instance.id, workspaceURL: resp.url };
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             await this.failInstanceStart({ span }, err, workspace, instance);
 
             if (rethrow) {
@@ -292,7 +292,7 @@ export class WorkspaceStarter {
                 }
             }
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             log.error({workspaceId: workspace.id, instanceId: instance.id, userId: workspace.ownerId}, "cannot properly fail workspace instance during start", err);
         }
     }
@@ -465,7 +465,7 @@ export class WorkspaceStarter {
 
             throw new Error("unknown workspace image source");
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish()
@@ -489,7 +489,7 @@ export class WorkspaceStarter {
 
             return result.getStatus() != BuildStatus.DONE_SUCCESS;
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -565,7 +565,7 @@ export class WorkspaceStarter {
             instance = await this.workspaceDb.trace({ span }).updateInstancePartial(instance.id, { status: { ...instance.status, phase: 'preparing', conditions: { failed: message }, message } });
             await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             const looksLikeUserError = (msg: string): boolean => {
                 return msg.startsWith("build failed:");
             };

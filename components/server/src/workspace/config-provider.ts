@@ -107,7 +107,7 @@ export class ConfigProvider {
 
             return config;
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -200,7 +200,7 @@ export class ConfigProvider {
 
             return { customConfig, configBasePath };
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -238,7 +238,7 @@ export class ConfigProvider {
                 revision: lastDockerFileSha
             };
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -300,7 +300,7 @@ export class ConfigProvider {
                 basePath: baseConfigBasePath
             }
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -322,7 +322,7 @@ export class ConfigProvider {
             }
             return content;
         } catch (e) {
-            TraceContext.logError({ span }, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();

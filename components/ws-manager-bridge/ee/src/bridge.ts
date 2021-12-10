@@ -31,7 +31,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
             const workspaceId = status.metadata!.metaId!;
             await this.workspaceDB.trace({span}).hardDeleteWorkspace(workspaceId);
         } catch (e) {
-            TraceContext.logError({span}, e);
+            TraceContext.setError({span}, e);
             throw e;
         } finally {
             span.finish();
@@ -53,7 +53,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
             const prebuild = await this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(status.metadata!.metaId!);
             if (!prebuild) {
                 log.warn(logCtx, "headless workspace without prebuild");
-                TraceContext.logError({span}, new Error("headless workspace without prebuild"));
+                TraceContext.setError({span}, new Error("headless workspace without prebuild"));
                 return
             }
 
@@ -107,7 +107,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 }
             }
         } catch (e) {
-            TraceContext.logError({span}, e);
+            TraceContext.setError({span}, e);
             throw e;
         } finally {
             span.finish();

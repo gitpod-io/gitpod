@@ -53,7 +53,7 @@ export class WorkspaceHealthMonitoring {
             const workspace = await this.workspaceFactory.createForContext({span}, user, context, "");
             await this.workspaceStarter.startWorkspace({span}, workspace, user, [], {rethrow: true});
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();
@@ -85,7 +85,7 @@ export class WorkspaceHealthMonitoring {
             const result = workspaces.filter(workspacesFilter).map(resultMapper);
             return await Promise.all(result);
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();
@@ -127,7 +127,7 @@ export class WorkspaceHealthMonitoring {
             up = true;
         } catch (err) {
             log.error({ instanceId: wsi.id, workspaceId: wsi.workspaceId }, "workspace health check failed", err, { "probeURL": probeURL.toString() });
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             up = false;
         } finally {
             span.finish();

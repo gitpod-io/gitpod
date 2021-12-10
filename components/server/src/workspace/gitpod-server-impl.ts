@@ -153,7 +153,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             try {
                 cb();
             } catch (e) {
-                TraceContext.logError(ctx, e);
+                TraceContext.setError(ctx, e);
                 throw e;
             } finally {
                 span.finish();
@@ -760,7 +760,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 .filter(info => info && info.workspace.type === "regular" && sameContext(info))
                 .map(info => info!);
         } catch (e) {
-            TraceContext.logError(ctx, e);
+            TraceContext.setError(ctx, e);
             throw e;
         } finally {
             span.finish();

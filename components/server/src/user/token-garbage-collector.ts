@@ -42,7 +42,7 @@ export class TokenGarbageCollector {
             await this.userDb.deleteExpiredTokenEntries(new Date().toISOString());
             log.debug("tokengc: done collecting.");
         } catch (err) {
-            TraceContext.logError({ span }, err);
+            TraceContext.setError({ span }, err);
             log.error("tokengc: error collecting expired tokens: ", err);
             throw err;
         } finally {

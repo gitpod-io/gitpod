@@ -71,7 +71,7 @@ export class WorkspaceFactory {
             await this.db.trace({span}).store(newWs);
             return newWs;
         } catch (e) {
-            TraceContext.logError({span}, e);
+            TraceContext.setError({span}, e);
             throw e;
         } finally {
             span.finish();
@@ -126,7 +126,7 @@ export class WorkspaceFactory {
             await this.db.trace({span}).store(newWs);
             return newWs;
         } catch (e) {
-            TraceContext.logError({span}, e);
+            TraceContext.setError({span}, e);
             throw e;
         } finally {
             span.finish();
@@ -182,7 +182,7 @@ export class WorkspaceFactory {
             await this.db.trace({span}).store(newWs);
             return newWs;
         } catch (e) {
-            TraceContext.logError({span}, e);
+            TraceContext.setError({span}, e);
             throw e;
         } finally {
             span.finish();

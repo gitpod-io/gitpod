@@ -135,7 +135,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 // do not await
                 this.storePrebuildInfo(ctx, project, pws, ws, user).catch(err => {
                     log.error(`failed to store prebuild info`, err);
-                    TraceContext.logError({span}, err);
+                    TraceContext.setError({span}, err);
                 });
             }
 
@@ -143,7 +143,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
 
             return ws;
         } catch (e) {
-            TraceContext.logError({span}, e);
+            TraceContext.setError({span}, e);
             throw e;
         } finally {
             span.finish();
@@ -243,7 +243,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             await this.db.trace({span}).store(newWs);
             return newWs;
         } catch (e) {
-            TraceContext.logError({span}, e);
+            TraceContext.setError({span}, e);
             throw e;
         } finally {
             span.finish();

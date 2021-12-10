@@ -33,7 +33,7 @@ export class DBWithTracing<T> {
                     try {
                         return await f.bind(_target)(...args);
                     } catch (e) {
-                        TraceContext.logError({ span }, e);
+                        TraceContext.setError({ span }, e);
                         throw e;
                     } finally {
                         span.finish();
