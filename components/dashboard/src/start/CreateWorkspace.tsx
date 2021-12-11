@@ -221,13 +221,13 @@ function LimitReachedModal(p: { children: React.ReactNode }) {
 
 function LimitReachedParallelWorkspacesModal() {
   return <LimitReachedModal>
-    <p className="mt-1 mb-2 text-base">You have reached the limit of parallel running workspaces for your account. Please, upgrade or stop one of the running workspaces.</p>
+    <p className="mt-1 mb-2 text-base dark:text-gray-400">You have reached the limit of parallel running workspaces for your account. Please, upgrade or stop one of the running workspaces.</p>
   </LimitReachedModal>;
 }
 
 function LimitReachedOutOfHours() {
   return <LimitReachedModal>
-    <p className="mt-1 mb-2 text-base">You have reached the limit of monthly workspace hours for your account. Please upgrade to get more hours for your workspaces.</p>
+    <p className="mt-1 mb-2 text-base dark:text-gray-400">You have reached the limit of monthly workspace hours for your account. Please upgrade to get more hours for your workspaces.</p>
   </LimitReachedModal>;
 }
 
