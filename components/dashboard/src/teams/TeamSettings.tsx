@@ -17,7 +17,7 @@ import { getCurrentTeam, TeamsContext } from "./teams-context";
 export function getTeamSettingsMenu(team?: Team) {
     return [
         {
-            title: 'Team',
+            title: 'General',
             link: [`/t/${team?.slug}/settings`],
         },
     ];
@@ -57,7 +57,7 @@ export default function TeamSettings() {
     return <>
         <PageWithSubMenu subMenu={getTeamSettingsMenu(team)} title="Settings" subtitle="Manage general team settings.">
             <h3>Delete Team</h3>
-            <p className="text-base text-gray-500 pb-4">Deleting this team will also remove all associated data with this team, including projects and workspaces. Deleted teams cannot be restored!</p>
+            <p className="text-base text-gray-500 pb-4 max-w-2xl">Deleting this team will also remove all associated data with this team, including projects and workspaces. Deleted teams cannot be restored!</p>
             <button className="danger secondary" onClick={() => setModal(true)}>Delete Team</button>
         </PageWithSubMenu>
 

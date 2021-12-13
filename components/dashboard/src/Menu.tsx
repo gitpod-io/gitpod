@@ -219,7 +219,7 @@ export default function Menu() {
                     ]}>
                         <div className="flex h-full px-2 py-1 space-x-3.5">
                             { !projectSlug && <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>}
-                            <img className="filter-grayscale" style={{marginTop: 5, marginBottom: 5}} src={CaretUpDown} />
+                            <img alt="" aria-label="Toggle team selection menu" className="filter-grayscale" style={{marginTop: 5, marginBottom: 5}} src={CaretUpDown} />
                         </div>
                     </ContextMenu>
                 </div>
@@ -232,7 +232,7 @@ export default function Menu() {
                 )}
                 { prebuildId && (
                     <div className="flex h-full ml-2 py-1">
-                        <img className="mr-3 filter-grayscale m-auto transform -rotate-90" src={CaretDown} />
+                        <img alt="" className="mr-3 filter-grayscale m-auto transform -rotate-90" src={CaretDown} />
                         <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{prebuildId}</span>
                     </div>
                 )}
