@@ -1,6 +1,7 @@
 # Change Log
 
 ## December 2021
+- [installer]: update docker-registry to allow for pod security policy application ([#7107](https://github.com/gitpod-io/gitpod/pull/7107)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Enable self-managed GitLab instances for Teams & Projects ([#7125](https://github.com/gitpod-io/gitpod/pull/7125)) - [@AlexTugarev](https://github.com/AlexTugarev), [@laushinka](https://github.com/laushinka)
 - Update VS Code Web to 1.63 ([#7133](https://github.com/gitpod-io/gitpod/pull/7133)) - [@jeanp413](https://github.com/jeanp413)
 - [Installer]: add license key to config ([#7120](https://github.com/gitpod-io/gitpod/pull/7120)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
