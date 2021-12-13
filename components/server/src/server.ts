@@ -29,7 +29,7 @@ import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
 import { MonitoringEndpointsApp } from './monitoring-endpoints';
-import { WebsocketClientType, WebsocketConnectionManager } from './websocket/websocket-connection-manager';
+import { WebsocketConnectionManager } from './websocket/websocket-connection-manager';
 import { DeletedEntryGC, PeriodicDbDeleter, TypeORM } from '@gitpod/gitpod-db/lib';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
@@ -164,7 +164,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 if (info.req.url === '/v1') {
                     try {
                         await this.bearerAuth.auth(info.req as express.Request)
-                    } catch (e) {
+                    } catch (e) {
                         if (isBearerAuthError(e)) {
                             return callback(false, 401, e.message);
                         }
@@ -319,8 +319,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             help: 'Currently served websocket connections',
             labelNames: ["clientType"],
         });
-        this.websocketConnectionHandler.onConnectionCreated((_, req) => gauge.inc({ clientType: WebsocketClientType.getClientType(req) || "undefined" }));
-        this.websocketConnectionHandler.onConnectionClosed((_, req) => gauge.dec({ clientType: WebsocketClientType.getClientType(req) || "undefined" }));
+        this.websocketConnectionHandler.onConnectionCreated((s, _) => gauge.inc({ clientType: s.clientMetadata.type || "undefined" }));
+        this.websocketConnectionHandler.onConnectionClosed((s, _) => gauge.dec({ clientType: s.clientMetadata.type || "undefined" }));
     }
 
     protected installWebsocketClientContextGauge() {
@@ -329,7 +329,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             help: 'Currently served client contexts',
             labelNames: ["authLevel"],
         });
-        this.websocketConnectionHandler.onClientContextCreated((ctx) => gauge.inc({ authLevel: ctx.authLevel }));
-        this.websocketConnectionHandler.onClientContextClosed((ctx) => gauge.dec({ authLevel: ctx.authLevel }));
+        this.websocketConnectionHandler.onClientContextCreated((ctx) => gauge.inc({ authLevel: ctx.clientMetadata.authLevel }));
+        this.websocketConnectionHandler.onClientContextClosed((ctx) => gauge.dec({ authLevel: ctx.clientMetadata.authLevel }));
     }
 }
