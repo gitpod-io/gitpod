@@ -21,18 +21,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	typeBrowser := "browser"
 	typeDesktop := "desktop"
 	idecfg := IDEConfig{
-		IDEVersion:   workspace.CodeIDEImageStableVersion,
-		IDEImageRepo: common.RepoName(ctx.Config.Repository, workspace.CodeIDEImage),
-		IDEImageAliases: map[string]string{
-			"code":        common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, workspace.CodeIDEImageStableVersion),
-			"code-latest": common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
-		},
-		DesktopIDEImageAliases: map[string]string{
-			"code-desktop":          common.ImageName(ctx.Config.Repository, workspace.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
-			"code-desktop-insiders": common.ImageName(ctx.Config.Repository, workspace.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
-			"intellij":              common.ImageName(ctx.Config.Repository, workspace.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
-			"goland":                common.ImageName(ctx.Config.Repository, workspace.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
-		},
 		SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 		IDEOptions: IDEOptions{
 			Options: map[string]IDEOption{
