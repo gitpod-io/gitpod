@@ -13,6 +13,7 @@ const (
 	ContainerPort      = 3000
 	ContainerPortName  = "http"
 	licenseFilePath    = "/gitpod/license"
+	secretFilePath     = "/gitpod/session"
 	PrometheusPort     = 9500
 	PrometheusPortName = "metrics"
 	ServicePort        = 3000

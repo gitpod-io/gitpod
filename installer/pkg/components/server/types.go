@@ -141,8 +141,9 @@ type GitHubApp struct {
 }
 
 type Session struct {
-	MaxAgeMs int32  `json:"maxAgeMs"`
-	Secret   string `json:"secret"`
+	MaxAgeMs   int32  `json:"maxAgeMs"`
+	Secret     string `json:"secret"`
+	SecretFile string `json:"secretFile"`
 }
 
 type WorkspaceHeartbeat struct {

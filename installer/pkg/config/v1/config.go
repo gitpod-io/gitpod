@@ -79,6 +79,8 @@ type Config struct {
 
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
 
+	Components *Components `json:"components,omitempty"`
+
 	Workspace Workspace `json:"workspace" validate:"required"`
 
 	AuthProviders []AuthProviderConfigs `json:"authProviders" validate:"dive"`
@@ -220,6 +222,14 @@ type Workspace struct {
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
 	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
+}
+
+type Components struct {
+	Server *ServerComponent `json:"server,omitempty"`
+}
+
+type ServerComponent struct {
+	CookieSecret *ObjectRef `json:"cookieSecret,omitempty"`
 }
 
 type FSShiftMethod string

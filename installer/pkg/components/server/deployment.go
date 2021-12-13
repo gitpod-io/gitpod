@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -53,6 +54,24 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name:      "gitpod-license-key",
 			MountPath: licenseFilePath,
 			SubPath:   "license",
+			ReadOnly:  true,
+		})
+	}
+
+	componentCfg := getComponentConfig(ctx)
+	if componentCfg != nil && componentCfg.CookieSecret != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "gitpod-cookie-secret",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: componentCfg.CookieSecret.Name,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "gitpod-cookie-secret",
+			MountPath: secretFilePath,
 			ReadOnly:  true,
 		})
 	}
@@ -130,13 +149,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Privileged: pointer.Bool(false),
 								RunAsUser:  pointer.Int64(31001),
 							},
-							Ports: []corev1.ContainerPort{{
-								Name:          ContainerPortName,
-								ContainerPort: ContainerPort,
-							}, {
-								Name:          PrometheusPortName,
-								ContainerPort: PrometheusPort,
-							}},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          ContainerPortName,
+									ContainerPort: ContainerPort,
+								},
+								{
+									Name:          PrometheusPortName,
+									ContainerPort: PrometheusPort,
+								},
+							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
@@ -144,22 +166,28 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								common.TracingEnv(&ctx.Config),
 								common.AnalyticsEnv(&ctx.Config),
 								common.MessageBusEnv(&ctx.Config),
-								[]corev1.EnvVar{{
-									Name:  "CONFIG_PATH",
-									Value: "/config/config.json",
-								}, {
-									Name:  "IDE_CONFIG_PATH",
-									Value: "/ide-config/config.json",
-								}, {
-									Name:  "NODE_ENV",
-									Value: "production", // todo(sje): will we need to change this?
-								}, {
-									Name:  "SHLVL",
-									Value: "1",
-								}, {
-									Name:  "WSMAN_CFG_MANAGERS",
-									Value: wsmanCfgManager,
-								}},
+								[]corev1.EnvVar{
+									{
+										Name:  "CONFIG_PATH",
+										Value: "/config/config.json",
+									},
+									{
+										Name:  "IDE_CONFIG_PATH",
+										Value: "/ide-config/config.json",
+									},
+									{
+										Name:  "NODE_ENV",
+										Value: "production", // todo(sje): will we need to change this?
+									},
+									{
+										Name:  "SHLVL",
+										Value: "1",
+									},
+									{
+										Name:  "WSMAN_CFG_MANAGERS",
+										Value: wsmanCfgManager,
+									},
+								},
 							),
 							// todo(sje): conditionally add github-app-cert-secret in
 							// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
