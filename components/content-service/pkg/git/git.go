@@ -165,8 +165,7 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 		if err != nil {
 			return nil, err
 		}
-		env = append(env, fmt.Sprintf("GIT_AUTH_USER=%s", user))
-		env = append(env, fmt.Sprintf("GIT_AUTH_PASSWORD=%s", pwd))
+		env = append(env, fmt.Sprintf("GIT_AUTH_USER=%s", user), fmt.Sprintf("GIT_AUTH_PASSWORD=%s", pwd))
 	}
 
 	fullArgs = append(fullArgs, subcommand)
@@ -267,8 +266,7 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 	args := []string{"--depth=1", "--no-single-branch", c.RemoteURI}
 
 	for key, value := range c.Config {
-		args = append(args, "--config")
-		args = append(args, strings.TrimSpace(key)+"="+strings.TrimSpace(value))
+		args = append(args, "--config", strings.TrimSpace(key)+"="+strings.TrimSpace(value))
 	}
 
 	args = append(args, ".")

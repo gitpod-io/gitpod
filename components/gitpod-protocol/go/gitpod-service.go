@@ -769,8 +769,7 @@ func (gp *APIoverJSONRPC) StartWorkspace(ctx context.Context, id string, options
 	}
 	var _params []interface{}
 
-	_params = append(_params, id)
-	_params = append(_params, options)
+	_params = append(_params, id, options)
 
 	var result StartWorkspaceResult
 	err = gp.C.Call(ctx, "startWorkspace", _params, &result)
@@ -826,8 +825,7 @@ func (gp *APIoverJSONRPC) SetWorkspaceDescription(ctx context.Context, id string
 	}
 	var _params []interface{}
 
-	_params = append(_params, id)
-	_params = append(_params, desc)
+	_params = append(_params, id, desc)
 
 	err = gp.C.Call(ctx, "setWorkspaceDescription", _params, nil)
 	if err != nil {
@@ -845,8 +843,7 @@ func (gp *APIoverJSONRPC) ControlAdmission(ctx context.Context, id string, level
 	}
 	var _params []interface{}
 
-	_params = append(_params, id)
-	_params = append(_params, level)
+	_params = append(_params, id, level)
 
 	err = gp.C.Call(ctx, "controlAdmission", _params, nil)
 	if err != nil {
@@ -902,8 +899,7 @@ func (gp *APIoverJSONRPC) SetWorkspaceTimeout(ctx context.Context, workspaceID s
 	}
 	var _params []interface{}
 
-	_params = append(_params, workspaceID)
-	_params = append(_params, duration)
+	_params = append(_params, workspaceID, duration)
 
 	var result SetWorkspaceTimeoutResult
 	err = gp.C.Call(ctx, "setWorkspaceTimeout", _params, &result)
@@ -961,8 +957,7 @@ func (gp *APIoverJSONRPC) UpdateWorkspaceUserPin(ctx context.Context, id string,
 	}
 	var _params []interface{}
 
-	_params = append(_params, id)
-	_params = append(_params, action)
+	_params = append(_params, id, action)
 
 	err = gp.C.Call(ctx, "updateWorkspaceUserPin", _params, nil)
 	if err != nil {
@@ -1000,8 +995,7 @@ func (gp *APIoverJSONRPC) OpenPort(ctx context.Context, workspaceID string, port
 	}
 	var _params []interface{}
 
-	_params = append(_params, workspaceID)
-	_params = append(_params, port)
+	_params = append(_params, workspaceID, port)
 
 	var result WorkspaceInstancePort
 	err = gp.C.Call(ctx, "openPort", _params, &result)
@@ -1021,8 +1015,7 @@ func (gp *APIoverJSONRPC) ClosePort(ctx context.Context, workspaceID string, por
 	}
 	var _params []interface{}
 
-	_params = append(_params, workspaceID)
-	_params = append(_params, port)
+	_params = append(_params, workspaceID, port)
 
 	err = gp.C.Call(ctx, "closePort", _params, nil)
 	if err != nil {
@@ -1321,8 +1314,7 @@ func (gp *APIoverJSONRPC) StoreLayout(ctx context.Context, workspaceID string, l
 	}
 	var _params []interface{}
 
-	_params = append(_params, workspaceID)
-	_params = append(_params, layoutData)
+	_params = append(_params, workspaceID, layoutData)
 
 	err = gp.C.Call(ctx, "storeLayout", _params, nil)
 	if err != nil {
@@ -1380,8 +1372,7 @@ func (gp *APIoverJSONRPC) ResolvePlugins(ctx context.Context, workspaceID string
 	}
 	var _params []interface{}
 
-	_params = append(_params, workspaceID)
-	_params = append(_params, params)
+	_params = append(_params, workspaceID, params)
 
 	var result ResolvedPlugins
 	err = gp.C.Call(ctx, "resolvePlugins", _params, &result)

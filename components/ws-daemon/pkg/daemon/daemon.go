@@ -187,8 +187,7 @@ func (d *Daemon) startReadinessSignal() {
 // cannot be started again.
 func (d *Daemon) Stop() error {
 	var errs []error
-	errs = append(errs, d.dispatch.Close())
-	errs = append(errs, d.content.Close())
+	errs = append(errs, d.dispatch.Close(), d.content.Close())
 	if d.hosts != nil {
 		errs = append(errs, d.hosts.Close())
 	}

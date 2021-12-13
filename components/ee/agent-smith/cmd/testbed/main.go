@@ -60,10 +60,7 @@ func run(args []string) error {
 				env[i] += e + ":" + cwd
 			}
 		}
-		env = append(env, "GITPOD_OWNER_ID=owner-id")
-		env = append(env, "GITPOD_WORKSPACE_ID=workspace-id")
-		env = append(env, "GITPOD_INSTANCE_ID=instance-id")
-		env = append(env, "GITPOD_WORKSPACE_CONTEXT_URL=https://github.com/gitpod-io/gitpod")
+		env = append(env, "GITPOD_OWNER_ID=owner-id", "GITPOD_WORKSPACE_ID=workspace-id", "GITPOD_INSTANCE_ID=instance-id", "GITPOD_WORKSPACE_CONTEXT_URL=https://github.com/gitpod-io/gitpod")
 
 		cmd := exec.Command("/proc/self/exe", "ring1")
 		cmd.Stdout = os.Stdout
