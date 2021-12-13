@@ -289,27 +289,9 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             increaseApiCallUserCounter(method, "anonymous");
         }
 
-        try {
-            await this.rateLimiter.consume(method);
-        } catch (rlRejected) {
-            if (rlRejected instanceof Error) {
-                log.error("Unexpected error in the rate limiter", rlRejected);
-                increaseApiCallCounter(method, 500);
-                throw rlRejected;
-            }
-            log.warn(`Rate limiter prevents accessing method '${method}' of user '${this.rateLimiter.user} due to too many requests.`, rlRejected);
-            increaseApiCallCounter(method, ErrorCodes.TOO_MANY_REQUESTS);
-            throw new ResponseError(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { "Retry-After": String(Math.round(rlRejected.msBeforeNext / 1000)) || 1 });
-        }
-
-        if (!this.accessGuard.canAccess(method)) {
-            log.error(`Request ${method} is not allowed`, { method, args });
-            increaseApiCallCounter(method, ErrorCodes.PERMISSION_DENIED);
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
-
         const span = opentracing.globalTracer().startSpan(method);
         const ctx = { span };
+        const userId = this.clientMetadata.userId;
         try {
             // generic tracing data
             TraceContext.addNestedTags(ctx, {
@@ -319,10 +301,28 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 },
             });
             TraceContext.setOWI(ctx, {
-                userId: this.clientMetadata.userId,
+                userId,
                 sessionId: this.clientMetadata.sessionId,
             });
             TraceContext.setJsonRPCMetadata(ctx, method);
+
+            // rate limiting
+            try {
+                await this.rateLimiter.consume(method);
+            } catch (rlRejected) {
+                if (rlRejected instanceof Error) {
+                    log.error({ userId }, "Unexpected error in the rate limiter", rlRejected);
+                    throw rlRejected;
+                }
+                log.warn({ userId }, "Rate limiter prevents accessing method due to too many requests.", rlRejected, { method });
+                throw new ResponseError(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { "Retry-After": String(Math.round(rlRejected.msBeforeNext / 1000)) || 1 });
+            }
+
+            // access guard
+            if (!this.accessGuard.canAccess(method)) {
+                // logging/tracing is done in 'catch' clause
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Request ${method} is not allowed`);
+            }
 
             // actual call
             const result = await this.target[method](ctx, ...args);    // we can inject TraceContext here because of GitpodServerWithTracing
@@ -333,7 +333,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 increaseApiCallCounter(method, e.code);
                 TraceContext.setJsonRPCError(ctx, method, e);
 
-                log.info(`Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
+                log.info({ userId }, `Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
             } else {
                 TraceContext.setError(ctx, e);  // this is a "real" error
 
@@ -341,7 +341,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 increaseApiCallCounter(method, err.code);
                 TraceContext.setJsonRPCError(ctx, method, err);
 
-                log.error(`Request ${method} failed with internal server error`, e, { method, args });
+                log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
             }
             throw e;
         } finally {
