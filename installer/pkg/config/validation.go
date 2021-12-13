@@ -46,7 +46,7 @@ func Validate(version ConfigVersion, cfg interface{}) (r *ValidationResult, err 
 					tag := strings.Replace(v.Tag(), "_", " ", -1)
 					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' is %s '%s'", v.Namespace(), tag, v.Param()))
 				case "startswith":
-					fmt.Printf("Field '%s' must start with '%s'", v.Namespace(), v.Param())
+					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' must start with '%s'", v.Namespace(), v.Param()))
 				default:
 					// General error message
 					res.Fatal = append(res.Fatal, fmt.Sprintf("Field '%s' failed %s validation", v.Namespace(), v.Tag()))
