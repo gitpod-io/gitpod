@@ -79,6 +79,26 @@ func TestFindWorkspaces(t *testing.T) {
 			},
 		},
 		{
+			Name: "multiple workspacekit children",
+			Proc: (func() memoryProc {
+				res := make(map[int]memoryProcEntry)
+				res[1] = memoryProcEntry{P: &process{PID: 1}}
+				res[2] = memoryProcEntry{
+					P:   &process{PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
+					Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
+				}
+				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
+				res[4] = memoryProcEntry{P: &process{PID: 4, Parent: res[1].P, Cmdline: []string{"slirp4netns"}}}
+				res[1].P.Children = []*process{res[2].P, res[4].P}
+				res[2].P.Children = []*process{res[3].P}
+				return res
+			})(),
+			Expectation: []WorkspaceAndDepth{
+				{PID: 2, D: 1, K: ProcessSandbox, C: "/proc/self/exe", W: ws},
+				{PID: 3, D: 2, K: ProcessSupervisor, C: "supervisor", W: ws},
+			},
+		},
+		{
 			Name: "mixed depths",
 			Proc: (func() memoryProc {
 				res := make(map[int]memoryProcEntry)
