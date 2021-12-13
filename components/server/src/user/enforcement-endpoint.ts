@@ -17,6 +17,7 @@ import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { GitpodServerImpl } from '../workspace/gitpod-server-impl';
 import { ResourceAccessGuard, OwnerResourceGuard } from '../auth/resource-access';
+import { ClientMetadata } from '../websocket/websocket-connection-manager';
 
 export const EnforcementControllerServerFactory = Symbol('EnforcementControllerServerFactory');
 export type EnforcementControllerServerFactory = () => GitpodServerImpl;
@@ -47,7 +48,7 @@ export class EnforcementController {
             another architecture is not necessary.
         */
         const server = this.serverFactory()
-        server.initialize(undefined, user, resourceAccessGuard, {});
+        server.initialize(undefined, user, resourceAccessGuard, ClientMetadata.from(user.id), {});
         return server;
     }
 

@@ -31,7 +31,7 @@ const EVENT_CLIENT_CONTEXT_CLOSED = "EVENT_CLIENT_CONTEXT_CLOSED";
 
 /** TODO(gpl) Refine this list */
 export type WebsocketClientType = "browser" | "go-client" | "vs-code";
-export namespace WebsocketClientType {
+namespace WebsocketClientType {
     export function getClientType(req: express.Request): WebsocketClientType | undefined {
         const userAgent = req.headers["user-agent"];
 
@@ -58,9 +58,10 @@ export interface ClientMetadata {
     authLevel: WebsocketAuthenticationLevel,
     sessionId?: string;
     userId?: string;
+    type?: WebsocketClientType;
 }
 export namespace ClientMetadata {
-    export function from(userId: string | undefined, sessionId?: string): ClientMetadata {
+    export function from(userId: string | undefined, sessionId?: string, type?: WebsocketClientType): ClientMetadata {
         let id = "anonymous";
         let authLevel: WebsocketAuthenticationLevel = "anonymous";
         if (userId) {
@@ -70,24 +71,21 @@ export namespace ClientMetadata {
             id = `session-${sessionId}`;
             authLevel = "session";
         }
-        return { id, authLevel, userId, sessionId };
+        return { id, authLevel, userId, sessionId, type };
     }
 }
 
 export class WebsocketClientContext {
     constructor(
-        /**
-         * We try to be as specific as we can when identifying client connections.
-         * If we now the userId, this will be the userId. If we just have a session, this is the sessionId (prefixed by `session-`).
-         * If it's a
-         */
-        public readonly clientId: string,
-
-        public readonly authLevel: WebsocketAuthenticationLevel
+        public readonly clientMetadata: ClientMetadata,
     ) {}
 
     /** This list of endpoints serving client connections 1-1 */
     protected servers: GitpodServerImpl[] = [];
+
+    get clientId(): string {
+        return this.clientMetadata.id;
+    }
 
     addEndpoint(server: GitpodServerImpl) {
         this.servers.push(server);
@@ -124,7 +122,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             this.createProxyTarget.bind(this),
             this.createAccessGuard.bind(this),
             this.createRateLimiter.bind(this),
-            this.getClientId.bind(this),
+            this.getClientMetadata.bind(this),
         );
     }
 
@@ -167,7 +165,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
         };
 
-        gitpodServer.initialize(client, user, resourceGuard, clientHeaderFields);
+        gitpodServer.initialize(client, user, resourceGuard, clientContext.clientMetadata, clientHeaderFields);
         client.onDidCloseConnection(() => {
             gitpodServer.dispose();
             increaseApiConnectionClosedCounter();
@@ -193,25 +191,26 @@ export class WebsocketConnectionManager implements ConnectionHandler {
     }
 
     protected getOrCreateClientContext(expressReq: express.Request): WebsocketClientContext {
-        const { id: clientId, authLevel } = this.getClientId(expressReq);
-        let ctx = this.contexts.get(clientId);
+        const metadata = this.getClientMetadata(expressReq);
+        let ctx = this.contexts.get(metadata.id);
         if (!ctx) {
-            ctx = new WebsocketClientContext(clientId, authLevel);
-            this.contexts.set(clientId, ctx);
+            ctx = new WebsocketClientContext(metadata);
+            this.contexts.set(metadata.id, ctx);
             this.events.emit(EVENT_CLIENT_CONTEXT_CREATED, ctx);
         }
         return ctx;
     }
 
-    protected getClientId(req?: object): ClientMetadata {
+    protected getClientMetadata(req?: object): ClientMetadata {
         const expressReq = req as express.Request;
         const user = expressReq.user;
         const sessionId = expressReq.session?.id;
-        return ClientMetadata.from(user?.id, sessionId);
+        const type = WebsocketClientType.getClientType(expressReq);
+        return ClientMetadata.from(user?.id, sessionId, type);
     }
 
     protected createRateLimiter(req?: object): RateLimiter {
-        const { id: clientId } = this.getClientId(req);
+        const { id: clientId } = this.getClientMetadata(req);
         return {
             user: clientId,
             consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(clientId, method),
@@ -294,12 +293,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         const userId = this.clientMetadata.userId;
         try {
             // generic tracing data
-            TraceContext.addNestedTags(ctx, {
-                client: {
-                    id: this.clientMetadata.id,
-                    authLevel: this.clientMetadata.authLevel,
-                },
-            });
+            traceClientMetadata(ctx, this.clientMetadata);
             TraceContext.setOWI(ctx, {
                 userId,
                 sessionId: this.clientMetadata.sessionId,
@@ -353,4 +347,14 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         throw new ResponseError(RPCErrorCodes.InvalidRequest, "notifications are not supported");
     }
 
+}
+
+function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) {
+    TraceContext.addNestedTags(ctx, {
+        client: {
+            id: clientMetadata.id,
+            authLevel: clientMetadata.authLevel,
+            type: clientMetadata.type,
+        },
+    });
 }

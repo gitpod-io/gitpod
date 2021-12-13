@@ -40,6 +40,7 @@ import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
+import { ClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -72,8 +73,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
-    initialize(client: GitpodClient | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields): void {
-        super.initialize(client, user, accessGuard, clientHeaderFields);
+    initialize(client: GitpodClient | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientMetadata: ClientMetadata, clientHeaderFields: ClientHeaderFields): void {
+        super.initialize(client, user, accessGuard, clientMetadata, clientHeaderFields);
 
         this.listenToCreditAlerts();
         this.listenForPrebuildUpdates();
