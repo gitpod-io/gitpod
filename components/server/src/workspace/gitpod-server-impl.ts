@@ -1707,6 +1707,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = this.checkAndBlockUser("setProjectConfiguration");
         await this.guardProjectOperation(user, projectId, "update");
+
         const parseResult = this.gitpodParser.parse(configString);
         if (parseResult.validationErrors) {
             throw new Error(`This configuration could not be parsed: ${parseResult.validationErrors.join(', ')}`);
@@ -1718,6 +1719,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async updateProjectPartial(ctx: TraceContext, partialProject: PartialProject): Promise<void> {
+        traceAPIParams(ctx, {
+            // censor everything irrelevant
+            partialProject: {
+                id: partialProject.id,
+                settings: partialProject.settings,
+            }
+        });
+
         const user = this.checkUser("updateProjectPartial");
         await this.guardProjectOperation(user, partialProject.id, "update");
 

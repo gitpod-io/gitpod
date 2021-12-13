@@ -15,7 +15,6 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { PrebuildInstanceStatus } from "./Prebuilds";
 import { shortCommitMessage } from "./render-utils";
-import { Link } from "react-router-dom";
 
 export default function () {
     const history = useHistory();
@@ -81,7 +80,7 @@ export default function () {
             {!!prebuild.info.basedOnPrebuildId && <>
                 <p className="mx-2 my-auto">·</p>
                 <div className="my-auto">
-                    <p className="text-gray-500 dark:text-gray-50">Incremental Prebuild (<Link className="gp-link" title={prebuild.info.basedOnPrebuildId} to={`./${prebuild.info.basedOnPrebuildId}`}>base</Link>)</p>
+                    <p className="text-gray-500 dark:text-gray-50">Incremental Prebuild (<a className="gp-link" title={prebuild.info.basedOnPrebuildId} href={`./${prebuild.info.basedOnPrebuildId}`}>base</a>)</p>
                 </div>
             </>}
         </div>)

@@ -17,12 +17,12 @@ export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? 't/' + team.slug : 'projects';
     return [
         {
-            title: 'Configuration',
-            link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/configure`],
+            title: 'General',
+            link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/settings`],
         },
         {
-            title: 'Project',
-            link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/settings`],
+            title: 'Configuration',
+            link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/configure`],
         },
     ];
 }
@@ -82,7 +82,7 @@ export default function () {
         }
     }
 
-    return <PageWithSubMenu subMenu={getProjectSettingsMenu(project, team)} title="Settings" subtitle={`Manage settings for your project ${project?.name}`}>
+    return <PageWithSubMenu subMenu={getProjectSettingsMenu(project, team)} title="Settings" subtitle="Manage project settings and configuration">
         <h3>Incremental Prebuilds</h3>
         <CheckBox
             title={<span>Enable Incremental Prebuilds <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel></span>}
