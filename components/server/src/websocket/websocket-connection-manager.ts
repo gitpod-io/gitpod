@@ -73,6 +73,14 @@ export namespace ClientMetadata {
         }
         return { id, authLevel, userId, sessionId, type };
     }
+
+    export function fromRequest(req: any) {
+        const expressReq = req as express.Request;
+        const user = expressReq.user;
+        const sessionId = expressReq.session?.id;
+        const type = WebsocketClientType.getClientType(expressReq);
+        return ClientMetadata.from(user?.id, sessionId, type);
+    }
 }
 
 export class WebsocketClientContext {
@@ -120,19 +128,13 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         this.jsonRpcConnectionHandler = new GitpodJsonRpcConnectionHandler<GitpodApiClient>(
             this.path,
             this.createProxyTarget.bind(this),
-            this.createAccessGuard.bind(this),
-            this.createRateLimiter.bind(this),
-            this.getClientMetadata.bind(this),
+            this.rateLimiterConfig,
         );
     }
 
     public onConnection(connection: MessageConnection, session?: object) {
         increaseApiConnectionCounter();
         this.jsonRpcConnectionHandler.onConnection(connection, session);
-    }
-
-    protected createAccessGuard(request?: object): FunctionAccessGuard {
-        return (request && (request as WithFunctionAccessGuard).functionGuard) || new AllAccessFunctionGuard();
     }
 
     protected createProxyTarget(client: JsonRpcProxy<GitpodApiClient>, request?: object): GitpodServerImpl {
@@ -191,7 +193,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
     }
 
     protected getOrCreateClientContext(expressReq: express.Request): WebsocketClientContext {
-        const metadata = this.getClientMetadata(expressReq);
+        const metadata = ClientMetadata.fromRequest(expressReq);
         let ctx = this.contexts.get(metadata.id);
         if (!ctx) {
             ctx = new WebsocketClientContext(metadata);
@@ -199,22 +201,6 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             this.events.emit(EVENT_CLIENT_CONTEXT_CREATED, ctx);
         }
         return ctx;
-    }
-
-    protected getClientMetadata(req?: object): ClientMetadata {
-        const expressReq = req as express.Request;
-        const user = expressReq.user;
-        const sessionId = expressReq.session?.id;
-        const type = WebsocketClientType.getClientType(expressReq);
-        return ClientMetadata.from(user?.id, sessionId, type);
-    }
-
-    protected createRateLimiter(req?: object): RateLimiter {
-        const { id: clientId } = this.getClientMetadata(req);
-        return {
-            user: clientId,
-            consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(clientId, method),
-        }
     }
 
     public onConnectionCreated(l: (server: GitpodServerImpl, req: express.Request) => void): Disposable {
@@ -250,25 +236,34 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
     constructor(
         readonly path: string,
         readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object) => any,
-        readonly accessGuard: (request?: object) => FunctionAccessGuard,
-        readonly rateLimiterFactory: (request?: object) => RateLimiter,
-        readonly getClientId: (request?: object) => ClientMetadata,
+        readonly rateLimiterConfig: RateLimiterConfig,
     ) {
         super(path, targetFactory);
     }
 
     onConnection(connection: MessageConnection, request?: object): void {
+        const clientMetadata = ClientMetadata.fromRequest(request);
+
         const factory = new GitpodJsonRpcProxyFactory<T>(
-            this.accessGuard(request),
-            this.rateLimiterFactory(request),
-            this.getClientId(request),
+            this.createAccessGuard(request),
+            this.createRateLimiter(clientMetadata.id, request),
+            clientMetadata,
         );
         const proxy = factory.createProxy();
         factory.target = this.targetFactory(proxy, request);
         factory.listen(connection);
     }
 
+    protected createRateLimiter(clientId: string, req?: object): RateLimiter {
+        return {
+            user: clientId,
+            consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(clientId, method),
+        }
+    }
 
+    protected createAccessGuard(request?: object): FunctionAccessGuard {
+        return (request && (request as WithFunctionAccessGuard).functionGuard) || new AllAccessFunctionGuard();
+    }
 }
 
 class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T> {
