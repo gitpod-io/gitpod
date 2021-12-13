@@ -394,7 +394,7 @@ components:
     codeImage:
       imageName: "ide/code"
       stableVersion: "commit-4cf15538da2ecff8bae9245f18aa3ac6f3b90c3f"
-      insidersVersion: "commit-4cf15538da2ecff8bae9245f18aa3ac6f3b90c3f"
+      insidersVersion: "nightly"
     desktopIdeImages:
       codeDesktop:
         imageName: "ide/code-desktop"
