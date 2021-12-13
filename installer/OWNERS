@@ -3,7 +3,7 @@ options:
   no_parent_owners: true
 
 approvers:
-  - engineering-workspace
+  - engineering-self-hosted
 
 labels:
-  - "team: workspace"
+  - "team: self-hosted"
