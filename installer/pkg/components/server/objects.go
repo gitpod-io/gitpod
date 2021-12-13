@@ -6,12 +6,13 @@ package server
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/server/ide"
 )
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
-	ideconfigmap,
+	ide.Objects,
 	networkpolicy,
 	role,
 	rolebinding,
