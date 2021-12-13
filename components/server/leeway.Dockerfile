@@ -12,7 +12,7 @@ WORKDIR /app
 RUN /installer/install.sh
 
 FROM golang:1.17.2 as oci-tool-builder
-RUN go install github.com/csweichel/oci-tool@latest
+RUN go install github.com/csweichel/oci-tool@v0.1.1
 
 FROM node:16.13.0-slim
 ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
