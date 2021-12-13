@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package server
+package ide
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-func ideconfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	typeBrowser := "browser"
 	typeDesktop := "desktop"
 	idecfg := IDEConfig{
