@@ -88,9 +88,9 @@ func TestFindWorkspaces(t *testing.T) {
 					Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
 				}
 				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
-				res[4] = memoryProcEntry{P: &process{PID: 4, Parent: res[1].P, Cmdline: []string{"slirp4netns"}}}
-				res[1].P.Children = []*process{res[2].P, res[4].P}
-				res[2].P.Children = []*process{res[3].P}
+				res[4] = memoryProcEntry{P: &process{PID: 4, Parent: res[2].P, Cmdline: []string{"slirp4netns"}}}
+				res[1].P.Children = []*process{res[2].P}
+				res[2].P.Children = []*process{res[3].P, res[4].P}
 				return res
 			})(),
 			Expectation: []WorkspaceAndDepth{
