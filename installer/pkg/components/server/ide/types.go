@@ -8,16 +8,8 @@ package ide
 
 // IDEConfig RawIDEConfig interface from components/server/src/ide-config.ts
 type IDEConfig struct {
-	// Deprecated
-	IDEVersion string `json:"ideVersion"`
-	// Deprecated
-	IDEImageRepo string `json:"ideImageRepo"`
-	// Deprecated
-	IDEImageAliases map[string]string `json:"ideImageAliases"`
-	// Deprecated
-	DesktopIDEImageAliases map[string]string `json:"desktopIdeImageAliases"`
-	SupervisorImage        string            `json:"supervisorImage"`
-	IDEOptions             IDEOptions        `json:"ideOptions"`
+	SupervisorImage string     `json:"supervisorImage"`
+	IDEOptions      IDEOptions `json:"ideOptions"`
 }
 
 // IDEOptions interface from components/gitpod-protocol/src/ide-protocol.ts
