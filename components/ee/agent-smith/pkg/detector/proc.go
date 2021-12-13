@@ -377,7 +377,7 @@ func findWorkspaces(proc discoverableProcFS, p *process, d int, ws *common.Works
 
 		if len(p.Cmdline) >= 2 && p.Cmdline[0] == "/proc/self/exe" && p.Cmdline[1] == "ring1" {
 			// we've potentially found a workspacekit process, and expect it's one child to a be a supervisor process
-			if len(p.Children) == 1 {
+			if len(p.Children) > 0 {
 				c := p.Children[0]
 
 				if isSupervisor(c.Cmdline) {
