@@ -800,7 +800,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
 
     async function installMonitoring() {
         const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
-        installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "v0.0.1";
+        installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "main";
         installMonitoringSatelliteParams.pathToKubeConfig = ""
         installMonitoringSatelliteParams.satelliteNamespace = namespace
         installMonitoringSatelliteParams.clusterName = namespace
