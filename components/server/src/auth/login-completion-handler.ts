@@ -17,6 +17,8 @@ import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { trackLogin } from '../analytics';
+import { UserService } from '../user/user-service';
+import { SubscriptionService } from '@gitpod/gitpod-payment-endpoint/lib/accounting';
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -28,6 +30,8 @@ export class LoginCompletionHandler {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
+    @inject(UserService) protected readonly userService: UserService;
+    @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
 
     async complete(request: express.Request, response: express.Response, { user, returnToUrl, authHost, elevateScopes }: LoginCompletionHandler.CompleteParams) {
         const logContext = LogContext.from({ user, request });
@@ -81,6 +85,10 @@ export class LoginCompletionHandler {
 
             /* no await */ SafePromise.catchAndLog(trackLogin(user, request, authHost, this.analytics), { userId: user.id });
         }
+
+        // Check for and automatically subscribe to Professional OpenSource subscription
+        /* no await */ SafePromise.catchAndLog(this.checkForAndSubscribeToProfessionalOss(user));
+
         response.redirect(returnTo);
     }
 
@@ -97,6 +105,14 @@ export class LoginCompletionHandler {
                 }
             }
         }
+    }
+
+    protected async checkForAndSubscribeToProfessionalOss(user: User) {
+        const eligible = await this.userService.checkAutomaticOssEligibility(user);
+        if (!eligible) {
+            return;
+        }
+        await this.subscriptionService.checkAndSubscribeToOssSubscription(user, new Date());
     }
 }
 export namespace LoginCompletionHandler {

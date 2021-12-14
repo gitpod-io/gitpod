@@ -18,3 +18,4 @@ export * from './headless-workspace-log';
 export * from './context-url';
 export * from './teams-projects-protocol';
 export * from './snapshot-url';
+export * from './oss-allowlist';

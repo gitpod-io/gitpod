@@ -66,7 +66,7 @@ export class SubscriptionService {
      * @param startDate
      * @param endDate
      */
-    async subscribe(userId: string, plan: Plan, paymentReference: string | undefined, startDate: string, endDate?: string): Promise<Subscription> {
+    async subscribe(userId: string, plan: Plan, paymentReference: string | undefined, startDate: string, endDate?: string): Promise<Subscription> {
         if (!Plans.isFreePlan(plan.chargebeeId)) {
             throw new Error("subscribe only works for 'free' plans!");
         }
@@ -83,6 +83,25 @@ export class SubscriptionService {
             log.info({ userId }, 'Creating subscription', { subscription: newSubscription });
             return db.newSubscription(newSubscription);
         });
+    }
+
+    /**
+     * Subscribes the given user to the "Professional Open Source" plan if they are not already
+     * @param user
+     * @param now
+     */
+    async checkAndSubscribeToOssSubscription(user: User, now: Date): Promise<void> {
+        const userId = user.id;
+
+        // don't override but keep an existing, not-yet cancelled Prof. OSS subscription
+        const subs = await this.getNotYetCancelledSubscriptions(user, now.toISOString());
+        const uncancelledOssSub = subs.find(s => s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId && !s.cancellationDate);
+        if (uncancelledOssSub) {
+            return;
+        }
+
+        await this.subscribe(userId, Plans.FREE_OPEN_SOURCE, undefined, now.toISOString());
+        return;
     }
 
     async addCredit(userId: string, amount: number, date: string, expiryDate?: string): Promise<AccountEntry> {
@@ -118,10 +137,11 @@ export class SubscriptionService {
         for (let subscription of subscriptions) {
             if (planId === subscription.planId) {
                 if (!subscription.endDate || endDate <= subscription.endDate) {
-                    if (subscription.startDate < endDate)
-                    Subscription.cancelSubscription(subscription, endDate);
-                    else
-                    Subscription.cancelSubscription(subscription, subscription.startDate);
+                    if (subscription.startDate < endDate) {
+                        Subscription.cancelSubscription(subscription, endDate);
+                    } else {
+                        Subscription.cancelSubscription(subscription, subscription.startDate);
+                    }
                     log.info({ userId }, 'Canceling subscription', { subscription });
                     await db.storeSubscription(subscription);
                 }

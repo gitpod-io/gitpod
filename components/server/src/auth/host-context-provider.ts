@@ -13,6 +13,7 @@ export interface HostContextProvider {
     init(): Promise<void>;
     getAll(): HostContext[];
     get(hostname: string): HostContext | undefined;
+    findByAuthProviderId(authProviderId: string): HostContext | undefined;
 }
 
 
