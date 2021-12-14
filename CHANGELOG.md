@@ -1,6 +1,8 @@
 # Change Log
 
 ## December 2021
+- 1. [installer] Add a namespace for the cert-manager self-signing issuer so it can be uninstalled using the configmap. ([#6827](https://github.com/gitpod-io/gitpod/pull/6827)) - [@kylos101](https://github.com/kylos101)
+- 2. [installer] Set EnableLocalApp to true by default. ([#6827](https://github.com/gitpod-io/gitpod/pull/6827)) - [@kylos101](https://github.com/kylos101)
 - [installer]: update docker-registry to allow for pod security policy application ([#7107](https://github.com/gitpod-io/gitpod/pull/7107)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Enable self-managed GitLab instances for Teams & Projects ([#7125](https://github.com/gitpod-io/gitpod/pull/7125)) - [@AlexTugarev](https://github.com/AlexTugarev), [@laushinka](https://github.com/laushinka)
 - Update VS Code Web to 1.63 ([#7133](https://github.com/gitpod-io/gitpod/pull/7133)) - [@jeanp413](https://github.com/jeanp413)
