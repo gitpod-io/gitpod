@@ -47,6 +47,7 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
             honeycombDataset: 'preview-environments',
         },
         previewEnvironment: {
+            domain: '${params.previewDomain}',
             nodeExporterPort: ${params.nodeExporterPort},
             prometheusDNS: 'prometheus-${params.previewDomain}',
             grafanaDNS: 'grafana-${params.previewDomain}',
