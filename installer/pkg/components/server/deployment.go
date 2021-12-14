@@ -57,6 +57,22 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
+	if ctx.Config.GitHubApp.Enabled {
+		volumes = append(volumes, corev1.Volume{
+			Name: "githubapp-private-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.GitHubApp.PrivateKey.Name,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "githubapp-private-key",
+			MountPath: "/githubapp",
+			ReadOnly:  true,
+		})
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,

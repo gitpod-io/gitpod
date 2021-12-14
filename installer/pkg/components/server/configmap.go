@@ -140,6 +140,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		EnablePayment:                false,
 		InsecureNoDomain:             false,
 		ChargebeeProviderOptionsFile: "/chargebee/providerOptions",
+		GitHubApp: GitHubApp{
+			Enabled:         ctx.Config.GitHubApp.Enabled,
+			AppId:           ctx.Config.GitHubApp.AppId,
+			BaseUrl:         ctx.Config.GitHubApp.BaseUrl,
+			WebhookSecret:   ctx.Config.GitHubApp.WebhookSecret,
+			AuthProviderId:  ctx.Config.GitHubApp.AuthProviderId,
+			CertPath:        "/githubapp/githubapp-private-key.pem",
+			MarketplaceName: ctx.Config.GitHubApp.MarketplaceName,
+			LogLevel:        string(ctx.Config.GitHubApp.LogLevel),
+		},
 	}
 
 	fc, err := json.MarshalIndent(scfg, "", " ")

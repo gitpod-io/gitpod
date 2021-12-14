@@ -55,6 +55,11 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 
+	cfg.GitHubApp = GitHubApp{
+		Enabled:  false,
+		LogLevel: LogLevelInfo,
+	}
+
 	return nil
 }
 
@@ -84,6 +89,8 @@ type Config struct {
 	AuthProviders []AuthProviderConfigs `json:"authProviders" validate:"dive"`
 	BlockNewUsers BlockNewUsers         `json:"blockNewUsers"`
 	License       *ObjectRef            `json:"license,omitempty"`
+
+	GitHubApp GitHubApp `json:"gitHubApp"`
 }
 
 type Metadata struct {
@@ -263,4 +270,15 @@ type OAuth struct {
 	AuthorizationParams map[string]string `json:"authorizationParams"`
 	ConfigURL           string            `json:"configURL"`
 	ConfigFn            string            `json:"configFn"`
+}
+
+type GitHubApp struct {
+	Enabled         bool       `json:"enabled"`
+	AppId           int32      `json:"appId"`
+	BaseUrl         string     `json:"baseUrl"`
+	WebhookSecret   string     `json:"webhookSecret"`
+	AuthProviderId  string     `json:"authProviderId"`
+	PrivateKey      *ObjectRef `json:"privateKey"`
+	MarketplaceName string     `json:"marketplaceName"`
+	LogLevel        LogLevel   `json:"logLevel"`
 }
