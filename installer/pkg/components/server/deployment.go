@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -57,6 +58,23 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
+	if ctx.Config.Meta != nil && ctx.Config.Meta.GitHubApp != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "github-app-secret",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.Meta.GitHubApp.Name,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "github-app-secret",
+			MountPath: githubAppPath,
+			ReadOnly:  true,
+		})
+	}
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -84,7 +102,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						PriorityClassName:  common.SystemNodeCritical,
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
-						// todo(sje): conditionally add github-app-cert-secret in
 						// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 						Volumes: append(
 							[]corev1.Volume{
@@ -130,13 +147,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Privileged: pointer.Bool(false),
 								RunAsUser:  pointer.Int64(31001),
 							},
-							Ports: []corev1.ContainerPort{{
-								Name:          ContainerPortName,
-								ContainerPort: ContainerPort,
-							}, {
-								Name:          PrometheusPortName,
-								ContainerPort: PrometheusPort,
-							}},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          ContainerPortName,
+									ContainerPort: ContainerPort,
+								},
+								{
+									Name:          PrometheusPortName,
+									ContainerPort: PrometheusPort,
+								},
+							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: common.MergeEnv(
 								common.DefaultEnv(&ctx.Config),
@@ -161,7 +181,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Value: wsmanCfgManager,
 								}},
 							),
-							// todo(sje): conditionally add github-app-cert-secret in
 							// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 							VolumeMounts: append(
 								[]corev1.VolumeMount{

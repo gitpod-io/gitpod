@@ -79,6 +79,8 @@ type Config struct {
 
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
 
+	Meta *Meta `json:"meta,omitempty"`
+
 	Workspace Workspace `json:"workspace" validate:"required"`
 
 	AuthProviders []AuthProviderConfigs `json:"authProviders" validate:"dive"`
@@ -214,6 +216,10 @@ type WorkspaceTemplates struct {
 	ImageBuild *corev1.Pod `json:"image_build"`
 	Regular    *corev1.Pod `json:"regular"`
 	Probe      *corev1.Pod `json:"probe"`
+}
+
+type Meta struct {
+	GitHubApp *ObjectRef `json:"githubApp,omitempty"`
 }
 
 type Workspace struct {

@@ -26,6 +26,20 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		license = licenseFilePath
 	}
 
+	githubApp := GitHubApp{
+		Enabled: false,
+	}
+	if ctx.Config.Meta != nil && ctx.Config.Meta.GitHubApp != nil {
+		githubApp = GitHubApp{
+			Enabled:             true,
+			AppIdPath:           fmt.Sprintf("%s/appId", githubAppPath),
+			CertPath:            fmt.Sprintf("%s/certificate", githubAppPath),
+			MarketplaceNamePath: fmt.Sprintf("%s/marketplaceName", githubAppPath),
+			WebhookSecretPath:   fmt.Sprintf("%s/webhookSecret", githubAppPath),
+			LogLevel:            string(ctx.Config.Observability.LogLevel),
+		}
+	}
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -46,6 +60,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MaxAgeMs: 259200000,
 			Secret:   "Important!Really-Change-This-Key!", // todo(sje): how best to do this?
 		},
+		GitHubApp:            githubApp,
 		DefinitelyGpDisabled: false,
 		WorkspaceGarbageCollection: WorkspaceGarbageCollection{
 			ChunkLimit:                 1000,
@@ -63,49 +78,66 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Logo:     "/images/gitpod-ddd.svg",
 			Homepage: fmt.Sprintf("https://%s/", ctx.Config.Domain),
 			Links: BrandingLinks{
-				Header: []Link{{
-					Name: "Workspaces",
-					URL:  "/workspaces/",
-				}, {
-					Name: "Docs",
-					URL:  "https://www.gitpod.io/docs/",
-				}, {
-					Name: "Blog",
-					URL:  "https://www.gitpod.io/blog/",
-				}, {
-					Name: "Community",
-					URL:  "https://community.gitpod.io/",
-				}},
-				Footer: []Link{{
-					Name: "Docs",
-					URL:  "https://www.gitpod.io/docs/",
-				}, {
-					Name: "Blog",
-					URL:  "https://www.gitpod.io/blog/",
-				}, {
-					Name: "Status",
-					URL:  "https://status.gitpod.io/",
-				}},
-				Social: []SocialLink{{
-					Type: "GitHub",
-					URL:  "https://github.com/gitpod-io/gitpod",
-				}, {
-					Type: "Discourse",
-					URL:  "https://community.gitpod.io/",
-				}, {
-					Type: "Twitter",
-					URL:  "https://twitter.com/gitpod",
-				}},
-				Legal: []Link{{
-					Name: "Imprint",
-					URL:  "https://www.gitpod.io/imprint/",
-				}, {
-					Name: "Privacy Policy",
-					URL:  "https://www.gitpod.io/privacy/",
-				}, {
-					Name: "Terms of Service",
-					URL:  "https://www.gitpod.io/terms/",
-				}},
+				Header: []Link{
+					{
+						Name: "Workspaces",
+						URL:  "/workspaces/",
+					},
+					{
+						Name: "Docs",
+						URL:  "https://www.gitpod.io/docs/",
+					},
+					{
+						Name: "Blog",
+						URL:  "https://www.gitpod.io/blog/",
+					},
+					{
+						Name: "Community",
+						URL:  "https://community.gitpod.io/",
+					},
+				},
+				Footer: []Link{
+					{
+						Name: "Docs",
+						URL:  "https://www.gitpod.io/docs/",
+					},
+					{
+						Name: "Blog",
+						URL:  "https://www.gitpod.io/blog/",
+					},
+					{
+						Name: "Status",
+						URL:  "https://status.gitpod.io/",
+					},
+				},
+				Social: []SocialLink{
+					{
+						Type: "GitHub",
+						URL:  "https://github.com/gitpod-io/gitpod",
+					},
+					{
+						Type: "Discourse",
+						URL:  "https://community.gitpod.io/",
+					},
+					{
+						Type: "Twitter",
+						URL:  "https://twitter.com/gitpod",
+					},
+				},
+				Legal: []Link{
+					{
+						Name: "Imprint",
+						URL:  "https://www.gitpod.io/imprint/",
+					},
+					{
+						Name: "Privacy Policy",
+						URL:  "https://www.gitpod.io/privacy/",
+					},
+					{
+						Name: "Terms of Service",
+						URL:  "https://www.gitpod.io/terms/",
+					},
+				},
 			},
 		},
 		MaxEnvvarPerUserCount:             4048,

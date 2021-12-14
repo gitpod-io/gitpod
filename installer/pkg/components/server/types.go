@@ -130,14 +130,17 @@ type WorkspaceGarbageCollection struct {
 }
 
 type GitHubApp struct {
-	Enabled         bool   `json:"enabled"`
-	AppId           int32  `json:"appId"`
-	BaseUrl         string `json:"baseUrl"`
-	WebhookSecret   string `json:"webhookSecret"`
-	AuthProviderId  string `json:"authProviderId"`
-	CertPath        string `json:"certPath"`
-	MarketplaceName string `json:"marketplaceName"`
-	LogLevel        string `json:"logLevel"`
+	Enabled             bool   `json:"enabled"`
+	AppId               int32  `json:"appId"`
+	AppIdPath           string `json:"appIdPath"`
+	BaseUrl             string `json:"baseUrl"`
+	WebhookSecret       string `json:"webhookSecret"`
+	WebhookSecretPath   string `json:"webhookSecretPath"`
+	AuthProviderId      string `json:"authProviderId"`
+	CertPath            string `json:"certPath"`
+	MarketplaceName     string `json:"marketplaceName"`
+	MarketplaceNamePath string `json:"marketplaceNamePath"`
+	LogLevel            string `json:"logLevel"`
 }
 
 type Session struct {

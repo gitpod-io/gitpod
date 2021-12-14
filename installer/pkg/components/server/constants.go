@@ -12,6 +12,7 @@ const (
 	Component          = common.ServerComponent
 	ContainerPort      = 3000
 	ContainerPortName  = "http"
+	githubAppPath      = "/gitpod/github-app"
 	licenseFilePath    = "/gitpod/license"
 	PrometheusPort     = 9500
 	PrometheusPortName = "metrics"
