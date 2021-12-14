@@ -55,6 +55,8 @@ import { TeamDBImpl } from './typeorm/team-db-impl';
 import { ProjectDB } from './project-db';
 import { ProjectDBImpl } from './typeorm/project-db-impl';
 import { EntityManager } from 'typeorm';
+import { OssAllowListDB } from './oss-allowlist-db';
+import { OssAllowListDBImpl } from './typeorm/oss-allowlist-db-impl';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -135,4 +137,5 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
     bind(EMailDB).to(TypeORMEMailDBImpl).inSingletonScope();
     bind(LicenseDB).to(LicenseDBImpl).inSingletonScope();
+    bind(OssAllowListDB).to(OssAllowListDBImpl).inSingletonScope();
 });

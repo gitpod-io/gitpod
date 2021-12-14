@@ -127,6 +127,10 @@ export class HostContextProviderImpl implements HostContextProvider {
         return hostContext;
     }
 
+    findByAuthProviderId(authProviderId: string): HostContext | undefined {
+        return this.getAll().find(h => h.authProvider.authProviderId === authProviderId);
+    }
+
     static createHostContext(parentContainer: interfaces.Container, authProviderConfig: AuthProviderParams): HostContext | undefined {
         const container = parentContainer.createChild();
         container.bind(AuthProviderParams).toConstantValue(authProviderConfig);

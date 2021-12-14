@@ -27,9 +27,7 @@ export class DeletedEntryGC implements Disposable {
 
         console.info(`Deleted Entries GC enabled (running every ${cfg.intervalMS/(60*1000)} minutes)`);
         this.disposables.push(
-            repeat(() => {
-                this.gc().catch(e => console.error("error while removing deleted entries", e));
-            }, cfg.intervalMS)
+            repeat(() => this.gc().catch(e => console.error("error while removing deleted entries", e)), cfg.intervalMS)
         );
     }
 
@@ -59,6 +57,7 @@ const tables: TableWithDeletion[] = [
     { deletionColumn: "deleted", name: "d_b_team_membership_invite" },
     { deletionColumn: "deleted", name: "d_b_project" },
     { deletionColumn: "deleted", name: "d_b_prebuild_info" },
+    { deletionColumn: "deleted", name: "d_b_oss_allowlist" },
 ];
 
 interface TableWithDeletion {
