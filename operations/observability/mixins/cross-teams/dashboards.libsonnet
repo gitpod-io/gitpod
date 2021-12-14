@@ -13,5 +13,6 @@
     // Import raw json files here.
     // Example:
     // 'my-new-dashboard.json': (import 'dashboards/components/new-component.json'),
+    'gitpod-cluster-autoscaler-k3s.json': (import 'dashboards/gitpod-cluster-autoscaler-k3s.json'),
   },
 }
