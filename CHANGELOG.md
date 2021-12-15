@@ -1,6 +1,10 @@
 # Change Log
 
 ## December 2021
+- [installer]: separate server and IDE components ([#7200](https://github.com/gitpod-io/gitpod/pull/7200)) - [@MrSimonEmms](https://github.com/MrSimonEmms), [@iQQBot](https://github.com/iQQBot)
+- [installer]: correct the starts_with validation on the config ([#7206](https://github.com/gitpod-io/gitpod/pull/7206)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Allow enabling/disabling Incremental Prebuilds in Project Settings ([#7031](https://github.com/gitpod-io/gitpod/pull/7031)) - [@jankeromnes](https://github.com/jankeromnes)
+- Also improve Prebuild Logs UX (show incremental status, format duration nicely, correctly show 'timed out' status) ([#7031](https://github.com/gitpod-io/gitpod/pull/7031)) - [@jankeromnes](https://github.com/jankeromnes)
 - 1. [installer] Add a namespace for the cert-manager self-signing issuer so it can be uninstalled using the configmap. ([#6827](https://github.com/gitpod-io/gitpod/pull/6827)) - [@kylos101](https://github.com/kylos101)
 - 2. [installer] Set EnableLocalApp to true by default. ([#6827](https://github.com/gitpod-io/gitpod/pull/6827)) - [@kylos101](https://github.com/kylos101)
 - [installer]: update docker-registry to allow for pod security policy application ([#7107](https://github.com/gitpod-io/gitpod/pull/7107)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
