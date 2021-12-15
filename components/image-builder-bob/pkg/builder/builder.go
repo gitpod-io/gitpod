@@ -138,7 +138,7 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 		// "--debug",
 		"build",
 		"--progress=plain",
-		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true",
+		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true,compression=estargz",
 		//"--export-cache=type=inline",
 		"--local=context=" + contextdir,
 		//"--export-cache=type=registry,ref=" + target + "-cache",
