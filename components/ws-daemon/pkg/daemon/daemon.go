@@ -61,7 +61,8 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 
 	if config.ContainerRootfsQuota != 0 {
 		listener = append(listener, &ContainerRootFSQuotaEnforcer{
-			Quota: config.ContainerRootfsQuota,
+			Quota:       config.ContainerRootfsQuota,
+			WorkingArea: config.Content.WorkingArea,
 		})
 	}
 
