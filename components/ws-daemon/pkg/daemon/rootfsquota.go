@@ -7,6 +7,7 @@ package daemon
 import (
 	"context"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
@@ -42,6 +43,8 @@ func (c *ContainerRootFSQuotaEnforcer) WorkspaceAdded(ctx context.Context, ws *d
 	if err != nil {
 		return xerrors.Errorf("cannot enforce rootfs quota: %w", err)
 	}
+
+	log.WithField("location", loc).WithField("quota", c.Quota).Info("quopta for workspace root FS created")
 
 	return nil
 }
