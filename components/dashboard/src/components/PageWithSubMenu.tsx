@@ -27,7 +27,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
                 <ul className="flex flex-col text tracking-wide text-gray-500 pt-4 lg:pt-0 w-48 space-y-2">
                     {p.subMenu.map(e => {
                         let classes = "flex block py-2 px-4 rounded-md";
-                        if (e.link.some(l => l.toLocaleLowerCase() === location.pathname)) {
+                        if (e.link.some(l => l === location.pathname)) {
                             classes += " bg-gray-800 text-gray-50";
                         } else {
                             classes += " hover:bg-gray-100 dark:hover:bg-gray-800";
