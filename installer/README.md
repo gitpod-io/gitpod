@@ -439,6 +439,25 @@ data:
   tls.key: xxx
 ```
 
+## How can I install to a Kubernetes namespace?
+
+By default, Gitpod will be installed to the `default`
+[Kubernetes namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces).
+To install to a different namespace, pass a `namespace` flag to the `render`
+command.
+
+```shell
+./installer render --config gitpod.config.yaml --namespace gitpod > gitpod.yaml
+```
+
+**IMPORTANT**: this does not create the namespace, so you will need to create
+that separately. This is so that uninstallation of Gitpod does not remove any
+Kubernetes objects, such as your TLS certificate or connection secrets.
+
+```shell
+kubectl create namespace gitpod
+```
+
 # Todo
 
 PRs/comments welcome
