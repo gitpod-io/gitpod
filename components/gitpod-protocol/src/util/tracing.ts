@@ -8,7 +8,7 @@
 import * as opentracing from 'opentracing';
 import { TracingConfig, initTracerFromEnv } from 'jaeger-client';
 import { Sampler, SamplingDecision } from './jaeger-client-types';
-import { initGlobalTracer } from 'opentracing';
+import { followsFrom, initGlobalTracer } from 'opentracing';
 import { injectable } from 'inversify';
 import { ResponseError } from 'vscode-jsonrpc';
 import { log, LogContext } from './logging';
@@ -22,13 +22,15 @@ export type TraceContextWithSpan = TraceContext & {
 
 
 export namespace TraceContext {
-    export function startSpan(operation: string, parentCtx?: TraceContext): opentracing.Span {
-        let options: opentracing.SpanOptions | undefined = undefined;
+    export function startSpan(operation: string, parentCtx?: TraceContext, ...referencedSpans: (opentracing.Span | opentracing.SpanContext | undefined)[]): opentracing.Span {
+        const options: opentracing.SpanOptions = {};
         if (parentCtx) {
-            options = {
-                childOf: parentCtx.span
-            };
+            options.childOf = parentCtx.span;
         }
+        if (referencedSpans) {
+            options.references = referencedSpans.filter(s => s !== undefined).map(s => followsFrom(s!));
+        }
+
         return opentracing.globalTracer().startSpan(operation, options);
     }
 

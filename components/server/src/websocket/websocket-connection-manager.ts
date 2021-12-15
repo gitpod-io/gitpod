@@ -244,10 +244,21 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
     onConnection(connection: MessageConnection, request?: object): void {
         const clientMetadata = ClientMetadata.fromRequest(request);
 
+        // trace the ws connection itself
+        const span = opentracing.globalTracer().startSpan("ws-connection");
+        const ctx = { span };
+        traceClientMetadata(ctx, clientMetadata);
+        TraceContext.setOWI(ctx, {
+            userId: clientMetadata.userId,
+            sessionId: clientMetadata.sessionId,
+        });
+        connection.onClose(() => span.finish());
+
         const factory = new GitpodJsonRpcProxyFactory<T>(
             this.createAccessGuard(request),
             this.createRateLimiter(clientMetadata.id, request),
             clientMetadata,
+            ctx,
         );
         const proxy = factory.createProxy();
         factory.target = this.targetFactory(proxy, request);
@@ -272,6 +283,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         protected readonly accessGuard: FunctionAccessGuard,
         protected readonly rateLimiter: RateLimiter,
         protected readonly clientMetadata: ClientMetadata,
+        protected readonly connectionCtx: TraceContext,
     ) {
         super();
     }
@@ -283,7 +295,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             increaseApiCallUserCounter(method, "anonymous");
         }
 
-        const span = opentracing.globalTracer().startSpan(method);
+        const span = TraceContext.startSpan(method, undefined, this.connectionCtx.span);
         const ctx = { span };
         const userId = this.clientMetadata.userId;
         try {
