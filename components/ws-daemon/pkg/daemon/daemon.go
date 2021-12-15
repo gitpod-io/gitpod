@@ -46,17 +46,26 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	if nodename == "" {
 		return nil, xerrors.Errorf("NODENAME env var isn't set")
 	}
+
 	cgCustomizer := &CgroupCustomizer{}
 	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupsBasePath)
 	markUnmountFallback, err := NewMarkUnmountFallback(reg)
 	if err != nil {
 		return nil, err
 	}
-	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
+	listener := []dispatch.Listener{
 		resources.NewDispatchListener(&config.Resources, reg),
 		cgCustomizer,
 		markUnmountFallback,
-	)
+	}
+
+	if config.ContainerRootfsQuota != 0 {
+		listener = append(listener, &ContainerRootFSQuotaEnforcer{
+			Quota: config.ContainerRootfsQuota,
+		})
+	}
+
+	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
 	if err != nil {
 		return nil, err
 	}

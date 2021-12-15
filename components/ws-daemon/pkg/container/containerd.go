@@ -412,9 +412,16 @@ func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContai
 	// We can't get the rootfs location on the node from containerd somehow.
 	// As a workaround we'll look at the node's mount table using the snapshotter key.
 	// This feels brittle and we should keep looking for a better way.
-	mnt, err := s.Mounts.GetMountpoint(func(mountPoint string) bool {
+	matcher := func(mountPoint string) bool {
 		return strings.Contains(mountPoint, info.SnapshotKey)
-	})
+	}
+
+	var mnt string
+	if opts.UpperDir {
+		mnt, err = s.Mounts.GetUpperdir(matcher)
+	} else {
+		mnt, err = s.Mounts.GetMountpoint(matcher)
+	}
 	if err != nil {
 		return
 	}

@@ -66,4 +66,8 @@ type ID string
 // OptsContainerRootfs provides options for the ContainerRootfs function
 type OptsContainerRootfs struct {
 	Unmapped bool
+
+	// UpperDir selects the upperdir of the rootfs, rather than the rootfs mountpoint itself.
+	// If the container's rootfs is not an overlayfs, an error is returned.
+	UpperDir bool
 }

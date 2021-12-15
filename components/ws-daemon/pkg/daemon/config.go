@@ -10,6 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 )
 
@@ -18,11 +19,12 @@ type Config struct {
 	Runtime         RuntimeConfig         `json:"runtime"`
 	ReadinessSignal ReadinessSignalConfig `json:"readiness"`
 
-	Content        content.Config      `json:"content"`
-	Uidmapper      iws.UidmapperConfig `json:"uidmapper"`
-	Resources      resources.Config    `json:"resources"`
-	Hosts          hosts.Config        `json:"hosts"`
-	DiskSpaceGuard diskguard.Config    `json:"disk"`
+	Content              content.Config      `json:"content"`
+	Uidmapper            iws.UidmapperConfig `json:"uidmapper"`
+	Resources            resources.Config    `json:"resources"`
+	Hosts                hosts.Config        `json:"hosts"`
+	DiskSpaceGuard       diskguard.Config    `json:"disk"`
+	ContainerRootfsQuota quota.Size          `json:"containerRootfsQuota"`
 }
 
 type RuntimeConfig struct {
