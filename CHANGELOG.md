@@ -1,6 +1,10 @@
 # Change Log
 
 ## December 2021
+- Fix Team Workspace Success Criteria dashboard ([#7354](https://github.com/gitpod-io/gitpod/pull/7354)) - [@kylos101](https://github.com/kylos101)
+- Allow auth provider secrets to be passed in via a secret ([#7177](https://github.com/gitpod-io/gitpod/pull/7177)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Profile of the user who already added a project is linked. ([#7312](https://github.com/gitpod-io/gitpod/pull/7312)) - [@laushinka](https://github.com/laushinka)
+- Update GoLand IDE image to version 213.6461.23. ([#7327](https://github.com/gitpod-io/gitpod/pull/7327)) - [@roboquat](https://github.com/roboquat)
 - Allow setting a name and a description for each port on .gitpod.yml ([#7012](https://github.com/gitpod-io/gitpod/pull/7012)) - [@felladrin](https://github.com/felladrin)
 - Mention username who added project in a team ([#5128](https://github.com/gitpod-io/gitpod/pull/5128)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Enables bitbucket.org repositories in Teams & Projects ([#7251](https://github.com/gitpod-io/gitpod/pull/7251)) - [@AlexTugarev](https://github.com/AlexTugarev)

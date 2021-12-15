@@ -540,6 +540,20 @@ func (mr *MockAPIInterfaceMockRecorder) GuessGitTokenScopes(ctx, params interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GuessGitTokenScopes", reflect.TypeOf((*MockAPIInterface)(nil).GuessGitTokenScopes), ctx, params)
 }
 
+// TrackEvent indicates an expected call of TrackEvent.
+func (m *MockAPIInterface) TrackEvent(ctx context.Context, params *RemoteTrackMessage) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TrackEvent", ctx, params)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TrackEvent indicates an expected call of TrackEvent.
+func (mr *MockAPIInterfaceMockRecorder) TrackEvent(ctx, params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GuessGitTokenScopes", reflect.TypeOf((*MockAPIInterface)(nil).TrackEvent), ctx, params)
+}
+
 // HasPermission mocks base method.
 func (m *MockAPIInterface) HasPermission(ctx context.Context, permission *PermissionName) (bool, error) {
 	m.ctrl.T.Helper()

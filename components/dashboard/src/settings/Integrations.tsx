@@ -291,15 +291,15 @@ function GitProviders() {
                     </ItemFieldIcon>
                     <ItemField className="w-4/12 xl:w-3/12 flex flex-col my-auto">
                         <span className="my-auto font-medium truncate overflow-ellipsis">{ap.authProviderType}</span>
-                        <span className="text-sm my-auto text-gray-400 truncate overflow-ellipsis">{ap.host}</span>
+                        <span className="text-sm my-auto text-gray-400 truncate overflow-ellipsis dark:text-gray-500">{ap.host}</span>
                     </ItemField>
                     <ItemField className="w-6/12 xl:w-3/12 flex flex-col my-auto">
-                        <span className="my-auto truncate text-gray-500 overflow-ellipsis">{getUsername(ap.authProviderId) || "–"}</span>
-                        <span className="text-sm my-auto text-gray-400">Username</span>
+                        <span className="my-auto truncate text-gray-500 overflow-ellipsis dark:text-gray-400">{getUsername(ap.authProviderId) || "–"}</span>
+                        <span className="text-sm my-auto text-gray-400 dark:text-gray-500">Username</span>
                     </ItemField>
                     <ItemField className="hidden xl:w-5/12 xl:flex xl:flex-col my-auto">
-                        <span className="my-auto truncate text-gray-500 overflow-ellipsis">{getPermissions(ap.authProviderId)?.join(", ") || "–"}</span>
-                        <span className="text-sm my-auto text-gray-400">Permissions</span>
+                        <span className="my-auto truncate text-gray-500 overflow-ellipsis dark:text-gray-400">{getPermissions(ap.authProviderId)?.join(", ") || "–"}</span>
+                        <span className="text-sm my-auto text-gray-400 dark:text-gray-500">Permissions</span>
                     </ItemField>
                     <ItemFieldContextMenu menuEntries={gitProviderMenu(ap)} />
                 </Item>
@@ -375,7 +375,7 @@ function GitIntegrations() {
         <div className="flex items-start sm:justify-between mb-2">
             <div>
                 <h3>Git Integrations</h3>
-                <h2 className="text-gray-500">Manage Git integrations for GitLab or GitHub self-hosted instances.</h2>
+                <h2>Manage Git integrations for GitLab or GitHub self-hosted instances.</h2>
             </div>
             {providers.length !== 0
                 ?

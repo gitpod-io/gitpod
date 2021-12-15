@@ -82,6 +82,7 @@ type APIInterface interface {
 	InstallUserPlugins(ctx context.Context, params *InstallPluginsParams) (res bool, err error)
 	UninstallUserPlugin(ctx context.Context, params *UninstallPluginParams) (res bool, err error)
 	GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error)
+	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 }
@@ -204,6 +205,8 @@ const (
 	FunctionUninstallUserPlugin FunctionName = "uninstallUserPlugin"
 	// FunctionGuessGitTokenScopes is the name of the guessGitTokenScopes function
 	FunctionGuessGitTokenScope FunctionName = "guessGitTokenScopes"
+	// FunctionTrackEvent is the name of the trackEvent function
+	FunctionTrackEvent FunctionName = "trackEvent"
 
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
 	FunctionOnInstanceUpdate = "onInstanceUpdate"
@@ -1457,6 +1460,19 @@ func (gp *APIoverJSONRPC) GuessGitTokenScopes(ctx context.Context, params *Guess
 	return
 }
 
+// TrackEvent calls trackEvent on the server
+func (gp *APIoverJSONRPC) TrackEvent(ctx context.Context, params *RemoteTrackMessage) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+
+	_params = append(_params, params)
+	err = gp.C.Call(ctx, "trackEvent", _params, nil)
+	return
+}
+
 // PermissionName is the name of a permission
 type PermissionName string
 
@@ -2028,6 +2044,11 @@ type GitToken struct {
 type GuessedGitTokenScopes struct {
 	Scopes  []string `json:"scopes,omitempty"`
 	Message string   `json:"message,omitempty"`
+}
+
+type RemoteTrackMessage struct {
+	Event      string      `json:"event,omitempty"`
+	Properties interface{} `json:"properties,omitempty"`
 }
 
 // BrandingLink is the BrandingLink message type
