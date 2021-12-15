@@ -22,13 +22,14 @@ export type TraceContextWithSpan = TraceContext & {
 
 
 export namespace TraceContext {
-    export function startSpan(operation: string, parentCtx?: TraceContext, ...referencedSpans: (opentracing.Span | opentracing.SpanContext | undefined)[]): opentracing.Span {
+    export function startSpan(operation: string, parentCtx?: TraceContext, ...referencedSpans: (opentracing.Span | undefined)[]): opentracing.Span {
         const options: opentracing.SpanOptions = {};
         if (parentCtx) {
             options.childOf = parentCtx.span;
         }
         if (referencedSpans) {
-            options.references = referencedSpans.filter(s => s !== undefined).map(s => followsFrom(s!));
+            // note: allthough followsForm's type says it takes 'opentracing.Span | opentracing.SpanContext', it only works with SpanContext (typing mismatch)
+            options.references = referencedSpans.filter(s => s !== undefined).map(s => followsFrom(s!.context()));
         }
 
         return opentracing.globalTracer().startSpan(operation, options);
