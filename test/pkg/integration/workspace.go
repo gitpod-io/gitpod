@@ -240,6 +240,10 @@ func LaunchWorkspaceFromContextURL(ctx context.Context, contextURL string, usern
 		return nil, nil, xerrors.Errorf("CreateWorkspace did not start the workspace")
 	}
 
+	// GetWorkspace might receive an instance before we seen the first event
+	// from ws-manager, in which case IdeURL is not set
+	nfo.LatestInstance.IdeURL = resp.WorkspaceURL
+
 	stopWs := func(waitForStop bool) {
 		sctx, scancel := context.WithTimeout(ctx, perCallTimeout)
 		_ = server.StopWorkspace(sctx, resp.CreatedWorkspaceID)
