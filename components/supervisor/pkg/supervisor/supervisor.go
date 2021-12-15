@@ -190,6 +190,13 @@ func Run(options ...RunOption) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+
+	internalPorts := []uint32{uint32(cfg.IDEPort), uint32(cfg.APIEndpointPort), uint32(cfg.SSHPort)}
+	desktopIDEPort := uint32(24000)
+	if cfg.DesktopIDE != nil {
+		internalPorts = append(internalPorts, desktopIDEPort)
+	}
+
 	var (
 		shutdown                           = make(chan ShutdownReason, 1)
 		ideReady                           = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
@@ -205,9 +212,7 @@ func Run(options ...RunOption) {
 			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
 			tunneledPortsService,
 			slirp,
-			uint32(cfg.IDEPort),
-			uint32(cfg.APIEndpointPort),
-			uint32(cfg.SSHPort),
+			internalPorts...,
 		)
 		termMux             = terminal.NewMux()
 		termMuxSrv          = terminal.NewMuxTerminalService(termMux)
