@@ -33,6 +33,9 @@ pod:
     hostPath:
       path: /mnt/disks/ssd0/go-build-cache
       type: DirectoryOrCreate
+  - name: harvester-kubeconfig
+    secret:
+      secretName: harvester-kubeconfig
   # - name: deploy-key
   #   secret:
   #     secretName: deploy-key
@@ -77,6 +80,8 @@ pod:
     - name: go-build-cache
       mountPath: /go-build-cache
       readOnly: false
+    - name: harvester-kubeconfig
+      mountPath: /mnt/secrets/harvester-kubeconfig
     # - name: deploy-key
     #   mountPath: /mnt/secrets/deploy-key
     #   readOnly: true

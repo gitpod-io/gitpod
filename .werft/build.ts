@@ -14,6 +14,7 @@ import { createHash } from "crypto";
 import { InstallMonitoringSatelliteParams, installMonitoringSatellite, observabilityStaticChecks } from './observability/monitoring-satellite';
 import { SpanStatusCode } from '@opentelemetry/api';
 import * as Tracing from './observability/tracing'
+import * as VM from './vm/vm'
 
 // Will be set once tracing has been initialized
 let werft: Werft
@@ -58,6 +59,7 @@ const phases = {
     PREDEPLOY: 'predeploy',
     DEPLOY: 'deploy',
     TRIGGER_INTEGRATION_TESTS: 'trigger integration tests',
+    VM: 'vm'
 }
 
 // Werft slices for deploy phase via installer
@@ -72,6 +74,10 @@ const installerSlices = {
     INSTALLER_POST_PROCESSING: "installer post processing",
     APPLY_INSTALL_MANIFESTS: "installer apply",
     DEPLOYMENT_WAITING: "monitor server deployment"
+}
+
+const vmSlices = {
+    BOOT_VM: 'Booting VM'
 }
 
 export function parseVersion(context) {
@@ -142,6 +148,7 @@ export async function build(context, version) {
     const withPayment= "with-payment" in buildConfig;
     const withObservability = "with-observability" in buildConfig;
     const withHelm = "with-helm" in buildConfig;
+    const withVM = "with-vm" in buildConfig;
 
     const jobConfig = {
         buildConfig,
@@ -282,6 +289,23 @@ export async function build(context, version) {
         withPayment,
         withObservability,
     };
+
+    if (withVM) {
+        werft.phase(phases.VM, "Start VM");
+
+        if (!VM.vmExists({ name: destname })) {
+            werft.log(vmSlices.BOOT_VM, 'Starting VM')
+            VM.startVM({ name: destname })
+        } else {
+            werft.log(vmSlices.BOOT_VM, 'VM already exists')
+        }
+
+        werft.log(vmSlices.BOOT_VM, 'Waiting for VM to be ready')
+        VM.waitForVM({ name: destname, timeoutMS: 1000 * 60 * 3 })
+
+        werft.done(phases.VM)
+        return
+    }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
     // the context namespace is not set at this point
