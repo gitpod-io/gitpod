@@ -66,13 +66,13 @@ data:
 
 {{- if not .Values.components.ideProxy.disabled }}
   vhost.ide: |
-    https://ide-proxy.{$GITPOD_DOMAIN} {
+    https://ide.{$GITPOD_DOMAIN} {
       import enable_log_debug
       import remove_server_header
       import ssl_configuration
 
       reverse_proxy  {
-        to ide.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:{{.Values.components.ideProxy.ports.http.servicePort}}
+        to ide-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:{{.Values.components.ideProxy.ports.http.servicePort}}
       }
     }
 {{- end }}

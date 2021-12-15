@@ -46,13 +46,13 @@ options:
     orderKey: "00"
     title: "VS Code"
     type: "browser"
-    logo: "vscode"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscode.svg"
     image: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
   code-latest:
     orderKey: "01"
     title: "VS Code"
     type: "browser"
-    logo: "vscode-insiders"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscodeInsiders.svg"
     tooltip: "Early access version, still subject to testing."
     label: "Insiders"
     image: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
@@ -63,13 +63,13 @@ options:
     orderKey: "02"
     title: "VS Code"
     type: "desktop"
-    logo: "vscode"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscode.svg"
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktop)) }}
   code-desktop-insiders:
     orderKey: "03"
     title: "VS Code"
     type: "desktop"
-    logo: "vscode-insiders"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscodeInsiders.svg"
     tooltip: "Visual Studio Code Insiders for early adopters."
     label: "Insiders"
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktopInsiders)) }}
@@ -77,28 +77,28 @@ options:
     orderKey: "04"
     title: "IntelliJ IDEA"
     type: "desktop"
-    logo: "intellij-idea"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/intellijIdeaLogo.svg"
     notes: ["While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
   goland:
     orderKey: "05"
     title: "GoLand"
     type: "desktop"
-    logo: "goland"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/golandLogo.svg"
     notes: ["While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
   pycharm:
     orderKey: "06"
     title: "PyCharm"
     type: "desktop"
-    logo: "https://upload.wikimedia.org/wikipedia/commons/1/1d/PyCharm_Icon.svg"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/pycharmLogo.svg"
     notes: ["While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
   phpstorm:
     orderKey: "07"
     title: "PhpStorm"
     type: "desktop"
-    logo: "https://upload.wikimedia.org/wikipedia/commons/c/c9/PhpStorm_Icon.svg"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/phpstormLogo.svg"
     notes: ["While in beta, when you open a workspace with PhpStorm you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
 
