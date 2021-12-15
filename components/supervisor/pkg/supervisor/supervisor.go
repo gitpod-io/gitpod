@@ -65,6 +65,7 @@ const (
 var (
 	additionalServices []RegisterableService
 	apiEndpointOpts    []grpc.ServerOption
+	Version            = ""
 )
 
 // RegisterAdditionalService registers additional services for the API endpoint
@@ -387,6 +388,11 @@ func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.API
 	gitpodService, err := gitpod.ConnectToServer(endpoint, gitpod.ConnectToServerOpts{
 		Token: tknres.Token,
 		Log:   log.Log,
+		ExtraHeaders: map[string]string{
+			"User-Agent":              "gitpod/supervisor",
+			"X-Workspace-Instance-Id": cfg.WorkspaceInstanceID,
+			"X-Client-Version":        Version,
+		},
 	})
 	if err != nil {
 		log.WithError(err).Error("cannot connect to Gitpod API")

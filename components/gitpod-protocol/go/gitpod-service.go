@@ -218,6 +218,7 @@ type ConnectToServerOpts struct {
 	Log                 *logrus.Entry
 	ReconnectionHandler func()
 	CloseHandler        func(error)
+	ExtraHeaders        map[string]string
 }
 
 // ConnectToServer establishes a new websocket connection to the server
@@ -241,6 +242,9 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 
 	reqHeader := http.Header{}
 	reqHeader.Set("Origin", origin)
+	for k, v := range opts.ExtraHeaders {
+		reqHeader.Set(k, v)
+	}
 	if opts.Token != "" {
 		reqHeader.Set("Authorization", "Bearer "+opts.Token)
 	}
