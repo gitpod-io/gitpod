@@ -72,11 +72,14 @@ export interface ConfigSerialized {
     githubApp?: {
         enabled: boolean;
         appId: number;
+        appIdPath?: string;
         baseUrl?: string;
         webhookSecret: string;
+        webhookSecretPath?: string;
         authProviderId: string;
         certPath: string;
         marketplaceName: string;
+        marketplaceNamePath?: string
     };
 
     definitelyGpDisabled: boolean;
@@ -184,6 +187,17 @@ export namespace ConfigFile {
         const licenseFile = config.licenseFile
         if (licenseFile) {
             license = fs.readFileSync(licenseFile, "utf-8")
+        }
+        if (config.githubApp) {
+            if (config.githubApp.appIdPath) {
+                config.githubApp.appId = Number(fs.readFileSync(config.githubApp.appIdPath, 'utf-8'));
+            }
+            if (config.githubApp.webhookSecretPath) {
+                config.githubApp.webhookSecret = fs.readFileSync(config.githubApp.webhookSecretPath, 'utf-8');
+            }
+            if (config.githubApp.marketplaceNamePath) {
+                config.githubApp.marketplaceName = fs.readFileSync(config.githubApp.marketplaceNamePath, 'utf-8');
+            }
         }
         return {
             ...config,
