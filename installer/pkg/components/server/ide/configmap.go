@@ -19,6 +19,9 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	getIdeLogoPath := func(name string) string {
+		return fmt.Sprintf("https://ide.%s/image/ide-logo/%s.svg", ctx.Config.Domain, name)
+	}
 	typeBrowser := "browser"
 	typeDesktop := "desktop"
 	idecfg := IDEConfig{
@@ -29,14 +32,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					OrderKey: pointer.String("00"),
 					Title:    "VS Code",
 					Type:     typeBrowser,
-					Logo:     "vscode",
+					Logo:     getIdeLogoPath("vscode"),
 					Image:    common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
 				},
 				"code-latest": {
 					OrderKey:           pointer.String("01"),
 					Title:              "VS Code",
 					Type:               typeBrowser,
-					Logo:               "vscode-insiders",
+					Logo:               getIdeLogoPath("vscodeInsiders"),
 					Tooltip:            pointer.String("Early access version, still subject to testing."),
 					Label:              pointer.String("Insiders"),
 					Image:              common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
@@ -46,14 +49,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					OrderKey: pointer.String("02"),
 					Title:    "VS Code",
 					Type:     typeDesktop,
-					Logo:     "vscode",
+					Logo:     getIdeLogoPath("vscode"),
 					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
 				},
 				"code-desktop-insiders": {
 					OrderKey: pointer.String("03"),
 					Title:    "VS Code",
 					Type:     typeDesktop,
-					Logo:     "vscode-insiders",
+					Logo:     getIdeLogoPath("vscodeInsiders"),
 					Tooltip:  pointer.String("Visual Studio Code Insiders for early adopters."),
 					Label:    pointer.String("Insiders"),
 					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
@@ -62,7 +65,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					OrderKey: pointer.String("04"),
 					Title:    "IntelliJ IDEA",
 					Type:     typeDesktop,
-					Logo:     "intellij-idea",
+					Logo:     getIdeLogoPath("intellijIdeaLogo"),
 					Notes:    []string{"While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
 				},
@@ -70,7 +73,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					OrderKey: pointer.String("05"),
 					Title:    "GoLand",
 					Type:     typeDesktop,
-					Logo:     "goland",
+					Logo:     getIdeLogoPath("golandLogo"),
 					Notes:    []string{"While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
 				},
@@ -78,7 +81,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					OrderKey: pointer.String("06"),
 					Title:    "PyCharm",
 					Type:     typeDesktop,
-					Logo:     "https://upload.wikimedia.org/wikipedia/commons/1/1d/PyCharm_Icon.svg", // TODO(clu): Serve logo from our own components instead of using this wikimedia URL.
+					Logo:     getIdeLogoPath("pycharmLogo"),
 					Notes:    []string{"While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
 				},
@@ -86,7 +89,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					OrderKey: pointer.String("07"),
 					Title:    "PhpStorm",
 					Type:     typeDesktop,
-					Logo:     "https://upload.wikimedia.org/wikipedia/commons/c/c9/PhpStorm_Icon.svg", // TODO(clu): Serve logo from our own components instead of using this wikimedia URL.
+					Logo:     getIdeLogoPath("phpstormLogo"),
 					Notes:    []string{"While in beta, when you open a workspace with PhpStorm you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
 				},
