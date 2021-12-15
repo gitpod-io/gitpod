@@ -31,14 +31,16 @@ export class AuthProviderService {
         const transformed = all.map(this.toAuthProviderParams.bind(this));
 
         // as a precaution, let's remove duplicates
-        const unique = transformed.reduce((prev, current) => {
-            const duplicate = prev.some(a => a.host === current.host);
+        const unique = new Map<string, AuthProviderParams>();
+        for (const current of transformed) {
+            const duplicate = unique.get(current.host);
             if (duplicate) {
                 log.warn(`Duplicate dynamic Auth Provider detected.`, { rawResult: all, duplicate: current.host });
+                continue;
             }
-            return duplicate ? prev : [...prev, current];
-        }, [] as AuthProviderParams[]);
-        return unique;
+            unique.set(current.host, current);
+        }
+        return Array.from(unique.values());
     }
 
     protected toAuthProviderParams = (oap: AuthProviderEntry) => <AuthProviderParams>{
