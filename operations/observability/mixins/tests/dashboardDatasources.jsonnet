@@ -17,11 +17,11 @@ test.suite(
       actual: panel.datasource,
       expectThat: {
         actual: error 'to be overriden',
-        result: std.type(self.actual) == 'null' || self.actual == '$datasource',
+        result: std.type(self.actual) == 'null' || self.actual == '$datasource' || self.actual == { uid: '$datasource' },
         description: ": to be non-existent(rows) or equal to '$datasource'",
       },
     }
     for dashboard in std.objectFields(dashboards)
-    for panel in dashboards[dashboard].panels
+    for panel in std.filter(function(p) std.objectHas(p, 'panel'), dashboards[dashboard].panels)
   },
 )
