@@ -111,6 +111,8 @@ type managedPort struct {
 	Served       bool
 	Exposed      bool
 	Visibility   api.PortVisibility
+	Description  string
+	Name         string
 	URL          string
 	OnExposed    api.OnPortExposedAction
 	AutoExposure api.PortAutoExposure
@@ -394,6 +396,8 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 				state[port] = mp
 			}
 			mp.LocalhostPort = port
+			mp.Description = config.Description
+			mp.Name = config.Name
 
 			autoExpose, autoExposed := pm.autoExposed[port]
 			if autoExposed {
@@ -774,8 +778,10 @@ func (pm *Manager) getStatus() []*api.PortsStatus {
 func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 	mp := pm.state[port]
 	ps := &api.PortsStatus{
-		LocalPort: mp.LocalhostPort,
-		Served:    mp.Served,
+		LocalPort:   mp.LocalhostPort,
+		Served:      mp.Served,
+		Description: mp.Description,
+		Name:        mp.Name,
 	}
 	if mp.Exposed && mp.URL != "" {
 		ps.Exposed = &api.ExposedPortInfo{
