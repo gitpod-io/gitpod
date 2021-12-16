@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Branch, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, User } from "@gitpod/gitpod-protocol";
+import { Branch, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, ProjectEnvVar, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -179,6 +179,22 @@ export class ProjectsService {
 
     async updateProjectPartial(partialProject: PartialProject): Promise<void> {
         return this.projectDB.updateProject(partialProject);
+    }
+
+    async setProjectEnvironmentVariable(projectId: string, name: string, value: string): Promise<void> {
+        return this.projectDB.setProjectEnvironmentVariable(projectId, name, value);
+    }
+
+    async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {
+        return this.projectDB.getProjectEnvironmentVariables(projectId);
+    }
+
+    async getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined> {
+        return this.projectDB.getProjectEnvironmentVariableById(variableId);
+    }
+
+    async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
+        return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 
 }

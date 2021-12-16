@@ -47,7 +47,7 @@ export default function Menu() {
     })();
     const prebuildId = (() => {
         const resource = projectSlug && match?.params?.segment3;
-        if (resource !== "workspaces" && resource !== "prebuilds" && resource !== "settings" && resource !== "configure") {
+        if (resource !== "workspaces" && resource !== "prebuilds" && resource !== "settings" && resource !== "configure" && resource !== "variables") {
             return resource;
         }
     })();

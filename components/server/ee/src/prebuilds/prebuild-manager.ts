@@ -5,7 +5,7 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Project, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { CommitContext, Project, ProjectEnvVar, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { inject, injectable } from 'inversify';
@@ -15,6 +15,7 @@ import { WorkspaceFactory } from '../../../src/workspace/workspace-factory';
 import { ConfigProvider } from '../../../src/workspace/config-provider';
 import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
 import { Config } from '../../../src/config';
+import { ProjectsService } from '../../../src/projects/projects-service';
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -39,6 +40,7 @@ export class PrebuildManager {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(Config) protected readonly config: Config;
+    @inject(ProjectsService) protected readonly projectService: ProjectsService;
 
     async hasAutomatedPrebuilds(ctx: TraceContext, cloneURL: string): Promise<boolean> {
         const span = TraceContext.startSpan("hasPrebuilds", ctx);
@@ -113,6 +115,7 @@ export class PrebuildManager {
 
             log.debug("Created prebuild context", prebuildContext);
 
+            const projectEnvVarsPromise = project ? this.projectService.getProjectEnvironmentVariables(project.id) : [];
             const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, contextURL);
             const prebuildPromise = this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
 
@@ -124,7 +127,8 @@ export class PrebuildManager {
             // }
 
             span.setTag("starting", true);
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], {excludeFeatureFlags: ['full_workspace_backup']});
+            const projectEnvVars = await projectEnvVarsPromise;
+            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {excludeFeatureFlags: ['full_workspace_backup']});
             const prebuild = await prebuildPromise;
             if (!prebuild) {
                 throw new Error(`Failed to create a prebuild for: ${contextURL}`);
@@ -158,7 +162,11 @@ export class PrebuildManager {
             if (!prebuild) {
                 throw new Error('No prebuild found for workspace ' + workspaceId);
             }
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user);
+            let projectEnvVars: ProjectEnvVar[] = [];
+            if (workspace.projectId) {
+                projectEnvVars = await this.projectService.getProjectEnvironmentVariables(workspace.projectId);
+            }
+            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars);
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.setError({ span }, err);

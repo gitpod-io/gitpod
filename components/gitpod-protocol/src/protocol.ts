@@ -154,11 +154,21 @@ export interface UserFeatureSettings {
 export const WorkspaceFeatureFlags = { "full_workspace_backup": undefined, "fixed_resources": undefined };
 export type NamedWorkspaceFeatureFlag = keyof (typeof WorkspaceFeatureFlags);
 
-export interface UserEnvVarValue {
-    id?: string;
+export interface EnvVarWithValue {
     name: string;
-    repositoryPattern: string;
     value: string;
+}
+
+export interface ProjectEnvVarWithValue extends EnvVarWithValue {
+    id: string;
+    projectId: string;
+}
+
+export type ProjectEnvVar = Omit<ProjectEnvVarWithValue, 'value'>;
+
+export interface UserEnvVarValue extends EnvVarWithValue {
+    id?: string;
+    repositoryPattern: string; // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
 }
 export interface UserEnvVar extends UserEnvVarValue {
     id: string;
@@ -168,10 +178,12 @@ export interface UserEnvVar extends UserEnvVarValue {
 
 export namespace UserEnvVar {
 
+    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function normalizeRepoPattern(pattern: string) {
         return pattern.toLocaleLowerCase();
     }
 
+    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function score(value: UserEnvVarValue): number {
         // We use a score to enforce precedence:
         //      value/value = 0
@@ -194,6 +206,7 @@ export namespace UserEnvVar {
         return score;
     }
 
+    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
         let result = vars.filter(e => {
             const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
@@ -241,6 +254,7 @@ export namespace UserEnvVar {
         return result;
     }
 
+    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function splitRepositoryPattern(repositoryPattern: string): string[] {
         const patterns = repositoryPattern.split('/');
         const repoPattern = patterns.pop() || "";
@@ -877,7 +891,7 @@ export namespace PrebuiltWorkspaceContext {
 }
 
 export interface WithEnvvarsContext extends WorkspaceContext {
-    envvars: UserEnvVarValue[];
+    envvars: EnvVarWithValue[];
 }
 
 export namespace WithEnvvarsContext {

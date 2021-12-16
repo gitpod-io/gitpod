@@ -21,7 +21,6 @@ import { trackButtonOrAnchor, trackPathChange, trackLocation } from './Analytics
 import { User } from '@gitpod/gitpod-protocol';
 import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 import { Experiment } from './experiments';
-import ProjectSettings from './projects/ProjectSettings';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -42,6 +41,8 @@ const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ './projec
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ './projects/ConfigureProject'));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Projects'));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Project'));
+const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ './projects/ProjectSettings'));
+const ProjectVariables = React.lazy(() => import(/* webpackPrefetch: true */ './projects/ProjectVariables'));
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuilds'));
 const Prebuild = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuild'));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './projects/InstallGitHubApp'));
@@ -307,6 +308,9 @@ function App() {
                         if (resourceOrPrebuild === "configure") {
                             return <ConfigureProject />;
                         }
+                        if (resourceOrPrebuild === "variables") {
+                            return <ProjectVariables />;
+                        }
                         if (resourceOrPrebuild === "prebuilds") {
                             return <Prebuilds />;
                         }
@@ -337,11 +341,14 @@ function App() {
                             if (maybeProject === "settings") {
                                 return <TeamSettings />;
                             }
+                            if (resourceOrPrebuild === "settings") {
+                                return <ProjectSettings />;
+                            }
                             if (resourceOrPrebuild === "configure") {
                                 return <ConfigureProject />;
                             }
-                            if (resourceOrPrebuild === "settings") {
-                                return <ProjectSettings />;
+                            if (resourceOrPrebuild === "variables") {
+                                return <ProjectVariables />;
                             }
                             if (resourceOrPrebuild === "prebuilds") {
                                 return <Prebuilds />;
