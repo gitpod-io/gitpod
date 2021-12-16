@@ -126,7 +126,8 @@ A config file is required which can be generated with the init command.`,
 
 		// output the YAML to stdout
 		for _, c := range sortedObjs {
-			fmt.Printf("---\n# %s/%s %s\n%s\n", c.TypeMeta.APIVersion, c.TypeMeta.Kind, c.Metadata.Name, c.Content)
+			fmt.Printf("---\n# %s/%s %s\n", c.TypeMeta.APIVersion, c.TypeMeta.Kind, c.Metadata.Name)
+			fmt.Println(c.Content)
 		}
 
 		return nil
