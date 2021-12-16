@@ -1,10 +1,9 @@
 {
     "entrypoint": "/ide-desktop/startup.sh",
-    "entrypointArgs": [ "Open in VS Code on Desktop", "vscode" ],
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "Open in VS Code on Desktop", "vscode" ],
     "readinessProbe": {
         "type": "http",
         "http": {
-            "port": 24000,
             "path": "/status"
         }
       }
