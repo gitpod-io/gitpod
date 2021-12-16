@@ -50,10 +50,6 @@ spec:
           sockets: 1
           threads: 1
         devices:
-          inputs:
-            - bus: usb
-              name: tablet
-              type: tablet
           interfaces:
             - masquerade: {}
               model: virtio
