@@ -15,10 +15,9 @@ type VirtualMachineManifestArguments = {
   vmName: string
   namespace: string
   claimName: string,
-  userDataSecretName: string
 }
 
-export function VirtualMachineManifest({ vmName, namespace, claimName, userDataSecretName }: VirtualMachineManifestArguments) {
+export function VirtualMachineManifest({ vmName, namespace, claimName }: VirtualMachineManifestArguments) {
   return `
 apiVersion: kubevirt.io/v1
 type: kubevirt.io.virtualmachine
@@ -46,7 +45,7 @@ spec:
         machine:
           type: q35
         cpu:
-          cores: 1
+          cores: 4
           sockets: 1
           threads: 1
         devices:
@@ -64,8 +63,8 @@ spec:
                 bus: virtio
         resources:
           limits:
-            memory: 2Gi
-            cpu: 1
+            memory: 8Gi
+            cpu: 4
       evictionStrategy: LiveMigrate
       networks:
         - pod: {}
@@ -76,10 +75,23 @@ spec:
             claimName: ${claimName}
         - name: cloudinitdisk
           cloudInitNoCloud:
-            networkDataSecretRef:
-              name: ${userDataSecretName}
-            secretRef:
-              name: ${userDataSecretName}
+            userData: |-
+              #cloud-config
+              users:
+                - name: ubuntu
+                  sudo: "ALL=(ALL) NOPASSWD: ALL"
+                  ssh_authorized_keys:
+                    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC/aB/HYsb56V0NBOEab6j33v3LIxRiGqG4fmidAryAXevLyTANJPF8m44KSzSQg7AI7PMy6egxQp/JqH2b+3z1cItWuHZSU+klsKNuf5HxK7AOrND3ahbejZfyYewtKFQ3X9rv5Sk8TAR5gw5oPbkTR61jiLa58Sw7UkhLm2EDguGASb6mBal8iboiF8Wpl8QIvPmJaGIOY2YwXLepwFA3S3kVqW88eh2WFmjTMre5ASLguYNkHXjyb/TuhVFzAvphzpl84RAaEyjKYnk45fh4xRXx+oKqlfKRJJ/Owxa7SmGO+/4rWb3chdnpodHeu7XjERmjYLY+r46sf6n6ySgEht1xAWjMb1uqZqkDx+fDDsjFSeaN3ncX6HSoDOrphFmXYSwaMpZ8v67A791fuUPrMLC+YMckhTuX2g4i3XUdumIWvhaMvKhy/JRRMsfUH0h+KAkBLI6tn5ozoXiQhgM4SAE5HsMr6CydSIzab0yY3sq0avmZgeoc78+8PKPkZG1zRMEspV/hKKBC8hq7nm0bu4IgzuEIYHowOD8svqA0ufhDWxTt6A4Jo0xDzhFyKme7KfmW7SIhpejf3T1Wlf+QINs1hURr8LSOZEyY2SzYmAoQ49N0SSPb5xyG44cptpKcj0WCAJjBJoZqz0F5x9TjJ8XToB5obyJfRHD1JjxoMQ== dev@gitpod.io
+              chpasswd:
+                list: |
+                  ubuntu:ubuntu
+                expire: False
+              runcmd:
+                - curl -sfL https://get.k3s.io | sh -
+                - sleep 10
+                - kubectl label nodes ${vmName} gitpod.io/workload_meta=true gitpod.io/workload_ide=true gitpod.io/workload_workspace_services=true gitpod.io/workload_workspace_regular=true gitpod.io/workload_workspace_headless=true gitpod.io/workspace_0=true gitpod.io/workspace_1=true gitpod.io/workspace_2=true
+                - kubectl create ns certs
+                - kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
 `
 }
 
@@ -122,24 +134,4 @@ spec:
 type UserDataSecretManifestOptions = {
   namespace: string,
   secretName: string
-}
-
-export function UserDataSecretManifest({ namespace, secretName }: UserDataSecretManifestOptions) {
-  const userdata = Buffer.from(`#cloud-config
-users:
-  - name: ubuntu
-    lock_passwd: false
-    sudo: "ALL=(ALL) NOPASSWD: ALL"
-    passwd: "$6$exDY1mhS4KUYCE/2$zmn9ToZwTKLhCw.b4/b.ZRTIZM30JZ4QrOQ2aOXJ8yk96xpcCof0kxKwuX1kqLG/ygbJ1f8wxED22bTL4F46P0"`).toString("base64")
-  return `
-apiVersion: v1
-type: secret
-kind: Secret
-data:
-  networkdata: ""
-  userdata: ${userdata}
-metadata:
-  name: ${secretName}
-  namespace: ${namespace}
-`
 }
