@@ -14,7 +14,6 @@ const UserContext = createContext<{
     setUser: () => null,
 });
 
-
 const UserContextProvider: React.FC = ({ children }) => {
     const [ user, setUser ] = useState<User>();
     return (
