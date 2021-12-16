@@ -9,6 +9,7 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import { UserContextProvider } from './user-context';
 import { TeamsContextProvider } from './teams/teams-context';
+import { ProjectContextProvider } from './projects/project-context';
 import { ThemeContextProvider } from './theme-context';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -18,11 +19,13 @@ ReactDOM.render(
     <React.StrictMode>
         <UserContextProvider>
             <TeamsContextProvider>
-                <ThemeContextProvider>
-                    <BrowserRouter>
-                        <App />
-                    </BrowserRouter>
-                </ThemeContextProvider>
+                <ProjectContextProvider>
+                    <ThemeContextProvider>
+                        <BrowserRouter>
+                            <App />
+                        </BrowserRouter>
+                    </ThemeContextProvider>
+                </ProjectContextProvider>
             </TeamsContextProvider>
         </UserContextProvider>
     </React.StrictMode>,

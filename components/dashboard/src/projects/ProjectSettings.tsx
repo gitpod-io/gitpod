@@ -5,13 +5,14 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { useLocation, useRouteMatch } from "react-router";
+import { useLocation } from "react-router";
 import { Project, Team } from "@gitpod/gitpod-protocol";
 import CheckBox from "../components/CheckBox";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
+import { ProjectContext } from "./project-context";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
     const teamOrUserSlug = !!team ? 't/' + team.slug : 'projects';
@@ -27,34 +28,21 @@ export function getProjectSettingsMenu(project?: Project, team?: Team) {
     ];
 }
 
-export default function () {
+export function ProjectSettingsPage(props: { project?: Project, children?: React.ReactNode }) {
     const location = useLocation();
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
-    const match = useRouteMatch<{ team: string, resource: string }>("/(t/)?:team/:resource");
-    const projectSlug = match?.params?.resource;
-    const [ project, setProject ] = useState<Project | undefined>();
+
+    return <PageWithSubMenu subMenu={getProjectSettingsMenu(props.project, team)} title="Settings" subtitle="Manage project settings and configuration">
+        {props.children}
+    </PageWithSubMenu>
+}
+
+export default function () {
+    const { project } = useContext(ProjectContext);
 
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
     const [ isIncrementalPrebuildsEnabled, setIsIncrementalPrebuildsEnabled ] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (!teams || !projectSlug) {
-            return;
-        }
-        (async () => {
-            const projects = (!!team
-                ? await getGitpodService().server.getTeamProjects(team.id)
-                : await getGitpodService().server.getUserProjects());
-
-            // Find project matching with slug, otherwise with name
-            const project = projectSlug && projects.find(p => p.slug ? p.slug === projectSlug : p.name === projectSlug);
-            if (!project) {
-                return;
-            }
-            setProject(project);
-        })();
-    }, [ projectSlug, team, teams ]);
 
     useEffect(() => {
         if (!project) {
@@ -82,7 +70,7 @@ export default function () {
         }
     }
 
-    return <PageWithSubMenu subMenu={getProjectSettingsMenu(project, team)} title="Settings" subtitle="Manage project settings and configuration">
+    return <ProjectSettingsPage project={project}>
         <h3>Incremental Prebuilds</h3>
         <CheckBox
             title={<span>Enable Incremental Prebuilds <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel></span>}
@@ -90,5 +78,5 @@ export default function () {
             checked={isIncrementalPrebuildsEnabled}
             disabled={isLoading}
             onChange={toggleIncrementalPrebuilds} />
-    </PageWithSubMenu>;
+    </ProjectSettingsPage>;
 }

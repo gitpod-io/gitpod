@@ -5,12 +5,10 @@
  */
 
 import React, { Suspense, useContext, useEffect, useState } from "react";
-import { useLocation, useRouteMatch } from "react-router";
 import { Project, StartPrebuildResult, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import PrebuildLogs from "../components/PrebuildLogs";
 import TabMenuItem from "../components/TabMenuItem";
 import { getGitpodService } from "../service/service";
-import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import Spinner from "../icons/Spinner.svg";
 import NoAccess from "../icons/NoAccess.svg";
 import PrebuildLogsEmpty from "../images/prebuild-logs-empty.svg";
@@ -19,8 +17,8 @@ import { ThemeContext } from "../theme-context";
 import { PrebuildInstanceStatus } from "./Prebuilds";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { getProjectSettingsMenu } from "./ProjectSettings";
+import { ProjectSettingsPage } from "./ProjectSettings";
+import { ProjectContext } from "./project-context";
 
 const MonacoEditor = React.lazy(() => import('../components/MonacoEditor'));
 
@@ -42,12 +40,7 @@ const TASKS = {
 // }
 
 export default function () {
-    const { teams } = useContext(TeamsContext);
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
-    const routeMatch = useRouteMatch<{ teamSlug: string, projectSlug: string }>("/(t/)?:teamSlug/:projectSlug/configure");
-    const projectSlug = routeMatch?.params.projectSlug;
-    const [project, setProject] = useState<Project | undefined>();
+    const { project } = useContext(ProjectContext);
     const [gitpodYml, setGitpodYml] = useState<string>('');
     const [dockerfile, setDockerfile] = useState<string>('');
     const [editorMessage, setEditorMessage] = useState<React.ReactNode | null>(null);
@@ -68,26 +61,12 @@ export default function () {
         setIsDetecting(true);
         setIsEditorDisabled(true);
         setEditorMessage(null);
-        if (!teams) {
-            setIsDetecting(false);
-            setEditorMessage(<EditorMessage type="warning" heading="Couldn't load teams information." message="Please try to reload this page." />);
-            return;
-        }
         (async () => {
-            const projects = (!!team
-                ? await getGitpodService().server.getTeamProjects(team.id)
-                : await getGitpodService().server.getUserProjects());
-
-        const project = projectSlug && projects.find(
-            p => p.slug ? p.slug === projectSlug :
-            p.name === projectSlug);
-
             if (!project) {
                 setIsDetecting(false);
                 setEditorMessage(<EditorMessage type="warning" heading="Couldn't load project information." message="Please try to reload this page." />);
                 return;
             }
-            setProject(project);
             try {
                 await detectProjectConfiguration(project);
             } catch (error) {
@@ -106,7 +85,7 @@ export default function () {
                 }
             }
         })();
-    }, [teams, team]);
+    }, [project]);
 
     const detectProjectConfiguration = async (project: Project) => {
         const guessedConfigStringPromise = getGitpodService().server.guessProjectConfiguration(project.id);
@@ -227,7 +206,7 @@ export default function () {
         redirectToNewWorkspace();
     }
 
-    return <PageWithSubMenu subMenu={getProjectSettingsMenu(project, team)} title="Configuration" subtitle="View and edit project configuration.">
+    return <ProjectSettingsPage project={project}>
         <div className="flex space-x-4">
             <div className="flex-1 h-96 rounded-xl overflow-hidden relative flex flex-col">
                 <div className="flex bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 px-6 pt-3">
@@ -245,7 +224,7 @@ export default function () {
                     {showAuthBanner ? (
                         <div className="mt-8 text-gray-500 flex-col">
                             <div className="p-16 text-center">
-                                <img src={NoAccess} title="No Access" className="m-auto mb-4" />
+                                <img alt="" src={NoAccess} title="No Access" className="m-auto mb-4" />
                                 <div className="text-center text-gray-600 dark:text-gray-50 pb-3 font-bold">
                                     No Access
                                 </div>
@@ -256,7 +235,7 @@ export default function () {
                             </div>
                         </div>
                     ) : (<>
-                        <img className="h-5 w-5 animate-spin" src={Spinner} />
+                        <img alt="" className="h-5 w-5 animate-spin" src={Spinner} />
                         <span className="font-semibold text-gray-400">Detecting project configuration ...</span>
                     </>
                     )}
@@ -266,7 +245,7 @@ export default function () {
                 <div className="flex-grow flex">{startPrebuildResult
                     ? <PrebuildLogs workspaceId={startPrebuildResult.wsid} onInstanceUpdate={onInstanceUpdate} />
                     : (!prebuildWasTriggered && <div className="flex-grow flex flex-col items-center justify-center">
-                        <img className="w-14" role="presentation" src={isDark ? PrebuildLogsEmptyDark : PrebuildLogsEmpty} />
+                        <img alt="" className="w-14" role="presentation" src={isDark ? PrebuildLogsEmptyDark : PrebuildLogsEmpty} />
                         <h3 className="text-center text-lg text-gray-500 dark:text-gray-50 mt-4">No Recent Prebuild</h3>
                         <p className="text-center text-base text-gray-500 dark:text-gray-400 mt-2 w-64">Edit the project configuration on the left to get started. <a className="gp-link" href="https://www.gitpod.io/docs/config-gitpod-file/">Learn more</a></p>
                     </div>)
@@ -283,7 +262,7 @@ export default function () {
                 </div>
             </div>
         </div>
-    </PageWithSubMenu>;
+    </ProjectSettingsPage>;
 }
 
 function EditorMessage(props: { heading: string, message: string, type: 'success' | 'warning' }) {

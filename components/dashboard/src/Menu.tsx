@@ -23,6 +23,7 @@ import PillMenuItem from "./components/PillMenuItem";
 import TabMenuItem from "./components/TabMenuItem";
 import { getTeamSettingsMenu } from "./teams/TeamSettings";
 import { getProjectSettingsMenu } from "./projects/ProjectSettings";
+import { ProjectContext } from "./projects/project-context";
 
 interface Entry {
     title: string,
@@ -30,11 +31,12 @@ interface Entry {
     alternatives?: string[]
 }
 
-
 export default function Menu() {
     const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
+    const team = getCurrentTeam(location, teams);
+    const { project, setProject } = useContext(ProjectContext);
 
     const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/(t/)?:segment1/:segment2?/:segment3?");
     const projectSlug = (() => {
@@ -57,7 +59,6 @@ export default function Menu() {
     }
 
     const userFullName = user?.fullName || user?.name || '...';
-    const team = getCurrentTeam(location, teams);
 
     {
         // updating last team selection
@@ -87,6 +88,24 @@ export default function Menu() {
             setTeamMembers(members);
         })();
     }, [ teams ]);
+
+    useEffect(() => {
+        if (!teams || !projectSlug) {
+            return;
+        }
+        (async () => {
+            const projects = (!!team
+                ? await getGitpodService().server.getTeamProjects(team.id)
+                : await getGitpodService().server.getUserProjects());
+
+            // Find project matching with slug, otherwise with name
+            const project = projectSlug && projects.find(p => p.slug ? p.slug === projectSlug : p.name === projectSlug);
+            if (!project) {
+                return;
+            }
+            setProject(project);
+        })();
+    }, [projectSlug, setProject, team, teams]);
 
     const teamOrUserSlug = !!team ? '/t/' + team.slug : '/projects';
     const leftMenu: Entry[] = (() => {
@@ -218,7 +237,7 @@ export default function Menu() {
                 { projectSlug && (
                     <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
                         <Link to={`${teamOrUserSlug}/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
-                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{projectSlug}</span>
+                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{project?.name}</span>
                         </Link>
                     </div>
                 )}
