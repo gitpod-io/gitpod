@@ -181,8 +181,6 @@ export default function EnvVars() {
         return '';
     };
 
-
-
     return <PageWithSubMenu subMenu={settingsMenu} title='Variables' subtitle='Configure environment variables for all workspaces.'>
         {isAddEnvVarModalVisible && <AddEnvVarModal
             save={save}

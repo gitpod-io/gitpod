@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { PartialProject, Project } from "@gitpod/gitpod-protocol";
+import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue } from "@gitpod/gitpod-protocol";
 
 export const ProjectDB = Symbol('ProjectDB');
 export interface ProjectDB {
@@ -16,4 +16,9 @@ export interface ProjectDB {
     storeProject(project: Project): Promise<Project>;
     updateProject(partialProject: PartialProject): Promise<void>;
     markDeleted(projectId: string): Promise<void>;
+    setProjectEnvironmentVariable(projectId: string, name: string, value: string): Promise<void>;
+    getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
+    getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined>;
+    deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
+    getProjectEnvironmentVariableValues(envVars: ProjectEnvVar[]): Promise<ProjectEnvVarWithValue[]>;
 }

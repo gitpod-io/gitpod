@@ -56,6 +56,7 @@ import { IDEConfigService } from '../ide-config';
 import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-protocol';
 import { ClientMetadata } from '../websocket/websocket-connection-manager';
 import { ConfigurationService } from '../config/configuration-service';
+import { ProjectEnvVar } from '@gitpod/gitpod-protocol/src/protocol';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -482,12 +483,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (workspace.deleted) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
         }
-        const envVars = this.userDB.getEnvVars(user.id);
+        const userEnvVars = this.userDB.getEnvVars(user.id);
+        let projectEnvVarsPromise: Promise<ProjectEnvVar[]> = Promise.resolve([]);
+        if (workspace.projectId) {
+            try {
+                await this.guardProjectOperation(user, workspace.projectId, "get");
+                projectEnvVarsPromise = this.projectsService.getProjectEnvironmentVariables(workspace.projectId);
+            } catch (error) {
+                log.debug({ userId: user.id }, "User doesn't have access to the Project, thus not loading Project environment variables:", error);
+            }
+        }
 
         await mayStartPromise;
 
         // at this point we're about to actually start a new workspace
-        const result = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await envVars, {
+        const result = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await userEnvVars, await projectEnvVarsPromise, {
             forceDefaultImage: !!options.forceDefaultImage
         });
         traceWI(ctx, { instanceId: result.instanceID });
@@ -840,9 +850,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 throw err;
             }
 
+            let projectEnvVarsPromise: Promise<ProjectEnvVar[]> = Promise.resolve([]);
+            if (workspace.projectId) {
+                try {
+                    await this.guardProjectOperation(user, workspace.projectId, "get");
+                    projectEnvVarsPromise = this.projectsService.getProjectEnvironmentVariables(workspace.projectId);
+                } catch (error) {
+                    log.warn(logContext, "User doesn't have access to the Project, thus not loading Project environment variables:", error);
+                }
+            }
+
             logContext.workspaceId = workspace.id;
             traceWI(ctx, { workspaceId: workspace.id });
-            const startWorkspaceResult = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await envVars);
+            const startWorkspaceResult = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await envVars, await projectEnvVarsPromise);
             ctx.span?.log({ "event": "startWorkspaceComplete", ...startWorkspaceResult });
 
             return {
@@ -1352,6 +1372,31 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.analytics.track({ event: "envvar-deleted", userId });
 
         await this.userDB.deleteEnvVar(envvar);
+    }
+
+    async setProjectEnvironmentVariable(ctx: TraceContext, projectId: string, name: string, value: string): Promise<void> {
+        traceAPIParams(ctx, { projectId, name }); // value may contain secrets
+        const user = this.checkAndBlockUser("setProjectEnvironmentVariable");
+        await this.guardProjectOperation(user, projectId, "update");
+        return this.projectsService.setProjectEnvironmentVariable(projectId, name, value);
+    }
+
+    async getProjectEnvironmentVariables(ctx: TraceContext, projectId: string): Promise<ProjectEnvVar[]> {
+        traceAPIParams(ctx, { projectId });
+        const user = this.checkAndBlockUser("getProjectEnvironmentVariables");
+        await this.guardProjectOperation(user, projectId, "get");
+        return this.projectsService.getProjectEnvironmentVariables(projectId);
+    }
+
+    async deleteProjectEnvironmentVariable(ctx: TraceContext, variableId: string): Promise<void> {
+        traceAPIParams(ctx, { variableId });
+        const user = this.checkAndBlockUser("deleteProjectEnvironmentVariable");
+        const envVar = await this.projectsService.getProjectEnvironmentVariableById(variableId);
+        if (!envVar) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project environment variable not found");
+        }
+        await this.guardProjectOperation(user, envVar.projectId, "update");
+        return this.projectsService.deleteProjectEnvironmentVariable(envVar.id);
     }
 
     protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<void> {

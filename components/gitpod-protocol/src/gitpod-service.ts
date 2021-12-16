@@ -9,7 +9,7 @@ import {
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
-    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes
+    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, ProjectEnvVar
 } from './protocol';
 import {
     Team, TeamMemberInfo,
@@ -141,6 +141,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     guessRepositoryConfiguration(cloneUrl: string): Promise<string | undefined>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     updateProjectPartial(partialProject: PartialProject): Promise<void>;
+    setProjectEnvironmentVariable(projectId: string, name: string, value: string): Promise<void>;
+    getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
+    deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>
