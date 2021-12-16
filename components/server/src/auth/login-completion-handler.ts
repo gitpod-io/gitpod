@@ -109,6 +109,7 @@ export class LoginCompletionHandler {
 
     protected async checkForAndSubscribeToProfessionalOss(user: User) {
         const eligible = await this.userService.checkAutomaticOssEligibility(user);
+        log.debug({ userId: user.id }, "user eligible for OSS subscription?", { eligible });
         if (!eligible) {
             return;
         }
