@@ -59,6 +59,7 @@ const (
 	gitpodUserName  = "gitpod"
 	gitpodGID       = 33333
 	gitpodGroupName = "gitpod"
+	desktopIDEPort  = 24000
 )
 
 var (
@@ -192,7 +193,6 @@ func Run(options ...RunOption) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	internalPorts := []uint32{uint32(cfg.IDEPort), uint32(cfg.APIEndpointPort), uint32(cfg.SSHPort)}
-	desktopIDEPort := uint32(24000)
 	if cfg.DesktopIDE != nil {
 		internalPorts = append(internalPorts, desktopIDEPort)
 	}
@@ -632,8 +632,8 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		s = func() *ideStatus { i := statusShouldRun; return &i }()
 
 		go func() {
-			desktopIDEStatus := runIDEReadinessProbe(cfg, ideConfig, ide)
-			ideReady.Set(true, desktopIDEStatus)
+			IDEStatus := runIDEReadinessProbe(cfg, ideConfig, ide)
+			ideReady.Set(true, IDEStatus)
 		}()
 
 		err = cmd.Wait()
@@ -666,6 +666,7 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 		args[i] = strings.ReplaceAll(args[i], "{WORKSPACEROOT}", cfg.WorkspaceRoot)
 		args[i] = strings.ReplaceAll(args[i], "{IDEPORT}", strconv.Itoa(cfg.IDEPort))
 		args[i] = strings.ReplaceAll(args[i], "{IDEHOSTNAME}", "0.0.0.0")
+		args[i] = strings.ReplaceAll(args[i], "{DESKTOPIDEPORT}", strconv.Itoa(desktopIDEPort))
 	}
 	log.WithField("args", args).WithField("entrypoint", ideConfig.Entrypoint).Info("preparing IDE launch")
 
@@ -775,6 +776,10 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 		return value
 	}
 
+	defaultProbePort := cfg.IDEPort
+	if ide == DesktopIDE {
+		defaultProbePort = desktopIDEPort
+	}
 	switch ideConfig.ReadinessProbe.Type {
 	case ReadinessProcessProbe:
 		return
@@ -783,7 +788,7 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 		var (
 			schema = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Schema, "http")
 			host   = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Host, "localhost")
-			port   = defaultIfZero(ideConfig.ReadinessProbe.HTTPProbe.Port, cfg.IDEPort)
+			port   = defaultIfZero(ideConfig.ReadinessProbe.HTTPProbe.Port, defaultProbePort)
 			url    = fmt.Sprintf("%s://%s:%d/%s", schema, host, port, strings.TrimPrefix(ideConfig.ReadinessProbe.HTTPProbe.Path, "/"))
 			client = http.Client{Timeout: 1 * time.Second}
 			tick   = time.NewTicker(500 * time.Millisecond)

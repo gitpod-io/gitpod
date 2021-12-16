@@ -8,7 +8,7 @@ set -euo pipefail
 # kill background jobs when the script exits
 trap "jobs -p | xargs -r kill" SIGINT SIGTERM EXIT
 
-/ide-desktop/status 24000 "$1" &
+/ide-desktop/status "$1" "$2" &
 
 echo "Desktop IDE: Waiting for the content initializer ..."
 until curl -sS "$SUPERVISOR_ADDR"/_supervisor/v1/status/content/wait/true | grep '"available":true' > /dev/null; do

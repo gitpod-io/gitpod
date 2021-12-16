@@ -1,10 +1,9 @@
 {
     "entrypoint": "/ide-desktop/startup.sh",
-    "entrypointArgs": [ "Open in IntelliJ IDEA" ],
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "Open in IntelliJ IDEA" ],
     "readinessProbe": {
         "type": "http",
         "http": {
-            "port": 24000,
             "path": "/status"
         }
       }
