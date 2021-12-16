@@ -37,6 +37,7 @@ Tracing.initialize()
         werft = new Werft("build")
     })
     .then(() => build(context, version))
+    .then(() => VM.stopKubectlPortForwards())
     .then(() => werft.endAllSpans())
     .catch((err) => {
         werft.rootSpan.setStatus({
@@ -52,6 +53,8 @@ Tracing.initialize()
             // Explicitly not using process.exit as we need to flush tracing, see tracing.js
             process.exitCode = 1
         }
+
+        VM.stopKubectlPortForwards()
     })
 
 // Werft phases
@@ -77,7 +80,11 @@ const installerSlices = {
 }
 
 const vmSlices = {
-    BOOT_VM: 'Booting VM'
+    BOOT_VM: 'Booting VM',
+    START_KUBECTL_PORT_FORWARDS: 'Start kubectl port forwards',
+    COPY_CERT_MANAGER_RESOURCES: 'Copy CertManager resources from core-dev',
+    INSTALL_LETS_ENCRYPT_ISSUER: 'Install Lets Encrypt issuer',
+    KUBECONFIG: 'Getting kubeconfig'
 }
 
 export function parseVersion(context) {
@@ -272,7 +279,7 @@ export async function build(context, version) {
 
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
-    const domain = `${destname}.staging.gitpod-dev.com`;
+    const domain = withVM ? `${destname}.preview.gitpod-dev.com` : `${destname}.staging.gitpod-dev.com`;
     const monitoringDomain = `${destname}.preview.gitpod-dev.com`;
     const url = `https://${domain}`;
     const deploymentConfig: DeploymentConfig = {
@@ -293,7 +300,12 @@ export async function build(context, version) {
     if (withVM) {
         werft.phase(phases.VM, "Start VM");
 
-        if (!VM.vmExists({ name: destname })) {
+        werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
+        exec(`kubectl get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
+        exec(`kubectl get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
+
+        const existingVM = VM.vmExists({ name: destname })
+        if (!existingVM) {
             werft.log(vmSlices.BOOT_VM, 'Starting VM')
             VM.startVM({ name: destname })
         } else {
@@ -301,10 +313,23 @@ export async function build(context, version) {
         }
 
         werft.log(vmSlices.BOOT_VM, 'Waiting for VM to be ready')
-        VM.waitForVM({ name: destname, timeoutMS: 1000 * 60 * 3 })
+        VM.waitForVM({ name: destname, timeoutMS: 1000 * 60 * 3, slice: vmSlices.BOOT_VM })
 
-        werft.done(phases.VM)
-        return
+        werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting SSH port forwarding')
+        VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
+
+        werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting Kube API port forwarding')
+        VM.startKubeAPIProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
+
+        werft.log(vmSlices.KUBECONFIG, 'Copying k3s kubeconfig')
+        VM.copyk3sKubeconfig({ path: 'k3s.yml', timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
+        // NOTE: This was a quick have to override the existing kubeconfig so all future kubectl commands use the k3s cluster.
+        //       We might want to keep both kubeconfigs around and be explicit about which one we're using.s
+        exec(`mv k3s.yml /home/gitpod/.kube/config`)
+
+        if (!existingVM) {
+            exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
+        }
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
