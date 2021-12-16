@@ -17,9 +17,22 @@
               severity: 'critical',
             },
             annotations: {
-              runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/WebsocketConnectionsNotClosing.md',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebsocketConnectionsNotClosing.md',
               summary: 'Open websocket connections are not closing for the last 10 minutes and accumulating.',
               description: 'We have accumulated {{ printf "%.2f" $value }} open websocket connections.',
+            },
+          },
+          {
+            alert: 'ServerEventLoopLagTooHigh',
+            expr: 'avg_over_time(nodejs_eventloop_lag_seconds{job="server"}[20m]) > 0.35',
+            'for': '5m',
+            labels: {
+              severity: 'critical',
+            },
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/ServerEventLoopLagTooHigh.md',
+              summary: 'Server accumulated too much "event loop lag". The webapp will become unresponsive if we don\'t act here.',
+              description: 'Server has accumulated {{ printf "%.2f" $value }}ms event loop lag.',
             },
           },
         ],
