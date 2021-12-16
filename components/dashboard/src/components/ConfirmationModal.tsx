@@ -45,7 +45,7 @@ export default function ConfirmationModal(props: {
     }
 
     const buttons = [
-        <button className="secondary" onClick={props.onClose}>Cancel</button>,
+        <button className="secondary" onClick={props.onClose} autoFocus>Cancel</button>,
         <button className="ml-2 danger" onClick={props.onConfirm} disabled={props.buttonDisabled}>
             {props.buttonText || "Yes, I'm Sure"}
         </button>,
