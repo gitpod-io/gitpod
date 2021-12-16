@@ -1823,9 +1823,11 @@ type ImageConfigFile struct {
 
 // PortConfig is the PortConfig message type
 type PortConfig struct {
-	OnOpen     string  `json:"onOpen,omitempty"`
-	Port       float64 `json:"port,omitempty"`
-	Visibility string  `json:"visibility,omitempty"`
+	OnOpen      string  `json:"onOpen,omitempty"`
+	Port        float64 `json:"port,omitempty"`
+	Visibility  string  `json:"visibility,omitempty"`
+	Description string  `json:"description,omitempty"`
+	Name        string  `json:"name,omitempty"`
 }
 
 // ResolvedPlugins is the ResolvedPlugins message type

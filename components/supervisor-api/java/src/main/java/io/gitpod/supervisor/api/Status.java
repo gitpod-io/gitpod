@@ -8863,6 +8863,46 @@ public final class Status {
      * <code>.supervisor.TunneledPortInfo tunneled = 6;</code>
      */
     io.gitpod.supervisor.api.Status.TunneledPortInfoOrBuilder getTunneledOrBuilder();
+
+    /**
+     * <pre>
+     * Port description, obtained from Gitpod PortConfig.
+     * </pre>
+     *
+     * <code>string description = 8;</code>
+     * @return The description.
+     */
+    java.lang.String getDescription();
+    /**
+     * <pre>
+     * Port description, obtained from Gitpod PortConfig.
+     * </pre>
+     *
+     * <code>string description = 8;</code>
+     * @return The bytes for description.
+     */
+    com.google.protobuf.ByteString
+        getDescriptionBytes();
+
+    /**
+     * <pre>
+     * Port name, obtained from Gitpod PortConfig.
+     * </pre>
+     *
+     * <code>string name = 9;</code>
+     * @return The name.
+     */
+    java.lang.String getName();
+    /**
+     * <pre>
+     * Port name, obtained from Gitpod PortConfig.
+     * </pre>
+     *
+     * <code>string name = 9;</code>
+     * @return The bytes for name.
+     */
+    com.google.protobuf.ByteString
+        getNameBytes();
   }
   /**
    * Protobuf type {@code supervisor.PortsStatus}
@@ -8878,6 +8918,8 @@ public final class Status {
     }
     private PortsStatus() {
       autoExposure_ = 0;
+      description_ = "";
+      name_ = "";
     }
 
     @java.lang.Override
@@ -8950,6 +8992,18 @@ public final class Status {
               int rawValue = input.readEnum();
 
               autoExposure_ = rawValue;
+              break;
+            }
+            case 66: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              description_ = s;
+              break;
+            }
+            case 74: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              name_ = s;
               break;
             }
             default: {
@@ -9127,6 +9181,98 @@ public final class Status {
       return getTunneled();
     }
 
+    public static final int DESCRIPTION_FIELD_NUMBER = 8;
+    private volatile java.lang.Object description_;
+    /**
+     * <pre>
+     * Port description, obtained from Gitpod PortConfig.
+     * </pre>
+     *
+     * <code>string description = 8;</code>
+     * @return The description.
+     */
+    @java.lang.Override
+    public java.lang.String getDescription() {
+      java.lang.Object ref = description_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        description_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * Port description, obtained from Gitpod PortConfig.
+     * </pre>
+     *
+     * <code>string description = 8;</code>
+     * @return The bytes for description.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDescriptionBytes() {
+      java.lang.Object ref = description_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        description_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int NAME_FIELD_NUMBER = 9;
+    private volatile java.lang.Object name_;
+    /**
+     * <pre>
+     * Port name, obtained from Gitpod PortConfig.
+     * </pre>
+     *
+     * <code>string name = 9;</code>
+     * @return The name.
+     */
+    @java.lang.Override
+    public java.lang.String getName() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        name_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * Port name, obtained from Gitpod PortConfig.
+     * </pre>
+     *
+     * <code>string name = 9;</code>
+     * @return The bytes for name.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getNameBytes() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        name_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -9156,6 +9302,12 @@ public final class Status {
       if (autoExposure_ != io.gitpod.supervisor.api.Status.PortAutoExposure.trying.getNumber()) {
         output.writeEnum(7, autoExposure_);
       }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(description_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 8, description_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 9, name_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -9184,6 +9336,12 @@ public final class Status {
       if (autoExposure_ != io.gitpod.supervisor.api.Status.PortAutoExposure.trying.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(7, autoExposure_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(description_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, description_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(name_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, name_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -9215,6 +9373,10 @@ public final class Status {
         if (!getTunneled()
             .equals(other.getTunneled())) return false;
       }
+      if (!getDescription()
+          .equals(other.getDescription())) return false;
+      if (!getName()
+          .equals(other.getName())) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -9241,6 +9403,10 @@ public final class Status {
         hash = (37 * hash) + TUNNELED_FIELD_NUMBER;
         hash = (53 * hash) + getTunneled().hashCode();
       }
+      hash = (37 * hash) + DESCRIPTION_FIELD_NUMBER;
+      hash = (53 * hash) + getDescription().hashCode();
+      hash = (37 * hash) + NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getName().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -9392,6 +9558,10 @@ public final class Status {
           tunneled_ = null;
           tunneledBuilder_ = null;
         }
+        description_ = "";
+
+        name_ = "";
+
         return this;
       }
 
@@ -9431,6 +9601,8 @@ public final class Status {
         } else {
           result.tunneled_ = tunneledBuilder_.build();
         }
+        result.description_ = description_;
+        result.name_ = name_;
         onBuilt();
         return result;
       }
@@ -9493,6 +9665,14 @@ public final class Status {
         }
         if (other.hasTunneled()) {
           mergeTunneled(other.getTunneled());
+        }
+        if (!other.getDescription().isEmpty()) {
+          description_ = other.description_;
+          onChanged();
+        }
+        if (!other.getName().isEmpty()) {
+          name_ = other.name_;
+          onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -10021,6 +10201,198 @@ public final class Status {
           tunneled_ = null;
         }
         return tunneledBuilder_;
+      }
+
+      private java.lang.Object description_ = "";
+      /**
+       * <pre>
+       * Port description, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string description = 8;</code>
+       * @return The description.
+       */
+      public java.lang.String getDescription() {
+        java.lang.Object ref = description_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          description_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Port description, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string description = 8;</code>
+       * @return The bytes for description.
+       */
+      public com.google.protobuf.ByteString
+          getDescriptionBytes() {
+        java.lang.Object ref = description_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          description_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Port description, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string description = 8;</code>
+       * @param value The description to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDescription(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        description_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Port description, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string description = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDescription() {
+        
+        description_ = getDefaultInstance().getDescription();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Port description, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string description = 8;</code>
+       * @param value The bytes for description to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDescriptionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        description_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object name_ = "";
+      /**
+       * <pre>
+       * Port name, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string name = 9;</code>
+       * @return The name.
+       */
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Port name, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string name = 9;</code>
+       * @return The bytes for name.
+       */
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * Port name, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string name = 9;</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        name_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Port name, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string name = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearName() {
+        
+        name_ = getDefaultInstance().getName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Port name, obtained from Gitpod PortConfig.
+       * </pre>
+       *
+       * <code>string name = 9;</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        name_ = value;
+        onChanged();
+        return this;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -13405,52 +13777,53 @@ public final class Status {
       "y\030\002 \001(\0162\033.supervisor.TunnelVisiblity\022:\n\007" +
       "clients\030\003 \003(\0132).supervisor.TunneledPortI" +
       "nfo.ClientsEntry\032.\n\014ClientsEntry\022\013\n\003key\030" +
-      "\001 \001(\t\022\r\n\005value\030\002 \001(\r:\0028\001\"\312\001\n\013PortsStatus" +
+      "\001 \001(\t\022\r\n\005value\030\002 \001(\r:\0028\001\"\355\001\n\013PortsStatus" +
       "\022\022\n\nlocal_port\030\001 \001(\r\022\016\n\006served\030\004 \001(\010\022,\n\007" +
       "exposed\030\005 \001(\0132\033.supervisor.ExposedPortIn" +
       "fo\0223\n\rauto_exposure\030\007 \001(\0162\034.supervisor.P" +
       "ortAutoExposure\022.\n\010tunneled\030\006 \001(\0132\034.supe" +
-      "rvisor.TunneledPortInfoJ\004\010\002\020\003\"%\n\022TasksSt" +
-      "atusRequest\022\017\n\007observe\030\001 \001(\010\"<\n\023TasksSta" +
-      "tusResponse\022%\n\005tasks\030\001 \003(\0132\026.supervisor." +
-      "TaskStatus\"\204\001\n\nTaskStatus\022\n\n\002id\030\001 \001(\t\022$\n" +
-      "\005state\030\002 \001(\0162\025.supervisor.TaskState\022\020\n\010t" +
-      "erminal\030\003 \001(\t\0222\n\014presentation\030\004 \001(\0132\034.su" +
-      "pervisor.TaskPresentation\"D\n\020TaskPresent" +
-      "ation\022\014\n\004name\030\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\t" +
-      "open_mode\030\003 \001(\t*C\n\rContentSource\022\016\n\nfrom" +
-      "_other\020\000\022\017\n\013from_backup\020\001\022\021\n\rfrom_prebui" +
-      "ld\020\002*?\n\016PortVisibility\022\026\n\022private_visibi" +
-      "lity\020\000\022\025\n\021public_visibility\020\001*e\n\023OnPortE" +
-      "xposedAction\022\n\n\006ignore\020\000\022\020\n\014open_browser" +
-      "\020\001\022\020\n\014open_preview\020\002\022\n\n\006notify\020\003\022\022\n\016noti" +
-      "fy_private\020\004*9\n\020PortAutoExposure\022\n\n\006tryi" +
-      "ng\020\000\022\r\n\tsucceeded\020\001\022\n\n\006failed\020\002*1\n\tTaskS" +
-      "tate\022\013\n\007opening\020\000\022\013\n\007running\020\001\022\n\n\006closed" +
-      "\020\0022\313\006\n\rStatusService\022|\n\020SupervisorStatus" +
-      "\022#.supervisor.SupervisorStatusRequest\032$." +
-      "supervisor.SupervisorStatusResponse\"\035\202\323\344" +
-      "\223\002\027\022\025/v1/status/supervisor\022\203\001\n\tIDEStatus" +
-      "\022\034.supervisor.IDEStatusRequest\032\035.supervi" +
-      "sor.IDEStatusResponse\"9\202\323\344\223\0023\022\016/v1/statu" +
-      "s/ideZ!\022\037/v1/status/ide/wait/{wait=true}" +
-      "\022\227\001\n\rContentStatus\022 .supervisor.ContentS" +
-      "tatusRequest\032!.supervisor.ContentStatusR" +
-      "esponse\"A\202\323\344\223\002;\022\022/v1/status/contentZ%\022#/" +
-      "v1/status/content/wait/{wait=true}\022l\n\014Ba" +
-      "ckupStatus\022\037.supervisor.BackupStatusRequ" +
-      "est\032 .supervisor.BackupStatusResponse\"\031\202" +
-      "\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013PortsStatus" +
-      "\022\036.supervisor.PortsStatusRequest\032\037.super" +
-      "visor.PortsStatusResponse\"C\202\323\344\223\002=\022\020/v1/s" +
-      "tatus/portsZ)\022\'/v1/status/ports/observe/" +
-      "{observe=true}0\001\022\225\001\n\013TasksStatus\022\036.super" +
-      "visor.TasksStatusRequest\032\037.supervisor.Ta" +
-      "sksStatusResponse\"C\202\323\344\223\002=\022\020/v1/status/ta" +
-      "sksZ)\022\'/v1/status/tasks/observe/{observe" +
-      "=true}0\001BF\n\030io.gitpod.supervisor.apiZ*gi" +
-      "thub.com/gitpod-io/gitpod/supervisor/api" +
-      "b\006proto3"
+      "rvisor.TunneledPortInfo\022\023\n\013description\030\010" +
+      " \001(\t\022\014\n\004name\030\t \001(\tJ\004\010\002\020\003\"%\n\022TasksStatusR" +
+      "equest\022\017\n\007observe\030\001 \001(\010\"<\n\023TasksStatusRe" +
+      "sponse\022%\n\005tasks\030\001 \003(\0132\026.supervisor.TaskS" +
+      "tatus\"\204\001\n\nTaskStatus\022\n\n\002id\030\001 \001(\t\022$\n\005stat" +
+      "e\030\002 \001(\0162\025.supervisor.TaskState\022\020\n\010termin" +
+      "al\030\003 \001(\t\0222\n\014presentation\030\004 \001(\0132\034.supervi" +
+      "sor.TaskPresentation\"D\n\020TaskPresentation" +
+      "\022\014\n\004name\030\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\topen_" +
+      "mode\030\003 \001(\t*C\n\rContentSource\022\016\n\nfrom_othe" +
+      "r\020\000\022\017\n\013from_backup\020\001\022\021\n\rfrom_prebuild\020\002*" +
+      "?\n\016PortVisibility\022\026\n\022private_visibility\020" +
+      "\000\022\025\n\021public_visibility\020\001*e\n\023OnPortExpose" +
+      "dAction\022\n\n\006ignore\020\000\022\020\n\014open_browser\020\001\022\020\n" +
+      "\014open_preview\020\002\022\n\n\006notify\020\003\022\022\n\016notify_pr" +
+      "ivate\020\004*9\n\020PortAutoExposure\022\n\n\006trying\020\000\022" +
+      "\r\n\tsucceeded\020\001\022\n\n\006failed\020\002*1\n\tTaskState\022" +
+      "\013\n\007opening\020\000\022\013\n\007running\020\001\022\n\n\006closed\020\0022\313\006" +
+      "\n\rStatusService\022|\n\020SupervisorStatus\022#.su" +
+      "pervisor.SupervisorStatusRequest\032$.super" +
+      "visor.SupervisorStatusResponse\"\035\202\323\344\223\002\027\022\025" +
+      "/v1/status/supervisor\022\203\001\n\tIDEStatus\022\034.su" +
+      "pervisor.IDEStatusRequest\032\035.supervisor.I" +
+      "DEStatusResponse\"9\202\323\344\223\0023\022\016/v1/status/ide" +
+      "Z!\022\037/v1/status/ide/wait/{wait=true}\022\227\001\n\r" +
+      "ContentStatus\022 .supervisor.ContentStatus" +
+      "Request\032!.supervisor.ContentStatusRespon" +
+      "se\"A\202\323\344\223\002;\022\022/v1/status/contentZ%\022#/v1/st" +
+      "atus/content/wait/{wait=true}\022l\n\014BackupS" +
+      "tatus\022\037.supervisor.BackupStatusRequest\032 " +
+      ".supervisor.BackupStatusResponse\"\031\202\323\344\223\002\023" +
+      "\022\021/v1/status/backup\022\225\001\n\013PortsStatus\022\036.su" +
+      "pervisor.PortsStatusRequest\032\037.supervisor" +
+      ".PortsStatusResponse\"C\202\323\344\223\002=\022\020/v1/status" +
+      "/portsZ)\022\'/v1/status/ports/observe/{obse" +
+      "rve=true}0\001\022\225\001\n\013TasksStatus\022\036.supervisor" +
+      ".TasksStatusRequest\032\037.supervisor.TasksSt" +
+      "atusResponse\"C\202\323\344\223\002=\022\020/v1/status/tasksZ)" +
+      "\022\'/v1/status/tasks/observe/{observe=true" +
+      "}0\001BF\n\030io.gitpod.supervisor.apiZ*github." +
+      "com/gitpod-io/gitpod/supervisor/apib\006pro" +
+      "to3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -13547,7 +13920,7 @@ public final class Status {
     internal_static_supervisor_PortsStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_PortsStatus_descriptor,
-        new java.lang.String[] { "LocalPort", "Served", "Exposed", "AutoExposure", "Tunneled", });
+        new java.lang.String[] { "LocalPort", "Served", "Exposed", "AutoExposure", "Tunneled", "Description", "Name", });
     internal_static_supervisor_TasksStatusRequest_descriptor =
       getDescriptor().getMessageTypes().get(13);
     internal_static_supervisor_TasksStatusRequest_fieldAccessorTable = new

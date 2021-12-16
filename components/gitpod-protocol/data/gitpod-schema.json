@@ -39,8 +39,7 @@
                     },
                     "name": {
                         "type": "string",
-                        "deprecationMessage": "The 'name' property is deprecated.",
-                        "description": "Port name (deprecated)."
+                        "description": "Port name."
                     },
                     "protocol": {
                         "type": "string",
@@ -51,6 +50,10 @@
                         ],
                         "deprecationMessage": "The 'protocol' property is deprecated.",
                         "description": "The protocol to be used. (deprecated)"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "A description to identify what is this port used for."
                     }
                 },
                 "additionalProperties": false

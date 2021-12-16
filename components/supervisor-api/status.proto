@@ -186,6 +186,12 @@ message PortsStatus {
     // Tunneled provides information when a port is tunneled. If not present then
     // the port is not tunneled.
     TunneledPortInfo tunneled = 6;
+
+    // Port description, obtained from Gitpod PortConfig.
+    string description = 8;
+
+    // Port name, obtained from Gitpod PortConfig.
+    string name = 9;
 }
 
 message TasksStatusRequest {
