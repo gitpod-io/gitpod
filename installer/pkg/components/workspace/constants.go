@@ -10,7 +10,7 @@ const (
 	DefaultWorkspaceImage        = "gitpod/workspace-full"
 	DefaultWorkspaceImageVersion = "latest"
 	CodeIDEImage                 = "ide/code"
-	CodeIDEImageStableVersion    = "commit-d8477d484d00967a92686642b33541aed824cb63" // stable version that will be updated manually on demand
+	CodeIDEImageStableVersion    = "commit-0d1e8cc5dcc8ccb38efcc2cd6404316b6e7bf4e9" // stable version that will be updated manually on demand
 	CodeDesktopIDEImage          = "ide/code-desktop"
 	CodeDesktopInsidersIDEImage  = "ide/code-desktop-insiders"
 	IntelliJDesktopIDEImage      = "ide/intellij"
