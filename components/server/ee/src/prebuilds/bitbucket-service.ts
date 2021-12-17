@@ -27,7 +27,17 @@ export class BitbucketService extends RepositoryService {
 
     async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
         const { host } = await this.bitbucketContextParser.parseURL(user, cloneUrl);
-        return host === this.authProviderConfig.host;
+        if (host !== this.authProviderConfig.host) {
+            return false;
+        }
+
+        // only admins may install webhooks on repositories
+        const { owner, repoName } = await this.bitbucketContextParser.parseURL(user, cloneUrl);
+        const api = await this.api.create(user);
+        const response = await api.user.listPermissionsForRepos({
+                q: `repository.full_name="${owner}/${repoName}"`
+            })
+        return !!response.data?.values && response.data.values[0]?.permission === "admin";
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {

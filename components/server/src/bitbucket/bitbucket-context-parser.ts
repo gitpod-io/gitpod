@@ -250,8 +250,6 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
 
         const result: Repository = {
             cloneUrl: `https://${host}/${repo.full_name}.git`,
-            // cloneUrl: repoQueryResult.links.html.href + ".git",
-            // cloneUrl: repoQueryResult.links.clone.find((x: any) => x.name === "https").href,
             host,
             name,
             owner,
