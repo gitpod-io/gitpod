@@ -5,7 +5,7 @@ defaultArgs:
   npmPublishTrigger: "false"
   publishToNPM: true
   localAppVersion: unknown
-  codeCommit: 1271ac6387fee05ed112549ea3638172ae095923
+  codeCommit: 2d73da62685879af94881423c03a4abc21fb0594
 
 defaultVariant:
   srcs:
