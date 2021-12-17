@@ -8,10 +8,9 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
-	"sigs.k8s.io/yaml"
-
 	"github.com/go-playground/validator/v10"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 )
 
 var InstallationKindList = map[InstallationKind]struct{}{
@@ -39,6 +38,13 @@ var FSShiftMethodList = map[FSShiftMethod]struct{}{
 	FSShiftShiftFS: {},
 }
 
+var KubernetesServiceTypeList = map[corev1.ServiceType]struct{}{
+	corev1.ServiceTypeClusterIP:    {},
+	corev1.ServiceTypeNodePort:     {},
+	corev1.ServiceTypeLoadBalancer: {},
+	corev1.ServiceTypeExternalName: {},
+}
+
 // LoadValidationFuncs load custom validation functions for this version of the config API
 func (v version) LoadValidationFuncs(validate *validator.Validate) error {
 	funcs := map[string]validator.Func{
@@ -52,6 +58,10 @@ func (v version) LoadValidationFuncs(validate *validator.Validate) error {
 		},
 		"installation_kind": func(fl validator.FieldLevel) bool {
 			_, ok := InstallationKindList[InstallationKind(fl.Field().String())]
+			return ok
+		},
+		"k8s_service_type": func(fl validator.FieldLevel) bool {
+			_, ok := KubernetesServiceTypeList[corev1.ServiceType(fl.Field().String())]
 			return ok
 		},
 		"log_level": func(fl validator.FieldLevel) bool {

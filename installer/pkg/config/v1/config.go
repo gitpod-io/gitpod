@@ -26,6 +26,11 @@ func (v version) Factory() interface{} {
 			Enabled:  false,
 			Passlist: []string{},
 		},
+		Components: &Components{
+			Proxy: &ProxyComponent{
+				ServiceType: corev1.ServiceTypeLoadBalancer,
+			},
+		},
 	}
 }
 func (v version) Defaults(in interface{}) error {
@@ -78,6 +83,8 @@ type Config struct {
 	Certificate ObjectRef `json:"certificate" validate:"required"`
 
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
+
+	Components *Components `json:"components,omitempty"`
 
 	Workspace Workspace `json:"workspace" validate:"required"`
 
@@ -163,7 +170,7 @@ const (
 type ContainerRegistry struct {
 	InCluster *bool                      `json:"inCluster,omitempty" validate:"required"`
 	External  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
-	S3Storage *S3Storage                 `json:"s3storage"`
+	S3Storage *S3Storage                 `json:"s3storage,omitempty"`
 }
 
 type ContainerRegistryExternal struct {
@@ -220,6 +227,14 @@ type Workspace struct {
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
 	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
+}
+
+type Components struct {
+	Proxy *ProxyComponent `json:"proxy,omitempty"`
+}
+
+type ProxyComponent struct {
+	ServiceType corev1.ServiceType `json:"serviceType,omitempty" validate:"k8s_service_type"`
 }
 
 type FSShiftMethod string

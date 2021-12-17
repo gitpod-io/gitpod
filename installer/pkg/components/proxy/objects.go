@@ -32,7 +32,7 @@ var Objects = common.CompositeRenderFunc(
 				ServicePort:   PrometheusPort,
 			},
 		}, func(service *corev1.Service) {
-			service.Spec.Type = corev1.ServiceTypeLoadBalancer
+			service.Spec.Type = cfg.Config.Components.Proxy.ServiceType
 			service.Annotations["external-dns.alpha.kubernetes.io/hostname"] = fmt.Sprintf("%s,*.%s,*.ws.%s", cfg.Config.Domain, cfg.Config.Domain, cfg.Config.Domain)
 			service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
 		})(cfg)

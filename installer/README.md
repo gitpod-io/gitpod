@@ -476,6 +476,21 @@ Kubernetes objects, such as your TLS certificate or connection secrets.
 kubectl create namespace gitpod
 ```
 
+# I need to add additional configuration to my load balancer - what do I do?
+
+By default, this will create a `proxy` service with `ServiceType: LoadBalancer`.
+If you want to specify your own ingress, you can do this easily by changing
+your Installer configuration:
+
+```yaml
+components:
+  proxy:
+    serviceType: ClusterIP
+```
+
+This will set the `ServiceType` to `ClusterIP` allowing you to create your own
+ingress controller.
+
 # Todo
 
 PRs/comments welcome
