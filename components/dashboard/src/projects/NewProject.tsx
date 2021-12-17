@@ -315,15 +315,17 @@ export default function NewProject() {
                                 <div key={`repo-${index}-${r.account}-${r.name}`} className="flex p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group" >
 
                                     <div className="flex-grow">
-                                        <div className="text-base text-gray-900 dark:text-gray-50 font-medium rounded-xl whitespace-nowrap">{toSimpleName(r.name)}</div>
+                                        <div className={"text-base text-gray-900 dark:text-gray-50 font-medium rounded-xl whitespace-nowrap" + (r.inUse ? " text-gray-400 dark:text-gray-500" : "text-gray-700")}>{toSimpleName(r.name)}</div>
                                         <p>Updated {moment(r.updatedAt).fromNow()}</p>
                                     </div>
                                     <div className="flex justify-end">
-                                        <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100">
+                                        <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100 items-center mr-2 text-right">
                                             {!r.inUse ? (
                                                 <button className="primary" onClick={() => setSelectedRepo(r)}>Select</button>
                                             ) : (
-                                                <p className="my-auto">already taken</p>
+                                                <p className="text-gray-500 font-medium">
+                                                    @{r.inUse.userName} already<br/>added this repo
+                                                </p>
                                             )}
                                         </div>
                                     </div>
