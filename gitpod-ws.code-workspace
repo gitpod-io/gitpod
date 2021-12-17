@@ -9,7 +9,6 @@
       { "path": "components/ee/ws-scheduler" },
       { "path": "components/gitpod-cli" },
       { "path": "components/gitpod-protocol" },
-      { "path": "components/image-builder" },
       { "path": "components/image-builder-bob" },
       { "path": "components/image-builder-mk3" },
       { "path": "components/licensor" },
