@@ -22,10 +22,4 @@ spec:
   - ports:
     - protocol: TCP
       port: 80
-    from:
-    # Allow ingress on port 80 from component:
-    - podSelector:
-        matchLabels:
-          app: {{ template "gitpod.fullname" . }}
-          component: proxy
 {{- end -}}
