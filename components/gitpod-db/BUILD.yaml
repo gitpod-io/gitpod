@@ -28,6 +28,7 @@ packages:
       - "src/wait-for-db.ts"
       - "src/migrate-migrations.ts"
       - "src/user-db.ts"
+      - "src/auth-provider-entry-db.ts"
       - "package.json"
     deps:
       - components/gitpod-protocol:lib

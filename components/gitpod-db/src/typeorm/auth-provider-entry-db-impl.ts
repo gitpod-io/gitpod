@@ -45,11 +45,25 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         await repo.update({ id }, { deleted: true });
     }
 
-    async findAll(): Promise<AuthProviderEntry[]> {
+    async findAll(exceptOAuthRevisions: string[] = []): Promise<AuthProviderEntry[]> {
+        const repo = await this.getAuthProviderRepo();
+        let query = repo.createQueryBuilder('auth_provider')
+            .where('auth_provider.deleted != true')
+        if (exceptOAuthRevisions.length > 0) {
+            query = query.andWhere('auth_provider.oauthRevision NOT IN (:exceptOAuthRevisions)', { exceptOAuthRevisions });
+        }
+        return query.getMany();
+    }
+
+    async findAllHosts(): Promise<string[]> {
+        const hostField: keyof DBAuthProviderEntry = "host";
+
         const repo = await this.getAuthProviderRepo();
         const query = repo.createQueryBuilder('auth_provider')
+            .select(hostField)
             .where('auth_provider.deleted != true');
-        return query.getMany();
+        const result = (await query.execute()) as Pick<DBAuthProviderEntry, "host">[];
+        return result.map(r => r.host);
     }
 
     async findByHost(host: string): Promise<AuthProviderEntry | undefined> {

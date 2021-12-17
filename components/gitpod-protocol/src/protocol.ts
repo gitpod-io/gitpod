@@ -1138,6 +1138,8 @@ export interface AuthProviderEntry {
     readonly status: AuthProviderEntry.Status;
 
     readonly oauth: OAuth2Config;
+    /** A random string that is guaranteed to change whenever oauth changes (enforced on service level) */
+    readonly oauthRevision: string;
 }
 
 export interface OAuth2Config {
