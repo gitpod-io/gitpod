@@ -233,9 +233,11 @@ function LimitReachedOutOfHours() {
 
 function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
   const [statusMessage, setStatusMessage] = useState<React.ReactNode>();
+  const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
+  const repoFullName = (owner && repoName) ? `${owner}/${repoName}` : '';
+
   useEffect(() => {
     (async () => {
-      const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
       console.log('host', host);
       console.log('owner', owner);
       console.log('repoName', repoName);
@@ -247,8 +249,6 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
       if (!authProvider) {
         return;
       }
-
-      const repoFullName = (owner && repoName) ? `${owner}/${repoName}` : '';
 
       // TODO: this should be aware of already granted permissions
       const missingScope = authProvider.host === 'github.com' ? 'repo' : 'read_repository';
@@ -297,9 +297,14 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
     })();
   }, []);
 
-  return <StartPage phase={StartPhase.Checking} error={p.error}>
-    {statusMessage}
-  </StartPage>;
+  return (
+    <StartPage phase={StartPhase.Checking} error={p.error}>
+      <p className="text-base text-gitpod-red mt-2">
+        <code>{repoFullName}</code>
+      </p>
+      {statusMessage}
+    </StartPage>
+  );
 }
 
 interface RunningPrebuildViewProps {
