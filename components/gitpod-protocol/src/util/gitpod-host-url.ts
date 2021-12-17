@@ -108,10 +108,6 @@ export class GitpodHostUrl {
         return this.with(url => ({ pathname: '/preferences' }));
     }
 
-    asGraphQLApi(): GitpodHostUrl {
-        return this.with(url => ({ pathname: '/graphql/' }));
-    }
-
     asStart(workspaceId = this.workspaceId): GitpodHostUrl {
         return this.withoutWorkspacePrefix().with({
             pathname: '/start/',
