@@ -141,7 +141,7 @@ export default function NewProject() {
     }, [selectedAccount]);
 
     useEffect(() => {
-        if (!selectedProviderHost || isBitbucket()) {
+        if (!selectedProviderHost) {
             return;
         }
         (async () => {
@@ -161,12 +161,11 @@ export default function NewProject() {
     }, [project, sourceOfConfig]);
 
     const isGitHub = () => selectedProviderHost === "github.com";
-    const isBitbucket = () => selectedProviderHost === "bitbucket.org";
 
     const updateReposInAccounts = async (installationId?: string) => {
         setLoaded(false);
         setReposInAccounts([]);
-        if (!selectedProviderHost || isBitbucket()) {
+        if (!selectedProviderHost) {
             return [];
         }
         try {
@@ -194,7 +193,7 @@ export default function NewProject() {
     }
 
     const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
-        if (!selectedProviderHost || isBitbucket()) {
+        if (!selectedProviderHost) {
             return;
         }
         const repoSlug = repo.path || repo.name;
@@ -382,11 +381,11 @@ export default function NewProject() {
             setSelectedProviderHost(host);
         }
 
-        if (!loaded && !isBitbucket()) {
+        if (!loaded) {
             return renderLoadingState();
         }
 
-        if (showGitProviders || isBitbucket()) {
+        if (showGitProviders) {
             return (<GitProviders onHostSelected={onGitProviderSeleted} authProviders={authProviders} />);
         }
 
@@ -437,18 +436,6 @@ export default function NewProject() {
         </>)
     };
 
-    const renderBitbucketWarning = () => {
-        return (
-            <div className="mt-16 flex space-x-2 py-6 px-6 w-96 justify-betweeen bg-gitpod-kumquat-light rounded-xl">
-                <div className="pr-3 self-center w-6">
-                    <img src={exclamation} />
-                </div>
-                <div className="flex-1 flex flex-col">
-                    <p className="text-gitpod-red text-sm">Bitbucket support for projects is not available yet. Follow <a className="gp-link" href="https://github.com/gitpod-io/gitpod/issues/5980">#5980</a> for updates.</p>
-                </div>
-            </div>);
-    }
-
     const onNewWorkspace = async () => {
         const redirectToNewWorkspace = () => {
             // instead of `history.push` we want forcibly to redirect here in order to avoid a following redirect from `/` -> `/projects` (cf. App.tsx)
@@ -472,8 +459,6 @@ export default function NewProject() {
 
                 {selectedRepo && selectedTeamOrUser && (<div></div>)}
             </>
-
-            {isBitbucket() && renderBitbucketWarning()}
 
         </div>);
     } else {
@@ -534,8 +519,8 @@ function GitProviders(props: {
         });
     }
 
-    // for now we exclude bitbucket.org and GitHub Enterprise
-    const filteredProviders = () => props.authProviders.filter(p => p.host === "github.com" || p.authProviderType === "GitLab");
+    // for now we exclude GitHub Enterprise
+    const filteredProviders = () => props.authProviders.filter(p => p.host === "github.com" || p.host === "bitbucket.org" || p.authProviderType === "GitLab");
 
     return (
         <div className="mt-8 border rounded-t-xl border-gray-100 dark:border-gray-800 flex-col">

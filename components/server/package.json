@@ -44,7 +44,7 @@
     "@probot/get-private-key": "^1.1.1",
     "amqplib": "^0.8.0",
     "base-64": "^1.0.0",
-    "bitbucket": "^2.4.2",
+    "bitbucket": "^2.7.0",
     "body-parser": "^1.18.2",
     "cookie": "^0.4.1",
     "cookie-parser": "^1.4.5",

@@ -41,6 +41,7 @@ import { Config } from "../../../src/config";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
 import { ClientMetadata } from "../../../src/websocket/websocket-connection-manager";
+import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -68,6 +69,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
     @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
+    @inject(BitbucketAppSupport) protected readonly bitbucketAppSupport: BitbucketAppSupport;
 
     @inject(Config) protected readonly config: Config;
 
@@ -1429,6 +1431,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         if (providerHost === "github.com") {
             repositories.push(...(await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params })));
+        } else if (providerHost === "bitbucket.org" && provider) {
+            repositories.push(...(await this.bitbucketAppSupport.getProviderRepositoriesForUser({ user, provider })));
         } else if (provider?.authProviderType === "GitLab") {
             repositories.push(...(await this.gitLabAppSupport.getProviderRepositoriesForUser({ user, provider })));
         } else {

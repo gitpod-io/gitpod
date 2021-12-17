@@ -5041,10 +5041,10 @@ bintrees@1.0.1:
   resolved "https://registry.yarnpkg.com/bintrees/-/bintrees-1.0.1.tgz#0e655c9b9c2435eaab68bf4027226d2b55a34524"
   integrity sha1-DmVcm5wkNeqraL9AJyJtK1WjRSQ=
 
-bitbucket@^2.4.2:
-  version "2.6.3"
-  resolved "https://registry.yarnpkg.com/bitbucket/-/bitbucket-2.6.3.tgz#e7aa030406720e24c19a40701506b1c366daf544"
-  integrity sha512-t23mlPsCchl+7TCGGHqI4Up++mnGd6smaKsNe/t+kGlkGfIzm+QmVdWvBboHl8Nyequ8Wm0Whi2lKq9qmfJmxA==
+bitbucket@^2.7.0:
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/bitbucket/-/bitbucket-2.7.0.tgz#fd11b19a42cc9b89f6a899ff669fd1575183a5b3"
+  integrity sha512-6fw3MzXeFp3TLmo6jF7IWFn9tFpFKpzCpDjKek9s5EY559Ff3snbu2hmS5ZKmR7D0XomPbIT0dBN1juoJ/gGyA==
   dependencies:
     before-after-hook "^2.1.0"
     deepmerge "^4.2.2"
