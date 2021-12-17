@@ -129,38 +129,3 @@ export interface CouponData {
      */
     coupon_code?: string;
 }
-
-@Entity()
-// on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
-@Index("ind_userId_softDeletedTime", ["userId", "softDeletedTime"])
-export class DBPaymentSourceInfo {
-    @PrimaryColumn()
-    id: string;
-
-    @PrimaryColumn({
-        type: "bigint"
-    })
-    @Index("ind_resourceVersion")   // Necessary for certain operations: https://dev.mysql.com/doc/refman/8.0/en/order-by-optimization.html
-    resourceVersion: number;
-
-    @Column(TypeORM.UUID_COLUMN_TYPE)
-    userId: string;
-
-    @Column()
-    status: PaymentSourceStatus;
-
-    @Column()
-    cardExpiryMonth: number;
-
-    @Column()
-    cardExpiryYear: number;
-
-    @Column({
-        type: "varchar",
-        length: 30,
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
-    })
-    softDeletedTime?: string;
-}
-export type PaymentSourceStatus = "valid" | "expiring" | "expired" | "invalid" | "pending_verification";

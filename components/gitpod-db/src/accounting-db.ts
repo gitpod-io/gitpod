@@ -5,8 +5,8 @@
  */
 
 import { AccountEntry, Subscription, SubscriptionAndUser, Credit } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
-import { DBSubscriptionAdditionalData, DBPaymentSourceInfo } from "./typeorm/entity/db-subscription";
-import { DeepPartial, EntityManager } from "typeorm";
+import { DBSubscriptionAdditionalData } from "./typeorm/entity/db-subscription";
+import { EntityManager } from "typeorm";
 
 export const TransactionalAccountingDBFactory = Symbol('TransactionalAccountingDBFactory');
 export interface TransactionalAccountingDBFactory {
@@ -41,7 +41,4 @@ export interface AccountingDB {
     transaction<T>(closure: (db: AccountingDB)=>Promise<T>, closures?: ((manager: EntityManager) => Promise<any>)[]): Promise<T>;
 
     storeSubscriptionAdditionalData(subscriptionData: DBSubscriptionAdditionalData): Promise<DBSubscriptionAdditionalData>;
-    storePaymentSourceInfo(cardInfo: DBPaymentSourceInfo): Promise<DBPaymentSourceInfo>;
 }
-
-export type DBPaymentSourceInfoPartial = DeepPartial<DBPaymentSourceInfo> & Pick<DBPaymentSourceInfo, "id">;
