@@ -17,6 +17,7 @@ import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
+import CodeText from "../components/CodeText";
 
 const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
 
@@ -233,9 +234,11 @@ function LimitReachedOutOfHours() {
 
 function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
   const [statusMessage, setStatusMessage] = useState<React.ReactNode>();
+  const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
+  const repoFullName = (owner && repoName) ? `${owner}/${repoName}` : '';
+
   useEffect(() => {
     (async () => {
-      const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
       console.log('host', host);
       console.log('owner', owner);
       console.log('repoName', repoName);
@@ -248,8 +251,6 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
         return;
       }
 
-      const repoFullName = (owner && repoName) ? `${owner}/${repoName}` : '';
-
       // TODO: this should be aware of already granted permissions
       const missingScope = authProvider.host === 'github.com' ? 'repo' : 'read_repository';
       const authorizeURL = gitpodHostUrl.withApi({
@@ -259,7 +260,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
 
       if (!userScopes.includes(missingScope)) {
         setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
-          <p className="text-base text-gray-400 w-96">The repository '{`${repoFullName}`}' may be private. Please authorize Gitpod to access to private repositories.</p>
+          <p className="text-base text-gray-400 w-96">The repository may be private. Please authorize Gitpod to access to private repositories.</p>
           <a className="mx-auto" href={authorizeURL}><button className="secondary">Grant Access</button></a>
         </div>);
         return;
@@ -267,7 +268,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
 
       if (userIsOwner) {
         setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
-          <p className="text-base text-gray-400 w-96">The repository '{`${repoFullName}`}' is not found in your account.</p>
+          <p className="text-base text-gray-400 w-96">The repository was not found in your account.</p>
         </div>);
         return;
       }
@@ -297,9 +298,14 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
     })();
   }, []);
 
-  return <StartPage phase={StartPhase.Checking} error={p.error}>
-    {statusMessage}
-  </StartPage>;
+  return (
+    <StartPage phase={StartPhase.Checking} error={p.error}>
+      <p className="text-base text-gray-400 mt-2">
+        <CodeText>{repoFullName}</CodeText>
+      </p>
+      {statusMessage}
+    </StartPage>
+  );
 }
 
 interface RunningPrebuildViewProps {
