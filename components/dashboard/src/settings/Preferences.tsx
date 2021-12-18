@@ -30,6 +30,14 @@ export default function Preferences() {
         const settings = additionalData.ideSettings || {};
         settings.defaultIde = value;
         additionalData.ideSettings = settings;
+        getGitpodService().server.trackEvent({
+            event: "ide_configuration_changed",
+            properties: {
+                useDesktopIde,
+                defaultIde: value,
+                defaultDesktopIde: useDesktopIde ? defaultDesktopIde : undefined
+            },
+        });
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setDefaultIde(value);
     }
@@ -40,6 +48,14 @@ export default function Preferences() {
         const settings = additionalData.ideSettings || {};
         settings.defaultDesktopIde = value;
         additionalData.ideSettings = settings;
+        getGitpodService().server.trackEvent({
+            event: "ide_configuration_changed",
+            properties: {
+                useDesktopIde,
+                defaultIde,
+                defaultDesktopIde: value
+            },
+        });
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setDefaultDesktopIde(value);
     }
@@ -52,6 +68,14 @@ export default function Preferences() {
         // Make sure that default desktop IDE is set even when the user did not explicitly select one.
         settings.defaultDesktopIde = defaultDesktopIde;
         additionalData.ideSettings = settings;
+        getGitpodService().server.trackEvent({
+            event: "ide_configuration_changed",
+            properties: {
+                useDesktopIde: value,
+                defaultIde,
+                defaultDesktopIde: value ? defaultDesktopIde : undefined
+            },
+        });
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setUseDesktopIde(value);
     }
@@ -129,7 +153,7 @@ export default function Preferences() {
                             </ul></InfoBox>
                         }
                         <p className="text-left w-full text-gray-500">
-                            The <strong>JetBrains desktop IDEs</strong> are currently in beta. <a href="https://github.com/gitpod-io/gitpod/issues/6576" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a> · <a href="https://www.gitpod.io/docs/integrations/jetbrains" target="_blank" rel="noopener" className="gp-link">Documentation</a>
+                            The <strong>JetBrains desktop IDEs</strong> are currently in beta. <a href="https://github.com/gitpod-io/gitpod/issues/6576" target="gitpod-feedback-issue" rel="noopener" className="gp-link">Send feedback</a> · <a href="https://www.gitpod.io/docs/integrations/jetbrains" target="_blank" rel="noopener noreferrer" className="gp-link">Documentation</a>
                         </p>
                     </>}
                 </>}
