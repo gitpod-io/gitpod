@@ -1,6 +1,7 @@
 # Change Log
 
 ## December 2021
+- Enables bitbucket.org repositories in Teams & Projects ([#7251](https://github.com/gitpod-io/gitpod/pull/7251)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Improved start page when a GitHub app is not installed. ([#7163](https://github.com/gitpod-io/gitpod/pull/7163)) - [@laushinka](https://github.com/laushinka)
 - [installer]: separate server and IDE components ([#7200](https://github.com/gitpod-io/gitpod/pull/7200)) - [@MrSimonEmms](https://github.com/MrSimonEmms), [@iQQBot](https://github.com/iQQBot)
 - [installer]: correct the starts_with validation on the config ([#7206](https://github.com/gitpod-io/gitpod/pull/7206)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
