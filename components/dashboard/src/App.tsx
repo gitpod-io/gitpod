@@ -170,8 +170,10 @@ function App() {
 
     // listen and notify Segment of client-side path updates
     useEffect(() => {
-        // Choose which experiments to run for this session/user
-        Experiment.set(Experiment.seed(true));
+        if (isGitpodIo()) {
+            // Choose which experiments to run for this session/user
+            Experiment.set(Experiment.seed(true));
+        }
     })
 
     useEffect(() => {
