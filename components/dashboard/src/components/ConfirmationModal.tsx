@@ -43,9 +43,10 @@ export default function ConfirmationModal(props: {
             child.push(props.children);
         }
     }
+    const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
     const buttons = [
-        <button className="secondary" onClick={props.onClose} autoFocus>Cancel</button>,
+        <button className="secondary" onClick={props.onClose} autoFocus ref={cancelButtonRef}>Cancel</button>,
         <button className="ml-2 danger" onClick={props.onConfirm} disabled={props.buttonDisabled}>
             {props.buttonText || "Yes, I'm Sure"}
         </button>,
@@ -63,6 +64,10 @@ export default function ConfirmationModal(props: {
             visible={props.visible === undefined ? true : props.visible}
             onClose={props.onClose}
             onEnter={() => {
+                if (cancelButtonRef?.current?.contains(document.activeElement)) {
+                    props.onClose();
+                    return false;
+                }
                 if (buttonDisabled.current) {
                     return false
                 }
