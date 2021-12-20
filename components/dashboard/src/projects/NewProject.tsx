@@ -274,6 +274,10 @@ export default function NewProject() {
 
         const showSearchInput = !!repoSearchFilter || filteredRepos.length > 0;
 
+        const userLink = (r: ProviderRepository) => {
+            return `https://${new URL(r.cloneUrl).host}/${r.inUse?.userName}`
+        }
+
         const projectText = () => {
             return <p className="text-gray-500 text-center text-base">Projects allow you to manage prebuilds and workspaces for your repository. <a href="https://www.gitpod.io/docs/teams-and-projects" rel="noopener" className="gp-link">Learn more</a></p>
         }
@@ -324,7 +328,7 @@ export default function NewProject() {
                                                 <button className="primary" onClick={() => setSelectedRepo(r)}>Select</button>
                                             ) : (
                                                 <p className="text-gray-500 font-medium">
-                                                    @{r.inUse.userName} already<br/>added this repo
+                                                    <a rel="noopener" className="gp-link" href={userLink(r)}>@{r.inUse.userName}</a> already<br/>added this repo
                                                 </p>
                                             )}
                                         </div>
