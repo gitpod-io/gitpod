@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { list as blocklist } from "the-big-username-blacklist";
 import { Team, TeamMemberInfo, TeamMemberRole, TeamMembershipInvite, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
@@ -16,39 +15,6 @@ import { DBTeamMembership } from "./entity/db-team-membership";
 import { DBUser } from "./entity/db-user";
 import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
 
-const FORBIDDEN_SLUGS = [
-    'access-control',
-    'account',
-    'admin',
-    'blocked',
-    'branches',
-    'from-referrer',
-    'install-github-app',
-    'integrations',
-    'issues',
-    'login',
-    'merge-requests',
-    'new',
-    'notifications',
-    'oauth-approval',
-    'plans',
-    'prebuilds',
-    'preferences',
-    'projects',
-    'pull-requests',
-    'settings',
-    'setup',
-    'snapshots',
-    'sorry',
-    'start',
-    'subscription',
-    'teams',
-    'upgrade-subscription',
-    'usage',
-    'variables',
-    'workspaces',
-    ...(blocklist),
-].sort((a, b) => b > a ? -1 : 1);
 
 @injectable()
 export class TeamDBImpl implements TeamDB {
@@ -129,9 +95,6 @@ export class TeamDBImpl implements TeamDB {
             throw new Error('Please choose a team name containing only letters, numbers, -, _, \', or spaces.');
         }
         const slug = name.toLocaleLowerCase().replace(/[ ']/g, '-');
-        if (FORBIDDEN_SLUGS.indexOf(slug) !== -1) {
-            throw new Error('Creating a team with this name is not allowed');
-        }
         const userRepo = await this.getUserRepo();
         const existingUsers = await userRepo.query('SELECT COUNT(id) AS count FROM d_b_user WHERE fullName LIKE ? OR name LIKE ?', [ name, slug ]);
         if (Number.parseInt(existingUsers[0].count) > 0) {
