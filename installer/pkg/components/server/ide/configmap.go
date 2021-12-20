@@ -10,6 +10,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ide"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,14 +31,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:    typeBrowser,
 					Logo:    "invalid",
 					Hidden:  pointer.Bool(true),
-					Image:   common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, workspace.CodeIDEImageStableVersion),
+					Image:   common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
 				},
 				"code": {
 					OrderKey: pointer.String("00"),
 					Title:    "VS Code",
 					Type:     typeBrowser,
 					Logo:     "vscode",
-					Image:    common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, workspace.CodeIDEImageStableVersion),
+					Image:    common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
 				},
 				"code-latest": {
 					OrderKey:           pointer.String("01"),
@@ -46,7 +47,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Logo:               "vscode-insiders",
 					Tooltip:            pointer.String("Early access version, still subject to testing."),
 					Label:              pointer.String("Insiders"),
-					Image:              common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
+					Image:              common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
 					ResolveImageDigest: pointer.Bool(true),
 				},
 				"code-desktop": {
@@ -54,7 +55,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Title:    "VS Code",
 					Type:     typeDesktop,
 					Logo:     "vscode",
-					Image:    common.ImageName(ctx.Config.Repository, workspace.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
+					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
 				},
 				"code-desktop-insiders": {
 					OrderKey: pointer.String("03"),
@@ -63,7 +64,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Logo:     "vscode-insiders",
 					Tooltip:  pointer.String("Visual Studio Code Insiders for early adopters."),
 					Label:    pointer.String("Insiders"),
-					Image:    common.ImageName(ctx.Config.Repository, workspace.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
+					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
 				},
 				"intellij": {
 					OrderKey: pointer.String("04"),
@@ -71,7 +72,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:     typeDesktop,
 					Logo:     "intellij-idea",
 					Notes:    []string{"While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."},
-					Image:    common.ImageName(ctx.Config.Repository, workspace.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
+					Image:    common.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
 				},
 				"goland": {
 					OrderKey: pointer.String("05"),
@@ -79,7 +80,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:     typeDesktop,
 					Logo:     "goland",
 					Notes:    []string{"While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."},
-					Image:    common.ImageName(ctx.Config.Repository, workspace.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
+					Image:    common.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
 				},
 				"pycharm": {
 					OrderKey: pointer.String("06"),
@@ -87,7 +88,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:     typeDesktop,
 					Logo:     "https://upload.wikimedia.org/wikipedia/commons/1/1d/PyCharm_Icon.svg", // TODO(clu): Serve logo from our own components instead of using this wikimedia URL.
 					Notes:    []string{"While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."},
-					Image:    common.ImageName(ctx.Config.Repository, workspace.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
+					Image:    common.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
 				},
 				"phpstorm": {
 					OrderKey: pointer.String("07"),
@@ -95,7 +96,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Type:     typeDesktop,
 					Logo:     "https://upload.wikimedia.org/wikipedia/commons/c/c9/PhpStorm_Icon.svg", // TODO(clu): Serve logo from our own components instead of using this wikimedia URL.
 					Notes:    []string{"While in beta, when you open a workspace with PhpStorm you will need to use the password “gitpod”."},
-					Image:    common.ImageName(ctx.Config.Repository, workspace.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
+					Image:    common.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
 				},
 			},
 			DefaultIDE:        "code",
