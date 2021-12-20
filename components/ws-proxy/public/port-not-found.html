@@ -120,6 +120,17 @@
     </div>
   </div>
   <script>
+    const [theme, setTheme] = useState<Theme>(localStorage.theme || 'system');
+      const actuallySetTheme = (theme: Theme) => {
+        if (theme === 'dark' || theme === 'light') {
+            localStorage.theme = theme;
+        } else {
+            localStorage.removeItem('theme');
+        }
+        const isDark = localStorage.theme === 'dark' || (!localStorage.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        setIsDark(isDark);
+        setTheme(theme);
+    }
     let port = parseInt(window.location.hostname.split('-')[0], 10);
     if (port) {
       document.getElementById('port').textContent = port;
