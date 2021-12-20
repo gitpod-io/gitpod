@@ -42,6 +42,7 @@ import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
 import { ClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
+import { URL } from 'url';
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -1444,12 +1445,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         for (const repo of repositories) {
             const p = cloneUrlToProject.get(repo.cloneUrl);
+            const repoProvider = new URL(repo.cloneUrl).host.split(".")[0];
+
             if (p) {
                 if (p.userId) {
                     const owner = await this.userDB.findUserById(p.userId);
                     if (owner) {
-                        repo.inUse = {
-                            userName: owner?.name || owner?.fullName || 'somebody'
+                        const ownerProviderMatchingRepoProvider = owner.identities.find((identity, index) => identity.authProviderId.toLowerCase().includes(repoProvider));
+                        if (ownerProviderMatchingRepoProvider) {
+                            repo.inUse = {
+                                userName: ownerProviderMatchingRepoProvider?.authName
+                            }
                         }
                     }
                 } else if (p.teamOwners && p.teamOwners[0]) {
