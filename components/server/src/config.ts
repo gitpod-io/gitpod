@@ -67,6 +67,7 @@ export interface ConfigSerialized {
     session: {
         maxAgeMs: number;
         secret: string;
+        secretFile?: string;
     };
 
     githubApp?: {
@@ -184,6 +185,10 @@ export namespace ConfigFile {
         const licenseFile = config.licenseFile
         if (licenseFile) {
             license = fs.readFileSync(licenseFile, "utf-8")
+        }
+        const sessionSecretFile = config.session.secretFile
+        if (sessionSecretFile) {
+            config.session.secret = fs.readFileSync(sessionSecretFile, "utf-8")
         }
         return {
             ...config,
