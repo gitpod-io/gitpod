@@ -285,14 +285,14 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
 
       if (!updatedRecently) {
         setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
-          <p className="text-base text-gray-400 w-96">Permission to access private repositories has been granted. If you are a member of '{owner}', please try to request access for Gitpod.</p>
+          <p className="text-base text-gray-400 w-96">Permission to access private repositories has been granted. If you are a member of <CodeText>{owner}</CodeText>, please try to request access for Gitpod.</p>
           <a className="mx-auto" href={authorizeURL}><button className="secondary">Request Access for Gitpod</button></a>
         </div>);
         return;
       }
 
       setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
-        <p className="text-base text-gray-400 w-96">Your access token was updated recently. Please try again if the repository exists and Gitpod was approved for '{owner}'.</p>
+        <p className="text-base text-gray-400 w-96">Your access token was updated recently. Please try again if the repository exists and Gitpod was approved for <CodeText>{owner}</CodeText>.</p>
         <a className="mx-auto" href={authorizeURL}><button className="secondary">Try Again</button></a>
       </div>);
     })();
