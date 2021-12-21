@@ -104,6 +104,9 @@ export interface AdditionalUserData {
     oauthClientsApproved?: { [key: string]: string }
     // to remember GH Orgs the user installed/updated the GH App for
     knownGitHubOrgs?: string[];
+
+    // Git clone URL pointing to the user's dotfile repo
+    dotfileRepo?: string;
 }
 
 export interface EmailNotificationSettings {

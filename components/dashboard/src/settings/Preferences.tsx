@@ -109,6 +109,13 @@ export default function Preferences() {
     const browserIdeOptions = ideOptions && orderedIdeOptions(ideOptions, "browser");
     const desktopIdeOptions = ideOptions && orderedIdeOptions(ideOptions, "desktop");
 
+    const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
+    const actuallySetDotfileRepo = async (value: string) => {
+        const additionalData = user?.additionalData || {};
+        additionalData.dotfileRepo = value;
+        await getGitpodService().server.updateLoggedInUser({ additionalData });
+    };
+
     return <div>
         <PageWithSubMenu subMenu={settingsMenu} title='Preferences' subtitle='Configure user preferences.'>
             {ideOptions && browserIdeOptions && <>
@@ -176,6 +183,17 @@ export default function Preferences() {
                         <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#C4C4C4" rx="8" /><path fill="#737373" d="M74.111 3.412A8 8 0 0180.665 0H100a8 8 0 018 8v24a8 8 0 01-8 8H48.5L74.111 3.412z" /><rect width="32" height="16" fill="#C4C4C4" rx="8" /><rect width="32" height="16" y="24" fill="#737373" rx="8" /><rect width="32" height="16" y="48" fill="#C4C4C4" rx="8" /></svg>
                     </div>
                 </SelectableCard>
+            </div>
+
+            <h3 className="mt-12">Dotfiles <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel></h3>
+            <p className="text-base text-gray-500 dark:text-gray-400">Customize workspaces using dotfiles.</p>
+            <div className="mt-4 max-w-md">
+                <h4>Repository URL</h4>
+                <input type="text" value={dotfileRepo} className="w-full" placeholder="e.g. https://github.com/username/dotfiles" onChange={(e) => setDotfileRepo(e.target.value)} />
+                <p className="text-base text-gray-500 dark:text-gray-400">Add a repository URL that includes dotfiles. Gitpod will clone and install your dotfiles for every new workspace.</p>
+                <div className="mt-4 max-w-md">
+                    <button onClick={() => actuallySetDotfileRepo(dotfileRepo)}>Save Changes</button>
+                </div>
             </div>
         </PageWithSubMenu>
     </div>;

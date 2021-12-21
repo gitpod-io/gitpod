@@ -236,6 +236,10 @@ type WorkspaceConfig struct {
 
 	// WorkspaceClusterHost is a host under which this workspace is served, e.g. ws-eu11.gitpod.io
 	WorkspaceClusterHost string `env:"GITPOD_WORKSPACE_CLUSTER_HOST"`
+
+	// DotfileRepo is a user-configurable repository which contains their dotfiles to customise
+	// the in-workspace epxerience.
+	DotfileRepo string `env:"SUPERVISOR_DOTFILE_REPO"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.
