@@ -212,7 +212,7 @@ export class WorkspaceStarter {
 
             this.analytics.track({
                 userId: user.id,
-                event: "workspace-started",
+                event: "workspace_started",
                 properties: {
                     workspaceId: workspace.id,
                     instanceId: instance.id,

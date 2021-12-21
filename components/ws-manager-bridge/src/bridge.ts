@@ -208,7 +208,7 @@ export class WorkspaceManagerBridge implements Disposable {
                         instance.startedTime = new Date().toISOString();
                         this.prometheusExporter.observeWorkspaceStartupTime(instance);
                         this.analytics.track({
-                            event: "workspace-running",
+                            event: "workspace_running",
                             messageId: `bridge-wsrun-${instance.id}`,
                             properties: { instanceId: instance.id, workspaceId: workspaceId },
                             userId,
@@ -334,9 +334,9 @@ export class WorkspaceManagerBridge implements Disposable {
 
         try {
             await this.userDB.trace({span}).deleteGitpodTokensNamedLike(ownerUserID, `${instance.id}-%`);
-            await this.analytics.track({
+            this.analytics.track({
                 userId: ownerUserID,
-                event: "workspace-stopped",
+                event: "workspace_stopped",
                 messageId: `bridge-wsstopped-${instance.id}`,
                 properties: { "instanceId": instance.id, "workspaceId": instance.workspaceId }
             });
