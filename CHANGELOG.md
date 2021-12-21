@@ -1,6 +1,8 @@
 # Change Log
 
 ## December 2021
+- Allow setting a name and a description for each port on .gitpod.yml ([#7012](https://github.com/gitpod-io/gitpod/pull/7012)) - [@felladrin](https://github.com/felladrin)
+- Mention username who added project in a team ([#5128](https://github.com/gitpod-io/gitpod/pull/5128)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Enables bitbucket.org repositories in Teams & Projects ([#7251](https://github.com/gitpod-io/gitpod/pull/7251)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Improved start page when a GitHub app is not installed. ([#7163](https://github.com/gitpod-io/gitpod/pull/7163)) - [@laushinka](https://github.com/laushinka)
 - [installer]: separate server and IDE components ([#7200](https://github.com/gitpod-io/gitpod/pull/7200)) - [@MrSimonEmms](https://github.com/MrSimonEmms), [@iQQBot](https://github.com/iQQBot)
