@@ -653,6 +653,12 @@ export class WorkspaceStarter {
         vsxRegistryUrl.setValue(this.config.vsxRegistryUrl);
         envvars.push(vsxRegistryUrl);
 
+        // supervisor ensures dotfiles are only used if the workspace is a regular workspace
+        const dotfileEnv = new EnvironmentVariable();
+        dotfileEnv.setName("SUPERVISOR_DOTFILE_REPO");
+        dotfileEnv.setValue(user.additionalData?.dotfileRepo || "");
+        envvars.push(dotfileEnv);
+
         const createGitpodTokenPromise = (async () => {
             const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
             const token = crypto.randomBytes(30).toString('hex');

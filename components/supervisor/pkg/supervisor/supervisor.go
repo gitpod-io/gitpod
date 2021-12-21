@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -35,6 +36,7 @@ import (
 	"github.com/soheilhy/cmux"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
@@ -278,6 +280,10 @@ func Run(options ...RunOption) {
 	//   - in headless task we can not use reaper, because it breaks headlessTaskFailed report
 	if !cfg.isHeadless() {
 		go reaper(terminatingReaper)
+
+		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
+		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
+		installDotfiles(ctx, termMuxSrv, cfg)
 	}
 
 	var ideWG sync.WaitGroup
@@ -362,6 +368,148 @@ func Run(options ...RunOption) {
 	terminateChildProcesses()
 
 	wg.Wait()
+}
+
+func installDotfiles(ctx context.Context, term *terminal.MuxTerminalService, cfg *Config) {
+	repo := cfg.DotfileRepo
+	if repo == "" {
+		return
+	}
+
+	const dotfilePath = "/home/gitpod/.dotfiles"
+	if _, err := os.Stat(dotfilePath); err == nil {
+		// dotfile path exists already - nothing to do here
+		return
+	}
+
+	prep := func(cfg *Config, out io.Writer, name string, args ...string) *exec.Cmd {
+		cmd := exec.Command(name, args...)
+		cmd.Dir = "/home/gitpod"
+		cmd.Env = buildChildProcEnv(cfg, nil)
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			// All supervisor children run as gitpod user. The environment variables we produce are also
+			// gitpod user specific.
+			Credential: &syscall.Credential{
+				Uid: gitpodUID,
+				Gid: gitpodGID,
+			},
+		}
+		cmd.Stdout = out
+		cmd.Stderr = out
+		return cmd
+	}
+
+	err := func() (err error) {
+		out, err := os.OpenFile("/home/gitpod/.dotfiles.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		defer func() {
+			if err != nil {
+				out.WriteString(fmt.Sprintf("# dotfile init failed: %s\n", err.Error()))
+			}
+		}()
+
+		done := make(chan error, 1)
+		go func() {
+			done <- prep(cfg, out, "git", "clone", "--depth=1", repo, "/home/gitpod/.dotfiles").Run()
+			close(done)
+		}()
+		select {
+		case err := <-done:
+			if err != nil {
+				return err
+			}
+		case <-time.After(120 * time.Second):
+			return xerrors.Errorf("dotfiles repo clone did not finish within two minutes")
+		}
+
+		// at this point we have the dotfile repo cloned, let's try and install it
+		var candidates = []string{
+			"install.sh",
+			"install",
+			"bootstrap.sh",
+			"bootstrap",
+			"script/bootstrap",
+			"setup.sh",
+			"setup",
+			"script/setup",
+		}
+		for _, c := range candidates {
+			fn := filepath.Join(dotfilePath, c)
+			stat, err := os.Stat(fn)
+			if err != nil {
+				_, _ = out.WriteString(fmt.Sprintf("# installation script candidate %s is not available\n", fn))
+				continue
+			}
+			if stat.IsDir() {
+				_, _ = out.WriteString(fmt.Sprintf("# installation script candidate %s is a directory\n", fn))
+				continue
+			}
+			if stat.Mode()&0111 == 0 {
+				_, _ = out.WriteString(fmt.Sprintf("# installation script candidate %s is not executable\n", fn))
+				continue
+			}
+
+			_, _ = out.WriteString(fmt.Sprintf("# executing installation script candidate %s\n", fn))
+
+			// looks like we've found a candidate, let's run it
+			cmd := prep(cfg, out, "/bin/sh", "-c", "exec "+fn)
+			err = cmd.Start()
+			if err != nil {
+				return err
+			}
+			done := make(chan error, 1)
+			go func() {
+				done <- cmd.Wait()
+				close(done)
+			}()
+
+			select {
+			case err = <-done:
+				return err
+			case <-time.After(120 * time.Second):
+				cmd.Process.Kill()
+				return xerrors.Errorf("installation process %s tool longer than 120 seconds", fn)
+			}
+		}
+
+		// no installation script candidate was found, let's try and symlink this stuff
+		err = filepath.Walk(dotfilePath, func(path string, info fs.FileInfo, err error) error {
+			if strings.Contains(path, "/.git") {
+				// don't symlink the .git directory or any of its content
+				return nil
+			}
+
+			homeFN := filepath.Join("/home/gitpod", strings.TrimPrefix(path, dotfilePath))
+			if _, err := os.Stat(homeFN); err == nil {
+				// homeFN exists already - do nothing
+				return nil
+			}
+
+			if info.IsDir() {
+				err = os.MkdirAll(homeFN, info.Mode().Perm())
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+
+			// write some feedback to the terminal
+			out.WriteString(fmt.Sprintf("# echo linking %s -> %s\n", path, homeFN))
+
+			return os.Symlink(path, homeFN)
+		})
+
+		return nil
+	}()
+	if err != nil {
+		// installing the dotfiles failed for some reason - we must tell the user
+		// TODO(cw): tell the user
+		log.WithError(err).Warn("installing dotfiles failed")
+	}
 }
 
 func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.APIoverJSONRPC {
@@ -1223,7 +1371,7 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 			cmd.ExtraFiles = []*os.File{socketFD}
 			alias, err := term.Start(cmd, terminal.TermOptions{
 				Annotations: map[string]string{
-					"supervisor": "true",
+					"gitpod.supervisor": "true",
 				},
 				LogToStdout: true,
 			})
