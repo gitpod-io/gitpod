@@ -11,7 +11,6 @@ import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
-import { Experiment } from './experiments';
 import gitpod from './images/gitpod.svg';
 import gitpodDark from './images/gitpod-dark.svg';
 import gitpodIcon from './icons/gitpod.svg';
@@ -67,10 +66,7 @@ export function Login() {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [providerFromContext, setProviderFromContext] = useState<AuthProviderInfo>();
 
-    const showWelcome = Experiment.has("login-from-context-6826") ?
-        (!hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://"))
-        : (!hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore())
-        ;
+    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
 
     useEffect(() => {
         (async () => {
@@ -79,9 +75,6 @@ export function Login() {
     }, [])
 
     useEffect(() => {
-        if (!Experiment.has("login-from-context-6826")) {
-            return;
-        }
         if (hostFromContext && authProviders) {
             const providerFromContext = authProviders.find(provider => provider.host === hostFromContext);
             setProviderFromContext(providerFromContext);
