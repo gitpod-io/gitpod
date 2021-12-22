@@ -9,6 +9,7 @@ import (
 	"time"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/spf13/cobra"
 )
 
@@ -26,13 +27,12 @@ var timeoutExtendCmd = &cobra.Command{
 		}
 		client, err := gitpod.ConnectToServer(ctx, wsInfo, []string{
 			"function:setWorkspaceTimeout",
-			"180m",
 			"resource:workspace::" + wsInfo.WorkspaceId + "::get/update",
 		})
 		if err != nil {
 			fail(err.Error())
 		}
-		err = client.StopWorkspace(ctx, wsInfo.WorkspaceId)
+		_, err = client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, *serverapi.WorkspaceTimeoutDuration180m)
 		if err != nil {
 			fail(err.Error())
 		}
