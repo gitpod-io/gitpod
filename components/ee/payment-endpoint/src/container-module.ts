@@ -22,7 +22,6 @@ import { AccountServiceImpl } from "./accounting/account-service-impl";
 import { GithubEndpointController } from "./github/endpoint-controller";
 import { GithubSubscriptionMapper } from "./github/subscription-mapper";
 import { GithubSubscriptionReconciler } from "./github/subscription-reconciler";
-import { PaymentSourceHandler } from "./chargebee/payment-source-handler";
 
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -44,7 +43,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(CompositeEventHandler).toSelf().inSingletonScope();
     bind(EventHandler).to(SubscriptionHandler).inSingletonScope();
     bind(EventHandler).to(TeamSubscriptionHandler).inSingletonScope();
-    bind(EventHandler).to(PaymentSourceHandler).inSingletonScope();
 
     bind(SubscriptionService).toSelf().inSingletonScope();
     bind(TeamSubscriptionService).toSelf().inSingletonScope();

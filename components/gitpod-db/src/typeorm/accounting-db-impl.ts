@@ -9,7 +9,7 @@ import { DBAccountEntry } from "./entity/db-account-entry";
 import { User } from "@gitpod/gitpod-protocol";
 import { AccountEntry, Subscription, Credit, SubscriptionAndUser } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { EntityManager, Repository } from "typeorm";
-import { DBSubscription, DBSubscriptionAdditionalData, DBPaymentSourceInfo } from "./entity/db-subscription";
+import { DBSubscription, DBSubscriptionAdditionalData } from "./entity/db-subscription";
 import { injectable, inject } from "inversify";
 import { v4 as uuidv4 } from 'uuid';
 import { DBUser } from "../typeorm/entity/db-user";
@@ -99,10 +99,6 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
 
     protected async getSubscriptionAdditionalDataRepo(): Promise<Repository<DBSubscriptionAdditionalData>> {
         return (await this.getEntityManager()).getRepository(DBSubscriptionAdditionalData);
-    }
-
-    protected async getPaymentSourceRepo(): Promise<Repository<DBPaymentSourceInfo>> {
-        return (await this.getEntityManager()).getRepository(DBPaymentSourceInfo);
     }
 
     async newSubscription(subscription: Omit<Subscription, 'uid'>): Promise<Subscription> {
@@ -256,23 +252,6 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
     async storeSubscriptionAdditionalData(subscriptionData: DBSubscriptionAdditionalData): Promise<DBSubscriptionAdditionalData> {
         const repo = await this.getSubscriptionAdditionalDataRepo();
         return repo.save(subscriptionData);
-    }
-
-    async storePaymentSourceInfo(info: DBPaymentSourceInfo): Promise<DBPaymentSourceInfo> {
-        const repo = await this.getPaymentSourceRepo();
-        // see https://github.com/gitpod-io/gitpod/issues/7171
-        // TypeORM seems to have problems with number type primary columns
-        const existing = await repo.findOne({ id: info.id, resourceVersion: info.resourceVersion });
-        if (existing) {
-            for (const prop in info) {
-                if (prop != "resourceVersion") {
-                    (existing as any)[prop] = (info as any)[prop];
-                }
-            }
-            return repo.save(existing);
-        } else {
-            return repo.save(info);
-        }
     }
 }
 

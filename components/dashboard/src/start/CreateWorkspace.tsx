@@ -113,7 +113,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
       switch (error.code) {
         case ErrorCodes.CONTEXT_PARSE_ERROR:
           statusMessage = <div className="text-center">
-            <p className="text-base mt-2">Are you trying to open a Git repository from a self-hosted instance? <a className="text-blue" href="https://gitpod.io/integrations">Add integration</a></p>
+            <p className="text-base mt-2">Are you trying to open a Git repository from a self-hosted instance? <a className="text-blue" href={gitpodHostUrl.asAccessControl().toString()}>Add integration</a></p>
           </div>;
           break;
         case ErrorCodes.INVALID_GITPOD_YML:

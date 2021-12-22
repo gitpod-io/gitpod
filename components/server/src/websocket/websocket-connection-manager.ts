@@ -30,7 +30,7 @@ const EVENT_CLIENT_CONTEXT_CREATED = "EVENT_CLIENT_CONTEXT_CREATED";
 const EVENT_CLIENT_CONTEXT_CLOSED = "EVENT_CLIENT_CONTEXT_CLOSED";
 
 /** TODO(gpl) Refine this list */
-export type WebsocketClientType = "browser" | "go-client" | "vs-code";
+export type WebsocketClientType = "browser" | "go-client" | "vs-code" | "supervisor" | "local-companion";
 namespace WebsocketClientType {
     export function getClientType(req: express.Request): WebsocketClientType | undefined {
         const userAgent = req.headers["user-agent"];
@@ -47,7 +47,13 @@ namespace WebsocketClientType {
         if (userAgent.startsWith("VS Code")) {
             return "vs-code";
         }
-        log.debug("API client without 'User-Agent'", { headers: req.headers });
+        if (userAgent.startsWith("gitpod/supervisor")) {
+            return "supervisor";
+        }
+        if (userAgent.startsWith("gitpod/local-companion")) {
+            return "local-companion";
+        }
+        log.debug("API client with unknown 'User-Agent'", userAgent);
         return undefined;
     }
 }

@@ -261,6 +261,10 @@ func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()
 		Log:                 logrus.NewEntry(logrus.StandardLogger()),
 		ReconnectionHandler: reconnectionHandler,
 		CloseHandler:        closeHandler,
+		ExtraHeaders: map[string]string{
+			"User-Agent":       "gitpod/local-companion",
+			"X-Client-Version": Version,
+		},
 	})
 	if err != nil {
 		return nil, err

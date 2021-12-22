@@ -12,6 +12,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ide"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
@@ -84,7 +85,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			WorkspaceImage:     common.ImageName("", workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion),
-			IDEImage:           common.ImageName(ctx.Config.Repository, workspace.CodeIDEImage, workspace.CodeIDEImageStableVersion),
+			IDEImage:           common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
 			SupervisorImage:    common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			FeatureFlags:       nil,
 			MaxGhostWorkspaces: 0,

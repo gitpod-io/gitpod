@@ -70,7 +70,15 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 	}
 
 	// The reference is already in digest form we don't have to do anything
-	if _, ok := pref.(reference.Canonical); ok {
+	if cref, ok := pref.(reference.Canonical); ok {
+		// if reference contain tag, we should remove it to avoid tag and digest conflict
+		if _, ok := pref.(reference.Tagged); ok {
+			dref, err := reference.WithDigest(reference.TrimNamed(pref), cref.Digest())
+			if err != nil {
+				return "", err
+			}
+			ref = dref.String()
+		}
 		span.LogKV("result", ref)
 		return ref, nil
 	}

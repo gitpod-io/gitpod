@@ -120,7 +120,7 @@ func TestPythonExtWorkspace(t *testing.T) {
 				Dir:     "/workspace/python-test-workspace",
 				Command: "yarn",
 				Args: []string{
-					"openvscode-server-test",
+					"gp-code-server-test",
 					fmt.Sprintf("--endpoint=%s", nfo.LatestInstance.IdeURL),
 					fmt.Sprintf("--authCookie=%s", base64.StdEncoding.EncodeToString([]byte(jsonCookie))),
 					"--workspacePath=./src/testWorkspace",

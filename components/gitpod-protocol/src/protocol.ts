@@ -684,6 +684,8 @@ export interface PortConfig {
     port: number;
     onOpen?: PortOnOpen;
     visibility?: PortVisibility;
+    description?: string;
+    name?: string;
 }
 export namespace PortConfig {
     export function is(config: any): config is PortConfig {

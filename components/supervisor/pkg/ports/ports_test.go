@@ -443,6 +443,56 @@ func TestPortsUpdateState(t *testing.T) {
 				{{LocalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
+		{
+			Desc: "port status has description set as soon as the port gets exposed, if there was a description configured",
+			Changes: []Change{
+				{
+					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+						{Port: 8080, Visibility: "private", Description: "Development server"},
+					}},
+				},
+				{
+					Served: []ServedPort{{"00000000", 8080, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 8080},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 8080, Description: "Development server"}},
+				{{LocalPort: 8080, Description: "Development server", Served: true}},
+				{{LocalPort: 8080, Description: "Development server", Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "port status has the name attribute set as soon as the port gets exposed, if there was a name configured in Gitpod's Workspace",
+			Changes: []Change{
+				{
+					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+						{Port: 3000, Visibility: "private", Name: "react"},
+					}},
+				},
+				{
+					Served: []ServedPort{{"00000000", 3000, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 3000, Public: false, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 3000},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 3000, Name: "react"}},
+				{{LocalPort: 3000, Name: "react", Served: true}},
+				{{LocalPort: 3000, Name: "react", Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+			},
+		},
 	}
 
 	log.Log.Logger.SetLevel(logrus.FatalLevel)

@@ -13,6 +13,7 @@ import { RateLimiterConfig } from './auth/rate-limiter';
 import { CodeSyncConfig } from './code-sync/code-sync-service';
 import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import * as fs from 'fs';
+import * as yaml from 'js-yaml';
 import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { filePathTelepresenceAware, KubeStage, translateLegacyStagename } from '@gitpod/gitpod-protocol/lib/env';
 import { BrandingParser } from './branding-parser';
@@ -86,6 +87,7 @@ export interface ConfigSerialized {
     enableLocalApp: boolean;
 
     authProviderConfigs: AuthProviderParams[];
+    authProviderConfigFiles: string[];
     builtinAuthProvidersConfigured: boolean;
     disableDynamicAuthProviderLogin: boolean;
 
@@ -170,10 +172,25 @@ export namespace ConfigFile {
 
     function loadAndCompleteConfig(config: ConfigSerialized): Config {
         const hostUrl = new GitpodHostUrl(config.hostUrl);
-        let authProviderConfigs = config.authProviderConfigs
-        if (authProviderConfigs) {
-            authProviderConfigs = normalizeAuthProviderParams(authProviderConfigs);
+        let authProviderConfigs: AuthProviderParams[] = []
+        const rawProviderConfigs = config.authProviderConfigs
+        if (rawProviderConfigs) {
+            /* Add raw provider data */
+            authProviderConfigs.push(...rawProviderConfigs);
         }
+        const rawProviderConfigFiles = config.authProviderConfigFiles
+        if (rawProviderConfigFiles) {
+            /* Add providers from files */
+            const authProviderConfigFiles: AuthProviderParams[] = rawProviderConfigFiles.map<AuthProviderParams>((providerFile) => {
+                const rawProviderData = fs.readFileSync(providerFile, "utf-8")
+
+                return yaml.load(rawProviderData) as AuthProviderParams
+            });
+
+            authProviderConfigs.push(...authProviderConfigFiles);
+        }
+        authProviderConfigs = normalizeAuthProviderParams(authProviderConfigs)
+
         const builtinAuthProvidersConfigured = authProviderConfigs.length > 0;
         const chargebeeProviderOptions = readOptionsFromFile(filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""));
         let brandingConfig = config.brandingConfig;
@@ -183,7 +200,7 @@ export namespace ConfigFile {
         let license = config.license
         const licenseFile = config.licenseFile
         if (licenseFile) {
-            license = fs.readFileSync(licenseFile, "utf-8")
+            license = fs.readFileSync(licenseFile, "utf-8");
         }
         return {
             ...config,

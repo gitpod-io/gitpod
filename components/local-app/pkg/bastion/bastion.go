@@ -152,6 +152,7 @@ func (s *SSHConfigWritingCallback) InstanceUpdate(w *Workspace) {
 				&ssh_config.KV{Key: "User", Value: "gitpod"},
 				&ssh_config.KV{Key: "Port", Value: port},
 				&ssh_config.KV{Key: "IdentityFile", Value: ws.SSHPrivateFN},
+				&ssh_config.KV{Key: "IdentitiesOnly", Value: "yes"},
 			},
 		})
 	}

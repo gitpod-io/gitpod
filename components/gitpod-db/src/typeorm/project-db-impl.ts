@@ -33,7 +33,7 @@ export class ProjectDBImpl implements ProjectDB {
         return repo.findOne({ cloneUrl, markedDeleted: false });
     }
 
-    public async findProjectsByCloneUrls(cloneUrls: string[]): Promise<Project[]> {
+    public async findProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { teamOwners?: string[] })[]> {
         if (cloneUrls.length === 0) {
             return [];
         }
@@ -41,7 +41,23 @@ export class ProjectDBImpl implements ProjectDB {
         const q = repo.createQueryBuilder("project")
             .where("project.markedDeleted = false")
             .andWhere(`project.cloneUrl in (${ cloneUrls.map(u => `'${u}'`).join(", ") })`)
-        const result = await q.getMany();
+        const projects = await q.getMany();
+
+        const teamIds = Array.from(new Set(projects.map(p => p.teamId).filter(id => !!id)));
+
+        const teamIdsAndOwners = teamIds.length === 0 ? [] : (await (await this.getEntityManager()).query(`
+                SELECT member.teamId AS teamId, user.name AS owner FROM d_b_user AS user
+                    LEFT JOIN d_b_team_membership AS member ON (user.id = member.userId)
+                    WHERE member.teamId IN (${teamIds.map(id => `'${id}'`).join(", ")})
+                    AND member.deleted = 0
+                    AND member.role = 'owner'
+            `)) as { teamId: string, owner: string }[];
+
+        const result: (Project & { teamOwners?: string[] })[] = [];
+        for (const project of projects) {
+            result.push({...project, teamOwners: teamIdsAndOwners.filter(i => i.teamId === project.teamId).map(i => i.owner)});
+        }
+
         return result;
     }
 

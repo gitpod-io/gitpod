@@ -34,18 +34,18 @@ type ConfigSerialized struct {
 	ChargebeeProviderOptionsFile      string   `json:"chargebeeProviderOptionsFile"`
 	EnablePayment                     bool     `json:"enablePayment"`
 
-	WorkspaceHeartbeat         WorkspaceHeartbeat           `json:"workspaceHeartbeat"`
-	WorkspaceDefaults          WorkspaceDefaults            `json:"workspaceDefaults"`
-	Session                    Session                      `json:"session"`
-	GitHubApp                  GitHubApp                    `json:"githubApp"`
-	WorkspaceGarbageCollection WorkspaceGarbageCollection   `json:"workspaceGarbageCollection"`
-	AuthProviderConfigs        []config.AuthProviderConfigs `json:"authProviderConfigs"`
-	BrandingConfig             BrandingConfig               `json:"brandingConfig"`
-	IncrementalPrebuilds       IncrementalPrebuilds         `json:"incrementalPrebuilds"`
-	BlockNewUsers              config.BlockNewUsers         `json:"blockNewUsers"`
-	OAuthServer                OAuthServer                  `json:"oauthServer"`
-	RateLimiter                RateLimiter                  `json:"rateLimiter"`
-	CodeSync                   CodeSync                     `json:"codeSync"`
+	WorkspaceHeartbeat         WorkspaceHeartbeat         `json:"workspaceHeartbeat"`
+	WorkspaceDefaults          WorkspaceDefaults          `json:"workspaceDefaults"`
+	Session                    Session                    `json:"session"`
+	GitHubApp                  GitHubApp                  `json:"githubApp"`
+	WorkspaceGarbageCollection WorkspaceGarbageCollection `json:"workspaceGarbageCollection"`
+	AuthProviderConfigFiles    []string                   `json:"authProviderConfigFiles"`
+	BrandingConfig             BrandingConfig             `json:"brandingConfig"`
+	IncrementalPrebuilds       IncrementalPrebuilds       `json:"incrementalPrebuilds"`
+	BlockNewUsers              config.BlockNewUsers       `json:"blockNewUsers"`
+	OAuthServer                OAuthServer                `json:"oauthServer"`
+	RateLimiter                RateLimiter                `json:"rateLimiter"`
+	CodeSync                   CodeSync                   `json:"codeSync"`
 }
 
 type CodeSyncResources struct {

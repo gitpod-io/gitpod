@@ -8,7 +8,6 @@ packages:
       - :goland
       - :pycharm
       - :phpstorm
-
   - name: intellij
     type: docker
     srcs:
@@ -30,7 +29,6 @@ packages:
       image:
         - ${imageRepoBase}/ide/intellij:${version}
         - ${imageRepoBase}/ide/intellij:commit-${__git_commit}
-
   - name: goland
     type: docker
     srcs:
@@ -47,12 +45,11 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.goland
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-2021.3.tar.gz"
+        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-2021.3.1.tar.gz"
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
       image:
         - ${imageRepoBase}/ide/goland:${version}
         - ${imageRepoBase}/ide/goland:commit-${__git_commit}
-
   - name: pycharm
     type: docker
     srcs:
@@ -74,7 +71,6 @@ packages:
       image:
         - ${imageRepoBase}/ide/pycharm:${version}
         - ${imageRepoBase}/ide/pycharm:commit-${__git_commit}
-
   - name: phpstorm
     type: docker
     srcs:
