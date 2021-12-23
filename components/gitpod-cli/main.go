@@ -4,6 +4,7 @@
 
 package main
 
+// test comment
 import (
 	"github.com/gitpod-io/gitpod/gitpod-cli/cmd"
 )
