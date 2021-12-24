@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{ if .Values.installNetworkPolicies -}}
+{{ if and (not .Values.components.ideProxy.disabled) (.Values.installNetworkPolicies) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
