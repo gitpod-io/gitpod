@@ -56,7 +56,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-dev-tools.2
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway.29
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
