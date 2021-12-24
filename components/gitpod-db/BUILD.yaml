@@ -79,6 +79,8 @@ packages:
         - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "run", "migrate-migrations"]
         # Run actual migrations
         - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "typeorm", "migrations:run"]
+        # Clean out package to not bload the build artifact
+        - ["rm", "-rf", "mig"]
   - name: docker
     type: docker
     srcs:

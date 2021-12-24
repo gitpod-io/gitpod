@@ -7,6 +7,10 @@ defaultArgs:
   localAppVersion: unknown
   codeCommit: 6fa6863137230f9daf7ef10c2f379cb2ec21fcb2
 
+provenance:
+  enabled: true
+  slsa: true
+
 defaultVariant:
   srcs:
     exclude:
