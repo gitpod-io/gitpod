@@ -3,6 +3,6 @@
 # See License-AGPL.txt in the project root for license information.
 
 FROM alpine:3.15
-COPY installer--app/installer /app/installer
+COPY installer--app/installer installer--app/provenance-bundle.jsonl /app/
 ENTRYPOINT [ "/app/installer" ]
 CMD [ "help" ]

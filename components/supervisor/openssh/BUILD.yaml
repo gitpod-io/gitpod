@@ -5,7 +5,7 @@ packages:
       - :docker-build
     config:
       commands:
-        - ["sh", "-c", "find . | grep layer.tar | xargs tar xfv"]
+        - ["sh", "-c", "find . | grep layer.tar | while read f; do tar xfv $f; done"]
         - ["rm", "-rf", "components-supervisor-openssh--docker-build"]
   - name: docker-build
     type: docker

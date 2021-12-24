@@ -3,4 +3,4 @@
 # See License-AGPL.txt in the project root for license information.
 
 FROM alpine:3.15
-COPY components--all-docker/versions.yaml /
+COPY components--all-docker/versions.yaml components--all-docker/provenance-bundle.jsonl /
