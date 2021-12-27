@@ -164,17 +164,20 @@ func (s *SSHConfigWritingCallback) InstanceUpdate(w *Workspace) {
 	}
 }
 
-func New(client gitpod.APIInterface, cb Callbacks) *Bastion {
+func New(client gitpod.APIInterface, sshIdleTimeout time.Duration, cb Callbacks) *Bastion {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Bastion{
-		Client:        client,
-		Callbacks:     cb,
-		workspaces:    make(map[string]*Workspace),
-		ctx:           ctx,
-		stop:          cancel,
-		updates:       make(chan *WorkspaceUpdateRequest, 10),
-		subscriptions: make(map[*StatusSubscription]struct{}, 10),
+	b := &Bastion{
+		Client:            client,
+		Callbacks:         cb,
+		workspaces:        make(map[string]*Workspace),
+		sshIdleTimeout:    sshIdleTimeout,
+		sshConnChangeChan: make(chan int),
+		ctx:               ctx,
+		stop:              cancel,
+		updates:           make(chan *WorkspaceUpdateRequest, 10),
+		subscriptions:     make(map[*StatusSubscription]struct{}, 10),
 	}
+	return b
 }
 
 type WorkspaceUpdateRequest struct {
@@ -191,6 +194,9 @@ type Bastion struct {
 
 	workspacesMu sync.RWMutex
 	workspaces   map[string]*Workspace
+
+	sshIdleTimeout    time.Duration
+	sshConnChangeChan chan int
 
 	ctx  context.Context
 	stop context.CancelFunc
@@ -227,6 +233,29 @@ func (b *Bastion) Run() error {
 			b.handleUpdate(u)
 		}
 	}()
+
+	if b.sshIdleTimeout != 0 {
+		go func() {
+			counter := 0
+			var timer *time.Timer
+			for num := range b.sshConnChangeChan {
+				counter += num
+				if counter == 0 {
+					logrus.Debugf("no active ssh tunnel, local app will terminate in %v", b.sshIdleTimeout)
+					timer = time.AfterFunc(b.sshIdleTimeout, func() {
+						os.Exit(0)
+					})
+				} else {
+					if timer != nil {
+						logrus.Debugf("reset local app ssh idle timeout")
+						timer.Stop()
+					}
+				}
+			}
+		}()
+		b.sshConnChangeChan <- 0
+	}
+
 	b.FullUpdate()
 
 	for u := range updates {
@@ -564,6 +593,12 @@ func (b *Bastion) establishTunnel(ctx context.Context, ws *Workspace, logprefix 
 			}
 			logrus.WithField("workspace", ws.WorkspaceID).Debug(logprefix + ": accepted new connection")
 			go func() {
+				if logprefix == "ssh" {
+					b.sshConnChangeChan <- 1
+					defer func() {
+						b.sshConnChangeChan <- -1
+					}()
+				}
 				defer logrus.WithField("workspace", ws.WorkspaceID).Debug(logprefix + ": connection closed")
 				defer conn.Close()
 
