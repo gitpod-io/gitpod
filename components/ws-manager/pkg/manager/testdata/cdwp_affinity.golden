@@ -199,6 +199,7 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
+            "hostname": "foobar",
             "affinity": {
                 "nodeAffinity": {
                     "requiredDuringSchedulingIgnoredDuringExecution": {

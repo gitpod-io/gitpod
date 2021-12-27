@@ -195,6 +195,7 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
+            "hostname": "foobar",
             "schedulerName": "workspace-scheduler",
             "tolerations": [
                 {
