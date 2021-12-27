@@ -20,6 +20,7 @@ import (
 var proxyOpts struct {
 	BaseRef, TargetRef string
 	Auth               string
+	AuthFile           string
 }
 
 // proxyCmd represents the build command
@@ -30,9 +31,19 @@ var proxyCmd = &cobra.Command{
 		log.Init("bob", "", true, os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true")
 		log := log.WithField("command", "proxy")
 
-		authP, err := proxy.NewAuthorizerFromEnvVar(proxyOpts.Auth)
-		if err != nil {
-			log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
+		var authP proxy.Authorizer
+		var err error
+
+		if len(proxyOpts.Auth) > 0 {
+			authP, err = proxy.NewAuthorizerFromEnvVar(proxyOpts.Auth)
+			if err != nil {
+				log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
+			}
+		} else {
+			authP, err = proxy.NewAuthorizerFromFile(proxyOpts.AuthFile)
+			if err != nil {
+				log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
+			}
 		}
 
 		baseref, err := reference.ParseNormalizedNamed(proxyOpts.BaseRef)
@@ -87,4 +98,5 @@ func init() {
 	proxyCmd.Flags().StringVar(&proxyOpts.BaseRef, "base-ref", os.Getenv("WORKSPACEKIT_BOBPROXY_BASEREF"), "ref of the base image")
 	proxyCmd.Flags().StringVar(&proxyOpts.TargetRef, "target-ref", os.Getenv("WORKSPACEKIT_BOBPROXY_TARGETREF"), "ref of the target image")
 	proxyCmd.Flags().StringVar(&proxyOpts.Auth, "auth", os.Getenv("WORKSPACEKIT_BOBPROXY_AUTH"), "authentication to use")
+	proxyCmd.Flags().StringVar(&proxyOpts.AuthFile, "auth-file", os.Getenv("WORKSPACEKIT_BOBPROXY_AUTH_FILE"), "authentication to use")
 }

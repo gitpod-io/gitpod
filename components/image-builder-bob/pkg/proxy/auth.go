@@ -7,6 +7,7 @@ package proxy
 import (
 	"encoding/base64"
 	"encoding/json"
+	"io/ioutil"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -66,5 +67,22 @@ func NewAuthorizerFromEnvVar(content string) (auth Authorizer, err error) {
 	if err != nil {
 		return
 	}
+	return authorizerImpl(res.Auths), nil
+}
+
+func NewAuthorizerFromFile(path string) (auth Authorizer, err error) {
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		return
+	}
+
+	var res struct {
+		Auths map[string]authConfig `json:"auths"`
+	}
+	err = json.Unmarshal([]byte(content), &res)
+	if err != nil {
+		return
+	}
+
 	return authorizerImpl(res.Auths), nil
 }
