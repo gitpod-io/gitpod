@@ -345,7 +345,7 @@ func TestParseGitpodEnviron(t *testing.T) {
 	}
 }
 
-func benchmarkParseGitPodEnviron(content string, b *testing.B) {
+func benchmarkParseGitpodEnviron(content string, b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -353,28 +353,28 @@ func benchmarkParseGitPodEnviron(content string, b *testing.B) {
 	}
 }
 
-func BenchmarkParseGitPodEnvironP0(b *testing.B) { benchmarkParseGitPodEnviron("", b) }
-func BenchmarkParseGitPodEnvironP1(b *testing.B) {
-	benchmarkParseGitPodEnviron("GITPOD_INSTANCE_ID=foobar\000", b)
+func BenchmarkParseGitpodEnvironP0(b *testing.B) { benchmarkParseGitpodEnviron("", b) }
+func BenchmarkParseGitpodEnvironP1(b *testing.B) {
+	benchmarkParseGitpodEnviron("GITPOD_INSTANCE_ID=foobar\000", b)
 }
-func BenchmarkParseGitPodEnvironP2(b *testing.B) {
-	benchmarkParseGitPodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
+func BenchmarkParseGitpodEnvironP2(b *testing.B) {
+	benchmarkParseGitpodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
 }
 func BenchmarkParseGitPodEnvironP4(b *testing.B) {
-	benchmarkParseGitPodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
+	benchmarkParseGitpodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
 }
-func BenchmarkParseGitPodEnvironP8(b *testing.B) {
-	benchmarkParseGitPodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
+func BenchmarkParseGitpodEnvironP8(b *testing.B) {
+	benchmarkParseGitpodEnviron("GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000GITPOD_INSTANCE_ID=foobar\000", b)
 }
-func BenchmarkParseGitPodEnvironN1(b *testing.B) { benchmarkParseGitPodEnviron("NOT_ME\000", b) }
-func BenchmarkParseGitPodEnvironN2(b *testing.B) {
-	benchmarkParseGitPodEnviron("NOT_ME\000NOT_ME\000", b)
+func BenchmarkParseGitpodEnvironN1(b *testing.B) { benchmarkParseGitpodEnviron("NOT_ME\000", b) }
+func BenchmarkParseGitpodEnvironN2(b *testing.B) {
+	benchmarkParseGitpodEnviron("NOT_ME\000NOT_ME\000", b)
 }
-func BenchmarkParseGitPodEnvironN4(b *testing.B) {
-	benchmarkParseGitPodEnviron("NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000", b)
+func BenchmarkParseGitpodEnvironN4(b *testing.B) {
+	benchmarkParseGitpodEnviron("NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000", b)
 }
-func BenchmarkParseGitPodEnvironN8(b *testing.B) {
-	benchmarkParseGitPodEnviron("NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000", b)
+func BenchmarkParseGitpodEnvironN8(b *testing.B) {
+	benchmarkParseGitpodEnviron("NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000NOT_ME\000", b)
 }
 
 func TestParseStat(t *testing.T) {

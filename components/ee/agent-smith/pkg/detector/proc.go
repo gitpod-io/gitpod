@@ -171,7 +171,7 @@ func (p realProcfs) Environ(pid int) ([]string, error) {
 }
 
 func parseGitpodEnviron(r io.Reader) ([]string, error) {
-	// Note: this function is benchmarked in BenchmarkParseGitPodEnviron.
+	// Note: this function is benchmarked in BenchmarkParseGitpodEnviron.
 	//       At the time of this wriging it consumed 3+N allocs where N is the number of
 	//       env vars starting with GITPOD_.
 	//
