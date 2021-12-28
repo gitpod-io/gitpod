@@ -264,6 +264,7 @@ func Run(options ...RunOption) {
 		&InfoService{cfg: cfg, ContentState: cstate},
 		&ControlService{portsManager: portMgmt},
 		&portService{portsManager: portMgmt},
+		&SSHKeyService{},
 	}
 	apiServices = append(apiServices, additionalServices...)
 

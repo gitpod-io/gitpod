@@ -4,7 +4,10 @@
 
 package wsproxy
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	corev1 "k8s.io/api/core/v1"
+)
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
@@ -26,5 +29,12 @@ var Objects = common.CompositeRenderFunc(
 			ContainerPort: MetricsPort,
 			ServicePort:   MetricsPort,
 		},
+		"ssh": {
+			ContainerPort: 2200,
+			ServicePort:   22,
+		},
+	}, func(service *corev1.Service) {
+		service.Spec.Type = corev1.ServiceTypeLoadBalancer
+		service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"22":{}}}`
 	}),
 )

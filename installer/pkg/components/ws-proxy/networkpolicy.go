@@ -34,6 +34,9 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}, {
 						Protocol: common.TCPProtocol,
 						Port:     &intstr.IntOrString{IntVal: HTTPSProxyPort},
+					}, {
+						Protocol: common.TCPProtocol,
+						Port:     &intstr.IntOrString{IntVal: 2200},
 					},
 				},
 			}},

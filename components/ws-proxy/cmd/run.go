@@ -5,24 +5,31 @@
 package cmd
 
 import (
+	_ "embed"
+	"net"
+
 	"github.com/bombsimon/logrusr"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 )
 
 var (
 	jsonLog bool
 	verbose bool
 )
+
+//go:embed ssh-key/hostkey
+var HostKeyByte []byte
 
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
@@ -74,6 +81,17 @@ var runCmd = &cobra.Command{
 
 		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider).MustServe()
 		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
+
+		hostSigner, err := ssh.ParsePrivateKey(HostKeyByte)
+		if err != nil {
+			log.Fatal(err)
+		}
+		server := sshproxy.New(hostSigner, workspaceInfoProvider, setup)
+		l, err := net.Listen("tcp", ":2200")
+		if err != nil {
+			panic(err)
+		}
+		go server.Serve(l)
 
 		log.Info("🚪 ws-proxy is up and running")
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

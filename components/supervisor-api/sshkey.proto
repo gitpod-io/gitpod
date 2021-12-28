@@ -1,0 +1,25 @@
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
+
+service SSHKeyService {
+    rpc CreateSSHKeyPair(CreateSSHKeyPairRequest) returns (CreateSSHKeyPairResponse) {
+        option (google.api.http) = {
+            post: "/v1/sshkey/create"
+        };
+    }
+}
+
+message CreateSSHKeyPairRequest {}
+message CreateSSHKeyPairResponse {
+    string private_key = 1;
+}

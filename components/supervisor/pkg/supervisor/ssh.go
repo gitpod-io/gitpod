@@ -15,9 +15,12 @@ import (
 	"strings"
 
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/process"
+	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
 func newSSHServer(ctx context.Context, cfg *Config) (*sshServer, error) {
@@ -162,7 +165,7 @@ func prepareSSHKey(ctx context.Context, sshkey string) error {
 		return xerrors.Errorf("cannot locate ssh-keygen (path %v)", sshkeygen)
 	}
 
-	keycmd := exec.Command(sshkeygen, "-t", "rsa", "-q", "-N", "", "-f", sshkey)
+	keycmd := exec.Command(sshkeygen, "-t", "ecdsa", "-q", "-N", "", "-f", sshkey)
 	// We need to force HOME because the Gitpod user might not have existed at the start of the container
 	// which makes the container runtime set an invalid HOME value.
 	keycmd.Env = func() []string {
@@ -212,4 +215,68 @@ func writeSSHEnv(cfg *Config) error {
 	_ = exec.Command("chown", "-R", fmt.Sprintf("%d:%d", gitpodUID, gitpodGID), d).Run()
 
 	return nil
+}
+
+// SSHKeyService implements the api.SSHKeyService.
+type SSHKeyService struct {
+	api.UnimplementedSSHKeyServiceServer
+	privateKey string
+	publicKey  string
+}
+
+// RegisterGRPC registers the gRPC ssh-key service.
+func (ss *SSHKeyService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterSSHKeyServiceServer(srv, ss)
+}
+
+// RegisterREST registers the REST ssh-key service.
+func (ss *SSHKeyService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterSSHKeyServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+}
+
+// CreateSSHKeyPair create a ssh key pair for the workspace.
+func (ss *SSHKeyService) CreateSSHKeyPair(context.Context, *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
+	if ss.privateKey != "" && ss.publicKey != "" {
+		return &api.CreateSSHKeyPairResponse{
+			PrivateKey: ss.privateKey,
+		}, nil
+	}
+	home, _ := os.UserHomeDir()
+	dir, err := os.MkdirTemp(os.TempDir(), "ssh-key-*")
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create tmpfile: %w", err)
+	}
+	err = prepareSSHKey(context.Background(), filepath.Join(dir, "ssh"))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create ssh key pair: %w", err)
+	}
+	bPublic, err := os.ReadFile(filepath.Join(dir, "ssh.pub"))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot read publickey: %w", err)
+	}
+	bPrivate, err := os.ReadFile(filepath.Join(dir, "ssh"))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot read privatekey: %w", err)
+	}
+	err = os.MkdirAll(filepath.Join(home, ".ssh"), 0o751)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create dir ~/.ssh/: %w", err)
+	}
+	f, err := os.OpenFile(filepath.Join(home, ".ssh/authorized_keys"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot open file ~/.ssh/authorized_keys: %w", err)
+	}
+	_, err = f.Write(bPublic)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot write file ~.ssh/authorized_keys: %w", err)
+	}
+	err = os.Chown(filepath.Join(home, ".ssh/authorized_keys"), gitpodUID, gitpodGID)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot chown SSH authorized_keys file: %w", err)
+	}
+	ss.privateKey = string(bPrivate)
+	ss.publicKey = string(bPublic)
+	return &api.CreateSSHKeyPairResponse{
+		PrivateKey: ss.privateKey,
+	}, err
 }
