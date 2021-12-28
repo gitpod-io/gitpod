@@ -258,7 +258,7 @@ https://*.*.{$GITPOD_DOMAIN} {
 	import ssl_configuration
 	import debug_headers
 
-	@workspace_blobserve header_regexp host Host ^blobserve.ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
+	@workspace_blobserve header_regexp host Host ^blobserve(?:-[a-fA-F0-9\-]{36})?.ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
 	handle @workspace_blobserve {
 		gitpod.cors_origin {
 			base_domain {$GITPOD_DOMAIN}

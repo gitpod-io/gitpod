@@ -34,11 +34,11 @@ export VSCODE_AGENT_FOLDER=/workspace/.vscode-remote
 [ -s ~/.nvm/nvm-lazy.sh ] && source /home/gitpod/.nvm/nvm-lazy.sh
 
 # Replace OpenVSX URL
-grep -rl open-vsx.org /ide | xargs sed -i "s|https://open-vsx.org|$VSX_REGISTRY_URL|g"
+grep -rl open-vsx.org /ide/reh | xargs sed -i "s|https://open-vsx.org|$VSX_REGISTRY_URL|g"
 
-cd /ide || exit
+cd /ide/reh || exit
 if [ "$SUPERVISOR_DEBUG_ENABLE" = "true" ]; then
-    exec /ide/server.sh --inspect --verbose --log trace --connectionToken 00000 "$@"
+    exec /ide/reh/server.sh --inspect --verbose --log trace --connection-token 00000 "$@"
 else
-    exec /ide/server.sh --connectionToken 00000 "$@"
+    exec /ide/reh/server.sh --connection-token 00000 "$@"
 fi

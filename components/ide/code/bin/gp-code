@@ -1,2 +1,5 @@
 #!/usr/bin/env sh
-exec /ide/bin/gitpod-code "$@"
+
+ROOT=$(dirname "$(dirname "$0")")
+
+exec "$ROOT/bin/gitpod-code" "$@"

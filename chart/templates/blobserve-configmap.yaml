@@ -24,14 +24,14 @@ data:
             "repos": {
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) -}}"],
-                    "workdir": "/ide",
+                    "workdir": "/ide/web",
                     "replacements": [
-                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" },
-                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js" }
+                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/web/out/vs/workbench/workbench.web.api.js" },
+                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/web/out/vs/workbench/services/extensions/worker/extensionHostWorker.js" }
                         {{- if not .Values.components.openVsxProxy.disabled }}
-                        , { "search": "https://open-vsx.org", "replacement": "https://open-vsx.{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" }
+                        , { "search": "https://open-vsx.org", "replacement": "https://open-vsx.{{ .Values.hostname }}", "path": "/ide/web/out/vs/workbench/workbench.web.api.js" }
                         {{- else if (and .Values.components.openVsxProxy.vsxRegistryUrl (ne .Values.components.openVsxProxy.vsxRegistryUrl "https://open-vsx.org")) }}
-                        , { "search": "https://open-vsx.org", "replacement": "{{ .Values.components.openVsxProxy.vsxRegistryUrl }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" }
+                        , { "search": "https://open-vsx.org", "replacement": "{{ .Values.components.openVsxProxy.vsxRegistryUrl }}", "path": "/ide/web/out/vs/workbench/workbench.web.api.js" }
                         {{- end }}
                     ],
                     "inlineStatic": [

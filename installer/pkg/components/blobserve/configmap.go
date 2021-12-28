@@ -38,19 +38,19 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Repos: map[string]blobserve.Repo{
 				common.RepoName(ctx.Config.Repository, ide.CodeIDEImage): {
 					PrePull: []string{},
-					Workdir: "/ide",
+					Workdir: "/ide/web",
 					Replacements: []blobserve.StringReplacement{{
 						Search:      "vscode-webview.net",
 						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
+						Path:        "/ide/web/out/vs/workbench/workbench.web.api.js",
 					}, {
 						Search:      "vscode-webview.net",
 						Replacement: ctx.Config.Domain,
-						Path:        "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
+						Path:        "/ide/web/out/vs/workbench/services/extensions/worker/extensionHostWorker.js",
 					}, {
 						Search:      "open-vsx.org",
 						Replacement: openVSXProxyUrl,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
+						Path:        "/ide/web/out/vs/workbench/workbench.web.api.js",
 					}},
 					InlineStatic: []blobserve.InlineReplacement{{
 						Search:      "${window.location.origin}",

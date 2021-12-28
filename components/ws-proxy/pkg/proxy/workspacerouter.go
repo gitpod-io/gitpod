@@ -187,7 +187,7 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 }
 
 func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	r := regexp.MustCompile("^blobserve" + wsHostSuffix)
+	r := regexp.MustCompile(`^blobserve(?:-[a-fA-F0-9\-]{36})?` + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
 		if hostname == "" {
