@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -39,7 +40,10 @@ func poolTask(task func() (bool, error)) (bool, error) {
 }
 
 func TestPythonExtWorkspace(t *testing.T) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
 	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
 	f := features.New("PythonExtensionWorkspace").
 		WithLabel("component", "server").
 		Assess("it can run python extension in a workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -50,6 +54,11 @@ func TestPythonExtWorkspace(t *testing.T) {
 			t.Cleanup(func() {
 				api.Done(t)
 			})
+
+			userId, err := api.CreateUser(username, userToken)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/jeanp413/python-test-workspace", username, api)
 			if err != nil {
@@ -66,10 +75,7 @@ func TestPythonExtWorkspace(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			userId, err := api.GetUserId(username)
-			if err != nil {
-				t.Fatal(err)
-			}
+
 			hash := sha256.Sum256([]byte(userId + serverConfig.Session.Secret))
 			secretKey, err := api.CreateGitpodOneTimeSecret(fmt.Sprintf("%x", hash))
 			if err != nil {

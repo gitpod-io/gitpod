@@ -7,11 +7,23 @@
 # there are many test binaries, each can have failures
 set -x
 
-export PATH=$PATH:/tests
+test_pattern="*.test"
+for i in "$@"; do
+  case $i in
+    -testPattern=*|--testPattern=*)
+      test_pattern="${i#*=}"
+      shift
+      ;;
+    *)
+      ;;
+  esac
+done
+
+export PATH="$PATH:/tests"
 
 FAILURE_COUNT=0
 # shellcheck disable=SC2045
-for i in $(find /tests/ -name "*.test" | sort); do
+for i in $(find /tests/ -name "$test_pattern" | sort); do
     echo "running test: $i"
     "$i" "$@";
     TEST_STATUS=$?
