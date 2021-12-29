@@ -55,6 +55,7 @@ import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
 import { IDEConfigService } from '../ide-config';
 import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-protocol';
 import { ClientMetadata } from '../websocket/websocket-connection-manager';
+import { ConfigurationService } from '../config/configuration-service';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -107,6 +108,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(HeadlessLogService) protected readonly headlessLogService: HeadlessLogService;
 
     @inject(ProjectsService) protected readonly projectsService: ProjectsService;
+
+    @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
 
     @inject(IDEConfigService) protected readonly ideConfigService: IDEConfigService;
 
@@ -1643,7 +1646,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { cloneUrl });
         const user = this.checkUser("fetchRepositoryConfiguration");
         try {
-            return await this.projectsService.fetchRepositoryConfiguration(ctx, user, cloneUrl);
+            return await this.configurationService.fetchRepositoryConfiguration(ctx, user, cloneUrl);
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
@@ -1664,7 +1667,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            return await this.projectsService.fetchRepositoryConfiguration(ctx, user, project.cloneUrl);
+            return await this.configurationService.fetchRepositoryConfiguration(ctx, user, project.cloneUrl);
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
@@ -1676,7 +1679,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async guessRepositoryConfiguration(ctx: TraceContext, cloneUrl: string): Promise<string | undefined> {
         const user = this.checkUser("guessRepositoryConfiguration");
         try {
-            return await this.projectsService.guessRepositoryConfiguration(ctx, user, cloneUrl);
+            return await this.configurationService.guessRepositoryConfiguration(ctx, user, cloneUrl);
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
@@ -1696,7 +1699,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            return await this.projectsService.guessRepositoryConfiguration(ctx, user, project.cloneUrl);
+            return await this.configurationService.guessRepositoryConfiguration(ctx, user, project.cloneUrl);
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);

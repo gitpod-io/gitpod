@@ -140,7 +140,7 @@ export class WorkspaceFactory {
             // TODO(janx): We potentially fetch the same Project twice in this flow (once here, and once in `configProvider`,
             // to parse a potential custom config from the Project DB). It would be cool to fetch the Project only once (and
             // e.g. pass it to `configProvider.fetchConfig` here).
-            const [ config, project ] = await Promise.all([
+            const [ { config, literalConfig} , project ] = await Promise.all([
                 this.configProvider.fetchConfig({ span }, user, context),
                 this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl),
             ]);
@@ -151,6 +151,9 @@ export class WorkspaceFactory {
                 if (project?.config) {
                     (context as any as AdditionalContentContext).additionalFiles = { ...project.config };
                 }
+            }
+            if (config._origin === 'derived' && literalConfig) {
+                (context as any as AdditionalContentContext).additionalFiles = { ... literalConfig };
             }
 
             let projectId: string | undefined;
