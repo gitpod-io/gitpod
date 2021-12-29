@@ -60,7 +60,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 }
             }
 
-            const config = await this.configProvider.fetchConfig({span}, user, context.actual);
+            const { config } = await this.configProvider.fetchConfig({span}, user, context.actual);
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context.actual, config);
 
             // Walk back the commit history to find suitable parent prebuild to start an incremental prebuild on.

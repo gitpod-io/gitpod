@@ -203,7 +203,7 @@ export class PrebuildManager {
                 return undefined;
             }
             const context = await contextParser!.handle({ span }, user, contextURL);
-            return await this.configProvider.fetchConfig({ span }, user, context as CommitContext);
+            return (await this.configProvider.fetchConfig({ span }, user, context as CommitContext)).config;
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
