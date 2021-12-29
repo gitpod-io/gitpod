@@ -167,7 +167,7 @@ export default function () {
                         </div>
                         <button onClick={showStartWSModal} className="ml-2">New Workspace</button>
                     </div>
-                    <ItemsList className="app-container">
+                    <ItemsList className="app-container pb-40">
                         <div className="border-t border-gray-200 dark:border-gray-800"></div>
                         {
                             teamsWorkspaceModel?.initialized && <ActiveTeamWorkspaces teams={teams} teamProjects={teamsProjects} teamWorkspaces={teamsActiveWorkspaces} />
