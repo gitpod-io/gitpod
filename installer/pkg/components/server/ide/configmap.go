@@ -25,14 +25,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 		IDEOptions: IDEOptions{
 			Options: map[string]IDEOption{
-				"theia": {
-					Title:   "Theia (legacy)",
-					Tooltip: pointer.String("This entry exists solely for legacy reasons."),
-					Type:    typeBrowser,
-					Logo:    "invalid",
-					Hidden:  pointer.Bool(true),
-					Image:   common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
-				},
 				"code": {
 					OrderKey: pointer.String("00"),
 					Title:    "VS Code",

@@ -1,5 +1,0 @@
-{
-  "ideConfigLocation": "/theia/supervisor-ide-config.json",
-  "frontendLocation": "/theia/frontend/",
-  "apiEndpointPort": 22999
-}

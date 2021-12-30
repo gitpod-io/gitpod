@@ -2,9 +2,6 @@ dist/
 components/*/lib/
 components/ee/*/lib/
 components/*/typescript/lib/
-components/theia/app/lib/
-components/theia/packages/*/lib/
-components/theia/supervisor-api/*/lib/
 components/local-app-api/*/lib/
 components/supervisor/frontend/lib/
 src-gen/
@@ -41,9 +38,6 @@ venv/
 .eggs/
 *.egg-info
 *.pyc
-
-# Generated
-components/theia/app/gen-webpack.config.js
 
 # Generated (in Jenkins builds)
 /dev-http-cache/

@@ -42,13 +42,6 @@ goland: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.c
 options:
 
   # Browser IDEs
-  theia:
-    title: "Theia (legacy)"
-    tooltip: "This entry exists solely for legacy reasons."
-    type: "browser"
-    logo: "invalid"
-    hidden: true
-    image: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
   code:
     orderKey: "00"
     title: "VS Code"

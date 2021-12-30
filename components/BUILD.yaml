@@ -46,7 +46,6 @@ packages:
       - components/ide/jetbrains/image:intellij
       - components/ide/jetbrains/image:phpstorm
       - components/ide/jetbrains/image:pycharm
-      - components/ide/theia:docker
       - components/image-builder-bob:docker
       - components/image-builder-mk3:docker
       - components/local-app:docker
