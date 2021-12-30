@@ -14,7 +14,6 @@ import { LicenseEvaluator } from '@gitpod/licensor/lib';
 import { Feature } from '@gitpod/licensor/lib/api';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
 import { RepoURL } from '../../../src/repohost';
 
@@ -220,7 +219,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 }
             }
 
-            const id = await generateWorkspaceID();
+            const id = await this.generateWorkspaceID(context);
             const newWs: Workspace = {
                 id,
                 type: "regular",

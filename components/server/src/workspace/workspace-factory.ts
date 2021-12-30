@@ -5,13 +5,14 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
-import { AdditionalContentContext, CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
+import { AdditionalContentContext, CommitContext, IssueContext, PrebuiltWorkspaceContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { inject, injectable } from 'inversify';
 import { ResponseError } from 'vscode-jsonrpc';
+import { RepoURL } from '../repohost';
 import { ConfigProvider } from './config-provider';
 import { ImageSourceProvider } from './image-source-provider';
 
@@ -55,7 +56,7 @@ export class WorkspaceFactory {
             // Basically we're using the raw alpine image bait-and-switch style without adding the GP layer.
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, null as any, config);
 
-            const id = await generateWorkspaceID();
+            const id = await this.generateWorkspaceID(context);
             const date = new Date().toISOString();
             const newWs: Workspace = {
                 id,
@@ -94,7 +95,7 @@ export class WorkspaceFactory {
                 throw new Error(`The original workspace has been deleted - cannot open this snapshot.`);
             }
 
-            const id = await generateWorkspaceID();
+            const id = await this.generateWorkspaceID(context);
             const date = new Date().toISOString();
             const newWs = <Workspace>{
                 id,
@@ -166,7 +167,7 @@ export class WorkspaceFactory {
                 }
             }
 
-            const id = await generateWorkspaceID();
+            const id = await this.generateWorkspaceID(context);
             const newWs: Workspace = {
                 id,
                 type: "regular",
@@ -205,6 +206,18 @@ export class WorkspaceFactory {
             return `#${context.nr}: ${context.title}`;
         }
         return context.title;
+    }
+
+    protected async generateWorkspaceID(context: WorkspaceContext): Promise<string> {
+        let ctx = context;
+        if (PrebuiltWorkspaceContext.is(context)) {
+            ctx = context.originalContext;
+        }
+        if (CommitContext.is(ctx)) {
+            const parsed = RepoURL.parseRepoUrl(ctx.repository.cloneUrl);
+            return await generateWorkspaceID(parsed?.owner, parsed?.repo);
+        }
+        return await generateWorkspaceID();
     }
 
 }

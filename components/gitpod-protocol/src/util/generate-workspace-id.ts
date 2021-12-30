@@ -5,8 +5,25 @@
  */
 import randomNumber = require("random-number-csprng");
 
-export async function generateWorkspaceID(): Promise<string> {
-    return (await random(colors))+'-'+(await random(animals))+'-'+(await random(characters, 8));
+export async function generateWorkspaceID(firstSegment?: string, secondSegment?: string): Promise<string> {
+    const firstSeg = clean(firstSegment) || await random(colors);
+    const secSeg = clean(secondSegment) || await random(animals);
+    return firstSeg+'-'+secSeg+'-'+(await random(characters, 8));
+}
+
+function clean(segment?: string) {
+  if (segment) {
+    let result = '';
+    for (let i =0; i < segment.length; i++) {
+      if (characters.indexOf(segment[i]) !== -1) {
+        result += segment[i];
+      }
+    }
+    if (result.length >= 2) {
+      return result.substring(0, 16);
+    }
+  }
+  return undefined;
 }
 
 async function random(array: string[], length: number = 1): Promise<string> {
