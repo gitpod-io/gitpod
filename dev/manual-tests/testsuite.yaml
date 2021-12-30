@@ -551,23 +551,6 @@ case:
   mustpass: true
   mintestercount: 1
   annotations: {}
-- id: theia-ide
-  name: eclipse-theia/theia (TypeScript)
-  group: Repositories
-  description: Check the TypeScript dev experience in the Theia repo
-  steps: |
-    - Open https://gitpod-staging.com/#https://github.com/eclipse-theia/theia in Gitpod
-    - Wait for Theia to build and run on port 3000, then click 'Open Browser' and verify the previewed IDE works
-    - Open a few `*.ts` files
-    - Check syntax highlighting
-    - Check hovers
-    - Check auto-complete
-    - Check go to definition
-    - Check rename symbol
-    - Check format document
-  mustpass: true
-  mintestercount: 1
-  annotations: {}
 - id: workspace-timeout
   name: Workspace timeout
   group: Dashboard

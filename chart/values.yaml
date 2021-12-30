@@ -389,8 +389,6 @@ components:
       imagePrefix: "gitpod/"
       imageName: "workspace-full"
       version: "latest"
-    theiaImage:
-      imageName: "ide/theia"
     codeImage:
       imageName: "ide/code"
       stableVersion: "commit-0d1e8cc5dcc8ccb38efcc2cd6404316b6e7bf4e9"

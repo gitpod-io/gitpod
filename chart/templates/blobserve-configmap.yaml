@@ -22,10 +22,6 @@ data:
             "port": {{ $comp.ports.service.containerPort }},
             "timeout": {{ ($comp.timeout | default "5s") | quote }},
             "repos": {
-                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}": {
-                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) -}}"],
-                    "workdir": "/theia/theia-app/app/lib"
-                },
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) -}}"],
                     "workdir": "/ide",
