@@ -220,6 +220,7 @@
                     "name": "eu.gcr.io-gitpod"
                 }
             ],
+            "hostname": "foobar",
             "affinity": {
                 "nodeAffinity": {
                     "requiredDuringSchedulingIgnoredDuringExecution": {

@@ -6,13 +6,10 @@
 
 import { inject, injectable } from "inversify";
 import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Branch, CommitContext, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { Branch, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { FileProvider, RepoURL } from "../repohost";
+import { RepoURL } from "../repohost";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { ContextParser } from "../workspace/context-parser-service";
-import { ConfigInferrer } from "./config-inferrer";
 import { PartialProject } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
 
 @injectable()
@@ -23,7 +20,6 @@ export class ProjectsService {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(ContextParser) protected contextParser: ContextParser;
 
     async getProject(projectId: string): Promise<Project | undefined> {
         return this.projectDB.findProjectById(projectId);
@@ -177,53 +173,6 @@ export class ProjectsService {
             }));
         }
         return result;
-    }
-
-    protected async getRepositoryFileProviderAndCommitContext(ctx: TraceContext, user: User, cloneUrl: string): Promise<{fileProvider: FileProvider, commitContext: CommitContext}> {
-        const normalizedContextUrl = this.contextParser.normalizeContextURL(cloneUrl);
-        const commitContext = (await this.contextParser.handle(ctx, user, normalizedContextUrl)) as CommitContext;
-        const { host } = commitContext.repository;
-        const hostContext = this.hostContextProvider.get(host);
-        if (!hostContext || !hostContext.services) {
-            throw new Error(`Cannot fetch repository configuration for host: ${host}`);
-        }
-        const fileProvider = hostContext.services.fileProvider;
-        return { fileProvider, commitContext };
-    }
-
-    async fetchRepositoryConfiguration(ctx: TraceContext, user: User, cloneUrl: string): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, cloneUrl);
-        const configString = await fileProvider.getGitpodFileContent(commitContext, user);
-        return configString;
-    }
-
-    // a static cache used to prefetch inferrer related files in parallel in advance
-    private requestedPaths = new Set<string>();
-
-    async guessRepositoryConfiguration(ctx: TraceContext, user: User, cloneUrl: string): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, cloneUrl);
-        const cache: { [path: string]: Promise<string | undefined> } = {};
-        const readFile = async (path: string) => {
-            if (path in cache) {
-                return await cache[path];
-            }
-            this.requestedPaths.add(path);
-            const content = fileProvider.getFileContent(commitContext, user, path);
-            cache[path] = content;
-            return await content;
-        }
-        // eagerly fetch for all files that the inferrer usually asks for.
-        this.requestedPaths.forEach(path => !(path in cache) && readFile(path));
-        const config: WorkspaceConfig = await new ConfigInferrer().getConfig({
-            config: {},
-            read: readFile,
-            exists: async (path: string) => !!(await readFile(path)),
-        });
-        if (!config.tasks) {
-            return;
-        }
-        const configString = `tasks:\n  - ${config.tasks.map(task => Object.entries(task).map(([phase, command]) => `${phase}: ${command}`).join('\n    ')).join('\n  - ')}`;
-        return configString;
     }
 
     async updateProjectPartial(partialProject: PartialProject): Promise<void> {

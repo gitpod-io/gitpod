@@ -14,8 +14,7 @@
     "scripts": {
         "build": "leeway exec --filter-type yarn --components -- yarn build",
         "watch": "leeway exec --package components:all --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
-        "clean": "leeway exec --filter-type yarn --components -- yarn clean && rm -rf node_modules",
-        "upgrade-gitpod-yml-inferrer": "git clone https://github.com/gitpod-io/gitpod-yml-inferrer /tmp/repo && cp /tmp/repo/src/config-* components/theia/packages/gitpod-extension/src/browser/setup/ && rm -rf /tmp/repo"
+        "clean": "leeway exec --filter-type yarn --components -- yarn clean && rm -rf node_modules"
     },
     "workspaces": {
         "packages": [

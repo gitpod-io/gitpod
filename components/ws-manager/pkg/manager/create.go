@@ -378,6 +378,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			Finalizers:  []string{"gitpod.io/finalizer"},
 		},
 		Spec: corev1.PodSpec{
+			Hostname:                     req.Metadata.MetaId,
 			AutomountServiceAccountToken: &boolFalse,
 			ServiceAccountName:           "workspace",
 			SchedulerName:                m.Config.SchedulerName,

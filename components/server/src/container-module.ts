@@ -17,7 +17,7 @@ import { ConfigProvider } from './workspace/config-provider';
 import { MessageBusIntegration } from './workspace/messagebus-integration';
 import { MessageBusHelper, MessageBusHelperImpl } from '@gitpod/gitpod-messagebus/lib';
 import { IClientDataPrometheusAdapter, ClientDataPrometheusAdapterImpl } from './workspace/client-data-prometheus-adapter';
-import { ConfigInferenceProvider } from './workspace/config-inference-provider';
+import { ConfigurationService } from './config/configuration-service';
 import { IContextParser, IPrefixContextParser } from './workspace/context-parser';
 import { ContextParser } from './workspace/context-parser-service';
 import { SnapshotContextParser } from './workspace/snapshot-context-parser';
@@ -103,7 +103,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(GitpodFileParser).toSelf().inSingletonScope();
 
     bind(ConfigProvider).toSelf().inSingletonScope();
-    bind(ConfigInferenceProvider).toSelf().inSingletonScope();
+    bind(ConfigurationService).toSelf().inSingletonScope();
 
     bind(WorkspaceFactory).toSelf().inSingletonScope();
     bind(WorkspaceDeletionService).toSelf().inSingletonScope();
