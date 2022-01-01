@@ -545,7 +545,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
     try {
-        exec(`kubectl delete -n ${deploymentConfig.namespace} job migrations | true`,{ slice: installerSlices.APPLY_INSTALL_MANIFESTS, silent: true });
+        exec(`kubectl delete -n ${deploymentConfig.namespace} job migrations || true`,{ slice: installerSlices.APPLY_INSTALL_MANIFESTS, silent: true });
         // errors could result in outputing a secret to the werft log when kubernetes patches existing objects...
         exec(`kubectl apply -f k8s.yaml`,{ slice: installerSlices.APPLY_INSTALL_MANIFESTS, silent: true });
         werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
