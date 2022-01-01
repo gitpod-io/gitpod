@@ -5,75 +5,50 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
-	"time"
+
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
 )
 
-// proxy for the Code With Me status endpoints that transforms it into the supervisor status format.
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Printf("Usage: %s <port> [<link label>]\n", os.Args[0])
 		os.Exit(1)
 	}
 	port := os.Args[1]
-	label := "Open JetBrains IDE"
+
+	label := "Open in Jetbrain Gateway"
 	if len(os.Args) > 2 {
 		label = os.Args[2]
 	}
 
-	errlog := log.New(os.Stderr, "JetBrains IDE status: ", log.LstdFlags)
+	errlog := log.New(os.Stderr, "Jetbrains IDE status: ", log.LstdFlags)
 
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		var (
-			url    = "http://localhost:63342/codeWithMe/unattendedHostStatus?token=gitpod"
-			client = http.Client{Timeout: 1 * time.Second}
-		)
-		resp, err := client.Get(url)
+
+		wsInfo, err := GetWSInfo(context.Background())
 		if err != nil {
+			errlog.Printf("cannot get workspace info: %v\n", err)
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			return
 		}
-		defer resp.Body.Close()
-
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			errlog.Printf("Error reading body: %v\n", err)
-			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			return
+		//jetbrains-gateway://connect#idePath=%2Fworkspace%2FIDE&projectPath=%2Fworkspace%2Ftemplate-golang-cli&host=35.205.211.83&port=22&user=10.96.17.249&type=ssh&deploy=false
+		hash := fmt.Sprintf("idePath=%s&projectPath=%s&host=%s&port=22&user=%s&type=ssh&deploy=false", url.QueryEscape("/ide-desktop/backend"), url.QueryEscape(wsInfo.CheckoutLocation), "35.205.160.148", url.QueryEscape(wsInfo.WorkspaceId))
+		fmt.Println(hash)
+		link := url.URL{
+			Scheme: "jetbrains-gateway",
+			Host:   "connect",
 		}
 
-		if resp.StatusCode != http.StatusOK {
-			errlog.Printf("Getting non-200 status - %d\n%s\n", resp.StatusCode, bodyBytes)
-			http.Error(w, string(bodyBytes), resp.StatusCode)
-			return
-		}
-
-		type Projects struct {
-			JoinLink string `json:"joinLink"`
-		}
-		type Response struct {
-			Projects []Projects `json:"projects"`
-		}
-		jsonResp := &Response{}
-		err = json.Unmarshal(bodyBytes, &jsonResp)
-
-		if err != nil {
-			errlog.Printf("Error parsing JSON body from IDE status probe: %v\n", err)
-			http.Error(w, "Error parsing JSON body from IDE status probe.", http.StatusServiceUnavailable)
-			return
-		}
-		if len(jsonResp.Projects) != 1 {
-			errlog.Printf("projects size != 1\n")
-			http.Error(w, "projects size != 1", http.StatusServiceUnavailable)
-			return
-		}
 		response := make(map[string]string)
-		response["link"] = jsonResp.Projects[0].JoinLink
+		response["link"] = link.String() + "#" + hash
 		response["label"] = label
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
@@ -83,4 +58,21 @@ func main() {
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GetWSInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
+	supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
+	if supervisorAddr == "" {
+		supervisorAddr = "localhost:22999"
+	}
+	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+	if err != nil {
+		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
+	}
+	defer supervisorConn.Close()
+	wsinfo, err := supervisor.NewInfoServiceClient(supervisorConn).WorkspaceInfo(ctx, &supervisor.WorkspaceInfoRequest{})
+	if err != nil {
+		return nil, xerrors.Errorf("failed getting workspace info from supervisor: %w", err)
+	}
+	return wsinfo, nil
 }
