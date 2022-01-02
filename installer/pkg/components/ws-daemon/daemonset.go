@@ -6,6 +6,7 @@ package wsdaemon
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
@@ -259,7 +260,7 @@ fi
 					},
 				},
 				LivenessProbe: &corev1.Probe{
-					Handler: corev1.Handler{HTTPGet: &corev1.HTTPGetAction{
+					ProbeHandler: corev1.ProbeHandler{HTTPGet: &corev1.HTTPGetAction{
 						Path: "/",
 						Port: intstr.IntOrString{IntVal: 9999},
 					}},
@@ -268,7 +269,7 @@ fi
 					FailureThreshold:    10,
 				},
 				ReadinessProbe: &corev1.Probe{
-					Handler: corev1.Handler{HTTPGet: &corev1.HTTPGetAction{
+					ProbeHandler: corev1.ProbeHandler{HTTPGet: &corev1.HTTPGetAction{
 						Path: "/",
 						Port: intstr.IntOrString{IntVal: 9999},
 					}},

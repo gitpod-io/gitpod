@@ -6,6 +6,7 @@ package proxy
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -204,7 +205,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Privileged: pointer.Bool(false),
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/ready",
 										Port: intstr.IntOrString{IntVal: ReadinessPort},

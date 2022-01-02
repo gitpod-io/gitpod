@@ -6,6 +6,7 @@ package openvsx_proxy
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -70,7 +71,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Image: common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.OpenVSXProxy.Version),
 						Args:  []string{"/config/config.json"},
 						ReadinessProbe: &v1.Probe{
-							Handler: v1.Handler{
+							ProbeHandler: v1.ProbeHandler{
 								HTTPGet: &v1.HTTPGetAction{
 									Path: "/openvsx-proxy-status",
 									Port: intstr.IntOrString{IntVal: ContainerPort},

@@ -5,7 +5,7 @@
 package cmd
 
 import (
-	"github.com/bombsimon/logrusr"
+	"github.com/bombsimon/logrusr/v2"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -35,7 +35,7 @@ var runCmd = &cobra.Command{
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
 
-		ctrl.SetLogger(logrusr.NewLogger(log.Log))
+		ctrl.SetLogger(logrusr.New(log.Log))
 
 		opts := ctrl.Options{
 			Scheme:                 scheme,
