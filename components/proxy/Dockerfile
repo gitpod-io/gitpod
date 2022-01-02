@@ -12,7 +12,7 @@ WORKDIR /plugins
 COPY plugins /plugins
 
 # build caddy
-RUN xcaddy build v2.4.5 \
+RUN xcaddy build v2.4.6 \
   --output /caddy \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
