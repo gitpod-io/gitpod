@@ -25,7 +25,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-cjlm2"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"10Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-cjlm2"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-4vm9w"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"50Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-4vm9w"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -57,7 +57,7 @@ spec:
             - name: system
               bootOrder: 1
               disk:
-                bus: virtio
+                bus: scsi
             - name: cloudinitdisk
               disk:
                 bus: virtio
