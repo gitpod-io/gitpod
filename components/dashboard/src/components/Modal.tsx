@@ -41,7 +41,8 @@ export default function Modal(props: {
         return () => {
             window.removeEventListener('keydown', handler);
         };
-    }, []); // Empty array ensures that effect is only run on mount and unmount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [props.onClose, props.onEnter]);
 
     if (!props.visible) {
         return null;
