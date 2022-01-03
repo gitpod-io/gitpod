@@ -391,13 +391,17 @@ func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
 		ws.cancel()
 		delete(b.workspaces, u.ID)
 		b.Callbacks.InstanceUpdate(ws)
-		b.workspaceMapChangeChan <- len(b.workspaces)
+		if b.localAppTimeout != 0 {
+			b.workspaceMapChangeChan <- len(b.workspaces)
+		}
 		return
 	}
 
 	b.workspaces[u.ID] = ws
 	b.Callbacks.InstanceUpdate(ws)
-	b.workspaceMapChangeChan <- len(b.workspaces)
+	if b.localAppTimeout != 0 {
+		b.workspaceMapChangeChan <- len(b.workspaces)
+	}
 }
 
 func generateSSHKeys(instanceID string) (privateKeyFN string, publicKey string, err error) {
