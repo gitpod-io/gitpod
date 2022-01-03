@@ -97,7 +97,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	if idecfg.IDEOptions.Options[idecfg.IDEOptions.DefaultIDE].Type != typeBrowser {
-		return nil, fmt.Errorf("default IDE '%s' does not point to a browser IDE option", idecfg.IDEOptions.DefaultIDE)
+		return nil, fmt.Errorf("editor '%s' does not point to a browser IDE option", idecfg.IDEOptions.DefaultIDE)
 	}
 
 	if idecfg.IDEOptions.Options[idecfg.IDEOptions.DefaultDesktopIDE].Type != typeDesktop {

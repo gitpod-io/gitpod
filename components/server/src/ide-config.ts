@@ -131,16 +131,16 @@ export class IDEConfigService {
                 }
 
                 if (!(newValue.ideOptions.defaultIde in newValue.ideOptions.options)) {
-                    throw new Error(`invalid: There is no IDEOption entry for default IDE '${newValue.ideOptions.defaultIde}'.`);
+                    throw new Error(`invalid: There is no IDEOption entry for editor '${newValue.ideOptions.defaultIde}'.`);
                 }
                 if (!(newValue.ideOptions.defaultDesktopIde in newValue.ideOptions.options)) {
                     throw new Error(`invalid: There is no IDEOption entry for default desktop IDE '${newValue.ideOptions.defaultDesktopIde}'.`);
                 }
                 if (newValue.ideOptions.options[newValue.ideOptions.defaultIde].type != "browser") {
-                    throw new Error(`invalid: Default IDE '${newValue.ideOptions.defaultIde}' needs to be of type 'browser' but is '${newValue.ideOptions.options[newValue.ideOptions.defaultIde].type}'.`);
+                    throw new Error(`invalid: Editor '${newValue.ideOptions.defaultIde}' needs to be of type 'browser' but is '${newValue.ideOptions.options[newValue.ideOptions.defaultIde].type}'.`);
                 }
                 if (newValue.ideOptions.options[newValue.ideOptions.defaultDesktopIde].type != "desktop") {
-                    throw new Error(`invalid: Default desktop IDE '${newValue.ideOptions.defaultDesktopIde}' needs to be of type 'desktop' but is '${newValue.ideOptions.options[newValue.ideOptions.defaultIde].type}'.`);
+                    throw new Error(`invalid: Editor (desktop), '${newValue.ideOptions.defaultDesktopIde}' needs to be of type 'desktop' but is '${newValue.ideOptions.options[newValue.ideOptions.defaultIde].type}'.`);
                 }
 
                 value = newValue;

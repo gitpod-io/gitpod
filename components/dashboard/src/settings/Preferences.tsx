@@ -112,7 +112,7 @@ export default function Preferences() {
     return <div>
         <PageWithSubMenu subMenu={settingsMenu} title='Preferences' subtitle='Configure user preferences.'>
             {ideOptions && browserIdeOptions && <>
-                <h3>Default IDE</h3>
+                <h3>Editor</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">Choose which IDE you want to use.</p>
                 <div className="my-4 space-x-4 flex">
                     {
