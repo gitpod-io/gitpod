@@ -213,6 +213,13 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"overrides.yaml
    fi
 
+    if [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      yq w -i k8s.yaml -d "$i" "metadata.annotations[cloud.google.com/neg]" '{"exposed_ports": {"22":{}}}'
+      yq w -i k8s.yaml -d "$i" spec.type LoadBalancer
+   fi
+
    # update workspace-templates configmap to set affinity for workspace, ghosts, image builders, etc.
    # if this is not done, and they start on a node other than workspace, they won't be able to talk to registry-facade or ws-daemon
    if [[ "workspace-templates" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then

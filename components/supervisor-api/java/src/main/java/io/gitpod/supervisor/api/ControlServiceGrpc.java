@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -51,6 +51,37 @@ public final class ControlServiceGrpc {
       }
     }
     return getExposePortMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest,
+      io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse> getCreateSSHKeyPairMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "CreateSSHKeyPair",
+      requestType = io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest.class,
+      responseType = io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest,
+      io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse> getCreateSSHKeyPairMethod() {
+    io.grpc.MethodDescriptor<io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest, io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse> getCreateSSHKeyPairMethod;
+    if ((getCreateSSHKeyPairMethod = ControlServiceGrpc.getCreateSSHKeyPairMethod) == null) {
+      synchronized (ControlServiceGrpc.class) {
+        if ((getCreateSSHKeyPairMethod = ControlServiceGrpc.getCreateSSHKeyPairMethod) == null) {
+          ControlServiceGrpc.getCreateSSHKeyPairMethod = getCreateSSHKeyPairMethod =
+              io.grpc.MethodDescriptor.<io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest, io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "CreateSSHKeyPair"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new ControlServiceMethodDescriptorSupplier("CreateSSHKeyPair"))
+              .build();
+        }
+      }
+    }
+    return getCreateSSHKeyPairMethod;
   }
 
   /**
@@ -114,6 +145,16 @@ public final class ControlServiceGrpc {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getExposePortMethod(), responseObserver);
     }
 
+    /**
+     * <pre>
+     * CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
+     * </pre>
+     */
+    public void createSSHKeyPair(io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest request,
+        io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getCreateSSHKeyPairMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -123,6 +164,13 @@ public final class ControlServiceGrpc {
                 io.gitpod.supervisor.api.Control.ExposePortRequest,
                 io.gitpod.supervisor.api.Control.ExposePortResponse>(
                   this, METHODID_EXPOSE_PORT)))
+          .addMethod(
+            getCreateSSHKeyPairMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest,
+                io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse>(
+                  this, METHODID_CREATE_SSHKEY_PAIR)))
           .build();
     }
   }
@@ -154,6 +202,17 @@ public final class ControlServiceGrpc {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getExposePortMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     * <pre>
+     * CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
+     * </pre>
+     */
+    public void createSSHKeyPair(io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest request,
+        io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getCreateSSHKeyPairMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -181,6 +240,16 @@ public final class ControlServiceGrpc {
     public io.gitpod.supervisor.api.Control.ExposePortResponse exposePort(io.gitpod.supervisor.api.Control.ExposePortRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getExposePortMethod(), getCallOptions(), request);
+    }
+
+    /**
+     * <pre>
+     * CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
+     * </pre>
+     */
+    public io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse createSSHKeyPair(io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getCreateSSHKeyPairMethod(), getCallOptions(), request);
     }
   }
 
@@ -211,9 +280,21 @@ public final class ControlServiceGrpc {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getExposePortMethod(), getCallOptions()), request);
     }
+
+    /**
+     * <pre>
+     * CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
+     * </pre>
+     */
+    public com.google.common.util.concurrent.ListenableFuture<io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse> createSSHKeyPair(
+        io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getCreateSSHKeyPairMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_EXPOSE_PORT = 0;
+  private static final int METHODID_CREATE_SSHKEY_PAIR = 1;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -235,6 +316,10 @@ public final class ControlServiceGrpc {
         case METHODID_EXPOSE_PORT:
           serviceImpl.exposePort((io.gitpod.supervisor.api.Control.ExposePortRequest) request,
               (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Control.ExposePortResponse>) responseObserver);
+          break;
+        case METHODID_CREATE_SSHKEY_PAIR:
+          serviceImpl.createSSHKeyPair((io.gitpod.supervisor.api.Control.CreateSSHKeyPairRequest) request,
+              (io.grpc.stub.StreamObserver<io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -298,6 +383,7 @@ public final class ControlServiceGrpc {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new ControlServiceFileDescriptorSupplier())
               .addMethod(getExposePortMethod())
+              .addMethod(getCreateSSHKeyPairMethod())
               .build();
         }
       }

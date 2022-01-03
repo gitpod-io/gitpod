@@ -5,15 +5,18 @@
 package supervisor
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -687,6 +690,9 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 type ControlService struct {
 	portsManager *ports.Manager
 
+	privateKey string
+	publicKey  string
+
 	api.UnimplementedControlServiceServer
 }
 
@@ -699,6 +705,67 @@ func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
 func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequest) (*api.ExposePortResponse, error) {
 	err := c.portsManager.Expose(ctx, req.Port)
 	return &api.ExposePortResponse{}, err
+}
+
+// CreateSSHKeyPair create a ssh key pair for the workspace.
+func (ss *ControlService) CreateSSHKeyPair(context.Context, *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
+	home, _ := os.UserHomeDir()
+	if ss.privateKey != "" && ss.publicKey != "" {
+		checkKey := func() error {
+			data, err := os.ReadFile(filepath.Join(home, ".ssh/authorized_keys"))
+			if err != nil {
+				return xerrors.Errorf("cannot read file ~/.ssh/authorized_keys: %w", err)
+			}
+			if !bytes.Contains(data, []byte(ss.publicKey)) {
+				return xerrors.Errorf("not found special publickey")
+			}
+			return nil
+		}
+		err := checkKey()
+		if err == nil {
+			return &api.CreateSSHKeyPairResponse{
+				PrivateKey: ss.privateKey,
+			}, nil
+		}
+		log.WithError(err).Error("check authorized_keys failed, will recreate")
+	}
+	dir, err := os.MkdirTemp(os.TempDir(), "ssh-key-*")
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create tmpfile: %w", err)
+	}
+	err = prepareSSHKey(context.Background(), filepath.Join(dir, "ssh"))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create ssh key pair: %w", err)
+	}
+	bPublic, err := os.ReadFile(filepath.Join(dir, "ssh.pub"))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot read publickey: %w", err)
+	}
+	bPrivate, err := os.ReadFile(filepath.Join(dir, "ssh"))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot read privatekey: %w", err)
+	}
+	err = os.MkdirAll(filepath.Join(home, ".ssh"), 0o700)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create dir ~/.ssh/: %w", err)
+	}
+	f, err := os.OpenFile(filepath.Join(home, ".ssh/authorized_keys"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot open file ~/.ssh/authorized_keys: %w", err)
+	}
+	_, err = f.Write(bPublic)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot write file ~.ssh/authorized_keys: %w", err)
+	}
+	err = os.Chown(filepath.Join(home, ".ssh/authorized_keys"), gitpodUID, gitpodGID)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot chown SSH authorized_keys file: %w", err)
+	}
+	ss.privateKey = string(bPrivate)
+	ss.publicKey = string(bPublic)
+	return &api.CreateSSHKeyPairResponse{
+		PrivateKey: ss.privateKey,
+	}, err
 }
 
 // ContentState signals the workspace content state.

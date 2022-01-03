@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"golang.org/x/crypto/ssh"
 	"sigs.k8s.io/yaml"
 
 	"github.com/go-playground/validator/v10"
@@ -150,5 +151,30 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		}
 	}
 
+	if cfg.SSHGatewayHostKey != nil {
+		secretName := cfg.SSHGatewayHostKey.Name
+		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRule(func(s *corev1.Secret) ([]cluster.ValidationError, error) {
+			var signers []ssh.Signer
+			errors := make([]cluster.ValidationError, 0)
+			for field, value := range s.Data {
+				hostSigner, err := ssh.ParsePrivateKey(value)
+				if err != nil {
+					errors = append(errors, cluster.ValidationError{
+						Message: fmt.Sprintf("Field '%s' can't parse to host key %v", field, err),
+						Type:    cluster.ValidationStatusWarning,
+					})
+					continue
+				}
+				signers = append(signers, hostSigner)
+			}
+			if len(signers) == 0 {
+				errors = append(errors, cluster.ValidationError{
+					Message: fmt.Sprintf("Secret '%s' not contain any valild host key", secretName),
+					Type:    cluster.ValidationStatusError,
+				})
+			}
+			return errors, nil
+		})))
+	}
 	return res
 }

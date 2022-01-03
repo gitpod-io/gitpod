@@ -563,6 +563,7 @@ components:
       memory: 64Mi
     replicas: 1
     hostHeader: "x-wsproxy-host"
+    # hostKeySecretName: "host-key"
     ports:
       httpProxy:
         expose: true
@@ -573,6 +574,10 @@ components:
       metrics:
         expose: false
         containerPort: 9500
+      ssh:
+        expose: false
+        containerPort: 2200
+        servicePort: 22
 
 docker-registry:
   enabled: true
