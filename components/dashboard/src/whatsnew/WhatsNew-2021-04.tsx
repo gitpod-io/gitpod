@@ -10,7 +10,7 @@ import { WhatsNewEntry } from "./WhatsNew";
 
 export const switchToVSCodeAction = async (user: User) => {
     const additionalData = user.additionalData = user.additionalData || {};
-    // make sure code is set as the default IDE
+    // make sure code is set as the editor preference
     const ideSettings = additionalData.ideSettings = additionalData.ideSettings || {};
     ideSettings.defaultIde = 'code';
     user = await getGitpodService().server.updateLoggedInUser({
