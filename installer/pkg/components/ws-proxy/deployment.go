@@ -44,6 +44,21 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: "/mnt/certificates",
 		})
 	}
+	if ctx.Config.SSHGatewayHostKey.Name != "" {
+		volumes = append(volumes, corev1.Volume{
+			Name: "host-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.SSHGatewayHostKey.Name,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "host-key",
+			MountPath: "/mnt/host-key",
+		})
+	}
 
 	return []runtime.Object{
 		&appsv1.Deployment{

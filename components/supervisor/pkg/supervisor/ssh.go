@@ -162,7 +162,7 @@ func prepareSSHKey(ctx context.Context, sshkey string) error {
 		return xerrors.Errorf("cannot locate ssh-keygen (path %v)", sshkeygen)
 	}
 
-	keycmd := exec.Command(sshkeygen, "-t", "rsa", "-q", "-N", "", "-f", sshkey)
+	keycmd := exec.Command(sshkeygen, "-t", "ecdsa", "-q", "-N", "", "-f", sshkey)
 	// We need to force HOME because the Gitpod user might not have existed at the start of the container
 	// which makes the container runtime set an invalid HOME value.
 	keycmd.Env = func() []string {
@@ -197,7 +197,7 @@ func writeSSHEnv(cfg *Config) error {
 	}
 
 	d := filepath.Join(home, ".ssh")
-	err = os.MkdirAll(d, 0o755)
+	err = os.MkdirAll(d, 0o700)
 	if err != nil {
 		return xerrors.Errorf("cannot create $HOME/.ssh: %w", err)
 	}

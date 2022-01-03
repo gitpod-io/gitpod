@@ -84,6 +84,8 @@ type Config struct {
 	AuthProviders []ObjectRef   `json:"authProviders" validate:"dive"`
 	BlockNewUsers BlockNewUsers `json:"blockNewUsers"`
 	License       *ObjectRef    `json:"license,omitempty"`
+
+	SSHGatewayHostKey *ObjectRef `json:"sshGatewayHostKey,omitempty"`
 }
 
 type Metadata struct {

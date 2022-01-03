@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -24,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 type ControlServiceClient interface {
 	// ExposePort exposes a port
 	ExposePort(ctx context.Context, in *ExposePortRequest, opts ...grpc.CallOption) (*ExposePortResponse, error)
+	// CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
+	CreateSSHKeyPair(ctx context.Context, in *CreateSSHKeyPairRequest, opts ...grpc.CallOption) (*CreateSSHKeyPairResponse, error)
 }
 
 type controlServiceClient struct {
@@ -43,12 +45,23 @@ func (c *controlServiceClient) ExposePort(ctx context.Context, in *ExposePortReq
 	return out, nil
 }
 
+func (c *controlServiceClient) CreateSSHKeyPair(ctx context.Context, in *CreateSSHKeyPairRequest, opts ...grpc.CallOption) (*CreateSSHKeyPairResponse, error) {
+	out := new(CreateSSHKeyPairResponse)
+	err := c.cc.Invoke(ctx, "/supervisor.ControlService/CreateSSHKeyPair", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ControlServiceServer is the server API for ControlService service.
 // All implementations must embed UnimplementedControlServiceServer
 // for forward compatibility
 type ControlServiceServer interface {
 	// ExposePort exposes a port
 	ExposePort(context.Context, *ExposePortRequest) (*ExposePortResponse, error)
+	// CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
+	CreateSSHKeyPair(context.Context, *CreateSSHKeyPairRequest) (*CreateSSHKeyPairResponse, error)
 	mustEmbedUnimplementedControlServiceServer()
 }
 
@@ -58,6 +71,9 @@ type UnimplementedControlServiceServer struct {
 
 func (UnimplementedControlServiceServer) ExposePort(context.Context, *ExposePortRequest) (*ExposePortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExposePort not implemented")
+}
+func (UnimplementedControlServiceServer) CreateSSHKeyPair(context.Context, *CreateSSHKeyPairRequest) (*CreateSSHKeyPairResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSSHKeyPair not implemented")
 }
 func (UnimplementedControlServiceServer) mustEmbedUnimplementedControlServiceServer() {}
 
@@ -90,6 +106,24 @@ func _ControlService_ExposePort_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControlService_CreateSSHKeyPair_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSSHKeyPairRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControlServiceServer).CreateSSHKeyPair(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/supervisor.ControlService/CreateSSHKeyPair",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControlServiceServer).CreateSSHKeyPair(ctx, req.(*CreateSSHKeyPairRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ControlService_ServiceDesc is the grpc.ServiceDesc for ControlService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +134,10 @@ var ControlService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExposePort",
 			Handler:    _ControlService_ExposePort_Handler,
+		},
+		{
+			MethodName: "CreateSSHKeyPair",
+			Handler:    _ControlService_CreateSSHKeyPair_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

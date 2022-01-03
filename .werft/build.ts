@@ -533,6 +533,21 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             werft.fail('authProviders', err);
         }
 
+        werft.log("SSH gateway hostkey", "copy host-key from secret")
+        try {
+            exec(`kubectl --namespace keys get secret host-key -o yaml \
+            | yq w - metadata.namespace ${namespace} \
+            | yq d - metadata.uid \
+            | yq d - metadata.resourceVersion \
+            | yq d - metadata.creationTimestamp \
+            | kubectl apply -f -`, { silent: true })
+            exec(`yq w -i ./config.yaml sshGatewayHostKey.kind "secret"`)
+            exec(`yq w -i ./config.yaml sshGatewayHostKey.name "host-key"`)
+            werft.done('SSH gateway hostkey');
+        } catch (err) {
+            werft.fail('SSH gateway hostkey', err);
+        }
+
         // validate the config and cluster
         exec(`/tmp/installer validate config -c config.yaml`, {slice: installerSlices.INSTALLER_RENDER});
 

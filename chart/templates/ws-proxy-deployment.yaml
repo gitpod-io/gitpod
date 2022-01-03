@@ -52,6 +52,11 @@ spec:
         secret:
           secretName: {{ $.Values.certificatesSecret.secretName }}
 {{- end }}
+{{- if $.comp.hostKeySecretName }}
+      - name: host-key
+        secret:
+          secretName: {{ $.comp.hostKeySecretName }}
+{{- end }}
       enableServiceLinks: false
       containers:
 {{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
@@ -84,6 +89,10 @@ spec:
 {{- if $.Values.certificatesSecret.secretName }}
         - name: config-certificates
           mountPath: "/mnt/certificates"
+{{- end }}
+{{- if $.comp.hostKeySecretName }}
+        - name: host-key
+          mountPath: "/mnt/host-key"
 {{- end }}
         securityContext:
           privileged: false

@@ -4,7 +4,9 @@
 
 package wsproxy
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
@@ -25,6 +27,10 @@ var Objects = common.CompositeRenderFunc(
 		MetricsPortName: {
 			ContainerPort: MetricsPort,
 			ServicePort:   MetricsPort,
+		},
+		SSHPortName: {
+			ContainerPort: SSHTargetPort,
+			ServicePort:   SSHServicePort,
 		},
 	}),
 )

@@ -20,10 +20,12 @@ spec:
   policyTypes:
   - Ingress
   ingress:
-  # Allow access to HTTP/HTTPS proxy ports from everywhere
+  # Allow access to HTTP/HTTPS/SSH proxy ports from everywhere
   - ports:
     - protocol: TCP
       port: {{ $comp.ports.httpProxy.containerPort }}
     - protocol: TCP
       port: {{ $comp.ports.httpsProxy.containerPort }}
+    - protocol: TCP
+      port: {{ $comp.ports.ssh.containerPort }}
 {{ end }}

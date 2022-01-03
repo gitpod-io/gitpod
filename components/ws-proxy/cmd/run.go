@@ -5,18 +5,23 @@
 package cmd
 
 import (
+	"net"
+	"os"
+	"path/filepath"
+
 	"github.com/bombsimon/logrusr"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 )
 
 var (
@@ -74,6 +79,34 @@ var runCmd = &cobra.Command{
 
 		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider).MustServe()
 		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
+
+		flist, err := os.ReadDir("/mnt/host-key")
+		if err == nil && len(flist) > 0 {
+			var signers []ssh.Signer
+			for _, f := range flist {
+				if f.IsDir() {
+					continue
+				}
+				b, err := os.ReadFile(filepath.Join("/mnt/host-key", f.Name()))
+				if err != nil {
+					continue
+				}
+				hostSigner, err := ssh.ParsePrivateKey(b)
+				if err != nil {
+					continue
+				}
+				signers = append(signers, hostSigner)
+			}
+			if len(signers) > 0 {
+				server := sshproxy.New(signers, workspaceInfoProvider)
+				l, err := net.Listen("tcp", ":2200")
+				if err != nil {
+					panic(err)
+				}
+				go server.Serve(l)
+				log.Info("SSHGateway is up and running")
+			}
+		}
 
 		log.Info("🚪 ws-proxy is up and running")
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

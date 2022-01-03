@@ -15,6 +15,9 @@ const (
 	HTTPProxyPortName  = "http-proxy"
 	HTTPSProxyPort     = 9090
 	HTTPSProxyPortName = "https-proxy"
+	SSHServicePort     = 22
+	SSHTargetPort      = 2200
+	SSHPortName        = "ssh"
 	MetricsPort        = 9500
 	MetricsPortName    = "metrics"
 	ProbePort          = 60088
