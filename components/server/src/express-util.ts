@@ -24,7 +24,7 @@ export const pingPong: WsRequestHandler = (ws, req, next) => {
         if (ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) {
             danglingTimeoutCounter++;
             log.warn("websocket ping-pong: dangling timer!", { readyState: ws.readyState, counter: danglingTimeoutCounter, globalPingPongCounter });
-            // disposable.dispose(); if this happens very often we should uncomment this line!
+            disposable.dispose();
             return;
         }
         danglingTimeoutCounter = 0;
