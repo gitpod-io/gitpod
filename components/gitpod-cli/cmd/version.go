@@ -26,7 +26,7 @@ var versionCmd = &cobra.Command{
 	Short:  "Prints the version of the CLI",
 	Args:   cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(version)
+		fmt.Println(Version)
 	},
 }
 
