@@ -10,7 +10,7 @@ if [[ -z ${NAMESPACE} ]]; then
 fi
 
 echo "Removing Gitpod in namespace ${NAMESPACE}"
-kubectl get configmap gitpod-app -n "${NAMESPACE}" -o jsonpath='{.data.app\.yaml}' | kubectl delete -f -
+kubectl get configmap gitpod-app -n "${NAMESPACE}" -o jsonpath='{.data.app\.yaml}' | kubectl delete --ignore-not-found=true -f -
 
 echo "Removing Gitpod storage from ${NAMESPACE}"
 kubectl -n "${NAMESPACE}" delete pvc data-mysql-0
