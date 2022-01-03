@@ -138,12 +138,12 @@ func hasUser(u *user.User) (bool, error) {
 }
 
 func addGroup(name string, gid int) error {
-	flavour := determineAdduserFlavour()
-	if flavour == adduserUnknown {
+	flavour := determineAddgroupFlavour()
+	if flavour == cmdUnknown {
 		return xerrors.Errorf("no addgroup command found")
 	}
 
-	args := addgroupCommand[flavour](name, gid)
+	args := addgroupCommands[flavour](name, gid)
 	out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 	if err != nil {
 		return xerrors.Errorf("%w: %s", err, string(out))
@@ -155,11 +155,11 @@ func addGroup(name string, gid int) error {
 
 func addUser(opts *user.User) error {
 	flavour := determineAdduserFlavour()
-	if flavour == adduserUnknown {
+	if flavour == cmdUnknown {
 		return xerrors.Errorf("no adduser command found")
 	}
 
-	args := adduserCommand[flavour](opts)
+	args := adduserCommands[flavour](opts)
 	out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 	if err != nil {
 		return xerrors.Errorf("%v: %w: %s", args, err, string(out))
@@ -169,66 +169,70 @@ func addUser(opts *user.User) error {
 	return nil
 }
 
-func determineAdduserFlavour() adduserFlavour {
-	for flavour, gen := range adduserCommand {
-		args := gen(&user.User{})
-		var flags []string
-		for _, a := range args {
-			if len(a) > 0 && a[0] == '-' {
-				flags = append(flags, a)
-			}
-		}
-
-		rout, _ := exec.Command(args[0], "-h").CombinedOutput()
-		var (
-			out   = string(rout)
-			found = true
-		)
-		for _, f := range flags {
-			if !strings.Contains(out, f) {
-				found = false
-				break
-			}
-		}
-		if found {
-			return flavour
+func determineCmdFlavour(args []string) bool {
+	var flags []string
+	for _, a := range args {
+		if len(a) > 0 && a[0] == '-' {
+			flags = append(flags, a)
 		}
 	}
 
-	return adduserUnknown
+	rout, _ := exec.Command(args[0], "-h").CombinedOutput()
+	var (
+		out   = string(rout)
+		found = true
+	)
+	for _, f := range flags {
+		// FIXME: use regexp to fix help with some flags like --global --gid which -g included
+		if !strings.Contains(out, f) {
+			found = false
+			break
+		}
+	}
+	return found
 }
 
-type adduserFlavour int
+func determineAddgroupFlavour() int {
+	for flavour, gen := range addgroupCommands {
+		args := gen("", 0)
+		if determineCmdFlavour(args) {
+			return flavour
+		}
+	}
+	return cmdUnknown
+}
+
+func determineAdduserFlavour() int {
+	for flavour, gen := range adduserCommands {
+		args := gen(&user.User{})
+		if determineCmdFlavour(args) {
+			return flavour
+		}
+	}
+	return cmdUnknown
+}
 
 const (
-	adduserUnknown adduserFlavour = iota
-	adduserBusybox
-	adduserDebian
-	adduserUseradd
+	cmdUnknown = -1
 )
 
 const defaultShell = "/bin/sh"
 
-var adduserCommand = map[adduserFlavour]func(*user.User) []string{
-	adduserBusybox: func(opts *user.User) []string {
-		return []string{"adduser", "-h", opts.HomeDir, "-s", defaultShell, "-D", "-G", opts.Gid, "-u", opts.Uid, opts.Username}
-	},
-	adduserDebian: func(opts *user.User) []string {
+var adduserCommands = []func(*user.User) []string{
+	func(opts *user.User) []string {
 		return []string{"adduser", "--home", opts.HomeDir, "--shell", defaultShell, "--disabled-login", "--gid", opts.Gid, "--uid", opts.Uid, opts.Username}
-	},
-	adduserUseradd: func(opts *user.User) []string {
+	}, // Debian
+	func(opts *user.User) []string {
+		return []string{"adduser", "-h", opts.HomeDir, "-s", defaultShell, "-D", "-G", opts.Gid, "-u", opts.Uid, opts.Username}
+	}, // Busybox
+	func(opts *user.User) []string {
 		return []string{"useradd", "-m", "--home-dir", opts.HomeDir, "--shell", defaultShell, "--gid", opts.Gid, "--uid", opts.Uid, opts.Username}
-	},
+	}, // Useradd
 }
 
-var addgroupCommand = map[adduserFlavour]func(name string, gid int) []string{
-	adduserBusybox: func(name string, gid int) []string {
-		return []string{"addgroup", "-g", strconv.Itoa(gid), name}
-	},
-	adduserDebian: func(name string, gid int) []string {
-		return []string{"addgroup", "--gid", strconv.Itoa(gid), name}
-	},
-	adduserUseradd: func(name string, gid int) []string {
-		return []string{"groupadd", "--gid", strconv.Itoa(gid), name}
-	},
+// addgroupCommands check long flag first to avoid --gid contains -g which -g flag doesn't realy exist
+var addgroupCommands = []func(name string, gid int) []string{
+	func(name string, gid int) []string { return []string{"addgroup", "--gid", strconv.Itoa(gid), name} }, // Debian
+	func(name string, gid int) []string { return []string{"groupadd", "--gid", strconv.Itoa(gid), name} }, // Useradd
+	func(name string, gid int) []string { return []string{"addgroup", "-g", strconv.Itoa(gid), name} },    // Busybox
 }
