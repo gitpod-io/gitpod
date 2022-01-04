@@ -120,6 +120,8 @@ RUN install-packages \
     libasound2 \
     libxtst6 \
     xauth
+# Install netcat to use it as proxy for SSH access to Harvester VMs
+RUN install-packages netcat
 
 USER gitpod
 
