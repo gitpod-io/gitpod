@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-const REGEX_WORKSPACE_ID = /[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8}/;
+const REGEX_WORKSPACE_ID = /[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11}/;
 const REGEX_WORKSPACE_ID_EXACT = new RegExp(`^${REGEX_WORKSPACE_ID.source}$`);
 // We need to parse the workspace id precisely here to get the case '<some-str>-<port>-<wsid>.ws.' right
 const REGEX_WORKSPACE_ID_FROM_HOSTNAME = new RegExp(`(${REGEX_WORKSPACE_ID.source})\.ws`);
