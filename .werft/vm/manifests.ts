@@ -14,10 +14,11 @@ metadata:
 type VirtualMachineManifestArguments = {
   vmName: string
   namespace: string
-  claimName: string,
+  claimName: string
+  userDataSecretName: string
 }
 
-export function VirtualMachineManifest({ vmName, namespace, claimName }: VirtualMachineManifestArguments) {
+export function VirtualMachineManifest({ vmName, namespace, claimName, userDataSecretName }: VirtualMachineManifestArguments) {
   return `
 apiVersion: kubevirt.io/v1
 type: kubevirt.io.virtualmachine
@@ -75,23 +76,11 @@ spec:
             claimName: ${claimName}
         - name: cloudinitdisk
           cloudInitNoCloud:
-            userData: |-
-              #cloud-config
-              users:
-                - name: ubuntu
-                  sudo: "ALL=(ALL) NOPASSWD: ALL"
-                  ssh_authorized_keys:
-                    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC/aB/HYsb56V0NBOEab6j33v3LIxRiGqG4fmidAryAXevLyTANJPF8m44KSzSQg7AI7PMy6egxQp/JqH2b+3z1cItWuHZSU+klsKNuf5HxK7AOrND3ahbejZfyYewtKFQ3X9rv5Sk8TAR5gw5oPbkTR61jiLa58Sw7UkhLm2EDguGASb6mBal8iboiF8Wpl8QIvPmJaGIOY2YwXLepwFA3S3kVqW88eh2WFmjTMre5ASLguYNkHXjyb/TuhVFzAvphzpl84RAaEyjKYnk45fh4xRXx+oKqlfKRJJ/Owxa7SmGO+/4rWb3chdnpodHeu7XjERmjYLY+r46sf6n6ySgEht1xAWjMb1uqZqkDx+fDDsjFSeaN3ncX6HSoDOrphFmXYSwaMpZ8v67A791fuUPrMLC+YMckhTuX2g4i3XUdumIWvhaMvKhy/JRRMsfUH0h+KAkBLI6tn5ozoXiQhgM4SAE5HsMr6CydSIzab0yY3sq0avmZgeoc78+8PKPkZG1zRMEspV/hKKBC8hq7nm0bu4IgzuEIYHowOD8svqA0ufhDWxTt6A4Jo0xDzhFyKme7KfmW7SIhpejf3T1Wlf+QINs1hURr8LSOZEyY2SzYmAoQ49N0SSPb5xyG44cptpKcj0WCAJjBJoZqz0F5x9TjJ8XToB5obyJfRHD1JjxoMQ== dev@gitpod.io
-              chpasswd:
-                list: |
-                  ubuntu:ubuntu
-                expire: False
-              runcmd:
-                - curl -sfL https://get.k3s.io | sh -
-                - sleep 10
-                - kubectl label nodes ${vmName} gitpod.io/workload_meta=true gitpod.io/workload_ide=true gitpod.io/workload_workspace_services=true gitpod.io/workload_workspace_regular=true gitpod.io/workload_workspace_headless=true gitpod.io/workspace_0=true gitpod.io/workspace_1=true gitpod.io/workspace_2=true
-                - kubectl create ns certs
-                - kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
+            networkDataSecretRef:
+              name: ${userDataSecretName}
+            secretRef:
+              name: ${userDataSecretName}
+
 `
 }
 
@@ -132,6 +121,82 @@ spec:
 }
 
 type UserDataSecretManifestOptions = {
+  vmName: string
   namespace: string,
   secretName: string
+}
+
+export function UserDataSecretManifest({vmName, namespace, secretName }: UserDataSecretManifestOptions) {
+  const userdata = Buffer.from(`#cloud-config
+users:
+- name: ubuntu
+  sudo: "ALL=(ALL) NOPASSWD: ALL"
+  ssh_authorized_keys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC/aB/HYsb56V0NBOEab6j33v3LIxRiGqG4fmidAryAXevLyTANJPF8m44KSzSQg7AI7PMy6egxQp/JqH2b+3z1cItWuHZSU+klsKNuf5HxK7AOrND3ahbejZfyYewtKFQ3X9rv5Sk8TAR5gw5oPbkTR61jiLa58Sw7UkhLm2EDguGASb6mBal8iboiF8Wpl8QIvPmJaGIOY2YwXLepwFA3S3kVqW88eh2WFmjTMre5ASLguYNkHXjyb/TuhVFzAvphzpl84RAaEyjKYnk45fh4xRXx+oKqlfKRJJ/Owxa7SmGO+/4rWb3chdnpodHeu7XjERmjYLY+r46sf6n6ySgEht1xAWjMb1uqZqkDx+fDDsjFSeaN3ncX6HSoDOrphFmXYSwaMpZ8v67A791fuUPrMLC+YMckhTuX2g4i3XUdumIWvhaMvKhy/JRRMsfUH0h+KAkBLI6tn5ozoXiQhgM4SAE5HsMr6CydSIzab0yY3sq0avmZgeoc78+8PKPkZG1zRMEspV/hKKBC8hq7nm0bu4IgzuEIYHowOD8svqA0ufhDWxTt6A4Jo0xDzhFyKme7KfmW7SIhpejf3T1Wlf+QINs1hURr8LSOZEyY2SzYmAoQ49N0SSPb5xyG44cptpKcj0WCAJjBJoZqz0F5x9TjJ8XToB5obyJfRHD1JjxoMQ== dev@gitpod.io
+chpasswd:
+  list: |
+    ubuntu:ubuntu
+  expire: False
+write_files:
+  - path: /usr/local/bin/bootstrap-k3s.sh
+    permissions: 0744
+    owner: root
+    content: |
+      #!/bin/bash
+
+      set -eo pipefail
+
+      # inspired by https://github.com/gitpod-io/ops/blob/main/deploy/workspace/templates/bootstrap.sh
+
+      # Install k3s
+      export INSTALL_K3S_SKIP_DOWNLOAD=true
+
+      /usr/local/bin/install-k3s.sh \
+          --token "1234" \
+          --node-ip "$(hostname -I | cut -d ' ' -f1)" \
+          --node-label "cloud.google.com/gke-nodepool=control-plane-pool" \
+          --container-runtime-endpoint=/var/run/containerd/containerd.sock \
+          --write-kubeconfig-mode 444 \
+          --disable servicelb \
+          --disable traefik \
+          --disable local-storage \
+          --disable metrics-server \
+          --flannel-backend=none \
+          --kubelet-arg config=/etc/kubernetes/kubelet-config.json \
+          --kubelet-arg feature-gates=LocalStorageCapacityIsolation=true \
+          --kubelet-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \
+          --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolation=true \
+          --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \
+          --cluster-init
+
+      kubectl label nodes ${vmName} \
+          gitpod.io/workload_meta=true \
+          gitpod.io/workload_ide=true \
+          gitpod.io/workload_workspace_services=true \
+          gitpod.io/workload_workspace_regular=true \
+          gitpod.io/workload_workspace_headless=true \
+          gitpod.io/workspace_0=true \
+          gitpod.io/workspace_1=true \
+          gitpod.io/workspace_2=true
+
+      kubectl apply -f /var/lib/gitpod/manifests/calico.yaml
+      kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
+      kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
+
+      cat <<EOF >> /root/.bashrc
+      export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+      EOF
+runcmd:
+ - bash /usr/local/bin/bootstrap-k3s.sh`).toString("base64")
+  return `
+apiVersion: v1
+type: secret
+kind: Secret
+data:
+  networkdata: ""
+  userdata: ${userdata}
+metadata:
+  name: ${secretName}
+  namespace: ${namespace}
+`
 }

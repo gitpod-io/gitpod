@@ -22,6 +22,7 @@ EOF
  */
 export function startVM(options: { name: string }) {
     const namespace = `preview-${options.name}`
+    const userDataSecretName = `userdata-${options.name}`
 
     kubectlApplyManifest(
         Manifests.NamespaceManifest({
@@ -30,10 +31,19 @@ export function startVM(options: { name: string }) {
     )
 
     kubectlApplyManifest(
+        Manifests.UserDataSecretManifest({
+            vmName: options.name,
+            namespace,
+            secretName: userDataSecretName,
+        })
+    )
+
+    kubectlApplyManifest(
         Manifests.VirtualMachineManifest({
             namespace,
             vmName: options.name,
-            claimName: `${options.name}-${Date.now()}`
+            claimName: `${options.name}-${Date.now()}`,
+            userDataSecretName
         }),
         { validate: false }
     )
