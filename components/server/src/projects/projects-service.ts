@@ -115,8 +115,10 @@ export class ProjectsService {
     protected async onDidCreateProject(project: Project, installer: User) {
         let { userId, teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
-        if ("gitlab.com" === parsedUrl?.host) {
-            const repositoryService = this.hostContextProvider.get(parsedUrl?.host)?.services?.repositoryService;
+        const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
+        const type = hostContext && hostContext.authProvider.info.authProviderType;
+        if (type === "GitLab" || type === "Bitbucket") {
+            const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
                 // in the project creation flow, we only propose repositories where the user is actually allowed to
