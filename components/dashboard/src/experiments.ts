@@ -27,8 +27,7 @@ const Experiments = {
     /**
      * Experiment "example" will be activate on login for 10% of all clients.
      */
-    // "example": 0.1,
-    "login-from-context-6826": 0, // https://github.com/gitpod-io/gitpod/issues/6826
+    "example": 0.1,
 };
 type Experiments = Partial<{ [e in Experiment]: boolean }>;
 export type Experiment = keyof (typeof Experiments);
