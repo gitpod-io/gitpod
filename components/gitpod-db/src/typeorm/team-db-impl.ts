@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { list as blocklist } from "the-big-username-blacklist";
 import { Team, TeamMemberInfo, TeamMemberRole, TeamMembershipInvite, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
@@ -95,6 +96,9 @@ export class TeamDBImpl implements TeamDB {
             throw new Error('Please choose a team name containing only letters, numbers, -, _, \', or spaces.');
         }
         const slug = name.toLocaleLowerCase().replace(/[ ']/g, '-');
+        if (blocklist.indexOf(slug) !== -1) {
+            throw new Error('Creating a team with this name is not allowed');
+        }
         const userRepo = await this.getUserRepo();
         const existingUsers = await userRepo.query('SELECT COUNT(id) AS count FROM d_b_user WHERE fullName LIKE ? OR name LIKE ?', [ name, slug ]);
         if (Number.parseInt(existingUsers[0].count) > 0) {
