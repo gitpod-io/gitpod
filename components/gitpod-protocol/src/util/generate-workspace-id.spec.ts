@@ -27,5 +27,21 @@ const expect = chai.expect
         expect(longestName.length <= 36, `"${longestName}" is longer than 36 chars (${longestName.length})`).to.be.true;
     }
 
+    @test public async testCustomName() {
+        const data = [
+            ['foo','bar','foo-bar-'],
+            ['f','bar','.{2,16}-bar-'],
+            ['gitpod-io','gitpod','gitpodio-gitpod-'],
+            ['this is rather long and has some "§$"% special chars','also here pretty long and needs abbreviation','thisisratherlon-alsohere-'],
+            ['breatheco-de', 'python-flask-api-tutorial', 'breathecode-pythonflaska-'],
+        ]
+        for (const d of data) {
+            const id = await generateWorkspaceID(d[0], d[1]);
+            expect(id).match(new RegExp("^"+d[2]));
+            expect(new GitpodHostUrl().withWorkspacePrefix(id, "eu").workspaceId).to.equal(id);
+            expect(id.length <= 36, `"${id}" is longer than 36 chars (${id.length})`).to.be.true;
+        }
+    }
+
 }
 module.exports = new TestGenerateWorkspaceId()
