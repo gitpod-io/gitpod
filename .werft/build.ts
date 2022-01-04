@@ -4,7 +4,7 @@ import * as path from 'path';
 import { exec, ExecOptions } from './util/shell';
 import { Werft } from './util/werft';
 import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName } from './util/kubectl';
-import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
+import { newIssueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
@@ -905,7 +905,7 @@ export async function issueMetaCerts(namespace: string, domain: string) {
     metaClusterCertParams.ip = getCoreDevIngressIP();
     metaClusterCertParams.bucketPrefixTail = ""
     metaClusterCertParams.additionalSubdomains = additionalSubdomains
-    await issueCertficate(werft, metaClusterCertParams, metaEnv());
+    await newIssueCertficate(werft, metaClusterCertParams, metaEnv());
 }
 
 async function installMetaCertificates(namespace: string) {
