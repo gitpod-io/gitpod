@@ -65,6 +65,7 @@ export class ConfigInferrer {
         } catch (e) {
             console.log(e, pckjsonContent);
         }
+        this.addExtension(ctx, 'dbaeumer.vscode-eslint');
     }
 
     protected async checkJava(ctx: Context): Promise<void> {
@@ -74,6 +75,8 @@ export class ConfigInferrer {
                 cmd = './gradlew';
             }
             this.addCommand(ctx.config, cmd + ' build', 'init');
+            this.addExtension(ctx, 'redhat.java');
+            this.addExtension(ctx, 'vscjava.vscode-java-debug');
             return;
         }
         if (await ctx.exists('pom.xml')) {
@@ -82,8 +85,21 @@ export class ConfigInferrer {
                 cmd = './mvnw';
             }
             this.addCommand(ctx.config, cmd + ' install -DskipTests=false', 'init');
+            this.addExtension(ctx, 'redhat.java');
+            this.addExtension(ctx, 'vscjava.vscode-java-debug');
+            this.addExtension(ctx, 'vscjava.vscode-maven');
             return;
         }
+    }
+
+    protected addExtension(ctx: Context, extensionName: string) {
+        if (!ctx.config.vscode || !ctx.config.vscode.extensions) {
+            ctx.config.vscode = {
+                extensions: []
+            };
+        }
+        if (ctx.config.vscode.extensions?.indexOf(extensionName) === -1)
+            ctx.config.vscode.extensions!.push(extensionName);
     }
 
     protected async isMake(ctx: Context) {
@@ -105,15 +121,20 @@ export class ConfigInferrer {
         }
         if (await ctx.exists('requirements.txt')) {
             this.addCommand(ctx.config, 'pip install -r requirements.txt', 'init');
+            this.addExtension(ctx, 'ms-python.python');
         } else if (await ctx.exists('setup.py')) {
             this.addCommand(ctx.config, 'pip install .', 'init');
+            this.addExtension(ctx, 'ms-python.python');
         }
         if (await ctx.exists('main.py')) {
             this.addCommand(ctx.config, 'python main.py', 'command');
+            this.addExtension(ctx, 'ms-python.python');
         } else if (await ctx.exists('app.py')) {
             this.addCommand(ctx.config, 'python app.py', 'command');
+            this.addExtension(ctx, 'ms-python.python');
         } else if (await ctx.exists('runserver.py')) {
             this.addCommand(ctx.config, 'python runserver.py', 'command');
+            this.addExtension(ctx, 'ms-python.python');
         }
     }
 
@@ -123,6 +144,7 @@ export class ConfigInferrer {
             this.addCommand(ctx.config, 'go build ./...', 'init');
             this.addCommand(ctx.config, 'go test ./...', 'init');
             this.addCommand(ctx.config, 'go run', 'command');
+            this.addExtension(ctx, 'golang.go');
         }
     }
 
@@ -130,6 +152,7 @@ export class ConfigInferrer {
         if (await ctx.exists('Cargo.toml')) {
             this.addCommand(ctx.config, 'cargo build', 'init');
             this.addCommand(ctx.config, 'cargo watch -x run', 'command');
+            this.addExtension(ctx, 'matklad.rust-analyzer');
         }
     }
 
@@ -165,5 +188,20 @@ export class ConfigInferrer {
             return;
         }
         config.tasks[0][phase] = (existing ? existing + ' && ' : '') + command;
+    }
+
+    toYaml(config: WorkspaceConfig): string {
+        const i = '  ';
+        let tasks = '';
+        if (config.tasks) {
+            tasks = `tasks:\n${i}- ${config.tasks.map(task => Object.entries(task).map(([phase, command]) => `${phase}: ${command}`).join('\n    ')).join('\n  - ')}`
+        }
+        let vscode = '';
+        if (config.vscode?.extensions) {
+            vscode = `vscode:\n${i}extensions:\n${config.vscode.extensions.map(extension => `${i + i}- ${extension}`).join('\n')}`
+        }
+        return `${tasks}
+${vscode}
+`;
     }
 }

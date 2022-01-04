@@ -23,6 +23,36 @@ async function expect(files: {[path:string]:string}, config: WorkspaceConfig): P
     chai.assert.equal(JSON.stringify(result, null, '  '), JSON.stringify(config, null, '  '));
 }
 
+describe('config serializer', () => {
+    it('serialized proper YAML',
+        async () => {
+            const config: WorkspaceConfig = {
+                tasks: [
+                    {
+                        'init': "yarn install",
+                        'command': "yarn run build"
+                    }
+                ],
+                vscode: {
+                    extensions: [
+                        'foo', 'bar'
+                    ]
+                }
+            }
+            const cf = new ConfigInferrer()
+            chai.assert.equal(cf.toYaml(config),
+`tasks:
+  - init: yarn install
+    command: yarn run build
+vscode:
+  extensions:
+    - foo
+    - bar
+`);
+        }
+    )
+});
+
 describe('config inferrer', () => {
     it('check node',
         async () => expect({
@@ -43,7 +73,12 @@ describe('config inferrer', () => {
                     init: "yarn install && yarn run build",
                     command: "yarn run watch"
                 }
-            ]
+            ],
+            vscode: {
+                extensions: [
+                    'dbaeumer.vscode-eslint'
+                ]
+            }
         })
     ),
     it('[java] mvn wrapper',
@@ -55,7 +90,14 @@ describe('config inferrer', () => {
                 {
                     init: "./mvnw install -DskipTests=false"
                 }
-            ]
+            ],
+            vscode: {
+                extensions: [
+                    'redhat.java',
+                    'vscjava.vscode-java-debug',
+                    'vscjava.vscode-maven'
+                ]
+            }
         })
     ),
     it('[java] mvn',
@@ -66,7 +108,14 @@ describe('config inferrer', () => {
                 {
                     init: "mvn install -DskipTests=false"
                 }
-            ]
+            ],
+            vscode: {
+                extensions: [
+                    'redhat.java',
+                    'vscjava.vscode-java-debug',
+                    'vscjava.vscode-maven'
+                ]
+            }
         })
     ),
     it('[java] gradle',
@@ -78,7 +127,13 @@ describe('config inferrer', () => {
                 {
                     init: "gradle build"
                 }
-            ]
+            ],
+            vscode: {
+                extensions: [
+                    'redhat.java',
+                    'vscjava.vscode-java-debug'
+                ]
+            }
         })
     ),
     it('[java] gradle wrapper',
@@ -90,7 +145,13 @@ describe('config inferrer', () => {
                 {
                     init: "./gradlew build"
                 }
-            ]
+            ],
+            vscode: {
+                extensions: [
+                    'redhat.java',
+                    'vscjava.vscode-java-debug'
+                ]
+            }
         })
     ),
     it('[python] pip install',
@@ -101,7 +162,12 @@ describe('config inferrer', () => {
                 {
                     init: "pip install -r requirements.txt"
                 }
-            ]
+            ],
+            vscode: {
+                extensions: [
+                    'ms-python.python'
+                ]
+            }
         })
     ),
     it('[go] go install',
@@ -113,7 +179,12 @@ describe('config inferrer', () => {
                     init: "go get && go build ./... && go test ./...",
                     command: "go run"
                 }
-            ]
+            ],
+            vscode: {
+                extensions: [
+                    'golang.go'
+                ]
+            }
         })
     ),
     it('[rust] cargo',
@@ -125,7 +196,12 @@ describe('config inferrer', () => {
                     init: "cargo build",
                     command: "cargo watch -x run"
                 }
-            ]
+            ],
+            vscode: {
+                extensions: [
+                    'matklad.rust-analyzer'
+                ]
+            }
         })
     ),
     it('[make] make',
