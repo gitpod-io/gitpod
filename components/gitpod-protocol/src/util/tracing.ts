@@ -71,13 +71,13 @@ export namespace TraceContext {
         addNestedTags(ctx, tags);
     }
 
-    export function setJsonRPCError(ctx: TraceContext, method: string, err: ResponseError<any>) {
+    export function setJsonRPCError(ctx: TraceContext, method: string, err: ResponseError<any>, withStatusCode: boolean = false) {
         if (!ctx.span) {
             return;
         }
         // not use setError bc this is (most likely) a working operation
 
-        setJsonRPCMetadata(ctx);
+        setJsonRPCMetadata(ctx, method);
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#json-rpc
         addNestedTags(ctx, {
             rpc: {
@@ -87,6 +87,11 @@ export namespace TraceContext {
                 },
             },
         });
+
+        // the field "status_code" is used by honeycomb to derive insights like success rate, etc. Defaults to "0".
+        if (withStatusCode) {
+            ctx.span.setTag("status_code", err.code);
+        }
     }
 
     export function addJsonRPCParameters(ctx: TraceContext, params: { [key: string]: any }) {

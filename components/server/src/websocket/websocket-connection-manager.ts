@@ -346,7 +346,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
                 const err = new ResponseError(500, "internal server error");
                 increaseApiCallCounter(method, err.code);
-                TraceContext.setJsonRPCError(ctx, method, err);
+                TraceContext.setJsonRPCError(ctx, method, err, true);
 
                 log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
             }
