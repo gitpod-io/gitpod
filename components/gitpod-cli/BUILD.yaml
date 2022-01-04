@@ -17,7 +17,6 @@ packages:
     config:
       packaging: app
     prep:
-      - ["cp", "_deps/components-gitpod-cli--version/version.txt", "cmd/version.txt"]
       - ["cp", "_deps/components-gitpod-cli--version/version.txt", "pkg/gitpod/version.txt"]
   - name: version
     type: generic

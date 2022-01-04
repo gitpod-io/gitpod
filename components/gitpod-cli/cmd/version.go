@@ -7,16 +7,10 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
-	"strings"
+
+	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 
 	"github.com/spf13/cobra"
-)
-
-var (
-	// Version : current version
-	Version string = strings.TrimSpace(version)
-	//go:embed version.txt
-	version string
 )
 
 // urlCmd represents the url command
@@ -26,7 +20,7 @@ var versionCmd = &cobra.Command{
 	Short:  "Prints the version of the CLI",
 	Args:   cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(Version)
+		fmt.Println(gitpod.Version)
 	},
 }
 
