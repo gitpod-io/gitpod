@@ -1,6 +1,15 @@
 # Change Log
 
-## December 2021
+## January 2022
+- Update GoLand IDE image to version 213.6461.81. ([#7406](https://github.com/gitpod-io/gitpod/pull/7406)) - [@roboquat](https://github.com/roboquat)
+- Provide SLSA/in-toto provenance for the build ([#7387](https://github.com/gitpod-io/gitpod/pull/7387)) - [@csweichel](https://github.com/csweichel)
+- [installer]: add example for post-processing the YAML ([#7364](https://github.com/gitpod-io/gitpod/pull/7364)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [server] add default branch to BitBucket provider ([#7371](https://github.com/gitpod-io/gitpod/pull/7371)) - [@trumbitta](https://github.com/trumbitta)
+- Update PyCharm IDE image to version 213.6461.77. ([#7389](https://github.com/gitpod-io/gitpod/pull/7389)) - [@roboquat](https://github.com/roboquat)
+- Update IntelliJ IDEA IDE image to version 213.6461.79. ([#7381](https://github.com/gitpod-io/gitpod/pull/7381)) - [@roboquat](https://github.com/roboquat)
+- Remove theia IDE ([#7395](https://github.com/gitpod-io/gitpod/pull/7395)) - [@aledbf](https://github.com/aledbf)
+
+##  December 2021
 - Automatically propose a configuration for non-configured repositories. ([#7383](https://github.com/gitpod-io/gitpod/pull/7383)) - [@svenefftinge](https://github.com/svenefftinge)
 - Fix Team Workspace Success Criteria dashboard ([#7354](https://github.com/gitpod-io/gitpod/pull/7354)) - [@kylos101](https://github.com/kylos101)
 - Allow auth provider secrets to be passed in via a secret ([#7177](https://github.com/gitpod-io/gitpod/pull/7177)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
