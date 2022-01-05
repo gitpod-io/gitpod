@@ -22,7 +22,6 @@ import { HostContainerMappingEE } from "./auth/host-container-mapping";
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { GithubApp } from "./prebuilds/github-app";
 import { GithubAppRules } from "./prebuilds/github-app-rules";
-import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { IPrefixContextParser } from "../../src/workspace/context-parser";
@@ -65,7 +64,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(GithubApp).toSelf().inSingletonScope();
     bind(GitHubAppSupport).toSelf().inSingletonScope();
     bind(GithubAppRules).toSelf().inSingletonScope();
-    bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
     bind(GitLabApp).toSelf().inSingletonScope();
     bind(GitLabAppSupport).toSelf().inSingletonScope();
     bind(BitbucketApp).toSelf().inSingletonScope();

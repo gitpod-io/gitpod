@@ -663,17 +663,6 @@ export namespace PrebuiltWorkspace {
     }
 }
 
-export interface PrebuiltWorkspaceUpdatable {
-    id: string;
-    prebuiltWorkspaceId: string;
-    owner: string;
-    repo: string;
-    isResolved: boolean;
-    installationId: string;
-    issue?: string;
-    contextUrl?: string;
-}
-
 export interface WhitelistedRepository {
     url: string
     name: string

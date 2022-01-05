@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Disposable, DisposableCollection, HeadlessWorkspaceEvent, PrebuildWithStatus, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { Disposable, DisposableCollection, PrebuildWithStatus, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -17,9 +17,6 @@ export interface PrebuildUpdateListener {
 }
 export interface CreditAlertListener {
     (ctx: TraceContext, alert: CreditAlert): void;
-}
-export interface HeadlessWorkspaceEventListener {
-    (ctx: TraceContext, evt: HeadlessWorkspaceEvent): void;
 }
 export interface WorkspaceInstanceUpdateListener {
     (ctx: TraceContext, instance: WorkspaceInstance): void;
@@ -34,8 +31,6 @@ export interface LocalMessageBroker {
     listenForPrebuildUpdates(projectId: string, listener: PrebuildUpdateListener): Disposable;
 
     listenToCreditAlerts(userId: string, listener: CreditAlertListener): Disposable;
-
-    listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable;
 
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable;
 }
@@ -63,7 +58,6 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
 
     protected prebuildUpdateListeners: Map<string, PrebuildUpdateListener[]> = new Map();
     protected creditAlertsListeners: Map<string, CreditAlertListener[]> = new Map();
-    protected headlessWorkspaceEventListeners: Map<string, HeadlessWorkspaceEventListener[]> = new Map();
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
 
     protected readonly disposables = new DisposableCollection();
@@ -101,21 +95,6 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
                 }
             }
         ));
-        this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdatableQueue(
-            (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
-                TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
-
-                const listeners = this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
-                for (const l of listeners) {
-                    try {
-                        l(ctx, evt);
-                    } catch (err) {
-                        TraceContext.setError(ctx, err);
-                        log.error({ workspaceId: evt.workspaceID }, "listenForPrebuildUpdatableQueue", err);
-                    }
-                }
-            }
-        ));
         this.disposables.push(this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
             undefined,
             (ctx: TraceContext, instance: WorkspaceInstance, userId: string | undefined) => {
@@ -148,11 +127,6 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
 
     listenToCreditAlerts(userId: string, listener: CreditAlertListener): Disposable {
         return this.doRegister(userId, listener, this.creditAlertsListeners);
-    }
-
-    listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
-        // we're being cheap here in re-using a map where it just needs to be a plain array.
-        return this.doRegister(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY, listener, this.headlessWorkspaceEventListeners);
     }
 
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable {
