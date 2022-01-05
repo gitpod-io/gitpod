@@ -1806,7 +1806,6 @@ type GithubAppConfig struct {
 // GithubAppPrebuildConfig is the GithubAppPrebuildConfig message type
 type GithubAppPrebuildConfig struct {
 	AddBadge              bool        `json:"addBadge,omitempty"`
-	AddCheck              bool        `json:"addCheck,omitempty"`
 	AddComment            bool        `json:"addComment,omitempty"`
 	AddLabel              interface{} `json:"addLabel,omitempty"`
 	Branches              bool        `json:"branches,omitempty"`
