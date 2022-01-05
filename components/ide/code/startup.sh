@@ -22,6 +22,7 @@
 
 export SHELL=/bin/bash
 export USER=gitpod
+export VSCODE_AGENT_FOLDER=/workspace/.vscode-remote
 
 # TODO ENVVAR CLEANUP: This stays here until we moved it to a central location, ideally workspace-full
 # (+ compatibility period)
