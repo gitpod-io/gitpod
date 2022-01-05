@@ -57,6 +57,19 @@ var credentialHelper = &cobra.Command{
 		}()
 
 		repoURL, gitCommand := parseProcessTree()
+
+		// Starts another process which tracks the executed git event
+		gitCommandTracker := exec.Command("/proc/self/exe", "git-track-command", "--gitCommand", gitCommand)
+		err = gitCommandTracker.Start()
+		if err != nil {
+			log.WithError(err).Print("error spawning tracker")
+		} else {
+			err = gitCommandTracker.Process.Release()
+			if err != nil {
+				log.WithError(err).Print("error releasing tracker")
+			}
+		}
+
 		host := parseHostFromStdin()
 		if len(host) == 0 {
 			log.Println("'host' is missing")
