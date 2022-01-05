@@ -82,7 +82,7 @@ export class WsExpressHandler {
         });
     }
 
-    protected matches(route: Route, pathname: string | undefined | null): boolean {
+    protected matches(route: Route, pathname: string | undefined | null): boolean {
         if (route instanceof RegExp) {
             return !!pathname && route.test(pathname);
         }
