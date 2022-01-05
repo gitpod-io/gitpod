@@ -1,6 +1,13 @@
 # Change Log
 
 ## January 2022
+- [Installer]: simplify container image mirroring ([#7156](https://github.com/gitpod-io/gitpod/pull/7156)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Rename editor preference section heading ([#7437](https://github.com/gitpod-io/gitpod/pull/7437)) - [@gtsiolis](https://github.com/gtsiolis)
+- Auto focus on cance on confirmation modal ([#7275](https://github.com/gitpod-io/gitpod/pull/7275)) - [@JanKoehnlein](https://github.com/JanKoehnlein), [@gtsiolis](https://github.com/gtsiolis)
+- Fixes registration of webhooks for projects hosted on bitbucket.org and self-managed gitlab. ([#7422](https://github.com/gitpod-io/gitpod/pull/7422)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Also propose vscode extensions for yet unconfigured repositories. ([#7392](https://github.com/gitpod-io/gitpod/pull/7392)) - [@svenefftinge](https://github.com/svenefftinge)
+- Every user sees the new Login page. ([#7349](https://github.com/gitpod-io/gitpod/pull/7349)) - [@geropl](https://github.com/geropl), [@laushinka](https://github.com/laushinka)
+- Update PhpStorm IDE image to version 213.6461.83. ([#7407](https://github.com/gitpod-io/gitpod/pull/7407)) - [@roboquat](https://github.com/roboquat)
 - Update GoLand IDE image to version 213.6461.81. ([#7406](https://github.com/gitpod-io/gitpod/pull/7406)) - [@roboquat](https://github.com/roboquat)
 - Provide SLSA/in-toto provenance for the build ([#7387](https://github.com/gitpod-io/gitpod/pull/7387)) - [@csweichel](https://github.com/csweichel)
 - [installer]: add example for post-processing the YAML ([#7364](https://github.com/gitpod-io/gitpod/pull/7364)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
