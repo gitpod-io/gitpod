@@ -32,7 +32,7 @@ var timeoutExtendCmd = &cobra.Command{
 		if err != nil {
 			fail(err.Error())
 		}
-		_, err = client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, *serverapi.WorkspaceTimeoutDuration180m)
+		_, err = client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, serverapi.WorkspaceTimeoutDuration180m)
 		if err != nil {
 			fail(err.Error())
 		}
