@@ -15,7 +15,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { increaseHttpRequestCounter } from '../prometheus-metrics';
 
 export type HttpServer = http.Server | https.Server;
-export type Route = string | RegExp;
+export type RouteMatcher = string | RegExp;
 export type MaybePromise = Promise<any> | any;
 
 export interface WsNextFunction {
@@ -31,10 +31,15 @@ export type WsHandler = WsRequestHandler | WsErrorHandler;
 
 export type WsConnectionFilter = websocket.VerifyClientCallbackAsync | websocket.VerifyClientCallbackSync;
 
+interface Route {
+    matcher: RouteMatcher;
+    handler: (ws: websocket, req: express.Request) => void;
+}
 
 export class WsExpressHandler {
 
     protected readonly wss: websocket.Server;
+    protected readonly routes: Route[] = [];
 
     constructor(
             protected readonly httpServer: HttpServer,
@@ -50,11 +55,12 @@ export class WsExpressHandler {
             clientTracking: false,
         });
         this.wss.on('error', (err) => {
-            log.error('Websocket error', err, { ws: this.wss });
+            log.error('websocket server error', err, { wss: this.wss });
         });
+        this.httpServer.on('upgrade', (req: http.IncomingMessage, socket: net.Socket, head: Buffer) => this.onUpgrade(req, socket, head));
     }
 
-    ws(route: Route, handler: (ws: websocket, request: express.Request) => void, ...handlers: WsHandler[]): void {
+    ws(matcher: RouteMatcher, handler: (ws: websocket, request: express.Request) => void, ...handlers: WsHandler[]): void {
         const stack = WsLayer.createStack(...handlers);
         const dispatch = (ws: websocket, request: express.Request) => {
             handler(ws, request);
@@ -68,24 +74,32 @@ export class WsExpressHandler {
             });
         }
 
-        this.httpServer.on('upgrade', (request: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
-            const pathname = request.url ? url.parse(request.url).pathname : undefined;
-            if (this.matches(route, pathname)) {
-                this.wss.handleUpgrade(request, socket, head, ws => {
-                    if (ws.readyState === ws.OPEN) {
-                        dispatch(ws, request as express.Request);
-                    } else {
-                        ws.on('open', () => dispatch(ws, request as express.Request));
-                    }
-                });
+        this.routes.push({
+            matcher,
+            handler: (ws, req) => {
+                if (ws.readyState === ws.OPEN) {
+                    dispatch(ws, req);
+                } else {
+                    ws.on('open', () => dispatch(ws, req));
+                }
             }
         });
     }
 
-    protected matches(route: Route, pathname: string | undefined | null): boolean {
-        if (route instanceof RegExp) {
-            return !!pathname && route.test(pathname);
+    protected onUpgrade(request: http.IncomingMessage, socket: net.Socket, head: Buffer) {
+        const pathname = request.url ? url.parse(request.url).pathname : undefined;
+        for (const route of this.routes) {
+            if (this.matches(route.matcher, pathname)) {
+                this.wss.handleUpgrade(request, socket, head, (ws) => route.handler(ws, request as express.Request));
+                return; // take the first match and stop
+            }
         }
-        return pathname === route;
+    }
+
+    protected matches(matcher: RouteMatcher, pathname: string | undefined | null): boolean {
+        if (matcher instanceof RegExp) {
+            return !!pathname && matcher.test(pathname);
+        }
+        return pathname === matcher;
     }
 }

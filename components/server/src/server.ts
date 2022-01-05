@@ -204,6 +204,12 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             }, handleError, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
             });
+            wsHandler.ws(/.*/, (ws, request) => {
+                // fallthrough case
+                // note: this is suboptimal as we upgrade and than terminate the request. But we're not sure this is a problem at all, so we start out with this
+                log.warn("websocket path not matching", { path: request.path })
+                ws.terminate();
+            });
 
             // start ws heartbeat/ping-pong
             wsPingPongHandler.start();
