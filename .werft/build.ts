@@ -76,7 +76,7 @@ const installerSlices = {
     INSTALLER_RENDER: "installer render",
     INSTALLER_POST_PROCESSING: "installer post processing",
     APPLY_INSTALL_MANIFESTS: "installer apply",
-    DEPLOYMENT_WAITING: "monitor server deployment"
+    DEPLOYMENT_WAITING: "monitor server deployment",
 }
 
 const vmSlices = {
@@ -176,6 +176,7 @@ export async function build(context, version) {
         installEELicense,
         withObservability,
         withHelm,
+        withVM,
     }
     werft.log("job config", JSON.stringify(jobConfig));
     werft.rootSpan.setAttributes(Object.fromEntries(Object.entries(jobConfig).map((kv) => {
@@ -295,6 +296,7 @@ export async function build(context, version) {
         installEELicense,
         withPayment,
         withObservability,
+        withVM,
     };
 
     if (withVM) {
@@ -382,6 +384,7 @@ interface DeploymentConfig {
     installEELicense: boolean;
     withPayment: boolean;
     withObservability: boolean;
+    withVM: boolean;
 }
 
 /*
@@ -390,7 +393,7 @@ interface DeploymentConfig {
 export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
     // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/post-process.sh -a with-clean-slate-deployment=true
-    const { version, destname, namespace, domain, monitoringDomain, url, withObservability } = deploymentConfig;
+    const { version, destname, namespace, domain, monitoringDomain, url, withObservability, withVM } = deploymentConfig;
 
     // find free ports
     werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Check for some free ports.");
@@ -419,19 +422,24 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.fail(installerSlices.CLEAN_ENV_STATE, err);
     }
 
-    // Now we want to execute further kubectl operations only in the created namespace
-    setKubectlContextNamespace(namespace, metaEnv({ slice: installerSlices.SET_CONTEXT }));
+    if (withVM) {
+        // If using a dedicated k3s, we don't need to create a dedicated namespace to deploy our preview
+        deploymentConfig.namespace = "default";
 
-    // trigger certificate issuing
-    try {
-        werft.log(installerSlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
+        // Harverster VMs also have SSL configured, we can just skip certificate creation
+    } else {
+        // If using core-dev, we want to execute further kubectl operations only in the created namespace
+        setKubectlContextNamespace(namespace, metaEnv({ slice: installerSlices.SET_CONTEXT }));
+        try {
+            werft.log(installerSlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
 
-        // trigger certificate issuing
-        await issueMetaCerts(namespace, domain);
-        await installMetaCertificates(namespace);
-        werft.done(installerSlices.ISSUE_CERTIFICATES);
-    } catch (err) {
-        werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+            // trigger certificate issuing
+            await issueMetaCerts(namespace, domain);
+            await installMetaCertificates(namespace);
+            werft.done(installerSlices.ISSUE_CERTIFICATES);
+        } catch (err) {
+            werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+        }
     }
 
     // add the image pull secret to the namespcae if it doesn't exist
