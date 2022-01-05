@@ -7,7 +7,7 @@
 import { CloneTargetMode, FileDownloadInitializer, GitAuthMethod, GitConfig, GitInitializer, PrebuildInitializer, SnapshotInitializer, WorkspaceInitializer } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
 import { DBUser, DBWithTracing, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile } from "@gitpod/gitpod-protocol";
+import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, DisposableCollection, AdditionalContentContext, ImageConfigFile } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -285,10 +285,6 @@ export class WorkspaceStarter {
                     prebuild.error = err.toString();
 
                     await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild)
-                    await this.messageBus.notifyHeadlessUpdate({span}, workspace.ownerId, workspace.id, <HeadlessWorkspaceEvent>{
-                        type: HeadlessWorkspaceEventType.Aborted,
-                        // TODO: `workspaceID: workspace.id` not needed here? (found in ee/src/prebuilds/prebuild-queue-maintainer.ts and ee/src/bridge.ts)
-                    });
                 }
             }
         } catch (err) {

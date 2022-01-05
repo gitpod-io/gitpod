@@ -6,7 +6,7 @@
 
 import { DeepPartial } from 'typeorm';
 
-import { Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, PrebuiltWorkspaceUpdatable, RunningWorkspaceInfo, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery, SnapshotState } from '@gitpod/gitpod-protocol';
+import { Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery, SnapshotState } from '@gitpod/gitpod-protocol';
 
 export type MaybeWorkspace = Workspace | undefined;
 export type MaybeWorkspaceInstance = WorkspaceInstance | undefined;
@@ -19,12 +19,6 @@ export interface FindWorkspacesOptions {
     searchString?: string
     includeHeadless?: boolean
     pinnedOnly?: boolean
-}
-
-export interface PrebuiltUpdatableAndWorkspace extends PrebuiltWorkspaceUpdatable {
-    prebuild: PrebuiltWorkspace
-    workspace: Workspace
-    instance: WorkspaceInstance
 }
 
 export type WorkspaceAuthData = Pick<Workspace, "id" | "ownerId" | "shareable">;
@@ -106,10 +100,6 @@ export interface WorkspaceDB {
     findPrebuildByID(pwsid: string): Promise<PrebuiltWorkspace | undefined>;
     countRunningPrebuilds(cloneURL: string): Promise<number>;
     findQueuedPrebuilds(cloneURL?: string): Promise<PrebuildWithWorkspace[]>;
-    attachUpdatableToPrebuild(pwsid: string, update: PrebuiltWorkspaceUpdatable): Promise<void>;
-    findUpdatablesForPrebuild(pwsid: string): Promise<PrebuiltWorkspaceUpdatable[]>;
-    markUpdatableResolved(updatableId: string): Promise<void>;
-    getUnresolvedUpdatables(): Promise<PrebuiltUpdatableAndWorkspace[]>;
 
     findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined>;
     storeLayoutData(layoutData: LayoutData): Promise<LayoutData>;

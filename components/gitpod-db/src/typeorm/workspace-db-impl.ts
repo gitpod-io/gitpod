@@ -6,8 +6,8 @@
 
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
-import { MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
-import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery, SnapshotState } from "@gitpod/gitpod-protocol";
+import { MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
+import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery, SnapshotState } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
@@ -17,7 +17,6 @@ import { DBWorkspaceInstanceUser } from "./entity/db-workspace-instance-user";
 import { DBRepositoryWhiteList } from "./entity/db-repository-whitelist";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DBPrebuiltWorkspace } from "./entity/db-prebuilt-workspace";
-import { DBPrebuiltWorkspaceUpdatable } from "./entity/db-prebuilt-workspace-updatable";
 import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../user-db";
 import { DBPrebuildInfo } from "./entity/db-prebuild-info-entry";
 
@@ -58,10 +57,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     protected async getPrebuildInfoRepo(): Promise<Repository<DBPrebuildInfo>> {
         return await (await this.getManager()).getRepository<DBPrebuildInfo>(DBPrebuildInfo);
-    }
-
-    protected async getPrebuiltWorkspaceUpdatableRepo(): Promise<Repository<DBPrebuiltWorkspaceUpdatable>> {
-        return await (await this.getManager()).getRepository<DBPrebuiltWorkspaceUpdatable>(DBPrebuiltWorkspaceUpdatable);
     }
 
     protected async getLayoutDataRepo(): Promise<Repository<DBLayoutData>> {
@@ -656,31 +651,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                 workspace: withWorkspace.workspace,
             }
         });
-    }
-    public async attachUpdatableToPrebuild(pwsid: string, update: PrebuiltWorkspaceUpdatable): Promise<void> {
-        const repo = await this.getPrebuiltWorkspaceUpdatableRepo();
-        await repo.save(update);
-    }
-    public async findUpdatablesForPrebuild(pwsid: string): Promise<PrebuiltWorkspaceUpdatable[]> {
-        const repo = await this.getPrebuiltWorkspaceUpdatableRepo();
-        return await repo.createQueryBuilder('pwsu')
-            .where('pwsu.prebuiltWorkspaceId = :pwsid', { pwsid })
-            .getMany();
-    }
-    public async markUpdatableResolved(updatableId: string): Promise<void> {
-        const repo = await this.getPrebuiltWorkspaceUpdatableRepo();
-        await repo.update(updatableId, { isResolved: true });
-    }
-    public async getUnresolvedUpdatables(): Promise<PrebuiltUpdatableAndWorkspace[]> {
-        const pwsuRepo = await this.getPrebuiltWorkspaceUpdatableRepo();
-
-        // select * from d_b_prebuilt_workspace_updatable as pwsu left join d_b_prebuilt_workspace pws ON pws.id = pwsu.prebuiltWorkspaceId left join d_b_workspace ws on pws.buildWorkspaceId = ws.id left join d_b_workspace_instance wsi on ws.id = wsi.workspaceId where pwsu.isResolved = 0
-        return await pwsuRepo.createQueryBuilder("pwsu")
-            .innerJoinAndMapOne('pwsu.prebuild', DBPrebuiltWorkspace, 'pws', 'pwsu.prebuiltWorkspaceId = pws.id')
-            .innerJoinAndMapOne('pwsu.workspace', DBWorkspace, 'ws', 'pws.buildWorkspaceId = ws.id')
-            .innerJoinAndMapOne('pwsu.instance', DBWorkspaceInstance, 'wsi', 'ws.id = wsi.workspaceId')
-            .where('pwsu.isResolved = 0')
-            .getMany() as any;
     }
 
     public async findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined> {
