@@ -25,6 +25,10 @@ ports:
 # Dev Theia
   - port: 13444
 tasks:
+  - name: Add Harvester kubeconfig
+    command: |
+      ./dev/preview/download-and-merge-harvester-kubeconfig.sh
+      exit 0
   - name: Java
     init: |
       leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
