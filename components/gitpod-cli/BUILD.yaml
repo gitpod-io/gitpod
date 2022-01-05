@@ -9,7 +9,20 @@ packages:
       - CGO_ENABLED=0
       - GOOS=linux
     deps:
+      - :version
       - components/supervisor-api/go:lib
       - components/gitpod-protocol/go:lib
+    argdeps:
+      - version
     config:
       packaging: app
+    prep:
+      - ["cp", "_deps/components-gitpod-cli--version/version.txt", "pkg/gitpod/version.txt"]
+  - name: version
+    type: generic
+    argdeps:
+      - version
+    config:
+      commands:
+        - ["sh", "-c", "echo '${version}' > version.txt"]
+        - ["echo", "Gitpod-CLI Version: ${version}"]

@@ -6,13 +6,22 @@ package server
 
 import (
 	"context"
+	_ "embed"
 	"os"
+	"strings"
 
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+)
+
+var (
+	// Version : current version
+	Version string = strings.TrimSpace(version)
+	//go:embed version.txt
+	version string
 )
 
 func GetWSInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
@@ -50,10 +59,15 @@ func ConnectToServer(ctx context.Context, wsInfo *supervisor.WorkspaceInfoRespon
 	if err != nil {
 		return nil, xerrors.Errorf("failed getting token from supervisor: %w", err)
 	}
+
 	client, err := serverapi.ConnectToServer(wsInfo.GitpodApi.Endpoint, serverapi.ConnectToServerOpts{
 		Token:   clientToken.Token,
 		Context: ctx,
 		Log:     log.NewEntry(log.StandardLogger()),
+		ExtraHeaders: map[string]string{
+			"User-Agent":       "gitpod/cli",
+			"X-Client-Version": Version,
+		},
 	})
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to server: %w", err)
