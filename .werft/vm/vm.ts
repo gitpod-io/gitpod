@@ -78,6 +78,8 @@ export function waitForVM(options: { name: string, timeoutMS: number, slice: str
 
         const status = exec(`kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name} -o jsonpath="{.status.phase}"`, { silent: true, slice: options.slice }).stdout.trim()
 
+        // This part needs to be changed
+        // We need to check for por readiness instead of just checking if it is running or not
         if (status == "Running") {
             return
         }
