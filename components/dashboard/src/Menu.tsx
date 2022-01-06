@@ -69,7 +69,7 @@ export default function Menu() {
     }
 
     // Hide most of the top menu when in a full-page form.
-    const isMinimalUI = ['/new', '/teams/new'].includes(location.pathname);
+    const isMinimalUI = ['/new', '/teams/new', '/open'].includes(location.pathname);
 
     const [ teamMembers, setTeamMembers ] = useState<Record<string, TeamMemberInfo[]>>({});
     useEffect(() => {
