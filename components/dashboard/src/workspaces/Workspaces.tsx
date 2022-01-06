@@ -5,16 +5,16 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { WhitelistedRepository, Workspace, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { WhitelistedRepository, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Header from "../components/Header";
 import DropDown from "../components/DropDown";
 import { WorkspaceModel } from "./workspace-model";
 import { WorkspaceEntry } from "./WorkspaceEntry";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { StartWorkspaceModal, WsStartEntry } from "./StartWorkspaceModal";
+import { getGitpodService } from "../service/service";
+import { StartWorkspaceModal } from "./StartWorkspaceModal";
 import { ItemsList } from "../components/ItemsList";
-import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
-import { useLocation, useRouteMatch } from "react-router";
+import { TeamsContext } from "../teams/teams-context";
+import { useLocation } from "react-router";
 
 export interface WorkspacesProps {
 }
@@ -29,20 +29,12 @@ export default function () {
     const location = useLocation();
 
     const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
-    const match = useRouteMatch<{ team: string, resource: string }>("/(t/)?:team/:resource");
-    const projectSlug = match?.params?.resource !== 'workspaces' ? match?.params?.resource : undefined;
     const [activeWorkspaces, setActiveWorkspaces] = useState<WorkspaceInfo[]>([]);
     const [inactiveWorkspaces, setInactiveWorkspaces] = useState<WorkspaceInfo[]>([]);
-    const [repos, setRepos] = useState<WhitelistedRepository[]>([]);
     const [isTemplateModelOpen, setIsTemplateModelOpen] = useState<boolean>(false);
     const [workspaceModel, setWorkspaceModel] = useState<WorkspaceModel>();
 
     useEffect(() => {
-        // only show example repos on the global user context
-        if (!team && !projectSlug) {
-            getGitpodService().server.getFeaturedRepositories().then(setRepos);
-        }
         (async () => {
             const workspaceModel = new WorkspaceModel(setActiveWorkspaces, setInactiveWorkspaces);
             setWorkspaceModel(workspaceModel);
@@ -51,39 +43,6 @@ export default function () {
 
     const showStartWSModal = () => setIsTemplateModelOpen(true);
     const hideStartWSModal = () => setIsTemplateModelOpen(false);
-
-    const getRecentSuggestions: () => WsStartEntry[] = () => {
-        if (workspaceModel) {
-            const all = workspaceModel.getAllFetchedWorkspaces();
-            if (all && all.size > 0) {
-                const index = new Map<string, WsStartEntry & { lastUse: string }>();
-                for (const ws of Array.from(all.values())) {
-                    const repoUrl = Workspace.getFullRepositoryUrl(ws.workspace);
-                    if (repoUrl) {
-                        const lastUse = WorkspaceInfo.lastActiveISODate(ws);
-                        let entry = index.get(repoUrl);
-                        if (!entry) {
-                            entry = {
-                                title: Workspace.getFullRepositoryName(ws.workspace) || repoUrl,
-                                description: repoUrl,
-                                startUrl: gitpodHostUrl.withContext(repoUrl).toString(),
-                                lastUse,
-                            };
-                            index.set(repoUrl, entry);
-                        } else {
-                            if (entry.lastUse.localeCompare(lastUse) < 0) {
-                                entry.lastUse = lastUse;
-                            }
-                        }
-                    }
-                }
-                const list = Array.from(index.values());
-                list.sort((a, b) => b.lastUse.localeCompare(a.lastUse));
-                return list;
-            }
-        }
-        return [];
-    }
 
     return <>
         <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
@@ -150,17 +109,7 @@ export default function () {
                     </div>
                 </div>
         )}
-        <StartWorkspaceModal
-            onClose={hideStartWSModal}
-            visible={!!isTemplateModelOpen}
-            examples={repos && repos.map(r => ({
-                title: r.name,
-                description: r.description || r.url,
-                startUrl: gitpodHostUrl.withContext(r.url).toString()
-            }))}
-            recent={workspaceModel && activeWorkspaces ?
-                getRecentSuggestions()
-                : []} />
+        <StartWorkspaceModal onClose={hideStartWSModal} visible={!!isTemplateModelOpen} />
     </>;
 
 }

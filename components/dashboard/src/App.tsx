@@ -25,6 +25,7 @@ import { Experiment } from './experiments';
 import { workspacesPathMain } from './workspaces/workspaces.routes';
 import { settingsPathAccount, settingsPathIntegrations, settingsPathMain, settingsPathNotifications, settingsPathPlans, settingsPathPreferences, settingsPathTeams, settingsPathTeamsJoin, settingsPathTeamsNew, settingsPathVariables } from './settings/settings.routes';
 import { projectsPathInstallGitHubApp, projectsPathMain, projectsPathMainWithParams, projectsPathNew } from './projects/projects.routes';
+import { refreshSearchData } from './components/RepositoryFinder';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -35,6 +36,7 @@ const Teams = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Te
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ './settings/EnvironmentVariables'));
 const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Integrations'));
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Preferences'));
+const Open = React.lazy(() => import(/* webpackPrefetch: true */ './start/Open'));
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/StartWorkspace'));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/CreateWorkspace'));
 const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ './teams/NewTeam'));
@@ -216,6 +218,12 @@ function App() {
         return () => window.removeEventListener("click", handleButtonOrAnchorTracking, true);
     }, []);
 
+    useEffect(() => {
+        if (user) {
+            refreshSearchData('', user);
+        }
+    }, [user]);
+
     // redirect to website for any website slugs
     if (isGitpodIo() && isWebsiteSlug(window.location.pathname)) {
         window.location.host = 'www.gitpod.io';
@@ -275,6 +283,7 @@ function App() {
             <Menu />
             <Switch>
                 <Route path={projectsPathNew} exact component={NewProject} />
+                <Route path="/open" exact component={Open} />
                 <Route path="/setup" exact component={Setup} />
                 <Route path={workspacesPathMain} exact component={Workspaces} />
                 <Route path={settingsPathAccount} exact component={Account} />

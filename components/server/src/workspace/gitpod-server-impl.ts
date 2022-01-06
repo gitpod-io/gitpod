@@ -996,6 +996,59 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             ))).filter(e => e !== undefined) as WhitelistedRepository[];
     }
 
+    public async getSuggestedContextURLs(ctx: TraceContext): Promise<string[]> {
+        const user = this.checkUser("getSuggestedContextURLs");
+        const suggestions: string[] = [];
+
+        // Fetch all data sources in parallel for maximum speed (don't await before `Promise.allSettled(promises)` below!)
+        const promises = [];
+
+        // Example repositories
+        promises.push(this.getFeaturedRepositories(ctx).then(exampleRepos => {
+            // log('got example repos', exampleRepos);
+            exampleRepos.forEach(r => suggestions.push(r.url));
+        }));
+
+        // User repositories
+        user.identities.forEach(identity => {
+            const provider = {
+                'Public-GitLab': 'gitlab.com',
+                'Public-GitHub': 'github.com',
+                'Public-Bitbucket': 'bitbucket.org',
+            }[identity.authProviderId];
+            if (!provider) {
+                return;
+            }
+            promises.push(this.getProviderRepositoriesForUser(ctx, { provider }).then(userRepos => {
+                // log('got', provider, 'user repos', userRepos)
+                userRepos.forEach(r => suggestions.push(r.cloneUrl.replace(/\.git$/, '')));
+            }));
+        });
+
+        // Recent repositories
+        promises.push(this.getWorkspaces(ctx, { /* limit: 20 */ }).then(workspaces => {
+            workspaces.forEach(ws => {
+                const repoUrl = Workspace.getFullRepositoryUrl(ws.workspace);
+                if (repoUrl) {
+                    suggestions.push(repoUrl);
+                }
+            });
+        }));
+
+        await Promise.allSettled(promises);
+
+        const uniqueURLs = new Set();
+        return suggestions
+            .sort((a, b) => a > b ? 1 : -1)
+            .filter(r => {
+                if (uniqueURLs.has(r)) {
+                    return false;
+                }
+                uniqueURLs.add(r);
+                return true;
+            });
+    }
+
     public async setWorkspaceTimeout(ctx: TraceContext, workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Custom workspace timeout is implemented in Gitpod's Enterprise Edition`);
     }
