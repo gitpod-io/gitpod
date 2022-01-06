@@ -337,6 +337,8 @@ export async function build(context, version) {
         exec(`mv k3s.yml /home/gitpod/.kube/config`)
 
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
+
+        issueMetaCerts(PROXY_SECRET_NAME, "default", domain)
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
@@ -437,7 +439,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             werft.log(installerSlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
 
             // trigger certificate issuing
-            await issueMetaCerts(namespace, domain);
+            await issueMetaCerts(namespace, "certs", domain);
             await installMetaCertificates(namespace);
             werft.done(installerSlices.ISSUE_CERTIFICATES);
         } catch (err) {
@@ -696,7 +698,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
 
         // trigger certificate issuing
         werft.log('certificate', "organizing a certificate for the preview environment...");
-        await issueMetaCerts(namespace, domain);
+        await issueMetaCerts(namespace, "certs", domain);
         await installMetaCertificates(namespace);
         werft.done('certificate');
         await addDNSRecord(deploymentConfig.namespace, deploymentConfig.domain, false)
@@ -937,13 +939,13 @@ async function addDNSRecord(namespace: string, domain: string, isLoadbalancer: b
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
 
-export async function issueMetaCerts(namespace: string, domain: string) {
+export async function issueMetaCerts(previewNamespace: string, certsNamespace:string, domain: string) {
     let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
     var metaClusterCertParams = new IssueCertificateParams();
     metaClusterCertParams.pathToTemplate = "/workspace/.werft/util/templates";
     metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-    metaClusterCertParams.namespace = namespace;
-    metaClusterCertParams.certNamespace = "certs";
+    metaClusterCertParams.namespace = previewNamespace;
+    metaClusterCertParams.certNamespace = certsNamespace;
     metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
     metaClusterCertParams.domain = domain;
     metaClusterCertParams.ip = getCoreDevIngressIP();
