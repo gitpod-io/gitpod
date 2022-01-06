@@ -41,4 +41,22 @@ roleRef:
   name:  {{ .Release.Namespace }}-kube-rbac-proxy
   apiGroup: rbac.authorization.k8s.io
 
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: gitpod
+    component: ws-manager-bridge
+  name: listAndGetPods-ws-manager-bridge
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ListAndGetPods
+subjects:
+- kind: ServiceAccount
+  name: ws-manager-bridge
+
 {{ end }}

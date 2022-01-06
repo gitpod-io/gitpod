@@ -368,9 +368,6 @@ components:
     insecureNoDomain: false
     chargebeeProviderOptionsFile: "/chargebee/providerOptions"
 
-  serviceWaiter:
-    imageName: "service-waiter"
-
   paymentEndpoint:
     name: "payment-endpoint"
     disabled: true

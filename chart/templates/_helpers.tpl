@@ -133,15 +133,12 @@ affinity:
 {{- $gp := .gp -}}
 {{- $this := dict "root" $ "gp" $gp "comp" $gp.components.serviceWaiter -}}
 - name: msgbus-waiter
-  image: {{ template "gitpod.comp.imageFull" $this }}
   args:
-  - -v
-  - messagebus
-  securityContext:
-    privileged: false
-    runAsUser: 31001
-  env:
-{{ include "gitpod.container.messagebusEnv" . | indent 2 }}
+    - kubectl wait --selector statefulset.kubernetes.io/pod-name=messagebus-0 --for=condition=ready pod --timeout=5m
+  command:
+    - bash
+    - -euc
+  image: docker.io/bitnami/kubectl:1.21.8
 {{- end -}}
 
 {{- define "gitpod.databaseWaiter.container" -}}
@@ -149,15 +146,12 @@ affinity:
 {{- $gp := .gp -}}
 {{- $this := dict "root" $ "gp" $gp "comp" $gp.components.serviceWaiter -}}
 - name: database-waiter
-  image: {{ template "gitpod.comp.imageFull" $this }}
   args:
-  - -v
-  - database
-  securityContext:
-    privileged: false
-    runAsUser: 31001
-  env:
-{{ include "gitpod.container.dbEnv" . | indent 2 }}
+    - kubectl wait --selector statefulset.kubernetes.io/pod-name=mysql-0 --for=condition=ready pod --timeout=5m
+  command:
+    - bash
+    - -euc
+  image: docker.io/bitnami/kubectl:1.21.8
 {{- end -}}
 
 {{- define "gitpod.container.defaultEnv" -}}
