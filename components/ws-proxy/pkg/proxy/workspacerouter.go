@@ -50,12 +50,13 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 
 		var (
 			getHostHeader = func(req *http.Request) string {
-				if header == "Host" {
+				host := req.Header.Get(header)
+				// if we don't get host from special header, fallback to use req.Host
+				if header == "Host" || host == "" {
 					parts := strings.Split(req.Host, ":")
 					return parts[0]
 				}
-
-				return req.Header.Get(header)
+				return host
 			}
 			blobserveRouter = r.MatcherFunc(matchBlobserveHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
 			portRouter      = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader, true)).Subrouter()

@@ -5,7 +5,7 @@ import * as path from 'path';
 
 
 export class IssueCertificateParams {
-    pathToTerraform: string
+    pathToTemplate: string
     gcpSaPath: string
     namespace: string
     dnsZoneDomain: string
@@ -38,55 +38,8 @@ export async function issueCertficate(werft, params: IssueCertificateParams, she
     })) {
         throw new Error(`there is no subdomain + '${params.domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
     }
-
-    // Always use 'terraform apply' to make sure the certificate is present and up-to-date
     var cmd = `set -x \
-    && cd ${params.pathToTerraform} \
-    && rm -rf .terraform* \
-    && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
-    && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state -upgrade \
-    && terraform apply -auto-approve \
-        -var 'namespace=${params.namespace}' \
-        -var 'dns_zone_domain=${params.dnsZoneDomain}' \
-        -var 'domain=${params.domain}' \
-        -var 'public_ip=${params.ip}' \
-        -var 'cert_namespace=${params.certNamespace}' \
-        -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
-
-    werft.log("certificate", "Terraform command for cert creation: " + cmd)
-    exec(cmd, { ...shellOpts, slice: 'certificate' });
-
-    werft.log('certificate', `waiting until certificate ${params.certNamespace}/${params.namespace} is ready...`)
-    let notReadyYet = true;
-    for (let i = 0; i < 90 && notReadyYet; i++) {
-        werft.log('certificate', `polling state of ${params.certNamespace}/${params.namespace}...`)
-        const result = exec(`kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { ...shellOpts, silent: true, dontCheckRc: true, async: false });
-        if (result != undefined && result.code === 0 && result.stdout === "True") {
-            notReadyYet = false;
-            break;
-        }
-
-        await sleep(5000);
-    }
-}
-
-export async function newIssueCertficate(werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
-    var subdomains = [];
-    werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
-    for (const sd of params.additionalSubdomains) {
-        subdomains.push(sd);
-    }
-
-    // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
-    // source: https://community.letsencrypt.org/t/certbot-errors-with-obtaining-a-new-certificate-an-unexpected-error-occurred-the-csr-is-unacceptable-e-g-due-to-a-short-key-error-finalizing-order-issuing-precertificate-csr-doesnt-contain-a-san-short-enough-to-fit-in-cn/105513/2
-    if (!subdomains.some(sd => {
-        const san = sd + params.domain;
-        return san.length <= 63;
-    })) {
-        throw new Error(`there is no subdomain + '${params.domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
-    }
-    var cmd = `set -x \
-    && cd ${path.join(params.pathToTerraform, 'cert/templates')} \
+    && cd ${path.join(params.pathToTemplate)} \
     && cp cert-manager_certificate.tpl cert.yaml \
     && yq w -i cert.yaml metadata.name '${params.namespace}' \
     && yq w -i cert.yaml spec.secretName '${params.namespace}' \
@@ -134,6 +87,7 @@ export async function installCertficate(werft, params: InstallCertificateParams,
     }
     if (!notReadyYet) {
         werft.log('certificate', `copied certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
+        werft.done('certificate')
     } else {
         werft.fail('certificate', `failed to copy certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`)
     }

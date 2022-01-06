@@ -169,7 +169,7 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 			}
 			if len(signers) == 0 {
 				errors = append(errors, cluster.ValidationError{
-					Message: fmt.Sprintf("Secret '%s' not contain any valild host key", secretName),
+					Message: fmt.Sprintf("Secret '%s' does not contain a valid host key", secretName),
 					Type:    cluster.ValidationStatusError,
 				})
 			}

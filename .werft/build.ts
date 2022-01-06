@@ -4,7 +4,7 @@ import * as path from 'path';
 import { exec, ExecOptions } from './util/shell';
 import { Werft } from './util/werft';
 import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName } from './util/kubectl';
-import { newIssueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
+import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
@@ -77,6 +77,7 @@ const installerSlices = {
     INSTALLER_POST_PROCESSING: "installer post processing",
     APPLY_INSTALL_MANIFESTS: "installer apply",
     DEPLOYMENT_WAITING: "monitor server deployment",
+    DNS_ADD_RECORD: "add dns record"
 }
 
 const vmSlices = {
@@ -303,6 +304,8 @@ export async function build(context, version) {
         withVM,
     };
 
+    exec(`kubectl --namespace keys get secret host-key -o yaml > /workspace/host-key.yaml`)
+
     if (withVM) {
         werft.phase(phases.VM, "Start VM");
 
@@ -431,6 +434,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         // in a VM, the secrets have alreay been copied
         // If using core-dev, we want to execute further kubectl operations only in the created namespace
         setKubectlContextNamespace(namespace, metaEnv({ slice: installerSlices.SET_CONTEXT }));
+        werft.done(installerSlices.SET_CONTEXT)
         try {
             werft.log(installerSlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
 
@@ -535,7 +539,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
         werft.log("SSH gateway hostkey", "copy host-key from secret")
         try {
-            exec(`kubectl --namespace keys get secret host-key -o yaml \
+            exec(`cat /workspace/host-key.yaml \
             | yq w - metadata.namespace ${namespace} \
             | yq d - metadata.uid \
             | yq d - metadata.resourceVersion \
@@ -609,6 +613,8 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     } catch (err) {
         werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
     }
+
+    await addDNSRecord(deploymentConfig.namespace, deploymentConfig.domain, !withVM)
 
     // TODO: Fix sweeper, it does not appear to be doing clean-up
     werft.log('sweeper', 'installing Sweeper');
@@ -695,7 +701,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         await issueMetaCerts(namespace, domain);
         await installMetaCertificates(namespace);
         werft.done('certificate');
-
+        await addDNSRecord(deploymentConfig.namespace, deploymentConfig.domain, false)
         werft.done('prep');
     } catch (err) {
         werft.fail('prep', err);
@@ -893,10 +899,50 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     }
 }
 
+async function addDNSRecord(namespace: string, domain: string, isLoadbalancer: boolean) {
+    let wsProxyLBIP = null
+    if (isLoadbalancer === true) {
+        werft.log(installerSlices.DNS_ADD_RECORD, "Getting ws-proxy loadbalancer IP");
+        for (let i = 0; i < 60; i++) {
+            try {
+                let lb = exec(`kubectl -n ${namespace} get service ws-proxy -o=jsonpath='{.status.loadBalancer.ingress[0].ip}'`, { silent: true })
+                if (lb.length > 4) {
+                    wsProxyLBIP = lb
+                    break
+                }
+                await sleep(1000)
+            } catch (err) {
+                await sleep(1000)
+            }
+        }
+        if (wsProxyLBIP == null) {
+            werft.fail(installerSlices.DNS_ADD_RECORD, new Error("Can't get ws-proxy loadbalancer IP"));
+        }
+        werft.log(installerSlices.DNS_ADD_RECORD, "Get ws-proxy loadbalancer IP: " + wsProxyLBIP);
+    } else {
+        wsProxyLBIP = getCoreDevIngressIP()
+    }
+
+    var cmd = `set -x \
+    && cd /workspace/.werft/dns \
+    && rm -rf .terraform* \
+    && export GOOGLE_APPLICATION_CREDENTIALS="${GCLOUD_SERVICE_ACCOUNT_PATH}" \
+    && terraform init -backend-config='prefix=${namespace}' -migrate-state -upgrade \
+    && terraform apply -auto-approve \
+        -var 'dns_zone_domain=gitpod-dev.com' \
+        -var 'domain=${domain}' \
+        -var 'ingress_ip=${getCoreDevIngressIP()}' \
+        -var 'ws_proxy_ip=${wsProxyLBIP}'`;
+
+    werft.log(installerSlices.DNS_ADD_RECORD, "Terraform command for create dns record: " + cmd)
+    exec(cmd, { ...metaEnv(), slice: installerSlices.DNS_ADD_RECORD });
+    werft.done(installerSlices.DNS_ADD_RECORD);
+}
+
 export async function issueMetaCerts(namespace: string, domain: string) {
     let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
     var metaClusterCertParams = new IssueCertificateParams();
-    metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
+    metaClusterCertParams.pathToTemplate = "/workspace/.werft/util/templates";
     metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
     metaClusterCertParams.namespace = namespace;
     metaClusterCertParams.certNamespace = "certs";
@@ -905,7 +951,7 @@ export async function issueMetaCerts(namespace: string, domain: string) {
     metaClusterCertParams.ip = getCoreDevIngressIP();
     metaClusterCertParams.bucketPrefixTail = ""
     metaClusterCertParams.additionalSubdomains = additionalSubdomains
-    await newIssueCertficate(werft, metaClusterCertParams, metaEnv());
+    await issueCertficate(werft, metaClusterCertParams, metaEnv());
 }
 
 async function installMetaCertificates(namespace: string) {

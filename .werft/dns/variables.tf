@@ -1,7 +1,3 @@
-variable "namespace" {
-    type = string
-}
-
 # e.g.: gitpod-dev.com
 variable "dns_zone_domain" {
     type = string
@@ -12,16 +8,21 @@ variable "domain" {
     type = string
 }
 
-# e.g.: ["", "*.", "*.ws."]
-variable "subdomains" {
+# e.g.: ["", "*.", "*.ws-dev."]
+variable "ingress_subdomains" {
     type = list(string)
+    default = ["", "*."]
 }
 
-variable "public_ip" {
+variable "ws_proxy_subdomain" {
+    type = string
+    default = "*.ws-dev."
+}
+
+variable "ingress_ip" {
     type = string
 }
 
-variable "cert_namespace" {
+variable "ws_proxy_ip" {
     type = string
-    default = "certs"
 }
