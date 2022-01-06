@@ -279,10 +279,13 @@ export async function build(context, version) {
     }
 
     const destname = version.split(".")[0];
-    const namespace = `staging-${destname}`;
+    const namespace = withVM ? `default` : `staging-${destname}`;
     const domain = withVM ? `${destname}.preview.gitpod-dev.com` : `${destname}.staging.gitpod-dev.com`;
     const monitoringDomain = `${destname}.preview.gitpod-dev.com`;
     const url = `https://${domain}`;
+    const imagePullAuth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
+        | yq r - data['.dockerconfigjson'] \
+        | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
     const deploymentConfig: DeploymentConfig = {
         version,
         destname,
@@ -294,6 +297,7 @@ export async function build(context, version) {
         cleanSlateDeployment,
         sweeperImage,
         installEELicense,
+        imagePullAuth,
         withPayment,
         withObservability,
         withVM,
@@ -382,6 +386,7 @@ interface DeploymentConfig {
     cleanSlateDeployment: boolean;
     sweeperImage: string;
     installEELicense: boolean;
+    imagePullAuth: string;
     withPayment: boolean;
     withObservability: boolean;
     withVM: boolean;
@@ -422,12 +427,8 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.fail(installerSlices.CLEAN_ENV_STATE, err);
     }
 
-    if (withVM) {
-        // If using a dedicated k3s, we don't need to create a dedicated namespace to deploy our preview
-        deploymentConfig.namespace = "default";
-
-        // Harverster VMs also have SSL configured, we can just skip certificate creation
-    } else {
+    if (!withVM) {
+        // in a VM, the secrets have alreay been copied
         // If using core-dev, we want to execute further kubectl operations only in the created namespace
         setKubectlContextNamespace(namespace, metaEnv({ slice: installerSlices.SET_CONTEXT }));
         try {
@@ -447,10 +448,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     if (!hasPullSecret) {
         try {
             werft.log(installerSlices.IMAGE_PULL_SECRET, "Adding the image pull secret to the namespace");
-            const auth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
-                | yq r - data['.dockerconfigjson'] \
-                | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
-            const dockerConfig = { auths: { "eu.gcr.io": { auth: auth } } };
+            const dockerConfig = { auths: { "eu.gcr.io": { auth: deploymentConfig.imagePullAuth } } };
             fs.writeFileSync(`./${IMAGE_PULL_SECRET_NAME}`, JSON.stringify(dockerConfig));
             exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`);
             werft.done(installerSlices.IMAGE_PULL_SECRET);
