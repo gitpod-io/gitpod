@@ -54,7 +54,6 @@ packages:
       - components/registry-facade:docker
       - components/registry-facade/ca-updater:docker
       - components/server:docker
-      - components/service-waiter:docker
       - components/supervisor:docker
       - components/workspacekit:docker
       - components/ws-daemon:docker
@@ -95,7 +94,6 @@ packages:
       - components/openvsx-proxy:app
       - components/registry-facade:app
       - components/server:app
-      - components/service-waiter:app
       - components/supervisor:app
       - components/supervisor/frontend:app
       - components/workspacekit:app
@@ -176,8 +174,6 @@ scripts:
       done
 
   - name: unblock-user
-    deps:
-      - components/service-waiter:app
     script: |
       export DB_USERNAME=root
       export DB_PASSWORD=test
@@ -208,8 +204,6 @@ scripts:
       kill $PID || true
 
   - name: make-user-admin
-    deps:
-      - components/service-waiter:app
     script: |
       export DB_USERNAME=root
       export DB_PASSWORD=test

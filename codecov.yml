@@ -62,9 +62,6 @@ flags:
   components-registry-facade-api-go-lib:
     paths:
       - components/registry-facade-api/
-  components-service-waiter-app:
-    paths:
-      - components/service-waiter/
   components-supervisor-app:
     paths:
       - components/supervisor/

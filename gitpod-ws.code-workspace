@@ -14,7 +14,6 @@
       { "path": "components/licensor" },
       { "path": "components/local-app" },
       { "path": "components/registry-facade" },
-      { "path": "components/service-waiter" },
       { "path": "components/supervisor" },
       { "path": "components/workspacekit" },
       { "path": "components/ws-daemon" },
