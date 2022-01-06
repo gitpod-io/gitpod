@@ -151,32 +151,32 @@ write_files:
       # Install k3s
       export INSTALL_K3S_SKIP_DOWNLOAD=true
 
-      /usr/local/bin/install-k3s.sh \
-          --token "1234" \
-          --node-ip "$(hostname -I | cut -d ' ' -f1)" \
-          --node-label "cloud.google.com/gke-nodepool=control-plane-pool" \
-          --container-runtime-endpoint=/var/run/containerd/containerd.sock \
-          --write-kubeconfig-mode 444 \
-          --disable servicelb \
-          --disable traefik \
-          --disable local-storage \
-          --disable metrics-server \
-          --flannel-backend=none \
-          --kubelet-arg config=/etc/kubernetes/kubelet-config.json \
-          --kubelet-arg feature-gates=LocalStorageCapacityIsolation=true \
-          --kubelet-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \
-          --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolation=true \
-          --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \
+      /usr/local/bin/install-k3s.sh \\
+          --token "1234" \\
+          --node-ip "$(hostname -I | cut -d ' ' -f1)" \\
+          --node-label "cloud.google.com/gke-nodepool=control-plane-pool" \\
+          --container-runtime-endpoint=/var/run/containerd/containerd.sock \\
+          --write-kubeconfig-mode 444 \\
+          --disable servicelb \\
+          --disable traefik \\
+          --disable local-storage \\
+          --disable metrics-server \\
+          --flannel-backend=none \\
+          --kubelet-arg config=/etc/kubernetes/kubelet-config.json \\
+          --kubelet-arg feature-gates=LocalStorageCapacityIsolation=true \\
+          --kubelet-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \\
+          --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolation=true \\
+          --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \\
           --cluster-init
 
-      kubectl label nodes ${vmName} \
-          gitpod.io/workload_meta=true \
-          gitpod.io/workload_ide=true \
-          gitpod.io/workload_workspace_services=true \
-          gitpod.io/workload_workspace_regular=true \
-          gitpod.io/workload_workspace_headless=true \
-          gitpod.io/workspace_0=true \
-          gitpod.io/workspace_1=true \
+      kubectl label nodes ${vmName} \\
+          gitpod.io/workload_meta=true \\
+          gitpod.io/workload_ide=true \\
+          gitpod.io/workload_workspace_services=true \\
+          gitpod.io/workload_workspace_regular=true \\
+          gitpod.io/workload_workspace_headless=true \\
+          gitpod.io/workspace_0=true \\
+          gitpod.io/workspace_1=true \\
           gitpod.io/workspace_2=true
 
       kubectl apply -f /var/lib/gitpod/manifests/calico.yaml
