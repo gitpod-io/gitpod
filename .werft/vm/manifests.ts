@@ -159,7 +159,6 @@ write_files:
           --write-kubeconfig-mode 444 \\
           --disable servicelb \\
           --disable traefik \\
-          --disable local-storage \\
           --disable metrics-server \\
           --flannel-backend=none \\
           --kubelet-arg config=/etc/kubernetes/kubelet-config.json \\
