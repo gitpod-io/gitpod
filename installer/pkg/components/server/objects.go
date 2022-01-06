@@ -14,6 +14,7 @@ var Objects = common.CompositeRenderFunc(
 	deployment,
 	ide.Objects,
 	networkpolicy,
+	common.ListAndGetPodsRole,
 	role,
 	rolebinding,
 	common.GenerateService(Component, map[string]common.ServicePort{

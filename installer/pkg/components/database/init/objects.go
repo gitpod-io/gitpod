@@ -11,6 +11,7 @@ import (
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	job,
+	common.ListAndGetPodsRole,
 	rolebinding,
 	common.DefaultServiceAccount(Component),
 )

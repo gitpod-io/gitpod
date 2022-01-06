@@ -10,6 +10,7 @@ import (
 
 var Objects = common.CompositeRenderFunc(
 	job,
+	common.ListAndGetPodsRole,
 	rolebinding,
 	common.DefaultServiceAccount(Component),
 )

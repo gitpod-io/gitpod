@@ -69,5 +69,6 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name: Component,
 			}},
 		},
+		common.ListAndGetPodsRoleBinding(ctx, Component),
 	}, nil
 }
