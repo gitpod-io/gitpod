@@ -52,10 +52,10 @@ spec:
         secret:
           secretName: {{ $.Values.certificatesSecret.secretName }}
 {{- end }}
-{{- if $.comp.hostKeySecretName }}
+{{- if $comp.hostKeySecretName }}
       - name: host-key
         secret:
-          secretName: {{ $.comp.hostKeySecretName }}
+          secretName: {{ $comp.hostKeySecretName }}
 {{- end }}
       enableServiceLinks: false
       containers:
@@ -90,7 +90,7 @@ spec:
         - name: config-certificates
           mountPath: "/mnt/certificates"
 {{- end }}
-{{- if $.comp.hostKeySecretName }}
+{{- if $comp.hostKeySecretName }}
         - name: host-key
           mountPath: "/mnt/host-key"
 {{- end }}
