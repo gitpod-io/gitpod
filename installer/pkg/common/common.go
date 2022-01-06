@@ -230,37 +230,23 @@ func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
-		Name:  "database-waiter",
-		Image: ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Name:    "database-waiter",
+		Image:   ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, DockerRegistryURL), KubectlImage, KubectlTag),
+		Command: []string{"bash", "-euc"},
 		Args: []string{
-			"-v",
-			"database",
+			`kubectl wait --selector statefulset.kubernetes.io/pod-name=mysql-0 --for=condition=ready pod --timeout=5m`,
 		},
-		SecurityContext: &corev1.SecurityContext{
-			Privileged: pointer.Bool(false),
-			RunAsUser:  pointer.Int64(31001),
-		},
-		Env: MergeEnv(
-			DatabaseEnv(&ctx.Config),
-		),
 	}
 }
 
 func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
-		Name:  "msgbus-waiter",
-		Image: ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Name:    "msgbus-waiter",
+		Image:   ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, DockerRegistryURL), KubectlImage, KubectlTag),
+		Command: []string{"bash", "-euc"},
 		Args: []string{
-			"-v",
-			"messagebus",
+			`kubectl wait --selector statefulset.kubernetes.io/pod-name=messagebus-0 --for=condition=ready pod --timeout=5m`,
 		},
-		SecurityContext: &corev1.SecurityContext{
-			Privileged: pointer.Bool(false),
-			RunAsUser:  pointer.Int64(31001),
-		},
-		Env: MergeEnv(
-			MessageBusEnv(&ctx.Config),
-		),
 	}
 }
 
