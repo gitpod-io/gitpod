@@ -7,6 +7,8 @@ terraform {
       source = "hashicorp/google"
       version = "3.63.0"
     }
+
+    # Added for compatibility with old branches, can be deleted if compatibility is not needed
     kubectl = {
       source  = "gavinbunney/kubectl"
       version = "1.10.1"

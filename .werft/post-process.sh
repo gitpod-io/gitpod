@@ -216,7 +216,17 @@ while [ "$i" -le "$DOCS" ]; do
     if [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
-      yq w -i k8s.yaml -d "$i" "metadata.annotations[cloud.google.com/neg]" '{"exposed_ports": {"22":{}}}'
+      # Provide harvester compatibility by adding ports instead of modifying the original ports
+      yq w -i k8s.yaml -d "$i" "spec.ports[+].name" http-lb
+      yq w -i k8s.yaml -d "$i" "spec.ports.(name==http-lb).port" 80
+      yq w -i k8s.yaml -d "$i" "spec.ports.(name==http-lb).protocol" TCP
+      yq w -i k8s.yaml -d "$i" "spec.ports.(name==http-lb).targetPort" 8080
+
+      yq w -i k8s.yaml -d "$i" "spec.ports[+].name" https-lb
+      yq w -i k8s.yaml -d "$i" "spec.ports.(name==https-lb).port" 443
+      yq w -i k8s.yaml -d "$i" "spec.ports.(name==https-lb).protocol" TCP
+      yq w -i k8s.yaml -d "$i" "spec.ports.(name==https-lb).targetPort" 9090
+      yq w -i k8s.yaml -d "$i" "metadata.annotations[cloud.google.com/neg]" '{"exposed_ports": {"22":{},"80":{},"443":{}}}'
       yq w -i k8s.yaml -d "$i" spec.type LoadBalancer
    fi
 
