@@ -180,11 +180,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: '_lastModified'
         },
         {
-            name: 'd_b_payment_source_info',
-            primaryKeys: ['id', 'resourceVersion'],
-            timeColumn: '_lastModified'
-        },
-        {
             name: 'd_b_gitpod_token',
             primaryKeys: ['tokenHash'],
             deletionColumn: 'deleted',
