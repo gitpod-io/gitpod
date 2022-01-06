@@ -9,7 +9,8 @@ import {
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
-    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, ProjectEnvVar, WorkspaceClusterPreference
+    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, ProjectEnvVar, WorkspaceClusterPreference,
+    WorkspaceClusterRTTEndpoints
 } from './protocol';
 import {
     Team, TeamMemberInfo,
@@ -240,7 +241,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     trackLocation(event: RemotePageMessage): Promise<void>;
     identifyUser(event: RemoteIdentifyMessage): Promise<void>;
 
-    listWorkspaceClusterRTTEndpoints(): Promise<{ endpoint: string; region: string }[]>;
+    listWorkspaceClusterRTTEndpoints(): Promise<WorkspaceClusterRTTEndpoints>;
     setWorkspaceClusterPreferences(pref: WorkspaceClusterPreference): Promise<void>;
 }
 

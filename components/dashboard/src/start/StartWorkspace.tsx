@@ -15,6 +15,7 @@ import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
+import { measureAndPickWorkspaceClusterRegion } from "./choose-region";
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
@@ -116,6 +117,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         return;
       }
     }
+
+    // Ensure we'll land on a good workspace custer - this call will take max 1 second
+    await measureAndPickWorkspaceClusterRegion();
 
     const { workspaceId } = this.props;
     try {

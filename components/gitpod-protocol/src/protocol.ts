@@ -1237,3 +1237,10 @@ export interface Terms {
 export interface WorkspaceClusterPreference {
     region?: string;
 }
+
+export interface WorkspaceClusterRTTEndpoints {
+    candidates: {
+        region: string;
+        endpoint: string;
+    }[];
+}

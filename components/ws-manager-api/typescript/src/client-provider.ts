@@ -44,7 +44,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
      * @returns The WorkspaceManagerClient that was chosen to start the next workspace with.
      */
     public async getStartManager(user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance, exceptInstallations?: string[]): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string }> {
-        let availableCluster = await this.getAvailableStartCluster(user, workspace, instance);
+        let availableCluster = await this.getAvailableStartCluster(user);
         if (!!exceptInstallations) {
             availableCluster = availableCluster.filter(c => !exceptInstallations?.includes(c.name));
         }
@@ -70,9 +70,9 @@ export class WorkspaceManagerClientProvider implements Disposable {
         };
     }
 
-    public async getAvailableStartCluster(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<WorkspaceClusterWoTLS[]> {
+    public async getAvailableStartCluster(user: User): Promise<WorkspaceClusterWoTLS[]> {
         const allClusters = await this.source.getAllWorkspaceClusters();
-        const availableClusters = allClusters.filter(c => c.score >= 0 && c.state === "available").filter(admissionConstraintsFilter(user, workspace, instance));
+        const availableClusters = allClusters.filter(c => c.score >= 0 && c.state === "available").filter(admissionConstraintsFilter(user));
         return availableClusters;
     }
 
@@ -176,7 +176,7 @@ function chooseCluster(availableCluster: WorkspaceClusterWoTLS[]): WorkspaceClus
     return availableCluster[availableCluster.length - 1];
 }
 
-function admissionConstraintsFilter(user: User, workspace: Workspace, instance: WorkspaceInstance): (c: WorkspaceClusterWoTLS) => boolean {
+function admissionConstraintsFilter(user: User, workspace?: Workspace, instance?: WorkspaceInstance): (c: WorkspaceClusterWoTLS) => boolean {
     return (c: WorkspaceClusterWoTLS) => {
         if (!c.admissionConstraints) {
             return true;

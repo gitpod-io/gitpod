@@ -17,6 +17,7 @@ import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
+import { measureAndPickWorkspaceClusterRegion } from "./choose-region";
 
 const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
 
@@ -45,6 +46,9 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
   async createWorkspace(mode = CreateWorkspaceMode.SelectIfRunning, forceDefaultConfig = false) {
     // Invalidate any previous result.
     this.setState({ result: undefined, stillParsing: true });
+
+    // Ensure we'll land on a good workspace custer
+    await measureAndPickWorkspaceClusterRegion();
 
     // We assume anything longer than 3 seconds is no longer just parsing the context URL (i.e. it's now creating a workspace).
     let timeout = setTimeout(() => this.setState({ stillParsing: false }), 3000);

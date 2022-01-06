@@ -54,13 +54,13 @@ class TestClientProvider {
 
     @test
     public async testGetStarterWorkspaceCluster() {
-        this.expectInstallations(["a1", "a2", "a3"], await this.provider.getAvailableStartCluster({} as User, {} as Workspace, {} as WorkspaceInstance));
+        this.expectInstallations(["a1", "a2", "a3"], await this.provider.getAvailableStartCluster({} as User));
         this.expectInstallations(["a1", "a2", "a3", "con1"], await this.provider.getAvailableStartCluster({
             additionalData: {featurePreview: true}
-        } as User, {} as Workspace, {} as WorkspaceInstance));
+        } as User));
         this.expectInstallations(["a1", "a2", "a3", "con2"], await this.provider.getAvailableStartCluster({
             rolesOrPermissions: ["new-workspace-cluster"]
-        } as User, {} as Workspace, {} as WorkspaceInstance));
+        } as User));
     }
 
     public async getStartManager() {
