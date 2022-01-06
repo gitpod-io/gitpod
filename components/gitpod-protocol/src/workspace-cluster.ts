@@ -60,9 +60,13 @@ export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
 export type AdmissionConstraintHasRole = { type: "has-permission", permission: PermissionName };
 export type AdmissionConstraintHasUserLevel = { type: "has-user-level", level: string };
 
-export type AdmissionPreference = AdmissionPreferenceUserLevel;
+export type AdmissionPreference = AdmissionPreferenceUserLevel | AdmissionPreferenceRegion;
 export type AdmissionPreferenceUserLevel = { type: 'user-level', level: string };
+export type AdmissionPreferenceRegion = { type: 'region', rttEndpoint: string, name: string };
 
+export function isAdmissionPreferenceRegion(arg: any): arg is AdmissionPreferenceRegion {
+    return "type" in arg && arg.type === "region" && "rttEndpoint" in arg && "region" in arg;
+}
 
 export const WorkspaceClusterDB = Symbol("WorkspaceClusterDB");
 export interface WorkspaceClusterDB {

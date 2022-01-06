@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -217,6 +217,11 @@ export class AdmissionPreference extends jspb.Message {
     getUserLevel(): string;
     setUserLevel(value: string): AdmissionPreference;
 
+    hasRegion(): boolean;
+    clearRegion(): void;
+    getRegion(): AdmissionPreference.Region | undefined;
+    setRegion(value?: AdmissionPreference.Region): AdmissionPreference;
+
     getPreferenceCase(): AdmissionPreference.PreferenceCase;
 
     serializeBinary(): Uint8Array;
@@ -232,11 +237,38 @@ export class AdmissionPreference extends jspb.Message {
 export namespace AdmissionPreference {
     export type AsObject = {
         userLevel: string,
+        region?: AdmissionPreference.Region.AsObject,
     }
+
+
+    export class Region extends jspb.Message {
+        getName(): string;
+        setName(value: string): Region;
+        getRttEndpoint(): string;
+        setRttEndpoint(value: string): Region;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): Region.AsObject;
+        static toObject(includeInstance: boolean, msg: Region): Region.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: Region, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): Region;
+        static deserializeBinaryFromReader(message: Region, reader: jspb.BinaryReader): Region;
+    }
+
+    export namespace Region {
+        export type AsObject = {
+            name: string,
+            rttEndpoint: string,
+        }
+    }
+
 
     export enum PreferenceCase {
         PREFERENCE_NOT_SET = 0,
         USER_LEVEL = 1,
+        REGION = 2,
     }
 
 }

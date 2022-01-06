@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -160,7 +161,7 @@ var clustersUpdateAdmissionConstraintCmd = &cobra.Command{
 }
 
 var clustersUpdateAdmissionPreferenceCmd = &cobra.Command{
-	Use:   "admission-preference add|remove user-level=<level>",
+	Use:   "admission-preference add|remove user-level=<level>|region=name@rtt-endpoint",
 	Short: "Updates a cluster's admission preferences",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -184,6 +185,29 @@ var clustersUpdateAdmissionPreferenceCmd = &cobra.Command{
 					Preference: &api.AdmissionPreference{
 						Preference: &api.AdmissionPreference_UserLevel{
 							UserLevel: strings.TrimPrefix(args[1], "user-level="),
+						},
+					},
+				},
+			}
+		} else if strings.HasPrefix(args[1], "region=") {
+			spec := strings.TrimPrefix(args[1], "region=")
+			segs := strings.Split(spec, "@")
+			if len(segs) != 2 {
+				log.Fatalf("\"%s\" is an invalid region admission preference. Expected format is name@https://some-rtt-endpoint", spec)
+			}
+			regionName, rttEndpoint := segs[0], segs[1]
+			if _, err := url.Parse(rttEndpoint); err != nil {
+				log.WithError(err).Fatal("endpoint is not a valid URL")
+			}
+			request.Property = &api.UpdateRequest_AdmissionPreference{
+				AdmissionPreference: &api.ModifyAdmissionPreference{
+					Add: add,
+					Preference: &api.AdmissionPreference{
+						Preference: &api.AdmissionPreference_Region_{
+							Region: &api.AdmissionPreference_Region{
+								Name:        regionName,
+								RttEndpoint: rttEndpoint,
+							},
 						},
 					},
 				},

@@ -477,6 +477,7 @@ type AdmissionPreference struct {
 
 	// Types that are assignable to Preference:
 	//	*AdmissionPreference_UserLevel
+	//	*AdmissionPreference_Region_
 	Preference isAdmissionPreference_Preference `protobuf_oneof:"preference"`
 }
 
@@ -526,6 +527,13 @@ func (x *AdmissionPreference) GetUserLevel() string {
 	return ""
 }
 
+func (x *AdmissionPreference) GetRegion() *AdmissionPreference_Region {
+	if x, ok := x.GetPreference().(*AdmissionPreference_Region_); ok {
+		return x.Region
+	}
+	return nil
+}
+
 type isAdmissionPreference_Preference interface {
 	isAdmissionPreference_Preference()
 }
@@ -534,7 +542,13 @@ type AdmissionPreference_UserLevel struct {
 	UserLevel string `protobuf:"bytes,1,opt,name=user_level,json=userLevel,proto3,oneof"`
 }
 
+type AdmissionPreference_Region_ struct {
+	Region *AdmissionPreference_Region `protobuf:"bytes,2,opt,name=region,proto3,oneof"`
+}
+
 func (*AdmissionPreference_UserLevel) isAdmissionPreference_Preference() {}
+
+func (*AdmissionPreference_Region_) isAdmissionPreference_Preference() {}
 
 type ClusterStatus struct {
 	state         protoimpl.MessageState
@@ -1188,6 +1202,61 @@ func (x *AdmissionConstraint_HasPermission) GetPermission() string {
 	return ""
 }
 
+type AdmissionPreference_Region struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	RttEndpoint string `protobuf:"bytes,2,opt,name=rtt_endpoint,json=rttEndpoint,proto3" json:"rtt_endpoint,omitempty"`
+}
+
+func (x *AdmissionPreference_Region) Reset() {
+	*x = AdmissionPreference_Region{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cluster_service_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AdmissionPreference_Region) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdmissionPreference_Region) ProtoMessage() {}
+
+func (x *AdmissionPreference_Region) ProtoReflect() protoreflect.Message {
+	mi := &file_cluster_service_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdmissionPreference_Region.ProtoReflect.Descriptor instead.
+func (*AdmissionPreference_Region) Descriptor() ([]byte, []int) {
+	return file_cluster_service_proto_rawDescGZIP(), []int{5, 0}
+}
+
+func (x *AdmissionPreference_Region) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *AdmissionPreference_Region) GetRttEndpoint() string {
+	if x != nil {
+		return x.RttEndpoint
+	}
+	return ""
+}
+
 var File_cluster_service_proto protoreflect.FileDescriptor
 
 var file_cluster_service_proto_rawDesc = []byte{
@@ -1254,10 +1323,19 @@ var file_cluster_service_proto_rawDesc = []byte{
 	0x73, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x0a, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69,
 	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73,
 	0x73, 0x69, 0x6f, 0x6e, 0x42, 0x0c, 0x0a, 0x0a, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x72, 0x61, 0x69,
-	0x6e, 0x74, 0x22, 0x44, 0x0a, 0x13, 0x41, 0x64, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x50,
-	0x72, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x12, 0x1f, 0x0a, 0x0a, 0x75, 0x73, 0x65,
-	0x72, 0x5f, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52,
-	0x09, 0x75, 0x73, 0x65, 0x72, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x42, 0x0c, 0x0a, 0x0a, 0x70, 0x72,
+	0x6e, 0x74, 0x22, 0xd3, 0x01, 0x0a, 0x13, 0x41, 0x64, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e,
+	0x50, 0x72, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x12, 0x1f, 0x0a, 0x0a, 0x75, 0x73,
+	0x65, 0x72, 0x5f, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00,
+	0x52, 0x09, 0x75, 0x73, 0x65, 0x72, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x12, 0x4c, 0x0a, 0x06, 0x72,
+	0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x32, 0x2e, 0x77, 0x6f,
+	0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x62, 0x72,
+	0x69, 0x64, 0x67, 0x65, 0x2e, 0x41, 0x64, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x50, 0x72,
+	0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x48,
+	0x00, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x1a, 0x3f, 0x0a, 0x06, 0x52, 0x65, 0x67,
+	0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x72, 0x74, 0x74, 0x5f, 0x65,
+	0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x72,
+	0x74, 0x74, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x42, 0x0c, 0x0a, 0x0a, 0x70, 0x72,
 	0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x22, 0x98, 0x03, 0x0a, 0x0d, 0x43, 0x6c, 0x75,
 	0x73, 0x74, 0x65, 0x72, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
 	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x10,
@@ -1386,7 +1464,7 @@ func file_cluster_service_proto_rawDescGZIP() []byte {
 }
 
 var file_cluster_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_cluster_service_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cluster_service_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_cluster_service_proto_goTypes = []interface{}{
 	(Preferability)(0),                         // 0: workspacemanagerbridge.Preferability
 	(ClusterState)(0),                          // 1: workspacemanagerbridge.ClusterState
@@ -1407,6 +1485,7 @@ var file_cluster_service_proto_goTypes = []interface{}{
 	(*ListResponse)(nil),                       // 16: workspacemanagerbridge.ListResponse
 	(*AdmissionConstraint_FeaturePreview)(nil), // 17: workspacemanagerbridge.AdmissionConstraint.FeaturePreview
 	(*AdmissionConstraint_HasPermission)(nil),  // 18: workspacemanagerbridge.AdmissionConstraint.HasPermission
+	(*AdmissionPreference_Region)(nil),         // 19: workspacemanagerbridge.AdmissionPreference.Region
 }
 var file_cluster_service_proto_depIdxs = []int32{
 	4,  // 0: workspacemanagerbridge.RegisterRequest.tls:type_name -> workspacemanagerbridge.TlsConfig
@@ -1416,27 +1495,28 @@ var file_cluster_service_proto_depIdxs = []int32{
 	0,  // 4: workspacemanagerbridge.RegistrationHints.perfereability:type_name -> workspacemanagerbridge.Preferability
 	17, // 5: workspacemanagerbridge.AdmissionConstraint.has_feature_preview:type_name -> workspacemanagerbridge.AdmissionConstraint.FeaturePreview
 	18, // 6: workspacemanagerbridge.AdmissionConstraint.has_permission:type_name -> workspacemanagerbridge.AdmissionConstraint.HasPermission
-	1,  // 7: workspacemanagerbridge.ClusterStatus.state:type_name -> workspacemanagerbridge.ClusterState
-	6,  // 8: workspacemanagerbridge.ClusterStatus.admission_constraint:type_name -> workspacemanagerbridge.AdmissionConstraint
-	7,  // 9: workspacemanagerbridge.ClusterStatus.admission_preference:type_name -> workspacemanagerbridge.AdmissionPreference
-	10, // 10: workspacemanagerbridge.UpdateRequest.admission_constraint:type_name -> workspacemanagerbridge.ModifyAdmissionConstraint
-	11, // 11: workspacemanagerbridge.UpdateRequest.admission_preference:type_name -> workspacemanagerbridge.ModifyAdmissionPreference
-	6,  // 12: workspacemanagerbridge.ModifyAdmissionConstraint.constraint:type_name -> workspacemanagerbridge.AdmissionConstraint
-	7,  // 13: workspacemanagerbridge.ModifyAdmissionPreference.preference:type_name -> workspacemanagerbridge.AdmissionPreference
-	8,  // 14: workspacemanagerbridge.ListResponse.status:type_name -> workspacemanagerbridge.ClusterStatus
-	2,  // 15: workspacemanagerbridge.ClusterService.Register:input_type -> workspacemanagerbridge.RegisterRequest
-	9,  // 16: workspacemanagerbridge.ClusterService.Update:input_type -> workspacemanagerbridge.UpdateRequest
-	13, // 17: workspacemanagerbridge.ClusterService.Deregister:input_type -> workspacemanagerbridge.DeregisterRequest
-	15, // 18: workspacemanagerbridge.ClusterService.List:input_type -> workspacemanagerbridge.ListRequest
-	3,  // 19: workspacemanagerbridge.ClusterService.Register:output_type -> workspacemanagerbridge.RegisterResponse
-	12, // 20: workspacemanagerbridge.ClusterService.Update:output_type -> workspacemanagerbridge.UpdateResponse
-	14, // 21: workspacemanagerbridge.ClusterService.Deregister:output_type -> workspacemanagerbridge.DeregisterResponse
-	16, // 22: workspacemanagerbridge.ClusterService.List:output_type -> workspacemanagerbridge.ListResponse
-	19, // [19:23] is the sub-list for method output_type
-	15, // [15:19] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	19, // 7: workspacemanagerbridge.AdmissionPreference.region:type_name -> workspacemanagerbridge.AdmissionPreference.Region
+	1,  // 8: workspacemanagerbridge.ClusterStatus.state:type_name -> workspacemanagerbridge.ClusterState
+	6,  // 9: workspacemanagerbridge.ClusterStatus.admission_constraint:type_name -> workspacemanagerbridge.AdmissionConstraint
+	7,  // 10: workspacemanagerbridge.ClusterStatus.admission_preference:type_name -> workspacemanagerbridge.AdmissionPreference
+	10, // 11: workspacemanagerbridge.UpdateRequest.admission_constraint:type_name -> workspacemanagerbridge.ModifyAdmissionConstraint
+	11, // 12: workspacemanagerbridge.UpdateRequest.admission_preference:type_name -> workspacemanagerbridge.ModifyAdmissionPreference
+	6,  // 13: workspacemanagerbridge.ModifyAdmissionConstraint.constraint:type_name -> workspacemanagerbridge.AdmissionConstraint
+	7,  // 14: workspacemanagerbridge.ModifyAdmissionPreference.preference:type_name -> workspacemanagerbridge.AdmissionPreference
+	8,  // 15: workspacemanagerbridge.ListResponse.status:type_name -> workspacemanagerbridge.ClusterStatus
+	2,  // 16: workspacemanagerbridge.ClusterService.Register:input_type -> workspacemanagerbridge.RegisterRequest
+	9,  // 17: workspacemanagerbridge.ClusterService.Update:input_type -> workspacemanagerbridge.UpdateRequest
+	13, // 18: workspacemanagerbridge.ClusterService.Deregister:input_type -> workspacemanagerbridge.DeregisterRequest
+	15, // 19: workspacemanagerbridge.ClusterService.List:input_type -> workspacemanagerbridge.ListRequest
+	3,  // 20: workspacemanagerbridge.ClusterService.Register:output_type -> workspacemanagerbridge.RegisterResponse
+	12, // 21: workspacemanagerbridge.ClusterService.Update:output_type -> workspacemanagerbridge.UpdateResponse
+	14, // 22: workspacemanagerbridge.ClusterService.Deregister:output_type -> workspacemanagerbridge.DeregisterResponse
+	16, // 23: workspacemanagerbridge.ClusterService.List:output_type -> workspacemanagerbridge.ListResponse
+	20, // [20:24] is the sub-list for method output_type
+	16, // [16:20] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_cluster_service_proto_init() }
@@ -1649,6 +1729,18 @@ func file_cluster_service_proto_init() {
 				return nil
 			}
 		}
+		file_cluster_service_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AdmissionPreference_Region); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_cluster_service_proto_msgTypes[4].OneofWrappers = []interface{}{
 		(*AdmissionConstraint_HasFeaturePreview)(nil),
@@ -1657,6 +1749,7 @@ func file_cluster_service_proto_init() {
 	}
 	file_cluster_service_proto_msgTypes[5].OneofWrappers = []interface{}{
 		(*AdmissionPreference_UserLevel)(nil),
+		(*AdmissionPreference_Region_)(nil),
 	}
 	file_cluster_service_proto_msgTypes[7].OneofWrappers = []interface{}{
 		(*UpdateRequest_Score)(nil),
@@ -1671,7 +1764,7 @@ func file_cluster_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cluster_service_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   17,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

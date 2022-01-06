@@ -6,7 +6,7 @@
 
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields } from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields, WorkspaceClusterPreference } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -57,6 +57,7 @@ import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-proto
 import { ClientMetadata } from '../websocket/websocket-connection-manager';
 import { ConfigurationService } from '../config/configuration-service';
 import { ProjectEnvVar } from '@gitpod/gitpod-protocol/src/protocol';
+import { AdmissionPreferenceRegion, WorkspaceClusterDB } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -113,6 +114,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
 
     @inject(IDEConfigService) protected readonly ideConfigService: IDEConfigService;
+
+    @inject(WorkspaceClusterDB) protected readonly workspaceClusterDB: WorkspaceClusterDB;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -2201,6 +2204,34 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {
         const ideConfig = await this.ideConfigService.config;
         return ideConfig.ideOptions;
+    }
+
+    async listWorkspaceClusterRTTEndpoints(ctx: TraceContext): Promise<{ region: string; endpoint: string; }[]> {
+        const candidates = await this.workspaceClusterDB.findFiltered({state: 'available'});
+        const allEndpoints = candidates.flatMap(c => (c.admissionPreferences || []).filter(ap => ap.type === 'region')).map(ap => {
+            const rap = ap as AdmissionPreferenceRegion;
+            return {
+                region: rap.name,
+                endpoint: rap.rttEndpoint,
+            };
+        });
+
+        return [...new Set(allEndpoints)];
+    }
+
+    async setWorkspaceClusterPreferences(ctx: TraceContext, pref: WorkspaceClusterPreference): Promise<void> {
+        const user = this.checkUser("setWorkspaceClusterPreferences");
+
+        const data = user.additionalData || {};
+        const clusterPref = data.clusterPreferences || {};
+
+        // don't just dump `pref` in here, we have no idea what it contains.
+        clusterPref.region = pref.region;
+
+        data.clusterPreferences = clusterPref;
+        user.additionalData = data;
+
+        await this.userDB.updateUserPartial(user);
     }
 
     //#region gitpod.io concerns

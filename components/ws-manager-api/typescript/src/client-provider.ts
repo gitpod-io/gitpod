@@ -199,6 +199,8 @@ function admissionPreferencesFilter(user: ExtendedUser): (c: WorkspaceClusterWoT
             switch (pref.type) {
                 case "user-level":
                     return pref.level === user.level;
+                case "region":
+                    return pref.name === user.additionalData?.clusterPreferences?.region;
                 default:
                     return false;
             }

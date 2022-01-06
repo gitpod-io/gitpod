@@ -7,7 +7,7 @@
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, AdmissionPreference, AdmissionPreferenceUserLevel, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, AdmissionPreference, AdmissionPreferenceUserLevel, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel, AdmissionPreferenceRegion } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -74,13 +74,13 @@ export class ClusterService implements IClusterServiceServer {
                     async () => {
                         const oldCluster = await this.clusterDB.findByName(req.name);
                         if (!oldCluster) {
-                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB`);
+                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a workspace cluster with name ${req.name} already exists in the DB`);
                         }
                     },
                     async () => {
                         const oldCluster = await this.clusterDB.findFiltered({ url: req.url });
                         if (!oldCluster) {
-                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with url ${req.url} already exists in the DB`);
+                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a workspace cluster with url ${req.url} already exists in the DB`);
                         }
                     }
                 ]);
@@ -214,6 +214,11 @@ export class ClusterService implements IClusterServiceServer {
                                         if (v.level == (c as AdmissionPreferenceUserLevel).level) {
                                             return false;
                                         }
+                                    case "region":
+                                        const vv = v as AdmissionPreferenceRegion;
+                                        if (vv.name === (c as AdmissionPreferenceRegion).name && vv.rttEndpoint === (c as AdmissionPreferenceRegion).rttEndpoint) {
+                                            return false;
+                                        }
                                     default:
                                         return true;
                                 }
@@ -327,6 +332,11 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
             case "user-level":
                 pref.setUserLevel(p.level);
                 break;
+            case "region":
+                const region = new GRPCAdmissionPreference.Region();
+                region.setName(p.name);
+                region.setRttEndpoint(p.rttEndpoint);
+                pref.setRegion(region);
         }
         clusterStatus.addAdmissionPreference(pref);
     });
@@ -366,6 +376,11 @@ function mapAdmissionPreference(c: GRPCAdmissionPreference | undefined): Admissi
 
     if (c.hasUserLevel()) {
         return <AdmissionPreference>{ type: "user-level", level: c.getUserLevel() };
+    }
+
+    if (c.hasRegion()) {
+        const ap = c.getRegion()!;
+        return <AdmissionPreferenceRegion>{ type: "region", name: ap.getName(), rttEndpoint: ap.getRttEndpoint() };
     }
 
     return;

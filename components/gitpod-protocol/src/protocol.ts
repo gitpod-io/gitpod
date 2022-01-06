@@ -107,6 +107,9 @@ export interface AdditionalUserData {
 
     // Git clone URL pointing to the user's dotfile repo
     dotfileRepo?: string;
+
+    // cluster preferences collect data useful for workspace cluster selection
+    clusterPreferences?: WorkspaceClusterPreference;
 }
 
 export interface EmailNotificationSettings {
@@ -1229,4 +1232,8 @@ export interface Terms {
     readonly updateMessage: string;
     readonly content: string;
     readonly formElements?: object;
+}
+
+export interface WorkspaceClusterPreference {
+    region?: string;
 }

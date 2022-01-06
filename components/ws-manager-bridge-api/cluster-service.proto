@@ -52,8 +52,14 @@ message AdmissionConstraint {
 }
 
 message AdmissionPreference {
+  message Region {
+    string name =  1;
+    string rtt_endpoint = 2;
+  }
+
   oneof preference {
     string user_level = 1;
+    Region region = 2;
   }
 }
 
