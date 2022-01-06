@@ -336,9 +336,7 @@ export async function build(context, version) {
         //       We might want to keep both kubeconfigs around and be explicit about which one we're using.s
         exec(`mv k3s.yml /home/gitpod/.kube/config`)
 
-        if (!existingVM) {
-            exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
-        }
+        exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
