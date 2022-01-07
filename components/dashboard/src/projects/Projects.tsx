@@ -179,7 +179,7 @@ export default function () {
                                     </div>
                                 </div>
                                 <a href={p.cloneUrl.replace(/\.git$/, '')}>
-                                    <p className="hover:text-gray-600 dark:hover:text-gray-400 dark:text-gray-500">{toRemoteURL(p.cloneUrl)}</p>
+                                    <p className="hover:text-gray-600 dark:hover:text-gray-400 dark:text-gray-500 pr-10 truncate">{toRemoteURL(p.cloneUrl)}</p>
                                 </a>
                             </div>
                             <div className="h-10 px-6 py-1 text-gray-400 text-sm">
