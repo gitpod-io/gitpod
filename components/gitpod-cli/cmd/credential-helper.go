@@ -7,7 +7,6 @@ package cmd
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,7 +21,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -75,27 +73,6 @@ var credentialHelper = &cobra.Command{
 			log.Println("'host' is missing")
 		}
 
-		if isTheiaIDE() {
-			service, err := theialib.NewServiceFromEnv()
-			if err != nil {
-				log.WithError(err).Print("cannot connect to Theia")
-				return
-			}
-			if action == "get" {
-				resp, err := service.GetGitToken(theialib.GetGitTokenRequest{
-					Command: gitCommand,
-					Host:    host,
-					RepoURL: repoURL,
-				})
-				if err != nil {
-					log.WithError(err).Print("cannot get token")
-					return
-				}
-				user = resp.User
-				token = resp.Token
-			}
-			return
-		}
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cancel()
 		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
@@ -132,11 +109,6 @@ var credentialHelper = &cobra.Command{
 		user = resp.User
 		token = resp.Token
 	},
-}
-
-func isTheiaIDE() bool {
-	stat, err := os.Stat("/theia")
-	return !errors.Is(os.ErrNotExist, err) && stat != nil && stat.IsDir()
 }
 
 func parseHostFromStdin() string {

@@ -18,7 +18,6 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
@@ -124,148 +123,78 @@ func connectToServer(ctx context.Context) (*connectToServerResult, error) {
 }
 
 func getEnvs() {
-	if !isTheiaIDE() {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-		defer cancel()
-		result, err := connectToServer(ctx)
-		if err != nil {
-			fail(err.Error())
-		}
-
-		vars, err := result.client.GetEnvVars(ctx)
-		if err != nil {
-			fail("failed to fetch env vars from server: " + err.Error())
-		}
-
-		for _, v := range vars {
-			printVar(v, exportEnvs)
-		}
-		return
-	}
-
-	service, err := theialib.NewServiceFromEnv()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	result, err := connectToServer(ctx)
 	if err != nil {
 		fail(err.Error())
 	}
 
-	vars, err := service.GetEnvVars(theialib.GetEnvvarsRequest{})
+	vars, err := result.client.GetEnvVars(ctx)
 	if err != nil {
-		fail(fmt.Sprintf("cannot get environment variables: %v", err))
+		fail("failed to fetch env vars from server: " + err.Error())
 	}
 
-	for _, v := range vars.Variables {
-		printVarFromTheia(v, exportEnvs)
+	for _, v := range vars {
+		printVar(v, exportEnvs)
 	}
 }
 
 func setEnvs(args []string) {
-	if !isTheiaIDE() {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-		defer cancel()
-		result, err := connectToServer(ctx)
-		if err != nil {
-			fail(err.Error())
-		}
-
-		vars, err := parseArgs(args, result.repositoryPattern)
-		if err != nil {
-			fail(err.Error())
-		}
-
-		var exitCode int
-		var wg sync.WaitGroup
-		wg.Add(len(vars))
-		for _, v := range vars {
-			go func(v *serverapi.UserEnvVarValue) {
-				err = result.client.SetEnvVar(ctx, v)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "cannot set %s: %v\n", v.Name, err)
-					exitCode = -1
-				} else {
-					printVar(v, exportEnvs)
-				}
-				wg.Done()
-			}(v)
-		}
-		wg.Wait()
-		os.Exit(exitCode)
-	}
-
-	service, err := theialib.NewServiceFromEnv()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	result, err := connectToServer(ctx)
 	if err != nil {
 		fail(err.Error())
 	}
 
-	vars := make([]theialib.EnvironmentVariable, len(args))
-	for i, arg := range args {
-		kv := strings.Split(arg, "=")
-		if len(kv) != 2 {
-			fail(fmt.Sprintf("%s has no value (correct format is %s=some_value)", arg, arg))
-		}
-
-		key := strings.TrimSpace(kv[0])
-		if key == "" {
-			fail("variable must have a name")
-		}
-		// Do not trim value - the user might want whitespace here
-		// Also do not check if the value is empty, as an empty value means we want to delete the variable
-		val := kv[1]
-		if val == "" {
-			fail("variable must have a value; use -u to unset a variable")
-		}
-
-		vars[i] = theialib.EnvironmentVariable{Name: key, Value: val}
-	}
-
-	_, err = service.SetEnvVar(theialib.SetEnvvarRequest{Variables: vars})
+	vars, err := parseArgs(args, result.repositoryPattern)
 	if err != nil {
-		fail(fmt.Sprintf("cannot set environment variables: %v", err))
+		fail(err.Error())
 	}
 
+	var exitCode int
+	var wg sync.WaitGroup
+	wg.Add(len(vars))
 	for _, v := range vars {
-		printVarFromTheia(v, exportEnvs)
+		go func(v *serverapi.UserEnvVarValue) {
+			err = result.client.SetEnvVar(ctx, v)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "cannot set %s: %v\n", v.Name, err)
+				exitCode = -1
+			} else {
+				printVar(v, exportEnvs)
+			}
+			wg.Done()
+		}(v)
 	}
+	wg.Wait()
+	os.Exit(exitCode)
 }
 
 func deleteEnvs(args []string) {
-	if !isTheiaIDE() {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-		defer cancel()
-		result, err := connectToServer(ctx)
-		if err != nil {
-			fail(err.Error())
-		}
-
-		var exitCode int
-		var wg sync.WaitGroup
-		wg.Add(len(args))
-		for _, name := range args {
-			go func(name string) {
-				err = result.client.DeleteEnvVar(ctx, &serverapi.UserEnvVarValue{Name: name, RepositoryPattern: result.repositoryPattern})
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "cannot unset %s: %v\n", name, err)
-					exitCode = -1
-				}
-				wg.Done()
-			}(name)
-		}
-		wg.Wait()
-		os.Exit(exitCode)
-	}
-
-	service, err := theialib.NewServiceFromEnv()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	result, err := connectToServer(ctx)
 	if err != nil {
 		fail(err.Error())
 	}
 
-	resp, err := service.DeleteEnvVar(theialib.DeleteEnvvarRequest{Variables: args})
-	if err != nil {
-		fail(fmt.Sprintf("cannot unset environment variables: %v", err))
+	var exitCode int
+	var wg sync.WaitGroup
+	wg.Add(len(args))
+	for _, name := range args {
+		go func(name string) {
+			err = result.client.DeleteEnvVar(ctx, &serverapi.UserEnvVarValue{Name: name, RepositoryPattern: result.repositoryPattern})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "cannot unset %s: %v\n", name, err)
+				exitCode = -1
+			}
+			wg.Done()
+		}(name)
 	}
-
-	if len(resp.NotDeleted) != 0 {
-		fail(fmt.Sprintf("cannot unset environment variables: %s", strings.Join(resp.NotDeleted, ", ")))
-	}
+	wg.Wait()
+	os.Exit(exitCode)
 }
 
 func fail(msg string) {
@@ -274,15 +203,6 @@ func fail(msg string) {
 }
 
 func printVar(v *serverapi.UserEnvVarValue, export bool) {
-	val := strings.Replace(v.Value, "\"", "\\\"", -1)
-	if export {
-		fmt.Printf("export %s=\"%s\"\n", v.Name, val)
-	} else {
-		fmt.Printf("%s=%s\n", v.Name, val)
-	}
-}
-
-func printVarFromTheia(v theialib.EnvironmentVariable, export bool) {
 	val := strings.Replace(v.Value, "\"", "\\\"", -1)
 	if export {
 		fmt.Printf("export %s=\"%s\"\n", v.Name, val)
