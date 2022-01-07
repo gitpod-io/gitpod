@@ -9,7 +9,7 @@
     "start-ee": "node --expose-gc ./dist/ee/src/main.js",
     "start-ee-inspect": "node --inspect=9229 ./dist/ee/src/main.js",
     "prepare": "yarn clean && yarn build",
-    "build": "npx tsc && ([ -e ee ] && cp ee/src/graphql/*.graphql dist/ee/src/graphql)",
+    "build": "npx tsc",
     "build:clean": "yarn clean && yarn build",
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",
@@ -20,8 +20,7 @@
     "test": "mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
     "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
     "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
-    "telepresence": "leeway run .:telepresence",
-    "graphql-codegen": "graphql-codegen --config src/ee/graphql/graphql-codegen.yml"
+    "telepresence": "leeway run .:telepresence"
   },
   "files": [
     "/dist"
@@ -52,14 +51,11 @@
     "deep-equal": "^2.0.5",
     "deepmerge": "^4.2.2",
     "express": "^4.16.1",
-    "express-graphql": "^0.9.0",
     "express-http-proxy": "^1.0.7",
     "express-mysql-session": "^2.1.0",
     "express-session": "^1.15.6",
     "fs-extra": "^10.0.0",
     "google-protobuf": "^3.18.0-rc.2",
-    "graphql": "^14.6.0",
-    "graphql-tools": "^4.0.7",
     "heapdump": "^0.3.15",
     "inversify": "^5.0.1",
     "js-yaml": "^3.10.0",
@@ -84,10 +80,6 @@
     "ws": "^7.4.6"
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "^1.19.4",
-    "@graphql-codegen/introspection": "^1.18.1",
-    "@graphql-codegen/typescript": "^1.19.0",
-    "@graphql-codegen/typescript-resolvers": "^1.18.0",
     "@testdeck/mocha": "0.1.2",
     "@types/amqplib": "^0.8.2",
     "@types/assert": "^1.5.6",
