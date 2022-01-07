@@ -609,7 +609,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     try {
         werft.log(installerSlices.DEPLOYMENT_WAITING, "Server not ready. Let the waiting...commence!");
-        exec(`kubectl rollout status deployment/server --timeout=5m`,{ slice: installerSlices.DEPLOYMENT_WAITING });
+        exec(`kubectl -n ${namespace} rollout status deployment/server --timeout=5m`,{ slice: installerSlices.DEPLOYMENT_WAITING });
         werft.done(installerSlices.DEPLOYMENT_WAITING);
     } catch (err) {
         werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
@@ -640,14 +640,17 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     const argsStr = Object.entries(args).map(([k, v]) => `\"--${k}\", \"${v}\"`).join(", ");
     const allArgsStr = `--set args="{${argsStr}}" --set githubToken.secret=github-sweeper-read-branches --set githubToken.key=token`;
 
-    // copy GH token into namespace
-    exec(`kubectl --namespace werft get secret github-sweeper-read-branches -o yaml \
-        | yq w - metadata.namespace ${namespace} \
-        | yq d - metadata.uid \
-        | yq d - metadata.resourceVersion \
-        | yq d - metadata.creationTimestamp \
-        | kubectl apply -f -`);
-    exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
+    // TODO: Implement sweeper logic for VMs in Harvester
+    if (!withVM) {
+        // copy GH token into namespace
+        exec(`kubectl --namespace werft get secret github-sweeper-read-branches -o yaml \
+            | yq w - metadata.namespace ${namespace} \
+            | yq d - metadata.uid \
+            | yq d - metadata.resourceVersion \
+            | yq d - metadata.creationTimestamp \
+            | kubectl apply -f -`);
+        exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" ${allArgsStr} sweeper ./dev/charts/sweeper`);
+    }
 
     werft.done(phases.DEPLOY);
 
