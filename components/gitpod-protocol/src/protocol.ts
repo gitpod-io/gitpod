@@ -1175,39 +1175,6 @@ export namespace AuthProviderEntry {
     }
 }
 
-export interface Branding {
-    readonly name: string;
-    readonly favicon?: string;
-    /** Either including domain OR absolute path (interpreted relative to host URL) */
-    readonly logo: string;
-    readonly startupLogo: string;
-    readonly showProductivityTips: boolean;
-    readonly redirectUrlIfNotAuthenticated?: string;
-    readonly redirectUrlAfterLogout?: string;
-    readonly homepage: string;
-    readonly ide?: {
-        readonly logo: string;
-        readonly showReleaseNotes: boolean;
-        readonly helpMenu: Branding.Link[];
-    }
-    readonly links: {
-        readonly header: Branding.Link[];
-        readonly footer: Branding.Link[];
-        readonly social: Branding.SocialLink[];
-        readonly legal: Branding.Link[];
-    }
-}
-export namespace Branding {
-    export interface Link {
-        readonly name: string;
-        readonly url: string;
-    }
-    export interface SocialLink {
-        readonly type: string;
-        readonly url: string;
-    }
-}
-
 export interface Configuration {
     readonly daysBeforeGarbageCollection: number;
     readonly garbageCollectionStartDate: number;

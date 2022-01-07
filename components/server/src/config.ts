@@ -7,7 +7,7 @@
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import { AuthProviderParams, normalizeAuthProviderParams } from './auth/auth-provider';
 
-import { Branding, NamedWorkspaceFeatureFlag } from '@gitpod/gitpod-protocol';
+import { NamedWorkspaceFeatureFlag } from '@gitpod/gitpod-protocol';
 
 import { RateLimiterConfig } from './auth/rate-limiter';
 import { CodeSyncConfig } from './code-sync/code-sync-service';
@@ -16,7 +16,6 @@ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { filePathTelepresenceAware, KubeStage, translateLegacyStagename } from '@gitpod/gitpod-protocol/lib/env';
-import { BrandingParser } from './branding-parser';
 
 export const Config = Symbol("Config");
 export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile"> & {
@@ -90,8 +89,6 @@ export interface ConfigSerialized {
     authProviderConfigFiles: string[];
     builtinAuthProvidersConfigured: boolean;
     disableDynamicAuthProviderLogin: boolean;
-
-    brandingConfig: Branding;
 
     /**
      * The maximum number of environment variables a user can have configured in their list at any given point in time.
@@ -193,10 +190,6 @@ export namespace ConfigFile {
 
         const builtinAuthProvidersConfigured = authProviderConfigs.length > 0;
         const chargebeeProviderOptions = readOptionsFromFile(filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""));
-        let brandingConfig = config.brandingConfig;
-        if (brandingConfig) {
-            brandingConfig = BrandingParser.normalize(brandingConfig);
-        }
         let license = config.license
         const licenseFile = config.licenseFile
         if (licenseFile) {
@@ -208,7 +201,6 @@ export namespace ConfigFile {
             hostUrl,
             authProviderConfigs,
             builtinAuthProvidersConfigured,
-            brandingConfig,
             chargebeeProviderOptions,
             license,
             workspaceGarbageCollection: {

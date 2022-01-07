@@ -66,57 +66,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 			return providers
 		}(),
-		BuiltinAuthProvidersConfigured:  len(ctx.Config.AuthProviders) > 0,
-		DisableDynamicAuthProviderLogin: false,
-		BrandingConfig: BrandingConfig{
-			Logo:     "/images/gitpod-ddd.svg",
-			Homepage: fmt.Sprintf("https://%s/", ctx.Config.Domain),
-			Links: BrandingLinks{
-				Header: []Link{{
-					Name: "Workspaces",
-					URL:  "/workspaces/",
-				}, {
-					Name: "Docs",
-					URL:  "https://www.gitpod.io/docs/",
-				}, {
-					Name: "Blog",
-					URL:  "https://www.gitpod.io/blog/",
-				}, {
-					Name: "Community",
-					URL:  "https://community.gitpod.io/",
-				}},
-				Footer: []Link{{
-					Name: "Docs",
-					URL:  "https://www.gitpod.io/docs/",
-				}, {
-					Name: "Blog",
-					URL:  "https://www.gitpod.io/blog/",
-				}, {
-					Name: "Status",
-					URL:  "https://status.gitpod.io/",
-				}},
-				Social: []SocialLink{{
-					Type: "GitHub",
-					URL:  "https://github.com/gitpod-io/gitpod",
-				}, {
-					Type: "Discourse",
-					URL:  "https://community.gitpod.io/",
-				}, {
-					Type: "Twitter",
-					URL:  "https://twitter.com/gitpod",
-				}},
-				Legal: []Link{{
-					Name: "Imprint",
-					URL:  "https://www.gitpod.io/imprint/",
-				}, {
-					Name: "Privacy Policy",
-					URL:  "https://www.gitpod.io/privacy/",
-				}, {
-					Name: "Terms of Service",
-					URL:  "https://www.gitpod.io/terms/",
-				}},
-			},
-		},
+		BuiltinAuthProvidersConfigured:    len(ctx.Config.AuthProviders) > 0,
+		DisableDynamicAuthProviderLogin:   false,
 		MaxEnvvarPerUserCount:             4048,
 		MaxConcurrentPrebuildsPerRef:      10,
 		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},

@@ -44,7 +44,6 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "getOwnAuthProviders": { group: "default", points: 1 },
         "updateOwnAuthProvider": { group: "default", points: 1 },
         "deleteOwnAuthProvider": { group: "default", points: 1 },
-        "getBranding": { group: "default", points: 1 },
         "getConfiguration": { group: "default", points: 1 },
         "getGitpodTokenScopes": { group: "default", points: 1 },
         "getToken": { group: "default", points: 1 },
