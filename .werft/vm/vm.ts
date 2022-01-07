@@ -70,28 +70,18 @@ export function vmExists(options: { name: string }) {
  * Wait until the VM Instance reaches the Running status.
  * If the VM Instance doesn't reach Running before the timeoutMS it will throw an Error.
  */
-export function waitForVM(options: { name: string, timeoutMS: number, slice: string }) {
+export function waitForVM(options: { name: string, timeoutSeconds: number, slice: string }) {
     const werft = getGlobalWerftInstance()
     const namespace = `preview-${options.name}`
-    const startTime = Date.now()
-    while (true) {
 
-        const status = exec(`kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name} -o jsonpath="{.status.phase}"`, { silent: true, slice: options.slice }).stdout.trim()
+    const ready = exec(`kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} wait --for=condition=ready --timeout=${options.timeoutSeconds}s pod -l kubevirt.io=virt-launcher -l harvesterhci.io/vmName=${options.name}`, { dontCheckRc: true, silent: true })
 
-        // This part needs to be changed
-        // We need to check for por readiness instead of just checking if it is running or not
-        if (status == "Running") {
-            return
-        }
-
-        const elapsedTimeMs = Date.now() - startTime
-        if (elapsedTimeMs > options.timeoutMS) {
-            throw new Error("VM didn reach Running status before the timeout")
-        }
-
-        werft.log(options.slice, `VM is not yet running. Current status is ${status}. Sleeping 5 seconds`)
-        exec('sleep 5', { silent: true, slice: options.slice })
+    if (ready.code == 0) {
+        return
     }
+
+    werft.log(options.slice, `Timeout while waiting for VM to get ready. Timeout: ${options.timeoutSeconds}. Stderr: ${ready.stderr}. Stdout: ${ready.stdout}`)
+    throw new Error("VM didn't reach 'Ready' status before the timeout.")
 }
 
 /**

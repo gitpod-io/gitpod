@@ -322,7 +322,7 @@ export async function build(context, version) {
         }
 
         werft.log(vmSlices.BOOT_VM, 'Waiting for VM to be ready')
-        VM.waitForVM({ name: destname, timeoutMS: 1000 * 60 * 3, slice: vmSlices.BOOT_VM })
+        VM.waitForVM({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.BOOT_VM })
 
         werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting SSH port forwarding')
         VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
