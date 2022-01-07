@@ -7,8 +7,6 @@
 import { ContainerModule } from "inversify";
 import { GitpodServerImpl } from "../../src/workspace/gitpod-server-impl";
 import { GitpodServerEEImpl } from "./workspace/gitpod-server-impl";
-import { GraphQLController } from './graphql/graphql-controller';
-import { GraphQLResolvers } from './graphql/resolvers';
 import { Server } from "../../src/server";
 import { ServerEE } from "./server";
 import { UserController } from "../../src/user/user-controller";
@@ -73,9 +71,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
 
     bind(LicenseEvaluator).toSelf().inSingletonScope();
     bind(LicenseKeySource).to(DBLicenseKeySource).inSingletonScope();
-
-    bind(GraphQLController).toSelf().inSingletonScope();
-    bind(GraphQLResolvers).toSelf().inSingletonScope();
 
     // GitpodServerImpl (stateful per user)
     rebind(GitpodServerImpl).to(GitpodServerEEImpl).inRequestScope();
