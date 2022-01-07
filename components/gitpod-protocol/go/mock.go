@@ -195,21 +195,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetAuthProviders(ctx interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthProviders", reflect.TypeOf((*MockAPIInterface)(nil).GetAuthProviders), ctx)
 }
 
-// GetBranding mocks base method.
-func (m *MockAPIInterface) GetBranding(ctx context.Context) (*Branding, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBranding", ctx)
-	ret0, _ := ret[0].(*Branding)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBranding indicates an expected call of GetBranding.
-func (mr *MockAPIInterfaceMockRecorder) GetBranding(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBranding", reflect.TypeOf((*MockAPIInterface)(nil).GetBranding), ctx)
-}
-
 // GetClientRegion mocks base method.
 func (m *MockAPIInterface) GetClientRegion(ctx context.Context) (string, error) {
 	m.ctrl.T.Helper()

@@ -141,13 +141,12 @@ export class UserController {
             this.ensureSafeReturnToParam(req);
             this.authenticator.deauthorize(req, res, next);
         });
-        const branding = this.config.brandingConfig;
         router.get("/logout", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             const logContext = LogContext.from({ user: req.user, request: req });
             const clientInfo = getRequestingClientInfo(req);
             const logPayload = { session: req.session, clientInfo };
 
-            let redirectToUrl = this.getSafeReturnToParam(req) || branding.redirectUrlAfterLogout || this.config.hostUrl.toString();
+            let redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 
             if (req.isAuthenticated()) {
                 req.logout();
@@ -621,7 +620,7 @@ export class UserController {
             return;
         }
 
-        if (this.urlStartsWith(returnToURL, this.config.hostUrl.toString()) || this.urlStartsWith(returnToURL, this.config.brandingConfig.homepage)) {
+        if (this.urlStartsWith(returnToURL, this.config.hostUrl.toString()) || this.urlStartsWith(returnToURL, "https://www.gitpod.io")) {
             return returnToURL
         }
 

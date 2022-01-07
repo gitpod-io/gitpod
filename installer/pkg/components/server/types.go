@@ -40,7 +40,6 @@ type ConfigSerialized struct {
 	GitHubApp                  GitHubApp                  `json:"githubApp"`
 	WorkspaceGarbageCollection WorkspaceGarbageCollection `json:"workspaceGarbageCollection"`
 	AuthProviderConfigFiles    []string                   `json:"authProviderConfigFiles"`
-	BrandingConfig             BrandingConfig             `json:"brandingConfig"`
 	IncrementalPrebuilds       IncrementalPrebuilds       `json:"incrementalPrebuilds"`
 	BlockNewUsers              config.BlockNewUsers       `json:"blockNewUsers"`
 	OAuthServer                OAuthServer                `json:"oauthServer"`
@@ -81,42 +80,6 @@ type OAuthServer struct {
 type IncrementalPrebuilds struct {
 	RepositoryPasslist []string `json:"repositoryPasslist"`
 	CommitHistory      int32    `json:"commitHistory"`
-}
-
-type Link struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
-type SocialLink struct {
-	Type string `json:"type"`
-	URL  string `json:"url"`
-}
-
-type IDE struct {
-	Logo             string `json:"logo"`
-	ShowReleaseNotes bool   `json:"showReleaseNotes"`
-	HelpMenu         []Link `json:"helpMenu"`
-}
-
-type BrandingLinks struct {
-	Header []Link       `json:"header"`
-	Footer []Link       `json:"footer"`
-	Social []SocialLink `json:"social"`
-	Legal  []Link       `json:"legal"`
-}
-
-type BrandingConfig struct {
-	Name                          string        `json:"name"`
-	Favicon                       string        `json:"favicon"`
-	Logo                          string        `json:"logo"`
-	StartupLogo                   string        `json:"startupLogo"`
-	ShowProductivityTips          bool          `json:"showProductivityTips"`
-	RedirectUrlIfNotAuthenticated string        `json:"redirectUrlIfNotAuthenticated"`
-	RedirectUrlAfterLogout        string        `json:"redirectUrlAfterLogout"`
-	Homepage                      string        `json:"homepage"`
-	IDE                           IDE           `json:"ide"`
-	Links                         BrandingLinks `json:"links"`
 }
 
 type WorkspaceGarbageCollection struct {
