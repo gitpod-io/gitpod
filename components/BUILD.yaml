@@ -56,6 +56,7 @@ packages:
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
+      - components/installation-telemetry:docker
       - components/workspacekit:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
@@ -98,6 +99,7 @@ packages:
       - components/service-waiter:app
       - components/supervisor:app
       - components/supervisor/frontend:app
+      - components/installation-telemetry:app
       - components/workspacekit:app
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
