@@ -16,7 +16,7 @@ export interface ProjectDB {
     storeProject(project: Project): Promise<Project>;
     updateProject(partialProject: PartialProject): Promise<void>;
     markDeleted(projectId: string): Promise<void>;
-    setProjectEnvironmentVariable(projectId: string, name: string, value: string): Promise<void>;
+    setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>;
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;

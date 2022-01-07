@@ -484,15 +484,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
         }
         const userEnvVars = this.userDB.getEnvVars(user.id);
-        let projectEnvVarsPromise: Promise<ProjectEnvVar[]> = Promise.resolve([]);
-        if (workspace.projectId) {
-            try {
-                await this.guardProjectOperation(user, workspace.projectId, "get");
-                projectEnvVarsPromise = this.projectsService.getProjectEnvironmentVariables(workspace.projectId);
-            } catch (error) {
-                log.debug({ userId: user.id }, "User doesn't have access to the Project, thus not loading Project environment variables:", error);
-            }
-        }
+        let projectEnvVarsPromise = this.internalGetPublicProjectEnvVars(workspace.projectId);
 
         await mayStartPromise;
 
@@ -850,15 +842,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 throw err;
             }
 
-            let projectEnvVarsPromise: Promise<ProjectEnvVar[]> = Promise.resolve([]);
-            if (workspace.projectId) {
-                try {
-                    await this.guardProjectOperation(user, workspace.projectId, "get");
-                    projectEnvVarsPromise = this.projectsService.getProjectEnvironmentVariables(workspace.projectId);
-                } catch (error) {
-                    log.warn(logContext, "User doesn't have access to the Project, thus not loading Project environment variables:", error);
-                }
-            }
+            let projectEnvVarsPromise = this.internalGetPublicProjectEnvVars(workspace.projectId);
 
             logContext.workspaceId = workspace.id;
             traceWI(ctx, { workspaceId: workspace.id });
@@ -1374,11 +1358,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.userDB.deleteEnvVar(envvar);
     }
 
-    async setProjectEnvironmentVariable(ctx: TraceContext, projectId: string, name: string, value: string): Promise<void> {
+    async setProjectEnvironmentVariable(ctx: TraceContext, projectId: string, name: string, value: string, censored: boolean): Promise<void> {
         traceAPIParams(ctx, { projectId, name }); // value may contain secrets
         const user = this.checkAndBlockUser("setProjectEnvironmentVariable");
         await this.guardProjectOperation(user, projectId, "update");
-        return this.projectsService.setProjectEnvironmentVariable(projectId, name, value);
+        return this.projectsService.setProjectEnvironmentVariable(projectId, name, value, censored);
     }
 
     async getProjectEnvironmentVariables(ctx: TraceContext, projectId: string): Promise<ProjectEnvVar[]> {
@@ -1397,6 +1381,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         await this.guardProjectOperation(user, envVar.projectId, "update");
         return this.projectsService.deleteProjectEnvironmentVariable(envVar.id);
+    }
+
+    protected async internalGetPublicProjectEnvVars(projectId?: string): Promise<ProjectEnvVar[]> {
+        if (!projectId) {
+            return [];
+        }
+        const projectEnvVars = await this.projectsService.getProjectEnvironmentVariables(projectId);
+        // Instead of using an access guard for Project environment variables, we let Project owners decide whether
+        // a variable should be:
+        //   - exposed in all workspaces (even for non-Project members when the repository is public), or
+        //   - censored from all workspaces (even for Project members)
+        return projectEnvVars.filter(variable => !variable.censored);
     }
 
     protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<void> {

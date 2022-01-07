@@ -181,8 +181,8 @@ export class ProjectsService {
         return this.projectDB.updateProject(partialProject);
     }
 
-    async setProjectEnvironmentVariable(projectId: string, name: string, value: string): Promise<void> {
-        return this.projectDB.setProjectEnvironmentVariable(projectId, name, value);
+    async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void> {
+        return this.projectDB.setProjectEnvironmentVariable(projectId, name, value, censored);
     }
 
     async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {

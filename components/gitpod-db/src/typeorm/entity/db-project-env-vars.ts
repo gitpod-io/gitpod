@@ -34,6 +34,9 @@ export class DBProjectEnvVar implements ProjectEnvVarWithValue {
     })
     value: string;
 
+    @Column()
+    censored: boolean;
+
     @Column("varchar")
     creationTime: string;
 
