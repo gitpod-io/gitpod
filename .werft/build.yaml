@@ -161,6 +161,11 @@ pod:
         secretKeyRef:
           name: honeycomb-api-key
           key: apikey
+    - name: SEGMENT_IO_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: self-hosted
+          key: segmentIOToken
     command:
       - bash
       - -c

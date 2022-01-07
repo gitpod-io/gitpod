@@ -481,6 +481,10 @@ var (
 		APIVersion: "batch/v1",
 		Kind:       "Job",
 	}
+	TypeMetaBatchCronJob = metav1.TypeMeta{
+		APIVersion: "batch/v1",
+		Kind:       "CronJob",
+	}
 )
 
 // validCookieChars contains all characters which may occur in an HTTP Cookie value (unicode \u0021 through \u007E),

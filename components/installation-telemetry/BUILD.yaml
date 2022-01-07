@@ -1,0 +1,42 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+packages:
+  - name: app
+    type: go
+    deps:
+      - components/common-go:lib
+    argdeps:
+      - SEGMENT_IO_TOKEN
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    env:
+      - CGO_ENABLED=0
+    config:
+      packaging: app
+      buildCommand:
+        [
+          "go",
+          "build",
+          "-trimpath",
+          "-ldflags",
+          "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/installation-telemetry/cmd.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/gitpod/installation-telemetry/cmd.segmentIOToken=${SEGMENT_IO_TOKEN}'",
+        ]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: installationTelemetry
+      image:
+        - ${imageRepoBase}/installation-telemetry:${version}
+        - ${imageRepoBase}/installation-telemetry:commit-${__git_commit}
