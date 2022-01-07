@@ -165,7 +165,6 @@ write_files:
           --node-label "cloud.google.com/gke-nodepool=control-plane-pool" \\
           --container-runtime-endpoint=/var/run/containerd/containerd.sock \\
           --write-kubeconfig-mode 444 \\
-          --disable servicelb \\
           --disable traefik \\
           --disable metrics-server \\
           --flannel-backend=none \\
@@ -186,7 +185,11 @@ write_files:
           gitpod.io/workspace_1=true \\
           gitpod.io/workspace_2=true
 
-      kubectl apply -f /var/lib/gitpod/manifests/calico.yaml
+      # apply fix from https://github.com/k3s-io/klipper-lb/issues/6 so we can use the klipper servicelb
+      # this can be removed if https://github.com/gitpod-io/gitpod-packer-gcp-image/pull/20 gets merged
+      cat /var/lib/gitpod/manifests/calico.yaml | sed s/__KUBERNETES_NODE_NAME__\\"\\,/__KUBERNETES_NODE_NAME__\\",\\ \\"container_settings\\"\\:\\ \\{\\ \\"allow_ip_forwarding\\"\\:\\ true\\ \\}\\,/ > /var/lib/gitpod/manifests/calico2.yaml
+      kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
+
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
       kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
 
