@@ -587,7 +587,8 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             // each "flag" string gets added to the configmap
         }
 
-        exec(`./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+        const flags = withVM ? "WITH_VM=true " : ""
+        exec(`${flags}./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
         werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
         werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
