@@ -1,3 +1,15 @@
+# Deprecation Notice
+
+Installing Gitpod Self-Hosted via Helm has been deprecated and will eventually be removed. We have created an installation tool here [../installer/README.md](../installer/README.md).
+
+We have also created guides for the three major cloud providers which use the installer for your reference.
+
+* [Amazon EKS](https://github.com/gitpod-io/gitpod-eks-guide)
+* [Google Kubernetes Engine](https://github.com/gitpod-io/gitpod-gke-guide)
+* [Azure AKS](https://github.com/gitpod-io/gitpod-microsoft-aks-guide)
+
+These charts will eventually be archived.
+
 # Gitpod Self-Hosted
 
 [gitpod.io](https://gitpod.io) is a service that provides developers with ready-to-code dev environments in the cloud.
