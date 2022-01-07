@@ -141,7 +141,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     guessRepositoryConfiguration(cloneUrl: string): Promise<string | undefined>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     updateProjectPartial(partialProject: PartialProject): Promise<void>;
-    setProjectEnvironmentVariable(projectId: string, name: string, value: string): Promise<void>;
+    setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>;
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
 

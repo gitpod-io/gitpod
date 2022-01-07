@@ -162,6 +162,7 @@ export interface EnvVarWithValue {
 export interface ProjectEnvVarWithValue extends EnvVarWithValue {
     id: string;
     projectId: string;
+    censored: boolean;
 }
 
 export type ProjectEnvVar = Omit<ProjectEnvVarWithValue, 'value'>;

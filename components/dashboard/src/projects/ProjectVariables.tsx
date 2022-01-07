@@ -7,6 +7,8 @@
 import { Project, ProjectEnvVar } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import AlertBox from "../components/AlertBox";
+import CheckBox from "../components/CheckBox";
+import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal from "../components/Modal";
 import { getGitpodService } from "../service/service";
@@ -54,15 +56,17 @@ export default function () {
             </div>
             : <>
                 <ItemsList>
-                    <Item header={true} className="grid grid-cols-3 items-center">
+                    <Item header={true} className="grid grid-cols-4 items-center">
                         <ItemField>Name</ItemField>
                         <ItemField>Value</ItemField>
+                        <ItemField>Visible in Workspaces?</ItemField>
                         <ItemField></ItemField>
                     </Item>
                     {envVars.map(variable => {
-                        return <Item className="grid grid-cols-3 items-center">
+                        return <Item className="grid grid-cols-4 items-center">
                             <ItemField>{variable.name}</ItemField>
                             <ItemField>****</ItemField>
+                            <ItemField>{variable.censored ? 'Hidden' : 'Visible'}</ItemField>
                             <ItemField className="flex justify-end">
                                 <ItemFieldContextMenu menuEntries={[
                                     {
@@ -83,6 +87,7 @@ export default function () {
 function AddVariableModal(props: { project?: Project, onClose: () => void }) {
     const [ name, setName ] = useState<string>("");
     const [ value, setValue ] = useState<string>("");
+    const [ censored, setCensored ] = useState<boolean>(true);
     const [ error, setError ] = useState<Error | undefined>();
 
     const addVariable = async () => {
@@ -90,7 +95,7 @@ function AddVariableModal(props: { project?: Project, onClose: () => void }) {
             return;
         }
         try {
-            await getGitpodService().server.setProjectEnvironmentVariable(props.project.id, name, value);
+            await getGitpodService().server.setProjectEnvironmentVariable(props.project.id, name, value, censored);
             props.onClose();
         } catch (err) {
             setError(err);
@@ -104,7 +109,7 @@ function AddVariableModal(props: { project?: Project, onClose: () => void }) {
             {error && <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">
                 {error}
             </div>}
-            <div className="mt-4">
+            <div className="mt-8">
                 <h4>Name</h4>
                 <input autoFocus className="w-full" type="text" name="name" value={name} onChange={e => setName(e.target.value)} />
             </div>
@@ -112,10 +117,16 @@ function AddVariableModal(props: { project?: Project, onClose: () => void }) {
                 <h4>Value</h4>
                 <input className="w-full" type="text" name="value" value={value} onChange={e => setValue(e.target.value)} />
             </div>
+            <div className="mt-4">
+                <CheckBox title="Hide in Workspaces" desc="Project variables are visible during prebuilds. Choose whether this variable should be visible in workspaces as well." checked={censored} onChange={() => setCensored(!censored)} />
+            </div>
+            {!censored && <div className="mt-4">
+                <InfoBox>This value will be directly visible to anyone who can open your repository in Gitpod.</InfoBox>
+            </div>}
         </div>
         <div className="flex justify-end mt-6">
             <button className="secondary" onClick={props.onClose}>Cancel</button>
-            <button className="ml-2" onClick={addVariable} >Add Variable</button>
+            <button className="ml-2" onClick={addVariable}>Add Variable</button>
         </div>
     </Modal>;
 }

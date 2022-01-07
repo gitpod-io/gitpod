@@ -108,11 +108,11 @@ export class ProjectDBImpl implements ProjectDB {
         }
     }
 
-    public async setProjectEnvironmentVariable(projectId: string, name: string, value: string): Promise<void>{
+    public async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>{
         const envVarRepo = await this.getProjectEnvVarRepo();
         const envVarWithValue = await envVarRepo.findOne({ projectId, name, deleted: false });
         if (envVarWithValue) {
-            await envVarRepo.update({ id: envVarWithValue.id, projectId: envVarWithValue.projectId }, { value });
+            await envVarRepo.update({ id: envVarWithValue.id, projectId: envVarWithValue.projectId }, { value, censored });
             return;
         }
         await envVarRepo.save({
@@ -120,6 +120,7 @@ export class ProjectDBImpl implements ProjectDB {
             projectId,
             name,
             value,
+            censored,
             creationTime: new Date().toISOString(),
             deleted: false,
         });
