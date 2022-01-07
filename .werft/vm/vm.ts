@@ -74,9 +74,11 @@ export function waitForVM(options: { name: string, timeoutSeconds: number, slice
     const werft = getGlobalWerftInstance()
     const namespace = `preview-${options.name}`
 
+    const startTime = Date.now()
     const ready = exec(`kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} wait --for=condition=ready --timeout=${options.timeoutSeconds}s pod -l kubevirt.io=virt-launcher -l harvesterhci.io/vmName=${options.name}`, { dontCheckRc: true, silent: true })
 
     if (ready.code == 0) {
+        werft.log(options.slice, `VM is ready after ${(Date.now() - startTime) / 1000} seconds`)
         return
     }
 
