@@ -50,7 +50,6 @@ var MetaObjects = common.CompositeRenderFunc(
 var WorkspaceObjects = common.CompositeRenderFunc(
 	agentsmith.Objects,
 	blobserve.Objects,
-	gitpod.Objects,
 	registryfacade.Objects,
 	workspace.Objects,
 	wsdaemon.Objects,
@@ -83,6 +82,7 @@ var FullHelmDependencies = common.CompositeHelmFunc(
 var CommonObjects = common.CompositeRenderFunc(
 	dockerregistry.Objects,
 	cluster.Objects,
+	gitpod.Objects,
 )
 
 var CommonHelmDependencies = common.CompositeHelmFunc(
