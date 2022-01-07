@@ -213,10 +213,9 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"overrides.yaml
    fi
 
-    if [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
+    if [[ ! -v WITH_VM ]] && [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
-      # Provide harvester compatibility by adding ports instead of modifying the original ports
       yq w -i k8s.yaml -d "$i" "spec.ports[+].name" http-lb
       yq w -i k8s.yaml -d "$i" "spec.ports.(name==http-lb).port" 80
       yq w -i k8s.yaml -d "$i" "spec.ports.(name==http-lb).protocol" TCP
