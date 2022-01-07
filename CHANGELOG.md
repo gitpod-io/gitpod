@@ -1,6 +1,7 @@
 # Change Log
 
 ## January 2022
+- Add dotfile repo support ([#7337](https://github.com/gitpod-io/gitpod/pull/7337)) - [@csweichel](https://github.com/csweichel)
 - Restore page bottom margin ([#7388](https://github.com/gitpod-io/gitpod/pull/7388)) - [@gtsiolis](https://github.com/gtsiolis)
 - [Installer]: simplify container image mirroring ([#7156](https://github.com/gitpod-io/gitpod/pull/7156)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Rename editor preference section heading ([#7437](https://github.com/gitpod-io/gitpod/pull/7437)) - [@gtsiolis](https://github.com/gtsiolis)
