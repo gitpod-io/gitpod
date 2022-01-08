@@ -57,6 +57,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "getFeaturedRepositories": { group: "default", points: 1 },
         "getWorkspace": { group: "default", points: 1 },
         "isWorkspaceOwner": { group: "default", points: 1 },
+        "getOwnerToken": { group: "default", points: 1 },
         "createWorkspace": { group: "default", points: 1 },
         "startWorkspace": { group: "default", points: 1 },
         "stopWorkspace": { group: "default", points: 1 },

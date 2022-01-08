@@ -443,6 +443,28 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
     }
 
+    public async getOwnerToken(ctx: TraceContext, workspaceId: string): Promise<string> {
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
+
+        this.checkUser('getOwnerToken');
+
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (!workspace) {
+            throw new Error('owner token not found');
+        }
+        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+
+        const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
+        this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace}, "get");
+
+        const ownerToken = latestInstance?.status.ownerToken;
+        if (!ownerToken) {
+            throw new Error('owner token not found');
+        }
+        return ownerToken;
+    }
+
     public async startWorkspace(ctx: TraceContext, workspaceId: string, options: GitpodServer.StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         traceAPIParams(ctx, { workspaceId, options });
         traceWI(ctx, { workspaceId });
