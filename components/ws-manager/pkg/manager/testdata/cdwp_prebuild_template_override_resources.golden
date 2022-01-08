@@ -170,7 +170,7 @@
                             "port": 22999,
                             "scheme": "HTTP"
                         },
-                        "initialDelaySeconds": 4,
+                        "initialDelaySeconds": 3,
                         "timeoutSeconds": 1,
                         "periodSeconds": 1,
                         "successThreshold": 1,
