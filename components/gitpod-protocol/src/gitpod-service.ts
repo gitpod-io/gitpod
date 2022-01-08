@@ -71,8 +71,14 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
     getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
     getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
+    /**
+     * **Security:**
+     * Sensitive information like an owner token is erased, since it allows access for all team members.
+     * If you need to access an owner token use `getOwnerToken` instead.
+     */
     getWorkspace(id: string): Promise<WorkspaceInfo>;
     isWorkspaceOwner(workspaceId: string): Promise<boolean>;
+    getOwnerToken(workspaceId: string): Promise<string>;
 
     /**
      * Creates and starts a workspace for the given context URL.
