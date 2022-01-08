@@ -1,6 +1,8 @@
 # Change Log
 
 ## January 2022
+- Adds analytic tracking to git commands requiring the git credential manager (remote-facing commands) ([#7463](https://github.com/gitpod-io/gitpod/pull/7463)) - [@filiptronicek](https://github.com/filiptronicek)
+- Use repository org and name for workspace ids. ([#7391](https://github.com/gitpod-io/gitpod/pull/7391)) - [@svenefftinge](https://github.com/svenefftinge)
 - Add dotfile repo support ([#7337](https://github.com/gitpod-io/gitpod/pull/7337)) - [@csweichel](https://github.com/csweichel)
 - Restore page bottom margin ([#7388](https://github.com/gitpod-io/gitpod/pull/7388)) - [@gtsiolis](https://github.com/gtsiolis)
 - [Installer]: simplify container image mirroring ([#7156](https://github.com/gitpod-io/gitpod/pull/7156)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
