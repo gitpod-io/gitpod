@@ -39,6 +39,10 @@ var Helm = common.CompositeHelmFunc(
 					helm.KeyValue("mysql.metrics.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
 					helm.ImagePullSecrets("mysql.volumePermissions.image.pullSecrets", cfg),
 					helm.KeyValue("mysql.volumePermissions.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+
+					// improve start time
+					helm.KeyValue("mysql.primary.startupProbe.enabled", "false"),
+					helm.KeyValue("mysql.primary.livenessProbe.initialDelaySeconds", "30"),
 				},
 				// This is too complex to be sent as a string
 				FileValues: []string{
