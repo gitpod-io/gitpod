@@ -1,6 +1,7 @@
 # Change Log
 
 ## January 2022
+- [installer]: use a pointer deref if the ssh gateway secret does not exist ([#7508](https://github.com/gitpod-io/gitpod/pull/7508)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Adds analytic tracking to git commands requiring the git credential manager (remote-facing commands) ([#7463](https://github.com/gitpod-io/gitpod/pull/7463)) - [@filiptronicek](https://github.com/filiptronicek)
 - Use repository org and name for workspace ids. ([#7391](https://github.com/gitpod-io/gitpod/pull/7391)) - [@svenefftinge](https://github.com/svenefftinge)
 - Add dotfile repo support ([#7337](https://github.com/gitpod-io/gitpod/pull/7337)) - [@csweichel](https://github.com/csweichel)
