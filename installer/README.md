@@ -118,6 +118,10 @@ kubectl get configmaps gitpod-app -o jsonpath='{.data.app\.yaml}' \
 cluster. This will include `Secrets` generated from internal `Certificates`
 and `PersistentVolumeClaims`. These will need to be manually deleted.
 
+[Batch jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/) are
+not included in this ConfigMap by design. These have `ttlSecondsAfterFinished`
+defined in the spec and so will be deleted shortly after the jobs have run.
+
 # Advanced topics
 
 ## Post-processing the YAML
