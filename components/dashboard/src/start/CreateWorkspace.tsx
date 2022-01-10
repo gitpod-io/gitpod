@@ -261,7 +261,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
       if (!userScopes.includes(missingScope)) {
         setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
           <p className="text-base text-gray-400 w-96">The repository may be private. Please authorize Gitpod to access to private repositories.</p>
-          <a className="mx-auto" href={authorizeURL}><button className="secondary">Grant Access</button></a>
+          <a className="mx-auto" href={authorizeURL}><button>Grant Access</button></a>
         </div>);
         return;
       }
@@ -286,14 +286,14 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
       if (!updatedRecently) {
         setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
           <p className="text-base text-gray-400 w-96">Permission to access private repositories has been granted. If you are a member of <CodeText>{owner}</CodeText>, please try to request access for Gitpod.</p>
-          <a className="mx-auto" href={authorizeURL}><button className="secondary">Request Access for Gitpod</button></a>
+          <a className="mx-auto" href={authorizeURL}><button>Request Access for Gitpod</button></a>
         </div>);
         return;
       }
 
       setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
         <p className="text-base text-gray-400 w-96">Your access token was updated recently. Please try again if the repository exists and Gitpod was approved for <CodeText>{owner}</CodeText>.</p>
-        <a className="mx-auto" href={authorizeURL}><button className="secondary">Try Again</button></a>
+        <a className="mx-auto" href={authorizeURL}><button>Try Again</button></a>
       </div>);
     })();
   }, []);
