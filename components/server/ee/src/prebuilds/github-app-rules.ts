@@ -11,6 +11,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 const defaultConfig: GithubAppConfig = {
     prebuilds: {
+        addCheck: true,
         addBadge: false,
         addComment: false,
         addLabel: false,
@@ -59,7 +60,7 @@ export class GithubAppRules {
         }
     }
 
-    public shouldDo(cfg: WorkspaceConfig | undefined, action: 'addBadge' | 'addLabel' | 'addComment'): boolean {
+    public shouldDo(cfg: WorkspaceConfig | undefined, action: 'addCheck' | 'addBadge' | 'addLabel' | 'addComment'): boolean {
         const config = this.mergeWithDefaultConfig(cfg);
         const prebuildCfg = config.prebuilds!;
 
@@ -67,7 +68,9 @@ export class GithubAppRules {
             return !!prebuildCfg;
         }
 
-        if (action === 'addBadge') {
+        if (action === 'addCheck') {
+            return !!prebuildCfg.addCheck;
+        } else if (action === 'addBadge') {
             return !!prebuildCfg.addBadge;
         } else if (action === 'addLabel') {
             return !!prebuildCfg.addLabel;
