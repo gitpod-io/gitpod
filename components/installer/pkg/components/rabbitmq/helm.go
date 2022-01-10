@@ -7,10 +7,8 @@ package rabbitmq
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"helm.sh/helm/v3/pkg/cli/values"
-	"sigs.k8s.io/yaml"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -108,67 +106,11 @@ type config struct {
 	Policies    []policy     `json:"policies"`
 }
 
-func generateParameters(username string, password string, input []parameter) ([]parameter, error) {
-	// Ensures this defaults to [] not null when marshalled to JSON
-	params := make([]parameter, 0)
-
-	for _, item := range input {
-		// Sort out default values
-		if item.Name == "" {
-			name, err := common.RandomString(20)
-			if err != nil {
-				return nil, err
-			}
-			item.Name = name
-		}
-		if item.Values.SrcExchange == "" {
-			item.Values.SrcExchange = "gitpod.ws.local"
-		}
-		if item.Values.SrcExchangeKey == "" {
-			item.Values.SrcExchangeKey = "#"
-		}
-		if item.Values.DestExchange == "" {
-			item.Values.DestExchange = "gitpod.ws"
-		}
-		if item.Values.DestUri == "" {
-			item.Values.DestUri = "amqp://"
-		}
-
-		srcUri := strings.Replace(item.Values.SrcUri, "$USERNAME", username, -1)
-		srcUri = strings.Replace(srcUri, "$PASSWORD", password, -1)
-
-		params = append(params, parameter{
-			Name:      item.Name,
-			Vhost:     "/",
-			Component: "shovel",
-			Values: parameterValues{
-				AckMode:               "on-publish",
-				SrcDeleteAfter:        "never",
-				SrcExchange:           item.Values.SrcExchange,
-				SrcExchangeKey:        item.Values.SrcExchangeKey,
-				SrcProtocol:           "amqp091",
-				SrcUri:                srcUri,
-				DestAddForwardHeaders: item.Values.DestAddForwardHeaders,
-				DestExchange:          item.Values.DestExchange,
-				DestProtocol:          "amqp091",
-				DestUri:               item.Values.DestUri,
-				ReconnectDelay:        item.Values.ReconnectDelay,
-			},
-		})
-	}
-	return params, nil
-}
-
 var Helm = common.CompositeHelmFunc(
 	helm.ImportTemplate(charts.RabbitMQ(), helm.TemplateConfig{}, func(cfg *common.RenderContext) (*common.HelmConfig, error) {
 		username := "gitpod"
 
 		password := cfg.Values.MessageBusPassword
-
-		parameters, err := generateParameters(username, password, []parameter{})
-		if err != nil {
-			return nil, err
-		}
 
 		loadDefinition, err := json.Marshal(config{
 			Users: []user{{
@@ -177,7 +119,7 @@ var Helm = common.CompositeHelmFunc(
 				Tags:     "administrator",
 			}},
 			Vhosts:     []vhost{{Name: "/"}},
-			Parameters: parameters,
+			Parameters: []parameter{},
 			Permissions: []permission{{
 				User:      username,
 				Vhost:     "/",
@@ -186,22 +128,10 @@ var Helm = common.CompositeHelmFunc(
 				Read:      ".*",
 			}},
 			Exchanges: []exchange{{
-				Name:       "gitpod.ws",
-				Vhost:      "/",
-				Type:       "topic",
-				Durable:    true,
-				AutoDelete: false,
-			}, {
 				Name:       "gitpod.ws.local",
 				Vhost:      "/",
 				Type:       "topic",
 				Durable:    true,
-				AutoDelete: false,
-			}, {
-				Name:       "wsman",
-				Vhost:      "/",
-				Type:       "topic",
-				Durable:    false,
 				AutoDelete: false,
 			}, {
 				Name:       "consensus-leader",
@@ -210,14 +140,7 @@ var Helm = common.CompositeHelmFunc(
 				Durable:    false,
 				AutoDelete: false,
 			}},
-			Bindings: []binding{{
-				Source:          "gitpod.ws.local",
-				Vhost:           "/",
-				Destination:     "gitpod.ws",
-				DestinationType: "exchange",
-				RoutingKey:      "#",
-				Arguments:       arguments{},
-			}},
+			Bindings: []binding{},
 			Queues: []queue{{
 				Name:       "consensus-peers",
 				Vhost:      "/",
@@ -247,16 +170,6 @@ var Helm = common.CompositeHelmFunc(
 		}
 
 		loadDefinitionFilename, err := helm.KeyFileValue("rabbitmq.extraSecrets.load-definition.load_definition\\.json", loadDefinition)
-		if err != nil {
-			return nil, err
-		}
-
-		shovelsTemplate, err := yaml.Marshal(parameters)
-		if err != nil {
-			return nil, err
-		}
-
-		shovelsTemplateFileName, err := helm.KeyFileValue("shovelsTemplate", shovelsTemplate)
 		if err != nil {
 			return nil, err
 		}
@@ -293,7 +206,6 @@ var Helm = common.CompositeHelmFunc(
 				FileValues: []string{
 					affinityTemplate,
 					loadDefinitionFilename,
-					shovelsTemplateFileName,
 				},
 			},
 		}, nil

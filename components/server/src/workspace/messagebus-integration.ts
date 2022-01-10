@@ -176,7 +176,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         await this.messageBusHelper.assertWorkspaceExchange(this.channel);
 
         // TODO(at) clarify on the exchange level
-        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE, topic, Buffer.from(JSON.stringify(prebuildInfo)));
+        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, Buffer.from(JSON.stringify(prebuildInfo)));
     }
 
     async notifyOnInstanceUpdate(userId: string, instance: WorkspaceInstance) {

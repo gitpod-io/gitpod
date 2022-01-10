@@ -580,9 +580,6 @@ mysql:
 rabbitmq:
   enabled: true
   fullnameOverride: "messagebus"
-  # non-standard configuration
-  # defined by gitpod.io
-  shovels: []
   persistence:
     enabled: false
   replicaCount: 1
@@ -605,7 +602,7 @@ rabbitmq:
     enabled: true
     allowExternal: true
   plugins: "rabbitmq_management rabbitmq_peer_discovery_k8s"
-  extraPlugins: "rabbitmq_shovel rabbitmq_shovel_management"
+  extraPlugins: ""
   extraSecrets:
     load-definition:
       load_definition.json: |
@@ -618,7 +615,7 @@ rabbitmq:
           "vhosts": [{
             "name": "/"
           }],
-          "parameters": {{ tpl (.Values.shovelsTemplate) . | fromYamlArray | toJson }},
+          "parameters": [],
           "permissions": [{
             "user": {{ .Values.auth.username | quote }},
             "vhost": "/",
@@ -627,22 +624,10 @@ rabbitmq:
             "read": ".*"
           }],
           "exchanges": [{
-            "name": "gitpod.ws",
-            "vhost": "/",
-            "type": "topic",
-            "durable": true,
-            "auto_delete": false
-          }, {
             "name": "gitpod.ws.local",
             "vhost": "/",
             "type": "topic",
             "durable": true,
-            "auto_delete": false
-          }, {
-            "name": "wsman",
-            "vhost": "/",
-            "type": "topic",
-            "durable": false,
             "auto_delete": false
           }, {
             "name": "consensus-leader",
@@ -651,14 +636,7 @@ rabbitmq:
             "durable": false,
             "auto_delete": false
           }],
-          "bindings": [{
-            "source": "gitpod.ws.local",
-            "vhost": "/",
-            "destination": "gitpod.ws",
-            "destination_type": "exchange",
-            "routing_key": "#",
-            "arguments": {}
-          }],
+          "bindings": [],
           "queues": [{
             "name": "consensus-peers",
             "vhost": "/",
@@ -694,25 +672,6 @@ rabbitmq:
     create: true
     minAvailable: 0
     maxUnavailable: 1
-  shovelsTemplate: |
-    {{ $auth := .Values.auth }}
-    {{- range $index, $shovel := .Values.shovels }}
-    - name: {{ $shovel.name | default (randAlphaNum 20) | quote }}
-      vhost: "/"
-      component: "shovel"
-      value:
-        ack-mode: "on-publish"
-        src-delete-after: "never"
-        src-exchange: {{ $shovel.srcExchange | default "gitpod.ws.local" | quote }}
-        src-exchange-key: {{ $shovel.srcExchangeKey | default "#" | quote  }}
-        src-protocol: "amqp091"
-        src-uri: {{ $shovel.srcUri | replace "$USERNAME" $auth.username | replace "$PASSWORD" $auth.password | quote }}
-        dest-add-forward-headers: {{ $shovel.destAddForwardHeaders | default true }}
-        dest-exchange: {{ $shovel.destExchange | default "gitpod.ws" | quote }}
-        dest-protocol: "amqp091"
-        dest-uri: {{ $shovel.destUri | default "amqp://" | quote }}
-        reconnect-delay: {{ $shovel.reconnectDelay | default 5 }}
-    {{- end }}
 
 cert-manager:
   enabled: false

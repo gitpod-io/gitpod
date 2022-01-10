@@ -76,7 +76,7 @@ const ASTERISK = "*";
 
 @injectable()
 export class MessageBusHelperImpl implements MessageBusHelper {
-    readonly workspaceExchange = MessageBusHelperImpl.WORKSPACE_EXCHANGE;
+    readonly workspaceExchange = MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL;
 
     /**
      * Ensures that the gitpod workspace exchange is present
@@ -155,7 +155,6 @@ export class MessageBusHelperImpl implements MessageBusHelper {
 }
 
 export namespace MessageBusHelperImpl {
-    export const WORKSPACE_EXCHANGE = "gitpod.ws";
     export const WORKSPACE_EXCHANGE_LOCAL = "gitpod.ws.local";
     export const PREBUILD_UPDATABLE_QUEUE = "pwsupdatable";
 }
