@@ -5,10 +5,11 @@
 package common
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	"regexp"
 	"sort"
 	"strings"
+
+	corev1 "k8s.io/api/core/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -84,7 +85,8 @@ func GenerateInstallationConfigMap(ctx *RenderContext, objects []RuntimeObject) 
 
 	// Convert to a simplified object that allows us to access the objects
 	for _, c := range objects {
-		if c.Kind != "" {
+		// Jobs are excluded as they break uninstallation if they've been cleaned up
+		if c.Kind != "" && !(c.APIVersion == TypeMetaBatchJob.APIVersion && c.Kind == TypeMetaBatchJob.Kind) {
 			marshal, err := yaml.Marshal(c)
 			if err != nil {
 				return nil, err
