@@ -4,6 +4,30 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+
+export enum HeadlessWorkspaceEventType {
+    LogOutput = "log-output",
+    FinishedSuccessfully = "finish-success",
+    FinishedButFailed = "finish-fail",
+    AbortedTimedOut = "aborted-timeout",
+    Aborted = "aborted",
+    Started = "started"
+}
+export namespace HeadlessWorkspaceEventType {
+    export function isRunning(t: HeadlessWorkspaceEventType) {
+        return t === HeadlessWorkspaceEventType.LogOutput;
+    }
+    export function didFinish(t: HeadlessWorkspaceEventType) {
+        return t === HeadlessWorkspaceEventType.FinishedButFailed || t === HeadlessWorkspaceEventType.FinishedSuccessfully;
+    }
+}
+
+export interface HeadlessWorkspaceEvent {
+    workspaceID: string;
+    text: string;
+    type: HeadlessWorkspaceEventType;
+}
+
 export interface HeadlessLogUrls {
     // A map of id to URL
     streams: { [streamID: string]: string };

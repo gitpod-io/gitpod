@@ -8,6 +8,7 @@ import { WorkspaceManagerBridge } from "../../src/bridge";
 import { injectable } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType, WorkspacePhase } from "@gitpod/ws-manager/lib";
+import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
@@ -61,27 +62,42 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 prebuild.state = "building";
 
                 await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
+                await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessWorkspaceEvent>{
+                    type: HeadlessWorkspaceEventType.Started,
+                    workspaceID: workspaceId,
+                });
             }
 
             if (status.phase === WorkspacePhase.STOPPING) {
+                let headlessUpdateType: HeadlessWorkspaceEventType = HeadlessWorkspaceEventType.Aborted;
                 if (!!status.conditions!.timeout) {
                     prebuild.state = "timeout";
                     prebuild.error = status.conditions!.timeout;
+                    headlessUpdateType = HeadlessWorkspaceEventType.AbortedTimedOut;
                 } else if (!!status.conditions!.failed) {
                     prebuild.state = "aborted";
                     prebuild.error = status.conditions!.failed;
+                    headlessUpdateType = HeadlessWorkspaceEventType.Aborted;
                 } else if (!!status.conditions!.stoppedByRequest) {
                     prebuild.state = "aborted";
                     prebuild.error = "Cancelled";
+                    headlessUpdateType = HeadlessWorkspaceEventType.Aborted;
                 } else if (!!status.conditions!.headlessTaskFailed) {
                     prebuild.state = "available";
                     prebuild.error = status.conditions!.headlessTaskFailed;
                     prebuild.snapshot = status.conditions!.snapshot;
+                    headlessUpdateType = HeadlessWorkspaceEventType.FinishedButFailed;
                 } else {
                     prebuild.state = "available";
                     prebuild.snapshot = status.conditions!.snapshot;
+                    headlessUpdateType = HeadlessWorkspaceEventType.FinishedSuccessfully;
                 }
                 await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
+
+                await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessWorkspaceEvent>{
+                    type: headlessUpdateType,
+                    workspaceID: workspaceId,
+                });
             }
 
             { // notify about prebuild updated
