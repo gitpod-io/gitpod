@@ -182,7 +182,7 @@ export namespace ConfigFile {
         if (rawProviderConfigFiles) {
             /* Add providers from files */
             const authProviderConfigFiles: AuthProviderParams[] = rawProviderConfigFiles.map<AuthProviderParams>((providerFile) => {
-                const rawProviderData = fs.readFileSync(providerFile, "utf-8")
+                const rawProviderData = fs.readFileSync(filePathTelepresenceAware(providerFile), "utf-8")
 
                 return yaml.load(rawProviderData) as AuthProviderParams
             });
@@ -200,7 +200,7 @@ export namespace ConfigFile {
         let license = config.license
         const licenseFile = config.licenseFile
         if (licenseFile) {
-            license = fs.readFileSync(licenseFile, "utf-8");
+            license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
         }
         return {
             ...config,

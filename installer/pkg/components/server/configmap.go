@@ -59,8 +59,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		AuthProviderConfigFiles: func() []string {
 			providers := make([]string, 0)
 
+			// Appending "/provider" here in order to play nicely with the telepresence hack
 			for _, provider := range ctx.Config.AuthProviders {
-				providers = append(providers, fmt.Sprintf("%s/%s", authProviderFilePath, provider.Name))
+				providers = append(providers, fmt.Sprintf("%s/%s/provider", authProviderFilePath, provider.Name))
 			}
 
 			return providers

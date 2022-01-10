@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -72,7 +73,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
 				Name:      volumeName,
 				MountPath: fmt.Sprintf("%s/%s", authProviderFilePath, provider.Name),
-				SubPath:   "provider",
 				ReadOnly:  true,
 			})
 		}
