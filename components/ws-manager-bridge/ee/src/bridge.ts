@@ -10,7 +10,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType, WorkspacePhase } from "@gitpod/ws-manager/lib";
 import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
@@ -38,15 +38,14 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
         }
     }
 
-    protected async updatePrebuiltWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject) {
+    protected async updatePrebuiltWorkspace(ctx: TraceContext, userId: string, status: WorkspaceStatus.AsObject, writeToDB: boolean) {
         if (status.spec && status.spec.type != WorkspaceType.PREBUILD) {
             return;
         }
 
         const instanceId = status.id!;
         const workspaceId = status.metadata!.metaId!;
-        const userId = status.metadata!.owner!;
-        const logCtx = { instanceId, workspaceId, userId };
+        const logCtx: LogContext = { instanceId, workspaceId, userId };
 
         const span = TraceContext.startSpan("updatePrebuiltWorkspace", ctx);
         try {
@@ -56,12 +55,15 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 TraceContext.setError({span}, new Error("headless workspace without prebuild"));
                 return
             }
+            span.setTag("updatePrebuiltWorkspace.prebuildId", prebuild.id);
 
             if (prebuild.state === 'queued') {
                 // We've received an update from ws-man for this workspace, hence it must be running.
                 prebuild.state = "building";
 
-                await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
+                if (writeToDB) {
+                    await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
+                }
                 await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessWorkspaceEvent>{
                     type: HeadlessWorkspaceEventType.Started,
                     workspaceID: workspaceId,
@@ -92,15 +94,19 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     prebuild.snapshot = status.conditions!.snapshot;
                     headlessUpdateType = HeadlessWorkspaceEventType.FinishedSuccessfully;
                 }
-                await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
 
+                if (writeToDB) {
+                    await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
+                }
+
+                // notify updates
+                // headless update
                 await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessWorkspaceEvent>{
                     type: headlessUpdateType,
                     workspaceID: workspaceId,
                 });
-            }
 
-            { // notify about prebuild updated
+                // prebuild info
                 const info = (await this.workspaceDB.trace({span}).findPrebuildInfos([prebuild.id]))[0];
                 if (info) {
                     this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });

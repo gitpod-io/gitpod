@@ -59,22 +59,32 @@ export class WorkspaceManagerBridge implements Disposable {
     protected cluster: WorkspaceClusterInfo;
 
     public start(cluster: WorkspaceClusterInfo, clientProvider: ClientProvider) {
-        const logPayload = { name: cluster.name, url: cluster.url };
+        const logPayload = { name: cluster.name, url: cluster.url, govern: cluster.govern };
         log.info(`starting bridge to cluster...`, logPayload);
         this.cluster = cluster;
 
-        if (cluster.govern) {
-            log.debug(`starting DB updater: ${cluster.name}`, logPayload);
-            /* no await */ this.startDatabaseUpdater(clientProvider, logPayload)
+        const startStatusUpdateHandler = (writeToDB: boolean) => {
+            log.debug(`starting status update handler: ${cluster.name}`, logPayload);
+            /* no await */ this.startStatusUpdateHandler(clientProvider, writeToDB, logPayload)
                 // this is a mere safe-guard: we do not expect the code inside to fail
-                .catch(err => log.error("cannot start database updater", err));
+                .catch(err => log.error("cannot start status update handler", err));
+        };
 
+        if (cluster.govern) {
+            // notify servers and _update the DB_
+            startStatusUpdateHandler(true);
+
+            // the actual "governing" part
             const controllerInterval = this.config.controllerIntervalSeconds;
             if (controllerInterval <= 0) {
                 throw new Error("controllerInterval <= 0!");
             }
             log.debug(`starting controller: ${cluster.name}`, logPayload);
             this.startController(clientProvider, controllerInterval, this.config.controllerMaxDisconnectSeconds);
+        } else {
+            // _DO NOT_ update the DB (another bridge is responsible for that)
+            // Still, listen to all updates, generate/derive new state and distribute it locally!
+            startStatusUpdateHandler(false);
         }
         log.info(`started bridge to cluster.`, logPayload);
     }
@@ -83,15 +93,15 @@ export class WorkspaceManagerBridge implements Disposable {
         this.dispose();
     }
 
-    protected async startDatabaseUpdater(clientProvider: ClientProvider, logPayload: {}): Promise<void> {
+    protected async startStatusUpdateHandler(clientProvider: ClientProvider, writeToDB: boolean, logPayload: {}): Promise<void> {
         const subscriber = new WsmanSubscriber(clientProvider);
         this.disposables.push(subscriber);
 
         const onReconnect = (ctx: TraceContext, s: WorkspaceStatus[]) => {
-            s.forEach(sx => this.serializeMessagesByInstanceId<WorkspaceStatus>(ctx, sx, m => m.getId(), (ctx, msg) => this.handleStatusUpdate(ctx, msg)))
+            s.forEach(sx => this.serializeMessagesByInstanceId<WorkspaceStatus>(ctx, sx, m => m.getId(), (ctx, msg) => this.handleStatusUpdate(ctx, msg, writeToDB)))
         };
         const onStatusUpdate = (ctx: TraceContext, s: WorkspaceStatus) => {
-            this.serializeMessagesByInstanceId<WorkspaceStatus>(ctx, s, msg => msg.getId(), (ctx, s) => this.handleStatusUpdate(ctx, s))
+            this.serializeMessagesByInstanceId<WorkspaceStatus>(ctx, s, msg => msg.getId(), (ctx, s) => this.handleStatusUpdate(ctx, s, writeToDB))
         };
         await subscriber.subscribe({ onReconnect, onStatusUpdate }, logPayload);
     }
@@ -110,7 +120,7 @@ export class WorkspaceManagerBridge implements Disposable {
         this.queues.set(instanceId, q);
     }
 
-    protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {
+    protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
         const status = rawStatus.toObject();
         if (!status.spec || !status.metadata || !status.conditions) {
             log.warn("Received invalid status update", status);
@@ -123,6 +133,7 @@ export class WorkspaceManagerBridge implements Disposable {
 
         const span = TraceContext.startSpan("handleStatusUpdate", ctx);
         span.setTag("status", JSON.stringify(filterStatus(status)));
+        span.setTag("writeToDB", writeToDB);
         try {
             // Beware of the ID mapping here: What's a workspace to the ws-manager is a workspace instance to the rest of the system.
             //                                The workspace ID of ws-manager is the workspace instance ID in the database.
@@ -246,20 +257,26 @@ export class WorkspaceManagerBridge implements Disposable {
                     break;
             }
 
-            await this.updatePrebuiltWorkspace({span}, status);
-
             span.setTag("after", JSON.stringify(instance));
-            await this.workspaceDB.trace({span}).storeInstance(instance);
-            await this.messagebus.notifyOnInstanceUpdate({span}, userId, instance);
 
-            // important: call this after the DB update
-            await this.cleanupProbeWorkspace({span}, status);
+            // now notify all prebuild listeners about updates - and update DB if needed
+            await this.updatePrebuiltWorkspace({span}, userId, status, writeToDB);
 
-            if (!!lifecycleHandler) {
-                await lifecycleHandler();
+            if (writeToDB) {
+                await this.workspaceDB.trace(ctx).storeInstance(instance);
+
+                // cleanup
+                // important: call this after the DB update
+                await this.cleanupProbeWorkspace(ctx, status);
+
+                if (!!lifecycleHandler) {
+                    await lifecycleHandler();
+                }
             }
+            await this.messagebus.notifyOnInstanceUpdate(ctx, userId, instance);
+
         } catch (e) {
-            TraceContext.setError({ span }, e);
+            TraceContext.setError({span}, e);
             throw e;
         } finally {
             span.finish();
@@ -321,7 +338,7 @@ export class WorkspaceManagerBridge implements Disposable {
         // probes are an EE feature - we just need the hook here
     }
 
-    protected async updatePrebuiltWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject) {
+    protected async updatePrebuiltWorkspace(ctx: TraceContext, userId: string, status: WorkspaceStatus.AsObject, writeToDB: boolean) {
         // prebuilds are an EE feature - we just need the hook here
     }
 
