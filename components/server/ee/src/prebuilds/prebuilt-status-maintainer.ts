@@ -10,7 +10,7 @@ import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db
 import { v4 as uuidv4 } from 'uuid';
 import { HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { PrebuiltWorkspaceUpdatable, PrebuiltWorkspace, Disposable, DisposableCollection } from '@gitpod/gitpod-protocol';
+import { PrebuiltWorkspaceUpdatable, PrebuiltWorkspace, Disposable, DisposableCollection, WorkspaceConfig } from '@gitpod/gitpod-protocol';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { LocalMessageBroker } from '../../../src/messaging/local-message-broker';
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
@@ -49,7 +49,7 @@ export class PrebuildStatusMaintainer implements Disposable {
         log.debug("prebuild updatatable status maintainer started");
     }
 
-    public async registerCheckRun(ctx: TraceContext, installationId: number, pws: PrebuiltWorkspace, cri: CheckRunInfo) {
+    public async registerCheckRun(ctx: TraceContext, installationId: number, pws: PrebuiltWorkspace, cri: CheckRunInfo, config?: WorkspaceConfig) {
         const span = TraceContext.startSpan("registerCheckRun", ctx);
         span.setTag("pws-state", pws.state);
 
@@ -88,9 +88,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                     target_url: cri.details_url,
                     context: "Gitpod",
                     description: conclusion == 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
-
-                    // at the moment we run in 'evergreen' mode where we always report success for status checks
-                    state: "success",
+                    state: (config?.github?.prebuilds?.addCheck === 'prevent-merge-on-error' ? conclusion : 'success')
                 });
             }
         } catch (err) {

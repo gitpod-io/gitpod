@@ -271,8 +271,8 @@ export class GithubApp {
             await this.statusMaintainer.registerCheckRun({ span }, installationId, pws, {
                 ...ctx.repo(),
                 head_sha: ctx.payload.pull_request.head.sha,
-                details_url: this.config.hostUrl.withContext(ctx.payload.pull_request.html_url).toString()
-            });
+                details_url: this.config.hostUrl.withContext(ctx.payload.pull_request.html_url).toString(),
+            }, config);
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;

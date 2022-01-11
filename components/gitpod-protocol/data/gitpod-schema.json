@@ -184,6 +184,18 @@
                             "type": "boolean",
                             "description": "Add a Review in Gitpod badge to pull requests. Defaults to true."
                         },
+                        "addCheck": {
+                            "type": [
+                                "boolean",
+                                "string"
+                            ],
+                            "enum": [
+                                true,
+                                false,
+                                "prevent-merge-on-error"
+                            ],
+                            "description": "Add a commit check to pull requests. Set to 'fail-on-error' if you want broken prebuilds to block merging. Defaults to true."
+                        },
                         "addLabel": {
                             "type": [
                                 "boolean",
