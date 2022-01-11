@@ -23,6 +23,9 @@ pod:
   - name: gpsh-coredev-license
     secret:
       secretName: gpsh-coredev-license
+  - name: gpsh-harvester-license
+    secret:
+      secretName: gpsh-harvester-license
   - name: payment-provider-secret
     secret:
       secretName: payment-provider-secret
@@ -73,6 +76,9 @@ pod:
       readOnly: true
     - name: gpsh-coredev-license
       mountPath: /mnt/secrets/gpsh-coredev
+      readOnly: true
+    - name: gpsh-harvester-license
+      mountPath: /mnt/secrets/gpsh-harvester
       readOnly: true
     - name: payment-webhook-secret
       mountPath: /mnt/secrets/payment-webhook-config
