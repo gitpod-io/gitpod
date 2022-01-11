@@ -12,6 +12,7 @@ install_dependencies() {
     go install github.com/golang/mock/mockgen@v1.6.0
 
     go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.6.0
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.6.0
 
     curl -sSo /tmp/protoc-gen-grpc-java https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/1.41.0/protoc-gen-grpc-java-1.41.0-linux-x86_64.exe
     chmod +x /tmp/protoc-gen-grpc-java

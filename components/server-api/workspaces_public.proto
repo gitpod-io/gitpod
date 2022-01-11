@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package server;
+option go_package = "github.com/gitpod-io/gitpod/server/api";
+option java_package = "io.gitpod.server.api";
+
+service Workspaces {
+    rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
+    rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
+    rpc CreateWorkspace(CreateWorkspaceRequest) returns (CreateWorkspaceResponse) {}
+    rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+    rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse) {}
+    rpc WatchWorkspaces(WatchWorkspacesRequest) returns (stream WatchWorkspacesResponse) {}
+
+    rpc GetWorkspaceInstance(GetWorkspaceInstanceRequest) returns (GetWorkspaceInstanceResponse) {}
+    rpc ListWorkspaceInstances(ListWorkspaceInstancesRequest) returns (ListWorkspaceInstancesResponse) {}
+    rpc GetRunningWorkspaceInstance(GetRunningWorkspaceInstanceRequest) returns (GetRunningWorkspaceInstanceResponse) {}
+}
+
+message GetWorkspaceRequest {
+    string id = 1;
+}
+message GetWorkspaceResponse {
+    Workspace workspace = 1;
+}
+
+message ListWorkspacesRequest {
+    string user_id = 1;
+}
+message ListWorkspacesResponse {
+    repeated Workspace workspaces = 1;
+}
+
+message CreateWorkspaceRequest {
+    string context_url = 1;
+}
+message CreateWorkspaceResponse {
+    Workspace workspace = 1;
+}
+
+message StartWorkspaceRequest {
+    string workspace_id = 1;
+}
+message StartWorkspaceResponse {
+    WorkspaceInstance instance = 1;
+}
+
+message StopWorkspaceRequest {
+    string workspace_id = 1;
+}
+message StopWorkspaceResponse {}
+
+message WatchWorkspacesRequest {
+    oneof criterion {
+        // watches all workspaces of a user
+        string owner_id = 1;
+        // watches all instances of a workspace
+        string workspace_id = 2;
+        // watches a single instance
+        string instance_id = 3;
+    }
+}
+message WatchWorkspacesResponse {
+    WorkspaceInstance instance = 1;
+}
+
+message GetWorkspaceInstanceRequest {
+    string id = 1;
+}
+message GetWorkspaceInstanceResponse {
+    WorkspaceInstance instance = 1;
+}
+
+message ListWorkspaceInstancesRequest {
+    oneof criterion {
+        string user_id = 1;
+        string workspace_id = 2;
+    };
+}
+message ListWorkspaceInstancesResponse {
+    repeated WorkspaceInstance instances = 1;
+}
+
+message GetRunningWorkspaceInstanceRequest {
+    string workspace_id = 1;
+}
+message GetRunningWorkspaceInstanceResponse {
+    WorkspaceInstance instance = 1;
+}
+
+message Workspace {
+    string id = 1;
+    string owner = 2;
+}
+
+message WorkspaceInstance {
+    string id = 1;
+    string workspace_id = 2;
+}
