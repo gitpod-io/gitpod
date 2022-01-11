@@ -170,7 +170,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         this.jsonRpcConnectionHandler.onConnection(connection, session);
     }
 
-    protected createProxyTarget(client: JsonRpcProxy<GitpodApiClient>, request?: object): GitpodServerImpl {
+    protected createProxyTarget(client: JsonRpcProxy<GitpodApiClient>, request?: object, connectionCtx?: TraceContext): GitpodServerImpl {
         const expressReq = request as express.Request;
         const session = expressReq.session;
         const user: User | undefined = expressReq.user;
@@ -200,7 +200,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
         };
 
-        gitpodServer.initialize(client, user, resourceGuard, clientContext.clientMetadata, clientHeaderFields);
+        gitpodServer.initialize(client, user, resourceGuard, clientContext.clientMetadata, connectionCtx, clientHeaderFields);
         client.onDidCloseConnection(() => {
             gitpodServer.dispose();
             increaseApiConnectionClosedCounter();
@@ -268,10 +268,10 @@ export class WebsocketConnectionManager implements ConnectionHandler {
 class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnectionHandler<T> {
     constructor(
         readonly path: string,
-        readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object) => any,
+        readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object, connectionCtx?: TraceContext) => any,
         readonly rateLimiterConfig: RateLimiterConfig,
     ) {
-        super(path, targetFactory);
+        super(path, targetFactory); // targetFactory has to adhere to the interface here, but is not used, because we override "onConnection" below
     }
 
     onConnection(connection: MessageConnection, request?: object): void {
@@ -294,7 +294,7 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
             ctx,
         );
         const proxy = factory.createProxy();
-        factory.target = this.targetFactory(proxy, request);
+        factory.target = this.targetFactory(proxy, request, ctx);
         factory.listen(connection);
     }
 
