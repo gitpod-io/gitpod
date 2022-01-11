@@ -21,6 +21,7 @@ import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApi
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import * as opentracing from 'opentracing';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -30,31 +31,29 @@ const EVENT_CLIENT_CONTEXT_CREATED = "EVENT_CLIENT_CONTEXT_CREATED";
 const EVENT_CLIENT_CONTEXT_CLOSED = "EVENT_CLIENT_CONTEXT_CLOSED";
 
 /** TODO(gpl) Refine this list */
-export type WebsocketClientType = "browser" | "go-client" | "vs-code" | "supervisor" | "local-companion";
+export type WebsocketClientType = "browser" | "go-client" | "gitpod-code" | "supervisor" | "local-companion";
 namespace WebsocketClientType {
     export function getClientType(req: express.Request): WebsocketClientType | undefined {
         const userAgent = req.headers["user-agent"];
 
-        if (!userAgent) {
-            return undefined;
+        let result: WebsocketClientType | undefined = undefined;
+        if (userAgent) {
+            if (userAgent.startsWith("Go-http-client")) {
+                result = "go-client";
+            } else if (userAgent.startsWith("Mozilla")) {
+                result = "browser";
+            } else if (userAgent.startsWith("Gitpod Code")) {
+                result = "gitpod-code";
+            } else if (userAgent.startsWith("gitpod/supervisor")) {
+                result = "supervisor";
+            } else if (userAgent.startsWith("gitpod/local-companion")) {
+                result = "local-companion";
+            }
         }
-        if (userAgent.startsWith("Go-http-client")) {
-            return "go-client";
+        if (result === undefined) {
+            log.debug("API client with unknown 'User-Agent'", req.headers);
         }
-        if (userAgent.startsWith("Mozilla")) {
-            return "browser";
-        }
-        if (userAgent.startsWith("VS Code")) {
-            return "vs-code";
-        }
-        if (userAgent.startsWith("gitpod/supervisor")) {
-            return "supervisor";
-        }
-        if (userAgent.startsWith("gitpod/local-companion")) {
-            return "local-companion";
-        }
-        log.debug("API client with unknown 'User-Agent'", userAgent);
-        return undefined;
+        return result;
     }
 }
 export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
@@ -65,9 +64,15 @@ export interface ClientMetadata {
     sessionId?: string;
     userId?: string;
     type?: WebsocketClientType;
+    origin: ClientOrigin,
+    version?: string;
+}
+interface ClientOrigin {
+    workspaceId?: string,
+    instanceId?: string,
 }
 export namespace ClientMetadata {
-    export function from(userId: string | undefined, sessionId?: string, type?: WebsocketClientType): ClientMetadata {
+    export function from(userId: string | undefined, sessionId?: string, type?: WebsocketClientType, origin?: ClientOrigin, version?: string): ClientMetadata {
         let id = "anonymous";
         let authLevel: WebsocketAuthenticationLevel = "anonymous";
         if (userId) {
@@ -77,7 +82,7 @@ export namespace ClientMetadata {
             id = `session-${sessionId}`;
             authLevel = "session";
         }
-        return { id, authLevel, userId, sessionId, type };
+        return { id, authLevel, userId, sessionId, type, origin: { ...(origin || {}) }, version };
     }
 
     export function fromRequest(req: any) {
@@ -85,7 +90,29 @@ export namespace ClientMetadata {
         const user = expressReq.user;
         const sessionId = expressReq.session?.id;
         const type = WebsocketClientType.getClientType(expressReq);
-        return ClientMetadata.from(user?.id, sessionId, type);
+        const version = takeFirst(expressReq.headers["x-client-version"]);
+        const instanceId = takeFirst(expressReq.headers["x-workspace-instance-id"]);
+        const workspaceId = getOriginWorkspaceId(expressReq);
+        const origin: ClientOrigin = {
+            instanceId,
+            workspaceId,
+        };
+        return ClientMetadata.from(user?.id, sessionId, type, origin, version);
+    }
+
+    function getOriginWorkspaceId(req: express.Request): string | undefined {
+        const origin = req.headers["origin"];
+        if (!origin) {
+            return undefined;
+        }
+
+        try {
+            const u = new GitpodHostUrl(origin);
+            return u.workspaceId;
+        } catch (err) {
+            // ignore
+            return undefined;
+        }
     }
 }
 
@@ -368,6 +395,8 @@ function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) 
             id: clientMetadata.id,
             authLevel: clientMetadata.authLevel,
             type: clientMetadata.type,
+            version: clientMetadata.version,
+            origin: clientMetadata.origin,
         },
     });
 }
