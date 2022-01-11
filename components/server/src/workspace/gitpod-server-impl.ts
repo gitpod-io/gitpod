@@ -116,6 +116,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
     public readonly clientMetadata: ClientMetadata;
+    protected connectionCtx: TraceContext | undefined = undefined;
     protected clientHeaderFields: ClientHeaderFields;
     protected resourceAccessGuard: ResourceAccessGuard;
     protected client: GitpodApiClient | undefined;
@@ -128,7 +129,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.disposables.dispose();
     }
 
-    initialize(client: GitpodApiClient | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientMetadata: ClientMetadata, clientHeaderFields: ClientHeaderFields): void {
+    initialize(client: GitpodApiClient | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientMetadata: ClientMetadata, connectionCtx: TraceContext | undefined, clientHeaderFields: ClientHeaderFields): void {
         if (client) {
             this.disposables.push(Disposable.create(() => this.client = undefined));
         }
@@ -137,6 +138,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.resourceAccessGuard = accessGuard;
         this.clientHeaderFields = clientHeaderFields;
         (this.clientMetadata as any) = clientMetadata;
+        this.connectionCtx = connectionCtx;
 
         log.debug({ userId: this.user?.id }, `clientRegion: ${clientHeaderFields.clientRegion}`);
         log.debug({ userId: this.user?.id }, 'initializeClient');
@@ -149,29 +151,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return;
         }
 
-        const withTrace = (ctx: TraceContext, cb: () => void) => {
-            // if we don't have a parent span, don't create a trace here as those <trace-without-root-spans> are not useful.
-            if (!ctx || !ctx.span || !ctx.span.context()) {
-                cb();
-                return;
-            }
-
-            const span = TraceContext.startSpan("forwardInstanceUpdateToClient", ctx);
-            try {
-                cb();
-            } catch (e) {
-                TraceContext.setError(ctx, e);
-                throw e;
-            } finally {
-                span.finish();
-            }
-        }
-
         // TODO(cw): the instance update is not subject to resource access guards, hence provides instance info
         //           to clients who might not otherwise have access to that information.
         this.disposables.push(this.localMessageBroker.listenForWorkspaceInstanceUpdates(
             this.user.id,
-            (ctx: TraceContext, instance: WorkspaceInstance) => withTrace(ctx, () => this.client?.onInstanceUpdate(this.censorInstance(instance)))
+            (ctx, instance) => TraceContext.withSpan("forwardInstanceUpdateToClient", () => this.client?.onInstanceUpdate(this.censorInstance(instance)), ctx, this.connectionCtx?.span)
         ));
 
     }

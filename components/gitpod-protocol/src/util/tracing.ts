@@ -40,6 +40,24 @@ export namespace TraceContext {
         return { span };
     }
 
+    export function withSpan(operation: string, callback: () => void, ctx?: TraceContext, ...referencedSpans: (opentracing.Span | undefined)[]): void {
+        // if we don't have a parent span, don't create a trace here as those <trace-without-root-spans> are not useful.
+        if (!ctx || !ctx.span || !ctx.span.context()) {
+            callback();
+            return;
+        }
+
+        const span = TraceContext.startSpan(operation, ctx, ...referencedSpans);
+        try {
+            callback();
+        } catch (e) {
+            TraceContext.setError({span}, e);
+            throw e;
+        } finally {
+            span.finish();
+        }
+    }
+
     export function setError(ctx: TraceContext, err: Error) {
         if (!ctx.span) {
             return;
