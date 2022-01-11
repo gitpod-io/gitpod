@@ -17,7 +17,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "../auth/rate-limiter";
 import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, TeamMemberResourceGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "../auth/resource-access";
 import { takeFirst } from "../express-util";
-import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "../prometheus-metrics";
+import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter, observeAPICallsDuration, apiCallDurationHistogram } from "../prometheus-metrics";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import * as opentracing from 'opentracing';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -359,8 +359,10 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             }
 
             // actual call
+            const end = apiCallDurationHistogram.startTimer();
             const result = await this.target[method](ctx, ...args);    // we can inject TraceContext here because of GitpodServerWithTracing
             increaseApiCallCounter(method, 200);
+            observeAPICallsDuration(method, end());
             return result;
         } catch (e) {
             if (e instanceof ResponseError) {
