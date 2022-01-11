@@ -591,7 +591,7 @@ export interface GithubAppPrebuildConfig {
     branches?: boolean
     pullRequests?: boolean
     pullRequestsFromForks?: boolean
-    addCheck?: boolean
+    addCheck?: boolean | 'prevent-merge-on-error'
     addBadge?: boolean
     addLabel?: boolean | string
     addComment?: boolean
