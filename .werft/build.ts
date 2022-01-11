@@ -580,7 +580,8 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
         if (deploymentConfig.installEELicense) {
             werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Adding the EE License...");
-            exec(`cp /mnt/secrets/gpsh-coredev/license /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
+            // Previews in core-dev and harvester use different domain, which requires different licenses.
+            exec(`cp /mnt/secrets/gpsh-${ withVM ? 'harvester' : 'coredev' }/license /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
             // post-process.sh looks for /tmp/license, and if it exists, adds it to the configmap
         } else {
             exec(`touch /tmp/license`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
