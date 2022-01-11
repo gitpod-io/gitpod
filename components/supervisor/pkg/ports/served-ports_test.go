@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"net"
 	"os"
 	"strings"
 	"testing"
@@ -50,13 +51,13 @@ func TestObserve(t *testing.T) {
 			},
 			Expectation: Expectation{
 				{
-					{Address: "0100007F", Port: 5900, BoundToLocalhost: true},
-					{Address: "00000000", Port: 6080},
-					{Address: "00000000", Port: 23000},
-					{Address: "00000000000000000000000001000000", Port: 5900, BoundToLocalhost: true},
-					{Address: "00000000000000000000000000000000", Port: 22999},
-					{Address: "00000000000000000000000000000000", Port: 35900},
-					{Address: "00000000000000000000000000000000", Port: 36080},
+					{Address: net.IPv4(127, 0, 0, 1), Port: 5900, BoundToLocalhost: true},
+					{Address: net.IPv4zero, Port: 6080},
+					{Address: net.IPv4zero, Port: 23000},
+					{Address: net.IPv6loopback, Port: 5900, BoundToLocalhost: true},
+					{Address: net.IPv6zero, Port: 22999},
+					{Address: net.IPv6zero, Port: 35900},
+					{Address: net.IPv6zero, Port: 36080},
 				},
 			},
 		},
@@ -75,12 +76,12 @@ func TestObserve(t *testing.T) {
 			},
 			Expectation: Expectation{
 				{
-					{Address: "0100007F", Port: 5900, BoundToLocalhost: true},
-					{Address: "00000000", Port: 6080},
-					{Address: "00000000", Port: 23000},
-					{Address: "00000000000000000000000001000000", Port: 5900, BoundToLocalhost: true},
-					{Address: "00000000000000000000000000000000", Port: 22999},
-					{Address: "00000000000000000000000000000000", Port: 60000},
+					{Address: net.IPv4(127, 0, 0, 1), Port: 5900, BoundToLocalhost: true},
+					{Address: net.IPv4zero, Port: 6080},
+					{Address: net.IPv4zero, Port: 23000},
+					{Address: net.IPv6loopback, Port: 5900, BoundToLocalhost: true},
+					{Address: net.IPv6zero, Port: 22999},
+					{Address: net.IPv6zero, Port: 60000},
 				},
 			},
 		},
@@ -99,12 +100,12 @@ func TestObserve(t *testing.T) {
 			},
 			Expectation: Expectation{
 				{
-					{Address: "0100007F", Port: 5900, BoundToLocalhost: true},
-					{Address: "00000000", Port: 6080},
-					{Address: "00000000", Port: 23000},
-					{Address: "00000000000000000000000000000000", Port: 5900, BoundToLocalhost: false},
-					{Address: "00000000000000000000000000000000", Port: 22999},
-					{Address: "00000000000000000000000000000000", Port: 60000},
+					{Address: net.IPv4(127, 0, 0, 1), Port: 5900, BoundToLocalhost: true},
+					{Address: net.IPv4zero, Port: 6080},
+					{Address: net.IPv4zero, Port: 23000},
+					{Address: net.IPv6zero, Port: 5900, BoundToLocalhost: false},
+					{Address: net.IPv6zero, Port: 22999},
+					{Address: net.IPv6zero, Port: 60000},
 				},
 			},
 		},
@@ -123,12 +124,12 @@ func TestObserve(t *testing.T) {
 			},
 			Expectation: Expectation{
 				{
-					{Address: "00000000", Port: 5900},
-					{Address: "00000000", Port: 6080},
-					{Address: "00000000", Port: 23000},
-					{Address: "00000000000000000000000001000000", Port: 5900, BoundToLocalhost: true},
-					{Address: "00000000000000000000000000000000", Port: 22999},
-					{Address: "00000000000000000000000000000000", Port: 60000},
+					{Address: net.IPv4zero, Port: 5900},
+					{Address: net.IPv4zero, Port: 6080},
+					{Address: net.IPv4zero, Port: 23000},
+					{Address: net.IPv6loopback, Port: 5900, BoundToLocalhost: true},
+					{Address: net.IPv6zero, Port: 22999},
+					{Address: net.IPv6zero, Port: 60000},
 				},
 			},
 		},
@@ -162,11 +163,11 @@ func TestObserve(t *testing.T) {
 			},
 			Expectation: Expectation{
 				{
-					{Address: "AD0E600A", Port: 9229},
-					{Address: "0100007F", Port: 9229, BoundToLocalhost: true},
-					{Address: "00000000", Port: 23000},
-					{Address: "AD0E600A", Port: 27017, BoundToLocalhost: false},
-					{Address: "0100007F", Port: 27017, BoundToLocalhost: true},
+					{Address: net.IPv4(10, 96, 14, 173), Port: 9229},
+					{Address: net.IPv4(127, 0, 0, 1), Port: 9229, BoundToLocalhost: true},
+					{Address: net.IPv4zero, Port: 23000},
+					{Address: net.IPv4(10, 96, 14, 173), Port: 27017, BoundToLocalhost: false},
+					{Address: net.IPv4(127, 0, 0, 1), Port: 27017, BoundToLocalhost: true},
 				},
 			},
 		},
@@ -196,10 +197,10 @@ func TestObserve(t *testing.T) {
 			},
 			Expectation: Expectation{
 				{
-					{Address: "220E600A", Port: 9229},
-					{Address: "0100007F", Port: 9229, BoundToLocalhost: true},
-					{Address: "00000000", Port: 23000},
-					{Address: "220E600A", Port: 27017},
+					{Address: net.IPv4(10, 96, 14, 34), Port: 9229},
+					{Address: net.IPv4(127, 0, 0, 1), Port: 9229, BoundToLocalhost: true},
+					{Address: net.IPv4zero, Port: 23000},
+					{Address: net.IPv4(10, 96, 14, 34), Port: 27017},
 				},
 			},
 		},
@@ -261,9 +262,9 @@ func TestReadNetTCPFile(t *testing.T) {
 			ListeningOnly: true,
 			Expectation: Expectation{
 				Ports: []ServedPort{
-					{Address: "0100007F", Port: 5900, BoundToLocalhost: true},
-					{Address: "00000000", Port: 6080},
-					{Address: "00000000", Port: 23000},
+					{Address: net.IPv4(127, 0, 0, 1), Port: 5900, BoundToLocalhost: true},
+					{Address: net.IPv4zero, Port: 6080},
+					{Address: net.IPv4zero, Port: 23000},
 				},
 			},
 		},
@@ -273,10 +274,10 @@ func TestReadNetTCPFile(t *testing.T) {
 			ListeningOnly: true,
 			Expectation: Expectation{
 				Ports: []ServedPort{
-					{Address: "00000000000000000000000001000000", Port: 5900, BoundToLocalhost: true},
-					{Address: "00000000000000000000000000000000", Port: 22999},
-					{Address: "00000000000000000000000000000000", Port: 35900},
-					{Address: "00000000000000000000000000000000", Port: 36080},
+					{Address: net.IPv6loopback, Port: 5900, BoundToLocalhost: true},
+					{Address: net.IPv6zero, Port: 22999},
+					{Address: net.IPv6zero, Port: 35900},
+					{Address: net.IPv6zero, Port: 36080},
 				},
 			},
 		},

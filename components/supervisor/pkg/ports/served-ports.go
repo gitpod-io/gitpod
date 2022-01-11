@@ -6,9 +6,12 @@ package ports
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"sort"
 	"strconv"
@@ -20,7 +23,7 @@ import (
 
 // ServedPort describes a port served by a local service.
 type ServedPort struct {
-	Address          string
+	Address          net.IP
 	Port             uint32
 	BoundToLocalhost bool
 }
@@ -94,7 +97,7 @@ func (p *PollingServedPortsObserver) Observe(ctx context.Context) (<-chan []Serv
 					continue
 				}
 				for _, port := range ps {
-					key := fmt.Sprintf("%s:%d", port.Address, port.Port)
+					key := fmt.Sprintf("%s:%d", hex.EncodeToString(port.Address), port.Port)
 					_, exists := visited[key]
 					if exists {
 						continue
@@ -113,11 +116,6 @@ func (p *PollingServedPortsObserver) Observe(ctx context.Context) (<-chan []Serv
 	return reschan, errchan
 }
 
-const (
-	v6Localhost = "00000000000000000000000001000000"
-	v4Localhost = "0100007F"
-)
-
 func readNetTCPFile(fc io.Reader, listeningOnly bool) (ports []ServedPort, err error) {
 	scanner := bufio.NewScanner(fc)
 	for scanner.Scan() {
@@ -133,28 +131,26 @@ func readNetTCPFile(fc io.Reader, listeningOnly bool) (ports []ServedPort, err e
 		if len(segs) < 2 {
 			continue
 		}
-		addr, prt := segs[0], segs[1]
+		addrHex, portHex := segs[0], segs[1]
 
-		locallyBound := addr == v4Localhost || addr == v6Localhost
-		port, err := strconv.ParseUint(prt, 16, 32)
+		port, err := strconv.ParseUint(portHex, 16, 32)
 		if err != nil {
-			log.WithError(err).WithField("port", prt).Warn("cannot parse port entry from /proc/net/tcp* file")
+			log.WithError(err).WithField("port", portHex).Warn("cannot parse port entry from /proc/net/tcp* file")
 			continue
 		}
+		ipAddress := hexDecodeIP([]byte(addrHex))
 
 		ports = append(ports, ServedPort{
-			BoundToLocalhost: locallyBound,
-			Address:          addr,
+			BoundToLocalhost: ipAddress.IsLoopback(),
+			Address:          ipAddress,
 			Port:             uint32(port),
 		})
 
 		sort.Slice(ports, func(i, j int) bool {
-			sortedByAddress := ports[i].Address > ports[j].Address
-			if ports[i].Address == ports[j].Address {
-				sortedByPort := ports[i].Port < ports[j].Port
-				return sortedByPort
+			if ports[i].Address.Equal(ports[j].Address) {
+				return ports[i].Port < ports[j].Port
 			}
-			return sortedByAddress
+			return bytes.Compare(ports[i].Address, ports[j].Address) < 0
 		})
 
 		sort.Slice(ports, func(i, j int) bool {
@@ -166,4 +162,33 @@ func readNetTCPFile(fc io.Reader, listeningOnly bool) (ports []ServedPort, err e
 	}
 
 	return
+}
+
+// Parses IPv4/IPv6 addresses. The address is a big endian 32 bit ints, hex encoded.
+// We just decode the hex and flip the bytes in every group of 4.
+func hexDecodeIP(src []byte) net.IP {
+	buf := make(net.IP, net.IPv6len)
+
+	blocks := len(src) / 8
+	for block := 0; block < blocks; block++ {
+		for i := 0; i < 4; i++ {
+			a := fromHexChar(src[block*8+i*2])
+			b := fromHexChar(src[block*8+i*2+1])
+			buf[block*4+3-i] = (a << 4) | b
+		}
+	}
+	return buf[:blocks*4]
+}
+
+// Converts a hex character into its value.
+func fromHexChar(c byte) uint8 {
+	switch {
+	case '0' <= c && c <= '9':
+		return c - '0'
+	case 'a' <= c && c <= 'f':
+		return c - 'a' + 10
+	case 'A' <= c && c <= 'F':
+		return c - 'A' + 10
+	}
+	return 0
 }
