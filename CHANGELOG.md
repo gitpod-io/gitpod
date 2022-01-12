@@ -1,6 +1,9 @@
 # Change Log
 
 ## January 2022
+- Route users to Discord for support ([#7241](https://github.com/gitpod-io/gitpod/pull/7241)) - [@kylos101](https://github.com/kylos101)
+- [installer] Adjust default MySQL value ([#7510](https://github.com/gitpod-io/gitpod/pull/7510)) - [@aledbf](https://github.com/aledbf)
+- The GraphQL API has been removed ([#7504](https://github.com/gitpod-io/gitpod/pull/7504)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
 - [installer] Adjust mysql helm chart probes configuration ([#7511](https://github.com/gitpod-io/gitpod/pull/7511)) - [@aledbf](https://github.com/aledbf)
 - [installer]: use a pointer deref if the ssh gateway secret does not exist ([#7508](https://github.com/gitpod-io/gitpod/pull/7508)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Adds analytic tracking to git commands requiring the git credential manager (remote-facing commands) ([#7463](https://github.com/gitpod-io/gitpod/pull/7463)) - [@filiptronicek](https://github.com/filiptronicek)
