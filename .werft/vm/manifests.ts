@@ -72,8 +72,8 @@ spec:
                 bus: virtio
         resources:
           limits:
-            memory: 8Gi
-            cpu: 4
+            memory: 12Gi
+            cpu: 6
       evictionStrategy: LiveMigrate
       networks:
         - pod: {}
