@@ -3,17 +3,17 @@
 # See License-AGPL.txt in the project root for license information.
 
 packages:
-  - name: lib
-    type: go
-    deps:
-      - components/common-go:lib
-    srcs:
-      - go.mod
-      - go.sum
-      - "**/*.go"
-    config:
-      packaging: library
-      dontTest: false
+  # - name: lib
+  #   type: go
+  #   deps:
+  #     - components/common-go:lib
+  #   srcs:
+  #     - go.mod
+  #     - go.sum
+  #     - "**/*.go"
+  #   config:
+  #     packaging: library
+  #     dontTest: false
   - name: app
     type: go
     deps:
