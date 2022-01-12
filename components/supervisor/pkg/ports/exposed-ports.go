@@ -6,6 +6,7 @@ package ports
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -160,7 +161,13 @@ func (g *GitpodExposedPorts) doExpose(req *exposePortRequest) {
 	attempt := 0
 	for {
 		_, err = g.C.OpenPort(req.ctx, g.WorkspaceID, req.port)
-		if err == nil || req.ctx.Err() != nil || attempt == 5 {
+		if err == nil || req.ctx.Err() != nil {
+			return
+		}
+		if attempt == 5 {
+			// raise an error here to ensure callers get notified and don't assume everything went smoothly
+			err = fmt.Errorf("cannot expose port after %d attempts", attempt)
+			log.WithError(err).WithField("port", req.port).WithField("attempts", attempt).Warn("cannot expose port, stopped retrying")
 			return
 		}
 		log.WithError(err).WithField("port", req.port).Warnf("cannot expose port, trying again in %d seconds...", uint32(delay.Seconds()))
