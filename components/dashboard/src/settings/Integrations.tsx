@@ -365,7 +365,7 @@ function GitIntegrations() {
                     name: modal.provider.type,
                     description: modal.provider.host,
                 }}
-                buttonText="Delete Workspace"
+                buttonText="Remove Integration"
                 onClose={() => setModal(undefined)}
                 onConfirm={() => deleteProvider(modal.provider)}
             />
