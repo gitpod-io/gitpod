@@ -90,7 +90,7 @@ export function waitForVM(options: { name: string, timeoutSeconds: number, slice
  * Copies the k3s kubeconfig out of the VM and places it at `path`
  * If it doesn't manage to do so before the timeout it will throw an Error
  */
-export function copyk3sKubeconfig(options: { path: string, timeoutMS: number, slice: string }) {
+export function copyk3sKubeconfig(options: { name: string, path: string, timeoutMS: number, slice: string }) {
     const werft = getGlobalWerftInstance()
     const startTime = Date.now()
     while (true) {
@@ -98,6 +98,7 @@ export function copyk3sKubeconfig(options: { path: string, timeoutMS: number, sl
         const status = exec(`ssh -i /workspace/.ssh/id_rsa_harvester_vm ubuntu@127.0.0.1 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no 'sudo cat /etc/rancher/k3s/k3s.yaml' > ${options.path}`, { silent: true, dontCheckRc: true, slice: options.slice })
 
         if (status.code == 0) {
+            exec(`kubectl --kubeconfig ${options.path} config set clusters.default.server https://${options.name}.kube.gitpod-dev.com:6443`, { silent: true, slice: options.slice });
             return
         }
 
@@ -117,14 +118,6 @@ export function copyk3sKubeconfig(options: { path: string, timeoutMS: number, sl
 export function startSSHProxy(options: { name: string, slice: string }) {
     const namespace = `preview-${options.name}`
     exec(`sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:22`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
-}
-
-/**
- * Proxy 127.0.0.1:6443 to :6443 in the VM through the k8s service
- */
-export function startKubeAPIProxy(options: { name: string, slice: string }) {
-    const namespace = `preview-${options.name}`
-    exec(`sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 6443:6443`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
 }
 
 /**
