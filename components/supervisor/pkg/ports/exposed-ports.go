@@ -11,6 +11,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
 // ExposedPort represents an exposed pprt
@@ -100,32 +101,53 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 	go func() {
 		defer close(reschan)
 		defer close(errchan)
+		explicitUpdates := make(chan *protocol.WorkspaceInstance)
+		defer close(explicitUpdates)
 
 		updates, err := g.C.InstanceUpdates(ctx, g.InstanceID)
 		if err != nil {
 			errchan <- err
 			return
 		}
+
+		g.C.RegisterReconnectionHandler(func() {
+			info, err := g.C.GetWorkspace(ctx, g.WorkspaceID)
+			if err != nil {
+				log.WithError(err).WithFields(log.OWI("", g.WorkspaceID, g.InstanceID)).Warn("GitpodExposedPorts: error retrieving workspace explicitly")
+				return
+			}
+			if info.LatestInstance == nil || info.LatestInstance.ID != g.InstanceID {
+				return
+			}
+			explicitUpdates <- info.LatestInstance
+		})
+
+		handleUpdate := func(u *protocol.WorkspaceInstance) {
+			if u == nil {
+				log.WithFields(log.OWI("", g.WorkspaceID, g.InstanceID)).Info("GitpodExposedPorts: instance update is nil")
+				return
+			}
+
+			log.WithFields(log.OWI("", g.WorkspaceID, g.InstanceID)).WithField("instance", u).Info("GitpodExposedPorts: new instance update")
+
+			res := make([]ExposedPort, len(u.Status.ExposedPorts))
+			for i, p := range u.Status.ExposedPorts {
+				res[i] = ExposedPort{
+					LocalPort: uint32(p.Port),
+					Public:    p.Visibility == "public",
+					URL:       p.URL,
+				}
+			}
+
+			reschan <- res
+		}
+
 		for {
 			select {
+			case u := <-explicitUpdates: // ensures we do not run handleUpdate in parallel
+				handleUpdate(u)
 			case u := <-updates:
-				if u == nil {
-					log.WithFields(log.OWI("", g.WorkspaceID, g.InstanceID)).Info("GitpodExposedPorts: instance update is nil")
-					return
-				}
-
-				log.WithFields(log.OWI("", g.WorkspaceID, g.InstanceID)).WithField("instance", u).Info("GitpodExposedPorts: new instance update")
-
-				res := make([]ExposedPort, len(u.Status.ExposedPorts))
-				for i, p := range u.Status.ExposedPorts {
-					res[i] = ExposedPort{
-						LocalPort: uint32(p.Port),
-						Public:    p.Visibility == "public",
-						URL:       p.URL,
-					}
-				}
-
-				reschan <- res
+				handleUpdate(u)
 			case <-ctx.Done():
 				return
 			}

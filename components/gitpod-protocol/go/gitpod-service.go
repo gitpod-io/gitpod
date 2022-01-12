@@ -84,6 +84,7 @@ type APIInterface interface {
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
+	RegisterReconnectionHandler(handler func())
 }
 
 // FunctionName is the name of an RPC function
@@ -213,12 +214,11 @@ var errNotConnected = errors.New("not connected to Gitpod server")
 
 // ConnectToServerOpts configures the server connection
 type ConnectToServerOpts struct {
-	Context             context.Context
-	Token               string
-	Log                 *logrus.Entry
-	ReconnectionHandler func()
-	CloseHandler        func(error)
-	ExtraHeaders        map[string]string
+	Context      context.Context
+	Token        string
+	Log          *logrus.Entry
+	CloseHandler func(error)
+	ExtraHeaders map[string]string
 }
 
 // ConnectToServer establishes a new websocket connection to the server
@@ -249,7 +249,6 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 		reqHeader.Set("Authorization", "Bearer "+opts.Token)
 	}
 	ws := NewReconnectingWebsocket(endpoint, reqHeader, opts.Log)
-	ws.ReconnectionHandler = opts.ReconnectionHandler
 	go func() {
 		err := ws.Dial(opts.Context)
 		if opts.CloseHandler != nil {
@@ -260,6 +259,15 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 	var res APIoverJSONRPC
 	res.log = opts.Log
 	res.C = jsonrpc2.NewConn(opts.Context, ws, jsonrpc2.HandlerWithError(res.handler))
+	res.reconnectionHandlers = make([]func(), 0)
+
+	ws.ReconnectionHandler = func() {
+		for _, h := range res.reconnectionHandlers {
+			if h != nil {
+				h()
+			}
+		}
+	}
 	return &res, nil
 }
 
@@ -270,6 +278,13 @@ type APIoverJSONRPC struct {
 
 	mu   sync.RWMutex
 	subs map[string]map[chan *WorkspaceInstance]struct{}
+
+	reconnectionHandlers []func()
+}
+
+// TODO handle removal. Necessary?
+func (gp *APIoverJSONRPC) RegisterReconnectionHandler(handler func()) {
+	gp.reconnectionHandlers = append(gp.reconnectionHandlers, handler)
 }
 
 // Close closes the connection
