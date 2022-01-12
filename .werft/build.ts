@@ -331,11 +331,8 @@ export async function build(context, version) {
         werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting SSH port forwarding')
         VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
 
-        werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting Kube API port forwarding')
-        VM.startKubeAPIProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
-
         werft.log(vmSlices.KUBECONFIG, 'Copying k3s kubeconfig')
-        VM.copyk3sKubeconfig({ path: 'k3s.yml', timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
+        VM.copyk3sKubeconfig({name: destname, path: 'k3s.yml', timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
         // NOTE: This was a quick have to override the existing kubeconfig so all future kubectl commands use the k3s cluster.
         //       We might want to keep both kubeconfigs around and be explicit about which one we're using.s
         exec(`mv k3s.yml /home/gitpod/.kube/config`)
