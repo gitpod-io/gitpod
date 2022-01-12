@@ -185,7 +185,7 @@ export default function () {
                         <span>Branch</span>
                     </ItemField>
                 </Item>
-                {isLoadingPrebuilds && <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16">
+                {isLoadingPrebuilds && <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16 pb-40">
                     <img alt="" className="h-4 w-4 animate-spin" src={Spinner} />
                     <span>Fetching prebuilds...</span>
                 </div>}
