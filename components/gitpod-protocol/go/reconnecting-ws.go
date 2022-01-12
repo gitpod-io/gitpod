@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/common/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -170,9 +171,11 @@ func (rc *ReconnectingWebsocket) Dial(ctx context.Context) error {
 			connCh <- conn
 		case <-rc.errCh:
 			conn.Close()
+			log.Warnf("reconnecting-ws: connection was temporarily closed")
 
 			time.Sleep(1 * time.Second)
 			conn = rc.connect(ctx)
+			log.Warnf("reconnecting-ws: connection was re-established")
 			if conn != nil && rc.ReconnectionHandler != nil {
 				go rc.ReconnectionHandler()
 			}
