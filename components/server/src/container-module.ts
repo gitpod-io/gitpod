@@ -12,6 +12,7 @@ import { SessionHandlerProvider } from './session-handler';
 import { GitpodFileParser } from '@gitpod/gitpod-protocol/lib/gitpod-file-parser';
 import { WorkspaceFactory } from './workspace/workspace-factory';
 import { UserController } from './user/user-controller';
+import { InstallationAdminController } from './installation-admin/installation-admin-controller';
 import { GitpodServerImpl } from './workspace/gitpod-server-impl';
 import { ConfigProvider } from './workspace/config-provider';
 import { MessageBusIntegration } from './workspace/messagebus-integration';
@@ -115,6 +116,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(EnforcementControllerServerFactory).toAutoFactory(GitpodServerImpl);
     bind(EnforcementController).toSelf().inSingletonScope();
 
+    bind(InstallationAdminController).toSelf().inSingletonScope();
+
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
     bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
     bind(MessageBusIntegration).toSelf().inSingletonScope();
@@ -124,11 +127,11 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(GitpodServerImpl).toSelf();
     bind(WebsocketConnectionManager).toDynamicValue(ctx => {
-            const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
-            const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
-            const config = ctx.container.get<Config>(Config);
-            return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
-        }
+        const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
+        const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
+        const config = ctx.container.get<Config>(Config);
+        return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
+    }
     ).inSingletonScope();
 
     bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();

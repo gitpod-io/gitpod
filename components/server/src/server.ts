@@ -44,6 +44,7 @@ import { Config } from './config';
 import { DebugApp } from './debug-app';
 import { LocalMessageBroker } from './messaging/local-message-broker';
 import { WsConnectionHandler } from './express/ws-connection-handler';
+import { InstallationAdminController } from './installation-admin/installation-admin-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -54,6 +55,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(SessionHandlerProvider) protected sessionHandlerProvider: SessionHandlerProvider;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
+    @inject(InstallationAdminController) protected readonly installationAdminController: InstallationAdminController;
     @inject(EnforcementController) protected readonly enforcementController: EnforcementController;
     @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
@@ -82,7 +84,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected app?: express.Application;
     protected httpServer?: http.Server;
     protected monitoringApp?: express.Application;
+    protected installationAdminApp?: express.Application;
     protected monitoringHttpServer?: http.Server;
+    protected installationAdminHttpServer?: http.Server;
     protected disposables = new DisposableCollection();
 
     public async init(app: express.Application) {
@@ -102,7 +106,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // metrics
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
             const startTime = Date.now();
-            req.on("end", () =>{
+            req.on("end", () => {
                 const method = req.method;
                 const route = req.route?.path || req.baseUrl || "unknown";
                 observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000)
@@ -229,6 +233,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Health check + metrics endpoints
         this.monitoringApp = this.monitoringEndpointsApp.create();
 
+        // Installation Admin - host separately to avoid exposing publicly
+        this.installationAdminApp = this.installationAdminController.create();
+
         // Report current websocket connections
         this.installWebsocketConnectionGauge();
         this.installWebsocketClientContextGauge();
@@ -302,12 +309,19 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
+        if (this.installationAdminApp) {
+            this.installationAdminHttpServer = this.installationAdminApp.listen(9000, () => {
+                log.info(`installation admin app listening on port: ${(<AddressInfo>this.installationAdminHttpServer!.address()).port}`)
+            })
+        }
+
         this.debugApp.start(6060);
     }
 
     public async stop() {
         await this.debugApp.stop();
         await this.stopServer(this.monitoringHttpServer);
+        await this.stopServer(this.installationAdminHttpServer);
         await this.stopServer(this.httpServer);
         this.disposables.dispose();
         log.info('server stopped.');
