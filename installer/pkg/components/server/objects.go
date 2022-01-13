@@ -25,6 +25,10 @@ var Objects = common.CompositeRenderFunc(
 			ContainerPort: PrometheusPort,
 			ServicePort:   PrometheusPort,
 		},
+		InstallationAdminName: {
+			ContainerPort: InstallationAdminPort,
+			ServicePort:   InstallationAdminPort,
+		},
 	}),
 	common.DefaultServiceAccount(Component),
 )

@@ -242,9 +242,15 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../components/content
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../components/gitpod-protocol/go // leeway
 
+replace github.com/gitpod-io/gitpod/image-builder/api => ../components/image-builder-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/openvsx-proxy => ../components/openvsx-proxy // leeway
+
 replace github.com/gitpod-io/gitpod/registry-facade => ../components/registry-facade // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../components/registry-facade-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/supervisor/api => ../components/supervisor-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon => ../components/ws-daemon // leeway
 
@@ -252,7 +258,9 @@ replace github.com/gitpod-io/gitpod/ws-daemon/api => ../components/ws-daemon-api
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../components/ws-manager-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/supervisor/api => ../components/supervisor-api/go // leeway
+replace github.com/gitpod-io/gitpod/ws-proxy => ../components/ws-proxy // leeway
+
+replace github.com/gitpod-io/gitpod/ws-scheduler => ../components/ee/ws-scheduler // leeway
 
 replace k8s.io/api => k8s.io/api v0.22.2 // leeway indirect from components/common-go:lib
 
