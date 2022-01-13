@@ -1,4 +1,5 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-test-dazzle-rewrite.79
+image:
+  file: .gitpod.Dockerfile
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
