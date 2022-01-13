@@ -7,13 +7,15 @@ package rabbitmq
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	"helm.sh/helm/v3/pkg/cli/values"
+	"sigs.k8s.io/yaml"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
-	"helm.sh/helm/v3/pkg/cli/values"
-	"sigs.k8s.io/yaml"
-	"strings"
 )
 
 type parameterValues struct {
@@ -284,6 +286,8 @@ var Helm = common.CompositeHelmFunc(
 					helm.KeyValue("rabbitmq.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
 					helm.ImagePullSecrets("volumePermissions.image.pullSecrets", cfg),
 					helm.KeyValue("rabbitmq.volumePermissions.image.registry", common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)),
+
+					helm.KeyValue("rabbitmq.livenessProbe.initialDelaySeconds", "30"),
 				},
 				// This is too complex to be sent as a string
 				FileValues: []string{
