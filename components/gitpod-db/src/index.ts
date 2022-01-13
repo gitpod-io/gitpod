@@ -37,3 +37,4 @@ export * from "./email-domain-filter-db";
 export * from "./typeorm/entity/db-account-entry";
 export * from "./project-db";
 export * from "./team-db";
+export * from "./installation-admin-db";

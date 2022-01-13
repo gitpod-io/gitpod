@@ -19,3 +19,4 @@ export * from './context-url';
 export * from './teams-projects-protocol';
 export * from './snapshot-url';
 export * from './oss-allowlist';
+export * from './installation-admin-protocol';
