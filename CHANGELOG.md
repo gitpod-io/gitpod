@@ -1,6 +1,9 @@
 # Change Log
 
 ## January 2022
+- [ws-manager] Adjust probe InitialDelaySeconds ([#7512](https://github.com/gitpod-io/gitpod/pull/7512)) - [@aledbf](https://github.com/aledbf)
+- [GitHub] Optionally prevent merging pull requests when prebuilds fail. ([#7535](https://github.com/gitpod-io/gitpod/pull/7535)) - [@svenefftinge](https://github.com/svenefftinge)
+- [installation-telemetry]: initial commit plus installer setup ([#7503](https://github.com/gitpod-io/gitpod/pull/7503)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Route users to Discord for support ([#7241](https://github.com/gitpod-io/gitpod/pull/7241)) - [@kylos101](https://github.com/kylos101)
 - [installer] Adjust default MySQL value ([#7510](https://github.com/gitpod-io/gitpod/pull/7510)) - [@aledbf](https://github.com/aledbf)
 - The GraphQL API has been removed ([#7504](https://github.com/gitpod-io/gitpod/pull/7504)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
