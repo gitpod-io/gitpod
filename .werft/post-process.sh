@@ -179,6 +179,9 @@ while [ "$i" -le "$DOCS" ]; do
       # is expected to be reg.<branch-name-with-dashes>.staging.gitpod-dev.com:$REG_DAEMON_PORT
       # Change the port we use to connect to ws-daemon
       REGISTRY_FACADE_HOST="reg.$DEV_BRANCH.staging.gitpod-dev.com:$REG_DAEMON_PORT"
+      if [[ -v WITH_VM ]]; then
+         REGISTRY_FACADE_HOST="reg.$DEV_BRANCH.preview.gitpod-dev.com:$REG_DAEMON_PORT"
+      fi
       yq r /tmp/"$NAME"overrides.yaml 'data.[config.json]' \
       | jq --arg REGISTRY_FACADE_HOST "$REGISTRY_FACADE_HOST" '.manager.registryFacadeHost = $REGISTRY_FACADE_HOST' \
       | jq ".manager.wsdaemon.port = $WS_DAEMON_PORT" > /tmp/"$NAME"-cm-overrides.json
