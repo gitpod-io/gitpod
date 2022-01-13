@@ -16,5 +16,5 @@ const (
 	licenseFilePath      = "/gitpod/license"
 	PrometheusPort       = 9500
 	PrometheusPortName   = "metrics"
-	ServicePort          = 3000
+	ServicePort          = common.ServerServicePort
 )
