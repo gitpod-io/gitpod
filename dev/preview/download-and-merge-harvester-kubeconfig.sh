@@ -2,12 +2,28 @@
 
 set -euo pipefail
 
+KUBECONFIG_PATH="/home/gitpod/.kube/config"
+HARVESTER_KUBECONFIG_PATH="$(mktemp)"
+MERGED_KUBECONFIG_PATH="$(mktemp)"
+KUBECTL_CONTEXT="dev"
+
+while getopts c:h:k:m: flag
+do
+    case "${flag}" in
+        c) KUBECTL_CONTEXT=${OPTARG};;
+        h) HARVESTER_KUBECONFIG_PATH=${OPTARG};;
+        k) KUBECONFIG_PATH=${OPTARG};;
+        m) MERGED_KUBECONFIG_PATH=${OPTARG};;
+        *) ;;
+    esac
+done
+
 function log {
     echo "[$(date)] $*"
 }
 
 function has-dev-access {
-    kubectl --context=dev auth can-i get secrets > /dev/null 2>&1 || false
+    kubectl --context=$KUBECTL_CONTEXT auth can-i get secrets > /dev/null 2>&1 || false
 }
 
 if ! has-dev-access; then
@@ -15,12 +31,8 @@ if ! has-dev-access; then
     exit 0
 fi
 
-KUBECONFIG_PATH="/home/gitpod/.kube/config"
-HARVESTER_KUBECONFIG_PATH="$(mktemp)"
-MERGED_KUBECONFIG_PATH="$(mktemp)"
-
 log "Downloading and preparing Harvester kubeconfig"
-kubectl -n werft get secret harvester-kubeconfig -o jsonpath='{.data}' \
+kubectl --context=$KUBECTL_CONTEXT -n werft get secret harvester-kubeconfig -o jsonpath='{.data}' \
 | jq -r '.["harvester-kubeconfig.yml"]' \
 | base64 -d \
 | sed 's/default/harvester/g' \
@@ -30,7 +42,7 @@ kubectl -n werft get secret harvester-kubeconfig -o jsonpath='{.data}' \
 # the value of current-context
 log "Merging kubeconfig files ${KUBECONFIG_PATH} ${HARVESTER_KUBECONFIG_PATH} into ${MERGED_KUBECONFIG_PATH}"
 KUBECONFIG="${KUBECONFIG_PATH}:${HARVESTER_KUBECONFIG_PATH}" \
-    kubectl config view --flatten --merge > "${MERGED_KUBECONFIG_PATH}"
+    kubectl --context=$KUBECTL_CONTEXT config view --flatten --merge > "${MERGED_KUBECONFIG_PATH}"
 
 log "Overwriting ${KUBECONFIG_PATH}"
 mv "${MERGED_KUBECONFIG_PATH}" "${KUBECONFIG_PATH}"
