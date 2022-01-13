@@ -44,6 +44,7 @@ import { Config } from './config';
 import { DebugApp } from './debug-app';
 import { LocalMessageBroker } from './messaging/local-message-broker';
 import { WsConnectionHandler } from './express/ws-connection-handler';
+import { InstallationAdminController } from './installation-admin/installation-admin-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -54,6 +55,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(SessionHandlerProvider) protected sessionHandlerProvider: SessionHandlerProvider;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
+    @inject(InstallationAdminController) protected readonly installationAdminController: InstallationAdminController;
     @inject(EnforcementController) protected readonly enforcementController: EnforcementController;
     @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
@@ -102,7 +104,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // metrics
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
             const startTime = Date.now();
-            req.on("end", () =>{
+            req.on("end", () => {
                 const method = req.method;
                 const route = req.route?.path || req.baseUrl || "unknown";
                 observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000)
@@ -283,6 +285,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             res.send(this.config.version);
         });
         app.use(this.oauthController.oauthRouter);
+        app.use('/installation-admin', this.installationAdminController.apiRouter);
     }
 
     public async start(port: number) {
