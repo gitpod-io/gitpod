@@ -59,5 +59,6 @@ After creating a new component, run the following to update the license header:
 - Replace `GITPOD_HOST` with _SaaS Gitpod host_ (e.g. `gitpod.io`) or _self-hosted Gitpod host_ (e.g. the base URL of your target self-hosted Gitpod)
 - Replace `__REPLACE_YOUR_COOKIE__` with the stringified value of your auth cookie taken from your browser's dev tools while visiting your target Gitpod host (e.g. `_gitpod_io_=s%3Axxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.XXXXXXXXXXXXXXX` for `gitpod.io`).
   ![Where to get the auth cookie name and value from](how-to-get-cookie.png)
+- You can view the dashboard at https://`PORT_NUMBER`-`GITPOD_WORKSPACE_URL`.
 
 🚀 After following the above steps, run `yarn run start` to start developing.
