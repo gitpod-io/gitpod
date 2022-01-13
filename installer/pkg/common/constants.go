@@ -38,6 +38,7 @@ const (
 	RegistryFacadeServicePort   = 30000
 	RegistryFacadeTLSCertSecret = "builtin-registry-facade-cert"
 	ServerComponent             = "server"
+	ServerInstallationAdminPort = 9000
 	SystemNodeCritical          = "system-node-critical"
 	WSManagerComponent          = "ws-manager"
 	WSManagerBridgeComponent    = "ws-manager-bridge"

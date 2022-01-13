@@ -5,7 +5,6 @@
 package gitpod
 
 import (
-	"crypto/sha512"
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -61,12 +60,12 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 										},
 										Env: []v1.EnvVar{
 											{
-												Name:  "GITPOD_DOMAIN_HASH",
-												Value: fmt.Sprintf("%x", sha512.Sum512([]byte(ctx.Config.Domain))),
-											},
-											{
 												Name:  "GITPOD_INSTALLATION_VERSION",
 												Value: ctx.VersionManifest.Version,
+											},
+											{
+												Name:  "SERVER_URL",
+												Value: fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", common.ServerComponent, ctx.Namespace, common.ServerInstallationAdminPort),
 											},
 										},
 									},
