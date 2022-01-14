@@ -339,7 +339,7 @@ export async function build(context, version) {
 
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
 
-        issueMetaCerts(PROXY_SECRET_NAME, "default", domain)
+        issueMetaCerts(PROXY_SECRET_NAME, "default", domain, withVM)
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
@@ -440,7 +440,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             werft.log(installerSlices.ISSUE_CERTIFICATES, "organizing a certificate for the preview environment...");
 
             // trigger certificate issuing
-            await issueMetaCerts(namespace, "certs", domain);
+            await issueMetaCerts(namespace, "certs", domain, withVM);
             await installMetaCertificates(namespace);
             werft.done(installerSlices.ISSUE_CERTIFICATES);
         } catch (err) {
@@ -708,7 +708,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
 
         // trigger certificate issuing
         werft.log('certificate', "organizing a certificate for the preview environment...");
-        await issueMetaCerts(namespace, "certs", domain);
+        await issueMetaCerts(namespace, "certs", domain, false);
         await installMetaCertificates(namespace);
         werft.done('certificate');
         await addDNSRecord(deploymentConfig.namespace, deploymentConfig.domain, false)
@@ -949,8 +949,8 @@ async function addDNSRecord(namespace: string, domain: string, isLoadbalancer: b
     werft.done(installerSlices.DNS_ADD_RECORD);
 }
 
-export async function issueMetaCerts(previewNamespace: string, certsNamespace:string, domain: string) {
-    let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
+export async function issueMetaCerts(previewNamespace: string, certsNamespace: string, domain: string, withVM: boolean) {
+    let additionalSubdomains: string[] = ["", "*.", `*.ws${ withVM ? '' : '-dev' }.`]
     var metaClusterCertParams = new IssueCertificateParams();
     metaClusterCertParams.pathToTemplate = "/workspace/.werft/util/templates";
     metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
