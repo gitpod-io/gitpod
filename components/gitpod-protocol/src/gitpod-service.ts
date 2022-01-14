@@ -383,10 +383,12 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
 
     public registerClient(client: Partial<Client>): Disposable {
         this.clients.push(client);
-        const index = this.clients.length;
         return {
             dispose: () => {
-                this.clients.slice(index, 1);
+                const index = this.clients.indexOf(client);
+                if (index > -1) {
+                    this.clients.splice(index, 1);
+                }
             }
         }
     }
@@ -576,7 +578,7 @@ export class WorkspaceInstanceUpdateListener {
 }
 
 export interface GitpodServiceOptions {
-    onReconnect?: () => (void | Promise<void>)
+    onReconnect?: () => (void | Promise<void>)
 }
 
 export class GitpodServiceImpl<Client extends GitpodClient, Server extends GitpodServer> {
