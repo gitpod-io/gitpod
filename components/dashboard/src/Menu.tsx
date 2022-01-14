@@ -293,9 +293,9 @@ export default function Menu() {
                     </div>
                 </div>
             </div>
-            {!isMinimalUI && !prebuildId && <div className="flex">
+            {!isMinimalUI && !prebuildId && <nav className="flex">
                 {leftMenu.map((entry: Entry) => <TabMenuItem key={entry.title} name={entry.title} selected={isSelected(entry, location)} link={entry.link}/>)}
-            </div>}
+            </nav>}
         </header>
         <Separator />
     </>;
