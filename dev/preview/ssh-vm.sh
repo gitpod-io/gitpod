@@ -8,12 +8,13 @@ set -euo pipefail
 HARVESTER_KUBECONFIG_PATH="$HOME/.kube/config-harvester"
 PORT_FORWARD_PID=""
 
-if [[ ! -f "$HARVESTER_KUBECONFIG_PATH" ]]; then
-    echo "Missing Harvester kubeconfig at $HARVESTER_KUBECONFIG_PATH. Downloading config."
-    kubectl -n werft get secret harvester-kubeconfig -o jsonpath='{.data}' \
-    | jq -r '.["harvester-kubeconfig.yml"]' \
-    | base64 -d \
-    > "$HARVESTER_KUBECONFIG_PATH"
+function has-harvester-access {
+    kubectl --context=harvester auth can-i get secrets > /dev/null 2>&1 || false
+}
+
+if ! has-dev-access; then
+    log "You are missing the harvester context in your kubeconfig. Exiting."
+    exit 0
 fi
 
 function cleanup {
@@ -24,14 +25,6 @@ function cleanup {
         # sudo kill -9 "$PORT_FORWARD_PID" > /dev/null 2>&1
         sudo killall kubectl > /dev/null
     fi
-}
-
-function prepareSSHKeys {
-    kubectl -n werft get secret harvester-vm-ssh-keys -o jsonpath='{.data}' | jq -r '.["id_rsa"]' | base64 -d > "$HOME/.ssh/id_rsa"
-    kubectl -n werft get secret harvester-vm-ssh-keys -o jsonpath='{.data}' | jq -r '.["id_rsa.pub"]' | base64 -d > "$HOME/.ssh/id_rsa.pub"
-
-    chmod 600 "$HOME/.ssh/id_rsa"
-    chmod 644 "$HOME/.ssh/id_rsa.pub"
 }
 
 function startKubectlPortForwardForSSH {
@@ -64,6 +57,5 @@ function startKubectlPortForwardForSSH {
 
 trap "cleanup" EXIT
 
-prepareSSHKeys
 startKubectlPortForwardForSSH
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@127.0.0.1

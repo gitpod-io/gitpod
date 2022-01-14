@@ -29,6 +29,10 @@ tasks:
     command: |
       ./dev/preview/download-and-merge-harvester-kubeconfig.sh
       exit 0
+  - name: Add VM SSH keys
+    command: |
+      ./dev/preview/install-vm-ssh-keys.sh
+      exit 0
   - name: Java
     init: |
       leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
