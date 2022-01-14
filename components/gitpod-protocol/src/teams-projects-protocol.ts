@@ -42,7 +42,13 @@ export namespace Project {
     }
 
     export interface Overview {
-        branches: BranchDetails[]
+        branches: BranchDetails[];
+    }
+
+    export namespace Overview {
+        export function is(data?: any): data is Project.Overview {
+            return Array.isArray(data?.branches);
+        }
     }
 
     export interface BranchDetails {

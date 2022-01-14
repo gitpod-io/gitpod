@@ -59,6 +59,7 @@ const tables: TableWithDeletion[] = [
     { deletionColumn: "deleted", name: "d_b_prebuild_info" },
     { deletionColumn: "deleted", name: "d_b_oss_allow_list" },
     { deletionColumn: "deleted", name: "d_b_project_env_var" },
+    { deletionColumn: "deleted", name: "d_b_project_info" },
 ];
 
 interface TableWithDeletion {
