@@ -155,9 +155,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //           to clients who might not otherwise have access to that information.
         this.disposables.push(this.localMessageBroker.listenForWorkspaceInstanceUpdates(
             this.user.id,
-            (ctx, instance) => TraceContext.withSpan("forwardInstanceUpdateToClient", () => this.client?.onInstanceUpdate(this.censorInstance(instance)), ctx, this.connectionCtx?.span)
-        ));
+            async (ctx, instance) => {
 
+                const span = TraceContext.startSpan("forwardInstanceUpdateToClient", ctx, this.connectionCtx?.span);
+                ClientMetadata.set({span}, this.clientMetadata);
+                try {
+                    await this.client?.onInstanceUpdate(this.censorInstance(instance))
+                } catch (err) {
+                    TraceContext.setError({span}, err);
+                    log.error("forwardInstanceUpdateToClient", err);
+                } finally {
+                    span.finish();
+                }
+            }
+        ));
     }
 
     setClient(ctx: TraceContext, client: GitpodApiClient | undefined): void {

@@ -89,9 +89,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         for (const projectId of projects) {
             this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
                 projectId,
-                (ctx: TraceContext, update: PrebuildWithStatus) => {
-                    this.client?.onPrebuildUpdate(update);
-                }
+                (ctx, update) => this.forwardPrebuildUpdate(ctx, update)
             ));
         }
 
@@ -1541,11 +1539,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         // update client registration for the logged in user
         this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
             project.id,
-            (ctx: TraceContext, update: PrebuildWithStatus) => {
-                this.client?.onPrebuildUpdate(update);
-            }
+            (ctx, update) => this.forwardPrebuildUpdate(ctx, update)
         ));
         return project;
     }
 
+    protected async forwardPrebuildUpdate(ctx: TraceContext, update: PrebuildWithStatus) {
+        const span = TraceContext.startSpan("forwardPrebuildUpdates", ctx, this.connectionCtx?.span);
+        ClientMetadata.set({span}, this.clientMetadata);
+        try {
+            await this.client?.onPrebuildUpdate(update);
+        } catch (err) {
+            TraceContext.setError({span}, err);
+            log.error("forwardPrebuildUpdates", err);
+        } finally {
+            span.finish();
+        }
+    }
 }

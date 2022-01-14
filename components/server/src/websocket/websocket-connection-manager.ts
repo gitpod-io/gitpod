@@ -100,6 +100,22 @@ export namespace ClientMetadata {
         return ClientMetadata.from(user?.id, sessionId, type, origin, version);
     }
 
+    export function set(ctx: TraceContext, clientMetadata: ClientMetadata) {
+        TraceContext.addNestedTags(ctx, {
+            client: {
+                id: clientMetadata.id,
+                authLevel: clientMetadata.authLevel,
+                type: clientMetadata.type,
+                version: clientMetadata.version,
+                origin: clientMetadata.origin,
+            },
+        });
+        TraceContext.setOWI(ctx, {
+            userId: clientMetadata.userId,
+            sessionId: clientMetadata.sessionId,
+        });
+    }
+
     function getOriginWorkspaceId(req: express.Request): string | undefined {
         const origin = req.headers["origin"];
         if (!origin) {
@@ -280,11 +296,7 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
         // trace the ws connection itself
         const span = opentracing.globalTracer().startSpan("ws-connection");
         const ctx = { span };
-        traceClientMetadata(ctx, clientMetadata);
-        TraceContext.setOWI(ctx, {
-            userId: clientMetadata.userId,
-            sessionId: clientMetadata.sessionId,
-        });
+        ClientMetadata.set(ctx, clientMetadata);
         connection.onClose(() => span.finish());
 
         const factory = new GitpodJsonRpcProxyFactory<T>(
@@ -333,11 +345,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         const userId = this.clientMetadata.userId;
         try {
             // generic tracing data
-            traceClientMetadata(ctx, this.clientMetadata);
-            TraceContext.setOWI(ctx, {
-                userId,
-                sessionId: this.clientMetadata.sessionId,
-            });
+            ClientMetadata.set(ctx, this.clientMetadata);
             TraceContext.setJsonRPCMetadata(ctx, method);
 
             // rate limiting
@@ -389,16 +397,4 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         throw new ResponseError(RPCErrorCodes.InvalidRequest, "notifications are not supported");
     }
 
-}
-
-function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) {
-    TraceContext.addNestedTags(ctx, {
-        client: {
-            id: clientMetadata.id,
-            authLevel: clientMetadata.authLevel,
-            type: clientMetadata.type,
-            version: clientMetadata.version,
-            origin: clientMetadata.origin,
-        },
-    });
 }
