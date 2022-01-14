@@ -22,7 +22,10 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
+require (
+	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+)
 
 require (
 	github.com/alecthomas/gometalinter v2.0.11+incompatible // indirect
