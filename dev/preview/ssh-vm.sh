@@ -5,14 +5,17 @@
 
 set -euo pipefail
 
-HARVESTER_KUBECONFIG_PATH="$HOME/.kube/config-harvester"
 PORT_FORWARD_PID=""
+
+function log {
+    echo "[$(date)] $*"
+}
 
 function has-harvester-access {
     kubectl --context=harvester auth can-i get secrets > /dev/null 2>&1 || false
 }
 
-if ! has-dev-access; then
+if ! has-harvester-access; then
     log "You are missing the harvester context in your kubeconfig. Exiting."
     exit 0
 fi
@@ -34,13 +37,15 @@ function startKubectlPortForwardForSSH {
 
     echo "Verifying VM exists"
     sudo kubectl \
-        --kubeconfig="$HARVESTER_KUBECONFIG_PATH" \
+        --kubeconfig="$HOME/.kube/config" \
+        --context=harvester \
         -n "$namespace" \
         get vmi "${vmName}" > /dev/null
 
     echo "Starting SSH port-forwaring to VM: ${vmName}"
     sudo kubectl \
-        --kubeconfig="$HARVESTER_KUBECONFIG_PATH" \
+        --kubeconfig="$HOME/.kube/config" \
+        --context=harvester \
         -n "$namespace" \
         port-forward service/proxy 22:22 > /dev/null &
     PORT_FORWARD_PID="$!"
@@ -48,7 +53,7 @@ function startKubectlPortForwardForSSH {
     set +e
     while true; do
         echo "Trying to validate SSH connection"
-        (ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@127.0.0.1 exit 0) && break
+        (ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $HOME/.ssh/vm_id_rsa ubuntu@127.0.0.1 exit 0) && break
         echo "Failed. Sleeping 5 seconds"
         sleep 5
     done
@@ -58,4 +63,4 @@ function startKubectlPortForwardForSSH {
 trap "cleanup" EXIT
 
 startKubectlPortForwardForSSH
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@127.0.0.1
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i $HOME/.ssh/vm_id_rsa ubuntu@127.0.0.1
