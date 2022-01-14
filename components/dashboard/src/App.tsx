@@ -277,7 +277,7 @@ function App() {
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
 
                 <Route path={["/", "/login"]} exact>
-                    <Redirect to="/projects" />
+                    <Redirect to="/workspaces" />
                 </Route>
                 <Route path={["/settings"]} exact>
                     <Redirect to="/account" />
@@ -306,9 +306,6 @@ function App() {
                         }
                         if (resourceOrPrebuild === "configure") {
                             return <ConfigureProject />;
-                        }
-                        if (resourceOrPrebuild === "workspaces") {
-                            return <Workspaces />;
                         }
                         if (resourceOrPrebuild === "prebuilds") {
                             return <Prebuilds />;
@@ -345,9 +342,6 @@ function App() {
                             }
                             if (resourceOrPrebuild === "settings") {
                                 return <ProjectSettings />;
-                            }
-                            if (resourceOrPrebuild === "workspaces") {
-                                return <Workspaces />;
                             }
                             if (resourceOrPrebuild === "prebuilds") {
                                 return <Prebuilds />;

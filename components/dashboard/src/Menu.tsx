@@ -98,10 +98,6 @@ export default function Menu() {
                     link: `${teamOrUserSlug}/${projectSlug}`,
                 },
                 {
-                    title: 'Workspaces',
-                    link: `${teamOrUserSlug}/${projectSlug}/workspaces`,
-                },
-                {
                     title: 'Prebuilds',
                     link: `${teamOrUserSlug}/${projectSlug}/prebuilds`,
                 },
@@ -120,11 +116,7 @@ export default function Menu() {
                 {
                     title: 'Projects',
                     link: `/t/${team.slug}/projects`,
-                },
-                {
-                    title: 'Workspaces',
-                    link: `/t/${team.slug}/workspaces`,
-                    alternatives: [`/t/${team.slug}`]
+                    alternatives: ([] as string[])
                 },
                 {
                     title: 'Members',
@@ -144,13 +136,13 @@ export default function Menu() {
         // User menu
         return [
             {
-                title: 'Projects',
-                link: '/projects'
-            },
-            {
                 title: 'Workspaces',
                 link: '/workspaces',
                 alternatives: ['/']
+            },
+            {
+                title: 'Projects',
+                link: '/projects'
             },
             {
                 title: 'Settings',
@@ -240,18 +232,11 @@ export default function Menu() {
         )
     }
 
-    const gitpodIconUrl = () => {
-        if (team) {
-            return `/t/${team.slug}`;
-        }
-        return "/"
-    }
-
     return <>
         <header className={`app-container flex flex-col pt-4 space-y-4 ${isMinimalUI || !!prebuildId ? 'pb-4' : ''}`} data-analytics='{"button_type":"menu"}'>
             <div className="flex h-10">
                 <div className="flex justify-between items-center pr-3">
-                    <Link to={gitpodIconUrl()}>
+                    <Link to="/">
                         <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
                     </Link>
                     {!isMinimalUI && <div className="ml-2 text-base">
