@@ -813,13 +813,11 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 	if ideConfig.Entrypoint == "/ide/startup.sh" && len(args) == 0 {
 		args = append(args, "{WORKSPACEROOT}")
 		args = append(args, "--port", "{IDEPORT}")
-		args = append(args, "--hostname", "{IDEHOSTNAME}")
 	}
 
 	for i := range args {
 		args[i] = strings.ReplaceAll(args[i], "{WORKSPACEROOT}", cfg.WorkspaceRoot)
 		args[i] = strings.ReplaceAll(args[i], "{IDEPORT}", strconv.Itoa(cfg.IDEPort))
-		args[i] = strings.ReplaceAll(args[i], "{IDEHOSTNAME}", "0.0.0.0")
 		args[i] = strings.ReplaceAll(args[i], "{DESKTOPIDEPORT}", strconv.Itoa(desktopIDEPort))
 	}
 	log.WithField("args", args).WithField("entrypoint", ideConfig.Entrypoint).Info("preparing IDE launch")

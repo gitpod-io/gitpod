@@ -38,7 +38,7 @@ grep -rl open-vsx.org /ide | xargs sed -i "s|https://open-vsx.org|$VSX_REGISTRY_
 
 cd /ide || exit
 if [ "$SUPERVISOR_DEBUG_ENABLE" = "true" ]; then
-    exec /ide/bin/gitpod-code --inspect --verbose --log trace --connection-token 00000 "$@"
+    exec /ide/bin/gitpod-code --inspect --log=trace --host=0.0.0.0 --connection-token=00000 "$@"
 else
-    exec /ide/bin/gitpod-code --connection-token 00000 "$@"
+    exec /ide/bin/gitpod-code --host=0.0.0.0 --connection-token=00000 "$@"
 fi
