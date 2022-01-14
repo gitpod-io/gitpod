@@ -736,7 +736,7 @@ export namespace WorkspaceImageBuild {
         upToLine?: number
         isDiff?: boolean
     }
-    export type LogCallback = (info: StateInfo, content: LogContent | undefined) => void;
+    export type LogCallback = (info: StateInfo, content: LogContent | undefined) => Promise<void>;
     export namespace LogLine {
         export const DELIMITER = '\r\n';
         export const DELIMITER_REGEX = /\r?\n/;

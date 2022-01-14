@@ -162,7 +162,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
   }
 
-  notifyDidOpenConnection() {
+  async notifyDidOpenConnection() {
     this.fetchWorkspaceInfo();
   }
 
@@ -396,8 +396,8 @@ function ImageBuildView(props: ImageBuildViewProps) {
     watchBuild();
 
     const toDispose = getGitpodService().registerClient({
-      notifyDidOpenConnection: () => watchBuild(),
-      onWorkspaceImageBuildLogs: (info: WorkspaceImageBuild.StateInfo, content?: WorkspaceImageBuild.LogContent) => {
+      notifyDidOpenConnection: async () => watchBuild(),
+      onWorkspaceImageBuildLogs: async (info: WorkspaceImageBuild.StateInfo, content?: WorkspaceImageBuild.LogContent) => {
         if (!content) {
           return;
         }

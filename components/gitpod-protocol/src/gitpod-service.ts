@@ -32,16 +32,16 @@ import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from './
 import { IDEServer } from './ide-protocol';
 
 export interface GitpodClient {
-    onInstanceUpdate(instance: WorkspaceInstance): void;
+    onInstanceUpdate(instance: WorkspaceInstance): Promise<void>;
     onWorkspaceImageBuildLogs: WorkspaceImageBuild.LogCallback;
 
-    onPrebuildUpdate(update: PrebuildWithStatus): void;
+    onPrebuildUpdate(update: PrebuildWithStatus): Promise<void>;
 
-    onCreditAlert(creditAlert: CreditAlert): void;
+    onCreditAlert(creditAlert: CreditAlert): Promise<void>;
 
     //#region propagating reconnection to iframe
-    notifyDidOpenConnection(): void;
-    notifyDidCloseConnection(): void;
+    notifyDidOpenConnection(): Promise<void>;
+    notifyDidCloseConnection(): Promise<void>;
     //#endregion
 }
 
@@ -391,74 +391,56 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
         }
     }
 
-    onInstanceUpdate(instance: WorkspaceInstance): void {
+    async onInstanceUpdate(instance: WorkspaceInstance): Promise<void> {
         for (const client of this.clients) {
             if (client.onInstanceUpdate) {
-                try {
-                    client.onInstanceUpdate(instance);
-                } catch (error) {
-                    console.error(error)
-                }
+                client.onInstanceUpdate(instance)
+                    .catch(console.error);
             }
         }
     }
 
-    onPrebuildUpdate(update: PrebuildWithStatus): void {
+    async onPrebuildUpdate(update: PrebuildWithStatus): Promise<void> {
         for (const client of this.clients) {
             if (client.onPrebuildUpdate) {
-                try {
-                    client.onPrebuildUpdate(update);
-                } catch (error) {
-                    console.error(error)
-                }
+                client.onPrebuildUpdate(update)
+                    .catch(console.error);
             }
         }
     }
 
-    onWorkspaceImageBuildLogs(info: WorkspaceImageBuild.StateInfo, content: WorkspaceImageBuild.LogContent | undefined): void {
+    async onWorkspaceImageBuildLogs(info: WorkspaceImageBuild.StateInfo, content: WorkspaceImageBuild.LogContent | undefined): Promise<void> {
         for (const client of this.clients) {
             if (client.onWorkspaceImageBuildLogs) {
-                try {
-                    client.onWorkspaceImageBuildLogs(info, content);
-                } catch (error) {
-                    console.error(error)
-                }
+                client.onWorkspaceImageBuildLogs(info, content)
+                    .catch(console.error);
             }
         }
     }
 
-    notifyDidOpenConnection(): void {
+    async notifyDidOpenConnection(): Promise<void> {
         for (const client of this.clients) {
             if (client.notifyDidOpenConnection) {
-                try {
-                    client.notifyDidOpenConnection();
-                } catch (error) {
-                    console.error(error)
-                }
+                client.notifyDidOpenConnection()
+                    .catch(console.error);
             }
         }
     }
 
-    notifyDidCloseConnection(): void {
+    async notifyDidCloseConnection(): Promise<void> {
         for (const client of this.clients) {
             if (client.notifyDidCloseConnection) {
-                try {
-                    client.notifyDidCloseConnection();
-                } catch (error) {
-                    console.error(error)
-                }
+                client.notifyDidCloseConnection()
+                    .catch(console.error);
             }
         }
     }
 
-    onCreditAlert(creditAlert: CreditAlert): void {
+    async onCreditAlert(creditAlert: CreditAlert): Promise<void> {
         for (const client of this.clients) {
             if (client.onCreditAlert) {
-                try {
-                    client.onCreditAlert(creditAlert);
-                } catch (error) {
-                    console.error(error)
-                }
+                client.onCreditAlert(creditAlert)
+                    .catch(console.error);
             }
         }
     }
@@ -494,7 +476,7 @@ export class WorkspaceInstanceUpdateListener {
         private _info: WorkspaceInfo
     ) {
         service.registerClient({
-            onInstanceUpdate: instance => {
+            onInstanceUpdate: async (instance) => {
                 if (this.isOutOfOrder(instance)) {
                     return;
                 }
@@ -503,7 +485,7 @@ export class WorkspaceInstanceUpdateListener {
                 this.source = 'update';
                 this.onDidChangeEmitter.fire(undefined);
             },
-            notifyDidOpenConnection: () => {
+            notifyDidOpenConnection: async () => {
                 this.sync();
             }
         });
