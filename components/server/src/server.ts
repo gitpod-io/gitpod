@@ -15,10 +15,9 @@ import { SessionHandlerProvider } from './session-handler';
 import { Authenticator } from './auth/authenticator';
 import { UserController } from './user/user-controller';
 import { EventEmitter } from 'events';
-import { toIWebSocket } from '@gitpod/gitpod-protocol/lib/messaging/node/connection';
 import { WsExpressHandler, WsRequestHandler } from './express/ws-handler';
 import { handleError, isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from './express-util';
-import { createWebSocketConnection } from 'vscode-ws-jsonrpc/lib';
+import { createWebSocketConnection, toSocket } from 'vscode-ws-jsonrpc/lib';
 import { MessageBusIntegration } from './workspace/messagebus-integration';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { EnforcementController } from './user/enforcement-endpoint';
@@ -193,13 +192,13 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             const wsPingPongHandler = new WsPingPongHandler();
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
             wsHandler.ws(websocketConnectionHandler.path, (ws, request) => {
-                const websocket = toIWebSocket(ws);
+                const websocket = toSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
             }, handleSession, ...initSessionHandlers, handleError, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
             });
             wsHandler.ws("/v1", (ws, request) => {
-                const websocket = toIWebSocket(ws);
+                const websocket = toSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
             }, handleError, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
