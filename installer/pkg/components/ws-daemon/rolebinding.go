@@ -37,22 +37,22 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-		&rbacv1.RoleBinding{
-			TypeMeta: common.TypeMetaRoleBinding,
+		&rbacv1.ClusterRoleBinding{
+			TypeMeta: common.TypeMetaClusterRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-rb", Component),
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:   fmt.Sprintf("%s-%s-rb", ctx.Namespace, Component),
+				Labels: labels,
 			},
-			Subjects: []rbacv1.Subject{{
-				Kind: "ServiceAccount",
-				Name: Component,
-			}},
 			RoleRef: rbacv1.RoleRef{
 				Kind:     "ClusterRole",
 				Name:     fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
 				APIGroup: "rbac.authorization.k8s.io",
 			},
+			Subjects: []rbacv1.Subject{{
+				Kind:      "ServiceAccount",
+				Name:      Component,
+				Namespace: ctx.Namespace,
+			}},
 		},
 	}, nil
 }
