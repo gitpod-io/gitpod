@@ -321,6 +321,11 @@ export async function build(context, version) {
         if (!existingVM) {
             werft.log(vmSlices.BOOT_VM, 'Starting VM')
             VM.startVM({ name: destname })
+        } else if (cleanSlateDeployment) {
+            werft.log(vmSlices.BOOT_VM, 'Removing existing namespace')
+            VM.deleteVM({ name: destname })
+            werft.log(vmSlices.BOOT_VM, 'Starting VM')
+            VM.startVM({ name: destname })
         } else {
             werft.log(vmSlices.BOOT_VM, 'VM already exists')
         }
@@ -417,7 +422,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
     // clean environment state
     try {
-        if (deploymentConfig.cleanSlateDeployment) {
+        if (deploymentConfig.cleanSlateDeployment && !withVM) {
             werft.log(installerSlices.CLEAN_ENV_STATE, "Clean the preview environment slate...");
             // re-create namespace
             await cleanStateEnv(metaEnv());
