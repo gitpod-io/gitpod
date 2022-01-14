@@ -4,13 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceContext } from "@gitpod/gitpod-protocol";
 import { injectable } from "inversify";
 import { IPrefixContextParser } from "./context-parser";
 
 @injectable()
 export class ImageBuildPrefixContextParser implements IPrefixContextParser {
-    static PREFIX = ContextURL.IMAGEBUILD_PREFIX + '/';
+    static PREFIX = 'imagebuild/';
 
     findPrefix(user: User, context: string): string | undefined {
         if (context.startsWith(ImageBuildPrefixContextParser.PREFIX)) {

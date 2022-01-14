@@ -133,7 +133,7 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
             </div>
             <div className="flex flex-col w-5/12 self-center truncate">
                 <div className="text-gray-500 overflow-ellipsis truncate">{p.ws.description}</div>
-                <div className="text-sm text-gray-400 overflow-ellipsis truncate">{p.ws.contextURL}</div>
+                <div className="text-sm text-gray-400 overflow-ellipsis truncate">{p.ws.context.normalizedContextURL}</div>
             </div>
             <div className="flex w-2/12 self-center">
                 <div className="text-sm w-full text-gray-400 truncate">{moment(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}</div>

@@ -394,6 +394,13 @@ export interface LayoutData {
 export interface Workspace {
     id: string;
     creationTime: string;
+    /**
+     * It is the original context URL before preprocessing.
+     * It can contains additional modifiers, i.e. env var prefixes.
+     *
+     * Usually we don't want to display modifiers to a user,
+     * use `context.normalizedContextURL` instead for rendering.
+     */
     contextURL: string;
     description: string;
     ownerId: string;
@@ -776,7 +783,6 @@ export namespace ExternalImageConfigFile {
 
 export interface WorkspaceContext {
     title: string;
-    /** This contains the URL portion of the contextURL (which might contain other modifiers as well). It's optional because it's not set for older workspaces. */
     normalizedContextURL?: string;
     forceCreateNewWorkspace?: boolean;
     forceImageBuild?: boolean;

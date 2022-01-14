@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, DisposableCollection, WithPrebuild, Workspace, WorkspaceImageBuild, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { DisposableCollection, WithPrebuild, Workspace, WorkspaceImageBuild, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
 import React, { Suspense, useEffect } from "react";
@@ -192,9 +192,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     // Successfully stopped and headless: the prebuild is done, let's try to use it!
     if (!error && workspaceInstance.status.phase === 'stopped' && this.state.workspace?.type !== 'regular') {
-      const contextURL = ContextURL.parseToURL(this.state.workspace?.contextURL);
+      const contextURL = this.state.workspace?.context.normalizedContextURL;
       if (contextURL) {
-        this.redirectTo(gitpodHostUrl.withContext(contextURL.toString()).toString());
+        this.redirectTo(gitpodHostUrl.withContext(contextURL).toString());
       } else {
         console.error(`unable to parse contextURL: ${contextURL}`);
       }
@@ -289,7 +289,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
               <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
               <div>
                 <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-                <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+                <a target="_parent" href={this.state.workspace?.context.normalizedContextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.context.normalizedContextURL}</p></a>
               </div>
             </div>
             <div className="mt-10 justify-center flex space-x-2">
@@ -336,7 +336,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
             <div>
               <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={this.state.workspace?.context.normalizedContextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.context.normalizedContextURL}</p></a>
             </div>
           </div>
           <div className="mt-10 flex justify-center">
@@ -363,7 +363,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={this.state.workspace?.context.normalizedContextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">{this.state.workspace?.context.normalizedContextURL}</p></a>
             </div>
           </div>
           <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />

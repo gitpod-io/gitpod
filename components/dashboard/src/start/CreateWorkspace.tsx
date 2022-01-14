@@ -166,7 +166,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
               <a href={w.latestInstance?.ideUrl || gitpodHostUrl.with({ pathname: '/start/', hash: '#' + w.latestInstance?.workspaceId }).toString()} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1">
                 <div className="w-full">
                   <p className="text-base text-black dark:text-gray-100 font-bold">{w.workspace.id}</p>
-                  <p className="truncate" title={w.workspace.contextURL}>{w.workspace.contextURL}</p>
+                  <p className="truncate" title={w.workspace.context.normalizedContextURL}>{w.workspace.context.normalizedContextURL}</p>
                 </div>
               </a>
             )}

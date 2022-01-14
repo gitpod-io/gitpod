@@ -4,7 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import * as url from 'url';
+import { GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "./host-context-provider";
 
 declare var resourceInstance: GuardedResource;
@@ -480,7 +481,7 @@ export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
 
         // Check if user can access repositories headless logs
         const ws = resource.subject;
-        const contextURL = ContextURL.parseToURL(ws.contextURL);
+        const contextURL = new url.URL(ws.context.normalizedContextURL || ws.contextURL);
         if (!contextURL) {
             throw new Error(`unable to parse ContextURL: ${contextURL}`);
         }

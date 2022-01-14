@@ -4,13 +4,13 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { User, WorkspaceContext, StartPrebuildContext, IssueContext, ContextURL } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceContext, StartPrebuildContext, IssueContext } from "@gitpod/gitpod-protocol";
 import { injectable } from "inversify";
 import { IPrefixContextParser } from "../../../src/workspace/context-parser";
 
 @injectable()
 export class StartPrebuildContextParser implements IPrefixContextParser {
-    static PREFIX = ContextURL.PREBUILD_PREFIX + '/';
+    static PREFIX = 'prebuild/';
 
     findPrefix(user: User, context: string): string | undefined {
         if (context.startsWith(StartPrebuildContextParser.PREFIX)) {
