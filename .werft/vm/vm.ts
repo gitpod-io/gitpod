@@ -16,6 +16,18 @@ EOF
     `)
 }
 
+
+/**
+ * Convenience function to kubectl delete a manifest from stdin.
+ */
+ function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
+    exec(`
+        cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} delete
+${manifest}
+EOF
+    `)
+}
+
 /**
  * Start a VM
  * Does not wait for the VM to be ready.
@@ -55,6 +67,47 @@ export function startVM(options: { name: string }) {
         })
     )
 }
+
+
+/**
+ * Remove a VM with its Namespace
+ */
+ export function deleteVM(options: { name: string }) {
+    const namespace = `preview-${options.name}`
+    const userDataSecretName = `userdata-${options.name}`
+
+    kubectlDeleteManifest(
+        Manifests.ServiceManifest({
+            vmName: options.name,
+            namespace
+        })
+    )
+
+    kubectlDeleteManifest(
+        Manifests.UserDataSecretManifest({
+            vmName: options.name,
+            namespace,
+            secretName: userDataSecretName,
+        })
+    )
+
+    kubectlDeleteManifest(
+        Manifests.VirtualMachineManifest({
+            namespace,
+            vmName: options.name,
+            claimName: `${options.name}-${Date.now()}`,
+            userDataSecretName
+        }),
+        { validate: false }
+    )
+
+    kubectlDeleteManifest(
+        Manifests.NamespaceManifest({
+            namespace
+        })
+    )
+}
+
 
 /**
  * Check if a VM with the given name already exists.
