@@ -6,7 +6,9 @@ FROM alpine:3.15
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
-  && apk add --no-cache ca-certificates
+  && apk add --no-cache ca-certificates bash
+
+RUN apk add --no-cache kubectl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 
 RUN adduser -S -D -H -h /app -u 1000 appuser
 COPY components-registry-facade--app/registry-facade /app/registry-facade

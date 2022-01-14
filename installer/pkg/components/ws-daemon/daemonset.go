@@ -6,6 +6,7 @@ package wsdaemon
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
@@ -92,6 +93,7 @@ fi
 			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
 		},
 	}
+
 	if cfg.Workspace.Runtime.FSShiftMethod == config.FSShiftShiftFS {
 		initContainers = append(initContainers, corev1.Container{
 			Name:  "shiftfs-module-loader",
@@ -278,6 +280,22 @@ fi
 				ImagePullPolicy: corev1.PullAlways,
 				SecurityContext: &corev1.SecurityContext{
 					Privileged: pointer.Bool(true),
+				},
+				Lifecycle: &corev1.Lifecycle{
+					PostStart: &corev1.Handler{
+						Exec: &corev1.ExecAction{
+							Command: []string{
+								"/bin/bash", "-c", `kubectl label nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}=true`,
+							},
+						},
+					},
+					PreStop: &corev1.Handler{
+						Exec: &corev1.ExecAction{
+							Command: []string{
+								"/bin/bash", "-c", `kubectl label nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}-`,
+							},
+						},
+					},
 				},
 			},
 			*common.KubeRBACProxyContainer(ctx),
