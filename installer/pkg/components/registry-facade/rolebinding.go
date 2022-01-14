@@ -18,12 +18,11 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
 	return []runtime.Object{
-		&rbacv1.RoleBinding{
-			TypeMeta: common.TypeMetaRoleBinding,
+		&rbacv1.ClusterRoleBinding{
+			TypeMeta: common.TypeMetaClusterRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
-				Namespace: ctx.Namespace,
-				Labels:    labels,
+				Name:   Component,
+				Labels: labels,
 			},
 			RoleRef: rbacv1.RoleRef{
 				Kind:     "ClusterRole",
@@ -31,8 +30,9 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 				APIGroup: "rbac.authorization.k8s.io",
 			},
 			Subjects: []rbacv1.Subject{{
-				Kind: "ServiceAccount",
-				Name: Component,
+				Kind:      "ServiceAccount",
+				Name:      Component,
+				Namespace: ctx.Namespace,
 			}},
 		},
 		&rbacv1.ClusterRoleBinding{

@@ -154,6 +154,13 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							[]corev1.EnvVar{{
 								Name:  "GRPC_GO_RETRY",
 								Value: "on",
+							}, {
+								Name: "NODENAME",
+								ValueFrom: &corev1.EnvVarSource{
+									FieldRef: &corev1.ObjectFieldSelector{
+										FieldPath: "spec.nodeName",
+									},
+								},
 							}},
 						),
 						VolumeMounts: append([]corev1.VolumeMount{{
