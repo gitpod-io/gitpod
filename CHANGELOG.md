@@ -1,6 +1,7 @@
 # Change Log
 
 ## January 2022
+- Add bottom padding for Projects, Branches, and Prebuilds pages ([#7578](https://github.com/gitpod-io/gitpod/pull/7578)) - [@gtsiolis](https://github.com/gtsiolis)
 - [ws-manager] Adjust probe InitialDelaySeconds ([#7512](https://github.com/gitpod-io/gitpod/pull/7512)) - [@aledbf](https://github.com/aledbf)
 - [GitHub] Optionally prevent merging pull requests when prebuilds fail. ([#7535](https://github.com/gitpod-io/gitpod/pull/7535)) - [@svenefftinge](https://github.com/svenefftinge)
 - [installation-telemetry]: initial commit plus installer setup ([#7503](https://github.com/gitpod-io/gitpod/pull/7503)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
