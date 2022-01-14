@@ -13,6 +13,7 @@ import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryp
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
 import { DBProjectEnvVar } from "./entity/db-project-env-vars";
+import { DBProjectInfo } from "./entity/db-project-info";
 
 function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
@@ -35,6 +36,10 @@ export class ProjectDBImpl implements ProjectDB {
 
     protected async getProjectEnvVarRepo(): Promise<Repository<DBProjectEnvVar>> {
         return (await this.getEntityManager()).getRepository<DBProjectEnvVar>(DBProjectEnvVar);
+    }
+
+    protected async getProjectInfoRepo(): Promise<Repository<DBProjectInfo>> {
+        return (await this.getEntityManager()).getRepository<DBProjectInfo>(DBProjectInfo);
     }
 
     public async findProjectById(projectId: string): Promise<Project | undefined> {
@@ -106,6 +111,12 @@ export class ProjectDBImpl implements ProjectDB {
             project.markedDeleted = true;
             await repo.save(project);
         }
+        // Delete any additional cached infos about this project
+        const projectInfoRepo = await this.getProjectInfoRepo();
+        const info = await projectInfoRepo.findOne({ projectId, deleted: false });
+        if (info) {
+            await projectInfoRepo.update(projectId, { deleted: true });
+        }
     }
 
     public async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void> {
@@ -163,5 +174,20 @@ export class ProjectDBImpl implements ProjectDB {
         const envVarRepo = await this.getProjectEnvVarRepo();
         const envVarsWithValues = await envVarRepo.findByIds(envVars);
         return envVarsWithValues;
+    }
+
+    public async findCachedProjectOverview(projectId: string): Promise<Project.Overview | undefined> {
+        const projectInfoRepo = await this.getProjectInfoRepo();
+        const info = await projectInfoRepo.findOne({ projectId });
+        return info?.overview;
+    }
+
+    public async storeCachedProjectOverview(projectId: string, overview: Project.Overview): Promise<void> {
+        const projectInfoRepo = await this.getProjectInfoRepo();
+        await projectInfoRepo.save({
+            projectId,
+            overview,
+            creationTime: new Date().toISOString(),
+        });
     }
 }

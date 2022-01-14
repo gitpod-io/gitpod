@@ -21,4 +21,6 @@ export interface ProjectDB {
     getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
     getProjectEnvironmentVariableValues(envVars: ProjectEnvVar[]): Promise<ProjectEnvVarWithValue[]>;
+    findCachedProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
+    storeCachedProjectOverview(projectId: string, overview: Project.Overview): Promise<void>;
 }

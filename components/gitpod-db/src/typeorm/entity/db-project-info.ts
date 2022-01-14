@@ -5,15 +5,16 @@
  */
 
 import { Entity, Column, PrimaryColumn } from "typeorm";
-import { PrebuildInfo } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 
 import { TypeORM } from "../../typeorm/typeorm";
 
 @Entity()
-export class DBPrebuildInfo {
+// on DB but not Typeorm: @Index("ind_dbsync", ["_lastModified"])   // DBSync
+export class DBProjectInfo {
 
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
-    prebuildId: string;
+    projectId: string;
 
     @Column({
         type: 'simple-json',
@@ -25,13 +26,18 @@ export class DBPrebuildInfo {
                 from(value: any): any {
                     try {
                         const obj = JSON.parse(value);
-                        return PrebuildInfo.is(obj) ? obj : undefined;
+                        if (Project.Overview.is(obj)) {
+                            return obj;
+                        }
                     } catch (error) {
                     }
                 }
             };
         })()
     })
-    info: PrebuildInfo;
+    overview: Project.Overview;
 
+    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    @Column()
+    deleted: boolean;
 }

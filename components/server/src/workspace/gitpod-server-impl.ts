@@ -1644,7 +1644,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         await this.guardProjectOperation(user, projectId, "get");
         try {
-            return await this.projectsService.getProjectOverview(user, project);
+            return await this.projectsService.getProjectOverviewCached(user, project);
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);

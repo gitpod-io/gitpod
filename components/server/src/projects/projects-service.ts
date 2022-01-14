@@ -37,9 +37,25 @@ export class ProjectsService {
         return this.projectDB.findProjectsByCloneUrls(cloneUrls);
     }
 
-    async getProjectOverview(user: User, project: Project): Promise<Project.Overview | undefined> {
-        const branches = await this.getBranchDetails(user, project);
-        return { branches };
+    async getProjectOverviewCached(user: User, project: Project): Promise<Project.Overview | undefined> {
+        // Check for a cached project overview (fast!)
+        const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
+
+        // ...but also refresh the cache on every request (asynchronously / in the background)
+        const refreshPromise = this.getBranchDetails(user, project).then(branches => {
+            const overview = { branches };
+            // No need to await here
+            this.projectDB.storeCachedProjectOverview(project.id, overview).catch(error => {
+                log.error(`Could not store cached project overview: ${error}`, { cloneUrl: project.cloneUrl })
+            });
+            return overview;
+        });
+
+        const cachedOverview = await cachedPromise;
+        if (cachedOverview) {
+            return cachedOverview;
+        }
+        return await refreshPromise;
     }
 
     protected getRepositoryProvider(project: Project) {
@@ -113,6 +129,10 @@ export class ProjectsService {
     }
 
     protected async onDidCreateProject(project: Project, installer: User) {
+        // Pre-fetch project details in the background -- don't await
+        this.getProjectOverviewCached(installer, project);
+
+        // Install the prebuilds webhook if possible
         let { userId, teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
