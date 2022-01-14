@@ -30,9 +30,21 @@ export class WsPingPongHandler implements Disposable {
                 try {
                     switch (ws.readyState) {
                         case websocket.CLOSED:
-                            // ws should not be in the clients list anymore
+                            // ws should not be in the clients list anymore, but still happens:
+                            // we rely on a 'close' event being generated, but never receive it. At the same time, the readyState is 'CLOSED' (3).
+                            // judging from the ws source code, this might only happen if an earlier registered handler throws an (unhandled) error.
                             log.warn("websocket in strange state", { readyState: ws.readyState });
-                            return
+
+                            // the following is a hack trying to mitigate the effects of leaking CLOSED websockets
+                            if (process.env.EXPERIMENTAL_WS_TERMINATION) {
+                                try {
+                                    (ws as any).emitClose();
+                                    log.warn("websocket (experimental): close emitted");
+                                } catch (err) {
+                                    log.error("websocket (experimental): error on emit('close')", err);
+                                }
+                            }
+                            return;
                         case websocket.CONNECTING:
                             // ws should not be in the clients list, yet
                             log.warn("websocket in strange state", { readyState: ws.readyState });
