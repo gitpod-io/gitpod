@@ -36,6 +36,8 @@ var attachTaskCmdOpts struct {
 	ForceResize bool
 }
 
+// TODO(andreafalzetti): refactor tasks.go to only keep the tasks cmd initialisation, moving the subcommands in their own file
+
 // This func was copied from https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/cmd/terminal.go#L29
 // TODO(andreafalzetti): move it somewhere else so that it's reusable from other cmds
 func dialSupervisor() *grpc.ClientConn {
@@ -111,15 +113,12 @@ var attachTaskCmd = &cobra.Command{
 			client = api.NewStatusServiceClient(dialSupervisor())
 		)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		listen, err := client.TasksStatus(ctx, &api.TasksStatusRequest{Observe: true})
+		listen, err := client.TasksStatus(context.Background(), &api.TasksStatusRequest{Observe: true})
 		if err != nil {
 			fmt.Println("Cannot list tasks")
 		}
 
-		errchan := make(chan error, 5)
+		errchan := make(chan error, 1)
 		func() {
 			for {
 				resp, err := listen.Recv()
@@ -167,8 +166,7 @@ func init() {
 	tasksCmd.AddCommand(listTasksCmd)
 	tasksCmd.AddCommand(attachTaskCmd)
 
-	// attachTaskCmd.Flags().StringVar(&attachTaskCmdOpts.TaskId, "format", "text | json", "")
-
+	// TODO(andreafalzetti): implement interactive & force-resize flags
 	attachTaskCmd.Flags().BoolVarP(&attachTaskCmdOpts.Interactive, "internactive", "i", false, "assume control over the terminal")
 	attachTaskCmd.Flags().BoolVarP(&attachTaskCmdOpts.ForceResize, "force-resize", "r", false, "force this terminal's size irregardless of other clients")
 }
