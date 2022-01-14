@@ -22,12 +22,18 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:   fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component),
 				Labels: common.DefaultLabels(Component),
 			},
-			Rules: []rbacv1.PolicyRule{{
-				APIGroups:     []string{"policy"},
-				Resources:     []string{"podsecuritypolicies"},
-				Verbs:         []string{"use"},
-				ResourceNames: []string{fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component)},
-			}},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups:     []string{"policy"},
+					Resources:     []string{"podsecuritypolicies"},
+					Verbs:         []string{"use"},
+					ResourceNames: []string{fmt.Sprintf("%s-ns-%s", ctx.Namespace, Component)},
+				}, {
+					APIGroups: []string{""},
+					Resources: []string{"nodes"},
+					Verbs:     []string{"update"},
+				},
+			},
 		},
 	}, nil
 }
