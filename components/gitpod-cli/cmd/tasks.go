@@ -7,10 +7,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
@@ -32,18 +32,19 @@ var attachTaskCmdOpts struct {
 
 // copied from https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/cmd/terminal.go#L29
 // TODO: move it somewhere else so that it's reusable from other cmds
+
 func dialSupervisor() *grpc.ClientConn {
-	cfg, err := supervisor.GetConfig()
-	if err != nil {
-		fmt.Println("Cannot get config")
-	}
+	// cfg, err := api.GetConfig()
+	// if err != nil {
+	// 	log.WithError(err).Fatal("cannot get config")
+	// }
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	url := fmt.Sprintf("localhost:%d", cfg.APIEndpointPort)
+	url := fmt.Sprintf("localhost:%d", 22999)
 	conn, err := grpc.DialContext(ctx, url, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		fmt.Println("Cannot connect to supervisor")
+		log.WithError(err).Fatal("cannot connect to supervisor")
 	}
 
 	// TODO(cw): devise some means to properly close the connection
@@ -57,27 +58,38 @@ var listTasksCmd = &cobra.Command{
 	Short: "Lists the workspace tasks and their status",
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
-			alias  string
-			client = api.NewTerminalServiceClient(dialSupervisor())
+			client = api.NewStatusServiceClient(dialSupervisor())
 		)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		resp, err := client.List(ctx, &api.ListTerminalsRequest{})
 
+		// TODO(andreafalzetti): ask how to opt-out from the stream! {Observe: false} gives me a stream 😢
+		listen, err := client.TasksStatus(ctx, &api.TasksStatusRequest{Observe: false})
 		if err != nil {
 			fmt.Println("Cannot list tasks")
 		}
-		if len(resp.Terminals) == 0 {
-			fmt.Println("No tasks available")
-		}
-		if len(resp.Terminals) > 1 {
-			fmt.Fprintln(os.Stderr, "More than one terminal, please choose explicitly:")
-			for _, r := range resp.Terminals {
-				fmt.Fprintf(os.Stderr, "\t%s\n", r.Alias)
+
+		errchan := make(chan error, 5)
+		func() {
+			for {
+				resp, err := listen.Recv()
+				if err != nil {
+					errchan <- err
+				}
+
+				tasks := resp.GetTasks()
+
+				if tasks != nil {
+					// TODO(andreafalzetti): refactor this fmt.Println with https://github.com/rodaine/table
+					for _, task := range tasks {
+						fmt.Println(task.Id, task.Presentation.Name, task.State)
+					}
+				} else {
+					break
+				}
 			}
-			os.Exit(1)
-		}
+		}()
 	},
 }
 
@@ -96,5 +108,5 @@ func init() {
 	tasksCmd.AddCommand(listTasksCmd)
 	tasksCmd.AddCommand(attachTaskCmd)
 
-	attachTaskCmd.Flags().StringVar(&attachTaskCmdOpts.TaskId, "task id", "", "")
+	attachTaskCmd.Flags().StringVar(&attachTaskCmdOpts.TaskId, "taskId", "", "")
 }
