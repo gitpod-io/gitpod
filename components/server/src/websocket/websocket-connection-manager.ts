@@ -135,7 +135,7 @@ export class WebsocketClientContext {
     removeEndpoint(server: GitpodServerImpl) {
         const index = this.servers.findIndex(s => s.uuid === server.uuid);
         if (index !== -1) {
-            this.servers.splice(index);
+            this.servers.splice(index, 1);
         }
     }
 
