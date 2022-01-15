@@ -126,6 +126,7 @@ export async function build(context, version) {
     try {
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
         exec("gcloud auth configure-docker --quiet");
+        exec("gcloud auth configure-docker europe-docker.pkg.dev --quiet");
         exec('gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev');
         werft.done('prep');
     } catch (err) {
@@ -284,7 +285,7 @@ export async function build(context, version) {
     const domain = withVM ? `${destname}.preview.gitpod-dev.com` : `${destname}.staging.gitpod-dev.com`;
     const monitoringDomain = `${destname}.preview.gitpod-dev.com`;
     const url = `https://${domain}`;
-    const imagePullAuth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
+    const imagePullAuth = exec(`printf "%s" "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
         | yq r - data['.dockerconfigjson'] \
         | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
     const deploymentConfig: DeploymentConfig = {
@@ -453,7 +454,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     if (!hasPullSecret) {
         try {
             werft.log(installerSlices.IMAGE_PULL_SECRET, "Adding the image pull secret to the namespace");
-            const dockerConfig = { auths: { "eu.gcr.io": { auth: deploymentConfig.imagePullAuth } } };
+            const dockerConfig = { auths: { "eu.gcr.io": { auth: deploymentConfig.imagePullAuth }, "europe-docker.pkg.dev": { auth: deploymentConfig.imagePullAuth } } };
             fs.writeFileSync(`./${IMAGE_PULL_SECRET_NAME}`, JSON.stringify(dockerConfig));
             exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`);
             werft.done(installerSlices.IMAGE_PULL_SECRET);
@@ -720,13 +721,16 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     // core-dev specific section start
     werft.log("secret", "copy secret into namespace")
     try {
-        const auth = exec(`echo -n "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
+        const auth = exec(`printf "%s" "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
                         | yq r - data['.dockerconfigjson'] \
                         | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
         fs.writeFileSync("chart/gcp-sa-registry-auth",
             `{
     "auths": {
         "eu.gcr.io": {
+            "auth": "${auth}"
+        }
+        "europe-docker.pkg.dev": {
             "auth": "${auth}"
         }
     }
