@@ -1,0 +1,6 @@
+apiVersion: install.gitpod.io/v1alpha1
+kind: Installation
+metadata:
+  name: installation-sample
+spec:
+  # Add fields here

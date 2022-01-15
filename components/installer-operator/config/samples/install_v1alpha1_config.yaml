@@ -1,0 +1,6 @@
+apiVersion: install.gitpod.io/v1alpha1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  # Add fields here
