@@ -277,7 +277,7 @@ fi
 					InitialDelaySeconds: 5,
 					PeriodSeconds:       10,
 				},
-				ImagePullPolicy: corev1.PullAlways,
+				ImagePullPolicy: corev1.PullIfNotPresent,
 				SecurityContext: &corev1.SecurityContext{
 					Privileged: pointer.Bool(true),
 				},
