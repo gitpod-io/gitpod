@@ -732,6 +732,8 @@ supervisorLoop:
 
 		select {
 		case <-ideStopped:
+			// kill all processes in same pgid
+			_ = syscall.Kill(-1*cmd.Process.Pid, syscall.SIGKILL)
 			// IDE was stopped - let's just restart it after a small delay (in case the IDE doesn't start at all) in the next round
 			if ideStatus == statusShouldShutdown {
 				break supervisorLoop
