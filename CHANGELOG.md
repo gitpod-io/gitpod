@@ -1,6 +1,10 @@
 # Change Log
 
 ## January 2022
+- [protocol] use owner and repo in lower case in ws IDs ([#7609](https://github.com/gitpod-io/gitpod/pull/7609)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
+- Removed "workspaces" from projects and teams and have a single global workspaces list, that shows all my workspaces. ([#7606](https://github.com/gitpod-io/gitpod/pull/7606)) - [@svenefftinge](https://github.com/svenefftinge)
+- Made the single "workspaces" list the default landing place in the dashboard. ([#7606](https://github.com/gitpod-io/gitpod/pull/7606)) - [@svenefftinge](https://github.com/svenefftinge)
+- [installer] Adjust rabbitmq helm chart probes configuration ([#7596](https://github.com/gitpod-io/gitpod/pull/7596)) - [@aledbf](https://github.com/aledbf)
 - Add bottom padding for Projects, Branches, and Prebuilds pages ([#7578](https://github.com/gitpod-io/gitpod/pull/7578)) - [@gtsiolis](https://github.com/gtsiolis)
 - [ws-manager] Adjust probe InitialDelaySeconds ([#7512](https://github.com/gitpod-io/gitpod/pull/7512)) - [@aledbf](https://github.com/aledbf)
 - [GitHub] Optionally prevent merging pull requests when prebuilds fail. ([#7535](https://github.com/gitpod-io/gitpod/pull/7535)) - [@svenefftinge](https://github.com/svenefftinge)
