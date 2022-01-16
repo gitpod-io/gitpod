@@ -259,9 +259,9 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 	if served != nil {
 		servedMap := make(map[uint32]ServedPort)
 		for _, port := range served {
-			if port.Address.String() == workspaceIPAdress {
+			if _, existProxy := pm.proxies[port.Port]; existProxy && port.Address.String() == workspaceIPAdress {
 				// Ignore entries that are bound to the workspace ip address
-				// as they are created by the reverse proxy
+				// as they are created by the internal reverse proxy
 				continue
 			}
 
