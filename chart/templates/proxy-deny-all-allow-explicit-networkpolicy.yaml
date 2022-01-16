@@ -19,12 +19,14 @@ spec:
   policyTypes:
   - Ingress
   ingress:
-  # Allow access to HTTP(S) ports from everywhere
+  # Allow access to HTTP(S)/SSH ports from everywhere
   - ports:
     - protocol: TCP
       port: 80
     - protocol: TCP
       port: 443
+    - protocol: TCP
+      port: 22
   # Allow prometheus scraping from proxy /metrics endpoint
   - ports:
     - protocol: TCP

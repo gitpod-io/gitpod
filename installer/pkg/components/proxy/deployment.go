@@ -6,6 +6,7 @@ package proxy
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -160,12 +161,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							}},
 							Ports: []corev1.ContainerPort{{
-								ContainerPort: ContainerHTTPPort,
-								Name:          ContainerHTTPName,
-								Protocol:      *common.TCPProtocol,
-							}, {
-								ContainerPort: ContainerHTTPSPort,
-								Name:          ContainerHTTPSName,
+								ContainerPort: ContainerSSHPort,
+								Name:          ContainerSSHName,
 								Protocol:      *common.TCPProtocol,
 							}, {
 								ContainerPort: PrometheusPort,
@@ -199,6 +196,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}, {
 								ContainerPort: ContainerHTTPSPort,
 								Name:          "https",
+							}, {
+								ContainerPort: ContainerSSHPort,
+								Name:          ContainerSSHName,
+								Protocol:      *common.TCPProtocol,
 							}, prometheusPort},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: pointer.Bool(false),

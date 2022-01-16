@@ -27,6 +27,10 @@ var Objects = common.CompositeRenderFunc(
 				ContainerPort: ContainerHTTPSPort,
 				ServicePort:   ContainerHTTPSPort,
 			},
+			ContainerSSHName: {
+				ContainerPort: ContainerSSHPort,
+				ServicePort:   ContainerSSHPort,
+			},
 			MetricsContainerName: {
 				ContainerPort: PrometheusPort,
 				ServicePort:   PrometheusPort,
