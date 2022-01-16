@@ -34,6 +34,11 @@ require (
 )
 
 require (
+	github.com/gitpod-io/gitpod/installer/api v0.0.0-00010101000000-000000000000
+	google.golang.org/grpc v1.39.1
+)
+
+require (
 	cloud.google.com/go v0.83.0 // indirect
 	cloud.google.com/go/storage v1.15.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -202,7 +207,6 @@ require (
 	google.golang.org/api v0.48.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced // indirect
-	google.golang.org/grpc v1.39.1 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -225,14 +229,6 @@ require (
 
 replace github.com/gitpod-io/gitpod/image-builder => ../components/image-builder-mk3 // leeway
 
-replace github.com/gitpod-io/gitpod/image-builder/api => ../components/image-builder-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/openvsx-proxy => ../components/openvsx-proxy // leeway
-
-replace github.com/gitpod-io/gitpod/ws-scheduler => ../components/ee/ws-scheduler // leeway
-
-replace github.com/gitpod-io/gitpod/ws-proxy => ../components/ws-proxy // leeway
-
 replace github.com/gitpod-io/gitpod/agent-smith => ../components/ee/agent-smith // leeway
 
 replace github.com/gitpod-io/gitpod/blobserve => ../components/blobserve // leeway
@@ -245,9 +241,17 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../components/content
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../components/gitpod-protocol/go // leeway
 
+replace github.com/gitpod-io/gitpod/image-builder/api => ../components/image-builder-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/installer/api => ../components/installer-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/openvsx-proxy => ../components/openvsx-proxy // leeway
+
 replace github.com/gitpod-io/gitpod/registry-facade => ../components/registry-facade // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../components/registry-facade-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/supervisor/api => ../components/supervisor-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon => ../components/ws-daemon // leeway
 
@@ -255,7 +259,9 @@ replace github.com/gitpod-io/gitpod/ws-daemon/api => ../components/ws-daemon-api
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../components/ws-manager-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/supervisor/api => ../components/supervisor-api/go // leeway
+replace github.com/gitpod-io/gitpod/ws-proxy => ../components/ws-proxy // leeway
+
+replace github.com/gitpod-io/gitpod/ws-scheduler => ../components/ee/ws-scheduler // leeway
 
 replace k8s.io/api => k8s.io/api v0.22.2 // leeway indirect from components/common-go:lib
 

@@ -56,7 +56,7 @@ A config file is required which can be generated with the init command.`,
 }
 
 func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *configv1.Config, err error) {
-	rawCfg, cfgVersion, err = config.Load(cfgFN)
+	rawCfg, cfgVersion, err = config.LoadFile(cfgFN)
 	if err != nil {
 		err = fmt.Errorf("error loading config: %w", err)
 		return

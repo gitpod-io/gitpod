@@ -1,24 +1,23 @@
-module github.com/gitpod-io/gitpod/installation-telemetry
+module github.com/gitpod-io/gitpod/installer/api
 
 go 1.17
 
 require (
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/spf13/cobra v1.3.0
-	gopkg.in/segmentio/analytics-go.v3 v3.1.0
+	google.golang.org/grpc v1.39.1
+	google.golang.org/protobuf v1.27.1
 )
 
 require (
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/kr/text v0.2.0 // indirect
-	github.com/segmentio/backo-go v1.0.0 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023 // indirect
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
+	golang.org/x/text v0.3.6 // indirect
+	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect
 )
 
-replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
+replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
 replace k8s.io/api => k8s.io/api v0.22.2 // leeway indirect from components/common-go:lib
 

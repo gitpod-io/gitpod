@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package installer;
+
+option go_package = "github.com/gitpod-io/gitpod/installer/api";
+
+service InstallerService {
+    rpc ValidateConfig(ValidateConfigRequest) returns (ValidateConfigResponse) {}
+    rpc ValidateCluster(ValidateClusterRequest) returns (ValidateClusterRequest) {}
+    rpc RenderConfig(RenderConfigRequest) returns (RenderConfigResponse) {}
+}
+
+message ValidateConfigRequest {
+    bytes config = 1;
+}
+message ValidateConfigResponse {
+    bool valid = 1;
+    repeated string warnings = 2;
+    repeated string errors = 3;
+}
+
+message ValidateClusterRequest {}
+message ValidateClusterResponse {
+    bool valid = 1;
+    string status = 2;
+    repeated ValidationCheck checks = 3;
+}
+
+message ValidationCheck {
+    string name = 1;
+	string description = 2;
+    repeated string errors = 3;
+}
+
+message RenderConfigRequest {
+    bytes config = 1;
+}
+message RenderConfigResponse {
+    repeated string resources = 1;
+}

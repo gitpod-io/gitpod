@@ -73,11 +73,7 @@ func LoadConfigVersion(version string) (ConfigVersion, error) {
 	return v, nil
 }
 
-func Load(fn string) (cfg interface{}, version string, err error) {
-	fc, err := ioutil.ReadFile(fn)
-	if err != nil {
-		return
-	}
+func Load(fc []byte) (cfg interface{}, version string, err error) {
 	var vs struct {
 		APIVersion string `json:"apiVersion"`
 	}
@@ -99,6 +95,15 @@ func Load(fn string) (cfg interface{}, version string, err error) {
 	}
 
 	return cfg, version, nil
+}
+
+func LoadFile(fn string) (cfg interface{}, version string, err error) {
+	fc, err := ioutil.ReadFile(fn)
+	if err != nil {
+		return
+	}
+
+	return Load(fc)
 }
 
 func Marshal(version string, cfg interface{}) ([]byte, error) {

@@ -28,6 +28,7 @@ packages:
       - components/ws-daemon-api/go:lib
       - components/ws-proxy:lib
       - components/openvsx-proxy:lib
+      - components/installer-api/go:lib
     env:
       - CGO_ENABLED=0
     prep:
