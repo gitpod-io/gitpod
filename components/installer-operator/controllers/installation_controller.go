@@ -18,8 +18,6 @@ package controllers
 
 import (
 	"archive/tar"
-	"bufio"
-	"bytes"
 	"compress/gzip"
 	"context"
 	"encoding/json"
@@ -33,24 +31,30 @@ import (
 
 	"github.com/containerd/containerd/remotes/docker"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	goyaml "gopkg.in/yaml.v2"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/gitpod-io/gitpod/installer/api"
+	installer "github.com/gitpod-io/gitpod/installer/api"
 	installv1alpha1 "github.com/gitpod-io/gitpod/operator/api/v1alpha1"
+)
+
+const (
+	installerExecPath = "/tmp/installer.active"
 )
 
 // InstallationReconciler reconciles a Installation object
 type InstallationReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	conn          *grpc.ClientConn
+	client        installer.InstallerServiceClient
+	stopInstaller func() error
 }
 
 //+kubebuilder:rbac:groups=install.gitpod.io,resources=installations,verbs=get;list;watch;create;update;patch;delete
@@ -74,31 +78,111 @@ func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	status := install.Status
 
-	// try and download the installer
-	digest, installerfn, err := downloadInstaller(ctx, install)
+	digest, err := resolveInstallerDigest(ctx, install)
+	if err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	if digest != install.Status.Digest {
+		// we have a new installer version - let's get connected
+
+		// try and download the installer
+		_, installerfn, err := downloadInstaller(ctx, install)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		// we might still be connected - if so, stop it all
+		if r.conn != nil {
+			r.conn.Close()
+		}
+		r.client = nil
+		if r.stopInstaller != nil {
+			r.stopInstaller()
+		}
+
+		// remove the old installer and move the new one into place
+		_ = os.RemoveAll(installerExecPath)
+		err = os.Rename(installerfn, installerExecPath)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		status.Digest = digest
+	}
+
+	// if we're not connected, try to connect
+	if r.client == nil {
+		err = r.runInstaller()
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+	}
+
+	cfg, err := yaml.Marshal(install.Spec.Config)
+	if err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
+	cfgval, err := r.client.ValidateConfig(ctx, &installer.ValidateConfigRequest{Config: cfg})
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
-	cfgfn, err := writeConfig(filepath.Dir(installerfn), install)
-	if err != nil {
-		return ctrl.Result{}, err
+	conditions := status.Conditions
+	conditions.Config = installv1alpha1.ValidationResult{
+		Valid:    cfgval.Valid,
+		Warnings: cfgval.Warnings,
+		Errors:   cfgval.Errors,
 	}
+	status.Conditions = conditions
 
-	err = applyConfig(ctx, installerfn, cfgfn)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	install.Status.Digest = digest
-
+	install.Status = status
 	err = r.Status().Update(ctx, install)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
 
 	return ctrl.Result{RequeueAfter: 24 * time.Hour}, nil
+}
+
+func (r *InstallationReconciler) runInstaller() (err error) {
+	cmd := exec.Command(installerExecPath, "serve", "--addr", "localhost:9999")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+
+	r.stopInstaller = func() error {
+		err := cmd.Process.Kill()
+		r.stopInstaller = nil
+		return err
+	}
+	defer func() {
+		if err != nil {
+			r.stopInstaller()
+		}
+	}()
+
+	r.conn, err = grpc.Dial("tcp://localhost:9999", grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		return
+	}
+	r.client = api.NewInstallerServiceClient(r.conn)
+
+	return nil
+}
+
+func resolveInstallerDigest(ctx context.Context, installation *installv1alpha1.Installation) (digest string, err error) {
+	ref := "eu.gcr.io/gitpod-core-dev/build/installer:" + installation.Spec.Channel
+	res := docker.NewResolver(docker.ResolverOptions{})
+	ref, spec, err := res.Resolve(ctx, ref)
+	if err != nil {
+		return
+	}
+	return spec.Digest.String(), nil
 }
 
 func downloadInstaller(ctx context.Context, installation *installv1alpha1.Installation) (digest, path string, err error) {
@@ -166,79 +250,6 @@ func downloadInstaller(ctx context.Context, installation *installv1alpha1.Instal
 	}
 
 	return
-}
-
-func writeConfig(dir string, installation *installv1alpha1.Installation) (string, error) {
-	cfg, err := goyaml.Marshal(installation.Spec.Config)
-	if err != nil {
-		return "", err
-	}
-	cfgfn := filepath.Join(dir, "config.yaml")
-	err = ioutil.WriteFile(cfgfn, cfg, 0644)
-	if err != nil {
-		return "", err
-	}
-	return cfgfn, nil
-}
-
-func applyConfig(ctx context.Context, installer, config string) error {
-	buf := bytes.NewBuffer(nil)
-	cmd := exec.Command(installer, "render", "--config", config, "--namespace", "gitpod")
-	cmd.Stdout = buf
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	// create the dynamic client from kubeconfig
-	dynamicClient, err := dynamic.NewForConfig(ctrl.GetConfigOrDie())
-	if err != nil {
-		return err
-	}
-
-	yr := yaml.NewYAMLReader(bufio.NewReader(buf))
-
-	// read returns a complete YAML document.
-	for {
-		buf, err := yr.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		// Do not use this YAML doc if it is unkind.
-		var typeMeta runtime.TypeMeta
-		if err := yaml.Unmarshal(buf, &typeMeta); err != nil {
-			continue
-		}
-		if typeMeta.Kind == "" {
-			continue
-		}
-
-		// Define the unstructured object into which the YAML document will be
-		// unmarshaled.
-		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{},
-		}
-
-		// Unmarshal the YAML document into the unstructured object.
-		err = yaml.Unmarshal(buf, &obj.Object)
-		if err != nil {
-			return err
-		}
-
-		// create the object using the dynamic client
-		nodeResource := schema.GroupVersionResource{Version: "v1", Resource: "Node"}
-		_, err = dynamicClient.Resource(nodeResource).Namespace("gitpod").Create(ctx, obj, v1.CreateOptions{})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

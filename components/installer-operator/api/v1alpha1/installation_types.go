@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,8 +30,12 @@ type InstallationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Channel string  `json:"channel,omitempty"`
-	Config  *Config `json:"config,omitempty"`
+	Channel string `json:"channel,omitempty"`
+
+	//+kubebuilder:validation:Type=object
+	//+kubebuilder:validation:Schemaless
+	//+kubebuilder:pruning:PreserveUnknownFields
+	Config json.RawMessage `json:"config,omitempty"`
 }
 
 // InstallationStatus defines the observed state of Installation
@@ -38,6 +44,20 @@ type InstallationStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	LastUpdated metav1.Time `json:"lastUpdated,omit"`
 	Digest      string      `json:"digest"`
+	Version     string      `json:"version"`
+
+	Conditions InstallationConditions `json:"conditions"`
+}
+
+type InstallationConditions struct {
+	Config  ValidationResult `json:"config,omitempty"`
+	Cluster ValidationResult `json:"cluster,omitempty"`
+}
+
+type ValidationResult struct {
+	Valid    bool     `json:"valid"`
+	Warnings []string `json:"warnings,omitempty"`
+	Errors   []string `json:"errors,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -1,0 +1,13 @@
+packages:
+  - name: raw-app
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - components/installer-api/go:lib
+    env:
+      - CGO_ENABLED=0
+    config:
+      packaging: app
