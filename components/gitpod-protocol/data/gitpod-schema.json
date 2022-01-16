@@ -136,13 +136,38 @@
             },
             "additionalProperties": false
         },
+        "subRepositories": {
+            "type": "array",
+            "description": "List of sub repositories that are part of this project.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "url"
+                ],
+                "properties": {
+                    "url": {
+                        "type": ["string"],
+                        "description": "The url of the git repository to clone. Supports any context URLs."
+                    },
+                    "checkoutLocation": {
+                        "type": "string",
+                        "description": "Path to where the repository should be checked out relative to `/workspace`. Defaults to the simple repository name."
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "mainRepository": {
+            "type": "string",
+            "description": "The main repository, containing the dev environment configuration."
+        },
         "checkoutLocation": {
             "type": "string",
-            "description": "Path to where the repository should be checked out."
+            "description": "Path to where the repository should be checked out relative to `/workspace`. Defaults to the simple repository name."
         },
         "workspaceLocation": {
             "type": "string",
-            "description": "Path to where the IDE's workspace should be opened."
+            "description": "Path to where the IDE's workspace should be opened. Supports vscode's `*.code-workspace` files."
         },
         "gitConfig": {
             "type": [
@@ -224,6 +249,7 @@
         },
         "experimentalNetwork": {
             "type": "boolean",
+            "deprecationMessage": "The 'experimentalNetwork' property is deprecated.",
             "description": "Experimental network configuration in workspaces (deprecated). Enabled by default"
         }
     },

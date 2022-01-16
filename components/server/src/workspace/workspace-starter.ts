@@ -7,7 +7,7 @@
 import { CloneTargetMode, FileDownloadInitializer, GitAuthMethod, GitConfig, GitInitializer, PrebuildInitializer, SnapshotInitializer, WorkspaceInitializer } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
 import { DBUser, DBWithTracing, ProjectDB, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile, ProjectEnvVar } from "@gitpod/gitpod-protocol";
+import { CommitContext, Disposable, GitpodToken, GitpodTokenType, NamedWorkspaceFeatureFlag, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile, ProjectEnvVar, GitCheckoutInfo } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -32,6 +32,7 @@ import * as path from 'path';
 import * as grpc from "@grpc/grpc-js";
 import { IDEConfig, IDEConfigService } from "../ide-config";
 import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
+import { ContextParser } from "./context-parser-service";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -57,6 +58,7 @@ export class WorkspaceStarter {
     @inject(TheiaPluginService) protected readonly theiaService: TheiaPluginService;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
+    @inject(ContextParser) protected contextParser: ContextParser;
 
     public async startWorkspace(ctx: TraceContext, workspace: Workspace, user: User, userEnvVars: UserEnvVar[], projectEnvVars: ProjectEnvVar[], options?: StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
@@ -420,20 +422,26 @@ export class WorkspaceStarter {
             if (WorkspaceImageSourceDocker.is(imgsrc)) {
                 let source: WorkspaceInitializer;
                 const disp = new DisposableCollection();
-                let checkoutLocation = this.getCheckoutLocation(workspace);
+                let checkoutLocation = CommitContext.is(workspace.context) && workspace.context.checkoutLocation || '.';
                 if (!AdditionalContentContext.hasDockerConfig(workspace.context, workspace.config) && imgsrc.dockerFileSource) {
                     // TODO(se): we cannot change this initializer structure now because it is part of how baserefs are computed in image-builder.
                     // Image builds should however just use the initialization if the workspace they are running for (i.e. the one from above).
-                    const { git, disposable } = await this.createGitInitializer({span}, workspace, {
+                    const { initializer, disposable } = await this.createCommitInitializer({span}, workspace, {
                         ...imgsrc.dockerFileSource,
+                        checkoutLocation: ".",
                         title: "irrelevant",
                         ref: undefined,
                     }, user);
                     disp.push(disposable);
+                    let git: GitInitializer;
+                    if (initializer instanceof CompositeInitializer) {
+                        // we use the first git initializer for image builds only
+                        git = initializer.getInitializerList()[0].getGit()!;
+                    } else {
+                        git = initializer;
+                    }
                     git.setCloneTaget(imgsrc.dockerFileSource.revision);
                     git.setTargetMode(CloneTargetMode.REMOTE_COMMIT);
-                    checkoutLocation = "."
-                    git.setCheckoutLocation(checkoutLocation);
                     source = new WorkspaceInitializer();
                     source.setGit(git);
                 } else {
@@ -855,17 +863,25 @@ export class WorkspaceStarter {
 
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
-            const { git } = await this.createGitInitializer(traceCtx, workspace, context, user);
+            const { initializer } = await this.createCommitInitializer(traceCtx, workspace, context, user);
             const init = new PrebuildInitializer();
             init.setPrebuild(snapshot);
-            init.setGit(git);
+            if (initializer instanceof CompositeInitializer) {
+                init.setComposite(initializer);
+            } else {
+                init.setGit(initializer);
+            }
             result.setPrebuild(init);
         } else if (WorkspaceProbeContext.is(context)) {
             // workspace probes have no workspace initializer as they need no content
         } else if (CommitContext.is(context)) {
-            const { git, disposable } = await this.createGitInitializer(traceCtx, workspace, context, user);
+            const { initializer, disposable } = await this.createCommitInitializer(traceCtx, workspace, context, user);
             disp.push(disposable);
-            result.setGit(git);
+            if (initializer instanceof CompositeInitializer) {
+                result.setComposite(initializer);
+            } else {
+                result.setGit(initializer);
+            }
         } else {
             throw new Error("cannot create initializer for unkown context type");
         }
@@ -888,11 +904,13 @@ export class WorkspaceStarter {
             }));
 
             additionalInit.setFilesList(fileInfos);
-            additionalInit.setTargetLocation(this.getCheckoutLocation(workspace));
+            if (CommitContext.is(context)) {
+                additionalInit.setTargetLocation(context.checkoutLocation || context.repository.name);
+            }
 
             // wire the protobuf structure
-            const newRoot = new WorkspaceInitializer();
             const composite = new CompositeInitializer();
+            const newRoot = new WorkspaceInitializer();
             newRoot.setComposite(composite);
             composite.addInitializer(result);
             const wsInitializerForDownload = new WorkspaceInitializer();
@@ -903,10 +921,32 @@ export class WorkspaceStarter {
         return {initializer: result, disposable: disp};
     }
 
-    protected async createGitInitializer(traceCtx: TraceContext, workspace: Workspace, context: CommitContext, user: User): Promise<{git: GitInitializer, disposable: Disposable}> {
-        if (!CommitContext.is(context)) {
-            throw new Error("Unknown workspace context");
+    protected async createCommitInitializer(ctx: TraceContext, workspace: Workspace, context: CommitContext, user: User): Promise<{initializer: GitInitializer | CompositeInitializer, disposable: Disposable}> {
+        const span = TraceContext.startSpan("createInitializerForCommit", ctx);
+        const mainGit = this.createGitInitializer({ span }, workspace, context, user);
+        if (!context.subRepositoryCheckoutInfo || context.subRepositoryCheckoutInfo.length === 0) {
+            return mainGit;
         }
+        const subRepoInitializers = [mainGit];
+        await Promise.all(context.subRepositoryCheckoutInfo.map(async subRepo => {
+                subRepoInitializers.push(this.createGitInitializer({ span }, workspace, subRepo , user));
+            }));
+        const inits = await Promise.all(subRepoInitializers);
+        const compositeInit = new CompositeInitializer();
+        const compositeDisposable = new DisposableCollection();
+        for (const r of inits) {
+            const wsinit = new WorkspaceInitializer();
+            wsinit.setGit(r.initializer);
+            compositeInit.addInitializer(wsinit);
+            compositeDisposable.push(r.disposable);
+        }
+        return {
+            initializer: compositeInit,
+            disposable: compositeDisposable
+        };
+    }
+
+    protected async createGitInitializer(traceCtx: TraceContext, workspace: Workspace, context: GitCheckoutInfo, user: User): Promise<{initializer: GitInitializer, disposable: Disposable}> {
         const host = context.repository.host;
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext) {
@@ -932,14 +972,13 @@ export class WorkspaceStarter {
             log.error({workspaceId: workspace.id, userId: workspace.ownerId}, "cannot authenticate user for Git initializer", error);
             throw new Error("User is unauthorized!");
         }
-        const cloneUrl = context.repository.cloneUrl || context.cloneUrl!;
+        const cloneUrl = context.repository.cloneUrl;
 
         var cloneTarget: string | undefined;
         var targetMode: CloneTargetMode;
-        const localBranchName = IssueContext.is(context) ? context.localBranch : undefined;
-        if (localBranchName) {
+        if (context.localBranch) {
             targetMode = CloneTargetMode.LOCAL_BRANCH;
-            cloneTarget = localBranchName;
+            cloneTarget = context.localBranch;
         } else if (RefType.getRefType(context) === 'tag') {
             targetMode = CloneTargetMode.REMOTE_COMMIT;
             cloneTarget = context.revision;
@@ -952,8 +991,6 @@ export class WorkspaceStarter {
         } else {
             targetMode = CloneTargetMode.REMOTE_HEAD;
         }
-
-        const upstreamRemoteURI = this.buildUpstreamCloneUrl(context);
 
         const gitConfig = new GitConfig();
         gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH_OTS);
@@ -975,38 +1012,20 @@ export class WorkspaceStarter {
 
         const result = new GitInitializer();
         result.setConfig(gitConfig);
-        result.setCheckoutLocation(this.getCheckoutLocation(workspace));
+        result.setCheckoutLocation(context.checkoutLocation || context.repository.name);
         if (!!cloneTarget) {
             result.setCloneTaget(cloneTarget);
         }
         result.setRemoteUri(cloneUrl);
         result.setTargetMode(targetMode);
-        if (!!upstreamRemoteURI) {
-            result.setUpstreamRemoteUri(upstreamRemoteURI);
+        if (!!context.upstreamRemoteURI) {
+            result.setUpstreamRemoteUri(context.upstreamRemoteURI);
         }
 
         return {
-            git: result,
+            initializer: result,
             disposable
         };
-    }
-
-    protected getCheckoutLocation(workspace: Workspace) {
-        return workspace.config.checkoutLocation || CommitContext.is(workspace.context) && workspace.context.repository.name || '.';
-    }
-
-    protected buildUpstreamCloneUrl(context: CommitContext): string | undefined {
-        let upstreamCloneUrl: string | undefined = undefined;
-        if (PullRequestContext.is(context) && context.base) {
-            upstreamCloneUrl = context.base.repository.cloneUrl;
-        } else if (context.repository.fork) {
-            upstreamCloneUrl = context.repository.fork.parent.cloneUrl;
-        }
-
-        if (context.repository.cloneUrl === upstreamCloneUrl) {
-            return undefined;
-        }
-        return upstreamCloneUrl;
     }
 
     protected toWorkspaceFeatureFlags(featureFlags: NamedWorkspaceFeatureFlag[]): WorkspaceFeatureFlag[] {

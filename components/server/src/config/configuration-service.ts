@@ -9,21 +9,18 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { FileProvider } from "../repohost";
-import { ContextParser } from "../workspace/context-parser-service";
 import { ConfigInferrer } from "./config-inferrer";
-
 
 @injectable()
 export class ConfigurationService {
 
-    @inject(ContextParser) protected contextParser: ContextParser;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
     // a static cache used to prefetch inferrer related files in parallel in advance
     private requestedPaths = new Set<string>();
 
-    async guessRepositoryConfiguration(ctx: TraceContext, user: User, contextURLOrContext: string | CommitContext): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, contextURLOrContext);
+    async guessRepositoryConfiguration(ctx: TraceContext, user: User, context: CommitContext): Promise<string | undefined> {
+        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, context);
         const cache: { [path: string]: Promise<string | undefined> } = {};
         const readFile = async (path: string) => {
             if (path in cache) {
@@ -54,20 +51,13 @@ ${configString}
 `;
     }
 
-    async fetchRepositoryConfiguration(ctx: TraceContext, user: User, contextURL: string): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, contextURL);
+    async fetchRepositoryConfiguration(ctx: TraceContext, user: User, context: CommitContext): Promise<string | undefined> {
+        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, context);
         const configString = await fileProvider.getGitpodFileContent(commitContext, user);
         return configString;
     }
 
-    protected async getRepositoryFileProviderAndCommitContext(ctx: TraceContext, user: User, contextURLOrContext: string | CommitContext): Promise<{fileProvider: FileProvider, commitContext: CommitContext}> {
-        let commitContext: CommitContext;
-        if (typeof contextURLOrContext === 'string') {
-            const normalizedContextUrl = this.contextParser.normalizeContextURL(contextURLOrContext);
-            commitContext = (await this.contextParser.handle(ctx, user, normalizedContextUrl)) as CommitContext;
-        } else {
-            commitContext = contextURLOrContext;
-        }
+    protected async getRepositoryFileProviderAndCommitContext(ctx: TraceContext, user: User, commitContext: CommitContext): Promise<{fileProvider: FileProvider, commitContext: CommitContext}> {
         const { host } = commitContext.repository;
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext || !hostContext.services) {

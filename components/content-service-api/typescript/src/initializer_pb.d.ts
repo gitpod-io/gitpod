@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -281,6 +281,11 @@ export class PrebuildInitializer extends jspb.Message {
     getGit(): GitInitializer | undefined;
     setGit(value?: GitInitializer): PrebuildInitializer;
 
+    hasComposite(): boolean;
+    clearComposite(): void;
+    getComposite(): CompositeInitializer | undefined;
+    setComposite(value?: CompositeInitializer): PrebuildInitializer;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrebuildInitializer.AsObject;
     static toObject(includeInstance: boolean, msg: PrebuildInitializer): PrebuildInitializer.AsObject;
@@ -295,6 +300,7 @@ export namespace PrebuildInitializer {
     export type AsObject = {
         prebuild?: SnapshotInitializer.AsObject,
         git?: GitInitializer.AsObject,
+        composite?: CompositeInitializer.AsObject,
     }
 }
 
