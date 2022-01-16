@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -2118,7 +2118,8 @@ proto.contentservice.PrebuildInitializer.prototype.toObject = function(opt_inclu
 proto.contentservice.PrebuildInitializer.toObject = function(includeInstance, msg) {
   var f, obj = {
     prebuild: (f = msg.getPrebuild()) && proto.contentservice.SnapshotInitializer.toObject(includeInstance, f),
-    git: (f = msg.getGit()) && proto.contentservice.GitInitializer.toObject(includeInstance, f)
+    git: (f = msg.getGit()) && proto.contentservice.GitInitializer.toObject(includeInstance, f),
+    composite: (f = msg.getComposite()) && proto.contentservice.CompositeInitializer.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -2165,6 +2166,11 @@ proto.contentservice.PrebuildInitializer.deserializeBinaryFromReader = function(
       reader.readMessage(value,proto.contentservice.GitInitializer.deserializeBinaryFromReader);
       msg.setGit(value);
       break;
+    case 3:
+      var value = new proto.contentservice.CompositeInitializer;
+      reader.readMessage(value,proto.contentservice.CompositeInitializer.deserializeBinaryFromReader);
+      msg.setComposite(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2208,6 +2214,14 @@ proto.contentservice.PrebuildInitializer.serializeBinaryToWriter = function(mess
       2,
       f,
       proto.contentservice.GitInitializer.serializeBinaryToWriter
+    );
+  }
+  f = message.getComposite();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      proto.contentservice.CompositeInitializer.serializeBinaryToWriter
     );
   }
 };
@@ -2284,6 +2298,43 @@ proto.contentservice.PrebuildInitializer.prototype.clearGit = function() {
  */
 proto.contentservice.PrebuildInitializer.prototype.hasGit = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional CompositeInitializer composite = 3;
+ * @return {?proto.contentservice.CompositeInitializer}
+ */
+proto.contentservice.PrebuildInitializer.prototype.getComposite = function() {
+  return /** @type{?proto.contentservice.CompositeInitializer} */ (
+    jspb.Message.getWrapperField(this, proto.contentservice.CompositeInitializer, 3));
+};
+
+
+/**
+ * @param {?proto.contentservice.CompositeInitializer|undefined} value
+ * @return {!proto.contentservice.PrebuildInitializer} returns this
+*/
+proto.contentservice.PrebuildInitializer.prototype.setComposite = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.contentservice.PrebuildInitializer} returns this
+ */
+proto.contentservice.PrebuildInitializer.prototype.clearComposite = function() {
+  return this.setComposite(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.contentservice.PrebuildInitializer.prototype.hasComposite = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
