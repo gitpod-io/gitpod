@@ -401,6 +401,9 @@ components:
       https:
         expose: true
         containerPort: 443
+      ssh:
+        expose: true
+        containerPort: 22
       metrics:
         expose: false
         containerPort: 9500
