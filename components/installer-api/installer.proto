@@ -7,6 +7,7 @@ option go_package = "github.com/gitpod-io/gitpod/installer/api";
 service InstallerService {
     rpc ValidateConfig(ValidateConfigRequest) returns (ValidateConfigResponse) {}
     rpc ValidateCluster(ValidateClusterRequest) returns (ValidateClusterRequest) {}
+    rpc InitConfig(InitConfigRequest) returns (InitConfigResponse) {}
     rpc RenderConfig(RenderConfigRequest) returns (RenderConfigResponse) {}
 }
 
@@ -30,6 +31,11 @@ message ValidationCheck {
     string name = 1;
 	string description = 2;
     repeated string errors = 3;
+}
+
+message InitConfigRequest {}
+message InitConfigResponse {
+    bytes config = 1;
 }
 
 message RenderConfigRequest {

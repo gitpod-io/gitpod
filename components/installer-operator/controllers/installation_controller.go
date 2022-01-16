@@ -70,15 +70,24 @@ type InstallationReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
-func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	_ = log.FromContext(ctx)
 
 	install := &installv1alpha1.Installation{}
-	err := r.Client.Get(ctx, req.NamespacedName, install)
+	err = r.Client.Get(ctx, req.NamespacedName, install)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 	status := install.Status
+
+	defer func() {
+		install.Status = status
+		uerr := r.Status().Update(ctx, install)
+		if uerr != nil && err == nil {
+			result = ctrl.Result{Requeue: true}
+			err = uerr
+		}
+	}()
 
 	digest, err := resolveInstallerDigest(ctx, install)
 	if err != nil {
@@ -121,6 +130,10 @@ func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
+	if len(install.Spec.Config) == 0 {
+		// we don't have a config yet - get a new one
+	}
+
 	cfg, err := yaml.Marshal(install.Spec.Config)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
@@ -136,12 +149,6 @@ func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		Errors:   cfgval.Errors,
 	}
 	status.Conditions = conditions
-
-	install.Status = status
-	err = r.Status().Update(ctx, install)
-	if err != nil {
-		return ctrl.Result{Requeue: true}, err
-	}
 
 	return ctrl.Result{RequeueAfter: 24 * time.Hour}, nil
 }

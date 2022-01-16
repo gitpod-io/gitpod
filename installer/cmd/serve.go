@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 )
 
@@ -37,6 +38,7 @@ var serveCmd = &cobra.Command{
 
 		srv := grpc.NewServer()
 		api.RegisterInstallerServiceServer(srv, &installerService{})
+		reflection.Register(srv)
 		fmt.Printf("serving on %s\n", serveOpts.Addr)
 		return srv.Serve(l)
 	},
@@ -73,6 +75,19 @@ func (*installerService) ValidateConfig(ctx context.Context, req *api.ValidateCo
 func (*installerService) ValidateCluster(ctx context.Context, req *api.ValidateClusterRequest) (*api.ValidateClusterRequest, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateCluster not implemented")
 }
+
+func (*installerService) InitConfig(context.Context, *api.InitConfigRequest) (*api.InitConfigResponse, error) {
+	cfg, err := config.NewDefaultConfig()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	fc, err := config.Marshal(config.CurrentVersion, cfg)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	return &api.InitConfigResponse{Config: fc}, nil
+}
+
 func (*installerService) RenderConfig(ctx context.Context, req *api.RenderConfigRequest) (*api.RenderConfigResponse, error) {
 	rawCfg, version, err := config.Load(req.Config)
 	if err != nil {

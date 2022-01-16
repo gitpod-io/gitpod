@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type InstallerServiceClient interface {
 	ValidateConfig(ctx context.Context, in *ValidateConfigRequest, opts ...grpc.CallOption) (*ValidateConfigResponse, error)
 	ValidateCluster(ctx context.Context, in *ValidateClusterRequest, opts ...grpc.CallOption) (*ValidateClusterRequest, error)
+	InitConfig(ctx context.Context, in *InitConfigRequest, opts ...grpc.CallOption) (*InitConfigResponse, error)
 	RenderConfig(ctx context.Context, in *RenderConfigRequest, opts ...grpc.CallOption) (*RenderConfigResponse, error)
 }
 
@@ -53,6 +54,15 @@ func (c *installerServiceClient) ValidateCluster(ctx context.Context, in *Valida
 	return out, nil
 }
 
+func (c *installerServiceClient) InitConfig(ctx context.Context, in *InitConfigRequest, opts ...grpc.CallOption) (*InitConfigResponse, error) {
+	out := new(InitConfigResponse)
+	err := c.cc.Invoke(ctx, "/installer.InstallerService/InitConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *installerServiceClient) RenderConfig(ctx context.Context, in *RenderConfigRequest, opts ...grpc.CallOption) (*RenderConfigResponse, error) {
 	out := new(RenderConfigResponse)
 	err := c.cc.Invoke(ctx, "/installer.InstallerService/RenderConfig", in, out, opts...)
@@ -68,6 +78,7 @@ func (c *installerServiceClient) RenderConfig(ctx context.Context, in *RenderCon
 type InstallerServiceServer interface {
 	ValidateConfig(context.Context, *ValidateConfigRequest) (*ValidateConfigResponse, error)
 	ValidateCluster(context.Context, *ValidateClusterRequest) (*ValidateClusterRequest, error)
+	InitConfig(context.Context, *InitConfigRequest) (*InitConfigResponse, error)
 	RenderConfig(context.Context, *RenderConfigRequest) (*RenderConfigResponse, error)
 	mustEmbedUnimplementedInstallerServiceServer()
 }
@@ -81,6 +92,9 @@ func (UnimplementedInstallerServiceServer) ValidateConfig(context.Context, *Vali
 }
 func (UnimplementedInstallerServiceServer) ValidateCluster(context.Context, *ValidateClusterRequest) (*ValidateClusterRequest, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateCluster not implemented")
+}
+func (UnimplementedInstallerServiceServer) InitConfig(context.Context, *InitConfigRequest) (*InitConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitConfig not implemented")
 }
 func (UnimplementedInstallerServiceServer) RenderConfig(context.Context, *RenderConfigRequest) (*RenderConfigResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RenderConfig not implemented")
@@ -134,6 +148,24 @@ func _InstallerService_ValidateCluster_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InstallerService_InitConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InitConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InstallerServiceServer).InitConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/installer.InstallerService/InitConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InstallerServiceServer).InitConfig(ctx, req.(*InitConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _InstallerService_RenderConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RenderConfigRequest)
 	if err := dec(in); err != nil {
@@ -166,6 +198,10 @@ var InstallerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValidateCluster",
 			Handler:    _InstallerService_ValidateCluster_Handler,
+		},
+		{
+			MethodName: "InitConfig",
+			Handler:    _InstallerService_InitConfig_Handler,
 		},
 		{
 			MethodName: "RenderConfig",
