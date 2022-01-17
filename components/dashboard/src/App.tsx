@@ -21,6 +21,9 @@ import { trackButtonOrAnchor, trackPathChange, trackLocation } from './Analytics
 import { User } from '@gitpod/gitpod-protocol';
 import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 import { Experiment } from './experiments';
+import { workspacesPathMain } from './workspaces/workspaces.routes';
+import { settingsPathAccount, settingsPathIntegrations, settingsPathMain, settingsPathNotifications, settingsPathPlans, settingsPathPreferences, settingsPathTeams, settingsPathTeamsJoin, settingsPathTeamsNew, settingsPathVariables } from './settings/settings.routes';
+import { projectsPathInstallGitHubApp, projectsPathMain, projectsPathMainWithParams, projectsPathNew } from './projects/projects.routes';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -262,32 +265,32 @@ function App() {
         <div className="container">
             <Menu />
             <Switch>
-                <Route path="/new" exact component={NewProject} />
+                <Route path={projectsPathNew} exact component={NewProject} />
                 <Route path="/setup" exact component={Setup} />
-                <Route path="/workspaces" exact component={Workspaces} />
-                <Route path="/account" exact component={Account} />
-                <Route path="/integrations" exact component={Integrations} />
-                <Route path="/notifications" exact component={Notifications} />
-                <Route path="/plans" exact component={Plans} />
-                <Route path="/variables" exact component={EnvironmentVariables} />
-                <Route path="/preferences" exact component={Preferences} />
-                <Route path="/install-github-app" exact component={InstallGitHubApp} />
+                <Route path={workspacesPathMain} exact component={Workspaces} />
+                <Route path={settingsPathAccount} exact component={Account} />
+                <Route path={settingsPathIntegrations} exact component={Integrations} />
+                <Route path={settingsPathNotifications} exact component={Notifications} />
+                <Route path={settingsPathPlans} exact component={Plans} />
+                <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
+                <Route path={settingsPathPreferences} exact component={Preferences} />
+                <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                 <Route path="/from-referrer" exact component={FromReferrer} />
 
                 <Route path="/admin/users" component={UserSearch} />
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
 
                 <Route path={["/", "/login"]} exact>
-                    <Redirect to="/workspaces" />
+                    <Redirect to={workspacesPathMain} />
                 </Route>
-                <Route path={["/settings"]} exact>
-                    <Redirect to="/account" />
+                <Route path={[settingsPathMain]} exact>
+                    <Redirect to={settingsPathAccount} />
                 </Route>
                 <Route path={["/access-control"]} exact>
-                    <Redirect to="/integrations" />
+                    <Redirect to={settingsPathIntegrations} />
                 </Route>
                 <Route path={["/subscription", "/usage", "/upgrade-subscription"]} exact>
-                    <Redirect to="/plans" />
+                    <Redirect to={settingsPathPlans} />
                 </Route>
                 <Route path={["/admin"]} exact>
                     <Redirect to="/admin/users" />
@@ -298,9 +301,9 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
-                <Route path="/projects">
-                    <Route exact path="/projects" component={Projects} />
-                    <Route exact path="/projects/:projectName/:resourceOrPrebuild?" render={(props) => {
+                <Route path={projectsPathMain}>
+                    <Route exact path={projectsPathMain} component={Projects} />
+                    <Route exact path={projectsPathMainWithParams} render={(props) => {
                         const { resourceOrPrebuild } = props.match.params;
                         if (resourceOrPrebuild === "settings") {
                             return <ProjectSettings />;
@@ -317,10 +320,10 @@ function App() {
                         return resourceOrPrebuild ? <Prebuild /> : <Project />;
                     }} />
                 </Route>
-                <Route path="/teams">
-                    <Route exact path="/teams" component={Teams} />
-                    <Route exact path="/teams/new" component={NewTeam} />
-                    <Route exact path="/teams/join" component={JoinTeam} />
+                <Route path={settingsPathTeams}>
+                    <Route exact path={settingsPathTeams} component={Teams} />
+                    <Route exact path={settingsPathTeamsNew} component={NewTeam} />
+                    <Route exact path={settingsPathTeamsJoin} component={JoinTeam} />
                 </Route>
                 {(teams || []).map(team =>
                     <Route path={`/t/${team.slug}`} key={team.slug}>
