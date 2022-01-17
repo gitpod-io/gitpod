@@ -155,7 +155,7 @@ export class ProjectsService {
         return this.projectDB.markDeleted(projectId);
     }
 
-    async findPrebuilds(user: User, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
+    async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {

@@ -90,6 +90,25 @@ export class ProjectDBImpl implements ProjectDB {
         return repo.find({ userId, markedDeleted: false });
     }
 
+    public async findProjectsBySearchTerm(
+        offset: number,
+        limit: number,
+        orderBy: keyof Project,
+        orderDir: "DESC" | "ASC",
+        searchTerm?: string
+        ): Promise<{ total: number, rows: Project[] }> {
+        const projectRepo = await this.getRepo();
+
+        const queryBuilder = projectRepo.createQueryBuilder('project')
+            .where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
+            .skip(offset)
+            .take(limit)
+            .orderBy(orderBy, orderDir)
+
+        const [rows, total] = await queryBuilder.getManyAndCount();
+        return { total, rows };
+    }
+
     public async storeProject(project: Project): Promise<Project> {
         const repo = await this.getRepo();
         return repo.save(project);
