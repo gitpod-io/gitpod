@@ -66,7 +66,7 @@ var listTasksCmd = &cobra.Command{
 		// TODO(andreafalzetti): ask how to opt-out from the stream! {Observe: false} gives me a stream 😢
 		listen, err := client.TasksStatus(ctx, &api.TasksStatusRequest{Observe: false})
 		if err != nil {
-			fmt.Println("Cannot list tasks")
+			log.WithError(err).Error("Cannot list tasks")
 		}
 
 		errchan := make(chan error, 5)
