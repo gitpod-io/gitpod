@@ -44,28 +44,26 @@ export default function () {
         <div className="mb-2 flex">
             <div className="flex-grow">
                 <h3>Environment Variables</h3>
-                <h2 className="text-gray-500">Manage environment variables for your project.</h2>
+                <h2 className="text-gray-500">Manage project-specific environment variables.</h2>
             </div>
-            {envVars.length > 0 && <button onClick={() => setShowAddVariableModal(true)}>Add Variable</button>}
+            {envVars.length > 0 && <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>}
         </div>
         {envVars.length === 0
             ? <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
                 <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Environment Variables</h3>
-                <p className="text-center pb-6 text-gray-500 text-base w-96">Here you can set <strong>project-specific environment variables</strong> that will be visible during prebuilds and (optionally) in workspaces for this project.</p>
+                <p className="text-center pb-6 text-gray-500 text-base w-96">All <strong>project-specific environment variables</strong> will be visible in prebuilds and optionally in workspaces for this project.</p>
                 <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>
             </div>
             : <>
                 <ItemsList>
-                    <Item header={true} className="grid grid-cols-4 items-center">
+                    <Item header={true} className="grid grid-cols-3 items-center">
                         <ItemField>Name</ItemField>
-                        <ItemField>Value</ItemField>
-                        <ItemField>Visible in Workspaces?</ItemField>
+                        <ItemField>Visibility in Workspaces</ItemField>
                         <ItemField></ItemField>
                     </Item>
                     {envVars.map(variable => {
-                        return <Item className="grid grid-cols-4 items-center">
+                        return <Item className="grid grid-cols-3 items-center">
                             <ItemField>{variable.name}</ItemField>
-                            <ItemField>****</ItemField>
                             <ItemField>{variable.censored ? 'Hidden' : 'Visible'}</ItemField>
                             <ItemField className="flex justify-end">
                                 <ItemFieldContextMenu menuEntries={[
@@ -98,17 +96,21 @@ function AddVariableModal(props: { project?: Project, onClose: () => void }) {
             await getGitpodService().server.setProjectEnvironmentVariable(props.project.id, name, value, censored);
             props.onClose();
         } catch (err) {
+            console.error(err);
             setError(err);
         }
     }
 
     return <Modal visible={true} onClose={props.onClose} onEnter={() => { addVariable(); return false; }}>
-        <h3 className="mb-4">Add Variable</h3>
+        <h3 className="mb-4">New Variable</h3>
         <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
-            <AlertBox><strong>Project variables might be accessible by anyone with read access to your repository.</strong><br/>Secret values can be exposed if they are printed in the logs, persisted to the file system, or made visible in workspaces.</AlertBox>
-            {error && <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">
-                {error}
-            </div>}
+            <AlertBox>
+                <strong>Project environment variables can be exposed.</strong><br/>
+                Even if <strong>Hide Variable in Workspaces</strong> is enabled, anyone with read access to your repository can access secret values if they are printed in the terminal, logged, or persisted to the file system.
+            </AlertBox>
+            {error && <AlertBox className="mt-4">
+                {String(error).replace(/Error: Request \w+ failed with message: /, '')}
+            </AlertBox>}
             <div className="mt-8">
                 <h4>Name</h4>
                 <input autoFocus className="w-full" type="text" name="name" value={name} onChange={e => setName(e.target.value)} />
@@ -118,10 +120,10 @@ function AddVariableModal(props: { project?: Project, onClose: () => void }) {
                 <input className="w-full" type="text" name="value" value={value} onChange={e => setValue(e.target.value)} />
             </div>
             <div className="mt-4">
-                <CheckBox title="Hide in Workspaces" desc="Project variables are visible during prebuilds. Choose whether this variable should be visible in workspaces as well." checked={censored} onChange={() => setCensored(!censored)} />
+                <CheckBox title="Hide Variable in Workspaces" desc="Unset this environment variable so that it's not accessible from the terminal in workspaces." checked={censored} onChange={() => setCensored(!censored)} />
             </div>
             {!censored && <div className="mt-4">
-                <InfoBox>This value will be directly visible to anyone who can open your repository in Gitpod.</InfoBox>
+                <InfoBox>This variable will be visible to anyone who starts a Gitpod workspace for your repository.</InfoBox>
             </div>}
         </div>
         <div className="flex justify-end mt-6">

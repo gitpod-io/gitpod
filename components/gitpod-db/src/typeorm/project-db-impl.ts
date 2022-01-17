@@ -108,7 +108,13 @@ export class ProjectDBImpl implements ProjectDB {
         }
     }
 
-    public async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>{
+    public async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void> {
+        if (!name) {
+            throw new Error('Variable name cannot be empty');
+        }
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+            throw new Error('Please choose a variable name containing only letters, numbers, or _, and which doesn\'t start with a number');
+        }
         const envVarRepo = await this.getProjectEnvVarRepo();
         const envVarWithValue = await envVarRepo.findOne({ projectId, name, deleted: false });
         if (envVarWithValue) {
