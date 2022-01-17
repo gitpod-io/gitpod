@@ -13,9 +13,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/rodaine/table"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 )
@@ -80,10 +83,16 @@ var listTasksCmd = &cobra.Command{
 				tasks := resp.GetTasks()
 
 				if tasks != nil {
-					// TODO(andreafalzetti): refactor this fmt.Println with https://github.com/rodaine/table
+					headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+					columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+					tbl := table.New("ID", "Name", "State")
+					tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
 					for _, task := range tasks {
-						fmt.Println(task.Id, task.Presentation.Name, task.State)
+						tbl.AddRow(task.Id, task.Presentation.Name, task.State)
 					}
+					tbl.Print()
 				} else {
 					break
 				}
