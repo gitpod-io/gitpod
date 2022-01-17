@@ -15,7 +15,7 @@ import { WsNextFunction, WsRequestHandler } from './ws-handler';
  * This class provides a websocket handler that manages ping-pong behavior for all incoming websocket requests.
  * Clients that to not respond in time are terminated.
  */
-export class WsPingPongHandler implements Disposable {
+export class WsConnectionHandler implements Disposable {
 
     protected readonly disposables: DisposableCollection = new DisposableCollection();
     protected readonly clients: Set<websocket> = new Set();
