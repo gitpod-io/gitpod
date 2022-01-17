@@ -38,26 +38,19 @@ var attachTaskCmdOpts struct {
 
 // TODO(andreafalzetti): refactor tasks.go to only keep the tasks cmd initialisation, moving the subcommands in their own file
 
-// This func was copied from https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/cmd/terminal.go#L29
 // TODO(andreafalzetti): move it somewhere else so that it's reusable from other cmds
 func dialSupervisor() *grpc.ClientConn {
-	// TODO(andreafalzetti): figure out how to import peroperly supervisor.GetConfig()
-	// cfg, err := supervisor.GetConfig()
-	// if err != nil {
-	// 	log.WithError(err).Fatal("cannot get config")
-	// }
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	url := fmt.Sprintf("localhost:%d", 22999)
-	conn, err := grpc.DialContext(ctx, url, grpc.WithInsecure(), grpc.WithBlock())
+	supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
+	if supervisorAddr == "" {
+		supervisorAddr = "localhost:22999"
+	}
+	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
 	if err != nil {
+		fmt.Printf("failed connecting to supervisor: %v", err)
 		log.WithError(err).Fatal("cannot connect to supervisor")
 	}
 
-	// TODO(cw): devise some means to properly close the connection
-
-	return conn
+	return supervisorConn
 }
 
 // listTasksCmd represents the tasks list command
@@ -65,9 +58,7 @@ var listTasksCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the workspace tasks and their status",
 	Run: func(cmd *cobra.Command, args []string) {
-		var (
-			client = api.NewStatusServiceClient(dialSupervisor())
-		)
+		client := api.NewStatusServiceClient(dialSupervisor())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -107,11 +98,7 @@ var attachTaskCmd = &cobra.Command{
 	Short: "Attach to a workspace task to retrieve its updates",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(args)
-
-		var (
-			client = api.NewStatusServiceClient(dialSupervisor())
-		)
+		client := api.NewStatusServiceClient(dialSupervisor())
 
 		listen, err := client.TasksStatus(context.Background(), &api.TasksStatusRequest{Observe: true})
 		if err != nil {
