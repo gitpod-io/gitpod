@@ -6,37 +6,34 @@
  */
 
 import * as ws from "ws";
-import * as http from "http";
-import * as net from "net";
 import { IWebSocket } from "vscode-ws-jsonrpc";
-import { log } from '../../util/logging';
 
-export interface OnOpen {
-    (webSocket: ws, request: http.IncomingMessage, socket: net.Socket, head: Buffer): void;
-}
-
-export function toIWebSocket(webSocket: ws) {
-    let sendsAfterOpen = 0;
+export function toIWebSocket(ws: ws) {
     return <IWebSocket>{
         send: content => {
-            if (webSocket.readyState !== ws.OPEN) {
-                if (sendsAfterOpen++ > 3) {
-                    //log.debug(`Repeated try to send on closed web socket (readyState was ${webSocket.readyState})`, { ws });
-                }
+            if (ws.readyState >= ws.CLOSING) {
+                // ws is already CLOSING/CLOSED, send() would just return an error.
                 return;
             }
-            webSocket.send(content, err => {
-                if (err) {
-                    log.error('error in ws.send()', err, { ws });
-                }
-            })
+
+            // in general send-errors should trigger an 'error' event already, we just make sure it actually happens.
+            try {
+                ws.send(content, err => {
+                    if (!err) {
+                        return;
+                    }
+                    ws.emit('error', err);
+                });
+            } catch (err) {
+                ws.emit('error', err);
+            }
         },
-        onMessage: cb => webSocket.on('message', cb),
-        onError: cb => webSocket.on('error', cb),
-        onClose: cb => webSocket.on('close', cb),
+        onMessage: cb => ws.on('message', cb),
+        onError: cb => ws.on('error', cb),
+        onClose: cb => ws.on('close', cb),
         dispose: () => {
-            if (webSocket.readyState < ws.CLOSING) {
-                webSocket.close();
+            if (ws.readyState < ws.CLOSING) {
+                ws.close();
             }
         }
     };

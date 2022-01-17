@@ -4,23 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WsRequestHandler } from './express/ws-handler';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { URL } from 'url';
 import * as express from 'express';
 import * as crypto from 'crypto';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import * as session from 'express-session';
-
-export const handleError: WsRequestHandler = (ws, req, next) => {
-    ws.on('error', (err: any) => {
-        if (err.code !== 'ECONNRESET') {
-            log.error('Websocket error', err, { ws, req });
-        }
-        ws.terminate();
-    });
-    next();
-}
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
