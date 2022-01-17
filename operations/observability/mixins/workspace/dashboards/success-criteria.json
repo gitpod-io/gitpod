@@ -21,8 +21,8 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 52,
-  "iteration": 1640278118309,
+  "id": 54,
+  "iteration": 1642434789546,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -167,7 +167,7 @@
               },
               {
                 "color": "red",
-                "value": 30
+                "value": 40
               }
             ]
           },
@@ -246,6 +246,6 @@
   "timezone": "",
   "title": "Success Criteria",
   "uid": "jgjwvIc7k",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
