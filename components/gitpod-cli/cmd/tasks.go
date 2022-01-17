@@ -13,12 +13,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fatih/color"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/rodaine/table"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/olekukonko/tablewriter"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 )
@@ -82,16 +81,21 @@ var listTasksCmd = &cobra.Command{
 				tasks := resp.GetTasks()
 
 				if tasks != nil {
-					headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
-					columnFmt := color.New(color.FgYellow).SprintfFunc()
+					table := tablewriter.NewWriter(os.Stdout)
+					table.SetHeader([]string{"ID", "Name", "State"})
+					table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+					table.SetCenterSeparator("|")
 
-					tbl := table.New("ID", "Name", "State")
-					tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+					mapStatusToColor := map[api.TaskState]int{
+						0: tablewriter.FgHiGreenColor,
+						1: tablewriter.FgHiGreenColor,
+						2: tablewriter.FgHiBlackColor,
+					}
 
 					for _, task := range tasks {
-						tbl.AddRow(task.Id, task.Presentation.Name, task.State)
+						table.Rich([]string{task.Id, task.Presentation.Name, task.State.String()}, []tablewriter.Colors{{}, {}, {mapStatusToColor[task.State]}})
 					}
-					tbl.Print()
+					table.Render()
 				} else {
 					break
 				}
@@ -124,7 +128,6 @@ var attachTaskCmd = &cobra.Command{
 				tasks := resp.GetTasks()
 
 				if tasks != nil {
-					// TODO(andreafalzetti): refactor this fmt.Println with https://github.com/rodaine/table
 					for _, task := range tasks {
 						if args[0] == task.Id {
 							fmt.Println(task.Id, task.Presentation.Name, task.State)
