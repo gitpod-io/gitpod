@@ -17,7 +17,7 @@ import { UserController } from './user/user-controller';
 import { EventEmitter } from 'events';
 import { toIWebSocket } from '@gitpod/gitpod-protocol/lib/messaging/node/connection';
 import { WsExpressHandler, WsRequestHandler } from './express/ws-handler';
-import { handleError, isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from './express-util';
+import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from './express-util';
 import { createWebSocketConnection } from 'vscode-ws-jsonrpc/lib';
 import { MessageBusIntegration } from './workspace/messagebus-integration';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -43,7 +43,7 @@ import { NewsletterSubscriptionController } from './user/newsletter-subscription
 import { Config } from './config';
 import { DebugApp } from './debug-app';
 import { LocalMessageBroker } from './messaging/local-message-broker';
-import { WsPingPongHandler } from './express/ws-ping-pong-handler';
+import { WsConnectionHandler } from './express/ws-connection-handler';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -190,18 +190,18 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 }
             );
 
-            const wsPingPongHandler = new WsPingPongHandler();
+            const wsPingPongHandler = new WsConnectionHandler();
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
             wsHandler.ws(websocketConnectionHandler.path, (ws, request) => {
                 const websocket = toIWebSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
-            }, handleSession, ...initSessionHandlers, handleError, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
+            }, handleSession, ...initSessionHandlers, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
             });
             wsHandler.ws("/v1", (ws, request) => {
                 const websocket = toIWebSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
-            }, handleError, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
+            }, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
             });
             wsHandler.ws(/.*/, (ws, request) => {
