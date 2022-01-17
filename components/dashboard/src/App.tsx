@@ -54,6 +54,7 @@ const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './From
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/UserSearch'));
 const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/WorkspacesSearch'));
 const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ './admin/Settings'));
+const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/ProjectsSearch'));
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ './OauthClientApproval'));
 
 function Loading() {
@@ -288,6 +289,7 @@ function App() {
                 <Route path="/admin/users" component={UserSearch} />
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
                 <Route path="/admin/settings" component={AdminSettings} />
+                <Route path="/admin/projects" component={ProjectsSearch} />
 
                 <Route path={["/", "/login"]} exact>
                     <Redirect to={workspacesPathMain} />

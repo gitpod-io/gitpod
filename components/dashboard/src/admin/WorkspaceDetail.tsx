@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
 import { getAdminLinks } from "./gcp-info";
-import { Property } from "./UserDetail";
+import Property from "./Property";
 
 export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance }) {
     const [workspace, setWorkspace] = useState(props.workspace);

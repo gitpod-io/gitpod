@@ -8,13 +8,14 @@ import { NamedWorkspaceFeatureFlag, Permissions, RoleOrPermission, Roles, User, 
 import { AccountStatement, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import moment from "moment";
-import { ReactChild, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CheckBox from "../components/CheckBox";
 import Modal from "../components/Modal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu"
 import { getGitpodService } from "../service/service";
 import { adminMenu } from "./admin-menu"
 import { WorkspaceSearch } from "./WorkspacesSearch";
+import Property from "./Property";
 
 
 export default function UserDetail(p: { user: User }) {
@@ -197,22 +198,6 @@ export default function UserDetail(p: { user: User }) {
 
 function Label(p: { text: string, color: string }) {
     return <div className={`ml-3 text-sm text-${p.color}-600 truncate bg-${p.color}-100 px-1.5 py-0.5 rounded-md my-auto`}>{p.text}</div>;
-}
-
-export function Property(p: { name: string, children: string | ReactChild, actions?: { label: string, onClick: () => void }[] }) {
-    return <div className="ml-3 flex flex-col w-4/12 truncate">
-        <div className="text-base text-gray-500 truncate">
-            {p.name}
-        </div>
-        <div className="text-lg text-gray-600 font-semibold truncate">
-            {p.children}
-        </div>
-        {(p.actions || []).map(a =>
-            <div className="cursor-pointer text-sm text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400 truncate" onClick={a.onClick}>
-                {a.label || ''}
-            </div>
-        )}
-    </div>;
 }
 
 interface Entry {
