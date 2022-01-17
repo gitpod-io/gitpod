@@ -54,6 +54,9 @@ export default function UserDetail(p: { user: User }) {
     };
 
     const addStudentDomain = async () => {
+        if (emailDomain === 'gmail.com') {
+            throw new Error(`Sanity check: Not adding '${emailDomain}' as a verified student email domain`);
+        }
         await updateUser(async u => {
             await getGitpodService().server.adminAddStudentEmailDomain(u.id, emailDomain);
             await getGitpodService().server.adminIsStudent(u.id).then(
