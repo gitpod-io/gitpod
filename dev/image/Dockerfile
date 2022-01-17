@@ -2,7 +2,10 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:latest
+# if you want to run this image in a workspace, follow these steps:
+# gcloud auth configure-docker europe-docker.pkg.dev
+# gcloud auth login --no-launch-browser
+FROM europe-docker.pkg.dev/gitpod-artifacts/docker-dev/workspace-base-images:full
 
 ENV TRIGGER_REBUILD 16
 
@@ -139,7 +142,7 @@ RUN sudo install-packages \
     python-dev \
     python-setuptools
 
-RUN bash -c "pip uninstall crcmod; pip install --no-cache-dir -U crcmod"
+RUN sudo python3 -m pip uninstall crcmod; sudo python3 -m pip install --no-cache-dir -U crcmod
 
 ### gitpod-core specific gcloud/kubectl config
 # Copy GCloud default config that points to gitpod-dev
@@ -159,7 +162,7 @@ ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
 
 ### AWS Cli ###
-RUN pip install --no-cache-dir awscli
+RUN sudo python3 -m pip install --no-cache-dir awscli
 
 # Install aws-iam-authenticator
 RUN sudo curl -fsSL -o aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator" \
@@ -189,7 +192,7 @@ RUN sudo curl -fsSL https://uploader.codecov.io/latest/codecov-linux -o /usr/loc
 
 # Install pre-commit https://pre-commit.com/#install
 RUN sudo install-packages shellcheck \
-    && sudo pip3 install pre-commit
+    && sudo python3 -m pip install pre-commit
 
 # Install observability-related binaries
 ARG PROM_VERSION="2.30.0"
