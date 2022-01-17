@@ -49,7 +49,6 @@ func dialSupervisor() *grpc.ClientConn {
 	}
 	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
 	if err != nil {
-		fmt.Printf("failed connecting to supervisor: %v", err)
 		log.WithError(err).Fatal("cannot connect to supervisor")
 	}
 
@@ -59,7 +58,7 @@ func dialSupervisor() *grpc.ClientConn {
 // listTasksCmd represents the tasks list command
 var listTasksCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Lists the workspace tasks and their status",
+	Short: "Lists the workspace tasks and their state",
 	Run: func(cmd *cobra.Command, args []string) {
 		client := api.NewStatusServiceClient(dialSupervisor())
 
@@ -111,7 +110,7 @@ var attachTaskCmd = &cobra.Command{
 
 		listen, err := client.TasksStatus(context.Background(), &api.TasksStatusRequest{Observe: true})
 		if err != nil {
-			fmt.Println("Cannot list tasks")
+			log.WithError(err).Error("Cannot list tasks")
 		}
 
 		errchan := make(chan error, 1)
