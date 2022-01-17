@@ -26,6 +26,7 @@ export class WsConnectionHandler implements Disposable {
         const TIMEOUT = INTERVAL;
         const CLOSING_TIMEOUT = INTERVAL;
         const timer = repeat(async () => {
+            log.debug("ws connection handler", { clients: this.clients.size });
             this.clients.forEach((ws) => {
                 try {
                     switch (ws.readyState) {
