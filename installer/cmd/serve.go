@@ -97,7 +97,7 @@ func (*installerService) RenderConfig(ctx context.Context, req *api.RenderConfig
 		return nil, status.Errorf(codes.FailedPrecondition, "unsupprted config version: %s", version)
 	}
 
-	res, err := renderKubernetesObjects(version, rawCfg.(*configv1.Config))
+	res, err := renderKubernetesObjects(version, rawCfg.(*configv1.Config), req.Namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

@@ -3,4 +3,39 @@ kind: Installation
 metadata:
   name: installation-sample
 spec:
-  # Add fields here
+  channel: cw-operator.3
+  config:
+    apiVersion: v1
+    authProviders: []
+    blockNewUsers:
+      enabled: false
+      passlist: []
+    certificate:
+      kind: secret
+      name: https-certificates
+    containerRegistry:
+      inCluster: true
+      s3storage: null
+    database:
+      inCluster: true
+    domain: gitpod.example.com
+    imagePullSecrets: null
+    jaegerOperator:
+      inCluster: true
+    kind: Full
+    metadata:
+      region: local
+    objectStorage:
+      inCluster: true
+    observability:
+      logLevel: info
+    repository: eu.gcr.io/gitpod-core-dev/build
+    workspace:
+      resources:
+        requests:
+          cpu: "1"
+          memory: 2Gi
+      runtime:
+        containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
+        containerdSocket: /run/containerd/containerd.sock
+        fsShiftMethod: fuse

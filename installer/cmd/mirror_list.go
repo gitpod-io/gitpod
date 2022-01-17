@@ -73,7 +73,7 @@ image to the "target" repo`,
 		// Use the default Gitpod registry to pull from
 		cfg.Repository = common.GitpodContainerRegistry
 
-		k8s, err := renderKubernetesObjects(cfgVersion, cfg)
+		k8s, err := renderKubernetesObjects(cfgVersion, cfg, renderOpts.Namespace)
 		if err != nil {
 			return err
 		}

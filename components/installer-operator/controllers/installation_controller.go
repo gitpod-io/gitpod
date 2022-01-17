@@ -21,6 +21,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -32,8 +33,14 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"google.golang.org/grpc"
-	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -47,8 +54,12 @@ const (
 	installerExecPath = "/tmp/installer.active"
 )
 
+// log is for logging in this package.
+var installationlog = log.Log.WithName("installation-controller")
+
 // InstallationReconciler reconciles a Installation object
 type InstallationReconciler struct {
+	DynamicClient dynamic.Interface
 	client.Client
 	Scheme *runtime.Scheme
 
@@ -79,11 +90,12 @@ func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 	status := install.Status
+	status.LastUpdated = metav1.Now()
 
 	defer func() {
 		install.Status = status
 		uerr := r.Status().Update(ctx, install)
-		if uerr != nil && err == nil {
+		if err == nil && uerr != nil {
 			result = ctrl.Result{Requeue: true}
 			err = uerr
 		}
@@ -96,6 +108,7 @@ func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	if digest != install.Status.Digest {
 		// we have a new installer version - let's get connected
+		installationlog.Info("found new version", "version", digest)
 
 		// try and download the installer
 		_, installerfn, err := downloadInstaller(ctx, install)
@@ -130,14 +143,15 @@ func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
-	if len(install.Spec.Config) == 0 {
-		// we don't have a config yet - get a new one
+	if install.Spec.Config == nil {
+		return ctrl.Result{}, nil
 	}
 
-	cfg, err := yaml.Marshal(install.Spec.Config)
+	cfg, err := json.Marshal(install.Spec.Config)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
+	installationlog.Info("validating config", "config", cfg)
 	cfgval, err := r.client.ValidateConfig(ctx, &installer.ValidateConfigRequest{Config: cfg})
 	if err != nil {
 		return ctrl.Result{}, err
@@ -150,7 +164,62 @@ func (r *InstallationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 	status.Conditions = conditions
 
+	if !cfgval.Valid {
+		return ctrl.Result{}, nil
+	}
+
+	rendered, err := r.client.RenderConfig(ctx, &installer.RenderConfigRequest{
+		Config:    cfg,
+		Namespace: "gitpod",
+	})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	for _, objYAML := range rendered.Resources {
+		err = r.applyObj(ctx, []byte(objYAML))
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	return ctrl.Result{RequeueAfter: 24 * time.Hour}, nil
+}
+
+func (r *InstallationReconciler) applyObj(ctx context.Context, objYAML []byte) error {
+	obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(objYAML, nil, nil)
+	if err != nil {
+		return err
+	}
+	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
+	b, err := unstructuredObj.MarshalJSON()
+	if err != nil {
+		return err
+	}
+
+	mapping, err := r.Client.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return err
+	}
+
+	var dri dynamic.ResourceInterface
+	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+		unstructuredObj.SetNamespace("gitpod")
+		dri = r.DynamicClient.Resource(mapping.Resource).Namespace(unstructuredObj.GetNamespace())
+	} else {
+		dri = r.DynamicClient.Resource(mapping.Resource)
+	}
+
+	_, err = dri.Patch(ctx, unstructuredObj.GetName(), types.ApplyPatchType, b, metav1.PatchOptions{
+		Force:        pointer.Bool(true),
+		FieldManager: "gitpod-operator",
+	})
+	if err != nil {
+		return err
+	}
+	installationlog.Info("applied object", "name", unstructuredObj.GetName(), "kind", unstructuredObj.GetKind())
+	return err
 }
 
 func (r *InstallationReconciler) runInstaller() (err error) {
@@ -163,6 +232,7 @@ func (r *InstallationReconciler) runInstaller() (err error) {
 	}
 
 	r.stopInstaller = func() error {
+		installationlog.Info("stopping installer")
 		err := cmd.Process.Kill()
 		r.stopInstaller = nil
 		return err
@@ -173,8 +243,11 @@ func (r *InstallationReconciler) runInstaller() (err error) {
 		}
 	}()
 
-	r.conn, err = grpc.Dial("tcp://localhost:9999", grpc.WithInsecure(), grpc.WithBlock())
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	r.conn, err = grpc.DialContext(ctx, "localhost:9999", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
+		err = fmt.Errorf("cannot connect to installer: %w", err)
 		return
 	}
 	r.client = api.NewInstallerServiceClient(r.conn)

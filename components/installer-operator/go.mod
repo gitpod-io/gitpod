@@ -9,9 +9,11 @@ require (
 	github.com/onsi/gomega v1.15.0
 	github.com/opencontainers/image-spec v1.0.2
 	google.golang.org/grpc v1.39.1
-	gopkg.in/yaml.v2 v2.4.0
+	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v0.22.2
+	k8s.io/klog v1.0.0
+	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a
 	sigs.k8s.io/controller-runtime v0.10.0
 )
 

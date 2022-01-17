@@ -42,7 +42,7 @@ A config file is required which can be generated with the init command.`,
 			return err
 		}
 
-		yaml, err := renderKubernetesObjects(cfgVersion, cfg)
+		yaml, err := renderKubernetesObjects(cfgVersion, cfg, renderOpts.Namespace)
 		if err != nil {
 			return err
 		}
@@ -70,7 +70,7 @@ func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *confi
 	return rawCfg, cfgVersion, cfg, err
 }
 
-func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string, error) {
+func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config, namespace string) ([]string, error) {
 	versionMF, err := getVersionManifest()
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 		}
 	}
 
-	ctx, err := common.NewRenderContext(*cfg, *versionMF, renderOpts.Namespace)
+	ctx, err := common.NewRenderContext(*cfg, *versionMF, namespace)
 	if err != nil {
 		return nil, err
 	}

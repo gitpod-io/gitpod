@@ -17,9 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"encoding/json"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -32,10 +31,7 @@ type InstallationSpec struct {
 
 	Channel string `json:"channel,omitempty"`
 
-	//+kubebuilder:validation:Type=object
-	//+kubebuilder:validation:Schemaless
-	//+kubebuilder:pruning:PreserveUnknownFields
-	Config json.RawMessage `json:"config,omitempty"`
+	Config *unstructured.Unstructured `json:"config,omitempty"`
 }
 
 // InstallationStatus defines the observed state of Installation
