@@ -21,7 +21,6 @@ export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
     const [user, setUser] = useState(p.user);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
-    const [viewAccountStatement, setViewAccountStatement] = useState(false);
     const [isStudent, setIsStudent] = useState<boolean>();
     const [editFeatureFlags, setEditFeatureFlags] = useState(false);
     const [editRoles, setEditRoles] = useState(false);
@@ -86,6 +85,23 @@ export default function UserDetail(p: { user: User }) {
     const flags = getFlags(user, updateUser);
     const rop = getRopEntries(user, updateUser);
 
+    const downloadAccountStatement = async () => {
+        if (!accountStatement) {
+            return;
+        }
+        try {
+            const blob = new Blob([JSON.stringify(accountStatement)], { type: 'application/json' });
+            const fileDownloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = fileDownloadUrl;
+            link.setAttribute('download', 'AccountStatement.json');
+            document.body.appendChild(link);
+            link.click();
+        } catch (error) {
+            console.error(`Error downloading account statement `, error);
+        }
+    }
+
     return <>
         <PageWithSubMenu subMenu={adminMenu} title="Users" subtitle="Search and manage all users.">
             <div className="flex">
@@ -106,8 +122,8 @@ export default function UserDetail(p: { user: User }) {
                         <Property name="Remaining Hours"
                             actions={
                                 accountStatement && [{
-                                    label: 'View Account Statement',
-                                    onClick: () => setViewAccountStatement(true)
+                                    label: 'Download Account Statement',
+                                    onClick: () => downloadAccountStatement()
                                 }, {
                                     label: 'Grant 20 Extra Hours',
                                     onClick: async () => {
@@ -173,15 +189,6 @@ export default function UserDetail(p: { user: User }) {
             <div className="flex flex-col">
                 {
                     rop.map(e => <CheckBox key={e.title} title={e.title} desc="" checked={!!e.checked} onChange={e.onClick} />)
-                }
-            </div>
-        </Modal>
-        <Modal visible={viewAccountStatement} onClose={() => setViewAccountStatement(false)} title="Edit Roles" buttons={[
-            <button className="secondary" onClick={() => setViewAccountStatement(false)}>Done</button>
-        ]}>
-            <div className="flex flex-col">
-                {
-                    JSON.stringify(accountStatement, null, '  ')
                 }
             </div>
         </Modal>
