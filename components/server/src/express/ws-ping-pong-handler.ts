@@ -95,6 +95,14 @@ export class WsPingPongHandler implements Disposable {
                 ws.pong(data);
             });
 
+            // error handling
+            ws.on('error', (err: any) => {
+                if (err.code !== 'ECONNRESET' && err.code !== 'EPIPE') {    // exclude very common errors
+                    log.warn('websocket error, closing.', err, { ws, req });
+                }
+                ws.close(); // ws should trigger close() itself on any socket error. We do this just to be sure.
+            });
+
             next();
         };
     }
