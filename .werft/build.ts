@@ -780,7 +780,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         werft.fail('deploy', err);
     } finally {
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
-        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
+        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
     }
 
     function installGitpod(commonFlags: string) {
