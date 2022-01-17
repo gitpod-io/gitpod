@@ -45,7 +45,7 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Command: []string{
 							"sh",
 							"-c",
-							"cd /app/node_modules/@gitpod/gitpod-db && yarn run wait-for-db && yarn run typeorm migrations:run",
+							"cd /app/node_modules/@gitpod/gitpod-db && yarn run wait-for-db && yarn run typeorm migration:show || true && yarn run typeorm migration:run",
 						},
 					}},
 				},
