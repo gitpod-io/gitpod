@@ -5,7 +5,6 @@
 package image_builder_mk3
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -73,7 +72,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
-	fc, err := json.MarshalIndent(imgcfg, "", " ")
+	fc, err := common.ToJSONString(imgcfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal image-builder-mk3 config: %w", err)
 	}

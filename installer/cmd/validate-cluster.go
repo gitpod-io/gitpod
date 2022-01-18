@@ -6,11 +6,11 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/rest"
@@ -70,7 +70,7 @@ var validateClusterCmd = &cobra.Command{
 			result.Items = append(result.Items, res.Items...)
 		}
 
-		jsonOut, err := json.MarshalIndent(result, "", "  ")
+		jsonOut, err := common.ToJSONString(result)
 		if err != nil {
 			return err
 		}

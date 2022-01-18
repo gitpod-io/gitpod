@@ -6,7 +6,6 @@ package agentsmith
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -53,7 +52,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
-	fc, err := json.MarshalIndent(ascfg, "", " ")
+	fc, err := common.ToJSONString(ascfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal agent-smith config: %w", err)
 	}

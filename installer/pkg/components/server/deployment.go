@@ -6,7 +6,6 @@ package server
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
@@ -32,7 +31,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	// Convert to a JSON string
-	fc, err := json.MarshalIndent(wsmanagerbridge.WSManagerList(), "", " ")
+	fc, err := common.ToJSONString(wsmanagerbridge.WSManagerList())
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal server.WorkspaceManagerList config: %w", err)
 	}

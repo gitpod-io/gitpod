@@ -5,7 +5,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -102,7 +101,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ChargebeeProviderOptionsFile: "/chargebee/providerOptions",
 	}
 
-	fc, err := json.MarshalIndent(scfg, "", " ")
+	fc, err := common.ToJSONString(scfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal server config: %w", err)
 	}
