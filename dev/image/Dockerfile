@@ -2,10 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-# if you want to run this image in a workspace, follow these steps:
-# gcloud auth configure-docker europe-docker.pkg.dev
-# gcloud auth login --no-launch-browser
-FROM europe-docker.pkg.dev/gitpod-artifacts/docker-dev/workspace-base-images:full
+FROM gitpod/workspace-full-vnc:latest
 
 ENV TRIGGER_REBUILD 16
 
@@ -107,6 +104,19 @@ RUN install-packages gperf \
     && cd $(mktemp -d) \
     && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.2/libseccomp-2.5.2.tar.gz | tar xz \
     && cd libseccomp-2.5.2 && ./configure && make && make install
+
+### Cypress deps
+RUN install-packages \
+    libgtk2.0-0 \
+    libgtk-3-0 \
+    libgbm-dev \
+    libnotify-dev \
+    libgconf-2-4 \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
+    xauth
 
 USER gitpod
 

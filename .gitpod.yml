@@ -1,5 +1,4 @@
-image:
-  file: .gitpod.Dockerfile
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:dashboard-e2e-fork.1
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
