@@ -5,7 +5,6 @@
 package ide
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -107,7 +106,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("default desktop IDE '%s' does not point to a desktop IDE option", idecfg.IDEOptions.DefaultIDE)
 	}
 
-	fc, err := json.MarshalIndent(idecfg, "", " ")
+	fc, err := common.ToJSONString(idecfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal server-ide-config config: %w", err)
 	}

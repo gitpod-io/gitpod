@@ -5,7 +5,6 @@
 package content_service
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/content-service/api/config"
@@ -30,7 +29,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Storage: common.StorageConfig(ctx),
 	}
 
-	fc, err := json.MarshalIndent(cscfg, "", " ")
+	fc, err := common.ToJSONString(cscfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal content-service config: %w", err)
 	}

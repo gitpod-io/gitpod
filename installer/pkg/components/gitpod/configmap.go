@@ -5,7 +5,6 @@
 package gitpod
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -25,7 +24,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		VersionManifest: ctx.VersionManifest,
 	}
 
-	fc, err := json.MarshalIndent(gpcfg, "", " ")
+	fc, err := common.ToJSONString(gpcfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal Gitpod config: %w", err)
 	}

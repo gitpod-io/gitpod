@@ -5,8 +5,8 @@
 package incluster
 
 import (
-	"encoding/json"
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,12 +26,12 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 	rootPassword := "PHejMfsLvfLcG1Drs40h"
 	password := "jBzVMe2w4Yi7GagadsyB"
 
-	encryptionKeys, err := json.MarshalIndent([]EncryptionKey{{
+	encryptionKeys, err := common.ToJSONString([]EncryptionKey{{
 		Name:     "general",
 		Version:  1,
 		Primary:  true,
 		Material: "4uGh1q8y2DYryJwrVMHs0kWXJlqvHWWt/KJuNi04edI=",
-	}}, "", "  ")
+	}})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal mysql encryptionKeys: %w", err)
 	}

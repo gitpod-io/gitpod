@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -123,7 +122,7 @@ image to the "target" repo`,
 			return scoreI < scoreJ
 		})
 
-		fc, err := json.MarshalIndent(images, "", "  ")
+		fc, err := common.ToJSONString(images)
 		if err != nil {
 			return err
 		}

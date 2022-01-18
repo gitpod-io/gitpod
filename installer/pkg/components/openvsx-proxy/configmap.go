@@ -5,15 +5,15 @@
 package openvsx_proxy
 
 import (
-	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	openvsx "github.com/gitpod-io/gitpod/openvsx-proxy/pkg"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"time"
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -29,7 +29,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PrometheusAddr:       fmt.Sprintf(":%d", PrometheusPort),
 	}
 
-	fc, err := json.MarshalIndent(imgcfg, "", " ")
+	fc, err := common.ToJSONString(imgcfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal openvsx config: %w", err)
 	}
