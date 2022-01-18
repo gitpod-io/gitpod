@@ -109,7 +109,6 @@ export class PrebuildStatusMaintainer implements Disposable {
         } else if (pws.state === "available" && !pws.error) {
             return "success";
         } else if (pws.state === "available" && !!pws.error) {
-            // Not sure if this is the right choice - do we really want the check to fail if the prebuild fails?
             return "failure";
         } else if (pws.state === "building") {
             return "pending";
@@ -149,6 +148,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                 log.error("unable to authenticate GitHub app - this leaves user-facing checks dangling.");
                 return;
             }
+            const workspace = await this.workspaceDB.trace({span}).findById(pws.buildWorkspaceId);
 
             if (!!updatatable.contextUrl) {
                 const conclusion = this.getConclusionFromPrebuildState(pws);
@@ -163,7 +163,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                         target_url: updatatable.contextUrl,
                         // at the moment we run in 'evergreen' mode where we always report success for status checks
                         description: conclusion == 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
-                        state: "success"
+                        state: (workspace?.config?.github?.prebuilds?.addCheck === 'prevent-merge-on-error' ? conclusion : 'success')
                     });
                 } catch (err) {
                     if (err.message == "Not Found") {
