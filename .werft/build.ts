@@ -562,12 +562,11 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             werft.fail('SSH gateway hostkey', err);
         }
 
-        // validate the config and cluster
+        // validate the config
         exec(`/tmp/installer validate config -c config.yaml`, {slice: installerSlices.INSTALLER_RENDER});
 
-        // TODO: Ignore cluster validation errors (our k8s version is too old in core-dev)
-        // consider removing '|| true' after we've left core-dev and are using K3s for preview envs
-        exec(`/tmp/installer validate cluster -c config.yaml || true`, {slice: installerSlices.INSTALLER_RENDER});
+        // validate the cluster
+        exec(`/tmp/installer validate cluster -c config.yaml`, {slice: installerSlices.INSTALLER_RENDER});
 
         // render the k8s manifest
         exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, { silent: true });

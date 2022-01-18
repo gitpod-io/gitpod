@@ -34,7 +34,6 @@ MATCHES="$(grep -c -- --- k8s.yaml)"
 # K8s object names and kinds are duplicated in a config map to faciliate deletion
 # subtract one (the config map) and then divide by 2 to get the actual # of docs we'll loop through
 DOCS="$(((MATCHES - 1) / 2))"
-PDB_POLICY_VERSION="policy/v1beta1"
 
 echo "Use node pool index $NODE_POOL_INDEX"
 
@@ -279,66 +278,56 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"-"$KIND"-overrides.yaml
    fi
 
-   # PodDisruptionBudget policy for core-dev only support policy/v1beta1, because we're on k8s 1.20.
-   # The installer supports 1.21, which has policy/v1.
-    # NetworkPolicy for ws-daemon
-   if [[ "messagebus" == "$NAME" ]] && [[ "$KIND" == "PodDisruptionBudget" ]]; then
-      WORK="overrides for $NAME $KIND"
-      echo "$WORK"
-      yq w -i k8s.yaml -d "$i" apiVersion $PDB_POLICY_VERSION
-   fi
-
-   # This changes or removes resources from the configmap we use to uninstall Gitpod
-   # There are a couple use cases where we must do this:
+   # Uncomment to change or remove resources from the configmap which can be used to uninstall Gitpod
+   # There are a couple use cases where you may want to do this:
    # 1. We don't want to uninstall a shared resource that is needed by other preview env namespaces
    # 2. The apiVersion used by the installer is not supported by core-dev
-   #    The installer supports Kubernetes 1.21+; core-dev is on 1.20.
-   if [[ "gitpod-app" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
-      WORK="overrides for $NAME $KIND"
-      echo "$WORK"
-      # Get a copy of the config we're working with
-      yq r k8s.yaml -d "$i" > /tmp/"$NAME"-"$KIND".yaml
-      # Parse the YAML string from the config map
-      yq r /tmp/"$NAME"-"$KIND".yaml 'data.[app.yaml]' > /tmp/"$NAME"-"$KIND"-original.yaml
-      # Loop through the config YAML docs
-      # each doc has a --- after it, except the last one, use a zero based loop
-      CONFIG_MATCHES="$(grep -c -- --- /tmp/"$NAME"-"$KIND"-original.yaml)"
-      ci=0 # index for going through the original
-      new_ci=0 # index for writing the new config
-      # this will contain our "new" config, sans things we omit (below) via continue w/o writing to file
-      touch /tmp/"$NAME"-"$KIND"-overrides.yaml
-      while [ "$ci" -le "$CONFIG_MATCHES" ]; do
-         CONFIG_NAME=$(yq r /tmp/"$NAME"-"$KIND"-original.yaml -d "$ci" metadata.name)
-         CONFIG_KIND=$(yq r /tmp/"$NAME"-"$KIND"-original.yaml -d "$ci" kind)
-         # Avoid writing something to the configmap, like a cluster scoped resource, so it is not uninstalled
-         # Other namespaces may depend on it
-         # if [[ "jaegers.jaegertracing.io" == "$CONFIG_NAME" ]] && [[ "$CONFIG_KIND" == "CustomResourceDefinition" ]]; then
-         #    echo "Avoiding writing the $CONFIG_NAME $CONFIG_KIND to the gitpod-app ConfigMap"
-         #    ci=$((ci + 1))
-         #    continue
-         # fi
+   # if [[ "gitpod-app" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
+   #    WORK="overrides for $NAME $KIND"
+   #    echo "$WORK"
+   #    # Get a copy of the config we're working with
+   #    yq r k8s.yaml -d "$i" > /tmp/"$NAME"-"$KIND".yaml
+   #    # Parse the YAML string from the config map
+   #    yq r /tmp/"$NAME"-"$KIND".yaml 'data.[app.yaml]' > /tmp/"$NAME"-"$KIND"-original.yaml
+   #    # Loop through the config YAML docs
+   #    # each doc has a --- after it, except the last one, use a zero based loop
+   #    CONFIG_MATCHES="$(grep -c -- --- /tmp/"$NAME"-"$KIND"-original.yaml)"
+   #    ci=0 # index for going through the original
+   #    new_ci=0 # index for writing the new config
+   #    # this will contain our "new" config, sans things we omit (below) via continue w/o writing to file
+   #    touch /tmp/"$NAME"-"$KIND"-overrides.yaml
+   #    while [ "$ci" -le "$CONFIG_MATCHES" ]; do
+   #       CONFIG_NAME=$(yq r /tmp/"$NAME"-"$KIND"-original.yaml -d "$ci" metadata.name)
+   #       CONFIG_KIND=$(yq r /tmp/"$NAME"-"$KIND"-original.yaml -d "$ci" kind)
+   #       # Avoid writing something to the configmap, like a cluster scoped resource, so it is not uninstalled
+   #       # Other namespaces may depend on it
+   #       # if [[ "jaegers.jaegertracing.io" == "$CONFIG_NAME" ]] && [[ "$CONFIG_KIND" == "CustomResourceDefinition" ]]; then
+   #       #    echo "Avoiding writing the $CONFIG_NAME $CONFIG_KIND to the gitpod-app ConfigMap"
+   #       #    ci=$((ci + 1))
+   #       #    continue
+   #       # fi
 
-         yq r /tmp/"$NAME"-"$KIND"-original.yaml -d "$ci" > /tmp/gitpod-app_config_"$ci"
-         if [ "$ci" -gt 0 ]; then
-            # add a document separater
-            echo "---" >> /tmp/"$NAME"-"$KIND"-overrides.yaml
-         fi
+   #       yq r /tmp/"$NAME"-"$KIND"-original.yaml -d "$ci" > /tmp/gitpod-app_config_"$ci"
+   #       if [ "$ci" -gt 0 ]; then
+   #          # add a document separater
+   #          echo "---" >> /tmp/"$NAME"-"$KIND"-overrides.yaml
+   #       fi
 
-         # Update the apiVersion to match what we installed, so we can uninstall at a later time w/o error
-         if [[ "messagebus" == "$CONFIG_NAME" ]] && [[ "$CONFIG_KIND" == "PodDisruptionBudget" ]]; then
-            echo "Update new $CONFIG_NAME $CONFIG_KIND in the gitpod-app ConfigMap"
-            yq w -i /tmp/gitpod-app_config_"$ci" apiVersion $PDB_POLICY_VERSION
-         fi
+   #       # Update the apiVersion to match what we installed, so we can uninstall at a later time w/o error
+   #       # if [[ "messagebus" == "$CONFIG_NAME" ]] && [[ "$CONFIG_KIND" == "PodDisruptionBudget" ]]; then
+   #       #    echo "Update new $CONFIG_NAME $CONFIG_KIND in the gitpod-app ConfigMap"
+   #       #    yq w -i /tmp/gitpod-app_config_"$ci" apiVersion $PDB_POLICY_VERSION
+   #       # fi
 
-         cat /tmp/gitpod-app_config_"$ci" >> /tmp/"$NAME"-"$KIND"-overrides.yaml
-         ci=$((ci + 1))
-         new_ci=$((new_ci + 1))
-      done
-      # merge overrides into base
-      yq w -i /tmp/"$NAME"-"$KIND".yaml "data.[app.yaml]" -- "$(< /tmp/"$NAME"-"$KIND"-overrides.yaml)"
-      # merge base into k8s.yaml
-      yq m -x -i -d "$i" k8s.yaml /tmp/"$NAME"-"$KIND".yaml
-   fi
+   #       cat /tmp/gitpod-app_config_"$ci" >> /tmp/"$NAME"-"$KIND"-overrides.yaml
+   #       ci=$((ci + 1))
+   #       new_ci=$((new_ci + 1))
+   #    done
+   #    # merge overrides into base
+   #    yq w -i /tmp/"$NAME"-"$KIND".yaml "data.[app.yaml]" -- "$(< /tmp/"$NAME"-"$KIND"-overrides.yaml)"
+   #    # merge base into k8s.yaml
+   #    yq m -x -i -d "$i" k8s.yaml /tmp/"$NAME"-"$KIND".yaml
+   # fi
 
    # TODO: integrate with chargebees
    # won't fix now, use Helm
