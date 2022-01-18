@@ -54,9 +54,6 @@ export default function UserDetail(p: { user: User }) {
     };
 
     const addStudentDomain = async () => {
-        if (emailDomain === 'gmail.com') {
-            throw new Error(`Sanity check: Not adding '${emailDomain}' as a verified student email domain`);
-        }
         await updateUser(async u => {
             await getGitpodService().server.adminAddStudentEmailDomain(u.id, emailDomain);
             await getGitpodService().server.adminIsStudent(u.id).then(
@@ -165,7 +162,7 @@ export default function UserDetail(p: { user: User }) {
                             }]}
                         >{user.rolesOrPermissions?.join(', ') || '---'}</Property>
                         <Property name="Student"
-                            actions={ !isStudent ? [{
+                            actions={ (!isStudent && !['gmail.com', 'yahoo.com', 'hotmail.com'].includes(emailDomain)) ? [{
                                 label: `Make '${emailDomain}' a student domain`,
                                 onClick: addStudentDomain
                             }] :  undefined}
