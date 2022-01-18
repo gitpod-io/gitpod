@@ -42,7 +42,7 @@ func MergeEnv(envs ...[]corev1.EnvVar) (res []corev1.EnvVar) {
 }
 
 func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
-	logLevel := "debug"
+	logLevel := "info"
 	if cfg.Observability.LogLevel != "" {
 		logLevel = string(cfg.Observability.LogLevel)
 	}
