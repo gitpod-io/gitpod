@@ -207,7 +207,7 @@ export default function () {
     }
 
     return <ProjectSettingsPage project={project}>
-        <div className="flex space-x-4">
+        <div className="grid xl:grid-cols-2 grid-cols-1 gap-4">
             <div className="flex-1 h-96 rounded-xl overflow-hidden relative flex flex-col">
                 <div className="flex bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 px-6 pt-3">
                     <TabMenuItem name=".gitpod.yml" selected={selectedEditor === '.gitpod.yml'} onClick={() => setSelectedEditor('.gitpod.yml')} />
