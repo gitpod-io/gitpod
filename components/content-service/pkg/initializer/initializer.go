@@ -367,7 +367,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	span.SetTag("location", location)
 	defer tracing.FinishSpan(span, &err)
 
-	log.WithField("location", location).Debug("InitializeWorkspace")
+	log.WithField("location", location).Info("InitializeWorkspace")
 
 	cfg := initializeOpts{
 		Initializer: &EmptyInitializer{},
