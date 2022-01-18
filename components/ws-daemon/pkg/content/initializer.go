@@ -17,6 +17,7 @@ import (
 	"syscall"
 
 	"github.com/google/uuid"
+	"github.com/opencontainers/runc/libcontainer/specconv"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
@@ -162,23 +163,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		return err
 	}
 
-	cmd := exec.Command("runc", "spec")
-	cmd.Dir = tmpdir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return xerrors.Errorf("cannot create runc spec: %s: %w", string(out), err)
-	}
-
-	cfgFN := filepath.Join(tmpdir, "config.json")
-	var spec specs.Spec
-	fc, err = os.ReadFile(cfgFN)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(fc, &spec)
-	if err != nil {
-		return err
-	}
+	spec := specconv.Example()
 
 	// we assemble the root filesystem from the ws-daemon container
 	for _, d := range []string{"app", "bin", "dev", "etc", "lib", "opt", "sbin", "sys", "usr", "var"} {
@@ -230,7 +215,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(cfgFN, fc, 0644)
+	err = os.WriteFile(filepath.Join(tmpdir, "config.json"), fc, 0644)
 	if err != nil {
 		return err
 	}
@@ -255,7 +240,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	args = append(args, "--log-format", "json", "run", name)
 
 	var cmdOut bytes.Buffer
-	cmd = exec.Command("runc", args...)
+	cmd := exec.Command("runc", args...)
 	cmd.Dir = tmpdir
 	cmd.Stdout = &cmdOut
 	cmd.Stderr = os.Stderr
