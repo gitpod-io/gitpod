@@ -54,16 +54,35 @@ func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
 										Args: []string{
 											"send",
 										},
-										Env: []v1.EnvVar{
-											{
-												Name:  "GITPOD_DOMAIN_HASH",
-												Value: fmt.Sprintf("%x", sha512.Sum512([]byte(ctx.Config.Domain))),
-											},
-											{
-												Name:  "GITPOD_INSTALLATION_VERSION",
-												Value: ctx.VersionManifest.Version,
-											},
-										},
+										Env: func() []v1.EnvVar {
+											envvars := []v1.EnvVar{
+												{
+													Name:  "GITPOD_DOMAIN_HASH",
+													Value: fmt.Sprintf("%x", sha512.Sum512([]byte(ctx.Config.Domain))),
+												},
+												{
+													Name:  "GITPOD_INSTALLATION_VERSION",
+													Value: ctx.VersionManifest.Version,
+												},
+											}
+
+											if ctx.Config.Telemetry != nil {
+												// This hash is used to hash the GITPOD_DOMAIN_HASH, further guaranteeing anonymity
+												envvars = append(envvars, v1.EnvVar{
+													Name: "GITPOD_CUSTOM_HASH",
+													ValueFrom: &v1.EnvVarSource{
+														SecretKeyRef: &v1.SecretKeySelector{
+															LocalObjectReference: v1.LocalObjectReference{
+																Name: ctx.Config.Telemetry.Name,
+															},
+															Key: "hash",
+														},
+													},
+												})
+											}
+
+											return envvars
+										}(),
 									},
 								},
 							},

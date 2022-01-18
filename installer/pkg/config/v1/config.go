@@ -86,6 +86,8 @@ type Config struct {
 	License       *ObjectRef    `json:"license,omitempty"`
 
 	SSHGatewayHostKey *ObjectRef `json:"sshGatewayHostKey,omitempty"`
+
+	Telemetry *ObjectRef `json:"telemetry,omitempty"`
 }
 
 type Metadata struct {

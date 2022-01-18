@@ -112,6 +112,24 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("license")))
 	}
 
+	if cfg.Telemetry != nil {
+		secretName := cfg.Telemetry.Name
+		res = append(res, cluster.CheckSecret(secretName, cluster.CheckSecretRequiredData("hash"), cluster.CheckSecretRule(func(s *corev1.Secret) ([]cluster.ValidationError, error) {
+			errors := make([]cluster.ValidationError, 0)
+
+			minLength := 6
+
+			if len(string(s.Data["hash"])) < minLength {
+				errors = append(errors, cluster.ValidationError{
+					Message: fmt.Sprintf("Telemetry hash must be at least %d characters", minLength),
+					Type:    cluster.ValidationStatusError,
+				})
+			}
+
+			return errors, nil
+		})))
+	}
+
 	if len(cfg.AuthProviders) > 0 {
 		for _, provider := range cfg.AuthProviders {
 			secretName := provider.Name

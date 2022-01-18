@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"crypto/sha512"
 	"fmt"
 	"os"
 
@@ -38,6 +39,12 @@ var sendCmd = &cobra.Command{
 		versionId := os.Getenv("GITPOD_INSTALLATION_VERSION")
 		if versionId == "" {
 			return fmt.Errorf("GITPOD_INSTALLATION_VERSION envvar not set")
+		}
+
+		customHash := os.Getenv("GITPOD_CUSTOM_HASH")
+		if customHash != "" {
+			log.Info("Applying additional hash to the domain hash")
+			domainHash = fmt.Sprintf("%x", sha512.Sum512([]byte(domainHash+customHash)))
 		}
 
 		client, err := analytics.NewWithConfig(segmentIOToken, analytics.Config{})
