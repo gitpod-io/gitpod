@@ -1097,7 +1097,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const newQuantity = oldQuantity + addQuantity;
         try {
             const now = new Date();
-            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
+            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity);
             await this.doChargeForTeamSubscriptionUpgrade(ts, oldQuantity, newQuantity, now.toISOString());
             await this.teamSubscriptionService.addSlots(ts, addQuantity);
         } catch (err) {
@@ -1211,7 +1211,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             try {
                 const now = new Date();
                 // Downgrade by 1 unit
-                await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
+                await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity);
                 await this.teamSubscriptionService.deactivateSlot(ts, teamSubscriptionSlotId, now);
             } catch (err) {
                 log.error({ userId: user.id }, 'tsDeactivateSlot', err);
@@ -1231,7 +1231,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             try {
                 const now = new Date();
                 // Upgrade by 1 unit (but don't charge again!)
-                await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
+                await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity);
                 await this.teamSubscriptionService.reactivateSlot(ts, teamSubscriptionSlotId, now);
             } catch (err) {
                 log.error({ userId: user.id }, 'tsReactivateSlot', err);
@@ -1293,7 +1293,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return retrieveResult.subscription;
     }
 
-    protected async doUpdateTeamSubscription(userId: string, teamSubscriptionId: string, newQuantity: number, applyEndOfTerm: boolean) {
+    protected async doUpdateTeamSubscription(userId: string, teamSubscriptionId: string, newQuantity: number) {
         const logContext = { userId };
         const teamSubscription = await this.internalGetTeamSubscription(teamSubscriptionId, userId);
         const chargebeeSubscriptionId = teamSubscription.paymentReference;
@@ -1304,7 +1304,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.doUpdateSubscription(userId, chargebeeSubscriptionId, {
             plan_quantity: newQuantity,
-            end_of_term: applyEndOfTerm
+            prorate: true
         });
     }
 
