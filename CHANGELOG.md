@@ -1,6 +1,9 @@
 # Change Log
 
 ## January 2022
+- Introduce Project-level environment variables ([#7295](https://github.com/gitpod-io/gitpod/pull/7295)) - [@jankeromnes](https://github.com/jankeromnes)
+- [Installer]: remove the deprecated TypeORM migration command ([#7642](https://github.com/gitpod-io/gitpod/pull/7642)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Admin users can download the account statement. ([#7633](https://github.com/gitpod-io/gitpod/pull/7633)) - [@laushinka](https://github.com/laushinka)
 - [protocol] use owner and repo in lower case in ws IDs ([#7609](https://github.com/gitpod-io/gitpod/pull/7609)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
 - Removed "workspaces" from projects and teams and have a single global workspaces list, that shows all my workspaces. ([#7606](https://github.com/gitpod-io/gitpod/pull/7606)) - [@svenefftinge](https://github.com/svenefftinge)
 - Made the single "workspaces" list the default landing place in the dashboard. ([#7606](https://github.com/gitpod-io/gitpod/pull/7606)) - [@svenefftinge](https://github.com/svenefftinge)
