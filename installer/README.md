@@ -20,7 +20,7 @@ The best way to get started with Gitpod
 - A [Kubernetes cluster configured](https://www.gitpod.io/docs/self-hosted/latest/installation)
 - A [TLS certificate](#tls-certificates)
 
-Or, [open a Gitpod workspace](https://gitpod.io/from-referer/)
+Or, [open a Gitpod workspace](https://gitpod.io/from-referrer/)
 
 The process to install Gitpod is:
 1. generate a base config
