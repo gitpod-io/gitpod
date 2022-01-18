@@ -5,7 +5,6 @@
 package blobserve
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -84,7 +83,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PrometheusAddr: "127.0.0.1:9500",
 	}
 
-	fc, err := json.MarshalIndent(bscfg, "", " ")
+	fc, err := common.ToJSONString(bscfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal blobserve config: %w", err)
 	}

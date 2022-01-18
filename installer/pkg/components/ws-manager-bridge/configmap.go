@@ -5,7 +5,6 @@
 package wsmanagerbridge
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -34,7 +33,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		StaticBridges: WSManagerList(),
 	}
 
-	fc, err := json.MarshalIndent(wsmbcfg, "", " ")
+	fc, err := common.ToJSONString(wsmbcfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal ws-manager-bridge config: %w", err)
 	}

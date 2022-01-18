@@ -5,7 +5,6 @@
 package wsmanager
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -130,7 +129,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}{Addr: "127.0.0.1:9500"},
 	}
 
-	fc, err := json.MarshalIndent(wsmcfg, "", " ")
+	fc, err := common.ToJSONString(wsmcfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal ws-manager config: %w", err)
 	}

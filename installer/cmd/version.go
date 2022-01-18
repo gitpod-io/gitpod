@@ -6,11 +6,11 @@ package cmd
 
 import (
 	"debug/elf"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"sigs.k8s.io/yaml"
 
@@ -27,7 +27,7 @@ var versionCmd = &cobra.Command{
 			return err
 		}
 
-		versions, err := json.MarshalIndent(versionMF, "", "  ")
+		versions, err := common.ToJSONString(versionMF)
 		if err != nil {
 			return err
 		}

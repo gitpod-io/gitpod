@@ -6,6 +6,7 @@ package common
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -42,7 +43,7 @@ func MergeEnv(envs ...[]corev1.EnvVar) (res []corev1.EnvVar) {
 }
 
 func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
-	logLevel := "debug"
+	logLevel := "info"
 	if cfg.Observability.LogLevel != "" {
 		logLevel = string(cfg.Observability.LogLevel)
 	}
@@ -526,4 +527,9 @@ func ThirdPartyContainerRepo(configRegistry string, thirdPartyRegistry string) s
 	}
 
 	return configRegistry
+}
+
+// ToJSONString returns the serialized JSON string of an object
+func ToJSONString(input interface{}) ([]byte, error) {
+	return json.MarshalIndent(input, "", "  ")
 }
