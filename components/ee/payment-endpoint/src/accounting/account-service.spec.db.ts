@@ -92,6 +92,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
         });
     }
 
+    @timeout(4000)
     @test async testIssue4045Minimal() {
         // We want a clean state
         await this.setupPurgeDB();
