@@ -185,7 +185,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							PostStart: &corev1.Handler{
 								Exec: &corev1.ExecAction{
 									Command: []string{
-										"/bin/bash", "-c", `kubectl label nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true`,
+										"/bin/bash", "-c", `kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true`,
 									},
 								},
 							},
