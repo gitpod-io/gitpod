@@ -8,6 +8,7 @@ certificate:
   name: https-certificates
 containerRegistry:
   inCluster: true
+  s3storage: null
 database:
   inCluster: true
 domain: gitpod.example.com
@@ -28,6 +29,6 @@ workspace:
       cpu: "1"
       memory: 2Gi
   runtime:
-    containerdRuntimeDir: /run/containerd/io.containerd.runtime.v2.task/k8s.io
+    containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
     containerdSocket: /run/containerd/containerd.sock
     fsShiftMethod: fuse
