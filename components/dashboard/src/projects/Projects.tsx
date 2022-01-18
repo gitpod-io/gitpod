@@ -150,7 +150,7 @@ export default function () {
                     {team && <Link to="./members" className="flex"><button className="ml-2 secondary">Invite Members</button></Link>}
                     <button className="ml-2" onClick={() => onNewProject()}>New Project</button>
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-4 pb-40">
+                <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
                     {projects.filter(filter).sort(hasNewerPrebuild).map(p => (<div key={`project-${p.id}`} className="h-52">
                         <div className="h-42 border border-gray-100 dark:border-gray-800 rounded-t-xl">
                             <div className="h-32 p-6">
