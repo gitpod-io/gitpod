@@ -69,7 +69,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.pycharm
       buildArgs:
-        JETBRAINS_BACKEND_URL: ${pycharmDownloadUrl}
+        JETBRAINS_BACKEND_URL: https://download.jetbrains.com/python/pycharm-professional-2021.3.1.tar.gz
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
       image:
         - ${imageRepoBase}/ide/pycharm:${version}
