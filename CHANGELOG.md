@@ -1,6 +1,14 @@
 # Change Log
 
 ## January 2022
+- [installer] Fix registry-facade ClusterRoleBinding name ([#7670](https://github.com/gitpod-io/gitpod/pull/7670)) - [@aledbf](https://github.com/aledbf)
+- [installer] Fix lifecycle PostStart label update ([#7656](https://github.com/gitpod-io/gitpod/pull/7656)) - [@aledbf](https://github.com/aledbf)
+- [server] fix commit check ([#7661](https://github.com/gitpod-io/gitpod/pull/7661)) - [@svenefftinge](https://github.com/svenefftinge)
+- [installer] Fix ws-daemon image pull policy ([#7623](https://github.com/gitpod-io/gitpod/pull/7623)) - [@aledbf](https://github.com/aledbf)
+- [dashboard] Don't offer to add common email domains as a verified student domains in Admin ([#7659](https://github.com/gitpod-io/gitpod/pull/7659)) - [@jankeromnes](https://github.com/jankeromnes)
+- Make proc mounts more reliable which affects parallel Docker container startup ([#7657](https://github.com/gitpod-io/gitpod/pull/7657)) - [@csweichel](https://github.com/csweichel)
+- [installer] Fix mysql image pull policy ([#7625](https://github.com/gitpod-io/gitpod/pull/7625)) - [@aledbf](https://github.com/aledbf)
+- [ws-manager] Improve workspaces PodAffinity ([#7472](https://github.com/gitpod-io/gitpod/pull/7472)) - [@aledbf](https://github.com/aledbf)
 - Introduce Project-level environment variables ([#7295](https://github.com/gitpod-io/gitpod/pull/7295)) - [@jankeromnes](https://github.com/jankeromnes)
 - [Installer]: remove the deprecated TypeORM migration command ([#7642](https://github.com/gitpod-io/gitpod/pull/7642)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Admin users can download the account statement. ([#7633](https://github.com/gitpod-io/gitpod/pull/7633)) - [@laushinka](https://github.com/laushinka)
