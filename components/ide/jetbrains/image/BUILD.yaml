@@ -91,7 +91,7 @@ packages:
       metadata:
         helm-component: workspace.desktopIdeImages.phpstorm
       buildArgs:
-        JETBRAINS_BACKEND_URL: ${phpstormDownloadUrl}
+        JETBRAINS_BACKEND_URL: https://download.jetbrains.com/webide/PhpStorm-2021.3.1.tar.gz
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
       image:
         - ${imageRepoBase}/ide/phpstorm:${version}
