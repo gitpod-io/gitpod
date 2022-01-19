@@ -21,7 +21,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&rbacv1.ClusterRoleBinding{
 			TypeMeta: common.TypeMetaClusterRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   fmt.Sprintf("%s-%s-rb", ctx.Namespace, Component),
+				Name:   Component,
 				Labels: labels,
 			},
 			RoleRef: rbacv1.RoleRef{
