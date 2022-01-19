@@ -105,6 +105,9 @@ RUN install-packages gperf \
     && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.2/libseccomp-2.5.2.tar.gz | tar xz \
     && cd libseccomp-2.5.2 && ./configure && make && make install
 
+# Install netcat to use it as proxy for SSH access to Harvester VMs
+RUN apt-get update && apt-get upgrade -y
+
 USER gitpod
 
 # Fix node version we develop against
