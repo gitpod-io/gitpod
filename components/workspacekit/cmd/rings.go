@@ -669,24 +669,24 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 
 	err := conn.SetDeadline(time.Now().Add(5 * time.Second))
 	if err != nil {
-		return 0, err
+		return 0, xerrors.Errorf("cannot setdeadline: %v", err)
 	}
 
 	f, err := conn.File()
 	if err != nil {
-		return 0, err
+		return 0, xerrors.Errorf("cannot open socket: %v", err)
 	}
 	defer f.Close()
 	connfd := int(f.Fd())
 
 	_, _, _, _, err = unix.Recvmsg(connfd, nil, buf, 0)
 	if err != nil {
-		return 0, err
+		return 0, xerrors.Errorf("cannot recvmsg from fd '%d': %v", connfd, err)
 	}
 
 	msgs, err := unix.ParseSocketControlMessage(buf)
 	if err != nil {
-		return 0, err
+		return 0, xerrors.Errorf("cannot parse socket control message: %v", err)
 	}
 	if len(msgs) != 1 {
 		return 0, xerrors.Errorf("expected a single socket control message")
@@ -694,7 +694,7 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 
 	fds, err := unix.ParseUnixRights(&msgs[0])
 	if err != nil {
-		return 0, err
+		return 0, xerrors.Errorf("cannot parse unix rights: %v", err)
 	}
 	if len(fds) == 0 {
 		return 0, xerrors.Errorf("expected a single socket FD")
