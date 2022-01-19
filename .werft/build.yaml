@@ -166,6 +166,8 @@ pod:
         secretKeyRef:
           name: self-hosted
           key: segmentIOToken
+    - name: JAVA_HOME
+      value: /home/gitpod/.sdkman/candidates/java/current
     command:
       - bash
       - -c

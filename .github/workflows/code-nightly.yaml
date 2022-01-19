@@ -13,12 +13,14 @@ jobs:
       - uses: actions/checkout@v2
       - name: downlaod leeway
         run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.8/leeway_0.2.8_Linux_x86_64.tar.gz | sudo tar xz
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@master
+      - name: Auth Google Cloud SDK
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
       - run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
