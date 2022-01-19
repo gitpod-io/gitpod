@@ -1,0 +1,43 @@
+on:
+  workflow_call:
+    inputs:
+      productId:
+        type: string
+        required: true
+      productCode:
+        type: string
+        required: true
+    secrets:
+      projectId:
+        required: true
+      serviceAccountKey:
+        required: true
+
+jobs:
+  update-jetbrains:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: downlaod leeway
+        run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.16/leeway_0.2.16_Linux_x86_64.tar.gz | sudo tar xz
+      - name: Auth Google Cloud SDK
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.serviceAccountKey }}
+      - uses: actions/setup-java@v2
+        with:
+          distribution: zulu
+          java-version: '11'
+      - name: Leeway build
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.projectId }}
+        env:
+          LEEWAY_REMOTE_CACHE_BUCKET: gitpod-core-leeway-cache-branch
+      - run: |
+          gcloud auth configure-docker --quiet
+          export LEEWAY_WORKSPACE_ROOT=$(pwd)
+          data=$(curl -sSL "https://data.services.jetbrains.com/products?code=${{ inputs.productCode }}&fields=distributions%2Clink%2Cname%2Creleases&_=$(date +%s)000")
+          link=$(echo "$data" | jq -r '.[0].releases[0].downloads.linux.link')
+          cd components/ide/jetbrains/image
+          leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -D${{ inputs.productId }}DownloadUrl=$link .:${{ inputs.productId }}

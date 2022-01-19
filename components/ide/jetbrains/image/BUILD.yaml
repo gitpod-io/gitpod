@@ -19,12 +19,13 @@ packages:
       - components/ide/jetbrains/backend-plugin:plugin
     argdeps:
       - imageRepoBase
+      - intellijDownloadUrl
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.intellij
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/idea/ideaIU-2021.3.1.tar.gz"
+        JETBRAINS_BACKEND_URL: ${intellijDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
       image:
         - ${imageRepoBase}/ide/intellij:${version}
@@ -40,12 +41,13 @@ packages:
       - components/ide/jetbrains/backend-plugin:plugin
     argdeps:
       - imageRepoBase
+      - golandDownloadUrl
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.goland
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/go/goland-2021.3.2.tar.gz"
+        JETBRAINS_BACKEND_URL: ${golandDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
       image:
         - ${imageRepoBase}/ide/goland:${version}
@@ -61,12 +63,13 @@ packages:
       - components/ide/jetbrains/backend-plugin:plugin
     argdeps:
       - imageRepoBase
+      - pycharmDownloadUrl
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.pycharm
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/python/pycharm-professional-2021.3.1.tar.gz"
+        JETBRAINS_BACKEND_URL: ${pycharmDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
       image:
         - ${imageRepoBase}/ide/pycharm:${version}
@@ -82,12 +85,13 @@ packages:
       - components/ide/jetbrains/backend-plugin:plugin
     argdeps:
       - imageRepoBase
+      - phpstormDownloadUrl
     config:
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.desktopIdeImages.phpstorm
       buildArgs:
-        JETBRAINS_BACKEND_URL: "https://download.jetbrains.com/webide/PhpStorm-2021.3.1.tar.gz"
+        JETBRAINS_BACKEND_URL: ${phpstormDownloadUrl}
         SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
       image:
         - ${imageRepoBase}/ide/phpstorm:${version}
