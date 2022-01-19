@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,10 @@ import (
 )
 
 func cronjob(ctx *common.RenderContext) ([]runtime.Object, error) {
+	if ctx.Config.Kind == config.InstallationWorkspace {
+		return []runtime.Object{}, nil
+	}
+
 	installationTelemetryComponent := fmt.Sprintf("%s-telemetry", Component)
 
 	objectMeta := metav1.ObjectMeta{
