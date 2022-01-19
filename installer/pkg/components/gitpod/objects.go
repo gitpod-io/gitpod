@@ -10,4 +10,5 @@ var Objects = common.CompositeRenderFunc(
 	configmap,
 	cronjob,
 	common.DefaultServiceAccount(Component),
+	rolebinding,
 )
