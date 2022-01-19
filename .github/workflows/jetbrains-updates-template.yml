@@ -44,7 +44,7 @@ jobs:
           echo "There is an update available!"
           echo "Latest release: ${{ steps.latest-release.outputs.result }}"
           echo "Used release:   ${{ steps.used-release.outputs.result }}"
-          yq -i e '(.packages[] | select(.name == "${{ inputs.productId }}") | .config.buildArgs.JETBRAINS_BACKEND_URL) = "${{ steps.latest-release.outputs.result }}"' components/ide/jetbrains/image/BUILD.yaml
+          yq -i e '.defaultArgs.${{ inputs.productId }}DownloadUrl = "${{ steps.latest-release.outputs.result }}"' WORKSPACE.yaml
           git diff
       - name: Create Pull Request
         if: steps.latest-release.outputs.result != steps.used-release.outputs.result

@@ -6,6 +6,10 @@ defaultArgs:
   publishToNPM: true
   localAppVersion: unknown
   codeCommit: 4591e0158896bfd22d70bbc0f37c379d5bae4265
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2021.3.1.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2021.3.2.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2021.3.1.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2021.3.1.tar.gz"
 
 provenance:
   enabled: true
