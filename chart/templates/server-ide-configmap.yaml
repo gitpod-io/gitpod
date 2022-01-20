@@ -104,6 +104,11 @@ options:
 
 defaultIde: "code"
 defaultDesktopIde: "code-desktop"
+
+clients:
+  jetbrains-gateway:
+    defaultDesktopIDE: "intellij"
+    desktopIDEs: ["intellij", "goland", "pycharm", "phpstorm"]
 {{ end }}
 
 {{- if $comp.serverIdeConfigDeploy.enabled }}

@@ -17,6 +17,7 @@ type IDEOptions struct {
 	Options           map[string]IDEOption `json:"options"`
 	DefaultIDE        string               `json:"defaultIde"`
 	DefaultDesktopIDE string               `json:"defaultDesktopIde"`
+	IDEClients        map[string]IDEClient `json:"clients,omitempty"`
 }
 
 // IDEOption interface from components/gitpod-protocol/src/ide-protocol.ts
@@ -31,4 +32,10 @@ type IDEOption struct {
 	Hidden             *bool    `json:"hidden,omitempty"`
 	Image              string   `json:"image"`
 	ResolveImageDigest *bool    `json:"resolveImageDigest,omitempty"`
+}
+
+// IDEClient interface from components/gitpod-protocol/src/ide-protocol.ts
+type IDEClient struct {
+	DefaultDesktopIDE string   `json:"defaultDesktopIDE,omitempty"`
+	DesktopIDEs       []string `json:"desktopIDEs,omitempty"`
 }
