@@ -10,4 +10,7 @@ export const adminMenu = [{
 }, {
     title: 'Workspaces',
     link: ['/admin/workspaces']
+}, {
+    title: 'Settings',
+    link: ['/admin/settings']
 },];

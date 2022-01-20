@@ -136,6 +136,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "adminForceStopWorkspace": { group: "default", points: 1 },
         "adminRestoreSoftDeletedWorkspace": { group: "default", points: 1 },
         "adminSetLicense": { group: "default", points: 1 },
+        "adminGetSettings": { group: "default", points: 1 },
+        "adminUpdateSettings": { group: "default", points: 1 },
 
         "validateLicense": { group: "default", points: 1 },
         "getLicenseInfo": { group: "default", points: 1 },

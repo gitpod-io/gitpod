@@ -5,8 +5,8 @@
  */
 
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
-import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields } from '@gitpod/gitpod-protocol';
+import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB, InstallationAdminDB } from '@gitpod/gitpod-db/lib';
+import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields, Permission } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -57,6 +57,7 @@ import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-proto
 import { ClientMetadata } from '../websocket/websocket-connection-manager';
 import { ConfigurationService } from '../config/configuration-service';
 import { ProjectEnvVar } from '@gitpod/gitpod-protocol/src/protocol';
+import { InstallationAdminSettings } from '@gitpod/gitpod-protocol';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -77,6 +78,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ContextParser) protected contextParser: ContextParser;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
+    @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
 
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(WorkspaceManagerClientProvider) protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
@@ -456,7 +458,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
         const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
-        this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace}, "get");
+        this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
 
         const ownerToken = latestInstance?.status.ownerToken;
         if (!ownerToken) {
@@ -564,6 +566,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, policy);
     }
 
+    protected async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
+        const user = this.checkAndBlockUser(method);
+        if (!this.authorizationService.hasPermission(user, requiredPermission)) {
+            log.warn({ userId: this.user?.id }, "unauthorised admin access", { authorised: false, method, params });
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+        log.info({ userId: this.user?.id }, "admin access", { authorised: true, method, params });
+    }
+
     protected async internalStopWorkspaceInstance(ctx: TraceContext, instanceId: string, instanceRegion: string, policy?: StopWorkspacePolicy): Promise<void> {
         const req = new StopWorkspaceRequest();
         req.setId(instanceId);
@@ -643,7 +654,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             includeHeadless: false,
         });
         await Promise.all(res.map(ws => this.guardAccess({ kind: "workspace", subject: ws.workspace }, "get")));
-        await Promise.all(res.map(ws => this.guardAccess({ kind: "workspaceInstance", subject: ws.latestInstance, workspace: ws.workspace}, "get")));
+        await Promise.all(res.map(ws => this.guardAccess({ kind: "workspaceInstance", subject: ws.latestInstance, workspace: ws.workspace }, "get")));
         return res;
     }
 
@@ -1875,7 +1886,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getGitpodTokenScopes(ctx: TraceContext, tokenHash: string): Promise<string[]> {
-        traceAPIParams(ctx, { });   // do not trace tokenHash
+        traceAPIParams(ctx, {});   // do not trace tokenHash
 
         const user = this.checkAndBlockUser("getGitpodTokenScopes");
         let token: GitpodToken | undefined;
@@ -1893,7 +1904,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async deleteGitpodToken(ctx: TraceContext, tokenHash: string): Promise<void> {
-        traceAPIParams(ctx, { });   // do not trace tokenHash
+        traceAPIParams(ctx, {});   // do not trace tokenHash
 
         const user = this.checkAndBlockUser("deleteGitpodToken");
         const existingTokens = await this.getGitpodTokens(ctx); // all tokens for logged in user
@@ -2006,6 +2017,32 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
+    async adminGetSettings(ctx: TraceContext): Promise<InstallationAdminSettings> {
+        traceAPIParams(ctx, {});
+
+        await this.guardAdminAccess("adminGetSettings", {}, Permission.ADMIN_API);
+
+        const settings = await this.installationAdminDb.getData();
+
+        return settings.settings;
+    }
+
+    async adminUpdateSettings(ctx: TraceContext, settings: InstallationAdminSettings): Promise<void> {
+        traceAPIParams(ctx, {});
+
+        await this.guardAdminAccess("adminUpdateSettings", {}, Permission.ADMIN_API);
+
+        const newSettings: Partial<InstallationAdminSettings> = {};
+
+        for (const p of InstallationAdminSettings.fields()) {
+            if (p in settings) {
+                newSettings[p] = settings[p];
+            }
+        }
+
+        await this.installationAdminDb.setSettings(newSettings);
+    }
+
     async getLicenseInfo(): Promise<GetLicenseInfoResult> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Licensing is implemented in Gitpod's Enterprise Edition`);
     }
@@ -2062,7 +2099,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected validHostNameRegexp = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])(\/([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))?$/;
 
     async updateOwnAuthProvider(ctx: TraceContext, { entry }: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry> {
-        traceAPIParams(ctx, {  });  // entry contains PII
+        traceAPIParams(ctx, {});  // entry contains PII
 
         let userId: string;
         try {

@@ -8,6 +8,7 @@ import { User, Workspace, NamedWorkspaceFeatureFlag } from "./protocol";
 import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { AccountStatement } from "./accounting-protocol";
+import { InstallationAdminSettings } from "./installation-admin-protocol";
 
 export interface AdminServer {
     adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>>;
@@ -29,6 +30,9 @@ export interface AdminServer {
     adminIsStudent(userId: string): Promise<boolean>;
     adminAddStudentEmailDomain(userId: string, domain: string): Promise<void>;
     adminGrantExtraHours(userId: string, extraHours: number): Promise<void>;
+
+    adminGetSettings(): Promise<InstallationAdminSettings>
+    adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>
 }
 
 export interface AdminGetListRequest<T> {
@@ -65,7 +69,7 @@ export interface AdminModifyPermanentWorkspaceFeatureFlagRequest {
     }[]
 }
 
-export interface WorkspaceAndInstance extends Omit<Workspace, "id"|"creationTime">, Omit<WorkspaceInstance, "id"|"creationTime"> {
+export interface WorkspaceAndInstance extends Omit<Workspace, "id" | "creationTime">, Omit<WorkspaceInstance, "id" | "creationTime"> {
     workspaceId: string;
     workspaceCreationTime: string;
     instanceId: string;
@@ -78,7 +82,7 @@ export namespace WorkspaceAndInstance {
         return {
             id: wai.workspaceId,
             creationTime: wai.workspaceCreationTime,
-            ... wai
+            ...wai
         };
     }
 
@@ -89,7 +93,7 @@ export namespace WorkspaceAndInstance {
         return {
             id: wai.instanceId,
             creationTime: wai.instanceCreationTime,
-            ... wai
+            ...wai
         };
     }
 }

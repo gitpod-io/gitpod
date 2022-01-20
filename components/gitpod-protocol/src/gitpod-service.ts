@@ -30,6 +30,7 @@ import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from './analytics';
 import { IDEServer } from './ide-protocol';
+import { InstallationAdminSettings } from './installation-admin-protocol';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -130,6 +131,10 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getGenericInvite(teamId: string): Promise<TeamMembershipInvite>;
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
     deleteTeam(teamId: string, userId: string): Promise<void>;
+
+    // Admin Settings
+    adminGetSettings(): Promise<InstallationAdminSettings>;
+    adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;
 
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;

@@ -8,6 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import { UserContextProvider } from './user-context';
+import { AdminContextProvider } from './admin-context';
 import { TeamsContextProvider } from './teams/teams-context';
 import { ProjectContextProvider } from './projects/project-context';
 import { ThemeContextProvider } from './theme-context';
@@ -18,15 +19,17 @@ import "./index.css"
 ReactDOM.render(
     <React.StrictMode>
         <UserContextProvider>
-            <TeamsContextProvider>
-                <ProjectContextProvider>
-                    <ThemeContextProvider>
-                        <BrowserRouter>
-                            <App />
-                        </BrowserRouter>
-                    </ThemeContextProvider>
-                </ProjectContextProvider>
-            </TeamsContextProvider>
+            <AdminContextProvider>
+                <TeamsContextProvider>
+                    <ProjectContextProvider>
+                        <ThemeContextProvider>
+                            <BrowserRouter>
+                                <App />
+                            </BrowserRouter>
+                        </ThemeContextProvider>
+                    </ProjectContextProvider>
+                </TeamsContextProvider>
+            </AdminContextProvider>
         </UserContextProvider>
     </React.StrictMode>,
     document.getElementById('root')
