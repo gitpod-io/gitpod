@@ -145,7 +145,8 @@ export async function build(context, version) {
     })();
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withContrib = "with-contrib" in buildConfig || mainBuild;
-    const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
+    // const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
+    const noPreview = false
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = "with-integration-tests" in buildConfig;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
