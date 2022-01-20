@@ -30,7 +30,6 @@ type syscallHandler func(req *libseccomp.ScmpNotifReq) (val uint64, errno int32,
 type SyscallHandler interface {
 	Mount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32)
 	Umount(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32)
-	Bind(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32)
 	Chown(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32)
 }
 
@@ -39,7 +38,6 @@ func mapHandler(h SyscallHandler) map[string]syscallHandler {
 		"mount":   h.Mount,
 		"umount":  h.Umount,
 		"umount2": h.Umount,
-		"bind":    h.Bind,
 		"chown":   h.Chown,
 	}
 }
@@ -181,7 +179,6 @@ type InWorkspaceHandler struct {
 	Daemon      IWSClientProvider
 	Ring2PID    int
 	Ring2Rootfs string
-	BindEvents  chan<- BindEvent
 }
 
 // BindEvent describes a process binding to a socket
@@ -373,51 +370,6 @@ func (h *InWorkspaceHandler) Umount(req *libseccomp.ScmpNotifReq) (val uint64, e
 
 	// let the kernel do the work
 	return 0, 0, libseccomp.NotifRespFlagContinue
-}
-
-func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {
-	log := log.WithFields(map[string]interface{}{
-		"syscall": "bind",
-		"pid":     req.Pid,
-		"id":      req.ID,
-	})
-	// We want the syscall to succeed, no matter what we do in this handler.
-	// The Kernel will execute the syscall for us.
-	defer func() {
-		val = 0
-		errno = 0
-		flags = libseccomp.NotifRespFlagContinue
-	}()
-
-	memFile, err := readarg.OpenMem(req.Pid)
-	if err != nil {
-		log.WithError(err).Error("cannot open mem")
-		return
-	}
-	defer memFile.Close()
-
-	// TODO(cw): find why this breaks
-	// err = libseccomp.NotifIDValid(fd, req.ID)
-	// if err != nil {
-	// 	log.WithError(err).Error("invalid notif ID")
-	// 	return returnErrno(unix.EPERM)
-	// }
-
-	evt := BindEvent{PID: req.Pid}
-	select {
-	case h.BindEvents <- evt:
-	default:
-	}
-
-	// socketFdB, err := readarg.ReadBytes(memFile, int64(req.Data.Args[0]), int(req.Data.Args[1]-req.Data.Args[0]))
-	// if err != nil {
-	// 	log.WithError(err).Error("cannot read socketfd arg")
-	// }
-
-	// socketfd := nativeEndian.Uint64(socketFdB)
-	// unix.Getsockname()
-
-	return
 }
 
 func (h *InWorkspaceHandler) Chown(req *libseccomp.ScmpNotifReq) (val uint64, errno int32, flags uint32) {

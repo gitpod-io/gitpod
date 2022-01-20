@@ -507,7 +507,6 @@ var ring1Cmd = &cobra.Command{
 				},
 				Ring2PID:    cmd.Process.Pid,
 				Ring2Rootfs: ring2Root,
-				BindEvents:  make(chan seccomp.BindEvent),
 			}
 
 			stp, errchan := seccomp.Handle(scmpfd, handler)
