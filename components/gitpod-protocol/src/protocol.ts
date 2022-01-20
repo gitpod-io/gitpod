@@ -891,6 +891,18 @@ export namespace PrebuiltWorkspaceContext {
     }
 }
 
+export interface WithReferrerContext extends WorkspaceContext {
+    referrer: string
+    referrerIde?: string
+}
+
+export namespace WithReferrerContext {
+    export function is(context: any): context is WithReferrerContext {
+        return context
+            && 'referrer' in context;
+    }
+}
+
 export interface WithEnvvarsContext extends WorkspaceContext {
     envvars: EnvVarWithValue[];
 }
