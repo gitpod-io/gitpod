@@ -161,10 +161,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							}},
 							Ports: []corev1.ContainerPort{{
-								ContainerPort: ContainerSSHPort,
-								Name:          ContainerSSHName,
-								Protocol:      *common.TCPProtocol,
-							}, {
 								ContainerPort: PrometheusPort,
 								Name:          MetricsContainerName,
 								Protocol:      *common.TCPProtocol,
