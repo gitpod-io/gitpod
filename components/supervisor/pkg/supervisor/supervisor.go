@@ -813,12 +813,10 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 
 	// Add default args for IDE (not desktop IDE) to be backwards compatible
 	if ideConfig.Entrypoint == "/ide/startup.sh" && len(args) == 0 {
-		args = append(args, "{WORKSPACEROOT}")
 		args = append(args, "--port", "{IDEPORT}")
 	}
 
 	for i := range args {
-		args[i] = strings.ReplaceAll(args[i], "{WORKSPACEROOT}", cfg.WorkspaceRoot)
 		args[i] = strings.ReplaceAll(args[i], "{IDEPORT}", strconv.Itoa(cfg.IDEPort))
 		args[i] = strings.ReplaceAll(args[i], "{DESKTOPIDEPORT}", strconv.Itoa(desktopIDEPort))
 	}
