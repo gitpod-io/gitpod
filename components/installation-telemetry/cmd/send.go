@@ -45,14 +45,16 @@ var sendCmd = &cobra.Command{
 			err = client.Close()
 		}()
 
-		client.Enqueue(analytics.Track{
+		telemetry := analytics.Track{
 			UserId: domainHash,
 			Event:  "Installation telemetry",
 			Properties: analytics.NewProperties().
 				Set("version", versionId),
-		})
+		}
 
-		log.Info("installation-telemetry has successfully sent data - exiting")
+		client.Enqueue(telemetry)
+
+		log.WithField("telemetry", telemetry).Info("installation-telemetry has successfully sent data - exiting")
 
 		return err
 	},
