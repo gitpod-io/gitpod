@@ -14,13 +14,13 @@
             labels: {
               severity: 'warning',
             },
-            'for': '10m',
+            'for': '5m',
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/observability/blob/main/runbooks/GitpodWorkspaceNodeHighNormalizedLoadAverage.md',
-              summary: "Workspace node's normalized load average is higher than 10 for more than 10 minutes.",
+              summary: "Workspace node's normalized load average is higher than 5 for more than 5 minutes.",
               description: 'Node {{ $labels.node }} is reporting {{ printf "%.2f" $value }}% normalized load average. Normalized load average is current load average divided by number of CPU cores of the node.',
             },
-            expr: 'nodepool:node_load1:normalized{nodepool=~".*workspace.*"} > 10',
+            expr: 'nodepool:node_load1:normalized{nodepool=~".*workspace.*"} > 5',
           },
         ],
       },
