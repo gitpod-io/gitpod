@@ -567,7 +567,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`/tmp/installer validate config -c config.yaml`, {slice: installerSlices.INSTALLER_RENDER});
 
         // validate the cluster
-        exec(`/tmp/installer validate cluster -c config.yaml`, {slice: installerSlices.INSTALLER_RENDER});
+        exec(`/tmp/installer validate cluster -c config.yaml || true`, {slice: installerSlices.INSTALLER_RENDER});
 
         // render the k8s manifest
         exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, { silent: true });
