@@ -1,6 +1,8 @@
 # Change Log
 
 ## January 2022
+- [installer] Telemetry should not run in workspace clusters ([#7687](https://github.com/gitpod-io/gitpod/pull/7687)) - [@aledbf](https://github.com/aledbf)
+- [installer] Switch default log level to info ([#7660](https://github.com/gitpod-io/gitpod/pull/7660)) - [@aledbf](https://github.com/aledbf)
 - [installer] Fix registry-facade ClusterRoleBinding name ([#7670](https://github.com/gitpod-io/gitpod/pull/7670)) - [@aledbf](https://github.com/aledbf)
 - [installer] Fix lifecycle PostStart label update ([#7656](https://github.com/gitpod-io/gitpod/pull/7656)) - [@aledbf](https://github.com/aledbf)
 - [server] fix commit check ([#7661](https://github.com/gitpod-io/gitpod/pull/7661)) - [@svenefftinge](https://github.com/svenefftinge)
