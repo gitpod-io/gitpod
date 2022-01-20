@@ -12,6 +12,7 @@ import { Login } from './Login';
 import { UserContext } from './user-context';
 import { TeamsContext } from './teams/teams-context';
 import { ThemeContext } from './theme-context';
+import { AdminContext } from './admin-context';
 import { getGitpodService } from './service/service';
 import { shouldSeeWhatsNew, WhatsNew } from './whatsnew/WhatsNew';
 import gitpodIcon from './icons/gitpod.svg';
@@ -52,6 +53,7 @@ const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/UserSearch'));
 const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/WorkspacesSearch'));
+const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ './admin/Settings'));
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ './OauthClientApproval'));
 
 function Loading() {
@@ -98,11 +100,12 @@ export function getURLHash() {
 function App() {
     const { user, setUser } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
+    const { setAdminSettings } = useContext(AdminContext);
     const { setIsDark } = useContext(ThemeContext);
 
-    const [ loading, setLoading ] = useState<boolean>(true);
-    const [ isWhatsNewShown, setWhatsNewShown ] = useState(false);
-    const [ isSetupRequired, setSetupRequired ] = useState(false);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [isWhatsNewShown, setWhatsNewShown] = useState(false);
+    const [isSetupRequired, setSetupRequired] = useState(false);
     const history = useHistory();
 
     useEffect(() => {
@@ -132,6 +135,11 @@ function App() {
                     }
                 }
                 setTeams(teams);
+
+                if (user?.rolesOrPermissions?.includes('admin')) {
+                    const adminSettings = await getGitpodService().server.adminGetSettings();
+                    setAdminSettings(adminSettings);
+                }
             } catch (error) {
                 console.error(error);
                 if (error && "code" in error) {
@@ -279,6 +287,7 @@ function App() {
 
                 <Route path="/admin/users" component={UserSearch} />
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
+                <Route path="/admin/settings" component={AdminSettings} />
 
                 <Route path={["/", "/login"]} exact>
                     <Redirect to={workspacesPathMain} />

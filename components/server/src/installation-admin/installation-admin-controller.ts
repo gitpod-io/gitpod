@@ -16,9 +16,9 @@ export class InstallationAdminController {
         const app = express();
 
         app.get('/data', async (req: express.Request, res: express.Response) => {
-            const data = await this.installationAdminDb.getTelemetryData();
+            const data = await this.installationAdminDb.getData();
 
-            res.send(data);
+            res.status(200).json(data);
         });
 
         return app;

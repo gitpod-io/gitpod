@@ -5,8 +5,7 @@
  */
 
 import { inject, injectable, } from 'inversify';
-import { InstallationAdmin } from '@gitpod/gitpod-protocol';
-import { v4 as uuidv4 } from 'uuid';
+import { InstallationAdmin, InstallationAdminSettings } from '@gitpod/gitpod-protocol';
 import { Repository } from 'typeorm';
 import { TypeORM } from './typeorm';
 import { InstallationAdminDB } from '../installation-admin-db';
@@ -21,12 +20,7 @@ export class TypeORMInstallationAdminImpl implements InstallationAdminDB {
     }
 
     protected async createDefaultRecord(): Promise<InstallationAdmin> {
-        const record: InstallationAdmin = {
-            id: uuidv4(),
-            settings: {
-                sendTelemetry: false,
-            },
-        };
+        const record = InstallationAdmin.createDefault();
 
         const repo = await this.getInstallationAdminRepo();
         return repo.save(record);
@@ -37,14 +31,14 @@ export class TypeORMInstallationAdminImpl implements InstallationAdminDB {
     }
 
     /**
-     * Get Telemetry Data
+     * Get Data
      *
      * Returns the first record found or creates a
      * new record.
      *
      * @returns Promise<InstallationAdmin>
      */
-    async getTelemetryData(): Promise<InstallationAdmin> {
+    async getData(): Promise<InstallationAdmin> {
         const repo = await this.getInstallationAdminRepo();
         const [record] = await repo.find();
 
@@ -54,5 +48,15 @@ export class TypeORMInstallationAdminImpl implements InstallationAdminDB {
 
         /* Record not found - create one */
         return this.createDefaultRecord();
+    }
+
+    async setSettings(settings: InstallationAdminSettings): Promise<void> {
+        const record = await this.getData();
+        record.settings = {
+            ...settings,
+        }
+
+        const repo = await this.getInstallationAdminRepo();
+        await repo.save(record);
     }
 }
