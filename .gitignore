@@ -57,3 +57,6 @@ components/server/*.log
 
 # IntelliJ
 .idea/
+
+# Yarn
+.yarn
