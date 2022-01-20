@@ -5,6 +5,7 @@
  */
 
 import { ContextURL, DisposableCollection, WithPrebuild, Workspace, WorkspaceImageBuild, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
 import React, { Suspense, useEffect } from "react";
@@ -32,7 +33,9 @@ export interface StartWorkspaceState {
   desktopIde?: {
     link: string
     label: string
+    clientID?: string
   }
+  ideOptions?: IDEOptions
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
@@ -54,7 +57,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
           }
           if (event.data.state.desktopIdeLink) {
             const label = event.data.state.desktopIdeLabel || "Open Desktop IDE";
-            this.setState({ desktopIde: { link: event.data.state.desktopIdeLink, label } });
+            const clientID = event.data.state.desktopIdeClientID;
+            this.setState({ desktopIde: { link: event.data.state.desktopIdeLink, label, clientID } });
           }
         }
       }
@@ -72,6 +76,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
 
     this.startWorkspace();
+    getGitpodService().server.getIDEOptions().then(ideOptions => this.setState({ ideOptions }))
   }
 
   componentWillUnmount() {
@@ -238,6 +243,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     let phase = StartPhase.Preparing;
     let title = undefined;
     let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
+    const contextURL = this.state.workspace?.context.normalizedContextURL || ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString();
 
     switch (this.state?.workspaceInstance?.status.phase) {
       // unknown indicates an issue within the system in that it cannot determine the actual phase of
@@ -281,17 +287,26 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
         if (!this.state.desktopIde) {
           phase = StartPhase.Running;
-          statusMessage = <p className="text-base text-gray-400">Opening IDE …</p>;
+          statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
         } else {
           phase = StartPhase.IdeReady;
+          const openLink = this.state.desktopIde.link;
+          const openLinkLabel = this.state.desktopIde.label;
+          const clientID = this.state.desktopIde.clientID
+          const client = clientID ? this.state.ideOptions?.clients?.[clientID] : undefined;
+          const installationSteps = client?.installationSteps?.length && <div className="flex flex-col text-center m-auto text-sm w-72 text-gray-400">
+            {client.installationSteps.map(step => <div dangerouslySetInnerHTML={{__html: step.replaceAll('${OPEN_LINK_LABEL}', openLinkLabel)}} />)}
+          </div>
           statusMessage = <div>
+            <p className="text-base text-gray-400">Opening Workspace …</p>
             <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
               <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
               <div>
-                <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-                <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+                <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">{this.state.workspaceInstance.workspaceId}</p>
+                <a target="_parent" href={contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{contextURL}</p></a>
               </div>
             </div>
+            {installationSteps}
             <div className="mt-10 justify-center flex space-x-2">
               <ContextMenu menuEntries={[
                 {
@@ -310,7 +325,18 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
               ]} >
                 <button className="secondary">More Actions...<Arrow up={false} /></button>
               </ContextMenu>
-              <a target="_blank" href={this.state.desktopIde.link}><button>{this.state.desktopIde.label}</button></a>
+              <button onClick={() => {
+                let redirect = false;
+                try {
+                  const desktopLink = new URL(openLink);
+                  redirect = desktopLink.protocol != 'http:' && desktopLink.protocol != 'https:';
+                } catch {}
+                if (redirect) {
+                  window.location.href = openLink;
+                } else {
+                  window.open(openLink, '_blank', 'noopener');
+                }
+              }}>{openLinkLabel}</button>
             </div>
             <div className="text-sm text-gray-400 dark:text-gray-500 mt-5">These IDE options are based on <a className="gp-link" href={gitpodHostUrl.asPreferences().toString()} target="_parent">your user preferences</a>.</div>
           </div>;
@@ -336,7 +362,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
             <div>
               <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{contextURL}</p></a>
             </div>
           </div>
           <div className="mt-10 flex justify-center">
@@ -363,7 +389,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{contextURL}</p></a>
             </div>
           </div>
           <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />

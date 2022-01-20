@@ -38,4 +38,5 @@ type IDEOption struct {
 type IDEClient struct {
 	DefaultDesktopIDE string   `json:"defaultDesktopIDE,omitempty"`
 	DesktopIDEs       []string `json:"desktopIDEs,omitempty"`
+	InstallationSteps []string `json:"installationSteps,omitempty"`
 }
