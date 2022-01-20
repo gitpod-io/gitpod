@@ -106,9 +106,24 @@ defaultIde: "code"
 defaultDesktopIde: "code-desktop"
 
 clients:
+  vscode:
+    defaultDesktopIDE: "code-desktop"
+    desktopIDEs: ["code-desktop"]
+    installationSteps: [
+      "If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/download'>VS Code</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
+  vscode-insiders:
+    defaultDesktopIDE: "code-desktop-insiders"
+    desktopIDEs: ["code-desktop-insiders"]
+    installationSteps: [
+      "If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
   jetbrains-gateway:
     defaultDesktopIDE: "intellij"
     desktopIDEs: ["intellij", "goland", "pycharm", "phpstorm"]
+    installationSteps: [
+      "If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://www.jetbrains.com/remote-development/gateway'>JetBrains Gateway</a> with <a target='_blank' class='gp-link' href='https://plugins.jetbrains.com/plugin/download?rel=true&updateId=154074'>Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
 {{ end }}
 
 {{- if $comp.serverIdeConfigDeploy.enabled }}

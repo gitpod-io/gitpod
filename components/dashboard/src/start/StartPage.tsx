@@ -34,7 +34,7 @@ function getPhaseTitle(phase?: StartPhase, error?: StartWorkspaceError) {
     case StartPhase.Running:
       return "Starting";
     case StartPhase.IdeReady:
-      return "Your Workspace is Ready!";
+      return "Running";
     case StartPhase.Stopping:
       return "Stopping";
     case StartPhase.Stopped:

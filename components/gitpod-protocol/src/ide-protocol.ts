@@ -46,6 +46,11 @@ export interface IDEClient {
      * Desktop IDEs supported by the client.
      */
     desktopIDEs?: string[]
+
+    /**
+     * Steps to install the client on user machine.
+     */
+    installationSteps?: string[]
 }
 
 export interface IDEOption {

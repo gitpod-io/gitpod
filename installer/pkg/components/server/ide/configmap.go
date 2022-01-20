@@ -24,6 +24,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	typeBrowser := "browser"
 	typeDesktop := "desktop"
 
+	codeDesktop := "code-desktop"
+	codeDesktopInsiders := "code-desktop-insiders"
+
 	intellij := "intellij"
 	goland := "goland"
 	pycharm := "pycharm"
@@ -32,9 +35,26 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		SupervisorImage: common.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 		IDEOptions: IDEOptions{
 			IDEClients: map[string]IDEClient{
+				"vscode": {
+					DefaultDesktopIDE: codeDesktop,
+					DesktopIDEs:       []string{codeDesktop},
+					InstallationSteps: []string{
+						"If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/download'>VS Code</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+					},
+				},
+				"vscode-insiders": {
+					DefaultDesktopIDE: codeDesktopInsiders,
+					DesktopIDEs:       []string{codeDesktopInsiders},
+					InstallationSteps: []string{
+						"If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+					},
+				},
 				"jetbrains-gateway": {
 					DefaultDesktopIDE: intellij,
 					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm},
+					InstallationSteps: []string{
+						"If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://www.jetbrains.com/remote-development/gateway'>JetBrains Gateway</a> with <a target='_blank' class='gp-link' href='https://plugins.jetbrains.com/plugin/download?rel=true&updateId=154074'>Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+					},
 				},
 			},
 			Options: map[string]IDEOption{
@@ -55,14 +75,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Image:              common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ctx.VersionManifest.Components.Workspace.CodeImage.Version),
 					ResolveImageDigest: pointer.Bool(true),
 				},
-				"code-desktop": {
+				codeDesktop: {
 					OrderKey: pointer.String("02"),
 					Title:    "VS Code",
 					Type:     typeDesktop,
 					Logo:     getIdeLogoPath("vscode"),
 					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
 				},
-				"code-desktop-insiders": {
+				codeDesktopInsiders: {
 					OrderKey: pointer.String("03"),
 					Title:    "VS Code",
 					Type:     typeDesktop,
@@ -105,7 +125,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			DefaultIDE:        "code",
-			DefaultDesktopIDE: "code-desktop",
+			DefaultDesktopIDE: codeDesktop,
 		},
 	}
 
