@@ -38,7 +38,7 @@ func main() {
 	}
 
 	if useFacade {
-		err = createAndRunc(runcPath)
+		err = createAndRunc(runcPath, log)
 	} else {
 		err = syscall.Exec(runcPath, os.Args, os.Environ())
 	}
@@ -47,7 +47,7 @@ func main() {
 	}
 }
 
-func createAndRunc(runcPath string) error {
+func createAndRunc(runcPath string, log *logrus.Logger) error {
 	fc, err := os.ReadFile("config.json")
 	if err != nil {
 		return xerrors.Errorf("cannot read config.json: %w", err)
@@ -61,6 +61,14 @@ func createAndRunc(runcPath string) error {
 
 	cfg.Process.OOMScoreAdj = &defaultOOMScoreAdj
 	delete(cfg.Linux.Sysctl, "net.ipv4.ip_unprivileged_port_start")
+	// TODO(toru): Drop the `kernel.domainame`` setting as it currently fails in the rootless container.
+	// - https://github.com/opencontainers/runc/issues/2091
+	// - https://github.com/opencontainers/runtime-spec/issues/592
+	// Perhaps using OCI hooks can solve this problem, but it's a bit tricky and hard.
+	if _, ok := cfg.Linux.Sysctl["kernel.domainname"]; ok {
+		log.Warnln("Since the rootless container cannot use domainname yet, we ignored it.")
+		delete(cfg.Linux.Sysctl, "kernel.domainname")
+	}
 	cfg.Process.Capabilities.Ambient = append(cfg.Process.Capabilities.Ambient, "CAP_NET_BIND_SERVICE")
 	cfg.Process.Capabilities.Bounding = append(cfg.Process.Capabilities.Bounding, "CAP_NET_BIND_SERVICE")
 	cfg.Process.Capabilities.Effective = append(cfg.Process.Capabilities.Effective, "CAP_NET_BIND_SERVICE")
