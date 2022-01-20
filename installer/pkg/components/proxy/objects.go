@@ -18,7 +18,7 @@ var Objects = common.CompositeRenderFunc(
 	networkpolicy,
 	rolebinding,
 	func(cfg *common.RenderContext) ([]runtime.Object, error) {
-		return common.GenerateService(Component, map[string]common.ServicePort{
+		ports := map[string]common.ServicePort{
 			ContainerHTTPName: {
 				ContainerPort: ContainerHTTPPort,
 				ServicePort:   ContainerHTTPPort,
@@ -27,15 +27,18 @@ var Objects = common.CompositeRenderFunc(
 				ContainerPort: ContainerHTTPSPort,
 				ServicePort:   ContainerHTTPSPort,
 			},
-			ContainerSSHName: {
-				ContainerPort: ContainerSSHPort,
-				ServicePort:   ContainerSSHPort,
-			},
 			MetricsContainerName: {
 				ContainerPort: PrometheusPort,
 				ServicePort:   PrometheusPort,
 			},
-		}, func(service *corev1.Service) {
+		}
+		if cfg.Config.SSHGatewayHostKey != nil {
+			ports[ContainerSSHName] = common.ServicePort{
+				ContainerPort: ContainerSSHPort,
+				ServicePort:   ContainerSSHPort,
+			}
+		}
+		return common.GenerateService(Component, ports, func(service *corev1.Service) {
 			service.Spec.Type = corev1.ServiceTypeLoadBalancer
 			service.Annotations["external-dns.alpha.kubernetes.io/hostname"] = fmt.Sprintf("%s,*.%s,*.ws.%s", cfg.Config.Domain, cfg.Config.Domain, cfg.Config.Domain)
 			service.Annotations["cloud.google.com/neg"] = `{"exposed_ports": {"80":{},"443": {}}}`
