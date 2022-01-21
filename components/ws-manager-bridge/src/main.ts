@@ -18,54 +18,53 @@ import { MetaInstanceController } from './meta-instance-controller';
 log.enableJSONLogging('ws-manager-bridge', undefined, LogrusLogLevel.getFromEnv());
 
 export const start = async (container: Container) => {
-    try {
-        const db = container.get(TypeORM);
-        await db.connect();
+  try {
+    const db = container.get(TypeORM);
+    await db.connect();
 
-        const msgbus = container.get(MessageBusIntegration);
-        await msgbus.connect();
+    const msgbus = container.get(MessageBusIntegration);
+    await msgbus.connect();
 
-        const tracingManager = container.get(TracingManager);
-        tracingManager.setup("ws-manager-bridge");
+    const tracingManager = container.get(TracingManager);
+    tracingManager.setup('ws-manager-bridge');
 
-        const metricsApp = express();
-        prometheusClient.collectDefaultMetrics();
-        metricsApp.get('/metrics', async (req, res) => {
-            res.set('Content-Type', prometheusClient.register.contentType);
-            res.send(await prometheusClient.register.metrics());
+    const metricsApp = express();
+    prometheusClient.collectDefaultMetrics();
+    metricsApp.get('/metrics', async (req, res) => {
+      res.set('Content-Type', prometheusClient.register.contentType);
+      res.send(await prometheusClient.register.metrics());
+    });
+    const metricsPort = 9500;
+    const metricsHttpServer = metricsApp.listen(metricsPort, 'localhost', () => {
+      log.info(`prometheus metrics server running on: localhost:${metricsPort}`);
+    });
+
+    const bridgeController = container.get<BridgeController>(BridgeController);
+    await bridgeController.start();
+
+    const clusterServiceServer = container.get<ClusterServiceServer>(ClusterServiceServer);
+    await clusterServiceServer.start();
+
+    const metaInstanceController = container.get<MetaInstanceController>(MetaInstanceController);
+    metaInstanceController.start();
+
+    process.on('SIGTERM', async () => {
+      log.info('SIGTERM received, stopping');
+      bridgeController.dispose();
+
+      if (metricsHttpServer) {
+        metricsHttpServer.close((err: any) => {
+          if (err) {
+            log.warn(`error closing prometheus metrics server`, { err });
+          }
         });
-        const metricsPort = 9500;
-        const metricsHttpServer = metricsApp.listen(metricsPort, 'localhost', () => {
-            log.info(`prometheus metrics server running on: localhost:${metricsPort}`);
-        });
-
-        const bridgeController = container.get<BridgeController>(BridgeController);
-        await bridgeController.start();
-
-        const clusterServiceServer = container.get<ClusterServiceServer>(ClusterServiceServer);
-        await clusterServiceServer.start();
-
-        const metaInstanceController = container.get<MetaInstanceController>(MetaInstanceController);
-        metaInstanceController.start();
-
-        process.on('SIGTERM', async () => {
-            log.info("SIGTERM received, stopping");
-            bridgeController.dispose();
-
-            if (metricsHttpServer) {
-                metricsHttpServer.close((err: any) => {
-                    if (err) {
-                        log.warn(`error closing prometheus metrics server`, { err });
-                    }
-                });
-            }
-            clusterServiceServer.stop()
-                .then(() => log.info("gRPC shutdown completed"));
-        });
-        log.info("ws-manager-bridge is up and running");
-        await new Promise((rs, rj) => {});
-    } catch(err) {
-        log.error("Error during startup. Exiting.", err);
-        process.exit(1);
-    }
-}
+      }
+      clusterServiceServer.stop().then(() => log.info('gRPC shutdown completed'));
+    });
+    log.info('ws-manager-bridge is up and running');
+    await new Promise((rs, rj) => {});
+  } catch (err) {
+    log.error('Error during startup. Exiting.', err);
+    process.exit(1);
+  }
+};

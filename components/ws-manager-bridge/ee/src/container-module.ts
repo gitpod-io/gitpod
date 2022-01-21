@@ -9,5 +9,5 @@ import { WorkspaceManagerBridgeEE } from './bridge';
 import { WorkspaceManagerBridge } from '../../src/bridge';
 
 export const containerModuleEE = new ContainerModule((bind, unbind, isBound, rebind) => {
-    rebind(WorkspaceManagerBridge).to(WorkspaceManagerBridgeEE).inRequestScope();
+  rebind(WorkspaceManagerBridge).to(WorkspaceManagerBridgeEE).inRequestScope();
 });
