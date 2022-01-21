@@ -1,6 +1,7 @@
 # Change Log
 
 ## January 2022
+- Revert "Bump libseccomp" ([#7714](https://github.com/gitpod-io/gitpod/pull/7714)) - [@csweichel](https://github.com/csweichel)
 - [installer] Telemetry should not run in workspace clusters ([#7687](https://github.com/gitpod-io/gitpod/pull/7687)) - [@aledbf](https://github.com/aledbf)
 - [installer] Switch default log level to info ([#7660](https://github.com/gitpod-io/gitpod/pull/7660)) - [@aledbf](https://github.com/aledbf)
 - [installer] Fix registry-facade ClusterRoleBinding name ([#7670](https://github.com/gitpod-io/gitpod/pull/7670)) - [@aledbf](https://github.com/aledbf)
