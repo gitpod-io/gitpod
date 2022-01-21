@@ -5,9 +5,9 @@
  */
 
 module.exports = {
-    root: true,
-    extends: ['react-app'],
-    rules: {
-        "import/no-anonymous-default-export": "off",
-    }
-}
+  root: true,
+  extends: ['react-app', 'plugin:prettier/recommended'],
+  rules: {
+    'import/no-anonymous-default-export': 'off',
+  },
+};
