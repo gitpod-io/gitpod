@@ -464,11 +464,7 @@
       "id": 46,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "lastNotNull",
-            "max"
-          ],
+          "calcs": ["mean", "lastNotNull", "max"],
           "displayMode": "table",
           "placement": "bottom"
         },
@@ -1361,9 +1357,7 @@
           "xaxis": {
             "mode": "time",
             "show": true,
-            "values": [
-              "avg"
-            ]
+            "values": ["avg"]
           },
           "yaxes": [
             {
@@ -2051,11 +2045,7 @@
           "id": 8,
           "options": {
             "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max"
-              ],
+              "calcs": ["mean", "lastNotNull", "max"],
               "displayMode": "table",
               "placement": "bottom"
             },
@@ -2645,9 +2635,7 @@
   "refresh": false,
   "schemaVersion": 34,
   "style": "dark",
-  "tags": [
-    "gitpod-mixin"
-  ],
+  "tags": ["gitpod-mixin"],
   "templating": {
     "list": [
       {
@@ -2684,12 +2672,8 @@
         "allValue": ".*",
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "datasource": {
           "uid": "$datasource"
@@ -2748,12 +2732,8 @@
         "allValue": ".*",
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "datasource": {
           "uid": "$datasource"
@@ -2799,12 +2779,8 @@
         "allValue": ".*",
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "datasource": {
           "uid": "$datasource"

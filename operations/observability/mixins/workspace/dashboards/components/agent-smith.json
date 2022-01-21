@@ -1869,9 +1869,7 @@
             "mode": "time",
             "name": null,
             "show": true,
-            "values": [
-              "avg"
-            ]
+            "values": ["avg"]
           },
           "yaxes": [
             {
@@ -2292,23 +2290,15 @@
   "refresh": "30s",
   "schemaVersion": 31,
   "style": "dark",
-  "tags": [
-    "gitpod-mixin"
-  ],
+  "tags": ["gitpod-mixin"],
   "templating": {
     "list": [
       {
         "allValue": null,
         "current": {
           "selected": true,
-          "text": [
-            "prod-ws-eu17",
-            "prod-ws-us17"
-          ],
-          "value": [
-            "prod-ws-eu17",
-            "prod-ws-us17"
-          ]
+          "text": ["prod-ws-eu17", "prod-ws-us17"],
+          "value": ["prod-ws-eu17", "prod-ws-us17"]
         },
         "datasource": "$datasource",
         "definition": "label_values(container_cpu_usage_seconds_total, cluster)",
@@ -2337,12 +2327,8 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "datasource": "$datasource",
         "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"agent-smith.*\"}, node)",
@@ -2371,12 +2357,8 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "datasource": "$datasource",
         "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"agent-smith.*\"}, pod)",

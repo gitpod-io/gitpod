@@ -2144,9 +2144,7 @@
             "mode": "time",
             "name": null,
             "show": true,
-            "values": [
-              "avg"
-            ]
+            "values": ["avg"]
           },
           "yaxes": [
             {
@@ -2586,9 +2584,7 @@
   "refresh": "30s",
   "schemaVersion": 30,
   "style": "dark",
-  "tags": [
-    "gitpod-mixin"
-  ],
+  "tags": ["gitpod-mixin"],
   "templating": {
     "list": [
       {

@@ -1395,9 +1395,7 @@
             "mode": "time",
             "name": null,
             "show": true,
-            "values": [
-              "avg"
-            ]
+            "values": ["avg"]
           },
           "yaxes": [
             {
@@ -1625,21 +1623,15 @@
   "refresh": "30s",
   "schemaVersion": 30,
   "style": "dark",
-  "tags": [
-    "gitpod-mixin"
-  ],
+  "tags": ["gitpod-mixin"],
   "templating": {
     "list": [
       {
         "allValue": null,
         "current": {
           "selected": false,
-          "text": [
-            "stag-meta-us01"
-          ],
-          "value": [
-            "stag-meta-us01"
-          ]
+          "text": ["stag-meta-us01"],
+          "value": ["stag-meta-us01"]
         },
         "datasource": "$datasource",
         "definition": "label_values(up{job=\"ws-manager-bridge\"}, cluster)",

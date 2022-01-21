@@ -212,10 +212,7 @@
   "refresh": "1m",
   "schemaVersion": 34,
   "style": "dark",
-  "tags": [
-    "workspace",
-    "success criteria"
-  ],
+  "tags": ["workspace", "success criteria"],
   "templating": {
     "list": [
       {

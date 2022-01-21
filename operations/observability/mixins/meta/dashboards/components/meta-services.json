@@ -299,9 +299,7 @@
   "refresh": "",
   "schemaVersion": 31,
   "style": "dark",
-  "tags": [
-    "gitpod-mixin"
-  ],
+  "tags": ["gitpod-mixin"],
   "templating": {
     "list": [
       {
@@ -329,12 +327,8 @@
         "allValue": ".*",
         "current": {
           "selected": false,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "datasource": "$datasource",
         "definition": "label_values(up{job=\"messagebus\"}, cluster)",
@@ -363,12 +357,8 @@
         "allValue": ".*",
         "current": {
           "selected": false,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "datasource": "$datasource",
         "definition": "label_values(kube_node_info{cluster=~\"$cluster\", node=~\".*-services-.*\"}, node)",

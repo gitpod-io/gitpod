@@ -4,36 +4,35 @@ Gitpod's mixin is based on the [Prometheus Monitoring Mixins project](https://gi
 
 ## Table of contents
 
-* [Folders and Teams](#Folders-and-Teams)
-* [How to develop Dashboards](#How-to-develop-Dashboards)
-    * [Grafonnet](#Grafonnet)
-    * [Exporting JSONs from Grafana UI](#Exporting-JSONs-from-Grafana-UI)
-* [How to develop Prometheus Alerts and Rules](#How-to-develop-Prometheus-Alerts-and-Rules)
-    * [Recording Rules](#Recording-Rules)
-    * [Alerts](#Alerts)
-    * [Rules and Alerts validation](#Rules-and-Alerts-validation)
-* [Deploying merged changes to production](#Deploying-merged-changes-to-production)
-* [Frequently asked Questions](#FAQ)
-    * [Any recommendations when developing new dashboards?](#Any-recommendations-when-developing-new-dashboards)
-    * [How is our mixin consumed?](#How-is-our-mixin-consumed)
-    * [How do I review dashboards before merging PRs?](#How-do-I-review-dashboards-before-merging-PRs)
-    * [Do I configure alerting routes in the mixin?](#Do-I-configure-alerting-routes-in-the-mixin)
-
+- [Folders and Teams](#Folders-and-Teams)
+- [How to develop Dashboards](#How-to-develop-Dashboards)
+  - [Grafonnet](#Grafonnet)
+  - [Exporting JSONs from Grafana UI](#Exporting-JSONs-from-Grafana-UI)
+- [How to develop Prometheus Alerts and Rules](#How-to-develop-Prometheus-Alerts-and-Rules)
+  - [Recording Rules](#Recording-Rules)
+  - [Alerts](#Alerts)
+  - [Rules and Alerts validation](#Rules-and-Alerts-validation)
+- [Deploying merged changes to production](#Deploying-merged-changes-to-production)
+- [Frequently asked Questions](#FAQ)
+  - [Any recommendations when developing new dashboards?](#Any-recommendations-when-developing-new-dashboards)
+  - [How is our mixin consumed?](#How-is-our-mixin-consumed)
+  - [How do I review dashboards before merging PRs?](#How-do-I-review-dashboards-before-merging-PRs)
+  - [Do I configure alerting routes in the mixin?](#Do-I-configure-alerting-routes-in-the-mixin)
 
 ## Folders and Teams
 
 Folders are organized following Gitpod as an organization, while also adding an extra folder for dashboards and alerts that involves multiple teams (Good place for broad overviews and SLOs):
-* Meta
-* Workspace
-* IDE
-* Cross-Teams (For dashboards and alerts that are co-owned by more than one team)
+
+- Meta
+- Workspace
+- IDE
+- Cross-Teams (For dashboards and alerts that are co-owned by more than one team)
 
 We've organized our mixins to make it easier to each team to own their dashboards and alerts. Every team has its own folder with a `mixin.libsonnet` file, which imports all dashboards and alerts from the subfolders.
 
 It doesn't matter how the imports inside the subfolders work, it is only important that all dashboards end up in a `grafanaDashboards` object, all alerts in the `prometheusAlerts` object and all recording rules in the `prometheusRules` object. [Read more about jsonnet objects](https://jsonnet.org/ref/language.html).
 
 From past experiences, the platform team suggests that dashboards and alerts get split by component inside the subfolders because, so far, we haven't implemented metrics that involves more than a single component operation.
-
 
 ## How to develop Dashboards
 
@@ -127,14 +126,15 @@ https://www.loom.com/share/23356f272a894801acc4f16bb3fd635a
 
 [Recording rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) is a feature of Prometheus that pre-computes the value of a PromQL expression and saves it into a brand-new metric. This brand new metric can then be used in Alerts and Dashboards. Recording rules are often used to:
 
-* Pre-calculate expensive queries that often freezes Grafana Dashboards
-* Simplify alerts that may require super complicated queries. Instead of adding a new alert with a super complicated query, create a new metric with its value and alert on this new metric.
+- Pre-calculate expensive queries that often freezes Grafana Dashboards
+- Simplify alerts that may require super complicated queries. Instead of adding a new alert with a super complicated query, create a new metric with its value and alert on this new metric.
 
 It doesn't matter how they are imported from each teams' `mixin.libsonnet` file, the only requirement is that they endup in an object called `prometheusRules`.
 
 Some examples!
 
 Importing json files:
+
 ```jsonnet
 // content of my-team/rules/components/my-component/rules.json
 {
@@ -164,6 +164,7 @@ Importing json files:
 ```
 
 Directly importing inside the `prometheusRules` object:
+
 ```jsonnet
 // content of my-team/rules/components.libsonnet
 {
@@ -200,6 +201,7 @@ It doesn't matter how they are imported from each teams' `mixin.libsonnet` file,
 Some examples!
 
 Importing json files:
+
 ```jsonnet
 // content of my-team/rules/components/my-component/alerts.json
 {
@@ -232,6 +234,7 @@ Importing json files:
 ```
 
 Directly importing inside the `prometheusAlerts` object:
+
 ```jsonnet
 // content of my-team/rules/components.libsonnet
 {
@@ -259,7 +262,6 @@ Directly importing inside the `prometheusAlerts` object:
 ```
 
 For further explanation of Prometheus Alerts, please head to the [official documentation](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/).
-
 
 ### Rules and Alerts validation
 
@@ -298,6 +300,7 @@ This `jsonnetfile.json` lists all dependencies that we use, which includes this 
 There are a couple of ways to trigger a werft job that will deploy a preview environment with Prometheus+Grafana with your changes:
 
 1. You can open a Pull Request with the following line in the description:
+
 ```
 # we deploy using K8s manifests generated by our new installer
 # observability only works with our old helm chart
@@ -311,12 +314,14 @@ There are a couple of ways to trigger a werft job that will deploy a preview env
 ```
 
 2. After opening a Pull Request, you can add a Github comment:
+
 ```
 /werft run with-observability with-helm
 /werft run withObservabilityBranch="<my-branch>" with-observability
 ```
 
 3. Inside your workspace, run:
+
 ```
 werft run github -a with-observability=true -a withObservabilityBranch="<my-branch>" -a with-helm=true
 ```
