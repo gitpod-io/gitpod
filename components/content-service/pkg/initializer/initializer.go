@@ -431,6 +431,47 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	return
 }
 
+// Some workspace content may have a `/dst/.gitpod` file or directory. That would break
+// the workspace ready file placement (see https://github.com/gitpod-io/gitpod/issues/7694).
+// This function ensures that workspaces do not have a `.gitpod` file or directory present.
+func EnsureCleanDotGitpodDirectory(ctx context.Context, wspath string) error {
+	var mv func(src, dst string) error
+	if git.IsWorkingCopy(wspath) {
+		c := &git.Client{
+			Location: wspath,
+		}
+		mv = func(src, dst string) error {
+			return c.Git(ctx, "mv", src, dst)
+		}
+	} else {
+		mv = os.Rename
+	}
+
+	dotGitpod := filepath.Join(wspath, ".gitpod")
+	stat, err := os.Stat(dotGitpod)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if stat.IsDir() {
+		// we need this to be a directory, we're probably ok
+		return nil
+	}
+
+	candidateFN := filepath.Join(wspath, ".gitpod.yaml")
+	if _, err := os.Stat(candidateFN); err == nil {
+		// Our candidate file already exists, hence we cannot just move things.
+		// As fallback we'll delete the .gitpod entry.
+		return os.RemoveAll(dotGitpod)
+	}
+
+	err = mv(dotGitpod, candidateFN)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // PlaceWorkspaceReadyFile writes a file in the workspace which indicates that the workspace has been initialized
 func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.WorkspaceInitSource, uid, gid int) (err error) {
 	//nolint:ineffassign,staticcheck
