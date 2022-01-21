@@ -1057,6 +1057,9 @@ function getNodeAffinities(): string[] {
         "values.nodeAffinities_1.yaml",
         "values.nodeAffinities_2.yaml",
         "values.nodeAffinities_0.yaml",
+        "values.nodeAffinities_3.yaml",
+        "values.nodeAffinities_4.yaml",
+        "values.nodeAffinities_5.yaml",
     ]
 }
 
