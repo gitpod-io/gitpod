@@ -4,12 +4,7 @@
   "title": "kedge config schema - generated using kedge config-schema",
   "definitions": {
     "": {
-      "required": [
-        "period",
-        "collectors",
-        "failureTTLService",
-        "failureTTLCollector"
-      ],
+      "required": ["period", "collectors", "failureTTLService", "failureTTLCollector"],
       "properties": {
         "collectors": {
           "$ref": "#/definitions/"
@@ -28,13 +23,7 @@
       "type": "object"
     },
     "config": {
-      "required": [
-        "token",
-        "namespace",
-        "kubeconfig",
-        "services",
-        "collection"
-      ],
+      "required": ["token", "namespace", "kubeconfig", "services", "collection"],
       "properties": {
         "collection": {
           "$schema": "http://json-schema.org/draft-04/schema#",

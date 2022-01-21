@@ -4,10 +4,7 @@
   "title": "agent-smith config schema - generated using agent-smith config-schema",
   "definitions": {
     "": {
-      "required": [
-        "hostURL",
-        "apiToken"
-      ],
+      "required": ["hostURL", "apiToken"],
       "properties": {
         "hostURL": {
           "type": "string"
@@ -20,10 +17,7 @@
       "type": "object"
     },
     "config": {
-      "required": [
-        "gitpodAPI",
-        "namespace"
-      ],
+      "required": ["gitpodAPI", "namespace"],
       "properties": {
         "gitpodAPI": {
           "$schema": "http://json-schema.org/draft-04/schema#",

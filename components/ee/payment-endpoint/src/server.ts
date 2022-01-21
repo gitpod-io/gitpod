@@ -18,48 +18,50 @@ import { AddressInfo } from 'net';
 
 @injectable()
 export class Server {
-    @inject(EndpointController) protected readonly chargebeeController: EndpointController;
-    @inject(GithubEndpointController) protected readonly githubController: GithubEndpointController;
-    @inject(GithubSubscriptionReconciler) protected readonly githubSubscriptionReconciler: GithubSubscriptionReconciler;
-    @inject(Config) protected readonly config: Config;
+  @inject(EndpointController) protected readonly chargebeeController: EndpointController;
+  @inject(GithubEndpointController) protected readonly githubController: GithubEndpointController;
+  @inject(GithubSubscriptionReconciler) protected readonly githubSubscriptionReconciler: GithubSubscriptionReconciler;
+  @inject(Config) protected readonly config: Config;
 
-    protected app?: App;
-    protected httpServer?: http.Server;
+  protected app?: App;
+  protected httpServer?: http.Server;
 
-    async init(app: App): Promise<void> {
-        app.use(this.chargebeeController.apiRouter);
+  async init(app: App): Promise<void> {
+    app.use(this.chargebeeController.apiRouter);
 
-        if (this.config.githubAppEnabled) {
-            this.githubController.register("/github", app);
-            this.githubSubscriptionReconciler.start();
-            log.info("GitHub integration is ENABLED");
-        } else {
-            log.info("GitHub integration is disabled");
-        }
-
-        this.app = app;
+    if (this.config.githubAppEnabled) {
+      this.githubController.register('/github', app);
+      this.githubSubscriptionReconciler.start();
+      log.info('GitHub integration is ENABLED');
+    } else {
+      log.info('GitHub integration is disabled');
     }
 
-    async start(port: number): Promise<void> {
-        if (!this.app) {
-            throw new Error('Server not initialized!');
-        }
+    this.app = app;
+  }
 
-        const app = this.app;
-        await new Promise<void>((resolve, reject) => {
-            const httpServer = app.listen(port, () => {
-                log.info(`Server listening on port: ${(<AddressInfo> httpServer.address()).port}`);
-                resolve();
-            }).on('error', reject);
-            this.httpServer = httpServer;
-        });
+  async start(port: number): Promise<void> {
+    if (!this.app) {
+      throw new Error('Server not initialized!');
     }
 
-    async stop(): Promise<void> {
-        const httpServer = this.httpServer;
-        if (httpServer) {
-            this.httpServer = undefined;
-            await new Promise ((resolve) => httpServer.close(resolve));
-        }
+    const app = this.app;
+    await new Promise<void>((resolve, reject) => {
+      const httpServer = app
+        .listen(port, () => {
+          log.info(`Server listening on port: ${(<AddressInfo>httpServer.address()).port}`);
+          resolve();
+        })
+        .on('error', reject);
+      this.httpServer = httpServer;
+    });
+  }
+
+  async stop(): Promise<void> {
+    const httpServer = this.httpServer;
+    if (httpServer) {
+      this.httpServer = undefined;
+      await new Promise((resolve) => httpServer.close(resolve));
     }
+  }
 }

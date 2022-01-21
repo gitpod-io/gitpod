@@ -1,6 +1,691 @@
 {
-    "services": [{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "dashboard","kind": "service","stage": "devstaging"},"name": "dashboard","namespace": "test-namespace","resourceVersion": "12783510","selfLink": "/api/v1/namespaces/test-namespace/services/dashboard","uid": "f250b343-d9e9-42a5-8efd-ed8210dbefc0"},"spec": {"clusterIP": "10.0.8.207","ports": [{"name": "http","port": 3001,"protocol": "TCP","targetPort": 80}],"selector": {"app": "gitpod","component": "dashboard","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "db","kind": "service","stage": "devstaging"},"name": "db","namespace": "test-namespace","resourceVersion": "12783523","selfLink": "/api/v1/namespaces/test-namespace/services/db","uid": "c799cb51-a0bb-4d8e-a2d2-64604f52cb0c"},"spec": {"clusterIP": "10.0.0.131","ports": [{"port": 3306,"protocol": "TCP","targetPort": 3306}],"selector": {"app": "gitpod","component": "db","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "image-builder","kind": "service","stage": "devstaging"},"name": "image-builder","namespace": "test-namespace","resourceVersion": "12783507","selfLink": "/api/v1/namespaces/test-namespace/services/image-builder","uid": "3a5d8dbb-2335-4e38-a820-2e8b54cfe400"},"spec": {"clusterIP": "10.0.8.249","ports": [{"name": "rpc","port": 8080,"protocol": "TCP","targetPort": 8080}],"selector": {"app": "gitpod","component": "image-builder","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:08:20Z","labels": {"app": "jaeger","chart": "gitpod-jaeger-0.1.5","heritage": "Helm","release": "jaeger"},"name": "jaeger","namespace": "test-namespace","resourceVersion": "12784239","selfLink": "/api/v1/namespaces/test-namespace/services/jaeger","uid": "20a90721-7c6c-4bee-9ca1-120717c72d0b"},"spec": {"clusterIP": "10.0.4.38","ports": [{"name": "jaeger-query","port": 80,"protocol": "TCP","targetPort": 16686}],"selector": {"app": "jaeger","chart": "gitpod-jaeger-0.1.5","heritage": "Helm","release": "jaeger"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:08:20Z","labels": {"app": "jaeger","chart": "gitpod-jaeger-0.1.5","heritage": "Helm","release": "jaeger"},"name": "jaeger-collector","namespace": "test-namespace","resourceVersion": "12784236","selfLink": "/api/v1/namespaces/test-namespace/services/jaeger-collector","uid": "8fbc2964-8d88-4c53-96a8-5f8e7bbe6175"},"spec": {"clusterIP": "10.0.10.100","ports": [{"name": "jaeger-collector-http","port": 14268,"protocol": "TCP","targetPort": 14268},{"name": "jaeger-collector-grpc","port": 14250,"protocol": "TCP","targetPort": 14250}],"selector": {"app": "jaeger","chart": "gitpod-jaeger-0.1.5","heritage": "Helm","release": "jaeger"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "kedge","kind": "service","stage": "devstaging"},"name": "kedge","namespace": "test-namespace","resourceVersion": "12783527","selfLink": "/api/v1/namespaces/test-namespace/services/kedge","uid": "9a103352-152a-4963-bd07-92b4a65a9fbb"},"spec": {"clusterIP": "10.0.11.131","ports": [{"name": "http","port": 8080,"protocol": "TCP","targetPort": 8080}],"selector": {"app": "gitpod","component": "kedge","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "messagebus","kind": "service","stage": "devstaging"},"name": "messagebus","namespace": "test-namespace","resourceVersion": "12783500","selfLink": "/api/v1/namespaces/test-namespace/services/messagebus","uid": "8ba40bf8-de40-4297-9179-874c8f25d050"},"spec": {"clusterIP": "10.0.14.164","ports": [{"name": "amqp","port": 5672,"protocol": "TCP","targetPort": 5672},{"name": "dist","port": 25672,"protocol": "TCP","targetPort": 25672},{"name": "epmd","port": 4369,"protocol": "TCP","targetPort": 4369},{"name": "ui","port": 15672,"protocol": "TCP","targetPort": 15672}],"selector": {"app": "gitpod","component": "messagebus","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"annotations": {"gitpod/kedge": "true"},"creationTimestamp": "2020-02-18T09:07:46Z","labels": {"app": "gitpod","component": "messagebus","kedge": "replicated","kind": "service","stage": "devstaging"},"name": "messagebus-dev","namespace": "test-namespace","resourceVersion": "12783908","selfLink": "/api/v1/namespaces/test-namespace/services/messagebus-dev","uid": "18b26688-dab7-420d-96ba-bce7da7625e6"},"spec": {"clusterIP": "10.0.10.198","ports": [{"name": "amqp","port": 5672,"protocol": "TCP","targetPort": 5672},{"name": "dist","port": 25672,"protocol": "TCP","targetPort": 25672},{"name": "epmd","port": 4369,"protocol": "TCP","targetPort": 4369},{"name": "ui","port": 15672,"protocol": "TCP","targetPort": 15672}],"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "payment-endpoint","kind": "service","stage": "devstaging"},"name": "payment-endpoint","namespace": "test-namespace","resourceVersion": "12783518","selfLink": "/api/v1/namespaces/test-namespace/services/payment-endpoint","uid": "4803fd9e-b266-4d71-ba5a-5227afc47805"},"spec": {"clusterIP": "10.0.2.151","ports": [{"name": "http","port": 3002,"protocol": "TCP","targetPort": 3002}],"selector": {"app": "gitpod","component": "payment-endpoint","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "proxy","kind": "service","stage": "devstaging"},"name": "proxy","namespace": "test-namespace","resourceVersion": "12783530","selfLink": "/api/v1/namespaces/test-namespace/services/proxy","uid": "94a78c40-fe54-47b8-a644-68cf1654de90"},"spec": {"clusterIP": "10.0.11.128","ports": [{"name": "http","port": 80,"protocol": "TCP","targetPort": 80},{"name": "https","port": 443,"protocol": "TCP","targetPort": 443}],"selector": {"app": "gitpod","component": "proxy","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:36Z","labels": {"app": "gitpod","component": "server","kind": "service","stage": "devstaging"},"name": "server","namespace": "test-namespace","resourceVersion": "12783498","selfLink": "/api/v1/namespaces/test-namespace/services/server","uid": "1e79f77e-eade-4c35-9894-6dfb76667453"},"spec": {"clusterIP": "10.0.3.191","ports": [{"name": "http","port": 3000,"protocol": "TCP","targetPort": 3000},{"name": "metrics","port": 9500,"protocol": "TCP","targetPort": 9500}],"selector": {"app": "gitpod","component": "server","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "ws-manager","kind": "service","stage": "devstaging"},"name": "ws-manager","namespace": "test-namespace","resourceVersion": "12783515","selfLink": "/api/v1/namespaces/test-namespace/services/ws-manager","uid": "80573de3-a0e7-4410-b4b7-b9c2b32ecd2b"},"spec": {"clusterIP": "10.0.2.183","ports": [{"name": "rpc","port": 8080,"protocol": "TCP","targetPort": 8080}],"selector": {"app": "gitpod","component": "ws-manager","kind": "pod","stage": "devstaging"},"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}},{"apiVersion": "v1","kind": "Service","metadata": {"annotations": {"gitpod/kedge": "true"},"creationTimestamp": "2020-02-18T09:07:46Z","labels": {"app": "gitpod","component": "ws-manager","kedge": "replicated","kind": "service","stage": "devstaging"},"name": "ws-manager-dev","namespace": "test-namespace","resourceVersion": "12783913","selfLink": "/api/v1/namespaces/test-namespace/services/ws-manager-dev","uid": "71b316fd-6200-4296-b101-770ebc4e96f6"},"spec": {"clusterIP": "10.0.0.31","ports": [{"name": "rpc","port": 8080,"protocol": "TCP","targetPort": 8080}],"sessionAffinity": "None","type": "ClusterIP"},"status": {"loadBalancer": {}}}],
-    "endpoints": [{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:07:45Z"},"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "dashboard","kind": "service","stage": "devstaging"},"name": "dashboard","namespace": "test-namespace","resourceVersion": "12783880","selfLink": "/api/v1/namespaces/test-namespace/endpoints/dashboard","uid": "f96ec22a-3b1f-423a-a18c-9775212fd924"},"subsets": [{"addresses": [{"ip": "10.8.9.170","nodeName": "gke-gitpod-dev-worker-pool-1-3df476cf-189b","targetRef": {"kind": "Pod","name": "dashboard-6cc5c5fd95-ql6dr","namespace": "test-namespace","resourceVersion": "12783877","uid": "003abb06-6aa2-42c9-9d21-33eccb678b22"}}],"ports": [{"name": "http","port": 80,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:07:54Z"},"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "db","kind": "service","stage": "devstaging"},"name": "db","namespace": "test-namespace","resourceVersion": "12784002","selfLink": "/api/v1/namespaces/test-namespace/endpoints/db","uid": "0aace14a-30a5-4339-a42d-cca0f64139d2"},"subsets": [{"addresses": [{"ip": "10.8.2.241","nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-nmx1","targetRef": {"kind": "Pod","name": "db-6fc8494b6d-t7h66","namespace": "test-namespace","resourceVersion": "12784001","uid": "7e2e495a-aa76-4029-9cb2-8eab8126e289"}}],"ports": [{"port": 3306,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:07:50Z"},"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "image-builder","kind": "service","stage": "devstaging"},"name": "image-builder","namespace": "test-namespace","resourceVersion": "12783980","selfLink": "/api/v1/namespaces/test-namespace/endpoints/image-builder","uid": "af9212a6-46d8-4987-be2d-a32d10991820"},"subsets": [{"addresses": [{"ip": "10.8.9.172","nodeName": "gke-gitpod-dev-worker-pool-1-3df476cf-189b","targetRef": {"kind": "Pod","name": "image-builder-6b646c6756-xvm99","namespace": "test-namespace","resourceVersion": "12783978","uid": "91e68f96-28f3-4d5c-940b-7ffc9bf53b64"}}],"ports": [{"name": "rpc","port": 8080,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:08:20Z"},"creationTimestamp": "2020-02-18T09:08:20Z","labels": {"app": "jaeger","chart": "gitpod-jaeger-0.1.5","heritage": "Helm","release": "jaeger"},"name": "jaeger","namespace": "test-namespace","resourceVersion": "12784240","selfLink": "/api/v1/namespaces/test-namespace/endpoints/jaeger","uid": "5ec33482-817c-402a-9a0d-1936aa91af74"}},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:08:20Z"},"creationTimestamp": "2020-02-18T09:08:20Z","labels": {"app": "jaeger","chart": "gitpod-jaeger-0.1.5","heritage": "Helm","release": "jaeger"},"name": "jaeger-collector","namespace": "test-namespace","resourceVersion": "12784238","selfLink": "/api/v1/namespaces/test-namespace/endpoints/jaeger-collector","uid": "a5a4d84d-9573-48ee-82a3-066af07c8278"}},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:07:46Z"},"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "kedge","kind": "service","stage": "devstaging"},"name": "kedge","namespace": "test-namespace","resourceVersion": "12783906","selfLink": "/api/v1/namespaces/test-namespace/endpoints/kedge","uid": "d26c9439-4529-4bd3-ab69-0c94a26a3cd2"},"subsets": [{"addresses": [{"ip": "10.8.4.157","nodeName": "gke-gitpod-dev-worker-pool-1-3df476cf-g9jp","targetRef": {"kind": "Pod","name": "kedge-8598478c48-rfjhh","namespace": "test-namespace","resourceVersion": "12783903","uid": "d3507c51-4df5-4e22-b93f-11f00f79865c"}}],"ports": [{"name": "http","port": 8080,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "messagebus","kind": "service","stage": "devstaging"},"name": "messagebus","namespace": "test-namespace","resourceVersion": "13224100","selfLink": "/api/v1/namespaces/test-namespace/endpoints/messagebus","uid": "73d57d14-7c35-4282-8de9-f07ac9c0e065"},"subsets": [{"addresses": [{"ip": "10.8.4.154","nodeName": "gke-gitpod-dev-worker-pool-1-3df476cf-g9jp","targetRef": {"kind": "Pod","name": "messagebus-778586b4b8-v9zb6","namespace": "test-namespace","resourceVersion": "12784088","uid": "e63b417c-1756-4b24-ba00-a9d1238ce84d"}}],"ports": [{"name": "dist","port": 25672,"protocol": "TCP"},{"name": "epmd","port": 4369,"protocol": "TCP"},{"name": "ui","port": 15672,"protocol": "TCP"},{"name": "amqp","port": 5672,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"gitpod/kedge": "true"},"creationTimestamp": "2020-02-18T09:08:16Z","labels": {"app": "gitpod","component": "messagebus","kedge": "replicated","kind": "service","stage": "devstaging"},"name": "messagebus-dev","namespace": "test-namespace","resourceVersion": "12784182","selfLink": "/api/v1/namespaces/test-namespace/endpoints/messagebus-dev","uid": "abc49394-91d6-4892-b397-13aa583f6600"},"subsets": [{"addresses": [{"ip": "10.8.4.154"}],"ports": [{"name": "dist","port": 25672,"protocol": "TCP"},{"name": "epmd","port": 4369,"protocol": "TCP"},{"name": "ui","port": 15672,"protocol": "TCP"},{"name": "amqp","port": 5672,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:08:12Z"},"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "payment-endpoint","kind": "service","stage": "devstaging"},"name": "payment-endpoint","namespace": "test-namespace","resourceVersion": "12784147","selfLink": "/api/v1/namespaces/test-namespace/endpoints/payment-endpoint","uid": "dd83da71-3669-4625-b599-e203a12bec47"},"subsets": [{"addresses": [{"ip": "10.8.10.242","nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j","targetRef": {"kind": "Pod","name": "payment-endpoint-5b9d7485f6-fm5kl","namespace": "test-namespace","resourceVersion": "12784146","uid": "d119c1df-bc6e-48f4-a446-b850229702d6"}}],"ports": [{"name": "http","port": 3002,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "proxy","kind": "service","stage": "devstaging"},"name": "proxy","namespace": "test-namespace","resourceVersion": "13224097","selfLink": "/api/v1/namespaces/test-namespace/endpoints/proxy","uid": "38d592de-f448-4bfe-94c5-e8a9450011c0"},"subsets": [{"addresses": [{"ip": "10.8.10.243","nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j","targetRef": {"kind": "Pod","name": "proxy-7b9cdb684d-stckc","namespace": "test-namespace","resourceVersion": "12783974","uid": "b61a6d63-3e68-4097-9e74-617763c7fba0"}}],"ports": [{"name": "http","port": 80,"protocol": "TCP"},{"name": "https","port": 443,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T20:35:36Z"},"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "server","kind": "service","stage": "devstaging"},"name": "server","namespace": "test-namespace","resourceVersion": "13096286","selfLink": "/api/v1/namespaces/test-namespace/endpoints/server","uid": "3973fcd9-fab6-4ed7-a59b-e1acc4f97fb1"},"subsets": [{"addresses": [{"ip": "10.8.10.51","nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j","targetRef": {"kind": "Pod","name": "server-7cd9c7c485-gdjn4","namespace": "test-namespace","resourceVersion": "13096284","uid": "85a14a31-085b-476f-bf41-800882be81e9"}}],"ports": [{"name": "metrics","port": 9500,"protocol": "TCP"},{"name": "http","port": 3000,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T20:35:26Z"},"creationTimestamp": "2020-02-18T09:07:37Z","labels": {"app": "gitpod","component": "ws-manager","kind": "service","stage": "devstaging"},"name": "ws-manager","namespace": "test-namespace","resourceVersion": "13096227","selfLink": "/api/v1/namespaces/test-namespace/endpoints/ws-manager","uid": "5f9dbc4b-7979-423a-8cc5-8672e968c12c"},"subsets": [{"addresses": [{"ip": "10.8.10.50","nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j","targetRef": {"kind": "Pod","name": "ws-manager-898656978-k5zv5","namespace": "test-namespace","resourceVersion": "13096225","uid": "a10a33ba-a489-42fb-9d53-c8c09fbb5613"}}],"ports": [{"name": "rpc","port": 8080,"protocol": "TCP"}]}]},{"apiVersion": "v1","kind": "Endpoints","metadata": {"annotations": {"gitpod/kedge": "true"},"creationTimestamp": "2020-02-18T20:35:50Z","labels": {"app": "gitpod","component": "ws-manager","kedge": "replicated","kind": "service","stage": "devstaging"},"name": "ws-manager-dev","namespace": "test-namespace","resourceVersion": "13096367","selfLink": "/api/v1/namespaces/test-namespace/endpoints/ws-manager-dev","uid": "208ad508-e472-4918-badd-18990080ef8f"},"subsets": [{"addresses": [{"ip": "10.8.10.50"}],"ports": [{"name": "rpc","port": 8080,"protocol": "TCP"}]}]}],
-    "serviceNames": ["ws-manager"],
-    "namespace": "test-namespace"
+  "services": [
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "dashboard", "kind": "service", "stage": "devstaging" },
+        "name": "dashboard",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783510",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/dashboard",
+        "uid": "f250b343-d9e9-42a5-8efd-ed8210dbefc0"
+      },
+      "spec": {
+        "clusterIP": "10.0.8.207",
+        "ports": [{ "name": "http", "port": 3001, "protocol": "TCP", "targetPort": 80 }],
+        "selector": { "app": "gitpod", "component": "dashboard", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "db", "kind": "service", "stage": "devstaging" },
+        "name": "db",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783523",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/db",
+        "uid": "c799cb51-a0bb-4d8e-a2d2-64604f52cb0c"
+      },
+      "spec": {
+        "clusterIP": "10.0.0.131",
+        "ports": [{ "port": 3306, "protocol": "TCP", "targetPort": 3306 }],
+        "selector": { "app": "gitpod", "component": "db", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "image-builder", "kind": "service", "stage": "devstaging" },
+        "name": "image-builder",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783507",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/image-builder",
+        "uid": "3a5d8dbb-2335-4e38-a820-2e8b54cfe400"
+      },
+      "spec": {
+        "clusterIP": "10.0.8.249",
+        "ports": [{ "name": "rpc", "port": 8080, "protocol": "TCP", "targetPort": 8080 }],
+        "selector": { "app": "gitpod", "component": "image-builder", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:08:20Z",
+        "labels": { "app": "jaeger", "chart": "gitpod-jaeger-0.1.5", "heritage": "Helm", "release": "jaeger" },
+        "name": "jaeger",
+        "namespace": "test-namespace",
+        "resourceVersion": "12784239",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/jaeger",
+        "uid": "20a90721-7c6c-4bee-9ca1-120717c72d0b"
+      },
+      "spec": {
+        "clusterIP": "10.0.4.38",
+        "ports": [{ "name": "jaeger-query", "port": 80, "protocol": "TCP", "targetPort": 16686 }],
+        "selector": { "app": "jaeger", "chart": "gitpod-jaeger-0.1.5", "heritage": "Helm", "release": "jaeger" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:08:20Z",
+        "labels": { "app": "jaeger", "chart": "gitpod-jaeger-0.1.5", "heritage": "Helm", "release": "jaeger" },
+        "name": "jaeger-collector",
+        "namespace": "test-namespace",
+        "resourceVersion": "12784236",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/jaeger-collector",
+        "uid": "8fbc2964-8d88-4c53-96a8-5f8e7bbe6175"
+      },
+      "spec": {
+        "clusterIP": "10.0.10.100",
+        "ports": [
+          { "name": "jaeger-collector-http", "port": 14268, "protocol": "TCP", "targetPort": 14268 },
+          { "name": "jaeger-collector-grpc", "port": 14250, "protocol": "TCP", "targetPort": 14250 }
+        ],
+        "selector": { "app": "jaeger", "chart": "gitpod-jaeger-0.1.5", "heritage": "Helm", "release": "jaeger" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "kedge", "kind": "service", "stage": "devstaging" },
+        "name": "kedge",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783527",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/kedge",
+        "uid": "9a103352-152a-4963-bd07-92b4a65a9fbb"
+      },
+      "spec": {
+        "clusterIP": "10.0.11.131",
+        "ports": [{ "name": "http", "port": 8080, "protocol": "TCP", "targetPort": 8080 }],
+        "selector": { "app": "gitpod", "component": "kedge", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "messagebus", "kind": "service", "stage": "devstaging" },
+        "name": "messagebus",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783500",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/messagebus",
+        "uid": "8ba40bf8-de40-4297-9179-874c8f25d050"
+      },
+      "spec": {
+        "clusterIP": "10.0.14.164",
+        "ports": [
+          { "name": "amqp", "port": 5672, "protocol": "TCP", "targetPort": 5672 },
+          { "name": "dist", "port": 25672, "protocol": "TCP", "targetPort": 25672 },
+          { "name": "epmd", "port": 4369, "protocol": "TCP", "targetPort": 4369 },
+          { "name": "ui", "port": 15672, "protocol": "TCP", "targetPort": 15672 }
+        ],
+        "selector": { "app": "gitpod", "component": "messagebus", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "annotations": { "gitpod/kedge": "true" },
+        "creationTimestamp": "2020-02-18T09:07:46Z",
+        "labels": {
+          "app": "gitpod",
+          "component": "messagebus",
+          "kedge": "replicated",
+          "kind": "service",
+          "stage": "devstaging"
+        },
+        "name": "messagebus-dev",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783908",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/messagebus-dev",
+        "uid": "18b26688-dab7-420d-96ba-bce7da7625e6"
+      },
+      "spec": {
+        "clusterIP": "10.0.10.198",
+        "ports": [
+          { "name": "amqp", "port": 5672, "protocol": "TCP", "targetPort": 5672 },
+          { "name": "dist", "port": 25672, "protocol": "TCP", "targetPort": 25672 },
+          { "name": "epmd", "port": 4369, "protocol": "TCP", "targetPort": 4369 },
+          { "name": "ui", "port": 15672, "protocol": "TCP", "targetPort": 15672 }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "payment-endpoint", "kind": "service", "stage": "devstaging" },
+        "name": "payment-endpoint",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783518",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/payment-endpoint",
+        "uid": "4803fd9e-b266-4d71-ba5a-5227afc47805"
+      },
+      "spec": {
+        "clusterIP": "10.0.2.151",
+        "ports": [{ "name": "http", "port": 3002, "protocol": "TCP", "targetPort": 3002 }],
+        "selector": { "app": "gitpod", "component": "payment-endpoint", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "proxy", "kind": "service", "stage": "devstaging" },
+        "name": "proxy",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783530",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/proxy",
+        "uid": "94a78c40-fe54-47b8-a644-68cf1654de90"
+      },
+      "spec": {
+        "clusterIP": "10.0.11.128",
+        "ports": [
+          { "name": "http", "port": 80, "protocol": "TCP", "targetPort": 80 },
+          { "name": "https", "port": 443, "protocol": "TCP", "targetPort": 443 }
+        ],
+        "selector": { "app": "gitpod", "component": "proxy", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:36Z",
+        "labels": { "app": "gitpod", "component": "server", "kind": "service", "stage": "devstaging" },
+        "name": "server",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783498",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/server",
+        "uid": "1e79f77e-eade-4c35-9894-6dfb76667453"
+      },
+      "spec": {
+        "clusterIP": "10.0.3.191",
+        "ports": [
+          { "name": "http", "port": 3000, "protocol": "TCP", "targetPort": 3000 },
+          { "name": "metrics", "port": 9500, "protocol": "TCP", "targetPort": 9500 }
+        ],
+        "selector": { "app": "gitpod", "component": "server", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "ws-manager", "kind": "service", "stage": "devstaging" },
+        "name": "ws-manager",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783515",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/ws-manager",
+        "uid": "80573de3-a0e7-4410-b4b7-b9c2b32ecd2b"
+      },
+      "spec": {
+        "clusterIP": "10.0.2.183",
+        "ports": [{ "name": "rpc", "port": 8080, "protocol": "TCP", "targetPort": 8080 }],
+        "selector": { "app": "gitpod", "component": "ws-manager", "kind": "pod", "stage": "devstaging" },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "annotations": { "gitpod/kedge": "true" },
+        "creationTimestamp": "2020-02-18T09:07:46Z",
+        "labels": {
+          "app": "gitpod",
+          "component": "ws-manager",
+          "kedge": "replicated",
+          "kind": "service",
+          "stage": "devstaging"
+        },
+        "name": "ws-manager-dev",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783913",
+        "selfLink": "/api/v1/namespaces/test-namespace/services/ws-manager-dev",
+        "uid": "71b316fd-6200-4296-b101-770ebc4e96f6"
+      },
+      "spec": {
+        "clusterIP": "10.0.0.31",
+        "ports": [{ "name": "rpc", "port": 8080, "protocol": "TCP", "targetPort": 8080 }],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      },
+      "status": { "loadBalancer": {} }
+    }
+  ],
+  "endpoints": [
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:07:45Z" },
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "dashboard", "kind": "service", "stage": "devstaging" },
+        "name": "dashboard",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783880",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/dashboard",
+        "uid": "f96ec22a-3b1f-423a-a18c-9775212fd924"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.9.170",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-3df476cf-189b",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "dashboard-6cc5c5fd95-ql6dr",
+                "namespace": "test-namespace",
+                "resourceVersion": "12783877",
+                "uid": "003abb06-6aa2-42c9-9d21-33eccb678b22"
+              }
+            }
+          ],
+          "ports": [{ "name": "http", "port": 80, "protocol": "TCP" }]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:07:54Z" },
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "db", "kind": "service", "stage": "devstaging" },
+        "name": "db",
+        "namespace": "test-namespace",
+        "resourceVersion": "12784002",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/db",
+        "uid": "0aace14a-30a5-4339-a42d-cca0f64139d2"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.2.241",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-nmx1",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "db-6fc8494b6d-t7h66",
+                "namespace": "test-namespace",
+                "resourceVersion": "12784001",
+                "uid": "7e2e495a-aa76-4029-9cb2-8eab8126e289"
+              }
+            }
+          ],
+          "ports": [{ "port": 3306, "protocol": "TCP" }]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:07:50Z" },
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "image-builder", "kind": "service", "stage": "devstaging" },
+        "name": "image-builder",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783980",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/image-builder",
+        "uid": "af9212a6-46d8-4987-be2d-a32d10991820"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.9.172",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-3df476cf-189b",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "image-builder-6b646c6756-xvm99",
+                "namespace": "test-namespace",
+                "resourceVersion": "12783978",
+                "uid": "91e68f96-28f3-4d5c-940b-7ffc9bf53b64"
+              }
+            }
+          ],
+          "ports": [{ "name": "rpc", "port": 8080, "protocol": "TCP" }]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:08:20Z" },
+        "creationTimestamp": "2020-02-18T09:08:20Z",
+        "labels": { "app": "jaeger", "chart": "gitpod-jaeger-0.1.5", "heritage": "Helm", "release": "jaeger" },
+        "name": "jaeger",
+        "namespace": "test-namespace",
+        "resourceVersion": "12784240",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/jaeger",
+        "uid": "5ec33482-817c-402a-9a0d-1936aa91af74"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:08:20Z" },
+        "creationTimestamp": "2020-02-18T09:08:20Z",
+        "labels": { "app": "jaeger", "chart": "gitpod-jaeger-0.1.5", "heritage": "Helm", "release": "jaeger" },
+        "name": "jaeger-collector",
+        "namespace": "test-namespace",
+        "resourceVersion": "12784238",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/jaeger-collector",
+        "uid": "a5a4d84d-9573-48ee-82a3-066af07c8278"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:07:46Z" },
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "kedge", "kind": "service", "stage": "devstaging" },
+        "name": "kedge",
+        "namespace": "test-namespace",
+        "resourceVersion": "12783906",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/kedge",
+        "uid": "d26c9439-4529-4bd3-ab69-0c94a26a3cd2"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.4.157",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-3df476cf-g9jp",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "kedge-8598478c48-rfjhh",
+                "namespace": "test-namespace",
+                "resourceVersion": "12783903",
+                "uid": "d3507c51-4df5-4e22-b93f-11f00f79865c"
+              }
+            }
+          ],
+          "ports": [{ "name": "http", "port": 8080, "protocol": "TCP" }]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "messagebus", "kind": "service", "stage": "devstaging" },
+        "name": "messagebus",
+        "namespace": "test-namespace",
+        "resourceVersion": "13224100",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/messagebus",
+        "uid": "73d57d14-7c35-4282-8de9-f07ac9c0e065"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.4.154",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-3df476cf-g9jp",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "messagebus-778586b4b8-v9zb6",
+                "namespace": "test-namespace",
+                "resourceVersion": "12784088",
+                "uid": "e63b417c-1756-4b24-ba00-a9d1238ce84d"
+              }
+            }
+          ],
+          "ports": [
+            { "name": "dist", "port": 25672, "protocol": "TCP" },
+            { "name": "epmd", "port": 4369, "protocol": "TCP" },
+            { "name": "ui", "port": 15672, "protocol": "TCP" },
+            { "name": "amqp", "port": 5672, "protocol": "TCP" }
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "gitpod/kedge": "true" },
+        "creationTimestamp": "2020-02-18T09:08:16Z",
+        "labels": {
+          "app": "gitpod",
+          "component": "messagebus",
+          "kedge": "replicated",
+          "kind": "service",
+          "stage": "devstaging"
+        },
+        "name": "messagebus-dev",
+        "namespace": "test-namespace",
+        "resourceVersion": "12784182",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/messagebus-dev",
+        "uid": "abc49394-91d6-4892-b397-13aa583f6600"
+      },
+      "subsets": [
+        {
+          "addresses": [{ "ip": "10.8.4.154" }],
+          "ports": [
+            { "name": "dist", "port": 25672, "protocol": "TCP" },
+            { "name": "epmd", "port": 4369, "protocol": "TCP" },
+            { "name": "ui", "port": 15672, "protocol": "TCP" },
+            { "name": "amqp", "port": 5672, "protocol": "TCP" }
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T09:08:12Z" },
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "payment-endpoint", "kind": "service", "stage": "devstaging" },
+        "name": "payment-endpoint",
+        "namespace": "test-namespace",
+        "resourceVersion": "12784147",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/payment-endpoint",
+        "uid": "dd83da71-3669-4625-b599-e203a12bec47"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.10.242",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "payment-endpoint-5b9d7485f6-fm5kl",
+                "namespace": "test-namespace",
+                "resourceVersion": "12784146",
+                "uid": "d119c1df-bc6e-48f4-a446-b850229702d6"
+              }
+            }
+          ],
+          "ports": [{ "name": "http", "port": 3002, "protocol": "TCP" }]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "proxy", "kind": "service", "stage": "devstaging" },
+        "name": "proxy",
+        "namespace": "test-namespace",
+        "resourceVersion": "13224097",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/proxy",
+        "uid": "38d592de-f448-4bfe-94c5-e8a9450011c0"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.10.243",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "proxy-7b9cdb684d-stckc",
+                "namespace": "test-namespace",
+                "resourceVersion": "12783974",
+                "uid": "b61a6d63-3e68-4097-9e74-617763c7fba0"
+              }
+            }
+          ],
+          "ports": [
+            { "name": "http", "port": 80, "protocol": "TCP" },
+            { "name": "https", "port": 443, "protocol": "TCP" }
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T20:35:36Z" },
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "server", "kind": "service", "stage": "devstaging" },
+        "name": "server",
+        "namespace": "test-namespace",
+        "resourceVersion": "13096286",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/server",
+        "uid": "3973fcd9-fab6-4ed7-a59b-e1acc4f97fb1"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.10.51",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "server-7cd9c7c485-gdjn4",
+                "namespace": "test-namespace",
+                "resourceVersion": "13096284",
+                "uid": "85a14a31-085b-476f-bf41-800882be81e9"
+              }
+            }
+          ],
+          "ports": [
+            { "name": "metrics", "port": 9500, "protocol": "TCP" },
+            { "name": "http", "port": 3000, "protocol": "TCP" }
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T20:35:26Z" },
+        "creationTimestamp": "2020-02-18T09:07:37Z",
+        "labels": { "app": "gitpod", "component": "ws-manager", "kind": "service", "stage": "devstaging" },
+        "name": "ws-manager",
+        "namespace": "test-namespace",
+        "resourceVersion": "13096227",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/ws-manager",
+        "uid": "5f9dbc4b-7979-423a-8cc5-8672e968c12c"
+      },
+      "subsets": [
+        {
+          "addresses": [
+            {
+              "ip": "10.8.10.50",
+              "nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j",
+              "targetRef": {
+                "kind": "Pod",
+                "name": "ws-manager-898656978-k5zv5",
+                "namespace": "test-namespace",
+                "resourceVersion": "13096225",
+                "uid": "a10a33ba-a489-42fb-9d53-c8c09fbb5613"
+              }
+            }
+          ],
+          "ports": [{ "name": "rpc", "port": 8080, "protocol": "TCP" }]
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Endpoints",
+      "metadata": {
+        "annotations": { "gitpod/kedge": "true" },
+        "creationTimestamp": "2020-02-18T20:35:50Z",
+        "labels": {
+          "app": "gitpod",
+          "component": "ws-manager",
+          "kedge": "replicated",
+          "kind": "service",
+          "stage": "devstaging"
+        },
+        "name": "ws-manager-dev",
+        "namespace": "test-namespace",
+        "resourceVersion": "13096367",
+        "selfLink": "/api/v1/namespaces/test-namespace/endpoints/ws-manager-dev",
+        "uid": "208ad508-e472-4918-badd-18990080ef8f"
+      },
+      "subsets": [
+        { "addresses": [{ "ip": "10.8.10.50" }], "ports": [{ "name": "rpc", "port": 8080, "protocol": "TCP" }] }
+      ]
+    }
+  ],
+  "serviceNames": ["ws-manager"],
+  "namespace": "test-namespace"
 }

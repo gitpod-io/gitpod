@@ -1,25 +1,23 @@
 {
-    "$schema": "./config-schema.json",
-    "services": [
-        "messagebus"
+  "$schema": "./config-schema.json",
+  "services": ["messagebus"],
+  "port": 8080,
+  "token": "foobar",
+  "namespace": "staging-cw-kedge-ii",
+  "collection": {
+    "period": 30,
+    "collectors": [
+      {
+        "name": "dev",
+        "suffix": "dev",
+        "token": "foobar",
+        "url": "http://localhost:8080"
+      }
     ],
-    "port": 8080,
-    "token": "foobar",
-    "namespace": "staging-cw-kedge-ii",
-    "collection": {
-        "period": 30,
-        "collectors": [
-            {
-                "name": "dev",
-                "suffix": "dev",
-                "token": "foobar",
-                "url": "http://localhost:8080"
-            }
-        ],
-        "failureTTLService": 10,
-        "failureTTLCollector": 20
-    },
-    "registration": {
-        "enabled": true
-    }
+    "failureTTLService": 10,
+    "failureTTLCollector": 20
+  },
+  "registration": {
+    "enabled": true
+  }
 }
