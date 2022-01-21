@@ -153,12 +153,16 @@ func Run(options ...RunOption) {
 		return
 	}
 
+	// BEWARE: we can only call buildChildProcEnv once, because it might download env vars from a one-time-secret
+	//         URL, which would fail if we tried another time.
+	childProcEnvvars := buildChildProcEnv(cfg, nil)
+
 	err = AddGitpodUserIfNotExists()
 	if err != nil {
 		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
 	}
 	symlinkBinaries(cfg)
-	configureGit(cfg)
+	configureGit(cfg, childProcEnvvars)
 
 	tokenService := NewInMemoryTokenService()
 	tkns, err := cfg.GetTokens(true)
@@ -246,7 +250,7 @@ func Run(options ...RunOption) {
 			return ""
 		}
 	}
-	termMuxSrv.Env = buildChildProcEnv(cfg, nil)
+	termMuxSrv.Env = childProcEnvvars
 	termMuxSrv.DefaultCreds = &syscall.Credential{
 		Uid: gitpodUID,
 		Gid: gitpodGID,
@@ -283,15 +287,15 @@ func Run(options ...RunOption) {
 
 		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
 		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
-		installDotfiles(ctx, termMuxSrv, cfg)
+		installDotfiles(ctx, cfg, childProcEnvvars)
 	}
 
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &cfg.IDE, &ideWG, ideReady, WebIDE)
+	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, ideReady, WebIDE)
 	if cfg.DesktopIDE != nil {
 		ideWG.Add(1)
-		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, &ideWG, desktopIdeReady, DesktopIDE)
+		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, desktopIdeReady, DesktopIDE)
 	}
 
 	var wg sync.WaitGroup
@@ -300,7 +304,7 @@ func Run(options ...RunOption) {
 	wg.Add(1)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, apiEndpointOpts...)
 	wg.Add(1)
-	go startSSHServer(ctx, cfg, &wg)
+	go startSSHServer(ctx, cfg, &wg, childProcEnvvars)
 	wg.Add(1)
 	tasksSuccessChan := make(chan taskSuccess, 1)
 	go taskManager.Run(ctx, &wg, tasksSuccessChan)
@@ -336,7 +340,7 @@ func Run(options ...RunOption) {
 			}()
 
 			cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
-			cmd.Env = buildChildProcEnv(cfg, nil)
+			cmd.Env = childProcEnvvars
 			cmd.Dir = cfg.RepoRoot
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -370,7 +374,7 @@ func Run(options ...RunOption) {
 	wg.Wait()
 }
 
-func installDotfiles(ctx context.Context, term *terminal.MuxTerminalService, cfg *Config) {
+func installDotfiles(ctx context.Context, cfg *Config, childProcEnvvars []string) {
 	repo := cfg.DotfileRepo
 	if repo == "" {
 		return
@@ -385,7 +389,7 @@ func installDotfiles(ctx context.Context, term *terminal.MuxTerminalService, cfg
 	prep := func(cfg *Config, out io.Writer, name string, args ...string) *exec.Cmd {
 		cmd := exec.Command(name, args...)
 		cmd.Dir = "/home/gitpod"
-		cmd.Env = buildChildProcEnv(cfg, nil)
+		cmd.Env = childProcEnvvars
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			// All supervisor children run as gitpod user. The environment variables we produce are also
 			// gitpod user specific.
@@ -588,7 +592,7 @@ func symlinkBinaries(cfg *Config) {
 	}
 }
 
-func configureGit(cfg *Config) {
+func configureGit(cfg *Config, childProcEnvvars []string) {
 	settings := [][]string{
 		{"push.default", "simple"},
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
@@ -604,7 +608,7 @@ func configureGit(cfg *Config) {
 	for _, s := range settings {
 		cmd := exec.Command("git", append([]string{"config", "--global"}, s...)...)
 		cmd = runAsGitpodUser(cmd)
-		cmd.Env = buildChildProcEnv(cfg, nil)
+		cmd.Env = childProcEnvvars
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
@@ -705,7 +709,7 @@ const (
 	statusShouldShutdown
 )
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg *sync.WaitGroup, ideReady *ideReadyState, ide IDEKind) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, ideReady *ideReadyState, ide IDEKind) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
@@ -727,7 +731,7 @@ supervisorLoop:
 		}
 
 		ideStopped = make(chan struct{}, 1)
-		cmd = prepareIDELaunch(cfg, ideConfig)
+		cmd = prepareIDELaunch(cfg, ideConfig, childProcEnvvars)
 		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
 
 		select {
@@ -808,7 +812,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 	}()
 }
 
-func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
+func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string) *exec.Cmd {
 	args := ideConfig.EntrypointArgs
 
 	// Add default args for IDE (not desktop IDE) to be backwards compatible
@@ -836,7 +840,7 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 			Gid: gitpodGID,
 		},
 	}
-	cmd.Env = buildChildProcEnv(cfg, nil)
+	cmd.Env = childProcEnvvars
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
@@ -854,6 +858,8 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 
 // buildChildProcEnv computes the environment variables passed to a child process, based on the total list
 // of envvars. If envvars is nil, os.Environ() is used.
+//
+// Beware: if config contains an OTS URL the results may differ on subsequent calls.
 func buildChildProcEnv(cfg *Config, envvars []string) []string {
 	if envvars == nil {
 		envvars = os.Environ()
@@ -875,6 +881,20 @@ func buildChildProcEnv(cfg *Config, envvars []string) []string {
 		envs[nme] = val
 	}
 	envs["SUPERVISOR_ADDR"] = fmt.Sprintf("localhost:%d", cfg.APIEndpointPort)
+
+	if cfg.EnvvarOTS != "" {
+		es, err := downloadEnvvarOTS(cfg.EnvvarOTS)
+		if err != nil {
+			log.WithError(err).Warn("unable to download environment variables from OTS")
+		}
+		for k, v := range es {
+			if isBlacklistedEnvvar(k) {
+				continue
+			}
+
+			envs[k] = v
+		}
+	}
 
 	// We're forcing basic environment variables here, because supervisor acts like a login process at this point.
 	// The gitpod user might not have existed when supervisor was started, hence the HOME coming
@@ -909,6 +929,31 @@ func buildChildProcEnv(cfg *Config, envvars []string) []string {
 	log.WithField("envvar", envn).Debug("passing environment variables to IDE")
 
 	return env
+}
+
+func downloadEnvvarOTS(url string) (res map[string]string, err error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	var dl []struct {
+		Name  string `json:"name"`
+		Value string `json:"value"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&dl)
+	if err != nil {
+		return nil, err
+	}
+
+	res = make(map[string]string)
+	for _, e := range dl {
+		res[e.Name] = e.Value
+	}
+	return res, nil
 }
 
 func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (desktopIDEStatus *DesktopIDEStatus) {
@@ -1179,7 +1224,7 @@ func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan
 	shutdown <- ShutdownReasonSuccess
 }
 
-func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
+func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup, childProcEnvvars []string) {
 	defer wg.Done()
 
 	if cfg.isHeadless() {
@@ -1187,7 +1232,7 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 	}
 
 	go func() {
-		ssh, err := newSSHServer(ctx, cfg)
+		ssh, err := newSSHServer(ctx, cfg, childProcEnvvars)
 		if err != nil {
 			log.WithError(err).Error("err starting SSH server")
 		}
