@@ -121,10 +121,9 @@ function deserialize_builder_ResolveWorkspaceImageResponse(buffer_arg) {
   return imgbuilder_pb.ResolveWorkspaceImageResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var ImageBuilderService = exports.ImageBuilderService = {
+var ImageBuilderService = (exports.ImageBuilderService = {
   // ResolveBaseImage returns the "digest" form of a Docker image tag thereby making it absolute.
-resolveBaseImage: {
+  resolveBaseImage: {
     path: '/builder.ImageBuilder/ResolveBaseImage',
     requestStream: false,
     responseStream: false,
@@ -136,7 +135,7 @@ resolveBaseImage: {
     responseDeserialize: deserialize_builder_ResolveBaseImageResponse,
   },
   // ResolveWorkspaceImage returns information about a build configuration without actually attempting to build anything.
-resolveWorkspaceImage: {
+  resolveWorkspaceImage: {
     path: '/builder.ImageBuilder/ResolveWorkspaceImage',
     requestStream: false,
     responseStream: false,
@@ -148,8 +147,8 @@ resolveWorkspaceImage: {
     responseDeserialize: deserialize_builder_ResolveWorkspaceImageResponse,
   },
   // Build initiates the build of a Docker image using a build configuration. If a build of this
-// configuration is already ongoing no new build will be started.
-build: {
+  // configuration is already ongoing no new build will be started.
+  build: {
     path: '/builder.ImageBuilder/Build',
     requestStream: false,
     responseStream: true,
@@ -161,7 +160,7 @@ build: {
     responseDeserialize: deserialize_builder_BuildResponse,
   },
   // Logs listens to the build output of an ongoing Docker build identified build the build ID
-logs: {
+  logs: {
     path: '/builder.ImageBuilder/Logs',
     requestStream: false,
     responseStream: true,
@@ -173,7 +172,7 @@ logs: {
     responseDeserialize: deserialize_builder_LogsResponse,
   },
   // ListBuilds returns a list of currently running builds
-listBuilds: {
+  listBuilds: {
     path: '/builder.ImageBuilder/ListBuilds',
     requestStream: false,
     responseStream: false,
@@ -184,6 +183,6 @@ listBuilds: {
     responseSerialize: serialize_builder_ListBuildsResponse,
     responseDeserialize: deserialize_builder_ListBuildsResponse,
   },
-};
+});
 
 exports.ImageBuilderClient = grpc.makeGenericClientConstructor(ImageBuilderService);
