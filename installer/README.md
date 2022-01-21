@@ -15,7 +15,7 @@ The best way to get started with Gitpod
 # Requirements
 
 - A machine running Linux/MacOS and Docker
-    - Windows is not currently supported, but will be in future
+  - Windows is not currently supported, but will be in future
 - [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) installed
 - A [Kubernetes cluster configured](https://www.gitpod.io/docs/self-hosted/latest/installation)
 - A [TLS certificate](#tls-certificates)
@@ -23,6 +23,7 @@ The best way to get started with Gitpod
 Or, [open a Gitpod workspace](https://gitpod.io/from-referrer/)
 
 The process to install Gitpod is:
+
 1. generate a base config
 2. amend the config for your own use-case
 3. validate
@@ -150,11 +151,11 @@ yq eval-all --inplace \
 # What is installed
 
 - All Gitpod components
-- Container registry*
-- MySQL database*
-- Jaeger operator*
+- Container registry\*
+- MySQL database\*
+- Jaeger operator\*
 - RabbitMQ
-- Minio object storage*
+- Minio object storage\*
 
 \* By default, these dependencies are installed if the `inCluster` setting
 is `true`. External dependencies can be used in their place
@@ -164,14 +165,14 @@ is `true`. External dependencies can be used in their place
 > Not every parameter is discussed in this table, just ones that are likely
 > to need changing. The full config structure is available in [config.go](/installer/pkg/config/v1/config.go).
 
-| Property | Required | Description | Notes |
-| --- | --- | --- | --- |
-| `domain` | Y | The domain to deploy to | This will need to be changed on every deployment |
-| `kind` | Y | Installation type to run - for most users, this will be `Full` | Can be `Full`, `Meta` or `Workspace` |
-| `metadata.region` | Y | Location for your `objectStorage` provider | If using Minio, set to `local` |
-| `workspace.runtime.containerdRuntimeDir` | Y | The location of containerd on host machine | Common values are: <ul><li>`/run/containerd/io.containerd.runtime.v2.task/k8s.io` (K3s)</li><li>`/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io` (AWS/Azure/GCP)</li><li>`/run/containerd/io.containerd.runtime.v1.linux/k8s.io`</li><li>`/run/containerd/io.containerd.runtime.v1.linux/moby`</li></ul> |
-| `workspace.runtime.containerdSocket` | Y | The location of containerd socket on the host machine |
-| `workspace.runtime.fsShiftMethod` | Y | File system | Can be either `fuse` (fuse-overlayfs) or `shiftfs`. This depending upon your host OS/distribution. If unsure, use `fuse`. |
+| Property                                 | Required | Description                                                    | Notes                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------- | -------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `domain`                                 | Y        | The domain to deploy to                                        | This will need to be changed on every deployment                                                                                                                                                                                                                                                                   |
+| `kind`                                   | Y        | Installation type to run - for most users, this will be `Full` | Can be `Full`, `Meta` or `Workspace`                                                                                                                                                                                                                                                                               |
+| `metadata.region`                        | Y        | Location for your `objectStorage` provider                     | If using Minio, set to `local`                                                                                                                                                                                                                                                                                     |
+| `workspace.runtime.containerdRuntimeDir` | Y        | The location of containerd on host machine                     | Common values are: <ul><li>`/run/containerd/io.containerd.runtime.v2.task/k8s.io` (K3s)</li><li>`/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io` (AWS/Azure/GCP)</li><li>`/run/containerd/io.containerd.runtime.v1.linux/k8s.io`</li><li>`/run/containerd/io.containerd.runtime.v1.linux/moby`</li></ul> |
+| `workspace.runtime.containerdSocket`     | Y        | The location of containerd socket on the host machine          |
+| `workspace.runtime.fsShiftMethod`        | Y        | File system                                                    | Can be either `fuse` (fuse-overlayfs) or `shiftfs`. This depending upon your host OS/distribution. If unsure, use `fuse`.                                                                                                                                                                                          |
 
 ## Auth Providers
 
@@ -256,10 +257,11 @@ database:
 ```
 
 The `cloudsql-token` secret must contain the following key/value pairs:
- - `credentials.json` - GCP Service Account key with `roles/cloudsql.client` role
- - `encryptionKeys` - database encryption key. Use default value as above if unsure
- - `password` - database password
- - `username` - database username
+
+- `credentials.json` - GCP Service Account key with `roles/cloudsql.client` role
+- `encryptionKeys` - database encryption key. Use default value as above if unsure
+- `password` - database password
+- `username` - database username
 
 ### External Database
 
@@ -275,6 +277,7 @@ database:
 ```
 
 The `database-token` secret must contain the following key/value pairs:
+
 - `encryptionKeys` - database encryption key. Use default value as above if unsure
 - `host` - IP or URL of the database
 - `password` - database password
@@ -300,6 +303,7 @@ objectStorage:
 ```
 
 The `gcp-storage-token` secret must contain the following key/value pairs:
+
 - `service-account.json` - GCP Service Account key with `roles/storage.admin` and `roles/storage.objectAdmin` roles
 
 ### Azure
@@ -319,6 +323,7 @@ objectStorage:
 ```
 
 The `az-storage-token` secret must contain the following key/value pairs:
+
 - `accountName` - the globally-unique storage account name
 - `accountKey` - access key for the storage account
 
@@ -341,6 +346,7 @@ objectStorage:
 ```
 
 The `s3-storage-token` secret must contain the following key/value pairs:
+
 - `accessKeyId` - username that has access to S3 account
 - `secretAccessKey` - password that has access to S3 account
 
@@ -360,6 +366,7 @@ have a containerd runtime.
 ## Affinity Labels
 
 Your Kubernetes nodes must have the following labels applied to them:
+
 - `gitpod.io/workload_meta`
 - `gitpod.io/workload_ide`
 - `gitpod.io/workload_workspace_services`
@@ -380,9 +387,10 @@ Kubernetes secret.
 
 The certificate must be associated with the following domains (where
 `$DOMAIN` is the value in config `domain`):
- - `$DOMAIN`
- - `*.$DOMAIN`
- - `*.ws.$DOMAIN`
+
+- `$DOMAIN`
+- `*.$DOMAIN`
+- `*.ws.$DOMAIN`
 
 See [FAQs](#how-do-i-use-cert-manager-to-create-a-tls-certificate) for help
 with creating a TLS certificate using cert-manager.
@@ -459,8 +467,8 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - $DOMAIN
-    - "*.$DOMAIN"
-    - "*.ws.$DOMAIN"
+    - '*.$DOMAIN'
+    - '*.ws.$DOMAIN'
 ```
 
 ## How do I use my own TLS certificate?

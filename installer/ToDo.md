@@ -2,39 +2,42 @@
 
 - [x] Integrate version manifest (@MrSimonEmms, @csweichel)
 - Wrap up component templates (@MrSimonEmms)
-    - workspace
-        - [x] ws-daemon
-        - [x] ws-manager
-        - [x] ws-proxy
-        - [x] ws-scheduler
-        - [x] registry-facade
-        - [x] blobserve
-        - [x] agent-smith
-        - [x] docker-registry
-    - meta
-        - [x] server
-        - [x] ws-manager-bridge
-        - [x] proxy
-        - [x] dashboard
-        - [x] image-builder-mk3
-        - [x] content-service
+
+  - workspace
+    - [x] ws-daemon
+    - [x] ws-manager
+    - [x] ws-proxy
+    - [x] ws-scheduler
+    - [x] registry-facade
+    - [x] blobserve
+    - [x] agent-smith
+    - [x] docker-registry
+  - meta
+    - [x] server
+    - [x] ws-manager-bridge
+    - [x] proxy
+    - [x] dashboard
+    - [x] image-builder-mk3
+    - [x] content-service
 
 - Integrate existing helm charts (@aledbf)
-    - [x] mysql: db
-    - [x] rabbitmq: messagebus
-    - [x] jaeger
-    - [x] minio
+
+  - [x] mysql: db
+  - [x] rabbitmq: messagebus
+  - [x] jaeger
+  - [x] minio
 
 - Database
-    - [ ] Integrate DB initialization as Kubernetes job with log forwarding support
-    - [ ] Integrate DB migrations as a Kubernetes job with log forwarding support
+
+  - [ ] Integrate DB initialization as Kubernetes job with log forwarding support
+  - [ ] Integrate DB migrations as a Kubernetes job with log forwarding support
 
 - Check cluster pre-requisites
-    - [ ] Kubernetes version
-    - [ ] container runtime and version
-    - [ ] Kernel version
-    - [ ] database version and defaults for CloudSQL and RDS
-    - [ ] CNI provider (Calico with eBPF does not support host ports)
+  - [ ] Kubernetes version
+  - [ ] container runtime and version
+  - [ ] Kernel version
+  - [ ] database version and defaults for CloudSQL and RDS
+  - [ ] CNI provider (Calico with eBPF does not support host ports)
 
 # Milestones
 
