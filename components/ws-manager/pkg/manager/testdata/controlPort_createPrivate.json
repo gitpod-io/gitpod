@@ -1,11 +1,11 @@
 {
-    "request": {
-        "id": "foobar",
-        "expose": true,
-        "spec": {
-            "port": 3000,
-            "visibility": 0
-        }
-    },
-    "noAllocator": true
+  "request": {
+    "id": "foobar",
+    "expose": true,
+    "spec": {
+      "port": 3000,
+      "visibility": 0
+    }
+  },
+  "noAllocator": true
 }

@@ -1,623 +1,612 @@
 {
-    "instanceID": "df376c57-7a0e-4233-976a-7a021e6f088c",
-    "wso": {
-        "pod": {
-            "metadata": {
-                "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                "namespace": "default",
-                "selfLink": "/api/v1/namespaces/default/pods/ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
-                "resourceVersion": "54747666",
-                "creationTimestamp": "2020-02-28T10:44:00Z",
-                "labels": {
-                    "app": "gitpod",
-                    "component": "workspace",
-                    "gitpod.io/networkpolicy": "default",
-                    "gpwsman": "true",
-                    "headless": "false",
-                    "metaID": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
-                    "owner": "ec566d71-62a8-492e-8040-51850d9a97c4",
-                    "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "workspaceType": "regular"
-                },
-                "annotations": {
-                    "cni.projectcalico.org/podIP": "10.4.5.45/32",
-                    "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
-                    "gitpod/customTimeout": "60m",
-                    "gitpod/firstUserActivity": "2020-02-28T10:44:36.995133911Z",
-                    "gitpod/id": "df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "gitpod/ready": "true",
-                    "gitpod/servicePrefix": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
-                    "gitpod/url": "https://c372bd58-ef61-4fc0-9083-bd61ef96ad9f.ws-eu01.gitpod-staging.com",
-                    "kubernetes.io/psp": "default-ns-privileged-unconfined",
-                    "prometheus.io/path": "/metrics",
-                    "prometheus.io/port": "23000",
-                    "prometheus.io/scrape": "true",
-                    "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
-                }
-            },
-            "spec": {
-                "volumes": [
-                    {
-                        "name": "vol-this-workspace",
-                        "hostPath": {
-                            "path": "/mnt/disks/ssd0/workspaces/df376c57-7a0e-4233-976a-7a021e6f088c",
-                            "type": "DirectoryOrCreate"
-                        }
-                    }
-                ],
-                "containers": [
-                    {
-                        "name": "workspace",
-                        "image": "eu.gcr.io/gitpod-dev/workspace-images:e2f1689912681deb150b0c1e989f2f9babd104a6b140c71d9120c9a142f5c29b",
-                        "ports": [
-                            {
-                                "containerPort": 23000,
-                                "protocol": "TCP"
-                            }
-                        ],
-                        "env": [],
-                        "resources": {
-                            "limits": {
-                                "cpu": "5",
-                                "memory": "11444Mi"
-                            },
-                            "requests": {
-                                "cpu": "1m",
-                                "memory": "2150Mi"
-                            }
-                        },
-                        "volumeMounts": [
-                            {
-                                "name": "vol-this-workspace",
-                                "mountPath": "/workspace",
-                                "mountPropagation": "HostToContainer"
-                            }
-                        ],
-                        "readinessProbe": {
-                            "httpGet": {
-                                "path": "/",
-                                "port": 23000,
-                                "scheme": "HTTP"
-                            },
-                            "timeoutSeconds": 1,
-                            "periodSeconds": 1,
-                            "successThreshold": 1,
-                            "failureThreshold": 600
-                        },
-                        "terminationMessagePath": "/dev/termination-log",
-                        "terminationMessagePolicy": "File",
-                        "imagePullPolicy": "IfNotPresent",
-                        "securityContext": {
-                            "capabilities": {
-                                "add": [
-                                    "AUDIT_WRITE",
-                                    "FSETID",
-                                    "KILL",
-                                    "NET_BIND_SERVICE",
-                                    "SYS_PTRACE"
-                                ],
-                                "drop": [
-                                    "SETPCAP",
-                                    "CHOWN",
-                                    "NET_RAW",
-                                    "DAC_OVERRIDE",
-                                    "FOWNER",
-                                    "SYS_CHROOT",
-                                    "SETFCAP",
-                                    "SETUID",
-                                    "SETGID"
-                                ]
-                            },
-                            "privileged": false,
-                            "runAsUser": 33333,
-                            "runAsGroup": 33333,
-                            "runAsNonRoot": true,
-                            "readOnlyRootFilesystem": false,
-                            "allowPrivilegeEscalation": true
-                        }
-                    }
-                ],
-                "restartPolicy": "Always",
-                "terminationGracePeriodSeconds": 30,
-                "dnsPolicy": "None",
-                "serviceAccountName": "workspace",
-                "serviceAccount": "workspace",
-                "automountServiceAccountToken": false,
-                "nodeName": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq",
-                "securityContext": {},
-                "imagePullSecrets": [
-                    {
-                        "name": "workspace-registry-pull-secret"
-                    }
-                ],
-                "affinity": {
-                    "nodeAffinity": {
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                            "nodeSelectorTerms": [
-                                {
-                                    "matchExpressions": [
-                                        {
-                                            "key": "gitpod.io/theia.master.2437",
-                                            "operator": "Exists"
-                                        },
-                                        {
-                                            "key": "gitpod.io/ws-daemon",
-                                            "operator": "Exists"
-                                        },
-                                        {
-                                            "key": "gitpod.io/workload_workspace",
-                                            "operator": "In",
-                                            "values": [
-                                                "true"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                },
-                "schedulerName": "workspace-scheduler",
-                "tolerations": [
-                    {
-                        "key": "node.kubernetes.io/disk-pressure",
-                        "operator": "Exists",
-                        "effect": "NoExecute",
-                        "tolerationSeconds": 15
-                    },
-                    {
-                        "key": "node.kubernetes.io/memory-pressure",
-                        "operator": "Exists",
-                        "effect": "NoExecute",
-                        "tolerationSeconds": 15
-                    },
-                    {
-                        "key": "node.kubernetes.io/network-unavailable",
-                        "operator": "Exists",
-                        "effect": "NoExecute",
-                        "tolerationSeconds": 15
-                    },
-                    {
-                        "key": "node.kubernetes.io/not-ready",
-                        "operator": "Exists",
-                        "effect": "NoExecute",
-                        "tolerationSeconds": 300
-                    },
-                    {
-                        "key": "node.kubernetes.io/unreachable",
-                        "operator": "Exists",
-                        "effect": "NoExecute",
-                        "tolerationSeconds": 300
-                    }
-                ],
-                "priority": 0,
-                "dnsConfig": {
-                    "nameservers": [
-                        "1.1.1.1",
-                        "8.8.8.8"
-                    ]
-                },
-                "enableServiceLinks": false
-            },
-            "status": {
-                "phase": "Running",
-                "conditions": [
-                    {
-                        "type": "Initialized",
-                        "status": "True",
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2020-02-28T10:44:00Z"
-                    },
-                    {
-                        "type": "Ready",
-                        "status": "True",
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2020-02-28T10:44:09Z"
-                    },
-                    {
-                        "type": "ContainersReady",
-                        "status": "True",
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2020-02-28T10:44:09Z"
-                    },
-                    {
-                        "type": "PodScheduled",
-                        "status": "True",
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2020-02-28T10:44:00Z"
-                    }
-                ],
-                "hostIP": "10.132.15.227",
-                "podIP": "10.4.5.45",
-                "startTime": "2020-02-28T10:44:00Z",
-                "containerStatuses": [
-                    {
-                        "name": "workspace",
-                        "state": {
-                            "running": {
-                                "startedAt": "2020-02-28T10:44:02Z"
-                            }
-                        },
-                        "lastState": {},
-                        "ready": true,
-                        "restartCount": 0,
-                        "image": "eu.gcr.io/gitpod-dev/workspace-images:e2f1689912681deb150b0c1e989f2f9babd104a6b140c71d9120c9a142f5c29b",
-                        "imageID": "eu.gcr.io/gitpod-dev/workspace-images@sha256:2b707990e2db57815d6da9d0ad6cafb04c012782a48e3c6c917034b48b7efef4",
-                        "containerID": "containerd://b53fad38bde9e14f6005cd7eb376470ee842f6d9894f2b66178a10c2768a028c"
-                    }
-                ],
-                "qosClass": "Burstable"
-            }
+  "instanceID": "df376c57-7a0e-4233-976a-7a021e6f088c",
+  "wso": {
+    "pod": {
+      "metadata": {
+        "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+        "namespace": "default",
+        "selfLink": "/api/v1/namespaces/default/pods/ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+        "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
+        "resourceVersion": "54747666",
+        "creationTimestamp": "2020-02-28T10:44:00Z",
+        "labels": {
+          "app": "gitpod",
+          "component": "workspace",
+          "gitpod.io/networkpolicy": "default",
+          "gpwsman": "true",
+          "headless": "false",
+          "metaID": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
+          "owner": "ec566d71-62a8-492e-8040-51850d9a97c4",
+          "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c",
+          "workspaceType": "regular"
         },
-        "theiaService": {
-            "metadata": {
-                "name": "ws-c372bd58-ef61-4fc0-9083-bd61ef96ad9f-theia",
-                "namespace": "default",
-                "selfLink": "/api/v1/namespaces/default/services/ws-c372bd58-ef61-4fc0-9083-bd61ef96ad9f-theia",
-                "uid": "3ad2fd76-5a17-11ea-8d13-42010a840226",
-                "resourceVersion": "54747466",
-                "creationTimestamp": "2020-02-28T10:44:00Z",
-                "labels": {
-                    "app": "gitpod",
-                    "component": "workspace",
-                    "gpwsman": "true",
-                    "headless": "false",
-                    "metaID": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
-                    "owner": "ec566d71-62a8-492e-8040-51850d9a97c4",
-                    "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "workspaceType": "regular"
-                }
+        "annotations": {
+          "cni.projectcalico.org/podIP": "10.4.5.45/32",
+          "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
+          "gitpod/customTimeout": "60m",
+          "gitpod/firstUserActivity": "2020-02-28T10:44:36.995133911Z",
+          "gitpod/id": "df376c57-7a0e-4233-976a-7a021e6f088c",
+          "gitpod/ready": "true",
+          "gitpod/servicePrefix": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
+          "gitpod/url": "https://c372bd58-ef61-4fc0-9083-bd61ef96ad9f.ws-eu01.gitpod-staging.com",
+          "kubernetes.io/psp": "default-ns-privileged-unconfined",
+          "prometheus.io/path": "/metrics",
+          "prometheus.io/port": "23000",
+          "prometheus.io/scrape": "true",
+          "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
+        }
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "vol-this-workspace",
+            "hostPath": {
+              "path": "/mnt/disks/ssd0/workspaces/df376c57-7a0e-4233-976a-7a021e6f088c",
+              "type": "DirectoryOrCreate"
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "workspace",
+            "image": "eu.gcr.io/gitpod-dev/workspace-images:e2f1689912681deb150b0c1e989f2f9babd104a6b140c71d9120c9a142f5c29b",
+            "ports": [
+              {
+                "containerPort": 23000,
+                "protocol": "TCP"
+              }
+            ],
+            "env": [],
+            "resources": {
+              "limits": {
+                "cpu": "5",
+                "memory": "11444Mi"
+              },
+              "requests": {
+                "cpu": "1m",
+                "memory": "2150Mi"
+              }
             },
-            "spec": {
-                "ports": [
+            "volumeMounts": [
+              {
+                "name": "vol-this-workspace",
+                "mountPath": "/workspace",
+                "mountPropagation": "HostToContainer"
+              }
+            ],
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/",
+                "port": 23000,
+                "scheme": "HTTP"
+              },
+              "timeoutSeconds": 1,
+              "periodSeconds": 1,
+              "successThreshold": 1,
+              "failureThreshold": 600
+            },
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "IfNotPresent",
+            "securityContext": {
+              "capabilities": {
+                "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"],
+                "drop": [
+                  "SETPCAP",
+                  "CHOWN",
+                  "NET_RAW",
+                  "DAC_OVERRIDE",
+                  "FOWNER",
+                  "SYS_CHROOT",
+                  "SETFCAP",
+                  "SETUID",
+                  "SETGID"
+                ]
+              },
+              "privileged": false,
+              "runAsUser": 33333,
+              "runAsGroup": 33333,
+              "runAsNonRoot": true,
+              "readOnlyRootFilesystem": false,
+              "allowPrivilegeEscalation": true
+            }
+          }
+        ],
+        "restartPolicy": "Always",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "None",
+        "serviceAccountName": "workspace",
+        "serviceAccount": "workspace",
+        "automountServiceAccountToken": false,
+        "nodeName": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq",
+        "securityContext": {},
+        "imagePullSecrets": [
+          {
+            "name": "workspace-registry-pull-secret"
+          }
+        ],
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchExpressions": [
                     {
-                        "name": "theia",
-                        "protocol": "TCP",
-                        "port": 23000,
-                        "targetPort": 23000
+                      "key": "gitpod.io/theia.master.2437",
+                      "operator": "Exists"
                     },
                     {
-                        "name": "supervisor",
-                        "protocol": "TCP",
-                        "port": 22999,
-                        "targetPort": 22999
+                      "key": "gitpod.io/ws-daemon",
+                      "operator": "Exists"
+                    },
+                    {
+                      "key": "gitpod.io/workload_workspace",
+                      "operator": "In",
+                      "values": ["true"]
                     }
-                ],
-                "selector": {
-                    "app": "gitpod",
-                    "component": "workspace",
-                    "gpwsman": "true",
-                    "headless": "false",
-                    "metaID": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
-                    "owner": "ec566d71-62a8-492e-8040-51850d9a97c4",
-                    "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "workspaceType": "regular"
-                },
-                "clusterIP": "10.8.5.133",
-                "type": "ClusterIP",
-                "sessionAffinity": "None"
-            },
-            "status": {
-                "loadBalancer": {}
-            }
-        },
-        "portsService": {
-            "metadata": {
-                "name": "ws-c372bd58-ef61-4fc0-9083-bd61ef96ad9f-ports",
-                "namespace": "default",
-                "selfLink": "/api/v1/namespaces/default/services/ws-c372bd58-ef61-4fc0-9083-bd61ef96ad9f-ports",
-                "uid": "3ad8841e-5a17-11ea-8d13-42010a840226",
-                "resourceVersion": "54747470",
-                "creationTimestamp": "2020-02-28T10:44:00Z",
-                "labels": {
-                    "gpwsman": "true",
-                    "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c"
+                  ]
                 }
-            },
-            "spec": {
-                "ports": [
-                    {
-                        "name": "p1337-public",
-                        "protocol": "TCP",
-                        "port": 1337,
-                        "targetPort": 31337
-                    },
-                    {
-                        "name": "p3000-public",
-                        "protocol": "TCP",
-                        "port": 3000,
-                        "targetPort": 33000
-                    },
-                    {
-                        "name": "p3001-public",
-                        "protocol": "TCP",
-                        "port": 3001,
-                        "targetPort": 33001
-                    },
-                    {
-                        "name": "p4000-public",
-                        "protocol": "TCP",
-                        "port": 4000,
-                        "targetPort": 34000
-                    },
-                    {
-                        "name": "p9229-public",
-                        "protocol": "TCP",
-                        "port": 9229,
-                        "targetPort": 39229
-                    },
-                    {
-                        "name": "p5900-public",
-                        "protocol": "TCP",
-                        "port": 5900,
-                        "targetPort": 35900
-                    },
-                    {
-                        "name": "p6080-public",
-                        "protocol": "TCP",
-                        "port": 6080,
-                        "targetPort": 36080
-                    },
-                    {
-                        "name": "p9999-public",
-                        "protocol": "TCP",
-                        "port": 9999,
-                        "targetPort": 39999
-                    },
-                    {
-                        "name": "p13001-public",
-                        "protocol": "TCP",
-                        "port": 13001,
-                        "targetPort": 43001
-                    },
-                    {
-                        "name": "p7777-public",
-                        "protocol": "TCP",
-                        "port": 7777,
-                        "targetPort": 37777
-                    },
-                    {
-                        "name": "p13444-public",
-                        "protocol": "TCP",
-                        "port": 13444,
-                        "targetPort": 43444
-                    }
-                ],
-                "selector": {
-                    "gpwsman": "true",
-                    "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c"
-                },
-                "clusterIP": "10.8.13.117",
-                "type": "ClusterIP",
-                "sessionAffinity": "None"
-            },
-            "status": {
-                "loadBalancer": {}
+              ]
             }
+          }
         },
-        "events": [
-            {
-                "metadata": {
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c - scheduledf96cp",
-                    "generateName": "ws-df376c57-7a0e-4233-976a-7a021e6f088c - scheduled",
-                    "namespace": "default",
-                    "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c+-+scheduledf96cp",
-                    "uid": "3ad0045b-5a17-11ea-bb55-42010a840225",
-                    "resourceVersion": "855785",
-                    "creationTimestamp": "2020-02-28T10:44:00Z"
-                },
-                "involvedObject": {
-                    "kind": "Pod",
-                    "namespace": "default",
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "uid": "3acac34d-5a17-11ea-8d13-42010a840226"
-                },
-                "reason": "Scheduled",
-                "message": "Placed pod [default/ws-df376c57-7a0e-4233-976a-7a021e6f088c] on gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq\n",
-                "source": {
-                    "component": "workspace-scheduler"
-                },
-                "firstTimestamp": "2020-02-28T10:44:00Z",
-                "lastTimestamp": "2020-02-28T10:44:00Z",
-                "count": 1,
-                "type": "Normal",
-                "eventTime": null,
-                "reportingComponent": "",
-                "reportingInstance": ""
+        "schedulerName": "workspace-scheduler",
+        "tolerations": [
+          {
+            "key": "node.kubernetes.io/disk-pressure",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 15
+          },
+          {
+            "key": "node.kubernetes.io/memory-pressure",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 15
+          },
+          {
+            "key": "node.kubernetes.io/network-unavailable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 15
+          },
+          {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          },
+          {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          }
+        ],
+        "priority": 0,
+        "dnsConfig": {
+          "nameservers": ["1.1.1.1", "8.8.8.8"]
+        },
+        "enableServiceLinks": false
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2020-02-28T10:44:00Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2020-02-28T10:44:09Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2020-02-28T10:44:09Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2020-02-28T10:44:00Z"
+          }
+        ],
+        "hostIP": "10.132.15.227",
+        "podIP": "10.4.5.45",
+        "startTime": "2020-02-28T10:44:00Z",
+        "containerStatuses": [
+          {
+            "name": "workspace",
+            "state": {
+              "running": {
+                "startedAt": "2020-02-28T10:44:02Z"
+              }
             },
-            {
-                "metadata": {
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b038483213b",
-                    "namespace": "default",
-                    "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b038483213b",
-                    "uid": "3b3b297b-5a17-11ea-bb55-42010a840225",
-                    "resourceVersion": "855786",
-                    "creationTimestamp": "2020-02-28T10:44:01Z"
-                },
-                "involvedObject": {
-                    "kind": "Pod",
-                    "namespace": "default",
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
-                    "apiVersion": "v1",
-                    "resourceVersion": "54747461",
-                    "fieldPath": "spec.containers{workspace}"
-                },
-                "reason": "Pulling",
-                "message": "pulling image \"eu.gcr.io/gitpod-dev/workspace-images:e2f1689912681deb150b0c1e989f2f9babd104a6b140c71d9120c9a142f5c29b\"",
-                "source": {
-                    "component": "kubelet",
-                    "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
-                },
-                "firstTimestamp": "2020-02-28T10:44:01Z",
-                "lastTimestamp": "2020-02-28T10:44:01Z",
-                "count": 1,
-                "type": "Normal",
-                "eventTime": null,
-                "reportingComponent": "",
-                "reportingInstance": ""
-            },
-            {
-                "metadata": {
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03b23e7a6c",
-                    "namespace": "default",
-                    "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03b23e7a6c",
-                    "uid": "3bb049b6-5a17-11ea-bb55-42010a840225",
-                    "resourceVersion": "855787",
-                    "creationTimestamp": "2020-02-28T10:44:02Z"
-                },
-                "involvedObject": {
-                    "kind": "Pod",
-                    "namespace": "default",
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
-                    "apiVersion": "v1",
-                    "resourceVersion": "54747461",
-                    "fieldPath": "spec.containers{workspace}"
-                },
-                "reason": "Pulled",
-                "message": "Successfully pulled image \"eu.gcr.io/gitpod-dev/workspace-images:e2f1689912681deb150b0c1e989f2f9babd104a6b140c71d9120c9a142f5c29b\"",
-                "source": {
-                    "component": "kubelet",
-                    "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
-                },
-                "firstTimestamp": "2020-02-28T10:44:02Z",
-                "lastTimestamp": "2020-02-28T10:44:02Z",
-                "count": 1,
-                "type": "Normal",
-                "eventTime": null,
-                "reportingComponent": "",
-                "reportingInstance": ""
-            },
-            {
-                "metadata": {
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03b6b3516f",
-                    "namespace": "default",
-                    "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03b6b3516f",
-                    "uid": "3bbbf9ed-5a17-11ea-bb55-42010a840225",
-                    "resourceVersion": "855788",
-                    "creationTimestamp": "2020-02-28T10:44:02Z"
-                },
-                "involvedObject": {
-                    "kind": "Pod",
-                    "namespace": "default",
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
-                    "apiVersion": "v1",
-                    "resourceVersion": "54747461",
-                    "fieldPath": "spec.containers{workspace}"
-                },
-                "reason": "Created",
-                "message": "Created container",
-                "source": {
-                    "component": "kubelet",
-                    "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
-                },
-                "firstTimestamp": "2020-02-28T10:44:02Z",
-                "lastTimestamp": "2020-02-28T10:44:02Z",
-                "count": 1,
-                "type": "Normal",
-                "eventTime": null,
-                "reportingComponent": "",
-                "reportingInstance": ""
-            },
-            {
-                "metadata": {
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03bd9420a5",
-                    "namespace": "default",
-                    "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03bd9420a5",
-                    "uid": "3bcd4583-5a17-11ea-bb55-42010a840225",
-                    "resourceVersion": "855789",
-                    "creationTimestamp": "2020-02-28T10:44:02Z"
-                },
-                "involvedObject": {
-                    "kind": "Pod",
-                    "namespace": "default",
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
-                    "apiVersion": "v1",
-                    "resourceVersion": "54747461",
-                    "fieldPath": "spec.containers{workspace}"
-                },
-                "reason": "Started",
-                "message": "Started container",
-                "source": {
-                    "component": "kubelet",
-                    "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
-                },
-                "firstTimestamp": "2020-02-28T10:44:02Z",
-                "lastTimestamp": "2020-02-28T10:44:02Z",
-                "count": 1,
-                "type": "Normal",
-                "eventTime": null,
-                "reportingComponent": "",
-                "reportingInstance": ""
-            },
-            {
-                "metadata": {
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03d161c3d6",
-                    "namespace": "default",
-                    "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03d161c3d6",
-                    "uid": "3bfff999-5a17-11ea-bb55-42010a840225",
-                    "resourceVersion": "855792",
-                    "creationTimestamp": "2020-02-28T10:44:02Z"
-                },
-                "involvedObject": {
-                    "kind": "Pod",
-                    "namespace": "default",
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
-                    "apiVersion": "v1",
-                    "resourceVersion": "54747461",
-                    "fieldPath": "spec.containers{workspace}"
-                },
-                "reason": "Unhealthy",
-                "message": "Readiness probe failed: Get http://10.4.5.45:23000/: dial tcp 10.4.5.45:23000: connect: connection refused",
-                "source": {
-                    "component": "kubelet",
-                    "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
-                },
-                "firstTimestamp": "2020-02-28T10:44:02Z",
-                "lastTimestamp": "2020-02-28T10:44:04Z",
-                "count": 3,
-                "type": "Warning",
-                "eventTime": null,
-                "reportingComponent": "",
-                "reportingInstance": ""
-            },
-            {
-                "metadata": {
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b04bfd2e33e",
-                    "namespace": "default",
-                    "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b04bfd2e33e",
-                    "uid": "3e626a24-5a17-11ea-bb55-42010a840225",
-                    "resourceVersion": "855796",
-                    "creationTimestamp": "2020-02-28T10:44:06Z"
-                },
-                "involvedObject": {
-                    "kind": "Pod",
-                    "namespace": "default",
-                    "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
-                    "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
-                    "apiVersion": "v1",
-                    "resourceVersion": "54747461",
-                    "fieldPath": "spec.containers{workspace}"
-                },
-                "reason": "Unhealthy",
-                "message": "Readiness probe failed: Get http://10.4.5.45:23000/: net/http: request canceled (Client.Timeout exceeded while awaiting headers)",
-                "source": {
-                    "component": "kubelet",
-                    "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
-                },
-                "firstTimestamp": "2020-02-28T10:44:06Z",
-                "lastTimestamp": "2020-02-28T10:44:09Z",
-                "count": 4,
-                "type": "Warning",
-                "eventTime": null,
-                "reportingComponent": "",
-                "reportingInstance": ""
-            }
-        ]
-    }
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "eu.gcr.io/gitpod-dev/workspace-images:e2f1689912681deb150b0c1e989f2f9babd104a6b140c71d9120c9a142f5c29b",
+            "imageID": "eu.gcr.io/gitpod-dev/workspace-images@sha256:2b707990e2db57815d6da9d0ad6cafb04c012782a48e3c6c917034b48b7efef4",
+            "containerID": "containerd://b53fad38bde9e14f6005cd7eb376470ee842f6d9894f2b66178a10c2768a028c"
+          }
+        ],
+        "qosClass": "Burstable"
+      }
+    },
+    "theiaService": {
+      "metadata": {
+        "name": "ws-c372bd58-ef61-4fc0-9083-bd61ef96ad9f-theia",
+        "namespace": "default",
+        "selfLink": "/api/v1/namespaces/default/services/ws-c372bd58-ef61-4fc0-9083-bd61ef96ad9f-theia",
+        "uid": "3ad2fd76-5a17-11ea-8d13-42010a840226",
+        "resourceVersion": "54747466",
+        "creationTimestamp": "2020-02-28T10:44:00Z",
+        "labels": {
+          "app": "gitpod",
+          "component": "workspace",
+          "gpwsman": "true",
+          "headless": "false",
+          "metaID": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
+          "owner": "ec566d71-62a8-492e-8040-51850d9a97c4",
+          "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c",
+          "workspaceType": "regular"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "theia",
+            "protocol": "TCP",
+            "port": 23000,
+            "targetPort": 23000
+          },
+          {
+            "name": "supervisor",
+            "protocol": "TCP",
+            "port": 22999,
+            "targetPort": 22999
+          }
+        ],
+        "selector": {
+          "app": "gitpod",
+          "component": "workspace",
+          "gpwsman": "true",
+          "headless": "false",
+          "metaID": "c372bd58-ef61-4fc0-9083-bd61ef96ad9f",
+          "owner": "ec566d71-62a8-492e-8040-51850d9a97c4",
+          "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c",
+          "workspaceType": "regular"
+        },
+        "clusterIP": "10.8.5.133",
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    },
+    "portsService": {
+      "metadata": {
+        "name": "ws-c372bd58-ef61-4fc0-9083-bd61ef96ad9f-ports",
+        "namespace": "default",
+        "selfLink": "/api/v1/namespaces/default/services/ws-c372bd58-ef61-4fc0-9083-bd61ef96ad9f-ports",
+        "uid": "3ad8841e-5a17-11ea-8d13-42010a840226",
+        "resourceVersion": "54747470",
+        "creationTimestamp": "2020-02-28T10:44:00Z",
+        "labels": {
+          "gpwsman": "true",
+          "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "p1337-public",
+            "protocol": "TCP",
+            "port": 1337,
+            "targetPort": 31337
+          },
+          {
+            "name": "p3000-public",
+            "protocol": "TCP",
+            "port": 3000,
+            "targetPort": 33000
+          },
+          {
+            "name": "p3001-public",
+            "protocol": "TCP",
+            "port": 3001,
+            "targetPort": 33001
+          },
+          {
+            "name": "p4000-public",
+            "protocol": "TCP",
+            "port": 4000,
+            "targetPort": 34000
+          },
+          {
+            "name": "p9229-public",
+            "protocol": "TCP",
+            "port": 9229,
+            "targetPort": 39229
+          },
+          {
+            "name": "p5900-public",
+            "protocol": "TCP",
+            "port": 5900,
+            "targetPort": 35900
+          },
+          {
+            "name": "p6080-public",
+            "protocol": "TCP",
+            "port": 6080,
+            "targetPort": 36080
+          },
+          {
+            "name": "p9999-public",
+            "protocol": "TCP",
+            "port": 9999,
+            "targetPort": 39999
+          },
+          {
+            "name": "p13001-public",
+            "protocol": "TCP",
+            "port": 13001,
+            "targetPort": 43001
+          },
+          {
+            "name": "p7777-public",
+            "protocol": "TCP",
+            "port": 7777,
+            "targetPort": 37777
+          },
+          {
+            "name": "p13444-public",
+            "protocol": "TCP",
+            "port": 13444,
+            "targetPort": 43444
+          }
+        ],
+        "selector": {
+          "gpwsman": "true",
+          "workspaceID": "df376c57-7a0e-4233-976a-7a021e6f088c"
+        },
+        "clusterIP": "10.8.13.117",
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    },
+    "events": [
+      {
+        "metadata": {
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c - scheduledf96cp",
+          "generateName": "ws-df376c57-7a0e-4233-976a-7a021e6f088c - scheduled",
+          "namespace": "default",
+          "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c+-+scheduledf96cp",
+          "uid": "3ad0045b-5a17-11ea-bb55-42010a840225",
+          "resourceVersion": "855785",
+          "creationTimestamp": "2020-02-28T10:44:00Z"
+        },
+        "involvedObject": {
+          "kind": "Pod",
+          "namespace": "default",
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+          "uid": "3acac34d-5a17-11ea-8d13-42010a840226"
+        },
+        "reason": "Scheduled",
+        "message": "Placed pod [default/ws-df376c57-7a0e-4233-976a-7a021e6f088c] on gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq\n",
+        "source": {
+          "component": "workspace-scheduler"
+        },
+        "firstTimestamp": "2020-02-28T10:44:00Z",
+        "lastTimestamp": "2020-02-28T10:44:00Z",
+        "count": 1,
+        "type": "Normal",
+        "eventTime": null,
+        "reportingComponent": "",
+        "reportingInstance": ""
+      },
+      {
+        "metadata": {
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b038483213b",
+          "namespace": "default",
+          "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b038483213b",
+          "uid": "3b3b297b-5a17-11ea-bb55-42010a840225",
+          "resourceVersion": "855786",
+          "creationTimestamp": "2020-02-28T10:44:01Z"
+        },
+        "involvedObject": {
+          "kind": "Pod",
+          "namespace": "default",
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+          "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
+          "apiVersion": "v1",
+          "resourceVersion": "54747461",
+          "fieldPath": "spec.containers{workspace}"
+        },
+        "reason": "Pulling",
+        "message": "pulling image \"eu.gcr.io/gitpod-dev/workspace-images:e2f1689912681deb150b0c1e989f2f9babd104a6b140c71d9120c9a142f5c29b\"",
+        "source": {
+          "component": "kubelet",
+          "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
+        },
+        "firstTimestamp": "2020-02-28T10:44:01Z",
+        "lastTimestamp": "2020-02-28T10:44:01Z",
+        "count": 1,
+        "type": "Normal",
+        "eventTime": null,
+        "reportingComponent": "",
+        "reportingInstance": ""
+      },
+      {
+        "metadata": {
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03b23e7a6c",
+          "namespace": "default",
+          "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03b23e7a6c",
+          "uid": "3bb049b6-5a17-11ea-bb55-42010a840225",
+          "resourceVersion": "855787",
+          "creationTimestamp": "2020-02-28T10:44:02Z"
+        },
+        "involvedObject": {
+          "kind": "Pod",
+          "namespace": "default",
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+          "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
+          "apiVersion": "v1",
+          "resourceVersion": "54747461",
+          "fieldPath": "spec.containers{workspace}"
+        },
+        "reason": "Pulled",
+        "message": "Successfully pulled image \"eu.gcr.io/gitpod-dev/workspace-images:e2f1689912681deb150b0c1e989f2f9babd104a6b140c71d9120c9a142f5c29b\"",
+        "source": {
+          "component": "kubelet",
+          "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
+        },
+        "firstTimestamp": "2020-02-28T10:44:02Z",
+        "lastTimestamp": "2020-02-28T10:44:02Z",
+        "count": 1,
+        "type": "Normal",
+        "eventTime": null,
+        "reportingComponent": "",
+        "reportingInstance": ""
+      },
+      {
+        "metadata": {
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03b6b3516f",
+          "namespace": "default",
+          "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03b6b3516f",
+          "uid": "3bbbf9ed-5a17-11ea-bb55-42010a840225",
+          "resourceVersion": "855788",
+          "creationTimestamp": "2020-02-28T10:44:02Z"
+        },
+        "involvedObject": {
+          "kind": "Pod",
+          "namespace": "default",
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+          "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
+          "apiVersion": "v1",
+          "resourceVersion": "54747461",
+          "fieldPath": "spec.containers{workspace}"
+        },
+        "reason": "Created",
+        "message": "Created container",
+        "source": {
+          "component": "kubelet",
+          "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
+        },
+        "firstTimestamp": "2020-02-28T10:44:02Z",
+        "lastTimestamp": "2020-02-28T10:44:02Z",
+        "count": 1,
+        "type": "Normal",
+        "eventTime": null,
+        "reportingComponent": "",
+        "reportingInstance": ""
+      },
+      {
+        "metadata": {
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03bd9420a5",
+          "namespace": "default",
+          "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03bd9420a5",
+          "uid": "3bcd4583-5a17-11ea-bb55-42010a840225",
+          "resourceVersion": "855789",
+          "creationTimestamp": "2020-02-28T10:44:02Z"
+        },
+        "involvedObject": {
+          "kind": "Pod",
+          "namespace": "default",
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+          "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
+          "apiVersion": "v1",
+          "resourceVersion": "54747461",
+          "fieldPath": "spec.containers{workspace}"
+        },
+        "reason": "Started",
+        "message": "Started container",
+        "source": {
+          "component": "kubelet",
+          "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
+        },
+        "firstTimestamp": "2020-02-28T10:44:02Z",
+        "lastTimestamp": "2020-02-28T10:44:02Z",
+        "count": 1,
+        "type": "Normal",
+        "eventTime": null,
+        "reportingComponent": "",
+        "reportingInstance": ""
+      },
+      {
+        "metadata": {
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03d161c3d6",
+          "namespace": "default",
+          "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b03d161c3d6",
+          "uid": "3bfff999-5a17-11ea-bb55-42010a840225",
+          "resourceVersion": "855792",
+          "creationTimestamp": "2020-02-28T10:44:02Z"
+        },
+        "involvedObject": {
+          "kind": "Pod",
+          "namespace": "default",
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+          "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
+          "apiVersion": "v1",
+          "resourceVersion": "54747461",
+          "fieldPath": "spec.containers{workspace}"
+        },
+        "reason": "Unhealthy",
+        "message": "Readiness probe failed: Get http://10.4.5.45:23000/: dial tcp 10.4.5.45:23000: connect: connection refused",
+        "source": {
+          "component": "kubelet",
+          "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
+        },
+        "firstTimestamp": "2020-02-28T10:44:02Z",
+        "lastTimestamp": "2020-02-28T10:44:04Z",
+        "count": 3,
+        "type": "Warning",
+        "eventTime": null,
+        "reportingComponent": "",
+        "reportingInstance": ""
+      },
+      {
+        "metadata": {
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b04bfd2e33e",
+          "namespace": "default",
+          "selfLink": "/api/v1/namespaces/default/events/ws-df376c57-7a0e-4233-976a-7a021e6f088c.15f78b04bfd2e33e",
+          "uid": "3e626a24-5a17-11ea-bb55-42010a840225",
+          "resourceVersion": "855796",
+          "creationTimestamp": "2020-02-28T10:44:06Z"
+        },
+        "involvedObject": {
+          "kind": "Pod",
+          "namespace": "default",
+          "name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+          "uid": "3acac34d-5a17-11ea-8d13-42010a840226",
+          "apiVersion": "v1",
+          "resourceVersion": "54747461",
+          "fieldPath": "spec.containers{workspace}"
+        },
+        "reason": "Unhealthy",
+        "message": "Readiness probe failed: Get http://10.4.5.45:23000/: net/http: request canceled (Client.Timeout exceeded while awaiting headers)",
+        "source": {
+          "component": "kubelet",
+          "host": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
+        },
+        "firstTimestamp": "2020-02-28T10:44:06Z",
+        "lastTimestamp": "2020-02-28T10:44:09Z",
+        "count": 4,
+        "type": "Warning",
+        "eventTime": null,
+        "reportingComponent": "",
+        "reportingInstance": ""
+      }
+    ]
+  }
 }

@@ -1,88 +1,86 @@
 {
-    "request": {
-        "metadata": {
-            "meta_id": "a96a0ea8-879b-4f4d-91c7-dbb069e7f18a",
-            "owner": "ec566d71-62a8-492e-8040-51850d9a97c4"
-        },
-        "id": "edcfaa87-12e0-4343-92ff-029bfad78fb7",
-        "service_prefix": "a96a0ea8-879b-4f4d-91c7-dbb069e7f18a",
-        "spec": {
-            "feature_flags": [
-                1
-            ],
-            "timeout": "60m",
-            "checkout_location": "gitpod",
-            "git": {
-                "username": "Christian Weichel",
-                "email": "some@user.com"
-            },
-            "initializer": {
-                "snapshot": {
-                    "snapshot": "workspaces/cryptic-id-goes-herg/fd62804b-4cab-11e9-843a-4e645373048e.tar@gitpod-dev-user-christesting"
-                }
-            },
-            "workspace_location": "gitpod/gitpod-ws.json",
-            "envvars": [],
-            "theia_version": "master.2507",
-            "ports": [
-                {
-                    "port": 1337,
-                    "visibility": 1
-                },
-                {
-                    "port": 3000,
-                    "visibility": 1
-                },
-                {
-                    "port": 3001,
-                    "visibility": 1
-                },
-                {
-                    "port": 3306,
-                    "visibility": 1
-                },
-                {
-                    "port": 4000,
-                    "visibility": 1
-                },
-                {
-                    "visibility": 1,
-                    "port": 5900
-                },
-                {
-                    "port": 6080,
-                    "visibility": 1
-                },
-                {
-                    "port": 9229,
-                    "visibility": 1
-                },
-                {
-                    "port": 5900,
-                    "visibility": 1
-                },
-                {
-                    "port": 6080,
-                    "visibility": 1
-                },
-                {
-                    "port": 9999,
-                    "visibility": 1
-                },
-                {
-                    "port": 13001,
-                    "visibility": 1
-                },
-                {
-                    "visibility": 1,
-                    "port": 7777
-                },
-                {
-                    "visibility": 1,
-                    "port": 13444
-                }
-            ],
-            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:0a59ddf4bc099439b7a6e0718ad47042cb8e3e640e26f8281dbc2e9eca3f52c6"
+  "request": {
+    "metadata": {
+      "meta_id": "a96a0ea8-879b-4f4d-91c7-dbb069e7f18a",
+      "owner": "ec566d71-62a8-492e-8040-51850d9a97c4"
+    },
+    "id": "edcfaa87-12e0-4343-92ff-029bfad78fb7",
+    "service_prefix": "a96a0ea8-879b-4f4d-91c7-dbb069e7f18a",
+    "spec": {
+      "feature_flags": [1],
+      "timeout": "60m",
+      "checkout_location": "gitpod",
+      "git": {
+        "username": "Christian Weichel",
+        "email": "some@user.com"
+      },
+      "initializer": {
+        "snapshot": {
+          "snapshot": "workspaces/cryptic-id-goes-herg/fd62804b-4cab-11e9-843a-4e645373048e.tar@gitpod-dev-user-christesting"
         }
+      },
+      "workspace_location": "gitpod/gitpod-ws.json",
+      "envvars": [],
+      "theia_version": "master.2507",
+      "ports": [
+        {
+          "port": 1337,
+          "visibility": 1
+        },
+        {
+          "port": 3000,
+          "visibility": 1
+        },
+        {
+          "port": 3001,
+          "visibility": 1
+        },
+        {
+          "port": 3306,
+          "visibility": 1
+        },
+        {
+          "port": 4000,
+          "visibility": 1
+        },
+        {
+          "visibility": 1,
+          "port": 5900
+        },
+        {
+          "port": 6080,
+          "visibility": 1
+        },
+        {
+          "port": 9229,
+          "visibility": 1
+        },
+        {
+          "port": 5900,
+          "visibility": 1
+        },
+        {
+          "port": 6080,
+          "visibility": 1
+        },
+        {
+          "port": 9999,
+          "visibility": 1
+        },
+        {
+          "port": 13001,
+          "visibility": 1
+        },
+        {
+          "visibility": 1,
+          "port": 7777
+        },
+        {
+          "visibility": 1,
+          "port": 13444
+        }
+      ],
+      "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:0a59ddf4bc099439b7a6e0718ad47042cb8e3e640e26f8281dbc2e9eca3f52c6"
     }
+  }
 }

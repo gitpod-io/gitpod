@@ -1,25 +1,25 @@
 {
-    "$schema": "./wsspec-schema.json",
-    "workspaceImage": "k8s.gcr.io/pause:3.1",
-    "initializer": {
-        "empty": {}
-    },
-    "ports": [
-        {
-            "port": 8080
-        }
-    ],
-    "envvars": [
-        {
-            "name": "foo",
-            "value": "bar"
-        }
-    ],
-    "checkoutLocation": ".",
-    "workspaceLocation": ".",
-    "theiaVersion": "master.2358",
-    "git": {
-        "username": "32leaves",
-        "email": "christian.weichel@typefox.io"
+  "$schema": "./wsspec-schema.json",
+  "workspaceImage": "k8s.gcr.io/pause:3.1",
+  "initializer": {
+    "empty": {}
+  },
+  "ports": [
+    {
+      "port": 8080
     }
+  ],
+  "envvars": [
+    {
+      "name": "foo",
+      "value": "bar"
+    }
+  ],
+  "checkoutLocation": ".",
+  "workspaceLocation": ".",
+  "theiaVersion": "master.2358",
+  "git": {
+    "username": "32leaves",
+    "email": "christian.weichel@typefox.io"
+  }
 }

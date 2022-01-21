@@ -13,9 +13,7 @@
         "component": "workspace",
         "app": "gitpod"
       },
-      "clusterIPs": [
-        "10.112.154.112"
-      ],
+      "clusterIPs": ["10.112.154.112"],
       "sessionAffinity": "None",
       "ports": [
         {
@@ -600,10 +598,7 @@
             "timeoutSeconds": 1,
             "failureThreshold": 600
           },
-          "command": [
-            "/.supervisor/workspacekit",
-            "ring0"
-          ],
+          "command": ["/.supervisor/workspacekit", "ring0"],
           "ports": [
             {
               "containerPort": 23000,
@@ -725,13 +720,7 @@
             "runAsGroup": 33333,
             "allowPrivilegeEscalation": true,
             "capabilities": {
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE",
-                "SYS_PTRACE"
-              ],
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"],
               "drop": [
                 "SETPCAP",
                 "CHOWN",
@@ -779,9 +768,7 @@
           "localhostProfile": "workspace_default_main.1254.json"
         },
         "fsGroup": 1,
-        "supplementalGroups": [
-          1
-        ]
+        "supplementalGroups": [1]
       },
       "schedulerName": "workspace-scheduler",
       "dnsPolicy": "None",
@@ -859,10 +846,7 @@
       "serviceAccountName": "workspace",
       "restartPolicy": "Never",
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "automountServiceAccountToken": false
     },
@@ -933,9 +917,7 @@
     "apiVersion": "v1",
     "spec": {
       "sessionAffinity": "None",
-      "clusterIPs": [
-        "10.112.153.201"
-      ],
+      "clusterIPs": ["10.112.153.201"],
       "ports": [
         {
           "targetPort": 3000,

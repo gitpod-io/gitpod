@@ -4,11 +4,7 @@
   "title": "ws-manager config schema - generated using wsman generate config",
   "definitions": {
     "": {
-      "required": [
-        "ca",
-        "crt",
-        "key"
-      ],
+      "required": ["ca", "crt", "key"],
       "properties": {
         "ca": {
           "type": "string"
@@ -24,9 +20,7 @@
       "type": "object"
     },
     "AllContainerConfiguration": {
-      "required": [
-        "workspace"
-      ],
+      "required": ["workspace"],
       "properties": {
         "workspace": {
           "$schema": "http://json-schema.org/draft-04/schema#",
@@ -106,11 +100,7 @@
       "type": "object"
     },
     "ContainerConfiguration": {
-      "required": [
-        "image",
-        "requests",
-        "limits"
-      ],
+      "required": ["image", "requests", "limits"],
       "properties": {
         "image": {
           "type": "string"
@@ -136,10 +126,7 @@
       "type": "object"
     },
     "ResourceConfiguration": {
-      "required": [
-        "cpu",
-        "memory"
-      ],
+      "required": ["cpu", "memory"],
       "properties": {
         "cpu": {
           "type": "string"
@@ -152,10 +139,7 @@
       "type": "object"
     },
     "WorkspaceSyncConfiguration": {
-      "required": [
-        "port",
-        "tls"
-      ],
+      "required": ["port", "tls"],
       "properties": {
         "port": {
           "type": "integer"
@@ -205,14 +189,7 @@
       "type": "object"
     },
     "config": {
-      "required": [
-        "messagebusURL",
-        "manager",
-        "rpcServerAddr",
-        "tls",
-        "pprofAddr",
-        "prometheusAddr"
-      ],
+      "required": ["messagebusURL", "manager", "rpcServerAddr", "tls", "pprofAddr", "prometheusAddr"],
       "properties": {
         "manager": {
           "$schema": "http://json-schema.org/draft-04/schema#",

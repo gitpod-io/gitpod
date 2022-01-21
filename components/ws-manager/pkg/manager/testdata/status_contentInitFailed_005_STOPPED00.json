@@ -514,10 +514,7 @@
           ],
           "name": "workspace",
           "image": "reg.gitpod.io:31001/remote/50bff6fd-2b1f-4d33-8b74-5362739add6f",
-          "command": [
-            "/.supervisor/workspacekit",
-            "ring0"
-          ],
+          "command": ["/.supervisor/workspacekit", "ring0"],
           "volumeMounts": [
             {
               "name": "vol-this-workspace",
@@ -562,13 +559,7 @@
                 "SETUID",
                 "SETGID"
               ],
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE",
-                "SYS_PTRACE"
-              ]
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"]
             },
             "runAsUser": 33333,
             "runAsNonRoot": true,
@@ -582,10 +573,7 @@
         }
       ],
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "imagePullSecrets": [
         {
@@ -671,9 +659,7 @@
           "localhostProfile": "workspace_default_main.1260.json"
         },
         "fsGroup": 1,
-        "supplementalGroups": [
-          1
-        ]
+        "supplementalGroups": [1]
       }
     },
     "status": {

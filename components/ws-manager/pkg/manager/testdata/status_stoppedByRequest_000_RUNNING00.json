@@ -43,9 +43,7 @@
         "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_cw-fix-6213.1.json"
       },
-      "finalizers": [
-        "gitpod.io/finalizer"
-      ],
+      "finalizers": ["gitpod.io/finalizer"],
       "managedFields": [
         {
           "manager": "calico",
@@ -442,10 +440,7 @@
         {
           "name": "workspace",
           "image": "reg.cw-fix-6213.staging.gitpod-dev.com:30558/remote/18f99de5-090f-4318-9759-05f5ef0277f7",
-          "command": [
-            "/.supervisor/workspacekit",
-            "ring0"
-          ],
+          "command": ["/.supervisor/workspacekit", "ring0"],
           "ports": [
             {
               "containerPort": 23000,
@@ -598,13 +593,7 @@
           "imagePullPolicy": "IfNotPresent",
           "securityContext": {
             "capabilities": {
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE",
-                "SYS_PTRACE"
-              ],
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"],
               "drop": [
                 "SETPCAP",
                 "CHOWN",
@@ -634,9 +623,7 @@
       "automountServiceAccountToken": false,
       "nodeName": "gke-core-dev-workspace-3-a69c4dd8-jqzs",
       "securityContext": {
-        "supplementalGroups": [
-          1
-        ],
+        "supplementalGroups": [1],
         "fsGroup": 1,
         "seccompProfile": {
           "type": "Localhost",
@@ -697,10 +684,7 @@
       ],
       "priority": 0,
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "enableServiceLinks": false,
       "preemptionPolicy": "PreemptLowerPriority"
@@ -863,9 +847,7 @@
         "workspaceType": "regular"
       },
       "clusterIP": "10.100.9.164",
-      "clusterIPs": [
-        "10.100.9.164"
-      ],
+      "clusterIPs": ["10.100.9.164"],
       "type": "ClusterIP",
       "sessionAffinity": "None"
     },
@@ -979,9 +961,7 @@
         "workspaceID": "18f99de5-090f-4318-9759-05f5ef0277f7"
       },
       "clusterIP": "10.100.1.62",
-      "clusterIPs": [
-        "10.100.1.62"
-      ],
+      "clusterIPs": ["10.100.1.62"],
       "type": "ClusterIP",
       "sessionAffinity": "None"
     },

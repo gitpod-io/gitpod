@@ -42,9 +42,7 @@
         "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_cw-wsdaemon-patch.0.json"
       },
-      "finalizers": [
-        "gitpod.io/finalizer"
-      ]
+      "finalizers": ["gitpod.io/finalizer"]
     },
     "spec": {
       "volumes": [
@@ -74,10 +72,7 @@
         {
           "name": "workspace",
           "image": "reg.cw-wsdaemon-patch.staging.gitpod-dev.com:30226/remote/cc1a3979-4e0e-42cc-bba5-a8d66485bdee",
-          "command": [
-            "/.supervisor/workspacekit",
-            "ring0"
-          ],
+          "command": ["/.supervisor/workspacekit", "ring0"],
           "ports": [
             {
               "containerPort": 23000,
@@ -221,13 +216,7 @@
           "imagePullPolicy": "IfNotPresent",
           "securityContext": {
             "capabilities": {
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE",
-                "SYS_PTRACE"
-              ],
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"],
               "drop": [
                 "SETPCAP",
                 "CHOWN",
@@ -257,9 +246,7 @@
       "automountServiceAccountToken": false,
       "nodeName": "gke-dev-workload-1-49d27f81-hhx0",
       "securityContext": {
-        "supplementalGroups": [
-          1
-        ],
+        "supplementalGroups": [1],
         "fsGroup": 1
       },
       "imagePullSecrets": [
@@ -316,10 +303,7 @@
       ],
       "priority": 0,
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "enableServiceLinks": false
     },

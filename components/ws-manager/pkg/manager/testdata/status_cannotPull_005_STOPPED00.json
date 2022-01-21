@@ -25,9 +25,7 @@
         "prometheus.io/port": "23000",
         "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade"
       },
-      "finalizers": [
-        "foregroundDeletion"
-      ],
+      "finalizers": ["foregroundDeletion"],
       "deletionGracePeriodSeconds": 30,
       "resourceVersion": "18919733",
       "deletionTimestamp": "2021-08-19T11:15:44Z",
@@ -454,13 +452,7 @@
                 "SETUID",
                 "SETGID"
               ],
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE",
-                "SYS_PTRACE"
-              ]
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"]
             }
           },
           "env": [
@@ -596,10 +588,7 @@
           "name": "workspace",
           "imagePullPolicy": "IfNotPresent",
           "terminationMessagePath": "/dev/termination-log",
-          "command": [
-            "/.supervisor/workspacekit",
-            "ring0"
-          ],
+          "command": ["/.supervisor/workspacekit", "ring0"],
           "ports": [
             {
               "containerPort": 23000,
@@ -615,9 +604,7 @@
           "type": "Localhost"
         },
         "fsGroup": 1,
-        "supplementalGroups": [
-          1
-        ]
+        "supplementalGroups": [1]
       },
       "tolerations": [
         {
@@ -659,10 +646,7 @@
       "priority": 0,
       "serviceAccount": "workspace",
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "imagePullSecrets": [
         {
@@ -1140,9 +1124,7 @@
         }
       ],
       "clusterIP": "10.112.153.201",
-      "clusterIPs": [
-        "10.112.153.201"
-      ],
+      "clusterIPs": ["10.112.153.201"],
       "type": "ClusterIP",
       "selector": {
         "workspaceID": "5031df46-db5e-43ae-91bd-1448305c001d",
@@ -1210,9 +1192,7 @@
       "uid": "a891f849-500b-426c-93b0-b0707d06b7ce",
       "deletionGracePeriodSeconds": 0,
       "resourceVersion": "18919705",
-      "finalizers": [
-        "foregroundDeletion"
-      ]
+      "finalizers": ["foregroundDeletion"]
     },
     "status": {
       "loadBalancer": {}
@@ -1233,9 +1213,7 @@
         "component": "workspace"
       },
       "name": "ws-silver-dormouse-is733prg-theia",
-      "finalizers": [
-        "foregroundDeletion"
-      ],
+      "finalizers": ["foregroundDeletion"],
       "namespace": "default",
       "managedFields": [
         {
@@ -1314,9 +1292,7 @@
           "port": 22999
         }
       ],
-      "clusterIPs": [
-        "10.112.154.112"
-      ],
+      "clusterIPs": ["10.112.154.112"],
       "selector": {
         "owner": "00000000-0000-0000-0000-000000000000",
         "component": "workspace",

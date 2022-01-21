@@ -55,9 +55,7 @@
                     {
                       "key": "gitpod.io/workload_workspace",
                       "operator": "In",
-                      "values": [
-                        "true"
-                      ]
+                      "values": ["true"]
                     }
                   ]
                 }
@@ -163,12 +161,7 @@
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
-                "add": [
-                  "AUDIT_WRITE",
-                  "FSETID",
-                  "KILL",
-                  "NET_BIND_SERVICE"
-                ],
+                "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE"],
                 "drop": [
                   "SETPCAP",
                   "CHOWN",
@@ -198,10 +191,7 @@
           }
         ],
         "dnsConfig": {
-          "nameservers": [
-            "1.1.1.1",
-            "8.8.8.8"
-          ]
+          "nameservers": ["1.1.1.1", "8.8.8.8"]
         },
         "dnsPolicy": "None",
         "enableServiceLinks": false,
@@ -216,9 +206,7 @@
         "schedulerName": "workspace-scheduler",
         "securityContext": {
           "fsGroup": 1,
-          "supplementalGroups": [
-            1
-          ]
+          "supplementalGroups": [1]
         },
         "serviceAccount": "workspace",
         "serviceAccountName": "workspace",

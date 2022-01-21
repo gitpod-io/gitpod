@@ -152,12 +152,7 @@
             "imagePullPolicy": "IfNotPresent",
             "securityContext": {
               "capabilities": {
-                "add": [
-                  "AUDIT_WRITE",
-                  "FSETID",
-                  "KILL",
-                  "NET_BIND_SERVICE"
-                ],
+                "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE"],
                 "drop": [
                   "SETPCAP",
                   "CHOWN",
@@ -186,9 +181,7 @@
         "automountServiceAccountToken": false,
         "nodeName": "gke-gitpod-staging-e-workspace-pool-2-2eb903d0-g86k",
         "securityContext": {
-          "supplementalGroups": [
-            1
-          ],
+          "supplementalGroups": [1],
           "fsGroup": 1
         },
         "imagePullSecrets": [
@@ -216,9 +209,7 @@
                     {
                       "key": "gitpod.io/workload_workspace",
                       "operator": "In",
-                      "values": [
-                        "true"
-                      ]
+                      "values": ["true"]
                     }
                   ]
                 }
@@ -243,10 +234,7 @@
         ],
         "priority": 0,
         "dnsConfig": {
-          "nameservers": [
-            "1.1.1.1",
-            "8.8.8.8"
-          ]
+          "nameservers": ["1.1.1.1", "8.8.8.8"]
         }
       },
       "status": {

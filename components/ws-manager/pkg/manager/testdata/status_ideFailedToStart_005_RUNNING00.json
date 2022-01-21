@@ -341,16 +341,11 @@
           "type": "Localhost",
           "localhostProfile": "workspace_default_main.1254.json"
         },
-        "supplementalGroups": [
-          1
-        ],
+        "supplementalGroups": [1],
         "fsGroup": 1
       },
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "dnsPolicy": "None",
       "schedulerName": "workspace-scheduler",
@@ -522,10 +517,7 @@
               "containerPort": 23000
             }
           ],
-          "command": [
-            "/.supervisor/workspacekit",
-            "ring0"
-          ],
+          "command": ["/.supervisor/workspacekit", "ring0"],
           "securityContext": {
             "readOnlyRootFilesystem": false,
             "runAsNonRoot": true,
@@ -544,13 +536,7 @@
                 "SETUID",
                 "SETGID"
               ],
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE",
-                "SYS_PTRACE"
-              ]
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"]
             },
             "runAsGroup": 33333
           },
@@ -1049,9 +1035,7 @@
   },
   "theiaService": {
     "spec": {
-      "clusterIPs": [
-        "10.108.5.7"
-      ],
+      "clusterIPs": ["10.108.5.7"],
       "type": "ClusterIP",
       "ports": [
         {

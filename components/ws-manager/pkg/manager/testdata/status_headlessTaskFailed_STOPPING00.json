@@ -426,10 +426,7 @@
         {
           "name": "workspace",
           "image": "reg.csweichel-don-t-abort-prebuild-4964.staging.gitpod-dev.com:30012/remote/60116ccc-1593-41f5-880e-6c4010dc4d1d",
-          "command": [
-            "/.supervisor/workspacekit",
-            "ring0"
-          ],
+          "command": ["/.supervisor/workspacekit", "ring0"],
           "ports": [
             {
               "containerPort": 23000,
@@ -569,13 +566,7 @@
           "imagePullPolicy": "IfNotPresent",
           "securityContext": {
             "capabilities": {
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE",
-                "SYS_PTRACE"
-              ],
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"],
               "drop": [
                 "SETPCAP",
                 "CHOWN",
@@ -605,9 +596,7 @@
       "automountServiceAccountToken": false,
       "nodeName": "gke-dev-workload-4-5712746c-38bw",
       "securityContext": {
-        "supplementalGroups": [
-          1
-        ],
+        "supplementalGroups": [1],
         "fsGroup": 1,
         "seccompProfile": {
           "type": "Localhost",
@@ -668,10 +657,7 @@
       ],
       "priority": 0,
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "enableServiceLinks": false,
       "preemptionPolicy": "PreemptLowerPriority"

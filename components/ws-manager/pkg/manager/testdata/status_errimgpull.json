@@ -152,12 +152,7 @@
           "imagePullPolicy": "IfNotPresent",
           "securityContext": {
             "capabilities": {
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE"
-              ],
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE"],
               "drop": [
                 "SETPCAP",
                 "CHOWN",

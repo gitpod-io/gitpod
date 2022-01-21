@@ -42,10 +42,7 @@
         "prometheus.io/scrape": "true",
         "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace_default_gpl-headless-log-wsman.25.json"
       },
-      "finalizers": [
-        "gitpod.io/finalizer",
-        "foregroundDeletion"
-      ]
+      "finalizers": ["gitpod.io/finalizer", "foregroundDeletion"]
     },
     "spec": {
       "volumes": [
@@ -68,10 +65,7 @@
         {
           "name": "workspace",
           "image": "reg.gpl-headless-log-wsman.staging.gitpod-dev.com:30570/remote/dbc45dce-611a-49a8-bd76-7afda76a1e24",
-          "command": [
-            "/.supervisor/workspacekit",
-            "ring0"
-          ],
+          "command": ["/.supervisor/workspacekit", "ring0"],
           "ports": [
             {
               "containerPort": 23000,
@@ -215,13 +209,7 @@
           "imagePullPolicy": "IfNotPresent",
           "securityContext": {
             "capabilities": {
-              "add": [
-                "AUDIT_WRITE",
-                "FSETID",
-                "KILL",
-                "NET_BIND_SERVICE",
-                "SYS_PTRACE"
-              ],
+              "add": ["AUDIT_WRITE", "FSETID", "KILL", "NET_BIND_SERVICE", "SYS_PTRACE"],
               "drop": [
                 "SETPCAP",
                 "CHOWN",
@@ -251,9 +239,7 @@
       "automountServiceAccountToken": false,
       "nodeName": "gke-dev-workload-1-49d27f81-3xfh",
       "securityContext": {
-        "supplementalGroups": [
-          1
-        ],
+        "supplementalGroups": [1],
         "fsGroup": 1
       },
       "imagePullSecrets": [
@@ -310,10 +296,7 @@
       ],
       "priority": 0,
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "enableServiceLinks": false
     },
@@ -402,9 +385,7 @@
         "workspaceID": "dbc45dce-611a-49a8-bd76-7afda76a1e24",
         "workspaceType": "prebuild"
       },
-      "finalizers": [
-        "foregroundDeletion"
-      ]
+      "finalizers": ["foregroundDeletion"]
     },
     "spec": {
       "ports": [
@@ -471,9 +452,7 @@
         "gitpod/port-url-9229": "https://9229-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com",
         "gitpod/port-url-9999": "https://9999-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
       },
-      "finalizers": [
-        "foregroundDeletion"
-      ]
+      "finalizers": ["foregroundDeletion"]
     },
     "spec": {
       "ports": [

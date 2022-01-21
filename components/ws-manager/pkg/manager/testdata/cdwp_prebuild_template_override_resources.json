@@ -2,10 +2,7 @@
   "defaultTemplate": {
     "spec": {
       "dnsConfig": {
-        "nameservers": [
-          "1.1.1.1",
-          "8.8.8.8"
-        ]
+        "nameservers": ["1.1.1.1", "8.8.8.8"]
       },
       "dnsPolicy": "None",
       "imagePullSecrets": [
@@ -40,9 +37,7 @@
                   {
                     "key": "gitpod.io/workload_prebuild",
                     "operator": "In",
-                    "values": [
-                      "true"
-                    ]
+                    "values": ["true"]
                   }
                 ]
               }
