@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 import * as opentracing from 'opentracing';
 import { TracingConfig, initTracerFromEnv } from 'jaeger-client';
 import { Sampler, SamplingDecision } from './jaeger-client-types';
@@ -14,286 +13,302 @@ import { ResponseError } from 'vscode-jsonrpc';
 import { log, LogContext } from './logging';
 
 export interface TraceContext {
-    span?: opentracing.Span
+  span?: opentracing.Span;
 }
 export type TraceContextWithSpan = TraceContext & {
-    span: opentracing.Span
-}
-
+  span: opentracing.Span;
+};
 
 export namespace TraceContext {
-    export function startSpan(operation: string, parentCtx?: TraceContext, ...referencedSpans: (opentracing.Span | undefined)[]): opentracing.Span {
-        const options: opentracing.SpanOptions = {};
-        if (parentCtx && parentCtx.span && !!parentCtx.span.context().toSpanId()) {
-            options.childOf = parentCtx.span;
-        }
-        if (referencedSpans) {
-            // note: allthough followsForm's type says it takes 'opentracing.Span | opentracing.SpanContext', it only works with SpanContext (typing mismatch)
-            // note2: we need to filter out debug spans (spanId === "")
-            options.references = referencedSpans.filter(s => s !== undefined)
-                .filter(s => !!s!.context().toSpanId())
-                .map(s => followsFrom(s!.context()));
-        }
-
-        return opentracing.globalTracer().startSpan(operation, options);
+  export function startSpan(
+    operation: string,
+    parentCtx?: TraceContext,
+    ...referencedSpans: (opentracing.Span | undefined)[]
+  ): opentracing.Span {
+    const options: opentracing.SpanOptions = {};
+    if (parentCtx && parentCtx.span && !!parentCtx.span.context().toSpanId()) {
+      options.childOf = parentCtx.span;
+    }
+    if (referencedSpans) {
+      // note: allthough followsForm's type says it takes 'opentracing.Span | opentracing.SpanContext', it only works with SpanContext (typing mismatch)
+      // note2: we need to filter out debug spans (spanId === "")
+      options.references = referencedSpans
+        .filter((s) => s !== undefined)
+        .filter((s) => !!s!.context().toSpanId())
+        .map((s) => followsFrom(s!.context()));
     }
 
-    export function childContext(operation: string, parentCtx: TraceContext): TraceContextWithSpan {
-        const span = startSpan(operation, parentCtx);
-        return { span };
+    return opentracing.globalTracer().startSpan(operation, options);
+  }
+
+  export function childContext(operation: string, parentCtx: TraceContext): TraceContextWithSpan {
+    const span = startSpan(operation, parentCtx);
+    return { span };
+  }
+
+  export function withSpan(
+    operation: string,
+    callback: () => void,
+    ctx?: TraceContext,
+    ...referencedSpans: (opentracing.Span | undefined)[]
+  ): void {
+    // if we don't have a parent span, don't create a trace here as those <trace-without-root-spans> are not useful.
+    if (!ctx || !ctx.span || !ctx.span.context()) {
+      callback();
+      return;
     }
 
-    export function withSpan(operation: string, callback: () => void, ctx?: TraceContext, ...referencedSpans: (opentracing.Span | undefined)[]): void {
-        // if we don't have a parent span, don't create a trace here as those <trace-without-root-spans> are not useful.
-        if (!ctx || !ctx.span || !ctx.span.context()) {
-            callback();
-            return;
-        }
+    const span = TraceContext.startSpan(operation, ctx, ...referencedSpans);
+    try {
+      callback();
+    } catch (e) {
+      TraceContext.setError({ span }, e);
+      throw e;
+    } finally {
+      span.finish();
+    }
+  }
 
-        const span = TraceContext.startSpan(operation, ctx, ...referencedSpans);
-        try {
-            callback();
-        } catch (e) {
-            TraceContext.setError({span}, e);
-            throw e;
-        } finally {
-            span.finish();
-        }
+  export function setError(ctx: TraceContext, err: Error) {
+    if (!ctx.span) {
+      return;
     }
 
-    export function setError(ctx: TraceContext, err: Error) {
-        if (!ctx.span) {
-            return;
-        }
+    TraceContext.addNestedTags(ctx, {
+      error: {
+        message: err.message,
+        stacktrace: err.stack,
+      },
+    });
+    ctx.span.setTag('error', true);
+  }
 
-        TraceContext.addNestedTags(ctx, {
-            error: {
-                message: err.message,
-                stacktrace: err.stack,
-            },
-        });
-        ctx.span.setTag("error", true);
+  export function setJsonRPCMetadata(ctx: TraceContext, method?: string) {
+    if (!ctx.span) {
+      return;
     }
 
-    export function setJsonRPCMetadata(ctx: TraceContext, method?: string) {
-        if (!ctx.span) {
-            return;
-        }
+    const tags: { [key: string]: any } = {
+      rpc: {
+        system: 'jsonrpc',
+        //  version,
+      },
+    };
+    if (method) {
+      tags.rpc.method = method;
+    }
+    addNestedTags(ctx, tags);
+  }
 
-        const tags: { [key: string]: any } = {
-            rpc: {
-                system: "jsonrpc",
-                //  version,
-            },
-        };
-        if (method) {
-            tags.rpc.method = method;
-        }
-        addNestedTags(ctx, tags);
+  export function setJsonRPCError(
+    ctx: TraceContext,
+    method: string,
+    err: ResponseError<any>,
+    withStatusCode: boolean = false,
+  ) {
+    if (!ctx.span) {
+      return;
+    }
+    // not use setError bc this is (most likely) a working operation
+
+    setJsonRPCMetadata(ctx, method);
+    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#json-rpc
+    addNestedTags(ctx, {
+      rpc: {
+        jsonrpc: {
+          error_code: err.code,
+          error_message: err.message,
+        },
+      },
+    });
+
+    // the field "status_code" is used by honeycomb to derive insights like success rate, etc. Defaults to "0".
+    if (withStatusCode) {
+      ctx.span.setTag('status_code', err.code);
+    }
+  }
+
+  export function addJsonRPCParameters(ctx: TraceContext, params: { [key: string]: any }) {
+    if (!ctx.span) {
+      return;
     }
 
-    export function setJsonRPCError(ctx: TraceContext, method: string, err: ResponseError<any>, withStatusCode: boolean = false) {
-        if (!ctx.span) {
-            return;
-        }
-        // not use setError bc this is (most likely) a working operation
+    setJsonRPCMetadata(ctx);
+    addNestedTags(ctx, {
+      rpc: {
+        jsonrpc: {
+          parameters: params,
+        },
+      },
+    });
+  }
 
-        setJsonRPCMetadata(ctx, method);
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#json-rpc
-        addNestedTags(ctx, {
-            rpc: {
-                jsonrpc: {
-                    error_code: err.code,
-                    error_message: err.message,
-                },
-            },
-        });
-
-        // the field "status_code" is used by honeycomb to derive insights like success rate, etc. Defaults to "0".
-        if (withStatusCode) {
-            ctx.span.setTag("status_code", err.code);
-        }
+  /**
+   * Does what one would expect from `span.addTags`: Calls `span.addTag` for all keys in map, recursively for objects.
+   * Example:
+   * ```
+   * TraceContext.addNestedTags(ctx, {
+   *    rpc: {
+   *       system: "jsonrpc",
+   *       jsonrpc: {
+   *          version: "1.0",
+   *          method: "test",
+   *          parameters: ["abc", "def"],
+   *       },
+   *    },
+   * });
+   * ```
+   * gives
+   * rpc.system = "jsonrpc"
+   * rpc.jsonrpc.version = "1.0"
+   * rpc.jsonrpc.method = "test"
+   * rpc.jsonrpc.parameters.0 = "abc"
+   * rpc.jsonrpc.parameters.1 = "def"
+   * @param ctx
+   * @param keyValueMap
+   * @returns
+   */
+  export function addNestedTags(ctx: TraceContext, keyValueMap: { [key: string]: any }, _namespace?: string) {
+    if (!ctx.span) {
+      return;
     }
+    const namespace = _namespace ? `${_namespace}.` : '';
 
-    export function addJsonRPCParameters(ctx: TraceContext, params: { [key: string]: any }) {
-        if (!ctx.span) {
-            return;
+    try {
+      for (const k of Object.keys(keyValueMap)) {
+        const v = keyValueMap[k];
+        if (v instanceof Object) {
+          addNestedTags(ctx, v, `${namespace}${k}`);
+        } else {
+          ctx.span.setTag(`${namespace}${k}`, v);
         }
-
-        setJsonRPCMetadata(ctx);
-        addNestedTags(ctx, {
-            rpc: {
-                jsonrpc: {
-                    parameters: params,
-                },
-            },
-        });
+      }
+    } catch (err) {
+      // general resilience against odd shapes/parameters
+      log.error('Tracing.addNestedTags', err, { namespace });
     }
+  }
 
-    /**
-     * Does what one would expect from `span.addTags`: Calls `span.addTag` for all keys in map, recursively for objects.
-     * Example:
-     * ```
-     * TraceContext.addNestedTags(ctx, {
-     *    rpc: {
-     *       system: "jsonrpc",
-     *       jsonrpc: {
-     *          version: "1.0",
-     *          method: "test",
-     *          parameters: ["abc", "def"],
-     *       },
-     *    },
-     * });
-     * ```
-     * gives
-     * rpc.system = "jsonrpc"
-     * rpc.jsonrpc.version = "1.0"
-     * rpc.jsonrpc.method = "test"
-     * rpc.jsonrpc.parameters.0 = "abc"
-     * rpc.jsonrpc.parameters.1 = "def"
-     * @param ctx
-     * @param keyValueMap
-     * @returns
-     */
-    export function addNestedTags(ctx: TraceContext, keyValueMap: { [key: string]: any }, _namespace?: string) {
-        if (!ctx.span) {
-            return;
-        }
-        const namespace = _namespace ? `${_namespace}.` : '';
-
-        try {
-            for (const k of Object.keys(keyValueMap)) {
-                const v = keyValueMap[k];
-                if (v instanceof Object) {
-                    addNestedTags(ctx, v, `${namespace}${k}`);
-                } else {
-                    ctx.span.setTag(`${namespace}${k}`, v);
-                }
-            }
-        } catch (err) {
-            // general resilience against odd shapes/parameters
-            log.error("Tracing.addNestedTags", err, { namespace });
-        }
+  export function setOWI(ctx: TraceContext, owi: LogContext) {
+    if (!ctx.span) {
+      return;
     }
-
-    export function setOWI(ctx: TraceContext, owi: LogContext) {
-        if (!ctx.span) {
-            return;
-        }
-        addNestedTags(ctx, {
-            context: owi,
-        });
-    }
+    addNestedTags(ctx, {
+      context: owi,
+    });
+  }
 }
 
 @injectable()
 export class TracingManager {
+  public setup(serviceName: string, opts?: CustomTracerOpts) {
+    initGlobalTracer(this.getTracerForService(serviceName, opts));
+  }
 
-    public setup(serviceName: string, opts?: CustomTracerOpts) {
-        initGlobalTracer(this.getTracerForService(serviceName, opts));
+  public getTracerForService(serviceName: string, opts?: CustomTracerOpts) {
+    const config: TracingConfig = {
+      disable: false,
+      reporter: {
+        logSpans: false,
+      },
+      serviceName,
+    };
+    const t = initTracerFromEnv(config, {
+      logger: console,
+      tags: {
+        'service.build.commit': process.env.GITPOD_BUILD_GIT_COMMIT,
+        'service.build.version': process.env.GITPOD_BUILD_VERSION,
+      },
+    });
+
+    if (opts) {
+      if (opts.perOpSampling) {
+        (t as any)._sampler = new PerOperationSampler((t as any)._sampler, opts.perOpSampling);
+      }
     }
-
-    public getTracerForService(serviceName: string, opts?: CustomTracerOpts) {
-        const config: TracingConfig = {
-            disable: false,
-            reporter: {
-                logSpans: false
-            },
-            serviceName,
-        }
-        const t = initTracerFromEnv(config, {
-            logger: console,
-            tags: {
-                'service.build.commit': process.env.GITPOD_BUILD_GIT_COMMIT,
-                'service.build.version': process.env.GITPOD_BUILD_VERSION,
-            }
-        });
-
-        if (opts) {
-            if (opts.perOpSampling) {
-                (t as any)._sampler = new PerOperationSampler((t as any)._sampler, opts.perOpSampling);
-            }
-        }
-        return t;
-    }
-
+    return t;
+  }
 }
 
 export interface CustomTracerOpts {
-    perOpSampling?: PerOperationSampling
+  perOpSampling?: PerOperationSampling;
 }
-
 
 // has to conform to https://github.com/jaegertracing/jaeger-client-node/blob/0042b1c0a0796bb655eb93e77ff76ab5e94c2bb6/src/_flow/sampler-thrift.js#L32
 export interface PerOperationSampling {
-    [key: string]: boolean
+  [key: string]: boolean;
 }
 
 export class PerOperationSampler implements Sampler {
-    constructor(protected readonly fallback: Sampler, protected readonly strategies: PerOperationSampling) {}
+  constructor(protected readonly fallback: Sampler, protected readonly strategies: PerOperationSampling) {}
 
-    name(): string {
-        return 'PerOperationSampler';
+  name(): string {
+    return 'PerOperationSampler';
+  }
+
+  toString(): string {
+    return `${this.name()}`;
+  }
+
+  isSampled(operation: string, tags: any): boolean {
+    let shouldSample = this.strategies[operation];
+    if (shouldSample === undefined) {
+      if (!this.fallback.isSampled) {
+        return false;
+      }
+      return this.fallback.isSampled(operation, tags);
     }
 
-    toString(): string {
-        return `${this.name()}`;
-    }
+    return shouldSample;
+  }
 
-    isSampled(operation: string, tags: any): boolean {
-        let shouldSample = this.strategies[operation];
-        if (shouldSample === undefined) {
-            if (!this.fallback.isSampled) {
-                return false;
-            }
-            return this.fallback.isSampled(operation, tags);
-        }
+  onCreateSpan(span: opentracing.Span): SamplingDecision {
+    const outTags = {};
+    const isSampled = this.isSampled((span as any).operationName, outTags);
+    // NB: return retryable=true here since we can change decision after setOperationName().
+    return { sample: isSampled, retryable: true, tags: outTags };
+  }
 
-        return shouldSample;
-    }
+  onSetOperationName(span: opentracing.Span, operationName: string): SamplingDecision {
+    const outTags = {};
+    const isSampled = this.isSampled((span as any).operationName, outTags);
+    return { sample: isSampled, retryable: false, tags: outTags };
+  }
 
-    onCreateSpan(span: opentracing.Span): SamplingDecision {
-        const outTags = {};
-        const isSampled = this.isSampled((span as any).operationName, outTags);
-        // NB: return retryable=true here since we can change decision after setOperationName().
-        return { sample: isSampled, retryable: true, tags: outTags };
-    }
+  onSetTag(span: opentracing.Span, key: string, value: any): SamplingDecision {
+    return { sample: false, retryable: true, tags: null };
+  }
 
-    onSetOperationName(span: opentracing.Span, operationName: string): SamplingDecision {
-        const outTags = {};
-        const isSampled = this.isSampled((span as any).operationName, outTags);
-        return { sample: isSampled, retryable: false, tags: outTags };
-    }
+  equal(other: Sampler): boolean {
+    return false; // TODO equal should be removed
+  }
 
-    onSetTag(span: opentracing.Span, key: string, value: any): SamplingDecision {
-        return { sample: false, retryable: true, tags: null };
+  close(callback: () => void): void {
+    // all nested samplers are of simple types, so we do not need to Close them
+    if (callback) {
+      callback();
     }
-
-    equal(other: Sampler): boolean {
-        return false; // TODO equal should be removed
-    }
-
-    close(callback: ()=>void): void {
-        // all nested samplers are of simple types, so we do not need to Close them
-        if (callback) {
-            callback();
-        }
-    }
+  }
 }
 
 // Augment interfaces with an leading parameter "TraceContext" on every method
-type IsValidArg<T> = T extends object ? keyof T extends never ? false : true : true;
-type AddTraceContext<T> =
-    T extends (a: infer A, b: infer B, c: infer C, d: infer D, e: infer E, f: infer F) => infer R ? (
-        IsValidArg<F> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E, f: F) => R :
-        IsValidArg<E> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E) => R :
-        IsValidArg<D> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D) => R :
-        IsValidArg<C> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C) => R :
-        IsValidArg<B> extends true ? (ctx: TraceContextWithSpan, a: A, b: B) => R :
-        IsValidArg<A> extends true ? (ctx: TraceContextWithSpan, a: A) => R :
-        (ctx: TraceContextWithSpan) => Promise<R>
-    ) : never;
+type IsValidArg<T> = T extends object ? (keyof T extends never ? false : true) : true;
+type AddTraceContext<T> = T extends (a: infer A, b: infer B, c: infer C, d: infer D, e: infer E, f: infer F) => infer R
+  ? IsValidArg<F> extends true
+    ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E, f: F) => R
+    : IsValidArg<E> extends true
+    ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E) => R
+    : IsValidArg<D> extends true
+    ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D) => R
+    : IsValidArg<C> extends true
+    ? (ctx: TraceContextWithSpan, a: A, b: B, c: C) => R
+    : IsValidArg<B> extends true
+    ? (ctx: TraceContextWithSpan, a: A, b: B) => R
+    : IsValidArg<A> extends true
+    ? (ctx: TraceContextWithSpan, a: A) => R
+    : (ctx: TraceContextWithSpan) => Promise<R>
+  : never;
 
 export type InterfaceWithTraceContext<T> = {
-    [P in keyof T]: AddTraceContext<T[P]>
+  [P in keyof T]: AddTraceContext<T[P]>;
 };

@@ -4,35 +4,34 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 export interface LicenseValidationResult {
-    valid: boolean
-    msg?: string
-    issue?: LicenseIssue
+  valid: boolean;
+  msg?: string;
+  issue?: LicenseIssue;
 }
 
-export type LicenseIssue = "seats-exhausted";
+export type LicenseIssue = 'seats-exhausted';
 
 export interface LicenseInfo {
-    key: string;
-    seats: number;
-    valid: boolean;
-    validUntil: string;
-    plan?: string;
+  key: string;
+  seats: number;
+  valid: boolean;
+  validUntil: string;
+  plan?: string;
 }
 
 export interface GetLicenseInfoResult {
-    isAdmin: boolean;
-    licenseInfo: LicenseInfo;
+  isAdmin: boolean;
+  licenseInfo: LicenseInfo;
 }
 
 export enum LicenseFeature {
-    CreateSnapshot = "create-snapshot",
-    // room for more
+  CreateSnapshot = 'create-snapshot',
+  // room for more
 }
 
 export interface LicenseService {
-    validateLicense(): Promise<LicenseValidationResult>;
-    getLicenseInfo(): Promise<GetLicenseInfoResult>;
-    licenseIncludesFeature(feature: LicenseFeature): Promise<boolean>
+  validateLicense(): Promise<LicenseValidationResult>;
+  getLicenseInfo(): Promise<GetLicenseInfoResult>;
+  licenseIncludesFeature(feature: LicenseFeature): Promise<boolean>;
 }

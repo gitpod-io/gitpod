@@ -8,10 +8,10 @@
 // DO NOT MODIFY
 
 export enum WorkspaceInitSource {
-    WorkspaceInitFromBackup = "from-backup",
-    WorkspaceInitFromPrebuild = "from-prebuild",
-    WorkspaceInitFromOther = "from-other",
+  WorkspaceInitFromBackup = 'from-backup',
+  WorkspaceInitFromPrebuild = 'from-prebuild',
+  WorkspaceInitFromOther = 'from-other',
 }
 export interface WorkspaceReadyMessage {
-    source: WorkspaceInitSource
+  source: WorkspaceInitSource;
 }

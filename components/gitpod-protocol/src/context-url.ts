@@ -5,9 +5,9 @@
  */
 
 export namespace ContextURL {
-  export const INCREMENTAL_PREBUILD_PREFIX = "incremental-prebuild";
-  export const PREBUILD_PREFIX = "prebuild";
-  export const IMAGEBUILD_PREFIX = "imagebuild";
+  export const INCREMENTAL_PREBUILD_PREFIX = 'incremental-prebuild';
+  export const PREBUILD_PREFIX = 'prebuild';
+  export const IMAGEBUILD_PREFIX = 'imagebuild';
 
   /**
    * The field "contextUrl" might contain prefixes like:
@@ -20,29 +20,30 @@ export namespace ContextURL {
       return undefined;
     }
 
-    const segments = contextUrl.split("/");
+    const segments = contextUrl.split('/');
     if (segments.length === 1) {
-      return new URL(segments[0]);  // this might be something, we just try
+      return new URL(segments[0]); // this might be something, we just try
     }
 
     const segmentsToURL = (offset: number): URL => {
-      let rest = segments.slice(offset).join("/");
-      if (!rest.startsWith("http")) {
+      let rest = segments.slice(offset).join('/');
+      if (!rest.startsWith('http')) {
         rest = 'https://' + rest;
       }
       return new URL(rest);
     };
 
-
     const firstSegment = segments[0];
-    if (firstSegment === PREBUILD_PREFIX ||
-        firstSegment === INCREMENTAL_PREBUILD_PREFIX ||
-        firstSegment === IMAGEBUILD_PREFIX) {
+    if (
+      firstSegment === PREBUILD_PREFIX ||
+      firstSegment === INCREMENTAL_PREBUILD_PREFIX ||
+      firstSegment === IMAGEBUILD_PREFIX
+    ) {
       return segmentsToURL(1);
     }
 
     // check for env vars
-    if (firstSegment.indexOf("=") !== -1) {
+    if (firstSegment.indexOf('=') !== -1) {
       return segmentsToURL(1);
     }
 

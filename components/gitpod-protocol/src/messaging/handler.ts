@@ -5,23 +5,23 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { MessageConnection } from "vscode-jsonrpc";
+import { MessageConnection } from 'vscode-jsonrpc';
 
 export const ConnectionHandler = Symbol('ConnectionHandler');
 
 export interface ConnectionHandler {
-    readonly path: string;
-    onConnection(connection: MessageConnection, session?: object): void;
+  readonly path: string;
+  onConnection(connection: MessageConnection, session?: object): void;
 }
 
 export interface ConnectionEventHandler {
-    /**
-     * Called when the transport underpinning the connection got closed
-     */
-     onTransportDidClose(): void;
+  /**
+   * Called when the transport underpinning the connection got closed
+   */
+  onTransportDidClose(): void;
 
-     /**
-      * Called when the transport underpinning the connection is (re-)opened
-      */
-     onTransportDidOpen(): void;
+  /**
+   * Called when the transport underpinning the connection is (re-)opened
+   */
+  onTransportDidOpen(): void;
 }

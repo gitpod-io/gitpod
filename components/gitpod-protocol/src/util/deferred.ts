@@ -5,26 +5,26 @@
  */
 
 export class Deferred<T> {
-    resolve: (value?: T) => void;
-    reject: (err?: any) => void;
-    isResolved: boolean = false;
-    timer: NodeJS.Timer;
+  resolve: (value?: T) => void;
+  reject: (err?: any) => void;
+  isResolved: boolean = false;
+  timer: NodeJS.Timer;
 
-    constructor(timeout?: number) {
-        if (timeout) {
-            this.timer = setTimeout(() => this.reject(new Error(`Timeout of ${timeout} ms.`)), timeout);
-        }
+  constructor(timeout?: number) {
+    if (timeout) {
+      this.timer = setTimeout(() => this.reject(new Error(`Timeout of ${timeout} ms.`)), timeout);
     }
+  }
 
-    promise = new Promise<T>((resolve, reject) => {
-        this.resolve = (o) => {
-            this.isResolved = true;
-            resolve(o as any)
-            clearTimeout(this.timer)
-        };
-        this.reject = (e) => {
-            reject(e)
-            clearTimeout(this.timer)
-        }
-    });
+  promise = new Promise<T>((resolve, reject) => {
+    this.resolve = (o) => {
+      this.isResolved = true;
+      resolve(o as any);
+      clearTimeout(this.timer);
+    };
+    this.reject = (e) => {
+      reject(e);
+      clearTimeout(this.timer);
+    };
+  });
 }

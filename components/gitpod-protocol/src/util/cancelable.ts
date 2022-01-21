@@ -4,28 +4,28 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Disposable } from "./disposable";
+import { Disposable } from './disposable';
 
 export class Cancelable<T> implements Disposable {
-    protected canceled: boolean;
+  protected canceled: boolean;
 
-    constructor(protected readonly activity: (cancel: boolean) => Promise<T> | undefined) { }
+  constructor(protected readonly activity: (cancel: boolean) => Promise<T> | undefined) {}
 
-    public async run(): Promise<T | undefined> {
-        for(let r = await this.activity(this.canceled); ; r = await this.activity(this.canceled)) {
-            if (this.canceled) {
-                return;
-            } else if (r !== undefined) {
-                return r;
-            }
-        }
+  public async run(): Promise<T | undefined> {
+    for (let r = await this.activity(this.canceled); ; r = await this.activity(this.canceled)) {
+      if (this.canceled) {
+        return;
+      } else if (r !== undefined) {
+        return r;
+      }
     }
+  }
 
-    public cancel() {
-        this.canceled = true;
-    }
+  public cancel() {
+    this.canceled = true;
+  }
 
-    dispose(): void {
-        this.cancel();
-    }
+  dispose(): void {
+    this.cancel();
+  }
 }

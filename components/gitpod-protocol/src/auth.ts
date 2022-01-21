@@ -5,23 +5,23 @@
  */
 
 export interface SelectAccountPayload {
-    currentUser: {
-        name: string;
-        avatarUrl: string;
-        authHost: string;
-        authName: string;
-        authProviderType: string;
-    },
-    otherUser: {
-        name: string;
-        avatarUrl: string;
-        authHost: string;
-        authName: string;
-        authProviderType: string;
-    }
+  currentUser: {
+    name: string;
+    avatarUrl: string;
+    authHost: string;
+    authName: string;
+    authProviderType: string;
+  };
+  otherUser: {
+    name: string;
+    avatarUrl: string;
+    authHost: string;
+    authName: string;
+    authProviderType: string;
+  };
 }
 export namespace SelectAccountPayload {
-    export function is(data: any): data is SelectAccountPayload {
-        return typeof data === "object" && "currentUser" in data && "otherUser" in data;
-    }
+  export function is(data: any): data is SelectAccountPayload {
+    return typeof data === 'object' && 'currentUser' in data && 'otherUser' in data;
+  }
 }

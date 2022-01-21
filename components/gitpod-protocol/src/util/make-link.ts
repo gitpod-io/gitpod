@@ -5,18 +5,17 @@
  */
 
 function isOpenNewTab(event: MouseEvent): boolean {
-    return event.metaKey || (event.ctrlKey);
+  return event.metaKey || event.ctrlKey;
 }
 
 export function makeLink(node: HTMLElement, url: string, hover: string): void {
-    node.onclick = event => {
-        let target = '_self';
-        if (isOpenNewTab(event)) {
-            target = '_blank';
-        }
-        window.open(url, target);
+  node.onclick = (event) => {
+    let target = '_self';
+    if (isOpenNewTab(event)) {
+      target = '_blank';
     }
-    node.style.cursor = 'pointer';
-    node.title = hover;
+    window.open(url, target);
+  };
+  node.style.cursor = 'pointer';
+  node.title = hover;
 }
-

@@ -8,5 +8,5 @@
  * Takes the idea of Partial<T> and applies that recursively to all child objects
  */
 export type DeepPartial<T> = {
-    [P in keyof T]?: DeepPartial<T[P]>;
+  [P in keyof T]?: DeepPartial<T[P]>;
 };

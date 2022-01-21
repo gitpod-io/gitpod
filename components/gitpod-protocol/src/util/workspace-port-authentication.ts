@@ -5,16 +5,13 @@
  */
 
 /**
-* These cookies are set in the Theia frontend. This pattern is relied upon in:
-*  - proxy:
-*    - to filter it out on port locations
-*    - to forward it to the server for authentication
-*  - server:
-*    - to authenticate access to port locations
-*/
-export const worspacePortAuthCookieName = function(host: string, workspaceId: string): string {
-    return host
-        .replace(/https?/, '')
-        .replace(/[\W_]+/g, "_")
-        + `_ws_${workspaceId}_port_auth_`;
+ * These cookies are set in the Theia frontend. This pattern is relied upon in:
+ *  - proxy:
+ *    - to filter it out on port locations
+ *    - to forward it to the server for authentication
+ *  - server:
+ *    - to authenticate access to port locations
+ */
+export const worspacePortAuthCookieName = function (host: string, workspaceId: string): string {
+  return host.replace(/https?/, '').replace(/[\W_]+/g, '_') + `_ws_${workspaceId}_port_auth_`;
 };

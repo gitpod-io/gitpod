@@ -11,29 +11,28 @@ const expect = chai.expect;
 
 @suite
 export class ContextUrlTest {
+  @test public parseContextUrl_withEnvVar() {
+    const actual = ContextURL.parseToURL('passedin=test%20value/https://github.com/gitpod-io/gitpod-test-repo');
+    expect(actual?.host).to.equal('github.com');
+    expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo');
+  }
 
-    @test public parseContextUrl_withEnvVar() {
-        const actual = ContextURL.parseToURL("passedin=test%20value/https://github.com/gitpod-io/gitpod-test-repo");
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
-    }
+  @test public parseContextUrl_withEnvVar_withoutSchema() {
+    const actual = ContextURL.parseToURL('passedin=test%20value/github.com/gitpod-io/gitpod-test-repo');
+    expect(actual?.host).to.equal('github.com');
+    expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo');
+  }
 
-    @test public parseContextUrl_withEnvVar_withoutSchema() {
-        const actual = ContextURL.parseToURL("passedin=test%20value/github.com/gitpod-io/gitpod-test-repo");
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
-    }
+  @test public parseContextUrl_withPrebuild() {
+    const actual = ContextURL.parseToURL('prebuild/https://github.com/gitpod-io/gitpod-test-repo');
+    expect(actual?.host).to.equal('github.com');
+    expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo');
+  }
 
-    @test public parseContextUrl_withPrebuild() {
-        const actual = ContextURL.parseToURL("prebuild/https://github.com/gitpod-io/gitpod-test-repo");
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
-    }
-
-    @test public parseContextUrl_withPrebuild_withoutSchema() {
-        const actual = ContextURL.parseToURL("prebuild/github.com/gitpod-io/gitpod-test-repo");
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
-    }
+  @test public parseContextUrl_withPrebuild_withoutSchema() {
+    const actual = ContextURL.parseToURL('prebuild/github.com/gitpod-io/gitpod-test-repo');
+    expect(actual?.host).to.equal('github.com');
+    expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo');
+  }
 }
-module.exports = new ContextUrlTest()
+module.exports = new ContextUrlTest();
