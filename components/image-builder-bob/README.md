@@ -1,6 +1,7 @@
 ## How to try locally
 
 Prerequisite: make sure you have buildkit in the path
+
 ```bash
 cd /tmp
 curl -OL https://github.com/moby/buildkit/releases/download/v0.9.0/buildkit-v0.9.0.linux-amd64.tar.gz
@@ -9,6 +10,7 @@ sudo mv bin/* /usr/bin
 ```
 
 Set things up
+
 ```bash
 # install oci-tool for inspecting the built image
 go install github.com/csweichel/oci-tool@latest
@@ -28,6 +30,7 @@ docker push localhost:5000/source:latest
 ```
 
 Build and run
+
 ```
 # build and install bob (do this after every change)
 cd /workspace/gitpod/components/image-builder-bob

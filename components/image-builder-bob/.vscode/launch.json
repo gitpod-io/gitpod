@@ -1,17 +1,17 @@
 {
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"name": "Attach",
-			"type": "go",
-			"request": "attach",
-			"mode": "remote",
-			"remotePath": "",
-			"port":2345,
-			"host":"127.0.0.1",
-			"showLog": true,
-			"trace": "log",
-			"logOutput": "rpc"
-		}
-	]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "remotePath": "",
+      "port": 2345,
+      "host": "127.0.0.1",
+      "showLog": true,
+      "trace": "log",
+      "logOutput": "rpc"
+    }
+  ]
 }
