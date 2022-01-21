@@ -44,6 +44,19 @@ export default function () {
     const showStartWSModal = () => setIsTemplateModelOpen(true);
     const hideStartWSModal = () => setIsTemplateModelOpen(false);
 
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && ['k', 'o', 'p'].includes(event.key)) {
+                event.preventDefault();
+                showStartWSModal();
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+        }
+    }, []);
+
     return <>
         <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
 
