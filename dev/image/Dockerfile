@@ -106,7 +106,7 @@ RUN install-packages gperf \
     && cd libseccomp-2.5.2 && ./configure && make && make install
 
 # Install netcat to use it as proxy for SSH access to Harvester VMs
-RUN apt-get update && apt-get upgrade -y
+RUN apt-get update && apt-get install netcat
 
 USER gitpod
 

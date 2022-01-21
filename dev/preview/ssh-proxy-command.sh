@@ -12,4 +12,4 @@ kubectl \
 sleep 5
 
 # Use netcat as SSH expects ProxyCommand to read and write using stdin/stdout
-nc -X connect localhost "${port}"
+netcat -X connect localhost "${port}"
