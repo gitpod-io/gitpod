@@ -4,10 +4,7 @@
   "title": "image-builder config schema - generated using img generate config",
   "definitions": {
     "": {
-      "required": [
-        "address",
-        "tls"
-      ],
+      "required": ["address", "tls"],
       "properties": {
         "address": {
           "type": "string"
@@ -21,12 +18,7 @@
       "type": "object"
     },
     "Configuration": {
-      "required": [
-        "baseImageRepository",
-        "workspaceImageRepository",
-        "gitpodLayerLoc",
-        "workdir"
-      ],
+      "required": ["baseImageRepository", "workspaceImageRepository", "gitpodLayerLoc", "workdir"],
       "properties": {
         "baseImageRepository": {
           "type": "string"
@@ -54,12 +46,7 @@
       "type": "object"
     },
     "config": {
-      "required": [
-        "builder",
-        "service",
-        "prometheus",
-        "pprof"
-      ],
+      "required": ["builder", "service", "prometheus", "pprof"],
       "properties": {
         "builder": {
           "$schema": "http://json-schema.org/draft-04/schema#",
@@ -84,10 +71,7 @@
       "type": "object"
     },
     "refcacheConfig": {
-      "required": [
-        "interval",
-        "refs"
-      ],
+      "required": ["interval", "refs"],
       "properties": {
         "interval": {
           "type": "string"
@@ -103,11 +87,7 @@
       "type": "object"
     },
     "tlsConfig": {
-      "required": [
-        "ca",
-        "crt",
-        "key"
-      ],
+      "required": ["ca", "crt", "key"],
       "properties": {
         "ca": {
           "type": "string"
