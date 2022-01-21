@@ -27,4 +27,4 @@ This examples illustrates how to use the `gitpod-k3s` Docker images with 3 nodes
       volumes:
         gitpod-workspaces-node3:
       ```
-3. Run `docker-compose up` on both machines.
+4. Run `docker-compose up` on both machines.

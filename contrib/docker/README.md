@@ -9,6 +9,7 @@ To run the Gitpod Docker image you need SSL certificates for HTTPS and DNS entri
 ## Running Gitpod using `docker run`
 
 Save your SSL certificates to `./certs` and execute the following Docker command to start Gitpod in a Docker container (replace your domain):
+
 ```
 $ docker run \
     --privileged \
@@ -34,6 +35,7 @@ DOMAIN=your-domain.example.com
 Then, you need to save your SSL certificates to `./certs`.
 
 After that, simple run:
+
 ```
 $ docker-compose up
 ```
@@ -47,6 +49,7 @@ You can add custom `values.yaml` files for the Gitpod `helm` installation. Simpl
 ### Override default MinIO and RabbitMQ credentials
 
 It is recommended that you override the default MinIO and RabbitMQ credentials with custom random values. For this, create a YAML file with the following content:
+
 ```
 minio:
   accessKey: add-here-a-random-string
@@ -67,7 +70,6 @@ Instead of setting the environment variable `DOMAIN` you could also set the vari
 
 You can install a specific Gitpod version by choosing the proper image tag. You'll find all image tags here: https://console.cloud.google.com/gcr/images/gitpod-core-dev/EU/build/gitpod-k3s
 
-
 ## Persistent volumes
 
 The Gitpod Docker image stores its state in the following volumes:
@@ -78,15 +80,16 @@ The Gitpod Docker image stores its state in the following volumes:
 - `/var/gitpod/mysql`
 - `/var/gitpod/workspaces`
 
-
 ## Troubleshooting
 
 In the Gitpod Docker container runs a k3s Kubernetes cluster. You can access `kubectl` by running `docker exec` like this (change the Docker container name `gitpod` accordingly):
+
 ```
 $ docker exec gitpod kubectl get pods
 ```
 
 Gitpod will be installed in the Kubernetes cluster by the pod `gitpod-helm-installer` in the `default` namespace. That means, shortly after starting the Gitpod Docker container, you should see this pod running:
+
 ```
 $ docker exec gitpod kubectl get pods
 NAME                                READY   STATUS              RESTARTS   AGE
@@ -94,6 +97,7 @@ gitpod-helm-installer               1/1     Running             0          2m11s
 ```
 
 The installation takes some time but finally you should see something like this:
+
 ```
 $ docker exec gitpod kubectl get pods
 NAME                                READY   STATUS      RESTARTS   AGE
@@ -115,9 +119,11 @@ gitpod-helm-installer               0/1     Completed   0          4m12s
 ws-manager-bridge-b64c9f95f-5f8tf   1/1     Running     0          3m24s
 server-7f8454c5c5-pndst             1/1     Running     0          3m24s
 ```
+
 The `gitpod-helm-installer` pod is completed and all other pods are running.
 
 If a pod is crashing these commands may be helpful (change the pod name accordingly):
+
 ```bash
 # describe a pod:
 docker exec gitpod kubectl describe pod server-7f8454c5c5-pndst
