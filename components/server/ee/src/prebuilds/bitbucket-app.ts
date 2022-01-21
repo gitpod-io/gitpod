@@ -6,7 +6,7 @@
 
 import * as express from 'express';
 import { postConstruct, injectable, inject } from 'inversify';
-import { UserDB } from '@gitpod/gitpod-db/lib';
+import { UserDB, ProjectDB } from '@gitpod/gitpod-db/lib';
 import { User, StartPrebuildResult } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
@@ -15,6 +15,7 @@ import { TokenService } from '../../../src/user/token-service';
 @injectable()
 export class BitbucketApp {
 
+    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
@@ -90,8 +91,8 @@ export class BitbucketApp {
             }
 
             console.log('Starting prebuild.', { contextURL })
-            // todo@alex: add branch and project args
-            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: data.gitCloneUrl, commit: data.commitHash});
+            const project = await this.projectDB.findProjectByCloneUrl(data.gitCloneUrl);
+            const ws = await this.prebuildManager.startPrebuild({ span }, { user, project,  contextURL, cloneURL: data.gitCloneUrl, commit: data.commitHash, branch: data.branchName });
             return ws;
         } finally {
             span.finish();
