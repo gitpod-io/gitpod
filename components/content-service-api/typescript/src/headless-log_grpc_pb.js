@@ -53,10 +53,9 @@ function deserialize_contentservice_LogDownloadURLResponse(buffer_arg) {
   return headless$log_pb.LogDownloadURLResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var HeadlessLogServiceService = exports.HeadlessLogServiceService = {
+var HeadlessLogServiceService = (exports.HeadlessLogServiceService = {
   // LogDownloadURL provides a URL from where the content of a workspace can be downloaded from
-logDownloadURL: {
+  logDownloadURL: {
     path: '/contentservice.HeadlessLogService/LogDownloadURL',
     requestStream: false,
     responseStream: false,
@@ -68,7 +67,7 @@ logDownloadURL: {
     responseDeserialize: deserialize_contentservice_LogDownloadURLResponse,
   },
   // ListLogs returns a list of taskIds for the specified workspace instance
-listLogs: {
+  listLogs: {
     path: '/contentservice.HeadlessLogService/ListLogs',
     requestStream: false,
     responseStream: false,
@@ -79,6 +78,6 @@ listLogs: {
     responseSerialize: serialize_contentservice_ListLogsResponse,
     responseDeserialize: deserialize_contentservice_ListLogsResponse,
   },
-};
+});
 
 exports.HeadlessLogServiceClient = grpc.makeGenericClientConstructor(HeadlessLogServiceService);

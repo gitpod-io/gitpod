@@ -31,10 +31,9 @@ function deserialize_contentservice_DeleteUserContentResponse(buffer_arg) {
   return content_pb.DeleteUserContentResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var ContentServiceService = exports.ContentServiceService = {
+var ContentServiceService = (exports.ContentServiceService = {
   // DeleteUserContent deletes all content associated with a user.
-deleteUserContent: {
+  deleteUserContent: {
     path: '/contentservice.ContentService/DeleteUserContent',
     requestStream: false,
     responseStream: false,
@@ -45,6 +44,6 @@ deleteUserContent: {
     responseSerialize: serialize_contentservice_DeleteUserContentResponse,
     responseDeserialize: deserialize_contentservice_DeleteUserContentResponse,
   },
-};
+});
 
 exports.ContentServiceClient = grpc.makeGenericClientConstructor(ContentServiceService);

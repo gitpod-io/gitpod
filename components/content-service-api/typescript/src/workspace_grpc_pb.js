@@ -75,10 +75,9 @@ function deserialize_contentservice_WorkspaceSnapshotExistsResponse(buffer_arg) 
   return workspace_pb.WorkspaceSnapshotExistsResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var WorkspaceServiceService = exports.WorkspaceServiceService = {
+var WorkspaceServiceService = (exports.WorkspaceServiceService = {
   // WorkspaceDownloadURL provides a URL from where the content of a workspace can be downloaded from
-workspaceDownloadURL: {
+  workspaceDownloadURL: {
     path: '/contentservice.WorkspaceService/WorkspaceDownloadURL',
     requestStream: false,
     responseStream: false,
@@ -90,7 +89,7 @@ workspaceDownloadURL: {
     responseDeserialize: deserialize_contentservice_WorkspaceDownloadURLResponse,
   },
   // DeleteWorkspace deletes the content of a single workspace
-deleteWorkspace: {
+  deleteWorkspace: {
     path: '/contentservice.WorkspaceService/DeleteWorkspace',
     requestStream: false,
     responseStream: false,
@@ -102,7 +101,7 @@ deleteWorkspace: {
     responseDeserialize: deserialize_contentservice_DeleteWorkspaceResponse,
   },
   // WorkspaceSnapshotExists checks whether the snapshot exists or not
-workspaceSnapshotExists: {
+  workspaceSnapshotExists: {
     path: '/contentservice.WorkspaceService/WorkspaceSnapshotExists',
     requestStream: false,
     responseStream: false,
@@ -113,6 +112,6 @@ workspaceSnapshotExists: {
     responseSerialize: serialize_contentservice_WorkspaceSnapshotExistsResponse,
     responseDeserialize: deserialize_contentservice_WorkspaceSnapshotExistsResponse,
   },
-};
+});
 
 exports.WorkspaceServiceClient = grpc.makeGenericClientConstructor(WorkspaceServiceService);

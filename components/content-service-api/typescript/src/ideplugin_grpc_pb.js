@@ -75,10 +75,9 @@ function deserialize_ideplugin_PluginUploadURLResponse(buffer_arg) {
   return ideplugin_pb.PluginUploadURLResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var IDEPluginServiceService = exports.IDEPluginServiceService = {
+var IDEPluginServiceService = (exports.IDEPluginServiceService = {
   // UploadURL provides a URL to which clients can upload the content via HTTP PUT.
-uploadURL: {
+  uploadURL: {
     path: '/ideplugin.IDEPluginService/UploadURL',
     requestStream: false,
     responseStream: false,
@@ -90,7 +89,7 @@ uploadURL: {
     responseDeserialize: deserialize_ideplugin_PluginUploadURLResponse,
   },
   // DownloadURL provides a URL from which clients can download the content via HTTP GET.
-downloadURL: {
+  downloadURL: {
     path: '/ideplugin.IDEPluginService/DownloadURL',
     requestStream: false,
     responseStream: false,
@@ -102,7 +101,7 @@ downloadURL: {
     responseDeserialize: deserialize_ideplugin_PluginDownloadURLResponse,
   },
   // PluginHash provides a hash of the plugin
-pluginHash: {
+  pluginHash: {
     path: '/ideplugin.IDEPluginService/PluginHash',
     requestStream: false,
     responseStream: false,
@@ -113,6 +112,6 @@ pluginHash: {
     responseSerialize: serialize_ideplugin_PluginHashResponse,
     responseDeserialize: deserialize_ideplugin_PluginHashResponse,
   },
-};
+});
 
 exports.IDEPluginServiceClient = grpc.makeGenericClientConstructor(IDEPluginServiceService);

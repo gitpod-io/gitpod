@@ -75,10 +75,9 @@ function deserialize_contentservice_UploadUrlResponse(buffer_arg) {
   return blobs_pb.UploadUrlResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var BlobServiceService = exports.BlobServiceService = {
+var BlobServiceService = (exports.BlobServiceService = {
   // UploadUrl provides a URL to which clients can upload the content via HTTP PUT.
-uploadUrl: {
+  uploadUrl: {
     path: '/contentservice.BlobService/UploadUrl',
     requestStream: false,
     responseStream: false,
@@ -90,7 +89,7 @@ uploadUrl: {
     responseDeserialize: deserialize_contentservice_UploadUrlResponse,
   },
   // DownloadUrl provides a URL from which clients can download the content via HTTP GET.
-downloadUrl: {
+  downloadUrl: {
     path: '/contentservice.BlobService/DownloadUrl',
     requestStream: false,
     responseStream: false,
@@ -102,7 +101,7 @@ downloadUrl: {
     responseDeserialize: deserialize_contentservice_DownloadUrlResponse,
   },
   // Delete deletes the uploaded content.
-delete: {
+  delete: {
     path: '/contentservice.BlobService/Delete',
     requestStream: false,
     responseStream: false,
@@ -113,6 +112,6 @@ delete: {
     responseSerialize: serialize_contentservice_DeleteResponse,
     responseDeserialize: deserialize_contentservice_DeleteResponse,
   },
-};
+});
 
 exports.BlobServiceClient = grpc.makeGenericClientConstructor(BlobServiceService);
