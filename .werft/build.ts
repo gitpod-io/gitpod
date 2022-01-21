@@ -619,7 +619,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
     } finally {
         // produce the result independently of install succeding, so that in case fails we still have the URL.
-        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/projects`);
+        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
     }
 
     try {
