@@ -6,6 +6,8 @@ package supervisor
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"sort"
 	"testing"
@@ -26,6 +28,7 @@ func TestBuildChildProcEnv(t *testing.T) {
 		Name        string
 		Input       []string
 		Expectation []string
+		OTS         string
 		Assert      func(t *testing.T, act []string)
 	}{
 		{
@@ -81,6 +84,18 @@ func TestBuildChildProcEnv(t *testing.T) {
 				}
 			},
 		},
+		{
+			Name:        "ots",
+			Input:       []string{},
+			OTS:         `[{"name":"foo","value":"bar"},{"name":"GITPOD_TOKENS","value":"foobar"}]`,
+			Expectation: []string{"HOME=/home/gitpod", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod", "foo=bar"},
+		},
+		{
+			Name:        "failed ots",
+			Input:       []string{},
+			OTS:         `invalid json`,
+			Expectation: []string{"HOME=/home/gitpod", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod"},
+		},
 	}
 
 	for _, test := range tests {
@@ -97,7 +112,17 @@ func TestBuildChildProcEnv(t *testing.T) {
 				}
 			}
 
-			act := buildChildProcEnv(&Config{StaticConfig: StaticConfig{APIEndpointPort: 8080}}, test.Input)
+			cfg := &Config{StaticConfig: StaticConfig{APIEndpointPort: 8080}}
+			if test.OTS != "" {
+				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Type", "application/json")
+					w.Write([]byte(test.OTS))
+				}))
+				cfg.EnvvarOTS = srv.URL
+			}
+
+			act := buildChildProcEnv(cfg, test.Input)
 			assert(t, act)
 		})
 	}
