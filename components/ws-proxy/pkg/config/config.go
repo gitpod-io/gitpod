@@ -21,6 +21,16 @@ type Config struct {
 	PrometheusAddr     string                       `json:"prometheusAddr"`
 	ReadinessProbeAddr string                       `json:"readinessProbeAddr"`
 	Namespace          string                       `json:"namespace"`
+	WorkspaceManager   *WorkspaceManagerConn        `json:"wsManager"`
+}
+
+type WorkspaceManagerConn struct {
+	Addr string `json:"addr"`
+	TLS  struct {
+		CA   string `json:"ca"`
+		Cert string `json:"crt"`
+		Key  string `json:"key"`
+	} `json:"tls"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime.
