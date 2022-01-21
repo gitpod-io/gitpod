@@ -6,6 +6,6 @@
 
 // Source: https://github.com/marteinn/The-Big-Username-Blacklist-JS/blob/master/src/index.js
 declare module 'the-big-username-blacklist' {
-    export function validate (username: string): boolean;
-    export var list: string[];
+  export function validate(username: string): boolean;
+  export var list: string[];
 }

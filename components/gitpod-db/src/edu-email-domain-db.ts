@@ -4,11 +4,11 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { EduEmailDomain } from "@gitpod/gitpod-protocol";
+import { EduEmailDomain } from '@gitpod/gitpod-protocol';
 
 export const EduEmailDomainDB = Symbol('EduEmailDomainDB');
 export interface EduEmailDomainDB {
-    storeDomainEntry(domain: EduEmailDomain): Promise<void>;
+  storeDomainEntry(domain: EduEmailDomain): Promise<void>;
 
-    readEducationalInstitutionDomains(): Promise<EduEmailDomain[]>;
+  readEducationalInstitutionDomains(): Promise<EduEmailDomain[]>;
 }

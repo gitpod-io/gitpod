@@ -27,7 +27,10 @@ import { TheiaPluginDBImpl } from './typeorm/theia-plugin-db-impl';
 import { TheiaPluginDB } from './theia-plugin-db';
 import { TypeORMOneTimeSecretDBImpl } from './typeorm/one-time-secret-db-impl';
 import { PendingGithubEventDB, TransactionalPendingGithubEventDBFactory } from './pending-github-event-db';
-import { TransactionalPendingGithubEventDBImpl, TypeORMPendingGithubEventDBImpl } from './typeorm/pending-github-event-db-impl';
+import {
+  TransactionalPendingGithubEventDBImpl,
+  TypeORMPendingGithubEventDBImpl,
+} from './typeorm/pending-github-event-db-impl';
 import { GitpodTableDescriptionProvider, TableDescriptionProvider } from './tables';
 import { PeriodicDbDeleter } from './periodic-deleter';
 import { TermsAcceptanceDB } from './terms-acceptance-db';
@@ -60,82 +63,84 @@ import { OssAllowListDBImpl } from './typeorm/oss-allowlist-db-impl';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
-    bind(Config).toSelf().inSingletonScope();
-    bind(TypeORM).toSelf().inSingletonScope();
-    bind(DBWithTracing).toSelf().inSingletonScope();
-    bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
-    bind(DeletedEntryGC).toSelf().inSingletonScope();
+  bind(Config).toSelf().inSingletonScope();
+  bind(TypeORM).toSelf().inSingletonScope();
+  bind(DBWithTracing).toSelf().inSingletonScope();
+  bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
+  bind(DeletedEntryGC).toSelf().inSingletonScope();
 
-    bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
-    bind(UserDB).toService(TypeORMUserDBImpl);
-    bind(TermsAcceptanceDBImpl).toSelf().inSingletonScope();
-    bind(TermsAcceptanceDB).toService(TermsAcceptanceDBImpl);
-    bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
+  bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
+  bind(UserDB).toService(TypeORMUserDBImpl);
+  bind(TermsAcceptanceDBImpl).toSelf().inSingletonScope();
+  bind(TermsAcceptanceDB).toService(TermsAcceptanceDBImpl);
+  bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
 
-    bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
+  bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
 
-    bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();
-    bind(WorkspaceDB).toService(TypeORMWorkspaceDBImpl);
-    bindDbWithTracing(TracedWorkspaceDB, bind, WorkspaceDB).inSingletonScope();
+  bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();
+  bind(WorkspaceDB).toService(TypeORMWorkspaceDBImpl);
+  bindDbWithTracing(TracedWorkspaceDB, bind, WorkspaceDB).inSingletonScope();
 
-    bind(TypeORMUserMessageViewsDBImpl).toSelf().inSingletonScope();
-    bind(UserMessageViewsDB).toService(TypeORMUserMessageViewsDBImpl);
+  bind(TypeORMUserMessageViewsDBImpl).toSelf().inSingletonScope();
+  bind(UserMessageViewsDB).toService(TypeORMUserMessageViewsDBImpl);
 
-    bind(TypeORMUserStorageResourcesDBImpl).toSelf().inSingletonScope();
-    bind(UserStorageResourcesDB).toService(TypeORMUserStorageResourcesDBImpl);
+  bind(TypeORMUserStorageResourcesDBImpl).toSelf().inSingletonScope();
+  bind(UserStorageResourcesDB).toService(TypeORMUserStorageResourcesDBImpl);
 
-    bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope();
-    bind(AppInstallationDB).toService(TypeORMAppInstallationDBImpl);
+  bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope();
+  bind(AppInstallationDB).toService(TypeORMAppInstallationDBImpl);
 
-    bind(TheiaPluginDBImpl).toSelf().inSingletonScope();
-    bind(TheiaPluginDB).toService(TheiaPluginDBImpl);
+  bind(TheiaPluginDBImpl).toSelf().inSingletonScope();
+  bind(TheiaPluginDB).toService(TheiaPluginDBImpl);
 
-    bind(TypeORMOneTimeSecretDBImpl).toSelf().inSingletonScope();
-    bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
-    bindDbWithTracing(TracedOneTimeSecretDB, bind, OneTimeSecretDB).inSingletonScope();
+  bind(TypeORMOneTimeSecretDBImpl).toSelf().inSingletonScope();
+  bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
+  bindDbWithTracing(TracedOneTimeSecretDB, bind, OneTimeSecretDB).inSingletonScope();
 
-    bind(TypeORMPendingGithubEventDBImpl).toSelf().inSingletonScope();
-    bind(PendingGithubEventDB).toService(TypeORMPendingGithubEventDBImpl);
-    bind(TransactionalPendingGithubEventDBFactory).toFactory(ctx => {
-        return (manager: EntityManager) => {
-            return new TransactionalPendingGithubEventDBImpl(manager);
-        }
-    });
+  bind(TypeORMPendingGithubEventDBImpl).toSelf().inSingletonScope();
+  bind(PendingGithubEventDB).toService(TypeORMPendingGithubEventDBImpl);
+  bind(TransactionalPendingGithubEventDBFactory).toFactory((ctx) => {
+    return (manager: EntityManager) => {
+      return new TransactionalPendingGithubEventDBImpl(manager);
+    };
+  });
 
-    encryptionModule(bind, unbind, isBound, rebind);
-    bind(KeyProviderConfig).toDynamicValue(ctx => {
-        const config = ctx.container.get<Config>(Config);
-        return {
-            keys: KeyProviderImpl.loadKeyConfigFromJsonString(config.dbEncryptionKeys)
-        };
-    }).inSingletonScope();
+  encryptionModule(bind, unbind, isBound, rebind);
+  bind(KeyProviderConfig)
+    .toDynamicValue((ctx) => {
+      const config = ctx.container.get<Config>(Config);
+      return {
+        keys: KeyProviderImpl.loadKeyConfigFromJsonString(config.dbEncryptionKeys),
+      };
+    })
+    .inSingletonScope();
 
-    bind(GitpodTableDescriptionProvider).toSelf().inSingletonScope();
-    bind(TableDescriptionProvider).toService(GitpodTableDescriptionProvider);
-    bind(PeriodicDbDeleter).toSelf().inSingletonScope();
+  bind(GitpodTableDescriptionProvider).toSelf().inSingletonScope();
+  bind(TableDescriptionProvider).toService(GitpodTableDescriptionProvider);
+  bind(PeriodicDbDeleter).toSelf().inSingletonScope();
 
-    bind(CodeSyncResourceDB).toSelf().inSingletonScope();
+  bind(CodeSyncResourceDB).toSelf().inSingletonScope();
 
-    bind(WorkspaceClusterDB).to(WorkspaceClusterDBImpl).inSingletonScope();
+  bind(WorkspaceClusterDB).to(WorkspaceClusterDBImpl).inSingletonScope();
 
-    bind(AuthCodeRepositoryDB).toSelf().inSingletonScope();
+  bind(AuthCodeRepositoryDB).toSelf().inSingletonScope();
 
-    bind(TeamDBImpl).toSelf().inSingletonScope();
-    bind(TeamDB).toService(TeamDBImpl);
-    bind(ProjectDBImpl).toSelf().inSingletonScope();
-    bind(ProjectDB).toService(ProjectDBImpl);
+  bind(TeamDBImpl).toSelf().inSingletonScope();
+  bind(TeamDB).toService(TeamDBImpl);
+  bind(ProjectDBImpl).toSelf().inSingletonScope();
+  bind(ProjectDB).toService(ProjectDBImpl);
 
-    // com concerns
-    bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();
-    bind(TransactionalAccountingDBFactory).toFactory(ctx => {
-        return (manager: EntityManager) => {
-            return new TransactionalAccountingDBImpl(manager);
-        }
-    });
-    bind(TeamSubscriptionDB).to(TeamSubscriptionDBImpl).inSingletonScope();
-    bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
-    bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
-    bind(EMailDB).to(TypeORMEMailDBImpl).inSingletonScope();
-    bind(LicenseDB).to(LicenseDBImpl).inSingletonScope();
-    bind(OssAllowListDB).to(OssAllowListDBImpl).inSingletonScope();
+  // com concerns
+  bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();
+  bind(TransactionalAccountingDBFactory).toFactory((ctx) => {
+    return (manager: EntityManager) => {
+      return new TransactionalAccountingDBImpl(manager);
+    };
+  });
+  bind(TeamSubscriptionDB).to(TeamSubscriptionDBImpl).inSingletonScope();
+  bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
+  bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
+  bind(EMailDB).to(TypeORMEMailDBImpl).inSingletonScope();
+  bind(LicenseDB).to(LicenseDBImpl).inSingletonScope();
+  bind(OssAllowListDB).to(OssAllowListDBImpl).inSingletonScope();
 });

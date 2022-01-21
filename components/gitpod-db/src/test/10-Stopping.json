@@ -1,59 +1,59 @@
 {
-    "id": "b20f0b1c-a729-4fa7-a318-6856d4d21893",
-    "workspaceId": "cbdcfccd-6c5f-4dad-849d-f7922bed631f",
-    "creationTime": "2018-03-24T08:40:38.932Z",
-    "ideUrl": "https://cbdcfccd-6c5f-4dad-849d-f7922bed631f.ws.gitpod.io/",
-    "status": "Stopping",
-    "events": [
-        {
-            "type": "Started",
-            "creationTime": "2018-03-24T08:40:38.932Z",
-            "heading": "Gitpod is Starting ...",
-            "severity": "Normal"
-        },
-        {
-            "type": "Heartbeat",
-            "heading": "Heartbeat From Client",
-            "creationTime": "2018-03-24T08:40:39.039Z",
-            "internal": true,
-            "severity": "Normal"
-        },
-        {
-            "type": "Initialized",
-            "heading": "Initialized",
-            "creationTime": "2018-03-24T08:40:39.063Z",
-            "inProgress": false,
-            "severity": "Normal",
-            "lastUpdatedTime": "2018-03-24T08:40:51.249Z"
-        },
-        {
-            "type": "Ready",
-            "heading": "Ready",
-            "creationTime": "2018-03-24T08:40:39.063Z",
-            "inProgress": false,
-            "severity": "Normal",
-            "lastUpdatedTime": "2018-03-24T08:40:51.249Z"
-        },
-        {
-            "type": "PodScheduled",
-            "heading": "PodScheduled",
-            "creationTime": "2018-03-24T08:40:39.063Z",
-            "inProgress": false,
-            "severity": "Normal",
-            "lastUpdatedTime": "2018-03-24T08:40:51.249Z"
-        },
-        {
-            "type": "IdeReady",
-            "heading": "IDE Readiness",
-            "creationTime": "2018-03-24T08:40:51.274Z",
-            "inProgress": false,
-            "severity": "Normal"
-        },
-        {
-            "type": "Stopping",
-            "creationTime": "2018-03-24T08:42:48.474Z",
-            "heading": "Gitpod is Stopping",
-            "severity": "Normal"
-        }
-    ]
+  "id": "b20f0b1c-a729-4fa7-a318-6856d4d21893",
+  "workspaceId": "cbdcfccd-6c5f-4dad-849d-f7922bed631f",
+  "creationTime": "2018-03-24T08:40:38.932Z",
+  "ideUrl": "https://cbdcfccd-6c5f-4dad-849d-f7922bed631f.ws.gitpod.io/",
+  "status": "Stopping",
+  "events": [
+    {
+      "type": "Started",
+      "creationTime": "2018-03-24T08:40:38.932Z",
+      "heading": "Gitpod is Starting ...",
+      "severity": "Normal"
+    },
+    {
+      "type": "Heartbeat",
+      "heading": "Heartbeat From Client",
+      "creationTime": "2018-03-24T08:40:39.039Z",
+      "internal": true,
+      "severity": "Normal"
+    },
+    {
+      "type": "Initialized",
+      "heading": "Initialized",
+      "creationTime": "2018-03-24T08:40:39.063Z",
+      "inProgress": false,
+      "severity": "Normal",
+      "lastUpdatedTime": "2018-03-24T08:40:51.249Z"
+    },
+    {
+      "type": "Ready",
+      "heading": "Ready",
+      "creationTime": "2018-03-24T08:40:39.063Z",
+      "inProgress": false,
+      "severity": "Normal",
+      "lastUpdatedTime": "2018-03-24T08:40:51.249Z"
+    },
+    {
+      "type": "PodScheduled",
+      "heading": "PodScheduled",
+      "creationTime": "2018-03-24T08:40:39.063Z",
+      "inProgress": false,
+      "severity": "Normal",
+      "lastUpdatedTime": "2018-03-24T08:40:51.249Z"
+    },
+    {
+      "type": "IdeReady",
+      "heading": "IDE Readiness",
+      "creationTime": "2018-03-24T08:40:51.274Z",
+      "inProgress": false,
+      "severity": "Normal"
+    },
+    {
+      "type": "Stopping",
+      "creationTime": "2018-03-24T08:42:48.474Z",
+      "heading": "Gitpod is Stopping",
+      "severity": "Normal"
+    }
+  ]
 }

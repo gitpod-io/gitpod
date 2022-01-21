@@ -1,47 +1,47 @@
 {
-    "id": "af55d1cc-ab8b-4058-8a8d-7e8259afeefd",
-    "workspaceId": "cbdcfccd-6c5f-4dad-849d-f7922bed631f",
-    "creationTime": "2018-03-23T15:55:26.373Z",
-    "ideUrl": "https://cbdcfccd-6c5f-4dad-849d-f7922bed631f.ws.gitpod.io/",
-    "status": "Starting",
-    "events": [
-        {
-            "type": "Started",
-            "creationTime": "2018-03-23T15:55:26.373Z",
-            "heading": "Gitpod is Starting ...",
-            "severity": "Normal"
-        },
-        {
-            "type": "Heartbeat",
-            "heading": "Heartbeat From Client",
-            "creationTime": "2018-03-23T15:55:27.968Z",
-            "internal": true,
-            "severity": "Normal"
-        },
-        {
-            "type": "PodScheduled",
-            "heading": "PodScheduled",
-            "creationTime": "2018-03-23T15:55:26.524Z",
-            "inProgress": false,
-            "severity": "Normal",
-            "lastUpdatedTime": "2018-03-23T15:55:35.528Z"
-        },
-        {
-            "type": "Initialized",
-            "heading": "Initialized",
-            "creationTime": "2018-03-23T15:55:26.552Z",
-            "inProgress": false,
-            "severity": "Normal",
-            "lastUpdatedTime": "2018-03-23T15:55:37.396Z"
-        },
-        {
-            "type": "Ready",
-            "heading": "Ready",
-            "creationTime": "2018-03-23T15:55:26.552Z",
-            "inProgress": true,
-            "message": "containers with unready status: [theia]",
-            "severity": "Normal",
-            "lastUpdatedTime": "2018-03-23T15:55:37.396Z"
-        }
-    ]
+  "id": "af55d1cc-ab8b-4058-8a8d-7e8259afeefd",
+  "workspaceId": "cbdcfccd-6c5f-4dad-849d-f7922bed631f",
+  "creationTime": "2018-03-23T15:55:26.373Z",
+  "ideUrl": "https://cbdcfccd-6c5f-4dad-849d-f7922bed631f.ws.gitpod.io/",
+  "status": "Starting",
+  "events": [
+    {
+      "type": "Started",
+      "creationTime": "2018-03-23T15:55:26.373Z",
+      "heading": "Gitpod is Starting ...",
+      "severity": "Normal"
+    },
+    {
+      "type": "Heartbeat",
+      "heading": "Heartbeat From Client",
+      "creationTime": "2018-03-23T15:55:27.968Z",
+      "internal": true,
+      "severity": "Normal"
+    },
+    {
+      "type": "PodScheduled",
+      "heading": "PodScheduled",
+      "creationTime": "2018-03-23T15:55:26.524Z",
+      "inProgress": false,
+      "severity": "Normal",
+      "lastUpdatedTime": "2018-03-23T15:55:35.528Z"
+    },
+    {
+      "type": "Initialized",
+      "heading": "Initialized",
+      "creationTime": "2018-03-23T15:55:26.552Z",
+      "inProgress": false,
+      "severity": "Normal",
+      "lastUpdatedTime": "2018-03-23T15:55:37.396Z"
+    },
+    {
+      "type": "Ready",
+      "heading": "Ready",
+      "creationTime": "2018-03-23T15:55:26.552Z",
+      "inProgress": true,
+      "message": "containers with unready status: [theia]",
+      "severity": "Normal",
+      "lastUpdatedTime": "2018-03-23T15:55:37.396Z"
+    }
+  ]
 }

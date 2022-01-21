@@ -4,10 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 export const UserMessageViewsDB = Symbol('UserMessageViewsDB');
 
 export interface UserMessageViewsDB {
-    didViewMessage(userId: string, messageId: string): Promise<boolean>;
-    markAsViewed(userId: string, messageIds: string[]): Promise<void>;
+  didViewMessage(userId: string, messageId: string): Promise<boolean>;
+  markAsViewed(userId: string, messageIds: string[]): Promise<void>;
 }
