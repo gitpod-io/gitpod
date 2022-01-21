@@ -9,23 +9,23 @@ import { Terms } from '@gitpod/gitpod-protocol';
 
 @injectable()
 export class TermsProvider {
-    getCurrent(): Terms {
-        return currentTerms;
-    }
+  getCurrent(): Terms {
+    return currentTerms;
+  }
 }
 
 const currentTerms: Terms = {
-    activeSince: "2020-11",
-    adminOnlyTerms: true,
-    revision: "2020-11",
-    updateMessage: `
+  activeSince: '2020-11',
+  adminOnlyTerms: true,
+  revision: '2020-11',
+  updateMessage: `
 # Terms and Conditions Update
 
 Read the updated [terms](https://www.gitpod.io/self-hosted-terms/).
 `,
-    content: `
+  content: `
 # Create a new Gitpod account with {{AUTH_HOST}}
 
 Before we proceed, please read and accept the [terms](https://www.gitpod.io/self-hosted-terms/).
-`
-}
+`,
+};

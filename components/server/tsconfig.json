@@ -1,29 +1,23 @@
 {
-    "compilerOptions": {
-        "outDir": "dist",
-        "experimentalDecorators": true,
-        "lib": [
-            "es6",
-            "esnext.asynciterable"
-        ],
-        "strict": true,
-        "noEmitOnError": false,
-        "noUnusedLocals": true,
-        "emitDecoratorMetadata": true,
-        "strictPropertyInitialization": false,
-        "downlevelIteration": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "target": "es6",
-        "jsx": "react",
-        "sourceMap": true,
-        "declaration": true,
-        "declarationMap": true,
-        "skipLibCheck": true,
-        "useUnknownInCatchVariables": false
-    },
-    "include": [
-        "src",
-        "ee/src"
-    ]
+  "compilerOptions": {
+    "outDir": "dist",
+    "experimentalDecorators": true,
+    "lib": ["es6", "esnext.asynciterable"],
+    "strict": true,
+    "noEmitOnError": false,
+    "noUnusedLocals": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "downlevelIteration": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es6",
+    "jsx": "react",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "skipLibCheck": true,
+    "useUnknownInCatchVariables": false
+  },
+  "include": ["src", "ee/src"]
 }

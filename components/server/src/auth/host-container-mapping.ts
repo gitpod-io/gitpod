@@ -4,28 +4,26 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, interfaces } from "inversify";
-import { githubContainerModule } from "../github/github-container-module";
-import { gitlabContainerModule } from "../gitlab/gitlab-container-module";
-import { genericAuthContainerModule } from "./oauth-container-module";
-import { bitbucketContainerModule } from "../bitbucket/bitbucket-container-module";
+import { injectable, interfaces } from 'inversify';
+import { githubContainerModule } from '../github/github-container-module';
+import { gitlabContainerModule } from '../gitlab/gitlab-container-module';
+import { genericAuthContainerModule } from './oauth-container-module';
+import { bitbucketContainerModule } from '../bitbucket/bitbucket-container-module';
 
 @injectable()
 export class HostContainerMapping {
-
-    public get(type: string): interfaces.ContainerModule[] | undefined {
-        switch (type) {
-        case "GitHub":
-            return [githubContainerModule];
-        case "GitLab":
-            return [gitlabContainerModule];
-        case "OAuth":
-            return [genericAuthContainerModule];
-        case "Bitbucket":
-            return [bitbucketContainerModule];
-        default:
-            return undefined;
-        }
+  public get(type: string): interfaces.ContainerModule[] | undefined {
+    switch (type) {
+      case 'GitHub':
+        return [githubContainerModule];
+      case 'GitLab':
+        return [gitlabContainerModule];
+      case 'OAuth':
+        return [genericAuthContainerModule];
+      case 'Bitbucket':
+        return [bitbucketContainerModule];
+      default:
+        return undefined;
     }
-
+  }
 }

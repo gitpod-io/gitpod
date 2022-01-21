@@ -23,12 +23,16 @@
  *  - build with Node.js 'ws' library
  */
 
-import { Metadata } from "@improbable-eng/grpc-web/dist/typings/metadata";
-import { Transport, TransportFactory, TransportOptions } from "@improbable-eng/grpc-web/dist/typings/transports/Transport";
+import { Metadata } from '@improbable-eng/grpc-web/dist/typings/metadata';
+import {
+  Transport,
+  TransportFactory,
+  TransportOptions,
+} from '@improbable-eng/grpc-web/dist/typings/transports/Transport';
 import * as WebSocket from 'ws';
 
 enum WebsocketSignal {
-  FINISH_SEND = 1
+  FINISH_SEND = 1,
 }
 
 const finishSendFrame = new Uint8Array([1]);
@@ -36,11 +40,11 @@ const finishSendFrame = new Uint8Array([1]);
 export function WebsocketTransport(): TransportFactory {
   return (opts: TransportOptions) => {
     return websocketRequest(opts);
-  }
+  };
 }
 
 function websocketRequest(options: TransportOptions): Transport {
-  options.debug && debug("websocketRequest", options);
+  options.debug && debug('websocketRequest', options);
 
   let webSocketAddress = constructWebSocketAddress(options.url);
 
@@ -57,7 +61,7 @@ function websocketRequest(options: TransportOptions): Transport {
 
       c.set(byteArray as any as ArrayLike<number>, 1);
 
-      ws.send(c)
+      ws.send(c);
     }
   }
 
@@ -79,57 +83,56 @@ function websocketRequest(options: TransportOptions): Transport {
     start: (metadata: Metadata) => {
       // Send headers both with request and the HTTP request itself
       const headers: { [key: string]: string } = {};
-      metadata.forEach((key, values) => headers[key] = values.join(","));
+      metadata.forEach((key, values) => (headers[key] = values.join(',')));
 
-      ws = new WebSocket(webSocketAddress, ["grpc-websockets"], {
+      ws = new WebSocket(webSocketAddress, ['grpc-websockets'], {
         headers,
       });
-      ws.binaryType = "arraybuffer";
+      ws.binaryType = 'arraybuffer';
       ws.onopen = function () {
-        options.debug && debug("websocketRequest.onopen");
+        options.debug && debug('websocketRequest.onopen');
         ws.send(headersToBytes(metadata));
 
         // send any messages that were passed to sendMessage before the connection was ready
-        sendQueue.forEach(toSend => {
+        sendQueue.forEach((toSend) => {
           sendToWebsocket(toSend);
         });
       };
 
       ws.onclose = function (closeEvent) {
-        options.debug && debug("websocketRequest.onclose", closeEvent);
+        options.debug && debug('websocketRequest.onclose', closeEvent);
         options.onEnd();
       };
 
       ws.onerror = function (error) {
-        options.debug && debug("websocketRequest.onerror", error);
+        options.debug && debug('websocketRequest.onerror', error);
       };
 
       ws.onmessage = function (e) {
         // @ts-ignore This is copied from an external library; we won't fix this here
         options.onChunk(new Uint8Array(Buffer.from(e.data)));
       };
-
     },
     cancel: () => {
-      options.debug && debug("websocket.abort");
+      options.debug && debug('websocket.abort');
       ws.close();
-    }
+    },
   };
 }
 
 function constructWebSocketAddress(url: string) {
-  if (url.substr(0, 8) === "https://") {
+  if (url.substr(0, 8) === 'https://') {
     return `wss://${url.substr(8)}`;
-  } else if (url.substr(0, 7) === "http://") {
+  } else if (url.substr(0, 7) === 'http://') {
     return `ws://${url.substr(7)}`;
   }
-  throw new Error("Websocket transport constructed with non-https:// or http:// host.");
+  throw new Error('Websocket transport constructed with non-https:// or http:// host.');
 }
 
 function headersToBytes(headers: Metadata): Uint8Array {
-  let asString = "";
+  let asString = '';
   headers.forEach((key, values) => {
-    asString += `${key}: ${values.join(", ")}\r\n`;
+    asString += `${key}: ${values.join(', ')}\r\n`;
   });
   return encodeASCII(asString);
 }
@@ -153,7 +156,7 @@ export function encodeASCII(input: string): Uint8Array {
   for (let i = 0; i !== input.length; ++i) {
     const charCode = input.charCodeAt(i);
     if (!isValidHeaderAscii(charCode)) {
-      throw new Error("Metadata contains invalid ASCII");
+      throw new Error('Metadata contains invalid ASCII');
     }
     encoded[i] = charCode;
   }

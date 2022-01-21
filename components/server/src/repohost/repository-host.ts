@@ -13,8 +13,8 @@ import { RepositoryService } from './repo-service';
 
 @injectable()
 export class RepositoryHost {
-    @inject(FileProvider) fileProvider: FileProvider;
-    @inject(LanguagesProvider) languagesProvider: LanguagesProvider;
-    @inject(RepositoryProvider) repositoryProvider: RepositoryProvider;
-    @inject(RepositoryService) repositoryService: RepositoryService;
+  @inject(FileProvider) fileProvider: FileProvider;
+  @inject(LanguagesProvider) languagesProvider: LanguagesProvider;
+  @inject(RepositoryProvider) repositoryProvider: RepositoryProvider;
+  @inject(RepositoryService) repositoryService: RepositoryService;
 }

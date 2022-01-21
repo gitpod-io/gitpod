@@ -9,7 +9,7 @@ import * as express from 'express';
 import { User } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { SafePromise } from '@gitpod/gitpod-protocol/lib/util/safe-promise';
-import { Config } from "../config";
+import { Config } from '../config';
 import { AuthFlow } from './auth-provider';
 import { HostContextProvider } from './host-context-provider';
 import { AuthProviderService } from './auth-provider-service';
@@ -25,102 +25,106 @@ import { SubscriptionService } from '@gitpod/gitpod-payment-endpoint/lib/account
  */
 @injectable()
 export class LoginCompletionHandler {
+  @inject(Config) protected readonly config: Config;
+  @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
+  @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
+  @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
+  @inject(UserService) protected readonly userService: UserService;
+  @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
 
-    @inject(Config) protected readonly config: Config;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
-    @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(UserService) protected readonly userService: UserService;
-    @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
+  async complete(
+    request: express.Request,
+    response: express.Response,
+    { user, returnToUrl, authHost, elevateScopes }: LoginCompletionHandler.CompleteParams,
+  ) {
+    const logContext = LogContext.from({ user, request });
 
-    async complete(request: express.Request, response: express.Response, { user, returnToUrl, authHost, elevateScopes }: LoginCompletionHandler.CompleteParams) {
-        const logContext = LogContext.from({ user, request });
+    try {
+      await new Promise<void>((resolve, reject) => {
+        request.login(user, (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+    } catch (err) {
+      // Clean up the session & avoid loops
+      await TosFlow.clear(request.session);
+      await AuthFlow.clear(request.session);
 
+      if (authHost) {
+        increaseLoginCounter('failed', authHost);
+      }
+      log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
+      response.redirect(this.config.hostUrl.asSorry('Oops! Something went wrong during login.').toString());
+      return;
+    }
+
+    // Update session info
+    let returnTo = returnToUrl || this.config.hostUrl.asDashboard().toString();
+    if (elevateScopes) {
+      const elevateScopesUrl = this.config.hostUrl
+        .withApi({
+          pathname: '/authorize',
+          search: `returnTo=${encodeURIComponent(returnTo)}&host=${authHost}&scopes=${elevateScopes.join(',')}`,
+        })
+        .toString();
+      returnTo = elevateScopesUrl;
+    }
+    log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { session: request.session });
+
+    // Don't forget to mark a dynamic provider as verified
+    if (authHost) {
+      await this.updateAuthProviderAsVerified(authHost, user);
+    }
+
+    // Clean up the session & avoid loops
+    await TosFlow.clear(request.session);
+    await AuthFlow.clear(request.session);
+
+    if (authHost) {
+      increaseLoginCounter('succeeded', authHost);
+
+      /* no await */ SafePromise.catchAndLog(trackLogin(user, request, authHost, this.analytics), { userId: user.id });
+    }
+
+    // Check for and automatically subscribe to Professional OpenSource subscription
+    /* no await */ SafePromise.catchAndLog(this.checkForAndSubscribeToProfessionalOss(user));
+
+    response.redirect(returnTo);
+  }
+
+  protected async updateAuthProviderAsVerified(hostname: string, user: User) {
+    const hostCtx = this.hostContextProvider.get(hostname);
+    if (hostCtx) {
+      const { params: config } = hostCtx.authProvider;
+      const { id, verified, ownerId, builtin } = config;
+      if (!builtin && !verified) {
         try {
-            await new Promise<void>((resolve, reject) => {
-                request.login(user, err => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                });
-            });
-        } catch(err) {
-            // Clean up the session & avoid loops
-            await TosFlow.clear(request.session);
-            await AuthFlow.clear(request.session);
-
-            if (authHost) {
-                increaseLoginCounter("failed", authHost)
-            }
-            log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
-            response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
-            return;
+          await this.authProviderService.markAsVerified({ id, ownerId });
+        } catch (error) {
+          log.error(LogContext.from({ user }), `Failed to mark AuthProvider as verified!`, { error });
         }
-
-        // Update session info
-        let returnTo = returnToUrl || this.config.hostUrl.asDashboard().toString();
-        if (elevateScopes) {
-            const elevateScopesUrl = this.config.hostUrl.withApi({
-                pathname: '/authorize',
-                search: `returnTo=${encodeURIComponent(returnTo)}&host=${authHost}&scopes=${elevateScopes.join(',')}`
-            }).toString();
-            returnTo = elevateScopesUrl;
-        }
-        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { session: request.session });
-
-        // Don't forget to mark a dynamic provider as verified
-        if (authHost) {
-            await this.updateAuthProviderAsVerified(authHost, user);
-        }
-
-        // Clean up the session & avoid loops
-        await TosFlow.clear(request.session);
-        await AuthFlow.clear(request.session);
-
-        if (authHost) {
-
-            increaseLoginCounter("succeeded", authHost);
-
-            /* no await */ SafePromise.catchAndLog(trackLogin(user, request, authHost, this.analytics), { userId: user.id });
-        }
-
-        // Check for and automatically subscribe to Professional OpenSource subscription
-        /* no await */ SafePromise.catchAndLog(this.checkForAndSubscribeToProfessionalOss(user));
-
-        response.redirect(returnTo);
+      }
     }
+  }
 
-    protected async updateAuthProviderAsVerified(hostname: string, user: User) {
-        const hostCtx = this.hostContextProvider.get(hostname);
-        if (hostCtx) {
-            const { params: config } = hostCtx.authProvider;
-            const { id, verified, ownerId, builtin } = config;
-            if (!builtin && !verified) {
-                try {
-                    await this.authProviderService.markAsVerified({ id, ownerId });
-                } catch (error) {
-                    log.error(LogContext.from({ user }), `Failed to mark AuthProvider as verified!`, { error });
-                }
-            }
-        }
+  protected async checkForAndSubscribeToProfessionalOss(user: User) {
+    const eligible = await this.userService.checkAutomaticOssEligibility(user);
+    log.debug({ userId: user.id }, 'user eligible for OSS subscription?', { eligible });
+    if (!eligible) {
+      return;
     }
-
-    protected async checkForAndSubscribeToProfessionalOss(user: User) {
-        const eligible = await this.userService.checkAutomaticOssEligibility(user);
-        log.debug({ userId: user.id }, "user eligible for OSS subscription?", { eligible });
-        if (!eligible) {
-            return;
-        }
-        await this.subscriptionService.checkAndSubscribeToOssSubscription(user, new Date());
-    }
+    await this.subscriptionService.checkAndSubscribeToOssSubscription(user, new Date());
+  }
 }
 export namespace LoginCompletionHandler {
-    export interface CompleteParams {
-        user: User;
-        returnToUrl?: string;
-        authHost?: string;
-        elevateScopes?: string[];
-    }
+  export interface CompleteParams {
+    user: User;
+    returnToUrl?: string;
+    authHost?: string;
+    elevateScopes?: string[];
+  }
 }

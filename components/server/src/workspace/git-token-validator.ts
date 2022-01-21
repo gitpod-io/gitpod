@@ -4,36 +4,35 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from "inversify";
-import { HostContextProvider } from "../auth/host-context-provider";
+import { inject, injectable } from 'inversify';
+import { HostContextProvider } from '../auth/host-context-provider';
 
 export interface CheckWriteAccessResult {
-    found: boolean;
-    isPrivateRepo?: boolean;
-    writeAccessToRepo?: boolean;
-    mayWritePrivate?: boolean;
-    mayWritePublic?: boolean;
-    error?: any;
+  found: boolean;
+  isPrivateRepo?: boolean;
+  writeAccessToRepo?: boolean;
+  mayWritePrivate?: boolean;
+  mayWritePublic?: boolean;
+  error?: any;
 }
 
-export interface  IGitTokenValidatorParams {
-    token: string
-    host: string
-    repoFullName: string
+export interface IGitTokenValidatorParams {
+  token: string;
+  host: string;
+  repoFullName: string;
 }
 
 export interface IGitTokenValidator {
-    checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult | undefined>;
+  checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult | undefined>;
 }
 
-export const IGitTokenValidator = Symbol("IGitTokenValidator")
+export const IGitTokenValidator = Symbol('IGitTokenValidator');
 
 @injectable()
 export class GitTokenValidator {
+  @inject(HostContextProvider) hostContextProvider: HostContextProvider;
 
-    @inject(HostContextProvider) hostContextProvider: HostContextProvider;
-
-    async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult | undefined> {
-        return this.hostContextProvider.get(params.host)?.gitTokenValidator?.checkWriteAccess(params);
-    }
+  async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult | undefined> {
+    return this.hostContextProvider.get(params.host)?.gitTokenValidator?.checkWriteAccess(params);
+  }
 }
