@@ -97,8 +97,7 @@ function deserialize_workspacemanagerbridge_UpdateResponse(buffer_arg) {
   return cluster$service_pb.UpdateResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var ClusterServiceService = exports.ClusterServiceService = {
+var ClusterServiceService = (exports.ClusterServiceService = {
   register: {
     path: '/workspacemanagerbridge.ClusterService/Register',
     requestStream: false,
@@ -143,6 +142,6 @@ var ClusterServiceService = exports.ClusterServiceService = {
     responseSerialize: serialize_workspacemanagerbridge_ListResponse,
     responseDeserialize: deserialize_workspacemanagerbridge_ListResponse,
   },
-};
+});
 
 exports.ClusterServiceClient = grpc.makeGenericClientConstructor(ClusterServiceService);
