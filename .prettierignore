@@ -1,4 +1,9 @@
 # Add files here to ignore them from prettier formatting
 
-build
-dist
+build/
+dist/
+templates/
+
+# YAML is supported, but let's play it safe for now
+*.yaml
+*.yml
