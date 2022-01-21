@@ -7,7 +7,7 @@
 import { Event } from "./util/event";
 import { Disposable } from "./util/disposable";
 
-export type IDEFrontendState = 'init' | 'ready' | 'terminated';
+export type IDEFrontendState = 'init' | 'ready' | 'terminated';
 
 export interface IDEFrontendService {
     readonly state: IDEFrontendState;

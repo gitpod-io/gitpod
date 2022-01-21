@@ -194,7 +194,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
         expect(statement!.remainingHours).to.be.equal(800);
     }
 
-    @test async noSessions() {
+    @test async noSessions() {
         expect(await this.invoice(start)).to.be.equal('')
         expect(await this.invoice(rightAfter(start))).to.be.equal('2000-01-01T00:00:00.000Z 100 credit 100')
         expect(await this.invoice(rightBefore(secondMonth))).to.be.equal('2000-01-01T00:00:00.000Z 100 credit 100');
@@ -388,7 +388,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
 2000-02-29T23:59:59.999Z -100 expiry`);
     }
 
-    @test async multiSubscription() {
+    @test async multiSubscription() {
         const subscriptionSwitchDate = hoursLater(start, 10 * 24); // 10 days
         Subscription.cancelSubscription(this.subscription, subscriptionSwitchDate, oneMonthLater(this.subscription.startDate));
         await this.accountingDb.storeSubscription(this.subscription);
@@ -406,7 +406,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
 2000-02-11T00:00:00.000Z 200 credit 200`);
     }
 
-    @test async multiSubscriptionOverlappingSession() {
+    @test async multiSubscriptionOverlappingSession() {
         const subscriptionSwitchDate = hoursLater(start, 240);
         Subscription.cancelSubscription(this.subscription, subscriptionSwitchDate, oneMonthLater(this.subscription.startDate));
         await this.accountingDb.storeSubscription(this.subscription)
@@ -426,7 +426,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
 2000-02-11T00:00:00.000Z 200 credit 200`);
     }
 
-    @test async multiSubscriptionOverlappingSessions() {
+    @test async multiSubscriptionOverlappingSessions() {
         const subscriptionSwitchDate = hoursLater(start, 240);
         Subscription.cancelSubscription(this.subscription, subscriptionSwitchDate, oneMonthLater(this.subscription.startDate));
         await this.accountingDb.storeSubscription(this.subscription)
@@ -448,7 +448,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
 2000-02-11T00:00:00.000Z 200 credit 200`);
     }
 
-    @test async multiSubscriptionOverlappingSession_2() {
+    @test async multiSubscriptionOverlappingSession_2() {
         const subscriptionSwitchDate1 = hoursLater(start, 240);
         const subscriptionSwitchDate2 = hoursLater(start, 245);
         Subscription.cancelSubscription(this.subscription, subscriptionSwitchDate1, oneMonthLater(this.subscription.startDate));
@@ -529,7 +529,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
         expect(await this.remainingHours(hoursLater(start, 200))).to.be.equal(10);
     }
 
-    @test async creditsAreBookedAgainstSessionsByAge() {
+    @test async creditsAreBookedAgainstSessionsByAge() {
         const subscriptionWith40Hours = {
             ...this.subscription,
             amount: 40
@@ -556,7 +556,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
     }
 
     // Test for https://github.com/TypeFox/gitpod/pull/3797#issuecomment-588170598
-    @test async testPaidPlanWhileProOpenSource() {
+    @test async testPaidPlanWhileProOpenSource() {
         Subscription.cancelSubscription(this.subscription, hoursLater(start, 1), oneMonthLater(this.subscription.startDate));
         await this.accountingDb.storeSubscription(this.subscription)
         await this.accountingDb.storeSubscription(await this.accountingDb.newSubscription({

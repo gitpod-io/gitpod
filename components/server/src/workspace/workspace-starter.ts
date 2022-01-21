@@ -805,7 +805,7 @@ export class WorkspaceStarter {
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "token", subjectID: "*", operations: ["get"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "contentBlob", subjectID: "*", operations: ["create", "get"]}),
         ];
-        if (CommitContext.is(workspace.context)) {
+        if (CommitContext.is(workspace.context)) {
             const subjectID = workspace.context.repository.owner + '/' + workspace.context.repository.name;
             scopes.push(
                 "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "envVar", subjectID, operations: ["create", "get", "update", "delete"]}),

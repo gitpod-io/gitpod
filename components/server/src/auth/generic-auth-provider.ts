@@ -33,7 +33,7 @@ import { OutgoingHttpHeaders } from 'http2';
  * --
  * The main entrypoints go along the phases of the OAuth2 Authorization Code Flow:
  *
- * 1. `authorize` – this is called by the `Authenticator` to handle login/authorization requests.
+ * 1. `authorize` – this is called by the `Authenticator` to handle login/authorization requests.
  *
  *   The OAuth2 library under the hood will redirect send a redirect response to initialize the OAuth2 flow with the
  *   authorization service.

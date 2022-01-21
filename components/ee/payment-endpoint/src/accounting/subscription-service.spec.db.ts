@@ -58,7 +58,7 @@ const expect = chai.expect;
         await manager.clear(DBSubscription)
     }
 
-    @test.skip async subscriptions()  {
+    @test.skip async subscriptions()  {
         const start = new Date(Date.UTC(2000, 0, 1)).toISOString();
         const secondMonth = new Date(Date.UTC(2000, 1, 1)).toISOString();
         const thirdMonth = new Date(Date.UTC(2000, 2, 1)).toISOString();
