@@ -20,13 +20,13 @@ The `App.tsx` is the entry point for the SPA and it uses React-Router to registe
 Pages are loaded lazily using `React.lazy` so that not everything needs to be loaded up-front but only when needed:
 
 ```ts
-const Notifications = React.lazy(() => import("./account/Notifications"));
-const Profile = React.lazy(() => import("./account/Profile"));
-const Subscriptions = React.lazy(() => import("./account/Subscriptions"));
-const DefaultIDE = React.lazy(() => import("./settings/DefaultIDE"));
-const EnvVars = React.lazy(() => import("./settings/EnvVars"));
-const FeaturePreview = React.lazy(() => import("./settings/FeaturePreview"));
-const GitIntegration = React.lazy(() => import("./settings/GitIntegration"));
+const Notifications = React.lazy(() => import('./account/Notifications'));
+const Profile = React.lazy(() => import('./account/Profile'));
+const Subscriptions = React.lazy(() => import('./account/Subscriptions'));
+const DefaultIDE = React.lazy(() => import('./settings/DefaultIDE'));
+const EnvVars = React.lazy(() => import('./settings/EnvVars'));
+const FeaturePreview = React.lazy(() => import('./settings/FeaturePreview'));
+const GitIntegration = React.lazy(() => import('./settings/GitIntegration'));
 ```
 
 Global state is passed through `React.Context`.

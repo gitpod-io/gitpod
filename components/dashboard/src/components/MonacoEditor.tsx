@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useRef } from "react";
-import * as monaco from "monaco-editor";
-import { ThemeContext } from "../theme-context";
+import { useContext, useEffect, useRef } from 'react';
+import * as monaco from 'monaco-editor';
+import { ThemeContext } from '../theme-context';
 
 monaco.editor.defineTheme('gitpod', {
   base: 'vs',
@@ -69,7 +69,7 @@ export default function MonacoEditor(props: MonacoEditorProps) {
         props.onChange(editorRef.current!.getValue());
       });
       // 8px top margin: https://github.com/Microsoft/monaco-editor/issues/1333
-      editorRef.current.changeViewZones(accessor => {
+      editorRef.current.changeViewZones((accessor) => {
         accessor.addZone({
           afterLineNumber: 0,
           heightInPx: 8,
@@ -84,16 +84,16 @@ export default function MonacoEditor(props: MonacoEditorProps) {
     if (editorRef.current && editorRef.current.getValue() !== props.value) {
       editorRef.current.setValue(props.value);
     }
-  }, [ props.value ]);
+  }, [props.value]);
 
   useEffect(() => {
-    monaco.editor.setTheme(props.disabled
-      ? (isDark ? 'gitpod-dark-disabled' : 'gitpod-disabled')
-      : (isDark ? 'gitpod-dark' : 'gitpod'));
+    monaco.editor.setTheme(
+      props.disabled ? (isDark ? 'gitpod-dark-disabled' : 'gitpod-disabled') : isDark ? 'gitpod-dark' : 'gitpod',
+    );
     if (editorRef.current) {
       editorRef.current.updateOptions({ readOnly: props.disabled });
     }
-  }, [ props.disabled, isDark ]);
+  }, [props.disabled, isDark]);
 
   return <div className={props.classes} ref={containerRef} />;
 }

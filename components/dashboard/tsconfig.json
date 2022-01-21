@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -23,8 +19,5 @@
     "jsx": "react-jsx",
     "useUnknownInCatchVariables": false
   },
-  "include": [
-    "src",
-    "ee/src"
-  ]
+  "include": ["src", "ee/src"]
 }

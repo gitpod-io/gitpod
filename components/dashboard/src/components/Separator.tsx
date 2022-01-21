@@ -5,5 +5,5 @@
  */
 
 export default function Separator() {
-    return <div className="border-gray-200 dark:border-gray-800 border-b absolute left-0 w-full"></div>;
+  return <div className="border-gray-200 dark:border-gray-800 border-b absolute left-0 w-full"></div>;
 }

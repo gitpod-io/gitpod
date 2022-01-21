@@ -4,17 +4,24 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, DisposableCollection, WithPrebuild, Workspace, WorkspaceImageBuild, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import EventEmitter from "events";
-import React, { Suspense, useEffect } from "react";
+import {
+  ContextURL,
+  DisposableCollection,
+  WithPrebuild,
+  Workspace,
+  WorkspaceImageBuild,
+  WorkspaceInstance,
+} from '@gitpod/gitpod-protocol';
+import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import EventEmitter from 'events';
+import React, { Suspense, useEffect } from 'react';
 import { v4 } from 'uuid';
-import Arrow from "../components/Arrow";
-import ContextMenu from "../components/ContextMenu";
-import PendingChangesDropdown from "../components/PendingChangesDropdown";
-import { watchHeadlessLogs } from "../components/PrebuildLogs";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
+import Arrow from '../components/Arrow';
+import ContextMenu from '../components/ContextMenu';
+import PendingChangesDropdown from '../components/PendingChangesDropdown';
+import { watchHeadlessLogs } from '../components/PrebuildLogs';
+import { getGitpodService, gitpodHostUrl } from '../service/service';
+import { StartPage, StartPhase, StartWorkspaceError } from './StartPage';
 const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
@@ -30,13 +37,12 @@ export interface StartWorkspaceState {
   hasImageBuildLogs?: boolean;
   error?: StartWorkspaceError;
   desktopIde?: {
-    link: string
-    label: string
-  }
+    link: string;
+    label: string;
+  };
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
-
   constructor(props: StartWorkspaceProps) {
     super(props);
     this.state = {};
@@ -53,14 +59,14 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             this.setState({ error });
           }
           if (event.data.state.desktopIdeLink) {
-            const label = event.data.state.desktopIdeLabel || "Open Desktop IDE";
+            const label = event.data.state.desktopIdeLabel || 'Open Desktop IDE';
             this.setState({ desktopIde: { link: event.data.state.desktopIdeLink, label } });
           }
         }
-      }
+      };
       window.addEventListener('message', setStateEventListener, false);
       this.toDispose.push({
-        dispose: () => window.removeEventListener('message', setStateEventListener)
+        dispose: () => window.removeEventListener('message', setStateEventListener),
       });
     }
 
@@ -83,26 +89,26 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     const oldPhase = prevState.workspaceInstance?.status.phase;
     if (newPhase !== oldPhase) {
       getGitpodService().server.trackEvent({
-        event: "status_rendered",
+        event: 'status_rendered',
         properties: {
           sessionId,
           instanceId: this.state.workspaceInstance?.id,
           workspaceId: this.props.workspaceId,
           type: this.state.workspace?.type,
-          phase: newPhase
+          phase: newPhase,
         },
       });
     }
 
     if (!!this.state.error && this.state.error !== prevState.error) {
       getGitpodService().server.trackEvent({
-        event: "error_rendered",
+        event: 'error_rendered',
         properties: {
           sessionId,
           instanceId: this.state.workspaceInstance?.id,
           workspaceId: this.state?.workspace?.id,
           type: this.state.workspace?.type,
-          error: this.state.error
+          error: this.state.error,
         },
       });
     }
@@ -111,7 +117,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
   async startWorkspace(restart = false, forceDefaultImage = false) {
     const state = this.state;
     if (state) {
-      if (!restart && (state.startedInstanceId /* || state.errorMessage */)) {
+      if (!restart && state.startedInstanceId /* || state.errorMessage */) {
         // We stick with a started instance until we're explicitly told not to
         return;
       }
@@ -121,9 +127,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     try {
       const result = await getGitpodService().server.startWorkspace(workspaceId, { forceDefaultImage });
       if (!result) {
-        throw new Error("No result!");
+        throw new Error('No result!');
       }
-      console.log("/start: started workspace instance: " + result.instanceID);
+      console.log('/start: started workspace instance: ' + result.instanceID);
       // redirect to workspaceURL if we are not yet running in an iframe
       if (!this.runsInIFrame() && result.workspaceURL) {
         this.redirectTo(result.workspaceURL);
@@ -152,7 +158,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       const info = await getGitpodService().server.getWorkspace(workspaceId);
       if (info.latestInstance) {
         this.setState({
-          workspace: info.workspace
+          workspace: info.workspace,
         });
         this.onInstanceUpdate(info.latestInstance);
       }
@@ -242,18 +248,18 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     switch (this.state?.workspaceInstance?.status.phase) {
       // unknown indicates an issue within the system in that it cannot determine the actual phase of
       // a workspace. This phase is usually accompanied by an error.
-      case "unknown":
+      case 'unknown':
         break;
 
       // Preparing means that we haven't actually started the workspace instance just yet, but rather
       // are still preparing for launch. This means we're building the Docker image for the workspace.
-      case "preparing":
+      case 'preparing':
         return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
 
       // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
       // some space within the cluster. If for example the cluster needs to scale up to accomodate the
       // workspace, the workspace will be in Pending state until that happened.
-      case "pending":
+      case 'pending':
         phase = StartPhase.Preparing;
         statusMessage = <p className="text-base text-gray-400">Allocating resources …</p>;
         break;
@@ -261,21 +267,23 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       // Creating means the workspace is currently being created. That includes downloading the images required
       // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
       // network speed, image size and cache states.
-      case "creating":
+      case 'creating':
         phase = StartPhase.Creating;
         statusMessage = <p className="text-base text-gray-400">Pulling container image …</p>;
         break;
 
       // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
       // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
-      case "initializing":
+      case 'initializing':
         phase = StartPhase.Starting;
-        statusMessage = <p className="text-base text-gray-400">{isPrebuilt ? 'Loading prebuild …' : 'Initializing content …'}</p>;
+        statusMessage = (
+          <p className="text-base text-gray-400">{isPrebuilt ? 'Loading prebuild …' : 'Initializing content …'}</p>
+        );
         break;
 
       // Running means the workspace is able to actively perform work, either by serving a user through Theia,
       // or as a headless workspace.
-      case "running":
+      case 'running':
         if (isHeadless) {
           return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
         }
@@ -284,100 +292,152 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
           statusMessage = <p className="text-base text-gray-400">Opening IDE …</p>;
         } else {
           phase = StartPhase.IdeReady;
-          statusMessage = <div>
-            <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
-              <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
-              <div>
-                <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-                <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+          statusMessage = (
+            <div>
+              <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
+                <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
+                <div>
+                  <p className="text-gray-700 dark:text-gray-200 font-semibold">
+                    {this.state.workspaceInstance.workspaceId}
+                  </p>
+                  <a target="_parent" href={this.state.workspace?.contextURL}>
+                    <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
+                      {this.state.workspace?.contextURL}
+                    </p>
+                  </a>
+                </div>
+              </div>
+              <div className="mt-10 justify-center flex space-x-2">
+                <ContextMenu
+                  menuEntries={[
+                    {
+                      title: 'Open in Browser',
+                      onClick: () => window.parent.postMessage({ type: 'openBrowserIde' }, '*'),
+                    },
+                    {
+                      title: 'Stop Workspace',
+                      onClick: () => getGitpodService().server.stopWorkspace(this.props.workspaceId),
+                    },
+                    {
+                      title: 'Go to Dashboard',
+                      href: gitpodHostUrl.asDashboard().toString(),
+                      target: '_parent',
+                    },
+                  ]}
+                >
+                  <button className="secondary">
+                    More Actions...
+                    <Arrow up={false} />
+                  </button>
+                </ContextMenu>
+                <a target="_blank" href={this.state.desktopIde.link}>
+                  <button>{this.state.desktopIde.label}</button>
+                </a>
+              </div>
+              <div className="text-sm text-gray-400 dark:text-gray-500 mt-5">
+                These IDE options are based on{' '}
+                <a className="gp-link" href={gitpodHostUrl.asPreferences().toString()} target="_parent">
+                  your user preferences
+                </a>
+                .
               </div>
             </div>
-            <div className="mt-10 justify-center flex space-x-2">
-              <ContextMenu menuEntries={[
-                {
-                  title: 'Open in Browser',
-                  onClick: () => window.parent.postMessage({ type: 'openBrowserIde' }, '*'),
-                },
-                {
-                  title: 'Stop Workspace',
-                  onClick: () => getGitpodService().server.stopWorkspace(this.props.workspaceId),
-                },
-                {
-                  title: 'Go to Dashboard',
-                  href: gitpodHostUrl.asDashboard().toString(),
-                  target: "_parent",
-                },
-              ]} >
-                <button className="secondary">More Actions...<Arrow up={false} /></button>
-              </ContextMenu>
-              <a target="_blank" href={this.state.desktopIde.link}><button>{this.state.desktopIde.label}</button></a>
-            </div>
-            <div className="text-sm text-gray-400 dark:text-gray-500 mt-5">These IDE options are based on <a className="gp-link" href={gitpodHostUrl.asPreferences().toString()} target="_parent">your user preferences</a>.</div>
-          </div>;
+          );
         }
 
         break;
 
       // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
       // When in this state, we expect it to become running or stopping anytime soon.
-      case "interrupted":
+      case 'interrupted':
         phase = StartPhase.Running;
         statusMessage = <p className="text-base text-gray-400">Checking workspace …</p>;
         break;
 
       // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
-      case "stopping":
+      case 'stopping':
         if (isHeadless) {
           return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
         }
         phase = StartPhase.Stopping;
-        statusMessage = <div>
-          <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100 dark:bg-gray-800">
-            <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
-            <div>
-              <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+        statusMessage = (
+          <div>
+            <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100 dark:bg-gray-800">
+              <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
+              <div>
+                <p className="text-gray-700 dark:text-gray-200 font-semibold">
+                  {this.state.workspaceInstance.workspaceId}
+                </p>
+                <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}>
+                  <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
+                    {this.state.workspace?.contextURL}
+                  </p>
+                </a>
+              </div>
+            </div>
+            <div className="mt-10 flex justify-center">
+              <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}>
+                <button className="secondary">Go to Dashboard</button>
+              </a>
             </div>
           </div>
-          <div className="mt-10 flex justify-center">
-            <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}><button className="secondary">Go to Dashboard</button></a>
-          </div>
-        </div>;
+        );
         break;
 
       // Stopped means the workspace ended regularly because it was shut down.
-      case "stopped":
+      case 'stopped':
         phase = StartPhase.Stopped;
         if (this.state.hasImageBuildLogs) {
           const restartWithDefaultImage = (event: React.MouseEvent) => {
             (event.target as HTMLButtonElement).disabled = true;
             this.startWorkspace(true, true);
-          }
-          return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} onStartWithDefaultImage={restartWithDefaultImage} phase={phase} error={error} />;
+          };
+          return (
+            <ImageBuildView
+              workspaceId={this.state.workspaceInstance.workspaceId}
+              onStartWithDefaultImage={restartWithDefaultImage}
+              phase={phase}
+              error={error}
+            />
+          );
         }
         if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
           title = 'Timed Out';
         }
-        statusMessage = <div>
-          <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
-            <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
-            <div>
-              <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+        statusMessage = (
+          <div>
+            <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
+              <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
+              <div>
+                <p className="text-gray-700 dark:text-gray-200 font-semibold">
+                  {this.state.workspaceInstance.workspaceId}
+                </p>
+                <a target="_parent" href={ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString()}>
+                  <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
+                    {this.state.workspace?.contextURL}
+                  </p>
+                </a>
+              </div>
+            </div>
+            <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />
+            <div className="mt-10 justify-center flex space-x-2">
+              <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}>
+                <button className="secondary">Go to Dashboard</button>
+              </a>
+              <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString()}>
+                <button>Open Workspace</button>
+              </a>
             </div>
           </div>
-          <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />
-          <div className="mt-10 justify-center flex space-x-2">
-            <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}><button className="secondary">Go to Dashboard</button></a>
-            <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString()}><button>Open Workspace</button></a>
-          </div>
-        </div>;
+        );
         break;
     }
 
-    return <StartPage phase={phase} error={error} title={title}>
-      {statusMessage}
-    </StartPage>;
+    return (
+      <StartPage phase={phase} error={error} title={title}>
+        {statusMessage}
+      </StartPage>
+    );
   }
 }
 
@@ -410,27 +470,41 @@ function ImageBuildView(props: ImageBuildViewProps) {
     };
   }, []);
 
-  return <StartPage title="Building Image" phase={props.phase}>
-    <Suspense fallback={<div />}>
-      <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
-    </Suspense>
-    {!!props.onStartWithDefaultImage && <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>Continue with Default Image</button>}
-  </StartPage>;
+  return (
+    <StartPage title="Building Image" phase={props.phase}>
+      <Suspense fallback={<div />}>
+        <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
+      </Suspense>
+      {!!props.onStartWithDefaultImage && (
+        <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>
+          Continue with Default Image
+        </button>
+      )}
+    </StartPage>
+  );
 }
 
 function HeadlessWorkspaceView(props: { instanceId: string }) {
   const logsEmitter = new EventEmitter();
 
   useEffect(() => {
-    const disposables = watchHeadlessLogs(props.instanceId, (chunk) => logsEmitter.emit('logs', chunk), async () => { return false; });
+    const disposables = watchHeadlessLogs(
+      props.instanceId,
+      (chunk) => logsEmitter.emit('logs', chunk),
+      async () => {
+        return false;
+      },
+    );
     return function cleanup() {
       disposables.dispose();
     };
   }, []);
 
-  return <StartPage title="Prebuild in Progress">
-    <Suspense fallback={<div />}>
-      <WorkspaceLogs logsEmitter={logsEmitter} />
-    </Suspense>
-  </StartPage>;
+  return (
+    <StartPage title="Prebuild in Progress">
+      <Suspense fallback={<div />}>
+        <WorkspaceLogs logsEmitter={logsEmitter} />
+      </Suspense>
+    </StartPage>
+  );
 }

@@ -13,21 +13,21 @@ import { ProjectContextProvider } from './projects/project-context';
 import { ThemeContextProvider } from './theme-context';
 import { BrowserRouter } from 'react-router-dom';
 
-import "./index.css"
+import './index.css';
 
 ReactDOM.render(
-    <React.StrictMode>
-        <UserContextProvider>
-            <TeamsContextProvider>
-                <ProjectContextProvider>
-                    <ThemeContextProvider>
-                        <BrowserRouter>
-                            <App />
-                        </BrowserRouter>
-                    </ThemeContextProvider>
-                </ProjectContextProvider>
-            </TeamsContextProvider>
-        </UserContextProvider>
-    </React.StrictMode>,
-    document.getElementById('root')
+  <React.StrictMode>
+    <UserContextProvider>
+      <TeamsContextProvider>
+        <ProjectContextProvider>
+          <ThemeContextProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </ThemeContextProvider>
+        </ProjectContextProvider>
+      </TeamsContextProvider>
+    </UserContextProvider>
+  </React.StrictMode>,
+  document.getElementById('root'),
 );

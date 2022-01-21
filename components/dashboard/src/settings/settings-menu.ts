@@ -5,32 +5,32 @@
  */
 
 export default [
-    {
-        title: 'Account',
-        link: ['/account','/settings']
-    },
-    {
-        title: 'Notifications',
-        link: ['/notifications']
-    },
-    {
-        title: 'Plans',
-        link: ['/plans']
-    },
-    {
-        title: 'Team Plans',
-        link: ['/teams']
-    },
-    {
-        title: 'Variables',
-        link: ['/variables']
-    },
-    {
-        title: 'Integrations',
-        link: ["/integrations", "/access-control"]
-    },
-    {
-        title: 'Preferences',
-        link: ['/preferences']
-    },
+  {
+    title: 'Account',
+    link: ['/account', '/settings'],
+  },
+  {
+    title: 'Notifications',
+    link: ['/notifications'],
+  },
+  {
+    title: 'Plans',
+    link: ['/plans'],
+  },
+  {
+    title: 'Team Plans',
+    link: ['/teams'],
+  },
+  {
+    title: 'Variables',
+    link: ['/variables'],
+  },
+  {
+    title: 'Integrations',
+    link: ['/integrations', '/access-control'],
+  },
+  {
+    title: 'Preferences',
+    link: ['/preferences'],
+  },
 ];

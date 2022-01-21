@@ -5,5 +5,9 @@
  */
 
 export default function CodeText(p: { children?: React.ReactNode }) {
-    return <span className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-md text-sm font-mono font-medium">{p.children}</span>;
+  return (
+    <span className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-md text-sm font-mono font-medium">
+      {p.children}
+    </span>
+  );
 }
