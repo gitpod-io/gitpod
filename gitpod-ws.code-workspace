@@ -30,13 +30,22 @@
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",
+      "[javascript]": {
+         "editor.defaultFormatter": "esbenp.prettier-vscode",
+         "editor.formatOnSave": true
+      },
+      "[typescript]": {
+         "editor.defaultFormatter": "esbenp.prettier-vscode",
+         "editor.formatOnSave": true
+      },
       "[json]": {
          "editor.insertSpaces": true,
          "editor.tabSize": 2
       },
       "[yaml]": {
          "editor.insertSpaces": true,
-         "editor.tabSize": 2
+         "editor.tabSize": 2,
+         "editor.defaultFormatter": "esbenp.prettier-vscode"
       },
       "[go]": {
          "editor.formatOnSave": true

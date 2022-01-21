@@ -43,7 +43,8 @@ tasks:
 vscode:
   extensions:
     - bradlc.vscode-tailwindcss
-    - EditorConfig.EditorConfig
+    - editorconfig.editorconfig
+    - esbenp.prettier-vscode
     - golang.go
     - hashicorp.terraform
     - ms-azuretools.vscode-docker
