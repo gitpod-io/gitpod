@@ -268,6 +268,7 @@ export class GithubApp {
                 log.info("Did not find user for installation. Probably an incomplete app installation.", { repo: ctx.payload.repository, installationId });
                 return;
             }
+            log.info("registering check run", pws.id);
             await this.statusMaintainer.registerCheckRun({ span }, installationId, pws, {
                 ...ctx.repo(),
                 head_sha: ctx.payload.pull_request.head.sha,

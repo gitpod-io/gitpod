@@ -81,6 +81,7 @@ export class PrebuildStatusMaintainer implements Disposable {
             } else {
                 // prebuild isn't running - mark with check
                 const conclusion = this.getConclusionFromPrebuildState(pws);
+                log.info('Sending status', { sha: cri.head_sha, conclusion, confi: config?.github?.prebuilds});
                 await githubApi.repos.createCommitStatus({
                     repo: cri.repo,
                     owner: cri.owner,
@@ -155,6 +156,7 @@ export class PrebuildStatusMaintainer implements Disposable {
 
                 let found = true;
                 try {
+                    log.info('Sending status 2', { sha: pws.commit, conclusion, confi: workspace?.config?.github?.prebuilds});
                     await githubApi.repos.createCommitStatus({
                         owner: updatatable.owner,
                         repo: updatatable.repo,
