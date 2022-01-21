@@ -327,7 +327,7 @@
 - [ws-daemon] Remove gitpod_ws_daemon_workspace_cpu_limit_sec metric ([#5444](https://github.com/gitpod-io/gitpod/pull/5444)) - [@aledbf](https://github.com/aledbf)
 - Upgrade grpc-js library ([#5455](https://github.com/gitpod-io/gitpod/pull/5455)) - [@meysholdt](https://github.com/meysholdt), [@princerachit](https://github.com/princerachit)
 - [ws-manager] Restart pod on config change ([#5454](https://github.com/gitpod-io/gitpod/pull/5454)) - [@geropl](https://github.com/geropl)
-- [local-app] gracefully handle invalid token ([#5369](https://github.com/gitpod-io/gitpod/pull/5369)) - [@akosyakov](https://github.com/akosyakov)
+- [local-app] gracefully handle invalid token ([#5369](https://github.com/gitpod-io/gitpod/pull/5369)) - [@akosyakov](https://github.com/akosyakov)
 - [helm] Add liveness probe to ws-proxy deployment ([#5286](https://github.com/gitpod-io/gitpod/pull/5286)) - [@princerachit](https://github.com/princerachit)
 - changed nodeAffinity for preview environments ([#5432](https://github.com/gitpod-io/gitpod/pull/5432)) - [@wulfthimm](https://github.com/wulfthimm)
 - [license] adjust users of self-hosted license ([#5420](https://github.com/gitpod-io/gitpod/pull/5420)) - [@laushinka](https://github.com/laushinka)
@@ -348,7 +348,7 @@
 - [workspacekit] Establish IWS conn for proc mounts ([#5407](https://github.com/gitpod-io/gitpod/pull/5407)) - [@csweichel](https://github.com/csweichel)
 - [ws-manager] Properly stop workspaces that never make it to the RUNNING phase ([#5396](https://github.com/gitpod-io/gitpod/pull/5396)) - [@csweichel](https://github.com/csweichel)
 - [caddy] reroute legacy URIs ([#5393](https://github.com/gitpod-io/gitpod/pull/5393)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
-- [code] improve share workspace notification ([#5384](https://github.com/gitpod-io/gitpod/pull/5384)) - [@jeanp413](https://github.com/jeanp413)
+- [code] improve share workspace notification ([#5384](https://github.com/gitpod-io/gitpod/pull/5384)) - [@jeanp413](https://github.com/jeanp413)
 - [dashboard] Allow onboarding mail ([#5397](https://github.com/gitpod-io/gitpod/pull/5397)) - [@laushinka](https://github.com/laushinka)
 - [code] rename gitpod extensions ([#5353](https://github.com/gitpod-io/gitpod/pull/5353)) - [@akosyakov](https://github.com/akosyakov)
 - [dashboard] De-noise backend error messages in Project Configurator ([#5395](https://github.com/gitpod-io/gitpod/pull/5395)) - [@jankeromnes](https://github.com/jankeromnes)
@@ -380,7 +380,7 @@
 - [dashboard] Update tailwindcss and enable jit (now stable) ([#4655](https://github.com/gitpod-io/gitpod/pull/4655)) - [@aledbf](https://github.com/aledbf)
 - [ws-daemon] remove failed backups ([#5325](https://github.com/gitpod-io/gitpod/pull/5325)) - [@svenefftinge](https://github.com/svenefftinge)
 - [workspace]: update logs ([#5257](https://github.com/gitpod-io/gitpod/pull/5257)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
-- [code] smooth VS Code desktop flow ([#5287](https://github.com/gitpod-io/gitpod/pull/5287)) - [@akosyakov](https://github.com/akosyakov)
+- [code] smooth VS Code desktop flow ([#5287](https://github.com/gitpod-io/gitpod/pull/5287)) - [@akosyakov](https://github.com/akosyakov)
 - [workspacekit] Close lift unix socket on termination ([#5296](https://github.com/gitpod-io/gitpod/pull/5296)) - [@aledbf](https://github.com/aledbf)
 - [ws-manager] Ensure status before setting phase tag ([#5294](https://github.com/gitpod-io/gitpod/pull/5294)) - [@aledbf](https://github.com/aledbf)
 - Update long description in messagebus ([#5291](https://github.com/gitpod-io/gitpod/pull/5291)) - [@YauhenPylAurea](https://github.com/YauhenPylAurea)
@@ -537,7 +537,7 @@
 - [content-service] Improve CPU utilization for initial git clone command ([#4847](https://github.com/gitpod-io/gitpod/pull/4847)) - [@aledbf](https://github.com/aledbf)
 - [server] Handle `releases/tag/<tag>` in GitHub context parser ([#4813](https://github.com/gitpod-io/gitpod/pull/4813)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - [ws-manager] Pull images if not present ([#4837](https://github.com/gitpod-io/gitpod/pull/4837)) - [@csweichel](https://github.com/csweichel)
-- [code] serve each webview from own origin ([#4738](https://github.com/gitpod-io/gitpod/pull/4738)) - [@akosyakov](https://github.com/akosyakov)
+- [code] serve each webview from own origin ([#4738](https://github.com/gitpod-io/gitpod/pull/4738)) - [@akosyakov](https://github.com/akosyakov)
 - [.gitpod.yml] update config ([#4798](https://github.com/gitpod-io/gitpod/pull/4798)) - [@svenefftinge](https://github.com/svenefftinge)
 - [server] Set owner token cookie HttpOnly and Secure ([#4832](https://github.com/gitpod-io/gitpod/pull/4832)) - [@csweichel](https://github.com/csweichel)
 - [gp] env: handle multi-word values without quotes ([#4816](https://github.com/gitpod-io/gitpod/pull/4816)) - [@geropl](https://github.com/geropl)
@@ -566,7 +566,7 @@
 - [server] Improve logging / error messages of GitLab app and context parser ([#4747](https://github.com/gitpod-io/gitpod/pull/4747)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - [admin] Fix adminRestoreSoftDeletedWorkspace ([#4772](https://github.com/gitpod-io/gitpod/pull/4772)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - [bpf] Reduce QEMU disk size ([#4766](https://github.com/gitpod-io/gitpod/pull/4766)) - [@geropl](https://github.com/geropl)
-- [code] confirm sharing ([#4743](https://github.com/gitpod-io/gitpod/pull/4743)) - [@akosyakov](https://github.com/akosyakov)
+- [code] confirm sharing ([#4743](https://github.com/gitpod-io/gitpod/pull/4743)) - [@akosyakov](https://github.com/akosyakov)
 - [ws-daemon] cgroup customizer on workspace add (fuse support) ([#4762](https://github.com/gitpod-io/gitpod/pull/4762)) - [@fntlnz](https://github.com/fntlnz)
 - [werft] K3s ws cluster register wait on dependent pods ([#4748](https://github.com/gitpod-io/gitpod/pull/4748)) - [@princerachit](https://github.com/princerachit)
 - [dashboard] Make sure the error thrown from getLoggedInUser takes pre… ([#4764](https://github.com/gitpod-io/gitpod/pull/4764)) - [@geropl](https://github.com/geropl)
@@ -595,13 +595,13 @@
 ## June 2021
 
 - Complete validations of VS Code extensions in .gitpod.yml ([#4645](https://github.com/gitpod-io/gitpod/pull/4645)):
-    | Check | Quick Fixes |
+    | Check | Quick Fixes |
     | --- | --- |
-    | Deprecated user uploaded extensions | Resolve them against Open VSX |
-    | Extensions cannot be found in Open VSX | Remove from .gitpod.yml or search for them in Open VSX |
-    | Extensions URLs cannot be resolved to valid VSIX files | Remove from .gitpod.yml |
-    | Extensions is installed for the workspace but missing in .gitpod.yml | Add to .gitpod.yml or uninstall |
-    | Extensions is uninstalled but present in .gitpod.yml | Remove from .gitpod.yml or install as no synced |
+    | Deprecated user uploaded extensions | Resolve them against Open VSX |
+    | Extensions cannot be found in Open VSX | Remove from .gitpod.yml or search for them in Open VSX |
+    | Extensions URLs cannot be resolved to valid VSIX files | Remove from .gitpod.yml |
+    | Extensions is installed for the workspace but missing in .gitpod.yml | Add to .gitpod.yml or uninstall |
+    | Extensions is uninstalled but present in .gitpod.yml | Remove from .gitpod.yml or install as no synced |
 - Breaking Change: Make ports configured in `.gitpod.yml` private by default when no value for `visibility` is given (was public). This change is for security reasons. ([#4548](https://github.com/gitpod-io/gitpod/pull/4548))
 - Added a deprecation warning for Theia ([#4614](https://github.com/gitpod-io/gitpod/pull/4614))
 - Deprecate `prebuild` task in `gitpod.yml` ([#4543](https://github.com/gitpod-io/gitpod/pull/4543))

@@ -11,7 +11,7 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 export const accessCodeSyncStorage = 'accessCodeSyncStorage';
 export const accessHeadlessLogs = 'accessHeadlessLogs';
-type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs;
+type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs;
 type GroupsConfig = {
     [key: string]: {
         points: number,

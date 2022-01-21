@@ -64,7 +64,7 @@ export default function ConfirmationModal(props: {
             visible={props.visible === undefined ? true : props.visible}
             onClose={props.onClose}
             onEnter={() => {
-                if (cancelButtonRef?.current?.contains(document.activeElement)) {
+                if (cancelButtonRef?.current?.contains(document.activeElement)) {
                     props.onClose();
                     return false;
                 }

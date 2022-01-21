@@ -26,7 +26,7 @@ export class GitTokenScopeGuesser {
 
         // in case of git operation which require write access to a remote
         if (gitCommand === "push") {
-            const validationResult = await this.tokenValidator.checkWriteAccess({ host: authProvider.host, repoFullName, token: currentToken.token });
+            const validationResult = await this.tokenValidator.checkWriteAccess({ host: authProvider.host, repoFullName, token: currentToken.token });
             const hasWriteAccess = validationResult && validationResult.writeAccessToRepo === true;
             if (hasWriteAccess) {
                 const isPublic = validationResult && !validationResult.isPrivateRepo;

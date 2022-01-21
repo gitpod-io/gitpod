@@ -1341,7 +1341,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return subscription;
     }
 
-    // (SaaS) – admin
+    // (SaaS) – admin
     async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
         traceAPIParams(ctx, { userId });
 
