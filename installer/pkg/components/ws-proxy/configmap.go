@@ -65,6 +65,18 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PProfAddr:          ":60060",
 		PrometheusAddr:     ":60095",
 		ReadinessProbeAddr: ":60088",
+		WorkspaceManager: &config.WorkspaceManagerConn{
+			Addr: "ws-manager:8080",
+			TLS: struct {
+				CA   string "json:\"ca\""
+				Cert string "json:\"crt\""
+				Key  string "json:\"key\""
+			}{
+				CA:   "/ws-manager-client-tls-certs/ca.crt",
+				Cert: "/ws-manager-client-tls-certs/tls.crt",
+				Key:  "/ws-manager-client-tls-certs/tls.key",
+			},
+		},
 	}
 
 	fc, err := common.ToJSONString(wspcfg)

@@ -19,17 +19,68 @@ import (
 )
 
 type Session struct {
-	Conn                *ssh.ServerConn
-	WorkspaceId         string
+	Conn *ssh.ServerConn
+
+	WorkspaceID string
+	InstanceID  string
+
 	PublicKey           ssh.PublicKey
-	WorkspaceIp         string
+	WorkspaceIP         string
 	WorkspacePrivateKey ssh.Signer
 }
 
 type Server struct {
-	ConnectionTimeout     time.Duration
+	ConnectionTimeout time.Duration
+	Heartbeater       Heartbeat
+
 	sshConfig             *ssh.ServerConfig
 	workspaceInfoProvider p.WorkspaceInfoProvider
+}
+
+// New creates a new SSH proxy server
+
+func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, heartbeat Heartbeat) *Server {
+	server := &Server{
+		workspaceInfoProvider: workspaceInfoProvider,
+		Heartbeater:           &noHeartbeat{},
+	}
+
+	server.sshConfig = &ssh.ServerConfig{
+		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
+		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
+			workspaceId, ownerToken := conn.User(), string(password)
+			err := server.Authenticator(workspaceId, ownerToken)
+			if err != nil {
+				return nil, err
+			}
+			return &ssh.Permissions{
+				Extensions: map[string]string{
+					"workspaceId": workspaceId,
+				},
+			}, nil
+		},
+		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
+			args := strings.Split(conn.User(), ":")
+			// workspaceId:ownerToken
+			if len(args) != 2 {
+				return nil, fmt.Errorf("username error")
+			}
+			workspaceId, ownerToken := args[0], args[1]
+			err := server.Authenticator(workspaceId, ownerToken)
+			if err != nil {
+				return nil, err
+			}
+			return &ssh.Permissions{
+				Extensions: map[string]string{
+					"workspaceId": workspaceId,
+				},
+			}, nil
+		},
+	}
+	for _, s := range signers {
+		server.sshConfig.AddHostKey(s)
+	}
+	return server
 }
 
 func (s *Server) HandleConn(c net.Conn) {
@@ -56,10 +107,12 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 	session := &Session{
 		Conn:                sshConn,
-		WorkspaceId:         workspaceId,
+		WorkspaceID:         workspaceId,
+		InstanceID:          wsInfo.InstanceID,
 		WorkspacePrivateKey: key,
-		WorkspaceIp:         wsInfo.IPAddress + ":23001",
+		WorkspaceIP:         wsInfo.IPAddress + ":23001",
 	}
+	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID)
 
 	go func() {
 		for req := range reqs {
@@ -125,47 +178,4 @@ func (s *Server) Serve(l net.Listener) error {
 
 		go s.HandleConn(conn)
 	}
-}
-
-func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider) *Server {
-	server := &Server{
-		workspaceInfoProvider: workspaceInfoProvider,
-	}
-
-	server.sshConfig = &ssh.ServerConfig{
-		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
-		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
-			workspaceId, ownerToken := conn.User(), string(password)
-			err := server.Authenticator(workspaceId, ownerToken)
-			if err != nil {
-				return nil, err
-			}
-			return &ssh.Permissions{
-				Extensions: map[string]string{
-					"workspaceId": workspaceId,
-				},
-			}, nil
-		},
-		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
-			args := strings.Split(conn.User(), ":")
-			// workspaceId:ownerToken
-			if len(args) != 2 {
-				return nil, fmt.Errorf("username error")
-			}
-			workspaceId, ownerToken := args[0], args[1]
-			err := server.Authenticator(workspaceId, ownerToken)
-			if err != nil {
-				return nil, err
-			}
-			return &ssh.Permissions{
-				Extensions: map[string]string{
-					"workspaceId": workspaceId,
-				},
-			}, nil
-		},
-	}
-	for _, s := range signers {
-		server.sshConfig.AddHostKey(s)
-	}
-	return server
 }

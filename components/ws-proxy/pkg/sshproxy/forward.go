@@ -80,14 +80,14 @@ func (s *Server) ChannelForward(session *Session, newChannel ssh.NewChannel) {
 		clientConfig.Timeout = s.ConnectionTimeout
 	}
 
-	conn, err := net.Dial("tcp", session.WorkspaceIp)
+	conn, err := net.Dial("tcp", session.WorkspaceIP)
 	if err != nil {
 		newChannel.Reject(ssh.ConnectionFailed, fmt.Sprintf("Connect failed: %v\r\n", err))
 		return
 	}
 	defer conn.Close()
 
-	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, session.WorkspaceIp, clientConfig)
+	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, session.WorkspaceIP, clientConfig)
 	if err != nil {
 		newChannel.Reject(ssh.ConnectionFailed, fmt.Sprintf("Client connection setup failed: %v\r\n", err))
 		return
@@ -135,6 +135,7 @@ func (s *Server) SessionForward(session *Session, newChannel ssh.NewChannel) {
 		for req := range sessReqs {
 			switch req.Type {
 			case "pty-req", "shell":
+				log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debugf("forwarding %s request", req.Type)
 				if req.WantReply {
 					req.Reply(true, []byte{})
 					req.WantReply = false
@@ -166,14 +167,14 @@ func (s *Server) SessionForward(session *Session, newChannel ssh.NewChannel) {
 		clientConfig.Timeout = s.ConnectionTimeout
 	}
 
-	conn, err := net.Dial("tcp", session.WorkspaceIp)
+	conn, err := net.Dial("tcp", session.WorkspaceIP)
 	if err != nil {
 		fmt.Fprintf(stderr, "Connect failed: %v\r\n", err)
 		return
 	}
 	defer conn.Close()
 
-	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, session.WorkspaceIp, clientConfig)
+	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, session.WorkspaceIP, clientConfig)
 	if err != nil {
 		fmt.Fprintf(stderr, "Client connection setup failed: %v\r\n", err)
 		return
@@ -186,5 +187,48 @@ func (s *Server) SessionForward(session *Session, newChannel ssh.NewChannel) {
 		return
 	}
 
-	proxy(maskedReqs, forwardReqs, sessChan, forwardChannel)
+	proxy(maskedReqs, forwardReqs, startHeartbeatingChannel(sessChan, s.Heartbeater, session.InstanceID), forwardChannel)
+}
+
+func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID string) ssh.Channel {
+	res := &heartbeatingChannel{
+		Channel: c,
+		t:       time.NewTimer(30 * time.Second),
+	}
+	go func() {
+		for range res.t.C {
+			res.mux.Lock()
+			if !res.sawActivity {
+				res.mux.Unlock()
+				continue
+			}
+			res.sawActivity = false
+			res.mux.Unlock()
+
+			heartbeat.SendHeartbeat(instanceID)
+		}
+	}()
+
+	return res
+}
+
+type heartbeatingChannel struct {
+	ssh.Channel
+
+	mux         sync.Mutex
+	sawActivity bool
+	t           *time.Timer
+}
+
+// Read reads up to len(data) bytes from the channel.
+func (c *heartbeatingChannel) Read(data []byte) (int, error) {
+	c.mux.Lock()
+	c.sawActivity = true
+	c.mux.Unlock()
+	return c.Channel.Read(data)
+}
+
+func (c *heartbeatingChannel) Close() error {
+	c.t.Stop()
+	return c.Channel.Close()
 }
