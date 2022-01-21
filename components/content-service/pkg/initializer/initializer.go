@@ -142,7 +142,7 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		initializer = &EmptyInitializer{}
 	}
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %v", err))
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	return initializer, nil
 }

@@ -235,7 +235,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)
 		if err != nil {
 			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
-			return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %s", err.Error()))
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		}
 	}
 
@@ -243,7 +243,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	err = workspace.MarkInitDone(ctx)
 	if err != nil {
 		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
-		return nil, status.Error(codes.Internal, fmt.Sprintf("cannot finish workspace init: %v", err))
+		return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf("cannot finish workspace init: %v", err))
 	}
 
 	return &api.InitWorkspaceResponse{}, nil

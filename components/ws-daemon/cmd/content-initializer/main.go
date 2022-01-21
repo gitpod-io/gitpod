@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -18,6 +19,9 @@ func main() {
 
 	err := content.RunInitializerChild()
 	if err != nil {
+		errfd := os.NewFile(uintptr(3), "errout")
+		_, _ = fmt.Fprintf(errfd, err.Error())
+
 		os.Exit(42)
 	}
 }

@@ -9,12 +9,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/opencontainers/runc/libcontainer/specconv"
@@ -237,7 +239,19 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		name = "init-ws-" + opts.OWI.InstanceID
 	}
 
-	args = append(args, "--log-format", "json", "run", name)
+	args = append(args, "--log-format", "json", "run")
+	args = append(args, "--preserve-fds", "1")
+	args = append(args, name)
+
+	errIn, errOut, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	errch := make(chan []byte, 1)
+	go func() {
+		errmsg, _ := ioutil.ReadAll(errIn)
+		errch <- errmsg
+	}()
 
 	var cmdOut bytes.Buffer
 	cmd := exec.Command("runc", args...)
@@ -245,14 +259,23 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	cmd.Stdout = &cmdOut
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
+	cmd.ExtraFiles = []*os.File{errOut}
 	err = cmd.Run()
 	log.FromBuffer(&cmdOut, log.WithFields(opts.OWI.Fields()))
+	errOut.Close()
+
+	var errmsg []byte
+	select {
+	case errmsg = <-errch:
+	case <-time.After(1 * time.Second):
+		errmsg = []byte("failed to read content initializer response")
+	}
 	if err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0. If it's 42, it was deliberate.
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == 42 {
 				log.WithError(err).WithField("exitCode", status.ExitStatus()).WithField("args", args).Error("content init failed")
-				return xerrors.Errorf("content initializer failed")
+				return xerrors.Errorf(string(errmsg))
 			}
 		}
 
