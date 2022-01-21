@@ -309,6 +309,13 @@ func RunInitializerChild() (err error) {
 		return err
 	}
 
+	// some workspace content may have a `/dst/.gitpod` file or directory. That would break
+	// the workspace ready file placement (see https://github.com/gitpod-io/gitpod/issues/7694).
+	err = wsinit.EnsureCleanDotGitpodDirectory(ctx, "/dst")
+	if err != nil {
+		return err
+	}
+
 	// Place the ready file to make Theia "open its gates"
 	err = wsinit.PlaceWorkspaceReadyFile(ctx, "/dst", initSource, initmsg.UID, initmsg.GID)
 	if err != nil {

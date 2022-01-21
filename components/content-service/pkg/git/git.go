@@ -260,8 +260,9 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 
 // Clone runs git clone
 func (c *Client) Clone(ctx context.Context) (err error) {
-	if err := os.MkdirAll(c.Location, 0755); err != nil {
-		log.WithError(err).Error()
+	err = os.MkdirAll(c.Location, 0755)
+	if err != nil {
+		log.WithError(err).Error("cannot create clone location")
 	}
 
 	args := []string{"--depth=1", "--no-single-branch", c.RemoteURI}
