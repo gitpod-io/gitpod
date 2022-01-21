@@ -5,64 +5,63 @@
  */
 
 import { injectable, inject, postConstruct } from 'inversify';
-import { init, Instance, dispose, isEnabled, hasEnoughSeats, inspect, validate } from "./nativemodule";
+import { init, Instance, dispose, isEnabled, hasEnoughSeats, inspect, validate } from './nativemodule';
 import { Feature, LicensePayload } from './api';
 
-export const LicenseKeySource = Symbol("LicenseKeySource");
+export const LicenseKeySource = Symbol('LicenseKeySource');
 
 export interface LicenseKeySource {
-    // getKey returns a license key
-    getKey(): Promise<{
-        key: string,
-        domain: string
-    }>;
+  // getKey returns a license key
+  getKey(): Promise<{
+    key: string;
+    domain: string;
+  }>;
 }
 
 @injectable()
 export class LicenseEvaluator {
-    @inject(LicenseKeySource) protected keySource: LicenseKeySource;
-    protected instanceID: Instance;
+  @inject(LicenseKeySource) protected keySource: LicenseKeySource;
+  protected instanceID: Instance;
 
-    @postConstruct()
-    protected async init() {
-        const { key, domain } = await this.keySource.getKey();
-        this.instanceID = init(key, domain);
+  @postConstruct()
+  protected async init() {
+    const { key, domain } = await this.keySource.getKey();
+    this.instanceID = init(key, domain);
 
-        const { msg, valid } = validate(this.instanceID);
-        if (!valid) {
-            console.error(`invalid license: falling back to default`, {domain, msg});
-        } else {
-            console.log("enterprise license accepted", this.inspect());
-        }
+    const { msg, valid } = validate(this.instanceID);
+    if (!valid) {
+      console.error(`invalid license: falling back to default`, { domain, msg });
+    } else {
+      console.log('enterprise license accepted', this.inspect());
     }
+  }
 
-    public async reloadLicense() {
-        this.dispose()
-        await this.init()
+  public async reloadLicense() {
+    this.dispose();
+    await this.init();
+  }
+
+  public validate(): { msg?: string; valid: boolean } {
+    const v = validate(this.instanceID);
+    if (v.valid) {
+      return { valid: true };
     }
+    return { msg: v.msg, valid: false };
+  }
 
-    public validate(): { msg?: string, valid: boolean } {
-        const v = validate(this.instanceID);
-        if (v.valid) {
-            return { valid: true };
-        }
-        return { msg: v.msg, valid: false };
-    }
+  public isEnabled(feature: Feature): boolean {
+    return isEnabled(this.instanceID, feature);
+  }
 
-    public isEnabled(feature: Feature): boolean {
-        return isEnabled(this.instanceID, feature);
-    }
+  public hasEnoughSeats(seats: number): boolean {
+    return hasEnoughSeats(this.instanceID, seats);
+  }
 
-    public hasEnoughSeats(seats: number): boolean {
-        return hasEnoughSeats(this.instanceID, seats);
-    }
+  public inspect(): LicensePayload {
+    return JSON.parse(inspect(this.instanceID));
+  }
 
-    public inspect(): LicensePayload {
-        return JSON.parse(inspect(this.instanceID));
-    }
-
-    public dispose() {
-        dispose(this.instanceID);
-    }
-
+  public dispose() {
+    dispose(this.instanceID);
+  }
 }
