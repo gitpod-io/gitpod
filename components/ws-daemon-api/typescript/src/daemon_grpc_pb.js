@@ -121,10 +121,9 @@ function deserialize_wsdaemon_WaitForInitResponse(buffer_arg) {
   return daemon_pb.WaitForInitResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var WorkspaceContentServiceService = exports.WorkspaceContentServiceService = {
+var WorkspaceContentServiceService = (exports.WorkspaceContentServiceService = {
   // initWorkspace intialises a new workspace folder in the working area
-initWorkspace: {
+  initWorkspace: {
     path: '/wsdaemon.WorkspaceContentService/InitWorkspace',
     requestStream: false,
     responseStream: false,
@@ -136,9 +135,9 @@ initWorkspace: {
     responseDeserialize: deserialize_wsdaemon_InitWorkspaceResponse,
   },
   // WaitForInit waits until a workspace is fully initialized.
-// If the workspace is already initialized, this function returns immediately.
-// If there is no initialization is going on, an error is returned.
-waitForInit: {
+  // If the workspace is already initialized, this function returns immediately.
+  // If there is no initialization is going on, an error is returned.
+  waitForInit: {
     path: '/wsdaemon.WorkspaceContentService/WaitForInit',
     requestStream: false,
     responseStream: false,
@@ -150,7 +149,7 @@ waitForInit: {
     responseDeserialize: deserialize_wsdaemon_WaitForInitResponse,
   },
   // TakeSnapshot creates a backup/snapshot of a workspace
-takeSnapshot: {
+  takeSnapshot: {
     path: '/wsdaemon.WorkspaceContentService/TakeSnapshot',
     requestStream: false,
     responseStream: false,
@@ -162,7 +161,7 @@ takeSnapshot: {
     responseDeserialize: deserialize_wsdaemon_TakeSnapshotResponse,
   },
   // disposeWorkspace cleans up a workspace, possibly after taking a final backup
-disposeWorkspace: {
+  disposeWorkspace: {
     path: '/wsdaemon.WorkspaceContentService/DisposeWorkspace',
     requestStream: false,
     responseStream: false,
@@ -174,7 +173,7 @@ disposeWorkspace: {
     responseDeserialize: deserialize_wsdaemon_DisposeWorkspaceResponse,
   },
   // BackupWorkspace creates a backup of a workspace
-backupWorkspace: {
+  backupWorkspace: {
     path: '/wsdaemon.WorkspaceContentService/BackupWorkspace',
     requestStream: false,
     responseStream: false,
@@ -185,6 +184,6 @@ backupWorkspace: {
     responseSerialize: serialize_wsdaemon_BackupWorkspaceResponse,
     responseDeserialize: deserialize_wsdaemon_BackupWorkspaceResponse,
   },
-};
+});
 
 exports.WorkspaceContentServiceClient = grpc.makeGenericClientConstructor(WorkspaceContentServiceService);

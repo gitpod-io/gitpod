@@ -120,15 +120,14 @@ function deserialize_iws_WriteIDMappingResponse(buffer_arg) {
   return workspace_daemon_pb.WriteIDMappingResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var InWorkspaceServiceService = exports.InWorkspaceServiceService = {
+var InWorkspaceServiceService = (exports.InWorkspaceServiceService = {
   // PrepareForUserNS prepares a workspace container for wrapping it in a user namespace.
-// A container that called this function MUST call Teardown.
-//
-// This call will make the workspace container's rootfs shared, and mount the workspace
-// container's rootfs as a shiftfs mark under `/.workspace/mark` if the workspace has
-// the daemon hostPath mount. Can only be used once per workspace.
-prepareForUserNS: {
+  // A container that called this function MUST call Teardown.
+  //
+  // This call will make the workspace container's rootfs shared, and mount the workspace
+  // container's rootfs as a shiftfs mark under `/.workspace/mark` if the workspace has
+  // the daemon hostPath mount. Can only be used once per workspace.
+  prepareForUserNS: {
     path: '/iws.InWorkspaceService/PrepareForUserNS',
     requestStream: false,
     responseStream: false,
@@ -140,8 +139,8 @@ prepareForUserNS: {
     responseDeserialize: deserialize_iws_PrepareForUserNSResponse,
   },
   // WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
-// for user namespaces and is available four times every 10 seconds.
-writeIDMapping: {
+  // for user namespaces and is available four times every 10 seconds.
+  writeIDMapping: {
     path: '/iws.InWorkspaceService/WriteIDMapping',
     requestStream: false,
     responseStream: false,
@@ -153,9 +152,9 @@ writeIDMapping: {
     responseDeserialize: deserialize_iws_WriteIDMappingResponse,
   },
   // MountProc mounts a masked proc in the container's rootfs.
-// The PID must be in the PID namespace of the workspace container.
-// The path is relative to the mount namespace of the PID.
-mountProc: {
+  // The PID must be in the PID namespace of the workspace container.
+  // The path is relative to the mount namespace of the PID.
+  mountProc: {
     path: '/iws.InWorkspaceService/MountProc',
     requestStream: false,
     responseStream: false,
@@ -167,9 +166,9 @@ mountProc: {
     responseDeserialize: deserialize_iws_MountProcResponse,
   },
   // UmountProc unmounts a masked proc from the container's rootfs.
-// The PID must be in the PID namespace of the workspace container.
-// The path is relative to the mount namespace of the PID.
-umountProc: {
+  // The PID must be in the PID namespace of the workspace container.
+  // The path is relative to the mount namespace of the PID.
+  umountProc: {
     path: '/iws.InWorkspaceService/UmountProc',
     requestStream: false,
     responseStream: false,
@@ -181,9 +180,9 @@ umountProc: {
     responseDeserialize: deserialize_iws_UmountProcResponse,
   },
   // MountSysfs mounts a masked sysfs in the container's rootfs.
-// The PID must be in the PID namespace of the workspace container.
-// The path is relative to the mount namespace of the PID.
-mountSysfs: {
+  // The PID must be in the PID namespace of the workspace container.
+  // The path is relative to the mount namespace of the PID.
+  mountSysfs: {
     path: '/iws.InWorkspaceService/MountSysfs',
     requestStream: false,
     responseStream: false,
@@ -195,9 +194,9 @@ mountSysfs: {
     responseDeserialize: deserialize_iws_MountProcResponse,
   },
   // UmountSysfs unmounts a masked sysfs from the container's rootfs.
-// The PID must be in the PID namespace of the workspace container.
-// The path is relative to the mount namespace of the PID.
-umountSysfs: {
+  // The PID must be in the PID namespace of the workspace container.
+  // The path is relative to the mount namespace of the PID.
+  umountSysfs: {
     path: '/iws.InWorkspaceService/UmountSysfs',
     requestStream: false,
     responseStream: false,
@@ -209,8 +208,8 @@ umountSysfs: {
     responseDeserialize: deserialize_iws_UmountProcResponse,
   },
   // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
-// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
-teardown: {
+  // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
+  teardown: {
     path: '/iws.InWorkspaceService/Teardown',
     requestStream: false,
     responseStream: false,
@@ -221,6 +220,6 @@ teardown: {
     responseSerialize: serialize_iws_TeardownResponse,
     responseDeserialize: deserialize_iws_TeardownResponse,
   },
-};
+});
 
 exports.InWorkspaceServiceClient = grpc.makeGenericClientConstructor(InWorkspaceServiceService);

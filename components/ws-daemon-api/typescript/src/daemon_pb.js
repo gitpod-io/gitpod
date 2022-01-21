@@ -19,13 +19,21 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() {
-  if (this) { return this; }
-  if (typeof window !== 'undefined') { return window; }
-  if (typeof global !== 'undefined') { return global; }
-  if (typeof self !== 'undefined') { return self; }
+var global = function () {
+  if (this) {
+    return this;
+  }
+  if (typeof window !== 'undefined') {
+    return window;
+  }
+  if (typeof global !== 'undefined') {
+    return global;
+  }
+  if (typeof self !== 'undefined') {
+    return self;
+  }
   return Function('return this')();
-}.call(null));
+}.call(null);
 
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
 goog.object.extend(proto, content$service$api_initializer_pb);
@@ -51,7 +59,7 @@ goog.exportSymbol('proto.wsdaemon.WorkspaceMetadata', null, global);
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.InitWorkspaceRequest = function(opt_data) {
+proto.wsdaemon.InitWorkspaceRequest = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.InitWorkspaceRequest, jspb.Message);
@@ -72,7 +80,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.WorkspaceMetadata = function(opt_data) {
+proto.wsdaemon.WorkspaceMetadata = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.WorkspaceMetadata, jspb.Message);
@@ -93,7 +101,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.InitWorkspaceResponse = function(opt_data) {
+proto.wsdaemon.InitWorkspaceResponse = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.InitWorkspaceResponse, jspb.Message);
@@ -114,7 +122,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.WaitForInitRequest = function(opt_data) {
+proto.wsdaemon.WaitForInitRequest = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.WaitForInitRequest, jspb.Message);
@@ -135,7 +143,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.WaitForInitResponse = function(opt_data) {
+proto.wsdaemon.WaitForInitResponse = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.WaitForInitResponse, jspb.Message);
@@ -156,7 +164,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.TakeSnapshotRequest = function(opt_data) {
+proto.wsdaemon.TakeSnapshotRequest = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.TakeSnapshotRequest, jspb.Message);
@@ -177,7 +185,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.TakeSnapshotResponse = function(opt_data) {
+proto.wsdaemon.TakeSnapshotResponse = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.TakeSnapshotResponse, jspb.Message);
@@ -198,7 +206,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.DisposeWorkspaceRequest = function(opt_data) {
+proto.wsdaemon.DisposeWorkspaceRequest = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.DisposeWorkspaceRequest, jspb.Message);
@@ -219,7 +227,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.DisposeWorkspaceResponse = function(opt_data) {
+proto.wsdaemon.DisposeWorkspaceResponse = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.DisposeWorkspaceResponse, jspb.Message);
@@ -240,7 +248,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.BackupWorkspaceRequest = function(opt_data) {
+proto.wsdaemon.BackupWorkspaceRequest = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.BackupWorkspaceRequest, jspb.Message);
@@ -261,7 +269,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.wsdaemon.BackupWorkspaceResponse = function(opt_data) {
+proto.wsdaemon.BackupWorkspaceResponse = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.wsdaemon.BackupWorkspaceResponse, jspb.Message);
@@ -273,64 +281,62 @@ if (goog.DEBUG && !COMPILED) {
   proto.wsdaemon.BackupWorkspaceResponse.displayName = 'proto.wsdaemon.BackupWorkspaceResponse';
 }
 
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.InitWorkspaceRequest.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.InitWorkspaceRequest.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.InitWorkspaceRequest} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.InitWorkspaceRequest.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    metadata: (f = msg.getMetadata()) && proto.wsdaemon.WorkspaceMetadata.toObject(includeInstance, f),
-    initializer: (f = msg.getInitializer()) && content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
-    fullWorkspaceBackup: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
-    contentManifest: msg.getContentManifest_asB64(),
-    remoteStorageDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.InitWorkspaceRequest.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.InitWorkspaceRequest.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.InitWorkspaceRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.InitWorkspaceRequest.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        metadata: (f = msg.getMetadata()) && proto.wsdaemon.WorkspaceMetadata.toObject(includeInstance, f),
+        initializer:
+          (f = msg.getInitializer()) &&
+          content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
+        fullWorkspaceBackup: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
+        contentManifest: msg.getContentManifest_asB64(),
+        remoteStorageDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.InitWorkspaceRequest}
  */
-proto.wsdaemon.InitWorkspaceRequest.deserializeBinary = function(bytes) {
+proto.wsdaemon.InitWorkspaceRequest.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.InitWorkspaceRequest;
+  var msg = new proto.wsdaemon.InitWorkspaceRequest();
   return proto.wsdaemon.InitWorkspaceRequest.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -339,58 +345,56 @@ proto.wsdaemon.InitWorkspaceRequest.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.InitWorkspaceRequest}
  */
-proto.wsdaemon.InitWorkspaceRequest.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.InitWorkspaceRequest.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
-    case 2:
-      var value = new proto.wsdaemon.WorkspaceMetadata;
-      reader.readMessage(value,proto.wsdaemon.WorkspaceMetadata.deserializeBinaryFromReader);
-      msg.setMetadata(value);
-      break;
-    case 3:
-      var value = new content$service$api_initializer_pb.WorkspaceInitializer;
-      reader.readMessage(value,content$service$api_initializer_pb.WorkspaceInitializer.deserializeBinaryFromReader);
-      msg.setInitializer(value);
-      break;
-    case 4:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setFullWorkspaceBackup(value);
-      break;
-    case 5:
-      var value = /** @type {!Uint8Array} */ (reader.readBytes());
-      msg.setContentManifest(value);
-      break;
-    case 7:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setRemoteStorageDisabled(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setId(value);
+        break;
+      case 2:
+        var value = new proto.wsdaemon.WorkspaceMetadata();
+        reader.readMessage(value, proto.wsdaemon.WorkspaceMetadata.deserializeBinaryFromReader);
+        msg.setMetadata(value);
+        break;
+      case 3:
+        var value = new content$service$api_initializer_pb.WorkspaceInitializer();
+        reader.readMessage(value, content$service$api_initializer_pb.WorkspaceInitializer.deserializeBinaryFromReader);
+        msg.setInitializer(value);
+        break;
+      case 4:
+        var value = /** @type {boolean} */ (reader.readBool());
+        msg.setFullWorkspaceBackup(value);
+        break;
+      case 5:
+        var value = /** @type {!Uint8Array} */ (reader.readBytes());
+        msg.setContentManifest(value);
+        break;
+      case 7:
+        var value = /** @type {boolean} */ (reader.readBool());
+        msg.setRemoteStorageDisabled(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.serializeBinary = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.InitWorkspaceRequest.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -399,184 +403,150 @@ proto.wsdaemon.InitWorkspaceRequest.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.InitWorkspaceRequest.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.InitWorkspaceRequest.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getId();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
   f = message.getMetadata();
   if (f != null) {
-    writer.writeMessage(
-      2,
-      f,
-      proto.wsdaemon.WorkspaceMetadata.serializeBinaryToWriter
-    );
+    writer.writeMessage(2, f, proto.wsdaemon.WorkspaceMetadata.serializeBinaryToWriter);
   }
   f = message.getInitializer();
   if (f != null) {
-    writer.writeMessage(
-      3,
-      f,
-      content$service$api_initializer_pb.WorkspaceInitializer.serializeBinaryToWriter
-    );
+    writer.writeMessage(3, f, content$service$api_initializer_pb.WorkspaceInitializer.serializeBinaryToWriter);
   }
   f = message.getFullWorkspaceBackup();
   if (f) {
-    writer.writeBool(
-      4,
-      f
-    );
+    writer.writeBool(4, f);
   }
   f = message.getContentManifest_asU8();
   if (f.length > 0) {
-    writer.writeBytes(
-      5,
-      f
-    );
+    writer.writeBytes(5, f);
   }
   f = message.getRemoteStorageDisabled();
   if (f) {
-    writer.writeBool(
-      7,
-      f
-    );
+    writer.writeBool(7, f);
   }
 };
-
 
 /**
  * optional string id = 1;
  * @return {string}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.wsdaemon.InitWorkspaceRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.setId = function(value) {
+proto.wsdaemon.InitWorkspaceRequest.prototype.setId = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
-
 
 /**
  * optional WorkspaceMetadata metadata = 2;
  * @return {?proto.wsdaemon.WorkspaceMetadata}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getMetadata = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.getMetadata = function () {
   return /** @type{?proto.wsdaemon.WorkspaceMetadata} */ (
-    jspb.Message.getWrapperField(this, proto.wsdaemon.WorkspaceMetadata, 2));
+    jspb.Message.getWrapperField(this, proto.wsdaemon.WorkspaceMetadata, 2)
+  );
 };
-
 
 /**
  * @param {?proto.wsdaemon.WorkspaceMetadata|undefined} value
  * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
-*/
-proto.wsdaemon.InitWorkspaceRequest.prototype.setMetadata = function(value) {
+ */
+proto.wsdaemon.InitWorkspaceRequest.prototype.setMetadata = function (value) {
   return jspb.Message.setWrapperField(this, 2, value);
 };
-
 
 /**
  * Clears the message field making it undefined.
  * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.clearMetadata = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.clearMetadata = function () {
   return this.setMetadata(undefined);
 };
-
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.hasMetadata = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.hasMetadata = function () {
   return jspb.Message.getField(this, 2) != null;
 };
-
 
 /**
  * optional contentservice.WorkspaceInitializer initializer = 3;
  * @return {?proto.contentservice.WorkspaceInitializer}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getInitializer = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.getInitializer = function () {
   return /** @type{?proto.contentservice.WorkspaceInitializer} */ (
-    jspb.Message.getWrapperField(this, content$service$api_initializer_pb.WorkspaceInitializer, 3));
+    jspb.Message.getWrapperField(this, content$service$api_initializer_pb.WorkspaceInitializer, 3)
+  );
 };
-
 
 /**
  * @param {?proto.contentservice.WorkspaceInitializer|undefined} value
  * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
-*/
-proto.wsdaemon.InitWorkspaceRequest.prototype.setInitializer = function(value) {
+ */
+proto.wsdaemon.InitWorkspaceRequest.prototype.setInitializer = function (value) {
   return jspb.Message.setWrapperField(this, 3, value);
 };
-
 
 /**
  * Clears the message field making it undefined.
  * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.clearInitializer = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.clearInitializer = function () {
   return this.setInitializer(undefined);
 };
-
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.hasInitializer = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.hasInitializer = function () {
   return jspb.Message.getField(this, 3) != null;
 };
-
 
 /**
  * optional bool full_workspace_backup = 4;
  * @return {boolean}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getFullWorkspaceBackup = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.getFullWorkspaceBackup = function () {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 4, false));
 };
-
 
 /**
  * @param {boolean} value
  * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.setFullWorkspaceBackup = function(value) {
+proto.wsdaemon.InitWorkspaceRequest.prototype.setFullWorkspaceBackup = function (value) {
   return jspb.Message.setProto3BooleanField(this, 4, value);
 };
-
 
 /**
  * optional bytes content_manifest = 5;
  * @return {!(string|Uint8Array)}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getContentManifest = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+proto.wsdaemon.InitWorkspaceRequest.prototype.getContentManifest = function () {
+  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 5, ''));
 };
-
 
 /**
  * optional bytes content_manifest = 5;
  * This is a type-conversion wrapper around `getContentManifest()`
  * @return {string}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getContentManifest_asB64 = function() {
-  return /** @type {string} */ (jspb.Message.bytesAsB64(
-      this.getContentManifest()));
+proto.wsdaemon.InitWorkspaceRequest.prototype.getContentManifest_asB64 = function () {
+  return /** @type {string} */ (jspb.Message.bytesAsB64(this.getContentManifest()));
 };
-
 
 /**
  * optional bytes content_manifest = 5;
@@ -585,94 +555,84 @@ proto.wsdaemon.InitWorkspaceRequest.prototype.getContentManifest_asB64 = functio
  * This is a type-conversion wrapper around `getContentManifest()`
  * @return {!Uint8Array}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getContentManifest_asU8 = function() {
-  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
-      this.getContentManifest()));
+proto.wsdaemon.InitWorkspaceRequest.prototype.getContentManifest_asU8 = function () {
+  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(this.getContentManifest()));
 };
-
 
 /**
  * @param {!(string|Uint8Array)} value
  * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.setContentManifest = function(value) {
+proto.wsdaemon.InitWorkspaceRequest.prototype.setContentManifest = function (value) {
   return jspb.Message.setProto3BytesField(this, 5, value);
 };
-
 
 /**
  * optional bool remote_storage_disabled = 7;
  * @return {boolean}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getRemoteStorageDisabled = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.getRemoteStorageDisabled = function () {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 7, false));
 };
-
 
 /**
  * @param {boolean} value
  * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.setRemoteStorageDisabled = function(value) {
+proto.wsdaemon.InitWorkspaceRequest.prototype.setRemoteStorageDisabled = function (value) {
   return jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.WorkspaceMetadata.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.WorkspaceMetadata.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.WorkspaceMetadata} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.WorkspaceMetadata.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    owner: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    metaId: jspb.Message.getFieldWithDefault(msg, 2, "")
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.WorkspaceMetadata.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.WorkspaceMetadata.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.WorkspaceMetadata} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.WorkspaceMetadata.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        owner: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        metaId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.WorkspaceMetadata}
  */
-proto.wsdaemon.WorkspaceMetadata.deserializeBinary = function(bytes) {
+proto.wsdaemon.WorkspaceMetadata.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.WorkspaceMetadata;
+  var msg = new proto.wsdaemon.WorkspaceMetadata();
   return proto.wsdaemon.WorkspaceMetadata.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -681,40 +641,38 @@ proto.wsdaemon.WorkspaceMetadata.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.WorkspaceMetadata}
  */
-proto.wsdaemon.WorkspaceMetadata.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.WorkspaceMetadata.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setOwner(value);
-      break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setMetaId(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setOwner(value);
+        break;
+      case 2:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setMetaId(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.WorkspaceMetadata.prototype.serializeBinary = function() {
+proto.wsdaemon.WorkspaceMetadata.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.WorkspaceMetadata.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -723,115 +681,97 @@ proto.wsdaemon.WorkspaceMetadata.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.WorkspaceMetadata.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.WorkspaceMetadata.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getOwner();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
   f = message.getMetaId();
   if (f.length > 0) {
-    writer.writeString(
-      2,
-      f
-    );
+    writer.writeString(2, f);
   }
 };
-
 
 /**
  * optional string owner = 1;
  * @return {string}
  */
-proto.wsdaemon.WorkspaceMetadata.prototype.getOwner = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.wsdaemon.WorkspaceMetadata.prototype.getOwner = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.WorkspaceMetadata} returns this
  */
-proto.wsdaemon.WorkspaceMetadata.prototype.setOwner = function(value) {
+proto.wsdaemon.WorkspaceMetadata.prototype.setOwner = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
-
 
 /**
  * optional string meta_id = 2;
  * @return {string}
  */
-proto.wsdaemon.WorkspaceMetadata.prototype.getMetaId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+proto.wsdaemon.WorkspaceMetadata.prototype.getMetaId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.WorkspaceMetadata} returns this
  */
-proto.wsdaemon.WorkspaceMetadata.prototype.setMetaId = function(value) {
+proto.wsdaemon.WorkspaceMetadata.prototype.setMetaId = function (value) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.InitWorkspaceResponse.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.InitWorkspaceResponse.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.InitWorkspaceResponse} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.InitWorkspaceResponse.toObject = function(includeInstance, msg) {
-  var f, obj = {
-
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.InitWorkspaceResponse.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.InitWorkspaceResponse.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.InitWorkspaceResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.InitWorkspaceResponse.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {};
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.InitWorkspaceResponse}
  */
-proto.wsdaemon.InitWorkspaceResponse.deserializeBinary = function(bytes) {
+proto.wsdaemon.InitWorkspaceResponse.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.InitWorkspaceResponse;
+  var msg = new proto.wsdaemon.InitWorkspaceResponse();
   return proto.wsdaemon.InitWorkspaceResponse.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -840,32 +780,30 @@ proto.wsdaemon.InitWorkspaceResponse.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.InitWorkspaceResponse}
  */
-proto.wsdaemon.InitWorkspaceResponse.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.InitWorkspaceResponse.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    default:
-      reader.skipField();
-      break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.InitWorkspaceResponse.prototype.serializeBinary = function() {
+proto.wsdaemon.InitWorkspaceResponse.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.InitWorkspaceResponse.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -874,65 +812,59 @@ proto.wsdaemon.InitWorkspaceResponse.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.InitWorkspaceResponse.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.InitWorkspaceResponse.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.WaitForInitRequest.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.WaitForInitRequest.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.WaitForInitRequest} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.WaitForInitRequest.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, "")
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.WaitForInitRequest.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.WaitForInitRequest.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.WaitForInitRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.WaitForInitRequest.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.WaitForInitRequest}
  */
-proto.wsdaemon.WaitForInitRequest.deserializeBinary = function(bytes) {
+proto.wsdaemon.WaitForInitRequest.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.WaitForInitRequest;
+  var msg = new proto.wsdaemon.WaitForInitRequest();
   return proto.wsdaemon.WaitForInitRequest.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -941,36 +873,34 @@ proto.wsdaemon.WaitForInitRequest.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.WaitForInitRequest}
  */
-proto.wsdaemon.WaitForInitRequest.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.WaitForInitRequest.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setId(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.WaitForInitRequest.prototype.serializeBinary = function() {
+proto.wsdaemon.WaitForInitRequest.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.WaitForInitRequest.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -979,90 +909,77 @@ proto.wsdaemon.WaitForInitRequest.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.WaitForInitRequest.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.WaitForInitRequest.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getId();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
 };
-
 
 /**
  * optional string id = 1;
  * @return {string}
  */
-proto.wsdaemon.WaitForInitRequest.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.wsdaemon.WaitForInitRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.WaitForInitRequest} returns this
  */
-proto.wsdaemon.WaitForInitRequest.prototype.setId = function(value) {
+proto.wsdaemon.WaitForInitRequest.prototype.setId = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.WaitForInitResponse.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.WaitForInitResponse.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.WaitForInitResponse} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.WaitForInitResponse.toObject = function(includeInstance, msg) {
-  var f, obj = {
-
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.WaitForInitResponse.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.WaitForInitResponse.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.WaitForInitResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.WaitForInitResponse.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {};
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.WaitForInitResponse}
  */
-proto.wsdaemon.WaitForInitResponse.deserializeBinary = function(bytes) {
+proto.wsdaemon.WaitForInitResponse.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.WaitForInitResponse;
+  var msg = new proto.wsdaemon.WaitForInitResponse();
   return proto.wsdaemon.WaitForInitResponse.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -1071,32 +988,30 @@ proto.wsdaemon.WaitForInitResponse.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.WaitForInitResponse}
  */
-proto.wsdaemon.WaitForInitResponse.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.WaitForInitResponse.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    default:
-      reader.skipField();
-      break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.WaitForInitResponse.prototype.serializeBinary = function() {
+proto.wsdaemon.WaitForInitResponse.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.WaitForInitResponse.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -1105,66 +1020,60 @@ proto.wsdaemon.WaitForInitResponse.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.WaitForInitResponse.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.WaitForInitResponse.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.TakeSnapshotRequest.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.TakeSnapshotRequest.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.TakeSnapshotRequest} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.TakeSnapshotRequest.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    returnImmediately: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.TakeSnapshotRequest.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.TakeSnapshotRequest.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.TakeSnapshotRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.TakeSnapshotRequest.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        returnImmediately: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.TakeSnapshotRequest}
  */
-proto.wsdaemon.TakeSnapshotRequest.deserializeBinary = function(bytes) {
+proto.wsdaemon.TakeSnapshotRequest.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.TakeSnapshotRequest;
+  var msg = new proto.wsdaemon.TakeSnapshotRequest();
   return proto.wsdaemon.TakeSnapshotRequest.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -1173,40 +1082,38 @@ proto.wsdaemon.TakeSnapshotRequest.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.TakeSnapshotRequest}
  */
-proto.wsdaemon.TakeSnapshotRequest.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.TakeSnapshotRequest.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
-    case 2:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setReturnImmediately(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setId(value);
+        break;
+      case 2:
+        var value = /** @type {boolean} */ (reader.readBool());
+        msg.setReturnImmediately(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.TakeSnapshotRequest.prototype.serializeBinary = function() {
+proto.wsdaemon.TakeSnapshotRequest.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.TakeSnapshotRequest.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -1215,115 +1122,99 @@ proto.wsdaemon.TakeSnapshotRequest.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.TakeSnapshotRequest.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.TakeSnapshotRequest.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getId();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
   f = message.getReturnImmediately();
   if (f) {
-    writer.writeBool(
-      2,
-      f
-    );
+    writer.writeBool(2, f);
   }
 };
-
 
 /**
  * optional string id = 1;
  * @return {string}
  */
-proto.wsdaemon.TakeSnapshotRequest.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.wsdaemon.TakeSnapshotRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.TakeSnapshotRequest} returns this
  */
-proto.wsdaemon.TakeSnapshotRequest.prototype.setId = function(value) {
+proto.wsdaemon.TakeSnapshotRequest.prototype.setId = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
-
 
 /**
  * optional bool return_immediately = 2;
  * @return {boolean}
  */
-proto.wsdaemon.TakeSnapshotRequest.prototype.getReturnImmediately = function() {
+proto.wsdaemon.TakeSnapshotRequest.prototype.getReturnImmediately = function () {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
 };
-
 
 /**
  * @param {boolean} value
  * @return {!proto.wsdaemon.TakeSnapshotRequest} returns this
  */
-proto.wsdaemon.TakeSnapshotRequest.prototype.setReturnImmediately = function(value) {
+proto.wsdaemon.TakeSnapshotRequest.prototype.setReturnImmediately = function (value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.TakeSnapshotResponse.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.TakeSnapshotResponse.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.TakeSnapshotResponse} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.TakeSnapshotResponse.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    url: jspb.Message.getFieldWithDefault(msg, 1, "")
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.TakeSnapshotResponse.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.TakeSnapshotResponse.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.TakeSnapshotResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.TakeSnapshotResponse.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        url: jspb.Message.getFieldWithDefault(msg, 1, ''),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.TakeSnapshotResponse}
  */
-proto.wsdaemon.TakeSnapshotResponse.deserializeBinary = function(bytes) {
+proto.wsdaemon.TakeSnapshotResponse.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.TakeSnapshotResponse;
+  var msg = new proto.wsdaemon.TakeSnapshotResponse();
   return proto.wsdaemon.TakeSnapshotResponse.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -1332,36 +1223,34 @@ proto.wsdaemon.TakeSnapshotResponse.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.TakeSnapshotResponse}
  */
-proto.wsdaemon.TakeSnapshotResponse.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.TakeSnapshotResponse.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setUrl(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setUrl(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.TakeSnapshotResponse.prototype.serializeBinary = function() {
+proto.wsdaemon.TakeSnapshotResponse.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.TakeSnapshotResponse.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -1370,92 +1259,81 @@ proto.wsdaemon.TakeSnapshotResponse.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.TakeSnapshotResponse.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.TakeSnapshotResponse.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getUrl();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
 };
-
 
 /**
  * optional string url = 1;
  * @return {string}
  */
-proto.wsdaemon.TakeSnapshotResponse.prototype.getUrl = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.wsdaemon.TakeSnapshotResponse.prototype.getUrl = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.TakeSnapshotResponse} returns this
  */
-proto.wsdaemon.TakeSnapshotResponse.prototype.setUrl = function(value) {
+proto.wsdaemon.TakeSnapshotResponse.prototype.setUrl = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.DisposeWorkspaceRequest.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.DisposeWorkspaceRequest} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.DisposeWorkspaceRequest.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    backup: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
-    backupLogs: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.DisposeWorkspaceRequest.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.DisposeWorkspaceRequest.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.DisposeWorkspaceRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.DisposeWorkspaceRequest.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        backup: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
+        backupLogs: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.DisposeWorkspaceRequest}
  */
-proto.wsdaemon.DisposeWorkspaceRequest.deserializeBinary = function(bytes) {
+proto.wsdaemon.DisposeWorkspaceRequest.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.DisposeWorkspaceRequest;
+  var msg = new proto.wsdaemon.DisposeWorkspaceRequest();
   return proto.wsdaemon.DisposeWorkspaceRequest.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -1464,44 +1342,42 @@ proto.wsdaemon.DisposeWorkspaceRequest.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.DisposeWorkspaceRequest}
  */
-proto.wsdaemon.DisposeWorkspaceRequest.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.DisposeWorkspaceRequest.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
-    case 2:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setBackup(value);
-      break;
-    case 3:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setBackupLogs(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setId(value);
+        break;
+      case 2:
+        var value = /** @type {boolean} */ (reader.readBool());
+        msg.setBackup(value);
+        break;
+      case 3:
+        var value = /** @type {boolean} */ (reader.readBool());
+        msg.setBackupLogs(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.serializeBinary = function() {
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.DisposeWorkspaceRequest.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -1510,140 +1386,120 @@ proto.wsdaemon.DisposeWorkspaceRequest.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.DisposeWorkspaceRequest.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.DisposeWorkspaceRequest.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getId();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
   f = message.getBackup();
   if (f) {
-    writer.writeBool(
-      2,
-      f
-    );
+    writer.writeBool(2, f);
   }
   f = message.getBackupLogs();
   if (f) {
-    writer.writeBool(
-      3,
-      f
-    );
+    writer.writeBool(3, f);
   }
 };
-
 
 /**
  * optional string id = 1;
  * @return {string}
  */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.DisposeWorkspaceRequest} returns this
  */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.setId = function(value) {
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.setId = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
-
 
 /**
  * optional bool backup = 2;
  * @return {boolean}
  */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.getBackup = function() {
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.getBackup = function () {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
 };
-
 
 /**
  * @param {boolean} value
  * @return {!proto.wsdaemon.DisposeWorkspaceRequest} returns this
  */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.setBackup = function(value) {
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.setBackup = function (value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
 };
-
 
 /**
  * optional bool backup_logs = 3;
  * @return {boolean}
  */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.getBackupLogs = function() {
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.getBackupLogs = function () {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
 };
-
 
 /**
  * @param {boolean} value
  * @return {!proto.wsdaemon.DisposeWorkspaceRequest} returns this
  */
-proto.wsdaemon.DisposeWorkspaceRequest.prototype.setBackupLogs = function(value) {
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.setBackupLogs = function (value) {
   return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.DisposeWorkspaceResponse.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.DisposeWorkspaceResponse.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.DisposeWorkspaceResponse} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.DisposeWorkspaceResponse.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    gitStatus: (f = msg.getGitStatus()) && content$service$api_initializer_pb.GitStatus.toObject(includeInstance, f)
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.DisposeWorkspaceResponse.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.DisposeWorkspaceResponse.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.DisposeWorkspaceResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.DisposeWorkspaceResponse.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        gitStatus:
+          (f = msg.getGitStatus()) && content$service$api_initializer_pb.GitStatus.toObject(includeInstance, f),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.DisposeWorkspaceResponse}
  */
-proto.wsdaemon.DisposeWorkspaceResponse.deserializeBinary = function(bytes) {
+proto.wsdaemon.DisposeWorkspaceResponse.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.DisposeWorkspaceResponse;
+  var msg = new proto.wsdaemon.DisposeWorkspaceResponse();
   return proto.wsdaemon.DisposeWorkspaceResponse.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -1652,37 +1508,35 @@ proto.wsdaemon.DisposeWorkspaceResponse.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.DisposeWorkspaceResponse}
  */
-proto.wsdaemon.DisposeWorkspaceResponse.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.DisposeWorkspaceResponse.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = new content$service$api_initializer_pb.GitStatus;
-      reader.readMessage(value,content$service$api_initializer_pb.GitStatus.deserializeBinaryFromReader);
-      msg.setGitStatus(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = new content$service$api_initializer_pb.GitStatus();
+        reader.readMessage(value, content$service$api_initializer_pb.GitStatus.deserializeBinaryFromReader);
+        msg.setGitStatus(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.DisposeWorkspaceResponse.prototype.serializeBinary = function() {
+proto.wsdaemon.DisposeWorkspaceResponse.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.DisposeWorkspaceResponse.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -1691,110 +1545,97 @@ proto.wsdaemon.DisposeWorkspaceResponse.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.DisposeWorkspaceResponse.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.DisposeWorkspaceResponse.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getGitStatus();
   if (f != null) {
-    writer.writeMessage(
-      1,
-      f,
-      content$service$api_initializer_pb.GitStatus.serializeBinaryToWriter
-    );
+    writer.writeMessage(1, f, content$service$api_initializer_pb.GitStatus.serializeBinaryToWriter);
   }
 };
-
 
 /**
  * optional contentservice.GitStatus git_status = 1;
  * @return {?proto.contentservice.GitStatus}
  */
-proto.wsdaemon.DisposeWorkspaceResponse.prototype.getGitStatus = function() {
+proto.wsdaemon.DisposeWorkspaceResponse.prototype.getGitStatus = function () {
   return /** @type{?proto.contentservice.GitStatus} */ (
-    jspb.Message.getWrapperField(this, content$service$api_initializer_pb.GitStatus, 1));
+    jspb.Message.getWrapperField(this, content$service$api_initializer_pb.GitStatus, 1)
+  );
 };
-
 
 /**
  * @param {?proto.contentservice.GitStatus|undefined} value
  * @return {!proto.wsdaemon.DisposeWorkspaceResponse} returns this
-*/
-proto.wsdaemon.DisposeWorkspaceResponse.prototype.setGitStatus = function(value) {
+ */
+proto.wsdaemon.DisposeWorkspaceResponse.prototype.setGitStatus = function (value) {
   return jspb.Message.setWrapperField(this, 1, value);
 };
-
 
 /**
  * Clears the message field making it undefined.
  * @return {!proto.wsdaemon.DisposeWorkspaceResponse} returns this
  */
-proto.wsdaemon.DisposeWorkspaceResponse.prototype.clearGitStatus = function() {
+proto.wsdaemon.DisposeWorkspaceResponse.prototype.clearGitStatus = function () {
   return this.setGitStatus(undefined);
 };
-
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.wsdaemon.DisposeWorkspaceResponse.prototype.hasGitStatus = function() {
+proto.wsdaemon.DisposeWorkspaceResponse.prototype.hasGitStatus = function () {
   return jspb.Message.getField(this, 1) != null;
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.BackupWorkspaceRequest.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.BackupWorkspaceRequest.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.BackupWorkspaceRequest} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.BackupWorkspaceRequest.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, "")
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.BackupWorkspaceRequest.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.BackupWorkspaceRequest.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.BackupWorkspaceRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.BackupWorkspaceRequest.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.BackupWorkspaceRequest}
  */
-proto.wsdaemon.BackupWorkspaceRequest.deserializeBinary = function(bytes) {
+proto.wsdaemon.BackupWorkspaceRequest.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.BackupWorkspaceRequest;
+  var msg = new proto.wsdaemon.BackupWorkspaceRequest();
   return proto.wsdaemon.BackupWorkspaceRequest.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -1803,36 +1644,34 @@ proto.wsdaemon.BackupWorkspaceRequest.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.BackupWorkspaceRequest}
  */
-proto.wsdaemon.BackupWorkspaceRequest.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.BackupWorkspaceRequest.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setId(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.BackupWorkspaceRequest.prototype.serializeBinary = function() {
+proto.wsdaemon.BackupWorkspaceRequest.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.BackupWorkspaceRequest.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -1841,90 +1680,79 @@ proto.wsdaemon.BackupWorkspaceRequest.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.BackupWorkspaceRequest.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.BackupWorkspaceRequest.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getId();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
 };
-
 
 /**
  * optional string id = 1;
  * @return {string}
  */
-proto.wsdaemon.BackupWorkspaceRequest.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.wsdaemon.BackupWorkspaceRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.BackupWorkspaceRequest} returns this
  */
-proto.wsdaemon.BackupWorkspaceRequest.prototype.setId = function(value) {
+proto.wsdaemon.BackupWorkspaceRequest.prototype.setId = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
-
-
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.wsdaemon.BackupWorkspaceResponse.prototype.toObject = function(opt_includeInstance) {
-  return proto.wsdaemon.BackupWorkspaceResponse.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.wsdaemon.BackupWorkspaceResponse} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.wsdaemon.BackupWorkspaceResponse.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    url: jspb.Message.getFieldWithDefault(msg, 1, "")
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.wsdaemon.BackupWorkspaceResponse.prototype.toObject = function (opt_includeInstance) {
+    return proto.wsdaemon.BackupWorkspaceResponse.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.wsdaemon.BackupWorkspaceResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.wsdaemon.BackupWorkspaceResponse.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        url: jspb.Message.getFieldWithDefault(msg, 1, ''),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.wsdaemon.BackupWorkspaceResponse}
  */
-proto.wsdaemon.BackupWorkspaceResponse.deserializeBinary = function(bytes) {
+proto.wsdaemon.BackupWorkspaceResponse.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.wsdaemon.BackupWorkspaceResponse;
+  var msg = new proto.wsdaemon.BackupWorkspaceResponse();
   return proto.wsdaemon.BackupWorkspaceResponse.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -1933,36 +1761,34 @@ proto.wsdaemon.BackupWorkspaceResponse.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.wsdaemon.BackupWorkspaceResponse}
  */
-proto.wsdaemon.BackupWorkspaceResponse.deserializeBinaryFromReader = function(msg, reader) {
+proto.wsdaemon.BackupWorkspaceResponse.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setUrl(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setUrl(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.wsdaemon.BackupWorkspaceResponse.prototype.serializeBinary = function() {
+proto.wsdaemon.BackupWorkspaceResponse.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.wsdaemon.BackupWorkspaceResponse.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -1971,35 +1797,29 @@ proto.wsdaemon.BackupWorkspaceResponse.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.wsdaemon.BackupWorkspaceResponse.serializeBinaryToWriter = function(message, writer) {
+proto.wsdaemon.BackupWorkspaceResponse.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getUrl();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
 };
-
 
 /**
  * optional string url = 1;
  * @return {string}
  */
-proto.wsdaemon.BackupWorkspaceResponse.prototype.getUrl = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.wsdaemon.BackupWorkspaceResponse.prototype.getUrl = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.wsdaemon.BackupWorkspaceResponse} returns this
  */
-proto.wsdaemon.BackupWorkspaceResponse.prototype.setUrl = function(value) {
+proto.wsdaemon.BackupWorkspaceResponse.prototype.setUrl = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
-
 
 /**
  * @enum {number}
@@ -2008,7 +1828,7 @@ proto.wsdaemon.WorkspaceContentState = {
   NONE: 0,
   SETTING_UP: 1,
   AVAILABLE: 2,
-  WRAPPING_UP: 3
+  WRAPPING_UP: 3,
 };
 
 goog.object.extend(exports, proto.wsdaemon);
