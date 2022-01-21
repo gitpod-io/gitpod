@@ -1,10 +1,19 @@
 {
-    "entrypoint": "/ide/startup.sh",
-    "entrypointArgs": [ "--port", "{IDEPORT}", "--host", "0.0.0.0", "--connection-token", "00000", "--server-data-dir", "/workspace/.vscode-remote" ],
-    "readinessProbe": {
-        "type": "http",
-        "http": {
-            "path": "version"
-        }
+  "entrypoint": "/ide/startup.sh",
+  "entrypointArgs": [
+    "--port",
+    "{IDEPORT}",
+    "--host",
+    "0.0.0.0",
+    "--connection-token",
+    "00000",
+    "--server-data-dir",
+    "/workspace/.vscode-remote"
+  ],
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "version"
     }
+  }
 }
