@@ -9,12 +9,8 @@
       "name": "PortService"
     }
   ],
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
   "paths": {
     "/v1/port/tunnel/auto/{enabled}": {
       "post": {
@@ -42,9 +38,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "PortService"
-        ]
+        "tags": ["PortService"]
       }
     },
     "/v1/port/tunnel/{port}": {
@@ -74,9 +68,7 @@
             "format": "int64"
           }
         ],
-        "tags": [
-          "PortService"
-        ]
+        "tags": ["PortService"]
       },
       "post": {
         "summary": "Tunnel notifies clients to install listeners on remote machines.\nAfter that such clients should call EstablishTunnel to forward incoming connections.",
@@ -124,9 +116,7 @@
             }
           }
         ],
-        "tags": [
-          "PortService"
-        ]
+        "tags": ["PortService"]
       }
     }
   },
@@ -200,11 +190,7 @@
     },
     "supervisorTunnelVisiblity": {
       "type": "string",
-      "enum": [
-        "none",
-        "host",
-        "network"
-      ],
+      "enum": ["none", "host", "network"],
       "default": "none"
     }
   }

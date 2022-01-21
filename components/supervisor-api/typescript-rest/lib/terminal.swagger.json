@@ -9,12 +9,8 @@
       "name": "TerminalService"
     }
   ],
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
   "paths": {
     "/v1/terminal/get/{alias}": {
       "get": {
@@ -42,9 +38,7 @@
             "type": "string"
           }
         ],
-        "tags": [
-          "TerminalService"
-        ]
+        "tags": ["TerminalService"]
       }
     },
     "/v1/terminal/list": {
@@ -65,9 +59,7 @@
             }
           }
         },
-        "tags": [
-          "TerminalService"
-        ]
+        "tags": ["TerminalService"]
       }
     },
     "/v1/terminal/listen/{alias}": {
@@ -105,9 +97,7 @@
             "type": "string"
           }
         ],
-        "tags": [
-          "TerminalService"
-        ]
+        "tags": ["TerminalService"]
       }
     },
     "/v1/terminal/shutdown/{alias}": {
@@ -136,9 +126,7 @@
             "type": "string"
           }
         ],
-        "tags": [
-          "TerminalService"
-        ]
+        "tags": ["TerminalService"]
       }
     },
     "/v1/terminal/write/{alias}": {
@@ -167,9 +155,7 @@
             "type": "string"
           }
         ],
-        "tags": [
-          "TerminalService"
-        ]
+        "tags": ["TerminalService"]
       }
     }
   },

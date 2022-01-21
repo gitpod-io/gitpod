@@ -29,7 +29,7 @@ goog.exportSymbol('proto.supervisor.WorkspaceInfoResponse', null, global);
  * @extends {jspb.Message}
  * @constructor
  */
-proto.supervisor.WorkspaceInfoRequest = function(opt_data) {
+proto.supervisor.WorkspaceInfoRequest = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.supervisor.WorkspaceInfoRequest, jspb.Message);
@@ -50,7 +50,7 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.supervisor.WorkspaceInfoResponse = function(opt_data) {
+proto.supervisor.WorkspaceInfoResponse = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, proto.supervisor.WorkspaceInfoResponse.oneofGroups_);
 };
 goog.inherits(proto.supervisor.WorkspaceInfoResponse, jspb.Message);
@@ -62,57 +62,51 @@ if (goog.DEBUG && !COMPILED) {
   proto.supervisor.WorkspaceInfoResponse.displayName = 'proto.supervisor.WorkspaceInfoResponse';
 }
 
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto suitable for use in Soy templates.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.supervisor.WorkspaceInfoRequest.prototype.toObject = function(opt_includeInstance) {
-  return proto.supervisor.WorkspaceInfoRequest.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.supervisor.WorkspaceInfoRequest} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.supervisor.WorkspaceInfoRequest.toObject = function(includeInstance, msg) {
-  var f, obj = {
-
+  /**
+   * Creates an object representation of this proto suitable for use in Soy templates.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+   * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+   *     for transitional soy proto support: http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.supervisor.WorkspaceInfoRequest.prototype.toObject = function (opt_includeInstance) {
+    return proto.supervisor.WorkspaceInfoRequest.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Whether to include the JSPB
+   *     instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.supervisor.WorkspaceInfoRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.supervisor.WorkspaceInfoRequest.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {};
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.supervisor.WorkspaceInfoRequest}
  */
-proto.supervisor.WorkspaceInfoRequest.deserializeBinary = function(bytes) {
+proto.supervisor.WorkspaceInfoRequest.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.supervisor.WorkspaceInfoRequest;
+  var msg = new proto.supervisor.WorkspaceInfoRequest();
   return proto.supervisor.WorkspaceInfoRequest.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -121,32 +115,30 @@ proto.supervisor.WorkspaceInfoRequest.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.supervisor.WorkspaceInfoRequest}
  */
-proto.supervisor.WorkspaceInfoRequest.deserializeBinaryFromReader = function(msg, reader) {
+proto.supervisor.WorkspaceInfoRequest.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    default:
-      reader.skipField();
-      break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.supervisor.WorkspaceInfoRequest.prototype.serializeBinary = function() {
+proto.supervisor.WorkspaceInfoRequest.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.supervisor.WorkspaceInfoRequest.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -155,11 +147,9 @@ proto.supervisor.WorkspaceInfoRequest.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.supervisor.WorkspaceInfoRequest.serializeBinaryToWriter = function(message, writer) {
+proto.supervisor.WorkspaceInfoRequest.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
 };
-
-
 
 /**
  * Oneof group definitions for this message. Each group defines the field
@@ -169,7 +159,7 @@ proto.supervisor.WorkspaceInfoRequest.serializeBinaryToWriter = function(message
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.supervisor.WorkspaceInfoResponse.oneofGroups_ = [[4,5]];
+proto.supervisor.WorkspaceInfoResponse.oneofGroups_ = [[4, 5]];
 
 /**
  * @enum {number}
@@ -177,72 +167,70 @@ proto.supervisor.WorkspaceInfoResponse.oneofGroups_ = [[4,5]];
 proto.supervisor.WorkspaceInfoResponse.WorkspaceLocationCase = {
   WORKSPACE_LOCATION_NOT_SET: 0,
   WORKSPACE_LOCATION_FILE: 4,
-  WORKSPACE_LOCATION_FOLDER: 5
+  WORKSPACE_LOCATION_FOLDER: 5,
 };
 
 /**
  * @return {proto.supervisor.WorkspaceInfoResponse.WorkspaceLocationCase}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.getWorkspaceLocationCase = function() {
-  return /** @type {proto.supervisor.WorkspaceInfoResponse.WorkspaceLocationCase} */(jspb.Message.computeOneofCase(this, proto.supervisor.WorkspaceInfoResponse.oneofGroups_[0]));
+proto.supervisor.WorkspaceInfoResponse.prototype.getWorkspaceLocationCase = function () {
+  return /** @type {proto.supervisor.WorkspaceInfoResponse.WorkspaceLocationCase} */ (
+    jspb.Message.computeOneofCase(this, proto.supervisor.WorkspaceInfoResponse.oneofGroups_[0])
+  );
 };
-
-
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto suitable for use in Soy templates.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.supervisor.WorkspaceInfoResponse.prototype.toObject = function(opt_includeInstance) {
-  return proto.supervisor.WorkspaceInfoResponse.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.supervisor.WorkspaceInfoResponse} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.supervisor.WorkspaceInfoResponse.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    workspaceId: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    instanceId: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    workspaceLocationFile: jspb.Message.getFieldWithDefault(msg, 4, ""),
-    workspaceLocationFolder: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    userHome: jspb.Message.getFieldWithDefault(msg, 6, "")
+  /**
+   * Creates an object representation of this proto suitable for use in Soy templates.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+   * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+   *     for transitional soy proto support: http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.supervisor.WorkspaceInfoResponse.prototype.toObject = function (opt_includeInstance) {
+    return proto.supervisor.WorkspaceInfoResponse.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Whether to include the JSPB
+   *     instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.supervisor.WorkspaceInfoResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.supervisor.WorkspaceInfoResponse.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        workspaceId: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        instanceId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        checkoutLocation: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        workspaceLocationFile: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        workspaceLocationFolder: jspb.Message.getFieldWithDefault(msg, 5, ''),
+        userHome: jspb.Message.getFieldWithDefault(msg, 6, ''),
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.supervisor.WorkspaceInfoResponse}
  */
-proto.supervisor.WorkspaceInfoResponse.deserializeBinary = function(bytes) {
+proto.supervisor.WorkspaceInfoResponse.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.supervisor.WorkspaceInfoResponse;
+  var msg = new proto.supervisor.WorkspaceInfoResponse();
   return proto.supervisor.WorkspaceInfoResponse.deserializeBinaryFromReader(msg, reader);
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -251,56 +239,54 @@ proto.supervisor.WorkspaceInfoResponse.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.supervisor.WorkspaceInfoResponse}
  */
-proto.supervisor.WorkspaceInfoResponse.deserializeBinaryFromReader = function(msg, reader) {
+proto.supervisor.WorkspaceInfoResponse.deserializeBinaryFromReader = function (msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setWorkspaceId(value);
-      break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setInstanceId(value);
-      break;
-    case 3:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setCheckoutLocation(value);
-      break;
-    case 4:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setWorkspaceLocationFile(value);
-      break;
-    case 5:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setWorkspaceLocationFolder(value);
-      break;
-    case 6:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setUserHome(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setWorkspaceId(value);
+        break;
+      case 2:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setInstanceId(value);
+        break;
+      case 3:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setCheckoutLocation(value);
+        break;
+      case 4:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setWorkspaceLocationFile(value);
+        break;
+      case 5:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setWorkspaceLocationFolder(value);
+        break;
+      case 6:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setUserHome(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.serializeBinary = function() {
+proto.supervisor.WorkspaceInfoResponse.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.supervisor.WorkspaceInfoResponse.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -309,175 +295,140 @@ proto.supervisor.WorkspaceInfoResponse.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.supervisor.WorkspaceInfoResponse.serializeBinaryToWriter = function(message, writer) {
+proto.supervisor.WorkspaceInfoResponse.serializeBinaryToWriter = function (message, writer) {
   var f = undefined;
   f = message.getWorkspaceId();
   if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
+    writer.writeString(1, f);
   }
   f = message.getInstanceId();
   if (f.length > 0) {
-    writer.writeString(
-      2,
-      f
-    );
+    writer.writeString(2, f);
   }
   f = message.getCheckoutLocation();
   if (f.length > 0) {
-    writer.writeString(
-      3,
-      f
-    );
+    writer.writeString(3, f);
   }
   f = /** @type {string} */ (jspb.Message.getField(message, 4));
   if (f != null) {
-    writer.writeString(
-      4,
-      f
-    );
+    writer.writeString(4, f);
   }
   f = /** @type {string} */ (jspb.Message.getField(message, 5));
   if (f != null) {
-    writer.writeString(
-      5,
-      f
-    );
+    writer.writeString(5, f);
   }
   f = message.getUserHome();
   if (f.length > 0) {
-    writer.writeString(
-      6,
-      f
-    );
+    writer.writeString(6, f);
   }
 };
-
 
 /**
  * optional string workspace_id = 1;
  * @return {string}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.getWorkspaceId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.supervisor.WorkspaceInfoResponse.prototype.getWorkspaceId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
-
 
 /** @param {string} value */
-proto.supervisor.WorkspaceInfoResponse.prototype.setWorkspaceId = function(value) {
+proto.supervisor.WorkspaceInfoResponse.prototype.setWorkspaceId = function (value) {
   jspb.Message.setProto3StringField(this, 1, value);
 };
-
 
 /**
  * optional string instance_id = 2;
  * @return {string}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.getInstanceId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+proto.supervisor.WorkspaceInfoResponse.prototype.getInstanceId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ''));
 };
-
 
 /** @param {string} value */
-proto.supervisor.WorkspaceInfoResponse.prototype.setInstanceId = function(value) {
+proto.supervisor.WorkspaceInfoResponse.prototype.setInstanceId = function (value) {
   jspb.Message.setProto3StringField(this, 2, value);
 };
-
 
 /**
  * optional string checkout_location = 3;
  * @return {string}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.getCheckoutLocation = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+proto.supervisor.WorkspaceInfoResponse.prototype.getCheckoutLocation = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ''));
 };
-
 
 /** @param {string} value */
-proto.supervisor.WorkspaceInfoResponse.prototype.setCheckoutLocation = function(value) {
+proto.supervisor.WorkspaceInfoResponse.prototype.setCheckoutLocation = function (value) {
   jspb.Message.setProto3StringField(this, 3, value);
 };
-
 
 /**
  * optional string workspace_location_file = 4;
  * @return {string}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.getWorkspaceLocationFile = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+proto.supervisor.WorkspaceInfoResponse.prototype.getWorkspaceLocationFile = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ''));
 };
-
 
 /** @param {string} value */
-proto.supervisor.WorkspaceInfoResponse.prototype.setWorkspaceLocationFile = function(value) {
+proto.supervisor.WorkspaceInfoResponse.prototype.setWorkspaceLocationFile = function (value) {
   jspb.Message.setOneofField(this, 4, proto.supervisor.WorkspaceInfoResponse.oneofGroups_[0], value);
 };
-
 
 /**
  * Clears the field making it undefined.
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.clearWorkspaceLocationFile = function() {
+proto.supervisor.WorkspaceInfoResponse.prototype.clearWorkspaceLocationFile = function () {
   jspb.Message.setOneofField(this, 4, proto.supervisor.WorkspaceInfoResponse.oneofGroups_[0], undefined);
 };
-
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.hasWorkspaceLocationFile = function() {
+proto.supervisor.WorkspaceInfoResponse.prototype.hasWorkspaceLocationFile = function () {
   return jspb.Message.getField(this, 4) != null;
 };
-
 
 /**
  * optional string workspace_location_folder = 5;
  * @return {string}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.getWorkspaceLocationFolder = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+proto.supervisor.WorkspaceInfoResponse.prototype.getWorkspaceLocationFolder = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ''));
 };
-
 
 /** @param {string} value */
-proto.supervisor.WorkspaceInfoResponse.prototype.setWorkspaceLocationFolder = function(value) {
+proto.supervisor.WorkspaceInfoResponse.prototype.setWorkspaceLocationFolder = function (value) {
   jspb.Message.setOneofField(this, 5, proto.supervisor.WorkspaceInfoResponse.oneofGroups_[0], value);
 };
-
 
 /**
  * Clears the field making it undefined.
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.clearWorkspaceLocationFolder = function() {
+proto.supervisor.WorkspaceInfoResponse.prototype.clearWorkspaceLocationFolder = function () {
   jspb.Message.setOneofField(this, 5, proto.supervisor.WorkspaceInfoResponse.oneofGroups_[0], undefined);
 };
-
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.hasWorkspaceLocationFolder = function() {
+proto.supervisor.WorkspaceInfoResponse.prototype.hasWorkspaceLocationFolder = function () {
   return jspb.Message.getField(this, 5) != null;
 };
-
 
 /**
  * optional string user_home = 6;
  * @return {string}
  */
-proto.supervisor.WorkspaceInfoResponse.prototype.getUserHome = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+proto.supervisor.WorkspaceInfoResponse.prototype.getUserHome = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ''));
 };
-
 
 /** @param {string} value */
-proto.supervisor.WorkspaceInfoResponse.prototype.setUserHome = function(value) {
+proto.supervisor.WorkspaceInfoResponse.prototype.setUserHome = function (value) {
   jspb.Message.setProto3StringField(this, 6, value);
 };
-
 
 goog.object.extend(exports, proto.supervisor);

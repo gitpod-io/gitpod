@@ -9,12 +9,8 @@
       "name": "StatusService"
     }
   ],
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
   "paths": {
     "/v1/status/backup": {
       "get": {
@@ -34,9 +30,7 @@
             }
           }
         },
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/content": {
@@ -66,9 +60,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/content/wait/{wait}": {
@@ -98,9 +90,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/ide": {
@@ -130,9 +120,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/ide/wait/{wait}": {
@@ -162,9 +150,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/ports": {
@@ -203,9 +189,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/ports/observe/{observe}": {
@@ -244,9 +228,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/supervisor": {
@@ -267,9 +249,7 @@
             }
           }
         },
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/tasks": {
@@ -308,9 +288,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     },
     "/v1/status/tasks/observe/{observe}": {
@@ -349,9 +327,7 @@
             "type": "boolean"
           }
         ],
-        "tags": [
-          "StatusService"
-        ]
+        "tags": ["StatusService"]
       }
     }
   },
@@ -396,11 +372,7 @@
     },
     "supervisorContentSource": {
       "type": "string",
-      "enum": [
-        "from_other",
-        "from_backup",
-        "from_prebuild"
-      ],
+      "enum": ["from_other", "from_backup", "from_prebuild"],
       "default": "from_other"
     },
     "supervisorContentStatusResponse": {
@@ -443,21 +415,12 @@
     },
     "supervisorOnPortExposedAction": {
       "type": "string",
-      "enum": [
-        "ignore",
-        "open_browser",
-        "open_preview",
-        "notify",
-        "notify_private"
-      ],
+      "enum": ["ignore", "open_browser", "open_preview", "notify", "notify_private"],
       "default": "ignore"
     },
     "supervisorPortVisibility": {
       "type": "string",
-      "enum": [
-        "private",
-        "public"
-      ],
+      "enum": ["private", "public"],
       "default": "private"
     },
     "supervisorPortsStatus": {
@@ -521,11 +484,7 @@
     },
     "supervisorTaskState": {
       "type": "string",
-      "enum": [
-        "opening",
-        "running",
-        "closed"
-      ],
+      "enum": ["opening", "running", "closed"],
       "default": "opening"
     },
     "supervisorTaskStatus": {
@@ -558,11 +517,7 @@
     },
     "supervisorTunnelVisiblity": {
       "type": "string",
-      "enum": [
-        "none",
-        "host",
-        "network"
-      ],
+      "enum": ["none", "host", "network"],
       "default": "none"
     },
     "supervisorTunneledPortInfo": {

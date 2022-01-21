@@ -9,12 +9,8 @@
       "name": "NotificationService"
     }
   ],
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
   "paths": {
     "/v1/notification/notify": {
       "post": {
@@ -34,9 +30,7 @@
             }
           }
         },
-        "tags": [
-          "NotificationService"
-        ]
+        "tags": ["NotificationService"]
       }
     },
     "/v1/notification/respond": {
@@ -57,9 +51,7 @@
             }
           }
         },
-        "tags": [
-          "NotificationService"
-        ]
+        "tags": ["NotificationService"]
       }
     },
     "/v1/notification/subscribe": {
@@ -89,20 +81,14 @@
             }
           }
         },
-        "tags": [
-          "NotificationService"
-        ]
+        "tags": ["NotificationService"]
       }
     }
   },
   "definitions": {
     "NotifyRequestLevel": {
       "type": "string",
-      "enum": [
-        "ERROR",
-        "WARNING",
-        "INFO"
-      ],
+      "enum": ["ERROR", "WARNING", "INFO"],
       "default": "ERROR"
     },
     "protobufAny": {

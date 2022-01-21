@@ -32,8 +32,7 @@ function deserialize_supervisor_WorkspaceInfoResponse(buffer_arg) {
   return info_pb.WorkspaceInfoResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-
-var InfoServiceService = exports.InfoServiceService = {
+var InfoServiceService = (exports.InfoServiceService = {
   workspaceInfo: {
     path: '/supervisor.InfoService/WorkspaceInfo',
     requestStream: false,
@@ -45,6 +44,6 @@ var InfoServiceService = exports.InfoServiceService = {
     responseSerialize: serialize_supervisor_WorkspaceInfoResponse,
     responseDeserialize: deserialize_supervisor_WorkspaceInfoResponse,
   },
-};
+});
 
 exports.InfoServiceClient = grpc.makeGenericClientConstructor(InfoServiceService);

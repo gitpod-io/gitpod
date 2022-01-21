@@ -9,12 +9,8 @@
       "name": "InfoService"
     }
   ],
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
   "paths": {
     "/v1/info/workspace": {
       "get": {
@@ -33,9 +29,7 @@
             }
           }
         },
-        "tags": [
-          "InfoService"
-        ]
+        "tags": ["InfoService"]
       }
     }
   },
