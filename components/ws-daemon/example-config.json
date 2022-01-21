@@ -1,32 +1,32 @@
 {
-    "$schema": "./config-schema.json",
-    "content": {
-        "workingArea": "/tmp/wsdaemon",
-        "backupPeriod": "30m",
-        "workspaceSizeLimit": "20g",
-        "tempDir": "/tmp",
-        "storage": {
-            "kind": "minio",
-            "stage": "dev",
-            "gcloud": {
-                "credentialsFile": "/workspace/gitpod/charts/gitpod_io/secrets/storage/gitpod-dev-content-key.json",
-                "region": "europe-west1",
-                "project": "gitpod-dev",
-                "parallelUpload": 4,
-                "maximumBackupSize": 32212254720,
-                "maximumBackupCount": 20
-            },
-            "minio": {
-                "endpoint": "127.0.0.1:9000",
-                "accessKeyID": "C1GL0KSOR9ERG1R5GW92",
-                "secretAccessKey": "CNmBGC9T5u7UC3xQfd+MVrVnfAVRkS0X2N3+B0RS"
-            }
-        }
-    },
-    "service": {
-      "address": ":8080"
-    },
-    "prometheus": {
-      "address": "127.0.0.1:9500"
+  "$schema": "./config-schema.json",
+  "content": {
+    "workingArea": "/tmp/wsdaemon",
+    "backupPeriod": "30m",
+    "workspaceSizeLimit": "20g",
+    "tempDir": "/tmp",
+    "storage": {
+      "kind": "minio",
+      "stage": "dev",
+      "gcloud": {
+        "credentialsFile": "/workspace/gitpod/charts/gitpod_io/secrets/storage/gitpod-dev-content-key.json",
+        "region": "europe-west1",
+        "project": "gitpod-dev",
+        "parallelUpload": 4,
+        "maximumBackupSize": 32212254720,
+        "maximumBackupCount": 20
+      },
+      "minio": {
+        "endpoint": "127.0.0.1:9000",
+        "accessKeyID": "C1GL0KSOR9ERG1R5GW92",
+        "secretAccessKey": "CNmBGC9T5u7UC3xQfd+MVrVnfAVRkS0X2N3+B0RS"
+      }
     }
+  },
+  "service": {
+    "address": ":8080"
+  },
+  "prometheus": {
+    "address": "127.0.0.1:9500"
+  }
 }
