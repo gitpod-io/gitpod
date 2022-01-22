@@ -11,12 +11,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	p "github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 )
+
+const GitpodUsername = "gitpod"
 
 type Session struct {
 	Conn *ssh.ServerConn
@@ -25,13 +28,11 @@ type Session struct {
 	InstanceID  string
 
 	PublicKey           ssh.PublicKey
-	WorkspaceIP         string
 	WorkspacePrivateKey ssh.Signer
 }
 
 type Server struct {
-	ConnectionTimeout time.Duration
-	Heartbeater       Heartbeat
+	Heartbeater Heartbeat
 
 	sshConfig             *ssh.ServerConfig
 	workspaceInfoProvider p.WorkspaceInfoProvider
@@ -91,6 +92,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 	defer sshConn.Close()
 
+	go ssh.DiscardRequests(reqs)
 	if sshConn.Permissions == nil || sshConn.Permissions.Extensions == nil || sshConn.Permissions.Extensions["workspaceId"] == "" {
 		return
 	}
@@ -100,39 +102,54 @@ func (s *Server) HandleConn(c net.Conn) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
 	key, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress)
 	if err != nil {
+		cancel()
 		return
 	}
+	cancel()
+
 	session := &Session{
 		Conn:                sshConn,
 		WorkspaceID:         workspaceId,
 		InstanceID:          wsInfo.InstanceID,
 		WorkspacePrivateKey: key,
-		WorkspaceIP:         wsInfo.IPAddress + ":23001",
 	}
-	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID)
+	remoteAddr := wsInfo.IPAddress + ":23001"
+	conn, err := net.Dial("tcp", remoteAddr)
+	if err != nil {
+		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("dail failed")
+		return
+	}
+	defer conn.Close()
+
+	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, remoteAddr, &ssh.ClientConfig{
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		User:            GitpodUsername,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeysCallback(func() (signers []ssh.Signer, err error) {
+				return []ssh.Signer{key}, nil
+			}),
+		},
+		Timeout: 10 * time.Second,
+	})
+	if err != nil {
+		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("connect failed")
+		return
+	}
+	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID, false)
+	client := ssh.NewClient(clientConn, clientChans, clientReqs)
+	ctx, cancel = context.WithCancel(context.Background())
 
 	go func() {
-		for req := range reqs {
-			switch req.Type {
-			case "keepalive@openssh.com":
-				if req.WantReply {
-					req.Reply(true, []byte{})
-				}
-			default:
-				req.Reply(false, []byte{})
-			}
-		}
+		client.Wait()
+		cancel()
 	}()
 
 	for newChannel := range chans {
 		switch newChannel.ChannelType() {
-		case "session":
-			go s.SessionForward(session, newChannel)
-		case "direct-tcpip":
-			go s.ChannelForward(session, newChannel)
+		case "session", "direct-tcpip":
+			go s.ChannelForward(ctx, session, client, newChannel)
 		case "tcpip-forward":
 			newChannel.Reject(ssh.UnknownChannelType, "Gitpod SSH Gateway cannot remote forward ports")
 		default:
