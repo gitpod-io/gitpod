@@ -49,6 +49,7 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 	}
 
 	return []corev1.EnvVar{
+		{Name: "KUBE_STAGE", Value: "production"}, // TODO: from the code, this can be production -> prod, staging -> prodcopy and "" -> dev
 		{Name: "GITPOD_DOMAIN", Value: cfg.Domain},
 		{Name: "GITPOD_INSTALLATION_LONGNAME", Value: cfg.Domain},  // todo(sje): figure out these values
 		{Name: "GITPOD_INSTALLATION_SHORTNAME", Value: cfg.Domain}, // todo(sje): figure out these values
