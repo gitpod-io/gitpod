@@ -12,6 +12,7 @@ export PATH=$PATH:/tests
 FAILURE_COUNT=0
 # shellcheck disable=SC2045
 for i in $(find /tests/ -name "*.test" | sort); do
+    echo "running test: $i"
     "$i" "$@";
     TEST_STATUS=$?
     if [ "$TEST_STATUS" -ne "0" ]; then
