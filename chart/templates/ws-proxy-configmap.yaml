@@ -55,6 +55,14 @@ data:
         },
         "pprofAddr": ":6060",
         "readinessProbeAddr": ":60088",
-        "prometheusAddr": "localhost:9500"
+        "prometheusAddr": "localhost:9500",
+        "wsManager": {
+            "addr": "ws-manager:8080",
+            "tls": {
+                "ca": "/ws-manager-client-tls-certs/ca.crt",
+                "crt": "/ws-manager-client-tls-certs/tls.crt",
+                "key": "/ws-manager-client-tls-certs/tls.key"
+            }
+        }
     }
 {{- end -}}
