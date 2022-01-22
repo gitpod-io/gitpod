@@ -54,13 +54,29 @@ var credentialHelper = &cobra.Command{
 			fmt.Printf("username=%s\npassword=%s\n", user, token)
 		}()
 
-		gitCommandData := parseProcessTree()
-		if gitCommandData == nil {
+		gitCmdInfo := &gitCommandInfo{}
+		err = walkProcessTree(os.Getpid(), func(pid int) bool {
+			cmdLine, err := readProc(pid, "cmdline")
+			if err != nil {
+				log.WithError(err).Print("error reading proc cmdline")
+				return true
+			}
+
+			cmdLineString := strings.ReplaceAll(cmdLine, string(byte(0)), " ")
+			gitCmdInfo.parseGitCommandAndOriginRemote(cmdLineString)
+
+			return gitCmdInfo.Ok()
+		})
+		if err != nil {
+			log.WithError(err).Print("error walking process tree")
+			return
+		}
+		if !gitCmdInfo.Ok() {
 			return
 		}
 
 		// Starts another process which tracks the executed git event
-		gitCommandTracker := exec.Command("/proc/self/exe", "git-track-command", "--gitCommand", gitCommandData.GitCommand)
+		gitCommandTracker := exec.Command("/proc/self/exe", "git-track-command", "--gitCommand", gitCmdInfo.GitCommand)
 		err = gitCommandTracker.Start()
 		if err != nil {
 			log.WithError(err).Print("error spawning tracker")
@@ -98,7 +114,7 @@ var credentialHelper = &cobra.Command{
 
 		validator := exec.Command("/proc/self/exe", "git-token-validator",
 			"--user", resp.User, "--token", resp.Token, "--scopes", strings.Join(resp.Scope, ","),
-			"--host", host, "--repoURL", gitCommandData.RepoUrl, "--gitCommand", gitCommandData.GitCommand)
+			"--host", host, "--repoURL", gitCmdInfo.RepoUrl, "--gitCommand", gitCmdInfo.GitCommand)
 		err = validator.Start()
 		if err != nil {
 			log.WithError(err).Print("error spawning validator")
@@ -134,85 +150,101 @@ func parseHostFromStdin() string {
 	return host
 }
 
-func parseProcessTree() (result *struct {
+type gitCommandInfo struct {
 	RepoUrl    string
 	GitCommand string
-}) {
-	gitCommandRegExp := regexp.MustCompile(`git(,\d+\s+|\s+)(push|clone|fetch|pull|diff)`)
-	repoUrlRegExp := regexp.MustCompile(`\sorigin\s*(https:[^\s]*)\s`)
-	pid := os.Getpid()
+}
+
+func (g *gitCommandInfo) Ok() bool {
+	return g.RepoUrl != "" && g.GitCommand != ""
+}
+
+var gitCommandRegExp = regexp.MustCompile(`git(,\d+\s+|\s+)(push|clone|fetch|pull|diff)`)
+var repoUrlRegExp = regexp.MustCompile(`\sorigin\s*(https:[^\s]*)\s`)
+
+// This method needs to be called multiple times to fill all the required info
+// from different git commands
+// For example from first command below the `RepoUrl` will be parsed and from
+// the second command the `GitCommand` will be parsed
+// `/usr/lib/git-core/git-remote-https origin https://github.com/jeanp413/test-gp-bug.git`
+// `/usr/lib/git-core/git push`
+func (g *gitCommandInfo) parseGitCommandAndOriginRemote(cmdLineString string) {
+	matchCommand := gitCommandRegExp.FindStringSubmatch(cmdLineString)
+	if len(matchCommand) == 3 {
+		g.GitCommand = matchCommand[2]
+	}
+
+	matchRepo := repoUrlRegExp.FindStringSubmatch(cmdLineString)
+	if len(matchRepo) == 2 {
+		g.RepoUrl = matchRepo[1]
+		if !strings.HasSuffix(g.RepoUrl, ".git") {
+			g.RepoUrl = g.RepoUrl + ".git"
+		}
+	}
+}
+
+type pidCallbackFn func(int) bool
+
+func walkProcessTree(pid int, fn pidCallbackFn) error {
 	for {
-		cmdLine := readProc(pid, "cmdline")
-		if cmdLine == "" {
-			return
-		}
-		cmdLineString := strings.ReplaceAll(cmdLine, string(byte(0)), " ")
-
-		var gitCommand string
-		matchCommand := gitCommandRegExp.FindStringSubmatch(cmdLineString)
-		if len(matchCommand) == 3 {
-			gitCommand = matchCommand[2]
+		stop := fn(pid)
+		if stop {
+			return nil
 		}
 
-		var repoUrl string
-		matchRepo := repoUrlRegExp.FindStringSubmatch(cmdLineString)
-		if len(matchRepo) == 2 {
-			repoUrl = matchRepo[1]
-			if !strings.HasSuffix(repoUrl, ".git") {
-				repoUrl = repoUrl + ".git"
-			}
-		}
-
-		if repoUrl != "" && gitCommand != "" {
-			result = &struct {
-				RepoUrl    string
-				GitCommand string
-			}{
-				RepoUrl:    repoUrl,
-				GitCommand: gitCommand,
-			}
-			return
-		}
-
-		statsString := readProc(pid, "stat")
-		if statsString == "" {
-			return
-		}
-		stats := strings.Fields(statsString)
-		if len(stats) < 3 {
-			log.Printf("Couldn't parse 3rd element from stats: '%s'", statsString)
-			return
-		}
-		ppid, err := strconv.Atoi(stats[3])
+		ppid, err := getProcesParentId(pid)
 		if err != nil {
-			log.Printf("ppid '%s' is not a number", stats[3])
-			return
+			return err
 		}
-		if ppid == pid {
-			return
+		if ppid == pid || ppid == 1 /* supervisor pid*/ {
+			return nil
 		}
 		pid = ppid
 	}
 }
 
-func readProc(pid int, file string) string {
+func getProcesParentId(pid int) (ppid int, err error) {
+	statsString, err := readProc(pid, "stat")
+	if err != nil {
+		return
+	}
+
+	stats := strings.Fields(statsString)
+	if len(stats) < 3 {
+		err = fmt.Errorf("CredentialHelper error cannot parse stats string: %s", statsString)
+		return
+	}
+
+	parentId, err := strconv.Atoi(stats[3])
+	if err != nil {
+		err = fmt.Errorf("CredentialHelper error cannot parse ppid: %s", stats[3])
+		return
+	}
+
+	ppid = parentId
+	return
+}
+
+func readProc(pid int, file string) (data string, err error) {
 	procFile := fmt.Sprintf("/proc/%d/%s", pid, file)
 	// read file not using os.Stat
 	// see https://github.com/prometheus/procfs/blob/5162bec877a860b5ff140b5d13db31ebb0643dd3/internal/util/readfile.go#L27
 	const maxBufferSize = 1024 * 512
 	f, err := os.Open(procFile)
 	if err != nil {
-		log.WithError(err).Printf("Error opening %s", procFile)
-		return ""
+		err = fmt.Errorf("CredentialHelper error opening proc file: %v", err)
+		return
 	}
 	defer f.Close()
 	reader := io.LimitReader(f, maxBufferSize)
 	buffer, err := ioutil.ReadAll(reader)
 	if err != nil {
-		log.WithError(err).Printf("Error reading %s", procFile)
-		return ""
+		err = fmt.Errorf("CredentialHelper error reading proc file: %v", err)
+		return
 	}
-	return string(buffer)
+
+	data = string(buffer)
+	return
 }
 
 func init() {
