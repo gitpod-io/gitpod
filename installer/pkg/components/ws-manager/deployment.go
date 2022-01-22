@@ -72,7 +72,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				MountPath: "/certs",
 				ReadOnly:  true,
 			}},
-		}},
+		},
+			*common.KubeRBACProxyContainer(ctx),
+		},
 		Volumes: []corev1.Volume{
 			{
 				Name: VolumeConfig,
