@@ -45,6 +45,9 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 		workspaceInfoProvider: workspaceInfoProvider,
 		Heartbeater:           &noHeartbeat{},
 	}
+	if heartbeat != nil {
+		server.Heartbeater = heartbeat
+	}
 
 	server.sshConfig = &ssh.ServerConfig{
 		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
