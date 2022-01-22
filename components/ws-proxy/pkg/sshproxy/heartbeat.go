@@ -14,22 +14,23 @@ import (
 
 type Heartbeat interface {
 	// SendHeartbeat sends a heartbeat for a workspace
-	SendHeartbeat(instanceID string)
+	SendHeartbeat(instanceID string, isClosed bool)
 }
 
 type noHeartbeat struct{}
 
-func (noHeartbeat) SendHeartbeat(instanceID string) {}
+func (noHeartbeat) SendHeartbeat(instanceID string, isClosed bool) {}
 
 type WorkspaceManagerHeartbeat struct {
 	Client wsmanapi.WorkspaceManagerClient
 }
 
-func (m *WorkspaceManagerHeartbeat) SendHeartbeat(instanceID string) {
+func (m *WorkspaceManagerHeartbeat) SendHeartbeat(instanceID string, isClosed bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := m.Client.MarkActive(ctx, &wsmanapi.MarkActiveRequest{
-		Id: instanceID,
+		Id:     instanceID,
+		Closed: isClosed,
 	})
 	if err != nil {
 		log.WithError(err).Warn("cannot send heartbeat for workspace instance")

@@ -90,21 +90,28 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, client *s
 }
 
 func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID string) ssh.Channel {
+	ctx, cancel := context.WithCancel(context.Background())
 	res := &heartbeatingChannel{
 		Channel: c,
-		t:       time.NewTimer(30 * time.Second),
+		t:       time.NewTicker(30 * time.Second),
+		cancel:  cancel,
 	}
 	go func() {
-		for range res.t.C {
-			res.mux.Lock()
-			if !res.sawActivity {
+		for {
+			select {
+			case <-res.t.C:
+				res.mux.Lock()
+				if !res.sawActivity {
+					res.mux.Unlock()
+					continue
+				}
+				res.sawActivity = false
 				res.mux.Unlock()
-				continue
+				heartbeat.SendHeartbeat(instanceID, false)
+			case <-ctx.Done():
+				heartbeat.SendHeartbeat(instanceID, true)
+				return
 			}
-			res.sawActivity = false
-			res.mux.Unlock()
-
-			heartbeat.SendHeartbeat(instanceID)
 		}
 	}()
 
@@ -116,18 +123,24 @@ type heartbeatingChannel struct {
 
 	mux         sync.Mutex
 	sawActivity bool
-	t           *time.Timer
+	t           *time.Ticker
+
+	cancel context.CancelFunc
 }
 
 // Read reads up to len(data) bytes from the channel.
-func (c *heartbeatingChannel) Read(data []byte) (int, error) {
-	c.mux.Lock()
-	c.sawActivity = true
-	c.mux.Unlock()
-	return c.Channel.Read(data)
+func (c *heartbeatingChannel) Read(data []byte) (written int, err error) {
+	written, err = c.Channel.Read(data)
+	if err == nil && written != 0 {
+		c.mux.Lock()
+		c.sawActivity = true
+		c.mux.Unlock()
+	}
+	return
 }
 
 func (c *heartbeatingChannel) Close() error {
 	c.t.Stop()
+	c.cancel()
 	return c.Channel.Close()
 }
