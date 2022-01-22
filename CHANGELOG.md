@@ -1,6 +1,9 @@
 # Change Log
 
 ## January 2022
+- Autofix: upgrade-nvm-tools ([#7514](https://github.com/gitpod-io/gitpod/pull/7514)) - [@autofix-bot](https://github.com/autofix-bot)
+- Improved feedback when content initialisation fails ([#7753](https://github.com/gitpod-io/gitpod/pull/7753)) - [@csweichel](https://github.com/csweichel)
+- [installation-telemetry]: log data sent to Segment ([#7730](https://github.com/gitpod-io/gitpod/pull/7730)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Revert "Bump libseccomp" ([#7714](https://github.com/gitpod-io/gitpod/pull/7714)) - [@csweichel](https://github.com/csweichel)
 - [installer] Telemetry should not run in workspace clusters ([#7687](https://github.com/gitpod-io/gitpod/pull/7687)) - [@aledbf](https://github.com/aledbf)
 - [installer] Switch default log level to info ([#7660](https://github.com/gitpod-io/gitpod/pull/7660)) - [@aledbf](https://github.com/aledbf)
