@@ -19,13 +19,14 @@ import (
 )
 
 func TestAdminBlockUser(t *testing.T) {
+	integration.SkipWithoutEnterpriseLicense(t, enterprise)
 	f := features.New("block user").
 		WithLabel("component", "server").
 		Assess("it should block new created user", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
