@@ -64,8 +64,8 @@ func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, he
 			}, nil
 		},
 		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
-			args := strings.Split(conn.User(), ":")
-			// workspaceId:ownerToken
+			args := strings.Split(conn.User(), "#")
+			// workspaceId#ownerToken
 			if len(args) != 2 {
 				return nil, fmt.Errorf("username error")
 			}
