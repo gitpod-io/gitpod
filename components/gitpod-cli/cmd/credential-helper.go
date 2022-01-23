@@ -54,13 +54,10 @@ var credentialHelper = &cobra.Command{
 			fmt.Printf("username=%s\npassword=%s\n", user, token)
 		}()
 
-		gitCommandData := parseProcessTree()
-		if gitCommandData == nil {
-			return
-		}
+		repoURL, gitCommand := parseProcessTree()
 
 		// Starts another process which tracks the executed git event
-		gitCommandTracker := exec.Command("/proc/self/exe", "git-track-command", "--gitCommand", gitCommandData.GitCommand)
+		gitCommandTracker := exec.Command("/proc/self/exe", "git-track-command", "--gitCommand", gitCommand)
 		err = gitCommandTracker.Start()
 		if err != nil {
 			log.WithError(err).Print("error spawning tracker")
@@ -98,7 +95,7 @@ var credentialHelper = &cobra.Command{
 
 		validator := exec.Command("/proc/self/exe", "git-token-validator",
 			"--user", resp.User, "--token", resp.Token, "--scopes", strings.Join(resp.Scope, ","),
-			"--host", host, "--repoURL", gitCommandData.RepoUrl, "--gitCommand", gitCommandData.GitCommand)
+			"--host", host, "--repoURL", repoURL, "--gitCommand", gitCommand)
 		err = validator.Start()
 		if err != nil {
 			log.WithError(err).Print("error spawning validator")
@@ -134,10 +131,7 @@ func parseHostFromStdin() string {
 	return host
 }
 
-func parseProcessTree() (result *struct {
-	RepoUrl    string
-	GitCommand string
-}) {
+func parseProcessTree() (repoUrl string, gitCommand string) {
 	gitCommandRegExp := regexp.MustCompile(`git(,\d+\s+|\s+)(push|clone|fetch|pull|diff)`)
 	repoUrlRegExp := regexp.MustCompile(`\sorigin\s*(https:[^\s]*)\s`)
 	pid := os.Getpid()
@@ -147,33 +141,24 @@ func parseProcessTree() (result *struct {
 			return
 		}
 		cmdLineString := strings.ReplaceAll(cmdLine, string(byte(0)), " ")
-
-		var gitCommand string
-		matchCommand := gitCommandRegExp.FindStringSubmatch(cmdLineString)
-		if len(matchCommand) == 3 {
-			gitCommand = matchCommand[2]
-		}
-
-		var repoUrl string
-		matchRepo := repoUrlRegExp.FindStringSubmatch(cmdLineString)
-		if len(matchRepo) == 2 {
-			repoUrl = matchRepo[1]
-			if !strings.HasSuffix(repoUrl, ".git") {
-				repoUrl = repoUrl + ".git"
+		if gitCommand == "" {
+			match := gitCommandRegExp.FindStringSubmatch(cmdLineString)
+			if len(match) == 3 {
+				gitCommand = match[2]
 			}
 		}
-
+		if repoUrl == "" {
+			match := repoUrlRegExp.FindStringSubmatch(cmdLineString)
+			if len(match) == 2 {
+				repoUrl = match[1]
+				if !strings.HasSuffix(repoUrl, ".git") {
+					repoUrl = repoUrl + ".git"
+				}
+			}
+		}
 		if repoUrl != "" && gitCommand != "" {
-			result = &struct {
-				RepoUrl    string
-				GitCommand string
-			}{
-				RepoUrl:    repoUrl,
-				GitCommand: gitCommand,
-			}
 			return
 		}
-
 		statsString := readProc(pid, "stat")
 		if statsString == "" {
 			return
