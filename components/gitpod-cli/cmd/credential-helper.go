@@ -141,6 +141,7 @@ func parseProcessTree() (repoUrl string, gitCommand string) {
 			return
 		}
 		cmdLineString := strings.ReplaceAll(cmdLine, string(byte(0)), " ")
+		log.Printf("Command line pid %v: '%s'", pid, cmdLineString)
 		if gitCommand == "" {
 			match := gitCommandRegExp.FindStringSubmatch(cmdLineString)
 			if len(match) == 3 {
@@ -173,6 +174,7 @@ func parseProcessTree() (repoUrl string, gitCommand string) {
 			log.Printf("ppid '%s' is not a number", stats[3])
 			return
 		}
+		log.Printf("Parent pid: %v - %v", pid, ppid)
 		if ppid == pid {
 			return
 		}
