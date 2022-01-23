@@ -282,8 +282,16 @@ func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
 		}
 	}
 	if ir, ok := spec.(*csapi.WorkspaceInitializer_Prebuild); ok {
-		if ir.Prebuild != nil && ir.Prebuild.Git != nil {
-			return ir.Prebuild.Git.CheckoutLocation
+		if ir.Prebuild != nil {
+			if ir.Prebuild.GetGit() != nil {
+				return ir.Prebuild.GetGit().CheckoutLocation
+			}
+			if ir.Prebuild.GetComposite() != nil {
+				first := ir.Prebuild.GetComposite().Initializer[0].Spec
+				if git, ok := first.(*csapi.WorkspaceInitializer_Git); ok {
+					return git.Git.CheckoutLocation
+				}
+			}
 		}
 	}
 	return ""

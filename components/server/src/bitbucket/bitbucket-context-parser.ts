@@ -267,31 +267,4 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         return result;
     }
 
-    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[] | undefined> {
-        const span = TraceContext.startSpan("BitbucketContextParser.fetchCommitHistory", ctx);
-        try {
-            // TODO(janx): To get more results than Bitbucket API's max pagelen (seems to be 100), pagination should be handled.
-            // The additional property 'page' may be helfpul.
-            const api = await this.api(user);
-            const { owner, repoName } = await this.parseURL(user, contextUrl);
-            const result = await api.repositories.listCommitsAt({
-                workspace: owner,
-                repo_slug: repoName,
-                revision: sha,
-                pagelen: maxDepth,
-            });
-
-            const commits = result.data.values?.slice(1);
-            if (!commits) {
-                return undefined;
-            }
-            return commits.map((v: Schema.Commit) => v.hash!);
-        } catch (e) {
-            span.log({ error: e });
-            log.error({ userId: user.id }, "Error fetching Bitbucket commit history", e);
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
 }

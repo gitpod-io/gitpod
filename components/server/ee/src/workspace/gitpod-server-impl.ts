@@ -1492,11 +1492,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const context = await this.contextParser.handle(ctx, user, contextURL) as CommitContext;
 
         const prebuild = await this.prebuildManager.startPrebuild(ctx, {
-            contextURL,
-            cloneURL: project.cloneUrl,
-            commit: context.revision,
+            context,
             user,
-            branch: branchDetails[0].name,
             project
         });
 

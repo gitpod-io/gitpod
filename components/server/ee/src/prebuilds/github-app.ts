@@ -12,13 +12,17 @@ import { Config } from '../../../src/config';
 import { AppInstallationDB, TracedWorkspaceDB, DBWithTracing, UserDB, WorkspaceDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
 import * as express from 'express';
 import { log, LogContext, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceConfig, User, Project, StartPrebuildResult } from '@gitpod/gitpod-protocol';
+import { WorkspaceConfig, User, Project, StartPrebuildResult, CommitContext, CommitInfo } from '@gitpod/gitpod-protocol';
 import { GithubAppRules } from './github-app-rules';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { PrebuildManager } from './prebuild-manager';
 import { PrebuildStatusMaintainer } from './prebuilt-status-maintainer';
 import { Options, ApplicationFunctionOptions } from 'probot/lib/types';
 import { asyncHandler } from '../../../src/express-util';
+import { ContextParser } from '../../../src/workspace/context-parser-service';
+import { HostContextProvider } from '../../../src/auth/host-context-provider';
+import { RepoURL } from '../../../src/repohost';
+
 
 /**
  * GitHub app urls:
@@ -39,6 +43,8 @@ export class GithubApp {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(GithubAppRules) protected readonly appRules: GithubAppRules;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
+    @inject(ContextParser) protected readonly contextParser: ContextParser;
+    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
 
     readonly server: Server | undefined;
 
@@ -189,7 +195,8 @@ export class GithubApp {
             const contextURL = `${repo.html_url}/tree/${branch}`;
             span.setTag('contextURL', contextURL);
 
-            let config = await this.prebuildManager.fetchConfig({ span }, owner.user, contextURL);
+            const context = await this.contextParser.handle({ span }, owner.user, contextURL) as CommitContext;
+            const config = await this.prebuildManager.fetchConfig({ span }, owner.user, context);
             const runPrebuild = this.appRules.shouldRunPrebuild(config, branch == repo.default_branch, false, false);
             if (!runPrebuild) {
                 const reason = `Not running prebuild, the user did not enable it for this context`;
@@ -198,7 +205,8 @@ export class GithubApp {
                 return;
             }
             const { user, project } = owner;
-            this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: repo.clone_url, commit: pl.after, branch, project})
+            const commitInfo = await this.getCommitInfo(user, repo.html_url, ctx.payload.after);
+            this.prebuildManager.startPrebuild({ span }, { user, context, project, commitInfo})
                 .catch(err => log.error(logCtx, "Error while starting prebuild", err, { contextURL }));
         } catch (e) {
             TraceContext.setError({ span }, e);
@@ -206,6 +214,16 @@ export class GithubApp {
         } finally {
             span.finish();
         }
+    }
+
+    private async getCommitInfo(user: User, repoURL: string, commitSHA: string) {
+        const parsedRepo = RepoURL.parseRepoUrl(repoURL)!;
+        const hostCtx = this.hostCtxProvider.get(parsedRepo.host);
+        let commitInfo: CommitInfo | undefined;
+        if (hostCtx?.services?.repositoryProvider) {
+            commitInfo = await hostCtx?.services?.repositoryProvider.getCommitInfo(user, parsedRepo.owner, parsedRepo.repo, commitSHA);
+        }
+        return commitInfo;
     }
 
     protected getBranchFromRef(ref: string): string | undefined {
@@ -232,12 +250,15 @@ export class GithubApp {
 
             const pr = ctx.payload.pull_request;
             const contextURL = pr.html_url;
-            const config = await this.prebuildManager.fetchConfig({ span }, owner.user, contextURL);
+            const context = await this.contextParser.handle( { span }, owner.user, contextURL) as CommitContext;
+            const config = await this.prebuildManager.fetchConfig({ span }, owner.user, context);
 
-            const prebuildStartPromise = this.onPrStartPrebuild({ span }, config, owner, ctx);
-            this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise);
-            this.onPrAddBadge(config, ctx);
-            this.onPrAddComment(config, ctx);
+            const prebuildStartPromise = await this.onPrStartPrebuild({ span }, config, context, owner, ctx);
+            if (prebuildStartPromise) {
+                this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise);
+                this.onPrAddBadge(config, ctx);
+                this.onPrAddComment(config, ctx);
+            }
         } catch (e) {
             TraceContext.setError({ span }, e);
             throw e;
@@ -246,7 +267,7 @@ export class GithubApp {
         }
     }
 
-    protected async onPrAddCheck(tracecContext: TraceContext, config: WorkspaceConfig | undefined, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>, start: Promise<StartPrebuildResult> | undefined) {
+    protected async onPrAddCheck(tracecContext: TraceContext, config: WorkspaceConfig | undefined, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>, start: StartPrebuildResult) {
         if (!start) {
             return;
         }
@@ -257,8 +278,7 @@ export class GithubApp {
 
         const span = TraceContext.startSpan("onPrAddCheck", tracecContext);
         try {
-            const spr = await start;
-            const pws = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(spr.wsid);
+            const pws = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(start.wsid);
             if (!pws) {
                 return;
             }
@@ -281,24 +301,22 @@ export class GithubApp {
         }
     }
 
-    protected onPrStartPrebuild(tracecContext: TraceContext, config: WorkspaceConfig | undefined, owner: {user: User, project?: Project}, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>): Promise<StartPrebuildResult> | undefined {
+    protected async onPrStartPrebuild(tracecContext: TraceContext, config: WorkspaceConfig | undefined, context: CommitContext, owner: {user: User, project?: Project}, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>): Promise<StartPrebuildResult | undefined> {
         const { user, project } = owner;
         const pr = ctx.payload.pull_request;
-        const pr_head = pr.head;
         const contextURL = pr.html_url;
-        const branch = pr.head.ref;
-        const cloneURL = pr_head.repo.clone_url;
 
         const isFork = pr.head.repo.id !== pr.base.repo.id;
         const runPrebuild = this.appRules.shouldRunPrebuild(config, false, true, isFork);
         let prebuildStartPromise: Promise<StartPrebuildResult> | undefined;
         if (runPrebuild) {
-            prebuildStartPromise = this.prebuildManager.startPrebuild(tracecContext, {user, contextURL, cloneURL, commit: pr_head.sha, branch, project});
+            const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
+            prebuildStartPromise = this.prebuildManager.startPrebuild(tracecContext, {user, context, project, commitInfo});
             prebuildStartPromise.catch(err => log.error(err, "Error while starting prebuild", { contextURL }));
             return prebuildStartPromise;
         } else {
             log.debug({ userId: owner.user.id }, `Not running prebuild, the user did not enable it for this context`, { contextURL, owner });
-            return;
+            return undefined;
         }
     }
 

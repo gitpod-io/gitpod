@@ -184,7 +184,11 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 			span.LogKV("fallback-to-git", err.Error())
 
 			// we failed creating a prebuild initializer, so let's try falling back to the Git part.
-			initializer = &csapi.WorkspaceInitializer{Spec: &csapi.WorkspaceInitializer_Git{Git: pis.Git}}
+			if pis.GetGit() == nil && pis.GetComposite() != nil {
+				initializer = &csapi.WorkspaceInitializer{Spec: &csapi.WorkspaceInitializer_Composite{Composite: pis.GetComposite()}}
+			} else {
+				initializer = &csapi.WorkspaceInitializer{Spec: &csapi.WorkspaceInitializer_Git{Git: pis.GetGit()}}
+			}
 		} else {
 			// creating the initializer worked - we're done here
 			return
@@ -296,11 +300,19 @@ func (s *Provider) getPrebuildContentLayer(ctx context.Context, pb *csapi.Prebui
 		l = append(l, ls...)
 
 		// and run no-snapshot prebuild init in workspace
+		var prebuild *csapi.PrebuildInitializer
+		if pb.GetGit() == nil {
+			prebuild = &csapi.PrebuildInitializer{
+				Spec: &csapi.PrebuildInitializer_Composite{Composite: pb.GetComposite()},
+			}
+		} else {
+			prebuild = &csapi.PrebuildInitializer{
+				Spec: &csapi.PrebuildInitializer_Git{Git: pb.GetGit()},
+			}
+		}
 		cdesc, err = executor.Prepare(&csapi.WorkspaceInitializer{
 			Spec: &csapi.WorkspaceInitializer_Prebuild{
-				Prebuild: &csapi.PrebuildInitializer{
-					Git: pb.Git,
-				},
+				Prebuild: prebuild,
 			},
 		}, nil)
 		if err != nil {

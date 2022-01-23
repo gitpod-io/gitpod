@@ -873,6 +873,7 @@ export namespace SnapshotContext {
 export interface StartPrebuildContext extends WorkspaceContext {
     actual: WorkspaceContext;
     commitHistory?: string[];
+    subRepoCommitHistories?: string[][];
     project?: Project;
     branch?: string;
 }
@@ -971,6 +972,33 @@ export interface CommitContext extends WorkspaceContext, GitCheckoutInfo {
      * The clone and checkout information for the sub-repositories in case of multi-repo projects.
      */
     subRepositoryCheckoutInfo?: GitCheckoutInfo[];
+}
+
+export namespace CommitContext {
+    /**
+     * Creates an identifier pointing to the commits of the CommitContext and all sub-repo commit infos.
+     * The identifier is max 255 chars long.
+     * @param commitContext
+     * @returns identifier for set of commits
+     */
+    export function getCommitSHAs(commitContext: CommitContext): string {
+        if (!commitContext.subRepositoryCheckoutInfo || commitContext.subRepositoryCheckoutInfo.length === 0) {
+            return commitContext.revision;
+        }
+        // it's a multi-repo project, we need to store all commit shas and that needs to fit into 255 chars. Let's only store at most first seven.
+        const commits = [commitContext.revision, ... commitContext.subRepositoryCheckoutInfo.map(i => i.revision)];
+        const maxLength = Math.min(7, 255 / commits.length);
+        return commits.map( r => r.substring(0, maxLength)).join(',');
+    }
+
+    /**
+     * unparses the commitShaIdentifier into an array of commit SHAs.
+     * @param commitSHAIdentifier
+     * @returns the array of commit SHAs
+     */
+    export function parseCommitSHAs(commitSHAIdentifier: string): string[] {
+        return commitSHAIdentifier.split(',');
+    }
 }
 
 export interface GitCheckoutInfo extends Commit {

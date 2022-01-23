@@ -112,14 +112,6 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		if ir.Prebuild == nil {
 			return nil, status.Error(codes.InvalidArgument, "missing prebuild initializer spec")
 		}
-		if ir.Prebuild.Git == nil {
-			return nil, status.Error(codes.InvalidArgument, "missing prebuild Git initializer spec")
-		}
-
-		gitinit, err := newGitInitializer(ctx, loc, ir.Prebuild.Git, opts.ForceGitpodUserForGit)
-		if err != nil {
-			return nil, err
-		}
 		var snapshot *SnapshotInitializer
 		if ir.Prebuild.Prebuild != nil {
 			snapshot, err = newSnapshotInitializer(loc, rs, ir.Prebuild.Prebuild)
@@ -127,10 +119,33 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 				return nil, status.Error(codes.Internal, fmt.Sprintf("cannot setup prebuild init: %v", err))
 			}
 		}
+		if ir.Prebuild.GetGit() != nil {
+			gitinit, err := newGitInitializer(ctx, loc, ir.Prebuild.GetGit(), opts.ForceGitpodUserForGit)
+			if err != nil {
+				return nil, err
+			}
 
-		initializer = &PrebuildInitializer{
-			Git:      gitinit,
-			Prebuild: snapshot,
+			initializer = &PrebuildInitializer{
+				Git:      gitinit,
+				Prebuild: snapshot,
+			}
+		} else if ir.Prebuild.GetComposite() != nil {
+			initializers := make([]Initializer, len(ir.Prebuild.GetComposite().Initializer))
+			for i, init := range ir.Prebuild.GetComposite().Initializer {
+				initializers[i], err = NewFromRequest(ctx, loc, rs, init, opts)
+				if err != nil {
+					return nil, err
+				}
+			}
+			composite := &CompositeInitializer{
+				Initializer: initializers,
+			}
+			initializer = &PrebuildInitializer{
+				Prebuild:  snapshot,
+				Composite: composite,
+			}
+		} else {
+			return nil, status.Error(codes.InvalidArgument, "missing prebuild Git or Composite initializer spec")
 		}
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Snapshot); ok {
 		initializer, err = newSnapshotInitializer(loc, rs, ir.Snapshot)

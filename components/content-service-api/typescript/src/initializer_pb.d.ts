@@ -286,6 +286,8 @@ export class PrebuildInitializer extends jspb.Message {
     getComposite(): CompositeInitializer | undefined;
     setComposite(value?: CompositeInitializer): PrebuildInitializer;
 
+    getSpecCase(): PrebuildInitializer.SpecCase;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrebuildInitializer.AsObject;
     static toObject(includeInstance: boolean, msg: PrebuildInitializer): PrebuildInitializer.AsObject;
@@ -302,6 +304,13 @@ export namespace PrebuildInitializer {
         git?: GitInitializer.AsObject,
         composite?: CompositeInitializer.AsObject,
     }
+
+    export enum SpecCase {
+        SPEC_NOT_SET = 0,
+        GIT = 2,
+        COMPOSITE = 3,
+    }
+
 }
 
 export class FromBackupInitializer extends jspb.Message {

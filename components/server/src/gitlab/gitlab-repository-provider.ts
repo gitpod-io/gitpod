@@ -94,4 +94,23 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
             authorAvatarUrl: "",
         };
     }
+
+    public async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number = 100): Promise<string[]> {
+        // TODO(janx): To get more results than GitLab API's max per_page (seems to be 100), pagination should be handled.
+        const projectId = `${owner}/${repo}`;
+        const result = await this.gitlab.run<GitLab.Commit[]>(user, async g => {
+            return g.Commits.all(projectId, {
+                ref_name: ref,
+                per_page: maxDepth,
+                page: 1,
+            });
+        });
+        if (GitLab.ApiError.is(result)) {
+            if (result.message === 'GitLab responded with code 404') {
+                throw new Error(`Couldn't find commit #${ref} in repository ${projectId}.`);
+            }
+            throw result;
+        }
+        return result.slice(1).map((c: GitLab.Commit) => c.id);
+    }
 }

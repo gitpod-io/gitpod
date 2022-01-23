@@ -7,10 +7,13 @@
 import * as express from 'express';
 import { postConstruct, injectable, inject } from 'inversify';
 import { UserDB } from '@gitpod/gitpod-db/lib';
-import { User, StartPrebuildResult } from '@gitpod/gitpod-protocol';
+import { User, StartPrebuildResult, CommitContext, CommitInfo } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TokenService } from '../../../src/user/token-service';
+import { ContextParser } from '../../../src/workspace/context-parser-service';
+import { HostContextProvider } from '../../../src/auth/host-context-provider';
+import { RepoURL } from '../../../src/repohost';
 
 @injectable()
 export class BitbucketApp {
@@ -18,6 +21,8 @@ export class BitbucketApp {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
+    @inject(ContextParser) protected readonly contextParser: ContextParser;
+    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
 
     protected _router = express.Router();
     public static path = '/apps/bitbucket/';
@@ -82,16 +87,23 @@ export class BitbucketApp {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
             const contextURL = this.createContextUrl(data);
+            const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
             span.setTag('contextURL', contextURL);
-            const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 console.log('No config. No prebuild.');
                 return undefined;
             }
 
             console.log('Starting prebuild.', { contextURL })
+            const {host, owner, repo} = RepoURL.parseRepoUrl(data.repoUrl)!;
+            const hostCtx = this.hostCtxProvider.get(host);
+            let commitInfo: CommitInfo | undefined;
+            if (hostCtx?.services?.repositoryProvider) {
+                commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(user, owner, repo, data.commitHash);
+            }
             // todo@alex: add branch and project args
-            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: data.gitCloneUrl, commit: data.commitHash});
+            const ws = await this.prebuildManager.startPrebuild({ span }, { user, context, commitInfo });
             return ws;
         } finally {
             span.finish();

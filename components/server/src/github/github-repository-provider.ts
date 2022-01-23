@@ -106,4 +106,49 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         const commit = await this.github.getCommit(user, { repo, owner, ref });
         return commit;
     }
+
+    public async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number = 100): Promise<string[]> {
+        try {
+            if (ref.length != 40) {
+                throw new Error(`Invalid commit ID ${ref}.`);
+            }
+
+            // TODO(janx): To get more results than GitHub API's max page size (seems to be 100), pagination should be handled.
+            // These additional history properties may be helfpul:
+            //     totalCount,
+            //     pageInfo {
+            //         haxNextPage,
+            //     },
+            const result: any = await this.githubQueryApi.runQuery(user, `
+                query {
+                    repository(name: "${repo}", owner: "${owner}") {
+                        object(oid: "${ref}") {
+                            ... on Commit {
+                                history(first: ${maxDepth}) {
+                                    edges {
+                                        node {
+                                            oid
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            `);
+
+            if (result.data.repository === null) {
+                throw new Error(`couldn't find repository ${owner}/${repo} on ${this.github.baseURL}`);
+            }
+
+            const commit = result.data.repository.object;
+            if (commit === null) {
+                throw new Error(`Couldn't find commit ${ref} in repository ${owner}/${repo}.`);
+            }
+
+            return commit.history.edges.slice(1).map((e: any) => e.node.oid) || [];
+        } catch (e) {
+            throw e;
+        }
+    }
 }

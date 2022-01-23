@@ -5,6 +5,7 @@
  */
 
 import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
+import { Schema } from "bitbucket";
 import { inject, injectable } from 'inversify';
 import { URL } from "url";
 import { RepoURL } from '../repohost/repo-url';
@@ -97,5 +98,23 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
             commitMessage: commit.message || "missing commit message",
             authorAvatarUrl: commit.author?.user?.links?.avatar?.href,
         };
+    }
+
+    public async getCommitHistory(user: User, owner: string, repo: string, revision: string, maxDepth: number = 100): Promise<string[]> {
+        const api = await this.apiFactory.create(user);
+        // TODO(janx): To get more results than Bitbucket API's max pagelen (seems to be 100), pagination should be handled.
+        // The additional property 'page' may be helfpul.
+        const result = await api.repositories.listCommitsAt({
+            workspace: owner,
+            repo_slug: repo,
+            revision: revision,
+            pagelen: maxDepth,
+        });
+
+        const commits = result.data.values?.slice(1);
+        if (!commits) {
+            return [];
+        }
+        return commits.map((v: Schema.Commit) => v.hash!);
     }
 }
