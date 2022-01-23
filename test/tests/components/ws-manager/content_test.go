@@ -26,7 +26,7 @@ func TestBackup(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
@@ -41,7 +41,7 @@ func TestBackup(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), cfg.Client(),
+			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
 				integration.WithInstanceID(ws.Req.Id),
 				integration.WithContainer("workspace"),
 				integration.WithWorkspacekitLift(true),
@@ -87,7 +87,7 @@ func TestBackup(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			rsa, closer, err = integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), cfg.Client(),
+			rsa, closer, err = integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(),
 				integration.WithInstanceID(ws.Req.Id),
 			)
 			if err != nil {
@@ -141,7 +141,7 @@ func TestMissingBackup(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})

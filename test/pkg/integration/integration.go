@@ -135,7 +135,7 @@ func WithWorkspacekitLift(lift bool) InstrumentOption {
 // If there isn't, we attempt to build `<agentName>_agent/main.go`.
 // The binary is copied to the destination pod, started and port-forwarded. Then we
 // create an RPC client.
-func Instrument(component ComponentType, agentName string, namespace string, client klient.Client, opts ...InstrumentOption) (*rpc.Client, []func() error, error) {
+func Instrument(component ComponentType, agentName string, namespace string, kubeconfig string, client klient.Client, opts ...InstrumentOption) (*rpc.Client, []func() error, error) {
 	var closer []func() error
 
 	options := instrumentOptions{
@@ -188,7 +188,7 @@ func Instrument(component ComponentType, agentName string, namespace string, cli
 	execErrs := make(chan error, 1)
 	go func() {
 		defer close(execErrs)
-		execErr := executeAgent(cmd, podName, containerName, namespace, client)
+		execErr := executeAgent(cmd, podName, containerName, namespace, kubeconfig, client)
 		if execErr != nil {
 			execErrs <- execErr
 		}
@@ -214,7 +214,7 @@ func Instrument(component ComponentType, agentName string, namespace string, cli
 		}
 	}()
 
-	fwdReady, fwdErr := common.ForwardPort(ctx, client.RESTConfig(), namespace, podName, strconv.Itoa(localAgentPort))
+	fwdReady, fwdErr := common.ForwardPort(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
 	select {
 	case <-fwdReady:
 	case err := <-execErrs:
@@ -274,8 +274,9 @@ func getFreePort() (int, error) {
 	return result.Port, nil
 }
 
-func executeAgent(cmd []string, pod, container string, namespace string, client klient.Client) error {
-	args := []string{"exec", pod, fmt.Sprintf("--namespace=%v", namespace)}
+func executeAgent(cmd []string, pod, container string, namespace string, kubeconfig string, client klient.Client) error {
+	// since we are self signing certs for gitpod components, pass insecure flag
+	args := []string{"exec", pod, fmt.Sprintf("--namespace=%v", namespace), "--insecure-skip-tls-verify=true", fmt.Sprintf("--kubeconfig=%v", kubeconfig)}
 	if len(container) > 0 {
 		args = append(args, fmt.Sprintf("--container=%s", container))
 	}
@@ -285,7 +286,7 @@ func executeAgent(cmd []string, pod, container string, namespace string, client 
 	command := exec.Command("kubectl", args...)
 	out, err := command.CombinedOutput()
 	if err != nil {
-		return xerrors.Errorf("cannot run kubectl command: %w\n%v", err, string(out))
+		return xerrors.Errorf("cannot run kubectl command: %w\n%v\nargs:%v", err, string(out), args)
 	}
 
 	return nil
@@ -431,12 +432,16 @@ func GetServerConfig(namespace string, client klient.Client) (*ServerConfigParti
 // ServerIDEConfigPartial is the subset of server IDE config we're using for integration tests.
 // NOTE: keep in sync with chart/templates/server-ide-configmap.yaml
 type ServerIDEConfigPartial struct {
-	IDEVersion      string `json:"ideVersion"`
-	IDEImageRepo    string `json:"ideImageRepo"`
-	IDEImageAliases struct {
-		Code       string `json:"code"`
-		CodeLatest string `json:"code-latest"`
-	} `json:"ideImageAliases"`
+	IDEOptions struct {
+		Options struct {
+			Code struct {
+				Image string `json:"image"`
+			} `json:"code"`
+			CodeLatest struct {
+				Image string `json:"image"`
+			} `json:"code-latest"`
+		} `json:"options"`
+	} `json:"ideOptions"`
 }
 
 func GetServerIDEConfig(namespace string, client klient.Client) (*ServerIDEConfigPartial, error) {

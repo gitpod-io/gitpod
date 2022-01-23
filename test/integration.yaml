@@ -15,6 +15,7 @@ rules:
         - 'secrets'
         - 'services'
         - 'configmaps'
+        - 'endpoints'
       verbs:
         - 'list'
         - 'get'
@@ -22,9 +23,9 @@ rules:
         - ''
       resources:
         - 'pods/portforward'
+        - 'pods/exec'
       verbs:
         - 'create'
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -37,3 +38,25 @@ roleRef:
     kind: Role
     name: integration-role
     apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: integration-job
+spec:
+  template:
+    spec:
+      serviceAccountName: integration-svc
+      containers:
+      - name: tests
+        image: eu.gcr.io/gitpod-core-dev/build/integration-tests:kyleb-installer-integration.24
+        imagePullPolicy: Always
+        #args: ["-username=sagor999"]
+        #args: ["-enterprise=true"]
+        #args: ["-gitlab=true"]
+        resources:
+          requests:
+            cpu: 2
+            memory: 4Gi
+      restartPolicy: Never
+  backoffLimit: 0

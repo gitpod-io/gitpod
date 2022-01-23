@@ -136,7 +136,7 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 		if err != nil {
 			return nil, xerrors.Errorf("cannot find server IDE config: %q", err)
 		}
-		ideImage = cfg.IDEImageAliases.Code
+		ideImage = cfg.IDEOptions.Options.Code.Image
 		if ideImage == "" {
 			return nil, xerrors.Errorf("cannot start workspaces without an IDE image (required by registry-facade resolver)")
 		}

@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"golang.org/x/xerrors"
-	"k8s.io/client-go/rest"
 )
 
 // ForwardPort establishes a TCP port forwarding to a Kubernetes pod
 // Uses kubectl instead of Go to use a local process that can reproduce the same behavior outside the tests
-func ForwardPort(ctx context.Context, config *rest.Config, namespace, pod, port string) (readychan chan struct{}, errchan chan error) {
+// Since we are using kubectl directly we need to pass kubeconfig explicetly
+func ForwardPort(ctx context.Context, kubeconfig string, namespace, pod, port string) (readychan chan struct{}, errchan chan error) {
 	errchan = make(chan error, 1)
 	readychan = make(chan struct{}, 1)
 
@@ -28,18 +28,19 @@ func ForwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 			"--address=0.0.0.0",
 			fmt.Sprintf("pod/%v", pod),
 			fmt.Sprintf("--namespace=%v", namespace),
+			fmt.Sprintf("--kubeconfig=%v", kubeconfig),
 			port,
 		}
 
 		command := exec.CommandContext(ctx, "kubectl", args...)
 		err := command.Start()
 		if err != nil {
-			errchan <- xerrors.Errorf("unexpected error starting port-forward: %w", err)
+			errchan <- xerrors.Errorf("unexpected error starting port-forward: %w, args: %v", err, args)
 		}
 
 		err = command.Wait()
 		if err != nil {
-			errchan <- xerrors.Errorf("unexpected error running port-forward: %w", err)
+			errchan <- xerrors.Errorf("unexpected error running port-forward: %w, args: %v", err, args)
 		}
 	}()
 

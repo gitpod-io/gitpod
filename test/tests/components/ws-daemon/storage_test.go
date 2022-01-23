@@ -24,7 +24,7 @@ func TestCreateBucket(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			rsa, closer, err := integration.Instrument(integration.ComponentWorkspaceDaemon, "daemon", cfg.Namespace(), cfg.Client(),
+			rsa, closer, err := integration.Instrument(integration.ComponentWorkspaceDaemon, "daemon", cfg.Namespace(), kubeconfig, cfg.Client(),
 				integration.WithWorkspacekitLift(false),
 				integration.WithContainer("ws-daemon"),
 			)
