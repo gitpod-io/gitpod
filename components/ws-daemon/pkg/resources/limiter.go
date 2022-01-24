@@ -4,6 +4,10 @@
 
 package resources
 
+import (
+	"github.com/gitpod-io/gitpod/common-go/log"
+)
+
 // ResourceLimiter implements a strategy to limit the resurce use of a workspace
 type ResourceLimiter interface {
 	Limit(budgetLeft int64) (newLimit int64)
@@ -42,14 +46,17 @@ type BucketLimiter []Bucket
 
 // Limit limits spending based on the budget that's left
 func (buckets BucketLimiter) Limit(budgetSpent int64) (newLimit int64) {
+	log.WithField("limit", budgetSpent).Debug("limiting budget spend")
+	spended := budgetSpent
 	for i, bkt := range buckets {
 		if i+1 == len(buckets) {
 			// We've reached the last bucket - budget doesn't matter anymore
 			return bkt.Limit
 		}
 
-		budgetSpent -= bkt.Budget
-		if budgetSpent <= 0 {
+		spended -= bkt.Budget
+		log.WithField("limit", budgetSpent).WithField("budget", bkt.Budget).WithField("spended", spended).Debug("checking budget")
+		if spended <= 0 {
 			// BudgetSpent value is in this bucket, hence we have found our current bucket
 			return bkt.Limit
 		}

@@ -84,16 +84,13 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 
 	var cpuLimiter ResourceLimiter
 	if fixedLimit, ok := ws.Pod.Annotations[wsk8s.CPULimitAnnotation]; ok && fixedLimit != "" {
-		var scaledLimit int64
-		limit, err := resource.ParseQuantity(fixedLimit)
+		scaledLimit, err := resource.ParseQuantity(fixedLimit)
 		if err != nil {
 			log.WithError(err).WithField("limitReq", fixedLimit).Warn("workspace requested a fixed CPU limit, but we cannot parse the value")
 			return xerrors.Errorf("cannot parse CPU limit annotation value: %w", err)
 		}
 
-		// we need to scale from milli jiffie to jiffie - see governer code for details
-		scaledLimit = limit.MilliValue() / 10
-		cpuLimiter = FixedLimiter(scaledLimit)
+		cpuLimiter = FixedLimiter(scaledLimit.MilliValue())
 	} else if len(d.Config.CPUBuckets) > 0 {
 		cpuLimiter = &ClampingBucketLimiter{Buckets: d.Config.CPUBuckets}
 	} else {
@@ -136,8 +133,7 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 		if err != nil {
 			return xerrors.Errorf("cannot enforce fixed CPU limit: %w", err)
 		}
-		// we need to scale from milli jiffie to jiffie - see governer code for details
-		scaledLimit = limit.MilliValue() / 10
+		scaledLimit = limit.MilliValue()
 	}
 
 	gov.SetFixedCPULimit(scaledLimit)
