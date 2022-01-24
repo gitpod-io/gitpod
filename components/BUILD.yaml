@@ -37,7 +37,6 @@ packages:
       - components/ee/db-sync:docker
       - components/ee/kedge:docker
       - components/ee/payment-endpoint:docker
-      - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
@@ -91,7 +90,6 @@ packages:
       - components/ee/db-sync:app
       - components/ee/kedge:app
       - components/ee/payment-endpoint:app
-      - components/ee/ws-scheduler:app
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app
       - components/registry-facade:app

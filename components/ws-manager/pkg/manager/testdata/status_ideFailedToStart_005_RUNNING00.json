@@ -31,8 +31,7 @@
               }
             },
             "time": "2021-08-18T17:42:08Z",
-            "apiVersion": "v1",
-            "manager": "ws-scheduler"
+            "apiVersion": "v1"
           }
         ],
         "resourceVersion": "619605",
@@ -353,7 +352,6 @@
         ]
       },
       "dnsPolicy": "None",
-      "schedulerName": "workspace-scheduler",
       "nodeName": "gke-gp-prod-ws-eu14-eu-workspace-pool-b6e0759a-3lb1",
       "affinity": {
         "nodeAffinity": {
@@ -362,7 +360,7 @@
               {
                 "matchExpressions": [
                   {
-                    "key": "gitpod.io/workload_workspace",
+                    "key": "gitpod.io/workload_workspace_regular",
                     "operator": "Exists"
                   }
                 ]

@@ -97,7 +97,6 @@ authProviders: []
 #     settingsUrl: "https://gitlab.com/-/profile/applications"
 #   description: ""
 #   icon: ""
-workspaceScheduler: workspace-scheduler
 
 components:
 
@@ -502,27 +501,6 @@ components:
       seccompProfileInstaller:
         enabled: true
         imageName: "seccomp-profile-installer"
-
-  wsScheduler:
-    name: "ws-scheduler"
-    disabled: false
-    resources:
-      cpu: 100m
-      memory: 32Mi
-    schedulerName: "workspace-scheduler"
-    ratelimit:
-      # Limits the # of scheduling attempts (per second) to limit traffic to the k8s master.
-      maxRPS: 10
-    scaler:
-      enabled: false
-      maxGhostWorkspaces: 10
-      renewal:
-        interval: "5m"
-        percentage: 20
-      controller:
-        kind: "constant"
-        constant:
-          setpoint: 5
 
   wsProxy:
     name: "ws-proxy"

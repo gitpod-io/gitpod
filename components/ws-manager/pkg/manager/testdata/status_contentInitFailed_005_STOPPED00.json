@@ -611,7 +611,6 @@
         }
       ],
       "nodeName": "gke-gp-prod-ws-us15-us--headless-pool-64a87cf8-bw7v",
-      "schedulerName": "workspace-scheduler",
       "serviceAccount": "workspace",
       "enableServiceLinks": false,
       "dnsPolicy": "None",
@@ -764,7 +763,6 @@
           {
             "fieldsType": "FieldsV1",
             "apiVersion": "v1",
-            "manager": "ws-scheduler",
             "fieldsV1": {
               "f:involvedObject": {
                 "f:namespace": {},

@@ -50,7 +50,6 @@
       "serviceAccount": "default",
       "nodeName": "minikube",
       "securityContext": {},
-      "schedulerName": "default-scheduler",
       "tolerations": [
         {
           "key": "node.kubernetes.io/not-ready",

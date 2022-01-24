@@ -653,7 +653,6 @@
       "terminationGracePeriodSeconds": 30,
       "automountServiceAccountToken": false,
       "serviceAccountName": "workspace",
-      "schedulerName": "workspace-scheduler",
       "restartPolicy": "Never",
       "enableServiceLinks": false,
       "priority": 0,
@@ -676,7 +675,7 @@
               {
                 "matchExpressions": [
                   {
-                    "key": "gitpod.io/workload_workspace",
+                    "key": "gitpod.io/workload_workspace_regular",
                     "operator": "Exists"
                   }
                 ]
@@ -782,7 +781,6 @@
         "managedFields": [
           {
             "time": "2021-08-19T11:14:44Z",
-            "manager": "ws-scheduler",
             "fieldsType": "FieldsV1",
             "fieldsV1": {
               "f:type": {},

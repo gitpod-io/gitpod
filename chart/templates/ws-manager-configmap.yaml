@@ -22,7 +22,6 @@ data:
     {
         "manager": {
             "namespace": "{{ .Release.Namespace }}",
-            "schedulerName": "{{ .Values.workspaceScheduler }}",
 {{- if $wsdaemon.userNamespaces.seccompProfileInstaller.enabled }}
             "seccompProfile": "localhost/workspace_default_{{ $gp.version }}.json",
 {{- else }}

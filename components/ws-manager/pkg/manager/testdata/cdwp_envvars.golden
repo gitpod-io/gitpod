@@ -237,7 +237,30 @@
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
             "hostname": "foobar",
-            "schedulerName": "workspace-scheduler",
+            "affinity": {
+                "nodeAffinity": {
+                    "requiredDuringSchedulingIgnoredDuringExecution": {
+                        "nodeSelectorTerms": [
+                            {
+                                "matchExpressions": [
+                                    {
+                                        "key": "gitpod.io/workload_workspace_regular",
+                                        "operator": "Exists"
+                                    },
+                                    {
+                                        "key": "gitpod.io/ws-daemon_ready_ns_default",
+                                        "operator": "Exists"
+                                    },
+                                    {
+                                        "key": "gitpod.io/registry-facade_ready_ns_default",
+                                        "operator": "Exists"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
             "tolerations": [
                 {
                     "key": "node.kubernetes.io/disk-pressure",

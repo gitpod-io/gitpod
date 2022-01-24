@@ -250,7 +250,6 @@
                     }
                 }
             },
-            "schedulerName": "workspace-scheduler",
             "tolerations": [
                 {
                     "key": "node.kubernetes.io/disk-pressure",

@@ -30,7 +30,6 @@ import (
 func forTestingOnlyManagerConfig() config.Configuration {
 	return config.Configuration{
 		Namespace:                "default",
-		SchedulerName:            "workspace-scheduler",
 		SeccompProfile:           "localhost/workspace-default",
 		HeartbeatInterval:        util.Duration(30 * time.Second),
 		WorkspaceHostPath:        "/tmp/workspaces",

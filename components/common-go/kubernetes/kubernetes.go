@@ -4,8 +4,6 @@
 
 package kubernetes
 
-// wsman and ws-scheduler need to share labels/annotations so that we can have consistent logging and tracing.
-//
 // Those two are the only cases where you would actually need this package. If you think you need this elsewhere,
 // please make sure you're not better of using wsman's API to solve your problem. If this is actually what you need,
 // please update this comment.

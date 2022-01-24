@@ -16,7 +16,6 @@ require (
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-proxy v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-scheduler v0.0.0-00010101000000-000000000000
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/google/go-cmp v0.5.6
 	github.com/jetstack/cert-manager v1.4.4
@@ -174,6 +173,7 @@ require (
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
+	github.com/seccomp/libseccomp-golang v0.9.1 // indirect
 	github.com/shirou/gopsutil v2.20.9+incompatible // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
@@ -213,7 +213,6 @@ require (
 	k8s.io/apiserver v0.22.2 // indirect
 	k8s.io/cli-runtime v0.22.2 // indirect
 	k8s.io/component-base v0.22.2 // indirect
-	k8s.io/component-helpers v0.22.2 // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
 	oras.land/oras-go v0.4.0 // indirect
@@ -228,8 +227,6 @@ replace github.com/gitpod-io/gitpod/image-builder => ../components/image-builder
 replace github.com/gitpod-io/gitpod/image-builder/api => ../components/image-builder-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/openvsx-proxy => ../components/openvsx-proxy // leeway
-
-replace github.com/gitpod-io/gitpod/ws-scheduler => ../components/ee/ws-scheduler // leeway
 
 replace github.com/gitpod-io/gitpod/ws-proxy => ../components/ws-proxy // leeway
 

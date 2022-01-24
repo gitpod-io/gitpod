@@ -53,7 +53,7 @@
                       "operator": "Exists"
                     },
                     {
-                      "key": "gitpod.io/workload_workspace",
+                      "key": "gitpod.io/workload_workspace_regular",
                       "operator": "In",
                       "values": [
                         "true"
@@ -213,7 +213,6 @@
         "nodeName": "gke-staging--gitpod--workspace-pool-1-f122a8ea-bb2l",
         "priority": 0,
         "restartPolicy": "Always",
-        "schedulerName": "workspace-scheduler",
         "securityContext": {
           "fsGroup": 1,
           "supplementalGroups": [

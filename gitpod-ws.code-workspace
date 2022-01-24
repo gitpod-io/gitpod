@@ -6,7 +6,6 @@
       { "path": "components/content-service" },
       { "path": "components/docker-up" },
       { "path": "components/ee/agent-smith" },
-      { "path": "components/ee/ws-scheduler" },
       { "path": "components/gitpod-cli" },
       { "path": "components/gitpod-protocol" },
       { "path": "components/image-builder-bob" },

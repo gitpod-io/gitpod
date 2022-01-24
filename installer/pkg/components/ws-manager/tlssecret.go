@@ -6,6 +6,7 @@ package wsmanager
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
@@ -25,7 +26,6 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.RegistryFacadeComponent,
 		common.ServerComponent,
 		common.WSManagerBridgeComponent,
-		common.WSSchedulerComponent,
 		common.WSProxyComponent,
 		Component,
 	}

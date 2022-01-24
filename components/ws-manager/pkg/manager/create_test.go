@@ -46,9 +46,6 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 			fixture := input.(*fixture)
 
 			mgmtCfg := forTestingOnlyManagerConfig()
-			if fixture.EnforceAffinity {
-				mgmtCfg.EnforceWorkspaceNodeAffinity = true
-			}
 			if fixture.ResourceRequests != nil {
 				var (
 					cont = mgmtCfg.Container

@@ -6,7 +6,6 @@
         - [x] ws-daemon
         - [x] ws-manager
         - [x] ws-proxy
-        - [x] ws-scheduler
         - [x] registry-facade
         - [x] blobserve
         - [x] agent-smith

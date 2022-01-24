@@ -224,7 +224,19 @@
                             {
                                 "matchExpressions": [
                                     {
-                                        "key": "gitpod.io/workload_workspace",
+                                        "key": "gitpod.io/workload_workspace_regular",
+                                        "operator": "Exists"
+                                    },
+                                    {
+                                        "key": "gitpod.io/ws-daemon_ready_ns_default",
+                                        "operator": "Exists"
+                                    },
+                                    {
+                                        "key": "gitpod.io/registry-facade_ready_ns_default",
+                                        "operator": "Exists"
+                                    },
+                                    {
+                                        "key": "gitpod.io/workload_workspace_regular",
                                         "operator": "In",
                                         "values": [
                                             "true"
@@ -236,7 +248,6 @@
                     }
                 }
             },
-            "schedulerName": "workspace-scheduler",
             "tolerations": [
                 {
                     "key": "node.kubernetes.io/disk-pressure",

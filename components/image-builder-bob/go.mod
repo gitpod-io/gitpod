@@ -19,6 +19,7 @@ require (
 	github.com/containerd/containerd v1.5.5
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/hashicorp/go-retryablehttp v0.7.0
+	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/sirupsen/logrus v1.8.1
 )
 
