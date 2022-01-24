@@ -53,7 +53,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DefaultDesktopIDE: intellij,
 					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm},
 					InstallationSteps: []string{
-						"If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://www.jetbrains.com/remote-development/gateway'>JetBrains Gateway</a> with <a target='_blank' class='gp-link' href='https://plugins.jetbrains.com/plugin/download?rel=true&updateId=154074'>Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+						"If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://www.jetbrains.com/remote-development/gateway'>JetBrains Gateway</a> with <a target='_blank' class='gp-link' href='https://github.com/gitpod-io/gitpod/blob/main/components/ide/jetbrains/gateway-plugin/doc/installing.md'>Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
 				},
 			},
