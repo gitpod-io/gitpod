@@ -22,6 +22,6 @@ func main() {
 		errfd := os.NewFile(uintptr(3), "errout")
 		_, _ = fmt.Fprintf(errfd, err.Error())
 
-		os.Exit(42)
+		os.Exit(content.FAIL_CONTENT_INITIALIZER_EXIT_CODE)
 	}
 }

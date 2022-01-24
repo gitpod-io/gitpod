@@ -272,8 +272,8 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}
 	if err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
-			// The program has exited with an exit code != 0. If it's 42, it was deliberate.
-			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == 42 {
+			// The program has exited with an exit code != 0. If it's FAIL_CONTENT_INITIALIZER_EXIT_CODE, it was deliberate.
+			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == FAIL_CONTENT_INITIALIZER_EXIT_CODE {
 				log.WithError(err).WithField("exitCode", status.ExitStatus()).WithField("args", args).Error("content init failed")
 				return xerrors.Errorf(string(errmsg))
 			}
