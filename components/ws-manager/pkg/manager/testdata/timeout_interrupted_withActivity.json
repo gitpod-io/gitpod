@@ -215,7 +215,7 @@
                       "operator": "Exists"
                     },
                     {
-                      "key": "gitpod.io/workload_workspace",
+                      "key": "gitpod.io/workload_workspace_regular",
                       "operator": "In",
                       "values": [
                         "true"

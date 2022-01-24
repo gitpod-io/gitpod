@@ -110,7 +110,6 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 			"ws-manager",
 			"ws-manager-bridge",
 			"ws-proxy",
-			"ws-scheduler",
 		}
 
 		client := cfg.Client()

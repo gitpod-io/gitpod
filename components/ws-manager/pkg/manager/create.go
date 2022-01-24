@@ -349,32 +349,30 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	if startContext.Headless {
 		workloadType = "headless"
 	}
-	var affinity *corev1.Affinity
-	if m.Config.EnforceWorkspaceNodeAffinity {
-		affinity = &corev1.Affinity{
-			NodeAffinity: &corev1.NodeAffinity{
-				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-					NodeSelectorTerms: []corev1.NodeSelectorTerm{
-						{
-							MatchExpressions: []corev1.NodeSelectorRequirement{
-								{
-									Key:      "gitpod.io/workload_workspace_" + workloadType,
-									Operator: corev1.NodeSelectorOpExists,
-								},
-								{
-									Key:      "gitpod.io/ws-daemon_ready_ns_" + m.Config.Namespace,
-									Operator: corev1.NodeSelectorOpExists,
-								},
-								{
-									Key:      "gitpod.io/registry-facade_ready_ns_" + m.Config.Namespace,
-									Operator: corev1.NodeSelectorOpExists,
-								},
+
+	affinity := &corev1.Affinity{
+		NodeAffinity: &corev1.NodeAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+				NodeSelectorTerms: []corev1.NodeSelectorTerm{
+					{
+						MatchExpressions: []corev1.NodeSelectorRequirement{
+							{
+								Key:      "gitpod.io/workload_workspace_" + workloadType,
+								Operator: corev1.NodeSelectorOpExists,
+							},
+							{
+								Key:      "gitpod.io/ws-daemon_ready_ns_" + m.Config.Namespace,
+								Operator: corev1.NodeSelectorOpExists,
+							},
+							{
+								Key:      "gitpod.io/registry-facade_ready_ns_" + m.Config.Namespace,
+								Operator: corev1.NodeSelectorOpExists,
 							},
 						},
 					},
 				},
 			},
-		}
+		},
 	}
 
 	pod := corev1.Pod{

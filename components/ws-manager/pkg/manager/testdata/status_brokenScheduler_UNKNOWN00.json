@@ -214,7 +214,7 @@
                             {
                                 "matchExpressions": [
                                     {
-                                        "key": "gitpod.io/workload_workspace",
+                                        "key": "gitpod.io/workload_workspace_regular",
                                         "operator": "In",
                                         "values": [
                                             "true"
@@ -226,7 +226,6 @@
                     }
                 }
             },
-            "schedulerName": "workspace-scheduler",
             "tolerations": [
                 {
                     "key": "node.kubernetes.io/not-ready",

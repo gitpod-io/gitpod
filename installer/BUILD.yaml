@@ -18,7 +18,6 @@ packages:
       - components/ws-manager-api/go:lib
       - components/content-service:lib
       - components/ee/agent-smith:lib
-      - components/ee/ws-scheduler:lib
       - components/blobserve:lib
       - components/content-service-api/go:lib
       - components/gitpod-protocol/go:lib

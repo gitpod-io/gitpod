@@ -63,7 +63,7 @@ packages:
         # - ["pwd"]
         # - ["kubectl", "create", "namespace", "wsman-integration-${__pkg_version}"]
         # - ["sh", "-c", "cp $HOME/.kube/config kubeconfig"]
-        # - ["sh", "-c", 'kubectl get node -l gitpod.io/workload_workspace --no-headers -o custom-columns=":metadata.name" | xargs kubectl patch node --patch ''{"metadata":{"labels":{"gitpod.io/theia.wsman-test": "available"}}}''']
+        # - ["sh", "-c", 'kubectl get node -l gitpod.io/workload_workspace_regular --no-headers -o custom-columns=":metadata.name" | xargs kubectl patch node --patch ''{"metadata":{"labels":{"gitpod.io/theia.wsman-test": "available"}}}''']
         # - ["kubectl", "--kubeconfig", "kubeconfig", "config", "set-context", "--current", "--namespace", "wsman-integration-${__pkg_version}"]
         # - ["components-ws-manager--app/ws-manager", "--kubeconfig", "kubeconfig", "integration-test", "patch-nodes", "-l", "gitpod.io/jenkins_agent"]
         # - ["sh", "-c", "./components-ws-manager--app/ws-manager --kubeconfig kubeconfig integration-test objs chart--helm/gitpod | kubectl --kubeconfig kubeconfig apply -f -"]

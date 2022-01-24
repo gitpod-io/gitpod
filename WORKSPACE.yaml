@@ -26,9 +26,6 @@ defaultVariant:
 
 variants:
 - name: oss
-  components:
-    exclude:
-      - components/ee/ws-scheduler
   srcs:
     exclude:
     - "**/ee"

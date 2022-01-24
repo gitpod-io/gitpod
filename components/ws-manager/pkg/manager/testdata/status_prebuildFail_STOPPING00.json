@@ -263,7 +263,7 @@
               {
                 "matchExpressions": [
                   {
-                    "key": "gitpod.io/workload_workspace",
+                    "key": "gitpod.io/workload_workspace_regular",
                     "operator": "Exists"
                   }
                 ]
@@ -272,7 +272,6 @@
           }
         }
       },
-      "schedulerName": "workspace-scheduler",
       "tolerations": [
         {
           "key": "node.kubernetes.io/disk-pressure",

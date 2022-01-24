@@ -42,7 +42,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	wsmcfg := config.ServiceConfiguration{
 		Manager: config.Configuration{
 			Namespace:      ctx.Namespace,
-			SchedulerName:  "workspace-scheduler",
 			SeccompProfile: fmt.Sprintf("localhost/workspace_default_%s.json", ctx.VersionManifest.Version),
 			DryRun:         false,
 			WorkspaceDaemon: config.WorkspaceDaemonConfiguration{
@@ -93,9 +92,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Interrupted:         util.Duration(5 * time.Minute),
 			},
 			//EventTraceLog:                "", // todo(sje): make conditional based on config
-			ReconnectionInterval:         util.Duration(30 * time.Second),
-			RegistryFacadeHost:           fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
-			EnforceWorkspaceNodeAffinity: true,
+			ReconnectionInterval: util.Duration(30 * time.Second),
+			RegistryFacadeHost:   fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
 		},
 		Content: struct {
 			Storage storageconfig.StorageConfig `json:"storage"`

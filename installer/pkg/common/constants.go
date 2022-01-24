@@ -42,7 +42,6 @@ const (
 	WSManagerComponent          = "ws-manager"
 	WSManagerBridgeComponent    = "ws-manager-bridge"
 	WSProxyComponent            = "ws-proxy"
-	WSSchedulerComponent        = "ws-scheduler"
 
 	AnnotationConfigChecksum = "gitpod.io/checksum_config"
 )

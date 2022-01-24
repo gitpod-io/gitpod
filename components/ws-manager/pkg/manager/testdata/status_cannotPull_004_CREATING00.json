@@ -783,7 +783,6 @@
           1
         ]
       },
-      "schedulerName": "workspace-scheduler",
       "dnsPolicy": "None",
       "affinity": {
         "nodeAffinity": {
@@ -793,7 +792,7 @@
                 "matchExpressions": [
                   {
                     "operator": "Exists",
-                    "key": "gitpod.io/workload_workspace"
+                    "key": "gitpod.io/workload_workspace_regular"
                   }
                 ]
               }
@@ -990,8 +989,7 @@
               },
               "f:type": {}
             },
-            "apiVersion": "v1",
-            "manager": "ws-scheduler"
+            "apiVersion": "v1"
           }
         ],
         "name": "ws-5031df46-db5e-43ae-91bd-1448305c001d - scheduledw7nkv",
