@@ -149,6 +149,7 @@ export async function build(context, version) {
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = "with-integration-tests" in buildConfig;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
+    const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
     const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
@@ -171,6 +172,7 @@ export async function build(context, version) {
         storage: storage,
         withIntegrationTests,
         publishToNpm,
+        publishToJBMarketplace,
         analytics,
         localAppVersion,
         retag,
@@ -205,7 +207,7 @@ export async function build(context, version) {
     if (withContrib || publishRelease) {
         exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} contrib:all`);
     }
-    exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DSEGMENT_IO_TOKEN=${process.env.SEGMENT_IO_TOKEN} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
+    exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DSEGMENT_IO_TOKEN=${process.env.SEGMENT_IO_TOKEN} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'} -DjbMarketplacePublishTrigger=${publishToJBMarketplace ? Date.now() : 'false'}`);
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");

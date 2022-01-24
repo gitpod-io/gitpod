@@ -123,6 +123,11 @@ pod:
         secretKeyRef:
           name: npm-auth-token
           key: npm-auth-token.json
+    - name: JB_MARKETPLACE_PUBLISH_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: jb-marketplace-publish-token
+          key: token
     - name: SLACK_NOTIFICATION_PATH
       valueFrom:
         secretKeyRef:
