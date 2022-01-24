@@ -495,6 +495,13 @@ command.
 ./installer render --config gitpod.config.yaml --namespace gitpod > gitpod.yaml
 ```
 
+The `validate cluster` command also accepts a namespace, allowing you to run
+the checks on that namespace.
+
+```shell
+./installer validate cluster --kubeconfig ~/.kube/config --config gitpod.config.yaml --namespace gitpod
+```
+
 **IMPORTANT**: this does not create the namespace, so you will need to create
 that separately. This is so that uninstallation of Gitpod does not remove any
 Kubernetes objects, such as your TLS certificate or connection secrets.
