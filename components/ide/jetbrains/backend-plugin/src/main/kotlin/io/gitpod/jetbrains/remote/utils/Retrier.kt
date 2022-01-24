@@ -2,13 +2,13 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package io.gitpod.ide.jetbrains.backend.utils
+package io.gitpod.jetbrains.remote.utils
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 
 object Retrier {
     @Suppress("TooGenericExceptionCaught")
-    suspend fun <T> retry(n: Int, logger: Logger? = null, fn: suspend () -> T): T {
+    suspend fun <T> retry(n: Int, fn: suspend () -> T): T {
         require(n >= 0)
         var i = 0
         while (true) {
@@ -16,7 +16,7 @@ object Retrier {
                 return fn()
             } catch (e: Exception) {
                 if (i++ < n) {
-                    logger?.error(e)
+                    thisLogger().error(e)
                 } else {
                     throw e
                 }
