@@ -13,10 +13,9 @@ packages:
     srcs:
       - "startup.sh"
       - "supervisor-ide-config_intellij.json"
-      - "status/go.mod"
-      - "status/main.go"
     deps:
       - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/image/status:app
     argdeps:
       - imageRepoBase
       - intellijDownloadUrl
@@ -35,10 +34,9 @@ packages:
     srcs:
       - "startup.sh"
       - "supervisor-ide-config_goland.json"
-      - "status/go.mod"
-      - "status/main.go"
     deps:
       - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/image/status:app
     argdeps:
       - imageRepoBase
       - golandDownloadUrl
@@ -57,10 +55,9 @@ packages:
     srcs:
       - "startup.sh"
       - "supervisor-ide-config_pycharm.json"
-      - "status/go.mod"
-      - "status/main.go"
     deps:
       - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/image/status:app
     argdeps:
       - imageRepoBase
       - pycharmDownloadUrl
@@ -79,10 +76,9 @@ packages:
     srcs:
       - "startup.sh"
       - "supervisor-ide-config_phpstorm.json"
-      - "status/go.mod"
-      - "status/main.go"
     deps:
       - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/image/status:app
     argdeps:
       - imageRepoBase
       - phpstormDownloadUrl

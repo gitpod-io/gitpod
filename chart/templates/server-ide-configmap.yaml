@@ -78,28 +78,24 @@ options:
     title: "IntelliJ IDEA"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/intellijIdeaLogo.svg"
-    notes: ["While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
   goland:
     orderKey: "05"
     title: "GoLand"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/golandLogo.svg"
-    notes: ["While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
   pycharm:
     orderKey: "06"
     title: "PyCharm"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/pycharmLogo.svg"
-    notes: ["While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
   phpstorm:
     orderKey: "07"
     title: "PhpStorm"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/phpstormLogo.svg"
-    notes: ["While in beta, when you open a workspace with PhpStorm you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
 
 defaultIde: "code"
