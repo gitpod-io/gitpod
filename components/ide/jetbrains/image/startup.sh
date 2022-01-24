@@ -16,9 +16,7 @@ until curl -sS "$SUPERVISOR_ADDR"/_supervisor/v1/status/content/wait/true | grep
 done
 echo "Desktop IDE: Content available."
 
-export CWM_NON_INTERACTIVE=1
-export CWM_HOST_PASSWORD=gitpod
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
-/ide-desktop/backend/bin/remote-dev-server.sh cwmHost "$GITPOD_REPO_ROOT" > >(sed 's/^/JetBrains remote-dev-server.sh (out): /') 2> >(sed 's/^/JetBrains remote-dev-server.sh (err): /' >&2)
+/ide-desktop/backend/bin/remote-dev-server.sh run "$GITPOD_REPO_ROOT"
 
 echo "Desktop IDE startup script exited"

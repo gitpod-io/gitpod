@@ -2,11 +2,6 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM golang:1.17 AS build
-WORKDIR /app
-COPY status/* /app/
-RUN go build -o status
-
 FROM alpine:3.15 as download
 ARG JETBRAINS_BACKEND_URL
 WORKDIR /workdir
@@ -19,5 +14,5 @@ FROM scratch
 ARG SUPERVISOR_IDE_CONFIG
 COPY --chown=33333:33333 ${SUPERVISOR_IDE_CONFIG} /ide-desktop/supervisor-ide-config.json
 COPY --chown=33333:33333 startup.sh /ide-desktop/
-COPY --chown=33333:33333 --from=build /app/status /ide-desktop/
 COPY --chown=33333:33333 --from=download /workdir/ /ide-desktop/backend/
+COPY --chown=33333:33333 components-ide-jetbrains-image-status--app/status /ide-desktop

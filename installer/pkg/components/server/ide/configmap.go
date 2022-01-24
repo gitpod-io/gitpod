@@ -96,7 +96,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Title:    "IntelliJ IDEA",
 					Type:     typeDesktop,
 					Logo:     getIdeLogoPath("intellijIdeaLogo"),
-					Notes:    []string{"While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJImage.Version),
 				},
 				goland: {
@@ -104,7 +103,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Title:    "GoLand",
 					Type:     typeDesktop,
 					Logo:     getIdeLogoPath("golandLogo"),
-					Notes:    []string{"While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.GoLandImage.Version),
 				},
 				pycharm: {
@@ -112,7 +110,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Title:    "PyCharm",
 					Type:     typeDesktop,
 					Logo:     getIdeLogoPath("pycharmLogo"),
-					Notes:    []string{"While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PyCharmImage.Version),
 				},
 				phpstorm: {
@@ -120,7 +117,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Title:    "PhpStorm",
 					Type:     typeDesktop,
 					Logo:     getIdeLogoPath("phpstormLogo"),
-					Notes:    []string{"While in beta, when you open a workspace with PhpStorm you will need to use the password “gitpod”."},
 					Image:    common.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.PhpStormImage.Version),
 				},
 			},
