@@ -4,8 +4,29 @@
 
 package io.gitpod.gitpodprotocol.api;
 
-public interface GitpodClient {
-    void connect(GitpodServer server);
+import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance;
+import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 
-    GitpodServer server();
+public class GitpodClient {
+
+    private GitpodServer server;
+
+    public void connect(GitpodServer server) {
+        this.server = server;
+    }
+
+    public GitpodServer getServer() {
+        if (this.server == null) {
+            throw new IllegalStateException("not connected");
+        }
+        return this.server;
+    }
+
+    public void notifyConnect() {
+    }
+
+    @JsonNotification
+    public void onInstanceUpdate(WorkspaceInstance instance) {
+
+    }
 }
