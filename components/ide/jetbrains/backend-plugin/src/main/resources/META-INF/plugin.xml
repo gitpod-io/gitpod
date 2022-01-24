@@ -5,9 +5,8 @@
 -->
 
 <idea-plugin>
-    <id>io.gitpod.ide.jetbrains.backend</id>
-    <name>Gitpod</name>
-
+    <id>io.gitpod.jetbrains.remote</id>
+    <name>Gitpod Remote</name>
     <vendor>Gitpod</vendor>
 
     <!-- Product and plugin compatibility requirements -->
@@ -15,7 +14,7 @@
     <depends>com.intellij.modules.platform</depends>
 
     <applicationListeners>
-        <listener class="io.gitpod.ide.jetbrains.backend.listeners.MyApplicationActivationListener"
-                  topic="com.intellij.openapi.application.ApplicationActivationListener" />
+        <listener class="io.gitpod.jetbrains.remote.listeners.MyApplicationActivationListener"
+                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
 </idea-plugin>

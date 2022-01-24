@@ -2,12 +2,12 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package io.gitpod.ide.jetbrains.backend.listeners
+package io.gitpod.jetbrains.remote.listeners
 
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.IdeFrame
-import io.gitpod.ide.jetbrains.backend.services.HeartbeatService
+import io.gitpod.jetbrains.remote.services.HeartbeatService
 
 class MyApplicationActivationListener : ApplicationActivationListener {
     override fun applicationActivated(ideFrame: IdeFrame) {
