@@ -75,6 +75,11 @@ var ClusterChecks = ValidationChecks{
 		Check:       checkCertManagerInstalled,
 		Description: "cert-manager is installed and has available issuer",
 	},
+	{
+		Name:        "Namespace exists",
+		Description: "ensure that the target namespace exists",
+		Check:       checkNamespaceExists,
+	},
 }
 
 // ValidationChecks are a group of validations

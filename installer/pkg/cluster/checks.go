@@ -68,18 +68,22 @@ func checkCertManagerInstalled(ctx context.Context, config *rest.Config, namespa
 	clusterIssuers, err := client.CertmanagerV1().ClusterIssuers().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		// If cert-manager not installed, this will error
-		return []ValidationError{{
-			Message: err.Error(),
-			Type:    ValidationStatusError,
-		}}, nil
+		return []ValidationError{
+			{
+				Message: err.Error(),
+				Type:    ValidationStatusError,
+			},
+		}, nil
 	}
 
 	if len(clusterIssuers.Items) == 0 {
 		// Treat as warning - may be bringing their own certs
-		return []ValidationError{{
-			Message: "no cluster issuers configured",
-			Type:    ValidationStatusWarning,
-		}}, nil
+		return []ValidationError{
+			{
+				Message: "no cluster issuers configured",
+				Type:    ValidationStatusWarning,
+			},
+		}, nil
 	}
 
 	return nil, nil
@@ -274,4 +278,34 @@ func checkKernelVersion(ctx context.Context, config *rest.Config, namespace stri
 	}
 
 	return res, nil
+}
+
+func checkNamespaceExists(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
+	client, err := clientsetFromContext(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+
+	namespaces, err := client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	namespaceExists := false
+	for _, nsp := range namespaces.Items {
+		if !namespaceExists && nsp.Name == namespace {
+			namespaceExists = true
+			break
+		}
+	}
+
+	if !namespaceExists {
+		return []ValidationError{
+			{
+				Message: fmt.Sprintf("Namespace %s does not exist", namespace),
+				Type:    ValidationStatusError,
+			},
+		}, nil
+	}
+
+	return nil, nil
 }

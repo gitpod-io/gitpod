@@ -18,8 +18,9 @@ import (
 )
 
 var validateClusterOpts struct {
-	Kube   kubeConfig
-	Config string
+	Kube      kubeConfig
+	Namespace string
+	Config    string
 }
 
 // validateClusterCmd represents the cluster command
@@ -39,18 +40,14 @@ var validateClusterCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		namespace, _, err := clientcfg.Namespace()
-		if err != nil {
-			return err
-		}
 
-		result, err := cluster.ClusterChecks.Validate(context.Background(), res, namespace)
+		result, err := cluster.ClusterChecks.Validate(context.Background(), res, validateClusterOpts.Namespace)
 		if err != nil {
 			return err
 		}
 
 		if validateClusterOpts.Config != "" {
-			res, err := runClusterConfigValidation(context.Background(), res, namespace)
+			res, err := runClusterConfigValidation(context.Background(), res, validateClusterOpts.Namespace)
 			if err != nil {
 				return err
 			}
@@ -107,4 +104,5 @@ func init() {
 
 	validateClusterCmd.PersistentFlags().StringVar(&validateClusterOpts.Kube.Config, "kubeconfig", "", "path to the kubeconfig file")
 	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Config, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+	validateClusterCmd.PersistentFlags().StringVarP(&validateClusterOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 }
