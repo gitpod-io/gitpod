@@ -4,12 +4,11 @@
 
 package io.gitpod.gitpodprotocol.api;
 
-import java.util.concurrent.CompletableFuture;
-
+import io.gitpod.gitpodprotocol.api.entities.*;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 
-import io.gitpod.gitpodprotocol.api.entities.SendHeartBeatOptions;
-import io.gitpod.gitpodprotocol.api.entities.User;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface GitpodServer {
     @JsonRequest
@@ -17,4 +16,19 @@ public interface GitpodServer {
 
     @JsonRequest
     CompletableFuture<Void> sendHeartBeat(SendHeartBeatOptions options);
+
+    @JsonRequest
+    CompletableFuture<List<String>> getGitpodTokenScopes(String tokenHash);
+
+    @JsonRequest
+    CompletableFuture<WorkspaceInfo> getWorkspace(String workspaceId);
+
+    @JsonRequest
+    CompletableFuture<String> getOwnerToken(String workspaceId);
+
+    @JsonRequest
+    CompletableFuture<List<WorkspaceInfo>> getWorkspaces(GetWorkspacesOptions options);
+
+    @JsonRequest
+    CompletableFuture<IDEOptions> getIDEOptions();
 }
