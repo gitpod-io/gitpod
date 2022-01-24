@@ -1,0 +1,38 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: gitpod-issuer
+spec:
+  acme:
+    # server: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      # Secret resource that will be used to store the account's private key.
+      name: gitpod-issuer-account-key
+    solvers:
+    - dns01:
+        cloudDNS:
+          # The ID of the GCP project
+          project: $PROJECT_ID
+          # This is the secret used to access the service account
+          serviceAccountSecretRef:
+            name: clouddns-dns01-solver-svc-acct
+            key: key
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: https-certificates
+spec:
+  secretName: https-certificates
+  issuerRef:
+    name: gitpod-issuer
+    kind: ClusterIssuer
+  dnsNames:
+    - "$DOMAIN"
+    - "*.$DOMAIN"
+    - "*.ws.$DOMAIN"

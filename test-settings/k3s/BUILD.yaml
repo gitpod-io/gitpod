@@ -1,0 +1,16 @@
+packages:
+  - name: docker
+    type: docker
+    srcs:
+      - "*.sh"
+      - "provisions/**/*"
+    deps:
+      - installer:app
+      - test:app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/test-k3s:${version}
+        - ${imageRepoBase}/test-k3s:commit-${__git_commit}
