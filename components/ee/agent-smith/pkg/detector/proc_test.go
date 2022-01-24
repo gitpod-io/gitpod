@@ -254,6 +254,7 @@ func TestRunDetector(t *testing.T) {
 			det := ProcfsDetector{
 				indexSizeGuage:     prometheus.NewGauge(prometheus.GaugeOpts{Name: "dont"}),
 				cacheUseCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{}, []string{"use"}),
+				workspaceGauge:     prometheus.NewGauge(prometheus.GaugeOpts{Name: "dont"}),
 				cache:              cache,
 			}
 

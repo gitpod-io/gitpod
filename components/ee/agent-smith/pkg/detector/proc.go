@@ -251,6 +251,7 @@ type ProcfsDetector struct {
 
 	indexSizeGuage     prometheus.Gauge
 	cacheUseCounterVec *prometheus.CounterVec
+	workspaceGauge     prometheus.Gauge
 
 	startOnce sync.Once
 
@@ -282,6 +283,12 @@ func NewProcfsDetector() (*ProcfsDetector, error) {
 			Name:      "cache_use_total",
 			Help:      "process cache statistics",
 		}, []string{"use"}),
+		workspaceGauge: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: "gitpod",
+			Subsystem: "agent_smith_procfs_detector",
+			Name:      "workspace_count",
+			Help:      "number of detected workspaces",
+		}),
 		proc:  realProcfs(p),
 		cache: cache,
 	}, nil
@@ -290,11 +297,13 @@ func NewProcfsDetector() (*ProcfsDetector, error) {
 func (det *ProcfsDetector) Describe(d chan<- *prometheus.Desc) {
 	det.indexSizeGuage.Describe(d)
 	det.cacheUseCounterVec.Describe(d)
+	det.workspaceGauge.Describe(d)
 }
 
 func (det *ProcfsDetector) Collect(m chan<- prometheus.Metric) {
 	det.indexSizeGuage.Collect(m)
 	det.cacheUseCounterVec.Collect(m)
+	det.workspaceGauge.Collect(m)
 }
 
 func (det *ProcfsDetector) start() {
@@ -344,13 +353,20 @@ func (det *ProcfsDetector) run(processes chan<- Process) {
 	// let's find all workspaces, from the root down
 	findWorkspaces(det.proc, root, 0, nil)
 
+	workspaces := 0
 	for _, p := range idx {
 		if p.Workspace == nil {
 			continue
 		}
+
+		if p.Kind == ProcessSandbox {
+			workspaces = workspaces + 1
+		}
+
 		if p.Kind != ProcessUserWorkload {
 			continue
 		}
+
 		if _, ok := det.cache.Get(p.Hash); ok {
 			det.cacheUseCounterVec.WithLabelValues("hit").Inc()
 			continue
@@ -367,6 +383,8 @@ func (det *ProcfsDetector) run(processes chan<- Process) {
 		log.WithField("proc", proc).Debug("found process")
 		processes <- proc
 	}
+
+	det.workspaceGauge.Set(float64(workspaces))
 }
 
 func findWorkspaces(proc discoverableProcFS, p *process, d int, ws *common.Workspace) {
