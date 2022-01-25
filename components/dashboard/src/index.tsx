@@ -12,6 +12,7 @@ import { AdminContextProvider } from './admin-context';
 import { TeamsContextProvider } from './teams/teams-context';
 import { ProjectContextProvider } from './projects/project-context';
 import { ThemeContextProvider } from './theme-context';
+import { StartWorkspaceModalContextProvider } from './workspaces/start-workspace-modal-context';
 import { BrowserRouter } from 'react-router-dom';
 
 import "./index.css"
@@ -23,9 +24,11 @@ ReactDOM.render(
                 <TeamsContextProvider>
                     <ProjectContextProvider>
                         <ThemeContextProvider>
-                            <BrowserRouter>
-                                <App />
-                            </BrowserRouter>
+                            <StartWorkspaceModalContextProvider>
+                                <BrowserRouter>
+                                    <App />
+                                </BrowserRouter>
+                            </StartWorkspaceModalContextProvider>
                         </ThemeContextProvider>
                     </ProjectContextProvider>
                 </TeamsContextProvider>
