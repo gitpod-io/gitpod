@@ -49,9 +49,11 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build --verbose",
-    "test": "craco test",
+    "test": "yarn test:unit && ./scripts/run-integration-tests.sh",
+    "test:unit": "craco test --all --watchAll=false",
+    "test:unit:watch": "craco test --all",
     "test:integration:watch": "cypress open",
-    "test:integration:run": "cypress run",
+    "test:integration:run": "cypress install && cypress run",
     "eject": "react-scripts eject",
     "telepresence": "TELEPRESENCE_USE_DEPLOYMENT=1 leeway run .:telepresence"
   },
