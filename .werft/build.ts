@@ -605,7 +605,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
     }
 
-    installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain);
+    installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, true);
     exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${deploymentConfig.domain}/dashboards`);
     exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${deploymentConfig.domain}/graph`);
 
@@ -769,7 +769,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     observabilityStaticChecks()
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
-        await installMonitoring(namespace, nodeExporterPort, monitoringDomain);
+        await installMonitoring(namespace, nodeExporterPort, monitoringDomain, false);
         exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
         exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
     } else {
@@ -975,7 +975,7 @@ async function installMetaCertificates(namespace: string) {
     await installCertficate(werft, metaInstallCertParams, metaEnv());
 }
 
-async function installMonitoring(namespace, nodeExporterPort, domain) {
+async function installMonitoring(namespace, nodeExporterPort, domain, withVM) {
     const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
     installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "main";
     installMonitoringSatelliteParams.pathToKubeConfig = ""
@@ -983,6 +983,7 @@ async function installMonitoring(namespace, nodeExporterPort, domain) {
     installMonitoringSatelliteParams.clusterName = namespace
     installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
     installMonitoringSatelliteParams.previewDomain = domain
+    installMonitoringSatelliteParams.withVM = withVM
     installMonitoringSatellite(installMonitoringSatelliteParams);
 }
 
