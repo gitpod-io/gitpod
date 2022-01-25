@@ -4,7 +4,7 @@ options:
 
 approvers:
   - engineering-ide
-  - engineering-meta
+  - engineering-webapp
   - engineering-self-hosted
   - engineering-workspace
 
