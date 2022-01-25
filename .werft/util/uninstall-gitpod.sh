@@ -13,7 +13,7 @@ echo "Removing Gitpod in namespace ${NAMESPACE}"
 kubectl get configmap gitpod-app -n "${NAMESPACE}" -o jsonpath='{.data.app\.yaml}' | kubectl delete --ignore-not-found=true -f -
 
 echo "Removing Gitpod storage from ${NAMESPACE}"
-kubectl -n "${NAMESPACE}" delete pvc data-mysql-0
+kubectl -n "${NAMESPACE}" --ignore-not-found=true delete pvc data-mysql-0
 # the installer includes the minio PVC in it's config mpap, this is a "just in case"
 kubectl -n "${NAMESPACE}" delete pvc minio || true
 
