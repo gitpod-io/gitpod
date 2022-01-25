@@ -212,7 +212,6 @@ type WorkspaceRuntime struct {
 type WorkspaceTemplates struct {
 	Default    *corev1.Pod `json:"default"`
 	Prebuild   *corev1.Pod `json:"prebuild"`
-	Ghost      *corev1.Pod `json:"ghost"`
 	ImageBuild *corev1.Pod `json:"imagebuild"`
 	Regular    *corev1.Pod `json:"regular"`
 	Probe      *corev1.Pod `json:"probe"`

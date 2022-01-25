@@ -86,22 +86,6 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			},
 		},
 		{
-			Name: "ghost tpl",
-			Config: &configv1.WorkspaceTemplates{
-				Ghost: &corev1.Pod{},
-			},
-			Expectation: Expectation{
-				TplConfig: wsmancfg.WorkspacePodTemplateConfiguration{
-					DefaultPath: "/workspace-templates/default.yaml",
-					GhostPath:   "/workspace-templates/ghost.yaml",
-				},
-				Data: map[string]bool{
-					"default.yaml": true,
-					"ghost.yaml":   true,
-				},
-			},
-		},
-		{
 			Name: "imgbuild tpl",
 			Config: &configv1.WorkspaceTemplates{
 				ImageBuild: &corev1.Pod{},

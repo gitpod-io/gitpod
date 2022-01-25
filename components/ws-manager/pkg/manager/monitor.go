@@ -795,7 +795,7 @@ func shouldDisableRemoteStorage(pod *corev1.Pod) bool {
 		tpe = api.WorkspaceType_REGULAR
 	}
 	switch tpe {
-	case api.WorkspaceType_GHOST, api.WorkspaceType_IMAGEBUILD:
+	case api.WorkspaceType_IMAGEBUILD:
 		return true
 	default:
 		return false
