@@ -192,17 +192,21 @@ func (gov *Controller) controlCPU() {
 	if prev > 0 {
 		// sample and prev are total CPU time consumption at t-10sec and t.
 		// diff is the total CPU time consumption during the sampling interval.
-		diff := sample - prev
+		diff := (sample - prev) / int64(time.Millisecond)
 
-		gov.cpuExpenditures.Value = diff / int64(time.Millisecond)
+		gov.cpuExpenditures.Value = diff
 		gov.cpuExpenditures = gov.cpuExpenditures.Next()
 		gov.cpuExpenditures.Do(func(s interface{}) {
 			si, ok := s.(int64)
 			if !ok {
 				return
 			}
+
+			gov.log.WithField("budget", bdgtSpent).WithField("inc", si).Info("increasing spent budget")
 			bdgtSpent += si
 		})
+
+		gov.log.WithField("diff", diff).WithField("sample", sample).WithField("prev", prev).WithField("budget", bdgtSpent).Info("updating cpu expenditure")
 	}
 
 	var newLimit int64
