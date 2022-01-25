@@ -11,10 +11,10 @@ import DropDown from "../components/DropDown";
 import { WorkspaceModel } from "./workspace-model";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { getGitpodService } from "../service/service";
-import { StartWorkspaceModal } from "./StartWorkspaceModal";
 import { ItemsList } from "../components/ItemsList";
 import { TeamsContext } from "../teams/teams-context";
 import { useLocation } from "react-router";
+import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
 
 export interface WorkspacesProps {
 }
@@ -31,8 +31,8 @@ export default function () {
     const { teams } = useContext(TeamsContext);
     const [activeWorkspaces, setActiveWorkspaces] = useState<WorkspaceInfo[]>([]);
     const [inactiveWorkspaces, setInactiveWorkspaces] = useState<WorkspaceInfo[]>([]);
-    const [isTemplateModelOpen, setIsTemplateModelOpen] = useState<boolean>(false);
     const [workspaceModel, setWorkspaceModel] = useState<WorkspaceModel>();
+    const { setIsStartWorkspaceModalVisible } = useContext(StartWorkspaceModalContext);
 
     useEffect(() => {
         (async () => {
@@ -40,22 +40,6 @@ export default function () {
             setWorkspaceModel(workspaceModel);
         })();
     }, [teams, location]);
-
-    const showStartWSModal = () => setIsTemplateModelOpen(true);
-    const hideStartWSModal = () => setIsTemplateModelOpen(false);
-
-    useEffect(() => {
-        const onKeyDown = (event: KeyboardEvent) => {
-            if ((event.metaKey || event.ctrlKey) && ['k', 'o', 'p'].includes(event.key)) {
-                event.preventDefault();
-                showStartWSModal();
-            }
-        };
-        window.addEventListener('keydown', onKeyDown);
-        return () => {
-            window.removeEventListener('keydown', onKeyDown);
-        }
-    }, []);
 
     return <>
         <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
@@ -85,7 +69,7 @@ export default function () {
                                 onClick: () => { if (workspaceModel) workspaceModel.limit = 200; }
                             }]} />
                         </div>
-                        <button onClick={showStartWSModal} className="ml-2">New Workspace</button>
+                        <button onClick={() => setIsStartWorkspaceModalVisible(true)} className="ml-2">New Workspace ({StartWorkspaceModalKeyBinding})</button>
                     </div>
                     <ItemsList className="app-container pb-40">
                         <div className="border-t border-gray-200 dark:border-gray-800"></div>
@@ -115,14 +99,13 @@ export default function () {
                                 <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Workspaces</h3>
                                 <div className="text-center pb-6 text-gray-500">Prefix any Git repository URL with {window.location.host}/# or create a new workspace for a recently used project. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
                                 <span>
-                                    <button onClick={showStartWSModal}>New Workspace</button>
+                                    <button onClick={() => setIsStartWorkspaceModalVisible(true)}>New Workspace ({StartWorkspaceModalKeyBinding})</button>
                                 </span>
                             </>
                         </div>
                     </div>
                 </div>
         )}
-        <StartWorkspaceModal onClose={hideStartWSModal} visible={!!isTemplateModelOpen} />
     </>;
 
 }
