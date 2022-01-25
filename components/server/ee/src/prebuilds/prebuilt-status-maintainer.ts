@@ -150,8 +150,12 @@ export class PrebuildStatusMaintainer implements Disposable {
             }
             const workspace = await this.workspaceDB.trace({span}).findById(pws.buildWorkspaceId);
 
-            if (!!updatatable.contextUrl) {
+            if (!!updatatable.contextUrl && !!workspace) {
                 const conclusion = this.getConclusionFromPrebuildState(pws);
+                if (conclusion === 'pending') {
+                    log.info(`Prebuild is still running.`, { prebuiltWorkspaceId: updatatable.prebuiltWorkspaceId });
+                    return;
+                }
 
                 let found = true;
                 try {
@@ -161,8 +165,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                         context: "Gitpod",
                         sha: pws.commit,
                         target_url: updatatable.contextUrl,
-                        // at the moment we run in 'evergreen' mode where we always report success for status checks
-                        description: conclusion == 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
+                        description: conclusion === 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
                         state: (workspace?.config?.github?.prebuilds?.addCheck === 'prevent-merge-on-error' ? conclusion : 'success')
                     });
                 } catch (err) {
