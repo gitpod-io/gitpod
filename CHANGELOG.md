@@ -1,6 +1,11 @@
 # Change Log
 
 ## January 2022
+- Support heartbeats from SSH sessions ([#7760](https://github.com/gitpod-io/gitpod/pull/7760)) - [@csweichel](https://github.com/csweichel), [@iQQBot](https://github.com/iQQBot)
+- Remove ws-scheduler component ([#7430](https://github.com/gitpod-io/gitpod/pull/7430)) - [@aledbf](https://github.com/aledbf)
+- Include in the README where to access the development environment when developing dashboards using gitpod ([#7581](https://github.com/gitpod-io/gitpod/pull/7581)) - [@utam0k](https://github.com/utam0k)
+- [installer] Fix invalid tag name for image build template ([#7752](https://github.com/gitpod-io/gitpod/pull/7752)) - [@aledbf](https://github.com/aledbf)
+- [dashboard] Error messages on workspace creation when the repository is not found, will now also display the name of the repository ([#7302](https://github.com/gitpod-io/gitpod/pull/7302)) - [@trumbitta](https://github.com/trumbitta)
 - Autofix: upgrade-nvm-tools ([#7514](https://github.com/gitpod-io/gitpod/pull/7514)) - [@autofix-bot](https://github.com/autofix-bot)
 - Improved feedback when content initialisation fails ([#7753](https://github.com/gitpod-io/gitpod/pull/7753)) - [@csweichel](https://github.com/csweichel)
 - [installation-telemetry]: log data sent to Segment ([#7730](https://github.com/gitpod-io/gitpod/pull/7730)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
