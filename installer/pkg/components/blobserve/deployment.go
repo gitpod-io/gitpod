@@ -92,7 +92,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}},
 						Containers: []corev1.Container{{
 							Name:            Component,
-							Args:            []string{"run", "-v", "/mnt/config/config.json"},
+							Args:            []string{"run", "/mnt/config/config.json"},
 							Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Blobserve.Version),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Ports: []corev1.ContainerPort{{
