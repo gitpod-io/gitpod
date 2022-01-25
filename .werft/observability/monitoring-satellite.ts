@@ -81,11 +81,11 @@ async function ensureCorrectInstallationOrder(){
 async function checkReadiness() {
     // For some reason prometheus' statefulset always take quite some time to get created
     // Therefore we wait a couple of seconds
-    exec('sleep 30 && kubectl rollout status statefulset prometheus-k8s', {slice: sliceName})
-    exec('kubectl rollout status deployment grafana', {slice: sliceName})
-    exec('kubectl rollout status deployment kube-state-metrics', {slice: sliceName})
-    exec('kubectl rollout status deployment otel-collector', {slice: sliceName})
-    exec('kubectl rollout status daemonset node-exporter', {slice: sliceName})
+    exec('sleep 30 && kubectl rollout status statefulset prometheus-k8s', {slice: sliceName, async: true})
+    exec('kubectl rollout status deployment grafana', {slice: sliceName, async: true})
+    exec('kubectl rollout status deployment kube-state-metrics', {slice: sliceName, async: true})
+    exec('kubectl rollout status deployment otel-collector', {slice: sliceName, async: true})
+    exec('kubectl rollout status daemonset node-exporter', {slice: sliceName, async: true})
 }
 
 async function deployGitpodServiceMonitors() {
