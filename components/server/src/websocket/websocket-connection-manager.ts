@@ -31,7 +31,7 @@ const EVENT_CLIENT_CONTEXT_CREATED = "EVENT_CLIENT_CONTEXT_CREATED";
 const EVENT_CLIENT_CONTEXT_CLOSED = "EVENT_CLIENT_CONTEXT_CLOSED";
 
 /** TODO(gpl) Refine this list */
-export type WebsocketClientType = "browser" | "go-client" | "gitpod-code" | "supervisor" | "local-companion";
+export type WebsocketClientType = "browser" | "go-client" | "gitpod-code" | "supervisor" | "local-companion" | "io.gitpod.jetbrains.remote" | "io.gitpod.jetbrains.gateway";
 namespace WebsocketClientType {
     export function getClientType(req: express.Request): WebsocketClientType | undefined {
         const userAgent = req.headers["user-agent"];
@@ -48,6 +48,8 @@ namespace WebsocketClientType {
                 result = "supervisor";
             } else if (userAgent.startsWith("gitpod/local-companion")) {
                 result = "local-companion";
+            } else if(userAgent === 'io.gitpod.jetbrains.remote' || userAgent === 'io.gitpod.jetbrains.gateway') {
+                result = userAgent;
             }
         }
         if (result === undefined) {
