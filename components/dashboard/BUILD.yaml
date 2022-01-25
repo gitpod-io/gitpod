@@ -14,11 +14,13 @@ packages:
       - craco.config.js
       - postcss.config.js
       - .eslintrc.js
+      - scripts/run-integration-tests.sh
     deps:
       - components/gitpod-protocol:lib
     config:
       commands:
         build: ["yarn", "build"]
+        test: ["yarn", "test"]
       yarnLock: ${coreYarnLockBase}/yarn.lock
       dontTest: true
       packaging: archive
