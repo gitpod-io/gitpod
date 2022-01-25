@@ -1,10 +1,10 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-kind: RoleBinding
+kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: registry-facade
+  name: {{ .Release.Namespace }}-ns-registry-facade
   labels:
     app: {{ template "gitpod.fullname" . }}
     component: registry-facade
@@ -13,6 +13,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: registry-facade
+  namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: {{ .Release.Namespace }}-ns-registry-facade

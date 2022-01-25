@@ -288,6 +288,19 @@ spec:
             path: "/"
           initialDelaySeconds: 5
           periodSeconds: 10
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - kubectl label --overwrite nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}=true
+          preStop:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - kubectl label nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}-
         livenessProbe:
           httpGet:
             port: 9999
