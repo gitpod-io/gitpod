@@ -108,6 +108,13 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                     prebuiltWorkspace: parentPrebuild,
                 }
                 ws = await this.createForPrebuiltWorkspace({span}, user, incrementalPrebuildContext, normalizedContextURL);
+                // Overwrite the config from the parent prebuild:
+                //   `createForPrebuiltWorkspace` 1:1 copies the config from the parent prebuild.
+                //   Above, we've made sure that the parent's prebuild tasks (before/init/prebuild) are still the same as now.
+                //   However, other non-prebuild config items might be outdated (e.g. any command task, VS Code extension, ...)
+                //   To fix this, we overwrite the new prebuild's config with the most-recently fetched config.
+                // See also: https://github.com/gitpod-io/gitpod/issues/7475
+                ws.config = config;
                 break;
             }
 
