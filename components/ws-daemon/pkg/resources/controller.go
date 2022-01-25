@@ -192,7 +192,7 @@ func (gov *Controller) controlCPU() {
 	if prev > 0 {
 		// sample and prev are total CPU time consumption at t-10sec and t.
 		// diff is the total CPU time consumption during the sampling interval.
-		diff := (sample - prev) / int64(time.Millisecond)
+		diff := (sample - prev) / int64(time.Second)
 
 		gov.cpuExpenditures.Value = diff
 		gov.cpuExpenditures = gov.cpuExpenditures.Next()
