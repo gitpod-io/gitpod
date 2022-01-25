@@ -34,7 +34,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Containers: []corev1.Container{{
 			Name:            Component,
-			Args:            []string{"run", "-v", "--config", "/config/config.json"},
+			Args:            []string{"run", "--config", "/config/config.json"},
 			Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManager.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			Resources: corev1.ResourceRequirements{

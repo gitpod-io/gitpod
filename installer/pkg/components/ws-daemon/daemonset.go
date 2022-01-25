@@ -193,7 +193,6 @@ fi
 				Image: common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSDaemon.Version),
 				Args: []string{
 					"run",
-					"-v",
 					"--config",
 					"/config/config.json",
 				},

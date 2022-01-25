@@ -88,7 +88,9 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		limit, err := resource.ParseQuantity(fixedLimit)
 		if err != nil {
 			log.WithError(err).WithField("limitReq", fixedLimit).Warn("workspace requested a fixed CPU limit, but we cannot parse the value")
+			return xerrors.Errorf("cannot parse CPU limit annotation value: %w", err)
 		}
+
 		// we need to scale from milli jiffie to jiffie - see governer code for details
 		scaledLimit = limit.MilliValue() / 10
 		cpuLimiter = FixedLimiter(scaledLimit)

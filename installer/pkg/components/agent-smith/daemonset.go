@@ -53,7 +53,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Name:            Component,
 						Image:           common.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.AgentSmith.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Args:            []string{"run", "-v", "--config", "/config/config.json"},
+						Args:            []string{"run", "--config", "/config/config.json"},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"cpu":    resource.MustParse("100m"),
