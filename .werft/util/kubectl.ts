@@ -165,7 +165,7 @@ export async function deleteNonNamespaceObjects(namespace: string, destname: str
     exec(`/usr/local/bin/helm3 delete gitpod-${destname} || echo gitpod-${destname} was not installed yet`, { ...shellOpts });
 
     let objs = [];
-    ["node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp =>
+    ["node-daemon", "cluster", "workspace", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp =>
         ["ClusterRole", "ClusterRoleBinding", "PodSecurityPolicy"].forEach(kind =>
             exec(`kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`, { ...shellOpts, dontCheckRc: true, async: false })
                 .split("\n")

@@ -503,6 +503,7 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`yq w -i config.yaml containerRegistry.external.certificate.kind secret`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, {slice: installerSlices.INSTALLER_RENDER});
+        // TODO: Get rid of JaegerOperator as part of https://github.com/gitpod-io/ops/issues/875
         exec(`yq w -i config.yaml jaegerOperator.inCluster false`, {slice: installerSlices.INSTALLER_RENDER});
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, {slice: installerSlices.INSTALLER_RENDER});
 
@@ -812,7 +813,6 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
 
         exec(`helm dependencies up`);
         exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
-        exec(`kubectl apply -f ../.werft/jaeger.yaml`);
 
         werft.log('helm', 'installing Sweeper');
         const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
