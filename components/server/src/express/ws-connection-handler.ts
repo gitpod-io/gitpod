@@ -61,17 +61,18 @@ export class WsConnectionHandler implements Disposable {
                             return;
                     }
 
-                    const heartbeat = getHeartbeat(ws);
-                    if (!heartbeat) {
-                        log.warn("websocket without heartbeat!");
-                        return;
+                    const pingSent = getPingSent(ws);
+                    if (pingSent) {
+                        const pongReceived = getPongReceived(ws) || 0;
+                        if (!(pingSent < pongReceived && pongReceived <= pingSent + TIMEOUT)) {
+                            ws.terminate();
+                            return;
+                        }
                     }
+                    // if no ping was sent, yet, this is a fresh ws connection
 
-                    if (heartbeat + TIMEOUT <= Date.now()) {
-                        ws.terminate();
-                        return;
-                    }
-                    ws.ping();
+                    setPingSent(ws, Date.now());
+                    ws.ping();  // if this fails it triggers a ws error, and fails the ws anyway
                 } catch (err) {
                     log.error("websocket ping-pong error", err);
                 }
@@ -86,10 +87,9 @@ export class WsConnectionHandler implements Disposable {
             this.clients.add(ws);
             ws.on('close', () => this.clients.delete(ws));
 
-            // setup heartbeating
-            setHeartbeat(ws);   // first "artificial" heartbeat
+            // setup ping-pong
             ws.on('pong', () => {
-                setHeartbeat(ws, Date.now());
+                setPongReceived(ws, Date.now());
             });
             ws.on('ping', (data: any) => {
                 // answer browser-side ping to conform RFC6455 (https://tools.ietf.org/html/rfc6455#section-5.5.2)
@@ -113,12 +113,20 @@ export class WsConnectionHandler implements Disposable {
     }
 }
 
-function setHeartbeat(ws: websocket, timestamp: number = Date.now()) {
-    (ws as any).lastHeartbeat = timestamp;
+function setPongReceived(ws: websocket, timestamp: number = Date.now()) {
+    (ws as any).pongReceived = timestamp;
 }
 
-function getHeartbeat(ws: websocket): number | undefined {
-    return (ws as any).lastHeartbeat;
+function setPingSent(ws: websocket, timestamp: number = Date.now()) {
+    (ws as any).pingSent = timestamp;
+}
+
+function getPongReceived(ws: websocket): number | undefined {
+    return (ws as any).pongReceived;
+}
+
+function getPingSent(ws: websocket): number | undefined {
+    return (ws as any).pingSent;
 }
 
 function getOrSetClosingTimestamp(ws: websocket, timestamp: number = Date.now()): number {
