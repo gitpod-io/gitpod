@@ -10,6 +10,6 @@ approvers:
 
 labels:
   - "team: IDE"
-  - "team: meta"
+  - "team: webapp"
   - "team: self-hosted"
   - "team: workspace"
