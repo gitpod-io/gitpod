@@ -126,7 +126,7 @@ export default function Preferences() {
                 {desktopIdeOptions && <>
                     <h3 className="mt-12">Desktop Editor <PillLabel type="warn" className="font-semibold mt-2 py-0.5 px-2 self-center">Beta</PillLabel></h3>
                     <p className="text-base text-gray-500 dark:text-gray-400">Optionally, choose the default desktop editor for opening workspaces.</p>
-                    <div className="my-4 gap-4 flex flex-wrap">
+                    <div className="my-4 gap-4 flex flex-wrap max-w-2xl">
                         {
                             desktopIdeOptions.map(([id, option]) => {
                                 const selected = defaultDesktopIde === id;
