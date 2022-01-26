@@ -43,6 +43,7 @@ var MetaObjects = common.CompositeRenderFunc(
 	openvsxproxy.Objects,
 	rabbitmq.Objects,
 	server.Objects,
+	wsdaemon.Objects,
 	wsmanager.Objects,
 	wsmanagerbridge.Objects,
 )
