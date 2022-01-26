@@ -557,8 +557,17 @@ export function GitIntegrationModal(props: ({
 
     const updateHostValue = (host: string) => {
         if (mode === "new") {
-            setHost(host);
-            setRedirectURL(callbackUrl(host));
+
+            let verifiedHost = host;
+
+            if (host.includes("https://")) {
+                verifiedHost = host.replace("https://","");
+            } else if (host.includes("http://")) {
+                verifiedHost = host.replace("http://","");
+            }
+
+            setHost(verifiedHost);
+            setRedirectURL(callbackUrl(verifiedHost));
             setErrorMessage(undefined);
         }
     }
