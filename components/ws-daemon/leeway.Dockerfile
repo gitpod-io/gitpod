@@ -4,9 +4,19 @@
 
 FROM alpine:3.15 as dl
 WORKDIR /dl
-RUN apk add --no-cache curl \
-  && curl -OL https://github.com/opencontainers/runc/releases/download/v1.0.1/runc.amd64 \
-  && chmod +x runc.amd64
+RUN arch="$(uname -m)"; \
+	case "$arch" in \
+		'x86_64') \
+			export ARCH='x86_64' \
+			;; \
+		'aarch64') \
+			export ARCH='arm64' \
+			;; \
+		*) echo >&2 "error: unsupported architecture '$arch'"; exit 1 ;; \
+	esac; \
+  apk add --no-cache curl \
+  && curl -o runc -L https://github.com/opencontainers/runc/releases/download/v1.0.1/runc.${ARCH} \
+  && chmod +x runc
 
 FROM alpine:3.15
 
@@ -18,7 +28,7 @@ RUN apk add --no-cache git bash openssh-client lz4 e2fsprogs coreutils tar strac
 
 RUN apk add --no-cache kubectl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 
-COPY --from=dl /dl/runc.amd64 /usr/bin/runc
+COPY --from=dl /dl/runc /usr/bin/runc
 
 # Add gitpod user for operations (e.g. checkout because of the post-checkout hook!)
 RUN addgroup -g 33333 gitpod \
