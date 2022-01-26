@@ -5,11 +5,10 @@
 package workspace
 
 import (
-	"fmt"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	agentsmith "github.com/gitpod-io/gitpod/installer/pkg/components/agent-smith"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
-	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/webapp/proxy"
+	agentsmith "github.com/gitpod-io/gitpod/installer/pkg/components/workspace/agent-smith"
+	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ws-daemon"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ import (
 )
 
 func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(component)
 
 	podSelectorLabels := labels
 	podSelectorLabels["gitpod.io/networkpolicy"] = "default"
@@ -25,7 +24,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&networkingv1.NetworkPolicy{
 		TypeMeta: common.TypeMetaNetworkPolicy,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-default", Component),
+			Name:      component + "-default",
 			Namespace: ctx.Namespace,
 			Labels:    labels,
 		},

@@ -13,24 +13,24 @@ import (
 )
 
 func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
-	labels := common.DefaultLabels(Component)
+	labels := common.DefaultLabels(component)
 
 	return []runtime.Object{
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      Component,
+				Name:      component,
 				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
 			RoleRef: rbacv1.RoleRef{
 				Kind:     "Role",
-				Name:     Component,
+				Name:     component,
 				APIGroup: "rbac.authorization.k8s.io",
 			},
 			Subjects: []rbacv1.Subject{{
 				Kind: "ServiceAccount",
-				Name: Component,
+				Name: component,
 			}},
 		},
 	}, nil

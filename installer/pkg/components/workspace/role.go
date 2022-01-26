@@ -6,6 +6,7 @@ package workspace
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -17,9 +18,9 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&rbacv1.Role{
 		TypeMeta: common.TypeMetaRole,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
+			Name:      component,
 			Namespace: ctx.Namespace,
-			Labels:    common.DefaultLabels(Component),
+			Labels:    common.DefaultLabels(component),
 		},
 		Rules: []rbacv1.PolicyRule{
 			{

@@ -12,6 +12,8 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/webapp"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/spf13/cobra"
@@ -105,11 +107,11 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 		renderable = components.FullObjects
 		helmCharts = components.FullHelmDependencies
 	case configv1.InstallationMeta:
-		renderable = components.MetaObjects
-		helmCharts = components.MetaHelmDependencies
+		renderable = webapp.Objects
+		helmCharts = webapp.HelmDependencies
 	case configv1.InstallationWorkspace:
-		renderable = components.WorkspaceObjects
-		helmCharts = components.WorkspaceHelmDependencies
+		renderable = workspace.Objects
+		helmCharts = workspace.HelmDependencies
 	default:
 		return nil, fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
 	}
