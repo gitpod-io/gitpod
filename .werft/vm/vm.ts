@@ -170,7 +170,7 @@ export function copyk3sKubeconfig(options: { name: string, path: string, timeout
  */
 export function startSSHProxy(options: { name: string, slice: string }) {
     const namespace = `preview-${options.name}`
-    exec(`sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:22`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
+    exec(`sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:2200`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
 }
 
 /**
