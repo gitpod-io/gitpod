@@ -6,6 +6,7 @@ package common
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	"helm.sh/helm/v3/pkg/cli/values"
@@ -63,6 +64,21 @@ type RenderContext struct {
 	Config          config.Config
 	Namespace       string
 	Values          GeneratedValues
+
+	experimentalConfig *experimental.Config
+}
+
+// WithExperimental provides access to the unsupported config. This will only do something
+// if the unsupported config is present.
+//
+// This is intentionally a function rather than an exported field to keep unsupported
+// config clearly marked as such, and to make sure we can easily remove/disable it.
+func (r *RenderContext) WithExperimental(mod func(ucfg *experimental.Config) error) error {
+	if r.experimentalConfig == nil {
+		return nil
+	}
+
+	return mod(r.experimentalConfig)
 }
 
 // generateValues generates the random values used throughout the context
@@ -103,10 +119,14 @@ func (r *RenderContext) generateValues() error {
 
 // NewRenderContext constructor function to create a new RenderContext with the values generated
 func NewRenderContext(cfg config.Config, versionManifest versions.Manifest, namespace string) (*RenderContext, error) {
+	us := cfg.Experimental
+	cfg.Experimental = nil
+
 	ctx := &RenderContext{
-		Config:          cfg,
-		VersionManifest: versionManifest,
-		Namespace:       namespace,
+		Config:             cfg,
+		VersionManifest:    versionManifest,
+		Namespace:          namespace,
+		experimentalConfig: us,
 	}
 
 	err := ctx.generateValues()

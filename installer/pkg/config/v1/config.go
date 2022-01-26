@@ -6,6 +6,7 @@ package config
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 
 	corev1 "k8s.io/api/core/v1"
@@ -86,6 +87,8 @@ type Config struct {
 	License       *ObjectRef    `json:"license,omitempty"`
 
 	SSHGatewayHostKey *ObjectRef `json:"sshGatewayHostKey,omitempty"`
+
+	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
 
 type Metadata struct {

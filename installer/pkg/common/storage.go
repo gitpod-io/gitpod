@@ -7,9 +7,11 @@ package common
 import (
 	"fmt"
 
-	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
-	"k8s.io/utils/pointer"
 	"path/filepath"
+
+	storageconfig "github.com/gitpod-io/gitpod/content-service/api/config"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
+	"k8s.io/utils/pointer"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -86,6 +88,13 @@ func StorageConfig(context *RenderContext) storageconfig.StorageConfig {
 	}
 	// 5 GiB
 	res.BlobQuota = 5 * 1024 * 1024 * 1024
+
+	_ = context.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace != nil {
+			res.Stage = storageconfig.Stage(ucfg.Workspace.Stage)
+		}
+		return nil
+	})
 
 	return *res
 }
