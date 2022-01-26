@@ -14,8 +14,8 @@ The best way to get started with Gitpod
 
 # Requirements
 
-- A machine running Linux/MacOS and Docker
-    - Windows is not currently supported, but will be in future
+- A machine running Linux
+    - MacOS and Windows are not currently supported, but may be in future
 - [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) installed
 - A [Kubernetes cluster configured](https://www.gitpod.io/docs/self-hosted/latest/installation)
 - A [TLS certificate](#tls-certificates)
@@ -31,35 +31,53 @@ The process to install Gitpod is:
 
 # Quickstart
 
-## Get your binary
+## Download the Installer on Linux
 
-> There is work to be done on improving the distribution of the binary
-> [#6766](https://github.com/gitpod-io/gitpod/issues/6766).
+Releases can be downloaded from [GitHub Releases](https://github.com/gitpod-io/gitpod/releases/)
+Select your desired binary, download and install
 
-From [werft](https://werft.gitpod-dev.com), search for the tag you want, such as
-`main.1919` - set this value to `$TAG`
-
-### Option 1 - download the pre-build Installer
+1. Download the latest release with the command:
 
 ```shell
-docker create -ti --name installer eu.gcr.io/gitpod-core-dev/build/installer:$TAG
-docker cp installer:/app/installer ./installer
-docker rm -f installer
+curl -fsSLO https://github.com/gitpod-io/gitpod/releases/download/2022.01/gitpod-installer-linux-amd64
 ```
 
-### Option 2 - use `go run`
+2. Validate the binary (optional)
+
+Download the checksum file:
 
 ```shell
-# Get the versions
-docker run -it --rm eu.gcr.io/gitpod-core-dev/build/versions:$TAG cat /versions.yaml > versions.yaml
+curl -fsSLO https://github.com/gitpod-io/gitpod/releases/download/2022.01/gitpod-installer-linux-amd64.sha256
 ```
 
-For every command below, replace `installer` with `go run . --debug-version-file ./versions.yaml`.
+Validate the binary against the checksum file:
+
+```shell
+echo "$(<gitpod-installer-linux-amd64.sha256)" | sha256sum --check
+```
+
+If valid, the output is:
+
+```shell:
+gitpod-installer-linux-amd64: OK
+```
+
+3. Install the binary
+
+```shell
+sudo install -o root -g root gitpod-installer-linux-amd64 /usr/local/bin/gitpod-installer
+```
+
+4. Test to ensure the version you installed it up-to-date:
+
+```shell
+gitpod-installer version
+```
 
 ## Generate the base config
 
 ```shell
-./installer init > gitpod.config.yaml
+gitpod-installer init > gitpod.config.yaml
 ```
 
 ## Customise your config
@@ -74,7 +92,7 @@ own.
 
 ```shell
 # Checks the validity of the configuration YAML
-./installer validate config --config gitpod.config.yaml
+gitpod-installer validate config --config gitpod.config.yaml
 ```
 
 Any errors here must be fixed before deploying. See [Config](#config) for
@@ -82,7 +100,7 @@ more details.
 
 ```shell
 # Checks that your cluster is ready to install Gitpod
-./installer validate cluster --kubeconfig ~/.kube/config --config gitpod.config.yaml
+gitpod-installer validate cluster --kubeconfig ~/.kube/config --config gitpod.config.yaml
 ```
 
 Any errors here must be fixed before deploying. See [Cluster Dependencies](#cluster-dependencies)
@@ -91,7 +109,7 @@ for more details.
 ## Render the YAML
 
 ```shell
-./installer render --config gitpod.config.yaml > gitpod.yaml
+gitpod-installer render --config gitpod.config.yaml > gitpod.yaml
 ```
 
 ## Deploy
@@ -492,14 +510,14 @@ To install to a different namespace, pass a `namespace` flag to the `render`
 command.
 
 ```shell
-./installer render --config gitpod.config.yaml --namespace gitpod > gitpod.yaml
+gitpod-installer render --config gitpod.config.yaml --namespace gitpod > gitpod.yaml
 ```
 
 The `validate cluster` command also accepts a namespace, allowing you to run
 the checks on that namespace.
 
 ```shell
-./installer validate cluster --kubeconfig ~/.kube/config --config gitpod.config.yaml --namespace gitpod
+gitpod-installer validate cluster --kubeconfig ~/.kube/config --config gitpod.config.yaml --namespace gitpod
 ```
 
 **IMPORTANT**: this does not create the namespace, so you will need to create
