@@ -22,6 +22,7 @@ var renderOpts struct {
 	ConfigFN               string
 	Namespace              string
 	ValidateConfigDisabled bool
+	UseExperimentalConfig  bool
 }
 
 // renderCmd represents the render command
@@ -40,6 +41,15 @@ A config file is required which can be generated with the init command.`,
 		_, cfgVersion, cfg, err := loadConfig(renderOpts.ConfigFN)
 		if err != nil {
 			return err
+		}
+
+		if cfg.Experimental != nil {
+			if renderOpts.UseExperimentalConfig {
+				fmt.Fprintf(os.Stderr, "rendering using experimental config - here be dragons\n")
+			} else {
+				fmt.Fprintf(os.Stderr, "config contains experimental options - ignoring them\n")
+				cfg.Experimental = nil
+			}
 		}
 
 		yaml, err := renderKubernetesObjects(cfgVersion, cfg)
@@ -168,4 +178,5 @@ func init() {
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
+	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "danger-use-unsupported-config", false, "enable use of unsupported config")
 }
