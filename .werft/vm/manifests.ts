@@ -43,7 +43,7 @@ spec:
     spec:
       readinessProbe:
         tcpSocket:
-          port: 22
+          port: 2200
         initialDelaySeconds: 120
         periodSeconds: 20
         timeoutSeconds: 10
@@ -106,10 +106,14 @@ metadata:
   namespace: ${namespace}
 spec:
   ports:
-    - name: ssh
+    - name: ssh-gateway
       protocol: TCP
       port: 22
       targetPort: 22
+    - name: vm-ssh
+      protocol: TCP
+      port: 2200
+      targetPort: 2200
     - name: http
       protocol: TCP
       port: 80
@@ -146,6 +150,10 @@ chpasswd:
     ubuntu:ubuntu
   expire: False
 write_files:
+  - path: /etc/ssh/sshd_config.d/101-change-ssh-port.conf
+    permission: 0644
+    owner: root
+    content: 'Port 2200'
   - path: /usr/local/bin/bootstrap-k3s.sh
     permissions: 0744
     owner: root
