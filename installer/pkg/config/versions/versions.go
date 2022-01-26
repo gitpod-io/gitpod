@@ -62,3 +62,9 @@ type Components struct {
 	WSManagerBridge Versioned `json:"wsManagerBridge"`
 	WSProxy         Versioned `json:"wsProxy"`
 }
+
+// var embedded embed.FS
+
+func Embedded() (*Manifest, error) {
+	return loadEmbedded()
+}

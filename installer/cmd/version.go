@@ -39,6 +39,14 @@ var versionCmd = &cobra.Command{
 }
 
 func getVersionManifest() (*versions.Manifest, error) {
+	embeddedManifest, err := versions.Embedded()
+	if err != nil {
+		return nil, err
+	}
+	if embeddedManifest != nil {
+		return embeddedManifest, nil
+	}
+
 	var data []byte
 	if rootOpts.VersionMF != "" {
 		var err error
@@ -68,7 +76,7 @@ func getVersionManifest() (*versions.Manifest, error) {
 	}
 
 	var res versions.Manifest
-	err := yaml.Unmarshal(data, &res)
+	err = yaml.Unmarshal(data, &res)
 	if err != nil {
 		return nil, err
 	}
