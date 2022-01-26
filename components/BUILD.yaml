@@ -179,8 +179,8 @@ scripts:
     deps:
       - components/service-waiter:app
     script: |
-      export DB_USERNAME=root
-      export DB_PASSWORD=test
+      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
+      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
       kubectl port-forward statefulset/mysql 3306 &
       PID=$!
       service-waiter database -t 10s
@@ -211,8 +211,8 @@ scripts:
     deps:
       - components/service-waiter:app
     script: |
-      export DB_USERNAME=root
-      export DB_PASSWORD=test
+      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
+      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
       kubectl port-forward statefulset/mysql 3306 &
       PID=$!
       service-waiter database -t 10s
@@ -228,7 +228,7 @@ scripts:
       printf "\nCurrent namespace:         $(kubens -c)\n"
 
       printf "\nAvailable users (max 10):\n$result\n\n"
-      printf "Enter user to unblock (empty to abort): "
+      printf "Enter user to make admin (empty to abort): "
       read user
       if [[ -z "$user" ]]; then
         echo "No input."
