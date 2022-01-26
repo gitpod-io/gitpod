@@ -1,6 +1,9 @@
 # Change Log
 
 ## January 2022
+- [installer] Do not start binaries in verbose mode ([#7774](https://github.com/gitpod-io/gitpod/pull/7774)) - [@aledbf](https://github.com/aledbf)
+- [installer] Add missing kube-rbac-proxy container in ws-manager deployment ([#7769](https://github.com/gitpod-io/gitpod/pull/7769)) - [@aledbf](https://github.com/aledbf)
+- [server]: Create installation admin controller ([#7591](https://github.com/gitpod-io/gitpod/pull/7591)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Support heartbeats from SSH sessions ([#7760](https://github.com/gitpod-io/gitpod/pull/7760)) - [@csweichel](https://github.com/csweichel), [@iQQBot](https://github.com/iQQBot)
 - Remove ws-scheduler component ([#7430](https://github.com/gitpod-io/gitpod/pull/7430)) - [@aledbf](https://github.com/aledbf)
 - Include in the README where to access the development environment when developing dashboards using gitpod ([#7581](https://github.com/gitpod-io/gitpod/pull/7581)) - [@utam0k](https://github.com/utam0k)
