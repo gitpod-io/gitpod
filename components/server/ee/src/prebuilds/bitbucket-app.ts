@@ -39,7 +39,9 @@ export class BitbucketApp {
                         return;
                     }
                     const data = toData(req.body);
-                    await this.handlePushHook({ span }, data, user);
+                    if (data) {
+                        await this.handlePushHook({ span }, data, user);
+                    }
                 } else {
                     console.log(`Ignoring unsupported bitbucket event: ${req.header('X-Event-Key')}`);
                 }
@@ -91,7 +93,7 @@ export class BitbucketApp {
 
             console.log('Starting prebuild.', { contextURL })
             // todo@alex: add branch and project args
-            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: data.gitCloneUrl, commit: data.commitHash});
+            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: data.gitCloneUrl, commit: data.commitHash });
             return ws;
         } finally {
             span.finish();
@@ -108,14 +110,19 @@ export class BitbucketApp {
     }
 }
 
-function toData(body: BitbucketPushHook): ParsedRequestData {
+function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
+    const branchName = body.push.changes[0]?.new?.name;
+    const commitHash = body.push.changes[0]?.new?.target?.hash;
+    if (!branchName || !commitHash){
+        return undefined;
+    }
     const result = {
-        branchName: body.push.changes[0].new.name,
-        commitHash: body.push.changes[0].new.target.hash,
+        branchName,
+        commitHash,
         repoUrl: body.repository.links.html.href,
         gitCloneUrl: body.repository.links.html.href + '.git'
     }
-    if (!result.branchName || !result.commitHash || !result.repoUrl) {
+    if (!result.commitHash || !result.repoUrl) {
         console.error('unexpected request body.', body);
         throw new Error('Unexpected request body.');
     }
@@ -140,6 +147,7 @@ interface BitbucketPushHook {
                     hash: string; // e.g. "1b283e4d7a849a89151548398cc836d15149179c"
                 }
             }
+            | null // in case where a branch is deleted
         }[]
     };
     actor: {
