@@ -1,6 +1,9 @@
 # Change Log
 
 ## January 2022
+- [Dashboard]: add send telemetry to admin settings ([#7732](https://github.com/gitpod-io/gitpod/pull/7732)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [installer]: add namespace to validate cluster command ([#7801](https://github.com/gitpod-io/gitpod/pull/7801)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Fix "token not found" issues. ([#7837](https://github.com/gitpod-io/gitpod/pull/7837)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [installer] Do not start binaries in verbose mode ([#7774](https://github.com/gitpod-io/gitpod/pull/7774)) - [@aledbf](https://github.com/aledbf)
 - [installer] Add missing kube-rbac-proxy container in ws-manager deployment ([#7769](https://github.com/gitpod-io/gitpod/pull/7769)) - [@aledbf](https://github.com/aledbf)
 - [server]: Create installation admin controller ([#7591](https://github.com/gitpod-io/gitpod/pull/7591)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
