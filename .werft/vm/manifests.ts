@@ -126,6 +126,14 @@ spec:
       protocol: TCP
       port: 6443
       targetPort: 6443
+    - name: prometheus
+      protocol: TCP
+      port: 9090
+      targetPort: 32001
+    - name: grafana
+      protocol: TCP
+      port: 3000
+      targetPort: 32000
   selector:
     harvesterhci.io/vmName: ${vmName}
   type: ClusterIP
