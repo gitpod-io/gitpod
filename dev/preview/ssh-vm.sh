@@ -13,10 +13,12 @@ PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
 PORT=8022
 THIS_DIR="$(dirname "$0")"
 USER="ubuntu"
+COMMAND=""
 
-while getopts n:p:u: flag
+while getopts c:n:p:u: flag
 do
     case "${flag}" in
+        c) COMMAND="${OPTARG}";;
         n) NAMESPACE="${OPTARG}";;
         p) PORT="${OPTARG}";;
         u) USER="${OPTARG}";;
@@ -52,4 +54,5 @@ ssh "$USER"@127.0.0.1 \
     -o StrictHostKeyChecking=no \
     -o "ProxyCommand=$THIS_DIR/ssh-proxy-command.sh -p $PORT -n $NAMESPACE" \
     -i "$HOME/.ssh/vm_id_rsa" \
-    -p "$PORT"
+    -p "$PORT" \
+    "$COMMAND"
