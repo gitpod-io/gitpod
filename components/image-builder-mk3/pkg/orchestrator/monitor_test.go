@@ -18,10 +18,12 @@ import (
 
 func TestExtractBuildResponse(t *testing.T) {
 	const (
-		buildID         = "build-id"
-		ref             = "ref"
-		baseref         = "base-ref"
-		startedAt int64 = 12345
+		buildID          = "build-id"
+		ref              = "ref"
+		baseref          = "base-ref"
+		startedAt  int64 = 12345
+		url              = "https://some-url.some-domain.com"
+		ownerToken       = "super-secret-owner-token"
 	)
 	tests := []struct {
 		Name        string
@@ -93,6 +95,12 @@ func TestExtractBuildResponse(t *testing.T) {
 				},
 				Conditions: &wsmanapi.WorkspaceConditions{},
 				Phase:      wsmanapi.WorkspacePhase_RUNNING,
+				Auth: &wsmanapi.WorkspaceAuthentication{
+					OwnerToken: ownerToken,
+				},
+				Spec: &wsmanapi.WorkspaceSpec{
+					Url: url,
+				},
 			}
 			test.Mod(status)
 			act := extractBuildResponse(status)
@@ -107,11 +115,17 @@ func TestExtractBuildResponse(t *testing.T) {
 					BaseRef:   baseref,
 					Status:    api.BuildStatus_running,
 					StartedAt: startedAt,
+					LogInfo: &api.LogInfo{
+						Url: url,
+						Headers: map[string]string{
+							"x-gitpod-owner-token": status.Auth.OwnerToken,
+						},
+					},
 				},
 			}
 			test.Expectation(exp)
 
-			if diff := cmp.Diff(exp, act, cmpopts.IgnoreUnexported(api.BuildResponse{}, api.BuildInfo{})); diff != "" {
+			if diff := cmp.Diff(exp, act, cmpopts.IgnoreUnexported(api.BuildResponse{}, api.BuildInfo{}, api.LogInfo{})); diff != "" {
 				t.Errorf("extractBuildResponse() mismatch (-want +got):\n%s", diff)
 			}
 		})

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -456,6 +456,11 @@ export class BuildInfo extends jspb.Message {
     getBuildId(): string;
     setBuildId(value: string): BuildInfo;
 
+    hasLogInfo(): boolean;
+    clearLogInfo(): void;
+    getLogInfo(): LogInfo | undefined;
+    setLogInfo(value?: LogInfo): BuildInfo;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildInfo.AsObject;
     static toObject(includeInstance: boolean, msg: BuildInfo): BuildInfo.AsObject;
@@ -473,6 +478,32 @@ export namespace BuildInfo {
         status: BuildStatus,
         startedAt: number,
         buildId: string,
+        logInfo?: LogInfo.AsObject,
+    }
+}
+
+export class LogInfo extends jspb.Message {
+    getUrl(): string;
+    setUrl(value: string): LogInfo;
+
+    getHeadersMap(): jspb.Map<string, string>;
+    clearHeadersMap(): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): LogInfo.AsObject;
+    static toObject(includeInstance: boolean, msg: LogInfo): LogInfo.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: LogInfo, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): LogInfo;
+    static deserializeBinaryFromReader(message: LogInfo, reader: jspb.BinaryReader): LogInfo;
+}
+
+export namespace LogInfo {
+    export type AsObject = {
+        url: string,
+
+        headersMap: Array<[string, string]>,
     }
 }
 
