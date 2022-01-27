@@ -61,5 +61,4 @@ type Components struct {
 	WSManager       Versioned `json:"wsManager"`
 	WSManagerBridge Versioned `json:"wsManagerBridge"`
 	WSProxy         Versioned `json:"wsProxy"`
-	WSScheduler     Versioned `json:"wsScheduler"`
 }
