@@ -66,7 +66,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}},
 						Env: common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-							common.TracingEnv(&ctx.Config),
+							common.TracingEnv(ctx),
 							[]corev1.EnvVar{{
 								Name: "NODENAME",
 								ValueFrom: &corev1.EnvVarSource{

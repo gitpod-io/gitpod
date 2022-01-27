@@ -52,7 +52,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Env: common.MergeEnv(
 				common.DefaultEnv(&ctx.Config),
-				common.TracingEnv(&ctx.Config),
+				common.TracingEnv(ctx),
 				[]corev1.EnvVar{{Name: "GRPC_GO_RETRY", Value: "on"}},
 			),
 			VolumeMounts: []corev1.VolumeMount{{

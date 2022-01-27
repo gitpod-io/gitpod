@@ -18,10 +18,26 @@ type Config struct {
 }
 
 type WorkspaceConfig struct {
-	Stage string `json:"stage"`
+	Tracing *Tracing `json:"tracing"`
+	Stage   string   `json:"stage"`
 }
 
 type WebAppConfig struct {
 }
 
 type IDEConfig struct{}
+
+type TracingSampleType string
+
+type Tracing struct {
+	SamplerType  *TracingSampleType `json:"samplerType,omitempty" validate:"omitempty,tracing_sampler_type"`
+	SamplerParam *float64           `json:"samplerParam,omitEmpty" validate:"required_with=SamplerType"`
+}
+
+// Values taken from https://github.com/jaegertracing/jaeger-client-go/blob/967f9c36f0fa5a2617c9a0993b03f9a3279fadc8/config/config.go#L71
+const (
+	TracingSampleTypeConst         TracingSampleType = "const"
+	TracingSampleTypeProbabilistic TracingSampleType = "probabilistic"
+	TracingSampleTypeRateLimiting  TracingSampleType = "rateLimiting"
+	TracingSampleTypeRemote        TracingSampleType = "remote"
+)
