@@ -770,8 +770,6 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         await installMonitoring(namespace, nodeExporterPort, monitoringDomain, false);
-        exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
-        exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
     } else {
         exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
         exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
