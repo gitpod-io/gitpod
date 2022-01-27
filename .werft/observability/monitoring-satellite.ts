@@ -14,6 +14,7 @@ import { validateIPaddress } from '../util/util';
     nodeExporterPort: number
     branch: string
     previewDomain: string
+    withVM: boolean
 }
 
 const sliceName = 'observability';
@@ -52,11 +53,7 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
             prometheusDNS: 'prometheus-${params.previewDomain}',
             grafanaDNS: 'grafana-${params.previewDomain}',
         },
-        nodeAffinity: {
-            nodeSelector: {
-                'gitpod.io/workload_services': 'true',
-            },
-        },
+        ${params.withVM ? '' : "nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"  }
     }" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
     find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
@@ -64,28 +61,28 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
     werft.log(sliceName, 'rendering YAML files')
     exec(jsonnetRenderCmd, {silent: true})
     // The correct kubectl context should already be configured prior to this step
-    ensureCorrectInstallationOrder()
+    ensureCorrectInstallationOrder(params.satelliteNamespace)
     ensureIngressesReadiness(params)
 }
 
-async function ensureCorrectInstallationOrder(){
+async function ensureCorrectInstallationOrder(namespace: string){
     const werft = getGlobalWerftInstance()
 
     werft.log(sliceName, 'installing monitoring-satellite')
     exec('cd observability && hack/deploy-satellite.sh', {slice: sliceName})
 
     deployGitpodServiceMonitors()
-    checkReadiness()
+    checkReadiness(namespace)
 }
 
-async function checkReadiness() {
+async function checkReadiness(namespace: string) {
     // For some reason prometheus' statefulset always take quite some time to get created
     // Therefore we wait a couple of seconds
-    exec('sleep 30 && kubectl rollout status statefulset prometheus-k8s', {slice: sliceName})
-    exec('kubectl rollout status deployment grafana', {slice: sliceName})
-    exec('kubectl rollout status deployment kube-state-metrics', {slice: sliceName})
-    exec('kubectl rollout status deployment otel-collector', {slice: sliceName})
-    exec('kubectl rollout status daemonset node-exporter', {slice: sliceName})
+    exec(`sleep 30 && kubectl rollout status -n ${namespace} statefulset prometheus-k8s`, {slice: sliceName, async: true})
+    exec(`kubectl rollout status -n ${namespace} deployment grafana`, {slice: sliceName, async: true})
+    exec(`kubectl rollout status -n ${namespace} deployment kube-state-metrics`, {slice: sliceName, async: true})
+    exec(`kubectl rollout status -n ${namespace} deployment otel-collector`, {slice: sliceName, async: true})
+    exec(`kubectl rollout status -n ${namespace} daemonset node-exporter`, {slice: sliceName, async: true})
 }
 
 async function deployGitpodServiceMonitors() {

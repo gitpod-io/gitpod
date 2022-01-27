@@ -348,6 +348,7 @@ export async function build(context, version) {
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
 
         issueMetaCerts(PROXY_SECRET_NAME, "default", domain, withVM)
+        installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, true);
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
@@ -768,7 +769,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     observabilityStaticChecks()
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
-        await installMonitoring();
+        await installMonitoring(namespace, nodeExporterPort, monitoringDomain, false);
         exec(`werft log result -d "Monitoring Satellite - Grafana" -c github-check-Grafana url https://grafana-${monitoringDomain}/dashboards`);
         exec(`werft log result -d "Monitoring Satellite - Prometheus" -c github-check-Prometheus url https://prometheus-${monitoringDomain}/graph`);
     } else {
@@ -906,17 +907,6 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
             werft.fail('predeploy cleanup', err);
         }
     }
-
-    async function installMonitoring() {
-        const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
-        installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "main";
-        installMonitoringSatelliteParams.pathToKubeConfig = ""
-        installMonitoringSatelliteParams.satelliteNamespace = namespace
-        installMonitoringSatelliteParams.clusterName = namespace
-        installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
-        installMonitoringSatelliteParams.previewDomain = monitoringDomain
-        await installMonitoringSatellite(installMonitoringSatelliteParams);
-    }
 }
 
 async function addDNSRecord(namespace: string, domain: string, isLoadbalancer: boolean) {
@@ -982,6 +972,18 @@ async function installMetaCertificates(namespace: string) {
     metaInstallCertParams.certSecretName = PROXY_SECRET_NAME
     metaInstallCertParams.destinationNamespace = namespace
     await installCertficate(werft, metaInstallCertParams, metaEnv());
+}
+
+async function installMonitoring(namespace, nodeExporterPort, domain, withVM) {
+    const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
+    installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "main";
+    installMonitoringSatelliteParams.pathToKubeConfig = ""
+    installMonitoringSatelliteParams.satelliteNamespace = namespace
+    installMonitoringSatelliteParams.clusterName = namespace
+    installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
+    installMonitoringSatelliteParams.previewDomain = domain
+    installMonitoringSatelliteParams.withVM = withVM
+    installMonitoringSatellite(installMonitoringSatelliteParams);
 }
 
 // returns the static IP address
