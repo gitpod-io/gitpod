@@ -60,6 +60,10 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
 
     werft.log(sliceName, 'rendering YAML files')
     exec(jsonnetRenderCmd, {silent: true})
+    if(params.withVM) {
+        postProcessManifests()
+    }
+
     // The correct kubectl context should already be configured prior to this step
     ensureCorrectInstallationOrder(params.satelliteNamespace)
     ensureIngressesReadiness(params)
@@ -181,4 +185,17 @@ function ingressReady(namespace: string, name: string): boolean {
     }
     werft.log(sliceName, `${name} ingress not ready.`)
     return false
+}
+
+function postProcessManifests() {
+    const werft = getGlobalWerftInstance()
+
+    // We're hardcoding nodeports, so we can use them in .werft/vm/manifests.ts
+    // We'll be able to access Prometheus and Grafana's UI by port-forwarding the harvester proxy into the nodePort
+    werft.log(sliceName, 'Post-processing manifests so it works on Harvester')
+    exec(`yq w -i observability/monitoring-satellite/manifests/grafana/service.yaml spec.type 'NodePort'`)
+    exec(`yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.type 'NodePort'`)
+
+    exec(`yq w -i observability/monitoring-satellite/manifests/prometheus/service.yaml spec.ports[0].nodePort 32001`)
+    exec(`yq w -i observability/monitoring-satellite/manifests/grafana/service.yaml spec.ports[0].nodePort 32000`)
 }
