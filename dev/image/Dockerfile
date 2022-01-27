@@ -5,7 +5,7 @@
 # if you want to run this image in a workspace, follow these steps:
 # gcloud auth configure-docker europe-docker.pkg.dev
 # gcloud auth login --no-launch-browser
-FROM europe-docker.pkg.dev/gitpod-artifacts/docker-dev/workspace-base-images:full
+FROM europe-docker.pkg.dev/gitpod-artifacts/docker-dev/workspace-full:2022-01-27-08-27-20
 
 ENV TRIGGER_REBUILD 16
 
