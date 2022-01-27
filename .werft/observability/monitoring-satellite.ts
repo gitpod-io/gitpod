@@ -2,7 +2,6 @@ import { exec } from '../util/shell';
 import { getGlobalWerftInstance } from '../util/werft';
 import * as shell from 'shelljs';
 import * as fs from 'fs';
-import { validateIPaddress } from '../util/util';
 
 /**
  * Monitoring satellite deployment bits
@@ -50,8 +49,6 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
         previewEnvironment: {
             domain: '${params.previewDomain}',
             nodeExporterPort: ${params.nodeExporterPort},
-            prometheusDNS: 'prometheus-${params.previewDomain}',
-            grafanaDNS: 'grafana-${params.previewDomain}',
         },
         ${params.withVM ? '' : "nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"  }
     }" \
@@ -66,7 +63,6 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
 
     // The correct kubectl context should already be configured prior to this step
     ensureCorrectInstallationOrder(params.satelliteNamespace)
-    ensureIngressesReadiness(params)
 }
 
 async function ensureCorrectInstallationOrder(namespace: string){
@@ -150,41 +146,6 @@ function jsonnetUnitTests(): boolean {
         werft.fail(sliceName, failedMessage)
     }
     return success
-}
-
-function ensureIngressesReadiness(params: InstallMonitoringSatelliteParams) {
-    // Read more about validating ingresses readiness
-    // https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balance-ingress?hl=it#validate
-
-    const werft = getGlobalWerftInstance()
-
-    let grafanaIngressReady = false
-    let prometheusIngressReady = false
-    werft.log(sliceName, "Checking ingresses readiness")
-    for(let i = 0; i < 15; i++) {
-        grafanaIngressReady = ingressReady(params.satelliteNamespace, 'grafana')
-        prometheusIngressReady = ingressReady(params.satelliteNamespace, 'prometheus')
-
-        if(grafanaIngressReady && prometheusIngressReady) { break }
-        werft.log(sliceName, "Trying again in 1 minute")
-        exec(`sleep 60`, {slice: sliceName}) // 1 min
-        i++
-    }
-
-    if (!prometheusIngressReady || !grafanaIngressReady) {
-        werft.log(sliceName, "Time out while waiting for ingress readiness")
-    }
-}
-
-function ingressReady(namespace: string, name: string): boolean {
-    const werft = getGlobalWerftInstance()
-
-    let ingressAddress = exec(`kubectl get ingress -n ${namespace} --no-headers ${name} | awk {'print $4'}`, { silent: true }).stdout.trim()
-    if (validateIPaddress(ingressAddress)) {
-        return true
-    }
-    werft.log(sliceName, `${name} ingress not ready.`)
-    return false
 }
 
 function postProcessManifests() {
