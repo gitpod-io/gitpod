@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"golang.org/x/crypto/ssh"
 	"sigs.k8s.io/yaml"
 
@@ -60,6 +61,11 @@ func (v version) LoadValidationFuncs(validate *validator.Validate) error {
 			return ok
 		},
 	}
+
+	for k, v := range experimental.ValidationChecks {
+		funcs[k] = v
+	}
+
 	for n, f := range funcs {
 		err := validate.RegisterValidation(n, f)
 		if err != nil {

@@ -127,7 +127,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 						Env: common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
-							common.TracingEnv(&ctx.Config),
+							common.TracingEnv(ctx),
 						),
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{

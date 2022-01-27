@@ -203,7 +203,7 @@ fi
 				}},
 				Env: common.MergeEnv(
 					common.DefaultEnv(&cfg),
-					common.TracingEnv(&cfg),
+					common.TracingEnv(ctx),
 					[]corev1.EnvVar{{
 						Name: "NODENAME",
 						ValueFrom: &corev1.EnvVarSource{
