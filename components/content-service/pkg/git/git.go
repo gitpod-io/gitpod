@@ -277,11 +277,9 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 	return c.Git(ctx, "clone", args...)
 }
 
-// Fetch runs git fetch and prunes remote-tracking references as well as ALL LOCAL TAGS.
+// Fetch runs git fetch
 func (c *Client) Fetch(ctx context.Context) (err error) {
-	// we need to fetch with pruning to avoid issues like github.com/gitpod-io/gitpod/issues/7561.
-	// See https://git-scm.com/docs/git-fetch#Documentation/git-fetch.txt---prune for more details.
-	return c.Git(ctx, "fetch", "-p", "-P")
+	return c.Git(ctx, "fetch")
 }
 
 // UpdateRemote performs a git fetch on the upstream remote URI
