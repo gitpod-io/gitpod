@@ -615,7 +615,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "The number of workspaces detected by agent-smith",
+      "description": "Difference between workspaces found by agent-smith and workspaces ws-manager knows about",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -690,13 +690,13 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "exemplar": true,
-          "expr": "sum(gitpod_agent_smith_procfs_detector_workspace_count{cluster=~\"$cluster\"}) by (cluster)",
+          "expr": "sum(gitpod_ws_manager_workspace_phase_total{cluster=~\"()\", phase=\"RUNNING\", type=\"REGULAR\"})  by (cluster) - on (cluster) sum(gitpod_agent_smith_procfs_detector_workspace_count{cluster=~\"()\"}) by (cluster)",
           "interval": "",
-          "legendFormat": "{{cluster}}",
+          "legendFormat": "Difference",
           "refId": "A"
         }
       ],
-      "title": "Detected Workspaces",
+      "title": "Workspace Difference",
       "type": "timeseries"
     },
     {
