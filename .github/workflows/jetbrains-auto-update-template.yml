@@ -12,6 +12,8 @@ on:
         required: true
       serviceAccountKey:
         required: true
+      slackWebhook:
+        required: true
 
 jobs:
   update-jetbrains:
@@ -41,3 +43,10 @@ jobs:
           link=$(echo "$data" | jq -r '.[0].releases[0].downloads.linux.link')
           cd components/ide/jetbrains/image
           leeway build -Dversion=latest -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -D${{ inputs.productId }}DownloadUrl=$link .:${{ inputs.productId }}
+      - name: Slack Notification
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: ${{ inputs.productId }}

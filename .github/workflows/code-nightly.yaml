@@ -27,3 +27,9 @@ jobs:
           headCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/main)
           cd components/ide/code
           leeway build -Dversion=nightly -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DcodeCommit=$headCommit .:docker
+      - name: Slack Notification
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
+          SLACK_COLOR: ${{ job.status }}
