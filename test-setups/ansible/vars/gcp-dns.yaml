@@ -1,0 +1,6 @@
+---
+gcp:
+  project: dns-for-playgrounds
+  cred_content: "{{ lookup('file', '/tmp/service-account.json') }}"
+  domain_zone_name: gitpod-self-hosted-com
+  domain_zone_dnsname: gitpod-self-hosted.com.

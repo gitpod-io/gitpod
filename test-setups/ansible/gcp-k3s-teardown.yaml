@@ -1,0 +1,13 @@
+---
+
+#  TODO: backup https-certificates
+
+- name: Delete GCP resources
+  hosts: localhost
+  gather_facts: no
+
+  vars_files:
+    - vars/gcp.yaml
+
+  roles:
+    - gcp-teardown

@@ -1,0 +1,87 @@
+---
+- name: Install and provision k3s
+  hosts: all
+  gather_facts: no
+
+  vars:
+    k3s_server_exec: "server --disable traefik --flannel-backend=none --disable-network-policy"
+    k3s_server_exec_labels: "--node-label gitpod.io/workload_meta=true --node-label gitpod.io/workload_ide=true"
+    k3s_agent_exec: "agent"
+    k3s_agent_exec_labels: "--node-label gitpod.io/workload_workspace_services=true --node-label gitpod.io/workload_workspace_regular=true --node-label gitpod.io/workload_workspace_headless=true"
+    cluster_secret: "qWo6sn3VWERh3dBBQniPLTqtZzEHURsriJNhTqus"
+
+  tasks:
+
+    - debug:
+        msg: "{{ inventory_hostname }}: {{ (k3s_server_exec + ' ' + k3s_server_exec_labels + ((' ' + k3s_agent_exec_labels) if ('gitpod_total_nodes_1' in group_names) else '')) if ('gitpod_node_main' in group_names) else (k3s_agent_exec + ' ' + k3s_agent_exec_labels) }}"
+
+    - name: Wait for target connection to become reachable/usable
+      wait_for_connection:
+
+    - name: Gather facts for first time
+      setup:
+
+    - name: Get installed services
+      service_facts:
+
+    - name: Download k3s install script
+      get_url:
+        url: https://get.k3s.io
+        dest: /tmp/k3s-install.sh
+        mode: 0755
+      when: "'k3s.service' not in services"
+
+    - name: Install k3s
+      environment:
+        INSTALL_K3S_EXEC: "{{ (k3s_server_exec + ' ' + k3s_server_exec_labels + ((' ' + k3s_agent_exec_labels) if ('gitpod_total_nodes_1' in group_names) else '')) if ('gitpod_node_main' in group_names) else (k3s_agent_exec + ' ' + k3s_agent_exec_labels) }}"
+        K3S_CLUSTER_SECRET: "{{ cluster_secret }}"
+        K3S_NODE_NAME: "{{ inventory_hostname }}"
+        K3S_KUBECONFIG_MODE: "644"
+        K3S_URL: "{{ 'https://gitpod-k3s--node-0:6443' if ('gitpod_node_main' not in group_names) else '' }}"
+      command: /tmp/k3s-install.sh
+      register: k3sinstall
+      when: "'k3s.service' not in services"
+
+    - debug:
+        var: k3sinstall
+
+    - name: Download Calico manifest
+      get_url:
+        url: https://docs.projectcalico.org/manifests/calico.yaml
+        dest: /tmp/calico.yaml
+      when: "'gitpod_node_main' in group_names"
+
+    - name: Patch Calico manifest
+      lineinfile:
+        path: /tmp/calico.yaml
+        insertafter: '"type": "calico",'
+        line: '          "container_settings": { "allow_ip_forwarding": true },'
+      when: "'gitpod_node_main' in group_names"
+
+    - name: Wait for the manifest folder
+      wait_for:
+        path: /var/lib/rancher/k3s/server/manifests
+      become: yes
+      when: "'gitpod_node_main' in group_names"
+
+    # - name: Install Calico
+    #   get_url:
+    #     url: https://raw.githubusercontent.com/corneliusludmann/gitpod-k3s-droplet/main/gitpod-install/calico.yaml
+    #     dest: /var/lib/rancher/k3s/server/manifests/calico.yaml
+    #   become: yes
+    #   when: "'gitpod_node_main' in group_names"
+
+    - name: Install Calico manifest
+      copy:
+        remote_src: 'true'
+        src: /tmp/calico.yaml
+        dest: /var/lib/rancher/k3s/server/manifests/calico.yaml
+      become: yes
+      when: "'gitpod_node_main' in group_names"
+
+    - name: Install Cert Manager manifest
+      copy:
+        src: "{{ item }}"
+        dest: /var/lib/rancher/k3s/server/manifests/
+      with_fileglob: "/workspace/gitpod/test-setups/manifests/cert-manager*.yaml"
+      become: yes

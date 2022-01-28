@@ -1,0 +1,10 @@
+---
+- name: remove instance
+  google.cloud.gcp_compute_instance:
+    name: "{{ node_prefix }}--node-{{ item }}"
+    zone: "{{ gcp.zone }}"
+    project: "{{ gcp.project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp.cred_content }}"
+    state: absent
+  loop: "{{ range(0, nodes_count) | list }}"

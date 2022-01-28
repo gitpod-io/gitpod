@@ -1,0 +1,52 @@
+---
+- name: Prepare GCP resources
+  hosts: localhost
+  gather_facts: no
+  vars:
+    nodes_count: 3
+  vars_files:
+    - vars/common.yaml
+    - vars/gcp.yaml
+  roles:
+    - gcp
+
+- name: Refresh inventory
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - meta: refresh_inventory
+
+- name: Wait for connection
+  hosts: all
+  gather_facts: no
+  tasks:
+    - wait_for_connection:
+
+- name: Prepare DNS
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/common.yaml
+    - vars/gcp-dns.yaml
+  roles:
+    - gcp-dns
+
+- name: Download secrets from GCP bucket
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/common.yaml
+    - vars/gcp.yaml
+  roles:
+    - gcp-bucket-download-secrets
+
+- name: Prepare Gitpod installer
+  hosts: gitpod_node_main
+  roles:
+    - gitpod-installer
+
+- name: Install k3s and Gitpod with installer
+  hosts: all
+  vars_files:
+    - vars/common.yaml
+    - vars/k3s.yaml
+  roles:
+    - k3s-gitpod-installer

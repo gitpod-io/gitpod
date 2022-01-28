@@ -1,0 +1,11 @@
+plugin: gcp_compute
+projects:
+  - clu-self-hosted-playground # TODO: use variable
+auth_kind: serviceaccount
+service_account_file: /tmp/service-account.json  # TODO: use variable
+keyed_groups:
+  - key: labels
+leading_separator: no
+hostnames: ["name", "public_ip", "private_ip"]
+# compose:
+#   ansible_host: name

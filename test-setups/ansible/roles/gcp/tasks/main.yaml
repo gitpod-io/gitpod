@@ -1,0 +1,61 @@
+---
+- name: "create instance"
+  google.cloud.gcp_compute_instance:
+    name: "{{ node_prefix }}--node-{{ item }}"
+    machine_type: "{{ gcp.machine_type }}"
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      initialize_params:
+        disk_size_gb: 256
+        source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
+    network_interfaces:
+    - access_configs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    labels:
+      gitpod-node: "{{ 'main' if ansible_loop.first else 'worker' }}"
+      gitpod-total-nodes: "{{ ansible_loop.length }}"
+    zone: "{{ gcp.zone }}"
+    project: "{{ gcp.project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp.cred_content }}"
+    state: present
+  loop: "{{ range(0, nodes_count) | list }}"
+  loop_control:
+    extended: yes
+  register: gcpvm
+
+- debug:
+    var: gcpvm.results
+- debug:
+    msg: "Cluster IP: {{ gcpvm.results[0].networkInterfaces[0].accessConfigs[0].natIP }}"
+
+- set_fact:
+    cluster_ip: "{{ gcpvm.results[0].networkInterfaces[0].accessConfigs[0].natIP }}"
+
+- name: "create http/https firewall rule"
+  google.cloud.gcp_compute_firewall:
+    name: "allow-http-https"
+    allowed:
+    - ip_protocol: tcp
+      ports: ["80","443"]
+    direction: INGRESS
+    source_ranges: "0.0.0.0/0"
+    project: "{{ gcp.project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp.cred_content }}"
+    state: present
+
+- name: "create k3s firewall rule"
+  google.cloud.gcp_compute_firewall:
+    name: "allow-k3s"
+    allowed:
+    - ip_protocol: tcp
+      ports: ["6443"]
+    direction: INGRESS
+    source_ranges: "0.0.0.0/0"
+    project: "{{ gcp.project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp.cred_content }}"
+    state: present

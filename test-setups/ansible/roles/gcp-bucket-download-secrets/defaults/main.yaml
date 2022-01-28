@@ -1,0 +1,7 @@
+---
+gitpod_domain: "{{ undef(hint='You must specify your Gitpod domain.') }}"
+
+gcp:
+  project: "{{ undef(hint='You must specify your GCP project.') }}"
+  cred_content: "{{ lookup('file', '/tmp/service-account.json') }}"
+  bucket_name: "{{ undef(hint='You must specify a GCP bucket name.') }}"

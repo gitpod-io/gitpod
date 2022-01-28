@@ -1,0 +1,4 @@
+---
+node_prefix: gitpod-k3s
+nodes_count: 3
+gitpod_domain: clu-gcp-k3s-2.gitpod-self-hosted.com

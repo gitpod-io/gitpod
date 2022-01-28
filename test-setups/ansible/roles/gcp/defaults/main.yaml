@@ -1,0 +1,14 @@
+---
+node_prefix: gitpod-k3s
+nodes_count: 3
+
+gcp:
+  project: "{{ undef(hint='You must specify your GCP project.') }}"
+  cred_content: "{{ lookup('file', '/tmp/service-account.json') }}"
+
+  # https://cloud.google.com/compute/docs/regions-zones
+  region: europe-west3
+  zone: europe-west3-a
+
+  # available types: gcloud compute machine-types list --zones=europe-west3-a
+  machine_type: c2-standard-4
