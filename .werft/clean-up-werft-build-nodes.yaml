@@ -18,7 +18,7 @@ pod:
     - name: build
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-dev-image-update.0
       workingDir: /workspace
-      imagePullPolicy: Always
+      imagePullPolicy: IfNotPresent
       env:
         - name: WERFT_HOST
           value: "werft.werft.svc.cluster.local:7777"
