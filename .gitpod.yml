@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-dazzlev2-test.0
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-dev-image-update.0
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
