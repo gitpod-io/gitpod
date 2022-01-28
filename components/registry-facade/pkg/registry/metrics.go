@@ -36,8 +36,14 @@ func (m *measuringRegistryRoundTripper) RoundTrip(req *http.Request) (*http.Resp
 
 	if strings.Contains(req.URL.Path, "/manifests/") {
 		m.metrics.ManifestHist.Observe(dt.Seconds())
+		if err != nil {
+			m.metrics.ReqFailedCounter.WithLabelValues("manifest").Inc()
+		}
 	} else if strings.Contains(req.URL.Path, "/blobs/") {
 		m.metrics.BlobCounter.Inc()
+		if err != nil {
+			m.metrics.ReqFailedCounter.WithLabelValues("blob").Inc()
+		}
 	}
 
 	return resp, err
@@ -46,6 +52,7 @@ func (m *measuringRegistryRoundTripper) RoundTrip(req *http.Request) (*http.Resp
 // Metrics combine custom metrics exported by registry facade
 type metrics struct {
 	ManifestHist          prometheus.Histogram
+	ReqFailedCounter      *prometheus.CounterVec
 	BlobCounter           prometheus.Counter
 	BlobDownloadSpeedHist prometheus.Histogram
 }
@@ -57,6 +64,17 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 		Buckets: []float64{0.1, 0.5, 1, 2, 5, 10, 60, 300, 600, 1800},
 	})
 	err := reg.Register(manifestHist)
+	if err != nil {
+		return nil, err
+	}
+
+	reqFailedCounter := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "req_failed_total",
+			Help: "number of requests that failed",
+		}, []string{"type"},
+	)
+	err = reg.Register(reqFailedCounter)
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +102,7 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 
 	return &metrics{
 		ManifestHist:          manifestHist,
+		ReqFailedCounter:      reqFailedCounter,
 		BlobCounter:           blobCounter,
 		BlobDownloadSpeedHist: blobDownloadSpeedHist,
 	}, nil
