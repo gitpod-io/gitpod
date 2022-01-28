@@ -36,7 +36,6 @@ packages:
     deps:
       - :app
       - :static
-      - components/local-app:app
       - components/gitpod-protocol:gitpod-schema
     argdeps:
       - imageRepoBase

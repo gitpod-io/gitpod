@@ -4,6 +4,8 @@ packages:
     srcs:
       - "conf/**"
       - "static/**"
+    deps:
+      - components/local-app:app
     argdeps:
       - imageRepoBase
     config:
