@@ -3,6 +3,10 @@ on: [push]
 
 env:
   REGISTRY: ghcr.io
+  DO_PUBLISH: "false"
+  publishToNPM: "false"
+  SEGMENT_IO_TOKEN: ""
+  version: "devel"
 
 jobs:
   build-gitpod-amd64:
@@ -42,4 +46,4 @@ jobs:
         uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64
         with:
           args: |
-            leeway -DSEGMENT_IO_TOKEN="${SEGMENT_IO_TOKEN}" -DpublishToNPM="${publishToNPM}" -DimageRepoBase=${CI_REGISTRY_IMAGE} -Dversion=${version}-amd64 build components:all-docker --dont-test --dont-retag
+            leeway -DSEGMENT_IO_TOKEN="${SEGMENT_IO_TOKEN}" -DpublishToNPM="${publishToNPM}" -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${version}-amd64 build components:all-docker --dont-test --dont-retag
