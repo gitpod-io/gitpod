@@ -39,7 +39,7 @@ jobs:
           string: ${{ github.repository }}
         id: string
       - name: build
-        uses: docker://ghcr.io/gitpod-arm/workspace-images/full:arm64
+        uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64
         with:
           args: |
             leeway -DSEGMENT_IO_TOKEN="${SEGMENT_IO_TOKEN}" -DpublishToNPM="${publishToNPM}" -DimageRepoBase=${CI_REGISTRY_IMAGE} -Dversion=${version}-amd64 build components:all-docker --dont-test --dont-retag
