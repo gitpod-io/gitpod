@@ -1,6 +1,8 @@
 # Change Log
 
 ## January 2022
+- - Refactor JB integration to connect over SSH instead of CWM links. ([#7362](https://github.com/gitpod-io/gitpod/pull/7362)) - [@akosyakov](https://github.com/akosyakov)
+- - Provide Gitpod integration in JB Gateway. ([#7362](https://github.com/gitpod-io/gitpod/pull/7362)) - [@akosyakov](https://github.com/akosyakov)
 - [Dashboard]: add send telemetry to admin settings ([#7732](https://github.com/gitpod-io/gitpod/pull/7732)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [installer]: add namespace to validate cluster command ([#7801](https://github.com/gitpod-io/gitpod/pull/7801)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Fix "token not found" issues. ([#7837](https://github.com/gitpod-io/gitpod/pull/7837)) - [@AlexTugarev](https://github.com/AlexTugarev)
