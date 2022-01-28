@@ -47,4 +47,7 @@ jobs:
         with:
           args: |
             export LEEWAY_WORKSPACE_ROOT=$PWD
+            sed -i 's/[-] test[:]docker/#- test:docker/g' components/BUILD.yaml
+            find . | grep BUILD.yaml | xargs -n 1 sed -i 's/[-] [:]dbtest/#- :dbtest/g'
+            find . | grep BUILD.yaml | xargs -n 1 sed -i 's/commit[-]/commit-amd64-/g'
             leeway -DSEGMENT_IO_TOKEN="${SEGMENT_IO_TOKEN}" -DpublishToNPM="${publishToNPM}" -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${version}-amd64 build components:all-docker --dont-test --dont-retag
