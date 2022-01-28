@@ -997,33 +997,33 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getSuggestedContextURLs(ctx: TraceContext): Promise<string[]> {
-        const user = this.checkUser("getSuggestedContextURLs");
+        this.checkUser("getSuggestedContextURLs");
         const suggestions: string[] = [];
+        const logCtx: LogContext = { userId: user.id };
 
-        // Fetch all data sources in parallel for maximum speed (don't await before `Promise.allSettled(promises)` below!)
+        // Fetch all data sources in parallel for maximum speed (don't await in this scope before `Promise.allSettled(promises)` below!)
         const promises = [];
 
         // Example repositories
         promises.push(this.getFeaturedRepositories(ctx).then(exampleRepos => {
-            // log('got example repos', exampleRepos);
             exampleRepos.forEach(r => suggestions.push(r.url));
+        }).catch(error => {
+            log.error(logCtx, 'Could not get example repositories', error);
         }));
 
         // User repositories
-        user.identities.forEach(identity => {
-            const provider = {
-                'Public-GitLab': 'gitlab.com',
-                'Public-GitHub': 'github.com',
-                'Public-Bitbucket': 'bitbucket.org',
-            }[identity.authProviderId];
-            if (!provider) {
-                return;
-            }
-            promises.push(this.getProviderRepositoriesForUser(ctx, { provider }).then(userRepos => {
-                // log('got', provider, 'user repos', userRepos)
+        promises.push(this.getAuthProviders(ctx).then(authProviders => Promise.all(authProviders.map(async (p) => {
+            // TODO(janx): Refactor this in order not to limit results to app installations & not fetch projects.
+            // This should be entirely about proposing great matches for a user, no matter an app is installed.
+            try {
+                const userRepos = await this.getProviderRepositoriesForUser(ctx, { provider: p.host });
                 userRepos.forEach(r => suggestions.push(r.cloneUrl.replace(/\.git$/, '')));
-            }));
-        });
+            } catch (error) {
+                log.debug(logCtx, 'Could not get user repositories from App for ' + p.host, error);
+            }
+        }))).catch(error => {
+            log.error(logCtx, 'Could not get auth providers', error);
+        }));
 
         // Recent repositories
         promises.push(this.getWorkspaces(ctx, { /* limit: 20 */ }).then(workspaces => {
@@ -1033,6 +1033,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     suggestions.push(repoUrl);
                 }
             });
+        }).catch(error => {
+            log.error(logCtx, 'Could not fetch recent workspace repositories', error);
         }));
 
         await Promise.allSettled(promises);
