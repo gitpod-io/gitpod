@@ -7,6 +7,7 @@ env:
   publishToNPM: "false"
   SEGMENT_IO_TOKEN: ""
   version: "devel"
+  LEEWAY_WORKSPACE_ROOT: "/github/workspace"
 
 jobs:
   build-gitpod-amd64:
@@ -53,4 +54,4 @@ jobs:
         uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64
         with:
           args: |
-            /bin/bash -c LEEWAY_WORKSPACE_ROOT=/github/workspace leeway -DSEGMENT_IO_TOKEN="${SEGMENT_IO_TOKEN}" -DpublishToNPM="${publishToNPM}" -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${version}-amd64 build components:all-docker --dont-test --dont-retag
+            leeway -DSEGMENT_IO_TOKEN="${SEGMENT_IO_TOKEN}" -DpublishToNPM="${publishToNPM}" -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${version}-amd64 build components:all-docker --dont-test --dont-retag
