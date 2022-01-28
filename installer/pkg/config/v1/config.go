@@ -52,7 +52,7 @@ func (v version) Defaults(in interface{}) error {
 		corev1.ResourceCPU:    resource.MustParse("1000m"),
 		corev1.ResourceMemory: resource.MustParse("2Gi"),
 	}
-	cfg.Workspace.Runtime.FSShiftMethod = FSShiftFuseFS
+	cfg.Workspace.Runtime.FSShiftMethod = FSShiftShiftFS
 	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 
