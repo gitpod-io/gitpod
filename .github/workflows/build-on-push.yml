@@ -46,4 +46,5 @@ jobs:
         uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64
         with:
           args: |
+            export LEEWAY_WORKSPACE_ROOT=$PWD
             leeway -DSEGMENT_IO_TOKEN="${SEGMENT_IO_TOKEN}" -DpublishToNPM="${publishToNPM}" -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${version}-amd64 build components:all-docker --dont-test --dont-retag
