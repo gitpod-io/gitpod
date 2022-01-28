@@ -1,4 +1,4 @@
-name: Check for new JetBrains IDE releases
+name: JB Releases
 on:
   workflow_dispatch:
   schedule:
@@ -7,30 +7,38 @@ on:
 
 jobs:
   intellij:
-    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    uses: ./.github/workflows/jetbrains-updates-template.yml
     with:
       productName: IntelliJ IDEA
       productId: intellij
       productCode: IIU
       productType: release
+    secrets:
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
   goland:
-    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    uses: ./.github/workflows/jetbrains-updates-template.yml
     with:
       productName: GoLand
       productId: goland
       productCode: GO
       productType: release
+    secrets:
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
   pycharm:
-    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    uses: ./.github/workflows/jetbrains-updates-template.yml
     with:
       productName: PyCharm
       productId: pycharm
       productCode: PCP
       productType: release
+    secrets:
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
   phpstorm:
-    uses: gitpod-io/gitpod/.github/workflows/jetbrains-updates-template.yml@main
+    uses: ./.github/workflows/jetbrains-updates-template.yml
     with:
       productName: PhpStorm
       productId: phpstorm
       productCode: PS
       productType: release
+    secrets:
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
