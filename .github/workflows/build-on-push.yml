@@ -58,6 +58,9 @@ jobs:
       - name: Prevent permission error
         shell: bash
         run: sudo chmod 777 /var/run/docker.sock
+      - name: Disk space check
+        shell: bash
+        run: sudo df
       - name: check uname
         # https://github.com/gitpod-arm/workspace-images/pkgs/container/workspace-images%2Fgitpod-dev/14065438?tag=arm64 for amd64
         uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:3738e57d85354de898b9ad9948ae6f83c0759ed81b2c92f4ded6f531c550bc4c
@@ -116,6 +119,9 @@ jobs:
       - name: Prevent permission error
         shell: bash
         run: sudo chmod 777 /var/run/docker.sock
+      - name: Disk space check
+        shell: bash
+        run: sudo df
       - name: check uname
         # https://github.com/gitpod-arm/workspace-images/pkgs/container/workspace-images%2Fgitpod-dev/14065438?tag=arm64 for arm64
         uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:9bcb27c3d13737c57a6b1c5791c62845ee37af0f28ae70a3fd31975d3510a9c7
