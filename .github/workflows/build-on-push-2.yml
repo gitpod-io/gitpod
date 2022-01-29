@@ -12,11 +12,14 @@ env:
   CI: "false"
 
 jobs:
-  build-gitpod-amd64:
+  build-gitpod:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -67,9 +70,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ghcr.io/gitpod-arm/gitpod:${{ matrix.arch }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.arch }}
           build-args: |
             SEGMENT_IO_TOKEN=${{ env.SEGMENT_IO_TOKEN }}
             PUBLISH_TO_NPM=${{ env.PUBLISH_TO_NPM }}
