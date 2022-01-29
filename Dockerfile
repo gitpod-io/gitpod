@@ -1,4 +1,6 @@
-FROM ghcr.io/gitpod-arm/workspace-images/gitpod-dev
+ARG ARCH
+
+FROM ghcr.io/gitpod-arm/workspace-images/gitpod-dev:$ARCH
 
 SHELL [ "/bin/bash", "-c" ]
 
