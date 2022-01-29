@@ -1,4 +1,5 @@
 name: Build on Push
+on: [push]
 
 env:
   REGISTRY: ghcr.io
