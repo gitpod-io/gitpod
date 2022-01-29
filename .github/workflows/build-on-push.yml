@@ -128,6 +128,18 @@ jobs:
         with:
           args: |
             /bin/bash -c "uname -m"
+      - name: check cpuinfo
+        # https://github.com/gitpod-arm/workspace-images/pkgs/container/workspace-images%2Fgitpod-dev/14065438?tag=arm64 for arm64
+        uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:9bcb27c3d13737c57a6b1c5791c62845ee37af0f28ae70a3fd31975d3510a9c7
+        with:
+          args: |
+            /bin/bash -c "cat /proc/cpuinfo"
+      - name: check cpuinfo with setarch
+        # https://github.com/gitpod-arm/workspace-images/pkgs/container/workspace-images%2Fgitpod-dev/14065438?tag=arm64 for arm64
+        uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:9bcb27c3d13737c57a6b1c5791c62845ee37af0f28ae70a3fd31975d3510a9c7
+        with:
+          args: |
+            /bin/bash -c "sudo setarch aarch64 cat /proc/cpuinfo"
       # use workaround https://github.com/docker/for-linux/issues/1146#issuecomment-936389137
       - name: build
         # https://github.com/gitpod-arm/workspace-images/pkgs/container/workspace-images%2Fgitpod-dev/14065438?tag=arm64 for arm64
