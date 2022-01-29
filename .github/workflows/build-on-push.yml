@@ -57,4 +57,4 @@ jobs:
         uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64
         with:
           args: |
-            /bin/bash -c "sudo docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && sudo chown gitpod:gitpod -R /github/home/ && leeway -DSEGMENT_IO_TOKEN=${{ env.SEGMENT_IO_TOKEN }} -DpublishToNPM=${{ env.publishToNPM }} -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${{ env.version }}-amd64 build components:all-docker --dont-test --dont-retag"
+            /bin/bash -c "docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && sudo chown gitpod:gitpod -R /github/home/ && leeway -DSEGMENT_IO_TOKEN=${{ env.SEGMENT_IO_TOKEN }} -DpublishToNPM=${{ env.publishToNPM }} -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${{ env.version }}-amd64 build components:all-docker --dont-test --dont-retag"
