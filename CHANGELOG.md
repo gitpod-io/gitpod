@@ -1,6 +1,7 @@
 # Change Log
 
 ## January 2022
+- [Installer]: release 2022.01 ([#7873](https://github.com/gitpod-io/gitpod/pull/7873)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - - Refactor JB integration to connect over SSH instead of CWM links. ([#7362](https://github.com/gitpod-io/gitpod/pull/7362)) - [@akosyakov](https://github.com/akosyakov)
 - - Provide Gitpod integration in JB Gateway. ([#7362](https://github.com/gitpod-io/gitpod/pull/7362)) - [@akosyakov](https://github.com/akosyakov)
 - [Dashboard]: add send telemetry to admin settings ([#7732](https://github.com/gitpod-io/gitpod/pull/7732)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
