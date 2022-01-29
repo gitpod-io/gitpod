@@ -122,9 +122,10 @@ jobs:
         with:
           args: |
             /bin/bash -c "uname -m"
+      # use workaround https://github.com/docker/for-linux/issues/1146#issuecomment-936389137
       - name: build
         # https://github.com/gitpod-arm/workspace-images/pkgs/container/workspace-images%2Fgitpod-dev/14065438?tag=arm64 for arm64
         uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:9bcb27c3d13737c57a6b1c5791c62845ee37af0f28ae70a3fd31975d3510a9c7
         with:
           args: |
-            /bin/bash -c "sudo chown gitpod:gitpod -R /github/home/ && docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && leeway -DSEGMENT_IO_TOKEN=${{ env.SEGMENT_IO_TOKEN }} -DpublishToNPM=${{ env.publishToNPM }} -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${{ env.version }}-amd64 build components:all-docker --dont-test --dont-retag"
+            /bin/bash -c "sudo mount -o ro,bind cpuinfo_rpi4 /proc/cpuinfo && sudo chown gitpod:gitpod -R /github/home/ && docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && leeway -DSEGMENT_IO_TOKEN=${{ env.SEGMENT_IO_TOKEN }} -DpublishToNPM=${{ env.publishToNPM }} -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${{ env.version }}-amd64 build components:all-docker --dont-test --dont-retag"
