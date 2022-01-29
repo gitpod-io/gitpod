@@ -1,4 +1,4 @@
-name: Build on Push
+name: Build on Push 2
 on: [push]
 
 env:
