@@ -58,13 +58,13 @@ jobs:
         run: sudo chmod 777 /var/run/docker.sock
       - name: check uname
         # https://github.com/gitpod-arm/workspace-images/pkgs/container/workspace-images%2Fgitpod-dev/14065438?tag=arm64 for amd64
-        uses: docker pull ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:3738e57d85354de898b9ad9948ae6f83c0759ed81b2c92f4ded6f531c550bc4c
+        uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:3738e57d85354de898b9ad9948ae6f83c0759ed81b2c92f4ded6f531c550bc4c
         with:
           args: |
             /bin/bash -c "uname -m"
       - name: build
         # https://github.com/gitpod-arm/workspace-images/pkgs/container/workspace-images%2Fgitpod-dev/14065438?tag=arm64 for amd64
-        uses: docker pull ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:3738e57d85354de898b9ad9948ae6f83c0759ed81b2c92f4ded6f531c550bc4c
+        uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64@sha256:3738e57d85354de898b9ad9948ae6f83c0759ed81b2c92f4ded6f531c550bc4c
         with:
           args: |
             /bin/bash -c "sudo chown gitpod:gitpod -R /github/home/ && docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && leeway -DSEGMENT_IO_TOKEN=${{ env.SEGMENT_IO_TOKEN }} -DpublishToNPM=${{ env.publishToNPM }} -DimageRepoBase=ghcr.io/gitpod-arm/gitpod -Dversion=${{ env.version }}-amd64 build components:all-docker --dont-test --dont-retag"
