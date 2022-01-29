@@ -9,6 +9,8 @@ env:
   version: "devel"
   LEEWAY_WORKSPACE_ROOT: "/github/workspace"
   JAVA_HOME: "/home/gitpod/.sdkman/candidates/java/current"
+  # components/dashboard:app need this
+  CI: "false"
 
 jobs:
   build-gitpod-amd64:
