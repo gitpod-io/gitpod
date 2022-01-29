@@ -14,6 +14,8 @@ env:
 jobs:
   build-gitpod-amd64:
     runs-on: ubuntu-latest
+    env:
+      GOARCH: amd64
     permissions:
       contents: read
       packages: write
@@ -70,6 +72,8 @@ jobs:
 
   build-gitpod-arm64:
     runs-on: ubuntu-latest
+    env:
+      GOARCH: arm64
     permissions:
       contents: read
       packages: write
