@@ -42,7 +42,6 @@ tasks:
     openMode: split-right
 vscode:
   extensions:
-    - bajdzis.vscode-database
     - bradlc.vscode-tailwindcss
     - EditorConfig.EditorConfig
     - golang.go
