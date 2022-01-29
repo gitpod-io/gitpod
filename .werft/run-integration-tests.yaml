@@ -61,9 +61,7 @@ pod:
       set -Eeuo pipefail
 
       echo "[prep] receiving config..."
-      mkdir /root/.config
-      cp -R /config/gcloud /root/.config/gcloud
-      export GOOGLE_APPLICATION_CREDENTIALS=/config/gcloud/legacy_credentials/gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json
+      export GOOGLE_APPLICATION_CREDENTIALS="/config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
       echo "[prep] received config."
 
       USERNAME="{{ .Annotations.username }}"
@@ -71,9 +69,15 @@ pod:
         USERNAME=""
       fi
       echo "[prep] using username: $USERNAME"
+
+      args=()
+      args+=( '-kubeconfig=/config/kubeconfig' )
+      args+=( "-namespace={{ .Annotations.namespace }}" )
+      [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
+      echo "[prep] args: ${args[@]}"
       echo "[prep|DONE]"
 
-      /entrypoint.sh -kubeconfig=/config/kubeconfig -namespace={{ .Annotations.namespace }} -username=$USERNAME 2>&1 | ts "[int-tests] "
+      /entrypoint.sh "${args[@]}" 2>&1 | ts "[int-tests] "
 
       RC=${PIPESTATUS[0]}
       if [ $RC -eq 1 ]; then

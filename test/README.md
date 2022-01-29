@@ -29,7 +29,7 @@ There is a [werft job](../.werft/run-integration-tests.yaml) that runs the integ
 
 Example command:
 ```
-werft job run github -j .werft/run-integration-tests.yaml -a namespace=staging-gpl-2658-int-tests -a version=gpl-2658-int-tests.57 -f
+werft run github -j .werft/run-integration-tests.yaml -a namespace=staging-gpl-2658-int-tests -a version=gpl-2658-int-tests.57 -f
 ```
 
 ### Manually
@@ -51,7 +51,7 @@ Best for when you want to validate an environment.
 #### Go test
 
 Best for when you're actively developing Gitpod.
-Test will work if images that they use are already cached by gitpod instnance. If not, they might fail if it takes too long to pull an image.
+Test will work if images that they use are already cached by Gitpod instance. If not, they might fail if it takes too long to pull an image.
 There are 4 different types of tests:
 1. Enterprise specific, that require valid license to be installed. Run those with `-enterprise=true`
 2. Tests that require correct user (user should have github OAuth integration setup with gitpod). Run those with `-username=<gitpod_username>`. Make sure to load https://github.com/gitpod-io/gitpod-test-repo and https://github.com/gitpod-io/gitpod workspaces inside your gitpod that you are testing to preload those images onto your node. Wait for it to finish pulling those image, this will ensure that test will not fail due to timeout while waiting to pull an image for the first time.
