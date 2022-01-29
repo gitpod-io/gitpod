@@ -50,6 +50,9 @@ jobs:
       - name: Change docker tag
         shell: bash
         run: find . | grep BUILD.yaml | xargs -n 1 sed -i 's/commit[-]/commit-amd64-/g'
+      - name: Prevent permission error
+        shell: bash
+        run: sudo chmod 777 /var/run/docker.sock
       - name: build
         uses: docker://ghcr.io/gitpod-arm/workspace-images/gitpod-dev:arm64
         with:
