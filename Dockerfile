@@ -12,6 +12,7 @@ ARG GITHUB_ACTOR
 
 ENV LEEWAY_WORKSPACE_ROOT="/github/workspace"
 ENV JAVA_HOME="/home/gitpod/.sdkman/candidates/java/current"
+ENV CI="false"
 
 RUN sudo chown gitpod:gitpod -R /github/home/ && \
     docker login $REGISTRY -u $GITHUB_ACTOR -p $GITHUB_TOKEN && \
