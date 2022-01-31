@@ -4,7 +4,7 @@
  See License-AGPL.txt in the project root for license information.
 -->
 
-<idea-plugin>
+<idea-plugin require-restart="true">
     <id>io.gitpod.jetbrains.gateway</id>
     <name>Gitpod Gateway</name>
     <vendor>Gitpod</vendor>
@@ -12,7 +12,9 @@
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.jetbrains.gateway</depends>
+    <!-- uncomment when versin mismatch in JB Marketpace for GW plugin verifier is resolved
+    see https://jetbrains.slack.com/archives/C02BRJLGPGF/p1643369943314119?thread_ts=1643358812.185799&cid=C02BRJLGPGF
+    <depends>com.jetbrains.gateway</depends> -->
 
     <extensions defaultExtensionNs="com.intellij">
         <httpRequestHandler implementation="io.gitpod.jetbrains.auth.GitpodAuthCallbackHandler"/>
