@@ -69,7 +69,7 @@ export default function () {
                                 onClick: () => { if (workspaceModel) workspaceModel.limit = 200; }
                             }]} />
                         </div>
-                        <button onClick={() => setIsStartWorkspaceModalVisible(true)} className="ml-2">New Workspace ({StartWorkspaceModalKeyBinding})</button>
+                        <button onClick={() => setIsStartWorkspaceModalVisible(true)} className="ml-2">New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span></button>
                     </div>
                     <ItemsList className="app-container pb-40">
                         <div className="border-t border-gray-200 dark:border-gray-800"></div>
@@ -99,7 +99,7 @@ export default function () {
                                 <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Workspaces</h3>
                                 <div className="text-center pb-6 text-gray-500">Prefix any Git repository URL with {window.location.host}/# or create a new workspace for a recently used project. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
                                 <span>
-                                    <button onClick={() => setIsStartWorkspaceModalVisible(true)}>New Workspace ({StartWorkspaceModalKeyBinding})</button>
+                                    <button onClick={() => setIsStartWorkspaceModalVisible(true)}>New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span></button>
                                 </span>
                             </>
                         </div>

@@ -6,6 +6,7 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import React, { useContext, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 
@@ -80,9 +81,18 @@ export default function RepositoryFinder(props: { initialQuery?: string }) {
             <div className="py-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="16" height="16"><path fill="#A8A29E" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" /></svg>
             </div>
-            <input type="search" className="flex-grow" placeholder="Repository" autoFocus value={searchQuery} onChange={e => search(e.target.value)} onKeyDown={onKeyDown} />
+            <input type="search" className="flex-grow" placeholder="Search repositories and examples" autoFocus value={searchQuery} onChange={e => search(e.target.value)} onKeyDown={onKeyDown} />
         </div>
-        <div className="mt-3 flex flex-col space-y-2 h-64 overflow-y-auto" id="search-results">
+        <div className="mt-3 -mx-5 px-5 flex flex-col space-y-2 h-64 overflow-y-auto">
+            {searchQuery === '' && searchResults.length === 0 &&
+                <div className="mt-12 mx-auto w-96 text-gray-500">
+                    Paste a <a className="gp-link" href="https://www.gitpod.io/docs/context-urls">repository context URL</a>, or start typing to see suggestions from:
+                    <ul className="list-disc mt-4 pl-7 flex flex-col space-y-1">
+                        <li>Your recent repositories</li>
+                        <li>Your repositories from <Link className="gp-link" to="/integrations">connected integrations</Link></li>
+                        <li>Example repositories</li>
+                    </ul>
+                </div>}
             {searchResults.slice(0, MAX_DISPLAYED_ITEMS).map((result, index) =>
                 <a className={`px-4 py-3 rounded-xl` + (result === selectedSearchResult ? ' bg-gray-600 text-gray-50 dark:bg-gray-700' : '')} href={`/#${result}`} key={`search-result-${index}`} onMouseEnter={() => setSelectedSearchResult(result)}>
                     {searchQuery.length < 2
@@ -94,7 +104,7 @@ export default function RepositoryFinder(props: { initialQuery?: string }) {
                 </a>
             )}
             {searchResults.length > MAX_DISPLAYED_ITEMS &&
-                <span className="mt-3 px-4 py-2 italic text-sm">{searchResults.length - MAX_DISPLAYED_ITEMS} results not shown</span>}
+                <span className="mt-3 px-4 py-2 text-sm text-gray-400 dark:text-gray-500">{searchResults.length - MAX_DISPLAYED_ITEMS} more result{(searchResults.length - MAX_DISPLAYED_ITEMS) === 1 ? '' : 's'} found</span>}
         </div>
     </form>;
 }
@@ -147,6 +157,10 @@ async function actuallyRefreshSearchData(query: string, user: User | undefined):
 }
 
 async function findResults(query: string, onResults: (results: string[]) => void) {
+    if (!query) {
+        onResults([]);
+        return;
+    }
     const searchData = loadSearchData();
     try {
         // If the query is a URL, and it's not present in the proposed results, "artificially" add it here.
@@ -157,5 +171,5 @@ async function findResults(query: string, onResults: (results: string[]) => void
     } catch {
     }
     // console.log('searching', query, 'in', searchData);
-    onResults(searchData.filter(result => result.includes(query)));
+    onResults(searchData.filter(result => result.toLowerCase().includes(query.toLowerCase())));
 }
