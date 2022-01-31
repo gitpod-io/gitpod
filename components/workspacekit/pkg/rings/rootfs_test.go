@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package cmd
+package rings
 
 import (
 	"bytes"
@@ -64,7 +64,7 @@ func TestFindBindMountCandidates(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			act, err := findBindMountCandidates(bytes.NewReader([]byte(test.Mounts)), test.Readlink)
+			act, err := FindBindMountCandidates(bytes.NewReader([]byte(test.Mounts)), test.Readlink)
 			if err != nil {
 				t.Fatal(err)
 			}
