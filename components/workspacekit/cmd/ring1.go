@@ -25,6 +25,7 @@ import (
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/lift"
+	"github.com/gitpod-io/gitpod/workspacekit/pkg/rings"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
@@ -36,6 +37,14 @@ import (
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 )
+
+// ring1ShutdownTimeout is the time ring1 gets between SIGTERM and SIGKILL.
+// We do this to ensure we have enough time left for ring0 to clean up prior
+// to receiving SIGKILL from the kubelet.
+//
+// This time must give ring1 enough time to shut down (see time budgets in supervisor.go),
+// and to talk to ws-daemon within the terminationGracePeriod of the workspace pod.
+const ring1ShutdownTimeout = 20 * time.Second
 
 var ring1Opts struct {
 	MappingEstablished bool
@@ -50,7 +59,7 @@ var ring1Cmd = &cobra.Command{
 		common_grpc.SetupLogging()
 
 		exitCode := 1
-		defer handleExit(&exitCode)
+		defer rings.HandleExit(&exitCode)
 
 		defer log.Info("done")
 
@@ -62,7 +71,7 @@ var ring1Cmd = &cobra.Command{
 			{ContainerId: 1, HostId: 100000, Size: 65534},
 		}
 		if !ring1Opts.MappingEstablished {
-			client, err := connectToInWorkspaceDaemonService(ctx)
+			client, err := rings.ConnectToInWorkspaceDaemonService(ctx)
 			if err != nil {
 				log.WithError(err).Error("cannot connect to daemon")
 				return
@@ -254,7 +263,7 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		client, err := connectToInWorkspaceDaemonService(ctx)
+		client, err := rings.ConnectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot connect to daemon")
 			return
@@ -340,7 +349,7 @@ var ring1Cmd = &cobra.Command{
 		defer slirpCmd.Process.Kill()
 
 		log.Info("signaling to child process")
-		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
+		_, err = msgutil.MarshalToWriter(ring2Conn, rings.SyncMsg{
 			Stage:   1,
 			Rootfs:  ring2Root,
 			FSShift: fsshift,
@@ -363,7 +372,7 @@ var ring1Cmd = &cobra.Command{
 			handler := &seccomp.InWorkspaceHandler{
 				FD: scmpfd,
 				Daemon: func(ctx context.Context) (seccomp.InWorkspaceServiceClient, error) {
-					return connectToInWorkspaceDaemonService(ctx)
+					return rings.ConnectToInWorkspaceDaemonService(ctx)
 				},
 				Ring2PID:    cmd.Process.Pid,
 				Ring2Rootfs: ring2Root,
@@ -561,4 +570,9 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 	}
 
 	return libseccomp.ScmpFd(fds[0]), nil
+}
+
+func init() {
+	rootCmd.AddCommand(ring1Cmd)
+	ring1Cmd.Flags().BoolVar(&ring1Opts.MappingEstablished, "mapping-established", false, "true if the UID/GID mapping has already been established")
 }

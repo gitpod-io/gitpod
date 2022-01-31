@@ -10,11 +10,13 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/workspacekit/pkg/rings"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
@@ -30,14 +32,14 @@ var ring0Cmd = &cobra.Command{
 		common_grpc.SetupLogging()
 
 		exitCode := 1
-		defer handleExit(&exitCode)
+		defer rings.HandleExit(&exitCode)
 
 		defer log.Info("done")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		client, err := connectToInWorkspaceDaemonService(ctx)
+		client, err := rings.ConnectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot connect to daemon")
 			return
@@ -54,7 +56,7 @@ var ring0Cmd = &cobra.Command{
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
-			client, err := connectToInWorkspaceDaemonService(ctx)
+			client, err := rings.ConnectToInWorkspaceDaemonService(ctx)
 			if err != nil {
 				log.WithError(err).Error("cannot connect to daemon")
 				return
@@ -141,4 +143,12 @@ var ring0Cmd = &cobra.Command{
 		}
 		exitCode = 0 // once we get here everythings good
 	},
+}
+
+func isProcessAlreadyFinished(err error) bool {
+	return strings.Contains(err.Error(), "os: process already finished")
+}
+
+func init() {
+	rootCmd.AddCommand(ring0Cmd)
 }

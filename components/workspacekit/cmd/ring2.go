@@ -9,9 +9,12 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"time"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/workspacekit/pkg/rings"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
@@ -19,6 +22,10 @@ import (
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 )
+
+// ring2StartupTimeout is the maximum time we wait between starting ring2 and its
+// attempt to connect to the parent socket.
+const ring2StartupTimeout = 5 * time.Second
 
 var ring2Opts struct {
 	SupervisorPath string
@@ -34,7 +41,7 @@ var ring2Cmd = &cobra.Command{
 		common_grpc.SetupLogging()
 
 		exitCode := 1
-		defer handleExit(&exitCode)
+		defer rings.HandleExit(&exitCode)
 
 		defer log.Info("done")
 
@@ -50,7 +57,7 @@ var ring2Cmd = &cobra.Command{
 		log.Info("connected to parent socket")
 
 		// Before we do anything, we wait for the parent to make /proc available to us.
-		var msg ringSyncMsg
+		var msg rings.SyncMsg
 		_, err = msgutil.UnmarshalFromReader(conn, &msg)
 		if err != nil {
 			log.WithError(err).Error("cannot read parent message")
@@ -174,4 +181,20 @@ func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
 	}
 
 	return nil
+}
+
+func init() {
+	rootCmd.AddCommand(ring2Cmd)
+
+	supervisorPath := os.Getenv("GITPOD_WORKSPACEKIT_SUPERVISOR_PATH")
+	if supervisorPath == "" {
+		wd, err := os.Executable()
+		if err == nil {
+			wd = filepath.Dir(wd)
+			supervisorPath = filepath.Join(wd, "supervisor")
+		} else {
+			supervisorPath = "/.supervisor/supervisor"
+		}
+	}
+	ring2Cmd.Flags().StringVar(&ring2Opts.SupervisorPath, "supervisor-path", supervisorPath, "path to the supervisor binary (taken from $GITPOD_WORKSPACEKIT_SUPERVISOR_PATH, defaults to '$PWD/supervisor')")
 }
