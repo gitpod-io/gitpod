@@ -53,10 +53,6 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 	if err != nil {
 		return 0, xerrors.Errorf("cannot create filter: %w", err)
 	}
-	err = filter.SetTsync(false)
-	if err != nil {
-		return 0, xerrors.Errorf("cannot set tsync: %w", err)
-	}
 	err = filter.SetNoNewPrivsBit(false)
 	if err != nil {
 		return 0, xerrors.Errorf("cannot set no_new_privs: %w", err)
