@@ -12,7 +12,6 @@ import (
 	"compress/gzip"
 	"context"
 	"embed"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -23,7 +22,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/sirupsen/logrus"
@@ -45,7 +43,6 @@ var opts struct {
 
 //go:embed docker.tgz
 //go:embed docker-compose
-//go:embed slirp4netns
 var binaries embed.FS
 
 const (
@@ -60,7 +57,7 @@ func main() {
 
 	pflag.BoolVarP(&opts.Verbose, "verbose", "v", false, "enables verbose logging")
 	pflag.BoolVar(&opts.RuncFacade, "runc-facade", true, "enables the runc-facade to handle rootless idiosyncrasies")
-	pflag.StringVar(&opts.BinDir, "bin-dir", filepath.Dir(self), "directory where runc-facade and slirp-docker-proxy are found")
+	pflag.StringVar(&opts.BinDir, "bin-dir", filepath.Dir(self), "directory where runc-facade is found")
 	pflag.BoolVar(&opts.AutoInstall, "auto-install", true, "auto-install prerequisites (docker, slirp4netns)")
 	pflag.BoolVar(&opts.UserAccessibleSocket, "user-accessible-socket", true, "chmod the Docker socket to make it user accessible")
 	pflag.BoolVar(&opts.DontWrapNetNS, "dont-wrap-netns", os.Getenv("WORKSPACEKIT_WRAP_NETNS") == "true", "wrap the Docker daemon in a network namespace")
@@ -71,75 +68,29 @@ func main() {
 		logger.SetLevel(logrus.DebugLevel)
 	}
 
-	var cmd string
-	if args := pflag.Args(); len(args) > 0 {
-		cmd = args[0]
-	}
-
 	listenFD := os.Getenv("LISTEN_FDS") != ""
 	if _, err := os.Stat(dockerSocketFN); !listenFD && (err == nil || !os.IsNotExist(err)) {
 		logger.Fatalf("Docker socket already exists at %s.\nIn a Gitpod workspace Docker will start automatically when used.\nIf all else fails, please remove %s and try again.", dockerSocketFN, dockerSocketFN)
 	}
 
-	if opts.DontWrapNetNS {
-		log = logger.WithField("service", "runWithinNetns")
-
-		// we don't need to wrap the daemon in a network namespace, hence don't need slirp4netns
-		delete(prerequisites, "slirp4netns")
-
-		err = ensurePrerequisites()
-		if err != nil {
-			log.WithError(err).Fatal("failed")
-		}
-
-		err = runWithinNetns(false)
-		if err != nil {
-			log.WithError(err).Fatal("failed")
-		}
-		return
+	err = ensurePrerequisites()
+	if err != nil {
+		log.WithError(err).Fatal("failed")
 	}
 
-	switch cmd {
-	case "child":
-		log = logger.WithField("service", "runWithinNetns")
-		err = runWithinNetns(true)
-	default:
-		log = logger.WithField("service", "runOutsideNetns")
-		err = runOutsideNetns()
-	}
-
+	err = runWithinNetns()
 	if err != nil {
 		log.WithError(err).Fatal("failed")
 	}
 }
 
-func runWithinNetns(runInChildProcess bool) (err error) {
+func runWithinNetns() (err error) {
 	listenFDs, _ := strconv.Atoi(os.Getenv("LISTEN_FDS"))
-
-	if runInChildProcess {
-		// magic file descriptor 3+listenFDs was passed in from the parent using ExtraFiles
-		fd := os.NewFile(uintptr(3+listenFDs), "")
-		defer fd.Close()
-
-		log.Debug("waiting for parent")
-		var msg message
-		_, err = msgutil.UnmarshalFromReader(fd, &msg)
-		if err != nil {
-			return err
-		}
-		if msg.Stage != 1 {
-			return xerrors.Errorf("expected stage 1 message, got %+q", msg)
-		}
-		log.Debug("parent is ready")
-	}
 
 	args := []string{
 		"--experimental",
 		"--rootless",
 		"--data-root=/workspace/.docker-root",
-	}
-	if !opts.DontWrapNetNS {
-		args = append(args, "--userland-proxy", "--userland-proxy-path="+filepath.Join(opts.BinDir, "slirp-docker-proxy"))
 	}
 	if opts.Verbose {
 		args = append(args,
@@ -208,93 +159,10 @@ func runWithinNetns(runInChildProcess bool) (err error) {
 	return nil
 }
 
-func runOutsideNetns() error {
-	err := ensurePrerequisites()
-	if err != nil {
-		return err
-	}
-
-	pipeR, pipeW, err := os.Pipe()
-	if err != nil {
-		return err
-	}
-	defer pipeW.Close()
-
-	slirpAPI, err := os.CreateTemp("", "slirp4netns-api")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(slirpAPI.Name())
-
-	cmd := exec.Command("/proc/self/exe", append(os.Args[1:], "child")...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig:    syscall.SIGKILL,
-		Unshareflags: syscall.CLONE_NEWNET,
-	}
-	if fds, err := strconv.Atoi(os.Getenv("LISTEN_FDS")); err == nil {
-		for i := 0; i < fds; i++ {
-			fmt.Printf("passing fd %d\n", i)
-			cmd.ExtraFiles = append(cmd.ExtraFiles, os.NewFile(uintptr(3+i), ""))
-		}
-	} else {
-		log.WithError(err).WithField("LISTEN_FDS", os.Getenv("listen_fds")).Warn("no LISTEN_FDS")
-	}
-	cmd.ExtraFiles = append(cmd.ExtraFiles, pipeR)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = append(os.Environ(),
-		"DOCKERUP_SLIRP4NETNS_SOCKET="+slirpAPI.Name(),
-	)
-
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-	sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
-	defer sigproxysignal.StopCatch(sigc)
-
-	slirpCmd := exec.Command("slirp4netns",
-		"--configure",
-		"--mtu=65520",
-		"--disable-host-loopback",
-		"--api-socket", slirpAPI.Name(),
-		strconv.Itoa(cmd.Process.Pid),
-		"tap0",
-	)
-	slirpCmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGKILL,
-	}
-	slirpCmd.Stdin = os.Stdin
-	slirpCmd.Stdout = os.Stdout
-	slirpCmd.Stderr = os.Stderr
-
-	err = slirpCmd.Start()
-	if err != nil {
-		return err
-	}
-	//nolint:errcheck
-	defer slirpCmd.Process.Kill()
-
-	_, err = msgutil.MarshalToWriter(pipeW, message{Stage: 1})
-	if err != nil {
-		return err
-	}
-	log.Debug("signalled child (stage 1)")
-
-	err = cmd.Wait()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 var prerequisites = map[string]func() error{
 	"dockerd":        installDocker,
 	"docker-compose": installDockerCompose,
 	"iptables":       installIptables,
-	"slirp4netns":    installSlirp4netns,
 }
 
 func ensurePrerequisites() error {
@@ -322,10 +190,6 @@ func ensurePrerequisites() error {
 	}
 
 	return nil
-}
-
-type message struct {
-	Stage int `json:"stage"`
 }
 
 func installDocker() error {
@@ -416,10 +280,6 @@ func installIptables() error {
 	// the container is not debian/ubuntu/alpine
 	log.WithField("command", "dockerd").Warn("Please install dockerd dependencies: iptables")
 	return nil
-}
-
-func installSlirp4netns() error {
-	return installBinary("slirp4netns", "/usr/bin/slirp4netns")
 }
 
 func installBinary(name, dst string) error {

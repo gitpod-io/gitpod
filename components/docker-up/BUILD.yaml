@@ -29,34 +29,17 @@ packages:
       - ["rmdir", "runc-facade"]
     config:
       dontTest: true
-  - name: bin-slirp-docker-proxy
-    type: go
-    srcs:
-      - go.mod
-      - go.sum
-      - "slirp-docker-proxy/**"
-    env:
-      - CGO_ENABLED=0
-      - GOOS=linux
-    prep:
-      - ["mv", "slirp-docker-proxy/main.go", "."]
-      - ["rmdir", "slirp-docker-proxy"]
-    config:
-      dontTest: true
   - name: app
     type: generic
     deps:
       - :bin-docker-up
       - :bin-runc-facade
-      - :bin-slirp-docker-proxy
     config:
       commands:
         - ["mv", "components-docker-up--bin-docker-up/docker-up", "docker-up"]
         - ["rm", "-r", "components-docker-up--bin-docker-up"]
         - ["mv", "components-docker-up--bin-runc-facade/docker-up", "runc-facade"]
         - ["rm", "-r", "components-docker-up--bin-runc-facade"]
-        - ["mv", "components-docker-up--bin-slirp-docker-proxy/docker-up", "slirp-docker-proxy"]
-        - ["rm", "-r", "components-docker-up--bin-slirp-docker-proxy"]
   - name: docker
     type: docker
     deps:
