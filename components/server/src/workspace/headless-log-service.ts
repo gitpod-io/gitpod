@@ -262,6 +262,24 @@ export class HeadlessLogService {
     }
 
     /**
+     * Streaming imagebuild logs is different to other headless workspaces (prebuilds) because we do not store them as "workspace" (incl. status, etc.), but have a special field "workspace.imageBuildInfo".
+     * @param logCtx
+     * @param logEndpoint
+     * @param sink
+     * @param aborted
+     */
+    async streamImageBuildLog(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint, sink: (chunk: string) => Promise<void>, aborted: Deferred<boolean>): Promise<void> {
+        const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
+        if (tasks.length === 0) {
+            throw new Error(`imagebuild logs: not tasks found for endpoint ${logEndpoint.url}!`);
+        }
+
+        // we're just looking at the first stream; image builds just have one stream atm
+        const task = tasks[0];
+        await this.streamWorkspaceLog(logCtx, logEndpoint, task.getTerminal(), sink, () => Promise.resolve(true), aborted);
+    }
+
+    /**
      * Retries op while the passed WorkspaceInstance is still starting. Retries are stopped if either:
      *  - `op` calls `retry(false)` and an err is thrown, it is re-thrown by this method
      *  - `aborted` resolves to `true`: `undefined` is returned

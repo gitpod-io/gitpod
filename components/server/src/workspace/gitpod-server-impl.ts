@@ -46,7 +46,7 @@ import { WorkspaceDeletionService } from './workspace-deletion-service';
 import { WorkspaceFactory } from './workspace-factory';
 import { WorkspaceStarter } from './workspace-starter';
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
-import { HeadlessLogService } from "./headless-log-service";
+import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
 import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
@@ -58,6 +58,7 @@ import { ClientMetadata } from '../websocket/websocket-connection-manager';
 import { ConfigurationService } from '../config/configuration-service';
 import { ProjectEnvVar } from '@gitpod/gitpod-protocol/src/protocol';
 import { InstallationAdminSettings } from '@gitpod/gitpod-protocol';
+import { Deferred } from '@gitpod/gitpod-protocol/lib/util/deferred';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -1112,24 +1113,87 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceWI(ctx, { workspaceId });
 
         const user = this.checkAndBlockUser("watchWorkspaceImageBuildLogs", undefined, { workspaceId });
-        const logCtx: LogContext = { userId: user.id, workspaceId };
-
-        const { instance, workspace } = await this.internGetCurrentWorkspaceInstance(ctx, workspaceId);
-        if (!this.client) {
+        const client = this.client;
+        if (!client) {
             return;
         }
+
+        const logCtx: LogContext = { userId: user.id, workspaceId };
+        let { instance, workspace } = await this.internGetCurrentWorkspaceInstance(ctx, workspaceId);
         if (!instance) {
             log.debug(logCtx, `No running instance for workspaceId.`);
             return;
         }
         traceWI(ctx, { instanceId: instance.id });
-        if (!workspace.imageNameResolved) {
-            log.debug(logCtx, `No imageNameResolved set for workspaceId, cannot watch logs.`);
-            return;
-        }
         const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace, teamMembers }, "get");
-        if (!this.client) {
+
+        // wait for up to 20s for imageBuildLogInfo to appear due to:
+        //  - db-sync round-trip times
+        //  - but also: wait until the image build actually started (image pull!), and log info is available!
+        for (let i = 0; i < 10; i++) {
+            if (instance.imageBuildInfo?.log) {
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const wsi = await this.workspaceDb.trace(ctx).findInstanceById(instance.id);
+            if (!wsi || wsi.status.phase !== 'preparing') {
+                log.debug(logCtx, `imagebuild logs: instance is not/no longer in 'preparing' state`, { phase: wsi?.status.phase });
+                return;
+            }
+            instance = wsi as WorkspaceInstance;    // help the compiler a bit
+        }
+
+        const logInfo = instance.imageBuildInfo?.log;
+        if (!logInfo) {
+            // during roll-out this is our fall-back case.
+            // Afterwards we might want to do some spinning-lock and re-check for a certain period (30s?) to give db-sync
+            // a change to move the imageBuildLogInfo across the globe.
+
+            log.warn(logCtx, "imageBuild logs: fallback!");
+            ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
+            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, workspace);
+            return;
+        }
+
+        const aborted = new Deferred<boolean>();
+        try {
+            const logEndpoint: HeadlessLogEndpoint = {
+                url: logInfo.url,
+                headers: logInfo.headers,
+            };
+            let lineCount = 0;
+            await this.headlessLogService.streamImageBuildLog(logCtx, logEndpoint, async (chunk) => {
+                if (aborted.isResolved) {
+                    return;
+                }
+
+                try {
+                    chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
+                    lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
+
+                    client.onWorkspaceImageBuildLogs(undefined as any, {
+                        text: chunk,
+                        isDiff: true,
+                        upToLine: lineCount
+                    });
+                } catch (err) {
+                    log.error("error while streaming imagebuild logs", err);
+                    aborted.resolve(true);
+                }
+            }, aborted);
+        } catch (err) {
+            log.error(logCtx, "cannot watch imagebuild logs for workspaceId", err);
+            throw new ResponseError(ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE, "cannot watch imagebuild logs for workspaceId");
+        } finally {
+            aborted.resolve(false);
+        }
+    }
+
+    protected async deprecatedDoWatchWorkspaceImageBuildLogs(ctx: TraceContext, logCtx: LogContext, workspace: Workspace) {
+        if (!workspace.imageNameResolved) {
+            log.debug(logCtx, `No imageNameResolved set for workspaceId, cannot watch logs.`);
             return;
         }
 
