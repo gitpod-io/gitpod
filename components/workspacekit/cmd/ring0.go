@@ -20,6 +20,7 @@ import (
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 )
 
 var ring0Cmd = &cobra.Command{
@@ -70,20 +71,8 @@ var ring0Cmd = &cobra.Command{
 			}
 		}()
 
-		cmd := exec.Command("/proc/self/exe", "ring1")
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS,
-		}
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Env = append(os.Environ(),
-			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
-			fmt.Sprintf("WORKSPACEKIT_FULL_WORKSPACE_BACKUP=%v", prep.FullWorkspaceBackup),
-		)
-
-		if err := cmd.Start(); err != nil {
+		cmd, err := callRing1(prep.FsShift, prep.FullWorkspaceBackup)
+		if err != nil {
 			log.WithError(err).Error("failed to start ring0")
 			return
 		}
@@ -144,6 +133,26 @@ var ring0Cmd = &cobra.Command{
 		}
 		exitCode = 0 // once we get here everythings good
 	},
+}
+
+func callRing1(fsShift daemonapi.FSShiftMethod, fullWorkSpaceBackup bool) (*exec.Cmd, error) {
+	cmd := exec.Command("/proc/self/exe", "ring1")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig:  syscall.SIGKILL,
+		Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS,
+	}
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(),
+		"WORKSPACEKIT_FSSHIFT="+fsShift.String(),
+		fmt.Sprintf("WORKSPACEKIT_FULL_WORKSPACE_BACKUP=%v", fullWorkSpaceBackup),
+	)
+	if err := cmd.Start(); err != nil {
+		return nil, xerrors.Errorf("failed to start ring0")
+	}
+
+	return cmd, nil
 }
 
 func isProcessAlreadyFinished(err error) bool {
