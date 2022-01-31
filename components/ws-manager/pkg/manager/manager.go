@@ -946,6 +946,10 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 		return nil, err
 	}
 
+	if len(endpointsList.Items) == 0 {
+		return nil, xerrors.Errorf("ws-daemon service does not exist")
+	}
+
 	// Find the ws-daemon endpoint on this node
 	var hostIP string
 	for _, pod := range endpointsList.Items {
