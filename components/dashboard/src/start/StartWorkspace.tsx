@@ -418,11 +418,29 @@ function ImageBuildView(props: ImageBuildViewProps) {
   const logsEmitter = new EventEmitter();
 
   useEffect(() => {
-    const watchBuild = () => getGitpodService().server.watchWorkspaceImageBuildLogs(props.workspaceId);
+    let registered = false;
+    const watchBuild = () => {
+      if (registered) {
+        return;
+      }
+
+      getGitpodService().server.watchWorkspaceImageBuildLogs(props.workspaceId)
+        .then(() => registered = true)
+        .catch(err => {
+
+          if (err?.code === ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE) {
+            // wait, and then retry
+            setTimeout(watchBuild, 5000);
+          }
+        })
+    }
     watchBuild();
 
     const toDispose = getGitpodService().registerClient({
-      notifyDidOpenConnection: () => watchBuild(),
+      notifyDidOpenConnection: () => {
+        registered = false; // new connection, we're not registered anymore
+        watchBuild();
+      },
       onWorkspaceImageBuildLogs: (info: WorkspaceImageBuild.StateInfo, content?: WorkspaceImageBuild.LogContent) => {
         if (!content) {
           return;
