@@ -1163,7 +1163,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getHeadlessLog(ctx: TraceContext, instanceId: string): Promise<HeadlessLogUrls> {
         traceAPIParams(ctx, { instanceId });
 
-        const user = this.checkAndBlockUser('getHeadlessLog', { instanceId });
+        this.checkAndBlockUser('getHeadlessLog', { instanceId });
+        const logCtx: LogContext = { instanceId };
 
         const ws = await this.workspaceDb.trace(ctx).findByInstanceId(instanceId);
         if (!ws) {
@@ -1180,7 +1181,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace instance for ${instanceId} not found`);
         }
 
-        const urls = await this.headlessLogService.getHeadlessLogURLs(user.id, wsi, ws.ownerId);
+        const urls = await this.headlessLogService.getHeadlessLogURLs(logCtx, wsi, ws.ownerId);
         if (!urls || (typeof urls.streams === "object" && Object.keys(urls.streams).length === 0)) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
