@@ -928,17 +928,13 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 		return nil, xerrors.Errorf("no nodeName found")
 	}
 
-	// Get all the ws-daemon endpoints (headless)
-	// NOTE: we could do a DNS lookup but currently keeping it k8s-centric
-	// to allow for transitioning to the newer service topology support.
-	// Also the Clientset is cache-enabled so we can leverage that.
-	var endpointsList corev1.EndpointsList
-	err = m.Clientset.List(ctx, &endpointsList,
+	var podList corev1.PodList
+	err = m.Clientset.List(ctx, &podList,
 		&client.ListOptions{
 			Namespace: m.Config.Namespace,
 			LabelSelector: labels.SelectorFromSet(labels.Set{
 				"component": "ws-daemon",
-				"kind":      "service",
+				"app":       "gitpod",
 			}),
 		},
 	)
@@ -946,21 +942,17 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 		return nil, err
 	}
 
-	// Find the ws-daemon endpoint on this node
+	// find the ws-daemon on this node
 	var hostIP string
-	for _, pod := range endpointsList.Items {
-		for _, subset := range pod.Subsets {
-			for _, endpointAddress := range subset.Addresses {
-				if endpointAddress.NodeName != nil && strings.Compare(nodeName, *endpointAddress.NodeName) == 0 {
-					hostIP = endpointAddress.IP
-					break
-				}
-			}
+	for _, pod := range podList.Items {
+		if pod.Spec.NodeName == nodeName {
+			hostIP = pod.Status.PodIP
+			break
 		}
 	}
 
 	if hostIP == "" {
-		return nil, xerrors.Errorf("cannot connect to ws-daemon: pod has no matching endpoint")
+		return nil, xerrors.Errorf("no running ws-daemon pod found")
 	}
 	conn, err := m.wsdaemonPool.Get(hostIP)
 	if err != nil {
@@ -1015,28 +1007,24 @@ func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Fa
 
 func checkWSDaemonEndpoint(namespace string, clientset client.Client) func(string) bool {
 	return func(address string) bool {
-		var endpointsList corev1.EndpointsList
-		err := clientset.List(context.Background(), &endpointsList,
+		var podList corev1.PodList
+		err := clientset.List(context.Background(), &podList,
 			&client.ListOptions{
 				Namespace: namespace,
 				LabelSelector: labels.SelectorFromSet(labels.Set{
 					"component": "ws-daemon",
-					"kind":      "service",
+					"app":       "gitpod",
 				}),
 			},
 		)
 		if err != nil {
-			log.WithError(err).Error("cannot list ws-daemon endpoints")
+			log.WithError(err).Error("cannot list ws-daemon pods")
 			return false
 		}
 
-		for _, endpoints := range endpointsList.Items {
-			for _, subset := range endpoints.Subsets {
-				for _, endpointAddress := range subset.Addresses {
-					if address == endpointAddress.IP {
-						return true
-					}
-				}
+		for _, pod := range podList.Items {
+			if pod.Status.PodIP == address {
+				return true
 			}
 		}
 
