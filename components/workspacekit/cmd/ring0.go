@@ -48,6 +48,7 @@ var ring0Cmd = &cobra.Command{
 		prep, err := client.PrepareForUserNS(ctx, &daemonapi.PrepareForUserNSRequest{})
 		if err != nil {
 			log.WithError(err).Fatal("cannot prepare for user namespaces")
+			client.Close()
 			return
 		}
 		client.Close()
