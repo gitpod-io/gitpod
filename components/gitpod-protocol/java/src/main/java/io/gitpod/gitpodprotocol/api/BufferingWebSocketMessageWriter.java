@@ -19,6 +19,9 @@ import java.util.logging.Logger;
 
 public class BufferingWebSocketMessageWriter implements MessageConsumer {
 
+    private static final Integer MAX_OUTGOING_PAYLOAD_SIZE = 64 * 1024; // 64kb
+    private static final Integer MAX_INCOMING_PAYLOAD_SIZE = 100 * 1024 * 1024; // 100 Mb
+
     private static final Logger LOG = Logger.getLogger(BufferingWebSocketMessageWriter.class.getName());
 
     private Session session;
@@ -31,6 +34,7 @@ public class BufferingWebSocketMessageWriter implements MessageConsumer {
     }
 
     public synchronized void setSession(Session session) {
+        session.setMaxTextMessageBufferSize(MAX_INCOMING_PAYLOAD_SIZE);
         this.session = session;
         if (this.buffer.isEmpty()) {
             return;
@@ -54,12 +58,12 @@ public class BufferingWebSocketMessageWriter implements MessageConsumer {
         }
         try {
             int length = msg.length();
-            if (length <= session.getMaxTextMessageBufferSize()) {
+            if (length <= MAX_OUTGOING_PAYLOAD_SIZE) {
                 session.getBasicRemote().sendText(msg);
             } else {
                 int currentOffset = 0;
                 while (currentOffset < length) {
-                    int currentEnd = Math.min(currentOffset + session.getMaxTextMessageBufferSize(), length);
+                    int currentEnd = Math.min(currentOffset + MAX_OUTGOING_PAYLOAD_SIZE, length);
                     session.getBasicRemote().sendText(msg.substring(currentOffset, currentEnd), currentEnd == length);
                     currentOffset = currentEnd;
                 }
