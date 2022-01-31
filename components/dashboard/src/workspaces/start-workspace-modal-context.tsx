@@ -34,4 +34,4 @@ export const StartWorkspaceModalContextProvider: React.FC = ({ children }) => {
     </StartWorkspaceModalContext.Provider>;
 }
 
-export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? '⌘' : 'Ctrl+'}O`;
+export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? '⌘' : 'Ctrl﹢'}O`;
