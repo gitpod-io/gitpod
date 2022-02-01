@@ -62,6 +62,7 @@ func getConfig() *config.Config {
 	if err != nil {
 		log.WithError(err).Fatal("cannot decode configuration. Maybe missing --config?")
 	}
+	log.Debug("bla")
 
 	return &cfg
 }
