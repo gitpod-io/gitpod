@@ -305,6 +305,7 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 	var preferredTerms []corev1.PreferredSchedulingTerm
 	for _, lbl := range orLabels {
 		preferredTerms = append(preferredTerms, corev1.PreferredSchedulingTerm{
+			Weight: 100,
 			Preference: corev1.NodeSelectorTerm{
 				MatchExpressions: []corev1.NodeSelectorRequirement{
 					{
