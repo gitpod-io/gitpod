@@ -302,9 +302,14 @@ fi
 		RestartPolicy:                 "Always",
 		TerminationGracePeriodSeconds: pointer.Int64(30),
 		DNSPolicy:                     "ClusterFirst",
-		ServiceAccountName:            Component,
-		HostPID:                       true,
-		Affinity:                      common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+		DNSConfig: &corev1.PodDNSConfig{
+			Options: []corev1.PodDNSConfigOption{{
+				Name: "single-request-reopen",
+			}},
+		},
+		ServiceAccountName: Component,
+		HostPID:            true,
+		Affinity:           common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 		Tolerations: []corev1.Toleration{
 			{
 				Key:      "node.kubernetes.io/disk-pressure",

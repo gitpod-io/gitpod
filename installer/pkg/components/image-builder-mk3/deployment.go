@@ -6,6 +6,7 @@ package image_builder_mk3
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -79,10 +80,15 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
-					ServiceAccountName:            Component,
-					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
+					Affinity:           common.Affinity(cluster.AffinityLabelMeta),
+					ServiceAccountName: Component,
+					EnableServiceLinks: pointer.Bool(false),
+					DNSPolicy:          "ClusterFirst",
+					DNSConfig: &corev1.PodDNSConfig{
+						Options: []corev1.PodDNSConfigOption{{
+							Name: "single-request-reopen",
+						}},
+					},
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Volumes: append([]corev1.Volume{

@@ -6,6 +6,7 @@ package wsmanagerbridge
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
@@ -64,11 +65,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
-						ServiceAccountName:            Component,
-						PriorityClassName:             common.SystemNodeCritical,
-						EnableServiceLinks:            pointer.Bool(false),
-						DNSPolicy:                     "ClusterFirst",
+						Affinity:           common.Affinity(cluster.AffinityLabelMeta),
+						ServiceAccountName: Component,
+						PriorityClassName:  common.SystemNodeCritical,
+						EnableServiceLinks: pointer.Bool(false),
+						DNSPolicy:          "ClusterFirst",
+						DNSConfig: &corev1.PodDNSConfig{
+							Options: []corev1.PodDNSConfigOption{{
+								Name: "single-request-reopen",
+							}},
+						},
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						Volumes: []corev1.Volume{{

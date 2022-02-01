@@ -89,11 +89,16 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Spec: corev1.PodSpec{
-					PriorityClassName:             common.SystemNodeCritical,
-					Affinity:                      common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
-					ServiceAccountName:            Component,
-					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
+					PriorityClassName:  common.SystemNodeCritical,
+					Affinity:           common.Affinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+					ServiceAccountName: Component,
+					EnableServiceLinks: pointer.Bool(false),
+					DNSPolicy:          "ClusterFirst",
+					DNSConfig: &corev1.PodDNSConfig{
+						Options: []corev1.PodDNSConfigOption{{
+							Name: "single-request-reopen",
+						}},
+					},
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					InitContainers: []corev1.Container{

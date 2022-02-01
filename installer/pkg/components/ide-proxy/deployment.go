@@ -40,10 +40,15 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Labels:    labels,
 					},
 					Spec: corev1.PodSpec{
-						Affinity:                      common.Affinity(cluster.AffinityLabelMeta),
-						ServiceAccountName:            Component,
-						EnableServiceLinks:            pointer.Bool(false),
-						DNSPolicy:                     "ClusterFirst",
+						Affinity:           common.Affinity(cluster.AffinityLabelMeta),
+						ServiceAccountName: Component,
+						EnableServiceLinks: pointer.Bool(false),
+						DNSPolicy:          "ClusterFirst",
+						DNSConfig: &corev1.PodDNSConfig{
+							Options: []corev1.PodDNSConfigOption{{
+								Name: "single-request-reopen",
+							}},
+						},
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						Containers: []corev1.Container{{

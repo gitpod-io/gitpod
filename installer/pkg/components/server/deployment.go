@@ -104,6 +104,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						PriorityClassName:  common.SystemNodeCritical,
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
+						DNSConfig: &corev1.PodDNSConfig{
+							Options: []corev1.PodDNSConfigOption{{
+								Name: "single-request-reopen",
+							}},
+						},
 						// todo(sje): conditionally add github-app-cert-secret in
 						// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 						Volumes: append(

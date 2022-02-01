@@ -28,6 +28,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PriorityClassName:  common.SystemNodeCritical,
 		Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
 		EnableServiceLinks: pointer.Bool(false),
+		DNSConfig: &corev1.PodDNSConfig{
+			Options: []corev1.PodDNSConfigOption{{
+				Name: "single-request-reopen",
+			}},
+		},
 		ServiceAccountName: Component,
 		SecurityContext: &corev1.PodSecurityContext{
 			RunAsUser: pointer.Int64(31002),

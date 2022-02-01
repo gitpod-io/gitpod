@@ -74,6 +74,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
+						DNSConfig: &corev1.PodDNSConfig{
+							Options: []corev1.PodDNSConfigOption{{
+								Name: "single-request-reopen",
+							}},
+						},
 						Volumes: []corev1.Volume{{
 							Name:         "cache",
 							VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
