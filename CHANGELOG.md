@@ -1,6 +1,10 @@
 # Change Log
 
 ## January 2022
+- Fix integration tests ([#7827](https://github.com/gitpod-io/gitpod/pull/7827)) - [@kylos101](https://github.com/kylos101), [@sagor999](https://github.com/sagor999)
+- [server] Ensure incremental prebuilds always use the latest config ([#7805](https://github.com/gitpod-io/gitpod/pull/7805)) - [@jankeromnes](https://github.com/jankeromnes)
+- [dashboard][server] Make Project overview page load faster by pre-fetching and caching Git provider data (branch details) ([#7610](https://github.com/gitpod-io/gitpod/pull/7610)) - [@jankeromnes](https://github.com/jankeromnes)
+- Add metric for tracking failed manifest requests from registry-facade ([#7905](https://github.com/gitpod-io/gitpod/pull/7905)) - [@sagor999](https://github.com/sagor999)
 - [Installer]: release 2022.01 ([#7873](https://github.com/gitpod-io/gitpod/pull/7873)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - - Refactor JB integration to connect over SSH instead of CWM links. ([#7362](https://github.com/gitpod-io/gitpod/pull/7362)) - [@akosyakov](https://github.com/akosyakov)
 - - Provide Gitpod integration in JB Gateway. ([#7362](https://github.com/gitpod-io/gitpod/pull/7362)) - [@akosyakov](https://github.com/akosyakov)
