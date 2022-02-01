@@ -375,6 +375,16 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	dnsConfig := &corev1.PodDNSConfig{
+		Options: []corev1.PodDNSConfigOption{
+			{
+				// this ensures that A and AAAA dns requests will use different ports
+				// and bypass conntrack race issue that causes one of requests to timeout
+				Name: "single-request-reopen",
+			},
+		},
+	}
+
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -389,6 +399,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			ServiceAccountName:           "workspace",
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
+			DNSConfig:                    dnsConfig,
 			Affinity:                     affinity,
 			Containers: []corev1.Container{
 				*workspaceContainer,

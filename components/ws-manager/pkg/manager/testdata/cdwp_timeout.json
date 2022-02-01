@@ -1,4 +1,11 @@
 {
+    "dnsConfig": {
+        "options": [
+            {
+                "name": "single-request-reopen"
+            }
+        ]
+    },
     "spec": {
         "ideImage": {
             "webRef": "eu.gcr.io/gitpod-core-dev/buid/theia-ide:someversion"

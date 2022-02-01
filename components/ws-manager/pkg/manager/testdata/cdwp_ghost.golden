@@ -238,6 +238,13 @@
                     "tolerationSeconds": 30
                 }
             ],
+            "dnsConfig": {
+                "options": [
+                    {
+                        "name": "single-request-reopen"
+                    }
+                ]
+            },
             "enableServiceLinks": false
         },
         "status": {}
