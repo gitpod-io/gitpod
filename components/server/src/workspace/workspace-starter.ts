@@ -34,6 +34,7 @@ import { IDEConfig, IDEConfigService } from "../ide-config";
 import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
 import { WithReferrerContext } from "@gitpod/gitpod-protocol/lib/protocol";
 import { IDEOption } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -173,10 +174,16 @@ export class WorkspaceStarter {
             startRequest.setSpec(spec);
             startRequest.setServicePrefix(workspace.id);
 
+            // we add additional information to the user to help with cluster selection
+            const euser: ExtendedUser = {
+                ...user,
+                getsMoreResources: await this.userService.userGetsMoreResources(user),
+            }
+
             // tell the world we're starting this instance
             let resp: StartWorkspaceResponse.AsObject | undefined;
             let lastInstallation = "";
-            const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance);
+            const clusters = await this.clientProvider.getStartClusterSets(euser, workspace, instance);
             for await (let cluster of clusters) {
                 try {
                     // getStartManager will throw an exception if there's no cluster available and hence exit the loop
