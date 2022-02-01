@@ -216,7 +216,7 @@ func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reade
 	for _, mod := range modifications {
 		err := b.modifyFile(name, mod.Path, mod.Modifier)
 		if err != nil {
-			return xerrors.Errorf("cannot modify blob %s: %w", mod.Path, err)
+			log.WithField("path", mod.Path).WithError(err).Error("Blobspace::AddFromTar error while trying to modify file")
 		}
 	}
 
