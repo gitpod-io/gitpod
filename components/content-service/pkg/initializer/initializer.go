@@ -490,29 +490,29 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 	gitpodDir := filepath.Join(wspath, filepath.Dir(WorkspaceReadyFile))
 	err = os.MkdirAll(gitpodDir, 0777)
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace ready file: %w", err)
+		return xerrors.Errorf("cannot create directory for workspace ready file: %w", err)
 	}
 	err = os.Chown(gitpodDir, uid, gid)
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace-ready file: %w", err)
+		return xerrors.Errorf("cannot chown directory for workspace ready file: %w", err)
 	}
 
 	tempWorkspaceReadyFile := WorkspaceReadyFile + ".tmp"
 	fn := filepath.Join(wspath, tempWorkspaceReadyFile)
 	err = os.WriteFile(fn, []byte(fc), 0644)
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace ready file: %w", err)
+		return xerrors.Errorf("cannot write workspace ready file content: %w", err)
 	}
 	err = os.Chown(fn, uid, gid)
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace ready file: %w", err)
+		return xerrors.Errorf("cannot chown workspace ready file: %w", err)
 	}
 
 	// Theia will listen for a rename event as trigger to start the tasks. This is a rename event
 	// because we're writing to the file and this is the most convenient way we can tell Theia that we're done writing.
 	err = os.Rename(fn, filepath.Join(wspath, WorkspaceReadyFile))
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace ready file: %w", err)
+		return xerrors.Errorf("cannot rename workspace ready file: %w", err)
 	}
 
 	return nil
