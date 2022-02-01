@@ -167,6 +167,7 @@ export class Authenticator {
             await this.userService.deauthorize(user, authProvider.authProviderId);
             res.redirect(returnTo);
         } catch (error) {
+            next(error);
             log.error({ sessionId: req.sessionID }, `Failed to disconnect a provider.`, error, { req, host, userId: user.id });
             res.redirect(this.getSorryUrl(`Failed to disconnect a provider: ${ error && error.message ? error.message : "unknown reason"}`));
         }
