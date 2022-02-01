@@ -58,7 +58,7 @@ func main() {
 		link := url.URL{
 			Scheme:   "jetbrains-gateway",
 			Host:     "connect",
-			RawQuery: fmt.Sprintf("gitpodHost=%s&workspaceId=%s", url.QueryEscape(gitpodUrl.Hostname()), url.QueryEscape(wsInfo.WorkspaceId)),
+			Fragment: fmt.Sprintf("gitpodHost=%s&workspaceId=%s", gitpodUrl.Hostname(), wsInfo.WorkspaceId),
 		}
 		response := make(map[string]string)
 		response["link"] = link.String()
