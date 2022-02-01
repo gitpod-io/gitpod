@@ -120,7 +120,7 @@ export function ProjectsSearch() {
                         <div className="font-medium text-gray-800 dark:text-gray-100 truncate">{p.project.name}</div>
                     </div>
                     <div className="flex flex-col w-6/12 truncate">
-                        <div className="font-medium text-gray-800 dark:text-gray-100 truncate">{p.project.cloneUrl}</div>
+                        <div className="text-gray-500 dark:text-gray-100 truncate">{p.project.cloneUrl}</div>
                     </div>
                     <div className="flex w-2/12 self-center">
                         <div className="text-sm w-full text-gray-400 truncate">{moment(p.project.creationTime).fromNow()}</div>
