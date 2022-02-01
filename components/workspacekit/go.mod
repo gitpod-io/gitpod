@@ -2,15 +2,13 @@ module github.com/gitpod-io/gitpod/workspacekit
 
 go 1.17
 
-replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-golang v0.9.2-0.20201113182948-883917843313
-
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.6
 	github.com/moby/sys/mountinfo v0.4.0
 	github.com/rootless-containers/rootlesskit v0.11.1
-	github.com/seccomp/libseccomp-golang v0.9.1
+	github.com/seccomp/libseccomp-golang v0.9.2-0.20220128023657-2a7184820543
 	github.com/spf13/cobra v1.1.3
 	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
