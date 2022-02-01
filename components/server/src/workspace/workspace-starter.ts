@@ -175,12 +175,12 @@ export class WorkspaceStarter {
 
             // tell the world we're starting this instance
             let resp: StartWorkspaceResponse.AsObject | undefined;
-            let exceptInstallation: string[] = [];
             let lastInstallation = "";
-            for (let i = 0; i < 5; i++) {
+            const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance);
+            for await (let cluster of clusters) {
                 try {
                     // getStartManager will throw an exception if there's no cluster available and hence exit the loop
-                    const { manager, installation } = await this.clientProvider.getStartManager(user, workspace, instance, exceptInstallation);
+                    const { manager, installation } = cluster;
                     lastInstallation = installation;
 
                     instance.status.phase = "pending";
@@ -202,7 +202,6 @@ export class WorkspaceStarter {
                 } catch (err: any) {
                     if ('code' in err && err.code !== grpc.status.OK && lastInstallation !== "") {
                         log.error({ instanceId: instance.id }, "cannot start workspace on cluster, might retry", err, { cluster: lastInstallation });
-                        exceptInstallation.push(lastInstallation);
                     } else {
                         throw err;
                     }
