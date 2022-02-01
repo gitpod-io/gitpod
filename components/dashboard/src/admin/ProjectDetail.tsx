@@ -18,7 +18,7 @@ export default function ProjectDetail(props: { project: Project, owner: string |
                 <p>{props.project.cloneUrl}</p>
             </div>
         </div>
-        <div className="flex flex-col w-full -ml-3">
+        <div className="flex flex-col w-full">
             <div className="flex w-full mt-6">
                 <Property name="Created">{moment(props.project.creationTime).format('MMM D, YYYY')}</Property>
                 <Property name="Repository"><a className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400 truncate" href={props.project.cloneUrl}>{props.project.name}</a></Property>
