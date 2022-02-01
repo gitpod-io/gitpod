@@ -14,6 +14,9 @@ pod:
   - name: monitoring-satellite-preview-token
     secret:
       secretName: monitoring-satellite-preview-token
+  - name: monitoring-satellite-stackdriver-credentials
+    secret:
+      secretName: monitoring-satellite-stackdriver-credentials
   - name: gcp-sa
     secret:
       secretName: gcp-sa-gitpod-dev-deployer
@@ -66,6 +69,8 @@ pod:
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
+    - name: monitoring-satellite-stackdriver-credentials
+      mountPath: /mnt/secrets/monitoring-satellite-stackdriver-credentials
     - name: monitoring-satellite-preview-token
       mountPath: /mnt/secrets/monitoring-satellite-preview-token
     - name: gcp-sa

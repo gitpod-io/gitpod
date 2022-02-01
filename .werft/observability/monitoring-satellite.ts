@@ -13,6 +13,7 @@ import * as fs from 'fs';
     nodeExporterPort: number
     branch: string
     previewDomain: string
+    stackdriverServiceAccount: any
     withVM: boolean
 }
 
@@ -23,6 +24,7 @@ const sliceName = 'observability';
  */
 export async function installMonitoringSatellite(params: InstallMonitoringSatelliteParams) {
     const werft = getGlobalWerftInstance()
+
     werft.log(sliceName, `Cloning observability repository - Branch: ${params.branch}`)
     exec(`git clone --branch ${params.branch} https://roboquat:$(cat /mnt/secrets/monitoring-satellite-preview-token/token)@github.com/gitpod-io/observability.git`, {silent: true})
     let currentCommit = exec(`git rev-parse HEAD`, {silent: true}).stdout.trim()
@@ -51,6 +53,11 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
             nodeExporterPort: ${params.nodeExporterPort},
         },
         ${params.withVM ? '' : "nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"  }
+        stackdriver: {
+            defaultProject: '${params.stackdriverServiceAccount.project_id}',
+            clientEmail: '${params.stackdriverServiceAccount.client_email}',
+            privateKey: '${params.stackdriverServiceAccount.private_key}',
+        },
     }" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
     find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
