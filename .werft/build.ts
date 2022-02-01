@@ -22,6 +22,7 @@ let werft: Werft
 const readDir = util.promisify(fs.readdir)
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
+const STACKDRIVER_SERVICEACCOUNT = JSON.parse(fs.readFileSync(`/mnt/secrets/monitoring-satellite-stackdriver-credentials/credentials.json`, 'utf8'));
 
 // used by both deploys (helm and Installer)
 const PROXY_SECRET_NAME = "proxy-config-certificates";
@@ -348,7 +349,7 @@ export async function build(context, version) {
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
 
         issueMetaCerts(PROXY_SECRET_NAME, "default", domain, withVM)
-        installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, true);
+        installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, true);
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
@@ -769,7 +770,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     observabilityStaticChecks()
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
-        await installMonitoring(namespace, nodeExporterPort, monitoringDomain, false);
+        await installMonitoring(namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false);
     } else {
         exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
         exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
@@ -972,7 +973,7 @@ async function installMetaCertificates(namespace: string) {
     await installCertficate(werft, metaInstallCertParams, metaEnv());
 }
 
-async function installMonitoring(namespace, nodeExporterPort, domain, withVM) {
+async function installMonitoring(namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean) {
     const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
     installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "main";
     installMonitoringSatelliteParams.pathToKubeConfig = ""
@@ -980,6 +981,7 @@ async function installMonitoring(namespace, nodeExporterPort, domain, withVM) {
     installMonitoringSatelliteParams.clusterName = namespace
     installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
     installMonitoringSatelliteParams.previewDomain = domain
+    installMonitoringSatelliteParams.stackdriverServiceAccount = stackdriverServiceAccount
     installMonitoringSatelliteParams.withVM = withVM
     installMonitoringSatellite(installMonitoringSatelliteParams);
 }
