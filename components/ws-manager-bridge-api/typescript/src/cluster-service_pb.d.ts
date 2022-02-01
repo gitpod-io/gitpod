@@ -138,6 +138,11 @@ export class AdmissionConstraint extends jspb.Message {
     getHasUserLevel(): string;
     setHasUserLevel(value: string): AdmissionConstraint;
 
+    hasHasMoreResources(): boolean;
+    clearHasMoreResources(): void;
+    getHasMoreResources(): boolean;
+    setHasMoreResources(value: boolean): AdmissionConstraint;
+
     getConstraintCase(): AdmissionConstraint.ConstraintCase;
 
     serializeBinary(): Uint8Array;
@@ -155,6 +160,7 @@ export namespace AdmissionConstraint {
         hasFeaturePreview?: AdmissionConstraint.FeaturePreview.AsObject,
         hasPermission?: AdmissionConstraint.HasPermission.AsObject,
         hasUserLevel: string,
+        hasMoreResources: boolean,
     }
 
 
@@ -201,6 +207,7 @@ export namespace AdmissionConstraint {
         HAS_FEATURE_PREVIEW = 1,
         HAS_PERMISSION = 2,
         HAS_USER_LEVEL = 3,
+        HAS_MORE_RESOURCES = 4,
     }
 
 }

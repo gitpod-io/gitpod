@@ -7,7 +7,7 @@
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel, AdmissionConstraintHasMoreResources } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -188,6 +188,8 @@ export class ClusterService implements IClusterServiceServer {
                                         if (v.level === (c as AdmissionConstraintHasUserLevel).level) {
                                             return false;
                                         }
+                                    case "has-more-resources":
+                                        return false;
                                 }
                                 return true;
                             })
@@ -288,6 +290,8 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 break;
             case "has-user-level":
                 constraint.setHasUserLevel(c.level);
+            case "has-more-resources":
+                constraint.setHasMoreResources(true);
             default:
                 return;
         }
@@ -318,6 +322,9 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
             return;
         }
         return <AdmissionConstraintHasUserLevel>{type: "has-user-level", level };
+    }
+    if (c.hasHasMoreResources()) {
+        return <AdmissionConstraintHasMoreResources>{type: "has-more-resources"};
     }
     return;
 }

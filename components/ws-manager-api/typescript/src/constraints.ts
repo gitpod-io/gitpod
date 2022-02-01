@@ -13,6 +13,7 @@ import { WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-clu
  */
 export interface ExtendedUser extends User  {
     level?: string;
+    getsMoreResources?: boolean;
 }
 
 export interface WorkspaceClusterConstraintSet {
@@ -39,11 +40,11 @@ export const workspaceClusterSets: WorkspaceClusterConstraintSet[] = [
             )
     },
     {
-        name: "regional reguilar",
+        name: "regional regular",
         constraint:
             intersect(
                 constraintRegional,
-                invert(constraintMoreResources),
+                constraintInverseMoreResources,
                 constraintInverseNewWorkspaceCluster
             )
     },
@@ -60,12 +61,8 @@ export const workspaceClusterSets: WorkspaceClusterConstraintSet[] = [
         name: "non-regional non-paying",
         constraint:
             intersect(
-                invert(
-                    intersect(
-                        constraintRegional,
-                        constraintMoreResources,
-                    )
-                ),
+                invert(constraintRegional),
+                constraintInverseMoreResources,
                 constraintInverseNewWorkspaceCluster
             )
     },
@@ -112,7 +109,16 @@ export function constraintRegional(all: WorkspaceClusterWoTLS[], user: ExtendedU
     return [];
 }
 
+export function constraintInverseMoreResources(all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance): WorkspaceClusterWoTLS[] {
+    return all.filter(cluster => !cluster.admissionConstraints?.find(constraint => constraint.type === "has-more-resources"));
+}
+
 export function constraintMoreResources(all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance): WorkspaceClusterWoTLS[] {
-    // TODO(cw): implement me
-    return [];
+    if (!user.getsMoreResources) {
+        // if the user does not get more resources, we don't have to go and find any
+        // which carry this constraint - the user would not be able to access it anyways.
+        return [];
+    }
+
+    return all.filter(cluster => !!cluster.admissionConstraints?.find(constraint => constraint.type === "has-more-resources"));
 }

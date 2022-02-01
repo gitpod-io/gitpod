@@ -14,7 +14,7 @@ import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientPr
 import { WorkspaceCluster, WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { PromisifiedWorkspaceManagerClient } from ".";
-import { Constraint, constraintNewWorkspaceCluster, ExtendedUser, intersect, invert } from "./constraints";
+import { Constraint, constraintInverseMoreResources, constraintMoreResources, constraintNewWorkspaceCluster, ExtendedUser, intersect, invert } from "./constraints";
 const expect = chai.expect;
 
 @suite
@@ -88,6 +88,18 @@ class TestClientProvider {
         ]
         expect(constraintNewWorkspaceCluster(clusters, {} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name)).to.be.empty;
         expect(constraintNewWorkspaceCluster(clusters, {rolesOrPermissions:["new-workspace-cluster"]} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name)).to.be.eql(["a1"]);
+    }
+
+    @test
+    public testConstraintHasMoreResources() {
+        const clusters: WorkspaceClusterWoTLS[] = [
+            {name: "a1", admissionConstraints: [{ type: "has-more-resources" }]} as WorkspaceClusterWoTLS,
+            {name: "b1" } as WorkspaceClusterWoTLS,
+        ]
+        expect(constraintMoreResources(clusters, {} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "gets no more resources").to.be.empty;
+        expect(constraintMoreResources(clusters, {getsMoreResources: true} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "gets more resources").to.be.eql(["a1"]);
+        expect(constraintInverseMoreResources(clusters, {} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "inverse more resources").to.be.eql(["b1"]);
+        expect(constraintInverseMoreResources(clusters, {getsMoreResources: true} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "inverse more resources").to.be.eql(["b1"]);
     }
 
     private async expectInstallations(expected: string[], actual: IWorkspaceClusterStartSet, msg: string) {
