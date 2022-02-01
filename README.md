@@ -71,7 +71,7 @@ You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/is
 We work with quarterly roadmaps in autonomous product teams.
 
  - [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
- - [Product Roadmap](https://github.com/gitpod-io/roadmap)
+ - [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
 
 ## Related Projects
 
