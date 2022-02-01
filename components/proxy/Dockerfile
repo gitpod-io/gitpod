@@ -4,7 +4,7 @@
 
 FROM golang:1.17 as builder
 
-RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.2.0/xcaddy_0.2.0_linux_amd64.tar.gz \
+RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.2.0/xcaddy_0.2.0_linux_$(dpkg --print-architecture).tar.gz \
   | tar -xzv -C /usr/local/bin/ xcaddy
 
 WORKDIR /plugins

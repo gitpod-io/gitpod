@@ -8,7 +8,7 @@ WORKDIR /app
 RUN /installer/install.sh
 
 FROM node:16.13.0 as proxy
-RUN wget https://storage.googleapis.com/cloudsql-proxy/v1.23.0/cloud_sql_proxy.linux.amd64 -O /bin/cloud_sql_proxy \
+RUN wget https://storage.googleapis.com/cloudsql-proxy/v1.23.0/cloud_sql_proxy.linux.$(dpkg --print-architecture) -O /bin/cloud_sql_proxy \
  && chmod +x /bin/cloud_sql_proxy
 
 FROM node:16.13.0-slim

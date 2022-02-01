@@ -18,7 +18,7 @@ RUN find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '
 
 COPY components-gitpod-protocol--gitpod-schema/gitpod-schema.json /www/static/schemas/gitpod-schema.json
 
-FROM caddy/caddy:2.4.0-alpine
+FROM caddy:2.4.0-alpine
 
 COPY components-dashboard--static/conf/Caddyfile /etc/caddy/Caddyfile
 COPY --from=compress /www /www

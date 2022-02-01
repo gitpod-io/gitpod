@@ -21,7 +21,18 @@ WORKDIR /gp-code
 RUN yarn --frozen-lockfile --network-timeout 180000
 RUN yarn --cwd ./extensions compile
 RUN yarn gulp vscode-web-min
-RUN yarn gulp vscode-reh-linux-x64-min
+RUN arch="$(uname -m)"; \
+    case "$arch" in \
+        'x86_64') \
+            yarn gulp vscode-reh-linux-x64-min \
+            && mv /vscode-reh-linux-x64 /vscode-reh-linux \
+            ;; \
+        'aarch64') \
+            yarn gulp vscode-reh-linux-arm64-min \
+            && mv /vscode-reh-linux-arm64 /vscode-reh-linux \
+            ;; \
+        *) echo >&2 "error: unsupported architecture '$arch'"; exit 1 ;; \
+    esac;
 
 # config for first layer needed by blobserve
 # we also remove `static/` from resource urls as that's needed by blobserve,
@@ -36,12 +47,12 @@ COPY bin /ide/bin
 RUN chmod -R ugo+x /ide/bin
 
 # grant write permissions for built-in extensions
-RUN chmod -R ugo+w /vscode-reh-linux-x64/extensions
+RUN chmod -R ugo+w /vscode-reh-linux/extensions
 
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
 COPY --from=code_installer --chown=33333:33333 /vscode-web/ /ide/
-COPY --from=code_installer --chown=33333:33333 /vscode-reh-linux-x64/ /ide/
+COPY --from=code_installer --chown=33333:33333 /vscode-reh-linux/ /ide/
 COPY --chown=33333:33333 startup.sh supervisor-ide-config.json /ide/
 
 COPY --from=code_installer --chown=33333:33333 /ide/bin /ide/bin/remote-cli

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -137,13 +138,13 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 
 	var dgst digest.Digest
 	for _, mf := range mfl.Manifests {
-		if fmt.Sprintf("%s-%s", mf.Platform.OS, mf.Platform.Architecture) == "linux-amd64" {
+		if fmt.Sprintf("%s-%s", mf.Platform.OS, mf.Platform.Architecture) == fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH) {
 			dgst = mf.Digest
 			break
 		}
 	}
 	if dgst == "" {
-		return "", fmt.Errorf("no manifest for platform linux-amd64 found")
+		return "", fmt.Errorf("no manifest for platform %s found", fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH))
 	}
 
 	pref, err = reference.WithDigest(pref, dgst)

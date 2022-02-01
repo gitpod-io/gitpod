@@ -19,7 +19,7 @@ RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
 done
 
 
-FROM caddy/caddy:2.4.6-alpine
+FROM caddy:2.4.6-alpine
 
 COPY conf/Caddyfile /etc/caddy/Caddyfile
 COPY static /www/

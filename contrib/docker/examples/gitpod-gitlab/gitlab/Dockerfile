@@ -3,8 +3,7 @@
 
 FROM rancher/k3s:v1.21.2-k3s1
 
-ADD https://github.com/krallin/tini/releases/download/v0.19.0/tini-static /tini
-RUN chmod +x /tini
+RUN apk add --no-cache tini
 
 VOLUME /var/gitlab/gitaly
 VOLUME /var/gitlab/minio
@@ -18,4 +17,4 @@ COPY persistent-volumes.yaml /var/lib/rancher/k3s/server/manifests/
 
 COPY entrypoint.sh /entrypoint
 
-ENTRYPOINT [ "/tini", "-g", "--", "/entrypoint" ]
+ENTRYPOINT [ "/sbin/tini", "-g", "--", "/entrypoint" ]

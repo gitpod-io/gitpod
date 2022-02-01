@@ -3,11 +3,23 @@
 
 FROM rancher/k3s:v1.21.2-k3s1
 
-ADD https://github.com/krallin/tini/releases/download/v0.19.0/tini-static /tini
-RUN chmod +x /tini
+RUN apk add --no-cache tini
 
-ADD https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64 /bin/yq
-RUN chmod +x /bin/yq
+ADD https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_arm64 /bin/yq-arm64
+RUN chmod +x /bin/yq-arm64
+ADD https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64 /bin/yq-amd64
+RUN chmod +x /bin/yq-amd64
+
+RUN arch="$(uname -m)"; \
+	case "$arch" in \
+		'x86_64') \
+			mv /bin/yq-amd64 /bin/yq \
+			;; \
+		'aarch64') \
+			mv /bin/yq-arm64 /bin/yq \
+			;; \
+		*) echo >&2 "error: unsupported architecture '$arch'"; exit 1 ;; \
+	esac;
 
 VOLUME /var/gitpod/docker
 VOLUME /var/gitpod/docker-registry
@@ -22,4 +34,4 @@ COPY chart--helm/gitpod /chart
 
 COPY entrypoint.sh /entrypoint
 
-ENTRYPOINT [ "/tini", "-g", "--", "/entrypoint" ]
+ENTRYPOINT [ "/sbin/tini", "-g", "--", "/entrypoint" ]

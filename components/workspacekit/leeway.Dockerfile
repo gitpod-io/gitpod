@@ -5,7 +5,7 @@
 FROM alpine:3.15 as download
 ENV SLIRP4NETNS_VERSION=v1.1.12
 WORKDIR /download
-RUN wget https://github.com/rootless-containers/slirp4netns/releases/download/${SLIRP4NETNS_VERSION}/slirp4netns-x86_64 -O slirp4netns && chmod 755 slirp4netns
+RUN wget https://github.com/rootless-containers/slirp4netns/releases/download/${SLIRP4NETNS_VERSION}/slirp4netns-$(uname -m) -O slirp4netns && chmod 755 slirp4netns
 
 FROM scratch
 

@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -146,6 +147,7 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 		"--frontend=dockerfile.v0",
 		"--local=dockerfile=" + filepath.Dir(dockerfile),
 		"--opt=filename=" + filepath.Base(dockerfile),
+		"--opt=platform=" + fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
 	}
 
 	buildctlCmd := exec.Command("buildctl", buildctlArgs...)
