@@ -35,9 +35,6 @@ export interface WorkspaceCluster {
 
     // An optional set of constraints that limit who can start workspaces on the cluster
     admissionConstraints?: AdmissionConstraint[];
-
-    // An optional set of admission preferences that guide cluster selection
-    admissionPreferences?: AdmissionPreference[];
 }
 
 export type WorkspaceClusterState = "available" | "cordoned" | "draining";
