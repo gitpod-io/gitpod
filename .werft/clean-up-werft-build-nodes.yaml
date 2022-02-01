@@ -36,7 +36,7 @@ pod:
           sleep 1
           set -Eeuo pipefail
 
-          export DOCKER_HOST=tcp://$NODENAME:2475
+          export DOCKER_HOST=tcp://$NODENAME:2375
 
           werft log phase docker-engine-prune "Cleaning up Docker Engine used by Werft builds"
           docker system prune --force --all --filter 'until=72h' 2>&1 | werft log slice docker-engine-prune

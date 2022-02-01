@@ -183,7 +183,7 @@ pod:
         sudo chown gitpod:gitpod $GOCACHE
         export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
 
-        export DOCKER_HOST=tcp://$NODENAME:2475
+        export DOCKER_HOST=tcp://$NODENAME:2375
         sudo chown -R gitpod:gitpod /workspace
 
         mkdir /workspace/.ssh
