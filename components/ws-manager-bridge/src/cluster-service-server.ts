@@ -7,7 +7,7 @@
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, AdmissionPreference, AdmissionPreferenceUserLevel, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -23,7 +23,6 @@ import {
     UpdateRequest,
     UpdateResponse,
     AdmissionConstraint as GRPCAdmissionConstraint,
-    AdmissionPreference as GRPCAdmissionPreference,
 } from '@gitpod/ws-manager-bridge-api/lib';
 import { GetWorkspacesRequest } from '@gitpod/ws-manager/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
@@ -112,7 +111,6 @@ export class ClusterService implements IClusterServiceServer {
                 };
 
                 const admissionConstraints = call.request.getAdmissionConstraintsList().map(mapAdmissionConstraint).filter(c => !!c) as AdmissionConstraint[];
-                const admissionPreferences = call.request.getAdmissionPreferenceList().map(mapAdmissionPreference).filter(c => !!c) as AdmissionPreference[];
 
                 const newCluster: WorkspaceCluster = {
                     name: req.name,
@@ -123,7 +121,6 @@ export class ClusterService implements IClusterServiceServer {
                     govern,
                     tls,
                     admissionConstraints,
-                    admissionPreferences,
                 };
 
                 // try to connect to validate the config. Throws an exception if it fails.
@@ -191,31 +188,6 @@ export class ClusterService implements IClusterServiceServer {
                                         if (v.level === (c as AdmissionConstraintHasUserLevel).level) {
                                             return false;
                                         }
-                                }
-                                return true;
-                            })
-                        }
-                    }
-                }
-                if (call.request.hasAdmissionPreference()) {
-                    const mod = call.request.getAdmissionPreference();
-                    const c = mapAdmissionPreference(mod?.getPreference());
-                    if (!!mod && !!c) {
-                        if (mod.getAdd()) {
-                            cluster.admissionPreferences = (cluster.admissionPreferences || []).concat([c]);
-                        } else {
-                            cluster.admissionPreferences = cluster.admissionPreferences?.filter(v => {
-                                if (v.type !== c.type) {
-                                    return true;
-                                }
-
-                                switch (v.type) {
-                                    case "user-level":
-                                        if (v.level == (c as AdmissionPreferenceUserLevel).level) {
-                                            return false;
-                                        }
-                                    default:
-                                        return true;
                                 }
                                 return true;
                             })
@@ -321,15 +293,6 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
         }
         clusterStatus.addAdmissionConstraint(constraint);
     });
-    ws.admissionPreferences?.forEach(p => {
-        const pref = new GRPCAdmissionPreference();
-        switch (p.type) {
-            case "user-level":
-                pref.setUserLevel(p.level);
-                break;
-        }
-        clusterStatus.addAdmissionPreference(pref);
-    });
     return clusterStatus;
 }
 
@@ -356,18 +319,6 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
         }
         return <AdmissionConstraintHasUserLevel>{type: "has-user-level", level };
     }
-    return;
-}
-
-function mapAdmissionPreference(c: GRPCAdmissionPreference | undefined): AdmissionPreference | undefined {
-    if (!c) {
-        return;
-    }
-
-    if (c.hasUserLevel()) {
-        return <AdmissionPreference>{ type: "user-level", level: c.getUserLevel() };
-    }
-
     return;
 }
 
