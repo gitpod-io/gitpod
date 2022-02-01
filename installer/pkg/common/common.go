@@ -302,13 +302,15 @@ func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
 }
 
 func Affinity(orLabels ...string) *corev1.Affinity {
-	var terms []corev1.NodeSelectorTerm
+	var preferredTerms []corev1.PreferredSchedulingTerm
 	for _, lbl := range orLabels {
-		terms = append(terms, corev1.NodeSelectorTerm{
-			MatchExpressions: []corev1.NodeSelectorRequirement{
-				{
-					Key:      lbl,
-					Operator: corev1.NodeSelectorOpExists,
+		preferredTerms = append(preferredTerms, corev1.PreferredSchedulingTerm{
+			Preference: corev1.NodeSelectorTerm{
+				MatchExpressions: []corev1.NodeSelectorRequirement{
+					{
+						Key:      lbl,
+						Operator: corev1.NodeSelectorOpExists,
+					},
 				},
 			},
 		})
@@ -316,9 +318,7 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 
 	return &corev1.Affinity{
 		NodeAffinity: &corev1.NodeAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-				NodeSelectorTerms: terms,
-			},
+			PreferredDuringSchedulingIgnoredDuringExecution: preferredTerms,
 		},
 	}
 }
