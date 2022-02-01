@@ -58,6 +58,8 @@ var runCmd = &cobra.Command{
 			log.Warn("no TLS configured - gRPC server will be unsecured")
 		}
 
+		log.Debug("bla")
+
 		server := grpc.NewServer(grpcOpts...)
 		dmn.Register(server)
 		lis, err := net.Listen("tcp", cfg.Service.Addr)
