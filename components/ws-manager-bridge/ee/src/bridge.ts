@@ -114,12 +114,21 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
         }
     }
 
-    protected async controlPrebuildInstance(instance: WorkspaceInstance): Promise<void> {
+    protected async stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void> {
+        const span = TraceContext.startSpan("stopPrebuildInstance", ctx);
+
         const prebuild = await this.workspaceDB.trace({}).findPrebuildByWorkspaceID(instance.workspaceId);
-        if (prebuild && prebuild.state == 'building') {
+        if (prebuild) {
             // this is a prebuild - set it to aborted
             prebuild.state = 'aborted';
             await this.workspaceDB.trace({}).storePrebuiltWorkspace(prebuild);
+
+            { // notify about prebuild updated
+                const info = (await this.workspaceDB.trace({span}).findPrebuildInfos([prebuild.id]))[0];
+                if (info) {
+                    this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
+                }
+            }
         }
     }
 
