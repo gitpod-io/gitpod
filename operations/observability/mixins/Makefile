@@ -39,3 +39,8 @@ unit-tests: vendor
 	jsonnet tests/alertsSeverityLabel.jsonnet -J vendor/
 	@echo 'Testing alert descripion annotation'
 	jsonnet tests/alertsDescriptionAnnotation.jsonnet -J vendor/
+
+.PHONY: dashboards_out
+dashboards_out:
+	@mkdir -p dashboards_out
+	jsonnet -J vendor -m dashboards_out dashboards.jsonnet
