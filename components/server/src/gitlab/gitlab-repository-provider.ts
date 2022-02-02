@@ -94,4 +94,9 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
             authorAvatarUrl: "",
         };
     }
+
+    async getUserRepos(user: User): Promise<string[]> {
+        // FIXME(janx): Not implemented yet
+        return [];
+    }
 }

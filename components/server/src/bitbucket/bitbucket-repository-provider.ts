@@ -98,4 +98,9 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
             authorAvatarUrl: commit.author?.user?.links?.avatar?.href,
         };
     }
+
+    async getUserRepos(user: User): Promise<string[]> {
+        // FIXME(janx): Not implemented yet
+        return [];
+    }
 }
