@@ -1,6 +1,12 @@
 # Change Log
 
-## January 2022
+## February 2022
+- [server] Support 'git@{host}:{user}/{repo}.git' format in context URLs ([#7951](https://github.com/gitpod-io/gitpod/pull/7951)) - [@jankeromnes](https://github.com/jankeromnes)
+- Admins can do a text search for projects and their associated prebuilds. ([#7882](https://github.com/gitpod-io/gitpod/pull/7882)) - [@laushinka](https://github.com/laushinka)
+- [installer]: put component ownership under webapp/workspace teams ([#7839](https://github.com/gitpod-io/gitpod/pull/7839)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [wa-manager] Refactor connectToWorkspaceDaemon helper ([#7926](https://github.com/gitpod-io/gitpod/pull/7926)) - [@aledbf](https://github.com/aledbf)
+
+##  January 2022
 - Fix integration tests ([#7827](https://github.com/gitpod-io/gitpod/pull/7827)) - [@kylos101](https://github.com/kylos101), [@sagor999](https://github.com/sagor999)
 - [server] Ensure incremental prebuilds always use the latest config ([#7805](https://github.com/gitpod-io/gitpod/pull/7805)) - [@jankeromnes](https://github.com/jankeromnes)
 - [dashboard][server] Make Project overview page load faster by pre-fetching and caching Git provider data (branch details) ([#7610](https://github.com/gitpod-io/gitpod/pull/7610)) - [@jankeromnes](https://github.com/jankeromnes)
