@@ -997,7 +997,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getSuggestedContextURLs(ctx: TraceContext): Promise<string[]> {
-        this.checkUser("getSuggestedContextURLs");
+        const user = this.checkUser("getSuggestedContextURLs");
         const suggestions: string[] = [];
         const logCtx: LogContext = { userId: user.id };
 
@@ -1011,15 +1011,31 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             log.error(logCtx, 'Could not get example repositories', error);
         }));
 
-        // User repositories
+        // User repositories (from Apps)
         promises.push(this.getAuthProviders(ctx).then(authProviders => Promise.all(authProviders.map(async (p) => {
-            // TODO(janx): Refactor this in order not to limit results to app installations & not fetch projects.
-            // This should be entirely about proposing great matches for a user, no matter an app is installed.
             try {
                 const userRepos = await this.getProviderRepositoriesForUser(ctx, { provider: p.host });
                 userRepos.forEach(r => suggestions.push(r.cloneUrl.replace(/\.git$/, '')));
             } catch (error) {
                 log.debug(logCtx, 'Could not get user repositories from App for ' + p.host, error);
+            }
+        }))).catch(error => {
+            log.error(logCtx, 'Could not get auth providers', error);
+        }));
+
+        // User repositories (from Git hosts directly)
+        promises.push(this.getAuthProviders(ctx).then(authProviders => Promise.all(authProviders.map(async (p) => {
+            try {
+                const hostContext = this.hostContextProvider.get(p.host);
+                const services = hostContext?.services;
+                if (!services) {
+                    log.error(logCtx, 'Unsupported repository host: ' + p.host);
+                    return;
+                }
+                const userRepos = await services.repositoryProvider.getUserRepos(user);
+                userRepos.forEach(r => suggestions.push(r.replace(/\.git$/, '')));
+            } catch (error) {
+                log.debug(logCtx, 'Could not get user repositories from host ' + p.host, error);
             }
         }))).catch(error => {
             log.error(logCtx, 'Could not get auth providers', error);

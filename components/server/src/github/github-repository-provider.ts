@@ -106,4 +106,26 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         const commit = await this.github.getCommit(user, { repo, owner, ref });
         return commit;
     }
+
+    async getUserRepos(user: User): Promise<string[]> {
+        // Hint: Use this to get richer results:
+        //   node {
+        //       nameWithOwner
+        //       shortDescriptionHTML(limit: 120)
+        //       url
+        //   }
+        const result: any = await this.githubQueryApi.runQuery(user, `
+            query {
+                viewer {
+                    repositoriesContributedTo(includeUserRepositories: true, first: 100) {
+                        edges {
+                            node {
+                                url
+                            }
+                        }
+                    }
+                }
+            }`);
+        return (result.data.viewer?.repositoriesContributedTo?.edges || []).map((edge: any) => edge.node.url)
+    }
 }
