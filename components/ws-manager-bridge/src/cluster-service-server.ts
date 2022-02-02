@@ -65,6 +65,7 @@ export class ClusterService implements IClusterServiceServer {
     protected readonly queue: Queue = new Queue();
 
     public register(call: grpc.ServerUnaryCall<RegisterRequest, RegisterResponse>, callback: grpc.sendUnaryData<RegisterResponse>) {
+        log.info("requested clusters.register", getClientInfo(call))
         this.queue.enqueue(async () => {
             try {
                 // check if the name or URL are already registered/in use
@@ -147,6 +148,7 @@ export class ClusterService implements IClusterServiceServer {
     }
 
     public update(call: grpc.ServerUnaryCall<UpdateRequest, UpdateResponse>, callback: grpc.sendUnaryData<UpdateResponse>) {
+        log.info("requested clusters.update", getClientInfo(call))
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
@@ -208,6 +210,7 @@ export class ClusterService implements IClusterServiceServer {
     }
 
     public deregister(call: grpc.ServerUnaryCall<DeregisterRequest, DeregisterResponse>, callback: grpc.sendUnaryData<DeregisterResponse>) {
+        log.info("requested clusters.deregister", getClientInfo(call))
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
@@ -231,6 +234,7 @@ export class ClusterService implements IClusterServiceServer {
     }
 
     public list(call: grpc.ServerUnaryCall<ListRequest, ListResponse>, callback: grpc.sendUnaryData<ListResponse>) {
+        log.info("requested clusters.list", getClientInfo(call))
         this.queue.enqueue(async () => {
             try {
                 const response = new ListResponse();
@@ -355,6 +359,21 @@ function mapToGRPCError(err: any): any {
         return new GRPCError(grpc.status.INTERNAL, err);
     }
     return err;
+}
+
+function getClientInfo(call: grpc.ServerUnaryCall<any,any>) {
+    const clientNameHeader = call.metadata.get("client-name")
+    const userAgentHeader = call.metadata.get("user-agent")
+
+    let [clientName, userAgent] = ["", ""]
+    if (clientNameHeader.length != 0) {
+        clientName = clientNameHeader[0].toString()
+    }
+    if (userAgentHeader.length != 0) {
+        userAgent = userAgentHeader[0].toString()
+    }
+    const clientIP = call.getPeer();
+    return {clientIP, clientName, userAgent}
 }
 
 // "grpc" does not allow additional methods on it's "ServiceServer"s so we have an additional wrapper here
