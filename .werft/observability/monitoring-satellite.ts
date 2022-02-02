@@ -99,62 +99,6 @@ async function deployGitpodServiceMonitors() {
     exec('kubectl apply -f observability/monitoring-satellite/manifests/gitpod/', {silent: true})
 }
 
-export function observabilityStaticChecks() {
-    shell.cd('/workspace/operations/observability/mixins')
-
-    if (!jsonnetFmtCheck() || !prometheusRulesCheck() || !jsonnetUnitTests()) {
-        throw new Error("Observability static checks failed!")
-    }
-}
-
-function jsonnetFmtCheck(): boolean {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, "Checking if jsonnet compiles and is well formated")
-    let success = exec('make fmt && git diff --exit-code .', {slice: sliceName}).code == 0
-
-    if (!success) {
-        werft.fail(sliceName, "Jsonnet is badly formatted. You can fix it by running 'cd operations/observability/mixins && make fmt'");
-    }
-
-    success = exec('make lint', {slice: sliceName}).code == 0
-
-    if (!success) {
-        werft.fail(sliceName, "Jsonnet does not compile.");
-    }
-    return success
-}
-
-function prometheusRulesCheck(): boolean {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, "Checking if Prometheus rules are valid.")
-    let success = exec("make promtool-lint", {slice: sliceName}).code == 0
-
-    if (!success) {
-        const failedMessage = `Prometheus rule validation failed. For futher reference, please read:
-https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
-https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/`
-        werft.fail(sliceName, failedMessage)
-    }
-    return success
-}
-
-function jsonnetUnitTests(): boolean {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, "Running mixin unit tests")
-    werft.log(sliceName, "Checking for hardcoded dashboard's datasources")
-
-    let success = exec("make unit-tests", {slice: sliceName}).code == 0
-
-    if (!success) {
-        const failedMessage = `To make sure our dashboards work for both preview-environments and production/staging, we can't hardcode datasources. Please use datasource variables.`
-        werft.fail(sliceName, failedMessage)
-    }
-    return success
-}
-
 function postProcessManifests() {
     const werft = getGlobalWerftInstance()
 

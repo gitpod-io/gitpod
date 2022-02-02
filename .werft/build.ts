@@ -11,7 +11,7 @@ import * as util from 'util';
 import { sleep, env } from './util/util';
 import * as gpctl from './util/gpctl';
 import { createHash } from "crypto";
-import { InstallMonitoringSatelliteParams, installMonitoringSatellite, observabilityStaticChecks } from './observability/monitoring-satellite';
+import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from './observability/monitoring-satellite';
 import { SpanStatusCode } from '@opentelemetry/api';
 import * as Tracing from './observability/tracing'
 import * as VM from './vm/vm'
@@ -767,7 +767,6 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     // The reason behind it is because Gitpod components will start sending traces to a non-existent
     // OpenTelemetry-collector otherwise.
     werft.log(`observability`, "Running observability static checks.")
-    observabilityStaticChecks()
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
         await installMonitoring(namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false);
