@@ -550,9 +550,9 @@ export function GitIntegrationModal(props: ({
 
             let verifiedHost = host;
 
-            if (host.includes("https://")) {
+            if (host.startsWith("https://")) {
                 verifiedHost = host.replace("https://","");
-            } else if (host.includes("http://")) {
+            } else if (host.startsWith("http://")) {
                 verifiedHost = host.replace("http://","");
             }
 
