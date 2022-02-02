@@ -258,8 +258,8 @@ export namespace UserEnvVar {
     // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function splitRepositoryPattern(repositoryPattern: string): string[] {
         const patterns = repositoryPattern.split('/');
-        const repoPattern = patterns.pop() || "";
-        const ownerPattern = patterns.join('/');
+        const repoPattern = patterns.slice(1).join('/')
+        const ownerPattern = patterns[0];
         return [ownerPattern, repoPattern];
     }
 }
