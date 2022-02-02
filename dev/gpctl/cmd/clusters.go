@@ -88,7 +88,7 @@ func getClustersClient(ctx context.Context) (*grpc.ClientConn, api.ClusterServic
 		secopt = grpc.WithTransportCredentials(creds)
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%s", localPort), secopt)
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%s", localPort), secopt, util.WithClientUnaryInterceptor())
 	if err != nil {
 		return nil, nil, err
 	}
