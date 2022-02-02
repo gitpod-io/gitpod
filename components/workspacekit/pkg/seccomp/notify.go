@@ -73,6 +73,10 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 		if err != nil {
 			return 0, xerrors.Errorf("unknown syscall %s: %w", sc, err)
 		}
+		if syscallID < 0 {
+			return 0, xerrors.Errorf("syscall resolve failed %d", syscallID)
+		}
+
 		err = filter.AddRule(syscallID, libseccomp.ActErrno.SetReturnCode(int16(unix.EPERM)))
 		if err != nil {
 			return 0, xerrors.Errorf("cannot add rule for %s: %w", sc, err)
@@ -85,6 +89,10 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 		if err != nil {
 			return 0, xerrors.Errorf("unknown syscall %s: %w", sc, err)
 		}
+		if syscallID < 0 {
+			return 0, xerrors.Errorf("syscall resolve failed %d", syscallID)
+		}
+
 		err = filter.AddRule(syscallID, libseccomp.ActNotify)
 		if err != nil {
 			return 0, xerrors.Errorf("cannot add rule for %s: %w", sc, err)
