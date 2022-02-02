@@ -68,6 +68,8 @@ func main() {
 		logger.SetLevel(logrus.DebugLevel)
 	}
 
+	log := logrus.NewEntry(logger)
+
 	listenFD := os.Getenv("LISTEN_FDS") != ""
 	if _, err := os.Stat(dockerSocketFN); !listenFD && (err == nil || !os.IsNotExist(err)) {
 		logger.Fatalf("Docker socket already exists at %s.\nIn a Gitpod workspace Docker will start automatically when used.\nIf all else fails, please remove %s and try again.", dockerSocketFN, dockerSocketFN)
