@@ -100,6 +100,22 @@ var pullRequestCommand = &cobra.Command{
 			l += *label.Name
 		}
 		logger.WithField("labels", l).WithField("pr", pr.Number).Info("PR labels successfully added")
+
+		retries = 0
+		for {
+			retries++
+			if retries > 60 {
+				logger.WithError(err).Fatal("Timeout trying to approve PR")
+			}
+			event := "APPROVE"
+			_, _, err := client.PullRequests.CreateReview(context, prOpts.Org, prOpts.Repo, *pr.Number, &github.PullRequestReviewRequest{Event: &event})
+			if err != nil {
+				logger.WithError(err).Error("Error approving PR. Trying again in a bit.")
+				time.Sleep(time.Second)
+			} else {
+				break
+			}
+		}
 	},
 }
 
