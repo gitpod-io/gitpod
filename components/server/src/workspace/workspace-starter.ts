@@ -696,6 +696,15 @@ export class WorkspaceStarter {
         ev.setValue(envvarOTS.token);
         envvars.push(ev);
 
+        // TODO(cw): for the time being we're still pushing the env vars as we did before.
+        //           Once everything is running with the latest supervisor, we can stop doing that.
+        allEnvVars.forEach(e => {
+            const ev = new EnvironmentVariable();
+            ev.setName(e.name);
+            ev.setValue(e.name);
+            envvars.push(ev);
+        })
+
         const ideAlias = user.additionalData?.ideSettings?.defaultIde;
         if (ideAlias && ideConfig.ideOptions.options[ideAlias]) {
             const ideAliasEnv = new EnvironmentVariable();
