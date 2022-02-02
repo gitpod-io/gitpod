@@ -1,0 +1,19 @@
+name: Team Labeler
+on:
+  pull_request:
+    types: [review_requested]
+jobs:
+  label:
+    name: Apply team labels
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Set team labels as output
+        id: team_labels
+        run: |
+          LABELS="team: ${{ join(github.event.pull_request.requested_teams.*.slug, ', team: ') }}"
+          echo ::set-output name=label::${LABELS//engineering-/}
+      - name: Add team labels
+        if: join(github.event.pull_request.requested_teams.*.slug, '') != ''
+        uses: andymckay/labeler@1.0.4
+        with:
+          add-labels: "${{ steps.team_labels.outputs.label }}"
