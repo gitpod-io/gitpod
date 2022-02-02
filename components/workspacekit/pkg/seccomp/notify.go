@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -81,6 +82,32 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 		if err != nil {
 			return 0, xerrors.Errorf("cannot add rule for %s: %w", sc, err)
 		}
+	}
+
+	log.Info("Dumping rules")
+
+	read, write, err := os.Pipe()
+	if err != nil {
+		return 0, xerrors.Errorf("could not create pipe for seccomp dump: %w", err)
+	}
+
+	go func() {
+		data, err := ioutil.ReadAll(read)
+		if err != nil {
+			log.Errorf("could not read package filter: %v", err)
+			read.Close()
+		}
+		if len(data) > 0 {
+			log.WithField("filter data", string(data)).Debug("dumped seccomp filter data")
+		} else {
+			log.Debug("no seccomp filter data was available")
+		}
+	}()
+
+	err = filter.ExportPFC(write)
+	write.Close()
+	if err != nil {
+		log.Errorf("could not export package filter: %v", err)
 	}
 
 	handledSyscalls := mapHandler(&InWorkspaceHandler{})
