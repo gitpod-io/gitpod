@@ -312,7 +312,7 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.stoppedTime = new Date().toISOString();
             promises.push(this.workspaceDB.trace({}).storeInstance(instance));
             promises.push(this.onInstanceStopped({}, ri.workspace.ownerId, instance));
-            promises.push(this.controlPrebuildInstance(instance));
+            promises.push(this.stopPrebuildInstance(ctx, instance));
         }
         await Promise.all(promises);
     }
@@ -325,7 +325,7 @@ export class WorkspaceManagerBridge implements Disposable {
         // prebuilds are an EE feature - we just need the hook here
     }
 
-    protected async controlPrebuildInstance(instance: WorkspaceInstance): Promise<void> {
+    protected async stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void> {
         // prebuilds are an EE feature - we just need the hook here
     }
 
