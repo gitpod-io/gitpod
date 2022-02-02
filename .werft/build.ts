@@ -320,6 +320,7 @@ export async function build(context, version) {
         werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
         exec(`kubectl get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
         exec(`kubectl get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
+        werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
 
         const existingVM = VM.vmExists({ name: destname })
         if (!existingVM) {
@@ -336,20 +337,26 @@ export async function build(context, version) {
 
         werft.log(vmSlices.BOOT_VM, 'Waiting for VM to be ready')
         VM.waitForVM({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.BOOT_VM })
+        werft.done(vmSlices.BOOT_VM)
 
         werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting SSH port forwarding')
         VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
+        werft.done(vmSlices.START_KUBECTL_PORT_FORWARDS)
 
         werft.log(vmSlices.KUBECONFIG, 'Copying k3s kubeconfig')
         VM.copyk3sKubeconfig({name: destname, path: 'k3s.yml', timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
         // NOTE: This was a quick have to override the existing kubeconfig so all future kubectl commands use the k3s cluster.
         //       We might want to keep both kubeconfigs around and be explicit about which one we're using.s
         exec(`mv k3s.yml /home/gitpod/.kube/config`)
+        werft.done(vmSlices.KUBECONFIG)
 
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
+        werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
         issueMetaCerts(PROXY_SECRET_NAME, "default", domain, withVM)
+        werft.done('certificate')
         installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, true);
+        werft.done('observability')
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
