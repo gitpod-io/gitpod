@@ -11,6 +11,7 @@ import com.intellij.remote.RemoteCredentialsHolder
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.util.application
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.gateway.api.ConnectionRequestor
@@ -230,11 +231,15 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                 )
                                 val client = connector.connect()
                                 client.clientClosed.advise(connectionLifetime) {
-                                    connectionLifetime.terminate()
+                                    application.invokeLater {
+                                        connectionLifetime.terminate()
+                                    }
                                 }
                                 client.onClientPresenceChanged.advise(connectionLifetime) {
-                                    if (client.clientPresent) {
-                                        statusMessage.text = ""
+                                    application.invokeLater {
+                                        if (client.clientPresent) {
+                                            statusMessage.text = ""
+                                        }
                                     }
                                 }
                                 thinClient = client
