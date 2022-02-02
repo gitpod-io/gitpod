@@ -209,7 +209,7 @@ write_files:
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
       kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
 
-      cat <<EOF >> /root/.bashrc
+      cat <<EOF >> /etc/bash.bashrc
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       EOF
 runcmd:

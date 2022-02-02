@@ -22,7 +22,7 @@ EOF
  */
  function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
     exec(`
-        cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} delete
+        cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} delete -f -
 ${manifest}
 EOF
     `)
