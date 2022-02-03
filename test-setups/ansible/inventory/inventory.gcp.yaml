@@ -1,8 +1,8 @@
 plugin: gcp_compute
 projects:
-  - clu-self-hosted-playground # TODO: use variable
+  - clu-self-hosted-playground # TODO: How to make this configurable without the hack in the entrypoint.sh?
 auth_kind: serviceaccount
-service_account_file: /tmp/service-account.json  # TODO: use variable
+service_account_file: /service-account.json
 keyed_groups:
   - key: labels
 leading_separator: no

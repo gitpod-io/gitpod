@@ -9,10 +9,13 @@
     mode: 0755
   when: "'k3s.service' not in services"
 
+- debug:
+    var: hostvars.localhost.cluster_secret
+
 - name: Install k3s
   environment:
     INSTALL_K3S_EXEC: "{{ (k3s_server_exec + ' ' + k3s_server_exec_labels + ((' ' + k3s_agent_exec_labels) if ('gitpod_total_nodes_1' in group_names) else '')) if ('gitpod_node_main' in group_names) else (k3s_agent_exec + ' ' + k3s_agent_exec_labels) }}"
-    K3S_CLUSTER_SECRET: "{{ cluster_secret }}"
+    K3S_CLUSTER_SECRET: "{{ hostvars.localhost.cluster_secret }}"
     K3S_NODE_NAME: "{{ inventory_hostname }}"
     K3S_KUBECONFIG_MODE: "644"
     K3S_URL: "{{ ('gitpod_node_main' not in group_names) | ternary('https://' + node_prefix + '--node-0:6443', '') }}"

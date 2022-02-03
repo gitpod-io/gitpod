@@ -1,0 +1,14 @@
+---
+# this is needed for the gcp-ssh-wrapper.sh script
+- name: Create service-account.json and gcloud-login.sh file
+  template:
+    src: "{{ item.file }}"
+    dest: "/tmp/{{ item.file }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - file: service-account.json
+      mode: "0644"
+    - file: gcloud-login.sh
+      mode: "0755"
+- name: GCloud login
+  command: /tmp/gcloud-login.sh

@@ -1,0 +1,47 @@
+---
+- name: Install dependencies
+  apt:
+    name: python3-pip
+    update_cache: yes
+    state: present
+  become: true
+
+- name: Install google Python library
+  pip:
+    name:
+      - google-auth
+      - google-cloud-storage
+    state: present
+  become: true
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0777
+  become: true
+  loop:
+    - /gitpod
+    - /gitpod/manifests
+
+- name: Restore
+  google.cloud.gcp_storage_object:
+    action: download
+    bucket: "{{ gcp.bucket_name }}"
+    src: "{{ item.remote }}"
+    dest: "{{ item.local }}"
+    project: "{{ gcp.project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp.cred_content }}"
+  ignore_errors: true
+  loop:
+    - remote: "auth-provider--{{ gitpod_domain }}.yaml"
+      local: /gitpod/manifests/auth-provider.yaml
+    - remote: "auth-provider-public-github--{{ gitpod_domain }}.yaml"
+      local: /gitpod/manifests/auth-provider-public-github.yaml
+    - remote: "auth-provider-public-gitlab--{{ gitpod_domain }}.yaml"
+      local: /gitpod/manifests/auth-provider-public-gitlab.yaml
+    - remote: "https-certificates--{{ gitpod_domain }}.yaml"
+      local: /gitpod/manifests/https-certificates.yaml
+    - remote: "gitpod-issuer-account-key--{{ gitpod_domain }}.yaml"
+      local: /gitpod/manifests/gitpod-issuer-account-key.yaml

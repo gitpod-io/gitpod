@@ -1,7 +1,7 @@
 ---
 gcp:
   project: clu-self-hosted-playground
-  cred_content: "{{ lookup('file', '/tmp/service-account.json') }}"
+  cred_content: "{{ lookup('file', '/service-account.json') }}"
   bucket_name: clu-gcp-k3s
   region: europe-west3
   zone: europe-west3-a

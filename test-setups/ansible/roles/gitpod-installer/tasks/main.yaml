@@ -26,20 +26,26 @@
 - name: Generate Gitpod config
   shell: gitpod-installer init > /gitpod/gitpod-config.yaml
 
+- name: Get manifest files
+  find:
+    path: /gitpod/manifests
+    patterns: '*.yaml'
+    file_type: file
+  register: manifest_files
+
 - name: Remove uid and resource version from manifests files
   shell: |
-    for f in /gitpod/manifests/*.yaml; do
-      yq eval --inplace "del(.metadata.uid)" "$f"
-      yq eval --inplace "del(.metadata.resourceVersion)" "$f"
-    done
-  args:
-    executable: /bin/bash
+    yq eval --inplace "del(.metadata.uid)" "{{ item.path }}"
+    yq eval --inplace "del(.metadata.resourceVersion)" "{{ item.path }}"
+  with_items: "{{ manifest_files.files }}"
 
-- name: Check if auth-provider-public-github.yaml exists
-  stat:
-    path: "/gitpod/manifests/auth-provider-public-github.yaml"
-  register: auth_provider_public_github_yaml
+- name: Get auth-provider files
+  find:
+    path: /gitpod/manifests
+    patterns: 'auth-provider*.yaml'
+    file_type: file
+  register: auth_provider_files
 
-- name: Add auth-provider-public-github.yaml to Gitpod config
-  command: "yq eval --inplace '.authProviders += [{\"kind\": \"secret\", \"name\": \"auth-provider-public-github\"}]' /gitpod/gitpod-config.yaml"
-  when: auth_provider_public_github_yaml.stat.exists
+- name: Add auth-providers to Gitpod config
+  command: 'yq eval --inplace ".authProviders += [{\"kind\": \"secret\", \"name\": \"{{ item.path | basename | splitext | first }}\"}]" /gitpod/gitpod-config.yaml'
+  with_items: "{{ auth_provider_files.files }}"

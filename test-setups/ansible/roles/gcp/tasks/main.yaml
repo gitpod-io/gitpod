@@ -1,5 +1,5 @@
 ---
-- name: "create instance"
+- name: Create instance
   google.cloud.gcp_compute_instance:
     name: "{{ node_prefix }}--node-{{ item }}"
     machine_type: "{{ gcp.machine_type }}"
@@ -26,15 +26,15 @@
     extended: yes
   register: gcpvm
 
-- debug:
-    var: gcpvm.results
-- debug:
-    msg: "Cluster IP: {{ gcpvm.results[0].networkInterfaces[0].accessConfigs[0].natIP }}"
+# - debug:
+#     var: gcpvm.results
+# - debug:
+#     msg: "Cluster IP: {{ gcpvm.results[0].networkInterfaces[0].accessConfigs[0].natIP }}"
 
 - set_fact:
     cluster_ip: "{{ gcpvm.results[0].networkInterfaces[0].accessConfigs[0].natIP }}"
 
-- name: "create http/https firewall rule"
+- name: Create http/https firewall rule
   google.cloud.gcp_compute_firewall:
     name: "allow-http-https"
     allowed:
@@ -47,7 +47,7 @@
     service_account_contents: "{{ gcp.cred_content }}"
     state: present
 
-- name: "create k3s firewall rule"
+- name: Create k3s firewall rule
   google.cloud.gcp_compute_firewall:
     name: "allow-k3s"
     allowed:

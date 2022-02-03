@@ -24,20 +24,35 @@
     - /gitpod
     - /gitpod/manifests
 
-- name: Download secrets
+- name: Create bucket
+  google.cloud.gcp_storage_bucket:
+    name: "{{ gcp.bucket_name }}"
+    project: "{{ gcp.project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp.cred_content }}"
+    state: present
+
+- name: Save K8s secrets
+  shell: |
+    kubectl get secret "{{ item.name }}" -n "{{ item.namespace }}" -o yaml > "/gitpod/manifests/{{ item.name }}.yaml" || rm -f "/gitpod/manifests/{{ item.name }}.yaml"
+  loop:
+    - name: https-certificates
+      namespace: default
+    - name: gitpod-issuer-account-key
+      namespace: cert-manager
+
+- name: Backup
   google.cloud.gcp_storage_object:
-    action: download
+    action: upload
     bucket: "{{ gcp.bucket_name }}"
-    src: "{{ item.remote }}"
-    dest: "{{ item.local }}"
+    src: "{{ item.local }}"
+    dest: "{{ item.remote }}"
     project: "{{ gcp.project }}"
     auth_kind: serviceaccount
     service_account_contents: "{{ gcp.cred_content }}"
   ignore_errors: true
   loop:
-    - remote: "auth-provider-public-github--{{ gitpod_domain }}.yaml"
-      local: /gitpod/manifests/auth-provider-public-github.yaml
     - remote: "https-certificates--{{ gitpod_domain }}.yaml"
       local: /gitpod/manifests/https-certificates.yaml
     - remote: "gitpod-issuer-account-key--{{ gitpod_domain }}.yaml"
-      local: /gitpod/manifests/gitpod-issuer-account-key.yaml"
+      local: /gitpod/manifests/gitpod-issuer-account-key.yaml

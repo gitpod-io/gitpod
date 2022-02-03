@@ -1,6 +1,20 @@
 ---
+- name: GCloud login
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp.yaml
+  roles:
+    # this is needed for the gcp-ssh-wrapper.sh script
+    - gcp-login
 
-#  TODO: backup https-certificates
+- name: Backup to GCP bucket
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/common.yaml
+    - vars/gcp.yaml
+  roles:
+    - gcp-bucket-backup
 
 - name: Delete GCP resources
   hosts: localhost
