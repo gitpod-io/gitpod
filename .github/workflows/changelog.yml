@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    container: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.35
+    container: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.36
 
     steps:
       - uses: actions/checkout@v2
