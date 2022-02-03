@@ -27,10 +27,11 @@ jobs:
             git add CHANGELOG.md
             git commit -m "[changelog] updated changelog"
             git push origin $PR_BRANCH
-            /app/changelog pr -t $TOKEN -o gitpod-io -r gitpod -b $GITHUB_REF -H $PR_BRANCH
+            /app/changelog pr -t $TOKEN -a $APPROVAL_TOKEN -o gitpod-io -r gitpod -b $GITHUB_REF -H $PR_BRANCH
           fi
         env:
           GITHUB_USER: roboquat
           GITHUB_EMAIL: roboquat@gitpod.io
           TOKEN: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
+          APPROVAL_TOKEN: ${{ secrets.GITOPS_BOT_PR_APPROVAL_TOKEN }}
         shell: bash
