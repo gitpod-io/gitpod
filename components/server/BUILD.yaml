@@ -44,6 +44,7 @@ packages:
       - "test/**"
       - package.json
       - mocha.opts
+      - tslint.yaml
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
@@ -61,7 +62,7 @@ packages:
       tsconfig: tsconfig.json
       commands:
         test: ["yarn", "test"]
-        build: ["npx", "tsc"]
+        build: ["yarn", "build"]
   - name: dbtest
     type: yarn
     srcs:
@@ -85,7 +86,7 @@ packages:
       tsconfig: tsconfig.json
       commands:
         test: ["yarn", "db-test"]
-        build: ["npx", "tsc"]
+        build: ["yarn", "build"]
 scripts:
   - name: telepresence
     deps:
