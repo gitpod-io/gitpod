@@ -39,7 +39,7 @@ export class BitbucketApp {
                         return;
                     }
                     const data = toData(req.body);
-                    this.handlePushHook({ span }, data, user);
+                    await this.handlePushHook({ span }, data, user);
                 } else {
                     console.log(`Ignoring unsupported bitbucket event: ${req.header('X-Event-Key')}`);
                 }

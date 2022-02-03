@@ -130,7 +130,7 @@ export class ProjectsService {
 
     protected async onDidCreateProject(project: Project, installer: User) {
         // Pre-fetch project details in the background -- don't await
-        this.getProjectOverviewCached(installer, project);
+        /** no await */ this.getProjectOverviewCached(installer, project).catch(err => {/** ignore */});
 
         // Install the prebuilds webhook if possible
         let { userId, teamId, cloneUrl } = project;

@@ -48,7 +48,7 @@ export class GitLabApp {
                     res.send();
                     return;
                 }
-                this.handlePushHook({ span }, context, user);
+                await this.handlePushHook({ span }, context, user);
             } else {
                 log.debug("Unknown GitLab event received", { event });
             }

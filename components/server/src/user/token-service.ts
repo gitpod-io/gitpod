@@ -24,7 +24,7 @@ export class TokenService implements TokenProvider {
 
     @postConstruct()
     init() {
-        this.tokenGC.start();
+        /** no await */ this.tokenGC.start().catch(err => {/** ignore */});
     }
 
     async getTokenForHost(user: User, host: string): Promise<Token> {

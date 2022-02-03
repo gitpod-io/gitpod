@@ -39,7 +39,6 @@ import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
-import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
 import { ClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from 'url';
@@ -80,7 +79,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         super.initialize(client, user, accessGuard, clientMetadata, connectionCtx, clientHeaderFields);
 
         this.listenToCreditAlerts();
-        this.listenForPrebuildUpdates();
+        this.listenForPrebuildUpdates()
+            .catch(err => log.error("error registering for prebuild updates", err));
     }
 
     protected async listenForPrebuildUpdates() {
@@ -337,7 +337,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.internalDoWaitForWorkspace(waitOpts);
         } else {
             // start driving the snapshot immediately
-            SafePromise.catchAndLog(this.internalDoWaitForWorkspace(waitOpts), { userId: user.id, workspaceId: workspaceId})
+            this.internalDoWaitForWorkspace(waitOpts)
+                .catch(err => log.error({ userId: user.id, workspaceId: workspaceId}, "internalDoWaitForWorkspace", err));
         }
 
         return snapshot.id;
@@ -1225,7 +1226,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             } catch (err) {
                 log.error({ userId: user.id }, 'tsDeactivateSlot', err);
             }
-        });
+        }).catch(err => {/** ignore */});
     }
 
     async tsReactivateSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
@@ -1245,7 +1246,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             } catch (err) {
                 log.error({ userId: user.id }, 'tsReactivateSlot', err);
             }
-        });
+        }).catch(err => {/** ignore */});
     }
 
     async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
