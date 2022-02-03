@@ -24,7 +24,7 @@ export class RabbitMQConsensusLeaderMessenger extends AbstractMessageBusIntegrat
     async connect(): Promise<void> {
         await super.connect();
 
-        this.setupExchangeAndQueue();
+        this.setupExchangeAndQueue().catch(err => {/** ignore */});
     }
 
     async register(uid?: string | undefined): Promise<string> {
@@ -67,7 +67,8 @@ export class RabbitMQConsensusLeaderMessenger extends AbstractMessageBusIntegrat
         }
 
         const cancellationTokenSource = new CancellationTokenSource()
-        this.listen(new EventListener(exchangeConsensusLeader, forwarder), cancellationTokenSource.token);
+        this.listen(new EventListener(exchangeConsensusLeader, forwarder), cancellationTokenSource.token)
+            .catch(err => {/** ignore */});
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 

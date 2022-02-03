@@ -111,14 +111,14 @@ export class HostContextProviderImpl implements HostContextProvider {
     }
 
     getAll(): HostContext[] {
-        this.ensureInitialized();
+        this.ensureInitialized().catch(err => {/** ignore */});
         const fixed = Array.from(this.fixedHosts.values());
         const dynamic = Array.from(this.dynamicHosts.values());
         return [...fixed, ...dynamic];
     }
 
     get(hostname: string): HostContext | undefined {
-        this.ensureInitialized();
+        this.ensureInitialized().catch(err => {/** ignore */});
         hostname = hostname.toLowerCase();
         const hostContext = this.fixedHosts.get(hostname) || this.dynamicHosts.get(hostname);
         if (!hostContext) {

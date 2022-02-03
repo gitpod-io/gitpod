@@ -261,7 +261,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         this.oneTimeSecretServer.startPruningExpiredSecrets();
 
         // Start DB updater
-        this.startDbDeleter();
+        this.startDbDeleter().catch(err => log.error("starting DB deleter", err));
 
         this.app = app;
         log.info('server initialized.');

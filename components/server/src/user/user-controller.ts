@@ -11,7 +11,6 @@ import * as express from 'express';
 import { Authenticator } from "../auth/authenticator";
 import { Config } from '../config';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { SafePromise } from '@gitpod/gitpod-protocol/lib/util/safe-promise';
 import { AuthorizationService } from "./authorization-service";
 import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { UserService } from "./user-service";
@@ -131,7 +130,8 @@ export class UserController {
                 return;
             }
             this.ensureSafeReturnToParam(req);
-            this.authenticator.authorize(req, res, next);
+            this.authenticator.authorize(req, res, next)
+                .catch(err => log.error("authenticator.authorize", err));
         });
         router.get("/deauthorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!User.is(req.user)) {
@@ -139,7 +139,8 @@ export class UserController {
                 return;
             }
             this.ensureSafeReturnToParam(req);
-            this.authenticator.deauthorize(req, res, next);
+            this.authenticator.deauthorize(req, res, next)
+                .catch(err => log.error("authenticator.deauthorize", err));
         });
         router.get("/logout", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             const logContext = LogContext.from({ user: req.user, request: req });
@@ -529,7 +530,8 @@ export class UserController {
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
 
-        /* no await */ SafePromise.catchAndLog(trackSignup(user, req, this.analytics), { userId: user.id });
+        /* no await */ trackSignup(user, req, this.analytics)
+            .catch(err => log.warn({ userId: user.id }, "trackSignup", err));
 
         await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
     }

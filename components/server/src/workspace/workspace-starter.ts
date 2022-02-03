@@ -133,7 +133,8 @@ export class WorkspaceStarter {
             // If the caller requested that errors be rethrown we must await the actual workspace start to be in the exception path.
             // To this end we disable the needsImageBuild behaviour if rethrow is true.
             if (needsImageBuild && !options.rethrow) {
-                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, ideConfig, userEnvVars, projectEnvVars, options.rethrow, forceRebuild);
+                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, ideConfig, userEnvVars, projectEnvVars, options.rethrow, forceRebuild)
+                    .catch(err => log.error("actuallyStartWorkspace", err));
                 return { instanceID: instance.id };
             }
 
@@ -264,7 +265,7 @@ export class WorkspaceStarter {
         if (prebuild) {
             const info = (await this.workspaceDb.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
             if (info) {
-                this.messageBus.notifyOnPrebuildUpdate({ info, status: "queued" });
+                await this.messageBus.notifyOnPrebuildUpdate({ info, status: "queued" });
             }
         }
     }

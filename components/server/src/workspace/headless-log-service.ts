@@ -224,7 +224,7 @@ export class HeadlessLogService {
 
         let receivedDataYet = false;
         let stream: ResponseStream<ListenTerminalResponse> | undefined = undefined;
-        aborted.promise.then(() => stream?.cancel());
+        aborted.promise.then(() => stream?.cancel()).catch((err) => {/** ignore */});
         const doStream = (retry: (doRetry?: boolean) => void) => new Promise<void>((resolve, reject) => {
             // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
             const decoder = new TextDecoder('utf-8')

@@ -135,14 +135,14 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
     listenForPrebuildUpdatableQueue(callback: (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => void): Disposable {
         const listener = new PrebuildUpdatableQueueListener(callback);
         const cancellationTokenSource = new CancellationTokenSource()
-        this.listen(listener, cancellationTokenSource.token);
+        this.listen(listener, cancellationTokenSource.token).catch(err => {/** ignore */});
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
     listenForWorkspaceInstanceUpdates(userId: string | undefined, callback: WorkspaceInstanceUpdateCallback): Disposable {
         const listener = new WorkspaceInstanceUpdateListener(this.messageBusHelper, callback, userId);
         const cancellationTokenSource = new CancellationTokenSource()
-        this.listen(listener, cancellationTokenSource.token);
+        this.listen(listener, cancellationTokenSource.token).catch(err => {/** ignore */});
         increaseMessagebusTopicReads(listener.topic())
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
@@ -152,7 +152,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         callback: (ctx: TraceContext, evt: PrebuildWithStatus) => void): Disposable {
         const listener = new PrebuildUpdateListener(this.messageBusHelper, callback, projectId);
         const cancellationTokenSource = new CancellationTokenSource()
-        this.listen(listener, cancellationTokenSource.token);
+        this.listen(listener, cancellationTokenSource.token).catch(err => {/** ignore */});
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
@@ -164,7 +164,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
     listenToCreditAlerts(userId: string | undefined, callback: (ctx: TraceContext, alert: CreditAlert) => void): Disposable {
         const listener = new CreditAlertListener(this.messageBusHelper, callback, userId);
         const cancellationTokenSource = new CancellationTokenSource()
-        this.listen(listener, cancellationTokenSource.token);
+        this.listen(listener, cancellationTokenSource.token).catch(err => {/** ignore */});
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 

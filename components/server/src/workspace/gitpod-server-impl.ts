@@ -460,7 +460,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
         const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
-        this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
+        await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
 
         const ownerToken = latestInstance?.status.ownerToken;
         if (!ownerToken) {
@@ -1205,7 +1205,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             req.setBuildRef(workspace.imageNameResolved);
 
             let lineCount = 0;
-            imgbuilder.logs(ctx, req, data => {
+            await imgbuilder.logs(ctx, req, data => {
                 if (!this.client) {
                     return 'stop';
                 }
@@ -1691,13 +1691,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach(project => {
-            this.deleteProject(ctx, project.id);
-        })
+            /** no awat */ this.deleteProject(ctx, project.id)
+                .catch(err => {/** ignore */});
+        });
 
         const teamMembers = await this.teamDB.findMembersByTeam(teamId);
         teamMembers.forEach(member => {
-            this.removeTeamMember(ctx, teamId, member.userId);
-        })
+            /** no awat */ this.removeTeamMember(ctx, teamId, member.userId)
+            .catch(err => {/** ignore */});
+        });
 
         await this.teamDB.deleteTeam(teamId);
 
