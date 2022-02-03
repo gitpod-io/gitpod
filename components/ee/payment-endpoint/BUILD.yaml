@@ -60,7 +60,7 @@ packages:
       tsconfig: tsconfig.json
       commands:
         test: ["yarn", "db-test"]
-        build: ["npx", "tsc"]
+        build: ["yarn", "build"]
 scripts:
   - name: telepresence
     script: |-
