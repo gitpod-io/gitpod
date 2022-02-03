@@ -66,7 +66,7 @@
 /installer/pkg/components/ws-manager-bridge @gitpod-io/engineering-webapp
 /installer/pkg/components/ws-manager @gitpod-io/engineering-workspace
 /installer/pkg/components/ws-proxy @gitpod-io/engineering-workspace
-/installer/pkg/config/versions @gitpod-io/engineering-ide @gitpod-io/engineering-ide @gitpod-io/engineering-ide @gitpod-io/engineering-ide
+/installer/pkg/config/versions @gitpod-io/engineering-ide
 /operations/observability/mixins @gitpod-io/platform
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
