@@ -30,7 +30,12 @@ export default function ProjectDetail(props: { project: Project, owner: string |
                         </>
                     </Property>
                     :
-                    <Property name="Owner">{`${props.owner} (Team)`}</Property>}
+                    <Property name="Owner">
+                        <>
+                            {props.owner}
+                            <span className="text-gray-400 dark:text-gray-500"> (Team)</span>
+                        </>
+                    </Property>}
             </div>
             <div className="flex w-full mt-6">
                 <Property name="Incremental Prebuilds">{props.project.settings?.useIncrementalPrebuilds ? "Yes" : "No"}</Property>
