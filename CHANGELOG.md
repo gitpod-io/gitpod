@@ -1,6 +1,9 @@
 # Change Log
 
 ## February 2022
+- Update PyCharm IDE image to version 213.6777.50. ([#7943](https://github.com/gitpod-io/gitpod/pull/7943)) - [@roboquat](https://github.com/roboquat)
+- Update PhpStorm IDE image to version 213.6777.58. ([#7944](https://github.com/gitpod-io/gitpod/pull/7944)) - [@roboquat](https://github.com/roboquat)
+- [installer]: add jaeger sampling options to the tracing object ([#7727](https://github.com/gitpod-io/gitpod/pull/7727)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [server] Support 'git@{host}:{user}/{repo}.git' format in context URLs ([#7951](https://github.com/gitpod-io/gitpod/pull/7951)) - [@jankeromnes](https://github.com/jankeromnes)
 - Admins can do a text search for projects and their associated prebuilds. ([#7882](https://github.com/gitpod-io/gitpod/pull/7882)) - [@laushinka](https://github.com/laushinka)
 - [installer]: put component ownership under webapp/workspace teams ([#7839](https://github.com/gitpod-io/gitpod/pull/7839)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
