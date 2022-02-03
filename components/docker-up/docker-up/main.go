@@ -68,7 +68,7 @@ func main() {
 		logger.SetLevel(logrus.DebugLevel)
 	}
 
-	log := logrus.NewEntry(logger)
+	log = logrus.NewEntry(logger)
 
 	listenFD := os.Getenv("LISTEN_FDS") != ""
 	if _, err := os.Stat(dockerSocketFN); !listenFD && (err == nil || !os.IsNotExist(err)) {
