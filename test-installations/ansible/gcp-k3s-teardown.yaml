@@ -1,0 +1,31 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: GCloud login
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp.yaml
+  roles:
+    # this is needed for the gcp-ssh-wrapper.sh script
+    - gcp-login
+
+- name: Backup to GCP bucket
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/common.yaml
+    - vars/gcp.yaml
+  roles:
+    - gcp-bucket-backup
+
+- name: Delete GCP resources
+  hosts: localhost
+  gather_facts: no
+
+  vars_files:
+    - vars/gcp.yaml
+
+  roles:
+    - gcp-teardown

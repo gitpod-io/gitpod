@@ -1,8 +1,0 @@
----
-gitpod_domain: "{{ undef(hint='You must specify your Gitpod domain.') }}"
-
-gcp:
-  project: "{{ undef(hint='You must specify your GCP project.') }}"
-  cred_content: "{{ lookup('file', '/service-account.json') }}"
-  domain_zone_name: "{{ undef(hint='You must specify your GCP domain zone name.') }}"
-  domain_zone_dnsname: "{{ undef(hint='You must specify your GCP domain zone DNS name.') }}"

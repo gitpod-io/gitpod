@@ -6,4 +6,4 @@ packages:
     deps:
       - contrib/docker/examples/gitpod-gitlab/gitlab:docker
       - contrib/docker/gitpod-image:docker
-      - test-settings/k3s:docker
+      - test-installations:docker

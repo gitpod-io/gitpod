@@ -1,8 +1,0 @@
----
-node_prefix: gitpod-k3s
-nodes_count: 3
-
-gcp:
-  project: "{{ undef(hint='You must specify your GCP project.') }}"
-  cred_content: "{{ lookup('file', '/service-account.json') }}"
-  zone: europe-west3-a
