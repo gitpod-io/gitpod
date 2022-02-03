@@ -4,12 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { PrimaryColumn, Column, Entity } from "typeorm";
+import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 
 import { PrebuiltWorkspaceUpdatable } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
 
+/**
+ * This index serves two query types:
+ *  - INNER JOIN ON prebuiltWorkspaceId ... WHERE isResolved = ...
+ *  - SELECT ... WHERE prebuiltWorkspaceId = .... (works because it's the index prefix)
+ */
+@Index("ind_prebuiltWorkspaceId_isResolved", ["prebuiltWorkspaceId", "isResolved"])
 @Entity()
 export class DBPrebuiltWorkspaceUpdatable implements PrebuiltWorkspaceUpdatable {
 
