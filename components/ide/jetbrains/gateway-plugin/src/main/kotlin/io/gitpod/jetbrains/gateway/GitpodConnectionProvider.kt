@@ -8,6 +8,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.remote.RemoteCredentialsHolder
+import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -18,14 +19,13 @@ import com.jetbrains.gateway.api.ConnectionRequestor
 import com.jetbrains.gateway.api.GatewayConnectionHandle
 import com.jetbrains.gateway.api.GatewayConnectionProvider
 import com.jetbrains.gateway.ssh.ClientOverSshTunnelConnector
-import com.jetbrains.gateway.thinClientLink.ThinClientHandle
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import java.net.URL
@@ -109,8 +109,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         }
 
         GlobalScope.launch {
-            var thinClient: ThinClientHandle? = null;
-            var thinClientJob: Job? = null;
+            var runningLifetime: LifetimeDefinition? = null;
 
             val httpClient = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.ALWAYS)
@@ -172,12 +171,14 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         }
 
                         if (update.status.phase == "stopping" || update.status.phase == "stopped") {
-                            thinClientJob?.cancel()
-                            thinClient?.close()
+                            runningLifetime?.terminate()
+                            runningLifetime = null
                         }
 
-                        if (thinClientJob == null && update.status.phase == "running") {
-                            thinClientJob = launch {
+                        if (runningLifetime == null && update.status.phase == "running") {
+                            val clientLifetime = connectionLifetime.createNested()
+                            runningLifetime = clientLifetime
+                            val clientJob = launch {
                                 val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
 
                                 val ideUrl = URL(update.ideUrl);
@@ -225,25 +226,25 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                 credentials.password = ownerToken
 
                                 val connector = ClientOverSshTunnelConnector(
-                                    connectionLifetime,
+                                    clientLifetime,
                                     credentials,
                                     URI(joinLink)
                                 )
                                 val client = connector.connect()
-                                client.clientClosed.advise(connectionLifetime) {
+                                client.clientClosed.advise(clientLifetime) {
                                     application.invokeLater {
                                         connectionLifetime.terminate()
                                     }
                                 }
-                                client.onClientPresenceChanged.advise(connectionLifetime) {
+                                client.onClientPresenceChanged.advise(clientLifetime) {
                                     application.invokeLater {
                                         if (client.clientPresent) {
                                             statusMessage.text = ""
                                         }
                                     }
                                 }
-                                thinClient = client
                             }
+                            clientLifetime.onTerminationOrNow { clientJob.cancel() }
                         }
                     } catch (e: Throwable) {
                         thisLogger().error(
