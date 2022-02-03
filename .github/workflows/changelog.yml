@@ -17,6 +17,8 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
           export PR_BRANCH=$(date '+rq/changelog_%Y%m%d%H%M')
+          # For testing, using a branch that is not main.
+          export GITHUB_REF=mads/old-changelog
           git checkout -b $PR_BRANCH
           /app/changelog update -t $TOKEN -o gitpod-io -r gitpod -b $GITHUB_REF
           if [[ $(git status --porcelain) ]]; then
