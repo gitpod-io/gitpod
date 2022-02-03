@@ -1,9 +1,0 @@
-
-options:
-  no_parent_owners: true
-
-approvers:
-  - engineering-workspace
-
-labels:
-  - "team: workspace"
