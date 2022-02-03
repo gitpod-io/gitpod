@@ -43,7 +43,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
      */
     public async getStartClusterSets(user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance): Promise<IWorkspaceClusterStartSet> {
         const allClusters = await this.source.getAllWorkspaceClusters();
-        const availableClusters = allClusters.filter(c => c.score >= 0 && c.state === "available");
+        const availableClusters = allClusters.filter(c => c.score > 0 && c.state === "available");
 
         const sets = workspaceClusterSets.map(constraints => {
             const r = constraints.constraint(availableClusters, user, workspace, instance);
@@ -62,9 +62,9 @@ export class WorkspaceManagerClientProvider implements Disposable {
                                 return {done: true, value: undefined};
                             }
 
-                            let res = await sets[sets.length - 1].next();
+                            let res = await sets[0].next();
                             if (!!res.done) {
-                                sets.pop();
+                                sets.splice(0, 1);
                                 continue;
                             }
 
