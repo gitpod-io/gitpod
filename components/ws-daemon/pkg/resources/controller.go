@@ -202,7 +202,7 @@ func (gov *Controller) controlCPU() {
 				return
 			}
 
-			gov.log.WithField("budget", bdgtSpent).WithField("inc", si).Info("increasing spent budget")
+			//gov.log.WithField("budget", bdgtSpent).WithField("inc", si).Info("increasing spent budget")
 			bdgtSpent += si
 		})
 
