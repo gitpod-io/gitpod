@@ -93,6 +93,7 @@ export class EligibilityService {
             return { student: false, faculty: false };
         }
 
+        const logCtx = { userId: user.id };
         try {
             const rawResponse = await fetch("https://education.github.com/api/user", {
                 headers: {
@@ -100,15 +101,18 @@ export class EligibilityService {
                     "faculty-check-preview": "true"
                 }
             });
+            if (!rawResponse.ok) {
+                log.warn(logCtx, `fetching the GitHub Education API failed with status ${rawResponse.status}: ${rawResponse.statusText}`);
+            }
             const result : GitHubEducationPack = JSON.parse(await rawResponse.text());
             if(result.student && result.faculty) {
                 // That violates the API contract: `student` and `faculty` need to be mutually exclusive
-                log.warn({userId: user.id}, "result of GitHub Eduction API violates the API contract: student and faculty need to be mutually exclusive", result);
+                log.warn(logCtx, "result of GitHub Eduction API violates the API contract: student and faculty need to be mutually exclusive", result);
                 return { student: false, faculty: false };
             }
             return result;
         } catch (err) {
-            log.warn({ userId: user.id }, "error while checking student pack status", err);
+            log.warn(logCtx, "error while checking student pack status", err);
         }
         return { student: false, faculty: false };
     }
