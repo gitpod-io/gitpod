@@ -1,16 +1,17 @@
 name: Changelog
 
 on:
+  push:
+    branches:
+      - mads/use-reviews-for-changelog
   schedule:
     - cron: "0 0 * * *"
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
-    container: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.34
+    container: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.35
 
     steps:
       - uses: actions/checkout@v2
