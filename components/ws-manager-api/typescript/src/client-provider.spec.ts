@@ -54,8 +54,8 @@ class TestClientProvider {
 
     @test
     public async getStartClusterSets() {
-        await this.expectInstallations(["a1", "a2", "a3"], await this.provider.getStartClusterSets({} as User, {} as Workspace, {} as WorkspaceInstance), "default case");
-        this.expectInstallations(["a1", "a2", "a3", "con1"], await this.provider.getStartClusterSets({
+        await this.expectInstallations([["a2", "a3"]], await this.provider.getStartClusterSets({} as User, {} as Workspace, {} as WorkspaceInstance), "default case");
+        await this.expectInstallations([["con1"], ["a2", "a3"]], await this.provider.getStartClusterSets({
             rolesOrPermissions: ["new-workspace-cluster"]
         } as User, {} as Workspace, {} as WorkspaceInstance), "new workspace cluster");
     }
@@ -102,13 +102,27 @@ class TestClientProvider {
         expect(constraintInverseMoreResources(clusters, {getsMoreResources: true} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "inverse more resources").to.be.eql(["b1"]);
     }
 
-    private async expectInstallations(expected: string[], actual: IWorkspaceClusterStartSet, msg: string) {
+    private async expectInstallations(expectedSets: string[][], actual: IWorkspaceClusterStartSet, msg: string) {
         const a: string[] = [];
         for await (const c of actual) {
             a.push(c.installation);
         }
 
-        expect(a.sort(), msg).to.be.eql(expected);
+        // we check:
+        //  - the order of returned sets
+        //  - identical content of said sets
+        //  - NOT the order of clusters within a set
+        let i = 0;
+        for (; i < expectedSets.length; i++) {
+            const eSet = expectedSets[i];
+            const aSet = a.splice(0, eSet.length);
+            expect(aSet.sort(), `returned set does not match (${msg})`).to.be.eql(eSet.sort());
+        }
+
+        const eOverage = expectedSets.slice(i).reduce((p, c) => [...p, ...c], []);
+        const aOverage = a;
+        expect(eOverage, `missing some cluster(s)/sets (${msg})`).to.be.empty;
+        expect(aOverage, `got too many cluster(s)/sets (${msg})`).to.be.empty;
     }
 
 }
