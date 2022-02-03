@@ -45,6 +45,9 @@ pod:
   - name: harvester-vm-ssh-keys
     secret:
       secretName: harvester-vm-ssh-keys
+  - name: fluent-bit-external
+    secret:
+      secretName: fluent-bit-external
   # - name: deploy-key
   #   secret:
   #     secretName: deploy-key
@@ -98,6 +101,8 @@ pod:
       mountPath: /mnt/secrets/harvester-kubeconfig
     - name: harvester-vm-ssh-keys
       mountPath: /mnt/secrets/harvester-vm-ssh-keys
+    - name: fluent-bit-external
+      mountPath: /mnt/fluent-bit-external
     # - name: deploy-key
     #   mountPath: /mnt/secrets/deploy-key
     #   readOnly: true
