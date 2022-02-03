@@ -20,7 +20,7 @@ jobs:
           # For testing, using a branch that is not main.
           export GITHUB_REF=mads/old-changelog
           git checkout -b $PR_BRANCH
-          /app/changelog update -t $TOKEN -o gitpod-io -r gitpod -b $GITHUB_REF
+          /app/changelog update -t $TOKEN -o gitpod-io -r gitpod -b main
           if [[ $(git status --porcelain) ]]; then
             git config --global user.name $GITHUB_USER
             git config --global user.email $GITHUB_EMAIL
