@@ -155,11 +155,17 @@ export default function EnvVars() {
         if (name.trim() === '') {
             return 'Name must not be empty.';
         }
+        if (name.length > 255) {
+            return 'Name too long. Maximum name length is 255 characters.';
+        }
         if (!/^[a-zA-Z0-9_]*$/.test(name)) {
             return 'Name must match /[a-zA-Z_]+[a-zA-Z0-9_]*/.';
         }
         if (variable.value.trim() === '') {
             return 'Value must not be empty.';
+        }
+        if (variable.value.length > 32768) {
+            return 'Value too long. Maximum value length is 32768 characters.';
         }
         if (pattern.trim() === '') {
             return 'Scope must not be empty.';
