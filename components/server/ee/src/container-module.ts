@@ -36,6 +36,7 @@ import {
     AccountServiceImpl,
     SubscriptionService,
     TeamSubscriptionService,
+    TeamSubscription2Service,
 } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import {
     ChargebeeProvider,
@@ -106,6 +107,7 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(AccountService).to(AccountServiceImpl).inSingletonScope();
     bind(SubscriptionService).toSelf().inSingletonScope();
     bind(TeamSubscriptionService).toSelf().inSingletonScope();
+    bind(TeamSubscription2Service).toSelf().inSingletonScope();
 
     // payment/billing
     bind(ChargebeeProvider).toSelf().inSingletonScope();

@@ -97,6 +97,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import {
     TeamSubscription,
+    TeamSubscription2,
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
@@ -2021,6 +2022,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         ctx.span?.setTag("teamId", invite.teamId);
         await this.teamDB.addMemberToTeam(user.id, invite.teamId);
+        await this.onTeamMemberAdded(user.id, invite.teamId);
         const team = await this.teamDB.findTeamById(invite.teamId);
 
         this.analytics.track({
@@ -2055,7 +2057,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkAndBlockUser("removeTeamMember");
         // Users are free to leave any team themselves, but only owners can remove others from their teams.
         await this.guardTeamOperation(teamId, user.id === userId ? "get" : "update");
+        const membership = await this.teamDB.findTeamMembership(userId, teamId);
+        if (!membership) {
+            throw new Error(`Could not find membership for user '${userId}' in team '${teamId}'`);
+        }
         await this.teamDB.removeMemberFromTeam(userId, teamId);
+        await this.onTeamMemberRemoved(userId, teamId, membership.id);
         this.analytics.track({
             userId: user.id,
             event: "team_user_removed",
@@ -2169,19 +2176,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach((project) => {
-            /** no awat */ this.deleteProject(ctx, project.id).catch((err) => {
+            /** no await */ this.deleteProject(ctx, project.id).catch((err) => {
                 /** ignore */
             });
         });
 
         const teamMembers = await this.teamDB.findMembersByTeam(teamId);
         teamMembers.forEach((member) => {
-            /** no awat */ this.removeTeamMember(ctx, teamId, member.userId).catch((err) => {
+            /** no await */ this.removeTeamMember(ctx, teamId, member.userId).catch((err) => {
                 /** ignore */
             });
         });
 
         await this.teamDB.deleteTeam(teamId);
+        await this.onTeamDeleted(teamId);
 
         return this.analytics.track({
             userId: user.id,
@@ -2917,7 +2925,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async createPortalSession(ctx: TraceContext): Promise<{}> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async createTeamPortalSession(ctx: TraceContext, teamId: string): Promise<{}> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
     async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async teamCheckout(ctx: TraceContext, teamId: string, planId: string): Promise<{}> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getAvailableCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
@@ -2943,6 +2957,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
     async subscriptionCancelDowngrade(ctx: TraceContext, subscriptionId: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
+        // Extension point for EE
+    }
+    protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
+        // Extension point for EE
+    }
+    protected async onTeamDeleted(teamId: string): Promise<void> {
+        // Extension point for EE
     }
     async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
