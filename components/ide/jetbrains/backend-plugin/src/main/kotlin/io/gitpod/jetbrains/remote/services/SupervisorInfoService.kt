@@ -17,7 +17,7 @@ object SupervisorInfoService {
     private const val SUPERVISOR_ADDRESS = "localhost:22999"
 
     // there should be only one channel per an application to avoid memory leak
-    private val channel = ManagedChannelBuilder.forTarget(SUPERVISOR_ADDRESS).usePlaintext().build()
+    val channel = ManagedChannelBuilder.forTarget(SUPERVISOR_ADDRESS).usePlaintext().build()
 
     data class Result(
         val infoResponse: io.gitpod.supervisor.api.Info.WorkspaceInfoResponse,
