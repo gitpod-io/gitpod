@@ -14,11 +14,12 @@ import Tooltip from "../components/Tooltip";
 import { getGitpodService } from "../service/service";
 import { ThemeContext } from "../theme-context";
 import { UserContext } from "../user-context";
-import settingsMenu from "./settings-menu";
+import getSettingsMenu from "./settings-menu";
 import IDENone from "../icons/IDENone.svg";
 import IDENoneDark from "../icons/IDENoneDark.svg";
 import CheckBox from "../components/CheckBox";
 import { trackEvent } from "../Analytics";
+import { PaymentContext } from "../payment-context";
 
 type Theme = "light" | "dark" | "system";
 
@@ -33,6 +34,7 @@ const DesktopNone: IDEOption = {
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
+    const { showPaymentUI } = useContext(PaymentContext);
     const { setIsDark, isDark } = useContext(ThemeContext);
 
     const updateUserIDEInfo = async (defaultDesktopIde: string, defaultIde: string, useLatestVersion: boolean) => {
@@ -129,7 +131,11 @@ export default function Preferences() {
 
     return (
         <div>
-            <PageWithSubMenu subMenu={settingsMenu} title="Preferences" subtitle="Configure user preferences.">
+            <PageWithSubMenu
+                subMenu={getSettingsMenu({ showPaymentUI })}
+                title="Preferences"
+                subtitle="Configure user preferences."
+            >
                 {ideOptions && (
                     <>
                         {browserIdeOptions && (
