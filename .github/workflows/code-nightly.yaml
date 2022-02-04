@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: downlaod leeway
-        run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.8/leeway_0.2.8_Linux_x86_64.tar.gz | sudo tar xz
+      - name: Download leeway
+        run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.16/leeway_0.2.16_Linux_x86_64.tar.gz | sudo tar xz
       - name: Auth Google Cloud SDK
         uses: google-github-actions/auth@v0
         with:
