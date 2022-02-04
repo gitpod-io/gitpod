@@ -60,6 +60,14 @@ func Test_parse_git_command_and_remote(t *testing.T) {
 			},
 			Expected: gitCommandInfo{RepoUrl: "https://github.com/jeanp413/test-private-package.git", GitCommand: "clone"},
 		},
+		{
+			Name: "JB push command",
+			Commands: []string{
+				"/usr/lib/git-core/git remote-https origin https://github.com/gitpod-io/spring-petclinic.git ",
+				"/bin/git -c core.quotepath=false -c log.showSignature=false push --progress --porcelain origin refs/heads/master:master ",
+			},
+			Expected: gitCommandInfo{RepoUrl: "https://github.com/gitpod-io/spring-petclinic.git", GitCommand: "push"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {

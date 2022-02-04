@@ -65,7 +65,7 @@ class GitpodManager : Disposable {
                         }
                         val notification = notificationGroup.createNotification(request.message, type)
                         for (action in request.actionsList) {
-                            notification.addAction(NotificationAction.createSimple(action) {
+                            notification.addAction(NotificationAction.createSimpleExpiring(action) {
                                 futureNotifications.respond(RespondRequest.newBuilder()
                                         .setRequestId(n.requestId)
                                         .setResponse(NotifyResponse.newBuilder().setAction(action).build())

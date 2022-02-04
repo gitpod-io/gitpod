@@ -16,6 +16,10 @@ until curl -sS "$SUPERVISOR_ADDR"/_supervisor/v1/status/content/wait/true | grep
 done
 echo "Desktop IDE: Content available."
 
+if [ "${SUPERVISOR_DEBUG_ENABLE+}" = "true" ]; then
+  JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
+fi
+
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
 /ide-desktop/backend/bin/remote-dev-server.sh run "$GITPOD_REPO_ROOT"
 
