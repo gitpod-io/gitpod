@@ -7,7 +7,6 @@ package util
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 )
 
@@ -39,7 +38,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 
 // MarshalJSON turns a duration into a string
 func (d Duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(fmt.Sprint(time.Duration(d)))
+	return json.Marshal(time.Duration(d).String())
 }
 
 // String produces a string representation of this duration
