@@ -10,6 +10,8 @@
 // If you use any setting herein, you forfeit support from Gitpod.
 package experimental
 
+import "k8s.io/apimachinery/pkg/api/resource"
+
 // Config contains all experimental configuration.
 type Config struct {
 	Workspace *WorkspaceConfig `json:"workspace"`
@@ -20,6 +22,13 @@ type Config struct {
 type WorkspaceConfig struct {
 	Tracing *Tracing `json:"tracing"`
 	Stage   string   `json:"stage"`
+
+	CPULimits struct {
+		Enabled          bool              `json:"enabled"`
+		NodeCPUBandwidth resource.Quantity `json:"nodeBandwidth"`
+		Limit            resource.Quantity `json:"limit"`
+		BurstLimit       resource.Quantity `json:"burstLimit"`
+	}
 }
 
 type WebAppConfig struct {

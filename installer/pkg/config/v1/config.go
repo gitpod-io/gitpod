@@ -7,7 +7,7 @@ package config
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -202,7 +202,7 @@ type Resources struct {
 	Requests      corev1.ResourceList `json:"requests" validate:"required"`
 	Limits        corev1.ResourceList `json:"limits,omitempty"`
 	DynamicLimits *struct {
-		CPU []resources.Bucket // todo(sje): add custom validation
+		CPU []cpulimit.Bucket // todo(sje): add custom validation
 	} `json:"dynamicLimits,omitempty"`
 }
 
