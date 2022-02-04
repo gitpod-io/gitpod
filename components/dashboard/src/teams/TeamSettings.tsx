@@ -10,16 +10,26 @@ import { Redirect, useLocation } from "react-router";
 import CodeText from "../components/CodeText";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import { PaymentContext } from "../payment-context";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { getCurrentTeam, TeamsContext } from "./teams-context";
 
-export function getTeamSettingsMenu(team?: Team) {
+export function getTeamSettingsMenu(params: { team?: Team; showPaymentUI?: boolean }) {
+    const { team, showPaymentUI } = params;
     return [
         {
             title: "General",
             link: [`/t/${team?.slug}/settings`],
         },
+        ...(showPaymentUI
+            ? [
+                  {
+                      title: "Billing",
+                      link: [`/t/${team?.slug}/billing`],
+                  },
+              ]
+            : []),
     ];
 }
 
@@ -31,6 +41,7 @@ export default function TeamSettings() {
     const { user } = useContext(UserContext);
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
+    const { showPaymentUI } = useContext(PaymentContext);
 
     const close = () => setModal(false);
 
@@ -57,7 +68,7 @@ export default function TeamSettings() {
     return (
         <>
             <PageWithSubMenu
-                subMenu={getTeamSettingsMenu(team)}
+                subMenu={getTeamSettingsMenu({ team, showPaymentUI })}
                 title="Settings"
                 subtitle="Manage general team settings."
             >
