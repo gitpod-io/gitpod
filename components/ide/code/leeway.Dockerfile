@@ -20,8 +20,8 @@ RUN mkdir gp-code \
 WORKDIR /gp-code
 RUN yarn --frozen-lockfile --network-timeout 180000
 RUN yarn --cwd ./extensions compile
-RUN yarn gulp vscode-web-min
-RUN yarn gulp vscode-reh-linux-x64-min
+RUN yarn gulp vscode-web
+RUN yarn gulp vscode-reh-linux-x64
 
 # config for first layer needed by blobserve
 # we also remove `static/` from resource urls as that's needed by blobserve,
