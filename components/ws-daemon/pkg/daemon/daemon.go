@@ -21,11 +21,11 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 )
 
 // NewDaemon produces a new daemon
@@ -47,13 +47,13 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("NODENAME env var isn't set")
 	}
 	cgCustomizer := &CgroupCustomizer{}
-	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupsBasePath)
+	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupBasePath)
 	markUnmountFallback, err := NewMarkUnmountFallback(reg)
 	if err != nil {
 		return nil, err
 	}
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
-		resources.NewDispatchListener(&config.Resources, reg),
+		cpulimit.NewDispatchListener(&config.Resources, reg),
 		cgCustomizer,
 		markUnmountFallback,
 	)

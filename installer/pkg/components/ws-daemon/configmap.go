@@ -11,15 +11,16 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	wsdapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 	wsdconfig "github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +37,19 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	default:
 		return nil, fmt.Errorf("unknown fs shift method: %s", ctx.Config.Workspace.Runtime.FSShiftMethod)
 	}
+
+	cpuLimitConfig := cpulimit.Config{
+		Enabled:        false,
+		CGroupBasePath: "/mnt/node-cgroups",
+		ControlPeriod:  util.Duration(15 * time.Second),
+	}
+	ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		cpuLimitConfig.Enabled = ucfg.Workspace.CPULimits.Enabled
+		cpuLimitConfig.BurstLimit = ucfg.Workspace.CPULimits.BurstLimit
+		cpuLimitConfig.Limit = ucfg.Workspace.CPULimits.Limit
+		cpuLimitConfig.TotalBandwidth = ucfg.Workspace.CPULimits.NodeCPUBandwidth
+		return nil
+	})
 
 	wsdcfg := wsdconfig.Config{
 		Daemon: daemon.Config{
@@ -81,23 +95,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Size:  70000,
 				}},
 			},
-			Resources: resources.Config{
-				// TODO(cw): how do we best expose this config?
-				CPUBuckets: []resources.Bucket{
-					{Budget: 90000, Limit: 500},
-					{Budget: 120000, Limit: 400},
-					{Budget: 54000, Limit: 200},
-				},
-				ControlPeriod:   "15m",
-				SamplingPeriod:  "10s",
-				CGroupsBasePath: "/mnt/node-cgroups",
-				ProcessPriorities: map[resources.ProcessType]int{
-					resources.ProcessSupervisor: 0,
-					resources.ProcessTheia:      5,
-					resources.ProcessShell:      6,
-					resources.ProcessDefault:    10,
-				},
-			},
+			Resources: cpuLimitConfig,
 			Hosts: hosts.Config{
 				Enabled:       true,
 				NodeHostsFile: "/mnt/hosts",

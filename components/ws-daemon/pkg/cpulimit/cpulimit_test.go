@@ -221,7 +221,7 @@ func (n *Node) Source(context.Context) ([]cpulimit.Workspace, error) {
 }
 
 // Sink acts as sink for a distributor
-func (n *Node) Sink(id string, limit cpulimit.Bandwidth) {
+func (n *Node) Sink(id string, limit cpulimit.Bandwidth, burst bool) {
 	n.State[id].Limit = limit
 }
 
@@ -238,7 +238,7 @@ func (n *Node) Dump(out io.Writer, t time.Duration, dbg cpulimit.DistributorDebu
 		if actualRate > limit {
 			actualRate = limit
 		}
-		fmt.Fprintf(out, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", t, c.ID(), c.Rate(t), state.Throttled, time.Duration(state.Usage).Milliseconds(), state.Limit, actualRate, totalCapacity, n.bandwidthUsed, n.bandwidthReq, dbg.BandwidthBreakout)
+		fmt.Fprintf(out, "%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", t, c.ID(), c.Rate(t), state.Throttled, time.Duration(state.Usage).Milliseconds(), state.Limit, actualRate, totalCapacity, n.bandwidthUsed, n.bandwidthReq, dbg.BandwidthBurst)
 	}
 }
 
