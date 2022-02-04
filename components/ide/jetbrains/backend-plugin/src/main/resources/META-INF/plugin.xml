@@ -19,7 +19,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.HeartbeatService" preload="true"/>
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager" preload="true"/>
-        <notificationGroup id="Gitpod Notifications" displayType="STICKY_BALLOON" />
+        <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false" />
+        <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
     </extensions>
 
 </idea-plugin>

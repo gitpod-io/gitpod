@@ -179,7 +179,7 @@ func (g *gitCommandInfo) Ok() bool {
 	return g.RepoUrl != "" && g.GitCommand != ""
 }
 
-var gitCommandRegExp = regexp.MustCompile(`git(\s+(?:[\w\-]+\s+)*)(push|clone|fetch|pull|diff|ls-remote)`)
+var gitCommandRegExp = regexp.MustCompile(`git(?:\s+(?:\S+\s+)*)(push|clone|fetch|pull|diff|ls-remote)(?:\s+(?:\S+\s+)*)?`)
 var repoUrlRegExp = regexp.MustCompile(`remote-https?\s([^\s]+)\s+(https?:[^\s]+)\s`)
 
 // This method needs to be called multiple times to fill all the required info
@@ -190,8 +190,8 @@ var repoUrlRegExp = regexp.MustCompile(`remote-https?\s([^\s]+)\s+(https?:[^\s]+
 // `/usr/lib/git-core/git push`
 func (g *gitCommandInfo) parseGitCommandAndRemote(cmdLineString string) {
 	matchCommand := gitCommandRegExp.FindStringSubmatch(cmdLineString)
-	if len(matchCommand) == 3 {
-		g.GitCommand = matchCommand[2]
+	if len(matchCommand) == 2 {
+		g.GitCommand = matchCommand[1]
 	}
 
 	matchRepo := repoUrlRegExp.FindStringSubmatch(cmdLineString)

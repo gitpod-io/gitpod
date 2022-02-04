@@ -16,3 +16,14 @@ COPY --chown=33333:33333 ${SUPERVISOR_IDE_CONFIG} /ide-desktop/supervisor-ide-co
 COPY --chown=33333:33333 startup.sh /ide-desktop/
 COPY --chown=33333:33333 --from=download /workdir/ /ide-desktop/backend/
 COPY --chown=33333:33333 components-ide-jetbrains-image-status--app/status /ide-desktop
+
+COPY --chown=33333:33333 components-ide-jetbrains-cli--app/cli /ide-desktop/bin/idea-cli
+ENV GITPOD_ENV_APPEND_PATH /ide-desktop/bin:
+
+# editor config
+ENV GITPOD_ENV_SET_EDITOR "/ide-desktop/bin/idea-cli open"
+ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
+ENV GITPOD_ENV_SET_GP_OPEN_EDITOR "$GITPOD_ENV_SET_EDITOR"
+ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"
+ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide-desktop/bin/idea-cli preview"
+ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide-desktop/bin/idea-cli preview"
