@@ -9,4 +9,5 @@ export * from './account-service';
 export * from './account-service-impl';
 export * from './subscription-service';
 export * from './team-subscription-service';
+export * from './team-subscription2-service';
 export * from './accounting-util';

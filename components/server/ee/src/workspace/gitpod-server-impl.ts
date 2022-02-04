@@ -72,6 +72,7 @@ import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/paymen
 import {
     AssigneeIdentityIdentifier,
     TeamSubscription,
+    TeamSubscription2,
     TeamSubscriptionSlot,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
@@ -84,8 +85,9 @@ import {
     AccountService,
     SubscriptionService,
     TeamSubscriptionService,
+    TeamSubscription2Service,
 } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { AccountingDB, TeamSubscriptionDB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
+import { AccountingDB, TeamSubscriptionDB, TeamSubscription2DB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
 import { ChargebeeProvider, UpgradeHelper } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import { ChargebeeCouponComputer } from "../user/coupon-computer";
 import { ChargebeeService } from "../user/chargebee-service";
@@ -115,8 +117,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(AccountingDB) protected readonly accountingDB: AccountingDB;
     @inject(EduEmailDomainDB) protected readonly eduDomainDb: EduEmailDomainDB;
 
+    @inject(TeamSubscription2DB) protected readonly teamSubscription2DB: TeamSubscription2DB;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDB: TeamSubscriptionDB;
     @inject(TeamSubscriptionService) protected readonly teamSubscriptionService: TeamSubscriptionService;
+    @inject(TeamSubscription2Service) protected readonly teamSubscription2Service: TeamSubscription2Service;
 
     @inject(ChargebeeProvider) protected readonly chargebeeProvider: ChargebeeProvider;
     @inject(UpgradeHelper) protected readonly upgradeHelper: UpgradeHelper;
@@ -1108,6 +1112,37 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
     }
 
+    async createTeamPortalSession(ctx: TraceContext, teamId: string): Promise<{}> {
+        traceAPIParams(ctx, { teamId });
+
+        this.checkUser("createTeamPortalSession");
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        await this.guardAccess({ kind: "team", subject: team, members }, "update");
+
+        return await new Promise((resolve, reject) => {
+            this.chargebeeProvider.portal_session
+                .create({
+                    customer: {
+                        id: "team:" + team.id,
+                    },
+                })
+                .request(function (error: any, result: any) {
+                    if (error) {
+                        log.error("Team portal session creation error", error);
+                        reject(error);
+                    } else {
+                        log.debug("Team portal session created");
+                        resolve(result.portal_session);
+                    }
+                });
+        });
+    }
+
     async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
         traceAPIParams(ctx, { planId, planQuantity });
 
@@ -1152,6 +1187,44 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             log.error(logContext, "Checkout error", err);
             throw err;
         }
+    }
+
+    async teamCheckout(ctx: TraceContext, teamId: string, planId: string): Promise<{}> {
+        traceAPIParams(ctx, { teamId, planId });
+
+        const user = this.checkUser("teamCheckout");
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        await this.guardAccess({ kind: "team", subject: team, members }, "update");
+
+        const coupon = await this.findAvailableCouponForPlan(user, planId);
+
+        const email = User.getPrimaryEmail(user);
+        return new Promise((resolve, reject) => {
+            this.chargebeeProvider.hosted_page
+                .checkout_new({
+                    customer: {
+                        id: "team:" + team.id,
+                        email,
+                    },
+                    subscription: {
+                        plan_id: planId,
+                        plan_quantity: members.length,
+                        coupon,
+                    },
+                })
+                .request((error: any, result: any) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve(result.hosted_page);
+                });
+        });
     }
 
     protected async findAvailableCouponForPlan(user: User, planId: string): Promise<string | undefined> {
@@ -1304,9 +1377,102 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return chargebeeSubscriptionId;
     }
 
-    // Team Subscriptions
+    // Team Subscriptions 2
+    async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
+        this.checkUser("getTeamSubscription");
+        await this.guardTeamOperation(teamId, "get");
+        return this.teamSubscription2DB.findForTeam(teamId, new Date().toISOString());
+    }
+
+    protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        await this.updateTeamSubscriptionQuantity(teamSubscription);
+        await this.teamSubscription2Service.addTeamMemberSubscription(teamSubscription, userId);
+    }
+
+    protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        await this.updateTeamSubscriptionQuantity(teamSubscription);
+        await this.teamSubscription2Service.cancelTeamMemberSubscription(
+            teamSubscription,
+            userId,
+            teamMembershipId,
+            now,
+        );
+    }
+
+    protected async onTeamDeleted(teamId: string): Promise<void> {
+        const now = new Date();
+        const teamSubscription = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
+        if (!teamSubscription) {
+            // No team subscription, nothing to do 🌴
+            return;
+        }
+        const chargebeeSubscriptionId = teamSubscription.paymentReference;
+        await this.chargebeeService.cancelSubscription(
+            chargebeeSubscriptionId,
+            {},
+            { teamId, chargebeeSubscriptionId },
+        );
+    }
+
+    protected async updateTeamSubscriptionQuantity(teamSubscription: TeamSubscription2): Promise<void> {
+        const members = await this.teamDB.findMembersByTeam(teamSubscription.teamId);
+        const oldQuantity = teamSubscription.quantity;
+        const newQuantity = members.length;
+        try {
+            if (oldQuantity < newQuantity) {
+                // Upgrade: Charge for it!
+                const chargebeeSubscription = await this.getChargebeeSubscription(
+                    {},
+                    teamSubscription.paymentReference,
+                );
+                let pricePerUnitInCents = chargebeeSubscription.plan_unit_price;
+                if (pricePerUnitInCents === undefined) {
+                    const plan = Plans.getById(teamSubscription.planId)!;
+                    pricePerUnitInCents = plan.pricePerMonth * 100;
+                }
+                const currentTermRemainingRatio =
+                    this.upgradeHelper.getCurrentTermRemainingRatio(chargebeeSubscription);
+                const diffInCents = Math.round(
+                    pricePerUnitInCents * (newQuantity - oldQuantity) * currentTermRemainingRatio,
+                );
+                const upgradeTimestamp = new Date().toISOString();
+                const description = `Pro-rated upgrade from '${oldQuantity}' to '${newQuantity}' team members (${formatDate(
+                    upgradeTimestamp,
+                )})`;
+                await this.upgradeHelper.chargeForUpgrade(
+                    "",
+                    teamSubscription.paymentReference,
+                    diffInCents,
+                    description,
+                    upgradeTimestamp,
+                );
+            }
+            await this.doUpdateSubscription("", teamSubscription.paymentReference, {
+                plan_quantity: newQuantity,
+                end_of_term: false,
+            });
+        } catch (err) {
+            if (chargebee.ApiError.is(err) && err.type === "payment") {
+                throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${err.api_error_code}: ${err.message}`);
+            }
+        }
+    }
+
+    // Team Subscriptions (legacy)
     async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
-        const user = this.checkUser("getTeamSubscriptions");
+        const user = this.checkUser("tsGet");
         return this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
     }
 
