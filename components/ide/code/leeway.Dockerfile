@@ -2,26 +2,50 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-# BUILDER_BASE is a placeholder, will be replaced before build time
-# Check BUILD.yaml
-FROM BUILDER_BASE as code_installer
+FROM gitpod/openvscode-server-linux-build-agent:centos7-devtoolset8-x64 as dependencies_builder
 
 ARG CODE_COMMIT
 
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD 1
-ENV ELECTRON_SKIP_BINARY_DOWNLOAD 1
-
-RUN mkdir gp-code \
-    && cd gp-code \
+RUN mkdir /gp-code \
+    && cd /gp-code \
     && git init \
     && git remote add origin https://github.com/gitpod-io/vscode \
     && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
-RUN yarn --frozen-lockfile --network-timeout 180000
-RUN yarn --cwd ./extensions compile
-RUN yarn gulp vscode-web-min
-RUN yarn gulp vscode-reh-linux-x64-min
+RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
+
+
+FROM gitpod/openvscode-server-linux-build-agent:bionic-x64 as code_installer
+
+USER root
+
+ARG CODE_COMMIT
+
+ARG NODE_VERSION=14.18.2
+ARG NVM_DIR="/root/.nvm"
+RUN mkdir -p $NVM_DIR \
+    && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | sh \
+    && . $NVM_DIR/nvm.sh \
+    && nvm alias default $NODE_VERSION
+ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD 1
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD 1
+
+RUN mkdir /gp-code \
+    && cd /gp-code \
+    && git init \
+    && git remote add origin https://github.com/gitpod-io/vscode \
+    && git fetch origin $CODE_COMMIT --depth=1 \
+    && git reset --hard FETCH_HEAD
+WORKDIR /gp-code
+RUN yarn --frozen-lockfile --network-timeout 180000 \
+    && yarn --cwd remote/web --frozen-lockfile --network-timeout 180000 \
+    && yarn --cwd extensions compile \
+    && yarn gulp vscode-web-min \
+    && yarn gulp vscode-reh-linux-x64-min
+COPY --from=dependencies_builder /gp-code/remote/node_modules/ /vscode-reh-linux-x64/node_modules/
 
 # config for first layer needed by blobserve
 # we also remove `static/` from resource urls as that's needed by blobserve,
