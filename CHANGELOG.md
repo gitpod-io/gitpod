@@ -1,6 +1,9 @@
 # Change Log
 
 ## February 2022
+- Fix missing status updates for prebuilds. ([#7968](https://github.com/gitpod-io/gitpod/pull/7968)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- reduce idle DB load on SH installations ([#7940](https://github.com/gitpod-io/gitpod/pull/7940)) - [@geropl](https://github.com/geropl)
+- [gitlab] user-scoped env vars can now be filtered for nested repos on Gitlab ([#7978](https://github.com/gitpod-io/gitpod/pull/7978)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
 - Update PyCharm IDE image to version 213.6777.50. ([#7943](https://github.com/gitpod-io/gitpod/pull/7943)) - [@roboquat](https://github.com/roboquat)
 - Update PhpStorm IDE image to version 213.6777.58. ([#7944](https://github.com/gitpod-io/gitpod/pull/7944)) - [@roboquat](https://github.com/roboquat)
 - [installer]: add jaeger sampling options to the tracing object ([#7727](https://github.com/gitpod-io/gitpod/pull/7727)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
