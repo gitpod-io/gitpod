@@ -35,6 +35,20 @@ export interface Role {
     permissions: PermissionName[],
 }
 
+export namespace RolesOrPermissions {
+    export function toPermissionSet(rolesOrPermissions: RoleOrPermission[] = []): Set<PermissionName> {
+        const permissions = new Set<PermissionName>();
+        for (const rop of rolesOrPermissions) {
+            if (Permission.is(rop)) {
+                permissions.add(rop);
+            } else if (RoleName.is(rop)) {
+                Role.getByName(rop).permissions.forEach(p => permissions.add(p));
+            }
+        }
+        return permissions;
+    };
+}
+
 export namespace Permission {
     /** The permission to monitor the (live) state of a Gitpod installation */
     export const MONITOR: PermissionName = "monitor";
@@ -66,9 +80,7 @@ export namespace Permission {
     }
 
     export const all = (): PermissionName[] => {
-        return Object.keys(Permission)
-            .map(k => (Permission as any)[k])
-            .filter(k => typeof(k) === 'string');
+        return Object.keys(Permissions) as PermissionName[];
     };
 }
 
