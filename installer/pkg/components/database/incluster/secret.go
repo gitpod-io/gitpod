@@ -36,6 +36,13 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("failed to marshal mysql encryptionKeys: %w", err)
 	}
 
+	databasePrefix := "mysql"
+	if inClusterEnabled(ctx) {
+		if useMariaDB(ctx) {
+			databasePrefix = "mariadb"
+		}
+	}
+
 	return []runtime.Object{&corev1.Secret{
 		TypeMeta: common.TypeMetaSecret,
 		ObjectMeta: metav1.ObjectMeta{
@@ -44,8 +51,8 @@ func secrets(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels:    common.DefaultLabels(Component),
 		},
 		Data: map[string][]byte{
-			"mysql-root-password": []byte(rootPassword),
-			"mysql-password":      []byte(password),
+			databasePrefix + "-root-password": []byte(rootPassword),
+			databasePrefix + "-password":      []byte(password),
 		},
 	}, &corev1.Secret{
 		TypeMeta: common.TypeMetaSecret,

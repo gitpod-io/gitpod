@@ -25,6 +25,10 @@ func inClusterEnabled(cfg *common.RenderContext) bool {
 	return pointer.BoolDeref(cfg.Config.Database.InCluster, false)
 }
 
+func useMariaDB(cfg *common.RenderContext) bool {
+	return pointer.BoolDeref(cfg.Config.Database.MariaDB, false)
+}
+
 var Objects = common.CompositeRenderFunc(
 	common.CompositeRenderFunc(func(cfg *common.RenderContext) ([]runtime.Object, error) {
 		if inClusterEnabled(cfg) {
@@ -43,7 +47,11 @@ var Objects = common.CompositeRenderFunc(
 var Helm = common.CompositeHelmFunc(
 	common.CompositeHelmFunc(func(cfg *common.RenderContext) ([]string, error) {
 		if inClusterEnabled(cfg) {
-			return incluster.Helm(cfg)
+			if useMariaDB(cfg) {
+				return incluster.HelmMariaDB(cfg)
+			} else {
+				return incluster.HelmMySQL(cfg)
+			}
 		}
 
 		return nil, nil

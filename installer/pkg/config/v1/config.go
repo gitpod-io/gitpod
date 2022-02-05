@@ -112,6 +112,7 @@ type Tracing struct {
 
 type Database struct {
 	InCluster *bool             `json:"inCluster,omitempty"`
+	MariaDB   *bool             `json:"mariaDB,omitempty"`
 	External  *DatabaseExternal `json:"external,omitempty"`
 	CloudSQL  *DatabaseCloudSQL `json:"cloudSQL,omitempty"`
 }

@@ -17,6 +17,13 @@ import (
 func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
+	appName := "mysql"
+	if inClusterEnabled(ctx) {
+		if useMariaDB(ctx) {
+			appName = "mariadb"
+		}
+	}
+
 	return []runtime.Object{&corev1.Service{
 		TypeMeta: common.TypeMetaService,
 		ObjectMeta: metav1.ObjectMeta{
@@ -32,7 +39,7 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}},
 			// todo(sje): selector is different if using CloudSQLProxy
 			Selector: map[string]string{
-				"app.kubernetes.io/name": "mysql",
+				"app.kubernetes.io/name": appName,
 			},
 			Type: corev1.ServiceTypeClusterIP,
 		},

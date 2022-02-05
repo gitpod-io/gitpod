@@ -11,9 +11,10 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strings"
 	"syscall"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"

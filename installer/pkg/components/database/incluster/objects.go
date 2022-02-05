@@ -6,7 +6,16 @@ package incluster
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"k8s.io/utils/pointer"
 )
+
+func inClusterEnabled(cfg *common.RenderContext) bool {
+	return pointer.BoolDeref(cfg.Config.Database.InCluster, false)
+}
+
+func useMariaDB(cfg *common.RenderContext) bool {
+	return pointer.BoolDeref(cfg.Config.Database.MariaDB, false)
+}
 
 var Objects = common.CompositeRenderFunc(
 	configmap,
