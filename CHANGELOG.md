@@ -1,6 +1,9 @@
 # Change Log
 
 ## February 2022
+- Improved in-transit security of user environment variables ([#7923](https://github.com/gitpod-io/gitpod/pull/7923)) - [@csweichel](https://github.com/csweichel)
+- Update GoLand IDE image to version 213.6777.51. ([#7919](https://github.com/gitpod-io/gitpod/pull/7919)) - [@roboquat](https://github.com/roboquat)
+- Update IntelliJ IDEA IDE image to version 213.6777.52. ([#7920](https://github.com/gitpod-io/gitpod/pull/7920)) - [@roboquat](https://github.com/roboquat)
 - Fix missing status updates for prebuilds. ([#7968](https://github.com/gitpod-io/gitpod/pull/7968)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - reduce idle DB load on SH installations ([#7940](https://github.com/gitpod-io/gitpod/pull/7940)) - [@geropl](https://github.com/geropl)
 - [gitlab] user-scoped env vars can now be filtered for nested repos on Gitlab ([#7978](https://github.com/gitpod-io/gitpod/pull/7978)) - [@JanKoehnlein](https://github.com/JanKoehnlein)
