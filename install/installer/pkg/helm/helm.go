@@ -11,17 +11,21 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strings"
 	"syscall"
+	"time"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 )
 
 // TemplateConfig
@@ -208,4 +212,95 @@ func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig P
 
 		return append(templates, rel.Manifest), nil
 	}
+}
+
+func CreateHelmChart(chartYaml chart.Metadata, objs []string) (*string, error) {
+	dir, err := os.MkdirTemp("", chartYaml.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.Mkdir(fmt.Sprintf("%s/crds", dir), 0755)
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.Mkdir(fmt.Sprintf("%s/templates", dir), 0755)
+	if err != nil {
+		return nil, err
+	}
+
+	fc, err := yaml.Marshal(chartYaml)
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.WriteFile(fmt.Sprintf("%s/Chart.yaml", dir), fc, 0644)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert everything to individual objects
+	runtimeObjs, err := common.YamlToRuntimeObject(objs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, obj := range runtimeObjs {
+		helmDir := "templates"
+		if obj.Kind == "CustomResourceDefinition" {
+			helmDir = "crds"
+		}
+
+		err = os.WriteFile(fmt.Sprintf("%s/%s/%s-%s.yaml", dir, helmDir, strings.ToLower(obj.Kind), obj.Metadata.Name), []byte(obj.Content), 0644)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &dir, nil
+}
+
+func InstallOrUpgrade(name string, namespace string, dir string) error {
+	settings := SettingsFactory(
+		&Config{
+			Debug:     false,
+			Name:      name,
+			Namespace: namespace,
+		},
+		dir,
+		nil,
+	)
+
+	if err := settings.ActionConfig.Init(settings.Env.RESTClientGetter(), namespace, "configmap", func(format string, v ...interface{}) {}); err != nil {
+		return err
+	}
+
+	histClient := action.NewHistory(settings.ActionConfig)
+	histClient.Max = 1
+	if _, err := histClient.Run(name); err == driver.ErrReleaseNotFound {
+		fmt.Fprintf(os.Stderr, "Release %q does not exist. Installing it now.\n", name)
+
+		client := action.NewInstall(settings.ActionConfig)
+		client.Atomic = true
+		client.CreateNamespace = true
+		client.Namespace = namespace
+		client.Timeout = 600 * time.Second
+		client.Wait = true
+
+		rel, err := runInstall(settings, client)
+		if err != nil {
+			return err
+		}
+		if rel == nil {
+			return fmt.Errorf("release for %s generated an empty value", settings.Config.Name)
+		}
+	}
+
+	os.Exit(1)
+
+	// cleanup on fail
+	// reset values
+
+	return nil
 }
