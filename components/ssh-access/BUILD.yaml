@@ -1,0 +1,13 @@
+packages:
+    - name: app
+      type: go
+      srcs:
+        - go.mod
+        - go.sum
+        - "**/*.go"
+      deps:
+        - components/gitpod-protocol/go:lib
+      env:
+        - CGO_ENABLED=0
+      config:
+        packaging: app

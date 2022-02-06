@@ -82,6 +82,7 @@ type APIInterface interface {
 	UninstallUserPlugin(ctx context.Context, params *UninstallPluginParams) (res bool, err error)
 	GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error)
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
+	GetOwnerToken(ctx context.Context, workspaceID string) (token string, err error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 }
@@ -1350,6 +1351,26 @@ func (gp *APIoverJSONRPC) PreparePluginUpload(ctx context.Context, params *Prepa
 
 	var result string
 	err = gp.C.Call(ctx, "preparePluginUpload", _params, &result)
+	if err != nil {
+		return
+	}
+	res = result
+
+	return
+}
+
+// PreparePluginUpload calls preparePluginUpload on the server
+func (gp *APIoverJSONRPC) GetOwnerToken(ctx context.Context, workspaceID string) (res string, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+
+	_params = append(_params, workspaceID)
+
+	var result string
+	err = gp.C.Call(ctx, "getOwnerToken", _params, &result)
 	if err != nil {
 		return
 	}
