@@ -9,7 +9,7 @@ ARG CODE_COMMIT
 RUN mkdir /gp-code \
     && cd /gp-code \
     && git init \
-    && git remote add origin https://github.com/gitpod-io/vscode \
+    && git remote add origin https://github.com/gitpod-io/openvscode-server \
     && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
@@ -34,7 +34,7 @@ ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
 RUN mkdir /gp-code \
     && cd /gp-code \
     && git init \
-    && git remote add origin https://github.com/gitpod-io/vscode \
+    && git remote add origin https://github.com/gitpod-io/openvscode-server \
     && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
