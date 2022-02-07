@@ -16,19 +16,8 @@ packages:
   - name: migrations
     type: yarn
     srcs:
-      - "src/typeorm/migration/**/*.ts"
-      - "src/typeorm/migrate-migrations-0_2_0.ts"
-      - "src/typeorm/entity/*.ts"
-      - "src/typeorm/ormconfig.ts"
-      - "src/typeorm/typeorm.ts"
-      - "src/typeorm/naming-strategy.ts"
-      - "src/typeorm/user-db-impl.ts"
-      - "src/typeorm/transformer.ts"
-      - "src/config.ts"
-      - "src/wait-for-db.ts"
-      - "src/migrate-migrations.ts"
-      - "src/user-db.ts"
-      - "package.json"
+      - "src/**/*.ts"
+      - package.json
     deps:
       - components/gitpod-protocol:lib
     config:
@@ -64,6 +53,7 @@ packages:
       - DB_PORT=23306
       - DB_USER=root
       - DB_PASSWORD=test
+      - DB_ENCRYPTION_KEYS=[{"name":"general","version":1,"primary":true,"material":"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c="}]
     ephemeral: true
     config:
       commands:
