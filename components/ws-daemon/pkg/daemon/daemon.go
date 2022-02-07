@@ -81,6 +81,8 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
+	log.Info("b")
+
 	return &Daemon{
 		Config: config,
 
