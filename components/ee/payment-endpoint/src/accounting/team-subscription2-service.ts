@@ -11,6 +11,7 @@ import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription
 import { inject, injectable } from "inversify";
 import { SubscriptionModel } from "./subscription-model";
 import { SubscriptionService } from "./subscription-service";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class TeamSubscription2Service {
@@ -19,6 +20,7 @@ export class TeamSubscription2Service {
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
 
     async addAllTeamMemberSubscriptions(ts2: TeamSubscription2): Promise<void> {
+        log.info(`addAllTeamMemberSubscriptions: ts2=${JSON.stringify(ts2)}`);
         const members = await this.teamDB.findMembersByTeam(ts2.teamId);
         for (const member of members) {
             await this.addTeamMemberSubscription(ts2, member.userId);
@@ -26,6 +28,7 @@ export class TeamSubscription2Service {
     }
 
     async addTeamMemberSubscription(ts2: TeamSubscription2, userId: string): Promise<void> {
+        log.info(`addTeamMemberSubscription: ts2=${JSON.stringify(ts2)} userId=${JSON.stringify(userId)}`);
         const membership = await this.teamDB.findTeamMembership(userId, ts2.teamId);
         if (!membership) {
             throw new Error(`Could not find membership for user '${userId}' in team '${ts2.teamId}'`);
@@ -39,6 +42,7 @@ export class TeamSubscription2Service {
     }
 
     protected async addSubscription(db: AccountingDB, userId: string, planId: string, teamMembershipId: string, startDate: string, amount: number, firstMonthAmount?: number, endDate?: string, cancelationDate?: string) {
+        log.info(`addSubscription: userId=${userId} planId=${planId} teamMembershipId=${teamMembershipId} startDate=${startDate} amount=${amount}`);
         const model = await this.loadSubscriptionModel(db, userId);
         const subscription = Subscription.create({
             userId,
@@ -56,6 +60,7 @@ export class TeamSubscription2Service {
     }
 
     async cancelAllTeamMemberSubscriptions(ts2: TeamSubscription2, date: Date): Promise<void> {
+        log.info(`cancelAllTeamMemberSubscriptions: ts2=${JSON.stringify(ts2)} date=${date.toISOString()}`);
         const members = await this.teamDB.findMembersByTeam(ts2.teamId);
         for (const member of members) {
             const membership = await this.teamDB.findTeamMembership(member.userId, ts2.teamId);
@@ -67,6 +72,7 @@ export class TeamSubscription2Service {
     }
 
     async cancelTeamMemberSubscription(ts2: TeamSubscription2, userId: string, teamMemberShipId: string, date: Date): Promise<void> {
+        log.info(`cancelTeamMemberSubscription: ts2=${JSON.stringify(ts2)} userId=${userId} teamMemberShipId=${teamMemberShipId} date=${date.toISOString()}`);
         const { endDate } = Subscription.calculateCurrentPeriod(ts2.startDate, date);
         return this.accountingDb.transaction(async (db) => {
             await this.cancelSubscription(db, userId, ts2.planId, teamMemberShipId, endDate);
@@ -74,6 +80,7 @@ export class TeamSubscription2Service {
     }
 
     protected async cancelSubscription(db: AccountingDB, userId: string, planId: string, teamMembershipId: string, cancellationDate: string) {
+        log.info(`cancelSubscription: userId=${userId} planId=${planId} teamMembershipId=${teamMembershipId} cancellationDate=${cancellationDate}`);
         const model = await this.loadSubscriptionModel(db, userId);
         const subscription = model.findSubscriptionByTeamMembershipId(teamMembershipId);
         if (!subscription) {

@@ -61,6 +61,7 @@ export class EndpointController {
      * @param res
      */
     private async handleUpdateGitpodSubscription(req: express.Request, res: express.Response) {
+        log.info('Chargebee handleUpdateGitpodSubscription!');
         if (!req.body || !req.body.event_type) {
             log.error('Received malformed event request from chargebee!');
             return;
@@ -70,7 +71,7 @@ export class EndpointController {
             const handled = await this.eventHandler.handle(req.body);
             if (!handled) {
                 const payload = { chargebeeEventType: req.body.event_type, action: 'ignored' };
-                log.debug(`Faithfully ignoring chargebee event of type: ${req.body.event_type}`, payload);
+                log.warn(`Faithfully ignoring chargebee event of type: ${req.body.event_type}`, payload);
             }
             res.status(200).send();
         } catch (err) {
