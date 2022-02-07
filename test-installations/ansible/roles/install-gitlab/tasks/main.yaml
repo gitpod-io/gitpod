@@ -1,0 +1,35 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Install dependencies
+  apt:
+    pkg:
+      - curl
+      - openssh-server
+      - ca-certificates
+      - tzdata
+      - perl
+    update_cache: yes
+    state: present
+  become: true
+
+- shell: curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.deb.sh | sudo bash
+
+- name: Install GitLab
+  apt:
+    name: gitlab-ee
+    update_cache: yes
+    state: present
+  become: true
+  environment:
+    EXTERNAL_URL: "https://{{ gitlab_domain }}"
+
+- name: Read initial root password
+  slurp:
+    src: /etc/gitlab/initial_root_password
+  register: init_root_passwd
+
+- debug:
+    msg: "GitLab Password: {{ init_root_passwd.content | b64decode | regex_search('Password: (.+)', '\\1') }}"
