@@ -145,22 +145,26 @@ export async function build(context, version) {
         }
         return raw.split(",").map(e => e.trim());
     })();
-    const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
+
+
+    // Main build should only contain the annotations below:
+    // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'clean-slate-deployment']
+    const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig && !mainBuild;
     const withContrib = "with-contrib" in buildConfig || mainBuild;
     const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
     const storage = buildConfig["storage"] || "";
-    const withIntegrationTests = "with-integration-tests" in buildConfig;
+    const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
     const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
-    const installEELicense = !("without-ee-license" in buildConfig);
-    const withPayment= "with-payment" in buildConfig;
-    const withObservability = "with-observability" in buildConfig;
-    const withHelm = "with-helm" in buildConfig;
-    const withVM = "with-vm" in buildConfig;
+    const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
+    const withPayment= "with-payment" in buildConfig && !mainBuild;
+    const withObservability = "with-observability" in buildConfig && !mainBuild;
+    const withHelm = "with-helm" in buildConfig && !mainBuild;
+    const withVM = "with-vm" in buildConfig && !mainBuild;
 
     const jobConfig = {
         buildConfig,
