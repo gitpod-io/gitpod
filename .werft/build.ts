@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec, ExecOptions } from './util/shell';
 import { Werft } from './util/werft';
-import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName } from './util/kubectl';
+import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName, findLastHostPort } from './util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
@@ -431,14 +431,19 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     const { version, destname, namespace, domain, monitoringDomain, url, withObservability, withVM } = deploymentConfig;
 
     // find free ports
-    werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Check for some free ports.");
-    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
-        { start: 10000, end: 11000 },
-        { start: 30000, end: 31000 },
-        { start: 31001, end: 32000 },
-    ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
+    werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Find last ports");
+    let wsdaemonPortMeta = findLastHostPort(namespace, 'ws-daemon', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
+    let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
+
+    if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta)) {
+        werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
+        [wsdaemonPortMeta, registryNodePortMeta] = findFreeHostPorts([
+            { start: 10000, end: 11000 },
+            { start: 30000, end: 31000 },
+        ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
+    }
     werft.log(installerSlices.FIND_FREE_HOST_PORTS,
-        `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}, and nodeExporterPort ${nodeExporterPort}.`);
+        `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}.`);
     werft.done(installerSlices.FIND_FREE_HOST_PORTS);
 
     // clean environment state
