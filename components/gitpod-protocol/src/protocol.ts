@@ -119,6 +119,7 @@ export type IDESettings = {
     defaultIde?: string
     useDesktopIde?: boolean
     defaultDesktopIde?: string
+    useLatestVersion?: boolean
 }
 
 export interface UserPlatform {

@@ -334,9 +334,10 @@ export class WorkspaceStarter {
             }
         }
 
+        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
         const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
         if (referrerIde) {
-            configuration.desktopIdeImage = referrerIde.option.image;
+            configuration.desktopIdeImage = useLatest ? (referrerIde.option.latestImage ?? referrerIde.option.image) : referrerIde.option.image
             if (!user.additionalData?.ideSettings) {
                 // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                 const additionalData = user?.additionalData || {};
@@ -356,7 +357,7 @@ export class WorkspaceStarter {
                 if (!!desktopIdeChoice) {
                     const mappedImage = ideConfig.ideOptions.options[desktopIdeChoice];
                     if (!!mappedImage && mappedImage.image) {
-                        configuration.desktopIdeImage = mappedImage.image;
+                        configuration.desktopIdeImage = useLatest ? (mappedImage.latestImage ?? mappedImage.image) : mappedImage.image
                     } else if (this.authService.hasPermission(user, "ide-settings")) {
                         // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
                         // For now, this feature requires special permissions.

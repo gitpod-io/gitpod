@@ -103,6 +103,11 @@ export interface IDEOption {
     image: string;
 
     /**
+     * The latest image ref to the IDE image, this image ref always resolve to digest.
+     */
+    latestImage?: string;
+
+    /**
      * When this is `true`, the tag of this image is resolved to the latest
      * image digest regularly.
      *
