@@ -20,8 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: downlaod leeway
-        run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.16/leeway_0.2.16_Linux_x86_64.tar.gz | sudo tar xz
+      - name: Download leeway
+        run: cd /usr/local/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.16/leeway_0.2.16_Linux_x86_64.tar.gz | tar xz
+      - name: Download golangci-lint
+        run: cd /usr/local && curl -fsSL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.42.0
+      - name: Download GoKart
+        run: cd /usr/local/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.3.0/gokart_0.3.0_linux_x86_64.tar.gz | tar xzv gokart
       - name: Auth Google Cloud SDK
         uses: google-github-actions/auth@v0
         with:
@@ -29,7 +33,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           distribution: zulu
-          java-version: '11'
+          java-version: "11"
       - name: Leeway build
         uses: google-github-actions/setup-gcloud@v0
         with:
