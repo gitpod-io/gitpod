@@ -187,6 +187,11 @@ export interface PortRange {
     end: number;
 }
 
+export function findLastHostPort(namespace: string, name: string, shellOpts: ExecOptions): number {
+    const portStr = exec(`kubectl get ds -n ${namespace} ${name} -o yaml | yq r - 'spec.template.spec.containers.*.ports.*.hostPort'`, { ...shellOpts, silent: true, async: false }).stdout
+    return Number.parseInt(portStr)
+}
+
 export function findFreeHostPorts(ranges: PortRange[], shellOpts: ExecOptions): number[] {
     const werft = getGlobalWerftInstance()
     const hostPorts: number[] = exec(`kubectl get pods --all-namespaces -o yaml | yq r - 'items.*.spec.containers.*.ports.*.hostPort'`, { ...shellOpts, silent: true, async: false })
@@ -196,8 +201,17 @@ export function findFreeHostPorts(ranges: PortRange[], shellOpts: ExecOptions): 
         .filter(l => l.length > 0)
         .map(l => Number.parseInt(l));
 
+    const nodePorts: number[] = exec(`kubectl get services --all-namespaces -o yaml | yq r - 'items.*.spec.ports.*.nodePort'`, { ...shellOpts, silent: true, async: false })
+        .stdout
+        .split("\n")
+        .map(l => l.trim())
+        .filter(l => l.length > 0)
+        .map(l => Number.parseInt(l));
     const alreadyReservedPorts: Set<number> = new Set();
     for (const port of hostPorts) {
+        alreadyReservedPorts.add(port);
+    }
+    for (const port of nodePorts) {
         alreadyReservedPorts.add(port);
     }
     werft.log(shellOpts.slice, `already reserved ports: ${Array.from(alreadyReservedPorts.values()).map(p => ""+p).join(", ")}`);
