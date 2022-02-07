@@ -340,12 +340,20 @@ var ring1Cmd = &cobra.Command{
 			}
 		}
 
-		// We deliberately do not bind mount `/etc/resolv.conf`, but instead place a copy
+		// We deliberately do not bind mount `/etc/resolv.conf` and `/etc/hosts`, but instead place a copy
 		// so that users in the workspace can modify the file.
-		err = copyResolvConf(ring2Root)
+
+		copyPaths := []string{"/etc/resolv.conf", "/etc/hosts"}
+		for _, fn := range copyPaths {
+			err = copyRing2Root(ring2Root, fn)
+			if err != nil {
+				log.WithError(err).Warn("cannot copy " + fn)
+			}
+		}
+
+		err = makeHostnameLocal(ring2Root)
 		if err != nil {
-			log.WithError(err).Error("cannot copy resolv.conf")
-			return
+			log.WithError(err).Warn("cannot make /etc/hosts hostname local")
 		}
 
 		env := make([]string, 0, len(os.Environ()))
@@ -565,11 +573,11 @@ var (
 		"/workspace",
 		"/sys",
 		"/dev",
-		"/etc/hosts",
 		"/etc/hostname",
 	}
 	rejectMountPaths = map[string]struct{}{
 		"/etc/resolv.conf": {},
+		"/etc/hosts":       {},
 	}
 )
 
@@ -636,9 +644,8 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 	return mounts, scanner.Err()
 }
 
-// copyResolvConf copies /etc/resolv.conf to <ring2root>/etc/resolv.conf
-func copyResolvConf(ring2root string) error {
-	fn := "/etc/resolv.conf"
+// copyRing2Root copies <fn> to <ring2root>/<fn>
+func copyRing2Root(ring2root string, fn string) error {
 	stat, err := os.Stat(fn)
 	if err != nil {
 		return err
@@ -662,6 +669,34 @@ func copyResolvConf(ring2root string) error {
 	}
 
 	return nil
+}
+
+func makeHostnameLocal(ring2root string) error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(ring2root, "/etc/hosts")
+	stat, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	bStr := string(b)
+	lines := strings.Split(bStr, "\n")
+	for i, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			continue
+		}
+		if fields[1] == hostname {
+			lines[i] = "127.0.0.1 " + hostname
+		}
+	}
+	return ioutil.WriteFile(path, []byte(strings.Join(lines, "\n")), stat.Mode())
 }
 
 func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
