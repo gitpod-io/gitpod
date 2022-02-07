@@ -1170,6 +1170,8 @@ export interface AuthProviderEntry {
     readonly status: AuthProviderEntry.Status;
 
     readonly oauth: OAuth2Config;
+    /** A random string that is to change whenever oauth changes (enforced on DB level) */
+    readonly oauthRevision?: string;
 }
 
 export interface OAuth2Config {
