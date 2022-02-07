@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, DisposableCollection, WithPrebuild, Workspace, WorkspaceImageBuild, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { ContextURL, DisposableCollection, GitpodServer, RateLimiterError, StartWorkspaceResult, WithPrebuild, Workspace, WorkspaceImageBuild, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
@@ -124,7 +124,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     const { workspaceId } = this.props;
     try {
-      const result = await getGitpodService().server.startWorkspace(workspaceId, { forceDefaultImage });
+      const result = await this.startWorkspaceRateLimited(workspaceId, { forceDefaultImage });
       if (!result) {
         throw new Error("No result!");
       }
@@ -148,6 +148,35 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         return;
       }
       this.setState({ error });
+    }
+  }
+
+  /**
+   * TODO(gpl) Ideally this can be pushed into the GitpodService implementation. But to get started we hand-roll it here.
+   * @param workspaceId
+   * @param options
+   * @returns
+   */
+  protected async startWorkspaceRateLimited(workspaceId: string, options: GitpodServer.StartWorkspaceOptions): Promise<StartWorkspaceResult> {
+    let retries = 0;
+    while (true) {
+      try {
+        return await getGitpodService().server.startWorkspace(workspaceId, options);
+      } catch (err) {
+        if (err?.code !== ErrorCodes.TOO_MANY_REQUESTS) {
+          throw err;
+        }
+
+        if (retries >= 10) {
+          throw err;
+        }
+        retries++;
+
+        const data = err?.data as RateLimiterError | undefined;
+        const timeoutSeconds = data?.retryAfter || 5;
+        console.log(`startWorkspace was rate-limited: waiting for ${timeoutSeconds}s before doing ${retries}nd retry...`)
+        await new Promise(resolve => setTimeout(resolve, timeoutSeconds * 1000));
+      }
     }
   }
 

@@ -12,6 +12,7 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 export const accessCodeSyncStorage = 'accessCodeSyncStorage';
 export const accessHeadlessLogs = 'accessHeadlessLogs';
 type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs;
+type GroupKey = "default" | "startWorkspace";
 type GroupsConfig = {
     [key: string]: {
         points: number,
@@ -20,7 +21,7 @@ type GroupsConfig = {
 }
 type FunctionsConfig = {
     [K in GitpodServerMethodType]: {
-        group: string,
+        group: GroupKey,
         points: number,
     }
 }
@@ -34,7 +35,11 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         default: {
             points: 60000, // 1,000 calls per user per second
             durationsSec: 60,
-        }
+        },
+        startWorkspace: {
+            points: 1,  // 1 workspace start per user per 10s
+            durationsSec: 10
+        },
     }
     const defaultFunctions: FunctionsConfig = {
         "getLoggedInUser": { group: "default", points: 1 },
@@ -59,7 +64,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "isWorkspaceOwner": { group: "default", points: 1 },
         "getOwnerToken": { group: "default", points: 1 },
         "createWorkspace": { group: "default", points: 1 },
-        "startWorkspace": { group: "default", points: 1 },
+        "startWorkspace": { group: "startWorkspace", points: 1 },
         "stopWorkspace": { group: "default", points: 1 },
         "deleteWorkspace": { group: "default", points: 1 },
         "setWorkspaceDescription": { group: "default", points: 1 },

@@ -252,6 +252,16 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     identifyUser(event: RemoteIdentifyMessage): Promise<void>;
 }
 
+export interface RateLimiterError {
+    method?: string,
+
+    /**
+     * Retry after this many seconds, earliest.
+     * cmp.: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
+     */
+    retryAfter: number,
+}
+
 export interface CreateProjectParams {
     name: string;
     slug?: string;
