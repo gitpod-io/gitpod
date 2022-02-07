@@ -33,7 +33,7 @@ tasks:
     init: |
       leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
       leeway exec --package components/ide/jetbrains/backend-plugin:plugin -- ./gradlew buildPlugin
-      leeway exec --package components/ide/jetbrains/gateway-plugin:plugin -- ./gradlew buildPlugin
+      leeway exec --package components/ide/jetbrains/gateway-plugin:publish -- ./gradlew buildPlugin
   - name: TypeScript
     before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
@@ -42,7 +42,6 @@ tasks:
     openMode: split-right
 vscode:
   extensions:
-    - bajdzis.vscode-database
     - bradlc.vscode-tailwindcss
     - EditorConfig.EditorConfig
     - golang.go

@@ -48,16 +48,6 @@
       "go.formatTool": "goimports",
       "go.useLanguageServer": true,
       "workspace.supportMultiRootWorkspace": true,
-      "database.connections": [
-         {
-            "type": "mysql",
-            "name": "devstaging DB",
-            "host": "127.0.0.1:23306",
-            "username": "gitpod",
-            "database": "gitpod",
-            "password": "test"
-         }
-      ],
       "launch": {},
       "files.exclude": {
          "**/.git": true
