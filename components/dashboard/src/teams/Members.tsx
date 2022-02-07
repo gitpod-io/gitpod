@@ -206,7 +206,7 @@ export default function() {
             <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
                 <label htmlFor="inviteUrl" className="font-medium">Invite URL</label>
                 <div className="w-full relative">
-                    <input name="inviteUrl" disabled={true} readOnly={true} type="text" value={getInviteURL(genericInvite.id)} className="rounded-md overflow-x-scroll w-full truncate pr-8" />
+                    <input name="inviteUrl" disabled={true} readOnly={true} type="text" value={getInviteURL(genericInvite.id)} className="rounded-md overflow-x-scroll w-full pr-8" />
                     <div className="cursor-pointer" onClick={() => copyToClipboard(getInviteURL(genericInvite.id))}>
                         <div className="absolute top-1/3 right-3">
                             <Tooltip content={copied ? 'Copied!' : 'Copy Invite URL'}>
