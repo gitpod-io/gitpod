@@ -114,10 +114,10 @@ export class CodeSyncService {
                 return;
             }
             const manifest = await this.db.getManifest(req.user.id);
-            if (!manifest.latest.extensions) {
+            if (manifest.latest && !manifest.latest.extensions) {
                 manifest.latest.extensions = fromTheiaRev;
             }
-            if (!manifest.latest.settings) {
+            if (manifest.latest && !manifest.latest.settings) {
                 manifest.latest.settings = fromTheiaRev;
             }
             res.json(manifest);
