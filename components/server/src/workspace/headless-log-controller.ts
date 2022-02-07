@@ -85,7 +85,7 @@ export class HeadlessLogController {
                     if (!done) {
                         res.once('drain', resolve);
                     } else {
-                        process.nextTick(resolve);
+                        setImmediate(resolve);
                     }
                 }));
                 const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(instance);
