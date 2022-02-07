@@ -900,7 +900,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
             flags += ` -f ../.werft/values.payment.yaml`;
             exec(`cp /mnt/secrets/payment-provider-config/providerOptions payment-core-dev-options.json`);
             flags += ` --set payment.chargebee.providerOptionsFile=payment-core-dev-options.json`;
-            exec(`cp /mnt/secrets/payment-webhook-config/webhook payment-core-dev-webhook.json`);
+            exec(`cp /mnt/secrets/payment-webhook-config/license payment-core-dev-webhook.json`);
             flags += ` --set components.paymentEndpoint.webhookFile="payment-core-dev-webhook.json"`;
         }
         return flags;
