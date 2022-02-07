@@ -17,12 +17,17 @@ type InstallationAdminSettings struct {
 	SendTelemetry bool `json:"sendTelemetry"`
 }
 
-type InstallationAdminData struct {
+type Data struct {
+	InstallationAdmin InstallationAdmin `json:"installationAdmin"`
+	TotalUsers        int64             `json:"totalUsers"`
+}
+
+type InstallationAdmin struct {
 	ID       string                    `json:"id"`
 	Settings InstallationAdminSettings `json:"settings"`
 }
 
-func GetInstallationAdminData(config common.Config) (*InstallationAdminData, error) {
+func GetInstallationAdminData(config common.Config) (*Data, error) {
 	resp, err := http.Get(fmt.Sprintf("%s/data", config.Server))
 	if err != nil {
 		return nil, err
@@ -35,7 +40,7 @@ func GetInstallationAdminData(config common.Config) (*InstallationAdminData, err
 		return nil, err
 	}
 
-	var data InstallationAdminData
+	var data Data
 	if err := json.Unmarshal(body, &data); err != nil {
 		return nil, err
 	}

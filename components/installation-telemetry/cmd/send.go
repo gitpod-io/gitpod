@@ -31,7 +31,7 @@ var sendCmd = &cobra.Command{
 			return err
 		}
 
-		if !data.Settings.SendTelemetry {
+		if !data.InstallationAdmin.Settings.SendTelemetry {
 			log.Info("installation-telemetry is not permitted to send - exiting")
 			return nil
 		}
@@ -51,10 +51,11 @@ var sendCmd = &cobra.Command{
 		}()
 
 		telemetry := analytics.Track{
-			UserId: data.ID,
+			UserId: data.InstallationAdmin.ID,
 			Event:  "Installation telemetry",
 			Properties: analytics.NewProperties().
-				Set("version", versionId),
+				Set("version", versionId).
+				Set("totalUsers", data.TotalUsers),
 		}
 
 		client.Enqueue(telemetry)
