@@ -34,6 +34,17 @@ export default function TeamBilling() {
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
 
+    console.log(
+        "members",
+        members.length,
+        "currency",
+        currency,
+        "teamSubscription",
+        teamSubscription,
+        "pendingTeamPlan",
+        pendingTeamPlan,
+    );
+
     useEffect(() => {
         if (!team) {
             return;

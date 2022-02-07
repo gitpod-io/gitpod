@@ -153,6 +153,9 @@ export class TeamSubscriptionHandler implements EventHandler<chargebee.Subscript
                     const upgradeTimestamp = new Date().toISOString();
                     const dateString = formatDate(upgradeTimestamp);
                     const description = `Pro-rated upgrade from ${oldQuantity} to ${newQuantity} team members (${dateString})`;
+                    log.info(
+                        `chargeForUpgrade: paymentReference=${sub.paymentReference}, currentTermRemainingRatio=${currentTermRemainingRatio}, diffInCents=${diffInCents}`,
+                    );
                     this.upgradeHelper
                         .chargeForUpgrade("", sub.paymentReference, diffInCents, description, upgradeTimestamp)
                         .catch((error) => {
