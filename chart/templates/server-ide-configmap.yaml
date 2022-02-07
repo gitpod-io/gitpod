@@ -79,24 +79,28 @@ options:
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/intellijIdeaLogo.svg"
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
   goland:
     orderKey: "05"
     title: "GoLand"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/golandLogo.svg"
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
   pycharm:
     orderKey: "06"
     title: "PyCharm"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/pycharmLogo.svg"
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
   phpstorm:
     orderKey: "07"
     title: "PhpStorm"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/phpstormLogo.svg"
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
 
 defaultIde: "code"
 defaultDesktopIde: "code-desktop"

@@ -310,6 +310,13 @@ registry.{{ .Values.hostname }}
 {{ template "gitpod.comp.imageRepo" . }}:{{- template "gitpod.comp.version" . -}}
 {{- end -}}
 
+{{- define "gitpod.comp.imageLatest" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- $comp := .comp -}}
+{{ template "gitpod.comp.imageRepo" . }}:latest
+{{- end -}}
+
 {{- define "gitpod.comp.configMap" -}}
 {{- $comp := .comp -}}
 {{ $comp.configMapName | default (printf "%s-config" $comp.name) }}

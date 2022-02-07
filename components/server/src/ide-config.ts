@@ -45,6 +45,7 @@ const scheme = {
                             "nodes": { "type": "array", "items": { "type": "string" } },
                             "hidden": { "type": "boolean" },
                             "image": { "type": "string" },
+                            "latestImage": { "type": "string" },
                             "resolveImageDigest": { "type": "boolean" },
                         },
                         "required": [
@@ -187,6 +188,20 @@ export class IDEConfigService {
                     });
                 } catch (e) {
                     log.error('ide config: error while resolving image digest', e, { trigger });
+                }
+            }
+
+            for (const [id, option] of Object.entries(newValue.ideOptions.options).filter(([_, x]) => x.latestImage)) {
+                try {
+                    value.ideOptions.options[id].latestImage = await this.resolveImageDigest(option.latestImage!);
+                    log.info("ide config: successfully resolved latest image digest", {
+                        ide: id,
+                        latestImage: option.latestImage,
+                        resolvedImage: value.ideOptions.options[id].latestImage,
+                        trigger,
+                    });
+                } catch (e) {
+                    log.error('ide config: error while resolving latest image digest', e, { trigger });
                 }
             }
 
