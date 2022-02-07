@@ -18,9 +18,12 @@ export class InstallationAdminController {
         const app = express();
 
         app.get('/data', async (req: express.Request, res: express.Response) => {
-            const installationAdmin = await this.installationAdminDb.getData();
-            const totalUsers = await this.userDb.getUserCount(false);
-            res.status(200).json({ installationAdmin, totalUsers } as Data);
+            const data: Data = {
+                installationAdmin: await this.installationAdminDb.getData(),
+                totalUsers: await this.userDb.getUserCount(false),
+            } as Data;
+
+            res.status(200).json(data);
         });
 
         return app;
