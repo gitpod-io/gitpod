@@ -23,6 +23,11 @@ export interface InstallationAdmin {
     settings: InstallationAdminSettings;
 }
 
+export interface Data {
+    installationAdmin: InstallationAdmin
+    totalUsers: number
+}
+
 export namespace InstallationAdmin {
     export function createDefault(): InstallationAdmin {
         return {
