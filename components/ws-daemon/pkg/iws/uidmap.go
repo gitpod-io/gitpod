@@ -174,12 +174,15 @@ func (m *Uidmapper) findHostPID(containerPID, inContainerPID uint64) (uint64, er
 		seen[p] = struct{}{}
 
 		p = filepath.Join(m.Config.ProcLocation, p)
+		log.Debugf("PROCFS: proc location is %v", p)
 
 		pid, nspid, err := readStatusFile(filepath.Join(p, "status"))
 		if err != nil {
 			log.WithField("file", filepath.Join(p, "status")).WithError(err).Error("findHostPID: cannot read PID file")
 			continue
 		}
+
+		log.Debugf("PROCFS: found npids are %v, pid is %v, in container pid is %v", nspid, pid, inContainerPID)
 		for _, nsp := range nspid {
 			if nsp == inContainerPID {
 				return pid, nil
