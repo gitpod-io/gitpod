@@ -65,7 +65,7 @@
             },
             'for': '15m',
             annotations: {
-              runbook_url: 'none',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceTooManyRegularNotActive.md',
               summary: 'too many running but inactive workspaces',
               description: 'too many running but inactive workspaces',
             },
