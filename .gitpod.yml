@@ -1,4 +1,3 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-ws-man-bridge-audit.10
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
