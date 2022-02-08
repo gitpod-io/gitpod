@@ -680,22 +680,12 @@ export class WorkspaceStarter {
         if (WithEnvvarsContext.is(context)) {
             allEnvVars = allEnvVars.concat(context.envvars);
         }
-
-        // we copy the envvars to a stable format so that things don't break when someone changes the
-        // EnvVarWithValue shape. The JSON.stringify(envvars) will be consumed by supervisor and we
-        // need to make sure we're speaking the same language.
-        const stableEnvvars = allEnvVars.map(e => { return { name: e.name, value: e.value }});
-
-        // we ship the user-specific env vars as OTS because they might contain secrets
-        const envvarOTSExpirationTime = new Date();
-        envvarOTSExpirationTime.setMinutes(envvarOTSExpirationTime.getMinutes() + 30);
-        const envvarOTS = await this.otsServer.serve(traceCtx, JSON.stringify(stableEnvvars), envvarOTSExpirationTime);
-
-        const envvars: EnvironmentVariable[] = [];
-        const ev = new EnvironmentVariable();
-        ev.setName("SUPERVISOR_ENVVAR_OTS");
-        ev.setValue(envvarOTS.token);
-        envvars.push(ev);
+        const envvars = allEnvVars.map(uv => {
+            const ev = new EnvironmentVariable();
+            ev.setName(uv.name);
+            ev.setValue(uv.value);
+            return ev;
+        });
 
         const ideAlias = user.additionalData?.ideSettings?.defaultIde;
         if (ideAlias && ideConfig.ideOptions.options[ideAlias]) {
