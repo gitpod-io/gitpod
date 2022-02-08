@@ -240,6 +240,12 @@ type WorkspaceConfig struct {
 	// DotfileRepo is a user-configurable repository which contains their dotfiles to customise
 	// the in-workspace epxerience.
 	DotfileRepo string `env:"SUPERVISOR_DOTFILE_REPO"`
+
+	// EnvvarOTS points to a URL from which environment variables for child processes can be downloaded from.
+	// This provides a safer means to transport environment variables compared to shipping them on the Kubernetes pod.
+	//
+	// The format of the content downloaded from this URL is expected to be JSON in the form of [{"name":"name", "value":"value"}]
+	EnvvarOTS string `env:"SUPERVISOR_ENVVAR_OTS"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.
