@@ -46,11 +46,16 @@ var credentialHelper = &cobra.Command{
 		defer func() {
 			// Credentials not found, return `quit=true` so no further helpers will be consulted, nor will the user be prompted.
 			// From https://git-scm.com/docs/gitcredentials#_custom_helpers
-			if user == "" || token == "" {
+			if token == "" {
 				fmt.Print("quit=true\n")
-			} else {
-				fmt.Printf("username=%s\npassword=%s\n", user, token)
+				return
 			}
+			// Server could return only the token and not the username, so we fallback to hardcoded `oauth2` username.
+			// See https://github.com/gitpod-io/gitpod/pull/7889#discussion_r801670957
+			if user == "" {
+				user = "oauth2"
+			}
+			fmt.Printf("username=%s\npassword=%s\n", user, token)
 		}()
 
 		host, err := parseHostFromStdin()
