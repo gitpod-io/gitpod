@@ -71,6 +71,7 @@
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
+/operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/platform
 /.werft/observability @gitpod-io/platform
 
 #
