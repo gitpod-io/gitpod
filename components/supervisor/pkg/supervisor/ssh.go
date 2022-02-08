@@ -20,7 +20,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/process"
 )
 
-func newSSHServer(ctx context.Context, cfg *Config, envvars []string) (*sshServer, error) {
+func newSSHServer(ctx context.Context, cfg *Config) (*sshServer, error) {
 	bin, err := os.Executable()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot find executable path: %w", err)
@@ -33,23 +33,21 @@ func newSSHServer(ctx context.Context, cfg *Config, envvars []string) (*sshServe
 			return nil, xerrors.Errorf("unexpected error creating SSH key: %w", err)
 		}
 	}
-	err = writeSSHEnv(cfg, envvars)
+	err = writeSSHEnv(cfg)
 	if err != nil {
 		return nil, xerrors.Errorf("unexpected error creating SSH env: %w", err)
 	}
 
 	return &sshServer{
-		ctx:     ctx,
-		cfg:     cfg,
-		sshkey:  sshkey,
-		envvars: envvars,
+		ctx:    ctx,
+		cfg:    cfg,
+		sshkey: sshkey,
 	}, nil
 }
 
 type sshServer struct {
-	ctx     context.Context
-	cfg     *Config
-	envvars []string
+	ctx context.Context
+	cfg *Config
 
 	sshkey string
 }
@@ -116,7 +114,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	log.WithField("args", args).Debug("sshd flags")
 	cmd := exec.CommandContext(ctx, openssh, args...)
 	cmd = runAsGitpodUser(cmd)
-	cmd.Env = s.envvars
+	cmd.Env = buildChildProcEnv(s.cfg, nil)
 	cmd.ExtraFiles = []*os.File{socketFD}
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = bufio.NewReader(socketFD)
@@ -192,7 +190,7 @@ func prepareSSHKey(ctx context.Context, sshkey string) error {
 	return nil
 }
 
-func writeSSHEnv(cfg *Config, envvars []string) error {
+func writeSSHEnv(cfg *Config) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -205,7 +203,8 @@ func writeSSHEnv(cfg *Config, envvars []string) error {
 	}
 
 	fn := filepath.Join(d, "supervisor_env")
-	err = os.WriteFile(fn, []byte(strings.Join(envvars, "\n")), 0o644)
+	env := strings.Join(buildChildProcEnv(cfg, nil), "\n")
+	err = os.WriteFile(fn, []byte(env), 0o644)
 	if err != nil {
 		return xerrors.Errorf("cannot write %s: %w", fn, err)
 	}
