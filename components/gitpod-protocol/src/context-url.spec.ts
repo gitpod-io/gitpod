@@ -24,6 +24,12 @@ export class ContextUrlTest {
         expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
     }
 
+    @test public parseContextUrl_withEnvVar_sshUrl() {
+        const actual = ContextURL.parseToURL("passedin=test%20value/git@github.com:gitpod-io/gitpod-test-repo.git");
+        expect(actual?.host).to.equal("github.com");
+        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo.git");
+    }
+
     @test public parseContextUrl_withPrebuild() {
         const actual = ContextURL.parseToURL("prebuild/https://github.com/gitpod-io/gitpod-test-repo");
         expect(actual?.host).to.equal("github.com");
@@ -34,6 +40,11 @@ export class ContextUrlTest {
         const actual = ContextURL.parseToURL("prebuild/github.com/gitpod-io/gitpod-test-repo");
         expect(actual?.host).to.equal("github.com");
         expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
+    }
+
+    @test public parseContextUrl_badUrl() {
+        const actual = ContextURL.parseToURL("[Object object]");
+        expect(actual).to.be.undefined;
     }
 }
 module.exports = new ContextUrlTest()
