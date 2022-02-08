@@ -314,21 +314,26 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
 	}
+
+	log.Infof("PROCFS: Wait for container %v", wbs.Session.InstanceID)
 	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot find workspace container")
 	}
 
+	log.Infof("PROCFS: container id %v", wscontainerID)
 	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
 	}
 
+	log.Infof("PROCFS: container pid: %v, requested pid: %v", containerPID, req.Pid)
 	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 
+	log.Infof("Pid to enter is %v", procPID)
 	nodeStaging, err := os.MkdirTemp("", "proc-staging")
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
