@@ -702,7 +702,7 @@ export class WorkspaceStarter {
         allEnvVars.forEach(e => {
             const ev = new EnvironmentVariable();
             ev.setName(e.name);
-            ev.setValue(e.name);
+            ev.setValue(e.value);
             envvars.push(ev);
         })
 
