@@ -245,6 +245,12 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
+	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
+	// That's why we resort to exec'ing "nsenter ... mount ...".
+	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "make-shared", "--target", "/")
+	})
+
 	if wbs.FSShift == api.FSShiftMethod_FUSE || wbs.Session.FullWorkspaceBackup {
 		err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 			// In case of any change in the user mapping, the next line must be updated.
@@ -269,11 +275,6 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		}, nil
 	}
 
-	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
-	// That's why we resort to exec'ing "nsenter ... mount ...".
-	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "make-shared", "--target", "/")
-	})
 	if err != nil {
 		log.WithField("containerPID", containerPID).WithError(err).Error("cannot make container's rootfs shared")
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
