@@ -5,6 +5,7 @@
 package iws
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -334,6 +336,20 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	}
 
 	log.Debugf("Pid to enter is %v", procPID)
+	statusPath := fmt.Sprintf("/proc/%v/status", procPID)
+	f, err := os.Open(statusPath)
+	if err != nil {
+		log.Debugf("could not read %s", statusPath)
+	}
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		text := scanner.Text()
+		if strings.HasPrefix(text, "Name:") {
+			log.Debugf("PROCFS: Name is %v", text)
+		}
+	}
+
 	nodeStaging, err := os.MkdirTemp("", "proc-staging")
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
