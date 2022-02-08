@@ -31,6 +31,8 @@ const IMAGE_PULL_SECRET_NAME = "gcp-sa-registry-auth";
 const context = JSON.parse(fs.readFileSync('context.json').toString());
 
 const version = parseVersion(context);
+const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
+const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
 
 
 Tracing.initialize()
@@ -134,8 +136,7 @@ export async function build(context, version) {
     } catch (err) {
         werft.fail('prep', err);
     }
-    const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
-    const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
+
     const dontTest = "no-test" in buildConfig;
     const publishRelease = "publish-release" in buildConfig;
     const workspaceFeatureFlags: string[] = ((): string[] => {
@@ -459,7 +460,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         }
         werft.done(installerSlices.CLEAN_ENV_STATE);
     } catch (err) {
-        werft.fail(installerSlices.CLEAN_ENV_STATE, err);
+        if(!mainBuild) {
+            werft.fail(installerSlices.CLEAN_ENV_STATE, err);
+        }
+        exec('exit 0')
     }
 
     if (!withVM) {
@@ -475,7 +479,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             await installMetaCertificates(namespace);
             werft.done(installerSlices.ISSUE_CERTIFICATES);
         } catch (err) {
-            werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+            if(!mainBuild) {
+                werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+            }
+            exec('exit 0')
         }
     }
 
@@ -490,7 +497,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             werft.done(installerSlices.IMAGE_PULL_SECRET);
         }
         catch (err) {
-            werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
+            if(!mainBuild) {
+                werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
+            }
+            exec('exit 0')
         }
     }
 
@@ -502,7 +512,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`/tmp/installer init > config.yaml`, {slice: installerSlices.INSTALLER_INIT});
         werft.done(installerSlices.INSTALLER_INIT);
     } catch (err) {
-        werft.fail(installerSlices.INSTALLER_INIT, err)
+        if(!mainBuild) {
+            werft.fail(installerSlices.INSTALLER_INIT, err)
+        }
+        exec('exit 0')
     }
 
     // prepare a proper config file
@@ -571,7 +584,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
             werft.done('authProviders');
         } catch (err) {
-            werft.fail('authProviders', err);
+            if(!mainBuild) {
+                werft.fail('authProviders', err);
+            }
+            exec('exit 0')
         }
 
         werft.log("SSH gateway hostkey", "copy host-key from secret")
@@ -586,7 +602,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             exec(`yq w -i ./config.yaml sshGatewayHostKey.name "host-key"`)
             werft.done('SSH gateway hostkey');
         } catch (err) {
-            werft.fail('SSH gateway hostkey', err);
+            if(!mainBuild) {
+                werft.fail('SSH gateway hostkey', err);
+            }
+            exec('exit 0')
         }
 
         // validate the config
@@ -599,7 +618,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, { silent: true });
         werft.done(installerSlices.INSTALLER_RENDER);
     } catch (err) {
-        werft.fail(installerSlices.INSTALLER_RENDER, err)
+        if(!mainBuild) {
+            werft.fail(installerSlices.INSTALLER_RENDER, err)
+        }
+        exec('exit 0')
     }
 
     try {
@@ -628,7 +650,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`${flags}./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
         werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
-        werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
+        if(!mainBuild) {
+            werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
+        }
+        exec('exit 0')
     }
 
     werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
@@ -638,7 +663,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`kubectl apply -f k8s.yaml`,{ slice: installerSlices.APPLY_INSTALL_MANIFESTS, silent: true });
         werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
     } catch (err) {
-        werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
+        if(!mainBuild) {
+            werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
+        }
+        exec('exit 0')
     } finally {
         // produce the result independently of install succeding, so that in case fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
@@ -649,7 +677,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`kubectl -n ${namespace} rollout status deployment/server --timeout=5m`,{ slice: installerSlices.DEPLOYMENT_WAITING });
         werft.done(installerSlices.DEPLOYMENT_WAITING);
     } catch (err) {
-        werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
+        if(!mainBuild) {
+            werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
+        }
+        exec('exit 0')
     }
 
     await addDNSRecord(deploymentConfig.namespace, deploymentConfig.domain, !withVM)
@@ -745,7 +776,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         await addDNSRecord(deploymentConfig.namespace, deploymentConfig.domain, false)
         werft.done('prep');
     } catch (err) {
-        werft.fail('prep', err);
+        if(!mainBuild) {
+            werft.fail('prep', err);
+        }
+        exec('exit 0')
     }
 
     // core-dev specific section start
@@ -767,7 +801,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
 }`      );
         werft.done('secret');
     } catch (err) {
-        werft.fail('secret', err);
+        if(!mainBuild) {
+            werft.fail('secret', err);
+        }
+        exec('exit 0')
     }
 
     werft.log("authProviders", "copy authProviders")
@@ -779,7 +816,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         exec(`yq merge --inplace .werft/values.dev.yaml ./authProviders`, { slice: "authProviders" })
         werft.done('authProviders');
     } catch (err) {
-        werft.fail('authProviders', err);
+        if(!mainBuild) {
+            werft.fail('authProviders', err);
+        }
+        exec('exit 0')
     }
     // core-dev specific section end
 
@@ -790,7 +830,14 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     werft.log(`observability`, "Running observability static checks.")
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
-        await installMonitoring(namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false);
+        try {
+            await installMonitoring(namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false);
+        } catch (err) {
+            if(!mainBuild) {
+                werft.fail('observability', err);
+            }
+            exec('exit 0')
+        }
     } else {
         exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
         exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
@@ -808,7 +855,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         werft.log('helm', 'done');
         werft.done('helm');
     } catch (err) {
-        werft.fail('deploy', err);
+        if(!mainBuild) {
+            werft.fail('deploy', err);
+        }
+        exec('exit 0')
     } finally {
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
@@ -895,7 +945,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         try {
             exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
         } catch (err) {
-            werft.fail('helm', err);
+            if(!mainBuild) {
+                werft.fail('helm', err);
+            }
+            exec('exit 0')
         }
         const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
         flags += ` -f ${pathToVersions}`;
@@ -923,7 +976,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
             await deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice: 'predeploy cleanup' });
             werft.done('predeploy cleanup');
         } catch (err) {
-            werft.fail('predeploy cleanup', err);
+            if(!mainBuild) {
+                werft.fail('predeploy cleanup', err);
+            }
+            exec('exit 0')
         }
     }
 }
@@ -1041,7 +1097,10 @@ export async function triggerIntegrationTests(version: string, namespace: string
 
         werft.done(phases.TRIGGER_INTEGRATION_TESTS);
     } catch (err) {
-        werft.fail(phases.TRIGGER_INTEGRATION_TESTS, err);
+        if(!mainBuild) {
+            werft.fail(phases.TRIGGER_INTEGRATION_TESTS, err);
+        }
+        exec('exit 0')
     }
 }
 
