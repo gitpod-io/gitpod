@@ -291,7 +291,7 @@ export class TypeORMUserDBImpl implements UserDB {
         if (tokenEntries.length === 0) {
             return undefined;
         }
-        return tokenEntries.sort((a, b) => `${a.token.updateDate}`.localeCompare(`${b.token.updateDate}`))[0]?.token;
+        return tokenEntries.sort((a, b) => `${a.token.updateDate}`.localeCompare(`${b.token.updateDate}`)).reverse()[0]?.token;
     }
 
     public async findTokensForIdentity(identity: Identity, includeDeleted?: boolean): Promise<TokenEntry[]> {
