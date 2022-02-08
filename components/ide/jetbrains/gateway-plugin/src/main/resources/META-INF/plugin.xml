@@ -4,7 +4,7 @@
  See License-AGPL.txt in the project root for license information.
 -->
 
-<idea-plugin require-restart="true">
+<idea-plugin require-restart="false">
     <id>io.gitpod.jetbrains.gateway</id>
     <name>Gitpod Gateway</name>
     <vendor>Gitpod</vendor>
