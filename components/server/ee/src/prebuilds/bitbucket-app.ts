@@ -6,8 +6,8 @@
 
 import * as express from 'express';
 import { postConstruct, injectable, inject } from 'inversify';
-import { UserDB } from '@gitpod/gitpod-db/lib';
-import { User, StartPrebuildResult } from '@gitpod/gitpod-protocol';
+import { ProjectDB, TeamDB, UserDB } from '@gitpod/gitpod-db/lib';
+import { User, StartPrebuildResult, Project } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TokenService } from '../../../src/user/token-service';
@@ -18,6 +18,8 @@ export class BitbucketApp {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
+    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     protected _router = express.Router();
     public static path = '/apps/bitbucket/';
@@ -39,7 +41,9 @@ export class BitbucketApp {
                         return;
                     }
                     const data = toData(req.body);
-                    this.handlePushHook({ span }, data, user);
+                    if (data) {
+                        await this.handlePushHook({ span }, data, user);
+                    }
                 } else {
                     console.log(`Ignoring unsupported bitbucket event: ${req.header('X-Event-Key')}`);
                 }
@@ -89,13 +93,57 @@ export class BitbucketApp {
                 return undefined;
             }
 
-            console.log('Starting prebuild.', { contextURL })
-            // todo@alex: add branch and project args
-            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: data.gitCloneUrl, commit: data.commitHash});
+            console.debug('Bitbucket push event: Starting prebuild.', { contextURL });
+
+            const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
+
+            const ws = await this.prebuildManager.startPrebuild({ span }, {
+                user: projectAndOwner.user,
+                project: projectAndOwner?.project,
+                branch: data.branchName,
+                contextURL,
+                cloneURL: data.gitCloneUrl,
+                commit: data.commitHash
+            });
             return ws;
         } finally {
             span.finish();
         }
+    }
+
+    /**
+     * Finds the relevant user account and project to the provided webhook event information.
+     *
+     * First of all it tries to find the project for the given `cloneURL`, then it tries to
+     * find the installer, which is also supposed to be a team member. As a fallback, it
+     * looks for a team member which also has a bitbucket.org connection.
+     *
+     * @param cloneURL of the webhook event
+     * @param webhookInstaller the user account known from the webhook installation
+     * @returns a promise which resolves to a user account and an optional project.
+     */
+    protected async findProjectAndOwner(cloneURL: string, webhookInstaller: User): Promise<{ user: User, project?: Project }> {
+        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
+        if (project) {
+            if (project.userId) {
+                const user = await this.userDB.findUserById(project.userId);
+                if (user) {
+                    return { user, project };
+                }
+            } else if (project.teamId) {
+                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || '');
+                if (teamMembers.some(t => t.userId === webhookInstaller.id)) {
+                    return { user: webhookInstaller, project };
+                }
+                for (const teamMember of teamMembers) {
+                    const user = await this.userDB.findUserById(teamMember.userId);
+                    if (user && user.identities.some(i => i.authProviderId === "Public-Bitbucket")) {
+                        return { user, project };
+                    }
+                }
+            }
+        }
+        return { user: webhookInstaller };
     }
 
     protected createContextUrl(data: ParsedRequestData) {
@@ -108,14 +156,19 @@ export class BitbucketApp {
     }
 }
 
-function toData(body: BitbucketPushHook): ParsedRequestData {
+function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
+    const branchName = body.push.changes[0]?.new?.name;
+    const commitHash = body.push.changes[0]?.new?.target?.hash;
+    if (!branchName || !commitHash){
+        return undefined;
+    }
     const result = {
-        branchName: body.push.changes[0].new.name,
-        commitHash: body.push.changes[0].new.target.hash,
+        branchName,
+        commitHash,
         repoUrl: body.repository.links.html.href,
         gitCloneUrl: body.repository.links.html.href + '.git'
     }
-    if (!result.branchName || !result.commitHash || !result.repoUrl) {
+    if (!result.commitHash || !result.repoUrl) {
         console.error('unexpected request body.', body);
         throw new Error('Unexpected request body.');
     }
@@ -140,6 +193,7 @@ interface BitbucketPushHook {
                     hash: string; // e.g. "1b283e4d7a849a89151548398cc836d15149179c"
                 }
             }
+            | null // in case where a branch is deleted
         }[]
     };
     actor: {

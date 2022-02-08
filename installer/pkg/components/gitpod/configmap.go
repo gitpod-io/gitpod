@@ -20,13 +20,18 @@ type Gitpod struct {
 }
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	gpcfg := Gitpod{
+	gpversions := Gitpod{
 		VersionManifest: ctx.VersionManifest,
 	}
 
-	fc, err := common.ToJSONString(gpcfg)
+	config, err := common.ToJSONString(ctx.Config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal Gitpod config: %w", err)
+	}
+
+	versions, err := common.ToJSONString(gpversions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal Gitpod versions: %w", err)
 	}
 
 	return []runtime.Object{
@@ -38,7 +43,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(Component),
 			},
 			Data: map[string]string{
-				"config.json": string(fc),
+				"config.json":   string(config),
+				"versions.json": string(versions),
 			},
 		},
 	}, nil

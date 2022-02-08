@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -44,15 +44,45 @@ var credentialHelper = &cobra.Command{
 
 		var user, token string
 		defer func() {
-			// token was not found, thus we return just a dummy to satisfy the git protocol
-			if user == "" {
-				user = "oauth2"
+			// Credentials not found, return `quit=true` so no further helpers will be consulted, nor will the user be prompted.
+			// From https://git-scm.com/docs/gitcredentials#_custom_helpers
+			if user == "" || token == "" {
+				fmt.Print("quit=true\n")
+			} else {
+				fmt.Printf("username=%s\npassword=%s\n", user, token)
 			}
-			if token == "" {
-				token = "no"
-			}
-			fmt.Printf("username=%s\npassword=%s\n", user, token)
 		}()
+
+		host, err := parseHostFromStdin()
+		if err != nil {
+			log.WithError(err).Print("error parsing 'host' from stdin")
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancel()
+
+		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
+		if supervisorAddr == "" {
+			supervisorAddr = "localhost:22999"
+		}
+		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+		if err != nil {
+			log.WithError(err).Print("error connecting to supervisor")
+			return
+		}
+
+		resp, err := supervisor.NewTokenServiceClient(supervisorConn).GetToken(ctx, &supervisor.GetTokenRequest{
+			Host: host,
+			Kind: "git",
+		})
+		if err != nil {
+			log.WithError(err).Print("error getting token from supervisior")
+			return
+		}
+
+		user = resp.User
+		token = resp.Token
 
 		gitCmdInfo := &gitCommandInfo{}
 		err = walkProcessTree(os.Getpid(), func(pid int) bool {
@@ -63,7 +93,8 @@ var credentialHelper = &cobra.Command{
 			}
 
 			cmdLineString := strings.ReplaceAll(cmdLine, string(byte(0)), " ")
-			gitCmdInfo.parseGitCommandAndOriginRemote(cmdLineString)
+			log.Printf("cmdLineString -> %v", cmdLineString)
+			gitCmdInfo.parseGitCommandAndRemote(cmdLineString)
 
 			return gitCmdInfo.Ok()
 		})
@@ -72,6 +103,7 @@ var credentialHelper = &cobra.Command{
 			return
 		}
 		if !gitCmdInfo.Ok() {
+			log.Warn(`Could not detect "RepoUrl" and or "GitCommand", token validation will not be performed`)
 			return
 		}
 
@@ -87,34 +119,16 @@ var credentialHelper = &cobra.Command{
 			}
 		}
 
-		host := parseHostFromStdin()
-		if len(host) == 0 {
-			log.Println("'host' is missing")
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-		defer cancel()
-		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-		if supervisorAddr == "" {
-			supervisorAddr = "localhost:22999"
-		}
-		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
-		if err != nil {
-			log.WithError(err).Print("error connecting to supervisor")
-			return
-		}
-		resp, err := supervisor.NewTokenServiceClient(supervisorConn).GetToken(ctx, &supervisor.GetTokenRequest{
-			Host: host,
-			Kind: "git",
-		})
-		if err != nil {
-			log.WithError(err).Print("error getting token from supervisior")
-			return
-		}
-
-		validator := exec.Command("/proc/self/exe", "git-token-validator",
-			"--user", resp.User, "--token", resp.Token, "--scopes", strings.Join(resp.Scope, ","),
-			"--host", host, "--repoURL", gitCmdInfo.RepoUrl, "--gitCommand", gitCmdInfo.GitCommand)
+		validator := exec.Command(
+			"/proc/self/exe",
+			"git-token-validator",
+			"--user", resp.User,
+			"--token", resp.Token,
+			"--scopes", strings.Join(resp.Scope, ","),
+			"--host", host,
+			"--repoURL", gitCmdInfo.RepoUrl,
+			"--gitCommand", gitCmdInfo.GitCommand,
+		)
 		err = validator.Start()
 		if err != nil {
 			log.WithError(err).Print("error spawning validator")
@@ -125,13 +139,10 @@ var credentialHelper = &cobra.Command{
 			log.WithError(err).Print("error releasing validator")
 			return
 		}
-		user = resp.User
-		token = resp.Token
 	},
 }
 
-func parseHostFromStdin() string {
-	host := ""
+func parseHostFromStdin() (host string, err error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -144,10 +155,14 @@ func parseHostFromStdin() string {
 			}
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		log.Println(err)
+
+	err = scanner.Err()
+	if err != nil {
+		err = fmt.Errorf("parseHostFromStdin error: %v", err)
+	} else if host == "" {
+		err = fmt.Errorf("parseHostFromStdin error 'host' is missing")
 	}
-	return host
+	return
 }
 
 type gitCommandInfo struct {
@@ -159,8 +174,8 @@ func (g *gitCommandInfo) Ok() bool {
 	return g.RepoUrl != "" && g.GitCommand != ""
 }
 
-var gitCommandRegExp = regexp.MustCompile(`git(,\d+\s+|\s+)(push|clone|fetch|pull|diff)`)
-var repoUrlRegExp = regexp.MustCompile(`\sorigin\s*(https:[^\s]*)\s`)
+var gitCommandRegExp = regexp.MustCompile(`git(\s+(?:[\w\-]+\s+)*)(push|clone|fetch|pull|diff|ls-remote)`)
+var repoUrlRegExp = regexp.MustCompile(`remote-https?\s([^\s]+)\s+(https?:[^\s]+)\s`)
 
 // This method needs to be called multiple times to fill all the required info
 // from different git commands
@@ -168,15 +183,15 @@ var repoUrlRegExp = regexp.MustCompile(`\sorigin\s*(https:[^\s]*)\s`)
 // the second command the `GitCommand` will be parsed
 // `/usr/lib/git-core/git-remote-https origin https://github.com/jeanp413/test-gp-bug.git`
 // `/usr/lib/git-core/git push`
-func (g *gitCommandInfo) parseGitCommandAndOriginRemote(cmdLineString string) {
+func (g *gitCommandInfo) parseGitCommandAndRemote(cmdLineString string) {
 	matchCommand := gitCommandRegExp.FindStringSubmatch(cmdLineString)
 	if len(matchCommand) == 3 {
 		g.GitCommand = matchCommand[2]
 	}
 
 	matchRepo := repoUrlRegExp.FindStringSubmatch(cmdLineString)
-	if len(matchRepo) == 2 {
-		g.RepoUrl = matchRepo[1]
+	if len(matchRepo) == 3 {
+		g.RepoUrl = matchRepo[2]
 		if !strings.HasSuffix(g.RepoUrl, ".git") {
 			g.RepoUrl = g.RepoUrl + ".git"
 		}
@@ -203,21 +218,23 @@ func walkProcessTree(pid int, fn pidCallbackFn) error {
 	}
 }
 
+var procStatPidRegExp = regexp.MustCompile(`\d+\ \(.+?\)\ .+?\ (\d+)`)
+
 func getProcesParentId(pid int) (ppid int, err error) {
 	statsString, err := readProc(pid, "stat")
 	if err != nil {
 		return
 	}
 
-	stats := strings.Fields(statsString)
-	if len(stats) < 3 {
+	match := procStatPidRegExp.FindStringSubmatch(statsString)
+	if len(match) != 2 {
 		err = fmt.Errorf("CredentialHelper error cannot parse stats string: %s", statsString)
 		return
 	}
 
-	parentId, err := strconv.Atoi(stats[3])
+	parentId, err := strconv.Atoi(match[1])
 	if err != nil {
-		err = fmt.Errorf("CredentialHelper error cannot parse ppid: %s", stats[3])
+		err = fmt.Errorf("CredentialHelper error cannot parse ppid: %s", match[1])
 		return
 	}
 
@@ -247,6 +264,15 @@ func readProc(pid int, file string) (data string, err error) {
 	return
 }
 
+// How to smoke test:
+// - Open a public git repository and try pushing some commit with and without permissions in the dashboard, if no permissions a popup should appear in vscode
+// - Open a private git repository and try pushing some commit with and without permissions in the dashboard, if no permissions a popup should appear in vscode
+// - Private npm package
+//   - Create a private git repository for an npm package e.g https://github.com/jeanp413/test-private-package
+//   - Start a workspace, then run `npm install github:jeanp413/test-private-package` with and without permissions in the dashboard
+// - Private npm package no access
+//   - Open this workspace https://github.com/jeanp413/test-gp-bug and run `npm install`
+//   - Observe NO notification with this message appears `Unknown repository '' Please grant the necessary permissions.`
 func init() {
 	rootCmd.AddCommand(credentialHelper)
 }

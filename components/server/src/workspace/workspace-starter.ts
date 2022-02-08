@@ -7,7 +7,7 @@
 import { CloneTargetMode, FileDownloadInitializer, GitAuthMethod, GitConfig, GitInitializer, PrebuildInitializer, SnapshotInitializer, WorkspaceInitializer } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
 import { DBUser, DBWithTracing, ProjectDB, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile, ProjectEnvVar } from "@gitpod/gitpod-protocol";
+import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile, ProjectEnvVar, ImageBuildLogInfo } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -34,6 +34,8 @@ import { IDEConfig, IDEConfigService } from "../ide-config";
 import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
 import { WithReferrerContext } from "@gitpod/gitpod-protocol/lib/protocol";
 import { IDEOption } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
+import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -131,7 +133,8 @@ export class WorkspaceStarter {
             // If the caller requested that errors be rethrown we must await the actual workspace start to be in the exception path.
             // To this end we disable the needsImageBuild behaviour if rethrow is true.
             if (needsImageBuild && !options.rethrow) {
-                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, ideConfig, userEnvVars, projectEnvVars, options.rethrow, forceRebuild);
+                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, ideConfig, userEnvVars, projectEnvVars, options.rethrow, forceRebuild)
+                    .catch(err => log.error("actuallyStartWorkspace", err));
                 return { instanceID: instance.id };
             }
 
@@ -173,14 +176,20 @@ export class WorkspaceStarter {
             startRequest.setSpec(spec);
             startRequest.setServicePrefix(workspace.id);
 
+            // we add additional information to the user to help with cluster selection
+            const euser: ExtendedUser = {
+                ...user,
+                getsMoreResources: await this.userService.userGetsMoreResources(user),
+            }
+
             // tell the world we're starting this instance
             let resp: StartWorkspaceResponse.AsObject | undefined;
-            let exceptInstallation: string[] = [];
             let lastInstallation = "";
-            for (let i = 0; i < 5; i++) {
+            const clusters = await this.clientProvider.getStartClusterSets(euser, workspace, instance);
+            for await (let cluster of clusters) {
                 try {
                     // getStartManager will throw an exception if there's no cluster available and hence exit the loop
-                    const { manager, installation } = await this.clientProvider.getStartManager(user, workspace, instance, exceptInstallation);
+                    const { manager, installation } = cluster;
                     lastInstallation = installation;
 
                     instance.status.phase = "pending";
@@ -202,7 +211,6 @@ export class WorkspaceStarter {
                 } catch (err: any) {
                     if ('code' in err && err.code !== grpc.status.OK && lastInstallation !== "") {
                         log.error({ instanceId: instance.id }, "cannot start workspace on cluster, might retry", err, { cluster: lastInstallation });
-                        exceptInstallation.push(lastInstallation);
                     } else {
                         throw err;
                     }
@@ -257,7 +265,7 @@ export class WorkspaceStarter {
         if (prebuild) {
             const info = (await this.workspaceDb.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
             if (info) {
-                this.messageBus.notifyOnPrebuildUpdate({ info, status: "queued" });
+                await this.messageBus.notifyOnPrebuildUpdate({ info, status: "queued" });
             }
         }
     }
@@ -326,9 +334,10 @@ export class WorkspaceStarter {
             }
         }
 
+        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
         const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
         if (referrerIde) {
-            configuration.desktopIdeImage = referrerIde.option.image;
+            configuration.desktopIdeImage = useLatest ? (referrerIde.option.latestImage ?? referrerIde.option.image) : referrerIde.option.image
             if (!user.additionalData?.ideSettings) {
                 // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                 const additionalData = user?.additionalData || {};
@@ -348,7 +357,7 @@ export class WorkspaceStarter {
                 if (!!desktopIdeChoice) {
                     const mappedImage = ideConfig.ideOptions.options[desktopIdeChoice];
                     if (!!mappedImage && mappedImage.image) {
-                        configuration.desktopIdeImage = mappedImage.image;
+                        configuration.desktopIdeImage = useLatest ? (mappedImage.latestImage ?? mappedImage.image) : mappedImage.image
                     } else if (this.authService.hasPermission(user, "ide-settings")) {
                         // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
                         // For now, this feature requires special permissions.
@@ -568,7 +577,18 @@ export class WorkspaceStarter {
             req.setAuth(auth);
             req.setForcerebuild(forceRebuild);
 
-            const result = await client.build({ span }, req);
+            // Make sure we persist logInfo as soon as we retrieve it
+            const imageBuildLogInfo = new Deferred<ImageBuildLogInfo>();
+            imageBuildLogInfo.promise.then(async logInfo => {
+                const imageBuildInfo = {
+                    ...(instance.imageBuildInfo || {}),
+                    log: logInfo,
+                };
+                instance.imageBuildInfo = imageBuildInfo;  // make sure we're not overriding ourselves again
+                await this.workspaceDb.trace({span}).updateInstancePartial(instance.id, { imageBuildInfo }).catch(err => log.error("error writing image build log info to the DB", err));
+            }).catch(err => log.warn("image build: never received log info"));
+
+            const result = await client.build({ span }, req, imageBuildLogInfo);
 
             // Update the workspace now that we know what the name of the workspace image will be (which doubles as buildID)
             workspace.imageNameResolved = result.ref;

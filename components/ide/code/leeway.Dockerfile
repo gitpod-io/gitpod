@@ -2,25 +2,51 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
+FROM gitpod/openvscode-server-linux-build-agent:centos7-devtoolset8 as dependencies_builder
 # BUILDER_BASE is a placeholder, will be replaced before build time
 # Check BUILD.yaml
 FROM BUILDER_BASE as code_installer
 
 ARG CODE_COMMIT
 
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD 1
-ENV ELECTRON_SKIP_BINARY_DOWNLOAD 1
-
-RUN mkdir gp-code \
-    && cd gp-code \
+RUN mkdir /gp-code \
+    && cd /gp-code \
     && git init \
     && git remote add origin https://github.com/gitpod-io/vscode \
     && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
-RUN yarn --frozen-lockfile --network-timeout 180000
-RUN yarn --cwd ./extensions compile
-RUN yarn gulp vscode-web-min
+RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
+
+
+FROM gitpod/openvscode-server-linux-build-agent:bionic as code_installer
+
+USER root
+
+ARG CODE_COMMIT
+
+ARG NODE_VERSION=14.18.2
+ARG NVM_DIR="/root/.nvm"
+RUN mkdir -p $NVM_DIR \
+    && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | sh \
+    && . $NVM_DIR/nvm.sh \
+    && nvm alias default $NODE_VERSION
+ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD 1
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD 1
+
+RUN mkdir /gp-code \
+    && cd /gp-code \
+    && git init \
+    && git remote add origin https://github.com/gitpod-io/vscode \
+    && git fetch origin $CODE_COMMIT --depth=1 \
+    && git reset --hard FETCH_HEAD
+WORKDIR /gp-code
+RUN yarn --frozen-lockfile --network-timeout 180000 \
+    && yarn --cwd remote/web --frozen-lockfile --network-timeout 180000 \
+    && yarn --cwd extensions compile \
+    && yarn gulp vscode-web-min \
 RUN arch="$(uname -m)"; \
     case "$arch" in \
         'x86_64') \
@@ -33,6 +59,8 @@ RUN arch="$(uname -m)"; \
             ;; \
         *) echo >&2 "error: unsupported architecture '$arch'"; exit 1 ;; \
     esac;
+    && yarn gulp vscode-web-min \
+COPY --from=dependencies_builder /gp-code/remote/node_modules/ /vscode-reh-linux/node_modules/
 
 # config for first layer needed by blobserve
 # we also remove `static/` from resource urls as that's needed by blobserve,

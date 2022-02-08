@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec, ExecOptions } from './util/shell';
 import { Werft } from './util/werft';
-import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName } from './util/kubectl';
+import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName, findLastHostPort } from './util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
@@ -11,7 +11,7 @@ import * as util from 'util';
 import { sleep, env } from './util/util';
 import * as gpctl from './util/gpctl';
 import { createHash } from "crypto";
-import { InstallMonitoringSatelliteParams, installMonitoringSatellite, observabilityStaticChecks } from './observability/monitoring-satellite';
+import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from './observability/monitoring-satellite';
 import { SpanStatusCode } from '@opentelemetry/api';
 import * as Tracing from './observability/tracing'
 import * as VM from './vm/vm'
@@ -22,6 +22,7 @@ let werft: Werft
 const readDir = util.promisify(fs.readdir)
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
+const STACKDRIVER_SERVICEACCOUNT = JSON.parse(fs.readFileSync(`/mnt/secrets/monitoring-satellite-stackdriver-credentials/credentials.json`, 'utf8'));
 
 // used by both deploys (helm and Installer)
 const PROXY_SECRET_NAME = "proxy-config-certificates";
@@ -30,6 +31,8 @@ const IMAGE_PULL_SECRET_NAME = "gcp-sa-registry-auth";
 const context = JSON.parse(fs.readFileSync('context.json').toString());
 
 const version = parseVersion(context);
+const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
+const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
 
 
 Tracing.initialize()
@@ -85,7 +88,8 @@ const vmSlices = {
     START_KUBECTL_PORT_FORWARDS: 'Start kubectl port forwards',
     COPY_CERT_MANAGER_RESOURCES: 'Copy CertManager resources from core-dev',
     INSTALL_LETS_ENCRYPT_ISSUER: 'Install Lets Encrypt issuer',
-    KUBECONFIG: 'Getting kubeconfig'
+    KUBECONFIG: 'Getting kubeconfig',
+    EXTERNAL_LOGGING: 'Install credentials to send logs from fluent-bit to GCP'
 }
 
 export function parseVersion(context) {
@@ -132,8 +136,7 @@ export async function build(context, version) {
     } catch (err) {
         werft.fail('prep', err);
     }
-    const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
-    const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
+
     const dontTest = "no-test" in buildConfig;
     const publishRelease = "publish-release" in buildConfig;
     const workspaceFeatureFlags: string[] = ((): string[] => {
@@ -143,22 +146,26 @@ export async function build(context, version) {
         }
         return raw.split(",").map(e => e.trim());
     })();
-    const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
+
+
+    // Main build should only contain the annotations below:
+    // ['with-contrib', 'publish-to-npm', 'publish-to-jb-marketplace', 'clean-slate-deployment']
+    const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig && !mainBuild;
     const withContrib = "with-contrib" in buildConfig || mainBuild;
     const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
     const storage = buildConfig["storage"] || "";
-    const withIntegrationTests = "with-integration-tests" in buildConfig;
+    const withIntegrationTests = "with-integration-tests" in buildConfig && !mainBuild;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
     const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
-    const installEELicense = !("without-ee-license" in buildConfig);
-    const withPayment= "with-payment" in buildConfig;
-    const withObservability = "with-observability" in buildConfig;
-    const withHelm = "with-helm" in buildConfig;
-    const withVM = "with-vm" in buildConfig;
+    const installEELicense = !("without-ee-license" in buildConfig) || mainBuild;
+    const withPayment= "with-payment" in buildConfig && !mainBuild;
+    const withObservability = "with-observability" in buildConfig && !mainBuild;
+    const withHelm = "with-helm" in buildConfig && !mainBuild;
+    const withVM = "with-vm" in buildConfig && !mainBuild;
 
     const jobConfig = {
         buildConfig,
@@ -319,6 +326,7 @@ export async function build(context, version) {
         werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
         exec(`kubectl get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
         exec(`kubectl get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
+        werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
 
         const existingVM = VM.vmExists({ name: destname })
         if (!existingVM) {
@@ -335,20 +343,30 @@ export async function build(context, version) {
 
         werft.log(vmSlices.BOOT_VM, 'Waiting for VM to be ready')
         VM.waitForVM({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.BOOT_VM })
+        werft.done(vmSlices.BOOT_VM)
 
         werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting SSH port forwarding')
         VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
+        werft.done(vmSlices.START_KUBECTL_PORT_FORWARDS)
 
         werft.log(vmSlices.KUBECONFIG, 'Copying k3s kubeconfig')
         VM.copyk3sKubeconfig({name: destname, path: 'k3s.yml', timeoutMS: 1000 * 60 * 3, slice: vmSlices.KUBECONFIG })
         // NOTE: This was a quick have to override the existing kubeconfig so all future kubectl commands use the k3s cluster.
         //       We might want to keep both kubeconfigs around and be explicit about which one we're using.s
         exec(`mv k3s.yml /home/gitpod/.kube/config`)
+        werft.done(vmSlices.KUBECONFIG)
 
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
+        werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
+
+        VM.installFluentBit({namespace: 'default', slice: vmSlices.EXTERNAL_LOGGING})
+        werft.done(vmSlices.EXTERNAL_LOGGING)
+
 
         issueMetaCerts(PROXY_SECRET_NAME, "default", domain, withVM)
-        installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, true);
+        werft.done('certificate')
+        installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, true);
+        werft.done('observability')
     }
 
     werft.phase(phases.PREDEPLOY, "Checking for existing installations...");
@@ -414,14 +432,19 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
     const { version, destname, namespace, domain, monitoringDomain, url, withObservability, withVM } = deploymentConfig;
 
     // find free ports
-    werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Check for some free ports.");
-    const [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
-        { start: 10000, end: 11000 },
-        { start: 30000, end: 31000 },
-        { start: 31001, end: 32000 },
-    ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
+    werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Find last ports");
+    let wsdaemonPortMeta = findLastHostPort(namespace, 'ws-daemon', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
+    let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
+
+    if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta)) {
+        werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
+        [wsdaemonPortMeta, registryNodePortMeta] = findFreeHostPorts([
+            { start: 10000, end: 11000 },
+            { start: 30000, end: 31000 },
+        ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
+    }
     werft.log(installerSlices.FIND_FREE_HOST_PORTS,
-        `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}, and nodeExporterPort ${nodeExporterPort}.`);
+        `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}.`);
     werft.done(installerSlices.FIND_FREE_HOST_PORTS);
 
     // clean environment state
@@ -437,7 +460,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         }
         werft.done(installerSlices.CLEAN_ENV_STATE);
     } catch (err) {
-        werft.fail(installerSlices.CLEAN_ENV_STATE, err);
+        if(!mainBuild) {
+            werft.fail(installerSlices.CLEAN_ENV_STATE, err);
+        }
+        exec('exit 0')
     }
 
     if (!withVM) {
@@ -453,7 +479,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             await installMetaCertificates(namespace);
             werft.done(installerSlices.ISSUE_CERTIFICATES);
         } catch (err) {
-            werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+            if(!mainBuild) {
+                werft.fail(installerSlices.ISSUE_CERTIFICATES, err);
+            }
+            exec('exit 0')
         }
     }
 
@@ -468,7 +497,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             werft.done(installerSlices.IMAGE_PULL_SECRET);
         }
         catch (err) {
-            werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
+            if(!mainBuild) {
+                werft.fail(installerSlices.IMAGE_PULL_SECRET, err);
+            }
+            exec('exit 0')
         }
     }
 
@@ -480,7 +512,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`/tmp/installer init > config.yaml`, {slice: installerSlices.INSTALLER_INIT});
         werft.done(installerSlices.INSTALLER_INIT);
     } catch (err) {
-        werft.fail(installerSlices.INSTALLER_INIT, err)
+        if(!mainBuild) {
+            werft.fail(installerSlices.INSTALLER_INIT, err)
+        }
+        exec('exit 0')
     }
 
     // prepare a proper config file
@@ -549,7 +584,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
 
             werft.done('authProviders');
         } catch (err) {
-            werft.fail('authProviders', err);
+            if(!mainBuild) {
+                werft.fail('authProviders', err);
+            }
+            exec('exit 0')
         }
 
         werft.log("SSH gateway hostkey", "copy host-key from secret")
@@ -564,7 +602,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
             exec(`yq w -i ./config.yaml sshGatewayHostKey.name "host-key"`)
             werft.done('SSH gateway hostkey');
         } catch (err) {
-            werft.fail('SSH gateway hostkey', err);
+            if(!mainBuild) {
+                werft.fail('SSH gateway hostkey', err);
+            }
+            exec('exit 0')
         }
 
         // validate the config
@@ -577,7 +618,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, { silent: true });
         werft.done(installerSlices.INSTALLER_RENDER);
     } catch (err) {
-        werft.fail(installerSlices.INSTALLER_RENDER, err)
+        if(!mainBuild) {
+            werft.fail(installerSlices.INSTALLER_RENDER, err)
+        }
+        exec('exit 0')
     }
 
     try {
@@ -606,7 +650,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`${flags}./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, {slice: installerSlices.INSTALLER_POST_PROCESSING});
         werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
-        werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
+        if(!mainBuild) {
+            werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
+        }
+        exec('exit 0')
     }
 
     werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
@@ -616,7 +663,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`kubectl apply -f k8s.yaml`,{ slice: installerSlices.APPLY_INSTALL_MANIFESTS, silent: true });
         werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
     } catch (err) {
-        werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
+        if(!mainBuild) {
+            werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
+        }
+        exec('exit 0')
     } finally {
         // produce the result independently of install succeding, so that in case fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
@@ -627,7 +677,10 @@ export async function deployToDevWithInstaller(deploymentConfig: DeploymentConfi
         exec(`kubectl -n ${namespace} rollout status deployment/server --timeout=5m`,{ slice: installerSlices.DEPLOYMENT_WAITING });
         werft.done(installerSlices.DEPLOYMENT_WAITING);
     } catch (err) {
-        werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
+        if(!mainBuild) {
+            werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
+        }
+        exec('exit 0')
     }
 
     await addDNSRecord(deploymentConfig.namespace, deploymentConfig.domain, !withVM)
@@ -723,7 +776,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         await addDNSRecord(deploymentConfig.namespace, deploymentConfig.domain, false)
         werft.done('prep');
     } catch (err) {
-        werft.fail('prep', err);
+        if(!mainBuild) {
+            werft.fail('prep', err);
+        }
+        exec('exit 0')
     }
 
     // core-dev specific section start
@@ -745,7 +801,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
 }`      );
         werft.done('secret');
     } catch (err) {
-        werft.fail('secret', err);
+        if(!mainBuild) {
+            werft.fail('secret', err);
+        }
+        exec('exit 0')
     }
 
     werft.log("authProviders", "copy authProviders")
@@ -757,7 +816,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         exec(`yq merge --inplace .werft/values.dev.yaml ./authProviders`, { slice: "authProviders" })
         werft.done('authProviders');
     } catch (err) {
-        werft.fail('authProviders', err);
+        if(!mainBuild) {
+            werft.fail('authProviders', err);
+        }
+        exec('exit 0')
     }
     // core-dev specific section end
 
@@ -766,10 +828,16 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
     // The reason behind it is because Gitpod components will start sending traces to a non-existent
     // OpenTelemetry-collector otherwise.
     werft.log(`observability`, "Running observability static checks.")
-    observabilityStaticChecks()
     werft.log(`observability`, "Installing monitoring-satellite...")
     if (deploymentConfig.withObservability) {
-        await installMonitoring(namespace, nodeExporterPort, monitoringDomain, false);
+        try {
+            await installMonitoring(namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, false);
+        } catch (err) {
+            if(!mainBuild) {
+                werft.fail('observability', err);
+            }
+            exec('exit 0')
+        }
     } else {
         exec(`echo '"with-observability" annotation not set, skipping...'`, {slice: `observability`})
         exec(`echo 'To deploy monitoring-satellite, please add "/werft with-observability" to your PR description.'`, {slice: `observability`})
@@ -787,7 +855,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         werft.log('helm', 'done');
         werft.done('helm');
     } catch (err) {
-        werft.fail('deploy', err);
+        if(!mainBuild) {
+            werft.fail('deploy', err);
+        }
+        exec('exit 0')
     } finally {
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
@@ -874,7 +945,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
         try {
             exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
         } catch (err) {
-            werft.fail('helm', err);
+            if(!mainBuild) {
+                werft.fail('helm', err);
+            }
+            exec('exit 0')
         }
         const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
         flags += ` -f ${pathToVersions}`;
@@ -888,7 +962,7 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
             flags += ` -f ../.werft/values.payment.yaml`;
             exec(`cp /mnt/secrets/payment-provider-config/providerOptions payment-core-dev-options.json`);
             flags += ` --set payment.chargebee.providerOptionsFile=payment-core-dev-options.json`;
-            exec(`cp /mnt/secrets/payment-webhook-config/webhook payment-core-dev-webhook.json`);
+            exec(`cp /mnt/secrets/payment-webhook-config/license payment-core-dev-webhook.json`);
             flags += ` --set components.paymentEndpoint.webhookFile="payment-core-dev-webhook.json"`;
         }
         return flags;
@@ -902,7 +976,10 @@ export async function deployToDevWithHelm(deploymentConfig: DeploymentConfig, wo
             await deleteNonNamespaceObjects(namespace, destname, { ...shellOpts, slice: 'predeploy cleanup' });
             werft.done('predeploy cleanup');
         } catch (err) {
-            werft.fail('predeploy cleanup', err);
+            if(!mainBuild) {
+                werft.fail('predeploy cleanup', err);
+            }
+            exec('exit 0')
         }
     }
 }
@@ -972,7 +1049,7 @@ async function installMetaCertificates(namespace: string) {
     await installCertficate(werft, metaInstallCertParams, metaEnv());
 }
 
-async function installMonitoring(namespace, nodeExporterPort, domain, withVM) {
+async function installMonitoring(namespace: string, nodeExporterPort: number, domain: string, stackdriverServiceAccount: any, withVM: boolean) {
     const installMonitoringSatelliteParams = new InstallMonitoringSatelliteParams();
     installMonitoringSatelliteParams.branch = context.Annotations.withObservabilityBranch || "main";
     installMonitoringSatelliteParams.pathToKubeConfig = ""
@@ -980,6 +1057,7 @@ async function installMonitoring(namespace, nodeExporterPort, domain, withVM) {
     installMonitoringSatelliteParams.clusterName = namespace
     installMonitoringSatelliteParams.nodeExporterPort = nodeExporterPort
     installMonitoringSatelliteParams.previewDomain = domain
+    installMonitoringSatelliteParams.stackdriverServiceAccount = stackdriverServiceAccount
     installMonitoringSatelliteParams.withVM = withVM
     installMonitoringSatellite(installMonitoringSatelliteParams);
 }
@@ -1019,7 +1097,10 @@ export async function triggerIntegrationTests(version: string, namespace: string
 
         werft.done(phases.TRIGGER_INTEGRATION_TESTS);
     } catch (err) {
-        werft.fail(phases.TRIGGER_INTEGRATION_TESTS, err);
+        if(!mainBuild) {
+            werft.fail(phases.TRIGGER_INTEGRATION_TESTS, err);
+        }
+        exec('exit 0')
     }
 }
 

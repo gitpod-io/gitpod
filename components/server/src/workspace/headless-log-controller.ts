@@ -12,7 +12,7 @@ import { CompositeResourceAccessGuard, OwnerResourceGuard, TeamMemberResourceGua
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { TeamDB } from "@gitpod/gitpod-db/lib/team-db";
-import { HeadlessLogService } from "./headless-log-service";
+import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
 import * as opentracing from 'opentracing';
 import { asyncHandler } from "../express-util";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -54,6 +54,7 @@ export class HeadlessLogController {
             const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
             log.debug(logCtx, HEADLESS_LOGS_PATH_PREFIX);
 
+            const aborted = new Deferred<boolean>();
             try {
                 const head = {
                     'Content-Type': 'text/html; charset=utf-8',  // is text/plain, but with that node.js won't stream...
@@ -62,7 +63,6 @@ export class HeadlessLogController {
                 };
                 res.writeHead(200, head)
 
-                const aborted = new Deferred<boolean>();
                 const abort = (err: any) => {
                     aborted.resolve(true);
                     log.debug(logCtx, "headless-log: aborted");
@@ -85,10 +85,11 @@ export class HeadlessLogController {
                     if (!done) {
                         res.once('drain', resolve);
                     } else {
-                        process.nextTick(resolve);
+                        setImmediate(resolve);
                     }
                 }));
-                await this.headlessLogService.streamWorkspaceLog(instance, params.terminalId, writeToResponse, aborted);
+                const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(instance);
+                await this.headlessLogService.streamWorkspaceLogWhileRunning(logCtx, logEndpoint, instanceId, params.terminalId, writeToResponse, aborted);
 
                 // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
                 // So we resort to this hand-written solution
@@ -100,6 +101,8 @@ export class HeadlessLogController {
 
                 res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
                 res.end();
+            } finally {
+                aborted.resolve(true);  // ensure that the promise gets resolved eventually!
             }
         })]);
         router.get("/", malformedRequestHandler);

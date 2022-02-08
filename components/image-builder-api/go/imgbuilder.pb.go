@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -1036,6 +1036,7 @@ type BuildInfo struct {
 	Status    BuildStatus `protobuf:"varint,2,opt,name=status,proto3,enum=builder.BuildStatus" json:"status,omitempty"`
 	StartedAt int64       `protobuf:"varint,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	BuildId   string      `protobuf:"bytes,5,opt,name=build_id,json=buildId,proto3" json:"build_id,omitempty"`
+	LogInfo   *LogInfo    `protobuf:"bytes,6,opt,name=log_info,json=logInfo,proto3" json:"log_info,omitempty"`
 }
 
 func (x *BuildInfo) Reset() {
@@ -1103,6 +1104,68 @@ func (x *BuildInfo) GetBuildId() string {
 		return x.BuildId
 	}
 	return ""
+}
+
+func (x *BuildInfo) GetLogInfo() *LogInfo {
+	if x != nil {
+		return x.LogInfo
+	}
+	return nil
+}
+
+type LogInfo struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Url     string            `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Headers map[string]string `protobuf:"bytes,2,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *LogInfo) Reset() {
+	*x = LogInfo{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_imgbuilder_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *LogInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogInfo) ProtoMessage() {}
+
+func (x *LogInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_imgbuilder_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogInfo.ProtoReflect.Descriptor instead.
+func (*LogInfo) Descriptor() ([]byte, []int) {
+	return file_imgbuilder_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *LogInfo) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *LogInfo) GetHeaders() map[string]string {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
 }
 
 var File_imgbuilder_proto protoreflect.FileDescriptor
@@ -1216,7 +1279,7 @@ var file_imgbuilder_proto_rawDesc = []byte{
 	0x6c, 0x64, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a, 0x0a, 0x06, 0x62,
 	0x75, 0x69, 0x6c, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x62, 0x75,
 	0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x49, 0x6e, 0x66, 0x6f, 0x52,
-	0x06, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x73, 0x22, 0xa0, 0x01, 0x0a, 0x09, 0x42, 0x75, 0x69, 0x6c,
+	0x06, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x73, 0x22, 0xcd, 0x01, 0x0a, 0x09, 0x42, 0x75, 0x69, 0x6c,
 	0x64, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x72, 0x65, 0x66, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x03, 0x72, 0x65, 0x66, 0x12, 0x19, 0x0a, 0x08, 0x62, 0x61, 0x73, 0x65, 0x5f,
 	0x72, 0x65, 0x66, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x62, 0x61, 0x73, 0x65, 0x52,
@@ -1226,7 +1289,19 @@ var file_imgbuilder_proto_rawDesc = []byte{
 	0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x03,
 	0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x73, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12,
 	0x19, 0x0a, 0x08, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x5f, 0x69, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x07, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x49, 0x64, 0x2a, 0x4b, 0x0a, 0x0b, 0x42, 0x75,
+	0x09, 0x52, 0x07, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x49, 0x64, 0x12, 0x2b, 0x0a, 0x08, 0x6c, 0x6f,
+	0x67, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x62,
+	0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e, 0x4c, 0x6f, 0x67, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x07,
+	0x6c, 0x6f, 0x67, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x90, 0x01, 0x0a, 0x07, 0x4c, 0x6f, 0x67, 0x49,
+	0x6e, 0x66, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x75, 0x72, 0x6c, 0x12, 0x37, 0x0a, 0x07, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73,
+	0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72,
+	0x2e, 0x4c, 0x6f, 0x67, 0x49, 0x6e, 0x66, 0x6f, 0x2e, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73,
+	0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x07, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x1a, 0x3a,
+	0x0a, 0x0c, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10,
+	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79,
+	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x2a, 0x4b, 0x0a, 0x0b, 0x42, 0x75,
 	0x69, 0x6c, 0x64, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0b, 0x0a, 0x07, 0x75, 0x6e, 0x6b,
 	0x6e, 0x6f, 0x77, 0x6e, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x72, 0x75, 0x6e, 0x6e, 0x69, 0x6e,
 	0x67, 0x10, 0x01, 0x12, 0x10, 0x0a, 0x0c, 0x64, 0x6f, 0x6e, 0x65, 0x5f, 0x73, 0x75, 0x63, 0x63,
@@ -1276,7 +1351,7 @@ func file_imgbuilder_proto_rawDescGZIP() []byte {
 }
 
 var file_imgbuilder_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_imgbuilder_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_imgbuilder_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_imgbuilder_proto_goTypes = []interface{}{
 	(BuildStatus)(0),                      // 0: builder.BuildStatus
 	(*BuildSource)(nil),                   // 1: builder.BuildSource
@@ -1296,12 +1371,14 @@ var file_imgbuilder_proto_goTypes = []interface{}{
 	(*ListBuildsRequest)(nil),             // 15: builder.ListBuildsRequest
 	(*ListBuildsResponse)(nil),            // 16: builder.ListBuildsResponse
 	(*BuildInfo)(nil),                     // 17: builder.BuildInfo
-	(*api.WorkspaceInitializer)(nil),      // 18: contentservice.WorkspaceInitializer
+	(*LogInfo)(nil),                       // 18: builder.LogInfo
+	nil,                                   // 19: builder.LogInfo.HeadersEntry
+	(*api.WorkspaceInitializer)(nil),      // 20: contentservice.WorkspaceInitializer
 }
 var file_imgbuilder_proto_depIdxs = []int32{
 	2,  // 0: builder.BuildSource.ref:type_name -> builder.BuildSourceReference
 	3,  // 1: builder.BuildSource.file:type_name -> builder.BuildSourceDockerfile
-	18, // 2: builder.BuildSourceDockerfile.source:type_name -> contentservice.WorkspaceInitializer
+	20, // 2: builder.BuildSourceDockerfile.source:type_name -> contentservice.WorkspaceInitializer
 	9,  // 3: builder.ResolveBaseImageRequest.auth:type_name -> builder.BuildRegistryAuth
 	1,  // 4: builder.ResolveWorkspaceImageRequest.source:type_name -> builder.BuildSource
 	9,  // 5: builder.ResolveWorkspaceImageRequest.auth:type_name -> builder.BuildRegistryAuth
@@ -1314,21 +1391,23 @@ var file_imgbuilder_proto_depIdxs = []int32{
 	17, // 12: builder.BuildResponse.info:type_name -> builder.BuildInfo
 	17, // 13: builder.ListBuildsResponse.builds:type_name -> builder.BuildInfo
 	0,  // 14: builder.BuildInfo.status:type_name -> builder.BuildStatus
-	4,  // 15: builder.ImageBuilder.ResolveBaseImage:input_type -> builder.ResolveBaseImageRequest
-	6,  // 16: builder.ImageBuilder.ResolveWorkspaceImage:input_type -> builder.ResolveWorkspaceImageRequest
-	8,  // 17: builder.ImageBuilder.Build:input_type -> builder.BuildRequest
-	13, // 18: builder.ImageBuilder.Logs:input_type -> builder.LogsRequest
-	15, // 19: builder.ImageBuilder.ListBuilds:input_type -> builder.ListBuildsRequest
-	5,  // 20: builder.ImageBuilder.ResolveBaseImage:output_type -> builder.ResolveBaseImageResponse
-	7,  // 21: builder.ImageBuilder.ResolveWorkspaceImage:output_type -> builder.ResolveWorkspaceImageResponse
-	12, // 22: builder.ImageBuilder.Build:output_type -> builder.BuildResponse
-	14, // 23: builder.ImageBuilder.Logs:output_type -> builder.LogsResponse
-	16, // 24: builder.ImageBuilder.ListBuilds:output_type -> builder.ListBuildsResponse
-	20, // [20:25] is the sub-list for method output_type
-	15, // [15:20] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	18, // 15: builder.BuildInfo.log_info:type_name -> builder.LogInfo
+	19, // 16: builder.LogInfo.headers:type_name -> builder.LogInfo.HeadersEntry
+	4,  // 17: builder.ImageBuilder.ResolveBaseImage:input_type -> builder.ResolveBaseImageRequest
+	6,  // 18: builder.ImageBuilder.ResolveWorkspaceImage:input_type -> builder.ResolveWorkspaceImageRequest
+	8,  // 19: builder.ImageBuilder.Build:input_type -> builder.BuildRequest
+	13, // 20: builder.ImageBuilder.Logs:input_type -> builder.LogsRequest
+	15, // 21: builder.ImageBuilder.ListBuilds:input_type -> builder.ListBuildsRequest
+	5,  // 22: builder.ImageBuilder.ResolveBaseImage:output_type -> builder.ResolveBaseImageResponse
+	7,  // 23: builder.ImageBuilder.ResolveWorkspaceImage:output_type -> builder.ResolveWorkspaceImageResponse
+	12, // 24: builder.ImageBuilder.Build:output_type -> builder.BuildResponse
+	14, // 25: builder.ImageBuilder.Logs:output_type -> builder.LogsResponse
+	16, // 26: builder.ImageBuilder.ListBuilds:output_type -> builder.ListBuildsResponse
+	22, // [22:27] is the sub-list for method output_type
+	17, // [17:22] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_imgbuilder_proto_init() }
@@ -1541,6 +1620,18 @@ func file_imgbuilder_proto_init() {
 				return nil
 			}
 		}
+		file_imgbuilder_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*LogInfo); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_imgbuilder_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*BuildSource_Ref)(nil),
@@ -1556,7 +1647,7 @@ func file_imgbuilder_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_imgbuilder_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

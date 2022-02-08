@@ -28,7 +28,6 @@ func TestFindBindMountCandidates(t *testing.T) {
 				"/dev",
 				"/sys",
 				"/workspace",
-				"/etc/hosts",
 				"/etc/hostname",
 			},
 		},
@@ -39,7 +38,6 @@ func TestFindBindMountCandidates(t *testing.T) {
 			Expectation: []string{
 				"/dev",
 				"/sys",
-				"/etc/hosts",
 				"/etc/hostname",
 			},
 		},
@@ -56,7 +54,6 @@ func TestFindBindMountCandidates(t *testing.T) {
 				"/dev",
 				"/sys",
 				"/workspace",
-				"/etc/hosts",
 				"/etc/hostname",
 				"/custom-certs",
 			},

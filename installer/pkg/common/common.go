@@ -10,10 +10,12 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"strconv"
 	"strings"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/docker/distribution/reference"
 	appsv1 "k8s.io/api/apps/v1"
@@ -64,14 +66,14 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 	}
 }
 
-func TracingEnv(cfg *config.Config) (res []corev1.EnvVar) {
-	if cfg.Observability.Tracing == nil {
+func TracingEnv(context *RenderContext) (res []corev1.EnvVar) {
+	if context.Config.Observability.Tracing == nil {
 		return
 	}
 
-	if ep := cfg.Observability.Tracing.Endpoint; ep != nil {
+	if ep := context.Config.Observability.Tracing.Endpoint; ep != nil {
 		res = append(res, corev1.EnvVar{Name: "JAEGER_ENDPOINT", Value: *ep})
-	} else if v := cfg.Observability.Tracing.AgentHost; v != nil {
+	} else if v := context.Config.Observability.Tracing.AgentHost; v != nil {
 		res = append(res, corev1.EnvVar{Name: "JAEGER_AGENT_HOST", Value: *v})
 	} else {
 		// TODO(cw): think about proper error handling here.
@@ -79,9 +81,24 @@ func TracingEnv(cfg *config.Config) (res []corev1.EnvVar) {
 		//			 but would make env var composition more cumbersome.
 	}
 
+	samplerType := experimental.TracingSampleTypeConst
+	samplerParam := "1"
+
+	_ = context.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace != nil && ucfg.Workspace.Tracing != nil {
+			if ucfg.Workspace.Tracing.SamplerType != nil {
+				samplerType = *ucfg.Workspace.Tracing.SamplerType
+			}
+			if ucfg.Workspace.Tracing.SamplerParam != nil {
+				samplerParam = strconv.FormatFloat(*ucfg.Workspace.Tracing.SamplerParam, 'f', -1, 64)
+			}
+		}
+		return nil
+	})
+
 	res = append(res,
-		corev1.EnvVar{Name: "JAEGER_SAMPLER_TYPE", Value: "const"},
-		corev1.EnvVar{Name: "JAEGER_SAMPLER_PARAM", Value: "1"},
+		corev1.EnvVar{Name: "JAEGER_SAMPLER_TYPE", Value: string(samplerType)},
+		corev1.EnvVar{Name: "JAEGER_SAMPLER_PARAM", Value: samplerParam},
 	)
 
 	return

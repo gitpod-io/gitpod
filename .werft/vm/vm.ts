@@ -22,7 +22,7 @@ EOF
  */
  function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
     exec(`
-        cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} delete
+        cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} delete -f -
 ${manifest}
 EOF
     `)
@@ -178,4 +178,14 @@ export function startSSHProxy(options: { name: string, slice: string }) {
  */
 export function stopKubectlPortForwards() {
     exec(`sudo killall kubectl || true`)
+}
+
+/**
+ * Install Fluent-Bit sending logs to GCP
+ */
+export function installFluentBit(options: {namespace: string, slice: string}) {
+    exec(`kubectl create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl apply -n ${options.namespace} -f -`, { slice: options.slice, dontCheckRc: true})
+    exec(`helm3 repo add fluent https://fluent.github.io/helm-charts`, { slice: options.slice, dontCheckRc: true})
+    exec(`helm3 repo update`, { slice: options.slice, dontCheckRc: true})
+    exec(`helm3 upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`, { slice: options.slice, dontCheckRc: true})
 }

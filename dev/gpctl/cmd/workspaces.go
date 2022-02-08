@@ -133,7 +133,7 @@ func getWorkspacesClient(ctx context.Context) (*grpc.ClientConn, api.WorkspaceMa
 
 		secopt = grpc.WithTransportCredentials(creds)
 	}
-	conn, err := grpc.Dial(addr, secopt)
+	conn, err := grpc.Dial(addr, secopt, util.WithClientUnaryInterceptor())
 	if err != nil {
 		return nil, nil, err
 	}

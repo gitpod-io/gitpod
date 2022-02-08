@@ -110,7 +110,8 @@ export class ConsensusLeaderQorum implements Disposable {
         if (this.role === 'leader') {
             if (!this.lastHeartbeatSend || Date.now() - this.lastHeartbeatSend > this.heartbeatPeriod) {
                 // we must send our regular heartbeats
-                this.messenger.sendHeartbeat(this.uid, this.currentTerm);
+                /** no await */ this.messenger.sendHeartbeat(this.uid, this.currentTerm)
+                    .catch(err => {/** ignore */});
 
                 this.lastHeartbeatSend = Date.now();
             }

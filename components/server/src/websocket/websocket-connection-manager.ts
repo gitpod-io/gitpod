@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ClientHeaderFields, Disposable, GitpodClient as GitpodApiClient, GitpodServerPath, User } from "@gitpod/gitpod-protocol";
+import { ClientHeaderFields, Disposable, GitpodClient as GitpodApiClient, GitpodServerPath, RateLimiterError, User } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler";
 import { JsonRpcConnectionHandler, JsonRpcProxy, JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
@@ -356,7 +356,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                     throw rlRejected;
                 }
                 log.warn({ userId }, "Rate limiter prevents accessing method due to too many requests.", rlRejected, { method });
-                throw new ResponseError(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { "Retry-After": String(Math.round(rlRejected.msBeforeNext / 1000)) || 1 });
+                throw new ResponseError<RateLimiterError>(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { method, retryAfter: Math.round(rlRejected.msBeforeNext / 1000) || 1 });
             }
 
             // access guard

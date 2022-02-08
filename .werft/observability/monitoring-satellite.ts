@@ -13,6 +13,7 @@ import * as fs from 'fs';
     nodeExporterPort: number
     branch: string
     previewDomain: string
+    stackdriverServiceAccount: any
     withVM: boolean
 }
 
@@ -23,6 +24,7 @@ const sliceName = 'observability';
  */
 export async function installMonitoringSatellite(params: InstallMonitoringSatelliteParams) {
     const werft = getGlobalWerftInstance()
+
     werft.log(sliceName, `Cloning observability repository - Branch: ${params.branch}`)
     exec(`git clone --branch ${params.branch} https://roboquat:$(cat /mnt/secrets/monitoring-satellite-preview-token/token)@github.com/gitpod-io/observability.git`, {silent: true})
     let currentCommit = exec(`git rev-parse HEAD`, {silent: true}).stdout.trim()
@@ -51,6 +53,11 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
             nodeExporterPort: ${params.nodeExporterPort},
         },
         ${params.withVM ? '' : "nodeAffinity: { nodeSelector: { 'gitpod.io/workload_services': 'true' }, },"  }
+        stackdriver: {
+            defaultProject: '${params.stackdriverServiceAccount.project_id}',
+            clientEmail: '${params.stackdriverServiceAccount.client_email}',
+            privateKey: '${params.stackdriverServiceAccount.private_key}',
+        },
     }" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
     find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
@@ -90,62 +97,6 @@ async function deployGitpodServiceMonitors() {
 
     werft.log(sliceName, 'installing gitpod ServiceMonitor resources')
     exec('kubectl apply -f observability/monitoring-satellite/manifests/gitpod/', {silent: true})
-}
-
-export function observabilityStaticChecks() {
-    shell.cd('/workspace/operations/observability/mixins')
-
-    if (!jsonnetFmtCheck() || !prometheusRulesCheck() || !jsonnetUnitTests()) {
-        throw new Error("Observability static checks failed!")
-    }
-}
-
-function jsonnetFmtCheck(): boolean {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, "Checking if jsonnet compiles and is well formated")
-    let success = exec('make fmt && git diff --exit-code .', {slice: sliceName}).code == 0
-
-    if (!success) {
-        werft.fail(sliceName, "Jsonnet is badly formatted. You can fix it by running 'cd operations/observability/mixins && make fmt'");
-    }
-
-    success = exec('make lint', {slice: sliceName}).code == 0
-
-    if (!success) {
-        werft.fail(sliceName, "Jsonnet does not compile.");
-    }
-    return success
-}
-
-function prometheusRulesCheck(): boolean {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, "Checking if Prometheus rules are valid.")
-    let success = exec("make promtool-lint", {slice: sliceName}).code == 0
-
-    if (!success) {
-        const failedMessage = `Prometheus rule validation failed. For futher reference, please read:
-https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
-https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/`
-        werft.fail(sliceName, failedMessage)
-    }
-    return success
-}
-
-function jsonnetUnitTests(): boolean {
-    const werft = getGlobalWerftInstance()
-
-    werft.log(sliceName, "Running mixin unit tests")
-    werft.log(sliceName, "Checking for hardcoded dashboard's datasources")
-
-    let success = exec("make unit-tests", {slice: sliceName}).code == 0
-
-    if (!success) {
-        const failedMessage = `To make sure our dashboards work for both preview-environments and production/staging, we can't hardcode datasources. Please use datasource variables.`
-        werft.fail(sliceName, failedMessage)
-    }
-    return success
 }
 
 function postProcessManifests() {

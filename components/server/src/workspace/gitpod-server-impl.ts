@@ -5,7 +5,7 @@
  */
 
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
-import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB, InstallationAdminDB } from '@gitpod/gitpod-db/lib';
+import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB, InstallationAdminDB, ProjectDB } from '@gitpod/gitpod-db/lib';
 import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields, Permission } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
@@ -46,7 +46,7 @@ import { WorkspaceDeletionService } from './workspace-deletion-service';
 import { WorkspaceFactory } from './workspace-factory';
 import { WorkspaceStarter } from './workspace-starter';
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
-import { HeadlessLogService } from "./headless-log-service";
+import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
 import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
@@ -58,6 +58,7 @@ import { ClientMetadata } from '../websocket/websocket-connection-manager';
 import { ConfigurationService } from '../config/configuration-service';
 import { ProjectEnvVar } from '@gitpod/gitpod-protocol/src/protocol';
 import { InstallationAdminSettings } from '@gitpod/gitpod-protocol';
+import { Deferred } from '@gitpod/gitpod-protocol/lib/util/deferred';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -110,6 +111,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(HeadlessLogService) protected readonly headlessLogService: HeadlessLogService;
 
+    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ProjectsService) protected readonly projectsService: ProjectsService;
 
     @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
@@ -458,7 +460,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
         const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
-        this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
+        await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
 
         const ownerToken = latestInstance?.status.ownerToken;
         if (!ownerToken) {
@@ -1112,24 +1114,87 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceWI(ctx, { workspaceId });
 
         const user = this.checkAndBlockUser("watchWorkspaceImageBuildLogs", undefined, { workspaceId });
-        const logCtx: LogContext = { userId: user.id, workspaceId };
-
-        const { instance, workspace } = await this.internGetCurrentWorkspaceInstance(ctx, workspaceId);
-        if (!this.client) {
+        const client = this.client;
+        if (!client) {
             return;
         }
+
+        const logCtx: LogContext = { userId: user.id, workspaceId };
+        let { instance, workspace } = await this.internGetCurrentWorkspaceInstance(ctx, workspaceId);
         if (!instance) {
             log.debug(logCtx, `No running instance for workspaceId.`);
             return;
         }
         traceWI(ctx, { instanceId: instance.id });
-        if (!workspace.imageNameResolved) {
-            log.debug(logCtx, `No imageNameResolved set for workspaceId, cannot watch logs.`);
-            return;
-        }
         const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace, teamMembers }, "get");
-        if (!this.client) {
+
+        // wait for up to 20s for imageBuildLogInfo to appear due to:
+        //  - db-sync round-trip times
+        //  - but also: wait until the image build actually started (image pull!), and log info is available!
+        for (let i = 0; i < 10; i++) {
+            if (instance.imageBuildInfo?.log) {
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const wsi = await this.workspaceDb.trace(ctx).findInstanceById(instance.id);
+            if (!wsi || wsi.status.phase !== 'preparing') {
+                log.debug(logCtx, `imagebuild logs: instance is not/no longer in 'preparing' state`, { phase: wsi?.status.phase });
+                return;
+            }
+            instance = wsi as WorkspaceInstance;    // help the compiler a bit
+        }
+
+        const logInfo = instance.imageBuildInfo?.log;
+        if (!logInfo) {
+            // during roll-out this is our fall-back case.
+            // Afterwards we might want to do some spinning-lock and re-check for a certain period (30s?) to give db-sync
+            // a change to move the imageBuildLogInfo across the globe.
+
+            log.warn(logCtx, "imageBuild logs: fallback!");
+            ctx.span?.setTag("workspace.imageBuild.logs.fallback", true);
+            await this.deprecatedDoWatchWorkspaceImageBuildLogs(ctx, logCtx, workspace);
+            return;
+        }
+
+        const aborted = new Deferred<boolean>();
+        try {
+            const logEndpoint: HeadlessLogEndpoint = {
+                url: logInfo.url,
+                headers: logInfo.headers,
+            };
+            let lineCount = 0;
+            await this.headlessLogService.streamImageBuildLog(logCtx, logEndpoint, async (chunk) => {
+                if (aborted.isResolved) {
+                    return;
+                }
+
+                try {
+                    chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
+                    lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
+
+                    client.onWorkspaceImageBuildLogs(undefined as any, {
+                        text: chunk,
+                        isDiff: true,
+                        upToLine: lineCount
+                    });
+                } catch (err) {
+                    log.error("error while streaming imagebuild logs", err);
+                    aborted.resolve(true);
+                }
+            }, aborted);
+        } catch (err) {
+            log.error(logCtx, "cannot watch imagebuild logs for workspaceId", err);
+            throw new ResponseError(ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE, "cannot watch imagebuild logs for workspaceId");
+        } finally {
+            aborted.resolve(false);
+        }
+    }
+
+    protected async deprecatedDoWatchWorkspaceImageBuildLogs(ctx: TraceContext, logCtx: LogContext, workspace: Workspace) {
+        if (!workspace.imageNameResolved) {
+            log.debug(logCtx, `No imageNameResolved set for workspaceId, cannot watch logs.`);
             return;
         }
 
@@ -1140,7 +1205,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             req.setBuildRef(workspace.imageNameResolved);
 
             let lineCount = 0;
-            imgbuilder.logs(ctx, req, data => {
+            await imgbuilder.logs(ctx, req, data => {
                 if (!this.client) {
                     return 'stop';
                 }
@@ -1162,7 +1227,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getHeadlessLog(ctx: TraceContext, instanceId: string): Promise<HeadlessLogUrls> {
         traceAPIParams(ctx, { instanceId });
 
-        const user = this.checkAndBlockUser('getHeadlessLog', { instanceId });
+        this.checkAndBlockUser('getHeadlessLog', { instanceId });
+        const logCtx: LogContext = { instanceId };
 
         const ws = await this.workspaceDb.trace(ctx).findByInstanceId(instanceId);
         if (!ws) {
@@ -1179,7 +1245,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace instance for ${instanceId} not found`);
         }
 
-        const urls = await this.headlessLogService.getHeadlessLogURLs(user.id, wsi, ws.ownerId);
+        const urls = await this.headlessLogService.getHeadlessLogURLs(logCtx, wsi, ws.ownerId);
         if (!urls || (typeof urls.streams === "object" && Object.keys(urls.streams).length === 0)) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
@@ -1625,13 +1691,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach(project => {
-            this.deleteProject(ctx, project.id);
-        })
+            /** no awat */ this.deleteProject(ctx, project.id)
+                .catch(err => {/** ignore */});
+        });
 
         const teamMembers = await this.teamDB.findMembersByTeam(teamId);
         teamMembers.forEach(member => {
-            this.removeTeamMember(ctx, teamId, member.userId);
-        })
+            /** no awat */ this.removeTeamMember(ctx, teamId, member.userId)
+            .catch(err => {/** ignore */});
+        });
 
         await this.teamDB.deleteTeam(teamId);
 
@@ -1664,7 +1732,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = this.checkAndBlockUser("getPrebuilds");
         await this.guardProjectOperation(user, params.projectId, "get");
-        return this.projectsService.findPrebuilds(user, params);
+        return this.projectsService.findPrebuilds(params);
     }
 
     public async getProjectOverview(ctx: TraceContext, projectId: string): Promise<Project.Overview | undefined> {
@@ -2010,6 +2078,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, id: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    async adminGetProjectsBySearchTerm(ctx: TraceContext, req: AdminGetListRequest<Project>): Promise<AdminGetListResult<Project>> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    async adminGetProjectById(ctx: TraceContext, id: string): Promise<Project | undefined> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    async adminFindPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 

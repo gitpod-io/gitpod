@@ -36,6 +36,14 @@ export class UserServiceEE extends UserService {
         return "60m";
     }
 
+    async userGetsMoreResources(user: User): Promise<boolean> {
+        if (this.config.enablePayment) {
+            return this.eligibilityService.userGetsMoreResources(user);
+        }
+
+        return false;
+    }
+
     async checkSignUp(params: CheckSignUpParams) {
 
         // todo@at: check if we need an optimization for SaaS here. used to be a no-op there.

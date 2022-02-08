@@ -48,7 +48,7 @@ export class GitLabApp {
                     res.send();
                     return;
                 }
-                this.handlePushHook({ span }, context, user);
+                await this.handlePushHook({ span }, context, user);
             } else {
                 log.debug("Unknown GitLab event received", { event });
             }
@@ -106,11 +106,12 @@ export class GitLabApp {
 
             const cloneURL = body.repository.git_http_url;
             const branch = this.getBranchFromRef(body.ref);
-            const projectOwner = await this.findProjectOwner(cloneURL);
+
+            const projectAndOwner = await this.findProjectAndOwner(cloneURL, user);
 
             const ws = await this.prebuildManager.startPrebuild({ span }, {
-                user: projectOwner?.user || user,
-                project: projectOwner?.project,
+                user: projectAndOwner.user,
+                project: projectAndOwner?.project,
                 contextURL,
                 cloneURL,
                 commit: body.after,
@@ -123,19 +124,39 @@ export class GitLabApp {
         }
     }
 
-    protected async findProjectOwner(cloneURL: string): Promise<{ user: User, project?: Project } | undefined> {
+    /**
+     * Finds the relevant user account and project to the provided webhook event information.
+     *
+     * First of all it tries to find the project for the given `cloneURL`, then it tries to
+     * find the installer, which is also supposed to be a team member. As a fallback, it
+     * looks for a team member which also has a gitlab.com connection.
+     *
+     * @param cloneURL of the webhook event
+     * @param webhookInstaller the user account known from the webhook installation
+     * @returns a promise which resolves to a user account and an optional project.
+     */
+     protected async findProjectAndOwner(cloneURL: string, webhookInstaller: User): Promise<{ user: User, project?: Project }> {
         const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
         if (project) {
-            const owner = !!project.userId
-                ? { userId: project.userId }
-                : (await this.teamDB.findMembersByTeam(project.teamId || '')).filter(m => m.role === "owner")[0];
-            if (owner) {
-                const user = await this.userDB.findUserById(owner.userId);
+            if (project.userId) {
+                const user = await this.userDB.findUserById(project.userId);
                 if (user) {
                     return { user, project };
                 }
+            } else if (project.teamId) {
+                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || '');
+                if (teamMembers.some(t => t.userId === webhookInstaller.id)) {
+                    return { user: webhookInstaller, project };
+                }
+                for (const teamMember of teamMembers) {
+                    const user = await this.userDB.findUserById(teamMember.userId);
+                    if (user && user.identities.some(i => i.authProviderId === "Public-GitLab")) {
+                        return { user, project };
+                    }
+                }
             }
         }
+        return { user: webhookInstaller };
     }
 
     protected createContextUrl(body: GitLabPushHook) {

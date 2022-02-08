@@ -53,7 +53,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-dev-image-update.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-ws-man-bridge-audit.10
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -153,7 +153,7 @@ pod:
         sudo chown gitpod:gitpod $GOCACHE
         export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
 
-        export DOCKER_HOST=tcp://$NODENAME:2475
+        export DOCKER_HOST=tcp://$NODENAME:2375
         sudo chown -R gitpod:gitpod /workspace
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep

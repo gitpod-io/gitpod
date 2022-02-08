@@ -15,6 +15,7 @@ import { BuildRequest, BuildResponse, BuildStatus, LogsRequest, LogsResponse, Re
 import { injectable, inject, optional } from 'inversify';
 import * as grpc from "@grpc/grpc-js";
 import { TextDecoder } from "util";
+import { ImageBuildLogInfo } from "@gitpod/gitpod-protocol";
 
 export const ImageBuilderClientProvider = Symbol("ImageBuilderClientProvider");
 
@@ -82,6 +83,7 @@ export class CachingImageBuilderClientProvider implements ImageBuilderClientProv
 // StagedBuildResponse captures the multi-stage nature (starting, running, done) of image builds.
 export interface StagedBuildResponse {
     buildPromise: Promise<BuildResponse>;
+    logPromise: Promise<ImageBuildLogInfo>;
 
     actuallyNeedsBuild: boolean;
     ref: string;
@@ -129,13 +131,14 @@ export class PromisifiedImageBuilderClient {
 
     // build returns a nested promise. The outer one resolves/rejects with the build start,
     // the inner one resolves/rejects when the build is done.
-    public build(ctx: TraceContext, request: BuildRequest): Promise<StagedBuildResponse> {
+    public build(ctx: TraceContext, request: BuildRequest, logInfoDeferred: Deferred<ImageBuildLogInfo> = new Deferred<ImageBuildLogInfo>()): Promise<StagedBuildResponse> {
         const span = TraceContext.startSpan(`/image-builder/build`, ctx);
 
         const buildResult = new Deferred<BuildResponse>();
 
         const result = new Deferred<StagedBuildResponse>();
         const resultResp: StagedBuildResponse = {
+            logPromise: logInfoDeferred.promise,
             buildPromise: buildResult.promise,
             actuallyNeedsBuild: true,
             ref: "unknown",
@@ -151,6 +154,7 @@ export class PromisifiedImageBuilderClient {
                     result.reject(err);
                 } else {
                     buildResult.reject(err);
+                    logInfoDeferred.reject(err);
                 }
 
                 TraceContext.setError({ span }, err);
@@ -166,6 +170,22 @@ export class PromisifiedImageBuilderClient {
                     resultResp.baseRef = resp.getBaseRef();
                 }
 
+                if (resp.hasInfo()) {
+                    // assumes that log info stays stable for instance lifetime
+                    const info = resp.getInfo()
+                    if (info && info.hasLogInfo() && !logInfoDeferred.isResolved) {
+                        const logInfo = info.getLogInfo()!;
+                        const headers: { [key: string]: string } = {};
+                        for (const [k, v] of logInfo.getHeadersMap().entries()) {
+                            headers[k] = v;
+                        }
+                        logInfoDeferred.resolve({
+                            url: logInfo.getUrl(),
+                            headers,
+                        });
+                    }
+                }
+
                 if (resp.getStatus() == BuildStatus.RUNNING) {
                     resultResp.actuallyNeedsBuild = true;
                     result.resolve(resultResp);
@@ -176,6 +196,9 @@ export class PromisifiedImageBuilderClient {
                         buildResult.resolve(resp);
                     } else {
                         buildResult.resolve(resp);
+                    }
+                    if (!logInfoDeferred.isResolved) {
+                        logInfoDeferred.reject(new Error("no log stream for this image build"));
                     }
 
                     span.finish();

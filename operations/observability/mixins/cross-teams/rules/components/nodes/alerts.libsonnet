@@ -29,6 +29,38 @@
                 ) - 10 < 5
               |||,
           },
+          {
+            alert: 'GitpodNodeConntrackTableIsFull',
+            labels: {
+              severity: 'critical',
+            },
+            'for': '5m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodNodeConntrackTableIsFull.md',
+              summary: 'Node conntrack table is almost full',
+              description: 'Node {{ $labels.node }} conntrack table is almost full. If it gets full, packets will be getting dropped.',
+            },
+            expr:
+              |||
+                (node_nf_conntrack_entries / node_nf_conntrack_entries_limit) > 0.95
+              |||,
+          },
+          {
+            alert: 'GitpodNodeConntrackTableGettingFull',
+            labels: {
+              severity: 'warning',
+            },
+            'for': '10m',
+            annotations: {
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodNodeConntrackTableIsFull.md',
+              summary: 'Node conntrack table is getting full',
+              description: 'Node {{ $labels.node }} conntrack table is getting full. If it gets full, packets will be getting dropped.',
+            },
+            expr:
+              |||
+                (node_nf_conntrack_entries / node_nf_conntrack_entries_limit) > 0.80
+              |||,
+          },
         ],
       },
     ],

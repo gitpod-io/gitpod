@@ -247,6 +247,27 @@ export class EligibilityService {
         return subscriptions.filter(s => eligblePlans.includes(s.planId!)).length > 0;
     }
 
+    /**
+     * Returns true if the user ought to land on a workspace cluster that provides more resources
+     * compared to the default case.
+     */
+    async userGetsMoreResources(user: User): Promise<boolean> {
+        if (!this.config.enablePayment) {
+            // when payment is disabled users can do everything
+            return true;
+        }
+
+        const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, new Date().toISOString());
+        const eligblePlans = [
+            Plans.PROFESSIONAL_EUR,
+            Plans.PROFESSIONAL_USD,
+            Plans.TEAM_PROFESSIONAL_EUR,
+            Plans.TEAM_PROFESSIONAL_USD,
+        ].map(p => p.chargebeeId);
+
+        return subscriptions.filter(s => eligblePlans.includes(s.planId!)).length > 0;
+    }
+
     protected async getUser(user: User | string): Promise<User> {
         if (typeof user === 'string') {
             const realUser = await this.userDb.findUserById(user);

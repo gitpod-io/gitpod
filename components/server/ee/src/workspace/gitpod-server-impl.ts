@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl, traceAPIParams, traceWI, censor } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace } from "@gitpod/gitpod-protocol";
+import { GitpodServer, GitpodClient, AdminGetListRequest, User, Team, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace, FindPrebuildsParams } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -39,7 +39,6 @@ import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
-import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
 import { ClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from 'url';
@@ -80,7 +79,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         super.initialize(client, user, accessGuard, clientMetadata, connectionCtx, clientHeaderFields);
 
         this.listenToCreditAlerts();
-        this.listenForPrebuildUpdates();
+        this.listenForPrebuildUpdates()
+            .catch(err => log.error("error registering for prebuild updates", err));
     }
 
     protected async listenForPrebuildUpdates() {
@@ -337,7 +337,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             await this.internalDoWaitForWorkspace(waitOpts);
         } else {
             // start driving the snapshot immediately
-            SafePromise.catchAndLog(this.internalDoWaitForWorkspace(waitOpts), { userId: user.id, workspaceId: workspaceId})
+            this.internalDoWaitForWorkspace(waitOpts)
+                .catch(err => log.error({ userId: user.id, workspaceId: workspaceId}, "internalDoWaitForWorkspace", err));
         }
 
         return snapshot.id;
@@ -539,6 +540,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.censorUser(target);
     }
 
+    async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+        await this.guardAdminAccess("adminGetTeamById", { id }, Permission.ADMIN_WORKSPACES);
+        return await this.teamDB.findTeamById(id);
+    }
+
     async adminGetWorkspaces(ctx: TraceContext, req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
         traceAPIParams(ctx, { req });
 
@@ -600,6 +607,18 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             ws.pinned = true;
             await db.store(ws);
         });
+    }
+
+    async adminGetProjectsBySearchTerm(ctx: TraceContext, req: AdminGetListRequest<Project>): Promise<AdminGetListResult<Project>> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+        await this.guardAdminAccess("adminGetProjectsBySearchTerm", { req }, Permission.ADMIN_PROJECTS);
+        return await this.projectDB.findProjectsBySearchTerm(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.searchTerm as string);
+    }
+
+    async adminGetProjectById(ctx: TraceContext, id: string): Promise<Project | undefined> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+        await this.guardAdminAccess("adminGetProjectById", { id }, Permission.ADMIN_PROJECTS);
+        return await this.projectDB.findProjectById(id);
     }
 
     protected async findPrebuiltWorkspace(parentCtx: TraceContext, user: User, context: WorkspaceContext, mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
@@ -1207,7 +1226,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             } catch (err) {
                 log.error({ userId: user.id }, 'tsDeactivateSlot', err);
             }
-        });
+        }).catch(err => {/** ignore */});
     }
 
     async tsReactivateSlot(ctx: TraceContext, teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
@@ -1227,7 +1246,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             } catch (err) {
                 log.error({ userId: user.id }, 'tsReactivateSlot', err);
             }
-        });
+        }).catch(err => {/** ignore */});
     }
 
     async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
@@ -1504,6 +1523,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         });
 
         return prebuild;
+    }
+
+    async adminFindPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
+        traceAPIParams(ctx, { params });
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+        await this.guardAdminAccess("adminFindPrebuilds", { params }, Permission.ADMIN_PROJECTS);
+
+        return this.projectsService.findPrebuilds(params);
     }
 
     async cancelPrebuild(ctx: TraceContext, projectId: string, prebuildId: string): Promise<void> {

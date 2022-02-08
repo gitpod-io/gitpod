@@ -32,6 +32,9 @@ export abstract class AbstractContextParser implements IContextParser {
         if (url.startsWith(`${this.host}/`)) {
             url = `https://${url}`;
         }
+        if (url.startsWith(`git@${this.host}:`)) {
+            return `https://${this.host}/` + url.slice(`git@${this.host}:`.length);
+        }
         if (url.startsWith(`https://${this.host}/`)) {
             return url;
         }

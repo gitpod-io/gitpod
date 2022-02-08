@@ -33,7 +33,7 @@ MATCHES="$(grep -c -- --- k8s.yaml)"
 # get the read number of K8s manifest docs
 # K8s object names and kinds are duplicated in a config map to faciliate deletion
 # subtract one (the config map) and then divide by 2 to get the actual # of docs we'll loop through
-DOCS="$(((MATCHES - 1) / 2))"
+DOCS="$((((MATCHES - 1) / 2) + 1))"
 
 echo "Use node pool index $NODE_POOL_INDEX"
 
@@ -276,6 +276,13 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i /tmp/"$NAME"-"$KIND"-overrides.yaml /tmp/"$NAME"-"$KIND"-data-overrides.yaml
       # merge the updated config map with k8s.yaml
       yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"-"$KIND"-overrides.yaml
+   fi
+
+   # suspend telemetry cron job
+   if [[ "gitpod-telemetry" == "$NAME" ]] && [[ "$KIND" == "CronJob" ]]; then
+      WORK="suspend $NAME $KIND"
+      echo "$WORK"
+      yq w -i k8s.yaml -d "$i" spec.suspend "true"
    fi
 
    # Uncomment to change or remove resources from the configmap which can be used to uninstall Gitpod

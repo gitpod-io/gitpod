@@ -13,6 +13,7 @@ export const Permissions = {
     "registry-access": undefined,
     "admin-users": undefined,
     "admin-workspaces": undefined,
+    "admin-projects": undefined,
     "admin-api": undefined,
     "ide-settings": undefined,
     "new-workspace-cluster": undefined,
@@ -49,6 +50,9 @@ export namespace Permission {
 
     /** The permission for accessing all workspace data */
     export const ADMIN_WORKSPACES: PermissionName = "admin-workspaces";
+
+    /** The permission for accessing all projects data */
+    export const ADMIN_PROJECTS: PermissionName = "admin-projects";
 
     /** The permission to access the admin API */
     export const ADMIN_API: PermissionName = "admin-api";
@@ -94,6 +98,7 @@ export namespace Role {
         permissions: [
             Permission.ADMIN_USERS,
             Permission.ADMIN_WORKSPACES,
+            Permission.ADMIN_PROJECTS,
             Permission.ADMIN_API,
             Permission.ENFORCEMENT,
         ]

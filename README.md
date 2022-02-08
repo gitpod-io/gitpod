@@ -28,7 +28,7 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 👐 [GitLab, GitHub, and Bitbucket integration](https://www.gitpod.io/docs/integrations/) - Gitpod seamlessly integrates in your workflow and works with all major git hosting platforms including GitHub, GitLab and Bitbucket.
 
-👀 [Integrated code reviews](https://www.gitpod.io/docs/code-reviews/#code-reviews) - with Gitpod you can do native code reviews on any PR/MR. No need to switch context anymore and clutter your local machine with your colleagues PR/MR.
+👀 [Integrated code reviews](https://www.gitpod.io/docs/context-urls#pullmerge-request-context) - with Gitpod you can do native code reviews on any PR/MR. No need to switch context anymore and clutter your local machine with your colleagues PR/MR.
 
 👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - invite team members to your dev environment or snapshot any state of your dev environment to share it with your team asynchronously.
 
@@ -71,7 +71,7 @@ You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/is
 We work with quarterly roadmaps in autonomous product teams.
 
  - [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
- - [Product Roadmap](https://github.com/gitpod-io/roadmap)
+ - [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
 
 ## Related Projects
 

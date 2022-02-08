@@ -159,6 +159,17 @@ export class UserService {
     }
 
     /**
+     * Returns true if the user ought land in a cluster which offers more resources than
+     * the default.
+     *
+     * @param user user to check for
+     * @returns
+     */
+    async userGetsMoreResources(user: User): Promise<boolean> {
+        return false;
+    }
+
+    /**
      * This might throw `AuthException`s.
      *
      * @param params

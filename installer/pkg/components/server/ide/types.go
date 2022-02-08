@@ -31,6 +31,7 @@ type IDEOption struct {
 	Notes              []string `json:"notes,omitempty"`
 	Hidden             *bool    `json:"hidden,omitempty"`
 	Image              string   `json:"image"`
+	LatestImage        string   `json:"latestImage,omitempty"`
 	ResolveImageDigest *bool    `json:"resolveImageDigest,omitempty"`
 }
 

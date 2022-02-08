@@ -4,5 +4,8 @@
 
 FROM alpine:3.15
 COPY installer--app/installer installer--app/provenance-bundle.jsonl /app/
+RUN apk add --no-cache curl yq  \
+    && curl -L "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl \
+    && chmod +x /usr/local/bin/kubectl
 ENTRYPOINT [ "/app/installer" ]
 CMD [ "help" ]

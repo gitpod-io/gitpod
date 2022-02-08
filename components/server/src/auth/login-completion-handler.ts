@@ -8,7 +8,6 @@ import { inject, injectable } from 'inversify';
 import * as express from 'express';
 import { User } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { SafePromise } from '@gitpod/gitpod-protocol/lib/util/safe-promise';
 import { Config } from "../config";
 import { AuthFlow } from './auth-provider';
 import { HostContextProvider } from './host-context-provider';
@@ -83,11 +82,13 @@ export class LoginCompletionHandler {
 
             increaseLoginCounter("succeeded", authHost);
 
-            /* no await */ SafePromise.catchAndLog(trackLogin(user, request, authHost, this.analytics), { userId: user.id });
+            /** no await */ trackLogin(user, request, authHost, this.analytics)
+                .catch(err => log.error({ userId: user.id }, err));
         }
 
         // Check for and automatically subscribe to Professional OpenSource subscription
-        /* no await */ SafePromise.catchAndLog(this.checkForAndSubscribeToProfessionalOss(user));
+        /** no await */ this.checkForAndSubscribeToProfessionalOss(user)
+            .catch(err => {/** ignore */});
 
         response.redirect(returnTo);
     }

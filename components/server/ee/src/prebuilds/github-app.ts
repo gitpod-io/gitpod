@@ -62,7 +62,8 @@ export class GithubApp {
                 secret: config.githubApp.webhookSecret
             });
 
-            this.server.load(this.buildApp.bind(this));
+            this.server.load(this.buildApp.bind(this))
+                .catch(err => log.error("error loading probot server", err));
         }
     }
 
@@ -235,9 +236,9 @@ export class GithubApp {
             const config = await this.prebuildManager.fetchConfig({ span }, owner.user, contextURL);
 
             const prebuildStartPromise = this.onPrStartPrebuild({ span }, config, owner, ctx);
-            this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise);
+            this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise).catch(() => {/** ignore */});
             this.onPrAddBadge(config, ctx);
-            this.onPrAddComment(config, ctx);
+            this.onPrAddComment(config, ctx).catch(() => {/** ignore */});
         } catch (e) {
             TraceContext.setError({ span }, e);
             throw e;
