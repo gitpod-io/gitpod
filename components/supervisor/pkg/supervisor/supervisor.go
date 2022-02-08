@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -46,6 +47,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/process"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
+	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -283,7 +285,7 @@ func Run(options ...RunOption) {
 
 		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
 		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
-		installDotfiles(ctx, termMuxSrv, cfg)
+		installDotfiles(ctx, cfg, tokenService)
 	}
 
 	var ideWG sync.WaitGroup
@@ -370,7 +372,7 @@ func Run(options ...RunOption) {
 	wg.Wait()
 }
 
-func installDotfiles(ctx context.Context, term *terminal.MuxTerminalService, cfg *Config) {
+func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTokenService) {
 	repo := cfg.DotfileRepo
 	if repo == "" {
 		return
@@ -414,12 +416,36 @@ func installDotfiles(ctx context.Context, term *terminal.MuxTerminalService, cfg
 
 		done := make(chan error, 1)
 		go func() {
-			done <- prep(cfg, out, "git", "clone", "--depth=1", repo, "/home/gitpod/.dotfiles").Run()
+			repoUrl, err := url.Parse(repo)
+			if err != nil {
+				done <- err
+				close(done)
+				return
+			}
+			authProvider := func() (username string, password string, err error) {
+				resp, err := tokenService.GetToken(ctx, &api.GetTokenRequest{
+					Host: repoUrl.Host,
+					Kind: KindGit,
+				})
+				if err != nil {
+					return
+				}
+				username = resp.User
+				password = resp.Token
+				return
+			}
+			client := &git.Client{
+				AuthProvider: authProvider,
+				AuthMethod:   git.BasicAuth,
+				Location:     "/home/gitpod/.dotfiles",
+				RemoteURI:    repo,
+			}
+			done <- client.Clone(ctx)
 			close(done)
 		}()
 		select {
 		case err := <-done:
-			if err != nil {
+			if err != nil && !process.IsNotChildProcess(err) {
 				return err
 			}
 		case <-time.After(120 * time.Second):
@@ -469,7 +495,9 @@ func installDotfiles(ctx context.Context, term *terminal.MuxTerminalService, cfg
 
 			select {
 			case err = <-done:
-				return err
+				if err != nil && !process.IsNotChildProcess(err) {
+					return err
+				}
 			case <-time.After(120 * time.Second):
 				cmd.Process.Kill()
 				return xerrors.Errorf("installation process %s tool longer than 120 seconds", fn)
