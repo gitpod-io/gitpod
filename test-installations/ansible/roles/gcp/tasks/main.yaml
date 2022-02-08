@@ -15,7 +15,7 @@
         source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
     network_interfaces:
     - access_configs:
-      - name: External NAT
+      - name: external-nat
         type: ONE_TO_ONE_NAT
     labels:
       gitpod-node: "{{ 'main' if ansible_loop.first else 'worker' }}"

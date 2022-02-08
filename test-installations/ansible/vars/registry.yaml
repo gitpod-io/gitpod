@@ -3,5 +3,5 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
-instance_name: gitlab
-domain: clu-gitlab-1.gitpod-self-hosted.com
+instance_name: registry
+domain: clu-registry.gitpod-self-hosted.com

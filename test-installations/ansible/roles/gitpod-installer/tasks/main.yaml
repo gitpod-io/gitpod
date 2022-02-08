@@ -27,9 +27,10 @@
   become: true
   when: "'/installer/gitpod-installer' is not file"
 
-- name: Create directories
+- name: Ensure directories exist
   file:
     path: "{{ item }}"
+    recurse: true
     state: directory
     mode: 0777
   become: true

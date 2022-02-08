@@ -15,7 +15,8 @@
     state: present
   become: true
 
-- shell: curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.deb.sh | sudo bash
+- name: Run GitLab packages script
+  shell: curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.deb.sh | sudo bash
 
 - name: Install GitLab
   apt:
@@ -24,7 +25,7 @@
     state: present
   become: true
   environment:
-    EXTERNAL_URL: "https://{{ gitlab_domain }}"
+    EXTERNAL_URL: "https://{{ domain }}"
 
 - name: Read initial root password
   slurp:
@@ -32,4 +33,4 @@
   register: init_root_passwd
 
 - debug:
-    msg: "GitLab Password: {{ init_root_passwd.content | b64decode | regex_search('Password: (.+)', '\\1') }}"
+    msg: "GitLab Password: {{ init_root_passwd.content | b64decode | regex_search('Password: (.+)', '\\1') | first }}"

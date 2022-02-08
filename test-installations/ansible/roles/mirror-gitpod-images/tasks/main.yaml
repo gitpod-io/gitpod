@@ -1,0 +1,65 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Install dependencies
+  apt:
+    pkg:
+      - jq
+    update_cache: yes
+    state: present
+  become: true
+  when: "'gitpod_node_main' in group_names"
+
+- name: Configure insecure registry
+  template:
+    src: docker-daemon.json
+    dest: /etc/docker/daemon.json
+  become: true
+  when: "'gitpod_node_main' in group_names"
+
+- name: Restart docker daemon
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+  become: true
+  when: "'gitpod_node_main' in group_names"
+
+- name: Patch Gitpod config
+  command: yq eval --inplace ".repository = \"{{ repository }}\"" /gitpod/gitpod-config.yaml
+  when: "'gitpod_node_main' in group_names"
+
+- name: Mirror images
+  shell: |
+    set -euo pipefail
+    for row in $(gitpod-installer mirror list --config /gitpod/gitpod-config.yaml | jq -c '.[]'); do
+      original=$(echo $row | jq -r '.original')
+      target=$(echo $row | jq -r '.target')
+
+      # TODO: fix mirror list command
+      [[ "$target" == "{{ repository }}" ]] && continue
+
+      docker pull $original
+      docker tag $original $target
+      docker push $target
+    done
+  become: true
+  args:
+    executable: /bin/bash
+  when: "'gitpod_node_main' in group_names"
+
+- name: Ensure directory exists
+  file:
+    path: /etc/rancher/k3s/
+    recurse: true
+    state: directory
+    mode: 0777
+  become: true
+
+- name: Configure insecure registry in k3s
+  template:
+    src: k3s-registries.yaml
+    dest: /etc/rancher/k3s/registries.yaml
+  become: true
+

@@ -18,14 +18,14 @@
     state: present
   become: true
 
-- name: Create directories
+- name: Ensure directories exist
   file:
     path: "{{ item }}"
+    recurse: true
     state: directory
     mode: 0777
   become: true
   loop:
-    - /gitpod
     - /gitpod/manifests
 
 - name: Create bucket

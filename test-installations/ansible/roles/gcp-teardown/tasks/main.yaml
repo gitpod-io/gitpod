@@ -13,11 +13,12 @@
     state: absent
   loop: "{{ range(0, gitpod_nodes_count) | list }}"
 
-- name: remove GitLab instance
+- name: remove other instances
   google.cloud.gcp_compute_instance:
-    name: "{{ gitlab_node_name }}"
+    name: "{{ item }}"
     zone: "{{ gcp_zone }}"
     project: "{{ gcp_project }}"
     auth_kind: serviceaccount
     service_account_contents: "{{ gcp_cred_content }}"
     state: absent
+  loop: "{{ gcp_instance_names }}"

@@ -61,11 +61,19 @@
     - set_fact:
         k3s_cluster_secret: "{{ lookup('community.general.random_string', length=40) }}"
 
-- name: Install k3s and Gitpod with installer
+- name: Install k3s
   hosts:
     - gitpod_node_main
     - gitpod_node_worker
   vars_files:
     - vars/common.yaml
   roles:
-    - k3s-gitpod-installer
+    - install-k3s
+
+- name: Install Gitpod
+  hosts:
+    - gitpod_node_main
+  vars_files:
+    - vars/common.yaml
+  roles:
+    - install-gitpod-k3s

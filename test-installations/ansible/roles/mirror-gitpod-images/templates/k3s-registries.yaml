@@ -1,0 +1,4 @@
+mirrors:
+  {{ repository }}:
+    endpoint:
+      - "http://{{ repository }}"

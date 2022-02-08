@@ -5,7 +5,7 @@
 ---
 - name: Create instance
   google.cloud.gcp_compute_instance:
-    name: "{{ gitlab_node_name }}"
+    name: "{{ instance_name }}"
     machine_type: "{{ gcp_machine_type }}"
     disks:
     - auto_delete: 'true'
@@ -15,10 +15,10 @@
         source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
     network_interfaces:
     - access_configs:
-      - name: External NAT
+      - name: external-nat
         type: ONE_TO_ONE_NAT
     labels:
-      gitlab: main
+      instance: "{{ instance_name }}"
     zone: "{{ gcp_zone }}"
     project: "{{ gcp_project }}"
     auth_kind: serviceaccount
@@ -26,7 +26,7 @@
     state: present
   register: gcpvm
 
-- name: "create resource record sets"
+- name: Create resource record sets
   google.cloud.gcp_dns_resource_record_set:
     name: "{{ item }}"
     managed_zone:
@@ -41,8 +41,8 @@
     service_account_contents: "{{ gcp_dns_cred_content }}"
     state: present
   with_items:
-  - "{{ gitlab_domain }}."
-  - "*.{{ gitlab_domain }}."
+  - "{{ domain }}."
+  - "*.{{ domain }}."
 
 - name: Create http/https firewall rule
   google.cloud.gcp_compute_firewall:

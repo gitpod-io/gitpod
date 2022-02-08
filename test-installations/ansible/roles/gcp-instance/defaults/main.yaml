@@ -3,8 +3,8 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
-gitlab_node_name: gitlab
-gitlab_domain: "{{ undef(hint='You must specify your GitLab domain.') }}"
+instance_name: "{{ undef(hint='You must specify an instance name.') }}"
+domain: "{{ undef(hint='You must specify a domain.') }}"
 
 gcp_project: "{{ undef(hint='You must specify your GCP project.') }}"
 gcp_cred_content: "{{ lookup('file', '/service-account.json') }}"

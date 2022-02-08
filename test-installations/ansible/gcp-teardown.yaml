@@ -23,9 +23,11 @@
 - name: Delete GCP resources
   hosts: localhost
   gather_facts: no
-
   vars_files:
     - vars/gcp.yaml
-
+  vars:
+    gcp_instance_names:
+      - gitlab
+      - registry
   roles:
     - gcp-teardown
