@@ -3,3 +3,6 @@ rules:
   matchesAll:
   - or: ["repo.ref ~= refs/heads/"]
   - or: ["trigger !== deleted"]
+- path: ".werft/wipe-devstaging.yaml"
+  matchesAll:
+  - or: ["trigger == deleted"]
