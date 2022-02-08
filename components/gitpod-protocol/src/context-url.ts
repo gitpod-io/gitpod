@@ -21,33 +21,40 @@ export namespace ContextURL {
       return undefined;
     }
 
-    const segments = contextUrl.split("/");
-    if (segments.length === 1) {
-      return new URL(segments[0]);  // this might be something, we just try
-    }
-
-    const segmentsToURL = (offset: number): URL => {
-      let rest = segments.slice(offset).join("/");
-      if (!rest.startsWith("http")) {
-        rest = 'https://' + rest;
+    try {
+      const segments = contextUrl.split("/");
+      if (segments.length === 1) {
+        return new URL(segments[0]);  // this might be something, we just try
       }
-      return new URL(rest);
-    };
 
+      const segmentsToURL = (offset: number): URL | undefined => {
+        let rest = segments.slice(offset).join("/");
+        if (/^git@[^:\/]+:/.test(rest)) {
+          rest = rest.replace(/^git@([^:\/]+):/, 'https://$1/');
+        }
+        if (!rest.startsWith("http")) {
+          rest = 'https://' + rest;
+        }
+        return new URL(rest);
+      };
 
-    const firstSegment = segments[0];
-    if (firstSegment === PREBUILD_PREFIX ||
-        firstSegment === INCREMENTAL_PREBUILD_PREFIX ||
-        firstSegment === IMAGEBUILD_PREFIX ||
-        firstSegment.startsWith(REFERRER_PREFIX)) {
-      return segmentsToURL(1);
+      const firstSegment = segments[0];
+      if (firstSegment === PREBUILD_PREFIX ||
+          firstSegment === INCREMENTAL_PREBUILD_PREFIX ||
+          firstSegment === IMAGEBUILD_PREFIX ||
+          firstSegment.startsWith(REFERRER_PREFIX)) {
+        return segmentsToURL(1);
+      }
+
+      // check for env vars
+      if (firstSegment.indexOf("=") !== -1) {
+        return segmentsToURL(1);
+      }
+
+      return segmentsToURL(0);
+    } catch (error) {
+      console.error(error);
     }
 
-    // check for env vars
-    if (firstSegment.indexOf("=") !== -1) {
-      return segmentsToURL(1);
-    }
-
-    return segmentsToURL(0);
   }
 }
