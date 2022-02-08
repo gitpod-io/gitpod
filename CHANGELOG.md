@@ -1,6 +1,7 @@
 # Change Log
 
 ## February 2022
+- configure basic rate-limiting for `startWorkspace` ([#8073](https://github.com/gitpod-io/gitpod/pull/8073)) - [@geropl](https://github.com/geropl)
 - Improved in-transit security of user environment variables ([#7923](https://github.com/gitpod-io/gitpod/pull/7923)) - [@csweichel](https://github.com/csweichel)
 - Update GoLand IDE image to version 213.6777.51. ([#7919](https://github.com/gitpod-io/gitpod/pull/7919)) - [@roboquat](https://github.com/roboquat)
 - Update IntelliJ IDEA IDE image to version 213.6777.52. ([#7920](https://github.com/gitpod-io/gitpod/pull/7920)) - [@roboquat](https://github.com/roboquat)
