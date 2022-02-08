@@ -9,14 +9,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/prometheus/procfs"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -90,14 +89,14 @@ var credentialHelper = &cobra.Command{
 		token = resp.Token
 
 		gitCmdInfo := &gitCommandInfo{}
-		err = walkProcessTree(os.Getpid(), func(pid int) bool {
-			cmdLine, err := readProc(pid, "cmdline")
+		err = walkProcessTree(os.Getpid(), func(proc procfs.Proc) bool {
+			cmdLine, err := proc.CmdLine()
 			if err != nil {
 				log.WithError(err).Print("error reading proc cmdline")
 				return true
 			}
 
-			cmdLineString := strings.ReplaceAll(cmdLine, string(byte(0)), " ")
+			cmdLineString := strings.Join(cmdLine, " ")
 			log.Printf("cmdLineString -> %v", cmdLineString)
 			gitCmdInfo.parseGitCommandAndRemote(cmdLineString)
 
@@ -180,7 +179,7 @@ func (g *gitCommandInfo) Ok() bool {
 }
 
 var gitCommandRegExp = regexp.MustCompile(`git(?:\s+(?:\S+\s+)*)(push|clone|fetch|pull|diff|ls-remote)(?:\s+(?:\S+\s+)*)?`)
-var repoUrlRegExp = regexp.MustCompile(`remote-https?\s([^\s]+)\s+(https?:[^\s]+)\s`)
+var repoUrlRegExp = regexp.MustCompile(`remote-https?\s([^\s]+)\s+(https?:[^\s]+)`)
 
 // This method needs to be called multiple times to fill all the required info
 // from different git commands
@@ -203,70 +202,29 @@ func (g *gitCommandInfo) parseGitCommandAndRemote(cmdLineString string) {
 	}
 }
 
-type pidCallbackFn func(int) bool
+type pidCallbackFn func(procfs.Proc) bool
 
 func walkProcessTree(pid int, fn pidCallbackFn) error {
 	for {
-		stop := fn(pid)
+		proc, err := procfs.NewProc(pid)
+		if err != nil {
+			return err
+		}
+
+		stop := fn(proc)
 		if stop {
 			return nil
 		}
 
-		ppid, err := getProcesParentId(pid)
+		procStat, err := proc.Stat()
 		if err != nil {
 			return err
 		}
-		if ppid == pid || ppid == 1 /* supervisor pid*/ {
+		if procStat.PPID == pid || procStat.PPID == 1 /* supervisor pid*/ {
 			return nil
 		}
-		pid = ppid
+		pid = procStat.PPID
 	}
-}
-
-var procStatPidRegExp = regexp.MustCompile(`\d+\ \(.+?\)\ .+?\ (\d+)`)
-
-func getProcesParentId(pid int) (ppid int, err error) {
-	statsString, err := readProc(pid, "stat")
-	if err != nil {
-		return
-	}
-
-	match := procStatPidRegExp.FindStringSubmatch(statsString)
-	if len(match) != 2 {
-		err = fmt.Errorf("CredentialHelper error cannot parse stats string: %s", statsString)
-		return
-	}
-
-	parentId, err := strconv.Atoi(match[1])
-	if err != nil {
-		err = fmt.Errorf("CredentialHelper error cannot parse ppid: %s", match[1])
-		return
-	}
-
-	ppid = parentId
-	return
-}
-
-func readProc(pid int, file string) (data string, err error) {
-	procFile := fmt.Sprintf("/proc/%d/%s", pid, file)
-	// read file not using os.Stat
-	// see https://github.com/prometheus/procfs/blob/5162bec877a860b5ff140b5d13db31ebb0643dd3/internal/util/readfile.go#L27
-	const maxBufferSize = 1024 * 512
-	f, err := os.Open(procFile)
-	if err != nil {
-		err = fmt.Errorf("CredentialHelper error opening proc file: %v", err)
-		return
-	}
-	defer f.Close()
-	reader := io.LimitReader(f, maxBufferSize)
-	buffer, err := ioutil.ReadAll(reader)
-	if err != nil {
-		err = fmt.Errorf("CredentialHelper error reading proc file: %v", err)
-		return
-	}
-
-	data = string(buffer)
-	return
 }
 
 // How to smoke test:
