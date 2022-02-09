@@ -226,7 +226,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     // Successfully stopped and headless: the prebuild is done, let's try to use it!
     if (!error && workspaceInstance.status.phase === 'stopped' && this.state.workspace?.type !== 'regular') {
-      const contextURL = ContextURL.parseToURL(this.state.workspace?.contextURL);
+      // here we want to point to the original context, w/o any modifiers "workspace" was started with (as this might have been a manually triggered prebuild!)
+      const contextURL = ContextURL.getNormalizedURL(this.state.workspace);
       if (contextURL) {
         this.redirectTo(gitpodHostUrl.withContext(contextURL.toString()).toString());
       } else {
@@ -272,7 +273,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     let phase = StartPhase.Preparing;
     let title = undefined;
     let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
-    const contextURL = this.state.workspace?.context.normalizedContextURL || ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString();
+    const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
 
     switch (this.state?.workspaceInstance?.status.phase) {
       // unknown indicates an issue within the system in that it cannot determine the actual phase of
