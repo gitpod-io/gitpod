@@ -275,18 +275,7 @@ func Run(options ...RunOption) {
 	}
 	apiServices = append(apiServices, additionalServices...)
 
-	// The reaper can be turned into a terminating reaper by writing true to this channel.
-	// When in terminating mode, the reaper will send SIGTERM to each child that gets reparented
-	// to us and is still running. We use this mechanism to send SIGTERM to a shell child processes
-	// that get reparented once their parent shell terminates during shutdown.
-	terminatingReaper := make(chan bool, 1)
-	// We keep the reaper until the bitter end because:
-	//   - it doesn't need graceful shutdown
-	//   - we want to do as much work as possible (SIGTERM'ing reparented processes during shutdown).
-	//   - in headless task we can not use reaper, because it breaks headlessTaskFailed report
 	if !cfg.isHeadless() {
-		go reaper(terminatingReaper)
-
 		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
 		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
 		installDotfiles(ctx, cfg, tokenService, childProcEnvvars)
@@ -362,7 +351,6 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM (or shutdown) - tearing down")
-	terminatingReaper <- true
 	cancel()
 	err = termMux.Close()
 	if err != nil {
@@ -667,66 +655,6 @@ func hasMetadataAccess() bool {
 
 	// if we see any error here we're good because then the request timed out or failed for some other reason.
 	return false
-}
-
-func reaper(terminatingReaper <-chan bool) {
-	defer log.Debug("reaper shutdown")
-
-	notifications := make(chan struct{}, 128)
-	go func() {
-		sigs := make(chan os.Signal, 3)
-		signal.Notify(sigs, syscall.SIGCHLD)
-		for {
-			<-sigs
-			select {
-			case notifications <- struct{}{}:
-			default:
-				// Notification channel is full, so we drop the notification.
-				// Because we're reaping with PID -1, we'll catch the child process for
-				// which we've missed the notification anyways.
-			}
-		}
-	}()
-
-	var terminating bool
-	for {
-		select {
-		case <-notifications:
-		case terminating = <-terminatingReaper:
-			continue
-		}
-		for {
-			// wait on the process, hence remove it from the process table
-			pid, err := unix.Wait4(-1, nil, 0, nil)
-			// if we've been interrupted, try again until we're done
-			for err == syscall.EINTR {
-				pid, err = unix.Wait4(-1, nil, 0, nil)
-			}
-			// The calling process does not have any unwaited-for children. Let's wait for a SIGCHLD notification.
-			if err == unix.ECHILD {
-				break
-			}
-			if err != nil {
-				log.WithField("pid", pid).WithError(err).Debug("cannot call waitpid() for re-parented child")
-			}
-			if !terminating {
-				continue
-			}
-			proc, err := os.FindProcess(pid)
-			if err != nil {
-				log.WithField("pid", pid).WithError(err).Debug("cannot find re-parented process")
-				continue
-			}
-			err = proc.Signal(syscall.SIGTERM)
-			if err != nil {
-				if !strings.Contains(err.Error(), "os: process already finished") {
-					log.WithField("pid", pid).WithError(err).Debug("cannot send SIGTERM to re-parented process")
-				}
-				continue
-			}
-			log.WithField("pid", pid).Debug("SIGTERM'ed reparented child process")
-		}
-	}
 }
 
 type ideStatus int
