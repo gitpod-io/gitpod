@@ -43,7 +43,7 @@ daemon:
     userUIDRange:
       - start: 100000
         size: 70000
-  resources:
+  cpuLimit:
     enabled: {{ $comp.cpuLimit.enabled }}
     totalBandwidth: {{ $comp.cpuLimit.totalBandwidth }}
     limit: {{ $comp.cpuLimit.limit }}

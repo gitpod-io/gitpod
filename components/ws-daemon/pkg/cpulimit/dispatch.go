@@ -26,7 +26,7 @@ type Config struct {
 	Enabled        bool              `json:"enabled"`
 	TotalBandwidth resource.Quantity `json:"totalBandwidth"`
 	Limit          resource.Quantity `json:"limit"`
-	BurstLimit     resource.Quantity `json:"bustLimit"`
+	BurstLimit     resource.Quantity `json:"burstLimit"`
 
 	ControlPeriod  util.Duration `json:"controlPeriod"`
 	CGroupBasePath string        `json:"cgroupBasePath"`
