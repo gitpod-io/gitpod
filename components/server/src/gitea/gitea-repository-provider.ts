@@ -7,18 +7,17 @@
 import { injectable, inject } from 'inversify';
 
 import { User, Repository } from "@gitpod/gitpod-protocol"
-import { GiteaGraphQlEndpoint, GiteaRestApi } from "./api";
+import { GiteaRestApi } from "./api";
 import { RepositoryProvider } from '../repohost/repository-provider';
 import { RepoURL } from '../repohost/repo-url';
 import { Branch, CommitInfo } from '@gitpod/gitpod-protocol/src/protocol';
 
 @injectable()
 export class GithubRepositoryProvider implements RepositoryProvider {
-    @inject(GiteaRestApi) protected readonly github: GiteaRestApi;
-    @inject(GiteaGraphQlEndpoint) protected readonly githubQueryApi: GiteaGraphQlEndpoint;
+    @inject(GiteaRestApi) protected readonly gitea: GiteaRestApi;
 
     async getRepo(user: User, owner: string, repo: string): Promise<Repository> {
-        const repository = await this.github.getRepository(user, { owner, repo });
+        const repository = await this.gitea.getRepository(user, { owner, repo });
         const cloneUrl = repository.clone_url;
         const host = RepoURL.parseRepoUrl(cloneUrl)!.host;
         const description = repository.description;
@@ -29,7 +28,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     }
 
     async getBranch(user: User, owner: string, repo: string, branch: string): Promise<Branch> {
-        const result = await this.github.getBranch(user, { repo, owner, branch });
+        const result = await this.gitea.getBranch(user, { repo, owner, branch });
         return result;
     }
 
@@ -39,7 +38,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         let hasNextPage: boolean = true;
 
         while (hasNextPage) {
-            const result: any = await this.githubQueryApi.runQuery(user, `
+            const result: any = await this.gitea.runQuery(user, `
                 query {
                     repository(name: "${repo}", owner: "${owner}") {
                         refs(refPrefix: "refs/heads/", orderBy: {field: TAG_COMMIT_DATE, direction: ASC}, first: 100 ${endCursor ? `, after: "${endCursor}"` : ""}) {
@@ -103,29 +102,12 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     }
 
     async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
-        const commit = await this.github.getCommit(user, { repo, owner, ref });
+        const commit = await this.gitea.getCommit(user, { repo, owner, ref });
         return commit;
     }
 
     async getUserRepos(user: User): Promise<string[]> {
-        // Hint: Use this to get richer results:
-        //   node {
-        //       nameWithOwner
-        //       shortDescriptionHTML(limit: 120)
-        //       url
-        //   }
-        const result: any = await this.githubQueryApi.runQuery(user, `
-            query {
-                viewer {
-                    repositoriesContributedTo(includeUserRepositories: true, first: 100) {
-                        edges {
-                            node {
-                                url
-                            }
-                        }
-                    }
-                }
-            }`);
+        const result: any = await this.gitea.getUserRepositories(user);
         return (result.data.viewer?.repositoriesContributedTo?.edges || []).map((edge: any) => edge.node.url)
     }
 }

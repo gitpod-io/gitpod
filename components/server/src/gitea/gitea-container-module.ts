@@ -8,7 +8,7 @@ import { ContainerModule } from "inversify";
 import { AuthProvider } from "../auth/auth-provider";
 import { FileProvider, LanguagesProvider, RepositoryProvider, RepositoryHost } from "../repohost";
 import { IContextParser } from "../workspace/context-parser";
-import { GiteaGraphQlEndpoint, GiteaRestApi } from "./api";
+import { GiteaRestApi } from "./api";
 import { GiteaFileProvider } from "./file-provider";
 import { GiteaAuthProvider } from "./gitea-auth-provider";
 import { GiteaContextParser } from "./gitea-context-parser";
@@ -21,7 +21,6 @@ import { GiteaTokenValidator } from "./gitea-token-validator";
 export const giteaContainerModule = new ContainerModule((bind, _unbind, _isBound, _rebind) => {
     bind(RepositoryHost).toSelf().inSingletonScope();
     bind(GiteaRestApi).toSelf().inSingletonScope();
-    bind(GiteaGraphQlEndpoint).toSelf().inSingletonScope();
     bind(GiteaFileProvider).toSelf().inSingletonScope();
     bind(FileProvider).toService(GiteaFileProvider);
     bind(GiteaAuthProvider).toSelf().inSingletonScope();

@@ -4,10 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import fetch from 'node-fetch';
-import { Octokit, RestEndpointMethodTypes } from "@octokit/rest"
-import { OctokitResponse } from "@octokit/types"
-import { OctokitOptions } from "@octokit/core/dist-types/types"
+import { Api } from "gitea-js"
 
 import { Branch, CommitInfo, User } from "@gitpod/gitpod-protocol"
 import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
@@ -29,80 +26,6 @@ export class GiteaApiError extends Error {
 export namespace GiteaApiError {
     export function is(error: Error | null): error is GiteaApiError {
         return !!error && error.name === 'GiteaApiError';
-    }
-}
-
-@injectable()
-export class GiteaGraphQlEndpoint {
-
-    @inject(AuthProviderParams) readonly config: AuthProviderParams;
-    @inject(GiteaTokenHelper) protected readonly tokenHelper: GiteaTokenHelper;
-
-    public async getFileContents(user: User, org: string, name: string, commitish: string, path: string): Promise<string | undefined> {
-        const githubToken = await this.tokenHelper.getTokenWithScopes(user, [/* TODO: check if private_repo has to be required */]);
-        const token = githubToken.value;
-        const { host } = this.config;
-        const urlString = host === 'github.com' ?
-            `https://raw.githubusercontent.com/${org}/${name}/${commitish}/${path}` :
-            `https://${host}/${org}/${name}/raw/${commitish}/${path}`;
-        const response = await fetch(urlString, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!response.ok) {
-            return undefined;
-        }
-        return response.text();
-    }
-
-    /**
-     * +----+------------------------------------------+--------------------------------+
-     * |    |                Enterprise                |             Gitea             |
-     * +----+------------------------------------------+--------------------------------+
-     * | v3 | https://[YOUR_HOST]/api/v3               | https://api.github.com         |
-     * | v4 | https://[YOUR_HOST]/api/graphql          | https://api.github.com/graphql |
-     * +----+------------------------------------------+--------------------------------+
-     */
-    get baseURLv4() {
-        return (this.config.host === 'github.com') ? 'https://api.github.com/graphql' : `https://${this.config.host}/api/graphql`;
-    }
-
-    public async runQuery<T>(user: User, query: string, variables?: object): Promise<QueryResult<T>> {
-        const githubToken = await this.tokenHelper.getTokenWithScopes(user, [/* TODO: check if private_repo has to be required */]);
-        const token = githubToken.value;
-        const request = {
-            query: query.trim(),
-            variables
-        };
-        return this.runQueryWithToken(token, request);
-    }
-
-    async runQueryWithToken<T>(token: string, request: object): Promise<QueryResult<T>> {
-        const response = await fetch(this.baseURLv4, {
-            method: 'POST',
-            body: JSON.stringify(request),
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!response.ok) {
-            throw Error(response.statusText);
-        }
-        const result: QueryResult<T> = await response.json();
-        if (!result.data && result.errors) {
-            const error = new Error(JSON.stringify({
-                request,
-                result
-            }));
-            (error as any).result = result;
-            throw error;
-        }
-        return result;
-
     }
 }
 
@@ -134,7 +57,7 @@ export class GiteaRestApi {
             const githubToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GiteaScope.Requirements.DEFAULT);
             token = githubToken.value;
         }
-        const api = new Octokit(this.getGiteaOptions(token));
+        const api = new Api(this.getGiteaOptions(token));
         return api;
     }
 
@@ -143,15 +66,14 @@ export class GiteaRestApi {
     }
 
     /**
-     * +----+------------------------------------------+--------------------------------+
-     * |    |                Enterprise                |             Gitea             |
-     * +----+------------------------------------------+--------------------------------+
-     * | v3 | https://[YOUR_HOST]/api/v3               | https://api.github.com         |
-     * | v4 | https://[YOUR_HOST]/api/graphql          | https://api.github.com/graphql |
-     * +----+------------------------------------------+--------------------------------+
+     * +----+-------------------------------------+
+     * |    |                Gitea                |
+     * +----+-------------------------------------+
+     * | v1 | https://[YOUR_HOST]/api/v1          |
+     * +----+-------------------------------------+
      */
     get baseURL() {
-        return (this.config.host === 'github.com') ? 'https://api.github.com' : `https://${this.config.host}/api/v3`;
+        return `https://${this.config.host}/api/v1`;
     }
 
     protected getGiteaOptions(auth: string): OctokitOptions {
@@ -297,23 +219,26 @@ export class GiteaRestApi {
         }
     }
 
+    public async getFileContents(user, repositoryOwner, repositoryName, revision, path): Promise<Branch[]> {
+        return [];
+    }
 }
 
-export interface GiteaResult<T> extends OctokitResponse<T> { }
-export namespace GiteaResult {
-    export function actualScopes(result: OctokitResponse<any>): string[] {
-        return (result.headers['x-oauth-scopes'] || "").split(",").map((s: any) => s.trim());
-    }
-    export function mayReadOrgs(result: OctokitResponse<any>): boolean {
-        return actualScopes(result).some(scope => scope === "read:org" || scope === "user");
-    }
-    export function mayWritePrivate(result: OctokitResponse<any>): boolean {
-        return actualScopes(result).some(scope => scope === "repo");
-    }
-    export function mayWritePublic(result: OctokitResponse<any>): boolean {
-        return actualScopes(result).some(scope => scope === "repo" || scope === "public_repo");
-    }
-}
+// export interface GiteaResult<T> extends OctokitResponse<T> { }
+// export namespace GiteaResult {
+//     export function actualScopes(result: OctokitResponse<any>): string[] {
+//         return (result.headers['x-oauth-scopes'] || "").split(",").map((s: any) => s.trim());
+//     }
+//     export function mayReadOrgs(result: OctokitResponse<any>): boolean {
+//         return actualScopes(result).some(scope => scope === "read:org" || scope === "user");
+//     }
+//     export function mayWritePrivate(result: OctokitResponse<any>): boolean {
+//         return actualScopes(result).some(scope => scope === "repo");
+//     }
+//     export function mayWritePublic(result: OctokitResponse<any>): boolean {
+//         return actualScopes(result).some(scope => scope === "repo" || scope === "public_repo");
+//     }
+// }
 
 // Git
 export interface CommitUser {

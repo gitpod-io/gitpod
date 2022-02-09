@@ -50,16 +50,8 @@ export class GiteaAuthProvider extends GenericAuthProvider {
         super.authorize(req, res, next, scope ? scope : GiteaScope.Requirements.DEFAULT);
     }
 
-    /**
-     * +----+------------------------------------------+--------------------------------+
-     * |    |                Enterprise                |             Gitea              |
-     * +----+------------------------------------------+--------------------------------+
-     * | v3 | https://[YOUR_HOST]/api/v3               | https://api.github.com         |
-     * | v4 | https://[YOUR_HOST]/api/graphql          | https://api.github.com/graphql |
-     * +----+------------------------------------------+--------------------------------+
-     */
     protected get baseURL() {
-        return (this.params.host === 'github.com') ? 'https://api.github.com' : `https://${this.params.host}/api/v3`;
+        return `https://${this.params.host}/api/v1`;
     }
 
     protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {

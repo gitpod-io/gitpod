@@ -6,13 +6,12 @@
 
 import { inject, injectable } from "inversify";
 import { CheckWriteAccessResult, IGitTokenValidator, IGitTokenValidatorParams } from "../workspace/git-token-validator";
-import { GiteaApiError, GiteaGraphQlEndpoint, GiteaRestApi, GiteaResult } from "./api";
+import { GiteaApiError, GiteaRestApi, GiteaResult } from "./api";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class GiteaTokenValidator implements IGitTokenValidator {
 	@inject(GiteaRestApi) githubRestApi: GiteaRestApi;
-	@inject(GiteaGraphQlEndpoint) githubGraphQLEndpoint: GiteaGraphQlEndpoint;
 
 	async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult> {
 

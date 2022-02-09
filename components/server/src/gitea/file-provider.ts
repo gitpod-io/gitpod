@@ -8,14 +8,13 @@ import { injectable, inject } from 'inversify';
 
 import { FileProvider, MaybeContent } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol"
-import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
+import { GiteaRestApi } from "./api";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class GiteaFileProvider implements FileProvider {
 
-    @inject(GitHubGraphQlEndpoint) protected readonly githubGraphQlApi: GitHubGraphQlEndpoint;
-    @inject(GitHubRestApi) protected readonly githubApi: GitHubRestApi;
+    @inject(GiteaRestApi) protected readonly giteaApi: GiteaRestApi;
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
         const yamlVersion1 = await Promise.all([
@@ -26,7 +25,7 @@ export class GiteaFileProvider implements FileProvider {
     }
 
     public async getLastChangeRevision(repository: Repository, revisionOrBranch: string, user: User, path: string): Promise<string> {
-        const commits = (await this.githubApi.run(user, (gh) => gh.repos.listCommits({
+        const commits = (await this.giteaApi.run(user, (gh) => gh.repos.listCommits({
             owner: repository.owner,
             repo: repository.name,
             sha: revisionOrBranch,
@@ -48,7 +47,7 @@ export class GiteaFileProvider implements FileProvider {
         }
 
         try {
-            const contents = await this.githubGraphQlApi.getFileContents(user, commit.repository.owner, commit.repository.name, commit.revision, path);
+            const contents = await this.giteaApi.getFileContents(user, commit.repository.owner, commit.repository.name, commit.revision, path);
             return contents;
         } catch (err) {
             log.error(err);
