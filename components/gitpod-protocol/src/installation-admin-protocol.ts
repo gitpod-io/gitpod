@@ -26,6 +26,8 @@ export interface InstallationAdmin {
 export interface Data {
     installationAdmin: InstallationAdmin
     totalUsers: number
+    totalWorkspaces: number
+    totalInstances: number
 }
 
 export namespace InstallationAdmin {

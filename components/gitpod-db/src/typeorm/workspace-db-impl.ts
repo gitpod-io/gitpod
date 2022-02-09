@@ -737,7 +737,13 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return { total, rows };
     }
 
+    public async getWorkspaceCount(type?: String): Promise<Number> {
+        const workspaceRepo = await this.getWorkspaceRepo();
+        const queryBuilder = workspaceRepo.createQueryBuilder("ws")
+            .where("ws.type = :type", { type: type ? type.toString() : "regular" }); // only regular workspaces by default
 
+        return await queryBuilder.getCount();
+    }
 
     public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }> {
         let whereConditions = [];

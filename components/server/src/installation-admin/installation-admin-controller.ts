@@ -6,13 +6,14 @@
 
 import { injectable, inject } from 'inversify';
 import * as express from 'express';
-import { InstallationAdminDB, UserDB } from '@gitpod/gitpod-db/lib';
+import { InstallationAdminDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
 import { Data } from '@gitpod/gitpod-protocol'
 
 @injectable()
 export class InstallationAdminController {
     @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
     @inject(UserDB) protected readonly userDb: UserDB
+    @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB
 
     public create(): express.Application {
         const app = express();
@@ -21,6 +22,7 @@ export class InstallationAdminController {
             const data: Data = {
                 installationAdmin: await this.installationAdminDb.getData(),
                 totalUsers: await this.userDb.getUserCount(false),
+                totalWorkspaces: await this.workspaceDb.getWorkspaceCount(),
             } as Data;
 
             res.status(200).json(data);
