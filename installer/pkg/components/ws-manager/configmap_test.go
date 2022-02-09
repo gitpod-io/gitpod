@@ -29,19 +29,13 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 		Expectation       Expectation
 	}{
 		{
-			Name: "no templates",
-			Expectation: Expectation{
-				TplConfig: wsmancfg.WorkspacePodTemplateConfiguration{DefaultPath: "/workspace-templates/default.yaml"},
-				Data:      map[string]bool{"default.yaml": true},
-			},
+			Name:        "no templates",
+			Expectation: Expectation{},
 		},
 		{
-			Name:   "empty templates",
-			Config: &configv1.WorkspaceTemplates{},
-			Expectation: Expectation{
-				TplConfig: wsmancfg.WorkspacePodTemplateConfiguration{DefaultPath: "/workspace-templates/default.yaml"},
-				Data:      map[string]bool{"default.yaml": true},
-			},
+			Name:        "empty templates",
+			Config:      &configv1.WorkspaceTemplates{},
+			Expectation: Expectation{},
 		},
 		{
 			Name: "default tpl",
@@ -60,11 +54,9 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			},
 			Expectation: Expectation{
 				TplConfig: wsmancfg.WorkspacePodTemplateConfiguration{
-					DefaultPath: "/workspace-templates/default.yaml",
 					RegularPath: "/workspace-templates/regular.yaml",
 				},
 				Data: map[string]bool{
-					"default.yaml": true,
 					"regular.yaml": true,
 				},
 			},
@@ -76,11 +68,9 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			},
 			Expectation: Expectation{
 				TplConfig: wsmancfg.WorkspacePodTemplateConfiguration{
-					DefaultPath:  "/workspace-templates/default.yaml",
 					PrebuildPath: "/workspace-templates/prebuild.yaml",
 				},
 				Data: map[string]bool{
-					"default.yaml":  true,
 					"prebuild.yaml": true,
 				},
 			},
@@ -92,12 +82,10 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			},
 			Expectation: Expectation{
 				TplConfig: wsmancfg.WorkspacePodTemplateConfiguration{
-					DefaultPath: "/workspace-templates/default.yaml",
-					GhostPath:   "/workspace-templates/ghost.yaml",
+					GhostPath: "/workspace-templates/ghost.yaml",
 				},
 				Data: map[string]bool{
-					"default.yaml": true,
-					"ghost.yaml":   true,
+					"ghost.yaml": true,
 				},
 			},
 		},
@@ -108,11 +96,9 @@ func TestBuildWorkspaceTemplates(t *testing.T) {
 			},
 			Expectation: Expectation{
 				TplConfig: wsmancfg.WorkspacePodTemplateConfiguration{
-					DefaultPath:    "/workspace-templates/default.yaml",
 					ImagebuildPath: "/workspace-templates/imagebuild.yaml",
 				},
 				Data: map[string]bool{
-					"default.yaml":    true,
 					"imagebuild.yaml": true,
 				},
 			},
