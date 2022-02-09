@@ -44,6 +44,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ControlPeriod:  util.Duration(15 * time.Second),
 	}
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace != nil {
+			return nil
+		}
+
 		cpuLimitConfig.Enabled = ucfg.Workspace.CPULimits.Enabled
 		cpuLimitConfig.BurstLimit = ucfg.Workspace.CPULimits.BurstLimit
 		cpuLimitConfig.Limit = ucfg.Workspace.CPULimits.Limit
