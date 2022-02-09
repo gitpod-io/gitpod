@@ -22,7 +22,7 @@ USER root
 
 ARG CODE_COMMIT
 
-ARG NODE_VERSION=14.18.2
+ARG NODE_VERSION=14.19.0
 ARG NVM_DIR="/root/.nvm"
 RUN mkdir -p $NVM_DIR \
     && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | sh \
