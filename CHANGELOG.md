@@ -1,6 +1,10 @@
 # Change Log
 
 ## February 2022
+- Refactor dynamic CPU limiting to provide fairer scheduling. ([#8036](https://github.com/gitpod-io/gitpod/pull/8036)) - [@csweichel](https://github.com/csweichel)
+- Fix wrong token selection if multiple found for a profile. ([#8093](https://github.com/gitpod-io/gitpod/pull/8093)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [server][dashboard] Improve 'New Workspace' modal with a search input, keyboard navigation, and a new context URL suggestion API ([#7715](https://github.com/gitpod-io/gitpod/pull/7715)) - [@jankeromnes](https://github.com/jankeromnes)
+- Fix Bitbucket push event handling ([#7833](https://github.com/gitpod-io/gitpod/pull/7833)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - configure basic rate-limiting for `startWorkspace` ([#8073](https://github.com/gitpod-io/gitpod/pull/8073)) - [@geropl](https://github.com/geropl)
 - Improved in-transit security of user environment variables ([#7923](https://github.com/gitpod-io/gitpod/pull/7923)) - [@csweichel](https://github.com/csweichel)
 - Update GoLand IDE image to version 213.6777.51. ([#7919](https://github.com/gitpod-io/gitpod/pull/7919)) - [@roboquat](https://github.com/roboquat)
