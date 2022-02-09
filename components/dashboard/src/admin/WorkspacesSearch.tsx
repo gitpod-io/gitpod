@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { AdminGetListResult, AdminGetWorkspacesQuery, User, WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
+import { AdminGetListResult, AdminGetWorkspacesQuery, ContextURL, User, WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
 import { matchesInstanceIdOrLegacyWorkspaceIdExactly, matchesNewWorkspaceIdExactly } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import moment from "moment";
 import { useContext, useEffect, useState } from "react";
@@ -133,7 +133,7 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
             </div>
             <div className="flex flex-col w-5/12 self-center truncate">
                 <div className="text-gray-500 overflow-ellipsis truncate">{p.ws.description}</div>
-                <div className="text-sm text-gray-400 overflow-ellipsis truncate">{p.ws.contextURL}</div>
+                <div className="text-sm text-gray-400 overflow-ellipsis truncate">{ContextURL.getNormalizedURL(p.ws)?.toString()}</div>
             </div>
             <div className="flex w-2/12 self-center">
                 <div className="text-sm w-full text-gray-400 truncate">{moment(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}</div>

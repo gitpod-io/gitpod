@@ -480,7 +480,7 @@ export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
 
         // Check if user can access repositories headless logs
         const ws = resource.subject;
-        const contextURL = ContextURL.parseToURL(ws.contextURL);
+        const contextURL = ContextURL.getNormalizedURL(ws);
         if (!contextURL) {
             throw new Error(`unable to parse ContextURL: ${contextURL}`);
         }
