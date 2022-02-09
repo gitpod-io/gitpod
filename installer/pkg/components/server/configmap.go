@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +25,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if ctx.Config.License != nil {
 		license = licenseFilePath
 	}
+
+	var disableDefinitelyGP bool
+	ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.WebApp != nil {
+			disableDefinitelyGP = ucfg.WebApp.DisableDefinitelyGP
+		}
+		return nil
+	})
 
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
@@ -45,7 +54,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MaxAgeMs: 259200000,
 			Secret:   "Important!Really-Change-This-Key!", // todo(sje): how best to do this?
 		},
-		DefinitelyGpDisabled: false,
+		DefinitelyGpDisabled: disableDefinitelyGP,
 		WorkspaceGarbageCollection: WorkspaceGarbageCollection{
 			ChunkLimit:                 1000,
 			ContentChunkLimit:          1000,

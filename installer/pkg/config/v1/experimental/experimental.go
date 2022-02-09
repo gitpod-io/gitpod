@@ -23,6 +23,7 @@ type WorkspaceConfig struct {
 }
 
 type WebAppConfig struct {
+	DisableDefinitelyGP bool `json:"disableDefinitelyGp,omitempty"`
 }
 
 type IDEConfig struct{}
@@ -31,7 +32,7 @@ type TracingSampleType string
 
 type Tracing struct {
 	SamplerType  *TracingSampleType `json:"samplerType,omitempty" validate:"omitempty,tracing_sampler_type"`
-	SamplerParam *float64           `json:"samplerParam,omitEmpty" validate:"required_with=SamplerType"`
+	SamplerParam *float64           `json:"samplerParam,omitempty" validate:"required_with=SamplerType"`
 }
 
 // Values taken from https://github.com/jaegertracing/jaeger-client-go/blob/967f9c36f0fa5a2617c9a0993b03f9a3279fadc8/config/config.go#L71
