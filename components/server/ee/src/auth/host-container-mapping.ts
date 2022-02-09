@@ -9,6 +9,7 @@ import { HostContainerMapping } from "../../../src/auth/host-container-mapping";
 import { gitlabContainerModuleEE } from "../gitlab/container-module";
 import { bitbucketContainerModuleEE } from "../bitbucket/container-module";
 import { gitHubContainerModuleEE } from "../github/container-module";
+import { giteaContainerModuleEE } from "../gitea/container-module";
 
 @injectable()
 export class HostContainerMappingEE extends HostContainerMapping {
@@ -23,6 +24,8 @@ export class HostContainerMappingEE extends HostContainerMapping {
             return (modules || []).concat([bitbucketContainerModuleEE]);
         case "GitHub":
             return (modules || []).concat([gitHubContainerModuleEE]);
+        case "Gitea":
+            return (modules || []).concat([giteaContainerModuleEE]);
         default:
             return modules;
         }

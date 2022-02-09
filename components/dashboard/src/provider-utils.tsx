@@ -7,6 +7,7 @@
 import bitbucket from './images/bitbucket.svg';
 import github from './images/github.svg';
 import gitlab from './images/gitlab.svg';
+import gitea from './images/gitea.svg';
 import { gitpodHostUrl } from "./service/service";
 
 function iconForAuthProvider(type: string) {
@@ -17,6 +18,8 @@ function iconForAuthProvider(type: string) {
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} />;
         case "Bitbucket":
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
+        case "Gitea":
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitea} />;
         default:
             return <></>;
     }

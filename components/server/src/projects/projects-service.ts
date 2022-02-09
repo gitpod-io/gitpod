@@ -137,6 +137,7 @@ export class ProjectsService {
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const type = hostContext && hostContext.authProvider.info.authProviderType;
+        // TODO: handle gitea
         if (type === "GitLab" || type === "Bitbucket") {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
