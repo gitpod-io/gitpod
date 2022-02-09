@@ -10,7 +10,6 @@ import (
 	"time"
 
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
-	"k8s.io/utils/pointer"
 	"sigs.k8s.io/yaml"
 
 	"github.com/gitpod-io/gitpod/common-go/grpc"
@@ -157,19 +156,6 @@ func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemp
 	cfgTpls := ctx.Config.Workspace.Templates
 	if cfgTpls == nil {
 		cfgTpls = &configv1.WorkspaceTemplates{}
-	}
-
-	cfgTpls.Default = &corev1.Pod{
-		Spec: corev1.PodSpec{
-			EnableServiceLinks: pointer.Bool(false),
-			DNSConfig: &corev1.PodDNSConfig{
-				Nameservers: []string{
-					"1.1.1.1",
-					"8.8.8.8",
-				},
-			},
-			DNSPolicy: corev1.DNSNone,
-		},
 	}
 
 	ops := []struct {
