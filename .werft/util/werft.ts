@@ -20,7 +20,7 @@ export class Werft {
     private tracer: Tracer;
     public rootSpan: Span;
     private sliceSpans: { [slice: string]: Span } = {}
-    private currentPhaseSpan: Span;
+    public currentPhaseSpan: Span;
 
     constructor(job: string) {
         if (werft) {

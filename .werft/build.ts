@@ -332,13 +332,16 @@ export async function build(context, version) {
         if (!existingVM) {
             werft.log(vmSlices.BOOT_VM, 'Starting VM')
             VM.startVM({ name: destname })
+            werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", true)
         } else if (cleanSlateDeployment) {
             werft.log(vmSlices.BOOT_VM, 'Removing existing namespace')
             VM.deleteVM({ name: destname })
             werft.log(vmSlices.BOOT_VM, 'Starting VM')
             VM.startVM({ name: destname })
+            werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", true)
         } else {
             werft.log(vmSlices.BOOT_VM, 'VM already exists')
+            werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
         }
 
         werft.log(vmSlices.BOOT_VM, 'Waiting for VM to be ready')
