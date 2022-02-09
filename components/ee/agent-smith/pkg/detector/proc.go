@@ -425,7 +425,7 @@ func findWorkspaces(proc discoverableProcFS, p *process, d int, ws *common.Works
 }
 
 func isSupervisor(cmdline []string) bool {
-	return len(cmdline) == 2 && cmdline[0] == "supervisor" && cmdline[1] == "run"
+	return len(cmdline) == 2 && cmdline[0] == "supervisor" && cmdline[1] == "init"
 }
 
 func extractWorkspaceFromWorkspacekit(proc discoverableProcFS, pid int) *common.Workspace {

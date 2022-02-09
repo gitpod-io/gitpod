@@ -806,7 +806,7 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "run"}, os.Environ())
+		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "init"}, os.Environ())
 		if err != nil {
 			if eerr, ok := err.(*exec.ExitError); ok {
 				exitCode = eerr.ExitCode()
