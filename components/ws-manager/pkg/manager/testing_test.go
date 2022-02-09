@@ -124,10 +124,10 @@ func forTestingOnlyCreateStartWorkspaceContext(manager *Manager, id string, tpe 
 			MetaId: "foobar",
 		},
 		Spec: &api.StartWorkspaceSpec{
-			WorkspaceImage: "foobar",
-			IdeImage:       &api.IDEImage{WebRef: "someide:version.0"},
-			Ports:          []*api.PortSpec{},
-			Initializer:    &csapi.WorkspaceInitializer{},
+			DeprecatedWorkspaceImage: "foobar",
+			IdeImage:                 &api.IDEImage{WebRef: "someide:version.0"},
+			Ports:                    []*api.PortSpec{},
+			Initializer:              &csapi.WorkspaceInitializer{},
 		},
 	})
 }

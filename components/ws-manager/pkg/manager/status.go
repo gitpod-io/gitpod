@@ -235,9 +235,9 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		StatusVersion: m.clock.Tick(),
 		Metadata:      getWorkspaceMetadata(wso.Pod),
 		Spec: &api.WorkspaceSpec{
-			Headless:           wso.IsWorkspaceHeadless(),
-			WorkspaceImage:     wsImage,
-			DeprecatedIdeImage: ideImage,
+			Headless:                 wso.IsWorkspaceHeadless(),
+			DeprecatedWorkspaceImage: wsImage,
+			DeprecatedIdeImage:       ideImage,
 			IdeImage: &api.IDEImage{
 				WebRef:        ideImage,
 				DesktopRef:    desktopIdeImage,

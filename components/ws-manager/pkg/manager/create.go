@@ -250,7 +250,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	spec := regapi.ImageSpec{
-		BaseRef:       startContext.Request.Spec.WorkspaceImage,
+		BaseRef:       startContext.Request.Spec.DeprecatedWorkspaceImage,
 		IdeRef:        ideRef,
 		DesktopIdeRef: desktopIdeRef,
 		SupervisorRef: supervisorRef,

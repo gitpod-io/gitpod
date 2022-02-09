@@ -151,8 +151,8 @@ func LaunchWorkspaceDirectly(ctx context.Context, api *ComponentAPI, opts ...Lau
 		},
 		Type: wsmanapi.WorkspaceType_REGULAR,
 		Spec: &wsmanapi.StartWorkspaceSpec{
-			WorkspaceImage:     workspaceImage,
-			DeprecatedIdeImage: ideImage,
+			DeprecatedWorkspaceImage: workspaceImage,
+			DeprecatedIdeImage:       ideImage,
 			IdeImage: &wsmanapi.IDEImage{
 				WebRef: ideImage,
 			},

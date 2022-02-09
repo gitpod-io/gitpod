@@ -193,7 +193,7 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 			},
 		},
 	}
-	out.Spec.WorkspaceImage = repo.WorkspaceImage
+	out.Spec.DeprecatedWorkspaceImage = repo.WorkspaceImage
 	r := StartWorkspaceSpec(*out)
 	return &r, nil
 }

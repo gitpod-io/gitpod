@@ -75,9 +75,9 @@ var runCmd = &cobra.Command{
 						},
 					},
 				},
-				Timeout:           "5m",
-				WorkspaceImage:    "eu.gcr.io/gitpod-dev/workspace-images:3fcaad7ba5a5a4695782cb4c366b82f927f1e6c1cf0c88fd4f14d985f7eb21f6",
-				WorkspaceLocation: "gitpod",
+				Timeout:                  "5m",
+				DeprecatedWorkspaceImage: "eu.gcr.io/gitpod-dev/workspace-images:3fcaad7ba5a5a4695782cb4c366b82f927f1e6c1cf0c88fd4f14d985f7eb21f6",
+				WorkspaceLocation:        "gitpod",
 				Envvars: []*api.EnvironmentVariable{
 					{
 						Name:  "THEIA_SUPERVISOR_TOKENS",

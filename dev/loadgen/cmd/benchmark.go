@@ -72,10 +72,10 @@ var benchmarkCommand = &cobra.Command{
 					Email:    "test@gitpod.io",
 					Username: "foobar",
 				},
-				FeatureFlags:      []api.WorkspaceFeatureFlag{},
-				Timeout:           "5m",
-				WorkspaceImage:    "will-be-overriden",
-				WorkspaceLocation: "gitpod",
+				FeatureFlags:             []api.WorkspaceFeatureFlag{},
+				Timeout:                  "5m",
+				DeprecatedWorkspaceImage: "will-be-overriden",
+				WorkspaceLocation:        "gitpod",
 				Envvars: []*api.EnvironmentVariable{
 					{
 						Name:  "THEIA_SUPERVISOR_TOKENS",

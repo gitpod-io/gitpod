@@ -53,7 +53,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 			Desc: "failed image pull",
 			T: &SingleWorkspaceIntegrationTest{
 				StartRequestModifier: func(t *testing.T, r *api.StartWorkspaceRequest) {
-					r.Spec.WorkspaceImage = "does-not-exist"
+					r.Spec.DeprecatedWorkspaceImage = "does-not-exist"
 				},
 				MockWsdaemon: func(t *testing.T, s *wsdaemon_mock.MockWorkspaceContentServiceServer) {
 					s.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(a, b interface{}) { time.Sleep(1 * time.Second) }).Return(&wsdaemon.InitWorkspaceResponse{}, nil)
@@ -86,7 +86,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 			Desc: "failed init",
 			T: &SingleWorkspaceIntegrationTest{
 				StartRequestModifier: func(t *testing.T, r *api.StartWorkspaceRequest) {
-					r.Spec.WorkspaceImage = "gitpod/workspace-full"
+					r.Spec.DeprecatedWorkspaceImage = "gitpod/workspace-full"
 				},
 				MockWsdaemon: func(t *testing.T, s *wsdaemon_mock.MockWorkspaceContentServiceServer) {
 					s.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(a, b interface{}) { time.Sleep(1 * time.Second) }).Return(nil, status.Error(codes.Internal, "fail intentionally"))
@@ -112,7 +112,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 			T: &SingleWorkspaceIntegrationTest{
 				PodTemplates: regularWorkspaceTemplates,
 				StartRequestModifier: func(t *testing.T, s *api.StartWorkspaceRequest) {
-					s.Spec.WorkspaceImage = "csweichel/noop:latest"
+					s.Spec.DeprecatedWorkspaceImage = "csweichel/noop:latest"
 				},
 				MockWsdaemon: func(t *testing.T, s *wsdaemon_mock.MockWorkspaceContentServiceServer) {
 					initCall := s.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).Return(&wsdaemon.InitWorkspaceResponse{}, nil)
@@ -158,7 +158,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 			T: &SingleWorkspaceIntegrationTest{
 				PodTemplates: regularWorkspaceTemplates,
 				StartRequestModifier: func(t *testing.T, s *api.StartWorkspaceRequest) {
-					s.Spec.WorkspaceImage = "csweichel/noop:latest"
+					s.Spec.DeprecatedWorkspaceImage = "csweichel/noop:latest"
 				},
 				MockWsdaemon: func(t *testing.T, s *wsdaemon_mock.MockWorkspaceContentServiceServer) {
 					initCall := s.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).Return(&wsdaemon.InitWorkspaceResponse{}, nil)

@@ -832,7 +832,7 @@ export class WorkspaceStarter {
         startWorkspaceSpecIDEImage.setSupervisorRef(instance.configuration?.supervisorImage || "");
         spec.setIdeImage(startWorkspaceSpecIDEImage);
         spec.setDeprecatedIdeImage(ideImage);
-        spec.setWorkspaceImage(instance.workspaceImage);
+        spec.setDeprecatedWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
         if (workspace.type === 'regular') {

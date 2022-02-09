@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -574,6 +574,11 @@ export class WorkspaceStatus extends jspb.Message {
     getAuth(): WorkspaceAuthentication | undefined;
     setAuth(value?: WorkspaceAuthentication): WorkspaceStatus;
 
+    hasImage(): boolean;
+    clearImage(): void;
+    getImage(): WorkspaceImageStatus | undefined;
+    setImage(value?: WorkspaceImageStatus): WorkspaceStatus;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceStatus.AsObject;
     static toObject(includeInstance: boolean, msg: WorkspaceStatus): WorkspaceStatus.AsObject;
@@ -596,6 +601,7 @@ export namespace WorkspaceStatus {
         repo?: content_service_api_initializer_pb.GitStatus.AsObject,
         runtime?: WorkspaceRuntimeInfo.AsObject,
         auth?: WorkspaceAuthentication.AsObject,
+        image?: WorkspaceImageStatus.AsObject,
     }
 }
 
@@ -625,9 +631,138 @@ export namespace IDEImage {
     }
 }
 
-export class WorkspaceSpec extends jspb.Message {
+export class WorkspaceImage extends jspb.Message {
+
+    hasImageRaw(): boolean;
+    clearImageRaw(): void;
+    getImageRaw(): string;
+    setImageRaw(value: string): WorkspaceImage;
+
+    hasImageRef(): boolean;
+    clearImageRef(): void;
+    getImageRef(): string;
+    setImageRef(value: string): WorkspaceImage;
+
+    hasFromFile(): boolean;
+    clearFromFile(): void;
+    getFromFile(): WorkspaceImage.Dockerfile | undefined;
+    setFromFile(value?: WorkspaceImage.Dockerfile): WorkspaceImage;
+
+    getSpecCase(): WorkspaceImage.SpecCase;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WorkspaceImage.AsObject;
+    static toObject(includeInstance: boolean, msg: WorkspaceImage): WorkspaceImage.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WorkspaceImage, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WorkspaceImage;
+    static deserializeBinaryFromReader(message: WorkspaceImage, reader: jspb.BinaryReader): WorkspaceImage;
+}
+
+export namespace WorkspaceImage {
+    export type AsObject = {
+        imageRaw: string,
+        imageRef: string,
+        fromFile?: WorkspaceImage.Dockerfile.AsObject,
+    }
+
+
+    export class Dockerfile extends jspb.Message {
+        getPath(): string;
+        setPath(value: string): Dockerfile;
+        getContext(): string;
+        setContext(value: string): Dockerfile;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): Dockerfile.AsObject;
+        static toObject(includeInstance: boolean, msg: Dockerfile): Dockerfile.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: Dockerfile, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): Dockerfile;
+        static deserializeBinaryFromReader(message: Dockerfile, reader: jspb.BinaryReader): Dockerfile;
+    }
+
+    export namespace Dockerfile {
+        export type AsObject = {
+            path: string,
+            context: string,
+        }
+    }
+
+
+    export enum SpecCase {
+        SPEC_NOT_SET = 0,
+        IMAGE_RAW = 1,
+        IMAGE_REF = 2,
+        FROM_FILE = 3,
+    }
+
+}
+
+export class WorkspaceImageStatus extends jspb.Message {
+    getPhase(): WorkspaceImagePhase;
+    setPhase(value: WorkspaceImagePhase): WorkspaceImageStatus;
+    getBaseImage(): string;
+    setBaseImage(value: string): WorkspaceImageStatus;
     getWorkspaceImage(): string;
-    setWorkspaceImage(value: string): WorkspaceSpec;
+    setWorkspaceImage(value: string): WorkspaceImageStatus;
+
+    hasLogs(): boolean;
+    clearLogs(): void;
+    getLogs(): WorkspaceImageStatus.LogDetails | undefined;
+    setLogs(value?: WorkspaceImageStatus.LogDetails): WorkspaceImageStatus;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WorkspaceImageStatus.AsObject;
+    static toObject(includeInstance: boolean, msg: WorkspaceImageStatus): WorkspaceImageStatus.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WorkspaceImageStatus, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WorkspaceImageStatus;
+    static deserializeBinaryFromReader(message: WorkspaceImageStatus, reader: jspb.BinaryReader): WorkspaceImageStatus;
+}
+
+export namespace WorkspaceImageStatus {
+    export type AsObject = {
+        phase: WorkspaceImagePhase,
+        baseImage: string,
+        workspaceImage: string,
+        logs?: WorkspaceImageStatus.LogDetails.AsObject,
+    }
+
+
+    export class LogDetails extends jspb.Message {
+        getUrl(): string;
+        setUrl(value: string): LogDetails;
+
+        getHeaderMap(): jspb.Map<string, string>;
+        clearHeaderMap(): void;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): LogDetails.AsObject;
+        static toObject(includeInstance: boolean, msg: LogDetails): LogDetails.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: LogDetails, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): LogDetails;
+        static deserializeBinaryFromReader(message: LogDetails, reader: jspb.BinaryReader): LogDetails;
+    }
+
+    export namespace LogDetails {
+        export type AsObject = {
+            url: string,
+
+            headerMap: Array<[string, string]>,
+        }
+    }
+
+}
+
+export class WorkspaceSpec extends jspb.Message {
+    getDeprecatedWorkspaceImage(): string;
+    setDeprecatedWorkspaceImage(value: string): WorkspaceSpec;
     getDeprecatedIdeImage(): string;
     setDeprecatedIdeImage(value: string): WorkspaceSpec;
     getHeadless(): boolean;
@@ -648,6 +783,11 @@ export class WorkspaceSpec extends jspb.Message {
     getIdeImage(): IDEImage | undefined;
     setIdeImage(value?: IDEImage): WorkspaceSpec;
 
+    hasWorkspaceImage(): boolean;
+    clearWorkspaceImage(): void;
+    getWorkspaceImage(): WorkspaceImage | undefined;
+    setWorkspaceImage(value?: WorkspaceImage): WorkspaceSpec;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceSpec.AsObject;
     static toObject(includeInstance: boolean, msg: WorkspaceSpec): WorkspaceSpec.AsObject;
@@ -660,7 +800,7 @@ export class WorkspaceSpec extends jspb.Message {
 
 export namespace WorkspaceSpec {
     export type AsObject = {
-        workspaceImage: string,
+        deprecatedWorkspaceImage: string,
         deprecatedIdeImage: string,
         headless: boolean,
         url: string,
@@ -668,6 +808,7 @@ export namespace WorkspaceSpec {
         type: WorkspaceType,
         timeout: string,
         ideImage?: IDEImage.AsObject,
+        workspaceImage?: WorkspaceImage.AsObject,
     }
 }
 
@@ -831,8 +972,8 @@ export namespace WorkspaceAuthentication {
 }
 
 export class StartWorkspaceSpec extends jspb.Message {
-    getWorkspaceImage(): string;
-    setWorkspaceImage(value: string): StartWorkspaceSpec;
+    getDeprecatedWorkspaceImage(): string;
+    setDeprecatedWorkspaceImage(value: string): StartWorkspaceSpec;
     getDeprecatedIdeImage(): string;
     setDeprecatedIdeImage(value: string): StartWorkspaceSpec;
     clearFeatureFlagsList(): void;
@@ -871,6 +1012,11 @@ export class StartWorkspaceSpec extends jspb.Message {
     getIdeImage(): IDEImage | undefined;
     setIdeImage(value?: IDEImage): StartWorkspaceSpec;
 
+    hasWorkspaceImage(): boolean;
+    clearWorkspaceImage(): void;
+    getWorkspaceImage(): WorkspaceImage | undefined;
+    setWorkspaceImage(value?: WorkspaceImage): StartWorkspaceSpec;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
     static toObject(includeInstance: boolean, msg: StartWorkspaceSpec): StartWorkspaceSpec.AsObject;
@@ -883,7 +1029,7 @@ export class StartWorkspaceSpec extends jspb.Message {
 
 export namespace StartWorkspaceSpec {
     export type AsObject = {
-        workspaceImage: string,
+        deprecatedWorkspaceImage: string,
         deprecatedIdeImage: string,
         featureFlagsList: Array<WorkspaceFeatureFlag>,
         initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
@@ -895,6 +1041,7 @@ export namespace StartWorkspaceSpec {
         timeout: string,
         admission: AdmissionLevel,
         ideImage?: IDEImage.AsObject,
+        workspaceImage?: WorkspaceImage.AsObject,
     }
 }
 
@@ -1007,6 +1154,12 @@ export enum AdmissionLevel {
     ADMIT_EVERYONE = 1,
 }
 
+export enum WorkspaceImagePhase {
+    UNAVAILABLE = 0,
+    AVAILABLE = 1,
+    BUILDING = 2,
+}
+
 export enum PortVisibility {
     PORT_VISIBILITY_PRIVATE = 0,
     PORT_VISIBILITY_PUBLIC = 1,
@@ -1021,6 +1174,7 @@ export enum WorkspaceConditionBool {
 export enum WorkspacePhase {
     UNKNOWN = 0,
     PENDING = 1,
+    BUILDING_IMAGE = 8,
     CREATING = 2,
     INITIALIZING = 3,
     RUNNING = 4,
