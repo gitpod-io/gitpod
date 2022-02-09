@@ -1,8 +1,8 @@
 #
-# The CODEOWNERS files is owned by all teams.
-# To change ownerhip all teams need to approve.
+# For the CODEONWERS file we don't want to have a specific CODEOWNER.
+# A single review from anyone who is allowed to review PRs is sufficent.
 #
-/.github/CODEOWNERS @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/engineering-self-hosted  @gitpod-io/platform
+/.github/CODEOWNERS
 
 /components/blobserve @gitpod-io/engineering-workspace
 /components/common-go @gitpod-io/engineering-workspace
