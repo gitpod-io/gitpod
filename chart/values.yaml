@@ -476,6 +476,13 @@ components:
     clusterIP: "None"
     selectorKind: daemonset
     workspaceSizeLimit: "50g"
+    cpuLimit:
+      enabled: true
+      totalBandwidth: 12
+      limit: 2
+      burstLimit: 6
+      controlPeriod: "15s"
+      cgroupBasePath: "/mnt/node-cgroups"
     containerRuntime:
       enabled: true
       runtime: containerd
