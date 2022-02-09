@@ -16,9 +16,7 @@ WORKDIR /gp-code
 RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
 
 
-FROM gitpod/openvscode-server-linux-build-agent:bionic-x64 as code_installer
-
-USER root
+FROM gitpod/openvscode-server-linux-build-agent:bionic-x64 as code_builder
 
 ARG CODE_COMMIT
 
@@ -40,12 +38,15 @@ RUN mkdir /gp-code \
     && git fetch origin $CODE_COMMIT --depth=1 \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
-RUN yarn --frozen-lockfile --network-timeout 180000 \
-    && yarn --cwd remote/web --frozen-lockfile --network-timeout 180000 \
-    && yarn --cwd extensions compile \
+RUN yarn --frozen-lockfile --network-timeout 180000
+
+# copy remote dependencies build in dependencies_builder image
+RUN rm -rf remote/node_modules/
+COPY --from=dependencies_builder /gp-code/remote/node_modules/ /gp-code/remote/node_modules/
+
+RUN yarn --cwd extensions compile \
     && yarn gulp vscode-web-min \
     && yarn gulp vscode-reh-linux-x64-min
-COPY --from=dependencies_builder /gp-code/remote/node_modules/ /vscode-reh-linux-x64/node_modules/
 
 # config for first layer needed by blobserve
 # we also remove `static/` from resource urls as that's needed by blobserve,
@@ -62,13 +63,14 @@ RUN chmod -R ugo+x /ide/bin
 # grant write permissions for built-in extensions
 RUN chmod -R ugo+w /vscode-reh-linux-x64/extensions
 
+
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
-COPY --from=code_installer --chown=33333:33333 /vscode-web/ /ide/
-COPY --from=code_installer --chown=33333:33333 /vscode-reh-linux-x64/ /ide/
+COPY --from=code_builder --chown=33333:33333 /vscode-web/ /ide/
+COPY --from=code_builder --chown=33333:33333 /vscode-reh-linux-x64/ /ide/
 COPY --chown=33333:33333 startup.sh supervisor-ide-config.json /ide/
 
-COPY --from=code_installer --chown=33333:33333 /ide/bin /ide/bin/remote-cli
+COPY --from=code_builder --chown=33333:33333 /ide/bin /ide/bin/remote-cli
 
 ENV GITPOD_ENV_APPEND_PATH /ide/bin/remote-cli:
 
