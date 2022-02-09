@@ -73,6 +73,10 @@ We work with quarterly roadmaps in autonomous product teams.
  - [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
  - [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
 
+### How do GitHub Issues get prioritised?
+
+Most GitHub issues (except smaller or more urgent issues) relate to our [current product roadmap items](https://github.com/orgs/gitpod-io/projects/27). Gitpod teams work against these roadmap items. Each Gitpod team has [it's own project board](https://github.com/orgs/gitpod-io/projects) that follows a similar structure. You can find these project boards attached to [the GitHub organisation](https://github.com/gitpod-io). Each team board has a "GroundWork" tab which shows current GitHub issues in progress. Each team project board also has an "inbox" where issues are sent for review by the team (and should be responded to within 48 hours). "Upvoting" by [reacting](https://docs.github.com/en/rest/reference/reactions) to GitHub issues helps signal to Gitpod that issues are important to you. If you are unsure of the status of an issue, please comment and a Gitpodder should respond to you shortly. For any other questions, please utilise the [Gitpod community](https://www.gitpod.io/community).
+
 ## Related Projects
 
 During the development of Gitpod we also developed some our own infrastructure tooling to make development easier and more efficient.
