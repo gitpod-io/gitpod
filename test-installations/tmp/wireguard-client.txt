@@ -1,0 +1,10 @@
+[Interface]
+PrivateKey = yGvWtqiGw0Ki/ESO+DVLmRZV5lekh2+lhgagxf/eG34=
+Address = 10.200.200.2/24
+#DNS = 10.200.200.1
+
+[Peer]
+PublicKey = 01Fdhg8KCjTWp23vk660r0944qsAUXAbxbCWGsRsIEo=
+#AllowedIPs = 10.200.200.0/24,34.159.253.108/32,10.156.0.58/32
+AllowedIPs = 0.0.0.0/0
+Endpoint = 34.159.253.108:41194

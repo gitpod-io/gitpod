@@ -25,7 +25,7 @@
     state: present
   become: true
   environment:
-    EXTERNAL_URL: "https://{{ domain }}"
+    EXTERNAL_URL: "https://{{ gitlab_domain }}"
 
 - name: Read initial root password
   slurp:

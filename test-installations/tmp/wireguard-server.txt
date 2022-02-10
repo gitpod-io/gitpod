@@ -1,0 +1,14 @@
+root@bastion:/etc/wireguard# cat wg0.conf
+[Interface]
+Address = 10.200.200.1/24
+ListenPort = 41194
+PrivateKey =  YH4D7zmNRl6cacUXjBjR81k8g9BwV8Mb3R5xVfPRTWA=
+
+# substitute eth0 in the following lines to match the Internet-facing interface
+# if the server is behind a router and receives traffic via NAT, these iptables rules are not needed
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o ens4 -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o ens4 -j MASQUERADE
+
+[Peer]
+PublicKey = 4Oy0F0sSecc9VUJJx8XzEV7fRcSaQJdrq1b/Cs/sAmU=
+AllowedIPs = 10.200.200.2/24

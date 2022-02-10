@@ -1,5 +1,5 @@
 {
     "insecure-registries": [
-        "{{ repository }}"
+        "{{ registry_domain }}"
     ]
 }

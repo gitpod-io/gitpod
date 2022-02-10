@@ -1,0 +1,31 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Install wireguard
+  apt:
+    name: wireguard
+    update_cache: yes
+    state: present
+  become: true
+
+- name: Ensure directory exists
+  file:
+    path: /etc/wireguard
+    recurse: true
+    state: directory
+    mode: 0700
+  become: true
+
+- name: Copy WireGuard config
+  copy:
+    src: "wg0.conf"
+    dest: /etc/wireguard/wg0.conf
+  become: true
+
+- name: Start WireGuard daemon
+  ansible.builtin.service:
+    name: "wg-quick@wg0"
+    state: started
+  become: true

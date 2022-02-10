@@ -3,4 +3,4 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
-domain: "{{ undef(hint='You must specify a domain.') }}"
+gitlab_domain: "{{ undef(hint='You must specify a domain.') }}"

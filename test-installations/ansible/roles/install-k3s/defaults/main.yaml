@@ -10,3 +10,5 @@ k3s_server_exec_labels: "--node-label gitpod.io/workload_meta=true --node-label 
 k3s_agent_exec: "agent"
 k3s_agent_exec_labels: "--node-label gitpod.io/workload_workspace_services=true --node-label gitpod.io/workload_workspace_regular=true --node-label gitpod.io/workload_workspace_headless=true"
 k3s_cluster_secret: "{{ undef(hint='You must specify a cluster secret.') }}"
+
+airgap: false

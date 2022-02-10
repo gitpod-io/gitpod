@@ -2,6 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
+domain: "{{ gitpod_domain }}"
 workspace:
   runtime:
     containerdRuntimeDir: /run/k3s/containerd/io.containerd.runtime.v2.task/k8s.io

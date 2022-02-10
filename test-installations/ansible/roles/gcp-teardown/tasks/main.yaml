@@ -22,3 +22,14 @@
     service_account_contents: "{{ gcp_cred_content }}"
     state: absent
   loop: "{{ gcp_instance_names }}"
+
+# # This is needed for air-gap installations.
+# - name: Create a private DNS managed zone
+#   google.cloud.gcp_dns_managed_zone:
+#     name: "{{ gcp_dns_domain_zone_name }}"
+#     dns_name: "{{ gcp_dns_domain_zone_dnsname }}"
+#     description: "DNS with internal IP addresses (mainly for air-gap installations)"
+#     project: "{{ gcp_project }}"
+#     auth_kind: serviceaccount
+#     service_account_contents: "{{ gcp_cred_content }}"
+#     state: absent

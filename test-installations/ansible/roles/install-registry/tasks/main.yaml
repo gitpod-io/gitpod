@@ -3,16 +3,45 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
+- name: Acquire certificates
+  community.docker.docker_container:
+    name: certbot
+    image: certbot/certbot
+    volumes:
+      - "/letsencrypt:/letsencrypt"
+    ports:
+      - "80:80"
+    auto_remove: true
+    command: certonly --config-dir /letsencrypt/config --work-dir /letsencrypt/work --logs-dir /letsencrypt/logs --agree-tos -d {{ registry_domain }} --register-unsafely-without-email --standalone
+  become: true
+
+- name: Ensure directory exists
+  file:
+    path: /certs
+    state: directory
+    mode: 0777
+  become: true
+
+- name: Copy certificates
+  copy:
+    remote_src: true
+    src: "/letsencrypt/config/live/{{ registry_domain }}/{{ item }}"
+    dest: "/certs/{{ item }}"
+  become: true
+  loop:
+    - fullchain.pem
+    - privkey.pem
+
 - name: Start registry container
   community.docker.docker_container:
     name: registry
     image: registry:2
     volumes:
-      - /var/lib/registry
-      # - ./cert:/certs
+      - "/registry:/var/lib/registry"
+      - "/certs:/certs"
     ports:
-      - "80:5000"
-    # env:
-    #   REGISTRY_HTTP_TLS_CERTIFICATE: /certs/fullchain.pem
-    #   REGISTRY_HTTP_TLS_KEY: /cert/privkey.pem
+      - "443:5000"
+    env:
+      REGISTRY_HTTP_TLS_CERTIFICATE: "/certs/fullchain.pem"
+      REGISTRY_HTTP_TLS_KEY: "/certs/privkey.pem"
     state: started

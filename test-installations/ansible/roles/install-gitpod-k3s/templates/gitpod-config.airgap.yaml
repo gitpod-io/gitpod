@@ -7,14 +7,21 @@ workspace:
     default:
       spec:
         hostAliases:
-          - ip: "10.156.0.47"
-            hostnames:
-            - "clu-airgap.gitpod-self-hosted.com"
-          - ip: "10.156.0.50"
-            hostnames:
-            - "clu-gitlab-1.gitpod-self-hosted.com"
+        - ip: 10.156.0.53
+          hostnames:
+          - clu-airgap.gitpod-self-hosted.com
+          - registry.clu-airgap.gitpod-self-hosted.com
+          - minio.clu-airgap.gitpod-self-hosted.com
+          - ide.clu-airgap.gitpod-self-hosted.com
+          - ws.clu-airgap.gitpod-self-hosted.com
+        - ip: 10.156.0.56
+          hostnames:
+          - clu-gitlab-1.gitpod-self-hosted.com
+        - ip: 10.156.0.57
+          hostnames:
+          - clu-registry.gitpod-self-hosted.com
 experimental:
   webapp:
     disableDefinitelyGp: true
-  workspace:
-    cpuLimit:
+  # workspace:
+  #   cpuLimit:

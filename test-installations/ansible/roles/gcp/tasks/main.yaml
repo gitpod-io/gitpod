@@ -38,6 +38,44 @@
 - set_fact:
     cluster_ip: "{{ gcpvm.results[0].networkInterfaces[0].accessConfigs[0].natIP }}"
 
+- set_fact:
+    cluster_internal_ip: "{{ gcpvm.results[0].networkInterfaces[0].networkIP }}"
+
+# This is needed for air-gap installations.
+- name: Create a private DNS managed zone
+  google.cloud.gcp_dns_managed_zone:
+    name: "{{ gcp_dns_domain_zone_name }}"
+    dns_name: "{{ gcp_dns_domain_zone_dnsname }}"
+    description: "DNS with internal IP addresses (mainly for air-gap installations)"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    visibility: private
+    state: present
+
+# This is needed for air-gap installations.
+- name: Create resource record sets (private zone)
+  google.cloud.gcp_dns_resource_record_set:
+    name: "{{ item }}"
+    managed_zone:
+      name: "{{ gcp_dns_domain_zone_name }}"
+      dnsName: "{{ gcp_dns_domain_zone_dnsname }}"
+    type: A
+    ttl: 300
+    target:
+    - "{{ gcpvm.results[0].networkInterfaces[0].networkIP }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present
+  with_items:
+  - "{{ gitpod_domain }}."
+  - "*.{{ gitpod_domain }}."
+  - "*.ws.{{ gitpod_domain }}."
+  ignore_errors: true  # TODO: Create private zone when not exist
+  delegate_to: localhost
+  run_once: true
+
 - name: Create http/https firewall rule
   google.cloud.gcp_compute_firewall:
     name: "allow-http-https"
@@ -57,6 +95,19 @@
     allowed:
     - ip_protocol: tcp
       ports: ["6443"]
+    direction: INGRESS
+    source_ranges: "0.0.0.0/0"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present
+
+- name: Create WireGuard rule
+  google.cloud.gcp_compute_firewall:
+    name: "allow-wireguard"
+    allowed:
+    - ip_protocol: udp
+      ports: ["41194"]
     direction: INGRESS
     source_ranges: "0.0.0.0/0"
     project: "{{ gcp_project }}"

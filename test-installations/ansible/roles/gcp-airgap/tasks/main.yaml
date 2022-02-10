@@ -36,7 +36,7 @@
   register: gcpvm
 
 # - name: Install Gitpod
-#   command: gcloud compute ssh --quiet {{ bastion_name }} --command "gcloud compute ssh --quiet {{ gitpod_node_prefix }}--node-0 --zone {{ gcp_zone }} --command 'sudo cp /gitpod/gitpod-manifests.yaml /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml' --internal-ip"
+#  command: gcloud compute ssh --quiet {{ bastion_name }} --command "gcloud compute ssh --quiet {{ gitpod_node_prefix }}--node-0 --zone {{ gcp_zone }} --command 'sudo cp /gitpod/gitpod-manifests.yaml /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml' --internal-ip"
 
 
 #   # - name: Verify missing internet access

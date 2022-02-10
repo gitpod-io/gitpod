@@ -22,7 +22,7 @@ if [[ "$playbook" == gcp* ]]; then
     export ANSIBLE_CONFIG=/ansible/ansible.gcp.cfg
 
     # Hack to configure the GCP project into inventory.gcp.yaml
-    gcp_project=$(yq e '.gcp.project' /ansible/vars/gcp.yaml)
+    gcp_project=$(yq e '.gcp.project' "/ansible/vars/$playbook.yaml")
     yq e -i ".projects = [\"${gcp_project}\"]" /ansible/inventory/inventory.gcp.yaml
 fi
 

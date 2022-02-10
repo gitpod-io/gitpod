@@ -3,5 +3,8 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
-gcp_project: clu-self-hosted-playground
-gcp_bucket_name: clu-gcp-k3s
+gcp_project: gitpod-self-hosted-testing
+gcp_bucket_name: gitpod-self-hosted-testing-backups
+
+gitlab_instance_name: gitlab
+registry_instance_name: registry

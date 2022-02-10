@@ -27,7 +27,7 @@
   when: "'gitpod_node_main' in group_names"
 
 - name: Patch Gitpod config
-  command: yq eval --inplace ".repository = \"{{ repository }}\"" /gitpod/gitpod-config.yaml
+  command: yq eval --inplace ".repository = \"{{ registry_domain }}\"" /gitpod/gitpod-config.yaml
   when: "'gitpod_node_main' in group_names"
 
 - name: Mirror images
@@ -38,7 +38,7 @@
       target=$(echo $row | jq -r '.target')
 
       # TODO: fix mirror list command
-      [[ "$target" == "{{ repository }}" ]] && continue
+      [[ "$target" == "{{ registry_domain }}" ]] && continue
 
       docker pull $original
       docker tag $original $target

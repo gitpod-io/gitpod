@@ -1,0 +1,40 @@
+- wireguard vpn setup
+    - https://www.cyberciti.biz/faq/ubuntu-20-04-set-up-wireguard-vpn-server/
+    - https://wiki.archlinux.org/title/WireGuard
+    - on server: sysctl -w net.ipv4.ip_forward=1
+
+- core dns config: add dns server
+
+kubectl -n kube-system get configmaps coredns -o yaml
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+        }
+        hosts /etc/coredns/NodeHosts {
+          ttl 60
+          reload 15s
+          fallthrough
+        }
+        prometheus :9153
+        #forward . /etc/resolv.conf
+        forward . 169.254.169.254
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    import /etc/coredns/custom/*.server
+  NodeHosts: |
+    10.156.0.54 gitpod--node-1
+    10.156.0.55 gitpod--node-2
+    10.156.0.53 gitpod--node-0
+kind: ConfigMap
+metadata:
+

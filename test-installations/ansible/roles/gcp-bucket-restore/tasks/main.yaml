@@ -27,6 +27,7 @@
   become: true
   loop:
     - /gitpod/manifests
+  when: "'gitpod_node_main' in group_names"
 
 - name: Restore
   google.cloud.gcp_storage_object:
@@ -39,13 +40,78 @@
     service_account_contents: "{{ gcp_cred_content }}"
   ignore_errors: true
   loop:
-    - remote: "auth-provider--{{ gitpod_domain }}.yaml"
+    - remote: "{{ gitpod_domain }}/auth-provider.yaml"
       local: /gitpod/manifests/auth-provider.yaml
-    - remote: "auth-provider-public-github--{{ gitpod_domain }}.yaml"
+    - remote: "{{ gitpod_domain }}/auth-provider-public-github.yaml"
       local: /gitpod/manifests/auth-provider-public-github.yaml
-    - remote: "auth-provider-public-gitlab--{{ gitpod_domain }}.yaml"
+    - remote: "{{ gitpod_domain }}/auth-provider-public-gitlab.yaml"
       local: /gitpod/manifests/auth-provider-public-gitlab.yaml
-    - remote: "https-certificates--{{ gitpod_domain }}.yaml"
+    - remote: "{{ gitpod_domain }}/https-certificates.yaml"
       local: /gitpod/manifests/https-certificates.yaml
-    - remote: "gitpod-issuer-account-key--{{ gitpod_domain }}.yaml"
+    - remote: "{{ gitpod_domain }}/gitpod-issuer-account-key.yaml"
       local: /gitpod/manifests/gitpod-issuer-account-key.yaml
+  when: "'gitpod_node_main' in group_names"
+
+- name: Ensure directories exist
+  file:
+    path: "{{ item }}"
+    recurse: true
+    state: directory
+    mode: 0755
+  become: true
+  loop:
+    - /etc/gitlab/ssl
+  when: "'instance_gitlab' in group_names and gitlab_domain is defined"
+
+- name: Restore GitLab certs
+  google.cloud.gcp_storage_object:
+    action: download
+    bucket: "{{ gcp_bucket_name }}"
+    src: "gitlab/{{ item }}"
+    dest: "/etc/gitlab/ssl/{{ item }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+  ignore_errors: true
+  loop:
+    - "{{ gitlab_domain }}.crt"
+    - "{{ gitlab_domain }}.key"
+  become: true
+  when: "'instance_gitlab' in group_names and gitlab_domain is defined"
+
+- name: Restore registry certs
+  google.cloud.gcp_storage_object:
+    action: download
+    bucket: "{{ gcp_bucket_name }}"
+    src: "registry/{{ registry_domain }}--letsencrypt.tgz.base64"
+    dest: /letsencrypt.tgz.base64
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+  ignore_errors: true
+  become: true
+  when: "'instance_registry' in group_names and registry_domain is defined"
+
+# Fix for: https://github.com/ansible-collections/google.cloud/issues/266
+- name: Decode registry certs tar file
+  shell: base64 --decode /letsencrypt.tgz.base64 > /letsencrypt.tgz
+  ignore_errors: true
+  become: true
+  when: "'instance_registry' in group_names and registry_domain is defined"
+
+- name: Ensure directory exists
+  file:
+    path: /letsencrypt
+    state: directory
+  become: true
+  when: "'instance_registry' in group_names and registry_domain is defined"
+
+- name: Unarchive registry certs
+  unarchive:
+    src: /letsencrypt.tgz
+    dest: /letsencrypt
+    remote_src: yes
+    creates: /letsencrypt/logs/letsencrypt.log
+  ignore_errors: true
+  become: true
+  when: "'instance_registry' in group_names and registry_domain is defined"

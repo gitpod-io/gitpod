@@ -5,9 +5,9 @@
 ---
 
 - debug:
-    msg: "Cluster IP: {{ hostvars.localhost.cluster_ip }}"
+    msg: "Cluster IP: {{ hostvars.localhost.cluster_ip }} – Cluster internal IP: {{ hostvars.localhost.cluster_internal_ip }}"
 
-- name: "create resource record sets"
+- name: "Create resource record sets"
   google.cloud.gcp_dns_resource_record_set:
     name: "{{ item }}"
     managed_zone:

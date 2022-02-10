@@ -64,3 +64,18 @@
   with_fileglob: "cert-manager*.yaml"
   become: true
   when: "'gitpod_node_main' in group_names"
+
+- name: Ensure directory exists
+  file:
+    path: /var/lib/rancher/k3s/agent/images/
+    recurse: true
+    state: directory
+  become: true
+
+- name: Download k3s airgap images on all nodes
+  get_url:
+    # TODO: use proper version
+    url: https://github.com/k3s-io/k3s/releases/download/v1.22.6%2Bk3s1/k3s-airgap-images-amd64.tar
+    dest: /var/lib/rancher/k3s/agent/images/
+  become: true
+  when: airgap

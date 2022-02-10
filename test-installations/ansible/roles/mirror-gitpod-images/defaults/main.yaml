@@ -3,5 +3,4 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
-repository: clu-registry.gitpod-self-hosted.com
-#repository: registry
+registry_domain: "{{ undef(hint='You must specify a domain.') }}"
