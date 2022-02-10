@@ -1,0 +1,1 @@
+![Architecture](../../docs/workspace/architecture.drawio.svg)
