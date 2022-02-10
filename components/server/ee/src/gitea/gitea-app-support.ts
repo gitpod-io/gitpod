@@ -28,12 +28,8 @@ export class GiteaAppSupport {
         if (!identity) {
             return result;
         }
-        const usersGitLabAccount = identity.authName;
+        const usersAccount = identity.authName;
 
-        // cf. https://docs.gitlab.com/ee/api/projects.html#list-all-projects
-        // we are listing only those projects with access level of maintainers.
-        // also cf. https://docs.gitlab.com/ee/api/members.html#valid-access-levels
-        //
         // TODO: check if valid
         const projectsWithAccess = await api.user.userCurrentListRepos({ limit: 100 });
         for (const project of projectsWithAccess.data) {
@@ -43,7 +39,7 @@ export class GiteaAppSupport {
             const accountAvatarUrl = project.owner?.avatar_url as string;
             const account = project.owner?.login as string;
 
-            (account === usersGitLabAccount ? ownersRepos : result).push({
+            (account === usersAccount ? ownersRepos : result).push({
                 name: project.name as string,
                 path,
                 account,

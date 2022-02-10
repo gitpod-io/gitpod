@@ -13,7 +13,6 @@ import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TokenService } from '../../../src/user/token-service';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
 // import { GiteaService } from './gitea-service';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class GiteaApp {
@@ -30,38 +29,15 @@ export class GiteaApp {
 
     @postConstruct()
     protected init() {
-        this._router.post('/', async (req, res) => {
-            const event = req.header('X-Gitlab-Event');
-            if (event === 'Push Hook') {
-                const context = req.body as GitLabPushHook;
-                const span = TraceContext.startSpan("GitLapApp.handleEvent", {});
-                span.setTag("request", context);
-                log.debug("GitLab push hook received", { event, context });
-                let user: User | undefined;
-                try {
-                    user = await this.findUser({ span }, context, req);
-                } catch (error) {
-                    log.error("Cannot find user.", error, { req })
-                }
-                if (!user) {
-                    res.statusCode = 503;
-                    res.send();
-                    return;
-                }
-                await this.handlePushHook({ span }, context, user);
-            } else {
-                log.debug("Unknown GitLab event received", { event });
-            }
-            res.send('OK');
-        });
+        // TODO
     }
 
-    protected async findUser(ctx: TraceContext, context: GitLabPushHook, req: express.Request): Promise<User> {
+    protected async findUser(ctx: TraceContext, context: GiteaPushHook, req: express.Request): Promise<User> {
         // TODO
         return {} as User;
     }
 
-    protected async handlePushHook(ctx: TraceContext, body: GitLabPushHook, user: User): Promise<StartPrebuildResult | undefined> {
+    protected async handlePushHook(ctx: TraceContext, body: GiteaPushHook, user: User): Promise<StartPrebuildResult | undefined> {
         // TODO
         return undefined;
     }
@@ -82,10 +58,9 @@ export class GiteaApp {
         return {} as { user: User, project?: Project };
     }
 
-    protected createContextUrl(body: GitLabPushHook) {
-        const repoUrl = body.repository.git_http_url;
-        const contextURL = `${repoUrl.substr(0, repoUrl.length - 4)}/-/tree${body.ref.substr('refs/head/'.length)}`;
-        return contextURL;
+    protected createContextUrl(body: GiteaPushHook) {
+        // TODO
+        return {};
     }
 
     get router(): express.Router {
@@ -102,30 +77,10 @@ export class GiteaApp {
     }
 }
 
-interface GitLabPushHook {
-    object_kind: 'push';
-    before: string;
-    after: string; // commit
-    ref: string; // e.g. "refs/heads/master"
-    user_avatar: string;
-    user_name: string;
-    project: GitLabProject;
-    repository: GitLabRepository;
+interface GiteaPushHook {
 }
 
-interface GitLabRepository {
-    name: string,
-    git_http_url: string; // e.g. http://example.com/mike/diaspora.git
-    visibility_level: number,
+interface GiteaRepository {
 }
 
-interface GitLabProject {
-    id: number,
-    namespace: string,
-    name: string,
-    path_with_namespace: string, // e.g. "mike/diaspora"
-    git_http_url: string; // e.g. http://example.com/mike/diaspora.git
-    web_url: string; // e.g. http://example.com/mike/diaspora
-    visibility_level: number,
-    avatar_url: string | null,
-}
+interface GiteaProject {}
