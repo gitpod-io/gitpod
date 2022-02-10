@@ -337,6 +337,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     public async getInstanceCount(type?: string): Promise<number> {
         const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
         const queryBuilder = workspaceInstanceRepo.createQueryBuilder("wsi")
+            .leftJoinAndMapOne("wsi.workspace", DBWorkspace, "ws", "wsi.workspaceId = ws.id")
             .where("ws.type = :type", { type: type ? type.toString() : "regular" }); // only regular workspaces by default
 
         return await queryBuilder.getCount();
