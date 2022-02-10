@@ -4,131 +4,106 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable } from 'inversify';
-import * as express from "express"
-import { AuthProviderInfo } from '@gitpod/gitpod-protocol';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { GiteaScope } from "./scopes";
-import { AuthUserSetup } from "../auth/auth-provider";
-import { Octokit } from "@octokit/rest"
-import { GiteaApiError } from "./api";
-import { GenericAuthProvider } from "../auth/generic-auth-provider";
-import { oauthUrls } from "./gitea-urls";
+ import * as express from "express";
+ import { injectable } from 'inversify';
+ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+ import { AuthProviderInfo } from '@gitpod/gitpod-protocol';
+ import { GiteaScope } from "./scopes";
+ import { UnconfirmedUserException } from "../auth/errors";
+ import { Gitea } from "./api";
+ import { GenericAuthProvider } from "../auth/generic-auth-provider";
+ import { AuthUserSetup } from "../auth/auth-provider";
+ import { oauthUrls } from "./gitea-urls";
 
-@injectable()
-export class GiteaAuthProvider extends GenericAuthProvider {
+ @injectable()
+ export class GiteaAuthProvider extends GenericAuthProvider {
 
-    get info(): AuthProviderInfo {
-        return {
-            ...this.defaultInfo(),
-            scopes: GiteaScope.All,
-            requirements: {
-                default: GiteaScope.Requirements.DEFAULT,
-                publicRepo: GiteaScope.Requirements.PUBLIC_REPO,
-                privateRepo: GiteaScope.Requirements.PRIVATE_REPO,
-            },
-        }
-    }
 
-    /**
-     * Augmented OAuthConfig for Gitea
-     */
-    protected get oauthConfig() {
-        const oauth = this.params.oauth!;
-        const defaultUrls = oauthUrls(this.params.host);
-        const scopeSeparator = ",";
-        return <typeof oauth>{
-            ...oauth!,
-            authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
-            tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
-            scope: GiteaScope.All.join(scopeSeparator),
-            scopeSeparator
-        };
-    }
+     get info(): AuthProviderInfo {
+         return {
+             ...this.defaultInfo(),
+             scopes: GiteaScope.All,
+             requirements: {
+                 default: GiteaScope.Requirements.DEFAULT,
+                 publicRepo: GiteaScope.Requirements.PUBLIC_REPO,
+                 privateRepo: GiteaScope.Requirements.PRIVATE_REPO,
+             },
+         }
+     }
 
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : GiteaScope.Requirements.DEFAULT);
-    }
+     /**
+      * Augmented OAuthConfig for Gitea
+      */
+     protected get oauthConfig() {
+         const oauth = this.params.oauth!;
+         const defaultUrls = oauthUrls(this.params.host);
+         const scopeSeparator = " ";
+         return <typeof oauth>{
+             ...oauth,
+             authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
+             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
+            //  settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
+             scope: GiteaScope.All.join(scopeSeparator),
+             scopeSeparator
+         };
+     }
 
-    protected get baseURL() {
-        return `https://${this.params.host}/api/v1`;
-    }
+     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
+         super.authorize(req, res, next, scope ? scope : GiteaScope.Requirements.DEFAULT);
+     }
 
-    protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
-        const api = new Octokit({
-            auth: accessToken,
-            request: {
-                timeout: 5000,
-            },
-            userAgent: this.USER_AGENT,
-            baseUrl: this.baseURL
-        });
-        const fetchCurrentUser = async () => {
-            const response = await api.users.getAuthenticated();
-            if (response.status !== 200) {
-                throw new GiteaApiError(response);
-            }
-            return response;
-        }
-        const fetchUserEmails = async () => {
-            const response = await api.users.listEmailsForAuthenticated({});
-            if (response.status !== 200) {
-                throw new GiteaApiError(response);
-            }
-            return response.data;
-        }
-        const currentUserPromise = this.retry(() => fetchCurrentUser());
-        const userEmailsPromise = this.retry(() => fetchUserEmails());
+     protected get baseURL() {
+         return `https://${this.params.host}`;
+     }
 
-        try {
-            const [ { data: { id, login, avatar_url, name }, headers }, userEmails ] = await Promise.all([ currentUserPromise, userEmailsPromise ]);
+     protected readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
+         const api = Gitea.create(this.baseURL, accessToken);
+         const getCurrentUser = async () => {
+             const response = await api.user.userGetCurrent();
+             return response.data as unknown as Gitea.User;
+         }
+         try {
+             const result = await getCurrentUser();
+             if (result) {
+                 if (!result.active || !result.created || !result.prohibit_login) {
+                    throw UnconfirmedUserException.create("Please confirm and activate your Gitea account and try again.", result);
+                 }
+             }
 
-            // https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
-            // e.g. X-OAuth-Scopes: repo, user
-            const currentScopes = this.normalizeScopes((headers as any)["x-oauth-scopes"]
-                .split(this.oauthConfig.scopeSeparator!)
-                .map((s: string) => s.trim())
-            );
+             return <AuthUserSetup>{
+                 authUser: {
+                     authId: String(result.id),
+                     authName: result.login,
+                     avatarUrl: result.avatar_url || undefined,
+                     name: result.full_name,
+                     primaryEmail: result.email
+                 },
+                 currentScopes: this.readScopesFromVerifyParams(tokenResponse)
+             }
+         } catch (error) {
+             // TODO: cleanup
+            //  if (error && typeof error.description === "string" && error.description.includes("403 Forbidden")) {
+            //      // If Gitlab is configured to disallow OAuth-token based API access for unconfirmed users, we need to reject this attempt
+            //      // 403 Forbidden  - You (@...) must accept the Terms of Service in order to perform this action. Please access GitLab from a web browser to accept these terms.
+            //      throw UnconfirmedUserException.create(error.description, error);
+            //  } else {
+                 log.error(`(${this.strategyName}) Reading current user info failed`, error, { accessToken, error });
+                 throw error;
+            //  }
+         }
 
-            const filterPrimaryEmail = (emails: typeof userEmails) => {
-                if (this.config.blockNewUsers) {
-                    // if there is any verified email with a domain that is in the blockNewUsersPassList then use this email as primary email
-                    const emailDomainInPasslist = (mail: string) => this.config.blockNewUsers.passlist.some(e => mail.endsWith(`@${e}`));
-                    const result = emails.filter(e => e.verified).filter(e => emailDomainInPasslist(e.email))
-                    if (result.length > 0) {
-                        return result[0].email;
-                    }
-                }
-                // otherwise use Gitea's primary email as Gitpod's primary email
-                return emails.filter(e => e.primary)[0].email;
-            };
+     }
 
-            return <AuthUserSetup>{
-                authUser: {
-                    authId: String(id),
-                    authName: login,
-                    avatarUrl: avatar_url,
-                    name,
-                    primaryEmail: filterPrimaryEmail(userEmails)
-                },
-                currentScopes
-            }
+     protected readScopesFromVerifyParams(params: any) {
+         if (params && typeof params.scope === 'string') {
+             return this.normalizeScopes(params.scope.split(' '));
+         }
+         return [];
+     }
 
-        } catch (error) {
-            log.error(`(${this.strategyName}) Reading current user info failed`, error, { accessToken, error });
-            throw error;
-        }
-    }
+     protected normalizeScopes(scopes: string[]) {
+         const set = new Set(scopes);
+         return Array.from(set).sort();
+     }
 
-    protected normalizeScopes(scopes: string[]) {
-        const set = new Set(scopes);
-        if (set.has('repo')) {
-            set.add('public_repo');
-        }
-        if (set.has('user')) {
-            set.add('user:email');
-        }
-        return Array.from(set).sort();
-    }
-
-}
+ }

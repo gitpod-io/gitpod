@@ -6,12 +6,12 @@
 
 import { inject, injectable } from "inversify";
 import { CheckWriteAccessResult, IGitTokenValidator, IGitTokenValidatorParams } from "../workspace/git-token-validator";
-import { GiteaApiError, GiteaRestApi, GiteaResult } from "./api";
+import { Gitea, GiteaRestApi } from "./api";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class GiteaTokenValidator implements IGitTokenValidator {
-	@inject(GiteaRestApi) githubRestApi: GiteaRestApi;
+	@inject(GiteaRestApi) giteaApi: GiteaRestApi;
 
 	async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult> {
 
@@ -21,58 +21,23 @@ export class GiteaTokenValidator implements IGitTokenValidator {
 		if (!parsedRepoName) {
 			throw new Error(`Could not parse repo name: ${repoFullName}`);
 		}
-		let repo;
-		try {
-			repo = await this.githubRestApi.run(token, api => api.repos.get(parsedRepoName));
-		} catch (error) {
-			if (GiteaApiError.is(error) && error.response?.status === 404) {
-				return { found: false };
-			}
-			log.error('Error getting repo information from Gitea', error, { repoFullName, parsedRepoName })
-			return { found: false, error };
+		const repo = await this.giteaApi.run<Gitea.Repository>(token, api => api.repos.repoGet(parsedRepoName.owner, parsedRepoName.repo));
+		if (Gitea.ApiError.is(repo) && Gitea.ApiError.isNotFound(repo)) {
+			return { found: false };
+		} else if (Gitea.ApiError.is(repo)) {
+			log.error('Error getting repo information from Gitea', repo, { repoFullName, parsedRepoName })
+			return { found: false, error: repo };
 		}
 
-		const mayWritePrivate = GiteaResult.mayWritePrivate(repo);
-		const mayWritePublic = GiteaResult.mayWritePublic(repo);
+		const isPrivateRepo = repo.private;
+		let writeAccessToRepo = repo.permissions?.push;
 
-		const isPrivateRepo = repo.data.private;
-		let writeAccessToRepo = repo.data.permissions?.push;
-		const inOrg = repo.data.owner?.type === "Organization";
-
-		if (inOrg) {
-			// if this repository belongs to an organization and Gitpod is not authorized,
-			// we're not allowed to list repositories using this a token issues for
-			// Gitpod's OAuth App.
-
-			const request = {
-				query: `
-				query {
-					organization(login: "${parsedRepoName.owner}") {
-						repositories(first: 1) {
-							totalCount
-						}
-					}
-				}
-				`.trim()
-			};
-			try {
-				await this.githubGraphQLEndpoint.runQueryWithToken(token, request)
-			} catch (error) {
-				const errors = error.result?.errors;
-				if (errors && errors[0] && (errors[0] as any)["type"] === "FORBIDDEN") {
-					writeAccessToRepo = false;
-				} else {
-					log.error('Error getting organization information from Gitea', error, { org: parsedRepoName.owner })
-					throw error;
-				}
-			}
-		}
 		return {
 			found: true,
 			isPrivateRepo,
 			writeAccessToRepo,
-			mayWritePrivate,
-			mayWritePublic
+			mayWritePrivate: true,
+			mayWritePublic: true
 		}
 	}
 

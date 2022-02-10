@@ -4,477 +4,389 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from 'inversify';
+ import { injectable, inject } from 'inversify';
 
-import { Repository, PullRequestContext, NavigatorContext, IssueContext, User, CommitContext, RefType } from '@gitpod/gitpod-protocol';
-import { GiteaGraphQlEndpoint } from './api';
-import { NotFoundError, UnauthorizedError } from '../errors';
-import { log, LogContext, LogPayload } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { IContextParser, IssueContexts, AbstractContextParser } from '../workspace/context-parser';
-import { GiteaScope } from './scopes';
-import { GiteaTokenHelper } from './gitea-token-helper';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+ import { NavigatorContext, User, CommitContext, Repository, PullRequestContext, IssueContext, RefType } from '@gitpod/gitpod-protocol';
+ import { GiteaRestApi, Gitea } from './api';
+ import { UnauthorizedError, NotFoundError } from '../errors';
+ import { GiteaScope } from './scopes';
+ import { IContextParser, IssueContexts, AbstractContextParser } from '../workspace/context-parser';
+ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+ import { GiteaTokenHelper } from './gitea-token-helper';
+ import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+ const path = require('path');
+import { convertRepo } from './convert';
 
-@injectable()
-export class GiteaContextParser extends AbstractContextParser implements IContextParser {
+ @injectable()
+ export class GiteaContextParser extends AbstractContextParser implements IContextParser {
 
-    @inject(GiteaGraphQlEndpoint) protected readonly githubQueryApi: GiteaGraphQlEndpoint;
-    @inject(GiteaTokenHelper) protected readonly tokenHelper: GiteaTokenHelper;
+     @inject(GiteaRestApi) protected readonly giteaApi: GiteaRestApi;
+     @inject(GiteaTokenHelper) protected readonly tokenHelper: GiteaTokenHelper;
 
-    protected get authProviderId() {
-        return this.config.id;
-    }
+     protected get authProviderId() {
+         return this.config.id;
+     }
 
-    public async handle(ctx: TraceContext, user: User, contextUrl: string): Promise<CommitContext> {
-        const span = TraceContext.startSpan("GiteaContextParser.handle", ctx);
+     public async handle(ctx: TraceContext, user: User, contextUrl: string): Promise<CommitContext> {
+         const span = TraceContext.startSpan("GitlabContextParser", ctx);
+         span.setTag("contextUrl", contextUrl);
 
-        try {
-            const { host, owner, repoName, moreSegments } = await this.parseURL(user, contextUrl);
-            if (moreSegments.length > 0) {
-                switch (moreSegments[0]) {
-                    case 'pull': {
-                        return await this.handlePullRequestContext({span}, user, host, owner, repoName, parseInt(moreSegments[1], 10));
-                    }
-                    case 'tree':
-                    case 'blob':
-                    case 'commits': {
-                        return await this.handleTreeContext({span}, user, host, owner, repoName, moreSegments.slice(1));
-                    }
-                    case 'releases': {
-                        if (moreSegments.length > 1 && moreSegments[1] === "tag") {
-                            return await this.handleTreeContext({ span }, user, host, owner, repoName, moreSegments.slice(2));
-                        }
-                        break;
-                    }
-                    case 'issues': {
-                        const issueNr = parseInt(moreSegments[1], 10);
-                        if (isNaN(issueNr))
-                            break;
-                        return await this.handleIssueContext({span}, user, host, owner, repoName, issueNr);
-                    }
-                    case 'commit': {
-                        return await this.handleCommitContext({span}, user, host, owner, repoName, moreSegments[1]);
-                    }
+         try {
+             const { host, owner, repoName, moreSegments } = await this.parseURL(user, contextUrl);
+             if (moreSegments.length > 0) {
+                 switch (moreSegments[0]) {
+                     case 'merge_requests': {
+                         return await this.handlePullRequestContext(user, host, owner, repoName, parseInt(moreSegments[1]));
+                     }
+                     case 'tree':
+                     case 'blob':
+                     case 'commits': {
+                         return await this.handleTreeContext(user, host, owner, repoName, moreSegments.slice(1));
+                     }
+                     case 'issues': {
+                         return await this.handleIssueContext(user, host, owner, repoName, parseInt(moreSegments[1]));
+                     }
+                     case 'commit': {
+                         return await this.handleCommitContext(user, host, owner, repoName, moreSegments[1]);
+                     }
+                 }
+             }
+
+             return await this.handleDefaultContext(user, host, owner, repoName);
+         } catch (error) {
+             if (error && error.code === 401) {
+                 const token = await this.tokenHelper.getCurrentToken(user);
+                 if (token) {
+                     const scopes = token.scopes;
+                     // most likely the token needs to be updated after revoking by user.
+                     throw UnauthorizedError.create(this.config.host, scopes, "http-unauthorized");
+                 }
+                 throw UnauthorizedError.create(this.config.host, GiteaScope.Requirements.DEFAULT);
+             }
+             throw error;
+         } finally {
+             span.finish();
+         }
+     }
+
+     // https://gitlab.com/AlexTugarev/gp-test
+     protected async handleDefaultContext(user: User, host: string, owner: string, repoName: string): Promise<NavigatorContext> {
+         try {
+             const repository = await this.fetchRepo(user, owner, repoName);
+             if (!repository.defaultBranch) {
+                 return <NavigatorContext>{
+                     isFile: false,
+                     path: '',
+                     title: `${owner}/${repoName}`,
+                     repository
+                 }
+             }
+
+             try {
+                 const branchOrTag = await this.getBranchOrTag(user, owner, repoName, [repository.defaultBranch!]);
+                 return <NavigatorContext>{
+                     isFile: false,
+                     path: '',
+                     title: `${owner}/${repoName} - ${branchOrTag.name}`,
+                     ref: branchOrTag.name,
+                     revision: branchOrTag.revision,
+                     refType: branchOrTag.type,
+                     repository
+                 };
+             } catch (error) {
+                 if (error && error.message && (error.message as string).startsWith("Cannot find tag/branch for context")) {
+                     // the repo is empty (has no branches)
+                     return <NavigatorContext>{
+                         isFile: false,
+                         path: '',
+                         title: `${owner}/${repoName} - ${repository.defaultBranch}`,
+                         revision: '',
+                         repository
+                     }
+                 } else {
+                     throw error;
+                 }
+             }
+         } catch (error) {
+             if (UnauthorizedError.is(error)) {
+                 throw error;
+             }
+             // log.error({ userId: user.id }, error);
+             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+         }
+     }
+
+     // https://gitlab.com/AlexTugarev/gp-test/tree/wip
+     // https://gitlab.com/AlexTugarev/gp-test/tree/wip/folder
+     // https://gitlab.com/AlexTugarev/gp-test/blob/wip/folder/empty.file.jpeg
+     protected async handleTreeContext(user: User, host: string, owner: string, repoName: string, segments: string[]): Promise<NavigatorContext> {
+
+         try {
+             const branchOrTagPromise = segments.length > 0 ? this.getBranchOrTag(user, owner, repoName, segments) : undefined;
+             const repository = await this.fetchRepo(user, owner, repoName);
+             const branchOrTag = await branchOrTagPromise;
+             const context = <NavigatorContext>{
+                 isFile: false,
+                 path: '',
+                 title: `${owner}/${repoName}` + (branchOrTag ? ` - ${branchOrTag.name}` : ''),
+                 ref: branchOrTag && branchOrTag.name,
+                 revision: branchOrTag && branchOrTag.revision,
+                 refType: branchOrTag && branchOrTag.type,
+                 repository
+             };
+             if (!branchOrTag) {
+                 return context;
+             }
+             if (segments.length === 1 || branchOrTag.fullPath.length === 0) {
+                 return context;
+             }
+
+             const result = await this.giteaApi.run<Gitea.ContentsResponse[]>(user, async g => {
+                 return g.repos.repoGetContents(owner, repoName, path.dirname(branchOrTag.fullPath), { ref: branchOrTag.name });
+             });
+             if (Gitea.ApiError.is(result)) {
+                 throw new Error(`Error reading TREE ${owner}/${repoName}/tree/${segments.join('/')}: ${result}`);
+             } else {
+                 const object = result.find(o => o.path === branchOrTag.fullPath);
+                 if (object) {
+                     const isFile = object.type === "blob";
+                     context.isFile = isFile;
+                     context.path = branchOrTag.fullPath;
+                 }
+             }
+             return context;
+         } catch (e) {
+             log.debug("Gitea context parser: Error handle tree context.", e);
+             throw e;
+         }
+     }
+
+     protected async getBranchOrTag(user: User, owner: string, repoName: string, segments: string[]): Promise<{ type: RefType, name: string, revision: string, fullPath: string }> {
+
+         let branchOrTagObject: { type: RefType, name: string, revision: string } | undefined = undefined;
+
+         // `segments` could have branch/tag name parts as well as file path parts.
+         // We never know which segments belong to the branch/tag name and which are already folder names.
+         // Here we generate a list of candidates for branch/tag names.
+         const branchOrTagCandidates: string[] = [];
+         // Try the concatination of all segments first.
+         branchOrTagCandidates.push(segments.join("/"));
+         // Then all subsets.
+         for (let i = 1; i < segments.length; i++) {
+             branchOrTagCandidates.push(segments.slice(0, i).join("/"));
+         }
+
+         for (const candidate of branchOrTagCandidates) {
+
+             // Check if there is a BRANCH with name `candidate`:
+             const possibleBranch = await this.giteaApi.run<Gitea.Branch>(user, async g => {
+                 return g.repos.repoGetBranch(owner, repoName, candidate);
+             });
+             // If the branch does not exist, the Gitea API returns with NotFound or InternalServerError.
+             const isNotFoundBranch = Gitea.ApiError.is(possibleBranch) && (Gitea.ApiError.isNotFound(possibleBranch) || Gitea.ApiError.isInternalServerError(possibleBranch));
+             if (!isNotFoundBranch) {
+                if (Gitea.ApiError.is(possibleBranch)) {
+                    throw new Error(`Gitea ApiError on searching for possible branches for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleBranch}`);
                 }
-            }
-            return await this.handleDefaultContext({span}, user, host, owner, repoName);
-        } catch (error) {
-            if (error && error.code === 401) {
-                const token = await this.tokenHelper.getCurrentToken(user);
-                if (token) {
-                    const scopes = token.scopes;
-                    // most likely the token needs to be updated after revoking by user.
-                    throw UnauthorizedError.create(this.config.host, scopes, "http-unauthorized");
-                }
-                // todo@alex: this is very unlikely. is coercing it into a valid case helpful?
-                // here, GH API responded with a 401 code, and we are missing a token. OTOH, a missing token would not lead to a request.
-                throw UnauthorizedError.create(this.config.host, GiteaScope.Requirements.PUBLIC_REPO, "missing-identity");
-            }
-            throw error;
-        } finally {
-            span.finish();
-        }
-    }
 
-    protected async handleDefaultContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string): Promise<NavigatorContext> {
-        const span = TraceContext.startSpan("GiteaContextParser.handleDefaultContext", ctx);
-
-        try {
-            const result: any = await this.githubQueryApi.runQuery(user, `
-                query {
-                    repository(name: "${repoName}", owner: "${owner}") {
-                        ${this.repoProperties()}
-                        defaultBranchRef {
-                            name,
-                            target {
-                                oid
-                            }
-                        },
-                    }
-                }
-            `);
-            span.log({"request.finished": ""});
-
-            if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
-            }
-            const defaultBranch = result.data.repository.defaultBranchRef;
-            const ref = defaultBranch && defaultBranch.name || undefined;
-            const refType = ref ? "branch" : undefined;
-            return {
-                isFile: false,
-                path: '',
-                title: `${owner}/${repoName} ${defaultBranch ? '- ' + defaultBranch.name : ''}`,
-                ref,
-                refType,
-                revision: defaultBranch && defaultBranch.target.oid || '',
-                repository: this.toRepository(host, result.data.repository)
-            }
-        } catch (e) {
-            span.log({error: e});
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
-    protected async handleTreeContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, segments: string[]): Promise<NavigatorContext> {
-        const span = TraceContext.startSpan("handleTreeContext", ctx);
-
-        try {
-            if (segments.length === 0) {
-                return this.handleDefaultContext({span}, user, host, owner, repoName);
-            }
-
-            for (let i = 1; i <= segments.length; i++) {
-                const branchNameOrCommitHash = decodeURIComponent(segments.slice(0, i).join('/'));
-                const couldBeHash = i === 1;
-                const path = decodeURIComponent(segments.slice(i).join('/'));
-                // Sanitize path expression to prevent GraphQL injections (e.g. escape any `"` or `\n`).
-                const pathExpression = JSON.stringify(`${branchNameOrCommitHash}:${path}`);
-                const result: any = await this.githubQueryApi.runQuery(user, `
-                    query {
-                        repository(name: "${repoName}", owner: "${owner}") {
-                            ${this.repoProperties()}
-                            path: object(expression: ${pathExpression}) {
-                                ... on Blob {
-                                    oid
-                                }
-                            }
-                            commit: object(expression: "${branchNameOrCommitHash}") {
-                                oid
-                            }
-                            ref(qualifiedName: "${branchNameOrCommitHash}") {
-                                name
-                                prefix
-                                target {
-                                    oid
-                                }
-                            }
-                        }
-                    }
-                `);
-                span.log({"request.finished": ""});
-
-                const repo = result.data.repository;
-                if (repo === null) {
-                    throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                if (!possibleBranch.commit?.id || !possibleBranch.name) {
+                    throw new Error(`Gitea ApiError on searching for possible branches for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleBranch}`);
                 }
 
-                const isFile = !!(repo.path && repo.path.oid);
-                const repository = this.toRepository(host, repo);
-                if (repo.ref !== null) {
-                    return {
-                        ref: repo.ref.name,
-                        refType: this.toRefType({ userId: user.id }, { host, owner, repoName }, repo.ref.prefix),
-                        isFile,
-                        path,
-                        title: `${owner}/${repoName} - ${repo.ref.name}`,
-                        revision: repo.ref.target.oid,
-                        repository
-                    };
+                branchOrTagObject = { type: 'branch', name: possibleBranch.name, revision: possibleBranch.commit.id };
+                break;
+             }
+
+             // Check if there is a TAG with name `candidate`:
+             const possibleTag = await this.giteaApi.run<Gitea.Tag>(user, async g => {
+                 return g.repos.repoGetTag(owner, repoName, candidate);
+             });
+             // If the tag does not exist, the GitLab API returns with NotFound or InternalServerError.
+             const isNotFoundTag = Gitea.ApiError.is(possibleTag) && (Gitea.ApiError.isNotFound(possibleTag) || Gitea.ApiError.isInternalServerError(possibleTag));
+             if (!isNotFoundTag) {
+                if (Gitea.ApiError.is(possibleTag)) {
+                    throw new Error(`GitLab ApiError on searching for possible tags for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleTag}`);
                 }
-                if (couldBeHash && repo.commit !== null) {
-                    const revision = repo.commit.oid as string;
-                    const shortRevision = revision.substr(0, 8);
-                    return {
-                        isFile,
-                        path,
-                        title: `${owner}/${repoName} - ${shortRevision}:${path}`,
-                        revision,
-                        repository
-                    };
+
+                if (!possibleTag.commit?.sha || !possibleTag.name) {
+                    throw new Error(`Gitea ApiError on searching for possible branches for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleBranch}`);
                 }
-            }
-            throw new Error(`Couldn't find branch and path for ${segments.join('/')} in repo ${owner}/${repoName}.`);
-        } catch (e) {
-            span.log({error: e});
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
 
-    protected toRefType(logCtx: LogContext, logPayload: LogPayload, refPrefix: string): RefType {
-        switch (refPrefix) {
-            case 'refs/tags/': {
-                return 'tag';
-            }
-            case 'refs/heads/': {
-                return 'branch';
-            }
-            default: {
-                log.warn(logCtx, "Unexpected refPrefix: " + refPrefix, logPayload);
-                return 'branch';
-            }
-        }
-    }
+                branchOrTagObject = { type: 'tag', name: possibleTag.name, revision: possibleTag.commit.sha };
+                break;
+             }
+         }
 
-    protected async handleCommitContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, sha: string): Promise<NavigatorContext> {
-        const span = TraceContext.startSpan("handleCommitContext", ctx);
+         // There seems to be no matching branch or tag.
+         if (branchOrTagObject === undefined) {
+             log.debug(`Cannot find tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`,
+                 { branchOrTagCandidates }
+             );
+             throw new Error(`Cannot find tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`);
+         }
 
-        if (sha.length != 40) {
-            throw new Error(`Invalid commit ID ${sha}.`);
-        }
+         const remainingSegmentsIndex = branchOrTagObject.name.split('/').length;
+         const fullPath = decodeURIComponent(segments.slice(remainingSegmentsIndex).filter(s => s.length > 0).join('/'));
 
-        try {
-            const result: any = await this.githubQueryApi.runQuery(user, `
-                query {
-                    repository(name: "${repoName}", owner: "${owner}") {
-                        object(oid: "${sha}") {
-                            oid,
-                            ... on Commit {
-                                messageHeadline
-                            }
-                        }
-                        ${this.repoProperties()}
-                        defaultBranchRef {
-                            name,
-                            target {
-                                oid
-                            }
-                        },
-                    }
-                }
-            `);
-            span.log({"request.finished": ""});
+         return { ...branchOrTagObject, fullPath };
+     }
 
-            if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
-            }
+     // https://gitlab.com/AlexTugarev/gp-test/merge_requests/1
+     protected async handlePullRequestContext(user: User, host: string, owner: string, repoName: string, nr: number): Promise<PullRequestContext> {
+         const result = await this.giteaApi.run<Gitea.PullRequest>(user, async g => {
+             return g.repos.repoGetPullRequest(owner, repoName, nr);
+         });
+         if (Gitea.ApiError.is(result)) {
+             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+         }
 
-            const commit = result.data.repository.object;
-            if (commit === null || commit.message === null) {
-                throw new Error(`Couldn't find commit ${sha} in repository ${owner}/${repoName}.`);
-            }
-
-            return <NavigatorContext>{
-                path: '',
-                ref: '',
-                refType: 'revision',
-                isFile: false,
-                title: `${owner}/${repoName} - ${commit.messageHeadline}`,
-                owner,
-                revision: sha,
-                repository: this.toRepository(host, result.data.repository),
-            };
-        } catch (e) {
-            span.log({"error": e});
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
-    protected async handlePullRequestContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, pullRequestNr: number, tryIssueContext: boolean = true): Promise<IssueContext | PullRequestContext> {
-        const span = TraceContext.startSpan("handlePullRequestContext", ctx);
-
-        try {
-            const result: any = await this.githubQueryApi.runQuery(user, `
-                query {
-                    repository(name: "${repoName}", owner: "${owner}") {
-                        pullRequest(number: ${pullRequestNr}) {
-                            title
-                            headRef {
-                                name
-                                repository {
-                                    ${this.repoProperties()}
-                                }
-                                target {
-                                    oid
-                                }
-                            }
-                            baseRef {
-                                name
-                                repository {
-                                    ${this.repoProperties()}
-                                }
-                                target {
-                                    oid
-                                }
-                            }
-                        }
-                    }
-                }
-            `);
-            span.log({"request.finished": ""});
-
-            if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
-            }
-            const pr = result.data.repository.pullRequest;
-            if (pr === null) {
-                log.info(`PR ${owner}/${repoName}/pull/${pullRequestNr} not found. Trying issue context.`);
-                if (tryIssueContext) {
-                    return this.handleIssueContext({span}, user, host, owner, repoName, pullRequestNr, false);
-                } else {
-                    throw new Error(`Could not find issue or pull request #${pullRequestNr} in repository ${owner}/${repoName}.`)
-                }
-            }
-            if (pr.headRef === null) {
-                throw new Error(`Could not open pull request ${owner}/${repoName}#${pullRequestNr}. Source branch may have been removed.`);
-            }
-            return <PullRequestContext>{
-                title: pr.title,
-                repository: this.toRepository(host, pr.headRef.repository),
-                ref: pr.headRef.name,
-                refType: "branch",
-                revision: pr.headRef.target.oid,
-                nr: pullRequestNr,
-                base: {
-                    repository: this.toRepository(host, pr.baseRef.repository),
-                    ref: pr.baseRef.name,
-                    refType: "branch",
-                }
-            };
-        } catch (e) {
-            span.log({"error": e});
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
-    protected async handleIssueContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, issueNr: number, tryPullrequestContext: boolean = true): Promise<IssueContext | PullRequestContext> {
-        const span = TraceContext.startSpan("handleIssueContext", ctx);
-
-        try {
-            const result: any = await this.githubQueryApi.runQuery(user, `
-                query {
-                    repository(name: "${repoName}", owner: "${owner}") {
-                        issue(number: ${issueNr}) {
-                            title
-                        }
-                        ${this.repoProperties()}
-                        defaultBranchRef {
-                            name,
-                            target {
-                                oid
-                            }
-                        },
-                    }
-                }
-            `);
-            span.log({"request.finished": ""});
-
-            if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
-            }
-            const issue = result.data.repository.issue;
-            if (issue === null) {
-                if (tryPullrequestContext) {
-                    log.info(`Issue ${owner}/${repoName}/issues/${issueNr} not found. Trying issue context.`);
-                    return this.handlePullRequestContext({span}, user, host, owner, repoName, issueNr, false);
-                } else {
-                    throw new Error(`Couldn't find issue or pull request #${issueNr} in repository ${owner}/${repoName}.`)
-                }
-            }
-            const branchRef = result.data.repository.defaultBranchRef;
-            const ref = branchRef && branchRef.name || undefined;
-            const refType = ref ? "branch" : undefined;
-
-
-            return <IssueContext>{
-                title: result.data.repository.issue.title,
-                owner,
-                nr: issueNr,
-                localBranch: IssueContexts.toBranchName(user, result.data.repository.issue.title as string || '', issueNr),
-                ref,
-                refType,
-                revision: branchRef && branchRef.target.oid || '',
-                repository: this.toRepository(host, result.data.repository)
-            };
-        } catch (e) {
-            span.log({error: e});
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
-    protected toRepository(host: string, repoQueryResult: any): Repository {
-        if (repoQueryResult === null) {
-            throw new Error('Unknown repository.');
-        }
-        const result: Repository = {
-            cloneUrl: repoQueryResult.url + '.git',
-            host,
-            name: repoQueryResult.name,
-            owner: repoQueryResult.owner.login,
-            private: !!repoQueryResult.isPrivate
-        }
-        if (repoQueryResult.parent !== null) {
-            result.fork = {
-                parent: this.toRepository(host, repoQueryResult.parent)
-            };
+         if (!result.base?.repo || !result.head?.repo || !result.title) {
+            throw new Error(`Missing relevant commit information for pull-request ${nr} from repository ${owner}/${repoName}`);
         }
 
-        return result;
-    }
+         const sourceRepo = convertRepo(result.head?.repo);
+         const targetRepo = convertRepo(result.base?.repo);
 
-    protected repoProperties(parents: number = 10): string {
-        return `
-            name,
-            owner {
-                login
+         const  U = <PullRequestContext>{
+            title: result.title,
+            repository: sourceRepo,
+            ref: result.head.ref,
+            refType: 'branch',
+            revision: result.head.sha,
+            nr,
+            base: {
+                repository: targetRepo,
+                ref: result.base.ref,
+                refType: 'branch',
             }
-            url,
-            isPrivate,
-            ${parents > 0 ? `parent {
-                ${this.repoProperties(parents - 1)}
-            }` : ''}
-        `;
-    }
-
-    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[]> {
-        const span = TraceContext.startSpan("GiteaContextParser.fetchCommitHistory", ctx);
-
-        try {
-            if (sha.length != 40) {
-                throw new Error(`Invalid commit ID ${sha}.`);
-            }
-
-            // TODO(janx): To get more results than Gitea API's max page size (seems to be 100), pagination should be handled.
-            // These additional history properties may be helfpul:
-            //     totalCount,
-            //     pageInfo {
-            //         haxNextPage,
-            //     },
-            const { owner, repoName } = await this.parseURL(user, contextUrl);
-            const result: any = await this.githubQueryApi.runQuery(user, `
-                query {
-                    repository(name: "${repoName}", owner: "${owner}") {
-                        object(oid: "${sha}") {
-                            ... on Commit {
-                                history(first: ${maxDepth}) {
-                                    edges {
-                                        node {
-                                            oid
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            `);
-            span.log({"request.finished": ""});
-
-            if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
-            }
-
-            const commit = result.data.repository.object;
-            if (commit === null) {
-                throw new Error(`Couldn't find commit ${sha} in repository ${owner}/${repoName}.`);
-            }
-
-            return commit.history.edges.slice(1).map((e: any) => e.node.oid) || [];
-        } catch (e) {
-            span.log({"error": e});
-            throw e;
-        } finally {
-            span.finish();
         }
-    }
-}
+
+         return U;
+     }
+
+     protected async fetchRepo(user: User, owner: string, repoName: string): Promise<Repository> {
+         // host might be a relative URL
+         const host = this.host; // as per contract, cf. `canHandle(user, contextURL)`
+
+         const result = await this.giteaApi.run<Gitea.Repository>(user, async g => {
+             return g.repos.repoGet(owner, repoName);
+         });
+         if (Gitea.ApiError.is(result)) {
+             throw result;
+         }
+         const repo = <Repository>{
+             host,
+             name: repoName,
+             owner: owner,
+             cloneUrl: result.clone_url,
+             defaultBranch: result.default_branch,
+             private: result.private
+         }
+         // TODO: support forks
+         //  if (result.fork) {
+        //      // host might be a relative URL, let's compute the prefix
+        //      const url = new URL(forked_from_project.http_url_to_repo.split(forked_from_project.namespace.full_path)[0]);
+        //      const relativePath = url.pathname.slice(1); // hint: pathname always starts with `/`
+        //      const host = relativePath ? `${url.hostname}/${relativePath}` : url.hostname;
+
+        //      repo.fork = {
+        //          parent: {
+        //              name: forked_from_project.path,
+        //              host,
+        //              owner: forked_from_project.namespace.full_path,
+        //              cloneUrl: forked_from_project.http_url_to_repo,
+        //              defaultBranch: forked_from_project.default_branch
+        //          }
+        //      }
+        //  }
+         return repo;
+     }
+
+     protected async fetchCommit(user: User, owner: string, repoName: string, sha: string) {
+         const result = await this.giteaApi.run<Gitea.Commit>(user, async g => {
+             return g.repos.repoGetSingleCommit(owner, repoName, sha);
+         });
+         if (Gitea.ApiError.is(result)) {
+             if (result.message === 'GitLab responded with code 404') {
+                 throw new Error(`Couldn't find commit #${sha} in repository ${owner}/${repoName}.`);
+             }
+             throw result;
+         }
+
+         if (!result.sha || !result.commit?.message) {
+            throw new Error(`The commit does not have all needed data ${owner}/${repoName}.`);
+         }
+
+         return {
+             id: result.sha, // TODO: how can we use a proper commit-id instead of the sha
+             title: result.commit?.message
+         }
+     }
+
+     // https://gitlab.com/AlexTugarev/gp-test/issues/1
+     protected async handleIssueContext(user: User, host: string, owner: string, repoName: string, nr: number): Promise<IssueContext> {
+         const ctxPromise = this.handleDefaultContext(user, host, owner, repoName);
+         const result = await this.giteaApi.run<Gitea.Issue>(user, async g => {
+             return g.repos.issueGetIssue(owner, repoName, nr);
+         });
+         if (Gitea.ApiError.is(result) || !result.title || !result.id) {
+             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+         }
+         const context = await ctxPromise;
+         return <IssueContext>{
+             ... context,
+             title: result.title,
+             owner,
+             nr,
+             localBranch: IssueContexts.toBranchName(user, result.title, result.id)
+         };
+     }
+
+     // https://gitlab.com/AlexTugarev/gp-test/-/commit/80948e8cc8f0e851e89a10bc7c2ee234d1a5fbe7
+     protected async handleCommitContext(user: User, host: string, owner: string, repoName: string, sha: string): Promise<NavigatorContext> {
+         const repository = await this.fetchRepo(user, owner, repoName);
+         if (Gitea.ApiError.is(repository)) {
+             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+         }
+         const commit = await this.fetchCommit(user, owner, repoName, sha);
+         if (Gitea.ApiError.is(commit)) {
+             throw new Error(`Couldn't find commit #${sha} in repository ${owner}/${repoName}.`);
+         }
+         return <NavigatorContext>{
+             path: '',
+             ref: '',
+             refType: 'revision',
+             isFile: false,
+             title: `${owner}/${repoName} - ${commit.title}`,
+             owner,
+             revision: sha,
+             repository,
+         };
+     }
+
+     public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[]> {
+         // TODO(janx): To get more results than Gitea API's max per_page (seems to be 100), pagination should be handled.
+         const { owner, repoName } = await this.parseURL(user, contextUrl);
+         const result = await this.giteaApi.run<Gitea.Commit[]>(user, async g => {
+             return g.repos.repoGetAllCommits(owner, repoName, {
+                 sha,
+                 limit: maxDepth,
+                 page: 1,
+             });
+         });
+         if (Gitea.ApiError.is(result)) {
+             if (result.message === 'Gitea responded with code 404') {
+                 throw new Error(`Couldn't find commit #${sha} in repository ${owner}/${repoName}.`);
+             }
+             throw result;
+         }
+         return result.slice(1).map((c) => {
+             // TODO: how can we use a proper commit-id instead of the sha
+            if (!c.sha) {
+                throw new Error(`Commit #${sha} does not have commit.`);
+            }
+
+            return c.sha;
+        });
+     }
+ }

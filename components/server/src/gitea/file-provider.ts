@@ -8,8 +8,7 @@ import { injectable, inject } from 'inversify';
 
 import { FileProvider, MaybeContent } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol"
-import { GiteaRestApi } from "./api";
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { Gitea, GiteaRestApi } from "./api";
 
 @injectable()
 export class GiteaFileProvider implements FileProvider {
@@ -25,32 +24,34 @@ export class GiteaFileProvider implements FileProvider {
     }
 
     public async getLastChangeRevision(repository: Repository, revisionOrBranch: string, user: User, path: string): Promise<string> {
-        const commits = (await this.giteaApi.run(user, (gh) => gh.repos.listCommits({
-            owner: repository.owner,
-            repo: repository.name,
+        const commits = (await this.giteaApi.run<Gitea.Commit[]>(user, (api) => api.repos.repoGetAllCommits(repository.owner, repository.name, {
             sha: revisionOrBranch,
-            // per_page: 1, // we need just the last one right?
+            limit: 1, // we need just the last one right?
             path
-        }))).data;
+        })));
 
-        const lastCommit = commits && commits[0];
-        if (!lastCommit) {
+        if (Gitea.ApiError.is(commits) || commits.length === 0) {
             throw new Error(`File ${path} does not exist in repository ${repository.owner}/${repository.name}`);
         }
 
-        return lastCommit.sha;
+        const sha = commits[0].sha;
+        if (!sha) {
+            throw new Error(`File ${path} in repository ${repository.owner}/${repository.name} has no char. Is it a folder?`);
+        }
+
+        return sha;
     }
 
-    public async getFileContent(commit: Commit, user: User, path: string) {
+    public async getFileContent(commit: Commit, user: User, path: string): Promise<MaybeContent> {
         if (!commit.revision) {
             return undefined;
         }
 
-        try {
-            const contents = await this.giteaApi.getFileContents(user, commit.repository.owner, commit.repository.name, commit.revision, path);
-            return contents;
-        } catch (err) {
-            log.error(err);
+        const contents = await this.giteaApi.run<string>(user, api => api.repos.repoGetRawFile(commit.repository.owner, commit.repository.name, path, { ref: commit.revision }))
+        if (Gitea.ApiError.is(contents)) {
+            return undefined; // e.g. 404 error, because the file isn't found
         }
+
+        return contents;
     }
 }

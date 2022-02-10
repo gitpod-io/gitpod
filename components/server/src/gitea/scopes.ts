@@ -6,22 +6,16 @@
 
 
 export namespace GiteaScope {
-    export const EMAIL = "user:email";
-    export const READ_USER = "read:user";
-    export const PUBLIC = "public_repo";
-    export const PRIVATE = "repo";
-    export const ORGS = "read:org";
-    export const WORKFLOW = "workflow";
-
-    export const All = [EMAIL, READ_USER, PUBLIC, PRIVATE, ORGS, WORKFLOW];
+    // TODO: currently Gitea does not support scopes (https://github.com/go-gitea/gitea/issues/4300)
+    export const All = [];
     export const Requirements = {
         /**
          * Minimal required permission.
          * Gitea's API is not restricted any further.
          */
-        DEFAULT: [EMAIL],
+        DEFAULT: [],
 
-        PUBLIC_REPO: [PUBLIC],
-        PRIVATE_REPO: [PRIVATE],
+        PUBLIC_REPO: [],
+        PRIVATE_REPO: [],
     }
 }

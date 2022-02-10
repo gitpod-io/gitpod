@@ -42,9 +42,6 @@ export class GiteaTokenHelper {
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const wantedSet = new Set(wantedScopes);
         const currentScopes = [...token.scopes];
-        if (currentScopes.some(s => s === GiteaScope.PRIVATE)) {
-            currentScopes.push(GiteaScope.PUBLIC); // normalize private_repo, which includes public_repo
-        }
         currentScopes.forEach(s => wantedSet.delete(s));
         return wantedSet.size === 0;
     }

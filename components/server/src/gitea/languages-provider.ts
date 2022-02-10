@@ -7,7 +7,7 @@
 import { injectable, inject } from 'inversify';
 
 import { User, Repository } from "@gitpod/gitpod-protocol"
-import { GiteaRestApi } from "./api";
+import { Gitea, GiteaRestApi } from "./api";
 import { LanguagesProvider } from '../repohost/languages-provider';
 
 @injectable()
@@ -16,8 +16,12 @@ export class GiteaLanguagesProvider implements LanguagesProvider {
     @inject(GiteaRestApi) protected readonly gitea: GiteaRestApi;
 
     async getLanguages(repository: Repository, user: User): Promise<object> {
-        const languages = await this.gitea.run<object>(user, (gitea) => gitea.repos.listLanguages({ owner: repository.owner, repo: repository.name }));
+        const languages = await this.gitea.run<object>(user, (gitea) => gitea.repos.repoGetLanguages(repository.owner, repository.name ));
 
-        return languages.data;
+        if (Gitea.ApiError.is(languages)) {
+            throw new Error(`Can\' get languages from repository ${repository.owner}/${repository.name}`);
+        }
+
+        return languages;
     }
 }
