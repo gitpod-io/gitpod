@@ -39,6 +39,7 @@ export interface PreviewEnvironmentConfig {
 export interface Repository {
     owner: string;
     repo: string;
+    ref: string;
     branch: string;
 }
 
@@ -94,6 +95,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
+        ref: context.Repository.ref,
         branch: context.Repository.ref,
     }
 

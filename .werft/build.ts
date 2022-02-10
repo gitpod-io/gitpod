@@ -46,7 +46,7 @@ async function run(context: any) {
 
     await validateChanges(werft)
     await prepare(werft)
-    await buildAndPublish(werft, config, context.Repository.ref)
+    await buildAndPublish(werft, config)
     await coverage(werft, config)
 
     if (config.noPreview) {

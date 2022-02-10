@@ -5,7 +5,7 @@ import { GCLOUD_SERVICE_ACCOUNT_PATH } from './const';
 import { JobConfig } from './job-config';
 
 
-export async function buildAndPublish(werft: Werft, jobConfig: JobConfig, releaseBranch: string) {
+export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
 
     const {
         publishRelease,
@@ -18,6 +18,8 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig, releas
         publishToNpm,
         coverageOutput
     } = jobConfig
+
+    const releaseBranch = jobConfig.repository.ref;
 
     werft.phase("build", "build running");
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
