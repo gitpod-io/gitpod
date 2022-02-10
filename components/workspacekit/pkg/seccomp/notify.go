@@ -208,12 +208,11 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 	}
 	defer memFile.Close()
 
-	// TODO(cw): find why this breaks
-	// err = libseccomp.NotifIDValid(fd, req.ID)
-	// if err != nil {
-	// 	log.WithError(err).Error("invalid notif ID")
-	// 	return Errno(unix.EPERM)
-	// }
+	err = libseccomp.NotifIDValid(h.FD, req.ID)
+	if err != nil {
+		log.WithError(err).Error("invalid notify ID", req.ID)
+		return Errno(unix.EPERM)
+	}
 
 	source, err := readarg.ReadString(memFile, int64(req.Data.Args[0]))
 	if err != nil {
