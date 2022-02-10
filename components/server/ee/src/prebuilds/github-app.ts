@@ -166,14 +166,16 @@ export class GithubApp {
         try {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
-            const owner = installationId && (await this.findProjectOwner(cloneURL) || (await this.findInstallationOwner(installationId)));
-            if (!owner) {
-                log.info(`Did not find user for installation. Probably an incomplete app installation.`, { repo: ctx.payload.repository, installationId });
+            const installationOwner = installationId ? await this.findInstallationOwner(installationId) : undefined;
+            const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
+            const user = await this.selectUserForPrebuild(installationOwner, project);
+            if (!user) {
+                log.info(`Did not find user for installation. Probably an incomplete app installation.`, { repo: ctx.payload.repository, installationId, project });
                 return;
             }
-            const logCtx: LogContext = { userId: owner.user.id };
+            const logCtx: LogContext = { userId: user.id };
 
-            if (!!owner.user.blocked) {
+            if (!!user.blocked) {
                 log.info(logCtx, `Blocked user tried to start prebuild`, { repo: ctx.payload.repository });
                 return;
             }
@@ -190,7 +192,7 @@ export class GithubApp {
             const contextURL = `${repo.html_url}/tree/${branch}`;
             span.setTag('contextURL', contextURL);
 
-            let config = await this.prebuildManager.fetchConfig({ span }, owner.user, contextURL);
+            let config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
             const runPrebuild = this.appRules.shouldRunPrebuild(config, branch == repo.default_branch, false, false);
             if (!runPrebuild) {
                 const reason = `Not running prebuild, the user did not enable it for this context`;
@@ -198,7 +200,7 @@ export class GithubApp {
                 span.log({ "not-running": reason, "config": config });
                 return;
             }
-            const { user, project } = owner;
+
             this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: repo.clone_url, commit: pl.after, branch, project})
                 .catch(err => log.error(logCtx, "Error while starting prebuild", err, { contextURL }));
         } catch (e) {
@@ -225,17 +227,19 @@ export class GithubApp {
         try {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
-            const owner = installationId && (await this.findProjectOwner(cloneURL) || (await this.findInstallationOwner(installationId)));
-            if (!owner) {
-                log.info("Did not find user for installation. Probably an incomplete app installation.", { repo: ctx.payload.repository, installationId });
+            const installationOwner = installationId ? await this.findInstallationOwner(installationId) : undefined;
+            const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
+            const user = await this.selectUserForPrebuild(installationOwner, project);
+            if (!user) {
+                log.info("Did not find user for installation. Probably an incomplete app installation.", { repo: ctx.payload.repository, installationId, project });
                 return;
             }
 
             const pr = ctx.payload.pull_request;
             const contextURL = pr.html_url;
-            const config = await this.prebuildManager.fetchConfig({ span }, owner.user, contextURL);
+            const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
 
-            const prebuildStartPromise = this.onPrStartPrebuild({ span }, config, owner, ctx);
+            const prebuildStartPromise = this.onPrStartPrebuild({ span }, ctx, config, user, project);
             this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise).catch(() => {/** ignore */});
             this.onPrAddBadge(config, ctx);
             this.onPrAddComment(config, ctx).catch(() => {/** ignore */});
@@ -282,8 +286,7 @@ export class GithubApp {
         }
     }
 
-    protected onPrStartPrebuild(tracecContext: TraceContext, config: WorkspaceConfig | undefined, owner: {user: User, project?: Project}, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>): Promise<StartPrebuildResult> | undefined {
-        const { user, project } = owner;
+    protected onPrStartPrebuild(tracecContext: TraceContext, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>, config: WorkspaceConfig | undefined, user: User, project?: Project): Promise<StartPrebuildResult> | undefined {
         const pr = ctx.payload.pull_request;
         const pr_head = pr.head;
         const contextURL = pr.html_url;
@@ -298,7 +301,7 @@ export class GithubApp {
             prebuildStartPromise.catch(err => log.error(err, "Error while starting prebuild", { contextURL }));
             return prebuildStartPromise;
         } else {
-            log.debug({ userId: owner.user.id }, `Not running prebuild, the user did not enable it for this context`, { contextURL, owner });
+            log.debug({ userId: user.id }, `Not running prebuild, the user did not enable it for this context`, { contextURL, user, project });
             return;
         }
     }
@@ -349,24 +352,39 @@ export class GithubApp {
         return this.config.hostUrl.with({ pathname: '/button/open-in-gitpod.svg' }).toString();
     }
 
-    protected async findProjectOwner(cloneURL: string): Promise<{user: User, project?: Project} | undefined> {
-        // Project mode
-        //
-        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
-        if (project) {
-            const owner = !!project.userId
-                ? { userId: project.userId }
-                : (await this.teamDB.findMembersByTeam(project.teamId || '')).filter(m => m.role === "owner")[0];
-            if (owner) {
-                const user = await this.userDB.findUserById(owner.userId);
-                if (user) {
-                    return { user, project}
-                }
+    /**
+     * Finds the relevant user account to create a prebuild with.
+     *
+     * First it tries to find the installer of the GitHub App installation
+     * among the members of the project team. As a fallback, it tries so pick
+     * any of the team members which also has a github.com connection.
+     *
+     * @param installationOwner given user account of the GitHub App installation
+     * @param project the project associated with the `cloneURL`
+     * @returns a promise that resolves to a `User` or undefined
+     */
+    protected async selectUserForPrebuild(installationOwner?: User, project?: Project): Promise<User | undefined> {
+        if (!project) {
+            return installationOwner;
+        }
+        const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || '');
+        if (!!installationOwner && teamMembers.some(t => t.userId === installationOwner.id)) {
+            return installationOwner;
+        }
+        for (const teamMember of teamMembers) {
+            const user = await this.userDB.findUserById(teamMember.userId);
+            if (user && user.identities.some(i => i.authProviderId === "Public-GitHub")) {
+                return user;
             }
         }
     }
 
-    protected async findInstallationOwner(installationId: number): Promise<{user: User, project?: Project} | undefined> {
+    /**
+     *
+     * @param installationId read from webhook event
+     * @returns the user account of the GitHub App installation
+     */
+    protected async findInstallationOwner(installationId: number): Promise<User | undefined> {
         // Legacy mode
         //
         const installation = await this.appInstallationDB.findInstallation("github", String(installationId));
@@ -380,7 +398,7 @@ export class GithubApp {
             return;
         }
 
-        return { user };
+        return user;
     }
 }
 
