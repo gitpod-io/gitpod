@@ -1,0 +1,4 @@
+- Moved each "step" into a separate file
+- "Promoted" the jobConfig object to a type and use it to pass config around the various steps. So build.ts translates the Werft data into a JobConfig which is then used in the rest of the files.
+    - I have only introduced as little structure as I could get away with (e.g. introduced previewEnvironment as an object)
+    - I have not tried to consolidate it with DeploymentConfig
