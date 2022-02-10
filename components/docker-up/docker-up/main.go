@@ -75,6 +75,12 @@ func main() {
 		logger.Fatalf("Docker socket already exists at %s.\nIn a Gitpod workspace Docker will start automatically when used.\nIf all else fails, please remove %s and try again.", dockerSocketFN, dockerSocketFN)
 	}
 
+	if _, exists := os.LookupEnv("DOCKER_DAEMON_ARGS"); exists {
+		log.Info("DOCKER_DAEMON_ARGS exists")
+	} else {
+		log.Info("DOCKER_DAEMON_ARGS does not exist")
+	}
+
 	err = ensurePrerequisites()
 	if err != nil {
 		log.WithError(err).Fatal("failed")
