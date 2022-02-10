@@ -23,6 +23,7 @@ export class InstallationAdminController {
                 installationAdmin: await this.installationAdminDb.getData(),
                 totalUsers: await this.userDb.getUserCount(false),
                 totalWorkspaces: await this.workspaceDb.getWorkspaceCount(),
+                totalInstances: await this.workspaceDb.getInstanceCount(),
             } as Data;
 
             res.status(200).json(data);
