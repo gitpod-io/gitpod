@@ -56,7 +56,7 @@
     "express-mysql-session": "^2.1.0",
     "express-session": "^1.15.6",
     "fs-extra": "^10.0.0",
-    "gitea-js": "1.0.1",
+    "gitea-js": "^1.1.0",
     "google-protobuf": "^3.18.0-rc.2",
     "heapdump": "^0.3.15",
     "inversify": "^5.0.1",
