@@ -13,34 +13,34 @@
     - gcp-login
   tags: ["x"]
 
-- name: Prepare Gitpod GCP resources
-  hosts: localhost
-  gather_facts: no
-  vars_files:
-    - vars/gcp.yaml
-    - vars/gcp-dns.yaml
-  roles:
-    - gcp
+# - name: Prepare Gitpod GCP resources
+#   hosts: localhost
+#   gather_facts: no
+#   vars_files:
+#     - vars/gcp.yaml
+#     - vars/gcp-dns.yaml
+#   roles:
+#     - gcp
 
-- name: Prepare GitLab GCP resources
-  hosts: localhost
-  gather_facts: no
-  vars_files:
-    - vars/gcp.yaml
-    - vars/gcp-dns.yaml
-    - vars/gitlab.yaml
-  roles:
-    - gcp-instance
+# - name: Prepare GitLab GCP resources
+#   hosts: localhost
+#   gather_facts: no
+#   vars_files:
+#     - vars/gcp.yaml
+#     - vars/gcp-dns.yaml
+#     - vars/gitlab.yaml
+#   roles:
+#     - gcp-instance
 
-- name: Prepare Registry GCP resources
-  hosts: localhost
-  gather_facts: no
-  vars_files:
-    - vars/gcp.yaml
-    - vars/gcp-dns.yaml
-    - vars/registry.yaml
-  roles:
-    - gcp-instance
+# - name: Prepare Registry GCP resources
+#   hosts: localhost
+#   gather_facts: no
+#   vars_files:
+#     - vars/gcp.yaml
+#     - vars/gcp-dns.yaml
+#     - vars/registry.yaml
+#   roles:
+#     - gcp-instance
 
 - name: Refresh inventory
   hosts: localhost
@@ -54,87 +54,80 @@
   tasks:
     - wait_for_connection:
 
-- name: Install GitLab
-  hosts: instance_gitlab
-  vars_files:
-    - vars/gitlab.yaml
-  roles:
-    - install-gitlab
+# - name: Install GitLab
+#   hosts: instance_gitlab
+#   vars_files:
+#     - vars/gitlab.yaml
+#   roles:
+#     - install-gitlab
 
-- name: Install Registry
-  hosts: instance_registry
-  roles:
-    - install-docker
-    - install-registry
+# - name: Install Registry
+#   hosts: instance_registry
+#   roles:
+#     - install-docker
+#     - install-registry
 
-- name: Prepare DNS
-  hosts: gitpod_node_main
-  vars_files:
-    - vars/common.yaml
-    - vars/gcp-dns.yaml
-  roles:
-    - gcp-dns
+# - name: Prepare DNS
+#   hosts: gitpod_node_main
+#   vars_files:
+#     - vars/common.yaml
+#     - vars/gcp-dns.yaml
+#   roles:
+#     - gcp-dns
 
-- name: Restore from GCP bucket
-  hosts: gitpod_node_main
+# - name: Restore from GCP bucket
+#   hosts: gitpod_node_main
+#   vars_files:
+#     - vars/common.yaml
+#     - vars/gcp.yaml
+#   roles:
+#     - gcp-bucket-restore
+
+# - name: Prepare Gitpod installer
+#   hosts: gitpod_node_main
+#   roles:
+#     - gitpod-installer
+
+# - name: Mirror Gitpod images
+#   hosts:
+#     - gitpod_node_main
+#     - gitpod_node_worker
+#   roles:
+#     - install-docker
+#     - mirror-gitpod-images
+
+# - name: Generate cluster secret
+#   hosts: localhost
+#   gather_facts: no
+#   tasks:
+#     - set_fact:
+#         k3s_cluster_secret: "{{ lookup('community.general.random_string', length=40) }}"
+
+# - name: Install k3s
+#   hosts:
+#     - gitpod_node_main
+#     - gitpod_node_worker
+#   vars_files:
+#     - vars/common.yaml
+#   roles:
+#     - install-k3s
+
+# - name: Install Gitpod
+#   hosts:
+#     - gitpod_node_main
+#   vars_files:
+#     - vars/common.yaml
+#   vars:
+#     airgap: true
+#   roles:
+#     - install-gitpod-k3s
+
+- name: Disconnect Gitpod nodes from the internet and install Gitpod
+  hosts: localhost
+  gather_facts: no
   vars_files:
     - vars/common.yaml
     - vars/gcp.yaml
   roles:
-    - gcp-bucket-restore
-
-- name: Prepare Gitpod installer
-  hosts: gitpod_node_main
-  roles:
-    - gitpod-installer
-
-- name: Mirror Gitpod images
-  hosts:
-    - gitpod_node_main
-    - gitpod_node_worker
-  roles:
-    - install-docker
-    - mirror-gitpod-images
+    - gcp-airgap
   tags: ["x"]
-
-- name: Generate cluster secret
-  hosts: localhost
-  gather_facts: no
-  tasks:
-    - set_fact:
-        k3s_cluster_secret: "{{ lookup('community.general.random_string', length=40) }}"
-
-- name: Install k3s
-  hosts:
-    - gitpod_node_main
-    - gitpod_node_worker
-  vars_files:
-    - vars/common.yaml
-  roles:
-    - install-k3s
-
-- name: Install Gitpod
-  hosts:
-    - gitpod_node_main
-  vars_files:
-    - vars/common.yaml
-  roles:
-    - install-gitpod-k3s
-
-# - name: Disconnect Gitpod nodes from the internet
-#   hosts: localhost
-#   gather_facts: no
-#   vars:
-#     gitpod_node_prefix: gitpod
-#     gitpod_nodes_count: 3
-#   tasks:
-#   # - name: Delete access config
-#   #   command: "gcloud compute instances delete-access-config {{ gitpod_node_prefix }}--node-{{ item }} --access-config-name='external-nat'"
-#   #   loop: "{{ range(0, gitpod_nodes_count) | list }}"
-#   # - name: Verify missing internet access
-#   #   command: "gcloud compute ssh --ssh-flag=-A gitlab -- \"ssh {{ gitpod_node_prefix }}--node-{{ item }} 'curl -v https://kubernetes.io' \""
-#   #   loop: "{{ range(0, gitpod_nodes_count) | list }}"
-#   - name: Verify missing internet access
-#     command: "gcloud compute ssh gitlab --command \"ssh -tt -o StrictHostKeyChecking=no {{ gitpod_node_prefix }}--node-{{ item }} 'curl -v https://kubernetes.io' \" -- -A -tt"
-#     loop: "{{ range(0, gitpod_nodes_count) | list }}"
-#   tags: ["x"]

@@ -13,6 +13,16 @@
     yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' /gitpod/gitpod-config.yaml /gitpod/gitpod-config.k3s.yaml
     yq eval --inplace ".domain = \"{{ gitpod_domain }}\"" /gitpod/gitpod-config.yaml
 
+- name: Copy host aliases
+  template:
+    src: gitpod-config.airgap.yaml
+    dest: /gitpod/gitpod-config.airgap.yaml
+
+- name: Patch Gitpod config for airgap
+  shell: |
+    yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' /gitpod/gitpod-config.yaml /gitpod/gitpod-config.airgap.yaml
+  when: airgap
+
 - name: Validate Gitpod config
   command: gitpod-installer validate config --config /gitpod/gitpod-config.yaml
 
@@ -30,6 +40,17 @@
   retries: 120
   delay: 5
 
-- name: Render Gitpod manifests
+- name: Render and install Gitpod manifests
   shell: gitpod-installer render --config /gitpod/gitpod-config.yaml > /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml
   become: true
+  when: not airgap
+
+- name: Render Gitpod manifests
+  shell: gitpod-installer render --danger-use-unsupported-config --config /gitpod/gitpod-config.yaml > /gitpod/gitpod-manifests.yaml
+  when: airgap
+
+- name: Patch Gitpod manifests
+  shell: |
+    yq --inplace 'select(.kind == "DaemonSet" and .metadata.name == "ws-daemon").spec.template.spec.hostAliases = [{"ip":"10.156.0.47","hostnames":["clu-airgap.gitpod-self-hosted.com"]},{"ip":"10.156.0.50","hostnames":["clu-gitlab-1.gitpod-self-hosted.com"]}]' /gitpod/gitpod-manifests.yaml
+    yq --inplace 'select(.kind == "Deployment" and .metadata.name == "image-builder-mk3").spec.template.spec.hostAliases = [{"ip":"10.156.0.47","hostnames":["clu-airgap.gitpod-self-hosted.com"]},{"ip":"10.156.0.50","hostnames":["clu-gitlab-1.gitpod-self-hosted.com"]},{"ip":"10.156.0.51","hostnames":["registry"]}]' /gitpod/gitpod-manifests.yaml
+  when: airgap

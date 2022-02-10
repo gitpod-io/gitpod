@@ -29,5 +29,6 @@
     gcp_instance_names:
       - gitlab
       - registry
+      - bastion
   roles:
     - gcp-teardown

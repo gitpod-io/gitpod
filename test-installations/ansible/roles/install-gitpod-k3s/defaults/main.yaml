@@ -4,3 +4,5 @@
 
 ---
 gitpod_domain: "{{ undef(hint='You must specify your Gitpod domain.') }}"
+
+airgap: false

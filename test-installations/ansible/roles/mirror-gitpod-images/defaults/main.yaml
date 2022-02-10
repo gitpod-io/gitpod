@@ -3,4 +3,5 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
-repository: registry
+repository: clu-registry.gitpod-self-hosted.com
+#repository: registry
