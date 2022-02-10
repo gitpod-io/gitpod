@@ -8,6 +8,7 @@ import { Team, TeamMemberInfo, TeamMemberRole, TeamMembershipInvite } from "@git
 
 export const TeamDB = Symbol('TeamDB');
 export interface TeamDB {
+    findTeams(offset: number, limit: number, orderBy: keyof Team, orderDir: "ASC" | "DESC", searchTerm: string): Promise<{ total: number, rows: Team[] }>;
     findTeamById(teamId: string): Promise<Team | undefined>;
     findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]>;
     findTeamsByUser(userId: string): Promise<Team[]>;

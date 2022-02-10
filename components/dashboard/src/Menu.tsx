@@ -41,7 +41,7 @@ export default function Menu() {
     const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/(t/)?:segment1/:segment2?/:segment3?");
     const projectSlug = (() => {
         const resource = match?.params?.segment2;
-        if (resource && !["projects", "members", "users", "workspaces", "settings"].includes(resource)) {
+        if (resource && !["projects", "members", "users", "workspaces", "settings", "teams"].includes(resource)) {
             return resource;
         }
     })();

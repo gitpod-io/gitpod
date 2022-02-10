@@ -112,6 +112,17 @@ import { DBIdentity } from './typeorm/entity/db-identity';
 
         expect(teams.length).to.eq(0);
     }
+
+    @test(timeout(10000))
+    public async findTeams() {
+        const user = await this.userDb.newUser();
+        await this.db.createTeam(user.id, 'First Team');
+        await this.db.createTeam(user.id, 'Second Team');
+
+        const searchTerm = 'first';
+        const result = await this.db.findTeams(0, 10, "creationTime", "DESC", searchTerm);
+        expect(result.rows.length).to.eq(1);
+    }
 }
 
 module.exports = new TeamDBSpec()
