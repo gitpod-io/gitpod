@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -141,6 +142,10 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	tracing.LogRequestSafe(span, req)
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
+
+	reqs, _ := protojson.Marshal(req)
+	safeReqs, _ := log.RedactJSON(reqs)
+	log.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
 
 	// Make sure the objects we're about to create do not exist already
 	switch req.Type {
