@@ -375,7 +375,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 				if result.Conditions.Failed != "" {
 					result.Conditions.Failed += "; "
 				}
-				result.Conditions.Failed += fmt.Sprintf("last backup failed: %s. Please contact support if you need the workspace data.", ds.BackupFailure)
+				result.Conditions.Failed += fmt.Sprintf("last backup failed: %s.", ds.BackupFailure)
 			}
 		}
 
