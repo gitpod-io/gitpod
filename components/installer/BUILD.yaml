@@ -43,7 +43,7 @@ packages:
       - version
     config:
       commands:
-        - ["objcopy", "--add-section", "versionManifest=components--all-docker/versions.yaml", "installer--raw-app/installer", "installer"]
+        - ["objcopy", "--add-section", "versionManifest=components--all-docker/versions.yaml", "components-installer--raw-app/installer", "installer"]
   - name: docker
     type: docker
     deps:

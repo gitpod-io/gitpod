@@ -12,7 +12,7 @@ packages:
       - :docker-versions
       - :publish-api
       - dev:all-app
-      - installer:docker
+      - components/installer:docker
       - components/gitpod-protocol:all
       - operations/observability/mixins:lint
   - name: docker-versions
