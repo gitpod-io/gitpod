@@ -17,7 +17,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/process"
 )
 
 func newSSHServer(ctx context.Context, cfg *Config, envvars []string) (*sshServer, error) {
@@ -180,7 +179,7 @@ func prepareSSHKey(ctx context.Context, sshkey string) error {
 	}()
 
 	_, err = keycmd.CombinedOutput()
-	if err != nil && !process.IsNotChildProcess(err) {
+	if err != nil {
 		return xerrors.Errorf("cannot create SSH hostkey file: %w", err)
 	}
 
