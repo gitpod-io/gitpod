@@ -85,4 +85,5 @@ async function publishHelmChart(werft: Werft, imageRepoBase: string, version: st
     ].forEach(cmd => {
         exec(cmd, { slice: 'publish-charts' });
     });
+    werft.done('publish-charts');
 }
