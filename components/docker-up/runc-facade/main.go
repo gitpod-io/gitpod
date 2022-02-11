@@ -75,6 +75,24 @@ func createAndRunc(runcPath string, log *logrus.Logger) error {
 	cfg.Process.Capabilities.Inheritable = append(cfg.Process.Capabilities.Inheritable, "CAP_NET_BIND_SERVICE")
 	cfg.Process.Capabilities.Permitted = append(cfg.Process.Capabilities.Permitted, "CAP_NET_BIND_SERVICE")
 
+	uidMapping0 := specs.LinuxIDMapping{
+		ContainerID: 1000,
+		HostID:      33333,
+		Size:        1,
+	}
+
+	uidMapping1 := specs.LinuxIDMapping{
+		ContainerID: 0,
+		HostID:      0,
+		Size:        1000,
+	}
+
+	cfg.Linux.UIDMappings = append(cfg.Linux.UIDMappings, uidMapping1, uidMapping0)
+	cfg.Linux.GIDMappings = append(cfg.Linux.GIDMappings, uidMapping1, uidMapping0)
+	if !containsUserNamespace(cfg.Linux.Namespaces) {
+		cfg.Linux.Namespaces = append(cfg.Linux.Namespaces, specs.LinuxNamespace{Type: specs.UserNamespace})
+	}
+
 	fc, err = json.Marshal(cfg)
 	if err != nil {
 		return xerrors.Errorf("cannot encode config.json: %w", err)
@@ -86,9 +104,21 @@ func createAndRunc(runcPath string, log *logrus.Logger) error {
 		}
 	}
 
-	err = syscall.Exec(runcPath, os.Args, os.Environ())
+	args := []string{"--debug", "--log", "/tmp/runc.log"}
+	args = append(args, os.Args...)
+	err = syscall.Exec(runcPath, args, os.Environ())
 	if err != nil {
 		return xerrors.Errorf("exec %s: %w", runcPath, err)
 	}
 	return nil
+}
+
+func containsUserNamespace(namespaces []specs.LinuxNamespace) bool {
+	for _, ns := range namespaces {
+		if ns.Type == specs.UserNamespace {
+			return true
+		}
+	}
+
+	return false
 }

@@ -42,8 +42,6 @@ var opts struct {
 	DontWrapNetNS        bool
 }
 
-//go:embed docker.tgz
-//go:embed docker-compose
 var binaries embed.FS
 
 const (
@@ -87,6 +85,7 @@ func main() {
 		log.WithError(err).Fatal("failed to ensure prerequisites")
 	}
 
+	log.Info("Run within netns")
 	err = runWithinNetns()
 	if err != nil {
 		log.WithError(err).Fatal("failed to run docker within net ns")
@@ -113,9 +112,14 @@ func runWithinNetns() (err error) {
 		)
 	}
 
-	args, err = setUserArgs(args)
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	log = logrus.NewEntry(logger)
+
+	log.Info("Set user args")
+	args, err = setUserArgs(args, log)
 	if err != nil {
-		log.Errorf("cannot add user supplied docker args: %w", err)
+		log.Errorf("cannot add user supplied docker args: %v", err)
 		return xerrors.Errorf("cannot add user supplied docker args: %w", err)
 	}
 
@@ -178,16 +182,20 @@ var allowedDockerArgs = []string{
 	"userns-remap",
 }
 
-func setUserArgs(args []string) ([]string, error) {
+func setUserArgs(args []string, log *logrus.Entry) ([]string, error) {
+	log.Info("in func")
+	args = append(args, "--userns-remap", "gitpod")
 	userArgs, exists := os.LookupEnv("DOCKER_DAEMON_ARGS")
 	if !exists {
 		return args, nil
 	}
+	log.Info("user args retrieved")
 
 	var providedDockerArgs map[string]string
 	if err := json.Unmarshal([]byte(userArgs), &providedDockerArgs); err != nil {
 		return nil, xerrors.Errorf("unable to deserialize docker args: %w", err)
 	}
+	log.Info("filter docker args")
 
 	for _, arg := range allowedDockerArgs {
 		v, exists := providedDockerArgs[arg]
