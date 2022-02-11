@@ -18,6 +18,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -52,6 +53,8 @@ require (
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/image-builder/api => ../../image-builder-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.22.2 // leeway indirect from components/common-go:lib
 

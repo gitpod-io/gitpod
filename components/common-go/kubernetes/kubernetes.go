@@ -65,9 +65,16 @@ const (
 	// WorkspaceAdmissionAnnotation determines the user admission to a workspace, i.e. if it can be accessed by everyone without token.
 	WorkspaceAdmissionAnnotation = "gitpod/admission"
 
-	// WorkspaceImageSpecAnnotation contains the protobuf serialized image spec in base64 encoding. We need to keep this around post-request
+	// ImageSpecAnnotation contains the protobuf serialized image spec in base64 encoding. We need to keep this around post-request
 	// to provide this information to the registry facade later in the workspace's lifecycle.
-	WorkspaceImageSpecAnnotation = "gitpod/imageSpec"
+	ImageSpecAnnotation = "gitpod/imageSpec"
+
+	// WorkspaceImageStatusAnnotation contains the protobuf serialized workspace image status in base64 encoding.
+	WorkspaceImageStatusAnnotation = "gitpod/workspaceImageStatus"
+
+	// WorkspaceImageSpec contains the protobuf serialized image spec in base64 encoding. We need to keep this around post-request
+	// to provide this information to image-builder
+	WorkspaceImageSpecAnnotation = "gitpod/workspaceImageSpec"
 
 	// WorkspaceExposedPorts contains the exposed ports in the workspace
 	WorkspaceExposedPorts = "gitpod/exposedPorts"

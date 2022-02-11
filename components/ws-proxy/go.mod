@@ -88,6 +88,8 @@ replace github.com/gitpod-io/gitpod/content-service => ../content-service // lee
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
 
+replace github.com/gitpod-io/gitpod/image-builder/api => ../image-builder-api/go // leeway
+
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway

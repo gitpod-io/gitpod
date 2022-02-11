@@ -19,6 +19,8 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +29,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	imgbuilder "github.com/gitpod-io/gitpod/image-builder/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -250,7 +253,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	spec := regapi.ImageSpec{
-		BaseRef:       startContext.Request.Spec.WorkspaceImage,
+		BaseRef:       startContext.ImageStatus.ImageRef,
 		IdeRef:        ideRef,
 		DesktopIdeRef: desktopIdeRef,
 		SupervisorRef: supervisorRef,
@@ -258,6 +261,16 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	imageSpec, err := spec.ToBase64()
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create remarshal image spec: %w", err)
+	}
+
+	imageStatus, err := startContext.ImageStatus.ToBase64()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create remarshal image status: %w", err)
+	}
+
+	workspaceImageSpec, err := req.Spec.WorkspaceImageBuild.ToBase64()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create remarshal workspace image build spec: %w", err)
 	}
 
 	initCfg, err := proto.Marshal(startContext.Request.Spec.Initializer)
@@ -297,19 +310,21 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	annotations := map[string]string{
-		"prometheus.io/scrape":                  "true",
-		"prometheus.io/path":                    "/metrics",
-		"prometheus.io/port":                    strconv.Itoa(int(startContext.IDEPort)),
-		workspaceIDAnnotation:                   req.Id,
-		servicePrefixAnnotation:                 getServicePrefix(req),
-		kubernetes.WorkspaceURLAnnotation:       startContext.WorkspaceURL,
-		workspaceInitializerAnnotation:          initializerConfig,
-		workspaceNeverReadyAnnotation:           "true",
-		kubernetes.WorkspaceAdmissionAnnotation: admissionLevel,
-		kubernetes.WorkspaceImageSpecAnnotation: imageSpec,
-		kubernetes.OwnerTokenAnnotation:         startContext.OwnerToken,
-		wsk8s.TraceIDAnnotation:                 startContext.TraceID,
-		wsk8s.RequiredNodeServicesAnnotation:    "ws-daemon,registry-facade",
+		"prometheus.io/scrape":                    "true",
+		"prometheus.io/path":                      "/metrics",
+		"prometheus.io/port":                      strconv.Itoa(int(startContext.IDEPort)),
+		workspaceIDAnnotation:                     req.Id,
+		servicePrefixAnnotation:                   getServicePrefix(req),
+		kubernetes.WorkspaceURLAnnotation:         startContext.WorkspaceURL,
+		workspaceInitializerAnnotation:            initializerConfig,
+		workspaceNeverReadyAnnotation:             "true",
+		kubernetes.WorkspaceAdmissionAnnotation:   admissionLevel,
+		kubernetes.ImageSpecAnnotation:            imageSpec,
+		kubernetes.WorkspaceImageStatusAnnotation: imageStatus,
+		kubernetes.WorkspaceImageSpecAnnotation:   workspaceImageSpec,
+		kubernetes.OwnerTokenAnnotation:           startContext.OwnerToken,
+		wsk8s.TraceIDAnnotation:                   startContext.TraceID,
+		wsk8s.RequiredNodeServicesAnnotation:      "ws-daemon,registry-facade",
 		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
 		// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
@@ -375,6 +390,15 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	var initContainers []corev1.Container
+	if startContext.ImageStatus.Phase != api.WorkspaceImageStatus_AVAILABLE {
+		initContainers = append(initContainers, corev1.Container{
+			Name: "image-build-waiter",
+			// TODO(cw) use a custom container here
+			Image: "gcr.io/google_containers/pause-amd64:3.0",
+		})
+	}
+
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
@@ -390,6 +414,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			SchedulerName:                m.Config.SchedulerName,
 			EnableServiceLinks:           &boolFalse,
 			Affinity:                     affinity,
+			InitContainers:               initContainers,
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
@@ -748,6 +773,31 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 	workspaceSpan := opentracing.StartSpan("workspace", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
 	traceID := tracing.GetTraceID(workspaceSpan)
 
+	var imageStatus *api.WorkspaceImageStatus
+	if req.Spec.WorkspaceImageBuild != nil {
+		resp, err := m.ImageBuilder.ResolveWorkspaceImage(ctx, &imgbuilder.ResolveWorkspaceImageRequest{
+			Source: req.Spec.WorkspaceImageBuild.Source,
+			Auth:   req.Spec.WorkspaceImageBuild.Auth,
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "cannot resolve workspace image: %v", err)
+		}
+		var phase api.WorkspaceImageStatus_Phase
+		if resp.Status == imgbuilder.BuildStatus_done_success {
+			// image exists - we can continue as is
+			phase = api.WorkspaceImageStatus_AVAILABLE
+		} else {
+			// image does not exist - we need to build it
+			phase = api.WorkspaceImageStatus_UNAVAILABLE
+		}
+		imageStatus = &api.WorkspaceImageStatus{
+			Phase:    phase,
+			BaseRef:  resp.BaseRef,
+			ImageRef: resp.Ref,
+		}
+		span.LogKV("event", "resolved workspace image build")
+	}
+
 	return &startWorkspaceContext{
 		Labels: map[string]string{
 			"app":                  "gitpod",
@@ -767,6 +817,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		WorkspaceURL:   workspaceURL,
 		TraceID:        traceID,
 		Headless:       headless,
+		ImageStatus:    imageStatus,
 	}, nil
 }
 

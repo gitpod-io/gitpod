@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -13,6 +13,7 @@
 import * as grpc from "@grpc/grpc-js";
 import * as core_pb from "./core_pb";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
+import * as image_builder_api_imgbuilder_pb from "@gitpod/image-builder/lib";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 
 interface IWorkspaceManagerService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {

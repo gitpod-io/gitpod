@@ -45,7 +45,7 @@ func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequ
 		tracing.FinishSpan(span, &err)
 	}()
 
-	ispec, ok := pod.Annotations[kubernetes.WorkspaceImageSpecAnnotation]
+	ispec, ok := pod.Annotations[kubernetes.ImageSpecAnnotation]
 	if !ok {
 		return nil, status.Error(codes.FailedPrecondition, "workspace has no image spec")
 	}

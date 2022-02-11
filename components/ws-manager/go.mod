@@ -58,6 +58,7 @@ require (
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000 // indirect
 	github.com/go-test/deep v1.0.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -125,6 +126,8 @@ replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 replace github.com/gitpod-io/gitpod/content-service => ../content-service // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/image-builder/api => ../image-builder-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-api/go // leeway
 

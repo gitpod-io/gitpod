@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -10,6 +10,7 @@
 var grpc = require('@grpc/grpc-js');
 var core_pb = require('./core_pb.js');
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
+var image$builder$api_imgbuilder_pb = require('@gitpod/image-builder/lib');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 
 function serialize_wsman_BackupWorkspaceRequest(arg) {

@@ -4,6 +4,7 @@ packages:
     deps:
       - components/common-go:lib
       - components/content-service-api/go:lib
+      - components/image-builder-api/go:lib
     srcs:
       - "**/*.go"
       - "go.mod"

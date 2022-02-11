@@ -32,6 +32,7 @@ popd
 
 pushd typescript/src
 node "$COMPONENTS_DIR"/content-service-api/typescript/patch-grpc-js.ts
+node "$COMPONENTS_DIR"/image-builder-api/typescript/patch-grpc-js.ts
 popd
 
 update_license

@@ -210,7 +210,7 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		desktopIdeImage string
 		supervisorImage string
 	)
-	if ispec, ok := wso.Pod.Annotations[kubernetes.WorkspaceImageSpecAnnotation]; ok {
+	if ispec, ok := wso.Pod.Annotations[kubernetes.ImageSpecAnnotation]; ok {
 		spec, err := regapi.ImageSpecFromBase64(ispec)
 		if err != nil {
 			return nil, xerrors.Errorf("invalid image spec: %w", err)

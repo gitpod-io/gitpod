@@ -34,6 +34,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
+	imgbuilder "github.com/gitpod-io/gitpod/image-builder/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
@@ -44,11 +45,12 @@ import (
 
 // Manager is a kubernetes backed implementation of a workspace manager
 type Manager struct {
-	Config    config.Configuration
-	Clientset client.Client
-	RawClient kubernetes.Interface
-	Content   *layer.Provider
-	OnChange  func(context.Context, *api.WorkspaceStatus)
+	Config       config.Configuration
+	Clientset    client.Client
+	RawClient    kubernetes.Interface
+	Content      *layer.Provider
+	OnChange     func(context.Context, *api.WorkspaceStatus)
+	ImageBuilder imgbuilder.ImageBuilderClient
 
 	activity sync.Map
 	clock    *clock.HLC
@@ -74,6 +76,7 @@ type startWorkspaceContext struct {
 	WorkspaceURL   string                     `json:"workspaceURL"`
 	TraceID        string                     `json:"traceID"`
 	Headless       bool                       `json:"headless"`
+	ImageStatus    *api.WorkspaceImageStatus  `json:"imageStatus"`
 }
 
 const (
@@ -174,15 +177,18 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	span.LogKV("event", "workspace does not exist")
 	err = validateStartWorkspaceRequest(req)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot start workspace: %w", err)
+		// validateStartWorkspaceRequest returns gRPC errors
+		return nil, err
 	}
 	span.LogKV("event", "validated workspace start request")
+
 	// create the objects required to start the workspace pod/service
 	startContext, err := m.newStartWorkspaceContext(ctx, req)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create context: %w", err)
 	}
 	span.LogKV("event", "created start workspace context")
+
 	clog.Debug("starting new workspace")
 	// we must create the workspace pod first to make sure we don't clean up the services or configmap we're about to create
 	// because they're "dangling".
@@ -191,6 +197,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 	span.LogKV("event", "pod description created")
+
 	err = m.Clientset.Create(ctx, pod)
 	if err != nil {
 		m, _ := json.Marshal(pod)
@@ -220,7 +227,6 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 // validateStartWorkspaceRequest ensures that acting on this request will not leave the system in an invalid state
 func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
 	err := validation.ValidateStruct(req.Spec,
-		validation.Field(&req.Spec.WorkspaceImage, validation.Required),
 		validation.Field(&req.Spec.CheckoutLocation, validation.Required),
 		validation.Field(&req.Spec.WorkspaceLocation, validation.Required),
 		validation.Field(&req.Spec.Ports, validation.By(areValidPorts)),
@@ -228,7 +234,17 @@ func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
 		validation.Field(&req.Spec.FeatureFlags, validation.By(areValidFeatureFlags)),
 	)
 	if err != nil {
-		return xerrors.Errorf("invalid request: %w", err)
+		return status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
+	}
+
+	if req.Spec.WorkspaceImage == "" {
+		if req.Spec.WorkspaceImageBuild == nil {
+			return status.Errorf(codes.InvalidArgument, "invalid request: missing workspace image (build)")
+		}
+	} else {
+		if req.Spec.WorkspaceImageBuild != nil {
+			return status.Errorf(codes.InvalidArgument, "invalid request: workspace image and workspace image build are exclusive")
+		}
 	}
 
 	rules := make([]*validation.FieldRules, 0)
@@ -240,7 +256,7 @@ func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
 	}
 	err = validation.ValidateStruct(req, rules...)
 	if err != nil {
-		return xerrors.Errorf("invalid request: %w", err)
+		return status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
 	}
 
 	return nil

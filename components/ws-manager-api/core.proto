@@ -5,6 +5,7 @@ package wsman;
 option go_package = "github.com/gitpod-io/gitpod/ws-manager/api";
 
 import "content-service-api/initializer.proto";
+import "image-builder-api/imgbuilder.proto";
 import "google/protobuf/timestamp.proto";
 
 service WorkspaceManager {
@@ -269,17 +270,46 @@ message WorkspaceStatus {
 
     // auth provides authentication information about the workspace. This info is primarily used by ws-proxy.
     WorkspaceAuthentication auth = 9;
+
+    // WorkspaceImageStatus provides information about the workspace image
+    WorkspaceImageStatus image = 11;
 }
 
-    // IDEImage configures the IDE images a workspace will use
-    message IDEImage {
-        // web_ref is a reference to an OCI image used for serving the web-based IDE
-        string web_ref = 1;
-        // desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
-        string desktop_ref = 2;
-        // supervisor_ref is a reference to an OCI image used as supervisor
-        string supervisor_ref = 3;
+// IDEImage configures the IDE images a workspace will use
+message IDEImage {
+    // web_ref is a reference to an OCI image used for serving the web-based IDE
+    string web_ref = 1;
+    // desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
+    string desktop_ref = 2;
+    // supervisor_ref is a reference to an OCI image used as supervisor
+    string supervisor_ref = 3;
+}
+
+// WorkspaceImageStatus provides information about the workspace image
+message WorkspaceImageStatus {
+    // Phase marks the phase of a workspace image
+    enum Phase {
+        UNAVAILABLE = 0;
+        BUILDING = 1;
+        AVAILABLE = 2;
     }
+    // LogInfo provides access to the image build logs
+    message LogInfo {
+        string url = 1;
+        map<string, string> header = 2;
+    }
+
+    // Phase marks the phase of a workspace image
+    Phase phase = 1;
+
+    // BaseRef is the workspace image base reference
+    string base_ref = 2;
+    // image_ref is the actual workspace image reference
+    string image_ref = 3;
+
+    // logs provides access to the build logs when the phase is BUILDING
+    LogInfo logs = 4;
+}
 
 // WorkspaceSpec is the specification of a workspace at runtime
 message WorkspaceSpec {
@@ -393,6 +423,10 @@ enum WorkspacePhase {
     // workspace, the workspace will be in Pending state until that happened.
     PENDING = 1;
 
+    // BuildingImage means the workspace currently has its workspace image built. In this time the workspace isn't
+    // actually starting, but instead we're building its image.
+    BUILDING_IMAGE = 8;
+
     // Creating means the workspace is currently being created. That includes downloading the images required
     // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
     // network speed, image size and cache states.
@@ -493,6 +527,10 @@ message StartWorkspaceSpec {
 
     // ide_image is the Docker image name of the IDE image
     IDEImage ide_image = 12;
+
+    // workspace_image_build is exclusive to the workspace_image. When set, there will be an image-build
+    // which preceeds the workspace startup.
+    builder.BuildRequest workspace_image_build = 13;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces
