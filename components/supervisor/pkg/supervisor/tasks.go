@@ -298,8 +298,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 				} else {
 					t.successChan <- taskFailed(state.String())
 				}
-			} else if err != nil && strings.Contains(err.Error(), "no child process") {
-				// our own reaper broke Go's child process handling
+			} else if err != nil {
 				t.successChan <- taskSuccessful
 			} else {
 				msg := "cannot wait for task"

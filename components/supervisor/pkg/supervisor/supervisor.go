@@ -336,7 +336,7 @@ func Run(options ...RunOption) {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			err := cmd.Run()
-			if err != nil && !process.IsNotChildProcess(err) {
+			if err != nil {
 				log.WithError(err).Error("git fetch error")
 			}
 		}()
@@ -437,9 +437,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 		}()
 		select {
 		case err := <-done:
-			if err != nil && !process.IsNotChildProcess(err) {
-				return err
-			}
+			return err
 		case <-time.After(120 * time.Second):
 			return xerrors.Errorf("dotfiles repo clone did not finish within two minutes")
 		}
@@ -753,7 +751,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		}()
 
 		err = cmd.Wait()
-		if err != nil && !(strings.Contains(err.Error(), "signal: interrupt") || strings.Contains(err.Error(), "wait: no child processes")) {
+		if err != nil {
 			log.WithField("ide", ide.String()).WithError(err).Warn("IDE was stopped")
 
 			ideWasReady, _ := ideReady.Get()
