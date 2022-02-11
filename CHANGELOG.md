@@ -1,6 +1,9 @@
 # Change Log
 
 ## February 2022
+- Improved workspace memory-pressure eviction resilience ([#8139](https://github.com/gitpod-io/gitpod/pull/8139)) - [@csweichel](https://github.com/csweichel)
+- Enable id check for seccomp notify ([#8134](https://github.com/gitpod-io/gitpod/pull/8134)) - [@utam0k](https://github.com/utam0k)
+- Autofix: upgrade-nvm-tools ([#8112](https://github.com/gitpod-io/gitpod/pull/8112)) - [@autofix-bot](https://github.com/autofix-bot)
 - fix dashboard contextURL handling ([#8099](https://github.com/gitpod-io/gitpod/pull/8099)) - [@geropl](https://github.com/geropl)
 - Added support for Git LFS during content init ([#8119](https://github.com/gitpod-io/gitpod/pull/8119)) - [@csweichel](https://github.com/csweichel)
 - Support private dotfiles repo ([#7569](https://github.com/gitpod-io/gitpod/pull/7569)) - [@iQQBot](https://github.com/iQQBot)
