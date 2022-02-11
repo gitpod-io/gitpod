@@ -39,37 +39,15 @@ export class TypeORMAppInstallationDBImpl implements AppInstallationDB {
         await repo.insert(obj);
     }
 
-    protected async findAndFinishInstallation(platform: AppInstallationPlatform, installationID: string): Promise<AppInstallation | undefined> {
-        // check if we find the complementary installation entries. If so, finish the installation
-        const repo = await this.getRepo();
-        const installationRecords = await repo.find({ where: { platform, installationID } });
-
-        // maybe we're already done and have a finished installation
-        const finishedInstallation = installationRecords.find(r => r.state == 'installed');
-        if (!!finishedInstallation) {
-            return finishedInstallation;
-        }
-
-        // maybe we need to finish an existing/ongoing installation
-        const platformClaim = installationRecords.find(r => r.state == 'claimed.platform');
-        const userClaim = installationRecords.find(r => r.state == 'claimed.user');
-        if (!!platformClaim && !!userClaim) {
-            const obj = new DBAppInstallation();
-            obj.platform = platform;
-            obj.installationID = installationID;
-            obj.state = 'installed';
-            obj.ownerUserID = userClaim.ownerUserID || platformClaim.ownerUserID || undefined;
-            obj.platformUserID = platformClaim.platformUserID;
-            obj.creationTime = new Date().toISOString();
-            return await repo.save(obj);
-        }
-
-        // we do not have a finished installation here
-        return undefined;
-    }
-
     public async findInstallation(platform: AppInstallationPlatform, installationID: string): Promise<AppInstallation | undefined> {
-        return this.findAndFinishInstallation(platform, installationID);
+        const repo = await this.getRepo();
+        const qb = repo.createQueryBuilder('installation')
+            .where("installation.installationID = :installationID", { installationID })
+            .andWhere('installation.state != "uninstalled"')
+            .orderBy("installation.lastUpdateTime", "DESC")
+            .limit(1);
+
+        return (await qb.getMany())[0];
     }
 
     public async recordUninstallation(platform: AppInstallationPlatform, source: 'user' | 'platform', installationID: string) {
