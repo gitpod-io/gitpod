@@ -11,14 +11,14 @@ export interface JobConfig {
     dynamicCPULimits: boolean;
     installEELicense: boolean
     localAppVersion: string
-    mainBuild: any;
+    mainBuild: boolean;
     noPreview: boolean;
     publishRelease: boolean;
     publishToJBMarketplace: string
     publishToNpm: string
     retag: string
-    storage: any;
-    version: any;
+    storage: string;
+    version: string;
     withContrib: boolean
     withHelm: boolean
     withIntegrationTests: boolean;
