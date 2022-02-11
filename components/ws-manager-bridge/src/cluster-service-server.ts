@@ -7,7 +7,7 @@
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel, AdmissionConstraintHasMoreResources } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasPermission, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel, AdmissionConstraintHasMoreResources } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -182,7 +182,7 @@ export class ClusterService implements IClusterServiceServer {
                                     case "has-feature-preview":
                                         return false;
                                     case "has-permission":
-                                        if (v.permission === (c as AdmissionConstraintHasRole).permission) {
+                                        if (v.permission === (c as AdmissionConstraintHasPermission).permission) {
                                             return false;
                                         }
                                         break;
@@ -318,7 +318,7 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
             return;
         }
 
-        return <AdmissionConstraintHasRole>{type: "has-permission", permission};
+        return <AdmissionConstraintHasPermission>{type: "has-permission", permission};
     }
     if (c.hasHasUserLevel()) {
         const level = c.getHasUserLevel();
