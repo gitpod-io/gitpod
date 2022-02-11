@@ -40,7 +40,7 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
             werft.phase("publish", "checking version semver compliance...");
             if (!semver.valid(version)) {
                 // make this an explicit error as early as possible. Is required by helm Charts.yaml/version
-                throw new Error(`'${version}' is not semver compliant and thus cannot used for Self-Hosted releases!`)
+                throw new Error(`'${version}' is not semver compliant and thus cannot be used for Self-Hosted releases!`)
             }
 
             werft.phase("publish", "publishing Helm chart...");
