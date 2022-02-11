@@ -8,6 +8,7 @@ import { WorkspaceConfig } from "@gitpod/gitpod-protocol";
 
 export interface Context {
     config: WorkspaceConfig;
+    excludeVsCodeConfig: boolean;
     exists(path: string): Promise<boolean>;
     read(path: string): Promise<string | undefined>;
 }
@@ -93,6 +94,9 @@ export class ConfigInferrer {
     }
 
     protected addExtension(ctx: Context, extensionName: string) {
+        if (ctx.excludeVsCodeConfig) {
+            return;
+        }
         if (!ctx.config.vscode || !ctx.config.vscode.extensions) {
             ctx.config.vscode = {
                 extensions: []

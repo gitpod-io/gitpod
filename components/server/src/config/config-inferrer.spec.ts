@@ -11,6 +11,7 @@ import { WorkspaceConfig } from "@gitpod/gitpod-protocol";
 
 function context(files: {[path:string]:string}): Context {
     return {
+        excludeVsCodeConfig: false,
         config: {},
         exists: async (path: string) => path.toString() in files,
         read: async (path: string) => files[path.toString()],
