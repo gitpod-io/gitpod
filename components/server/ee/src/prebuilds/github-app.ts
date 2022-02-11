@@ -359,6 +359,8 @@ export class GithubApp {
      * among the members of the project team. As a fallback, it tries so pick
      * any of the team members which also has a github.com connection.
      *
+     * For projects under a personal account, it simply returns the installer.
+     *
      * @param installationOwner given user account of the GitHub App installation
      * @param project the project associated with the `cloneURL`
      * @returns a promise that resolves to a `User` or undefined
@@ -367,7 +369,10 @@ export class GithubApp {
         if (!project) {
             return installationOwner;
         }
-        const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || '');
+        if (!project.teamId) {
+            return installationOwner;
+        }
+        const teamMembers = await this.teamDB.findMembersByTeam(project.teamId);
         if (!!installationOwner && teamMembers.some(t => t.userId === installationOwner.id)) {
             return installationOwner;
         }
