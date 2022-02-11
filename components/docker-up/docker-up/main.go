@@ -12,6 +12,7 @@ import (
 	"compress/gzip"
 	"context"
 	"embed"
+	"encoding/json"
 	"io"
 	"os"
 	"os/exec"
@@ -112,6 +113,11 @@ func runWithinNetns() (err error) {
 		)
 	}
 
+	args, err = setUserArgs(args)
+	if err != nil {
+		return xerrors.Errorf("cannot add user supplied docker args: %w", err)
+	}
+
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
 		args = append(args, "-H", "fd://")
@@ -136,7 +142,7 @@ func runWithinNetns() (err error) {
 
 	err = cmd.Start()
 	if err != nil {
-		return err
+		return xerrors.Errorf("failed to start dockerd: %w", err)
 	}
 
 	sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
@@ -165,6 +171,34 @@ func runWithinNetns() (err error) {
 		return err
 	}
 	return nil
+}
+
+var allowedDockerArgs = []string{
+	"userns-remap",
+}
+
+func setUserArgs(args []string) ([]string, error) {
+	userArgs, exists := os.LookupEnv("DOCKER_DAEMON_ARGS")
+	if !exists {
+		return args, nil
+	}
+
+	var providedDockerArgs map[string]string
+	if err := json.Unmarshal([]byte(userArgs), &providedDockerArgs); err != nil {
+		return nil, xerrors.Errorf("unable to deserialize docker args: %w", err)
+	}
+
+	for _, arg := range allowedDockerArgs {
+		v, exists := providedDockerArgs[arg]
+		if !exists {
+			continue
+		}
+
+		log.Info("append")
+		args = append(args, "--"+arg, v)
+	}
+
+	return args, nil
 }
 
 var prerequisites = map[string]func() error{
