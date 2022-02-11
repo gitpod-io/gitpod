@@ -20,7 +20,13 @@ if [ "${SUPERVISOR_DEBUG_ENABLE+}" = "true" ]; then
   JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
 fi
 
+# Set default config and system directories under /workspace to preserve between restarts
+export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains
+export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
+
+# Enable host status endpoint
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
+
 /ide-desktop/backend/bin/remote-dev-server.sh run "$GITPOD_REPO_ROOT"
 
 echo "Desktop IDE startup script exited"

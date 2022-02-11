@@ -2,6 +2,15 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="jetbrains-backend-plugin" target="11" />
+      <module name="jetbrains-backend-plugin.gitpod-protocol" target="11" />
+      <module name="jetbrains-backend-plugin.gitpod-protocol.main" target="11" />
+      <module name="jetbrains-backend-plugin.gitpod-protocol.test" target="11" />
+      <module name="jetbrains-backend-plugin.main" target="11" />
+      <module name="jetbrains-backend-plugin.supervisor-api" target="11" />
+      <module name="jetbrains-backend-plugin.supervisor-api.main" target="11" />
+      <module name="jetbrains-backend-plugin.supervisor-api.test" target="11" />
+      <module name="jetbrains-backend-plugin.test" target="11" />
       <module name="jetbrains-gateway-gitpod-plugin" target="11" />
       <module name="jetbrains-gateway-gitpod-plugin.gitpod-protocol" target="11" />
       <module name="jetbrains-gateway-gitpod-plugin.gitpod-protocol.main" target="11" />
