@@ -55,7 +55,9 @@ var sendCmd = &cobra.Command{
 			Event:  "Installation telemetry",
 			Properties: analytics.NewProperties().
 				Set("version", versionId).
-				Set("totalUsers", data.TotalUsers),
+				Set("totalUsers", data.TotalUsers).
+				Set("totalWorkspaces", data.TotalWorkspaces).
+				Set("totalInstnaces", data.TotalInstances),
 		}
 
 		client.Enqueue(telemetry)
