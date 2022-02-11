@@ -5,4 +5,4 @@ rules:
   - or: ["trigger !== deleted"]
 - path: ".werft/delete-preview-environments/delete-preview-environment.yaml"
   matchesAll:
-  - or: ["trigger == deleted"]
+  - or: ["trigger === deleted"]
