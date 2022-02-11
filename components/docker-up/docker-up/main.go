@@ -84,12 +84,12 @@ func main() {
 
 	err = ensurePrerequisites()
 	if err != nil {
-		log.WithError(err).Fatal("failed")
+		log.WithError(err).Fatal("failed to ensure prerequisites")
 	}
 
 	err = runWithinNetns()
 	if err != nil {
-		log.WithError(err).Fatal("failed")
+		log.WithError(err).Fatal("failed to run docker within net ns")
 	}
 }
 
@@ -115,6 +115,7 @@ func runWithinNetns() (err error) {
 
 	args, err = setUserArgs(args)
 	if err != nil {
+		log.Errorf("cannot add user supplied docker args: %w", err)
 		return xerrors.Errorf("cannot add user supplied docker args: %w", err)
 	}
 
@@ -194,7 +195,7 @@ func setUserArgs(args []string) ([]string, error) {
 			continue
 		}
 
-		log.Info("append")
+		log.Info("append-k75d")
 		args = append(args, "--"+arg, v)
 	}
 
