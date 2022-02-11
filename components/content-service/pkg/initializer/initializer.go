@@ -314,11 +314,17 @@ func downloadOTS(ctx context.Context, url string) (user, pwd string, err error) 
 			break
 		}
 		log.WithError(err).WithField("attempt", i).Warn("cannot download OTS")
+		if metrics != nil {
+			metrics.DownloadOTSCounter.WithLabelValues("failure").Inc()
+		}
 	}
 	if err != nil {
 		return "", "", err
 	}
 
+	if metrics != nil {
+		metrics.DownloadOTSCounter.WithLabelValues("success").Inc()
+	}
 	return user, pwd, nil
 }
 

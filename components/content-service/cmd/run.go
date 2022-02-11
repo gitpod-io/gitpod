@@ -22,6 +22,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/service"
 )
 
@@ -33,6 +34,11 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
 		reg := prometheus.NewRegistry()
+
+		err := initializer.NewMetrics(prometheus.WrapRegistererWithPrefix("content_service_", reg))
+		if err != nil {
+			log.WithError(err).Error("failed to register initializer metrics")
+		}
 
 		common_grpc.SetupLogging()
 
