@@ -40,7 +40,7 @@ const (
 	GitpodGID = 33333
 
 	// otsDownloadAttempts is the number of times we'll attempt to download the one-time secret
-	otsDownloadAttempts = 10
+	otsDownloadAttempts = 20
 )
 
 // Initializer can initialize a workspace with content
