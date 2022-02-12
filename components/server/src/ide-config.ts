@@ -134,7 +134,8 @@ export class IDEConfigService {
 
             const newValue: IDEConfig = JSON.parse(fileContent);
             const contentHash = crypto.createHash('sha256').update(fileContent, 'utf8').digest('hex');
-            if (this.contentHash !== contentHash) {
+            const contentChanged = this.contentHash !== contentHash
+            if (contentChanged) {
                 this.contentHash = contentHash;
 
                 this.validate(newValue);
@@ -175,6 +176,11 @@ export class IDEConfigService {
 
             if (!value) {
                 return;
+            }
+
+            // we only want to resolve image by interval or content changed
+            if (!(contentChanged || trigger === 'interval')) {
+                return
             }
 
             for (const [id, option] of Object.entries(newValue.ideOptions.options).filter(([_, x]) => !!x.resolveImageDigest)) {
