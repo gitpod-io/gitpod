@@ -1,6 +1,8 @@
 # Change Log
 
 ## February 2022
+- [GitHub] Fix the user account picked for a prebuild. ([#8132](https://github.com/gitpod-io/gitpod/pull/8132)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Update code to 1.64.2 ([#8143](https://github.com/gitpod-io/gitpod/pull/8143)) - [@filiptronicek](https://github.com/filiptronicek)
 - Improved workspace memory-pressure eviction resilience ([#8139](https://github.com/gitpod-io/gitpod/pull/8139)) - [@csweichel](https://github.com/csweichel)
 - Enable id check for seccomp notify ([#8134](https://github.com/gitpod-io/gitpod/pull/8134)) - [@utam0k](https://github.com/utam0k)
 - Autofix: upgrade-nvm-tools ([#8112](https://github.com/gitpod-io/gitpod/pull/8112)) - [@autofix-bot](https://github.com/autofix-bot)
