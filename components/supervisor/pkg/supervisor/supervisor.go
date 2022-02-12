@@ -1262,7 +1262,8 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup, childP
 	go func() {
 		ssh, err := newSSHServer(ctx, cfg, childProcEnvvars)
 		if err != nil {
-			log.WithError(err).Error("err starting SSH server")
+			log.WithError(err).Error("err creating SSH server")
+			return
 		}
 
 		err = ssh.listenAndServe()
