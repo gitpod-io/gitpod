@@ -398,7 +398,7 @@ var ring1Cmd = &cobra.Command{
 		procLoc := filepath.Join(ring2Root, "proc")
 		err = os.MkdirAll(procLoc, 0755)
 		if err != nil {
-			log.WithError(err).Error("cannot mount proc")
+			log.WithError(err).Error("cannot create directory for mounting proc")
 			return
 		}
 
@@ -828,20 +828,6 @@ func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
 	// /proc/self/cwd being the old root. Since we can play around with the cwd
 	// with pivot_root this allows us to pivot without creating directories in
 	// the rootfs. Shout-outs to the LXC developers for giving us this idea.
-
-	if fsshift == api.FSShiftMethod_FUSE {
-		err := unix.Chroot(rootfs)
-		if err != nil {
-			return xerrors.Errorf("cannot chroot: %v", err)
-		}
-
-		err = unix.Chdir("/")
-		if err != nil {
-			return xerrors.Errorf("cannot chdir to new root :%v", err)
-		}
-
-		return nil
-	}
 
 	oldroot, err := unix.Open("/", unix.O_DIRECTORY|unix.O_RDONLY, 0)
 	if err != nil {
