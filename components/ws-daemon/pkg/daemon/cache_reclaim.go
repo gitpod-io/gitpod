@@ -124,11 +124,11 @@ func readLimit(memCgroupPath string) (uint64, error) {
 		return math.MaxUint64, nil
 	}
 
-	p, err := strconv.ParseInt(s, 10, 64)
+	p, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
 		return 0, xerrors.Errorf("cannot parse memory.limit_in_bytes (%s): %v", s, err)
 	}
-	return uint64(p), nil
+	return p, nil
 }
 
 func readCache(memCgroupPath string) (uint64, error) {
@@ -147,11 +147,11 @@ func readCache(memCgroupPath string) (uint64, error) {
 			continue
 		}
 
-		r, err := strconv.ParseInt(strings.TrimSpace(strings.TrimPrefix(l, prefixCache)), 10, 64)
+		r, err := strconv.ParseUint(strings.TrimSpace(strings.TrimPrefix(l, prefixCache)), 10, 64)
 		if err != nil {
 			return 0, xerrors.Errorf("cannot parse memory.stat: %s: %w", l, err)
 		}
-		return uint64(r), nil
+		return r, nil
 	}
 	return 0, xerrors.Errorf("memory.stat did not contain cache")
 }
