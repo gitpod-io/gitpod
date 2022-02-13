@@ -16,8 +16,14 @@ until curl -sS "$SUPERVISOR_ADDR"/_supervisor/v1/status/content/wait/true | grep
 done
 echo "Desktop IDE: Content available."
 
+# instead put them into /ide-desktop/backend/bin/idea64.vmoptions
+# otherwise JB will complain to a user on each startup
+# by default remote dev already set -Xmx2048m, see /ide-desktop/backend/plugins/remote-dev-server/bin/launcher.sh
+unset JAVA_TOOL_OPTIONS
+
+# enable remote debuggign if debug mode is enabled
 if [ "${SUPERVISOR_DEBUG_ENABLE+}" = "true" ]; then
-  JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
+  export JAVA_TOOL_OPTIONS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
 fi
 
 # Set default config and system directories under /workspace to preserve between restarts
