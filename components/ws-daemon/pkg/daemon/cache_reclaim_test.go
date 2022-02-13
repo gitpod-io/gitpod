@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/opencontainers/runc/libcontainer/cgroups"
@@ -23,6 +24,40 @@ func createTempDir(t *testing.T, subsystem string) string {
 		t.Fatal(err)
 	}
 	return path
+}
+
+func TestReadLimit(t *testing.T) {
+	const limit = 4096
+	tempdir := createTempDir(t, "memory")
+	err := cgroups.WriteFile(tempdir, "memory.limit_in_bytes", strconv.Itoa(limit))
+	if err != nil {
+		t.Fatal(err)
+	}
+	value, err := readLimit(tempdir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if value != limit {
+		t.Fatalf("unexpected error: is '%v' but expected '%v'", value, limit)
+	}
+}
+
+func TestReadLimitBadValue(t *testing.T) {
+	invalidValues := []string{
+		"invalid",
+		"-1",
+	}
+	tempdir := createTempDir(t, "memory")
+	for _, v := range invalidValues {
+		err := cgroups.WriteFile(tempdir, "memory.limit_in_bytes", v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = readCache(tempdir)
+		if err == nil {
+			t.Fatal("expected failure")
+		}
+	}
 }
 
 func TestReadCache(t *testing.T) {
@@ -42,11 +77,11 @@ func TestReadCache(t *testing.T) {
 }
 
 func TestReadCacheBadValue(t *testing.T) {
-	tempdir := createTempDir(t, "memory")
 	invalidValues := []string{
 		"invalid",
 		"cache -1",
 	}
+	tempdir := createTempDir(t, "memory")
 	for _, v := range invalidValues {
 		err := cgroups.WriteFile(tempdir, "memory.stat", v)
 		if err != nil {
