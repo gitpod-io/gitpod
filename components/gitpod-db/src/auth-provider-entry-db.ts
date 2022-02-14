@@ -5,21 +5,15 @@
  */
 
 import { AuthProviderEntry as AuthProviderEntry } from "@gitpod/gitpod-protocol";
-import { createHash } from "crypto";
 
 export const AuthProviderEntryDB = Symbol('AuthProviderEntryDB');
 
 export interface AuthProviderEntryDB {
-    storeAuthProvider(ap: AuthProviderEntry, updateOAuthRevision: boolean): Promise<AuthProviderEntry>;
+    storeAuthProvider(ap: AuthProviderEntry): Promise<AuthProviderEntry>;
 
     delete(ap: AuthProviderEntry): Promise<void>;
 
-    findAll(exceptOAuthRevisions?: string[]): Promise<AuthProviderEntry[]>;
-    findAllHosts(): Promise<string[]>;
+    findAll(): Promise<AuthProviderEntry[]>;
     findByHost(host: string): Promise<AuthProviderEntry | undefined>;
     findByUserId(userId: string): Promise<AuthProviderEntry[]>;
-}
-
-export function hashOAuth(oauth: AuthProviderEntry["oauth"]): string {
-    return createHash('sha256').update(JSON.stringify(oauth)).digest('hex');
 }

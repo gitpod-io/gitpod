@@ -26,8 +26,8 @@ export class AuthProviderService {
     /**
      * Returns all auth providers.
      */
-    async getAllAuthProviders(exceptOAuthRevisions: string[] = []): Promise<AuthProviderParams[]> {
-        const all = await this.authProviderDB.findAll(exceptOAuthRevisions);
+    async getAllAuthProviders(): Promise<AuthProviderParams[]> {
+        const all = await this.authProviderDB.findAll();
         const transformed = all.map(this.toAuthProviderParams.bind(this));
 
         // as a precaution, let's remove duplicates
@@ -41,10 +41,6 @@ export class AuthProviderService {
             unique.set(current.host, current);
         }
         return Array.from(unique.values());
-    }
-
-    async getAllAuthProviderHosts(): Promise<string[]> {
-        return this.authProviderDB.findAllHosts();
     }
 
     protected toAuthProviderParams = (oap: AuthProviderEntry) => <AuthProviderParams>{
@@ -86,14 +82,13 @@ export class AuthProviderService {
             }
 
             // update config on demand
-            const oauth = {
-                ...existing.oauth,
-                clientId: entry.clientId,
-                clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
-            };
             authProvider = {
                 ...existing,
-                oauth,
+                oauth: {
+                    ...existing.oauth,
+                    clientId: entry.clientId,
+                    clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
+                },
                 status: "pending",
             }
         } else {
@@ -103,7 +98,7 @@ export class AuthProviderService {
             }
             authProvider = this.initializeNewProvider(entry);
         }
-        return await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry, true);
+        return await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry);
     }
     protected initializeNewProvider(newEntry: AuthProviderEntry.NewEntry): AuthProviderEntry {
         const { host, type, clientId, clientSecret } = newEntry;
@@ -111,17 +106,16 @@ export class AuthProviderService {
         if (!urls) {
             throw new Error("Unexpected service type.");
         }
-        const oauth: AuthProviderEntry["oauth"] = {
-            ...urls,
-            callBackUrl: this.callbackUrl(host),
-            clientId: clientId!,
-            clientSecret: clientSecret!,
-        };
-        return {
+        return <AuthProviderEntry>{
             ...newEntry,
             id: uuidv4(),
             type,
-            oauth,
+            oauth: {
+                ...urls,
+                callBackUrl: this.callbackUrl(host),
+                clientId,
+                clientSecret,
+            },
             status: "pending",
         };
     }
@@ -142,7 +136,7 @@ export class AuthProviderService {
                     ownerId: ownerId,
                     status: "verified"
                 };
-                await this.authProviderDB.storeAuthProvider(ap, true);
+                await this.authProviderDB.storeAuthProvider(ap);
             } else {
                 log.warn("Failed to find the AuthProviderEntry to be activated.", { params, id, ap });
             }
