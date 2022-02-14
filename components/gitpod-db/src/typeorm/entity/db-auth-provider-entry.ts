@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { PrimaryColumn, Column, Entity, Index } from "typeorm";
+import { PrimaryColumn, Column, Entity } from "typeorm";
 import { TypeORM } from "../typeorm";
 import { AuthProviderEntry, OAuth2Config } from "@gitpod/gitpod-protocol";
 import { Transformer } from "../transformer";
@@ -36,13 +36,6 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
         )
     })
     oauth: OAuth2Config;
-
-    @Index("ind_oauthRevision")
-    @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
-    })
-    oauthRevision?: string;
 
     @Column()
     deleted?: boolean;
