@@ -27,6 +27,7 @@ import { settingsPathAccount, settingsPathIntegrations, settingsPathMain, settin
 import { projectsPathInstallGitHubApp, projectsPathMain, projectsPathMainWithParams, projectsPathNew } from './projects/projects.routes';
 import { refreshSearchData } from './components/RepositoryFinder';
 import { StartWorkspaceModal } from './workspaces/StartWorkspaceModal';
+import { parseProps } from './start/StartWorkspace';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -412,7 +413,7 @@ function App() {
     } else if (isCreation) {
         toRender = <CreateWorkspace contextUrl={hash} />;
     } else if (isWsStart) {
-        toRender = <StartWorkspace workspaceId={hash} />;
+        toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
     } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
         let url = new URL(window.location.href)
         url.hash = url.pathname

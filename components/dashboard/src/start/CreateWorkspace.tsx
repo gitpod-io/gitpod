@@ -12,7 +12,7 @@ import Modal from "../components/Modal";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
-import StartWorkspace from "./StartWorkspace";
+import StartWorkspace, { parseProps } from "./StartWorkspace";
 import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
@@ -154,7 +154,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
 
     const result = this.state?.result;
     if (result?.createdWorkspaceId) {
-      return <StartWorkspace workspaceId={result.createdWorkspaceId} />;
+      return <StartWorkspace {...parseProps(result?.createdWorkspaceId, window.location.search)} />;
     }
 
     else if (result?.existingWorkspaces) {
