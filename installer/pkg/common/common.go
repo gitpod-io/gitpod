@@ -68,6 +68,7 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 
 func TracingEnv(context *RenderContext) (res []corev1.EnvVar) {
 	if context.Config.Observability.Tracing == nil {
+		res = append(res, corev1.EnvVar{Name: "JAEGER_DISABLED", Value: "true"})
 		return
 	}
 

@@ -272,6 +272,9 @@ env:
   value: {{ $tracing.samplerType }}
 - name: JAEGER_SAMPLER_PARAM
   value: "{{ $tracing.samplerParam }}"
+{{- else }}
+- name: JAEGER_DISABLED
+  value: "true"
 {{- end }}
 {{- end -}}
 
