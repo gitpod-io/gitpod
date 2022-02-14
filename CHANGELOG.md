@@ -1,6 +1,7 @@
 # Change Log
 
 ## February 2022
+- A bit of improvements to cache_reclaim ([#8179](https://github.com/gitpod-io/gitpod/pull/8179)) - [@utam0k](https://github.com/utam0k)
 - Add workspace start request debug logging to ws-manager ([#8161](https://github.com/gitpod-io/gitpod/pull/8161)) - [@csweichel](https://github.com/csweichel)
 - [GitHub] Fix the user account picked for a prebuild. ([#8132](https://github.com/gitpod-io/gitpod/pull/8132)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Update code to 1.64.2 ([#8143](https://github.com/gitpod-io/gitpod/pull/8143)) - [@filiptronicek](https://github.com/filiptronicek)
