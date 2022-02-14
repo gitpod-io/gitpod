@@ -54,7 +54,7 @@ import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/su
 import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
 import { IDEConfigService } from '../ide-config';
 import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-protocol';
-import { ClientMetadata } from '../websocket/websocket-connection-manager';
+import { ClientMetadata, traceClientMetadata } from '../websocket/websocket-connection-manager';
 import { ConfigurationService } from '../config/configuration-service';
 import { ProjectEnvVar } from '@gitpod/gitpod-protocol/src/protocol';
 import { InstallationAdminSettings } from '@gitpod/gitpod-protocol';
@@ -160,7 +160,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //           to clients who might not otherwise have access to that information.
         this.disposables.push(this.localMessageBroker.listenForWorkspaceInstanceUpdates(
             this.user.id,
-            (ctx, instance) => TraceContext.withSpan("forwardInstanceUpdateToClient", () => this.client?.onInstanceUpdate(this.censorInstance(instance)), ctx)
+            (ctx, instance) => TraceContext.withSpan("forwardInstanceUpdateToClient", (ctx) => {
+                traceClientMetadata(ctx, this.clientMetadata);
+                TraceContext.setJsonRPCMetadata(ctx, "onInstanceUpdate");
+
+                this.client?.onInstanceUpdate(this.censorInstance(instance));
+            }, ctx)
         ));
 
     }
