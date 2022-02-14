@@ -170,8 +170,9 @@ func checkKubernetesVersion(ctx context.Context, config *rest.Config, namespace 
 }
 
 type checkSecretOpts struct {
-	RequiredFields []string
-	Validator      func(*corev1.Secret) ([]ValidationError, error)
+	RequiredFields    []string
+	RecommendedFields []string
+	Validator         func(*corev1.Secret) ([]ValidationError, error)
 }
 
 type CheckSecretOpt func(*checkSecretOpts)
@@ -179,6 +180,12 @@ type CheckSecretOpt func(*checkSecretOpts)
 func CheckSecretRequiredData(entries ...string) CheckSecretOpt {
 	return func(cso *checkSecretOpts) {
 		cso.RequiredFields = append(cso.RequiredFields, entries...)
+	}
+}
+
+func CheckSecretRecommendedData(entries ...string) CheckSecretOpt {
+	return func(cso *checkSecretOpts) {
+		cso.RecommendedFields = append(cso.RecommendedFields, entries...)
 	}
 }
 
@@ -223,6 +230,15 @@ func CheckSecret(name string, opts ...CheckSecretOpt) ValidationCheck {
 					res = append(res, ValidationError{
 						Message: fmt.Sprintf("secret %s has no %s entry", name, k),
 						Type:    ValidationStatusError,
+					})
+				}
+			}
+			for _, k := range cfg.RecommendedFields {
+				_, ok := secret.Data[k]
+				if !ok {
+					res = append(res, ValidationError{
+						Message: fmt.Sprintf("secret %s has no %s entry", name, k),
+						Type:    ValidationStatusWarning,
 					})
 				}
 			}
