@@ -103,7 +103,11 @@ export class IDEConfigService {
         this.configPath = filePathTelepresenceAware(configPath);
         this.validate = this.ajv.compile(scheme);
         this.reconcile("initial");
-        fs.watchFile(this.configPath, () => this.reconcile("file changed"));
+        fs.watchFile(this.configPath, (curr, prev) => {
+            if (curr.mtimeMs != prev.mtimeMs) {
+                this.reconcile("file changed");
+            }
+        });
         repeat(() => this.reconcile("interval"), 60 * 60 * 1000 /* 1 hour */);
     }
 
