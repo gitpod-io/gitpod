@@ -57,15 +57,16 @@ func (e *EmptyInitializer) Run(ctx context.Context, mappings []archive.IDMapping
 }
 
 // CompositeInitializer does nothing
-type CompositeInitializer struct {
-	Initializer []Initializer
-}
+type CompositeInitializer []Initializer
 
 // Run calls run on all child initializers
-func (e *CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
+func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
 	_, ctx = opentracing.StartSpanFromContext(ctx, "CompositeInitializer.Run")
-	for _, init := range e.Initializer {
-		init.Run(ctx, mappings)
+	for _, init := range e {
+		_, err := init.Run(ctx, mappings)
+		if err != nil {
+			return csapi.WorkspaceInitFromOther, err
+		}
 	}
 	return csapi.WorkspaceInitFromOther, nil
 }
@@ -99,9 +100,7 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 				return nil, err
 			}
 		}
-		initializer = &CompositeInitializer{
-			Initializer: initializers,
-		}
+		initializer = CompositeInitializer(initializers)
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Git); ok {
 		if ir.Git == nil {
 			return nil, status.Error(codes.InvalidArgument, "missing Git initializer spec")
