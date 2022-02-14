@@ -619,13 +619,14 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .getCount();
     }
 
-    public async findPrebuildsWithWorkpace(cloneURL: string): Promise<PrebuildWithWorkspace[]> {
+    public async findPrebuildsWithWorkpace(cloneURL: string, limit: number = 20): Promise<PrebuildWithWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
 
         let query = repo.createQueryBuilder('pws');
         query = query.where('pws.cloneURL = :cloneURL', { cloneURL })
-        query = query.orderBy('pws.creationTime', 'ASC');
+        query = query.orderBy('pws.creationTime', 'DESC');
         query = query.innerJoinAndMapOne('pws.workspace', DBWorkspace, 'ws', 'pws.buildWorkspaceId = ws.id');
+        query = query.limit(limit);
 
         const res = await query.getMany();
         return res.map(r => {

@@ -118,8 +118,10 @@ message SnapshotInitializer {
 // If restoring the snapshot fails, we fall back to a regular Git initializer, which might be composite git initializer for multi-repo projects.
 message PrebuildInitializer {
     SnapshotInitializer prebuild = 1;
-    GitInitializer git = 2;
-    CompositeInitializer composite = 3;
+    oneof spec {
+        GitInitializer git = 2;
+        CompositeInitializer composite = 3;
+    }
 }
 
 // FromBackupInitializer initializes content from a previously made backup

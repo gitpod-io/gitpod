@@ -103,17 +103,17 @@ export class ContextParser {
         const span = TraceContext.startSpan("ContextParser.handleMultiRepositoryContext", ctx);
         let config = await this.configProvider.fetchConfig({ span }, user, context);
         let mainRepoContext: WorkspaceContext | undefined;
-        if (config.config.mainRepository) {
-            mainRepoContext = await this.internalHandleWithoutPrefix({ span }, user, config.config.mainRepository);
+        if (config.config.mainConfiguration) {
+            mainRepoContext = await this.internalHandleWithoutPrefix({ span }, user, config.config.mainConfiguration);
             if (!CommitContext.is(mainRepoContext)) {
-                throw new InvalidGitpodYMLError([`Cannot find main repository '${config.config.mainRepository}'.`]);
+                throw new InvalidGitpodYMLError([`Cannot find main repository '${config.config.mainConfiguration}'.`]);
             }
             config = await this.configProvider.fetchConfig({ span }, user, mainRepoContext);
         }
 
-        if (config.config.subRepositories && config.config.subRepositories.length > 0) {
+        if (config.config.additionalRepositories && config.config.additionalRepositories.length > 0) {
             const subRepoCommits: GitCheckoutInfo[] = [];
-            for (const subRepo of config.config.subRepositories) {
+            for (const subRepo of config.config.additionalRepositories) {
                 let subContext = await this.internalHandleWithoutPrefix({ span }, user, subRepo.url) as CommitContext;
                 if (!CommitContext.is(subContext)) {
                     throw new InvalidGitpodYMLError([`Cannot find sub-repository '${subRepo.url}'.`]);
@@ -136,7 +136,7 @@ export class ContextParser {
         if (mainRepoContext && CommitContext.is(mainRepoContext)) {
             context.repository = mainRepoContext.repository;
             context.revision = mainRepoContext.revision;
-            context.ref = mainRepoContext.revision;
+            context.ref = mainRepoContext.ref;
             context.refType = mainRepoContext.refType;
         }
         context.checkoutLocation = (config.config.checkoutLocation || context.repository.name);

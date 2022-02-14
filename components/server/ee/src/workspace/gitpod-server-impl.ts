@@ -628,18 +628,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             return;
         }
 
+        const commitSHAs = CommitContext.getCommitSHAs(context);
+
         const logCtx: LogContext = { userId: user.id };
         const cloneUrl = context.repository.cloneUrl;
-        // Note: findPrebuiltWorkspaceByCommit always returns the last triggered prebuild (so, if you re-trigger a prebuild, the newer one will always be used here)
-        const prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceByCommit(cloneUrl, context.revision);
-        const logPayload = { mode, cloneUrl, commit: context.revision, prebuiltWorkspace };
+        const prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+        const logPayload = { mode, cloneUrl, commit: commitSHAs, prebuiltWorkspace };
         log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
         if (!prebuiltWorkspace) {
             return;
         }
 
         if (prebuiltWorkspace.state === 'available') {
-            log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${context.revision}`, logPayload);
+            log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
             const result: PrebuiltWorkspaceContext = {
                 title: context.title,
                 originalContext: context,
@@ -719,7 +720,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             } else {
                 result.runningWorkspacePrebuild!.starting = 'running';
             }
-            log.info(logCtx, `Found prebuilding (starting=${result.runningWorkspacePrebuild!.starting}) workspace for ${cloneUrl}:${context.revision}`, logPayload);
+            log.info(logCtx, `Found prebuilding (starting=${result.runningWorkspacePrebuild!.starting}) workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
             return result;
         }
     }
@@ -732,27 +733,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.licenseDB.store(uuidv4(), key);
         await this.licenseEvaluator.reloadLicense();
     }
-
-    // TODO(gpl) This is not part of our API interface, nor can I find any clients. Remove or re-surrect?
-    // async getLicenseInfo(ctx: TraceContext): Promise<GetLicenseInfoResult> {
-    //     const user = this.checkAndBlockUser("getLicenseInfo");
-
-    //     const { key } = await this.licenseKeySource.getKey();
-    //     const { validUntil, seats } = this.licenseEvaluator.inspect();
-    //     const { valid } = this.licenseEvaluator.validate();
-
-    //     const isAdmin = this.authorizationService.hasPermission(user, Permission.ADMIN_API);
-
-    //     return {
-    //         isAdmin,
-    //         licenseInfo: {
-    //             key: isAdmin ? key : "REDACTED",
-    //             seats,
-    //             valid,
-    //             validUntil
-    //         }
-    //     };
-    // }
 
     async licenseIncludesFeature(ctx: TraceContext, licenseFeature: LicenseFeature): Promise<boolean> {
         traceAPIParams(ctx, { licenseFeature });
@@ -1502,11 +1482,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const context = await this.contextParser.handle(ctx, user, contextURL) as CommitContext;
 
         const prebuild = await this.prebuildManager.startPrebuild(ctx, {
-            contextURL,
-            cloneURL: project.cloneUrl,
-            commit: context.revision,
+            context,
             user,
-            branch: branchDetails[0].name,
             project
         });
 

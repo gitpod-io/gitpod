@@ -38,6 +38,7 @@ goog.exportSymbol('proto.contentservice.GitConfig', null, global);
 goog.exportSymbol('proto.contentservice.GitInitializer', null, global);
 goog.exportSymbol('proto.contentservice.GitStatus', null, global);
 goog.exportSymbol('proto.contentservice.PrebuildInitializer', null, global);
+goog.exportSymbol('proto.contentservice.PrebuildInitializer.SpecCase', null, global);
 goog.exportSymbol('proto.contentservice.SnapshotInitializer', null, global);
 goog.exportSymbol('proto.contentservice.WorkspaceInitializer', null, global);
 goog.exportSymbol('proto.contentservice.WorkspaceInitializer.SpecCase', null, global);
@@ -220,7 +221,7 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.contentservice.PrebuildInitializer = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, null, proto.contentservice.PrebuildInitializer.oneofGroups_);
 };
 goog.inherits(proto.contentservice.PrebuildInitializer, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -2086,6 +2087,32 @@ proto.contentservice.SnapshotInitializer.prototype.setSnapshot = function(value)
 
 
 
+/**
+ * Oneof group definitions for this message. Each group defines the field
+ * numbers belonging to that group. When of these fields' value is set, all
+ * other fields in the group are cleared. During deserialization, if multiple
+ * fields are encountered for a group, only the last value seen will be kept.
+ * @private {!Array<!Array<number>>}
+ * @const
+ */
+proto.contentservice.PrebuildInitializer.oneofGroups_ = [[2,3]];
+
+/**
+ * @enum {number}
+ */
+proto.contentservice.PrebuildInitializer.SpecCase = {
+  SPEC_NOT_SET: 0,
+  GIT: 2,
+  COMPOSITE: 3
+};
+
+/**
+ * @return {proto.contentservice.PrebuildInitializer.SpecCase}
+ */
+proto.contentservice.PrebuildInitializer.prototype.getSpecCase = function() {
+  return /** @type {proto.contentservice.PrebuildInitializer.SpecCase} */(jspb.Message.computeOneofCase(this, proto.contentservice.PrebuildInitializer.oneofGroups_[0]));
+};
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2279,7 +2306,7 @@ proto.contentservice.PrebuildInitializer.prototype.getGit = function() {
  * @return {!proto.contentservice.PrebuildInitializer} returns this
 */
 proto.contentservice.PrebuildInitializer.prototype.setGit = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setOneofWrapperField(this, 2, proto.contentservice.PrebuildInitializer.oneofGroups_[0], value);
 };
 
 
@@ -2316,7 +2343,7 @@ proto.contentservice.PrebuildInitializer.prototype.getComposite = function() {
  * @return {!proto.contentservice.PrebuildInitializer} returns this
 */
 proto.contentservice.PrebuildInitializer.prototype.setComposite = function(value) {
-  return jspb.Message.setWrapperField(this, 3, value);
+  return jspb.Message.setOneofWrapperField(this, 3, proto.contentservice.PrebuildInitializer.oneofGroups_[0], value);
 };
 
 

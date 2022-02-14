@@ -136,9 +136,9 @@
             },
             "additionalProperties": false
         },
-        "subRepositories": {
+        "additionalRepositories": {
             "type": "array",
-            "description": "List of sub repositories that are part of this project.",
+            "description": "List of additional repositories that are part of this project.",
             "items": {
                 "type": "object",
                 "required": [
@@ -157,7 +157,7 @@
                 "additionalProperties": false
             }
         },
-        "mainRepository": {
+        "mainConfiguration": {
             "type": "string",
             "description": "The main repository, containing the dev environment configuration."
         },

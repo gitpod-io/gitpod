@@ -14,4 +14,5 @@ export interface RepositoryProvider {
     getBranches(user: User, owner: string, repo: string): Promise<Branch[]>;
     getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined>;
     getUserRepos(user: User): Promise<string[]>;
+    getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number): Promise<string[]>;
 }
