@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsmanagerbridge "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-bridge"
+	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -53,7 +54,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name:      "gitpod-license-key",
 			MountPath: licenseFilePath,
 			SubPath:   "license",
-			ReadOnly:  true,
 		})
 	}
 
@@ -164,22 +164,47 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								common.TracingEnv(ctx),
 								common.AnalyticsEnv(&ctx.Config),
 								common.MessageBusEnv(&ctx.Config),
-								[]corev1.EnvVar{{
-									Name:  "CONFIG_PATH",
-									Value: "/config/config.json",
-								}, {
-									Name:  "IDE_CONFIG_PATH",
-									Value: "/ide-config/config.json",
-								}, {
-									Name:  "NODE_ENV",
-									Value: "production", // todo(sje): will we need to change this?
-								}, {
-									Name:  "SHLVL",
-									Value: "1",
-								}, {
-									Name:  "WSMAN_CFG_MANAGERS",
-									Value: wsmanCfgManager,
-								}},
+								[]corev1.EnvVar{
+									{
+										Name:  "CONFIG_PATH",
+										Value: "/config/config.json",
+									},
+									func() corev1.EnvVar {
+										envvar := corev1.EnvVar{
+											Name: "GITPOD_LICENSE_TYPE",
+										}
+
+										if ctx.Config.License == nil {
+											envvar.Value = string(configv1.LicensorTypeGitpod)
+										} else {
+											envvar.ValueFrom = &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{
+													LocalObjectReference: corev1.LocalObjectReference{Name: ctx.Config.License.Name},
+													Key:                  "type",
+													Optional:             pointer.Bool(true),
+												},
+											}
+										}
+
+										return envvar
+									}(),
+									{
+										Name:  "IDE_CONFIG_PATH",
+										Value: "/ide-config/config.json",
+									},
+									{
+										Name:  "NODE_ENV",
+										Value: "production", // todo(sje): will we need to change this?
+									},
+									{
+										Name:  "SHLVL",
+										Value: "1",
+									},
+									{
+										Name:  "WSMAN_CFG_MANAGERS",
+										Value: wsmanCfgManager,
+									},
+								},
 							),
 							// todo(sje): conditionally add github-app-cert-secret in
 							// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
