@@ -63,18 +63,19 @@ export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
 export interface ClientMetadata {
     id: string,
     authLevel: WebsocketAuthenticationLevel,
-    sessionId?: string;
-    userId?: string;
-    type?: WebsocketClientType;
+    sessionId?: string,
+    userId?: string,
+    type?: WebsocketClientType,
     origin: ClientOrigin,
-    version?: string;
+    version?: string,
+    userAgent?: string,
 }
 interface ClientOrigin {
     workspaceId?: string,
     instanceId?: string,
 }
 export namespace ClientMetadata {
-    export function from(userId: string | undefined, sessionId?: string, type?: WebsocketClientType, origin?: ClientOrigin, version?: string): ClientMetadata {
+    export function from(userId: string | undefined, sessionId?: string, data?: Omit<ClientMetadata, "id" | "sessionId" | "authLevel">): ClientMetadata {
         let id = "anonymous";
         let authLevel: WebsocketAuthenticationLevel = "anonymous";
         if (userId) {
@@ -84,7 +85,7 @@ export namespace ClientMetadata {
             id = `session-${sessionId}`;
             authLevel = "session";
         }
-        return { id, authLevel, userId, sessionId, type, origin: { ...(origin || {}) }, version };
+        return { id, authLevel, userId, sessionId, ...data, origin: data?.origin || {}, };
     }
 
     export function fromRequest(req: any) {
@@ -93,13 +94,14 @@ export namespace ClientMetadata {
         const sessionId = expressReq.session?.id;
         const type = WebsocketClientType.getClientType(expressReq);
         const version = takeFirst(expressReq.headers["x-client-version"]);
+        const userAgent = takeFirst(expressReq.headers["user-agent"]);
         const instanceId = takeFirst(expressReq.headers["x-workspace-instance-id"]);
         const workspaceId = getOriginWorkspaceId(expressReq);
         const origin: ClientOrigin = {
             instanceId,
             workspaceId,
         };
-        return ClientMetadata.from(user?.id, sessionId, type, origin, version);
+        return ClientMetadata.from(user?.id, sessionId, { type, origin, version, userAgent });
     }
 
     function getOriginWorkspaceId(req: express.Request): string | undefined {
@@ -406,6 +408,7 @@ function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) 
             type: clientMetadata.type,
             version: clientMetadata.version,
             origin: clientMetadata.origin,
+            userAgent: clientMetadata.userAgent,
         },
     });
 }
