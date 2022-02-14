@@ -236,6 +236,13 @@ type OpenVSX struct {
 	URL string `json:"url" validate:"url"`
 }
 
+type LicensorType string
+
+const (
+	LicensorTypeGitpod     LicensorType = "gitpod"
+	LicensorTypeReplicated LicensorType = "replicated"
+)
+
 type FSShiftMethod string
 
 const (
