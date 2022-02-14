@@ -8,7 +8,7 @@
 import * as opentracing from 'opentracing';
 import { TracingConfig, initTracerFromEnv } from 'jaeger-client';
 import { Sampler, SamplingDecision } from './jaeger-client-types';
-import { followsFrom, initGlobalTracer } from 'opentracing';
+import { initGlobalTracer } from 'opentracing';
 import { injectable } from 'inversify';
 import { ResponseError } from 'vscode-jsonrpc';
 import { log, LogContext } from './logging';
@@ -22,18 +22,19 @@ export type TraceContextWithSpan = TraceContext & {
 
 
 export namespace TraceContext {
-    export function startSpan(operation: string, parentCtx?: TraceContext, ...referencedSpans: (opentracing.Span | undefined)[]): opentracing.Span {
+    export function startSpan(operation: string, parentCtx?: TraceContext): opentracing.Span {
         const options: opentracing.SpanOptions = {};
         if (parentCtx && parentCtx.span && !!parentCtx.span.context().toSpanId()) {
             options.childOf = parentCtx.span;
         }
-        if (referencedSpans) {
-            // note: allthough followsForm's type says it takes 'opentracing.Span | opentracing.SpanContext', it only works with SpanContext (typing mismatch)
-            // note2: we need to filter out debug spans (spanId === "")
-            options.references = referencedSpans.filter(s => s !== undefined)
-                .filter(s => !!s!.context().toSpanId())
-                .map(s => followsFrom(s!.context()));
-        }
+        // TODO(gpl) references lead to a huge amount of errors in prod logs. Avoid those until we have time to figure out how to fix it.
+        // if (referencedSpans) {
+        //     // note: allthough followsForm's type says it takes 'opentracing.Span | opentracing.SpanContext', it only works with SpanContext (typing mismatch)
+        //     // note2: we need to filter out debug spans (spanId === "")
+        //     options.references = referencedSpans.filter(s => s !== undefined)
+        //         .filter(s => !!s!.context().toSpanId())
+        //         .map(s => followsFrom(s!.context()));
+        // }
 
         return opentracing.globalTracer().startSpan(operation, options);
     }
@@ -43,14 +44,14 @@ export namespace TraceContext {
         return { span };
     }
 
-    export function withSpan(operation: string, callback: () => void, ctx?: TraceContext, ...referencedSpans: (opentracing.Span | undefined)[]): void {
+    export function withSpan(operation: string, callback: () => void, ctx?: TraceContext): void {
         // if we don't have a parent span, don't create a trace here as those <trace-without-root-spans> are not useful.
         if (!ctx || !ctx.span || !ctx.span.context()) {
             callback();
             return;
         }
 
-        const span = TraceContext.startSpan(operation, ctx, ...referencedSpans);
+        const span = TraceContext.startSpan(operation, ctx);
         try {
             callback();
         } catch (e) {
