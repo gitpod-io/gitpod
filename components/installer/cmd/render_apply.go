@@ -6,13 +6,15 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"helm.sh/helm/v3/pkg/chart"
 )
+
+var renderApplyOpts struct {
+	WriteOnly bool
+}
 
 var applyCmd = &cobra.Command{
 	Use:   "apply",
@@ -45,8 +47,12 @@ var applyCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(*dir)
-		os.Exit(1)
+		if renderApplyOpts.WriteOnly {
+			fmt.Println(fmt.Sprintf(`Installer config rendered to %s.
+
+This can now be installed using Helm.`, *dir))
+			return nil
+		}
 
 		// Install/upgrade the Helm release
 		err = helm.InstallOrUpgrade("gitpod", renderOpts.Namespace, *dir)
@@ -60,4 +66,6 @@ var applyCmd = &cobra.Command{
 
 func init() {
 	renderCmd.AddCommand(applyCmd)
+
+	applyCmd.Flags().BoolVar(&renderApplyOpts.WriteOnly, "write-only", false, "if set, the config will be written to disk only and will not be installed")
 }
