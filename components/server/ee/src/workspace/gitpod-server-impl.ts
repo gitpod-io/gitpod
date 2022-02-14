@@ -39,7 +39,7 @@ import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
-import { ClientMetadata } from "../../../src/websocket/websocket-connection-manager";
+import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from 'url';
 
@@ -89,9 +89,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         for (const projectId of projects) {
             this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
                 projectId,
-                (ctx: TraceContext, update: PrebuildWithStatus) => {
+                (ctx: TraceContext, update: PrebuildWithStatus) => TraceContext.withSpan("forwardPrebuildUpdateToClient", (ctx) => {
+                    traceClientMetadata(ctx, this.clientMetadata);
+                    TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
+
                     this.client?.onPrebuildUpdate(update);
-                }
+                }, ctx)
             ));
         }
 
@@ -122,12 +125,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         this.disposables.push(this.localMessageBroker.listenToCreditAlerts(
             this.user.id,
-            async (ctx: TraceContext, creditAlert: CreditAlert) => {
-                this.client?.onCreditAlert(creditAlert);
-                if (creditAlert.remainingUsageHours < 1e-6) {
-                    const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(creditAlert.userId);
-                    runningInstances.forEach(async instance => await this.stopWorkspace(ctx, instance.workspaceId));
-                }
+            (ctx: TraceContext, creditAlert: CreditAlert) => {
+                TraceContext.withSpan("forwardCreditAlertToClient", async (ctx) => {
+                    traceClientMetadata(ctx, this.clientMetadata);
+                    TraceContext.setJsonRPCMetadata(ctx, "onCreditAlert");
+
+                    this.client?.onCreditAlert(creditAlert);
+                    if (creditAlert.remainingUsageHours < 1e-6) {
+                        const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(creditAlert.userId);
+                        runningInstances.forEach(async instance => await this.stopWorkspace(ctx, instance.workspaceId));
+                    }
+                }, ctx);
             }
         ));
     }
@@ -1559,9 +1567,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         // update client registration for the logged in user
         this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
             project.id,
-            (ctx: TraceContext, update: PrebuildWithStatus) => {
+            (ctx: TraceContext, update: PrebuildWithStatus) =>  TraceContext.withSpan("forwardPrebuildUpdateToClient", (ctx) => {
+                traceClientMetadata(ctx, this.clientMetadata);
+                TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
+
                 this.client?.onPrebuildUpdate(update);
-            }
+            }, ctx)
         ));
         return project;
     }
