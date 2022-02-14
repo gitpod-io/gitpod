@@ -9,6 +9,7 @@
     "js-cookie": "^3.0.1",
     "moment": "^2.29.1",
     "monaco-editor": "^0.25.2",
+    "query-string": "^7.1.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-router-dom": "^5.2.0",

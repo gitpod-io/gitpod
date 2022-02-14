@@ -414,10 +414,10 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusFound,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://test-domain.com/start/#blabla-smelt-9ba20cc1"},
+					"Location":     {"https://test-domain.com/start/?not_found=true#blabla-smelt-9ba20cc1"},
 					"Vary":         {"Accept-Encoding"},
 				},
-				Body: ("<a href=\"https://test-domain.com/start/#blabla-smelt-9ba20cc1\">Found</a>.\n\n"),
+				Body: ("<a href=\"https://test-domain.com/start/?not_found=true#blabla-smelt-9ba20cc1\">Found</a>.\n\n"),
 			},
 		},
 		{
@@ -429,10 +429,10 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusFound,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://test-domain.com/start/#blabla-smelt-9ba20cc1"},
+					"Location":     {"https://test-domain.com/start/?not_found=true#blabla-smelt-9ba20cc1"},
 					"Vary":         {"Accept-Encoding"},
 				},
-				Body: ("<a href=\"https://test-domain.com/start/#blabla-smelt-9ba20cc1\">Found</a>.\n\n"),
+				Body: ("<a href=\"https://test-domain.com/start/?not_found=true#blabla-smelt-9ba20cc1\">Found</a>.\n\n"),
 			},
 		},
 		{

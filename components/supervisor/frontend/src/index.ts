@@ -106,7 +106,6 @@ const toStop = new DisposableCollection();
 
     //#region current-frame
     let current: HTMLElement = loading.frame;
-    let stopped = false;
     let desktopRedirected = false;
     const nextFrame = () => {
         const instance = gitpodServiceClient.info.latestInstance;
@@ -141,19 +140,6 @@ const toStop = new DisposableCollection();
                 if (ideService.state === 'ready') {
                     return document.body;
                 }
-            }
-            if (instance.status.phase === 'stopped') {
-                stopped = true;
-            }
-            if (stopped && (
-                instance.status.phase === 'preparing' ||
-                instance.status.phase === 'pending' ||
-                instance.status.phase === 'creating' ||
-                instance.status.phase === 'initializing')) {
-                // reload the page if the workspace was restarted to ensure:
-                // - graceful reconnection of IDEs
-                // - new owner token is set
-                window.location.href = startUrl.toString();
             }
         }
         return loading.frame;
