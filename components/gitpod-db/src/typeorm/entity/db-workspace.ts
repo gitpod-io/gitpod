@@ -27,7 +27,6 @@ export class DBWorkspace implements Workspace {
     ownerId: string;
 
     @Column("text")
-    @Index('ind_contextURL')
     contextURL: string;
 
     @Column({
