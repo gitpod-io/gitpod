@@ -121,14 +121,15 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
 
     if (this.props.dontAutostart) {
+      // we saw errors previously, or run in-frame
       this.fetchWorkspaceInfo(undefined);
-      return;
+    } else {
+      // dashboard case (w/o previous errors): start workspace as quickly as possible
+      this.startWorkspace();
     }
 
-    // dashboard case (no previous errors): start workspace as quickly as possible
-    this.startWorkspace();
     // query IDE options so we can show them if necessary once the workspace is running
-    getGitpodService().server.getIDEOptions().then(ideOptions => this.setState({ ideOptions }));
+    this.fetchIDEOptions();
   }
 
   componentWillUnmount() {
@@ -260,6 +261,17 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
   }
 
+  /**
+   * Fetches the current IDEOptions config for this user
+   *
+   * TODO(gpl) Ideally this would be part of the WorkspaceInstance shape, really. And we'd display options based on
+   * what support it was started with.
+   */
+  protected async fetchIDEOptions() {
+    const ideOptions = await getGitpodService().server.getIDEOptions();
+    this.setState({ ideOptions });
+  }
+
   notifyDidOpenConnection() {
     this.fetchWorkspaceInfo(undefined);
   }
@@ -283,6 +295,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         startedInstanceId: workspaceInstance.id,
         workspaceInstance,
       });
+
+      // now we're listening to a new instance, which might have been started with other IDEoptions
+      this.fetchIDEOptions();
     }
 
     await this.ensureWorkspaceAuth(workspaceInstance.id);
