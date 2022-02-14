@@ -337,7 +337,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             increaseApiCallUserCounter(method, "anonymous");
         }
 
-        const span = TraceContext.startSpan(method, undefined, this.connectionCtx.span);
+        const span = TraceContext.startSpan(method, undefined);
         const ctx = { span };
         const userId = this.clientMetadata.userId;
         try {
@@ -400,7 +400,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
 }
 
-function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) {
+export function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) {
     TraceContext.addNestedTags(ctx, {
         client: {
             id: clientMetadata.id,
