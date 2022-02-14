@@ -38,7 +38,6 @@ goog.exportSymbol('proto.contentservice.GitConfig', null, global);
 goog.exportSymbol('proto.contentservice.GitInitializer', null, global);
 goog.exportSymbol('proto.contentservice.GitStatus', null, global);
 goog.exportSymbol('proto.contentservice.PrebuildInitializer', null, global);
-goog.exportSymbol('proto.contentservice.PrebuildInitializer.SpecCase', null, global);
 goog.exportSymbol('proto.contentservice.SnapshotInitializer', null, global);
 goog.exportSymbol('proto.contentservice.WorkspaceInitializer', null, global);
 goog.exportSymbol('proto.contentservice.WorkspaceInitializer.SpecCase', null, global);
@@ -221,7 +220,7 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.contentservice.PrebuildInitializer = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, proto.contentservice.PrebuildInitializer.oneofGroups_);
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.contentservice.PrebuildInitializer.repeatedFields_, null);
 };
 goog.inherits(proto.contentservice.PrebuildInitializer, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -2088,30 +2087,11 @@ proto.contentservice.SnapshotInitializer.prototype.setSnapshot = function(value)
 
 
 /**
- * Oneof group definitions for this message. Each group defines the field
- * numbers belonging to that group. When of these fields' value is set, all
- * other fields in the group are cleared. During deserialization, if multiple
- * fields are encountered for a group, only the last value seen will be kept.
- * @private {!Array<!Array<number>>}
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
  * @const
  */
-proto.contentservice.PrebuildInitializer.oneofGroups_ = [[2,3]];
-
-/**
- * @enum {number}
- */
-proto.contentservice.PrebuildInitializer.SpecCase = {
-  SPEC_NOT_SET: 0,
-  GIT: 2,
-  COMPOSITE: 3
-};
-
-/**
- * @return {proto.contentservice.PrebuildInitializer.SpecCase}
- */
-proto.contentservice.PrebuildInitializer.prototype.getSpecCase = function() {
-  return /** @type {proto.contentservice.PrebuildInitializer.SpecCase} */(jspb.Message.computeOneofCase(this, proto.contentservice.PrebuildInitializer.oneofGroups_[0]));
-};
+proto.contentservice.PrebuildInitializer.repeatedFields_ = [2];
 
 
 
@@ -2145,8 +2125,8 @@ proto.contentservice.PrebuildInitializer.prototype.toObject = function(opt_inclu
 proto.contentservice.PrebuildInitializer.toObject = function(includeInstance, msg) {
   var f, obj = {
     prebuild: (f = msg.getPrebuild()) && proto.contentservice.SnapshotInitializer.toObject(includeInstance, f),
-    git: (f = msg.getGit()) && proto.contentservice.GitInitializer.toObject(includeInstance, f),
-    composite: (f = msg.getComposite()) && proto.contentservice.CompositeInitializer.toObject(includeInstance, f)
+    gitList: jspb.Message.toObjectList(msg.getGitList(),
+    proto.contentservice.GitInitializer.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -2191,12 +2171,7 @@ proto.contentservice.PrebuildInitializer.deserializeBinaryFromReader = function(
     case 2:
       var value = new proto.contentservice.GitInitializer;
       reader.readMessage(value,proto.contentservice.GitInitializer.deserializeBinaryFromReader);
-      msg.setGit(value);
-      break;
-    case 3:
-      var value = new proto.contentservice.CompositeInitializer;
-      reader.readMessage(value,proto.contentservice.CompositeInitializer.deserializeBinaryFromReader);
-      msg.setComposite(value);
+      msg.addGit(value);
       break;
     default:
       reader.skipField();
@@ -2235,20 +2210,12 @@ proto.contentservice.PrebuildInitializer.serializeBinaryToWriter = function(mess
       proto.contentservice.SnapshotInitializer.serializeBinaryToWriter
     );
   }
-  f = message.getGit();
-  if (f != null) {
-    writer.writeMessage(
+  f = message.getGitList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
       2,
       f,
       proto.contentservice.GitInitializer.serializeBinaryToWriter
-    );
-  }
-  f = message.getComposite();
-  if (f != null) {
-    writer.writeMessage(
-      3,
-      f,
-      proto.contentservice.CompositeInitializer.serializeBinaryToWriter
     );
   }
 };
@@ -2292,76 +2259,40 @@ proto.contentservice.PrebuildInitializer.prototype.hasPrebuild = function() {
 
 
 /**
- * optional GitInitializer git = 2;
- * @return {?proto.contentservice.GitInitializer}
+ * repeated GitInitializer git = 2;
+ * @return {!Array<!proto.contentservice.GitInitializer>}
  */
-proto.contentservice.PrebuildInitializer.prototype.getGit = function() {
-  return /** @type{?proto.contentservice.GitInitializer} */ (
-    jspb.Message.getWrapperField(this, proto.contentservice.GitInitializer, 2));
+proto.contentservice.PrebuildInitializer.prototype.getGitList = function() {
+  return /** @type{!Array<!proto.contentservice.GitInitializer>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.contentservice.GitInitializer, 2));
 };
 
 
 /**
- * @param {?proto.contentservice.GitInitializer|undefined} value
+ * @param {!Array<!proto.contentservice.GitInitializer>} value
  * @return {!proto.contentservice.PrebuildInitializer} returns this
 */
-proto.contentservice.PrebuildInitializer.prototype.setGit = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 2, proto.contentservice.PrebuildInitializer.oneofGroups_[0], value);
+proto.contentservice.PrebuildInitializer.prototype.setGitList = function(value) {
+  return jspb.Message.setRepeatedWrapperField(this, 2, value);
 };
 
 
 /**
- * Clears the message field making it undefined.
+ * @param {!proto.contentservice.GitInitializer=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.contentservice.GitInitializer}
+ */
+proto.contentservice.PrebuildInitializer.prototype.addGit = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 2, opt_value, proto.contentservice.GitInitializer, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
  * @return {!proto.contentservice.PrebuildInitializer} returns this
  */
-proto.contentservice.PrebuildInitializer.prototype.clearGit = function() {
-  return this.setGit(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.contentservice.PrebuildInitializer.prototype.hasGit = function() {
-  return jspb.Message.getField(this, 2) != null;
-};
-
-
-/**
- * optional CompositeInitializer composite = 3;
- * @return {?proto.contentservice.CompositeInitializer}
- */
-proto.contentservice.PrebuildInitializer.prototype.getComposite = function() {
-  return /** @type{?proto.contentservice.CompositeInitializer} */ (
-    jspb.Message.getWrapperField(this, proto.contentservice.CompositeInitializer, 3));
-};
-
-
-/**
- * @param {?proto.contentservice.CompositeInitializer|undefined} value
- * @return {!proto.contentservice.PrebuildInitializer} returns this
-*/
-proto.contentservice.PrebuildInitializer.prototype.setComposite = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 3, proto.contentservice.PrebuildInitializer.oneofGroups_[0], value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.contentservice.PrebuildInitializer} returns this
- */
-proto.contentservice.PrebuildInitializer.prototype.clearComposite = function() {
-  return this.setComposite(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.contentservice.PrebuildInitializer.prototype.hasComposite = function() {
-  return jspb.Message.getField(this, 3) != null;
+proto.contentservice.PrebuildInitializer.prototype.clearGitList = function() {
+  return this.setGitList([]);
 };
 
 

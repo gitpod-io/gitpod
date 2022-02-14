@@ -275,18 +275,10 @@ export class PrebuildInitializer extends jspb.Message {
     clearPrebuild(): void;
     getPrebuild(): SnapshotInitializer | undefined;
     setPrebuild(value?: SnapshotInitializer): PrebuildInitializer;
-
-    hasGit(): boolean;
-    clearGit(): void;
-    getGit(): GitInitializer | undefined;
-    setGit(value?: GitInitializer): PrebuildInitializer;
-
-    hasComposite(): boolean;
-    clearComposite(): void;
-    getComposite(): CompositeInitializer | undefined;
-    setComposite(value?: CompositeInitializer): PrebuildInitializer;
-
-    getSpecCase(): PrebuildInitializer.SpecCase;
+    clearGitList(): void;
+    getGitList(): Array<GitInitializer>;
+    setGitList(value: Array<GitInitializer>): PrebuildInitializer;
+    addGit(value?: GitInitializer, index?: number): GitInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrebuildInitializer.AsObject;
@@ -301,16 +293,8 @@ export class PrebuildInitializer extends jspb.Message {
 export namespace PrebuildInitializer {
     export type AsObject = {
         prebuild?: SnapshotInitializer.AsObject,
-        git?: GitInitializer.AsObject,
-        composite?: CompositeInitializer.AsObject,
+        gitList: Array<GitInitializer.AsObject>,
     }
-
-    export enum SpecCase {
-        SPEC_NOT_SET = 0,
-        GIT = 2,
-        COMPOSITE = 3,
-    }
-
 }
 
 export class FromBackupInitializer extends jspb.Message {

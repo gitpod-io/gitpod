@@ -26,9 +26,8 @@ import (
 // PrebuildInitializer first tries to restore the snapshot/prebuild and if that succeeds performs Git operations.
 // If restoring the prebuild does not succeed we fall back to Git entriely.
 type PrebuildInitializer struct {
-	Git       *GitInitializer
-	Prebuild  *SnapshotInitializer
-	Composite *CompositeInitializer
+	Git      []*GitInitializer
+	Prebuild *SnapshotInitializer
 }
 
 // Run runs the prebuild initializer
@@ -46,14 +45,11 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 			tracelog.String("snapshot", p.Prebuild.Snapshot),
 		)
 	}
-	if p.Git == nil {
+	if len(p.Git) == 0 {
 		spandata = append(spandata, tracelog.Bool("hasGit", false))
 	} else {
 		spandata = append(spandata,
 			tracelog.Bool("hasGit", true),
-			tracelog.String("git.targetMode", string(p.Git.TargetMode)),
-			tracelog.String("git.cloneTarget", string(p.Git.CloneTarget)),
-			tracelog.String("git.location", string(p.Git.Location)),
 		)
 	}
 	span.LogFields(spandata...)
@@ -71,10 +67,12 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 			if err := clearWorkspace(location); err != nil {
 				return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: %w", err)
 			}
-			if p.Composite != nil {
-				return p.Composite.Run(ctx, mappings)
-			} else {
-				return p.Git.Run(ctx, mappings)
+
+			for _, gi := range p.Git {
+				_, err = gi.Run(ctx, mappings)
+				if err != nil {
+					return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: Git fallback: %w", err)
+				}
 			}
 		}
 	}
@@ -84,25 +82,11 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	src = csapi.WorkspaceInitFromPrebuild
 
 	// make sure we're on the correct branch
-
-	if p.Git != nil {
-		err = runGitInit(ctx, p.Git)
-	} else if p.Composite != nil {
-		for _, init := range p.Composite.Initializer {
-			if gitinit, ok := init.(*GitInitializer); ok {
-				anErr := runGitInit(ctx, gitinit)
-				if anErr != nil {
-					if err == nil {
-						err = anErr
-					} else {
-						log.Error("Git init for prebuild on "+gitinit.RemoteURI+" failed.", err)
-					}
-				}
-			}
+	for _, gi := range p.Git {
+		err = runGitInit(ctx, gi)
+		if err != nil {
+			return src, err
 		}
-	}
-	if err != nil {
-		return src, err
 	}
 	log.Debug("Initialized workspace with prebuilt snapshot")
 	return
