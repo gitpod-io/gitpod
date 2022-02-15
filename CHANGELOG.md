@@ -1,6 +1,11 @@
 # Change Log
 
 ## February 2022
+- [tracing] avoid noisy error messages ([#8187](https://github.com/gitpod-io/gitpod/pull/8187)) - [@geropl](https://github.com/geropl)
+- Composite content initializer now correctly report errors. ([#8189](https://github.com/gitpod-io/gitpod/pull/8189)) - [@csweichel](https://github.com/csweichel)
+- Add alerts if the GC of ws-daemon is excessive ([#8185](https://github.com/gitpod-io/gitpod/pull/8185)) - [@princerachit](https://github.com/princerachit)
+- make workspace startup more robust ([#8125](https://github.com/gitpod-io/gitpod/pull/8125)) - [@geropl](https://github.com/geropl)
+- Fixed a bug where docker in workspaces could not be used when overlay-fusefs was used as shift method ([#8181](https://github.com/gitpod-io/gitpod/pull/8181)) - [@Furisto](https://github.com/Furisto)
 - A bit of improvements to cache_reclaim ([#8179](https://github.com/gitpod-io/gitpod/pull/8179)) - [@utam0k](https://github.com/utam0k)
 - Add workspace start request debug logging to ws-manager ([#8161](https://github.com/gitpod-io/gitpod/pull/8161)) - [@csweichel](https://github.com/csweichel)
 - [GitHub] Fix the user account picked for a prebuild. ([#8132](https://github.com/gitpod-io/gitpod/pull/8132)) - [@AlexTugarev](https://github.com/AlexTugarev)
