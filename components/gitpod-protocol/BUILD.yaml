@@ -17,13 +17,11 @@ packages:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
-  - name: theia-plugin-list
+  - name: gen-manifest-file
     type: generic
-    srcs:
-      - data/builtin-theia-plugins.json
     config:
       commands:
-        - ["mv", "data/builtin-theia-plugins.json", "manifest.json"]
+        - ["echo", "'[]'", ">>", "manifest.json"]
   - name: gitpod-schema
     type: generic
     srcs:

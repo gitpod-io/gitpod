@@ -35,9 +35,26 @@ export USER=gitpod
 # Replace OpenVSX URL
 grep -rl open-vsx.org /ide | xargs sed -i "s|https://open-vsx.org|$VSX_REGISTRY_URL|g"
 
+# Download all extensions
+DOWNLOAD_DIR=/tmp/vsix
+EXT_URLS=$(echo "$GITPOD_RESOLVED_EXTENSIONS" | jq -r .[].url )
+for url in $EXT_URLS; do
+    wget -P $DOWNLOAD_DIR "$url"
+done
+
+# List extensions
+INSTALL_EXTENSIONS=""
+for entry in "$DOWNLOAD_DIR"/*
+do
+    INSTALL_EXTENSIONS="$INSTALL_EXTENSIONS --install-extension \"$DOWNLOAD_DIR$entry\""
+done
+INSTALL_EXTENSIONS=${INSTALL_EXTENSIONS:1}
+
+[[ $GITPOD_WORKSPACE_CONTEXT_URL =~ github\.com ]] && INSTALL_EXTENSIONS="$INSTALL_EXTENSIONS --install-extension \"github.vscode-pull-request-github\""
+
 cd /ide || exit
 if [ "$SUPERVISOR_DEBUG_ENABLE" = "true" ]; then
-    exec /ide/bin/gitpod-code --inspect --log=trace "$@"
+    exec /ide/bin/gitpod-code --inspect --log=trace "$INSTALL_EXTENSIONS" "$@"
 else
-    exec /ide/bin/gitpod-code "$@"
+    exec /ide/bin/gitpod-code "$INSTALL_EXTENSIONS" "$@"
 fi

@@ -12,12 +12,9 @@ import { Config } from '../config';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { PluginIndexEntry } from '@gitpod/gitpod-protocol/lib/theia-plugins';
 import { StorageClient } from '../storage/storage-client';
 import {  } from '@gitpod/gitpod-db/lib';
 import fetch from 'node-fetch';
-
-const builtinExtensions: PluginIndexEntry[] = require('@gitpod/gitpod-protocol/data/builtin-theia-plugins.json');
 
 const userPluginsUri = 'user-plugins://';
 
@@ -201,10 +198,6 @@ export class TheiaPluginService {
                 if (builtins[id] && builtins[id]!.kind === 'builtin') {
                     resolvePlugin(id, 'builtin');
                 }
-            }
-        } else {
-            for (const extension of builtinExtensions) {
-                resolvePlugin(extension.name, 'builtin');
             }
         }
         await Promise.all(resolving);
