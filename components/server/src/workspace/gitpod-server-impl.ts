@@ -1062,7 +1062,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const uniqueURLs = new Set();
         return suggestions
-            .sort((a, b) => a > b ? 1 : -1)
+            .sort((a, b) => a.toLowerCase() > b.toLowerCase() ? 1 : -1)
             .filter(r => {
                 if (uniqueURLs.has(r)) {
                     return false;
