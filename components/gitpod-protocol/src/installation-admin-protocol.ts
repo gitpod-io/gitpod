@@ -23,7 +23,7 @@ export interface InstallationAdmin {
     settings: InstallationAdminSettings;
 }
 
-export interface Data {
+export interface TelemetryData {
     installationAdmin: InstallationAdmin
     totalUsers: number
     totalWorkspaces: number

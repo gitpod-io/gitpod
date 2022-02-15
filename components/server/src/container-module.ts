@@ -81,6 +81,7 @@ import { DebugApp } from './debug-app';
 import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from './messaging/local-message-broker';
 import { contentServiceBinder } from '@gitpod/content-service/lib/sugar';
 import { ReferrerPrefixParser } from './workspace/referrer-prefix-context-parser';
+import { InstallationAdminTelemetryDataProvider } from './installation-admin/telemetry-data-provider';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -192,6 +193,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(BearerAuth).toSelf().inSingletonScope();
 
     bind(TermsProvider).toSelf().inSingletonScope();
+
+    bind(InstallationAdminTelemetryDataProvider).toSelf().inSingletonScope();
 
     // binds all content services
     (contentServiceBinder((ctx) => {

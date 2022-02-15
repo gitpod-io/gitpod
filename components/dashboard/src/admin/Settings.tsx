@@ -5,15 +5,32 @@
  */
 
 import { useContext } from "react";
-import { InstallationAdminSettings } from "@gitpod/gitpod-protocol";
+import { TelemetryData, InstallationAdminSettings } from "@gitpod/gitpod-protocol";
 import { AdminContext } from "../admin-context";
 import CheckBox from "../components/CheckBox";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
 import { adminMenu } from "./admin-menu";
+import { useEffect, useState } from "react";
+import InfoBox from "../components/InfoBox";
+import { Redirect } from "react-router-dom";
+import { UserContext } from "../user-context";
 
 export default function Settings() {
     const { adminSettings, setAdminSettings } = useContext(AdminContext);
+    const [telemetryData, setTelemetryData] = useState<TelemetryData>();
+    const { user } = useContext(UserContext);
+
+    useEffect(() => {
+        (async () => {
+            const data = await getGitpodService().server.adminGetTelemetryData();
+            setTelemetryData(data)
+        })();
+    });
+
+    if (!user || !user?.rolesOrPermissions?.includes('admin')) {
+        return <Redirect to="/"/>
+    }
 
     const actuallySetTelemetryPrefs = async (value: InstallationAdminSettings) => {
         await getGitpodService().server.adminUpdateSettings(value);
@@ -26,12 +43,13 @@ export default function Settings() {
                 <h3>Usage Statistics</h3>
                 <CheckBox
                     title="Enable Service Ping"
-                    desc={<span>This is used to provide insights on how you use your cluster so we can provide a better overall experience. <a className="gp-link" href="https://www.gitpod.io/privacy">Read our Privacy Policy</a></span>}
+                    desc={<span>The following usage data is sent to provide insights on how you use your Gitpod instance, so we can provide a better overall experience. <a className="gp-link" href="https://www.gitpod.io/privacy">Read our Privacy Policy</a></span>}
                     checked={adminSettings?.sendTelemetry ?? false}
                     onChange={(evt) => actuallySetTelemetryPrefs({
                         sendTelemetry: evt.target.checked,
                     })} />
-            </PageWithSubMenu>
+                <InfoBox><pre>{JSON.stringify(telemetryData, null, 2)}</pre></InfoBox>
+            </PageWithSubMenu >
         </div >
     )
 }
