@@ -61,7 +61,7 @@ There are 4 different types of tests:
 To run the tests:
 1. Clone this repo (`git clone git@github.com:gitpod-io/gitpod.git`), and `cd` to `./gitpod/test`
 2. Run the tests like so
-  ```bash
+  ```console
   go test -v ./... \
   -kubeconfig=<path_to_kube_config_file> \
   -namespace=<namespace_where_gitpod_is_installed> \
