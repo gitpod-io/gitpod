@@ -9,7 +9,7 @@ import com.intellij.openapi.CompositeDisposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.remoteDev.util.onTerminationOrNow
-import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
@@ -90,7 +90,7 @@ class GitpodStartWorkspaceView(
         }.topGap(TopGap.NONE)
             .rowComment(
                 "Create and start a new workspace via browser. If an IDE does not open automatically, check progress in your browser.",
-                MAX_LINE_LENGTH_NO_WRAP
+                MAX_LINE_LENGTH_WORD_WRAP
             )
     }.apply {
         this.background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
