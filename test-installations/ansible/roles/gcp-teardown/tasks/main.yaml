@@ -3,7 +3,7 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
-- name: remove Gitpod instances
+- name: Remove Gitpod instances
   google.cloud.gcp_compute_instance:
     name: "{{ gitpod_node_prefix }}--node-{{ item }}"
     zone: "{{ gcp_zone }}"
@@ -13,7 +13,7 @@
     state: absent
   loop: "{{ range(0, gitpod_nodes_count) | list }}"
 
-- name: remove other instances
+- name: Remove other instances
   google.cloud.gcp_compute_instance:
     name: "{{ item }}"
     zone: "{{ gcp_zone }}"
@@ -23,13 +23,28 @@
     state: absent
   loop: "{{ gcp_instance_names }}"
 
-# # This is needed for air-gap installations.
-# - name: Create a private DNS managed zone
-#   google.cloud.gcp_dns_managed_zone:
-#     name: "{{ gcp_dns_domain_zone_name }}"
-#     dns_name: "{{ gcp_dns_domain_zone_dnsname }}"
-#     description: "DNS with internal IP addresses (mainly for air-gap installations)"
-#     project: "{{ gcp_project }}"
-#     auth_kind: serviceaccount
-#     service_account_contents: "{{ gcp_cred_content }}"
-#     state: absent
+- name: Remove resource record sets (private zone)
+  google.cloud.gcp_dns_resource_record_set:
+    name: "{{ item }}"
+    managed_zone:
+      name: "{{ gcp_dns_domain_zone_name }}"
+      dnsName: "{{ gcp_dns_domain_zone_dnsname }}"
+    type: A
+    # ttl: 300
+    # target:
+    # - "{{ gcpvm.results[0].networkInterfaces[0].networkIP }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: absent
+  with_items: "{{ dns_records }}"
+
+- name: Remove private DNS managed zone
+  google.cloud.gcp_dns_managed_zone:
+    name: "{{ gcp_dns_domain_zone_name }}"
+    dns_name: "{{ gcp_dns_domain_zone_dnsname }}"
+    description: "DNS with internal IP addresses (mainly for air-gap installations)"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: absent

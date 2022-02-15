@@ -4,9 +4,11 @@
 
 ---
 gitpod_domain: gitpod-airgap.testing.gitpod-self-hosted.com
+gitpod_node_prefix: gitpod
 airgap: true
 
 gcp_project: gitpod-self-hosted-testing
+gcp_zone: europe-west3-a
 gcp_bucket_name: gitpod-self-hosted-testing-backups
 
 gcp_dns_project: dns-for-playgrounds

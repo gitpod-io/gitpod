@@ -3,8 +3,22 @@
 # See License-AGPL.txt in the project root for license information.
 
 ---
+gitpod_domain: gitpod-airgap.testing.gitpod-self-hosted.com
+gitpod_nodes_count: 3
+gitpod_node_prefix: gitpod
+
 gcp_project: gitpod-self-hosted-testing
 gcp_bucket_name: gitpod-self-hosted-testing-backups
+gcp_zone: europe-west3-a
+
+gcp_dns_project: dns-for-playgrounds
+gcp_dns_domain_zone_name: gitpod-self-hosted-com
+gcp_dns_domain_zone_dnsname: gitpod-self-hosted.com.
 
 gitlab_instance_name: gitlab
+gitlab_domain: gitlab-1.testing.gitpod-self-hosted.com
+
 registry_instance_name: registry
+registry_domain: registry-1.testing.gitpod-self-hosted.com
+
+bastion_instance_name: bastion

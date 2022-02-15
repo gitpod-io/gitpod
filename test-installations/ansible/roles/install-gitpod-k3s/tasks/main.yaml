@@ -46,9 +46,3 @@
 - name: Render Gitpod manifests
   command: gitpod-installer render --danger-use-unsupported-config --config /gitpod/gitpod-config.yaml > /gitpod/gitpod-manifests.yaml
   when: airgap
-
-
-
-
-## Patch core dns configmap to use nameserver of: /run/systemd/resolve/resolv.conf
-# cat /run/systemd/resolve/resolv.conf | grep nameserver | cut -f2 -d' '

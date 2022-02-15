@@ -1,5 +1,0 @@
-{
-    "insecure-registries": [
-        "{{ registry_domain }}"
-    ]
-}

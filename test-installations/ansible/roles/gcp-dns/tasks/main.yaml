@@ -5,7 +5,7 @@
 ---
 
 - debug:
-    msg: "Cluster IP: {{ hostvars.localhost.cluster_ip }} – Cluster internal IP: {{ hostvars.localhost.cluster_internal_ip }}"
+    msg: "Cluster IP: {{ hostvars.localhost.cluster_ip | default('-') }} – Cluster internal IP: {{ hostvars.localhost.internal_ips['gitpod'] }}"
 
 - name: "Create resource record sets"
   google.cloud.gcp_dns_resource_record_set:
@@ -16,7 +16,7 @@
     type: A
     ttl: 300
     target:
-    - "{{ hostvars.localhost.cluster_ip }}"
+    - "{{ hostvars.localhost.cluster_ip | default(hostvars.localhost.internal_ips['gitpod']) }}"
     project: "{{ gcp_dns_project }}"
     auth_kind: serviceaccount
     service_account_contents: "{{ gcp_dns_cred_content }}"

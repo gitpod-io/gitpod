@@ -30,6 +30,44 @@
 # - debug:
 #     var: k3s_install_result
 
+- name: Get k3s version
+  shell: k3s --version | awk -F' ' '$1 == "k3s" && $2 == "version" { print $3 }'
+  register: k3s_version
+  when: airgap
+
+- debug:
+    msg: "k3s version: {{ k3s_version.stdout_lines | first }} ({{ k3s_version.stdout_lines | first | urlencode }})"
+  when: airgap
+
+- name: Ensure directory exists
+  file:
+    path: /var/lib/rancher/k3s/agent/images/
+    recurse: true
+    state: directory
+  become: true
+  when: airgap
+
+- name: Download k3s airgap images on all nodes
+  get_url:
+    url: https://github.com/k3s-io/k3s/releases/download/{{ k3s_version.stdout_lines | first | urlencode }}/k3s-airgap-images-amd64.tar
+    dest: /var/lib/rancher/k3s/agent/images/
+  become: true
+  when: airgap
+
+- name: Restart k3s daemon
+  ansible.builtin.service:
+    name: k3s
+    state: restarted
+  become: true
+  when: "airgap and 'gitpod_node_main' in group_names"
+
+- name: Restart k3s-agent daemon
+  ansible.builtin.service:
+    name: k3s-agent
+    state: restarted
+  become: true
+  when: "airgap and 'gitpod_node_main' not in group_names"
+
 - name: Download Calico manifest
   get_url:
     url: https://docs.projectcalico.org/manifests/calico-vxlan.yaml
@@ -65,17 +103,9 @@
   become: true
   when: "'gitpod_node_main' in group_names"
 
-- name: Ensure directory exists
-  file:
-    path: /var/lib/rancher/k3s/agent/images/
-    recurse: true
-    state: directory
-  become: true
-
-- name: Download k3s airgap images on all nodes
-  get_url:
-    # TODO: use proper version
-    url: https://github.com/k3s-io/k3s/releases/download/v1.22.6%2Bk3s1/k3s-airgap-images-amd64.tar
-    dest: /var/lib/rancher/k3s/agent/images/
-  become: true
-  when: airgap
+- name: Patch coredns nameserver (for airgap)
+  shell: |
+    kubectl get configmap -n kube-system coredns -o yaml > /tmp/coredns.yaml
+    sed -i "s+forward . /etc/resolv.conf+forward . $(cat /run/systemd/resolve/resolv.conf | grep nameserver | cut -f2 -d' ')+" /tmp/coredns.yaml
+    kubectl replace -f /tmp/coredns.yaml
+  when: "airgap and 'gitpod_node_main' in group_names"

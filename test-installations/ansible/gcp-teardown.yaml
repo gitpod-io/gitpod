@@ -12,6 +12,29 @@
     # this is needed for the gcp-ssh-wrapper.sh script
     - gcp-login
 
+- name: Prepare
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-teardown.yaml
+  tasks:
+    - name: Add access config (in case it was removed for air-gap installation)
+      command: "gcloud compute instances add-access-config {{ gitpod_node_prefix }}--node-{{ item }} --access-config-name='external-nat'"
+      loop: "{{ range(0, gitpod_nodes_count) | list }}"
+      ignore_errors: true
+
+- name: Refresh inventory
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - meta: refresh_inventory
+
+- name: Wait for connection
+  hosts: all
+  gather_facts: no
+  tasks:
+    - wait_for_connection:
+
 - name: Backup to GCP bucket
   hosts:
     - gitpod_node_main
@@ -31,6 +54,14 @@
     gcp_instance_names:
       - "{{ gitlab_instance_name }}"
       - "{{ registry_instance_name }}"
-      - bastion
+      - "{{ bastion_instance_name }}"
+    dns_records:
+      - "{{ gitpod_domain }}."
+      - "*.{{ gitpod_domain }}."
+      - "*.ws.{{ gitpod_domain }}."
+      - "{{ gitlab_domain }}."
+      - "*.{{ gitlab_domain }}."
+      - "{{ registry_domain }}."
+      - "*.{{ registry_domain }}."
   roles:
     - gcp-teardown

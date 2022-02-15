@@ -11,6 +11,7 @@
   roles:
     # this is needed for the gcp-ssh-wrapper.sh script
     - gcp-login
+  tags: ["localhost"]
 
 - name: Prepare Gitpod GCP resources
   hosts: localhost
@@ -19,6 +20,7 @@
     - vars/gcp-k3s-gitlab-airgap.yaml
   roles:
     - gcp
+  tags: ["localhost"]
 
 - name: Prepare GitLab GCP resources
   hosts: localhost
@@ -30,6 +32,7 @@
     domain: "{{ gitlab_domain }}"
   roles:
     - gcp-instance
+  tags: ["localhost"]
 
 - name: Prepare Registry GCP resources
   hosts: localhost
@@ -41,18 +44,21 @@
     domain: "{{ registry_domain }}"
   roles:
     - gcp-instance
+  tags: ["localhost"]
 
 - name: Refresh inventory
   hosts: localhost
   gather_facts: no
   tasks:
     - meta: refresh_inventory
+  tags: ["localhost"]
 
 - name: Wait for connection
   hosts: all
   gather_facts: no
   tasks:
     - wait_for_connection:
+  tags: ["localhost"]
 
 - name: Restore from GCP bucket
   hosts:
@@ -121,7 +127,7 @@
   roles:
     - install-k3s
 
-- name: Install Gitpod
+- name: Prepate Gitpod installation
   hosts:
     - gitpod_node_main
   vars_files:
@@ -136,6 +142,16 @@
     - vars/gcp-k3s-gitlab-airgap.yaml
   roles:
     - gcp-airgap
+  tags: ["localhost"]
+
+- name: Start Gitpod installation
+  hosts: instance_bastion
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  tasks:
+    - name: Copy manifests file
+      command: gcloud compute ssh --quiet {{ gitpod_node_prefix }}--node-0 --zone {{ gcp_zone }} --internal-ip --command 'sudo cp /gitpod/gitpod-manifests.yaml /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml'
+  tags: ["localhost"]
 
 - name: Install WireGuard on bastion host
   hosts: instance_bastion
@@ -143,3 +159,4 @@
     - vars/gcp-k3s-gitlab-airgap.yaml
   roles:
     - install-wireguard
+  tags: ["localhost"]
