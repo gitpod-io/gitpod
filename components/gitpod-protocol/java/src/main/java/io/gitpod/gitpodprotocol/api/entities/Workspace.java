@@ -12,6 +12,8 @@ public class Workspace {
 
     private WorkspaceContext context;
 
+    private String creationTime;
+
     public String getId() {
         return id;
     }
@@ -34,5 +36,13 @@ public class Workspace {
 
     public void setContext(WorkspaceContext context) {
         this.context = context;
+    }
+
+    public String getCreationTime() {
+        return creationTime;
+    }
+
+    public void setCreationTime(String creationTime) {
+        this.creationTime = creationTime;
     }
 }
