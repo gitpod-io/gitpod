@@ -36,7 +36,9 @@ export interface Role {
 }
 
 export namespace RolesOrPermissions {
-    export function toPermissionSet(rolesOrPermissions: RoleOrPermission[] = []): Set<PermissionName> {
+    export function toPermissionSet(rolesOrPermissions: RoleOrPermission[] | undefined): Set<PermissionName> {
+        rolesOrPermissions = rolesOrPermissions || [];
+
         const permissions = new Set<PermissionName>();
         for (const rop of rolesOrPermissions) {
             if (Permission.is(rop)) {
