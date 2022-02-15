@@ -8,6 +8,7 @@
  import * as websocket from 'ws';
 import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { asyncForEach } from "@gitpod/gitpod-protocol/lib/util/foreach";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WsNextFunction, WsRequestHandler } from './ws-handler';
 
@@ -27,7 +28,7 @@ export class WsConnectionHandler implements Disposable {
         const CLOSING_TIMEOUT = INTERVAL;
         const timer = repeat(async () => {
             log.debug("ws connection handler", { clients: this.clients.size });
-            this.clients.forEach((ws) => {
+            await asyncForEach(this.clients.values(), (ws) => {
                 try {
                     switch (ws.readyState) {
                         case websocket.CLOSED:

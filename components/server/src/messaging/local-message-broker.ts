@@ -4,8 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Disposable, DisposableCollection, HeadlessWorkspaceEvent, PrebuildWithStatus, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { Disposable, DisposableCollection, HeadlessWorkspaceEvent, PrebuildWithStatus, Queue, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { asyncForEach } from "@gitpod/gitpod-protocol/lib/util/foreach";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
@@ -40,6 +41,8 @@ export interface LocalMessageBroker {
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable;
 }
 
+const MAX_LISTENERS_PER_TICK = 100;
+
 /**
  * With our current code we basically create O(ws*p) queues for every user (ws = nr of websockets connections,
  * p = nr of projects). This already breaks production regularly, as each queue consumes memory (and in
@@ -62,9 +65,13 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
     @inject(MessageBusIntegration) protected readonly messageBusIntegration: MessageBusIntegration;
 
     protected prebuildUpdateListeners: Map<string, PrebuildUpdateListener[]> = new Map();
+    protected prebuildUpdateQueue = new Queue();
     protected creditAlertsListeners: Map<string, CreditAlertListener[]> = new Map();
+    protected creditAlertsQueue = new Queue();
     protected headlessWorkspaceEventListeners: Map<string, HeadlessWorkspaceEventListener[]> = new Map();
+    protected headlessWorkspaceEventQueue = new Queue();
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
+    protected workspaceInstanceUpdateQueue = new Queue();
 
     protected readonly disposables = new DisposableCollection();
 
@@ -72,68 +79,76 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
         this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdates(
             undefined,
             (ctx: TraceContext, update: PrebuildWithStatus) => {
-                TraceContext.setOWI(ctx, { workspaceId: update.info.buildWorkspaceId });
+                this.prebuildUpdateQueue.enqueue(async () => {
+                    TraceContext.setOWI(ctx, { workspaceId: update.info.buildWorkspaceId });
 
-                const listeners = this.prebuildUpdateListeners.get(update.info.projectId) || [];
-                for (const l of listeners) {
-                    try {
-                        l(ctx, update);
-                    } catch (err) {
-                        TraceContext.setError(ctx, err);
-                        log.error({ userId: update.info.userId, workspaceId: update.info.buildWorkspaceId }, "listenForPrebuildUpdates", err, { projectId: update.info.projectId, prebuildId: update.info.id });
-                    }
-                }
+                    const listeners = this.prebuildUpdateListeners.get(update.info.projectId) || [];
+                    await asyncForEach(listeners.entries(), ([_, l]) => {
+                        try {
+                            l(ctx, update);
+                        } catch (err) {
+                            TraceContext.setError(ctx, err);
+                            log.error({ userId: update.info.userId, workspaceId: update.info.buildWorkspaceId }, "listenForPrebuildUpdates", err, { projectId: update.info.projectId, prebuildId: update.info.id });
+                        }
+                    }, MAX_LISTENERS_PER_TICK);
+                })
             }
         ));
         this.disposables.push(this.messageBusIntegration.listenToCreditAlerts(
             undefined,
             (ctx: TraceContext, alert: CreditAlert) => {
-                TraceContext.setOWI(ctx, { userId: alert.userId });
+                this.creditAlertsQueue.enqueue(async () => {
+                    TraceContext.setOWI(ctx, { userId: alert.userId });
 
-                const listeners = this.creditAlertsListeners.get(alert.userId) || [];
-                for (const l of listeners) {
-                    try {
-                        l(ctx, alert);
-                    } catch (err) {
-                        TraceContext.setError(ctx, err);
-                        log.error({ userId: alert.userId }, "listenToCreditAlerts", err, { alert });
-                    }
-                }
+                    const listeners = this.creditAlertsListeners.get(alert.userId) || [];
+                    await asyncForEach(listeners.entries(), ([_, l]) => {
+                        try {
+                            l(ctx, alert);
+                        } catch (err) {
+                            TraceContext.setError(ctx, err);
+                            log.error({ userId: alert.userId }, "listenToCreditAlerts", err, { alert });
+                        }
+                    }, MAX_LISTENERS_PER_TICK);
+                })
             }
         ));
         this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdatableQueue(
             (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
-                TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
+                this.headlessWorkspaceEventQueue.enqueue(async () => {
+                    TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
 
-                const listeners = this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
-                for (const l of listeners) {
-                    try {
-                        l(ctx, evt);
-                    } catch (err) {
-                        TraceContext.setError(ctx, err);
-                        log.error({ workspaceId: evt.workspaceID }, "listenForPrebuildUpdatableQueue", err);
-                    }
-                }
+                    const listeners = this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
+                    await asyncForEach(listeners.entries(), ([_, l]) => {
+                        try {
+                            l(ctx, evt);
+                        } catch (err) {
+                            TraceContext.setError(ctx, err);
+                            log.error({ workspaceId: evt.workspaceID }, "listenForPrebuildUpdatableQueue", err);
+                        }
+                    }, MAX_LISTENERS_PER_TICK);
+                })
             }
         ));
         this.disposables.push(this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
             undefined,
             (ctx: TraceContext, instance: WorkspaceInstance, userId: string | undefined) => {
-                TraceContext.setOWI(ctx, { userId, instanceId: instance.id });
+                this.workspaceInstanceUpdateQueue.enqueue(async () => {
+                    TraceContext.setOWI(ctx, { userId, instanceId: instance.id });
 
-                if (!userId) {
-                    return;
-                }
-
-                const listeners = this.workspaceInstanceUpdateListeners.get(userId) || [];
-                for (const l of listeners) {
-                    try {
-                        l(ctx, instance);
-                    } catch (err) {
-                        TraceContext.setError(ctx, err);
-                        log.error({ userId, instanceId: instance.id }, "listenForWorkspaceInstanceUpdates", err);
+                    if (!userId) {
+                        return;
                     }
-                }
+
+                    const listeners = this.workspaceInstanceUpdateListeners.get(userId) || [];
+                    await asyncForEach(listeners.entries(), ([_, l]) => {
+                        try {
+                            l(ctx, instance);
+                        } catch (err) {
+                            TraceContext.setError(ctx, err);
+                            log.error({ userId, instanceId: instance.id }, "listenForWorkspaceInstanceUpdates", err);
+                        }
+                    }, MAX_LISTENERS_PER_TICK);
+                })
             }
         ));
     }
