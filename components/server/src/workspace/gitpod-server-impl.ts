@@ -57,8 +57,9 @@ import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-proto
 import { ClientMetadata, traceClientMetadata } from '../websocket/websocket-connection-manager';
 import { ConfigurationService } from '../config/configuration-service';
 import { ProjectEnvVar } from '@gitpod/gitpod-protocol/src/protocol';
-import { InstallationAdminSettings } from '@gitpod/gitpod-protocol';
+import { InstallationAdminSettings, TelemetryData } from '@gitpod/gitpod-protocol';
 import { Deferred } from '@gitpod/gitpod-protocol/lib/util/deferred';
+import { InstallationAdminTelemetryDataProvider } from '../installation-admin/telemetry-data-provider';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -80,6 +81,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
     @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
+    @inject(InstallationAdminTelemetryDataProvider) protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
+
 
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(WorkspaceManagerClientProvider) protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
@@ -2202,6 +2205,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.installationAdminDb.setSettings(newSettings);
     }
+
+    async adminGetTelemetryData(ctx: TraceContext): Promise<TelemetryData> {
+        traceAPIParams(ctx, {});
+
+        await this.guardAdminAccess("adminGetTelemetryData", {}, Permission.ADMIN_API);
+
+       return await this.telemetryDataProvider.getTelemetryData();
+    }
+
+
 
     async getLicenseInfo(): Promise<GetLicenseInfoResult> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Licensing is implemented in Gitpod's Enterprise Edition`);
