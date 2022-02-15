@@ -1,6 +1,6 @@
 import { ShellString } from 'shelljs';
 import { exec, ExecOptions } from './shell';
-import { getGlobalWerftInstance } from './werft';
+import { getGlobalWerftInstance, Werft } from './werft';
 
 
 export const IS_PREVIEW_APP_LABEL: string = "isPreviewApp";
@@ -15,6 +15,8 @@ export function setKubectlContextNamespace(namespace: string, shellOpts: ExecOpt
 }
 
 export async function wipePreviewEnvironmentAndNamespace(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
+    const werft = getGlobalWerftInstance();
+
     // wipe preview envs built with installer
     await wipePreviewEnvironmentInstaller(namespace, shellOpts);
 
@@ -26,6 +28,7 @@ export async function wipePreviewEnvironmentAndNamespace(helmInstallName: string
     await deleteAllUnnamespacedObjects(namespace, shellOpts);
 
     deleteNamespace(true, namespace, shellOpts);
+    werft.done(shellOpts.slice)
 }
 
 export async function wipeAndRecreateNamespace(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
