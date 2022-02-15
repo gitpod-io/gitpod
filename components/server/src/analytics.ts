@@ -14,6 +14,7 @@ export async function trackLogin(user: User, request: Request, authHost: string,
     //track the login
     analytics.track({
         userId: user.id,
+        anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
         event: "login",
         properties: {
             "loginContext": authHost
@@ -28,6 +29,7 @@ export async function trackSignup(user: User, request: Request, analytics: IAnal
         //track the signup
         analytics.track({
             userId: user.id,
+            anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
             event: "signup",
             properties: {
                 "auth_provider": user.identities[0].authProviderId,
