@@ -210,7 +210,7 @@ function App() {
             //check if current target or any ancestor up to document is button or anchor
             while (!(curr instanceof Document)) {
                 if (curr instanceof HTMLButtonElement || curr instanceof HTMLAnchorElement || (curr instanceof HTMLDivElement && curr.onclick)) {
-                    trackButtonOrAnchor(curr, !!user);
+                    trackButtonOrAnchor(curr);
                     break; //finding first ancestor is sufficient
                 }
                 curr = curr.parentNode as HTMLElement;

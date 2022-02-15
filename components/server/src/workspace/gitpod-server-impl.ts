@@ -17,7 +17,7 @@ import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } 
 import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { InterfaceWithTraceContext, TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { IdentifyMessage, PageMessage, RemoteIdentifyMessage, RemotePageMessage, RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
+import { IdentifyMessage, RemoteIdentifyMessage, RemotePageMessage, RemoteTrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
 import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { ControlPortRequest, DescribeWorkspaceRequest, MarkActiveRequest, PortSpec, PortVisibility as ProtoPortVisibility, StopWorkspacePolicy, StopWorkspaceRequest } from '@gitpod/ws-manager/lib/core_pb';
@@ -2342,6 +2342,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //         the wire and we have no idea what's in it. Even passing the context and properties directly
         //         is questionable. Considering we're handing down the msg and do not know how the analytics library
         //         handles potentially broken or malicious input, we better err on the side of caution.
+
+        const userId = this.user?.id;
+        const anonymousId = event.anonymousId;
         const msg = {
             event: event.event,
             messageId: event.messageId,
@@ -2349,51 +2352,47 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             properties: event.properties
         }
 
-        //either the user is authenticated...
-        if (this.user) {
-            const trackMessage: TrackMessage = {
-                userId: this.user.id,
+        //only track if at least one identifier is known
+        if (userId) {
+            this.analytics.track({
+                userId: userId,
+                anonymousId: anonymousId,
                 ...msg
-            }
-            this.analytics.track(trackMessage);
-            return;
-        }
-
-        //... or an anonymous id was passed. else, no tracking call is made
-        if (event.anonymousId) {
-            const trackMessage: TrackMessage = {
-                anonymousId: event.anonymousId,
+            });
+        } else if (anonymousId) {
+            this.analytics.track({
+                anonymousId: anonymousId as string | number,
                 ...msg
-            }
-            this.analytics.track(trackMessage);
+            });
         };
     }
 
     public async trackLocation(ctx: TraceContext, event: RemotePageMessage): Promise<void> {
-        //either an anonymousId was passed, signifying that we want to make a privacy preserving page call...
-        if (event.anonymousId) {
-            // we are making a reduced page call that respects user's privacy by not using any PII
-            this.analytics.page({
-                anonymousId: event.anonymousId,
-                messageId: event.messageId,
-                context: {},
-                properties: event.properties
-            });
-            return;
+
+        const userId = this.user?.id;
+        const anonymousId = event.anonymousId;
+        let msg = {
+            messageId: event.messageId,
+            context: {},
+            properties: event.properties
         }
 
-        //...or we associate the page call with the authenticated user. else no page call is made.
-        if (this.user) {
-            const msg: PageMessage = {
-                userId: this.user.id,
-                messageId: event.messageId,
-                context: {
-                    ip: this.clientHeaderFields?.ip,
-                    userAgent: this.clientHeaderFields?.userAgent
-                },
-                properties: event.properties,
+        //only page if at least one identifier is known
+        if(userId) {
+            msg.context = {
+                ip: this.clientHeaderFields?.ip,
+                userAgent: this.clientHeaderFields?.userAgent
             }
-            this.analytics.page(msg);
+            this.analytics.page({
+                userId: userId,
+                anonymousId: anonymousId,
+                ...msg,
+            });
+        } else if (anonymousId) {
+            this.analytics.page({
+                anonymousId: anonymousId as string | number,
+                ...msg
+            });
         }
     }
 
@@ -2403,12 +2402,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
         const user = this.checkUser("IdentifyUser");
 
-        const msg: IdentifyMessage = {
+        const identifyMessage: IdentifyMessage = {
             userId: user.id,
+            anonymousId: event.anonymousId,
             traits: event.traits,
             context: event.context
         };
-        this.analytics.identify(msg);
+        this.analytics.identify(identifyMessage);
     }
 
     async getTerms(ctx: TraceContext): Promise<Terms> {

@@ -8,7 +8,7 @@
 export const IAnalyticsWriter = Symbol("IAnalyticsWriter");
 
 type Identity =
-    | { userId: string | number }
+    | { userId: string | number; anonymousId?: string | number }
     | { userId?: string | number; anonymousId: string | number };
 
 interface Message {
@@ -34,14 +34,12 @@ export type PageMessage = Message & Identity & {
     context?: any;
 };
 
-export type RemoteTrackMessage = Omit<TrackMessage, "timestamp" | "userId" | "anonymousId"> & {
-    anonymousId?: string | number;
-};
+export type RemoteTrackMessage = Omit<TrackMessage, "timestamp" | "userId">;
 export type RemotePageMessage = Omit<PageMessage, "timestamp" | "userId"> & {
-    anonymousId?: string | number;
+    includePII?: boolean;
 };
 
-export type RemoteIdentifyMessage = Omit<IdentifyMessage, "timestamp" | "userId" | "anonymousId">;
+export type RemoteIdentifyMessage = Omit<IdentifyMessage, "timestamp" | "userId">;
 
 export interface IAnalyticsWriter {
 
