@@ -47,10 +47,9 @@ export class WsExpressHandler {
         this.wss = new websocket.Server({
             verifyClient,
             noServer: true,
-            perMessageDeflate: {
-                // don't compress if a message is less than 256kb
-                threshold: 256 * 1024
-            },
+            // disabling to reduce memory consumption, cf.
+            // https://github.com/websockets/ws#websocket-compression
+            perMessageDeflate: false,
             // we don't use this feature, so avoid having another potential mem leak
             clientTracking: false,
         });
