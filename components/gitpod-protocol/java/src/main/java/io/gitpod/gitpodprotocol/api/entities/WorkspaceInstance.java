@@ -9,6 +9,7 @@ public class WorkspaceInstance {
     private String workspaceId;
     private WorkspaceInstanceStatus status;
     private String ideUrl;
+    private String creationTime;
 
     public String getId() {
         return id;
@@ -40,6 +41,14 @@ public class WorkspaceInstance {
 
     public void setIdeUrl(String ideUrl) {
         this.ideUrl = ideUrl;
+    }
+
+    public String getCreationTime() {
+        return creationTime;
+    }
+
+    public void setCreationTime(String creationTime) {
+        this.creationTime = creationTime;
     }
 
     public static boolean isUpToDate(WorkspaceInstance current, WorkspaceInstance next) {

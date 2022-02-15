@@ -4,7 +4,9 @@
 
 package io.gitpod.jetbrains.auth
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.AppIcon
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
@@ -29,8 +31,11 @@ internal class GitpodAuthCallbackHandler : RestService() {
             context,
             response("text/html", Unpooled.wrappedBuffer(responseHTML.toByteArray(StandardCharsets.UTF_8)))
         )
-        ApplicationManager.getApplication().invokeAndWait {
-            activateLastFocusedFrame()
+        invokeLater {
+            val toFocus = IdeFocusManager.getGlobalInstance()?.lastFocusedFrame
+            if (toFocus != null) {
+                AppIcon.getInstance().requestFocus(toFocus)
+            }
         }
         return null
     }
