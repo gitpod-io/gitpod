@@ -20,6 +20,10 @@ var rootCmd = &cobra.Command{
 
 // Execute runs the root command
 func Execute() {
+	// the docker credential helper has to start with "docker-credential-" so we can't use the process below
+	if "docker-credential-gp" == filepath.Base(os.Args[0]) {
+		os.Args = append([]string{os.Args[0], "docker-credential-helper"}, os.Args[1:]...)
+	}
 	entrypoint := strings.TrimPrefix(filepath.Base(os.Args[0]), "gp-")
 	for _, c := range rootCmd.Commands() {
 		if c.Name() == entrypoint {
