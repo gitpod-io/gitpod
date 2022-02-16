@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/rpc"
+	"sync"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 
 const (
 	numberOfMount = 500
+	parallel      = 5
 )
 
 func loadMountProc(t *testing.T, rsa *rpc.Client) {
@@ -66,7 +68,15 @@ func TestMountProc(t *testing.T) {
 			defer rsa.Close()
 			integration.DeferCloser(t, closer)
 
-			loadMountProc(t, rsa)
+			var wg sync.WaitGroup
+			wg.Add(parallel)
+			for i := 0; i < 5; i++ {
+				go func() {
+					defer wg.Done()
+					loadMountProc(t, rsa)
+				}()
+			}
+			wg.Wait()
 
 			err = integration.DeleteWorkspace(ctx, api, ws.Req.Id)
 			if err != nil {
