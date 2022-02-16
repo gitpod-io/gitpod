@@ -11,3 +11,6 @@ minio:
     requests:
       # defaults to 4GB, set to 2GB to be able to start on smaller instances
       memory: 2G
+  extraEnvVars:
+    - name: MINIO_SKIP_CLIENT
+      value: "yes"
