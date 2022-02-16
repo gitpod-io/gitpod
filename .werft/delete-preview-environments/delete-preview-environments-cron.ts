@@ -35,6 +35,7 @@ async function deletePreviewEnvironments() {
 
     werft.phase("Fetching branches");
     const branches = getAllBranches();
+    const expectedPreviewEnvironmentNamespaces = new Set(branches.map(branch => parseBranch(branch)));
     werft.done("Fetching branches");
 
     werft.phase("Fetching previews");
@@ -46,30 +47,15 @@ async function deletePreviewEnvironments() {
     }
     werft.done("Fetching previews");
 
-    werft.phase("Mapping previews => branches")
-    var previewBranchMap = new Map<string, string>()
-    previews.forEach(preview => {
-        branches.forEach(branch => {
-            if (previewHasBranch(branch, preview)) {
-                previewBranchMap.set(preview, branch)
-            }
-        });
 
-        if (!previewBranchMap.has(preview)) {
-            previewBranchMap.set(preview, "")
-        }
-    });
-    previewBranchMap.forEach((branch: string, preview: string) => {
-        werft.log("Mapping previews", `Preview: ${preview}, branch: ${branch}`)
-    });
-    werft.done("Mapping previews => branches")
+    werft.phase("Mapping previews => branches")
+    const previewsToDelete = previews.filter(ns => !expectedPreviewEnvironmentNamespaces.has(ns))
 
     werft.phase("deleting previews")
     try {
-        previewBranchMap.forEach((branch: string, preview: string) => {
-            if (branch == "") {
-                // wipePreviewEnvironmentAndNamespace(helmInstallName, preview, { slice: `Deleting preview ${preview}` })
-            }
+        previewsToDelete.forEach(preview => {
+            // wipePreviewEnvironmentAndNamespace(helmInstallName, preview, { slice: `Deleting preview ${preview}` )
+            werft.log("deleting previews", `should delete ${preview}`)
         });
 
     } catch (err) {
@@ -80,13 +66,6 @@ async function deletePreviewEnvironments() {
 
 function getAllBranches(): string[] {
     return exec(`git branch -r | grep -v '\\->' | sed "s,\\x1B\\[[0-9;]*[a-zA-Z],,g" | while read remote; do echo "\${remote#origin/}"; done`).stdout.trim().split('\n');
-}
-
-function previewHasBranch(branch: string, preview: string): boolean {
-    if (parseBranch(branch) == preview) {
-        return true
-    }
-    return false
 }
 
 function parseBranch(branch: string): string {
