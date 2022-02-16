@@ -25,6 +25,8 @@ import (
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -184,27 +186,59 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	span.LogKV("event", "created start workspace context")
 	clog.Debug("starting new workspace")
-	// we must create the workspace pod first to make sure we don't clean up the services or configmap we're about to create
-	// because they're "dangling".
+
+	// create a Pod object for the workspace
 	pod, err := m.createWorkspacePod(startContext)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 	span.LogKV("event", "pod description created")
-	err = m.Clientset.Create(ctx, pod)
-	if err != nil {
-		m, _ := json.Marshal(pod)
-		safePod, _ := log.RedactJSON(m)
 
-		if k8serr.IsAlreadyExists(err) {
-			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Warn("was unable to start workspace which already exists")
-			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+	// create the Pod in the cluster and wait until is scheduled
+	// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.22.md#workloads-that-saturate-nodes-with-pods-may-see-pods-that-fail-due-to-node-admission
+	backoff := wait.Backoff{
+		Steps:    10,
+		Duration: 100 * time.Millisecond,
+		Factor:   5.0,
+		Jitter:   0.1,
+	}
+
+	var retryErr error
+	err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+		err = m.Clientset.Create(ctx, pod)
+		if err != nil {
+			m, _ := json.Marshal(pod)
+			safePod, _ := log.RedactJSON(m)
+
+			if k8serr.IsAlreadyExists(err) {
+				clog.WithError(err).WithField("req", req).WithField("pod", safePod).Warn("was unable to start workspace which already exists")
+				return false, status.Error(codes.AlreadyExists, "workspace instance already exists")
+			}
+
+			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
+			return false, err
 		}
 
-		clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
-		return nil, err
+		err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, podRunning(m.Clientset, pod.Namespace, pod.Name))
+		if err != nil {
+			m, _ := json.Marshal(pod)
+			safePod, _ := log.RedactJSON(m)
+			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to reach ready state")
+			retryErr = err
+			return true, nil
+		}
+
+		return true, nil
+	})
+	if err == wait.ErrWaitTimeout {
+		err = retryErr
 	}
-	span.LogKV("event", "pod created")
+
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
+	}
+
+	span.LogKV("event", "pod created and scheduled")
 
 	// all workspaces get a service now
 	okResponse := &api.StartWorkspaceResponse{
@@ -215,6 +249,29 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	m.metrics.OnWorkspaceStarted(req.Type)
 
 	return okResponse, nil
+}
+
+func podRunning(clientset client.Client, podName, namespace string) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (bool, error) {
+		var pod corev1.Pod
+		err := clientset.Get(ctx, types.NamespacedName{Namespace: namespace, Name: podName}, &pod)
+		if err != nil {
+			return false, nil
+		}
+
+		switch pod.Status.Phase {
+		case corev1.PodFailed, corev1.PodSucceeded:
+			return false, fmt.Errorf("pod ran to completion")
+		case corev1.PodPending:
+			if pod.Status.Reason == "OutOfmemory" || pod.Status.Reason == "OutOfcpu" {
+				return false, xerrors.Errorf("cannot schedule pod, reason: %s", pod.Status.Reason)
+			}
+
+			return false, fmt.Errorf("pod ran to completion")
+		}
+
+		return true, nil
+	}
 }
 
 // validateStartWorkspaceRequest ensures that acting on this request will not leave the system in an invalid state
