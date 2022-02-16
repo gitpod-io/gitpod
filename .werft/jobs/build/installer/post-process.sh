@@ -4,7 +4,7 @@
 # 1. generate a config like so: ./installer init > config.yaml
 # 2. generate a k8s manifest like so: ./installer render -n $(kubens -c) -c config.yaml > k8s.yaml
 # 3. fake a license and feature file like so: echo "foo" > /tmp/license && echo '"bar"' > /tmp/defaultFeatureFlags
-# 4. call this script like so: ./.werft/post-process.sh 1234 5678 2 your-branch-just-dashes
+# 4. call this script like so: ./.werft/jobs/build/helm/post-process.sh 1234 5678 2 your-branch-just-dashes
 
 set -euo pipefail
 
@@ -91,7 +91,7 @@ while [ "$i" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$i" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
-      THEIA_BUCKET_NAME=$(yq r ./.werft/values.dev.yaml components.server.theiaPluginsBucketNameOverride)
+      THEIA_BUCKET_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.theiaPluginsBucketNameOverride)
       THEIA_BUCKET_NAME_EXPR="s/\"theiaPluginsBucketNameOverride\": \"\"/\"theiaPluginsBucketNameOverride\": \"$THEIA_BUCKET_NAME\"/"
       sed -i "$THEIA_BUCKET_NAME_EXPR" /tmp/"$NAME"overrides.yaml
 
@@ -100,12 +100,12 @@ while [ "$i" -le "$DOCS" ]; do
 
       # InstallationShortname
       # is expected to look like ws-dev.<branch-name-with-dashes>.staging.gitpod-dev.com
-      SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
+      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
       NAMESPACE=$(kubens -c)
       INSTALL_SHORT_NAME_EXPR="s/\"installationShortname\": \"$NAMESPACE\"/\"installationShortname\": \"$SHORT_NAME\"/"
       sed -i "$INSTALL_SHORT_NAME_EXPR" /tmp/"$NAME"overrides.yaml
       # Stage
-      STAGE=$(yq r ./.werft/values.dev.yaml installation.stage)
+      STAGE=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.stage)
       STAGE_EXPR="s/\"stage\": \"production\"/\"stage\": \"$STAGE\"/"
       sed -i "$STAGE_EXPR" /tmp/"$NAME"overrides.yaml
       # Install EE license, if it exists
@@ -140,7 +140,7 @@ while [ "$i" -le "$DOCS" ]; do
       yq r k8s.yaml -d "$i" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       # simliar to server, except the ConfigMap hierarchy, key, and value are different
-      SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
+      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
       INSTALL_SHORT_NAME_EXPR="s/\"installation\": \"\"/\"installation\": \"$SHORT_NAME\"/"
       sed -i "$INSTALL_SHORT_NAME_EXPR" /tmp/"$NAME"overrides.yaml
       yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"overrides.yaml
@@ -160,8 +160,8 @@ while [ "$i" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
       yq r k8s.yaml -d "$i" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
-      SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
-      STAGING_HOST_NAME=$(yq r ./.werft/values.dev.yaml hostname)
+      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
+      STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
 
@@ -200,8 +200,8 @@ while [ "$i" -le "$DOCS" ]; do
       yq r k8s.yaml -d "$i" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       # simliar to server, except the ConfigMap hierarchy, key, and value are different
-      SHORT_NAME=$(yq r ./.werft/values.dev.yaml installation.shortname)
-      STAGING_HOST_NAME=$(yq r ./.werft/values.dev.yaml hostname)
+      SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
+      STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
       CURRENT_WS_HOST_NAME="ws.$DEV_BRANCH.$STAGING_HOST_NAME"
       NEW_WS_HOST_NAME="ws-$SHORT_NAME.$DEV_BRANCH.$STAGING_HOST_NAME"
 
