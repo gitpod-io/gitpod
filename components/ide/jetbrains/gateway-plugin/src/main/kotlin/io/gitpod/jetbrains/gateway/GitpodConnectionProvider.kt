@@ -52,7 +52,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         }
         val connectParams = ConnectParams(
             parameters["gitpodHost"]!!,
-            parameters["workspaceId"]!!
+            parameters["workspaceId"]!!,
+            parameters["backendPort"]
         )
         val client = gitpod.obtainClient(connectParams.gitpodHost)
         val connectionLifetime = Lifetime.Eternal.createNested()
@@ -187,8 +188,12 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                 var requestTimeout = 2 * 1000L
                                 while (joinLink == null) {
                                     try {
+                                        var resolveJoinLinkUrl = "https://24000-${ideUrl.host}/joinLink"
+                                        if (!connectParams.backendPort.isNullOrBlank()) {
+                                            resolveJoinLinkUrl += "?backendPort=${connectParams.backendPort}"
+                                        }
                                         val httpRequest = HttpRequest.newBuilder()
-                                            .uri(URI.create("https://24000-${ideUrl.host}/joinLink"))
+                                            .uri(URI.create(resolveJoinLinkUrl))
                                             .header("x-gitpod-owner-token", ownerToken)
                                             .GET()
                                             .timeout(Duration.ofMillis(requestTimeout))
@@ -270,7 +275,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private data class ConnectParams(
         val gitpodHost: String,
-        val workspaceId: String
+        val workspaceId: String,
+        val backendPort: String?
     )
 
     private class GitpodConnectionHandle(
