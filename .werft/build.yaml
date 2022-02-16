@@ -205,6 +205,9 @@ pod:
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
         printf '{{ toJson . }}' > context.json
 
-        npx ts-node .werft/build.ts
+        trap 'kill $(jobs -p)' SIGINT SIGTERM
+
+        npx ts-node .werft/build.ts &
+        wait $!
 sidecars:
 - testdb
