@@ -49,5 +49,4 @@ pod:
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
 
-        # We're merging with the script commented so we can safely test prior to fully commit to it
         npx ts-node .werft/delete-preview-environments/delete-preview-environments-cron.ts
