@@ -30,7 +30,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			StoppingPhaseSeconds:             3600,
 			UnknownPhaseSeconds:              600,
 		},
-		StaticBridges: WSManagerList(),
+		EmulatePreparingIntervalSeconds: 10,
+		StaticBridges:                   WSManagerList(),
 	}
 
 	fc, err := common.ToJSONString(wsmbcfg)
