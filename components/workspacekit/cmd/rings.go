@@ -52,6 +52,9 @@ const (
 	// ring2StartupTimeout is the maximum time we wait between starting ring2 and its
 	// attempt to connect to the parent socket.
 	ring2StartupTimeout = 5 * time.Second
+
+	// https://lore.kernel.org/lkml/1450844609-9194-3-git-send-email-serge.hallyn@ubuntu.com/
+	CLONE_NEWCGROUP = 0x02000000
 )
 
 var ring0Cmd = &cobra.Command{
@@ -104,7 +107,7 @@ var ring0Cmd = &cobra.Command{
 		cmd := exec.Command("/proc/self/exe", "ring1")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS,
+			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | CLONE_NEWCGROUP,
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
