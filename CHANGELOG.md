@@ -1,6 +1,7 @@
 # Change Log
 
 ## February 2022
+- [server] Disable `perMessageDeflate` on websockets ([#8227](https://github.com/gitpod-io/gitpod/pull/8227)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [tracing] avoid noisy error messages ([#8187](https://github.com/gitpod-io/gitpod/pull/8187)) - [@geropl](https://github.com/geropl)
 - Composite content initializer now correctly report errors. ([#8189](https://github.com/gitpod-io/gitpod/pull/8189)) - [@csweichel](https://github.com/csweichel)
 - Add alerts if the GC of ws-daemon is excessive ([#8185](https://github.com/gitpod-io/gitpod/pull/8185)) - [@princerachit](https://github.com/princerachit)
