@@ -852,6 +852,15 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return <WorkspaceAndInstance>(res);
     }
 
+    async findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]> {
+        const repo = await this.getWorkspaceInstanceRepo();
+        // uses index: ind_phasePersisted_region
+        const qb = repo.createQueryBuilder("wsi")
+            .where("wsi.phasePersisted = :phase", { phase })
+            .andWhere("wsi.region = :region", { region });
+        return qb.getMany();
+    }
+
     async findPrebuiltWorkspacesByProject(projectId: string, branch?: string, limit?: number): Promise<PrebuiltWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
 

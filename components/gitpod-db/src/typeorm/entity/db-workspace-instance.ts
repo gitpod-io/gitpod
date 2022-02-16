@@ -13,6 +13,7 @@ import { Transformer } from "../transformer";
 
 @Entity()
 @Index("ind_find_wsi_ws_in_period", ['workspaceId', 'startedTime', 'stoppedTime'])   // findInstancesWithWorkspaceInPeriod
+@Index("ind_phasePersisted_region", ['phasePersisted', 'region'])   // findInstancesByPhaseAndRegion
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBWorkspaceInstance implements WorkspaceInstance {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)

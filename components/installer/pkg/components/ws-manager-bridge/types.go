@@ -13,6 +13,7 @@ type Configuration struct {
 	ControllerIntervalSeconds           int32              `json:"controllerIntervalSeconds"`
 	ControllerMaxDisconnectSeconds      int32              `json:"controllerMaxDisconnectSeconds"`
 	MaxTimeToRunningPhaseSeconds        int32              `json:"maxTimeToRunningPhaseSeconds"`
+	EmulatePreparingIntervalSeconds     int32              `json:"emulatePreparingIntervalSeconds"`
 	Timeouts                            Timeouts           `json:"timeouts"`
 }
 

@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import { MessageBusIntegration } from "./messagebus-integration";
-import { Disposable, WorkspaceInstance, Queue, WorkspaceInstancePort, PortVisibility, RunningWorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { Disposable, WorkspaceInstance, Queue, WorkspaceInstancePort, PortVisibility, RunningWorkspaceInfo, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, WorkspaceConditionBool, PortVisibility as WsManPortVisibility, WorkspaceType, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
@@ -20,6 +20,7 @@ import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { PreparingUpdateEmulator } from "./preparing-update-emulator";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -53,7 +54,7 @@ export class WorkspaceManagerBridge implements Disposable {
     @inject(IAnalyticsWriter)
     protected readonly analytics: IAnalyticsWriter;
 
-    protected readonly disposables: Disposable[] = [];
+    protected readonly disposables = new DisposableCollection();
     protected readonly queues = new Map<string, Queue>();
 
     protected cluster: WorkspaceClusterInfo;
@@ -85,6 +86,11 @@ export class WorkspaceManagerBridge implements Disposable {
             // _DO NOT_ update the DB (another bridge is responsible for that)
             // Still, listen to all updates, generate/derive new state and distribute it locally!
             startStatusUpdateHandler(false);
+
+            // emulate WorkspaceInstance updates for all Workspaces in the "preparing" phase in this cluster
+            const updateEmulator = new PreparingUpdateEmulator();
+            this.disposables.push(updateEmulator);
+            updateEmulator.start(cluster.name);
         }
         log.info(`started bridge to cluster.`, logPayload);
     }
@@ -366,7 +372,7 @@ export class WorkspaceManagerBridge implements Disposable {
     }
 
     public dispose() {
-        this.disposables.forEach(d => d.dispose());
+        this.disposables.dispose();
     }
 
 }
