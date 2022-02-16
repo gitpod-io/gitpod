@@ -24,6 +24,10 @@
     dest: /etc/wireguard/wg0.conf
   become: true
 
+- name: Enable IP forwarding
+  command: sysctl -w net.ipv4.ip_forward=1
+  become: true
+
 - name: Start WireGuard daemon
   ansible.builtin.service:
     name: "wg-quick@wg0"

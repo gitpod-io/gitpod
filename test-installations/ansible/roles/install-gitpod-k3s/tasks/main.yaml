@@ -39,10 +39,10 @@
   delay: 5
 
 - name: Render and install Gitpod manifests
-  command: gitpod-installer render --config /gitpod/gitpod-config.yaml > /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml
+  shell: gitpod-installer render --config /gitpod/gitpod-config.yaml > /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml
   become: true
   when: not airgap
 
 - name: Render Gitpod manifests
-  command: gitpod-installer render --danger-use-unsupported-config --config /gitpod/gitpod-config.yaml > /gitpod/gitpod-manifests.yaml
+  shell: gitpod-installer render --danger-use-unsupported-config --config /gitpod/gitpod-config.yaml > /gitpod/gitpod-manifests.yaml
   when: airgap

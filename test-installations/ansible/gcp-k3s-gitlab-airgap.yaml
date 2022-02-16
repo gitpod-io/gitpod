@@ -144,6 +144,20 @@
     - gcp-airgap
   tags: ["localhost"]
 
+- name: Refresh inventory
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - meta: refresh_inventory
+  tags: ["localhost"]
+
+- name: Wait for connection
+  hosts: all
+  gather_facts: no
+  tasks:
+    - wait_for_connection:
+  tags: ["localhost"]
+
 - name: Start Gitpod installation
   hosts: instance_bastion
   vars_files:
