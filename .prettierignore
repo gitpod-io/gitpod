@@ -1,0 +1,5 @@
+# We dont use it for YAML yet
+*.yaml
+
+# For now we only use it for .werft
+components

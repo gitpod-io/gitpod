@@ -55,3 +55,4 @@ vscode:
     - timonwong.shellcheck
     - vscjava.vscode-java-pack
     - fwcd.kotlin
+    - esbenp.prettier-vscode

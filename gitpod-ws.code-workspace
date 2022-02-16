@@ -30,6 +30,10 @@
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",
+      "[typescript]": {
+         "editor.formatOnSave": true,
+         "editor.defaultFormatter": "esbenp.prettier-vscode"
+      },
       "[json]": {
          "editor.insertSpaces": true,
          "editor.tabSize": 2
