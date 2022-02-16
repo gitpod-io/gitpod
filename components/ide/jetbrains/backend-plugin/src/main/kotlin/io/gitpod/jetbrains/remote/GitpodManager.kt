@@ -14,25 +14,55 @@ import com.intellij.remoteDev.util.onTerminationOrNow
 import com.jetbrains.rd.util.lifetime.Lifetime
 import git4idea.config.GitVcsApplicationSettings
 import io.gitpod.jetbrains.remote.services.SupervisorInfoService
-import io.gitpod.supervisor.api.Notification.NotifyRequest
-import io.gitpod.supervisor.api.Notification.NotifyResponse
-import io.gitpod.supervisor.api.Notification.RespondRequest
-import io.gitpod.supervisor.api.Notification.SubscribeRequest
-import io.gitpod.supervisor.api.Notification.SubscribeResponse
+import io.gitpod.supervisor.api.Notification.*
 import io.gitpod.supervisor.api.NotificationServiceGrpc
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
-import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.ide.BuiltInServerManager
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import kotlinx.coroutines.*
 
 @Service
 class GitpodManager : Disposable {
+
+    init {
+        GlobalScope.launch {
+            try {
+                val backendPort = BuiltInServerManager.getInstance().waitForStart().port
+                val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .build()
+                val httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:24000/gatewayLink?backendPort=${backendPort}"))
+                    .GET()
+                    .build()
+                val response =
+                    httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+                if (response.statusCode() == 200) {
+                    val gatewayLink = response.body()
+                    thisLogger().warn(
+                        "\n\n\n*********************************************************\n\n" +
+                                "Gitpod gateway link: $gatewayLink" +
+                                "\n\n*********************************************************\n\n\n"
+                    )
+                } else {
+                    throw Exception("" + response.statusCode())
+                }
+            } catch (t: Throwable) {
+                thisLogger().error("gitpod: failed to resolve gateway link:", t)
+            }
+        }
+    }
 
     init {
         GitVcsApplicationSettings.getInstance().isUseCredentialHelper = true
@@ -47,42 +77,46 @@ class GitpodManager : Disposable {
         while (isActive) {
             try {
                 val f = CompletableFuture<Void>()
-                notifications.subscribe(SubscribeRequest.newBuilder().build(), object : ClientResponseObserver<SubscribeRequest, SubscribeResponse> {
+                notifications.subscribe(
+                    SubscribeRequest.newBuilder().build(),
+                    object : ClientResponseObserver<SubscribeRequest, SubscribeResponse> {
 
-                    override fun beforeStart(requestStream: ClientCallStreamObserver<SubscribeRequest>) {
-                        // TODO(ak): actually should be bound to cancellation of notifications job
-                        lifetime.onTerminationOrNow {
-                            requestStream.cancel(null, null)
+                        override fun beforeStart(requestStream: ClientCallStreamObserver<SubscribeRequest>) {
+                            // TODO(ak): actually should be bound to cancellation of notifications job
+                            lifetime.onTerminationOrNow {
+                                requestStream.cancel(null, null)
+                            }
                         }
-                    }
 
-                    override fun onNext(n: SubscribeResponse) {
-                        val request = n.request
-                        val type = when (request.level) {
-                            NotifyRequest.Level.ERROR -> NotificationType.ERROR
-                            NotifyRequest.Level.WARNING -> NotificationType.WARNING
-                            else -> NotificationType.INFORMATION
+                        override fun onNext(n: SubscribeResponse) {
+                            val request = n.request
+                            val type = when (request.level) {
+                                NotifyRequest.Level.ERROR -> NotificationType.ERROR
+                                NotifyRequest.Level.WARNING -> NotificationType.WARNING
+                                else -> NotificationType.INFORMATION
+                            }
+                            val notification = notificationGroup.createNotification(request.message, type)
+                            for (action in request.actionsList) {
+                                notification.addAction(NotificationAction.createSimpleExpiring(action) {
+                                    futureNotifications.respond(
+                                        RespondRequest.newBuilder()
+                                            .setRequestId(n.requestId)
+                                            .setResponse(NotifyResponse.newBuilder().setAction(action).build())
+                                            .build()
+                                    )
+                                })
+                            }
+                            notification.notify(null)
                         }
-                        val notification = notificationGroup.createNotification(request.message, type)
-                        for (action in request.actionsList) {
-                            notification.addAction(NotificationAction.createSimpleExpiring(action) {
-                                futureNotifications.respond(RespondRequest.newBuilder()
-                                        .setRequestId(n.requestId)
-                                        .setResponse(NotifyResponse.newBuilder().setAction(action).build())
-                                        .build())
-                            })
+
+                        override fun onError(t: Throwable) {
+                            f.completeExceptionally(t)
                         }
-                        notification.notify(null)
-                    }
 
-                    override fun onError(t: Throwable) {
-                        f.completeExceptionally(t)
-                    }
-
-                    override fun onCompleted() {
-                        f.complete(null)
-                    }
-                })
+                        override fun onCompleted() {
+                            f.complete(null)
+                        }
+                    })
                 f.await()
             } catch (t: Throwable) {
                 if (t is CancellationException) {
@@ -93,6 +127,7 @@ class GitpodManager : Disposable {
             delay(1000L)
         }
     }
+
     init {
         lifetime.onTerminationOrNow {
             notificationsJob.cancel()

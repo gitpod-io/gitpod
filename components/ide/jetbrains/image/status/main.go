@@ -20,6 +20,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const defaultBackendPort = "63342"
+
 // proxy for the Code With Me status endpoints that transforms it into the supervisor status format.
 func main() {
 	if len(os.Args) < 2 {
@@ -35,33 +37,44 @@ func main() {
 	errlog := log.New(os.Stderr, "JetBrains IDE status: ", log.LstdFlags)
 
 	http.HandleFunc("/joinLink", func(w http.ResponseWriter, r *http.Request) {
-		jsonLink, err := resolveJsonLink()
+		backendPort := r.URL.Query().Get("backendPort")
+		if backendPort == "" {
+			backendPort = defaultBackendPort
+		}
+		jsonLink, err := resolveJsonLink(backendPort)
 		if err != nil {
+			errlog.Printf("cannot resolve join link: %v\n", err)
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		fmt.Fprint(w, jsonLink)
+	})
+	http.HandleFunc("/gatewayLink", func(w http.ResponseWriter, r *http.Request) {
+		backendPort := r.URL.Query().Get("backendPort")
+		if backendPort == "" {
+			backendPort = defaultBackendPort
+		}
+		jsonLink, err := resolveGatewayLink(backendPort)
+		if err != nil {
+			errlog.Printf("cannot resolve gateway link: %v\n", err)
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 		fmt.Fprint(w, jsonLink)
 	})
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		wsInfo, err := resolveWorkspaceInfo(context.Background())
+		backendPort := r.URL.Query().Get("backendPort")
+		if backendPort == "" {
+			backendPort = defaultBackendPort
+		}
+		gatewayLink, err := resolveGatewayLink(backendPort)
 		if err != nil {
-			errlog.Printf("cannot get workspace info: %v\n", err)
+			errlog.Printf("cannot resolve gateway link: %v\n", err)
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
-		}
-		gitpodUrl, err := url.Parse(wsInfo.GitpodHost)
-		if err != nil {
-			errlog.Printf("cannot parse gitpod url: %v\n", err)
-			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			return
-		}
-		link := url.URL{
-			Scheme:   "jetbrains-gateway",
-			Host:     "connect",
-			Fragment: fmt.Sprintf("gitpodHost=%s&workspaceId=%s", gitpodUrl.Hostname(), wsInfo.WorkspaceId),
 		}
 		response := make(map[string]string)
-		response["link"] = link.String()
+		response["link"] = gatewayLink
 		response["label"] = label
 		response["clientID"] = "jetbrains-gateway"
 		w.Header().Set("Content-Type", "application/json")
@@ -81,9 +94,26 @@ type Response struct {
 	Projects []Projects `json:"projects"`
 }
 
-func resolveJsonLink() (string, error) {
+func resolveGatewayLink(backendPort string) (string, error) {
+	wsInfo, err := resolveWorkspaceInfo(context.Background())
+	if err != nil {
+		return "", err
+	}
+	gitpodUrl, err := url.Parse(wsInfo.GitpodHost)
+	if err != nil {
+		return "", err
+	}
+	link := url.URL{
+		Scheme:   "jetbrains-gateway",
+		Host:     "connect",
+		Fragment: fmt.Sprintf("gitpodHost=%s&workspaceId=%s&backendPort=%s", gitpodUrl.Hostname(), wsInfo.WorkspaceId, backendPort),
+	}
+	return link.String(), nil
+}
+
+func resolveJsonLink(backendPort string) (string, error) {
 	var (
-		hostStatusUrl = "http://localhost:63342/codeWithMe/unattendedHostStatus?token=gitpod"
+		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
 		client        = http.Client{Timeout: 1 * time.Second}
 	)
 	resp, err := client.Get(hostStatusUrl)
