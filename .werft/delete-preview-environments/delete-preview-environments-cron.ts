@@ -53,11 +53,7 @@ async function deletePreviewEnvironments() {
 
     werft.phase("deleting previews")
     try {
-        previewsToDelete.forEach(preview => {
-            // wipePreviewEnvironmentAndNamespace(helmInstallName, preview, { slice: `Deleting preview ${preview}` )
-            werft.log("deleting previews", `should delete ${preview}`)
-        });
-
+        previewsToDelete.forEach(preview => wipePreviewEnvironmentAndNamespace(helmInstallName, preview, { slice: `Deleting preview ${preview}` }));
     } catch (err) {
         werft.fail("deleting previews", err)
     }
