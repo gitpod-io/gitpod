@@ -7,6 +7,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"net/rpc"
 	"testing"
 	"time"
 
@@ -20,6 +21,26 @@ import (
 const (
 	numberOfMount = 500
 )
+
+func loadMountProc(t *testing.T, rsa *rpc.Client) {
+	var resp agent.ExecResponse
+	err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+		Dir:     "/",
+		Command: "bash",
+		Args: []string{
+			"-c",
+			fmt.Sprintf("for i in {1..%d}; do echo $i; sudo unshare -m --propagation unchanged mount -t proc proc $(mktemp -d) || exit 1; done", numberOfMount),
+		},
+	}, &resp)
+	if err != nil {
+		t.Fatalf("proc mount run failed: %v\n%s\n%s", err, resp.Stdout, resp.Stderr)
+	}
+
+	if resp.ExitCode != 0 {
+		t.Fatalf("proc mount run failed: %s\n%s", resp.Stdout, resp.Stderr)
+	}
+
+}
 
 func TestMountProc(t *testing.T) {
 	f := features.New("proc mount").
@@ -45,22 +66,7 @@ func TestMountProc(t *testing.T) {
 			defer rsa.Close()
 			integration.DeferCloser(t, closer)
 
-			var resp agent.ExecResponse
-			err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-				Dir:     "/",
-				Command: "bash",
-				Args: []string{
-					"-c",
-					fmt.Sprintf("for i in $(seq 1 %d); do sudo unshare -m --propagation unchanged mount -t proc proc $(mktemp -d) || exit 1 done", numberOfMount),
-				},
-			}, &resp)
-			if err != nil {
-				t.Fatalf("proc mount run failed: %v\n%s\n%s", err, resp.Stdout, resp.Stderr)
-			}
-
-			if resp.ExitCode != 0 {
-				t.Fatalf("proc mount run failed: %s\n%s", resp.Stdout, resp.Stderr)
-			}
+			loadMountProc(t, rsa)
 
 			err = integration.DeleteWorkspace(ctx, api, ws.Req.Id)
 			if err != nil {
