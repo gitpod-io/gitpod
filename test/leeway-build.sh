@@ -19,4 +19,5 @@ for COMPONENT in tests/components/*; do
     go test -trimpath -ldflags="-buildid= -w -s" -c -o bin/"$OUTPUT".test ./"$COMPONENT"
 done
 
-go test -trimpath -ldflags="-buildid= -w -s" -o bin/workspace -c ./tests/workspace
+echo building test tests/workspace
+go test -trimpath -ldflags="-buildid= -w -s" -o bin/workspace.test -c ./tests/workspace
