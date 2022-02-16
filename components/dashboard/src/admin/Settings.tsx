@@ -37,7 +37,7 @@ export default function Settings() {
                 <h3>Usage Statistics</h3>
                 <CheckBox
                     title="Enable Service Ping"
-                    desc={<span>This is used to provide insights on how you use your cluster so we can provide a better overall experience. <a className="gp-link" href="https://www.gitpod.io/privacy">Read our Privacy Policy</a>. The following data is sent:</span>}
+                    desc={<span>This is used to provide insights on how you use your Gitpod instance so we can provide a better overall experience. <a className="gp-link" href="https://www.gitpod.io/privacy">Read our Privacy Policy</a>. The following data is sent:</span>}
                     checked={adminSettings?.sendTelemetry ?? false}
                     onChange={(evt) => actuallySetTelemetryPrefs({
                         sendTelemetry: evt.target.checked,
