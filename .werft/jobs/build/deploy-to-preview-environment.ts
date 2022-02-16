@@ -193,7 +193,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
 */
 async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
-    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/post-process.sh -a with-clean-slate-deployment=true
+    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/jobs/build/helm/post-process.sh -a with-clean-slate-deployment=true
     const { version, destname, namespace, domain, monitoringDomain, url, withObservability, withVM } = deploymentConfig;
 
     // find free ports
@@ -291,9 +291,9 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
 
         // get some values we need to customize the config and write them to file
-        exec(`yq r ./.werft/values.dev.yaml components.server.blockNewUsers \
+        exec(`yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers \
         | yq prefix - 'blockNewUsers' > ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq r ./.werft/values.variant.cpuLimits.yaml workspaceSizing | yq prefix - 'workspace' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
+        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing | yq prefix - 'workspace' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
 
         // merge values from files
         exec(`yq m -i --overwrite config.yaml ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
@@ -322,7 +322,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
         if (withObservability) {
             // TODO: there's likely more to do...
-            const tracingEndpoint = exec(`yq r ./.werft/values.tracing.yaml tracing.endpoint`, { slice: installerSlices.INSTALLER_RENDER }).stdout.trim();
+            const tracingEndpoint = exec(`yq r ./.werft/jobs/build/helm/values.tracing.yaml tracing.endpoint`, { slice: installerSlices.INSTALLER_RENDER }).stdout.trim();
             exec(`yq w -i config.yaml observability.tracing.endpoint ${tracingEndpoint}`, { slice: installerSlices.INSTALLER_RENDER });
         }
 
@@ -415,7 +415,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         }
 
         const flags = withVM ? "WITH_VM=true " : ""
-        exec(`${flags}./.werft/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
+        exec(`${flags}./.werft/jobs/build/helm/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
         werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
         if (!jobConfig.mainBuild) {
@@ -574,7 +574,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
                 | yq r - data.authProviders \
                 | base64 -d -w 0 \
                 > authProviders`, { slice: "authProviders" });
-        exec(`yq merge --inplace .werft/values.dev.yaml ./authProviders`, { slice: "authProviders" })
+        exec(`yq merge --inplace .werft/jobs/build/helm/values.dev.yaml ./authProviders`, { slice: "authProviders" })
         werft.done('authProviders');
     } catch (err) {
         if (!jobConfig.mainBuild) {
@@ -634,7 +634,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
 
         if (storage === "gcp") {
             exec("kubectl get secret gcp-sa-gitpod-dev-deployer -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -");
-            flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
+            flags += ` -f ../.werft/jobs/build/helm/values.dev.gcp-storage.yaml`;
         }
 
         /*  A hash is caclulated from the branch name and a subset of that string is parsed to a number x,
@@ -645,7 +645,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
         const nodepoolIndex = getNodePoolIndex(namespace);
 
         exec(`helm dependencies up`);
-        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
+        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/jobs/build/helm/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/jobs/build/helm/values.dev.yaml ${flags} ${helmInstallName} .`);
 
         werft.log('helm', 'installing Sweeper');
         const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
@@ -684,7 +684,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
             flags += ` --set components.server.defaultFeatureFlags[${i}]='${f}'`;
         });
         if (dynamicCPULimits) {
-            flags += ` -f ../.werft/values.variant.cpuLimits.yaml`;
+            flags += ` -f ../.werft/jobs/build/helm/values.variant.cpuLimits.yaml`;
         }
         if ((deploymentConfig.analytics || "").startsWith("segment|")) {
             flags += ` --set analytics.writer=segment`;
@@ -693,7 +693,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
             flags += ` --set analytics.writer=${deploymentConfig.analytics!}`;
         }
         if (deploymentConfig.withObservability) {
-            flags += ` -f ../.werft/values.tracing.yaml`;
+            flags += ` -f ../.werft/jobs/build/helm/values.tracing.yaml`;
         }
         werft.log("helm", "extracting versions");
         try {
@@ -713,7 +713,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
             flags += ` --set license=${fs.readFileSync('/mnt/secrets/gpsh-coredev/license').toString()}`
         }
         if (deploymentConfig.withPayment) {
-            flags += ` -f ../.werft/values.payment.yaml`;
+            flags += ` -f ../.werft/jobs/build/helm/values.payment.yaml`;
             exec(`cp /mnt/secrets/payment-provider-config/providerOptions payment-core-dev-options.json`);
             flags += ` --set payment.chargebee.providerOptionsFile=payment-core-dev-options.json`;
             exec(`cp /mnt/secrets/payment-webhook-config/license payment-core-dev-webhook.json`);
