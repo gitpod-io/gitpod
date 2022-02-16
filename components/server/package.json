@@ -27,6 +27,7 @@
     "/dist"
   ],
   "dependencies": {
+    "@atlassian/bitbucket-server": "^0.0.6",
     "@gitbeaker/node": "^25.6.0",
     "@gitpod/content-service": "0.1.5",
     "@gitpod/gitpod-db": "0.1.5",
