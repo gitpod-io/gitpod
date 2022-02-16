@@ -251,8 +251,8 @@ export namespace UserEnvVar {
         if (variable.value.trim() === "") {
             return "Value must not be empty.";
         }
-        if (variable.value.length > 32768) {
-            return 'Value too long. Maximum value length is 32768 characters.';
+        if (variable.value.length > 32767) {
+            return 'Value too long. Maximum value length is 32767 characters.';
         }
         if (pattern.trim() === "") {
             return "Scope must not be empty.";
