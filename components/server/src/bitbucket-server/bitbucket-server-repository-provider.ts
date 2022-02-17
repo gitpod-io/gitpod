@@ -11,10 +11,6 @@ import { RepositoryProvider } from '../repohost/repository-provider';
 @injectable()
 export class BitbucketServerRepositoryProvider implements RepositoryProvider {
 
-    getUserRepos(user: User): Promise<string[]> {
-        throw new Error("getUserRepos not implemented.");
-    }
-
     async getRepo(user: User, owner: string, name: string): Promise<Repository> {
         // const api = await this.apiFactory.create(user);
         // const repo = (await api.repositories.get({ workspace: owner, repo_slug: name })).data;
@@ -100,4 +96,15 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         //     authorAvatarUrl: commit.author?.user?.links?.avatar?.href,
         // };
     }
+
+    async getUserRepos(user: User): Promise<string[]> {
+        // TODO(janx): Not implemented yet
+        return [];
+    }
+
+    async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
+        // TODO(janx): Not implemented yet
+        return false;
+    }
+
 }

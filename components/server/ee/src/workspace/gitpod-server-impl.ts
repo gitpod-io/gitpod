@@ -359,7 +359,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!workspace || workspace.ownerId !== userId) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
-        await this.guardAccess({ kind: "snapshot", subject: undefined, workspaceOwnerID: workspace.ownerId, workspaceID: workspace.id }, "create");
+        await this.guardAccess({ kind: "snapshot", subject: undefined, workspace }, "create");
 
         return workspace;
     }
@@ -406,7 +406,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         const snapshots = await this.workspaceDb.trace(ctx).findSnapshotsByWorkspaceId(workspaceId);
-        await Promise.all(snapshots.map(s => this.guardAccess({ kind: "snapshot", subject: s, workspaceOwnerID: workspace.ownerId }, "get")));
+        await Promise.all(snapshots.map(s => this.guardAccess({ kind: "snapshot", subject: s, workspace }, "get")));
 
         return snapshots.map(s => s.id);
     }

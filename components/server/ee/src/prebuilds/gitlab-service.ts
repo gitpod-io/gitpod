@@ -5,7 +5,7 @@
  */
 
 import { RepositoryService } from "../../../src/repohost/repo-service";
-import { CommitContext, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { GitLabApi, GitLab } from "../../../src/gitlab/api";
 import { AuthProviderParams } from "../../../src/auth/auth-provider";
@@ -64,25 +64,6 @@ export class GitlabService extends RepositoryService {
             token: user.id+'|'+tokenEntry.token.value
         });
         log.info('Installed Webhook for ' + cloneUrl, { cloneUrl, userId: user.id });
-    }
-
-    async canAccessHeadlessLogs(user: User, context: WorkspaceContext): Promise<boolean> {
-        if (!CommitContext.is(context)) {
-            return false;
-        }
-        const { owner, name: repoName } = context.repository;
-
-        try {
-            // If we can "see" a project we are allowed to access it's headless logs
-            const api = await this.api.create(user);
-            const response = await api.Projects.show(`${owner}/${repoName}`);
-            if (GitLab.ApiError.is(response)) {
-                return false;
-            }
-            return true;
-        } catch (err) {
-            return false;
-        }
     }
 
     protected getHookUrl() {

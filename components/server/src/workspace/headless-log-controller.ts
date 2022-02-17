@@ -8,7 +8,7 @@ import { inject, injectable } from "inversify";
 import * as express from 'express';
 import { HEADLESS_LOG_STREAM_STATUS_CODE, Queue, TeamMemberInfo, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { CompositeResourceAccessGuard, OwnerResourceGuard, TeamMemberResourceGuard, WorkspaceLogAccessGuard } from "../auth/resource-access";
+import { CompositeResourceAccessGuard, OwnerResourceGuard, TeamMemberResourceGuard, RepositoryResourceGuard } from "../auth/resource-access";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { TeamDB } from "@gitpod/gitpod-db/lib/team-db";
@@ -170,7 +170,7 @@ export class HeadlessLogController {
         const resourceGuard = new CompositeResourceAccessGuard([
             new OwnerResourceGuard(user.id),
             new TeamMemberResourceGuard(user.id),
-            new WorkspaceLogAccessGuard(user, this.hostContextProvider),
+            new RepositoryResourceGuard(user, this.hostContextProvider),
         ]);
         if (!await resourceGuard.canAccess({ kind: 'workspaceLog', subject: workspace, teamMembers }, 'get')) {
             res.sendStatus(403);

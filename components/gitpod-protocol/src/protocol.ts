@@ -815,15 +815,14 @@ export namespace WithSnapshot {
     }
 }
 
-export interface WithPrebuild {
-    snapshotBucketId: string;
+export interface WithPrebuild extends WithSnapshot {
     prebuildWorkspaceId: string;
     wasPrebuilt: true;
 }
 export namespace WithPrebuild {
     export function is(context: any): context is WithPrebuild {
         return context
-            && 'snapshotBucketId' in context
+            && WithSnapshot.is(context)
             && 'prebuildWorkspaceId' in context
             && 'wasPrebuilt' in context;
     }

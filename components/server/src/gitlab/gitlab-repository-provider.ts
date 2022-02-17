@@ -99,4 +99,18 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         // FIXME(janx): Not implemented yet
         return [];
     }
+
+    async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
+        try {
+            // If we can "see" a project we are allowed to read it
+            const api = await this.gitlab.create(user);
+            const response = await api.Projects.show(`${owner}/${repo}`);
+            if (GitLab.ApiError.is(response)) {
+                return false;
+            }
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
 }

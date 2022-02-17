@@ -129,6 +129,9 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             }}>Authorize with {error.data.host}</button>
           </div>;
           break;
+        case ErrorCodes.PERMISSION_DENIED:
+          statusMessage = <p className="text-base text-gitpod-red w-96">Access is not allowed</p>;
+          break;
         case ErrorCodes.USER_BLOCKED:
           window.location.href = '/blocked';
           return;
