@@ -1,31 +1,37 @@
-import { exec } from '../util/shell';
-import { getGlobalWerftInstance } from '../util/werft';
+import { exec } from "../util/shell";
+import { getGlobalWerftInstance } from "../util/werft";
 
-import * as Manifests from './manifests'
+import * as Manifests from "./manifests";
 
-const KUBECONFIG_PATH = '/mnt/secrets/harvester-kubeconfig/harvester-kubeconfig.yml'
+const KUBECONFIG_PATH =
+  "/mnt/secrets/harvester-kubeconfig/harvester-kubeconfig.yml";
 
 /**
  * Convenience function to kubectl apply a manifest from stdin.
  */
-function kubectlApplyManifest(manifest: string, options?: { validate?: boolean }) {
-    exec(`
+function kubectlApplyManifest(
+  manifest: string,
+  options?: { validate?: boolean }
+) {
+  exec(`
         cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} apply --validate=${!!options?.validate} -f -
 ${manifest}
 EOF
-    `)
+    `);
 }
-
 
 /**
  * Convenience function to kubectl delete a manifest from stdin.
  */
- function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
-    exec(`
+function kubectlDeleteManifest(
+  manifest: string,
+  options?: { validate?: boolean }
+) {
+  exec(`
         cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} delete -f -
 ${manifest}
 EOF
-    `)
+    `);
 }
 
 /**
@@ -33,159 +39,203 @@ EOF
  * Does not wait for the VM to be ready.
  */
 export function startVM(options: { name: string }) {
-    const namespace = `preview-${options.name}`
-    const userDataSecretName = `userdata-${options.name}`
+  const namespace = `preview-${options.name}`;
+  const userDataSecretName = `userdata-${options.name}`;
 
-    kubectlApplyManifest(
-        Manifests.NamespaceManifest({
-            namespace
-        })
-    )
+  kubectlApplyManifest(
+    Manifests.NamespaceManifest({
+      namespace,
+    })
+  );
 
-    kubectlApplyManifest(
-        Manifests.UserDataSecretManifest({
-            vmName: options.name,
-            namespace,
-            secretName: userDataSecretName,
-        })
-    )
+  kubectlApplyManifest(
+    Manifests.UserDataSecretManifest({
+      vmName: options.name,
+      namespace,
+      secretName: userDataSecretName,
+    })
+  );
 
-    kubectlApplyManifest(
-        Manifests.VirtualMachineManifest({
-            namespace,
-            vmName: options.name,
-            claimName: `${options.name}-${Date.now()}`,
-            userDataSecretName
-        }),
-        { validate: false }
-    )
+  kubectlApplyManifest(
+    Manifests.VirtualMachineManifest({
+      namespace,
+      vmName: options.name,
+      claimName: `${options.name}-${Date.now()}`,
+      userDataSecretName,
+    }),
+    { validate: false }
+  );
 
-    kubectlApplyManifest(
-        Manifests.ServiceManifest({
-            vmName: options.name,
-            namespace
-        })
-    )
+  kubectlApplyManifest(
+    Manifests.ServiceManifest({
+      vmName: options.name,
+      namespace,
+    })
+  );
 }
-
 
 /**
  * Remove a VM with its Namespace
  */
- export function deleteVM(options: { name: string }) {
-    const namespace = `preview-${options.name}`
-    const userDataSecretName = `userdata-${options.name}`
+export function deleteVM(options: { name: string }) {
+  const namespace = `preview-${options.name}`;
+  const userDataSecretName = `userdata-${options.name}`;
 
-    kubectlDeleteManifest(
-        Manifests.ServiceManifest({
-            vmName: options.name,
-            namespace
-        })
-    )
+  kubectlDeleteManifest(
+    Manifests.ServiceManifest({
+      vmName: options.name,
+      namespace,
+    })
+  );
 
-    kubectlDeleteManifest(
-        Manifests.UserDataSecretManifest({
-            vmName: options.name,
-            namespace,
-            secretName: userDataSecretName,
-        })
-    )
+  kubectlDeleteManifest(
+    Manifests.UserDataSecretManifest({
+      vmName: options.name,
+      namespace,
+      secretName: userDataSecretName,
+    })
+  );
 
-    kubectlDeleteManifest(
-        Manifests.VirtualMachineManifest({
-            namespace,
-            vmName: options.name,
-            claimName: `${options.name}-${Date.now()}`,
-            userDataSecretName
-        }),
-        { validate: false }
-    )
+  kubectlDeleteManifest(
+    Manifests.VirtualMachineManifest({
+      namespace,
+      vmName: options.name,
+      claimName: `${options.name}-${Date.now()}`,
+      userDataSecretName,
+    }),
+    { validate: false }
+  );
 
-    kubectlDeleteManifest(
-        Manifests.NamespaceManifest({
-            namespace
-        })
-    )
+  kubectlDeleteManifest(
+    Manifests.NamespaceManifest({
+      namespace,
+    })
+  );
 }
-
 
 /**
  * Check if a VM with the given name already exists.
  * @returns true if the VM already exists
  */
 export function vmExists(options: { name: string }) {
-    const namespace = `preview-${options.name}`
-    const status = exec(`kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`, { dontCheckRc: true, silent: true })
-    return status.code == 0
+  const namespace = `preview-${options.name}`;
+  const status = exec(
+    `kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} get vmi ${options.name}`,
+    { dontCheckRc: true, silent: true }
+  );
+  return status.code == 0;
 }
 
 /**
  * Wait until the VM Instance reaches the Running status.
  * If the VM Instance doesn't reach Running before the timeoutMS it will throw an Error.
  */
-export function waitForVM(options: { name: string, timeoutSeconds: number, slice: string }) {
-    const werft = getGlobalWerftInstance()
-    const namespace = `preview-${options.name}`
+export function waitForVM(options: {
+  name: string;
+  timeoutSeconds: number;
+  slice: string;
+}) {
+  const werft = getGlobalWerftInstance();
+  const namespace = `preview-${options.name}`;
 
-    const startTime = Date.now()
-    const ready = exec(`kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} wait --for=condition=ready --timeout=${options.timeoutSeconds}s pod -l kubevirt.io=virt-launcher -l harvesterhci.io/vmName=${options.name}`, { dontCheckRc: true, silent: true })
+  const startTime = Date.now();
+  const ready = exec(
+    `kubectl --kubeconfig ${KUBECONFIG_PATH} -n ${namespace} wait --for=condition=ready --timeout=${options.timeoutSeconds}s pod -l kubevirt.io=virt-launcher -l harvesterhci.io/vmName=${options.name}`,
+    { dontCheckRc: true, silent: true }
+  );
 
-    if (ready.code == 0) {
-        werft.log(options.slice, `VM is ready after ${(Date.now() - startTime) / 1000} seconds`)
-        return
-    }
+  if (ready.code == 0) {
+    werft.log(
+      options.slice,
+      `VM is ready after ${(Date.now() - startTime) / 1000} seconds`
+    );
+    return;
+  }
 
-    werft.log(options.slice, `Timeout while waiting for VM to get ready. Timeout: ${options.timeoutSeconds}. Stderr: ${ready.stderr}. Stdout: ${ready.stdout}`)
-    throw new Error("VM didn't reach 'Ready' status before the timeout.")
+  werft.log(
+    options.slice,
+    `Timeout while waiting for VM to get ready. Timeout: ${options.timeoutSeconds}. Stderr: ${ready.stderr}. Stdout: ${ready.stdout}`
+  );
+  throw new Error("VM didn't reach 'Ready' status before the timeout.");
 }
 
 /**
  * Copies the k3s kubeconfig out of the VM and places it at `path`
  * If it doesn't manage to do so before the timeout it will throw an Error
  */
-export function copyk3sKubeconfig(options: { name: string, path: string, timeoutMS: number, slice: string }) {
-    const werft = getGlobalWerftInstance()
-    const startTime = Date.now()
-    while (true) {
+export function copyk3sKubeconfig(options: {
+  name: string;
+  path: string;
+  timeoutMS: number;
+  slice: string;
+}) {
+  const werft = getGlobalWerftInstance();
+  const startTime = Date.now();
+  while (true) {
+    const status = exec(
+      `ssh -i /workspace/.ssh/id_rsa_harvester_vm ubuntu@127.0.0.1 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no 'sudo cat /etc/rancher/k3s/k3s.yaml' > ${options.path}`,
+      { silent: true, dontCheckRc: true, slice: options.slice }
+    );
 
-        const status = exec(`ssh -i /workspace/.ssh/id_rsa_harvester_vm ubuntu@127.0.0.1 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no 'sudo cat /etc/rancher/k3s/k3s.yaml' > ${options.path}`, { silent: true, dontCheckRc: true, slice: options.slice })
-
-        if (status.code == 0) {
-            exec(`kubectl --kubeconfig ${options.path} config set clusters.default.server https://${options.name}.kube.gitpod-dev.com:6443`, { silent: true, slice: options.slice });
-            return
-        }
-
-        const elapsedTimeMs = Date.now() - startTime
-        if (elapsedTimeMs > options.timeoutMS) {
-            throw new Error(`Wasn't able to copy out the kubeconfig before the timeout. Exit code ${status.code}. Stderr: ${status.stderr}. Stdout: ${status.stdout}`)
-        }
-
-        werft.log(options.slice, `Wasn't able to copy out kubeconfig yet. Sleeping 5 seconds`)
-        exec('sleep 5', { silent: true, slice: options.slice })
+    if (status.code == 0) {
+      exec(
+        `kubectl --kubeconfig ${options.path} config set clusters.default.server https://${options.name}.kube.gitpod-dev.com:6443`,
+        { silent: true, slice: options.slice }
+      );
+      return;
     }
+
+    const elapsedTimeMs = Date.now() - startTime;
+    if (elapsedTimeMs > options.timeoutMS) {
+      throw new Error(
+        `Wasn't able to copy out the kubeconfig before the timeout. Exit code ${status.code}. Stderr: ${status.stderr}. Stdout: ${status.stdout}`
+      );
+    }
+
+    werft.log(
+      options.slice,
+      `Wasn't able to copy out kubeconfig yet. Sleeping 5 seconds`
+    );
+    exec("sleep 5", { silent: true, slice: options.slice });
+  }
 }
 
 /**
  * Proxy 127.0.0.1:22 to :22 in the VM through the k8s service
  */
-export function startSSHProxy(options: { name: string, slice: string }) {
-    const namespace = `preview-${options.name}`
-    exec(`sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:2200`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
+export function startSSHProxy(options: { name: string; slice: string }) {
+  const namespace = `preview-${options.name}`;
+  exec(
+    `sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:2200`,
+    { async: true, silent: true, slice: options.slice, dontCheckRc: true }
+  );
 }
 
 /**
  * Terminates all running kubectl proxies
  */
 export function stopKubectlPortForwards() {
-    exec(`sudo killall kubectl || true`)
+  exec(`sudo killall kubectl || true`);
 }
 
 /**
  * Install Fluent-Bit sending logs to GCP
  */
-export function installFluentBit(options: {namespace: string, slice: string}) {
-    exec(`kubectl create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl apply -n ${options.namespace} -f -`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 repo add fluent https://fluent.github.io/helm-charts`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 repo update`, { slice: options.slice, dontCheckRc: true})
-    exec(`helm3 upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`, { slice: options.slice, dontCheckRc: true})
+export function installFluentBit(options: {
+  namespace: string;
+  slice: string;
+}) {
+  exec(
+    `kubectl create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl apply -n ${options.namespace} -f -`,
+    { slice: options.slice, dontCheckRc: true }
+  );
+  exec(`helm3 repo add fluent https://fluent.github.io/helm-charts`, {
+    slice: options.slice,
+    dontCheckRc: true,
+  });
+  exec(`helm3 repo update`, { slice: options.slice, dontCheckRc: true });
+  exec(
+    `helm3 upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`,
+    { slice: options.slice, dontCheckRc: true }
+  );
 }
