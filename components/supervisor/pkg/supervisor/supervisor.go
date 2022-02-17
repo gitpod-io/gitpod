@@ -594,6 +594,7 @@ func symlinkBinaries(cfg *Config) {
 
 	binaries := map[string]string{
 		"gitpod-cli": "gp",
+		"gp":         "docker-credential-gp",
 	}
 	for k, v := range binaries {
 		var (
