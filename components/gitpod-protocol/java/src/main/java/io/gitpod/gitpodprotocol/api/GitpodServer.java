@@ -18,6 +18,9 @@ public interface GitpodServer {
     CompletableFuture<Void> sendHeartBeat(SendHeartBeatOptions options);
 
     @JsonRequest
+    CompletableFuture<Void> trackEvent(RemoteTrackMessage event);
+
+    @JsonRequest
     CompletableFuture<List<String>> getGitpodTokenScopes(String tokenHash);
 
     @JsonRequest
