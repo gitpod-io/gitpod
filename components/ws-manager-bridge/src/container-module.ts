@@ -70,5 +70,6 @@ export const containerModule = new ContainerModule(bind => {
 
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
+    bind(PreparingUpdateEmulator).toSelf().inRequestScope();
     bind(PreparingUpdateEmulatorFactory).toAutoFactory(PreparingUpdateEmulator);
 });
