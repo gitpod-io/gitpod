@@ -437,7 +437,9 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 		}()
 		select {
 		case err := <-done:
-			return err
+			if err != nil {
+				return err
+			}
 		case <-time.After(120 * time.Second):
 			return xerrors.Errorf("dotfiles repo clone did not finish within two minutes")
 		}
