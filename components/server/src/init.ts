@@ -50,6 +50,43 @@ process.on("SIGUSR2", () => {
 });
 //#endregion
 
+//#region cpu profile
+/**
+ * Make cpu profile by sending the server process a SIGINFO signal:
+ * kill -s SIGUSR1 <pid>
+ *
+ * ***IMPORTANT***: making the cpu profile costs cpu and ram!
+ *
+ * cpu profiles are written to tmp folder and have `.cpuprofile` extension.
+ * Check server logs for the concrete filename.
+ */
+
+import { Session } from "inspector";
+import * as fs from "fs";
+
+process.on("SIGUSR1", () => {
+    const session = new Session();
+    session.connect();
+
+    session.post('Profiler.enable', () => {
+        session.post('Profiler.start', async () => {
+            await new Promise(resolve => setTimeout(resolve, 5 * 60_000));
+
+            session.post('Profiler.stop', (err, { profile }) => {
+                // Write profile to disk, upload, etc.
+                if (!err) {
+                    const filename = path.join(os.tmpdir(), Date.now() + '.cpuprofile');
+                    console.log('preparing cpuprofile: ' + filename);
+                    fs.promises.writeFile(filename, JSON.stringify(profile));
+                } else {
+                    console.error('failed to cpuprofile: ', err);
+                }
+            });
+        });
+    });
+});
+//#endregion
+
 require('reflect-metadata');
 // Use asyncIterators with es2015
 if (typeof (Symbol as any).asyncIterator === 'undefined') {
