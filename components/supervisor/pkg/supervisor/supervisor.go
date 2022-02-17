@@ -44,7 +44,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/common-go/process"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
@@ -429,7 +428,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 			client := &git.Client{
 				AuthProvider: authProvider,
 				AuthMethod:   git.BasicAuth,
-				Location:     "/home/gitpod/.dotfiles",
+				Location:     dotfilePath,
 				RemoteURI:    repo,
 			}
 			done <- client.Clone(ctx)
@@ -443,6 +442,13 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 		case <-time.After(120 * time.Second):
 			return xerrors.Errorf("dotfiles repo clone did not finish within two minutes")
 		}
+
+		filepath.Walk(dotfilePath, func(name string, info os.FileInfo, err error) error {
+			if err == nil {
+				err = os.Chown(name, gitpodUID, gitpodGID)
+			}
+			return err
+		})
 
 		// at this point we have the dotfile repo cloned, let's try and install it
 		var candidates = []string{
@@ -487,9 +493,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 
 			select {
 			case err = <-done:
-				if err != nil && !process.IsNotChildProcess(err) {
-					return err
-				}
+				return err
 			case <-time.After(120 * time.Second):
 				cmd.Process.Kill()
 				return xerrors.Errorf("installation process %s tool longer than 120 seconds", fn)
