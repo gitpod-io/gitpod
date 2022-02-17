@@ -4,7 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { CommitContext, ContextURL, GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { UnauthorizedError } from "../errors";
 import { HostContextProvider } from "./host-context-provider";
 
 declare var resourceInstance: GuardedResource;
@@ -61,9 +62,8 @@ export interface GuardedUser {
 
 export interface GuardedSnapshot {
     kind: "snapshot";
-    subject: Snapshot | undefined;
-    workspaceOwnerID: string;
-    workspaceID?: string;
+    subject?: Snapshot;
+    workspace: Workspace;
 }
 
 export interface GuardedUserStorage {
@@ -177,7 +177,7 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
             case "gitpodToken":
                 return resource.subject.user.id === this.userId;
             case "snapshot":
-                return resource.workspaceOwnerID === this.userId;
+                return resource.workspace.ownerId === this.userId;
             case "token":
                 return resource.tokenOwnerID === this.userId;
             case "user":
@@ -360,10 +360,7 @@ export namespace ScopedResourceGuard {
                 if (resource.subject) {
                     return resource.subject.id;
                 }
-                if (resource.workspaceID) {
-                    return SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + resource.workspaceID;
-                }
-                return undefined;
+                return SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + resource.workspace.id;
             case "token":
                 return resource.subject.value;
             case "user":
@@ -464,13 +461,13 @@ export namespace TokenResourceGuard {
 
 }
 
-export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
+export class RepositoryResourceGuard implements ResourceAccessGuard {
     constructor(
         protected readonly user: User,
         protected readonly hostContextProvider: HostContextProvider) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
-        if (resource.kind !== 'workspaceLog') {
+        if (resource.kind !== 'workspaceLog' && resource.kind !== 'snapshot') {
             return false;
         }
         // only get operations are supported
@@ -478,9 +475,9 @@ export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
             return false;
         }
 
-        // Check if user can access repositories headless logs
-        const ws = resource.subject;
-        const contextURL = ContextURL.getNormalizedURL(ws);
+        // Check if user has at least read access to the repository
+        const workspace = resource.kind === 'snapshot' ? resource.workspace : resource.subject;
+        const contextURL = ContextURL.getNormalizedURL(workspace);
         if (!contextURL) {
             throw new Error(`unable to parse ContextURL: ${contextURL}`);
         }
@@ -488,11 +485,19 @@ export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
         if (!hostContext) {
             throw new Error(`no HostContext found for hostname: ${contextURL.hostname}`);
         }
-
-        const svcs = hostContext.services;
-        if (!svcs) {
+        const { authProvider } = hostContext;
+        const identity = User.getIdentity(this.user, authProvider.authProviderId);
+        if (!identity) {
+            throw UnauthorizedError.create(contextURL.hostname, authProvider.info.requirements?.default || [], "missing-identity");
+        }
+        const { services } = hostContext;
+        if (!services) {
             throw new Error(`no services found in HostContext for hostname: ${contextURL.hostname}`);
         }
-        return svcs.repositoryService.canAccessHeadlessLogs(this.user, ws.context);
+        if (!CommitContext.is(workspace.context)) {
+            return false;
+        }
+        const { owner, name: repo } = workspace.context.repository;
+        return services.repositoryProvider.hasReadAccess(this.user, owner, repo);
     }
 }

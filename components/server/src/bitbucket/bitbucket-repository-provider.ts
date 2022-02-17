@@ -103,4 +103,9 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         // FIXME(janx): Not implemented yet
         return [];
     }
+
+    async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
+        // FIXME(janx): Not implemented yet
+        return false;
+    }
 }
