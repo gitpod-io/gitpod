@@ -31,8 +31,8 @@ func SkipWithoutUsername(t *testing.T, username string) {
 	}
 }
 
-func SkipWithoutEnterpriseLicense(t *testing.T, enterpise bool) {
-	if !enterpise {
+func SkipWithoutEnterpriseLicense(t *testing.T, enterprise bool) {
+	if !enterprise {
 		t.Skip("Skipping because requires enterprise license")
 	}
 }
