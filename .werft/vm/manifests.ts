@@ -54,7 +54,7 @@ spec:
         machine:
           type: q35
         cpu:
-          cores: 4
+          cores: 6
           sockets: 1
           threads: 1
         devices:
