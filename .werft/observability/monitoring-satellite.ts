@@ -58,6 +58,11 @@ export async function installMonitoringSatellite(params: InstallMonitoringSatell
             clientEmail: '${params.stackdriverServiceAccount.client_email}',
             privateKey: '${params.stackdriverServiceAccount.private_key}',
         },
+        prometheus: {
+            resources: {
+                requests: { memory: '200Mi', cpu: '50m' },
+            },
+        },
     }" \
     monitoring-satellite/manifests/yaml-generator.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {} && \
     find monitoring-satellite/manifests -type f ! -name '*.yaml' ! -name '*.jsonnet'  -delete`
