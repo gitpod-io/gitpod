@@ -204,12 +204,15 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	backoff := wait.Backoff{
 		Steps:    10,
 		Duration: 100 * time.Millisecond,
-		Factor:   5.0,
+		Factor:   2.5,
 		Jitter:   0.1,
+		Cap:      5 * time.Minute,
 	}
 
 	var retryErr error
 	err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+		// remove resource version so that we can attempt to re-create the pod
+		pod.ResourceVersion = ""
 		err = m.Clientset.Create(ctx, pod)
 		if err != nil {
 			m, _ := json.Marshal(pod)
@@ -224,18 +227,42 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			return false, err
 		}
 
-		err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, podRunning(m.Clientset, pod.Namespace, pod.Name))
+		err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
 		if err != nil {
-			m, _ := json.Marshal(pod)
-			safePod, _ := log.RedactJSON(m)
+			jsonPod, _ := json.Marshal(pod)
+			safePod, _ := log.RedactJSON(jsonPod)
 			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to reach ready state")
 			retryErr = err
-			return true, nil
+
+			var tempPod corev1.Pod
+			getErr := m.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
+			if getErr != nil {
+				clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to get pod")
+				// pod doesn't exist, so we are safe to proceed with retry
+				return false, nil
+			}
+			tempPod.Finalizers = []string{}
+			updateErr := m.Clientset.Update(ctx, &tempPod)
+			if updateErr != nil {
+				clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to remove finalizer")
+				// failed to remove finalizer, we not going to be able to create a new pod, so bail out with retry error
+				return false, retryErr
+			}
+
+			deleteErr := m.Clientset.Delete(ctx, &tempPod)
+			if deleteErr != nil {
+				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to delete pod")
+				// failed to delete pod, so not going to be able to create a new pod, so bail out
+				return false, retryErr
+			}
+
+			// we deleted original pod, so now we can try to create a new one and see if this one will be able to be scheduled\started
+			return false, nil
 		}
 
 		return true, nil
 	})
-	if err == wait.ErrWaitTimeout {
+	if err == wait.ErrWaitTimeout && retryErr != nil {
 		err = retryErr
 	}
 
@@ -243,7 +270,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 
-	span.LogKV("event", "pod created and scheduled")
+	span.LogKV("event", "pod started successfully")
 
 	// all workspaces get a service now
 	okResponse := &api.StartWorkspaceResponse{
@@ -268,14 +295,25 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 		case corev1.PodFailed, corev1.PodSucceeded:
 			return false, fmt.Errorf("pod ran to completion")
 		case corev1.PodPending:
-			if pod.Status.Reason == "OutOfmemory" || pod.Status.Reason == "OutOfcpu" {
-				return false, xerrors.Errorf("cannot schedule pod, reason: %s", pod.Status.Reason)
+			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
+				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
 			}
 
-			return false, fmt.Errorf("pod ran to completion")
+			for _, c := range pod.Status.Conditions {
+				if c.Type == corev1.PodScheduled && c.Status == corev1.ConditionTrue {
+					// even if pod is pending but was scheduled already, it means kubelet is pulling images and running init containers
+					// we can consider this as pod running
+					return true, nil
+				}
+			}
+
+			// if pod is pending, wait for it to get scheduled
+			return false, nil
+		case corev1.PodRunning:
+			return true, nil
 		}
 
-		return true, nil
+		return false, xerrors.Errorf("pod in unknown state: %s", pod.Status.Phase)
 	}
 }
 
