@@ -238,7 +238,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 
-	span.LogKV("event", "pod created and scheduled")
+	span.LogKV("event", "pod started successfully")
 
 	// all workspaces get a service now
 	okResponse := &api.StartWorkspaceResponse{
@@ -263,14 +263,16 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 		case corev1.PodFailed, corev1.PodSucceeded:
 			return false, fmt.Errorf("pod ran to completion")
 		case corev1.PodPending:
-			if pod.Status.Reason == "OutOfMemory" || pod.Status.Reason == "OutOfCpu" {
-				return false, xerrors.Errorf("cannot schedule pod, reason: %s", pod.Status.Reason)
+			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
+				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
 			}
 
-			return false, fmt.Errorf("pod ran to completion")
+			return false, xerrors.Errorf("cannot schedule pod, reason: %s", pod.Status.Reason)
+		case corev1.PodRunning:
+			return true, nil
 		}
 
-		return true, nil
+		return false, xerrors.Errorf("pod in unknown state: %s", pod.Status.Phase)
 	}
 }
 
