@@ -199,7 +199,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	backoff := wait.Backoff{
 		Steps:    10,
 		Duration: 100 * time.Millisecond,
-		Factor:   5.0,
+		Factor:   2.5,
 		Jitter:   0.1,
 	}
 
