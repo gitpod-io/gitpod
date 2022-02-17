@@ -193,7 +193,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
 */
 async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     // to test this function, change files in your workspace, sideload (-s) changed files into werft or set annotations (-a) like so:
-    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/jobs/build/helm/post-process.sh -a with-clean-slate-deployment=true
+    // werft run github -f -j ./.werft/build.yaml -s ./.werft/build.ts -s ./.werft/jobs/build/installer/post-process.sh -a with-clean-slate-deployment=true
     const { version, destname, namespace, domain, monitoringDomain, url, withObservability, withVM } = deploymentConfig;
 
     // find free ports
@@ -415,7 +415,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         }
 
         const flags = withVM ? "WITH_VM=true " : ""
-        exec(`${flags}./.werft/jobs/build/helm/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
+        exec(`${flags}./.werft/jobs/build/installer/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
         werft.done(installerSlices.INSTALLER_POST_PROCESSING);
     } catch (err) {
         if (!jobConfig.mainBuild) {

@@ -4,7 +4,7 @@
 # 1. generate a config like so: ./installer init > config.yaml
 # 2. generate a k8s manifest like so: ./installer render -n $(kubens -c) -c config.yaml > k8s.yaml
 # 3. fake a license and feature file like so: echo "foo" > /tmp/license && echo '"bar"' > /tmp/defaultFeatureFlags
-# 4. call this script like so: ./.werft/jobs/build/helm/post-process.sh 1234 5678 2 your-branch-just-dashes
+# 4. call this script like so: ./.werft/jobs/build/installer/post-process.sh 1234 5678 2 your-branch-just-dashes
 
 set -euo pipefail
 
