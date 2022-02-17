@@ -310,6 +310,9 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         exec(`yq w -i config.yaml jaegerOperator.inCluster false`, { slice: installerSlices.INSTALLER_RENDER });
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: installerSlices.INSTALLER_RENDER });
 
+        // Relax CPU contraints
+        exec(`yq w -i config.yaml workspace.resources.requests.cpu "100m"`, { slice: installerSlices.INSTALLER_RENDER });
+
         if ((deploymentConfig.analytics || "").startsWith("segment|")) {
             exec(`yq w -i config.yaml analytics.writer segment`, { slice: installerSlices.INSTALLER_RENDER });
             exec(`yq w -i config.yaml analytics.segmentKey ${deploymentConfig.analytics!.substring("segment|".length)}`, { slice: installerSlices.INSTALLER_RENDER });
