@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from "inversify";
+import { inject, injectable, interfaces } from "inversify";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { Disposable, WorkspaceInstance, Queue, WorkspaceInstancePort, PortVisibility, RunningWorkspaceInfo, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, WorkspaceConditionBool, PortVisibility as WsManPortVisibility, WorkspaceType, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
@@ -20,7 +20,7 @@ import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { PreparingUpdateEmulator } from "./preparing-update-emulator";
+import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -50,6 +50,9 @@ export class WorkspaceManagerBridge implements Disposable {
 
     @inject(Configuration)
     protected readonly config: Configuration;
+
+    @inject(PreparingUpdateEmulatorFactory)
+    protected readonly preparingUpdateEmulatorFactory: interfaces.Factory<PreparingUpdateEmulator>;
 
     @inject(IAnalyticsWriter)
     protected readonly analytics: IAnalyticsWriter;
@@ -88,7 +91,7 @@ export class WorkspaceManagerBridge implements Disposable {
             startStatusUpdateHandler(false);
 
             // emulate WorkspaceInstance updates for all Workspaces in the "preparing" phase in this cluster
-            const updateEmulator = new PreparingUpdateEmulator();
+            const updateEmulator = this.preparingUpdateEmulatorFactory() as PreparingUpdateEmulator;
             this.disposables.push(updateEmulator);
             updateEmulator.start(cluster.name);
         }

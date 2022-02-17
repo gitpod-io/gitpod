@@ -25,7 +25,7 @@ import { newAnalyticsWriterFromEnv } from '@gitpod/gitpod-protocol/lib/util/anal
 import { MetaInstanceController } from './meta-instance-controller';
 import { IClientCallMetrics } from '@gitpod/content-service/lib/client-call-metrics';
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
-import { PreparingUpdateEmulator } from './preparing-update-emulator';
+import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from './preparing-update-emulator';
 
 export const containerModule = new ContainerModule(bind => {
 
@@ -70,5 +70,5 @@ export const containerModule = new ContainerModule(bind => {
 
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
-    bind(PreparingUpdateEmulator).toSelf().inSingletonScope();
+    bind(PreparingUpdateEmulatorFactory).toAutoFactory(PreparingUpdateEmulator);
 });

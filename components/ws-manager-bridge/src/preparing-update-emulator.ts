@@ -14,6 +14,8 @@ import { MessageBusIntegration } from "./messagebus-integration";
 import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 import * as crypto from 'crypto';
 
+export const PreparingUpdateEmulatorFactory = Symbol("PreparingUpdateEmulatorFactory");
+
 interface CacheEntry {
     instance: WorkspaceInstance,
     userId: string,
