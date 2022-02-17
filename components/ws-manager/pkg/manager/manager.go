@@ -263,7 +263,7 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 		case corev1.PodFailed, corev1.PodSucceeded:
 			return false, fmt.Errorf("pod ran to completion")
 		case corev1.PodPending:
-			if pod.Status.Reason == "OutOfmemory" || pod.Status.Reason == "OutOfcpu" {
+			if pod.Status.Reason == "OutOfMemory" || pod.Status.Reason == "OutOfCpu" {
 				return false, xerrors.Errorf("cannot schedule pod, reason: %s", pod.Status.Reason)
 			}
 
