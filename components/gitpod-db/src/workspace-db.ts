@@ -88,6 +88,9 @@ export interface WorkspaceDB {
     getWorkspaceCount(type?: String): Promise<Number>;
     getInstanceCount(type?: string): Promise<number>
 
+    getWorkspaceCount(type?: String): Promise<Number>;
+    getInstanceCount(type?: string): Promise<number>
+
     findAllWorkspaceInstances(offset: number, limit: number, orderBy: keyof WorkspaceInstance, orderDir: "ASC" | "DESC", ownerId?: string, minCreationTime?: Date, maxCreationTime?: Date, onlyRunning?: boolean, type?: WorkspaceType): Promise<{ total: number, rows: WorkspaceInstance[] }>;
 
     findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]>;
