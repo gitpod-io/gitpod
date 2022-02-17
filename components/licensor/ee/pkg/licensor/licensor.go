@@ -17,6 +17,13 @@ import (
 	"time"
 )
 
+type LicenseType string
+
+const (
+	LicenseTypeGitpod     LicenseType = "gitpod"
+	LicenseTypeReplicated LicenseType = "replicated"
+)
+
 // LicensePayload is the actual license content
 type LicensePayload struct {
 	ID         string       `json:"id"`
@@ -115,57 +122,6 @@ var defaultLicense = LicensePayload{
 	// Domain, ValidUntil are free for all
 }
 
-// NewEvaluator produces a new license evaluator from a license key
-func NewEvaluator(key []byte, domain string) (res *Evaluator) {
-	if len(key) == 0 {
-		// fallback to the default license
-		return &Evaluator{
-			lic: defaultLicense,
-		}
-	}
-
-	deckey := make([]byte, base64.StdEncoding.DecodedLen(len(key)))
-	n, err := base64.StdEncoding.Decode(deckey, key)
-	if err != nil {
-		return &Evaluator{invalid: fmt.Sprintf("cannot decode key: %q", err)}
-	}
-	deckey = deckey[:n]
-
-	var lic licensePayload
-	err = json.Unmarshal(deckey, &lic)
-	if err != nil {
-		return &Evaluator{invalid: fmt.Sprintf("cannot unmarshal key: %q", err)}
-	}
-
-	keyWoSig, err := json.Marshal(lic.LicensePayload)
-	if err != nil {
-		return &Evaluator{invalid: fmt.Sprintf("cannot remarshal key: %q", err)}
-	}
-	hashed := sha256.Sum256(keyWoSig)
-
-	for _, k := range publicKeys {
-		err = rsa.VerifyPKCS1v15(k, crypto.SHA256, hashed[:], lic.Signature)
-		if err == nil {
-			break
-		}
-	}
-	if err != nil {
-		return &Evaluator{invalid: fmt.Sprintf("cannot verify key: %q", err)}
-	}
-
-	if !matchesDomain(lic.Domain, domain) {
-		return &Evaluator{invalid: "wrong domain"}
-	}
-
-	if lic.ValidUntil.Before(time.Now()) {
-		return &Evaluator{invalid: "not valid anymore"}
-	}
-
-	return &Evaluator{
-		lic: lic.LicensePayload,
-	}
-}
-
 func matchesDomain(pattern, domain string) bool {
 	if pattern == "" {
 		return true
@@ -184,46 +140,11 @@ func matchesDomain(pattern, domain string) bool {
 	return false
 }
 
-// Evaluator determines what a license allows for
-type Evaluator struct {
-	invalid string
-	lic     LicensePayload
-}
-
-// Validate returns false if the license isn't valid and a message explaining why that is.
-func (e *Evaluator) Validate() (msg string, valid bool) {
-	if e.invalid == "" {
-		return "", true
-	}
-
-	return e.invalid, false
-}
-
-// Enabled determines if a feature is enabled by the license
-func (e *Evaluator) Enabled(feature Feature) bool {
-	if e.invalid != "" {
-		return false
-	}
-
-	_, ok := e.lic.Level.allowance().Features[feature]
-	return ok
-}
-
-// HasEnoughSeats returns true if the license supports at least the give amount of seats
-func (e *Evaluator) HasEnoughSeats(seats int) bool {
-	if e.invalid != "" {
-		return false
-	}
-
-	return e.lic.Seats == 0 || seats <= e.lic.Seats
-}
-
-// Inspect returns the license information this evaluator holds.
-// This function is intended for transparency/debugging purposes only and must
-// never be used to determine feature eligibility under a license. All code making
-// those kinds of decisions must be part of the Evaluator.
-func (e *Evaluator) Inspect() LicensePayload {
-	return e.lic
+type Evaluator interface {
+	Enabled(feature Feature) bool
+	HasEnoughSeats(seats int) bool
+	Inspect() LicensePayload
+	Validate() (msg string, valid bool)
 }
 
 // Sign signs a license so that it can be used with the evaluator
