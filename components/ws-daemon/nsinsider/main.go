@@ -25,7 +25,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:  "move-mount",
-				Usage: "calls move_mount with fd 3 to target",
+				Usage: "calls move_mount with the pipe-fd to target",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "target",
@@ -42,7 +42,7 @@ func main() {
 			},
 			{
 				Name:  "open-tree",
-				Usage: "opens a and writes the resulting mountfd to the Unix pipe on fd 3",
+				Usage: "opens a and writes the resulting mountfd to the Unix pipe on the pipe-fd",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "target",
