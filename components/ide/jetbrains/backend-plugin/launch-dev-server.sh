@@ -26,6 +26,7 @@ if [ ! -d "$TEST_DIR" ]; then
   git clone $TEST_REPO $TEST_DIR
 fi
 
+export JB_DEV=true
 export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
 
 $TEST_BACKEND_DIR/bin/remote-dev-server.sh run $TEST_DIR

@@ -4,15 +4,20 @@
 
 package io.gitpod.jetbrains.remote
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.jetbrains.rd.util.lifetime.Lifetime
 import git4idea.config.GitVcsApplicationSettings
+import io.gitpod.gitpodprotocol.api.GitpodClient
+import io.gitpod.gitpodprotocol.api.GitpodServerLauncher
+import io.gitpod.jetbrains.remote.services.HeartbeatService
 import io.gitpod.jetbrains.remote.services.SupervisorInfoService
 import io.gitpod.supervisor.api.Notification.*
 import io.gitpod.supervisor.api.NotificationServiceGrpc
@@ -31,9 +36,18 @@ import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
+import javax.websocket.DeploymentException
 
 @Service
 class GitpodManager : Disposable {
+
+    val devMode = System.getenv("JB_DEV").toBoolean()
+
+    private val lifetime = Lifetime.Eternal.createNested()
+
+    override fun dispose() {
+        lifetime.terminate()
+    }
 
     init {
         GlobalScope.launch {
@@ -67,8 +81,6 @@ class GitpodManager : Disposable {
     init {
         GitVcsApplicationSettings.getInstance().isUseCredentialHelper = true
     }
-
-    private val lifetime = Lifetime.Eternal.createNested()
 
     private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
     private val notificationsJob = GlobalScope.launch {
@@ -127,14 +139,91 @@ class GitpodManager : Disposable {
             delay(1000L)
         }
     }
-
     init {
         lifetime.onTerminationOrNow {
             notificationsJob.cancel()
         }
     }
 
-    override fun dispose() {
-        lifetime.terminate()
+    val pendingInfo = CompletableFuture<SupervisorInfoService.Result>()
+    private val infoJob = GlobalScope.launch {
+        try {
+            // TOO(ak) inline SupervisorInfoService
+            pendingInfo.complete(SupervisorInfoService.fetch())
+        } catch (t: Throwable) {
+            pendingInfo.completeExceptionally(t)
+        }
+    }
+    init {
+        lifetime.onTerminationOrNow {
+            infoJob.cancel()
+        }
+    }
+
+    val client = GitpodClient()
+    private val serverJob = GlobalScope.launch {
+        val info = pendingInfo.await()
+        val launcher = GitpodServerLauncher.create(client)
+        val plugin = PluginManagerCore.getPlugin(PluginId.getId("io.gitpod.jetbrains.remote"))!!
+        val connect = {
+            val originalClassLoader = Thread.currentThread().contextClassLoader
+            try {
+                // see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360003146180/comments/360000376240
+                Thread.currentThread().contextClassLoader = HeartbeatService::class.java.classLoader
+                launcher.listen(
+                        info.infoResponse.gitpodApi.endpoint,
+                        info.infoResponse.gitpodHost,
+                        plugin.pluginId.idString,
+                        plugin.version,
+                        info.tokenResponse.token
+                )
+            } finally {
+                Thread.currentThread().contextClassLoader = originalClassLoader;
+            }
+        }
+
+        val minReconnectionDelay = 2 * 1000L
+        val maxReconnectionDelay = 30 * 1000L
+        val reconnectionDelayGrowFactor = 1.5;
+        var reconnectionDelay = minReconnectionDelay;
+        val gitpodHost = info.infoResponse.gitpodApi.host
+        var closeReason: Any = "cancelled"
+        try {
+            while (kotlin.coroutines.coroutineContext.isActive) {
+                try {
+                    val connection = connect()
+                    thisLogger().info("$gitpodHost: connected")
+                    reconnectionDelay = minReconnectionDelay
+                    closeReason = connection.await()
+                    thisLogger().warn("$gitpodHost: connection closed, reconnecting after $reconnectionDelay milliseconds: $closeReason")
+                } catch (t: Throwable) {
+                    if (t is DeploymentException) {
+                        // connection is alright, but server does not want to handshake, there is no point to try with the same token again
+                        throw t
+                    }
+                    closeReason = t
+                    thisLogger().warn(
+                            "$gitpodHost: failed to connect, trying again after $reconnectionDelay milliseconds:",
+                            closeReason
+                    )
+                }
+                delay(reconnectionDelay)
+                closeReason = "cancelled"
+                reconnectionDelay = (reconnectionDelay * reconnectionDelayGrowFactor).toLong()
+                if (reconnectionDelay > maxReconnectionDelay) {
+                    reconnectionDelay = maxReconnectionDelay
+                }
+            }
+        } catch (t: Throwable) {
+            if (t !is CancellationException) {
+                closeReason = t
+            }
+        }
+        thisLogger().warn("$gitpodHost: connection permanently closed: $closeReason")
+    }
+    init {
+        lifetime.onTerminationOrNow {
+            serverJob.cancel()
+        }
     }
 }

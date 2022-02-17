@@ -37,6 +37,7 @@ object SupervisorInfoService {
             val request = GetTokenRequest.newBuilder()
                 .setHost(infoResponse.gitpodApi.host)
                 .addScope("function:sendHeartBeat")
+                    .addScope("function:trackEvent")
                 .setKind("gitpod")
                 .build()
 
