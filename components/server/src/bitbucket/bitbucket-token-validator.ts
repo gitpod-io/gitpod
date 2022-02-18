@@ -23,6 +23,7 @@ export class BitbucketTokenValidator implements IGitTokenValidator {
         };
 
         const options = {
+            notice: false,
             auth: { token: token },
             baseUrl: `https://api.${host}/2.0`,
         };
