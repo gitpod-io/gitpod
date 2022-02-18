@@ -252,6 +252,31 @@ The `container-registry-token` secret must contain a `.dockerconfigjson`
 key - this can be created by using the `kubectl create secret docker-registry`
 [command](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line).
 
+### Using Amazon Elastic Container Registry (ECR)
+
+Gitpod is compatible with any registry that implements the [Docker Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)
+specification. Amazon ECR does not implement this spec fully. The spec expects
+that, if an image is pushed to a repository that doesn't exist, it creates the
+repository before uploading the image. Amazon ECR does not do this - if the
+repository doesn't exist, it will error on push.
+
+To configure Gitpod to use Amazon, you will need to use the in-cluster
+registry and configure it to use S3 storage as the backend storage.
+
+```yaml
+containerRegistry:
+  inCluster: true
+  s3storage:
+    bucket: <name of bucket>
+    certificate:
+      kind: secret
+      name: s3-storage-token
+```
+
+The secret expects to have two keys:
+ - `s3AccessKey`
+ - `s3SecretKey`
+
 ## Database
 
 Gitpod requires an instance of MySQL 5.7 for data storage.
