@@ -1,0 +1,106 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Install dependencies
+  apt:
+    name: python3-pip
+    update_cache: yes
+    state: present
+  become: true
+
+- name: Install google Python library
+  pip:
+    name:
+      - google-auth
+      - google-cloud-storage
+    state: present
+  become: true
+
+- name: Create bucket
+  google.cloud.gcp_storage_bucket:
+    name: "{{ gcp_bucket_name }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present
+  run_once: true
+
+- name: Ensure directories exist
+  file:
+    path: "{{ item }}"
+    recurse: true
+    state: directory
+    mode: 0777
+  become: true
+  loop:
+    - /gitpod/manifests
+  when: "'gitpod_node_main' in group_names"
+
+- name: Save K8s secrets
+  shell: |
+    kubectl get secret "{{ item.name }}" -n "{{ item.namespace }}" -o yaml > "/gitpod/manifests/{{ item.name }}.yaml" || rm -f "/gitpod/manifests/{{ item.name }}.yaml"
+  args:
+    executable: /bin/bash
+  loop:
+    - name: https-certificates
+      namespace: default
+    - name: gitpod-issuer-account-key
+      namespace: cert-manager
+  when: "'gitpod_node_main' in group_names"
+
+- name: Backup
+  google.cloud.gcp_storage_object:
+    action: upload
+    bucket: "{{ gcp_bucket_name }}"
+    src: "{{ item }}"
+    dest: "{{ gitpod_domain }}/{{ item | basename }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+  ignore_errors: true
+  loop:
+    - /gitpod/manifests/https-certificates.yaml
+    - /gitpod/manifests/gitpod-issuer-account-key.yaml
+  when: "'gitpod_node_main' in group_names"
+
+- name: Backup GitLab certs
+  google.cloud.gcp_storage_object:
+    action: upload
+    bucket: "{{ gcp_bucket_name }}"
+    src: "/etc/gitlab/ssl/{{ item }}"
+    dest: "gitlab/{{ item }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+  loop:
+    - "{{ gitlab_domain }}.crt"
+    - "{{ gitlab_domain }}.key"
+  become: true
+  when: "'instance_gitlab' in group_names and gitlab_domain is defined"
+
+- name: Create registry certs tar file
+  community.general.archive:
+    path: /letsencrypt
+    dest: /letsencrypt.tgz
+  become: true
+  when: "'instance_registry' in group_names and registry_domain is defined"
+
+# Fix for: https://github.com/ansible-collections/google.cloud/issues/266
+- name: Encode registry certs tar file
+  shell: base64 /letsencrypt.tgz > /letsencrypt.tgz.base64
+  become: true
+  when: "'instance_registry' in group_names and registry_domain is defined"
+
+- name: Backup registry certs
+  google.cloud.gcp_storage_object:
+    action: upload
+    bucket: "{{ gcp_bucket_name }}"
+    src: "/letsencrypt.tgz.base64"
+    dest: "registry/{{ registry_domain }}--letsencrypt.tgz.base64"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+  become: true
+  when: "'instance_registry' in group_names and registry_domain is defined"

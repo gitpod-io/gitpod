@@ -1,0 +1,22 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+gitpod_node_prefix: gitpod
+gitpod_nodes_count: 3
+
+gcp_project: "{{ undef(hint='You must specify your GCP project.') }}"
+gcp_cred_content: "{{ lookup('file', '/service-account.json') }}"
+
+# https://cloud.google.com/compute/docs/regions-zones
+gcp_region: europe-west3
+gcp_zone: europe-west3-a
+
+# available types: gcloud compute machine-types list --zones=europe-west3-a
+gcp_machine_type: c2-standard-4
+
+gitpod_domain: "{{ undef(hint='You must specify your Gitpod domain.') }}"
+
+gcp_dns_domain_zone_name: "{{ undef(hint='You must specify your GCP domain zone name.') }}"
+gcp_dns_domain_zone_dnsname: "{{ undef(hint='You must specify your GCP domain zone DNS name.') }}"

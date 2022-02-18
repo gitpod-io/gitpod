@@ -1,0 +1,11 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+gitpod_domain: "{{ undef(hint='You must specify your Gitpod domain.') }}"
+
+gcp_dns_project: "{{ undef(hint='You must specify your GCP project.') }}"
+gcp_dns_cred_content: "{{ lookup('file', '/service-account.json') }}"
+gcp_dns_domain_zone_name: "{{ undef(hint='You must specify your GCP domain zone name.') }}"
+gcp_dns_domain_zone_dnsname: "{{ undef(hint='You must specify your GCP domain zone DNS name.') }}"

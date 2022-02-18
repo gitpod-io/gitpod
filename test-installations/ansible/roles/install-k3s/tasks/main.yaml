@@ -1,0 +1,111 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Get installed services
+  service_facts:
+
+- name: Download k3s install script
+  get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s-install.sh
+    mode: 0755
+  when: "'k3s.service' not in services"
+
+- debug:
+    var: hostvars.localhost.k3s_cluster_secret
+
+- name: Install k3s
+  environment:
+    INSTALL_K3S_EXEC: "{{ (k3s_server_exec + ' ' + k3s_server_exec_labels + ((' ' + k3s_agent_exec_labels) if ('gitpod_total_nodes_1' in group_names) else '')) if ('gitpod_node_main' in group_names) else (k3s_agent_exec + ' ' + k3s_agent_exec_labels) }}"
+    K3S_CLUSTER_SECRET: "{{ hostvars.localhost.k3s_cluster_secret }}"
+    K3S_NODE_NAME: "{{ inventory_hostname }}"
+    K3S_KUBECONFIG_MODE: "644"
+    K3S_URL: "{{ ('gitpod_node_main' not in group_names) | ternary('https://' + gitpod_node_prefix + '--node-0:6443', '') }}"
+  command: /tmp/k3s-install.sh
+  register: k3s_install_result
+  when: "'k3s.service' not in services"
+
+# - debug:
+#     var: k3s_install_result
+
+- name: Get k3s version
+  shell: k3s --version | awk -F' ' '$1 == "k3s" && $2 == "version" { print $3 }'
+  register: k3s_version
+  when: airgap
+
+- debug:
+    msg: "k3s version: {{ k3s_version.stdout_lines | first }} ({{ k3s_version.stdout_lines | first | urlencode }})"
+  when: airgap
+
+- name: Ensure directory exists
+  file:
+    path: /var/lib/rancher/k3s/agent/images/
+    recurse: true
+    state: directory
+  become: true
+  when: airgap
+
+- name: Download k3s airgap images on all nodes
+  get_url:
+    url: https://github.com/k3s-io/k3s/releases/download/{{ k3s_version.stdout_lines | first | urlencode }}/k3s-airgap-images-amd64.tar
+    dest: /var/lib/rancher/k3s/agent/images/
+  become: true
+  when: airgap
+
+- name: Restart k3s daemon
+  ansible.builtin.service:
+    name: k3s
+    state: restarted
+  become: true
+  when: "airgap and 'gitpod_node_main' in group_names"
+
+- name: Restart k3s-agent daemon
+  ansible.builtin.service:
+    name: k3s-agent
+    state: restarted
+  become: true
+  when: "airgap and 'gitpod_node_main' not in group_names"
+
+- name: Download Calico manifest
+  get_url:
+    url: https://docs.projectcalico.org/manifests/calico-vxlan.yaml
+    dest: /tmp/calico.yaml
+  when: "'gitpod_node_main' in group_names"
+
+- name: Patch Calico manifest
+  lineinfile:
+    path: /tmp/calico.yaml
+    insertafter: '"type": "calico",'
+    line: '          "container_settings": { "allow_ip_forwarding": true },'
+  when: "'gitpod_node_main' in group_names"
+
+- name: Wait for the manifest folder
+  wait_for:
+    path: /var/lib/rancher/k3s/server/manifests
+  become: true
+  when: "'gitpod_node_main' in group_names"
+
+- name: Install Calico manifest
+  copy:
+    remote_src: true
+    src: /tmp/calico.yaml
+    dest: /var/lib/rancher/k3s/server/manifests/calico.yaml
+  become: true
+  when: "'gitpod_node_main' in group_names"
+
+- name: Install Cert Manager manifest
+  copy:
+    src: "{{ item }}"
+    dest: /var/lib/rancher/k3s/server/manifests/
+  with_fileglob: "cert-manager*.yaml"
+  become: true
+  when: "'gitpod_node_main' in group_names"
+
+- name: Patch coredns nameserver (for airgap)
+  shell: |
+    kubectl get configmap -n kube-system coredns -o yaml > /tmp/coredns.yaml
+    sed -i "s+forward . /etc/resolv.conf+forward . $(cat /run/systemd/resolve/resolv.conf | grep nameserver | cut -f2 -d' ')+" /tmp/coredns.yaml
+    kubectl replace -f /tmp/coredns.yaml
+  when: "airgap and 'gitpod_node_main' in group_names"

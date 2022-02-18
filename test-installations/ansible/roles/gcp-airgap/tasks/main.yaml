@@ -1,0 +1,117 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Delete access config
+  command: "gcloud compute instances delete-access-config {{ gitpod_node_prefix }}--node-{{ item }} --access-config-name='external-nat'"
+  loop: "{{ range(0, gitpod_nodes_count) | list }}"
+  ignore_errors: true
+
+- name: Create a private DNS managed zone
+  google.cloud.gcp_dns_managed_zone:
+    name: "{{ gcp_dns_domain_zone_name }}"
+    dns_name: "{{ gcp_dns_domain_zone_dnsname }}"
+    description: "DNS with internal IP addresses (mainly for air-gap installations)"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    visibility: private
+    private_visibility_config:
+      networks:
+        - network_url: "https://www.googleapis.com/compute/v1/projects/{{ gcp_project }}/global/networks/default"
+    state: present
+
+- debug:
+    var: hostvars.localhost.internal_ips
+
+- name: Create resource record sets (private zone)
+  google.cloud.gcp_dns_resource_record_set:
+    name: "{{ item.name }}"
+    managed_zone:
+      name: "{{ gcp_dns_domain_zone_name }}"
+      dnsName: "{{ gcp_dns_domain_zone_dnsname }}"
+    type: A
+    ttl: 300
+    target:
+    - "{{ item.target }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present
+  with_items:
+  - name: "{{ gitpod_domain }}."
+    target: "{{ hostvars.localhost.internal_ips['gitpod'] }}"
+  - name: "*.{{ gitpod_domain }}."
+    target: "{{ hostvars.localhost.internal_ips['gitpod'] }}"
+  - name: "*.ws.{{ gitpod_domain }}."
+    target: "{{ hostvars.localhost.internal_ips['gitpod'] }}"
+  - name: "{{ gitlab_domain }}."
+    target: "{{ hostvars.localhost.internal_ips[gitlab_instance_name] }}"
+  - name: "{{ registry_domain }}."
+    target: "{{ hostvars.localhost.internal_ips[registry_instance_name] }}"
+
+- name: Change DNS record sets to internal cluster IP
+  google.cloud.gcp_dns_resource_record_set:
+    name: "{{ item }}"
+    managed_zone:
+      name: "{{ gcp_dns_domain_zone_name }}"
+      dnsName: "{{ gcp_dns_domain_zone_dnsname }}"
+    type: A
+    ttl: 300
+    target:
+    - "{{ hostvars.localhost.internal_ips['gitpod'] }}"
+    project: "{{ gcp_dns_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_dns_cred_content }}"
+    state: present
+  with_items:
+  - "{{ gitpod_domain }}."
+  - "*.{{ gitpod_domain }}."
+  - "*.ws.{{ gitpod_domain }}."
+
+- name: Create jumpbox / bastion host
+  google.cloud.gcp_compute_instance:
+    name: "{{ bastion_instance_name }}"
+    machine_type: "{{ gcp_machine_type }}"
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      initialize_params:
+        disk_size_gb: 256
+        source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
+    network_interfaces:
+    - access_configs:
+      - name: external-nat
+        type: ONE_TO_ONE_NAT
+    labels:
+      instance: "{{ bastion_instance_name }}"
+    zone: "{{ gcp_zone }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    service_accounts:
+      - email: "{{ gcp_cred_content.client_email }}"
+        scopes:
+          - "https://www.googleapis.com/auth/compute"
+    state: present
+  register: gcpvm
+
+- meta: refresh_inventory
+- wait_for_connection:
+
+# - name: Install Gitpod
+#   command: gcloud compute ssh --quiet {{ bastion_instance_name }} --command "gcloud compute ssh --quiet {{ gitpod_node_prefix }}--node-0 --zone {{ gcp_zone }} --command 'sudo cp /gitpod/gitpod-manifests.yaml /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml' --internal-ip"
+
+
+#   # - name: Verify missing internet access
+#   #   command: "gcloud compute ssh --ssh-flag=-A gitlab -- \"ssh {{ gitpod_node_prefix }}--node-{{ item }} 'curl -v https://kubernetes.io' \""
+#   #   loop: "{{ range(0, gitpod_nodes_count) | list }}"
+#   - name: Verify missing internet access
+#     command: "gcloud compute ssh gitlab --command \"ssh -tt -o StrictHostKeyChecking=no {{ gitpod_node_prefix }}--node-{{ item }} 'curl -v https://kubernetes.io' \" -- -A -tt"
+#     loop: "{{ range(0, gitpod_nodes_count) | list }}"
+#   tags: ["x"]
+
+
+# https://cloud.google.com/compute/docs/instances/connecting-advanced#gcloud_1
+# gcloud compute instances set-service-account gitlab --service-account self-hosted-integration-tests@clu-self-hosted-playground.iam.gserviceaccount.com --scopes compute-rw

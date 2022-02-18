@@ -31,10 +31,10 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
-    if (withContrib || publishRelease) {
-        exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} contrib:all`);
-    }
     exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} ${retag} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DSEGMENT_IO_TOKEN=${process.env.SEGMENT_IO_TOKEN} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'} -DjbMarketplacePublishTrigger=${publishToJBMarketplace ? Date.now() : 'false'}`);
+    if (withContrib || publishRelease) {
+        exec(`leeway build --docker-build-options network=host --werft=true -c remote ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} -DSEGMENT_IO_TOKEN=${process.env.SEGMENT_IO_TOKEN} contrib:all`);
+    }
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");

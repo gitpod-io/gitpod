@@ -1,0 +1,48 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Copy gitpod-config.k3s.yaml
+  template:
+    src: gitpod-config.k3s.yaml
+    dest: /gitpod/
+
+- name: Patch Gitpod config
+  command: yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' /gitpod/gitpod-config.yaml /gitpod/gitpod-config.k3s.yaml
+
+- name: Copy gitpod-config.airgap.yaml
+  template:
+    src: gitpod-config.airgap.yaml
+    dest: /gitpod/
+  when: airgap
+
+- name: Patch Gitpod config for airgap
+  command: yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' /gitpod/gitpod-config.yaml /gitpod/gitpod-config.airgap.yaml
+  when: airgap
+
+- name: Validate Gitpod config
+  command: gitpod-installer validate config --config /gitpod/gitpod-config.yaml
+
+- name: Copy manifests
+  copy:
+    src: /gitpod/manifests/
+    remote_src: true
+    dest: /var/lib/rancher/k3s/server/manifests/
+  become: true
+
+- name: Waiting for cluster validation
+  shell: gitpod-installer validate cluster --kubeconfig /etc/rancher/k3s/k3s.yaml --config /gitpod/gitpod-config.yaml
+  register: result
+  until: result.rc == 0
+  retries: 120
+  delay: 5
+
+- name: Render and install Gitpod manifests
+  shell: gitpod-installer render --config /gitpod/gitpod-config.yaml > /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml
+  become: true
+  when: not airgap
+
+- name: Render Gitpod manifests
+  shell: gitpod-installer render --danger-use-unsupported-config --config /gitpod/gitpod-config.yaml > /gitpod/gitpod-manifests.yaml
+  when: airgap

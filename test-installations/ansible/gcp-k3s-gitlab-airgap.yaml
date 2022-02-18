@@ -1,0 +1,176 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: GCloud login
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    # this is needed for the gcp-ssh-wrapper.sh script
+    - gcp-login
+  tags: ["localhost"]
+
+- name: Prepare Gitpod GCP resources
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - gcp
+  tags: ["localhost"]
+
+- name: Prepare GitLab GCP resources
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  vars:
+    instance_name: "{{ gitlab_instance_name }}"
+    domain: "{{ gitlab_domain }}"
+  roles:
+    - gcp-instance
+  tags: ["localhost"]
+
+- name: Prepare Registry GCP resources
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  vars:
+    instance_name: "{{ registry_instance_name }}"
+    domain: "{{ registry_domain }}"
+  roles:
+    - gcp-instance
+  tags: ["localhost"]
+
+- name: Refresh inventory
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - meta: refresh_inventory
+  tags: ["localhost"]
+
+- name: Wait for connection
+  hosts: all
+  gather_facts: no
+  tasks:
+    - wait_for_connection:
+  tags: ["localhost"]
+
+- name: Restore from GCP bucket
+  hosts:
+    - gitpod_node_main
+    - instance_gitlab
+    - instance_registry
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - gcp-bucket-restore
+
+- name: Install GitLab
+  hosts: instance_gitlab
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - install-gitlab
+
+- name: Install Registry
+  hosts: instance_registry
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - install-docker
+    - install-registry
+
+- name: Prepare DNS
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - gcp-dns
+
+- name: Prepare Gitpod installer
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - gitpod-installer
+
+- name: Mirror Gitpod images
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  hosts:
+    - gitpod_node_main
+    - gitpod_node_worker
+  roles:
+    - install-docker
+    - mirror-gitpod-images
+
+- name: Generate cluster secret
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        k3s_cluster_secret: "{{ lookup('community.general.random_string', length=40) }}"
+
+- name: Install k3s
+  hosts:
+    - gitpod_node_main
+    - gitpod_node_worker
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  vars:
+    airgap: true
+  roles:
+    - install-k3s
+
+- name: Prepate Gitpod installation
+  hosts:
+    - gitpod_node_main
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - install-gitpod-k3s
+
+- name: Disconnect Gitpod nodes from the internet and install Gitpod
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - gcp-airgap
+  tags: ["localhost"]
+
+- name: Refresh inventory
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - meta: refresh_inventory
+  tags: ["localhost"]
+
+- name: Wait for connection
+  hosts: all
+  gather_facts: no
+  tasks:
+    - wait_for_connection:
+  tags: ["localhost"]
+
+- name: Start Gitpod installation
+  hosts: instance_bastion
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  tasks:
+    - name: Copy manifests file
+      command: gcloud compute ssh --quiet {{ gitpod_node_prefix }}--node-0 --zone {{ gcp_zone }} --internal-ip --command 'sudo cp /gitpod/gitpod-manifests.yaml /var/lib/rancher/k3s/server/manifests/gitpod-manifests.yaml'
+  tags: ["localhost"]
+
+- name: Install WireGuard on bastion host
+  hosts: instance_bastion
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - install-wireguard
+  tags: ["localhost"]

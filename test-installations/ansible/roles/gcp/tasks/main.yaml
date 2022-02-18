@@ -1,0 +1,76 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Create instance
+  google.cloud.gcp_compute_instance:
+    name: "{{ gitpod_node_prefix }}--node-{{ item }}"
+    machine_type: "{{ gcp_machine_type }}"
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      initialize_params:
+        disk_size_gb: 256
+        source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
+    network_interfaces:
+    - access_configs:
+      - name: external-nat
+        type: ONE_TO_ONE_NAT
+    labels:
+      gitpod-node: "{{ 'main' if ansible_loop.first else 'worker' }}"
+      gitpod-total-nodes: "{{ ansible_loop.length }}"
+    zone: "{{ gcp_zone }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present
+  loop: "{{ range(0, gitpod_nodes_count) | list }}"
+  loop_control:
+    extended: yes
+  register: gcpvm
+
+- set_fact:
+    cluster_ip: "{{ gcpvm.results[0].networkInterfaces[0].accessConfigs[0].natIP | default(gcpvm.results[0].networkInterfaces[0].networkIP) }}"
+
+- set_fact:
+    "internal_ips": "{{ internal_ips | default({}) | combine({'gitpod': gcpvm.results[0].networkInterfaces[0].networkIP}) }}"
+
+- name: Create http/https firewall rule
+  google.cloud.gcp_compute_firewall:
+    name: "allow-http-https"
+    allowed:
+    - ip_protocol: tcp
+      ports: ["80","443"]
+    direction: INGRESS
+    source_ranges: "0.0.0.0/0"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present
+
+- name: Create k3s firewall rule
+  google.cloud.gcp_compute_firewall:
+    name: "allow-k3s"
+    allowed:
+    - ip_protocol: tcp
+      ports: ["6443"]
+    direction: INGRESS
+    source_ranges: "0.0.0.0/0"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present
+
+- name: Create WireGuard rule
+  google.cloud.gcp_compute_firewall:
+    name: "allow-wireguard"
+    allowed:
+    - ip_protocol: udp
+      ports: ["41194"]
+    direction: INGRESS
+    source_ranges: "0.0.0.0/0"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present

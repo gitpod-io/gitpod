@@ -1,0 +1,14 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+gitpod_node_prefix: gitpod
+
+k3s_server_exec: "server --disable traefik --flannel-backend=none --disable-network-policy"
+k3s_server_exec_labels: "--node-label gitpod.io/workload_meta=true --node-label gitpod.io/workload_ide=true"
+k3s_agent_exec: "agent"
+k3s_agent_exec_labels: "--node-label gitpod.io/workload_workspace_services=true --node-label gitpod.io/workload_workspace_regular=true --node-label gitpod.io/workload_workspace_headless=true"
+k3s_cluster_secret: "{{ undef(hint='You must specify a cluster secret.') }}"
+
+airgap: false

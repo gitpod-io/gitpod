@@ -1,0 +1,61 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Create instance
+  google.cloud.gcp_compute_instance:
+    name: "{{ instance_name }}"
+    machine_type: "{{ gcp_machine_type }}"
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      initialize_params:
+        disk_size_gb: 256
+        source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
+    network_interfaces:
+    - access_configs:
+      - name: external-nat
+        type: ONE_TO_ONE_NAT
+    labels:
+      instance: "{{ instance_name }}"
+    zone: "{{ gcp_zone }}"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present
+  register: gcpvm
+
+- set_fact:
+    "internal_ips": "{{ internal_ips | default({}) | combine({instance_name: gcpvm.networkInterfaces[0].networkIP}) }}"
+
+- name: Create resource record sets
+  google.cloud.gcp_dns_resource_record_set:
+    name: "{{ item }}"
+    managed_zone:
+      name: "{{ gcp_dns_domain_zone_name }}"
+      dnsName: "{{ gcp_dns_domain_zone_dnsname }}"
+    type: A
+    ttl: 300
+    target:
+    - "{{ gcpvm.networkInterfaces[0].accessConfigs[0].natIP }}"
+    project: "{{ gcp_dns_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_dns_cred_content }}"
+    state: present
+  with_items:
+  - "{{ domain }}."
+  - "*.{{ domain }}."
+
+- name: Create http/https firewall rule
+  google.cloud.gcp_compute_firewall:
+    name: "allow-http-https"
+    allowed:
+    - ip_protocol: tcp
+      ports: ["80","443"]
+    direction: INGRESS
+    source_ranges: "0.0.0.0/0"
+    project: "{{ gcp_project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp_cred_content }}"
+    state: present

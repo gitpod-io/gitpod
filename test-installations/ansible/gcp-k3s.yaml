@@ -1,0 +1,78 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: GCloud login
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-k3s.yaml
+  roles:
+    # this is needed for the gcp-ssh-wrapper.sh script
+    - gcp-login
+
+- name: Prepare GCP resources
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-k3s.yaml
+  roles:
+    - gcp
+
+- name: Refresh inventory
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - meta: refresh_inventory
+
+- name: Wait for connection
+  hosts: all
+  gather_facts: no
+  tasks:
+    - wait_for_connection:
+
+- name: Prepare DNS
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/gcp-k3s.yaml
+  roles:
+    - gcp-dns
+
+- name: Restore from GCP bucket
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/gcp-k3s.yaml
+  roles:
+    - gcp-bucket-restore
+
+- name: Prepare Gitpod installer
+  hosts: gitpod_node_main
+  vars_files:
+    - vars/gcp-k3s.yaml
+  roles:
+    - gitpod-installer
+
+- name: Generate cluster secret
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        k3s_cluster_secret: "{{ lookup('community.general.random_string', length=40) }}"
+
+- name: Install k3s
+  hosts:
+    - gitpod_node_main
+    - gitpod_node_worker
+  vars_files:
+    - vars/gcp-k3s.yaml
+  roles:
+    - install-k3s
+
+- name: Install Gitpod
+  hosts:
+    - gitpod_node_main
+  vars_files:
+    - vars/gcp-k3s.yaml
+  roles:
+    - install-gitpod-k3s

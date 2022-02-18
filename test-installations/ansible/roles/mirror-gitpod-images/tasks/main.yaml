@@ -1,0 +1,36 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Install dependencies
+  apt:
+    pkg:
+      - jq
+    update_cache: yes
+    state: present
+  become: true
+  when: "'gitpod_node_main' in group_names"
+
+- name: Patch Gitpod config
+  command: yq eval --inplace ".repository = \"{{ registry_domain }}\"" /gitpod/gitpod-config.yaml
+  when: "'gitpod_node_main' in group_names"
+
+- name: Mirror images
+  shell: |
+    set -euo pipefail
+    for row in $(gitpod-installer mirror list --config /gitpod/gitpod-config.yaml | jq -c '.[]'); do
+      original=$(echo $row | jq -r '.original')
+      target=$(echo $row | jq -r '.target')
+
+      # TODO: fix mirror list command
+      [[ "$target" == "{{ registry_domain }}" ]] && continue
+
+      docker pull $original
+      docker tag $original $target
+      docker push $target
+    done
+  become: true
+  args:
+    executable: /bin/bash
+  when: "'gitpod_node_main' in group_names"

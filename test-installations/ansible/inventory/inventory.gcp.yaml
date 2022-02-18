@@ -1,0 +1,15 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+plugin: gcp_compute
+projects:
+  - gitpod-self-hosted-testing # TODO: How to make this configurable without the hack in the entrypoint.sh?
+auth_kind: serviceaccount
+service_account_file: /service-account.json
+keyed_groups:
+  - key: labels
+leading_separator: no
+hostnames: ["name", "public_ip", "private_ip"]
+# compose:
+#   ansible_host: name
