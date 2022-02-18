@@ -5,10 +5,14 @@
 package integration
 
 import (
+	"context"
+
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 )
 
+// CreateUser creates a new admin user in the Gitpod installation
 func CreateUser(username string, admin bool, api *ComponentAPI) (userId string, err error) {
 	userUUID, err := uuid.NewRandom()
 	if err != nil {
@@ -62,4 +66,19 @@ func IsUserBlocked(userId string, api *ComponentAPI) (blocked bool, err error) {
 
 	err = rows.Scan(&blocked)
 	return
+}
+
+// GitHubToken returns the GitHub token of the user from Gitpod
+func GitHubToken(ctx context.Context, username string, api *ComponentAPI) (token string, err error) {
+	server, err := api.GitpodServer(WithGitpodUser(username))
+	if err != nil {
+		return "", xerrors.Errorf("cannot connect to server: %q", err)
+	}
+	tkn, err := server.GetToken(ctx, &protocol.GetTokenSearchOptions{
+		Host: "github.com",
+	})
+	if err != nil {
+		return "", xerrors.Errorf("cannot get token: %w", err)
+	}
+	return tkn.Value, nil
 }

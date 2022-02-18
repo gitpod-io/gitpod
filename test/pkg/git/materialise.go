@@ -191,7 +191,7 @@ func (r *MaterialisedGitHubRepo) Delete(ctx context.Context) error {
 
 // ContextURL returns the context URL of the repo
 func (r *MaterialisedGitHubRepo) ContextURL() string {
-	return r.gh.BaseURL.String()
+	return *r.Remote.HTMLURL
 }
 
 // CloneURL returns the git clone URL of the repo

@@ -7,6 +7,7 @@ package workspace
 import (
 	"context"
 	"net/rpc"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -14,17 +15,16 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
+	"github.com/gitpod-io/gitpod/test/pkg/git"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"github.com/gitpod-io/gitpod/test/tests/workspace/common"
 )
 
 //
 type GitTest struct {
-	Skip          bool
-	Name          string
-	ContextURL    string
-	WorkspaceRoot string
-	Action        GitFunc
+	Skip   bool
+	Name   string
+	Action GitFunc
 }
 
 type GitFunc func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) error
@@ -33,9 +33,7 @@ func TestGitActions(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
 	tests := []GitTest{
 		{
-			Name:          "create, add and commit",
-			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
-			WorkspaceRoot: "/workspace/gitpod-test-repo",
+			Name: "create, add and commit",
 			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
 
 				var resp agent.ExecResponse
@@ -62,10 +60,8 @@ func TestGitActions(t *testing.T) {
 			},
 		},
 		{
-			Skip:          true,
-			Name:          "create, add and commit and PUSH",
-			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
-			WorkspaceRoot: "/workspace/gitpod-test-repo",
+			Skip: false,
+			Name: "create, add and commit and PUSH",
 			Action: func(rsa *rpc.Client, git common.GitClient, workspaceRoot string) (err error) {
 
 				var resp agent.ExecResponse
@@ -109,12 +105,27 @@ func TestGitActions(t *testing.T) {
 			})
 
 			for _, test := range tests {
-				t.Run(test.ContextURL, func(t *testing.T) {
+				t.Run(test.Name, func(t *testing.T) {
 					if test.Skip {
 						t.SkipNow()
 					}
 
-					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, test.ContextURL, username, api)
+					tkn, err := integration.GitHubToken(ctx, username, api)
+					if err != nil {
+						t.Fatal(err)
+					}
+					repo, err := git.MaterialiseToGitHub(ctx, tkn, "", git.TempRepo(true), git.Ops{
+						git.OpAddFile("README", "nothing to see here"),
+						git.OpCommitAll("initial commit"),
+					})
+					if err != nil {
+						t.Fatal(err)
+					}
+					t.Cleanup(func() {
+						repo.Delete(ctx)
+					})
+
+					nfo, stopWS, err := integration.LaunchWorkspaceFromContextURL(ctx, repo.ContextURL(), username, api)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -133,8 +144,10 @@ func TestGitActions(t *testing.T) {
 					defer rsa.Close()
 					integration.DeferCloser(t, closer)
 
+					workspaceRoot := filepath.Join("/workspace", *repo.Remote.Name)
+
 					git := common.Git(rsa)
-					err = test.Action(rsa, git, test.WorkspaceRoot)
+					err = test.Action(rsa, git, workspaceRoot)
 					if err != nil {
 						t.Fatal(err)
 					}
