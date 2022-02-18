@@ -82,6 +82,7 @@ data:
                 "headlessWorkspace": "60m",
                 "initialization": "30m",
                 "regularWorkspace": "30m",
+                "maxLifetime": "36h",
                 "startup": "60m",
                 "contentFinalization": "60m",
                 "stopping": "60m",

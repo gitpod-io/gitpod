@@ -122,6 +122,8 @@ type WorkspaceTimeoutConfiguration struct {
 	Initialization util.Duration `json:"initialization"`
 	// RegularWorkspace is the time a regular workspace can be without activity before it's shutdown
 	RegularWorkspace util.Duration `json:"regularWorkspace"`
+	// MaxLifetime is the maximum lifetime of a regular workspace
+	MaxLifetime util.Duration `json:"maxLifetime"`
 	// HeadlessWorkspace is the maximum runtime a headless workspace can have (including startup)
 	HeadlessWorkspace util.Duration `json:"headlessWorkspace"`
 	// AfterClose is the time a workspace lives after it has been marked closed
@@ -188,6 +190,7 @@ func (c *Configuration) Validate() error {
 		validation.Field(&c.Timeouts.HeadlessWorkspace, validation.Required),
 		validation.Field(&c.Timeouts.Initialization, validation.Required),
 		validation.Field(&c.Timeouts.RegularWorkspace, validation.Required),
+		validation.Field(&c.Timeouts.MaxLifetime, validation.Required),
 		validation.Field(&c.Timeouts.TotalStartup, validation.Required),
 		validation.Field(&c.Timeouts.ContentFinalization, validation.Required),
 		validation.Field(&c.Timeouts.Stopping, validation.Required),
