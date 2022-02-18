@@ -85,6 +85,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				HeadlessWorkspace:   util.Duration(1 * time.Hour),
 				Initialization:      util.Duration(30 * time.Minute),
 				RegularWorkspace:    util.Duration(30 * time.Minute),
+				MaxLifetime:         util.Duration(36 * time.Hour),
 				TotalStartup:        util.Duration(1 * time.Hour),
 				ContentFinalization: util.Duration(1 * time.Hour),
 				Stopping:            util.Duration(1 * time.Hour),

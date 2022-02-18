@@ -976,7 +976,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 }
 
-// markTimedoutWorkspaces finds workspaces which haven't been active recently and marks them as timed out
+// markTimedoutWorkspaces finds workspaces which can be timeout due to inactivity or max lifetime allowed
 func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "markTimedoutWorkspaces")
 	defer tracing.FinishSpan(span, &err)
