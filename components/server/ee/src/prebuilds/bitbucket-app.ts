@@ -36,7 +36,9 @@ export class BitbucketApp {
                     }
                     const user = await this.findUser({ span }, secretToken);
                     if (!user) {
-                        res.statusCode = 503;
+                        // If the webhook installer is no longer found in Gitpod's DB
+                        // we should send a UNAUTHORIZED signal.
+                        res.statusCode = 401;
                         res.send();
                         return;
                     }
@@ -45,13 +47,13 @@ export class BitbucketApp {
                         await this.handlePushHook({ span }, data, user);
                     }
                 } else {
-                    console.log(`Ignoring unsupported bitbucket event: ${req.header('X-Event-Key')}`);
+                    console.warn(`Ignoring unsupported bitbucket event: ${req.header('X-Event-Key')}`);
                 }
-                res.send('OK');
             } catch (err) {
-                console.error(`Couldn't handle request.`, req.headers, req.body);
-                console.error(err);
-                res.sendStatus(500);
+                console.error(`Couldn't handle request.`, err, { headers: req.headers, reqBody: req.body });
+            } finally {
+                // we always respond with OK, when we received a valid event.
+                res.sendStatus(200);
             }
         });
     }
@@ -89,7 +91,7 @@ export class BitbucketApp {
             span.setTag('contextURL', contextURL);
             const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
             if (!this.prebuildManager.shouldPrebuild(config)) {
-                console.log('No config. No prebuild.');
+                console.log('Bitbucket push event: No config. No prebuild.');
                 return undefined;
             }
 
@@ -159,7 +161,7 @@ export class BitbucketApp {
 function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
     const branchName = body.push.changes[0]?.new?.name;
     const commitHash = body.push.changes[0]?.new?.target?.hash;
-    if (!branchName || !commitHash){
+    if (!branchName || !commitHash) {
         return undefined;
     }
     const result = {
@@ -169,7 +171,7 @@ function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
         gitCloneUrl: body.repository.links.html.href + '.git'
     }
     if (!result.commitHash || !result.repoUrl) {
-        console.error('unexpected request body.', body);
+        console.error('Bitbucket push event: unexpected request body.', body);
         throw new Error('Unexpected request body.');
     }
     return result;
