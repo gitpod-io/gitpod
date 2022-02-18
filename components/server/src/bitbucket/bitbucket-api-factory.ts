@@ -27,6 +27,7 @@ export class BitbucketApiFactory {
 
     protected createBitbucket(baseUrl: string, token: Token): APIClient {
         return new Bitbucket({
+            notice: false,
             baseUrl,
             auth: {
                 token: token.value
@@ -44,6 +45,7 @@ export class BasicAuthBitbucketApiFactory extends BitbucketApiFactory {
     protected createBitbucket(baseUrl: string, token: Token): APIClient {
 
         return new Bitbucket({
+            notice: false,
             baseUrl,
             auth: {
                 username: token.username!,

@@ -60,6 +60,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
         try {
 
             const options = {
+                notice: false,
                 auth: { token: accessToken },
                 baseUrl: `https://api.${this.params.host}/2.0`,
             };

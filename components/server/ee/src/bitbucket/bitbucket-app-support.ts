@@ -20,6 +20,7 @@ export class BitbucketAppSupport {
         const oauthToken = token.value;
 
         const api = new Bitbucket({
+            notice: false,
             baseUrl: `https://api.${params.provider.host}/2.0`,
             auth: {
                 token: oauthToken
