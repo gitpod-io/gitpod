@@ -45,7 +45,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MaxAgeMs: 259200000,
 			Secret:   "Important!Really-Change-This-Key!", // todo(sje): how best to do this?
 		},
-		DefinitelyGpDisabled: false,
+		DefinitelyGpDisabled: ctx.Config.DisableDefinitelyGP,
 		WorkspaceGarbageCollection: WorkspaceGarbageCollection{
 			ChunkLimit:                 1000,
 			ContentChunkLimit:          1000,
