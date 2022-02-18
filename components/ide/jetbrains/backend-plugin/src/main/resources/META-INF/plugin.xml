@@ -14,9 +14,11 @@
     <dependencies>
         <plugin id="com.intellij.modules.platform"/>
         <plugin id="Git4Idea"/>
+        <plugin id="org.jetbrains.plugins.terminal"/>
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.TerminalService" preload="true"/>
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.HeartbeatService" preload="true"/>
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager" preload="true"/>
         <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false" />
