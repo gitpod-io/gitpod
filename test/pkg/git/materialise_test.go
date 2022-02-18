@@ -30,8 +30,10 @@ func TestExampleInitialise(t *testing.T) {
 
 	fmt.Println(repo.CloneURL())
 
-	err = repo.Delete(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err = repo.Delete(context.Background())
+		if err != nil {
+			t.Error(err)
+		}
+	})
 }
