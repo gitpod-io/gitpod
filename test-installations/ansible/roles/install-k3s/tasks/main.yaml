@@ -101,7 +101,7 @@
     dest: /var/lib/rancher/k3s/server/manifests/
   with_fileglob: "cert-manager*.yaml"
   become: true
-  when: "'gitpod_node_main' in group_names"
+  when: "installCertManager and 'gitpod_node_main' in group_names"
 
 - name: Patch coredns nameserver (for airgap)
   shell: |

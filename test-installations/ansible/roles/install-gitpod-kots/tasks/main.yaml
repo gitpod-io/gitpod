@@ -1,0 +1,20 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: Download KOTS install script
+  get_url:
+    url: https://kots.io/install
+    dest: /tmp/kots-install.sh
+    mode: 0755
+
+- name: Install KOTS
+  shell: /tmp/kots-install.sh
+  args:
+    executable: /bin/bash
+
+# - name: Install Gitpod KOTS application
+#   shell: nohup kubectl kots install gitpod-pov --namespace gitpod --license-file /gitpod/kots-license.yaml --shared-password gitpod --config-values /gitpod/kots-config.yaml >/tmp/kots.log 2>&1 &
+#   args:
+#     executable: /bin/bash
