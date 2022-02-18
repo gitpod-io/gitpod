@@ -33,8 +33,6 @@ import (
 	kubectlcp "k8s.io/kubectl/pkg/cmd/cp"
 	kubectlexec "k8s.io/kubectl/pkg/cmd/exec"
 	"sigs.k8s.io/e2e-framework/klient"
-
-	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
 type PodExec struct {
@@ -214,7 +212,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		}
 	}()
 
-	fwdReady, fwdErr := common.ForwardPort(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
+	fwdReady, fwdErr := ForwardPort(ctx, kubeconfig, namespace, podName, strconv.Itoa(localAgentPort))
 	select {
 	case <-fwdReady:
 	case err := <-execErrs:
