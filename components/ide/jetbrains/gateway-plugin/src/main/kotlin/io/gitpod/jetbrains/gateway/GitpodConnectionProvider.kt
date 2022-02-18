@@ -4,14 +4,25 @@
 
 package io.gitpod.jetbrains.gateway
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.remote.RemoteCredentialsHolder
+import com.intellij.ssh.AskAboutHostKey
+import com.intellij.ssh.OpenSshLikeHostKeyVerifier
+import com.intellij.ssh.connectionBuilder
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.application
+import com.intellij.util.io.DigestUtil
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.gateway.api.ConnectionRequestor
@@ -23,22 +34,30 @@ import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import io.gitpod.jetbrains.icons.GitpodIcons
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
+import org.bouncycastle.pqc.math.linearalgebra.ByteUtils
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.coroutines.coroutineContext
+
 
 class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private val gitpod = service<GitpodConnectionService>()
+
+    private val httpClient = HttpClient.newBuilder()
+        .followRedirects(HttpClient.Redirect.ALWAYS)
+        .build()
+
+    private val jacksonMapper = jacksonObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
     override suspend fun connect(
         parameters: Map<String, String>,
@@ -62,60 +81,73 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
         val phaseMessage = JLabel()
         val statusMessage = JLabel()
-        val errorMessage = JLabel()
+        val errorMessage = JBTextArea().apply {
+            isEditable = true
+            wrapStyleWord = true
+            lineWrap = true
+            border = null
+            font = JBFont.regular()
+            emptyText.setFont(JBFont.regular())
+            foreground = UIUtil.getErrorForeground()
+            background = phaseMessage.background
+            columns = 30
+        }
         var ideUrl = "";
         val connectionPanel = panel {
-            row {
-                resizableRow()
-                panel {
-                    resizableColumn()
-                    verticalAlign(VerticalAlign.CENTER)
-                    row {
-                        icon(GitpodIcons.Logo2x)
-                            .horizontalAlign(HorizontalAlign.CENTER)
-                    }
-                    row {
-                        cell(phaseMessage)
-                            .bold()
-                            .horizontalAlign(HorizontalAlign.CENTER)
-                    }
-                    row {
-                        cell(statusMessage)
-                            .horizontalAlign(HorizontalAlign.CENTER)
-                            .applyToComponent {
-                                foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-                            }
-                    }
+            indent {
+                row {
+                    resizableRow()
                     panel {
                         row {
-                            link(connectParams.workspaceId) {
-                                if (ideUrl.isNotBlank()) {
-                                    BrowserUtil.browse(ideUrl)
-                                }
-                            }
+                            icon(GitpodIcons.Logo2x)
+                                .horizontalAlign(HorizontalAlign.CENTER)
                         }
                         row {
-                            browserLink(workspace.context.normalizedContextURL, workspace.context.normalizedContextURL)
+                            cell(phaseMessage)
+                                .bold()
+                                .horizontalAlign(HorizontalAlign.CENTER)
                         }
-                    }.horizontalAlign(HorizontalAlign.CENTER)
-                    row {
-                        cell(errorMessage)
-                            .horizontalAlign(HorizontalAlign.CENTER)
-                            .applyToComponent {
-                                foreground = UIUtil.getErrorForeground()
+                        row {
+                            cell(statusMessage)
+                                .horizontalAlign(HorizontalAlign.CENTER)
+                                .applyToComponent {
+                                    foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+                                }
+                        }
+                        panel {
+                            row {
+                                link(connectParams.workspaceId) {
+                                    if (ideUrl.isNotBlank()) {
+                                        BrowserUtil.browse(ideUrl)
+                                    }
+                                }
                             }
-                    }
+                            row {
+                                browserLink(
+                                    workspace.context.normalizedContextURL,
+                                    workspace.context.normalizedContextURL
+                                )
+                            }
+                        }.horizontalAlign(HorizontalAlign.CENTER)
+                        row {
+                            cell(JBScrollPane(errorMessage).apply {
+                                border = null
+                            }).horizontalAlign(HorizontalAlign.CENTER)
+                        }
+                    }.verticalAlign(VerticalAlign.CENTER)
                 }
             }
+        }
+
+        fun setErrorMessage(msg: String) {
+            errorMessage.text = msg
+            connectionPanel.revalidate()
+            connectionPanel.repaint()
         }
 
         GlobalScope.launch {
             var thinClient: ThinClientHandle? = null;
             var thinClientJob: Job? = null;
-
-            val httpClient = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.ALWAYS)
-                .build()
 
             var lastUpdate: WorkspaceInstance? = null;
             try {
@@ -127,7 +159,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         ideUrl = update.ideUrl
                         lastUpdate = update;
                         if (!update.status.conditions.failed.isNullOrBlank()) {
-                            errorMessage.text = update.status.conditions.failed;
+                            setErrorMessage(update.status.conditions.failed)
                         }
                         when (update.status.phase) {
                             "preparing" -> {
@@ -179,75 +211,46 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
                         if (thinClientJob == null && update.status.phase == "running") {
                             thinClientJob = launch {
-                                val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
-
-                                val ideUrl = URL(update.ideUrl);
-                                var joinLink: String? = null
-                                val maxRequestTimeout = 30 * 1000L
-                                val timeoutDelayGrowFactor = 1.5;
-                                var requestTimeout = 2 * 1000L
-                                while (joinLink == null) {
-                                    try {
-                                        var resolveJoinLinkUrl = "https://24000-${ideUrl.host}/joinLink"
-                                        if (!connectParams.backendPort.isNullOrBlank()) {
-                                            resolveJoinLinkUrl += "?backendPort=${connectParams.backendPort}"
-                                        }
-                                        val httpRequest = HttpRequest.newBuilder()
-                                            .uri(URI.create(resolveJoinLinkUrl))
-                                            .header("x-gitpod-owner-token", ownerToken)
-                                            .GET()
-                                            .timeout(Duration.ofMillis(requestTimeout))
-                                            .build()
-                                        val response =
-                                            httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
-                                        if (response.statusCode() == 200) {
-                                            joinLink = response.body()
-                                            errorMessage.text = ""
-                                        } else {
-                                            errorMessage.text =
-                                                "failed to fetch join link: ${response.statusCode()}, trying again...";
-                                        }
-                                    } catch (t: Throwable) {
-                                        if (t is CancellationException) {
-                                            throw t
-                                        }
-                                        thisLogger().error(
-                                            "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch join link:",
-                                            t
-                                        )
-                                        errorMessage.text = "failed to fetch join link: ${t.message}, trying again...";
+                                try {
+                                    val ideUrl = URL(update.ideUrl);
+                                    val hostKeys = resolveHostKeys(ideUrl, connectParams)
+                                    if (hostKeys.isNullOrEmpty()) {
+                                        setErrorMessage("${connectParams.gitpodHost} installation does not allow SSH access, public keys cannot be found")
+                                        return@launch
                                     }
-                                    requestTimeout = (requestTimeout * timeoutDelayGrowFactor).toLong()
-                                    if (requestTimeout > maxRequestTimeout) {
-                                        requestTimeout = maxRequestTimeout
+                                    val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
+                                    val credentials =
+                                        resolveCredentials(ideUrl, update.workspaceId, ownerToken, hostKeys)
+                                    val joinLink = resolveJoinLink(ideUrl, ownerToken, connectParams)
+                                    val connector = ClientOverSshTunnelConnector(
+                                        connectionLifetime,
+                                        credentials,
+                                        URI(joinLink)
+                                    )
+                                    val client = connector.connect()
+                                    client.clientClosed.advise(connectionLifetime) {
+                                        application.invokeLater {
+                                            connectionLifetime.terminate()
+                                        }
                                     }
+                                    client.onClientPresenceChanged.advise(connectionLifetime) {
+                                        application.invokeLater {
+                                            if (client.clientPresent) {
+                                                statusMessage.text = ""
+                                            }
+                                        }
+                                    }
+                                    thinClient = client
+                                } catch (t: Throwable) {
+                                    if (t is CancellationException) {
+                                        throw t
+                                    }
+                                    thisLogger().error(
+                                        "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to connect:",
+                                        t
+                                    )
+                                    setErrorMessage("" + t.message)
                                 }
-
-                                val credentials = RemoteCredentialsHolder()
-                                credentials.setHost(ideUrl.host)
-                                credentials.port = 22
-                                credentials.userName = update.workspaceId
-                                credentials.password = ownerToken
-
-                                val connector = ClientOverSshTunnelConnector(
-                                    connectionLifetime,
-                                    credentials,
-                                    URI(joinLink)
-                                )
-                                val client = connector.connect()
-                                client.clientClosed.advise(connectionLifetime) {
-                                    application.invokeLater {
-                                        connectionLifetime.terminate()
-                                    }
-                                }
-                                client.onClientPresenceChanged.advise(connectionLifetime) {
-                                    application.invokeLater {
-                                        if (client.clientPresent) {
-                                            statusMessage.text = ""
-                                        }
-                                    }
-                                }
-                                thinClient = client
                             }
                         }
                     } catch (e: Throwable) {
@@ -263,11 +266,146 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                     "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to process workspace updates:",
                     t
                 )
-                errorMessage.text = " failed to process workspace updates ${t.message}"
+                setErrorMessage("failed to process workspace updates ${t.message}")
             }
         }
 
         return GitpodConnectionHandle(connectionLifetime, connectionPanel, connectParams);
+    }
+
+    private suspend fun resolveJoinLink(
+        ideUrl: URL,
+        ownerToken: String,
+        connectParams: ConnectParams
+    ): String? {
+        var resolveJoinLinkUrl = "https://24000-${ideUrl.host}/joinLink"
+        if (!connectParams.backendPort.isNullOrBlank()) {
+            resolveJoinLinkUrl += "?backendPort=${connectParams.backendPort}"
+        }
+        return fetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
+    }
+
+    private fun resolveCredentials(
+        ideUrl: URL,
+        userName: String,
+        password: String,
+        hostKeys: List<SSHHostKey>
+    ): RemoteCredentialsHolder {
+        val credentials = RemoteCredentialsHolder()
+        credentials.setHost(ideUrl.host)
+        credentials.port = 22
+        credentials.userName = userName
+        credentials.password = password
+        credentials.connectionBuilder().withSshConnectionConfig {
+            val hostKeyVerifier = it.hostKeyVerifier
+            if (hostKeyVerifier is OpenSshLikeHostKeyVerifier) {
+                val acceptHostKey = acceptHostKey(ideUrl, hostKeys)
+                it.copy(
+                    hostKeyVerifier = hostKeyVerifier.copy(
+                        acceptChangedHostKey = acceptHostKey,
+                        acceptUnknownHostKey = acceptHostKey
+                    )
+                )
+            } else {
+                it
+            }
+        }.connect()
+        return credentials
+    }
+
+    private suspend fun resolveHostKeys(
+        ideUrl: URL,
+        connectParams: ConnectParams
+    ): List<SSHHostKey>? {
+        val hostKeysValue =
+            fetchWS("https://${ideUrl.host}/_ssh/host_keys", connectParams, null)
+        if (hostKeysValue.isNullOrBlank()) {
+            return null
+        }
+        return with(jacksonMapper) {
+            propertyNamingStrategy = PropertyNamingStrategies.SnakeCaseStrategy()
+            readValue(hostKeysValue, object : TypeReference<List<SSHHostKey>>() {})
+        }
+    }
+
+    private fun acceptHostKey(
+        ideUrl: URL,
+        hostKeys: List<SSHHostKey>
+    ): AskAboutHostKey {
+        val hostKeysByType = hostKeys.groupBy({ it.type.lowercase() }) { it.hostKey }
+        val acceptHostKey: AskAboutHostKey = { hostName, keyType, fingerprint, _ ->
+            if (hostName != ideUrl.host) {
+                false
+            }
+            val matchedHostKeys = hostKeysByType[keyType.lowercase()]
+            if (matchedHostKeys.isNullOrEmpty()) {
+                false
+            }
+            var matchedFingerprint = false
+            for (hostKey in matchedHostKeys!!) {
+                for (digest in listOf(
+                    DigestUtil.md5(),
+                    DigestUtil.sha256(),
+                    DigestUtil.sha1()
+                )) {
+                    val digest =
+                        digest.digest(Base64.getDecoder().decode(hostKey))
+                    val hostKeyFingerprint = ByteUtils.toHexString(digest, "", ":")
+                    if (hostKeyFingerprint == fingerprint) {
+                        matchedFingerprint = true
+                        break
+                    }
+                }
+
+            }
+            matchedFingerprint
+        }
+        return acceptHostKey
+    }
+
+    private suspend fun fetchWS(
+        endpointUrl: String,
+        connectParams: ConnectParams,
+        ownerToken: String?,
+    ): String? {
+        val maxRequestTimeout = 30 * 1000L
+        val timeoutDelayGrowFactor = 1.5;
+        var requestTimeout = 2 * 1000L
+        while (true) {
+            coroutineContext.job.ensureActive()
+            try {
+                var httpRequestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(endpointUrl))
+                    .GET()
+                    .timeout(Duration.ofMillis(requestTimeout))
+                if (!ownerToken.isNullOrBlank()) {
+                    httpRequestBuilder = httpRequestBuilder.header("x-gitpod-owner-token", ownerToken)
+                }
+                val httpRequest = httpRequestBuilder.build()
+                val response =
+                    httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString()).await()
+                if (response.statusCode() == 200) {
+                    return response.body()
+                }
+                if (response.statusCode() < 500) {
+                    thisLogger().error("${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '${endpointUrl}': ${response.statusCode()}")
+                    return null
+                }
+                thisLogger().warn("${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '${endpointUrl}', trying again...: ${response.statusCode()}")
+            } catch (t: Throwable) {
+                if (t is CancellationException) {
+                    throw t
+                }
+                thisLogger().warn(
+                    "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '${endpointUrl}', trying again...:",
+                    t
+                )
+            }
+            requestTimeout = (requestTimeout * timeoutDelayGrowFactor).toLong()
+            if (requestTimeout > maxRequestTimeout) {
+                requestTimeout = maxRequestTimeout
+            }
+        }
     }
 
     override fun isApplicable(parameters: Map<String, String>): Boolean =
@@ -297,5 +435,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             return false
         }
     }
+
+    private data class SSHHostKey(val type: String, val hostKey: String)
 
 }
