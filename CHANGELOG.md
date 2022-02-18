@@ -1,6 +1,12 @@
 # Change Log
 
 ## February 2022
+- Update the usage of nsinsider. ([#8275](https://github.com/gitpod-io/gitpod/pull/8275)) - [@utam0k](https://github.com/utam0k)
+- [server]: Add `totalUsers`, `totalWorkspaces`, and `totalInstances` fields to telemetry data ([#8067](https://github.com/gitpod-io/gitpod/pull/8067)) - [@Pothulapati](https://github.com/Pothulapati)
+- messagebus: remove cross-cluster dependency ([#7523](https://github.com/gitpod-io/gitpod/pull/7523)) - [@geropl](https://github.com/geropl)
+- [self-hosted] Skip MinIO client configuration in the MinIO container because it breaks air-gap installations. ([#8270](https://github.com/gitpod-io/gitpod/pull/8270)) - [@corneliusludmann](https://github.com/corneliusludmann)
+- Bitbucket Server: Authorize with Bitbucket Server 7.20 and start workspaces. ([#8086](https://github.com/gitpod-io/gitpod/pull/8086)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- Add stress test for mount proc ([#8234](https://github.com/gitpod-io/gitpod/pull/8234)) - [@utam0k](https://github.com/utam0k)
 - [server] Disable `perMessageDeflate` on websockets ([#8227](https://github.com/gitpod-io/gitpod/pull/8227)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [tracing] avoid noisy error messages ([#8187](https://github.com/gitpod-io/gitpod/pull/8187)) - [@geropl](https://github.com/geropl)
 - Composite content initializer now correctly report errors. ([#8189](https://github.com/gitpod-io/gitpod/pull/8189)) - [@csweichel](https://github.com/csweichel)
