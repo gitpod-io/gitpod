@@ -70,20 +70,23 @@ export class ClusterService implements IClusterServiceServer {
             try {
                 // check if the name or URL are already registered/in use
                 const req = call.request.toObject();
-                await Promise.all([
-                    async () => {
-                        const oldCluster = await this.clusterDB.findByName(req.name);
-                        if (!oldCluster) {
-                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB`);
-                        }
-                    },
-                    async () => {
-                        const oldCluster = await this.clusterDB.findFiltered({ url: req.url });
-                        if (!oldCluster) {
-                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with url ${req.url} already exists in the DB`);
-                        }
-                    }
+
+                const clusterByNamePromise = this.clusterDB.findByName(req.name);
+                const clusterByUrlPromise = this.clusterDB.findFiltered({ url: req.url })
+
+                const [clusterByName, clusterByUrl] = await Promise.all([
+                    clusterByNamePromise,
+                    clusterByUrlPromise
                 ]);
+
+                if (!!clusterByName) {
+                    throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB`);
+                }
+                if (!!clusterByUrl) {
+                    if (clusterByUrl.length > 0) {
+                        throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with url ${req.url} already exists in the DB`);
+                    }
+                }
 
                 // store the ws-manager into the database
                 let perfereability = Preferability.NONE;
@@ -154,7 +157,7 @@ export class ClusterService implements IClusterServiceServer {
                 const req = call.request.toObject();
                 const cluster = await this.clusterDB.findByName(req.name);
                 if (!cluster) {
-                    throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB!`);
+                    throw new GRPCError(grpc.status.NOT_FOUND, `a WorkspaceCluster with name ${req.name} does not exist in the DB!`);
                 }
 
                 if (call.request.hasMaxScore()) {
@@ -257,8 +260,6 @@ export class ClusterService implements IClusterServiceServer {
                     clusterStatus.setStatic(true);
                     response.addStatus(clusterStatus);
                 }
-
-                log.info("response status for clusters.list", response.getStatusList())
 
                 callback(null, response);
             } catch (err) {
