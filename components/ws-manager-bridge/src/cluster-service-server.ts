@@ -258,6 +258,8 @@ export class ClusterService implements IClusterServiceServer {
                     response.addStatus(clusterStatus);
                 }
 
+                log.info("response status for clusters.list", response.getStatusList())
+
                 callback(null, response);
             } catch (err) {
                 callback(mapToGRPCError(err), null);
@@ -294,8 +296,10 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 break;
             case "has-user-level":
                 constraint.setHasUserLevel(c.level);
+                break;
             case "has-more-resources":
                 constraint.setHasMoreResources(true);
+                break;
             default:
                 return;
         }
