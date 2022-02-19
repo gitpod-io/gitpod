@@ -1,6 +1,8 @@
 # Change Log
 
 ## February 2022
+- Improve handling of "Out of Memory" error when starting up workspaces ([#8289](https://github.com/gitpod-io/gitpod/pull/8289)) - [@aledbf](https://github.com/aledbf), [@sagor999](https://github.com/sagor999)
+- [installer] Installer does not set default nameserver settings for workspaces anymore ([#8288](https://github.com/gitpod-io/gitpod/pull/8288)) - [@csweichel](https://github.com/csweichel)
 - Update the usage of nsinsider. ([#8275](https://github.com/gitpod-io/gitpod/pull/8275)) - [@utam0k](https://github.com/utam0k)
 - [server]: Add `totalUsers`, `totalWorkspaces`, and `totalInstances` fields to telemetry data ([#8067](https://github.com/gitpod-io/gitpod/pull/8067)) - [@Pothulapati](https://github.com/Pothulapati)
 - messagebus: remove cross-cluster dependency ([#7523](https://github.com/gitpod-io/gitpod/pull/7523)) - [@geropl](https://github.com/geropl)
