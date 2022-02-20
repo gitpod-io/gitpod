@@ -6,6 +6,7 @@ package workspace
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	agentsmith "github.com/gitpod-io/gitpod/installer/pkg/components/agent-smith"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
@@ -19,8 +20,11 @@ import (
 func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	podSelectorLabels := labels
-	podSelectorLabels["gitpod.io/networkpolicy"] = "default"
+	podSelectorLabels := map[string]string{
+		"app":                     common.AppName,
+		"component":               Component,
+		"gitpod.io/networkpolicy": "default",
+	}
 
 	return []runtime.Object{&networkingv1.NetworkPolicy{
 		TypeMeta: common.TypeMetaNetworkPolicy,
