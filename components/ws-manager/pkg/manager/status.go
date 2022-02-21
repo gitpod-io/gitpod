@@ -453,15 +453,6 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 				result.Message = fmt.Sprintf("container %s was terminated unexpectedly - workspace is recovering", cs.Name)
 				return nil
 			}
-
-			_, neverWereReady := pod.Annotations[workspaceNeverReadyAnnotation]
-			if neverWereReady && !cs.Ready {
-				// container isn't ready yet (never has been), thus we're still in the creating phase.
-				result.Phase = api.WorkspacePhase_CREATING
-				result.Message = "containers are starting"
-				result.Conditions.PullingImages = api.WorkspaceConditionBool_FALSE
-				return nil
-			}
 		}
 
 		tpe, err := wso.WorkspaceType()
