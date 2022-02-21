@@ -312,7 +312,10 @@ export class ConfigProvider {
 
         try {
             const url = `https://raw.githubusercontent.com/gitpod-io/definitely-gp/master/${filePath}`;
-            const response = await fetch(url, { method: 'GET' });
+            const response = await fetch(url, {
+                timeout: 10000,
+                method: 'GET',
+            });
             let content;
             if (response.ok) {
                 try {

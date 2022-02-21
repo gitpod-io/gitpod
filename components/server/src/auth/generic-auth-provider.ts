@@ -194,6 +194,7 @@ export class GenericAuthProvider implements AuthProvider {
             this.readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
                 try {
                     const fetchResult = await fetch(configURL, {
+                        timeout: 10000,
                         method: "POST",
                         headers: {
                             "Accept": "application/json",
