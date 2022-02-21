@@ -112,12 +112,10 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider).MustServe()
-		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
-
+		// SSH Gateway
+		var signers []ssh.Signer
 		flist, err := os.ReadDir("/mnt/host-key")
 		if err == nil && len(flist) > 0 {
-			var signers []ssh.Signer
 			for _, f := range flist {
 				if f.IsDir() {
 					continue
@@ -142,6 +140,9 @@ var runCmd = &cobra.Command{
 				log.Info("SSHGateway is up and running")
 			}
 		}
+
+		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider, signers).MustServe()
+		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
 
 		log.Info("🚪 ws-proxy is up and running")
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
