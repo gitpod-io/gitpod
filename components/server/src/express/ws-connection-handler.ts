@@ -71,8 +71,16 @@ export class WsConnectionHandler implements Disposable {
                     }
                     // if no ping was sent, yet, this is a fresh ws connection
 
-                    setPingSent(ws, Date.now());
-                    ws.ping();  // if this fails it triggers a ws error, and fails the ws anyway
+
+                    // note: decoupling by using `setImmediate` in order to offload to the following event loop iteration.
+                    setImmediate(() => {
+                        try {
+                            ws.ping();  // if this fails it triggers a ws error, and fails the ws anyway
+                            setPingSent(ws, Date.now());
+                        } catch (err) {
+                            log.error("websocket ping error", err);
+                        }
+                    });
                 } catch (err) {
                     log.error("websocket ping-pong error", err);
                 }
@@ -93,7 +101,14 @@ export class WsConnectionHandler implements Disposable {
             });
             ws.on('ping', (data: any) => {
                 // answer browser-side ping to conform RFC6455 (https://tools.ietf.org/html/rfc6455#section-5.5.2)
-                ws.pong(data);
+                // note: decoupling by using `setImmediate` in order to offload to the following event loop iteration.
+                setImmediate(() => {
+                    try {
+                        ws.pong(data);
+                    } catch (err) {
+                        log.error("websocket pong error", err);
+                    }
+                });
             });
 
             // error handling
