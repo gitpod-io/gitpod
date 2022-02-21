@@ -20,6 +20,7 @@ export class BitbucketServerApi {
         const token = (await this.tokenHelper.getTokenWithScopes(user, [])).value;
         const fullUrl = `${this.baseUrl}${urlPath}`;
         const response = await fetch(fullUrl, {
+            timeout: 10000,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

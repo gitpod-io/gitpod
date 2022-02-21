@@ -191,6 +191,7 @@ export class CodeSyncService {
                     const blobsClient = this.blobsProvider.getDefault();
                     const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(blobsClient.downloadUrl.bind(blobsClient))(request);
                     const response = await fetch(urlResponse.getUrl(), {
+                        timeout: 10000,
                         headers: {
                             'content-type': contentType
                         }
@@ -241,6 +242,7 @@ export class CodeSyncService {
                 const url = urlResponse.getUrl();
                 const content = req.body as string;
                 const response = await fetch(url, {
+                    timeout: 10000,
                     method: 'PUT',
                     body: content,
                     headers: {

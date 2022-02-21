@@ -96,6 +96,7 @@ export class EligibilityService {
         const logCtx = { userId: user.id };
         try {
             const rawResponse = await fetch("https://education.github.com/api/user", {
+                timeout: 5000,
                 headers: {
                     "Authorization": `token ${token}`,
                     "faculty-check-preview": "true"

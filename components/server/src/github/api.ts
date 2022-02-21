@@ -46,6 +46,7 @@ export class GitHubGraphQlEndpoint {
             `https://raw.githubusercontent.com/${org}/${name}/${commitish}/${path}` :
             `https://${host}/${org}/${name}/raw/${commitish}/${path}`;
         const response = await fetch(urlString, {
+            timeout: 15000,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -82,6 +83,7 @@ export class GitHubGraphQlEndpoint {
 
     async runQueryWithToken<T>(token: string, request: object): Promise<QueryResult<T>> {
         const response = await fetch(this.baseURLv4, {
+            timeout: 15000,
             method: 'POST',
             body: JSON.stringify(request),
             headers: {

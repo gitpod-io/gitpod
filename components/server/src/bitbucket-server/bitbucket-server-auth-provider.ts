@@ -56,6 +56,7 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
     protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
         try {
             const fetchResult = await fetch(`https://${this.params.host}/plugins/servlet/applinks/whoami`, {
+                timeout: 10000,
                 headers: {
                     "Authorization": `Bearer ${accessToken}`,
                 }

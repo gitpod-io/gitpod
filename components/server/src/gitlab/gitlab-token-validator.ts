@@ -22,6 +22,7 @@ export class GitLabTokenValidator implements IGitTokenValidator {
 				query: `query {project(fullPath: "${repoFullName}") { visibility, userPermissions{ pushCode } } } `
 			};
 			const response = await fetch(`https://${host}/api/graphql`, {
+				timeout: 5000,
 				method: "POST",
 				body: JSON.stringify(request),
 				headers: {
