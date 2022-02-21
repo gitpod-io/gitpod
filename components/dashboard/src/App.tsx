@@ -144,6 +144,10 @@ function App() {
                 if (user?.rolesOrPermissions?.includes('admin')) {
                     const adminSettings = await getGitpodService().server.adminGetSettings();
                     setAdminSettings(adminSettings);
+                } else {
+                    if (window.location.toString().startsWith('/admin')) {
+                        history.replace('/');
+                    }
                 }
             } catch (error) {
                 console.error(error);
