@@ -148,7 +148,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
 
         issueMetaCerts(werft, PROXY_SECRET_NAME, "default", domain, withVM)
         werft.done('certificate')
-        installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, true, jobConfig.observability.branch);
+        installMonitoring(deploymentConfig.namespace, 9100, deploymentConfig.domain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
         werft.done('observability')
     }
 
@@ -200,12 +200,14 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Find last ports");
     let wsdaemonPortMeta = findLastHostPort(namespace, 'ws-daemon', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
     let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
+    let nodeExporterPort = findLastHostPort(namespace, 'node-exporter', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
 
-    if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta)) {
+    if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || isNaN(nodeExporterPort)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
-        [wsdaemonPortMeta, registryNodePortMeta] = findFreeHostPorts([
+        [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
             { start: 10000, end: 11000 },
             { start: 30000, end: 31000 },
+            { start: 31001, end: 32000 },
         ], metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }));
     }
     werft.log(installerSlices.FIND_FREE_HOST_PORTS,
@@ -320,10 +322,22 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
             exec(`yq w -i config.yaml analytics.writer ${deploymentConfig.analytics!}`, { slice: installerSlices.INSTALLER_RENDER });
         }
 
-        if (withObservability) {
+        if (withVM || withObservability) {
             // TODO: there's likely more to do...
             const tracingEndpoint = exec(`yq r ./.werft/jobs/build/helm/values.tracing.yaml tracing.endpoint`, { slice: installerSlices.INSTALLER_RENDER }).stdout.trim();
             exec(`yq w -i config.yaml observability.tracing.endpoint ${tracingEndpoint}`, { slice: installerSlices.INSTALLER_RENDER });
+
+            // If the preview is running on Harvester, we've already deployed monitoring-satellite during 'VM' phase.
+            // Therefore, we want to skip installing it here.
+            if(!withVM) {
+                try {
+                    installMonitoring(deploymentConfig.namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
+                } catch (err) {
+                    werft.fail('observability', err)
+                } finally {
+                    werft.done('observability')
+                }
+            }
         }
 
         werft.log("authProviders", "copy authProviders from secret")
