@@ -1366,12 +1366,6 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 		l.Close()
 	}()
 
-	if _, exists := os.LookupEnv("DOCKER_DAEMON_ARGS"); exists {
-		log.Debug("DOCKER_DAEMON_ARGS exists")
-	} else {
-		log.Debug("DOCKER_DAEMON_ARGS does not exist")
-	}
-
 	_ = os.Chown(fn, gitpodUID, gitpodGID)
 	for ctx.Err() == nil {
 		err = activation.Listen(ctx, l, func(socketFD *os.File) error {
