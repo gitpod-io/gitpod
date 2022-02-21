@@ -9,9 +9,11 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"compress/gzip"
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -47,6 +49,7 @@ var opts struct {
 //go:embed runc
 var binaries embed.FS
 
+// ensure apt update is run only once
 var aptUpdated = false
 
 const (
@@ -116,6 +119,11 @@ func runWithinNetns() (err error) {
 		)
 	}
 
+	args, err = setUserArgs(args)
+	if err != nil {
+		return xerrors.Errorf("cannot add user supplied docker args: %w", err)
+	}
+
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
 		args = append(args, "-H", "fd://")
@@ -168,6 +176,78 @@ func runWithinNetns() (err error) {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+var allowedDockerArgs = map[string]string{
+	"remap-user": "userns-remap",
+}
+
+func setUserArgs(args []string) ([]string, error) {
+	userArgs, exists := os.LookupEnv("DOCKER_DAEMON_ARGS")
+	if !exists {
+		return args, nil
+	}
+
+	var providedDockerArgs map[string]string
+	if err := json.Unmarshal([]byte(userArgs), &providedDockerArgs); err != nil {
+		return nil, xerrors.Errorf("unable to deserialize docker args: %w", err)
+	}
+
+	for userArg, userValue := range providedDockerArgs {
+		mapped, exists := allowedDockerArgs[userArg]
+		if !exists {
+			continue
+		}
+
+		if userArg == "remap-user" {
+			id, err := strconv.Atoi(userValue)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, f := range []string{"/etc/subuid", "/etc/subgid"} {
+				err := adaptSubid(f, id)
+				if err != nil {
+					return nil, xerrors.Errorf("could not adapt subid files: %w", err)
+				}
+			}
+
+			args = append(args, "--"+mapped, "gitpod")
+		} else {
+			args = append(args, "--"+userArg, userValue)
+		}
+	}
+
+	return args, nil
+}
+
+func adaptSubid(oldfile string, id int) error {
+	uid, err := os.Open(oldfile)
+	if err != nil {
+		return err
+	}
+
+	newfile, err := os.Create(oldfile + ".new")
+	if err != nil {
+		return err
+	}
+
+	newfile.WriteString(fmt.Sprintf("gitpod:%d:%d\n", 1, id))
+	newfile.WriteString("gitpod:33333:1\n")
+
+	uidScanner := bufio.NewScanner(uid)
+	for uidScanner.Scan() {
+		l := uidScanner.Text()
+		if !strings.HasPrefix(l, "gitpod") {
+			newfile.WriteString(l + "\n")
+		}
+	}
+
+	if err = os.Rename(newfile.Name(), oldfile); err != nil {
+		return err
+	}
+
 	return nil
 }
 
