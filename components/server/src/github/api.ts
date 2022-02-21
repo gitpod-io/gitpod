@@ -94,7 +94,7 @@ export class GitHubGraphQlEndpoint {
         if (!response.ok) {
             throw Error(response.statusText);
         }
-        const result: QueryResult<T> = await response.json();
+        const result = await response.json() as QueryResult<T>;
         if (!result.data && result.errors) {
             const error = new Error(JSON.stringify({
                 request,
