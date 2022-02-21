@@ -6,6 +6,11 @@ package proxy
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net"
@@ -18,6 +23,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -662,7 +668,7 @@ func TestRoutes(t *testing.T) {
 				Header:       "",
 			}
 
-			proxy := NewWorkspaceProxy(ingress, cfg, router, &fakeWsInfoProvider{infos: workspaces})
+			proxy := NewWorkspaceProxy(ingress, cfg, router, &fakeWsInfoProvider{infos: workspaces}, nil)
 			handler, err := proxy.Handler()
 			if err != nil {
 				t.Fatalf("cannot create proxy handler: %q", err)
@@ -731,6 +737,98 @@ func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoord
 	}
 
 	return nil
+}
+
+func TestSSHGatewayRouter(t *testing.T) {
+	generatePrivateKey := func() ssh.Signer {
+		prik, err := rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			return nil
+		}
+		b := pem.EncodeToMemory(&pem.Block{
+			Bytes: x509.MarshalPKCS1PrivateKey(prik),
+			Type:  "RSA PRIVATE KEY",
+		})
+		signal, err := ssh.ParsePrivateKey(b)
+		if err != nil {
+			return nil
+		}
+		return signal
+	}
+
+	tests := []struct {
+		Name     string
+		Input    []ssh.Signer
+		Expected int
+	}{
+		{"one hostkey", []ssh.Signer{generatePrivateKey()}, 1},
+		{"multi hostkey", []ssh.Signer{generatePrivateKey(), generatePrivateKey()}, 2},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			router := HostBasedRouter(hostBasedHeader, wsHostSuffix, wsHostNameRegex)
+			ingress := HostBasedIngressConfig{
+				HTTPAddress:  "8080",
+				HTTPSAddress: "9090",
+				Header:       "",
+			}
+
+			proxy := NewWorkspaceProxy(ingress, config, router, &fakeWsInfoProvider{infos: workspaces}, test.Input)
+			handler, err := proxy.Handler()
+			if err != nil {
+				t.Fatalf("cannot create proxy handler: %q", err)
+			}
+
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_ssh/host_keys", nil),
+				addHostHeader,
+			))
+			resp := rec.Result()
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if resp.StatusCode != 200 {
+				t.Fatalf("status code should be 200, but got %d", resp.StatusCode)
+			}
+			var hostkeys []map[string]interface{}
+			fmt.Println(string(body))
+			err = json.Unmarshal(body, &hostkeys)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Log(hostkeys, len(hostkeys), test.Expected)
+
+			if len(hostkeys) != test.Expected {
+				t.Fatalf("hostkey length is not expected")
+			}
+		})
+	}
+}
+
+func TestNoSSHGatewayRouter(t *testing.T) {
+	t.Run("TestNoSSHGatewayRouter", func(t *testing.T) {
+		router := HostBasedRouter(hostBasedHeader, wsHostSuffix, wsHostNameRegex)
+		ingress := HostBasedIngressConfig{
+			HTTPAddress:  "8080",
+			HTTPSAddress: "9090",
+			Header:       "",
+		}
+
+		proxy := NewWorkspaceProxy(ingress, config, router, &fakeWsInfoProvider{infos: workspaces}, nil)
+		handler, err := proxy.Handler()
+		if err != nil {
+			t.Fatalf("cannot create proxy handler: %q", err)
+		}
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_ssh/host_keys", nil),
+			addHostHeader,
+		))
+		resp := rec.Result()
+		resp.Body.Close()
+		if resp.StatusCode != 401 {
+			t.Fatalf("status code should be 401, but got %d", resp.StatusCode)
+		}
+	})
+
 }
 
 func TestRemoveSensitiveCookies(t *testing.T) {

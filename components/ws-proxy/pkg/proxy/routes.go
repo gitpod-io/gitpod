@@ -7,6 +7,7 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -68,12 +70,17 @@ func NewRouteHandlerConfig(config *Config, opts ...RouteHandlerConfigOpt) (*Rout
 type RouteHandler = func(r *mux.Router, config *RouteHandlerConfig)
 
 // installWorkspaceRoutes configures routing of workspace and IDE requests.
-func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider) {
+func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider, hostKeyList []ssh.Signer) {
 	r.Use(logHandler)
 
 	// Note: the order of routes defines their priority.
 	//       Routes registered first have priority over those that come afterwards.
 	routes := newIDERoutes(config, ip)
+
+	// if host key is not empty, we use /_ssh/host_keys to provider public host key
+	if len(hostKeyList) > 0 {
+		routes.HandleSSHHostKeyRoute(r.Path("/_ssh/host_keys"), hostKeyList)
+	}
 
 	// The favicon warants special handling, because we pull that from the supervisor frontend
 	// rather than the IDE.
@@ -130,6 +137,29 @@ type ideRoutes struct {
 	InfoProvider WorkspaceInfoProvider
 
 	workspaceMustExistHandler mux.MiddlewareFunc
+}
+
+func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.Signer) {
+	shk := make([]struct {
+		Type    string `json:"type"`
+		HostKey string `json:"host_key"`
+	}, len(hostKeyList))
+	for i, hk := range hostKeyList {
+		shk[i].Type = hk.PublicKey().Type()
+		shk[i].HostKey = base64.StdEncoding.EncodeToString(hk.PublicKey().Marshal())
+	}
+	byt, err := json.Marshal(shk)
+	if err != nil {
+		log.WithError(err).Error("ssh_host_key router setup failed")
+		return
+	}
+	r := route.Subrouter()
+	r.Use(logRouteHandlerHandler("HandleSSHHostKeyRoute"))
+	r.Use(ir.Config.CorsHandler)
+	r.NewRoute().HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Add("Content-Type", "application/json")
+		rw.Write(byt)
+	})
 }
 
 func (ir *ideRoutes) HandleDirectIDERoute(route *mux.Route) {
