@@ -88,7 +88,7 @@ type Config struct {
 
 	SSHGatewayHostKey *ObjectRef `json:"sshGatewayHostKey,omitempty"`
 
-	DisableDefinitelyGP bool `json:"disableDefinitelyGp,omitempty"`
+	DisableDefinitelyGP bool `json:"disableDefinitelyGp,omitempty" validate:"boolean"`
 
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
