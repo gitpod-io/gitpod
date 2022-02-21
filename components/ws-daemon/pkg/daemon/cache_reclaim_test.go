@@ -54,8 +54,8 @@ func TestReadLimitBadValue(t *testing.T) {
 			t.Fatal(err)
 		}
 		_, err = readCache(tempdir)
-		if err == nil {
-			t.Fatal("expected failure")
+		if err != nil {
+			t.Fatalf("unexpected error: is '%v' but expected no error", err)
 		}
 	}
 }

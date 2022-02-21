@@ -7,6 +7,8 @@ package daemon
 import (
 	"bufio"
 	"context"
+	"errors"
+	"io/fs"
 	"io/ioutil"
 	"math"
 	"os"
@@ -116,6 +118,11 @@ func readLimit(memCgroupPath string) (uint64, error) {
 	fn := filepath.Join(string(memCgroupPath), "memory.limit_in_bytes")
 	fc, err := os.ReadFile(fn)
 	if err != nil {
+		// TODO(toru): find out why the file does not exists
+		if errors.Is(err, fs.ErrNotExist) {
+			return 0, nil
+		}
+
 		return 0, xerrors.Errorf("cannot read memory.limit_in_bytes: %v", err)
 	}
 
@@ -134,6 +141,11 @@ func readLimit(memCgroupPath string) (uint64, error) {
 func readCache(memCgroupPath string) (uint64, error) {
 	f, err := os.Open(filepath.Join(string(memCgroupPath), "memory.stat"))
 	if err != nil {
+		// TODO(toru): find out why the file does not exists
+		if errors.Is(err, fs.ErrNotExist) {
+			return 0, nil
+		}
+
 		return 0, xerrors.Errorf("cannot read memory.stat: %w", err)
 	}
 	defer f.Close()
