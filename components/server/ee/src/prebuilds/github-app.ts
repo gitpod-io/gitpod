@@ -227,6 +227,13 @@ export class GithubApp {
         try {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
+
+            // case 1: repo doesn't match PR target
+            if (cloneURL !== ctx.payload.pull_request.base.repo.clone_url) {
+                log.debug("Not exececuting a prebuild from unrelated forks.", { ctx });
+                return;
+            }
+
             const installationOwner = installationId ? await this.findInstallationOwner(installationId) : undefined;
             const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
             const user = await this.selectUserForPrebuild(installationOwner, project);
