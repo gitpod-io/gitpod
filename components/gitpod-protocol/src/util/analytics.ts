@@ -30,7 +30,13 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
 
         identify(msg: IdentifyMessage) {
         try {
-            this.analytics.identify(msg, (err: Error) => {
+            this.analytics.identify({
+                ...msg,
+                integrations: {
+                    "All": true,
+                    "Mixpanel": !!msg.userId
+                }
+            }, (err: Error) => {
                 if (err) {
                     log.warn("analytics.identify failed", err);
                 }
@@ -42,7 +48,13 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
 
     track(msg: TrackMessage) {
         try {
-            this.analytics.track(msg, (err: Error) => {
+            this.analytics.track({
+                ...msg,
+                integrations: {
+                    "All": true,
+                    "Mixpanel": !!msg.userId
+                }
+            }, (err: Error) => {
                 if (err) {
                     log.warn("analytics.track failed", err);
                 }
@@ -54,7 +66,13 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
 
     page(msg: PageMessage) {
         try{
-            this.analytics.page(msg, (err: Error) => {
+            this.analytics.page({
+                ...msg,
+                integrations: {
+                    "All": true,
+                    "Mixpanel": !!msg.userId
+                }
+            }, (err: Error) => {
                 if (err) {
                     log.warn("analytics.page failed", err);
                 }
