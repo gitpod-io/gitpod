@@ -12,6 +12,7 @@ import (
 	"compress/gzip"
 	"context"
 	"embed"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -311,15 +312,68 @@ func installUidMap() error {
 
 func installRunc() error {
 	runc, _ := exec.LookPath("runc")
-	if runc == "" {
+	if runc != "" {
+		// if the required version or a more recent one is already
+		// installed do nothing
+		if !needInstallRunc() {
+			return nil
+		}
+	} else {
 		runc = "/bin/runc"
 	}
+
 	err := installBinary("runc", runc)
 	if err != nil {
 		return xerrors.Errorf("could not install runc: %w", err)
 	}
 
 	return nil
+}
+
+func needInstallRunc() bool {
+	cmd := exec.Command("runc", "--version")
+	output, err := cmd.Output()
+	if err != nil {
+		return true
+	}
+
+	major, minor, err := detectRuncVersion(string(output))
+	if err != nil {
+		return true
+	}
+
+	return major < 1 || major == 1 && minor < 1
+}
+
+func detectRuncVersion(output string) (major, minor int, err error) {
+	versionInfo := strings.Split(output, "\n")
+	for _, l := range versionInfo {
+		if !strings.HasPrefix(l, "runc version") {
+			continue
+		}
+
+		l = strings.TrimPrefix(l, "runc version")
+		l = strings.TrimSpace(l)
+
+		n := strings.Split(l, ".")
+		if len(n) < 2 {
+			return 0, 0, xerrors.Errorf("could not parse %s", l)
+		}
+
+		major, err = strconv.Atoi(n[0])
+		if err != nil {
+			return 0, 0, xerrors.Errorf("could not parse major %s: %w", n[0])
+		}
+
+		minor, err = strconv.Atoi(n[1])
+		if err != nil {
+			return 0, 0, xerrors.Errorf("could not parse minor %s: %w", n[1])
+		}
+
+		return major, minor, nil
+	}
+
+	return 0, 0, xerrors.Errorf("could not detect runc version")
 }
 
 func installPackages(packages ...string) error {
