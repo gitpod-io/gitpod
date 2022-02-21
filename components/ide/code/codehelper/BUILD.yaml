@@ -1,0 +1,17 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    deps:
+      - components/gitpod-protocol/go:lib
+      - components/supervisor-api/go:lib
+      - components/common-go:lib
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/code/codehelper.Version=commit-${__git_commit}'"]
