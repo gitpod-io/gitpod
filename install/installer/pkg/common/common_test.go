@@ -5,9 +5,9 @@
 package common_test
 
 import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/google/go-cmp/cmp"
 )
 
