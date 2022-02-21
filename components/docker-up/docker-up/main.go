@@ -43,7 +43,10 @@ var opts struct {
 
 //go:embed docker.tgz
 //go:embed docker-compose
+//go:embed runc
 var binaries embed.FS
+
+var aptUpdated = false
 
 const (
 	dockerSocketFN = "/var/run/docker.sock"
@@ -171,6 +174,8 @@ var prerequisites = map[string]func() error{
 	"dockerd":        installDocker,
 	"docker-compose": installDockerCompose,
 	"iptables":       installIptables,
+	"uidmap":         installUidMap,
+	"runcV1.1.0":     installRunc,
 }
 
 func ensurePrerequisites() error {
@@ -259,20 +264,12 @@ func installDockerCompose() error {
 }
 
 func installIptables() error {
-	pth, _ := exec.LookPath("apt-get")
-	if pth != "" {
-		cmd := exec.Command("/bin/sh", "-c", "apt-get update && apt-get install -y iptables xz-utils")
-		cmd.Stdin = os.Stdin
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig: syscall.SIGKILL,
-		}
-
-		return cmd.Run()
+	err := installPackages("iptables", "xz-utils")
+	if err != nil {
+		return xerrors.Errorf("could not install iptables: %w", err)
 	}
 
-	pth, _ = exec.LookPath("apk")
+	pth, _ := exec.LookPath("apk")
 	if pth != "" {
 		cmd := exec.Command("/bin/sh", "-c", "apk add --no-cache iptables xz")
 		cmd.Stdin = os.Stdin
@@ -288,6 +285,76 @@ func installIptables() error {
 	// the container is not debian/ubuntu/alpine
 	log.WithField("command", "dockerd").Warn("Please install dockerd dependencies: iptables")
 	return nil
+}
+
+func installUidMap() error {
+	needInstall := false
+	if _, err := exec.LookPath("newuidmap"); err != nil {
+		needInstall = true
+	}
+
+	if _, err := exec.LookPath("newgidmap"); err != nil {
+		needInstall = true
+	}
+
+	if !needInstall {
+		return nil
+	}
+
+	err := installPackages("uidmap")
+	if err != nil {
+		return xerrors.Errorf("could not install uidmap: %w", err)
+	}
+
+	return nil
+}
+
+func installRunc() error {
+	runc, _ := exec.LookPath("runc")
+	if runc == "" {
+		runc = "/bin/runc"
+	}
+	err := installBinary("runc", runc)
+	if err != nil {
+		return xerrors.Errorf("could not install runc: %w", err)
+	}
+
+	return nil
+}
+
+func installPackages(packages ...string) error {
+	apt, _ := exec.LookPath("apt-get")
+	if apt != "" {
+		cmd := exec.Command("/bin/sh", "-c")
+
+		var installCommand string
+		if !aptUpdated {
+			installCommand = "apt-get update && "
+		}
+
+		installCommand = installCommand + "apt-get install -y"
+		for _, p := range packages {
+			installCommand = installCommand + " " + p
+		}
+
+		cmd.Args = append(cmd.Args, installCommand)
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Pdeathsig: syscall.SIGKILL,
+		}
+
+		err := cmd.Run()
+		if err != nil {
+			return err
+		}
+
+		aptUpdated = true
+		return nil
+	} else {
+		return xerrors.Errorf("apt-get is not available")
+	}
 }
 
 func installBinary(name, dst string) error {
