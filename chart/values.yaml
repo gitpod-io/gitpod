@@ -36,7 +36,7 @@ workspaceSizing:
     memory: "2.25Gi"
     ephemeral-storage: "5Gi"
   limits:
-    cpu: "5"
+    cpu: "6"
     memory: "12Gi"
   dynamic:
     # Gitpod supports dynamic CPU limiting. We express those limits in "buckets of CPU time" (jiffies where 1 jiffie is 1% of a vCPU).
