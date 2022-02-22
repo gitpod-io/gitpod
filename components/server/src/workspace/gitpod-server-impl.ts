@@ -1029,7 +1029,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getSuggestedContextURLs(ctx: TraceContext): Promise<string[]> {
         const user = this.checkUser("getSuggestedContextURLs");
-        const suggestions: string[] = [];
+        const suggestions: Array<{ url: string, lastUse?: string }> = [];
         const logCtx: LogContext = { userId: user.id };
 
         // Fetch all data sources in parallel for maximum speed (don't await in this scope before `Promise.allSettled(promises)` below!)
@@ -1037,7 +1037,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Example repositories
         promises.push(this.getFeaturedRepositories(ctx).then(exampleRepos => {
-            exampleRepos.forEach(r => suggestions.push(r.url));
+            exampleRepos.forEach(r => suggestions.push({ url: r.url }));
         }).catch(error => {
             log.error(logCtx, 'Could not get example repositories', error);
         }));
@@ -1046,7 +1046,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         promises.push(this.getAuthProviders(ctx).then(authProviders => Promise.all(authProviders.map(async (p) => {
             try {
                 const userRepos = await this.getProviderRepositoriesForUser(ctx, { provider: p.host });
-                userRepos.forEach(r => suggestions.push(r.cloneUrl.replace(/\.git$/, '')));
+                userRepos.forEach(r => suggestions.push({ url: r.cloneUrl.replace(/\.git$/, '') }));
             } catch (error) {
                 log.debug(logCtx, 'Could not get user repositories from App for ' + p.host, error);
             }
@@ -1064,7 +1064,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     return;
                 }
                 const userRepos = await services.repositoryProvider.getUserRepos(user);
-                userRepos.forEach(r => suggestions.push(r.replace(/\.git$/, '')));
+                userRepos.forEach(r => suggestions.push({ url: r.replace(/\.git$/, '') }));
             } catch (error) {
                 log.debug(logCtx, 'Could not get user repositories from host ' + p.host, error);
             }
@@ -1077,7 +1077,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             workspaces.forEach(ws => {
                 const repoUrl = Workspace.getFullRepositoryUrl(ws.workspace);
                 if (repoUrl) {
-                    suggestions.push(repoUrl);
+                    const lastUse = WorkspaceInfo.lastActiveISODate(ws);
+                    suggestions.push({ url: repoUrl, lastUse });
                 }
             });
         }).catch(error => {
@@ -1088,14 +1089,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const uniqueURLs = new Set();
         return suggestions
-            .sort((a, b) => a.toLowerCase() > b.toLowerCase() ? 1 : -1)
-            .filter(r => {
-                if (uniqueURLs.has(r)) {
+            .sort((a, b) => {
+                // Most recently used first
+                if (b.lastUse || a.lastUse) {
+                    const la = a.lastUse || '';
+                    const lb = b.lastUse || '';
+                    return la < lb ? 1 : (la === lb ? 0 : -1);
+                }
+                // Otherwise, alphasort
+                const ua = a.url.toLowerCase();
+                const ub = b.url.toLowerCase();
+                return ua > ub ? 1 : (ua === ub ? 0 : -1);
+            })
+            .filter(s => {
+                if (uniqueURLs.has(s.url)) {
                     return false;
                 }
-                uniqueURLs.add(r);
+                uniqueURLs.add(s.url);
                 return true;
-            });
+            }).map(s => s.url);
     }
 
     public async setWorkspaceTimeout(ctx: TraceContext, workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
