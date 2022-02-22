@@ -40,7 +40,7 @@ class HeartbeatService : Disposable {
                 }
 
                 if (wasClosed != null) {
-                    manager.client.server.sendHeartBeat(SendHeartBeatOptions(info.infoResponse.instanceId, wasClosed)).await()
+                    manager.client.server.sendHeartBeat(SendHeartBeatOptions(info.instanceId, wasClosed)).await()
                 }
             } catch (t: Throwable) {
                 thisLogger().error("gitpod: failed to check activity:", t)

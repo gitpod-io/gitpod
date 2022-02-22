@@ -18,14 +18,17 @@ import git4idea.config.GitVcsApplicationSettings
 import io.gitpod.gitpodprotocol.api.GitpodClient
 import io.gitpod.gitpodprotocol.api.GitpodServerLauncher
 import io.gitpod.jetbrains.remote.services.HeartbeatService
-import io.gitpod.jetbrains.remote.services.SupervisorInfoService
+import io.gitpod.supervisor.api.*
+import io.gitpod.supervisor.api.Info.WorkspaceInfoResponse
 import io.gitpod.supervisor.api.Notification.*
-import io.gitpod.supervisor.api.NotificationServiceGrpc
+import io.grpc.ManagedChannel
+import io.grpc.ManagedChannelBuilder
 import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.guava.asDeferred
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.ide.BuiltInServerManager
@@ -37,9 +40,15 @@ import java.time.Duration
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import javax.websocket.DeploymentException
+import io.gitpod.jetbrains.remote.utils.Retrier.retry
 
 @Service
 class GitpodManager : Disposable {
+
+    companion object {
+        // there should be only one channel per an application to avoid memory leak
+        val supervisorChannel: ManagedChannel = ManagedChannelBuilder.forTarget("localhost:22999").usePlaintext().build()
+    }
 
     val devMode = System.getenv("JB_DEV").toBoolean()
 
@@ -84,8 +93,8 @@ class GitpodManager : Disposable {
 
     private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gitpod Notifications")
     private val notificationsJob = GlobalScope.launch {
-        val notifications = NotificationServiceGrpc.newStub(SupervisorInfoService.channel)
-        val futureNotifications = NotificationServiceGrpc.newFutureStub(SupervisorInfoService.channel)
+        val notifications = NotificationServiceGrpc.newStub(supervisorChannel)
+        val futureNotifications = NotificationServiceGrpc.newFutureStub(supervisorChannel)
         while (isActive) {
             try {
                 val f = CompletableFuture<Void>()
@@ -145,11 +154,18 @@ class GitpodManager : Disposable {
         }
     }
 
-    val pendingInfo = CompletableFuture<SupervisorInfoService.Result>()
+    val pendingInfo = CompletableFuture<WorkspaceInfoResponse>()
     private val infoJob = GlobalScope.launch {
         try {
-            // TOO(ak) inline SupervisorInfoService
-            pendingInfo.complete(SupervisorInfoService.fetch())
+            // TODO(ak) replace retry with proper handling of grpc errors
+            val infoResponse = retry(3) {
+                InfoServiceGrpc
+                        .newFutureStub(supervisorChannel)
+                        .workspaceInfo(Info.WorkspaceInfoRequest.newBuilder().build())
+                        .asDeferred()
+                        .await()
+            }
+            pendingInfo.complete(infoResponse)
         } catch (t: Throwable) {
             pendingInfo.completeExceptionally(t)
         }
@@ -163,6 +179,23 @@ class GitpodManager : Disposable {
     val client = GitpodClient()
     private val serverJob = GlobalScope.launch {
         val info = pendingInfo.await()
+
+        // TODO(ak) replace retry with proper handling of grpc errors
+        val tokenResponse = retry(3) {
+            val request = Token.GetTokenRequest.newBuilder()
+                    .setHost(info.gitpodApi.host)
+                    .addScope("function:sendHeartBeat")
+                    .addScope("function:trackEvent")
+                    .setKind("gitpod")
+                    .build()
+
+            TokenServiceGrpc
+                    .newFutureStub(supervisorChannel)
+                    .getToken(request)
+                    .asDeferred()
+                    .await()
+        }
+
         val launcher = GitpodServerLauncher.create(client)
         val plugin = PluginManagerCore.getPlugin(PluginId.getId("io.gitpod.jetbrains.remote"))!!
         val connect = {
@@ -171,11 +204,11 @@ class GitpodManager : Disposable {
                 // see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360003146180/comments/360000376240
                 Thread.currentThread().contextClassLoader = HeartbeatService::class.java.classLoader
                 launcher.listen(
-                        info.infoResponse.gitpodApi.endpoint,
-                        info.infoResponse.gitpodHost,
+                        info.gitpodApi.endpoint,
+                        info.gitpodHost,
                         plugin.pluginId.idString,
                         plugin.version,
-                        info.tokenResponse.token
+                        tokenResponse.token
                 )
             } finally {
                 Thread.currentThread().contextClassLoader = originalClassLoader;
@@ -186,7 +219,7 @@ class GitpodManager : Disposable {
         val maxReconnectionDelay = 30 * 1000L
         val reconnectionDelayGrowFactor = 1.5;
         var reconnectionDelay = minReconnectionDelay;
-        val gitpodHost = info.infoResponse.gitpodApi.host
+        val gitpodHost = info.gitpodApi.host
         var closeReason: Any = "cancelled"
         try {
             while (kotlin.coroutines.coroutineContext.isActive) {
