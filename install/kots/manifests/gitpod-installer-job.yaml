@@ -17,6 +17,25 @@ spec:
     spec:
       serviceAccountName: installer
       restartPolicy: OnFailure
+      initContainers:
+        # Checks that the cert-manager installation is complete
+        - name: cert-manager
+          image: alpine/helm
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -e
+              echo "Gitpod: Install jq"
+              apk add --no-cache jq
+              echo "Gitpod: Perform the check"
+              while [ "$(helm status -n {{repl Namespace }} cert-manager -o json | jq '.info.status == "deployed"')" = "false" ];
+              do
+                echo "Gitpod: Release not found - will retry in 10s"
+                sleep 10
+              done
+              echo "Gitpod: Release found - goodbye"
       containers:
         - name: installer
           # Normally, this would be a release but this has additions for Replicated from 2022.01
