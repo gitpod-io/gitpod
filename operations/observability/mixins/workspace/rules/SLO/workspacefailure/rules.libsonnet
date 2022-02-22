@@ -14,9 +14,9 @@
             expr: |||
               (
                 (
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"GHOST|PREBUILD"}[5m]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[5m]))
                   /
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"GHOST|PREBUILD"}[5m]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[5m]))
                 )
               ) + (
                 (
@@ -32,9 +32,9 @@
             expr: |||
               (
                 (
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"GHOST|PREBUILD"}[30m]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[30m]))
                   /
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"GHOST|PREBUILD"}[30m]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[30m]))
                 )
               ) + (
                 (
@@ -50,9 +50,9 @@
             expr: |||
               (
                 (
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"GHOST|PREBUILD"}[1h]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[1h]))
                   /
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"GHOST|PREBUILD"}[1h]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[1h]))
                 )
               ) + (
                 (
@@ -68,9 +68,9 @@
             expr: |||
               (
                 (
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"GHOST|PREBUILD"}[2h]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[2h]))
                   /
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"GHOST|PREBUILD"}[2h]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[2h]))
                 )
               ) + (
                 (
@@ -86,9 +86,9 @@
             expr: |||
               (
                 (
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"GHOST|PREBUILD"}[6h]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[6h]))
                   /
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"GHOST|PREBUILD"}[6h]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[6h]))
                 )
               ) + (
                 (
@@ -104,9 +104,9 @@
             expr: |||
               (
                 (
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"GHOST|PREBUILD"}[1d]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[1d]))
                   /
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"GHOST|PREBUILD"}[1d]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[1d]))
                 )
               ) + (
                 (
@@ -122,9 +122,9 @@
             expr: |||
               (
                 (
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"GHOST|PREBUILD"}[3d]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[3d]))
                   /
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"GHOST|PREBUILD"}[3d]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[3d]))
                 )
               ) + (
                 (
@@ -140,9 +140,9 @@
             expr: |||
               (
                 (
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"GHOST|PREBUILD"}[30d]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed",type!~"PREBUILD"}[30d]))
                   /
-                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"GHOST|PREBUILD"}[30d]))
+                  sum(rate(gitpod_ws_manager_workspace_stops_total{type!~"PREBUILD"}[30d]))
                 )
               ) + (
                 (

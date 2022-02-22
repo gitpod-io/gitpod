@@ -165,7 +165,6 @@ func buildWorkspaceTemplates(ctx *common.RenderContext) (config.WorkspacePodTemp
 		Tpl  *corev1.Pod
 	}{
 		{Name: "default", Path: &cfg.DefaultPath, Tpl: cfgTpls.Default},
-		{Name: "ghost", Path: &cfg.GhostPath, Tpl: cfgTpls.Ghost},
 		{Name: "imagebuild", Path: &cfg.ImagebuildPath, Tpl: cfgTpls.ImageBuild},
 		{Name: "prebuild", Path: &cfg.PrebuildPath, Tpl: cfgTpls.Prebuild},
 		{Name: "regular", Path: &cfg.RegularPath, Tpl: cfgTpls.Regular},

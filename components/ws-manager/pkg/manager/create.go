@@ -53,8 +53,6 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.PrebuildPath)
 	case api.WorkspaceType_PROBE:
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ProbePath)
-	case api.WorkspaceType_GHOST:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.GhostPath)
 	case api.WorkspaceType_IMAGEBUILD:
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ImagebuildPath)
 	}
@@ -278,8 +276,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		prefix = "prebuild"
 	case api.WorkspaceType_PROBE:
 		prefix = "probe"
-	case api.WorkspaceType_GHOST:
-		prefix = "ghost"
 	case api.WorkspaceType_IMAGEBUILD:
 		prefix = "imagebuild"
 		// mount self-signed gitpod CA certificate to ensure
@@ -537,11 +533,6 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			InitialDelaySeconds: 3,
 		}
 	)
-
-	if startContext.Request.Type == api.WorkspaceType_GHOST {
-		command = []string{"/.supervisor/supervisor", "ghost"}
-		readinessProbe = nil
-	}
 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 
