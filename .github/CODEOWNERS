@@ -25,6 +25,7 @@
 /components/image-builder-bob @gitpod-io/engineering-workspace
 /components/image-builder-mk3 @gitpod-io/engineering-workspace
 /components/installation-telemetry @gitpod-io/engineering-self-hosted
+/install @gitpod-io/engineering-self-hosted
 /install/installer @gitpod-io/engineering-self-hosted
 /install/installer/pkg/components/agent-smith @gitpod-io/engineering-workspace
 /install/installer/pkg/components/blobserve @gitpod-io/engineering-workspace
