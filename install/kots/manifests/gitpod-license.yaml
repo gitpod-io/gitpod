@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitpod-license
+data:
+  license: '{{repl LicenseFieldValue "signature" | Base64Encode }}'
+  type: '{{repl printf "replicated" | Base64Encode }}'

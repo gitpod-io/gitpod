@@ -1,5 +1,6 @@
 # The installer job is where the magic happens. It generates
-# the config and installs Gitpod
+# the config, installs Gitpod and then deletes itself when
+# it's finished
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -27,22 +28,35 @@ spec:
           args:
             - |
               set -e
+
               echo "Gitpod: Install jq"
               apk add --no-cache jq
+
               echo "Gitpod: Perform the check"
               while [ "$(helm status -n {{repl Namespace }} cert-manager -o json | jq '.info.status == "deployed"')" = "false" ];
               do
                 echo "Gitpod: Release not found - will retry in 10s"
                 sleep 10
               done
+
               echo "Gitpod: Release found - goodbye"
       containers:
         - name: installer
           # This will normally be the release tag - using this tag as need the license evaluator
           image: 'eu.gcr.io/gitpod-core-dev/build/installer:main.2569'
+          volumeMounts:
+            - mountPath: /mnt/node0
+              name: node-fs0
+              readOnly: true
           env:
             - name: CONFIG_FILE
               value: /tmp/gitpod-config.yaml
+            - name: CONTAINERD_DIR_K3S
+              value: /run/k3s/containerd/io.containerd.runtime.v2.task/k8s.io
+            - name: CONTAINERD_SOCKET_K3S
+              value: /run/k3s/containerd/containerd.sock
+            - name: GITPOD_OBJECTS
+              value: /tmp/gitpod
           command:
             - /bin/sh
             - -c
@@ -53,10 +67,102 @@ spec:
               echo "Gitpod: Generate the base Installer config"
               /app/installer init > "${CONFIG_FILE}"
 
+              echo "Gitpod: auto-detecting containerd location on host machine"
+              if [ -d "/mnt/node0${CONTAINERD_DIR_K3S}" ]; then
+                echo "Gitpod: containerd dir detected as k3s"
+
+                yq e -i ".workspace.runtime.containerdRuntimeDir = \"${CONTAINERD_DIR_K3S}\"" "${CONFIG_FILE}"
+              fi
+
+              if [ -S "/mnt/node0${CONTAINERD_SOCKET_K3S}" ]; then
+                echo "Gitpod: containerd socket detected as k3s"
+
+                yq e -i ".workspace.runtime.containerdSocket = \"${CONTAINERD_SOCKET_K3S}\"" "${CONFIG_FILE}"
+              fi
+
               echo "Gitpod: Inject the Replicated variables into the config"
               yq e -i '.domain = "{{repl ConfigOption "domain" }}"' "${CONFIG_FILE}"
+              yq e -i '.license.kind = "secret"' "${CONFIG_FILE}"
+              yq e -i '.license.name = "gitpod-license"' "${CONFIG_FILE}"
+
+              if [ '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "1") }}' = "true" ];
+              then
+                echo "Gitpod: configuring CloudSQLProxy"
+
+                yq e -i ".database.inCluster = false" "${CONFIG_FILE}"
+                yq e -i ".database.cloudSQL.instance = \"{{repl ConfigOption "db_cloudsql_instance" }}\"" "${CONFIG_FILE}"
+                yq e -i ".database.cloudSQL.serviceAccount.kind = \"secret\"" "${CONFIG_FILE}"
+                yq e -i ".database.cloudSQL.serviceAccount.name = \"cloudsql\"" "${CONFIG_FILE}"
+              fi
+
+              if [ '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "0") }}' = "true" ];
+              then
+                echo "Gitpod: configuring external database"
+
+                yq e -i ".database.inCluster = false" "${CONFIG_FILE}"
+                yq e -i ".database.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+                yq e -i ".database.external.certificate.name = \"database\"" "${CONFIG_FILE}"
+              fi
+
+              if [ '{{repl ConfigOptionEquals "reg_incluster" "0" }}' = "true" ];
+              then
+                echo "Gitpod: configuring external container registry"
+
+                yq e -i ".containerRegistry.inCluster = false" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.url = \"{{repl ConfigOption "reg_url" }}\"" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+                yq e -i ".containerRegistry.external.certificate.name = \"container-registry\"" "${CONFIG_FILE}"
+
+              if [ '{{repl ConfigOptionEquals "reg_s3storage" "1" }}' = "true" ];
+                then
+                  echo "Gitpod: configuring container registry S3 backend"
+
+                  yq e -i ".containerRegistry.s3storage.bucket = \"{{repl ConfigOption "reg_bucketname" }}\"" "${CONFIG_FILE}"
+                  yq e -i ".containerRegistry.s3storage.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+                  yq e -i ".containerRegistry.s3storage.certificate.name = \"container-registry-s3-backend\"" "${CONFIG_FILE}"
+                fi
+              fi
+
+              if [ '{{repl ConfigOptionNotEquals "store_provider" "incluster" }}' = "true" ];
+              then
+                echo "Gitpod: configuring the storage"
+
+                yq e -i ".metadata.region = \"{{repl ConfigOption "store_region" }}\"" "${CONFIG_FILE}"
+                yq e -i ".objectStorage.inCluster = false" "${CONFIG_FILE}"
+
+                if [ '{{repl ConfigOptionEquals "store_provider" "azure" }}' = "true" ];
+                then
+                  echo "Gitpod: configuring storage for Azure"
+
+                  yq e -i ".objectStorage.azure.credentials.kind = \"secret\"" "${CONFIG_FILE}"
+                  yq e -i ".objectStorage.azure.credentials.name = \"storage-azure\"" "${CONFIG_FILE}"
+                fi
+
+                if [ '{{repl ConfigOptionEquals "store_provider" "gcp" }}' = "true" ];
+                then
+                  echo "Gitpod: configuring storage for GCP"
+
+                  yq e -i ".objectStorage.cloudStorage.project = \"{{repl ConfigOption "store_gcp_project" }}\"" "${CONFIG_FILE}"
+                  yq e -i ".objectStorage.cloudStorage.serviceAccount.kind = \"secret\"" "${CONFIG_FILE}"
+                  yq e -i ".objectStorage.cloudStorage.serviceAccount.name = \"storage-gcp\"" "${CONFIG_FILE}"
+                fi
+
+                if [ '{{repl ConfigOptionEquals "store_provider" "s3" }}' = "true" ];
+                then
+                  echo "Gitpod: configuring storage for S3"
+
+                  yq e -i ".objectStorage.s3.endpoint = \"{{repl ConfigOption "store_s3_endpoint" }}\"" "${CONFIG_FILE}"
+                  yq e -i ".objectStorage.s3.credentials.secret = \"secret\"" "${CONFIG_FILE}"
+                  yq e -i ".objectStorage.s3.credentials.name = \"storage-s3\"" "${CONFIG_FILE}"
+                fi
+              fi
 
               echo "Gitpod: Generate the Kubernetes objects and apply"
               /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} | kubectl apply -f -
 
               echo "Gitpod: Installer job finished - goodbye"
+      volumes:
+        - name: node-fs0
+          hostPath:
+            path: /
+            type: Directory
