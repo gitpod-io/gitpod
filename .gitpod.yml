@@ -29,6 +29,14 @@ tasks:
     command: |
       ./dev/preview/download-and-merge-harvester-kubeconfig.sh
       exit 0
+  - name: Replicated
+    before: |
+      brew install replicatedhq/replicated/cli kubectl helm
+      curl https://kots.io/install | bash
+    command: |
+      cd install/kots
+      make helm
+      exit 0
   - name: Java
     init: |
       leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
