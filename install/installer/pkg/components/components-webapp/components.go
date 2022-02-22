@@ -11,7 +11,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
 	ide_proxy "github.com/gitpod-io/gitpod/installer/pkg/components/ide-proxy"
 	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
-	jaegeroperator "github.com/gitpod-io/gitpod/installer/pkg/components/jaeger-operator"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/migrations"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
 	openvsxproxy "github.com/gitpod-io/gitpod/installer/pkg/components/openvsx-proxy"
@@ -38,7 +37,6 @@ var Objects = common.CompositeRenderFunc(
 
 var Helm = common.CompositeHelmFunc(
 	database.Helm,
-	jaegeroperator.Helm,
 	minio.Helm,
 	rabbitmq.Helm,
 )
