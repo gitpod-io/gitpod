@@ -52,9 +52,20 @@ func (basePath CgroupCFSController) SetLimit(limit Bandwidth) (changed bool, err
 
 	err = os.WriteFile(filepath.Join(string(basePath), "cpu.cfs_quota_us"), []byte(strconv.FormatInt(target.Microseconds(), 10)), 0644)
 	if err != nil {
-		return false, xerrors.Errorf("cannot set CFS quota of %d (period is %d): %w", target.Microseconds(), period.Microseconds(), err)
+		return false, xerrors.Errorf("cannot set CFS quota of %d (period is %d, parent quota is %d): %w",
+			target.Microseconds(), period.Microseconds(), basePath.readParentQuota().Microseconds(), err)
 	}
 	return true, nil
+}
+
+func (basePath CgroupCFSController) readParentQuota() time.Duration {
+	parent := CgroupCFSController(filepath.Dir(string(basePath)))
+	pq, err := parent.readUint64("cpu.cfs_quota_us")
+	if err != nil {
+		return time.Duration(0)
+	}
+
+	return time.Duration(pq) * time.Microsecond
 }
 
 func (basePath CgroupCFSController) readUint64(path string) (uint64, error) {
