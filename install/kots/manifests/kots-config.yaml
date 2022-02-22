@@ -1,0 +1,15 @@
+apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: gitpod
+spec:
+  groups:
+    - name: general
+      title: General settings
+      description: General settings for your Gitpod instance
+      items:
+        - name: domain
+          title: What is your domain name?
+          help_text: This will be the URL that you use to access your Gitpod instance. This should be in the format "gitpod.domain.com".
+          type: text
+          required: true
