@@ -18,6 +18,7 @@ import settingsMenu from "./settings-menu";
 import IDENone from '../icons/IDENone.svg';
 import IDENoneDark from '../icons/IDENoneDark.svg';
 import CheckBox from "../components/CheckBox";
+import { trackEvent } from "../Analytics";
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -44,15 +45,15 @@ export default function Preferences() {
         settings.defaultDesktopIde = desktopIde;
         settings.useLatestVersion = useLatestVersion;
         additionalData.ideSettings = settings;
-        getGitpodService().server.trackEvent({
-            event: "ide_configuration_changed",
-            properties: {
+        trackEvent(
+            "ide_configuration_changed",
+            {
                 useDesktopIde,
                 defaultIde,
                 defaultDesktopIde: desktopIde,
                 useLatestVersion,
-            },
-        }).then().catch(console.error);
+            }
+        ).then().catch(console.error);
         await getGitpodService().server.updateLoggedInUser({ additionalData });
     }
 

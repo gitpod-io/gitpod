@@ -2373,34 +2373,38 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    public async trackEvent(ctx: TraceContext, event: RemoteTrackMessage): Promise<void> {
-        // Beware: DO NOT just event... the message, but consume it individually as the message is coming from
+    public async trackEvent(ctx: TraceContext, event: RemoteTrackMessage | RemoteTrackMessage[]): Promise<void> {
+        // Beware: DO NOT spread the `event` message using `...`, but consume it individually as the message is coming from
         //         the wire and we have no idea what's in it. Even passing the context and properties directly
         //         is questionable. Considering we're handing down the msg and do not know how the analytics library
         //         handles potentially broken or malicious input, we better err on the side of caution.
 
-        const userId = this.user?.id;
-        const anonymousId = event.anonymousId;
-        const msg = {
-            event: event.event,
-            messageId: event.messageId,
-            context: event.context,
-            properties: event.properties
-        }
+        // (AT)hint: `analytics-node` is buffering up to 450kb of messages and flushes then to the remote site
+        const events = Array.isArray(event) ? event : [event];
+        for (const event of events) {
+            const userId = this.user?.id;
+            const anonymousId = event.anonymousId;
+            const msg = {
+                event: event.event,
+                messageId: event.messageId,
+                context: event.context,
+                properties: event.properties
+            }
 
-        //only track if at least one identifier is known
-        if (userId) {
-            this.analytics.track({
-                userId: userId,
-                anonymousId: anonymousId,
-                ...msg
-            });
-        } else if (anonymousId) {
-            this.analytics.track({
-                anonymousId: anonymousId as string | number,
-                ...msg
-            });
-        };
+            //only track if at least one identifier is known
+            if (userId) {
+                this.analytics.track({
+                    userId: userId,
+                    anonymousId: anonymousId,
+                    ...msg
+                });
+            } else if (anonymousId) {
+                this.analytics.track({
+                    anonymousId: anonymousId as string | number,
+                    ...msg
+                });
+            };
+        }
     }
 
     public async trackLocation(ctx: TraceContext, event: RemotePageMessage): Promise<void> {

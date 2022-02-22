@@ -11,6 +11,7 @@ import EventEmitter from "events";
 import * as queryString from "query-string";
 import React, { Suspense, useEffect } from "react";
 import { v4 } from 'uuid';
+import { trackEvent } from "../Analytics";
 import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
@@ -140,29 +141,29 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     const newPhase = this.state?.workspaceInstance?.status.phase;
     const oldPhase = prevState.workspaceInstance?.status.phase;
     if (newPhase !== oldPhase) {
-      getGitpodService().server.trackEvent({
-        event: "status_rendered",
-        properties: {
+      trackEvent(
+        "status_rendered",
+        {
           sessionId,
           instanceId: this.state.workspaceInstance?.id,
           workspaceId: this.props.workspaceId,
           type: this.state.workspace?.type,
           phase: newPhase
-        },
-      });
+        }
+      );
     }
 
     if (!!this.state.error && this.state.error !== prevState.error) {
-      getGitpodService().server.trackEvent({
-        event: "error_rendered",
-        properties: {
+      trackEvent(
+        "error_rendered",
+        {
           sessionId,
           instanceId: this.state.workspaceInstance?.id,
           workspaceId: this.state?.workspace?.id,
           type: this.state.workspace?.type,
           error: this.state.error
         },
-      });
+      );
     }
   }
 

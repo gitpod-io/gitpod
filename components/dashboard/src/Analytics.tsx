@@ -9,17 +9,18 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import Cookies from "js-cookie";
 import { v4 } from "uuid";
 import { Experiment } from "./experiments";
+import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 
-
-export type Event = "invite_url_requested" | "organisation_authorised";
+export type Event = string | "invite_url_requested" | "organisation_authorised";
 type InternalEvent = Event | "path_changed" | "dashboard_clicked";
 
 export type EventProperties =
-    TrackOrgAuthorised
+  TrackOrgAuthorised
   | TrackInviteUrlRequested
-;
+  | { [key: string]: string | boolean | object | undefined }
+  ;
 type InternalEventProperties = TrackUIExperiments & (
-    EventProperties
+  EventProperties
   | TrackDashboardClick
   | TrackPathChanged
 );
@@ -58,18 +59,41 @@ interface Traits {
 
 //call this to track all events outside of button and anchor clicks
 export const trackEvent = (event: Event, properties: EventProperties) => {
-  trackEventInternal(event, properties);
+  return trackEventInternal(event, properties);
 }
+
+const queue: RemoteTrackMessage[] = [];
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // make sure the events are pushed to backend before the tab disappears.
+    pushTrackEventsToServer();
+  }
+});
 
 const trackEventInternal = (event: InternalEvent, properties: InternalEventProperties) => {
   properties.ui_experiments = Experiment.get();
 
-  getGitpodService().server.trackEvent({
+  return getGitpodService().server.trackEvent({
     anonymousId: getAnonymousId(),
     event,
     properties,
   });
 };
+
+const pushTrackEventsToServer = () => {
+  if (queue.length === 0) {
+    return;
+  }
+  const events = queue.splice(0, queue.length);
+  getGitpodService().server.trackEvent(events);
+}
+
+const w = window as any;
+const _gp = w._gp || (w._gp = {});
+if (!_gp.trackEventTimer) {
+  _gp.trackEventTimer = setInterval(pushTrackEventsToServer, 5000);
+}
 
 export const trackButtonOrAnchor = (target: HTMLAnchorElement | HTMLButtonElement | HTMLDivElement) => {
   //read manually passed analytics props from 'data-analytics' attribute of event target
@@ -116,13 +140,13 @@ export const trackButtonOrAnchor = (target: HTMLAnchorElement | HTMLButtonElemen
     }
     const ancestorProps: TrackDashboardClick | undefined = getAncestorProps(curr.parentElement);
     const currProps = JSON.parse(curr.dataset.analytics || "{}") as TrackDashboardClick;
-    return {...ancestorProps, ...currProps};
+    return { ...ancestorProps, ...currProps };
   }
 
   const ancestorProps = getAncestorProps(target);
 
   //props that were passed directly to the event target take precedence over those passed to ancestor elements, which take precedence over those implicitly determined.
-  trackingMsg = {...trackingMsg, ...ancestorProps, ...passedProps};
+  trackingMsg = { ...trackingMsg, ...ancestorProps, ...passedProps };
 
   trackEventInternal("dashboard_clicked", trackingMsg);
 }
@@ -171,7 +195,7 @@ const getAnonymousId = (): string => {
   }
   else {
     anonymousId = v4();
-    Cookies.set('ajs_anonymous_id', anonymousId, {domain: '.'+window.location.hostname, expires: 365});
+    Cookies.set('ajs_anonymous_id', anonymousId, { domain: '.' + window.location.hostname, expires: 365 });
   };
   return anonymousId;
 }
