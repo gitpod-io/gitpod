@@ -22,11 +22,14 @@ export default function Settings() {
     const { user } = useContext(UserContext);
 
     useEffect(() => {
+        if (isGitpodIo()) {
+            return; // temporarily disable to avoid hight CPU on the DB
+        }
         (async () => {
             const data = await getGitpodService().server.adminGetTelemetryData();
             setTelemetryData(data)
         })();
-    });
+    }, []);
 
     if (!user || !user?.rolesOrPermissions?.includes('admin')) {
         return <Redirect to="/"/>
@@ -52,4 +55,8 @@ export default function Settings() {
             </PageWithSubMenu >
         </div >
     )
+}
+
+function isGitpodIo() {
+    return window.location.hostname === 'gitpod.io' || window.location.hostname === 'gitpod-staging.com';
 }
