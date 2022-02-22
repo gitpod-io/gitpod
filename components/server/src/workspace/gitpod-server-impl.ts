@@ -836,6 +836,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             ]);
 
             if (SnapshotContext.is(context)) {
+                // TODO(janx): Remove snapshot access tracking once we're certain that enforcing repository read access doesn't disrupt the snapshot UX.
+                this.trackEvent(ctx, { event: "snapshot_access_request", properties: { snapshot_id: context.snapshotId } }).catch();
                 const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(context.snapshotId);
                 if (!snapshot) {
                     throw new ResponseError(ErrorCodes.NOT_FOUND, "No snapshot with id '" + context.snapshotId + "' found.");
@@ -847,11 +849,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 try {
                     await this.guardAccess({ kind: "snapshot", subject: snapshot, workspace }, "get");
                 } catch (error) {
+                    this.trackEvent(ctx, { event: "snapshot_access_denied", properties: { snapshot_id: context.snapshotId, error: String(error) } }).catch();
                     if (UnauthorizedError.is(error)) {
                         throw error;
                     }
                     throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Snapshot URLs require read access to the underlying repository. Please request access from the repository owner.`)
                 }
+                this.trackEvent(ctx, { event: "snapshot_access_granted", properties: { snapshot_id: context.snapshotId } }).catch();
             }
 
             // if we're forced to use the default config, mark the context as such
