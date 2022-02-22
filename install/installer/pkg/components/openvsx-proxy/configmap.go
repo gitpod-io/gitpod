@@ -22,7 +22,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		LogDebug:             false,
 		CacheDurationRegular: util.Duration(time.Minute),
 		CacheDurationBackup:  util.Duration(time.Hour * 72),
-		URLUpstream:          "https://open-vsx.org", // todo(sje): make configurable
+		URLUpstream:          ctx.Config.OpenVSX.URL,
 		URLLocal:             fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain),
 		MaxIdleConns:         1000,
 		MaxIdleConnsPerHost:  1000,

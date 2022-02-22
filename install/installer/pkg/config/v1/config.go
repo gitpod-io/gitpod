@@ -55,6 +55,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.FSShiftMethod = FSShiftFuseFS
 	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
+	cfg.OpenVSX.URL = "https://open-vsx.org"
 
 	return nil
 }
@@ -81,6 +82,8 @@ type Config struct {
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
 
 	Workspace Workspace `json:"workspace" validate:"required"`
+
+	OpenVSX OpenVSX `json:"openVSX"`
 
 	AuthProviders []ObjectRef   `json:"authProviders" validate:"dive"`
 	BlockNewUsers BlockNewUsers `json:"blockNewUsers"`
@@ -227,6 +230,10 @@ type Workspace struct {
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
 	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
+}
+
+type OpenVSX struct {
+	URL string `json:"url" validate:"url"`
 }
 
 type FSShiftMethod string
