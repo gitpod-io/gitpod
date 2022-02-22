@@ -50,6 +50,9 @@ func LoadMock() *Config {
 			Kind: ObjectRefSecret,
 			Name: "https-certs",
 		},
+		OpenVSX: OpenVSX{
+			URL: "https://open-vsx.org",
+		},
 		Workspace: Workspace{
 			Runtime: WorkspaceRuntime{
 				FSShiftMethod:        FSShiftFuseFS,
