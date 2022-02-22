@@ -28,6 +28,9 @@ export default function Settings() {
         (async () => {
             const data = await getGitpodService().server.adminGetTelemetryData();
             setTelemetryData(data)
+
+            const setting = await getGitpodService().server.adminGetSettings();
+            setAdminSettings(setting)
         })();
     }, []);
 
