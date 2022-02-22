@@ -26,7 +26,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-h4ns9"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"100Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-h4ns9"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-vz76n"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"100Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-vz76n"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -158,10 +158,27 @@ chpasswd:
     ubuntu:ubuntu
   expire: False
 write_files:
+  - path: /etc/cloud/cloud.cfg.d/99-custom.cfg
+    content: |
+      datasource_list: [ NoCloud ]
   - path: /etc/ssh/sshd_config.d/101-change-ssh-port.conf
     permission: 0644
     owner: root
     content: 'Port 2200'
+  - path: /etc/disable-services.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      systemctl disable google-guest-agent &
+      systemctl disable google-startup-scripts &
+      systemctl disable google-osconfig-agent &
+      systemctl disable google-oslogin-cache.timer &
+      systemctl disable google-shutdown-scripts &
+      systemctl stop google-guest-agent &
+      systemctl stop google-startup-scripts &
+      systemctl stop google-osconfig-agent &
+      systemctl stop google-oslogin-cache.timer &
+      systemctl stop google-shutdown-scripts &
   - path: /usr/local/bin/bootstrap-k3s.sh
     permissions: 0744
     owner: root
@@ -213,6 +230,7 @@ write_files:
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       EOF
 runcmd:
+ - /etc/disable-services.sh
  - bash /usr/local/bin/bootstrap-k3s.sh`).toString("base64")
   return `
 apiVersion: v1
