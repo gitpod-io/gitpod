@@ -1,0 +1,24 @@
+apiVersion: troubleshoot.replicated.com/v1beta1
+kind: SupportBundle
+metadata:
+  name: gitpod
+spec:
+  collectors:
+    - clusterInfo: {}
+    - clusterResources: {}
+    - logs:
+        selector:
+          - app=gitpod
+        namespace: '{{repl Namespace }}'
+        limits:
+          maxAge: 720h
+          maxLines: 10000
+    - configMap:
+        selector:
+          - app=gitpod
+        namespace: '{{repl Namespace }}'
+        includeAllData: true
+    - secret:
+        selector:
+          - app=gitpod
+        namespace: '{{repl Namespace }}'
