@@ -242,9 +242,9 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			for i := 0; i < 3 && !finalizerRemoved; i++ {
 				getErr := m.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
 				if getErr != nil {
-					if !k8serr.IsNotFound(getErr) {
+					if k8serr.IsNotFound(getErr) {
 						// pod doesn't exist, so we are safe to proceed with retry
-						return true, nil
+						return false, nil
 					}
 					clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to get pod")
 					// pod get call failed so we error out
@@ -254,6 +254,10 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				tempPod.Finalizers = []string{}
 				updateErr := m.Clientset.Update(ctx, &tempPod)
 				if updateErr != nil {
+					if k8serr.IsNotFound(updateErr) {
+						// pod doesn't exist, so we are safe to proceed with retry
+						return false, nil
+					}
 					clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to remove finalizer")
 					continue
 				}
