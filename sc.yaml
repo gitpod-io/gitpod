@@ -1,0 +1,16 @@
+allowVolumeExpansion: true
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  creationTimestamp: "2022-02-22T12:36:39Z"
+  name: longhorn-image-vz76n-1replica
+  resourceVersion: "914203"
+  uid: c1bf506b-76fb-4f89-bf28-d823cbf2fe09
+parameters:
+  backingImage: default-image-vz76n
+  migratable: "true"
+  numberOfReplicas: "1"
+  staleReplicaTimeout: "30"
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate

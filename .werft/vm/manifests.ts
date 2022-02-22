@@ -41,14 +41,6 @@ spec:
       labels:
         harvesterhci.io/vmName: ${vmName}
     spec:
-      readinessProbe:
-        tcpSocket:
-          port: 2200
-        initialDelaySeconds: 120
-        periodSeconds: 20
-        timeoutSeconds: 10
-        failureThreshold: 10
-        successThreshold: 10
       domain:
         hostname: ${vmName}
         machine:
