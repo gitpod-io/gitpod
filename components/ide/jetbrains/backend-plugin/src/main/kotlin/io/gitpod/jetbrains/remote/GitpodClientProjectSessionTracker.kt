@@ -25,8 +25,8 @@ class GitpodClientProjectSessionTracker(
                 event = "jb_session"
                 properties = mapOf(
                         "sessionId" to session.clientId.value,
-                        "instanceId" to info.infoResponse.instanceId,
-                        "workspaceId" to info.infoResponse.workspaceId,
+                        "instanceId" to info.instanceId,
+                        "workspaceId" to info.workspaceId,
                         "appName" to ApplicationInfo.getInstance().versionName,
                         "appVersion" to ApplicationInfo.getInstance().fullVersion,
                         "timestamp" to System.currentTimeMillis()

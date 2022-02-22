@@ -3,6 +3,9 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
+set -e
+set -o pipefail
+
 TEST_BACKEND_DIR=/workspace/ide-backend
 if [ ! -d "$TEST_BACKEND_DIR" ]; then
   mkdir -p $TEST_BACKEND_DIR
