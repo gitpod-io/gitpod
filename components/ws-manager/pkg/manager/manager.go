@@ -295,6 +295,8 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 		case corev1.PodFailed, corev1.PodSucceeded:
 			return false, fmt.Errorf("pod ran to completion")
 		case corev1.PodPending:
+			log.Warnf("pod %s status: %v", podName, pod.Status)
+
 			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
 				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
 			}
