@@ -1,0 +1,97 @@
+apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight
+metadata:
+  name: gitpod
+spec:
+  analyzers:
+    - clusterVersion:
+        outcomes:
+          - fail:
+              when: "< 1.20.0"
+              message: The application requires Kubernetes 1.20.0 or later, and recommends 1.21.0.
+              uri: https://www.kubernetes.io
+          - warn:
+              when: "< 1.21.0"
+              message: Your cluster meets the minimum version of Kubernetes, but we recommend you update to 1.21.0 or later.
+              uri: https://kubernetes.io
+          - pass:
+              message: Your cluster meets the recommended and required versions of Kubernetes.
+    # @todo(sje): figure out a way of checking the Kernel version is >= 5.4.0-0
+    - containerRuntime:
+        outcomes:
+          - pass:
+              when: "== containerd"
+              message: containerd runtime was found.
+          - fail:
+              message: Did not find containerd runtime.
+    - nodeResources:
+        checkName: At least one node must "gitpod.io/workload_meta" label
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_meta: "true"
+        outcomes:
+          - fail:
+              when: "count() < 1"
+              message: There must be at least one node with the label "gitpod.io/workload_meta" and value "true"
+          - pass:
+              message: Node with label exists
+    - nodeResources:
+        checkName: At least one node must have "gitpod.io/workload_ide" label
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_ide: "true"
+        outcomes:
+          - fail:
+              when: "count() < 1"
+              message: There must be at least one node with the label "gitpod.io/workload_ide" and value "true"
+          - pass:
+              message: Node with label exists
+    - nodeResources:
+        checkName: At least one node must have "gitpod.io/workload_workspace_services" label
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_services: "true"
+        outcomes:
+          - fail:
+              when: "count() < 1"
+              message: There must be at least one node with the label "gitpod.io/workload_workspace_services" and value "true"
+          - pass:
+              message: Node with label exists
+    - nodeResources:
+        checkName: At least one node must have "gitpod.io/workload_workspace_regular" label
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_regular: "true"
+        outcomes:
+          - fail:
+              when: "count() < 1"
+              message: There must be at least one node with the label "gitpod.io/workload_workspace_regular" and value "true"
+          - pass:
+              message: Node with label exists
+    - nodeResources:
+        checkName: At least one node must have "gitpod.io/workload_workspace_headless" label
+        filters:
+          selector:
+            matchLabel:
+              gitpod.io/workload_workspace_headless: "true"
+        outcomes:
+          - fail:
+              when: "count() < 1"
+              message: There must be at least one node with the label "gitpod.io/workload_workspace_headless" and value "true"
+          - pass:
+              message: Node with label exists
+    - nodeResources:
+        checkName: Total CPU Cores in the cluster is 2 or greater
+        outcomes:
+          - fail:
+              when: "sum(cpuCapacity) < 2"
+              message: The cluster must contain at least 2 cores
+          - warn:
+              when: "sum(cpuCapacity) < 4"
+              message: The cluster must contain at least 4 cores
+          - pass:
+              message: There are at least 2 cores in the cluster

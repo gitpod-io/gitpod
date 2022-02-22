@@ -1,0 +1,43 @@
+# The installer job is where the magic happens. It generates
+# the config and installs Gitpod
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: installer
+  labels:
+    app: gitpod
+    component: gitpod-installer
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    metadata:
+      labels:
+        app: gitpod
+        component: gitpod-installer
+    spec:
+      serviceAccountName: installer
+      restartPolicy: OnFailure
+      containers:
+        - name: installer
+          # Normally, this would be a release but this has additions for Replicated from 2022.01
+          image: eu.gcr.io/gitpod-core-dev/build/installer:main.2316
+          env:
+            - name: CONFIG_FILE
+              value: /tmp/gitpod-config.yaml
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -e
+
+              echo "Gitpod: Generate the base Installer config"
+              /app/installer init > "${CONFIG_FILE}"
+
+              echo "Gitpod: Inject the Replicated variables into the config"
+              yq e -i '.domain = "{{repl ConfigOption "domain" }}"' "${CONFIG_FILE}"
+
+              echo "Gitpod: Generate the Kubernetes objects and apply"
+              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} | kubectl apply -f -
+
+              echo "Gitpod: Installer job finished - goodbye"
