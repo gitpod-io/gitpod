@@ -1,0 +1,11 @@
+# @todo(sje): cert-manager may become optional in future, to allow for users to install their own version
+apiVersion: kots.io/v1beta1
+kind: HelmChart
+metadata:
+  name: cert-manager
+spec:
+  chart:
+    name: cert-manager
+    chartVersion: 1.7.0
+  helmVersion: v3
+  useHelmInstall: true
