@@ -7,7 +7,7 @@
 import { inject, injectable, interfaces } from "inversify";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { Disposable, WorkspaceInstance, Queue, WorkspaceInstancePort, PortVisibility, RunningWorkspaceInfo, DisposableCollection } from "@gitpod/gitpod-protocol";
-import { WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, WorkspaceConditionBool, PortVisibility as WsManPortVisibility, WorkspaceType, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
+import { WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, WorkspaceConditionBool, PortVisibility as WsManPortVisibility, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -135,9 +135,7 @@ export class WorkspaceManagerBridge implements Disposable {
             log.warn("Received invalid status update", status);
             return;
         }
-        if (status.spec.type === WorkspaceType.GHOST) {
-            return;
-        }
+
         log.debug("Received status update", status);
 
         const span = TraceContext.startSpan("handleStatusUpdate", ctx);

@@ -49,10 +49,6 @@ data:
   "probe.yaml": |
 {{ dict | merge ($comp.templates.probe | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "probe") | fromYaml) | toJson | indent 4 }}
 {{- end }}
-{{ if (or $comp.templates.regular $comp.affinity) }}
-  "ghost.yaml": |
-{{ dict | merge ($comp.templates.ghost | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "ghost") | fromYaml) | toJson | indent 4 }}
-{{- end }}
 {{ if (or $comp.templates.imagebuild $comp.affinity) }}
   "imagebuild.yaml": |
 {{ dict | merge ($comp.templates.imagebuild | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "imagebuild") | fromYaml) | toJson | indent 4 }}

@@ -57,7 +57,7 @@ local workspaceTemplate =
   template.new(
     name='workspace',
     datasource='$datasource',
-    query='label_values(kube_pod_labels{%s=~"$cluster",component="workspace", label_workspace_type!="ghost"}, pod)' % _config.clusterLabel,
+    query='label_values(kube_pod_labels{%s=~"$cluster",component="workspace"}, pod)' % _config.clusterLabel,
     current='all',
     refresh=2,
     includeAll=false,

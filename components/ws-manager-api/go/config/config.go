@@ -158,8 +158,6 @@ type WorkspacePodTemplateConfiguration struct {
 	PrebuildPath string `json:"prebuildPath,omitempty"`
 	// ProbePath is a path to an additional workspace pod template YAML file for probe workspaces
 	ProbePath string `json:"probePath,omitempty"`
-	// GhostPath is a path to an additional workspace pod template YAML file for ghost workspaces
-	GhostPath string `json:"ghostPath,omitempty"`
 	// ImagebuildPath is a path to an additional workspace pod template YAML file for imagebuild workspaces
 	ImagebuildPath string `json:"imagebuildPath,omitempty"`
 }
@@ -206,7 +204,6 @@ func (c *Configuration) Validate() error {
 		validation.Field(&c.WorkspacePodTemplate.DefaultPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.PrebuildPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.ProbePath, validPodTemplate),
-		validation.Field(&c.WorkspacePodTemplate.GhostPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.RegularPath, validPodTemplate),
 	)
 	if err != nil {

@@ -58,7 +58,6 @@ local runningWorkspacesGraph =
   .addSeriesOverride({ alias: 'REGULAR', color: '#73BF69' })
   .addSeriesOverride({ alias: 'PREBUILD', color: '#5794F2' })
   .addSeriesOverride({ alias: 'PROBE', color: '#B877D9' })
-  .addSeriesOverride({ alias: 'GHOST', color: '#ffffff' })
   .addSeriesOverride({ alias: 'Regular Not Active', color: '#FADE2A' })
 ;
 
@@ -126,7 +125,6 @@ local workspaceFailuresGraph =
   .addSeriesOverride({ alias: 'REGULAR', color: '#73BF69' })
   .addSeriesOverride({ alias: 'PREBUILD', color: '#5794F2' })
   .addSeriesOverride({ alias: 'PROBE', color: '#B877D9' })
-  .addSeriesOverride({ alias: 'GHOST', color: '#ffffff' })
 ;
 
 local workspacePhasesGraph =
@@ -141,12 +139,6 @@ local workspacePhasesGraph =
     repeat='cluster',
   )
   .addTarget(prometheus.target('gitpod_ws_manager_workspace_phase_total{%(clusterLabel)s=~"$cluster", phase!="RUNNING"}' % _config, legendFormat='{{type}} - {{phase}}'))
-  // Ghosts use different levels of white/grey
-  .addSeriesOverride({ alias: 'GHOST - INITIALIZING', color: '#ffffff' })
-  .addSeriesOverride({ alias: 'GHOST - CREATING', color: '#cccccc' })
-  .addSeriesOverride({ alias: 'GHOST - PENDING', color: '#999999' })
-  .addSeriesOverride({ alias: 'GHOST - STOPPING', color: '#666666' })
-  .addSeriesOverride({ alias: 'GHOST - STOPPED', color: '#333333' })
   // Regular use different levels of green
   .addSeriesOverride({ alias: 'REGULAR - INITIALIZING', color: '#C8F2C2' })
   .addSeriesOverride({ alias: 'REGULAR - CREATING', color: '#96D98D' })
