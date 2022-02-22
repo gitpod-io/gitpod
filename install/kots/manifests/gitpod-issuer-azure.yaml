@@ -1,0 +1,20 @@
+# Azure doesn't seem to like using an Issuer
+# @link https://github.com/cert-manager/cert-manager/issues/4867c
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: gitpod-issuer
+  annotations:
+    kots.io/when: '{{repl and (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
+spec:
+  acme:
+    email: '{{repl ConfigOption "cert_manager_email" }}'
+    server: '{{repl ConfigOption "cert_manager_acme_url" }}'
+    privateKeySecretRef:
+      name: issuer-account-key
+    solvers:
+      - dns01:
+          azureDNS:
+            subscriptionID: '{{repl ConfigOption "cert_manager_azure_subscription_id" }}'
+            resourceGroupName: '{{repl ConfigOption "cert_manager_azure_resource_group" }}'
+            hostedZoneName: '{{repl ConfigOption "domain" }}'

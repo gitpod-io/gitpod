@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: https-certificates
+  annotations:
+    kots.io/when: '{{repl ConfigOptionEquals "cert_manager_enabled" "1" }}'
+spec:
+  secretName: https-certificates
+  issuerRef:
+    name: '{{repl if (ConfigOptionEquals "cert_manager_provider" "incluster" ) }}ca-issuer{{repl else }}gitpod-issuer{{repl end }}'
+    kind: '{{repl if (ConfigOptionEquals "cert_manager_provider" "azure") }}ClusterIssuer{{repl else }}Issuer{{repl end }}'
+  dnsNames:
+    - '{{repl ConfigOption "domain" }}'
+    - '*.{{repl ConfigOption "domain" }}'
+    - '*.ws.{{repl ConfigOption "domain" }}'
