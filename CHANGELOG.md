@@ -1,6 +1,10 @@
 # Change Log
 
 ## February 2022
+- [installer] Use fuse as default ShiftFS method. ([#8346](https://github.com/gitpod-io/gitpod/pull/8346)) - [@corneliusludmann](https://github.com/corneliusludmann)
+- Show collected telemetry data below the telemetry toggle ([#8272](https://github.com/gitpod-io/gitpod/pull/8272)) - [@Pothulapati](https://github.com/Pothulapati)
+- Restrict snapshot access based on repository access ([#8306](https://github.com/gitpod-io/gitpod/pull/8306)) - [@jankeromnes](https://github.com/jankeromnes)
+- [installer] Add `disableDefinitelyGp` config option ([#8308](https://github.com/gitpod-io/gitpod/pull/8308)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - Improve handling of "Out of Memory" error when starting up workspaces ([#8289](https://github.com/gitpod-io/gitpod/pull/8289)) - [@aledbf](https://github.com/aledbf), [@sagor999](https://github.com/sagor999)
 - [installer] Installer does not set default nameserver settings for workspaces anymore ([#8288](https://github.com/gitpod-io/gitpod/pull/8288)) - [@csweichel](https://github.com/csweichel)
 - Update the usage of nsinsider. ([#8275](https://github.com/gitpod-io/gitpod/pull/8275)) - [@utam0k](https://github.com/utam0k)
