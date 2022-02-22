@@ -83,8 +83,16 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 					Spec: corev1.PodSpec{
-						PriorityClassName:  common.SystemNodeCritical,
-						Affinity:           common.Affinity(cluster.AffinityLabelWorkspaceServices),
+						PriorityClassName: common.SystemNodeCritical,
+						Affinity:          common.Affinity(cluster.AffinityLabelWorkspaceServices),
+						TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
+							corev1.TopologySpreadConstraint{
+								LabelSelector:     &metav1.LabelSelector{MatchLabels: labels},
+								MaxSkew:           1,
+								TopologyKey:       "kubernetes.io/hostname",
+								WhenUnsatisfiable: corev1.DoNotSchedule,
+							},
+						},
 						EnableServiceLinks: pointer.Bool(false),
 						ServiceAccountName: Component,
 						SecurityContext: &corev1.PodSecurityContext{
