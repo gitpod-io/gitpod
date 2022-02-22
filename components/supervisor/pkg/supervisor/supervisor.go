@@ -232,6 +232,7 @@ func Run(options ...RunOption) {
 	if cfg.DesktopIDE != nil {
 		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 	}
+	go trackReadiness(ctx, gitpodService, cfg, cstate, ideReady, desktopIdeReady)
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
 	go gitpodConfigService.Watch(ctx)
@@ -1551,6 +1552,48 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 		case <-ctx.Done():
 			return
 		}
+	}
+}
+
+func trackReadiness(ctx context.Context, gitpodService *gitpod.APIoverJSONRPC, cfg *Config, cstate *InMemoryContentState, ideReady *ideReadyState, desktopIdeReady *ideReadyState) {
+	type SupervisorReadiness struct {
+		Kind                string `json:"kind,omitempty"`
+		WorkspaceId         string `json:"workspaceId,omitempty"`
+		WorkspaceInstanceId string `json:"instanceId,omitempty"`
+		Timestamp           int64  `json:"timestamp,omitempty"`
+	}
+	trackFn := func(ctx context.Context, gitpodService *gitpod.APIoverJSONRPC, cfg *Config, kind string) {
+		err := gitpodService.TrackEvent(ctx, &gitpod.RemoteTrackMessage{
+			Event: "supervisor_readiness",
+			Properties: SupervisorReadiness{
+				Kind:                kind,
+				WorkspaceId:         cfg.WorkspaceID,
+				WorkspaceInstanceId: cfg.WorkspaceInstanceID,
+				Timestamp:           time.Now().UnixMilli(),
+			},
+		})
+		if err != nil {
+			log.WithError(err).Error("error tracking supervisor_readiness")
+		}
+	}
+	const (
+		readinessKindContent    = "content"
+		readinessKindIDE        = "ide"
+		readinessKindDesktopIDE = "ide-desktop"
+	)
+	go func() {
+		<-cstate.ContentReady()
+		trackFn(ctx, gitpodService, cfg, readinessKindContent)
+	}()
+	go func() {
+		<-ideReady.Wait()
+		trackFn(ctx, gitpodService, cfg, readinessKindIDE)
+	}()
+	if cfg.DesktopIDE != nil {
+		go func() {
+			<-desktopIdeReady.Wait()
+			trackFn(ctx, gitpodService, cfg, readinessKindDesktopIDE)
+		}()
 	}
 }
 
