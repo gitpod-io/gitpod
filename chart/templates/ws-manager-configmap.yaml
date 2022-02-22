@@ -44,7 +44,7 @@ data:
                         "memory": "{{ .Values.workspaceSizing.memoryRequest }}Mi"
                     },
                     "limits": {
-                        "cpu": "5",
+                        "cpu": "6",
                         "memory": "{{ .Values.workspaceSizing.memoryLimit }}Mi"
                     },
                     {{ else -}}
