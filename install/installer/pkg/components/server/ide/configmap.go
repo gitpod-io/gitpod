@@ -39,21 +39,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DefaultDesktopIDE: codeDesktop,
 					DesktopIDEs:       []string{codeDesktop},
 					InstallationSteps: []string{
-						"If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/download'>VS Code</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+						"If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/download'>VS Code</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
 				},
 				"vscode-insiders": {
 					DefaultDesktopIDE: codeDesktopInsiders,
 					DesktopIDEs:       []string{codeDesktopInsiders},
 					InstallationSteps: []string{
-						"If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+						"If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
 				},
 				"jetbrains-gateway": {
 					DefaultDesktopIDE: intellij,
 					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm},
 					InstallationSteps: []string{
-						"If you don't see an open dialog by the browser, make sure you have <a target='_blank' class='gp-link' href='https://www.jetbrains.com/remote-development/gateway'>JetBrains Gateway</a> with <a target='_blank' class='gp-link' href='https://github.com/gitpod-io/gitpod/blob/main/components/ide/jetbrains/gateway-plugin/doc/installing.md'>Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+						"If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
 				},
 			},
