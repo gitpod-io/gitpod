@@ -25,6 +25,7 @@
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodBranding"
                             serviceInterface="com.intellij.remoteDev.customization.GatewayBranding"
                             overrides="true" />
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/>
     </extensions>
 
 </idea-plugin>
