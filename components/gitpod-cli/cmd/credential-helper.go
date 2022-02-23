@@ -41,27 +41,28 @@ var credentialHelper = &cobra.Command{
 			return
 		}
 
-		var user, token string
-		defer func() {
-			// Credentials not found, return `quit=true` so no further helpers will be consulted, nor will the user be prompted.
-			// From https://git-scm.com/docs/gitcredentials#_custom_helpers
-			if token == "" {
-				fmt.Print("quit=true\n")
-				return
-			}
-			// Server could return only the token and not the username, so we fallback to hardcoded `oauth2` username.
-			// See https://github.com/gitpod-io/gitpod/pull/7889#discussion_r801670957
-			if user == "" {
-				user = "oauth2"
-			}
-			fmt.Printf("username=%s\npassword=%s\n", user, token)
-		}()
-
-		host, err := parseHostFromStdin()
-		if err != nil {
+		result, err := parseFromStdin()
+		host := result["host"]
+		if err != nil || host == "" {
 			log.WithError(err).Print("error parsing 'host' from stdin")
 			return
 		}
+
+		var user, token string
+		defer func() {
+			// Server could return only the token and not the username, so we fallback to hardcoded `oauth2` username.
+			// See https://github.com/gitpod-io/gitpod/pull/7889#discussion_r801670957
+			if token != "" && user == "" {
+				user = "oauth2"
+			}
+			if token != "" {
+				result["username"] = user
+				result["password"] = token
+			}
+			for k, v := range result {
+				fmt.Printf("%s=%s\n", k, v)
+			}
+		}()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cancel()
@@ -146,27 +147,22 @@ var credentialHelper = &cobra.Command{
 	},
 }
 
-func parseHostFromStdin() (host string, err error) {
+func parseFromStdin() (map[string]string, error) {
+	result := make(map[string]string)
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if len(line) > 0 {
 			tuple := strings.Split(line, "=")
 			if len(tuple) == 2 {
-				if strings.TrimSpace(tuple[0]) == "host" {
-					host = strings.TrimSpace(tuple[1])
-				}
+				result[tuple[0]] = strings.TrimSpace(tuple[1])
 			}
 		}
 	}
-
-	err = scanner.Err()
-	if err != nil {
-		err = fmt.Errorf("parseHostFromStdin error: %v", err)
-	} else if host == "" {
-		err = fmt.Errorf("parseHostFromStdin error 'host' is missing")
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
-	return
+	return result, nil
 }
 
 type gitCommandInfo struct {
