@@ -1,6 +1,16 @@
 # Change Log
 
 ## February 2022
+- [installer] Ensure multiple ws-proxy replicas are scheduled in different nodes ([#8389](https://github.com/gitpod-io/gitpod/pull/8389)) - [@aledbf](https://github.com/aledbf)
+- Make Open VSX upstream URL configurable in the installer for air-gap installations ([#8266](https://github.com/gitpod-io/gitpod/pull/8266)) - [@Pothulapati](https://github.com/Pothulapati)
+- Pre-populate Cmd+O modal and sort suggested context URLs by most-recently-used first ([#8380](https://github.com/gitpod-io/gitpod/pull/8380)) - [@jankeromnes](https://github.com/jankeromnes)
+- Add max lifetime timeout for a workspace ([#8307](https://github.com/gitpod-io/gitpod/pull/8307)) - [@princerachit](https://github.com/princerachit)
+- Improve error handling for workspace cluster register & update ([#8330](https://github.com/gitpod-io/gitpod/pull/8330)) - [@kylos101](https://github.com/kylos101)
+- Show all admission constraints for workspace cluster list ([#8330](https://github.com/gitpod-io/gitpod/pull/8330)) - [@kylos101](https://github.com/kylos101)
+- [installer] Use fuse as default ShiftFS method. ([#8346](https://github.com/gitpod-io/gitpod/pull/8346)) - [@corneliusludmann](https://github.com/corneliusludmann)
+- Show collected telemetry data below the telemetry toggle ([#8272](https://github.com/gitpod-io/gitpod/pull/8272)) - [@Pothulapati](https://github.com/Pothulapati)
+- Restrict snapshot access based on repository access ([#8306](https://github.com/gitpod-io/gitpod/pull/8306)) - [@jankeromnes](https://github.com/jankeromnes)
+- [installer] Add `disableDefinitelyGp` config option ([#8308](https://github.com/gitpod-io/gitpod/pull/8308)) - [@corneliusludmann](https://github.com/corneliusludmann)
 - Improve handling of "Out of Memory" error when starting up workspaces ([#8289](https://github.com/gitpod-io/gitpod/pull/8289)) - [@aledbf](https://github.com/aledbf), [@sagor999](https://github.com/sagor999)
 - [installer] Installer does not set default nameserver settings for workspaces anymore ([#8288](https://github.com/gitpod-io/gitpod/pull/8288)) - [@csweichel](https://github.com/csweichel)
 - Update the usage of nsinsider. ([#8275](https://github.com/gitpod-io/gitpod/pull/8275)) - [@utam0k](https://github.com/utam0k)
