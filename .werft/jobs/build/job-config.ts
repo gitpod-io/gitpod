@@ -85,7 +85,16 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withHelm = "with-helm" in buildConfig && !mainBuild;
     const withVM = "with-vm" in buildConfig && !mainBuild;
 
-    const previewDestName = version.split(".")[0];
+    let previewDestName = version.split(".")[0];
+    // For various reasons, we can't have preview names bigger than 20 characters
+    // For more info, see: https://github.com/gitpod-io/ops/issues/1252
+    if (previewDestName.length >= 20) {
+        // Werft job names can end with the '-' character when getting hard cut on 20 characters.
+        // We make sure to remove the ending '-' character because it is not a valid namespace name.
+        var trimmingRegex = /-$/gi;
+        previewDestName = previewDestName.substring(0, 19).replace(trimmingRegex, "").split("/").join("-")
+    }
+
     const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewDestName}`;
     const previewEnvironment = {
         destname: previewDestName,
