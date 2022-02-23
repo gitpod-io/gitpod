@@ -36,7 +36,6 @@ func (v version) Defaults(in interface{}) error {
 	}
 
 	cfg.Kind = InstallationFull
-	cfg.Domain = "gitpod.example.com"
 	cfg.Repository = "eu.gcr.io/gitpod-core-dev/build"
 	cfg.Observability = Observability{
 		LogLevel: LogLevelInfo,
