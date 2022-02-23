@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	_ "embed"
@@ -66,7 +67,18 @@ A config file is required which can be generated with the init command.`,
 }
 
 func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *configv1.Config, err error) {
-	rawCfg, cfgVersion, err = config.Load(cfgFN)
+	var overrideConfig string
+	// Update overrideConfig if cfgFN is not empty
+	if cfgFN != "" {
+		cfgBytes, err := ioutil.ReadFile(cfgFN)
+		if err != nil {
+			panic(fmt.Sprintf("couldn't read file %s, %s", cfgFN, err))
+
+		}
+		overrideConfig = string(cfgBytes)
+	}
+
+	rawCfg, cfgVersion, err = config.Load(overrideConfig)
 	if err != nil {
 		err = fmt.Errorf("error loading config: %w", err)
 		return
@@ -175,7 +187,7 @@ func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string,
 func init() {
 	rootCmd.AddCommand(renderCmd)
 
-	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", "", "path to the config file")
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
 	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "danger-use-unsupported-config", false, "enable use of unsupported config")
