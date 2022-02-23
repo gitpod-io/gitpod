@@ -6,7 +6,6 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/go-playground/validator/v10"
@@ -73,32 +72,43 @@ func LoadConfigVersion(version string) (ConfigVersion, error) {
 	return v, nil
 }
 
-func Load(fn string) (cfg interface{}, version string, err error) {
-	fc, err := ioutil.ReadFile(fn)
-	if err != nil {
-		return
-	}
-	var vs struct {
+// Load takes a config string and overrides that onto the default
+// config for that version (passed in the config). If no config version
+// is passed, It overrides it onto the default CurrentVersion of the binary
+func Load(overrideConfig string) (cfg interface{}, version string, err error) {
+	var overrideVS struct {
 		APIVersion string `json:"apiVersion"`
 	}
-	err = yaml.Unmarshal(fc, &vs)
+	err = yaml.Unmarshal([]byte(overrideConfig), &overrideVS)
 	if err != nil {
 		return
 	}
 
-	v, err := LoadConfigVersion(vs.APIVersion)
+	apiVersion := overrideVS.APIVersion
+	// fall-back to default CurrentVersion if no apiVersion was passed
+	if version == "" {
+		apiVersion = CurrentVersion
+	}
+
+	v, err := LoadConfigVersion(apiVersion)
 	if err != nil {
 		return
 	}
 
+	// Load default configuration
 	cfg = v.Factory()
-	version = vs.APIVersion
-	err = yaml.Unmarshal(fc, cfg)
+	err = v.Defaults(cfg)
 	if err != nil {
 		return
 	}
 
-	return cfg, version, nil
+	// Override passed configuration onto the default
+	err = yaml.Unmarshal([]byte(overrideConfig), cfg)
+	if err != nil {
+		return
+	}
+
+	return cfg, apiVersion, nil
 }
 
 func Marshal(version string, cfg interface{}) ([]byte, error) {
