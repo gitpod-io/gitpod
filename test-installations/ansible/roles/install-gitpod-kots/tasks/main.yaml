@@ -15,6 +15,6 @@
     executable: /bin/bash
 
 # - name: Install Gitpod KOTS application
-#   shell: nohup kubectl kots install gitpod-pov --namespace gitpod --license-file /gitpod/kots-license.yaml --shared-password gitpod --config-values /gitpod/kots-config.yaml >/tmp/kots.log 2>&1 &
+#   shell: nohup kubectl kots install gitpod-pov --namespace "{{ gitpod_namespace | default ('default') }}" --shared-password gitpod --license-file /gitpod/kots-license.yaml --config-values /gitpod/kots-config.yaml >/tmp/kots.log 2>&1 &
 #   args:
 #     executable: /bin/bash

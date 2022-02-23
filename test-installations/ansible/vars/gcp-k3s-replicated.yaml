@@ -4,6 +4,7 @@
 
 ---
 gitpod_domain: gitpod.testing.gitpod-self-hosted.com
+gitpod_namespace: gitpod
 
 gcp_project: gitpod-self-hosted-testing
 gcp_bucket_name: gitpod-self-hosted-testing-backups
@@ -13,3 +14,6 @@ gcp_dns_domain_zone_name: gitpod-self-hosted-com
 gcp_dns_domain_zone_dnsname: gitpod-self-hosted.com.
 
 installCertManager: false
+
+gitlab_instance_name: gitlab
+gitlab_domain: gitlab-1.testing.gitpod-self-hosted.com

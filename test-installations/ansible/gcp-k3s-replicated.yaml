@@ -20,6 +20,17 @@
   roles:
     - gcp
 
+- name: Prepare GitLab GCP resources
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  vars:
+    instance_name: "{{ gitlab_instance_name }}"
+    domain: "{{ gitlab_domain }}"
+  roles:
+    - gcp-instance
+
 - name: Refresh inventory
   hosts: localhost
   gather_facts: no
@@ -40,11 +51,20 @@
     - gcp-dns
 
 - name: Restore from GCP bucket
-  hosts: gitpod_node_main
+  hosts:
+    - gitpod_node_main
+    - instance_gitlab
   vars_files:
     - vars/gcp-k3s-replicated.yaml
   roles:
     - gcp-bucket-restore
+
+- name: Install GitLab
+  hosts: instance_gitlab
+  vars_files:
+    - vars/gcp-k3s-gitlab-airgap.yaml
+  roles:
+    - install-gitlab
 
 - name: Generate cluster secret
   hosts: localhost

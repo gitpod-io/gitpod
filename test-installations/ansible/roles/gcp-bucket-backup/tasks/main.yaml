@@ -45,9 +45,9 @@
     executable: /bin/bash
   loop:
     - name: https-certificates
-      namespace: default
+      namespace: "{{ gitpod_namespace | default ('default') }}"
     - name: gitpod-issuer-account-key
-      namespace: cert-manager
+      namespace: "{{ cert_manager_namespace | default ('cert-manager') }}"
   when: "'gitpod_node_main' in group_names"
 
 - name: Backup
