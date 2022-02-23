@@ -40,15 +40,17 @@ export async function trackSignup(user: User, request: Request, analytics: IAnal
 function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter) {
     //makes a full identify call for authenticated users
     const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
+    const ip = request.get("x-forwarded-for")?.split(",")[0];
     analytics.identify({
         anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
         userId:user.id,
         context: {
-            "ip": maskIp(request.ips[0]),
+            "ip": ip ? maskIp(ip): undefined,
             "userAgent": request.get("User-Agent"),
             "location": {
                 "city": request.get("x-glb-client-city"),
                 "country": request.get("x-glb-client-region"),
+                "region": request.get("x-glb-client-region-subdivision"),
                 "latitude": coords?.length == 2 ? coords[0] : undefined,
                 "longitude": coords?.length == 2 ? coords[1] : undefined
             }
