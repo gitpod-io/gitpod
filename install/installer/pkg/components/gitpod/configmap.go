@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	corev1 "k8s.io/api/core/v1"
@@ -24,7 +25,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		VersionManifest: ctx.VersionManifest,
 	}
 
-	config, err := common.ToJSONString(ctx.Config)
+	cfg, err := config.Marshal(config.CurrentVersion, ctx.Config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal Gitpod config: %w", err)
 	}
@@ -43,7 +44,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(Component),
 			},
 			Data: map[string]string{
-				"config.json":   string(config),
+				"config.yaml":   string(cfg),
 				"versions.json": string(versions),
 			},
 		},
