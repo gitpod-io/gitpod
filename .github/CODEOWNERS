@@ -67,6 +67,7 @@
 /components/ws-proxy @gitpod-io/engineering-workspace
 /dev/gpctl @gitpod-io/engineering-workspace
 /dev/loadgen @gitpod-io/engineering-workspace
+/dev/preview @gitpod-io/platform
 /operations/observability/mixins @gitpod-io/platform
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
