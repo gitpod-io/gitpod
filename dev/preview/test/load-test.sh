@@ -25,7 +25,7 @@ opts=$(getopt \
   -- "$@"
 )
 
-eval set --$opts
+eval set -- "$opts"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
