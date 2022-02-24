@@ -184,6 +184,9 @@ while [ "$i" -le "$DOCS" ]; do
       yq r /tmp/"$NAME"overrides.yaml 'data.[config.json]' \
       | jq --arg REGISTRY_FACADE_HOST "$REGISTRY_FACADE_HOST" '.manager.registryFacadeHost = $REGISTRY_FACADE_HOST' \
       | jq ".manager.wsdaemon.port = $WS_DAEMON_PORT" > /tmp/"$NAME"-cm-overrides.json
+
+      yq w -i -j /tmp/"$NAME"-cm-overrides.json manager.podTemplate.defaultPath /workspace-templates/default.yaml
+
       touch /tmp/"$NAME"-cm-overrides.yaml
       # write a yaml file with the json as a multiline string
       yq w -i /tmp/"$NAME"-cm-overrides.yaml "data.[config.json]" -- "$(< /tmp/"$NAME"-cm-overrides.json)"
@@ -245,6 +248,9 @@ while [ "$i" -le "$DOCS" ]; do
       LABEL="gitpod.io/workspace_$NODE_POOL_INDEX"
       yq w -i /tmp/"$NAME"overrides.yaml spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key "$LABEL"
       yq w -i /tmp/"$NAME"overrides.yaml spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator Exists
+      yq w -i /tmp/"$NAME"overrides.yaml spec.containers[+].name workspace
+      yq w -i /tmp/"$NAME"overrides.yaml "spec.containers.(name==workspace).env[+].name" GITPOD_PREVENT_METADATA_ACCESS
+      yq w -i /tmp/"$NAME"overrides.yaml "spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value" "true"
 
       yq w -i k8s.yaml -d "$i" "data.[default.yaml]" -- "$(< /tmp/"$NAME"overrides.yaml)"
    fi

@@ -198,7 +198,7 @@ type WorkspaceConfig struct {
 
 	// PreventMetadataAccess exits supervisor/stops the workspace if we can access Google Cloud
 	// compute metadata from within the container.
-	PreventMetadataAccess bool `env:"THEIA_PREVENT_METADATA_ACCESS"`
+	PreventMetadataAccess bool `env:"GITPOD_PREVENT_METADATA_ACCESS"`
 
 	// LogRateLimit limits the log output of the IDE process.
 	// Any output that exceeds this limit is silently dropped.
