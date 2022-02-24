@@ -15,11 +15,13 @@ import { HostContainerMapping } from "./host-container-mapping";
 import { RepositoryService } from "../repohost/repo-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { DisposableCollection } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class HostContextProviderImpl implements HostContextProvider {
     protected fixedHosts = new Map<string, HostContext>();
     protected dynamicHosts = new Map<string, HostContext>();
+    protected disposables = new DisposableCollection();
 
     @inject(Config)
     protected readonly config: Config;
@@ -30,15 +32,8 @@ export class HostContextProviderImpl implements HostContextProvider {
     @inject(HostContextProviderFactory)
     protected factory: HostContextProviderFactory;
 
-    async init() {
-        await this.ensureInitialized();
-    }
-
     protected initialized = false;
-    protected async ensureInitialized() {
-        if (this.initialized) {
-            return;
-        }
+    async init() {
         this.createFixedHosts();
 
         try {
@@ -48,7 +43,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         }
 
         // schedule periodic update of dynamic hosts
-        repeat(async () => {
+        const updateDynamicHostsJob = repeat(async () => {
             const span = TraceContext.startSpan("updateDynamicHosts");
             try {
                 await this.updateDynamicHosts({span});
@@ -58,7 +53,15 @@ export class HostContextProviderImpl implements HostContextProvider {
                 span.finish();
             }
         }, 1999);
+        this.disposables.push(updateDynamicHostsJob);
+
         this.initialized = true;
+    }
+
+    protected assertInitialized() {
+        if (!this.initialized) {
+            throw new Error("HostContextProvider not initialized yet!");
+        }
     }
 
     protected createFixedHosts() {
@@ -123,14 +126,14 @@ export class HostContextProviderImpl implements HostContextProvider {
     }
 
     getAll(): HostContext[] {
-        this.ensureInitialized().catch(err => {/** ignore */});
+        this.assertInitialized();
         const fixed = Array.from(this.fixedHosts.values());
         const dynamic = Array.from(this.dynamicHosts.values());
         return [...fixed, ...dynamic];
     }
 
     get(hostname: string): HostContext | undefined {
-        this.ensureInitialized().catch(err => {/** ignore */});
+        this.assertInitialized();
         hostname = hostname.toLowerCase();
         const hostContext = this.fixedHosts.get(hostname) || this.dynamicHosts.get(hostname);
         if (!hostContext) {
