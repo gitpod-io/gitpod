@@ -35,6 +35,8 @@ import (
 
 var log *logrus.Entry
 
+const DaemonArgs = "DOCKER_DAEMON_ARGS"
+
 var opts struct {
 	RuncFacade           bool
 	BinDir               string
@@ -178,7 +180,7 @@ var allowedDockerArgs = map[string]string{
 }
 
 func setUserArgs(args []string) ([]string, error) {
-	userArgs, exists := os.LookupEnv("DOCKER_DAEMON_ARGS")
+	userArgs, exists := os.LookupEnv(DaemonArgs)
 	if !exists {
 		return args, nil
 	}
@@ -370,6 +372,11 @@ func installIptables() error {
 }
 
 func installUidMap() error {
+	_, exists := os.LookupEnv(DaemonArgs)
+	if !exists {
+		return nil
+	}
+
 	needInstall := false
 	if _, err := exec.LookPath("newuidmap"); err != nil {
 		needInstall = true
@@ -392,6 +399,11 @@ func installUidMap() error {
 }
 
 func installRunc() error {
+	_, exists := os.LookupEnv(DaemonArgs)
+	if !exists {
+		return nil
+	}
+
 	runc, _ := exec.LookPath("runc")
 	if runc != "" {
 		// if the required version or a more recent one is already
