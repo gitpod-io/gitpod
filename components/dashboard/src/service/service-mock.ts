@@ -192,6 +192,7 @@ const gitpodServiceMock = createServiceMock({
                 "clientId": "clientid-123",
                 "clientSecret": "redacted"
             },
+            "oauthRevision": "some-revision",
             "deleted": false
         }]
     },
