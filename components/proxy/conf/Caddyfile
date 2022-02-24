@@ -286,31 +286,6 @@ https://*.*.{$GITPOD_DOMAIN} {
 		}
 	}
 
-	# remove (webview-|browser-|extensions-) after Theia removed and new VS Code is used by all workspaces
-	@workspace_port header_regexp host Host ^(webview-|browser-|extensions-)?(?P<workspacePort>[0-9]{2,5})-(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
-	handle @workspace_port {
-		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
-			import workspace_transport
-			import upstream_headers
-
-			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
-			header_up X-Gitpod-Port        {re.host.workspacePort}
-			header_up X-WSProxy-Host       {http.request.host}
-		}
-	}
-
-	# remove (webview-|browser-|extensions-) after Theia removed and new VS Code is used by all workspaces
-	@workspace 	header_regexp host Host ^(webview-|browser-|extensions-)?(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
-	handle @workspace {
-		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
-			import workspace_transport
-			import upstream_headers
-
-			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
-			header_up X-WSProxy-Host       {http.request.host}
-		}
-	}
-
 	# foreign content origin should be decoupled from the workspace (port) origin but the workspace (port) prefix should be the path root for routing
 	@foreign_content header_regexp host Host ^(.*)(foreign).ws(-[a-z0-9]+)?.{$GITPOD_DOMAIN}
 	handle @foreign_content {
