@@ -24,14 +24,15 @@ const defaultBackendPort = "63342"
 
 // proxy for the Code With Me status endpoints that transforms it into the supervisor status format.
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Printf("Usage: %s <port> [<link label>]\n", os.Args[0])
+	if len(os.Args) < 3 {
+		fmt.Printf("Usage: %s <port> <kind> [<link label>]\n", os.Args[0])
 		os.Exit(1)
 	}
 	port := os.Args[1]
+	kind := os.Args[2]
 	label := "Open JetBrains IDE"
-	if len(os.Args) > 2 {
-		label = os.Args[2]
+	if len(os.Args) > 3 {
+		label = os.Args[3]
 	}
 
 	errlog := log.New(os.Stderr, "JetBrains IDE status: ", log.LstdFlags)
@@ -77,6 +78,7 @@ func main() {
 		response["link"] = gatewayLink
 		response["label"] = label
 		response["clientID"] = "jetbrains-gateway"
+		response["kind"] = kind
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(response)
 	})
