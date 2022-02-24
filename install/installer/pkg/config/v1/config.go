@@ -55,6 +55,7 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.ContainerDSocket = "/run/containerd/containerd.sock"
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 	cfg.OpenVSX.URL = "https://open-vsx.org"
+	cfg.DisableDefinitelyGP = false
 
 	return nil
 }
@@ -78,7 +79,7 @@ type Config struct {
 
 	Certificate ObjectRef `json:"certificate" validate:"required"`
 
-	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
+	ImagePullSecrets []ObjectRef `json:"imagePullSecrets,omitempty"`
 
 	Workspace Workspace `json:"workspace" validate:"required"`
 
@@ -90,7 +91,7 @@ type Config struct {
 
 	SSHGatewayHostKey *ObjectRef `json:"sshGatewayHostKey,omitempty"`
 
-	DisableDefinitelyGP bool `json:"disableDefinitelyGp,omitempty"`
+	DisableDefinitelyGP bool `json:"disableDefinitelyGp"`
 
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
@@ -172,7 +173,7 @@ const (
 type ContainerRegistry struct {
 	InCluster *bool                      `json:"inCluster,omitempty" validate:"required"`
 	External  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
-	S3Storage *S3Storage                 `json:"s3storage"`
+	S3Storage *S3Storage                 `json:"s3storage,omitempty"`
 }
 
 type ContainerRegistryExternal struct {
