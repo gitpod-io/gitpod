@@ -4,6 +4,7 @@
 
 FROM alpine:3.15
 COPY install-installer--app/installer install-installer--app/provenance-bundle.jsonl /app/
+COPY --from=alpine/helm:latest /usr/bin/helm /usr/local/bin/helm
 RUN apk add --no-cache curl yq  \
     && curl -L "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl
