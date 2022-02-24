@@ -232,6 +232,8 @@ func walkProcessTree(pid int, fn pidCallbackFn) error {
 // - Private npm package no access
 //   - Open this workspace https://github.com/jeanp413/test-gp-bug and run `npm install`
 //   - Observe NO notification with this message appears `Unknown repository '' Please grant the necessary permissions.`
+// - Clone private repo without permission
+//   - Start a workspace, then run `git clone 'https://gitlab.ebizmarts.com/ebizmarts/magento2-pos-api-request.git`, you should see a prompt ask your username and password, instead of `'gp credential-helper' told us to quit`
 func init() {
 	rootCmd.AddCommand(credentialHelper)
 }
