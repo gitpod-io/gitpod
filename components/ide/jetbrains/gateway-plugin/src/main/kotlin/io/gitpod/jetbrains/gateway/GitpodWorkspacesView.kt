@@ -125,7 +125,7 @@ class GitpodWorkspacesView(
                         }
                     }, object : DumbAwareAction("Documentation", "Documentation", AllIcons.Toolwindows.Documentation) {
                         override fun actionPerformed(e: AnActionEvent) {
-                            BrowserUtil.browse("https://www.gitpod.io/docs")
+                            BrowserUtil.browse("https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway")
                         }
                     }, object : DumbAwareAction("Log Out", "Log out", AllIcons.Actions.Exit) {
                         override fun actionPerformed(e: AnActionEvent) {

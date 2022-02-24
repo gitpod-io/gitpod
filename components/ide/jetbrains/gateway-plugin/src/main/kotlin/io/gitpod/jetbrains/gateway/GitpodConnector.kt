@@ -31,8 +31,7 @@ class GitpodConnector : GatewayConnector {
     }
 
     override fun getDocumentationLink(): String {
-        // TODO(ak) something JetBrains specific
-        return "https://www.gitpod.io/docs"
+        return "https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway"
     }
 
     override fun getRecentConnections(setContentCallback: (Component) -> Unit): GatewayRecentConnections? {
