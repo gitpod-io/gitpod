@@ -2192,6 +2192,18 @@ public final class Status {
        */
       com.google.protobuf.ByteString
           getClientIDBytes();
+
+      /**
+       * <code>string kind = 4;</code>
+       * @return The kind.
+       */
+      java.lang.String getKind();
+      /**
+       * <code>string kind = 4;</code>
+       * @return The bytes for kind.
+       */
+      com.google.protobuf.ByteString
+          getKindBytes();
     }
     /**
      * Protobuf type {@code supervisor.IDEStatusResponse.DesktopStatus}
@@ -2209,6 +2221,7 @@ public final class Status {
         link_ = "";
         label_ = "";
         clientID_ = "";
+        kind_ = "";
       }
 
       @java.lang.Override
@@ -2257,6 +2270,12 @@ public final class Status {
                 java.lang.String s = input.readStringRequireUtf8();
 
                 clientID_ = s;
+                break;
+              }
+              case 34: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                kind_ = s;
                 break;
               }
               default: {
@@ -2405,6 +2424,44 @@ public final class Status {
         }
       }
 
+      public static final int KIND_FIELD_NUMBER = 4;
+      private volatile java.lang.Object kind_;
+      /**
+       * <code>string kind = 4;</code>
+       * @return The kind.
+       */
+      @java.lang.Override
+      public java.lang.String getKind() {
+        java.lang.Object ref = kind_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs = 
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          kind_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>string kind = 4;</code>
+       * @return The bytes for kind.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getKindBytes() {
+        java.lang.Object ref = kind_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          kind_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
       private byte memoizedIsInitialized = -1;
       @java.lang.Override
       public final boolean isInitialized() {
@@ -2428,6 +2485,9 @@ public final class Status {
         if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(clientID_)) {
           com.google.protobuf.GeneratedMessageV3.writeString(output, 3, clientID_);
         }
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 4, kind_);
+        }
         unknownFields.writeTo(output);
       }
 
@@ -2445,6 +2505,9 @@ public final class Status {
         }
         if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(clientID_)) {
           size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, clientID_);
+        }
+        if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(kind_)) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, kind_);
         }
         size += unknownFields.getSerializedSize();
         memoizedSize = size;
@@ -2467,6 +2530,8 @@ public final class Status {
             .equals(other.getLabel())) return false;
         if (!getClientID()
             .equals(other.getClientID())) return false;
+        if (!getKind()
+            .equals(other.getKind())) return false;
         if (!unknownFields.equals(other.unknownFields)) return false;
         return true;
       }
@@ -2484,6 +2549,8 @@ public final class Status {
         hash = (53 * hash) + getLabel().hashCode();
         hash = (37 * hash) + CLIENTID_FIELD_NUMBER;
         hash = (53 * hash) + getClientID().hashCode();
+        hash = (37 * hash) + KIND_FIELD_NUMBER;
+        hash = (53 * hash) + getKind().hashCode();
         hash = (29 * hash) + unknownFields.hashCode();
         memoizedHashCode = hash;
         return hash;
@@ -2623,6 +2690,8 @@ public final class Status {
 
           clientID_ = "";
 
+          kind_ = "";
+
           return this;
         }
 
@@ -2652,6 +2721,7 @@ public final class Status {
           result.link_ = link_;
           result.label_ = label_;
           result.clientID_ = clientID_;
+          result.kind_ = kind_;
           onBuilt();
           return result;
         }
@@ -2710,6 +2780,10 @@ public final class Status {
           }
           if (!other.getClientID().isEmpty()) {
             clientID_ = other.clientID_;
+            onChanged();
+          }
+          if (!other.getKind().isEmpty()) {
+            kind_ = other.kind_;
             onChanged();
           }
           this.mergeUnknownFields(other.unknownFields);
@@ -2965,6 +3039,82 @@ public final class Status {
   checkByteStringIsUtf8(value);
           
           clientID_ = value;
+          onChanged();
+          return this;
+        }
+
+        private java.lang.Object kind_ = "";
+        /**
+         * <code>string kind = 4;</code>
+         * @return The kind.
+         */
+        public java.lang.String getKind() {
+          java.lang.Object ref = kind_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            kind_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>string kind = 4;</code>
+         * @return The bytes for kind.
+         */
+        public com.google.protobuf.ByteString
+            getKindBytes() {
+          java.lang.Object ref = kind_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            kind_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>string kind = 4;</code>
+         * @param value The kind to set.
+         * @return This builder for chaining.
+         */
+        public Builder setKind(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  
+          kind_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string kind = 4;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearKind() {
+          
+          kind_ = getDefaultInstance().getKind();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string kind = 4;</code>
+         * @param value The bytes for kind to set.
+         * @return This builder for chaining.
+         */
+        public Builder setKindBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          
+          kind_ = value;
           onChanged();
           return this;
         }
@@ -13908,72 +14058,72 @@ public final class Status {
       "nnotations.proto\032\nport.proto\"\031\n\027Supervis" +
       "orStatusRequest\"&\n\030SupervisorStatusRespo" +
       "nse\022\n\n\002ok\030\001 \001(\010\" \n\020IDEStatusRequest\022\014\n\004w" +
-      "ait\030\001 \001(\010\"\235\001\n\021IDEStatusResponse\022\n\n\002ok\030\001 " +
+      "ait\030\001 \001(\010\"\253\001\n\021IDEStatusResponse\022\n\n\002ok\030\001 " +
       "\001(\010\022<\n\007desktop\030\002 \001(\0132+.supervisor.IDESta" +
-      "tusResponse.DesktopStatus\032>\n\rDesktopStat" +
+      "tusResponse.DesktopStatus\032L\n\rDesktopStat" +
       "us\022\014\n\004link\030\001 \001(\t\022\r\n\005label\030\002 \001(\t\022\020\n\010clien" +
-      "tID\030\003 \001(\t\"$\n\024ContentStatusRequest\022\014\n\004wai" +
-      "t\030\001 \001(\010\"U\n\025ContentStatusResponse\022\021\n\tavai" +
-      "lable\030\001 \001(\010\022)\n\006source\030\002 \001(\0162\031.supervisor" +
-      ".ContentSource\"\025\n\023BackupStatusRequest\"0\n" +
-      "\024BackupStatusResponse\022\030\n\020canary_availabl" +
-      "e\030\001 \001(\010\"%\n\022PortsStatusRequest\022\017\n\007observe" +
-      "\030\001 \001(\010\"=\n\023PortsStatusResponse\022&\n\005ports\030\001" +
-      " \003(\0132\027.supervisor.PortsStatus\"\203\001\n\017Expose" +
-      "dPortInfo\022.\n\nvisibility\030\001 \001(\0162\032.supervis" +
-      "or.PortVisibility\022\013\n\003url\030\002 \001(\t\0223\n\non_exp" +
-      "osed\030\003 \001(\0162\037.supervisor.OnPortExposedAct" +
-      "ion\"\304\001\n\020TunneledPortInfo\022\023\n\013target_port\030" +
-      "\001 \001(\r\022/\n\nvisibility\030\002 \001(\0162\033.supervisor.T" +
-      "unnelVisiblity\022:\n\007clients\030\003 \003(\0132).superv" +
-      "isor.TunneledPortInfo.ClientsEntry\032.\n\014Cl" +
-      "ientsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\r:\002" +
-      "8\001\"\355\001\n\013PortsStatus\022\022\n\nlocal_port\030\001 \001(\r\022\016" +
-      "\n\006served\030\004 \001(\010\022,\n\007exposed\030\005 \001(\0132\033.superv" +
-      "isor.ExposedPortInfo\0223\n\rauto_exposure\030\007 " +
-      "\001(\0162\034.supervisor.PortAutoExposure\022.\n\010tun" +
-      "neled\030\006 \001(\0132\034.supervisor.TunneledPortInf" +
-      "o\022\023\n\013description\030\010 \001(\t\022\014\n\004name\030\t \001(\tJ\004\010\002" +
-      "\020\003\"%\n\022TasksStatusRequest\022\017\n\007observe\030\001 \001(" +
-      "\010\"<\n\023TasksStatusResponse\022%\n\005tasks\030\001 \003(\0132" +
-      "\026.supervisor.TaskStatus\"\204\001\n\nTaskStatus\022\n" +
-      "\n\002id\030\001 \001(\t\022$\n\005state\030\002 \001(\0162\025.supervisor.T" +
-      "askState\022\020\n\010terminal\030\003 \001(\t\0222\n\014presentati" +
-      "on\030\004 \001(\0132\034.supervisor.TaskPresentation\"D" +
-      "\n\020TaskPresentation\022\014\n\004name\030\001 \001(\t\022\017\n\007open" +
-      "_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001(\t*C\n\rContentS" +
-      "ource\022\016\n\nfrom_other\020\000\022\017\n\013from_backup\020\001\022\021" +
-      "\n\rfrom_prebuild\020\002*?\n\016PortVisibility\022\026\n\022p" +
-      "rivate_visibility\020\000\022\025\n\021public_visibility" +
-      "\020\001*e\n\023OnPortExposedAction\022\n\n\006ignore\020\000\022\020\n" +
-      "\014open_browser\020\001\022\020\n\014open_preview\020\002\022\n\n\006not" +
-      "ify\020\003\022\022\n\016notify_private\020\004*9\n\020PortAutoExp" +
-      "osure\022\n\n\006trying\020\000\022\r\n\tsucceeded\020\001\022\n\n\006fail" +
-      "ed\020\002*1\n\tTaskState\022\013\n\007opening\020\000\022\013\n\007runnin" +
-      "g\020\001\022\n\n\006closed\020\0022\313\006\n\rStatusService\022|\n\020Sup" +
-      "ervisorStatus\022#.supervisor.SupervisorSta" +
-      "tusRequest\032$.supervisor.SupervisorStatus" +
-      "Response\"\035\202\323\344\223\002\027\022\025/v1/status/supervisor\022" +
-      "\203\001\n\tIDEStatus\022\034.supervisor.IDEStatusRequ" +
-      "est\032\035.supervisor.IDEStatusResponse\"9\202\323\344\223" +
-      "\0023\022\016/v1/status/ideZ!\022\037/v1/status/ide/wai" +
-      "t/{wait=true}\022\227\001\n\rContentStatus\022 .superv" +
-      "isor.ContentStatusRequest\032!.supervisor.C" +
-      "ontentStatusResponse\"A\202\323\344\223\002;\022\022/v1/status" +
-      "/contentZ%\022#/v1/status/content/wait/{wai" +
-      "t=true}\022l\n\014BackupStatus\022\037.supervisor.Bac" +
-      "kupStatusRequest\032 .supervisor.BackupStat" +
-      "usResponse\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001" +
-      "\n\013PortsStatus\022\036.supervisor.PortsStatusRe" +
-      "quest\032\037.supervisor.PortsStatusResponse\"C" +
-      "\202\323\344\223\002=\022\020/v1/status/portsZ)\022\'/v1/status/p" +
-      "orts/observe/{observe=true}0\001\022\225\001\n\013TasksS" +
-      "tatus\022\036.supervisor.TasksStatusRequest\032\037." +
-      "supervisor.TasksStatusResponse\"C\202\323\344\223\002=\022\020" +
-      "/v1/status/tasksZ)\022\'/v1/status/tasks/obs" +
-      "erve/{observe=true}0\001BF\n\030io.gitpod.super" +
-      "visor.apiZ*github.com/gitpod-io/gitpod/s" +
-      "upervisor/apib\006proto3"
+      "tID\030\003 \001(\t\022\014\n\004kind\030\004 \001(\t\"$\n\024ContentStatus" +
+      "Request\022\014\n\004wait\030\001 \001(\010\"U\n\025ContentStatusRe" +
+      "sponse\022\021\n\tavailable\030\001 \001(\010\022)\n\006source\030\002 \001(" +
+      "\0162\031.supervisor.ContentSource\"\025\n\023BackupSt" +
+      "atusRequest\"0\n\024BackupStatusResponse\022\030\n\020c" +
+      "anary_available\030\001 \001(\010\"%\n\022PortsStatusRequ" +
+      "est\022\017\n\007observe\030\001 \001(\010\"=\n\023PortsStatusRespo" +
+      "nse\022&\n\005ports\030\001 \003(\0132\027.supervisor.PortsSta" +
+      "tus\"\203\001\n\017ExposedPortInfo\022.\n\nvisibility\030\001 " +
+      "\001(\0162\032.supervisor.PortVisibility\022\013\n\003url\030\002" +
+      " \001(\t\0223\n\non_exposed\030\003 \001(\0162\037.supervisor.On" +
+      "PortExposedAction\"\304\001\n\020TunneledPortInfo\022\023" +
+      "\n\013target_port\030\001 \001(\r\022/\n\nvisibility\030\002 \001(\0162" +
+      "\033.supervisor.TunnelVisiblity\022:\n\007clients\030" +
+      "\003 \003(\0132).supervisor.TunneledPortInfo.Clie" +
+      "ntsEntry\032.\n\014ClientsEntry\022\013\n\003key\030\001 \001(\t\022\r\n" +
+      "\005value\030\002 \001(\r:\0028\001\"\355\001\n\013PortsStatus\022\022\n\nloca" +
+      "l_port\030\001 \001(\r\022\016\n\006served\030\004 \001(\010\022,\n\007exposed\030" +
+      "\005 \001(\0132\033.supervisor.ExposedPortInfo\0223\n\rau" +
+      "to_exposure\030\007 \001(\0162\034.supervisor.PortAutoE" +
+      "xposure\022.\n\010tunneled\030\006 \001(\0132\034.supervisor.T" +
+      "unneledPortInfo\022\023\n\013description\030\010 \001(\t\022\014\n\004" +
+      "name\030\t \001(\tJ\004\010\002\020\003\"%\n\022TasksStatusRequest\022\017" +
+      "\n\007observe\030\001 \001(\010\"<\n\023TasksStatusResponse\022%" +
+      "\n\005tasks\030\001 \003(\0132\026.supervisor.TaskStatus\"\204\001" +
+      "\n\nTaskStatus\022\n\n\002id\030\001 \001(\t\022$\n\005state\030\002 \001(\0162" +
+      "\025.supervisor.TaskState\022\020\n\010terminal\030\003 \001(\t" +
+      "\0222\n\014presentation\030\004 \001(\0132\034.supervisor.Task" +
+      "Presentation\"D\n\020TaskPresentation\022\014\n\004name" +
+      "\030\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\topen_mode\030\003 \001" +
+      "(\t*C\n\rContentSource\022\016\n\nfrom_other\020\000\022\017\n\013f" +
+      "rom_backup\020\001\022\021\n\rfrom_prebuild\020\002*?\n\016PortV" +
+      "isibility\022\026\n\022private_visibility\020\000\022\025\n\021pub" +
+      "lic_visibility\020\001*e\n\023OnPortExposedAction\022" +
+      "\n\n\006ignore\020\000\022\020\n\014open_browser\020\001\022\020\n\014open_pr" +
+      "eview\020\002\022\n\n\006notify\020\003\022\022\n\016notify_private\020\004*" +
+      "9\n\020PortAutoExposure\022\n\n\006trying\020\000\022\r\n\tsucce" +
+      "eded\020\001\022\n\n\006failed\020\002*1\n\tTaskState\022\013\n\007openi" +
+      "ng\020\000\022\013\n\007running\020\001\022\n\n\006closed\020\0022\313\006\n\rStatus" +
+      "Service\022|\n\020SupervisorStatus\022#.supervisor" +
+      ".SupervisorStatusRequest\032$.supervisor.Su" +
+      "pervisorStatusResponse\"\035\202\323\344\223\002\027\022\025/v1/stat" +
+      "us/supervisor\022\203\001\n\tIDEStatus\022\034.supervisor" +
+      ".IDEStatusRequest\032\035.supervisor.IDEStatus" +
+      "Response\"9\202\323\344\223\0023\022\016/v1/status/ideZ!\022\037/v1/" +
+      "status/ide/wait/{wait=true}\022\227\001\n\rContentS" +
+      "tatus\022 .supervisor.ContentStatusRequest\032" +
+      "!.supervisor.ContentStatusResponse\"A\202\323\344\223" +
+      "\002;\022\022/v1/status/contentZ%\022#/v1/status/con" +
+      "tent/wait/{wait=true}\022l\n\014BackupStatus\022\037." +
+      "supervisor.BackupStatusRequest\032 .supervi" +
+      "sor.BackupStatusResponse\"\031\202\323\344\223\002\023\022\021/v1/st" +
+      "atus/backup\022\225\001\n\013PortsStatus\022\036.supervisor" +
+      ".PortsStatusRequest\032\037.supervisor.PortsSt" +
+      "atusResponse\"C\202\323\344\223\002=\022\020/v1/status/portsZ)" +
+      "\022\'/v1/status/ports/observe/{observe=true" +
+      "}0\001\022\225\001\n\013TasksStatus\022\036.supervisor.TasksSt" +
+      "atusRequest\032\037.supervisor.TasksStatusResp" +
+      "onse\"C\202\323\344\223\002=\022\020/v1/status/tasksZ)\022\'/v1/st" +
+      "atus/tasks/observe/{observe=true}0\001BF\n\030i" +
+      "o.gitpod.supervisor.apiZ*github.com/gitp" +
+      "od-io/gitpod/supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -14010,7 +14160,7 @@ public final class Status {
     internal_static_supervisor_IDEStatusResponse_DesktopStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_IDEStatusResponse_DesktopStatus_descriptor,
-        new java.lang.String[] { "Link", "Label", "ClientID", });
+        new java.lang.String[] { "Link", "Label", "ClientID", "Kind", });
     internal_static_supervisor_ContentStatusRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_supervisor_ContentStatusRequest_fieldAccessorTable = new
