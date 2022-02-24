@@ -233,7 +233,10 @@ func adaptSubid(oldfile string, id int) error {
 		return err
 	}
 
-	newfile.WriteString(fmt.Sprintf("gitpod:%d:%d\n", 1, id))
+	if id != 0 {
+		newfile.WriteString(fmt.Sprintf("gitpod:%d:%d\n", 1, id))
+	}
+
 	newfile.WriteString("gitpod:33333:1\n")
 
 	uidScanner := bufio.NewScanner(uid)
