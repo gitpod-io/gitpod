@@ -1,6 +1,9 @@
 # Change Log
 
 ## February 2022
+- Make `-c` optional in installer, while allowing the passed config to be flexible ([#8401](https://github.com/gitpod-io/gitpod/pull/8401)) - [@Pothulapati](https://github.com/Pothulapati)
+- Show correct admin telemetry settings during first visit ([#8373](https://github.com/gitpod-io/gitpod/pull/8373)) - [@Pothulapati](https://github.com/Pothulapati)
+- Remove Jaeger operator ([#8376](https://github.com/gitpod-io/gitpod/pull/8376)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [installer] Ensure multiple ws-proxy replicas are scheduled in different nodes ([#8389](https://github.com/gitpod-io/gitpod/pull/8389)) - [@aledbf](https://github.com/aledbf)
 - Make Open VSX upstream URL configurable in the installer for air-gap installations ([#8266](https://github.com/gitpod-io/gitpod/pull/8266)) - [@Pothulapati](https://github.com/Pothulapati)
 - Pre-populate Cmd+O modal and sort suggested context URLs by most-recently-used first ([#8380](https://github.com/gitpod-io/gitpod/pull/8380)) - [@jankeromnes](https://github.com/jankeromnes)
