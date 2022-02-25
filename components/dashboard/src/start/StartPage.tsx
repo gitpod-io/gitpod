@@ -5,7 +5,7 @@
  */
 
 import { useEffect } from 'react';
-import gitpodIcon from '../icons/gitpod.svg';
+import gitpodIconUA from '../icons/gitpod-ua.svg';
 
 export enum StartPhase {
   Checking = 0,
@@ -87,7 +87,7 @@ export function StartPage(props: StartPageProps) {
   return <div className="w-screen h-screen align-middle">
     <div className="flex flex-col mx-auto items-center text-center h-screen">
       <div className="h-1/3"></div>
-      <img src={gitpodIcon} alt="Gitpod's logo" className={`h-16 flex-shrink-0 ${(error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady) ? '' : 'animate-bounce'}`} />
+      <img src={gitpodIconUA} alt="Gitpod's logo" className={`h-16 flex-shrink-0 ${(error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady) ? '' : 'animate-bounce'}`} />
       <h3 className="mt-8 text-xl">{title}</h3>
       {typeof(phase) === 'number' && phase < StartPhase.IdeReady && <ProgressBar phase={phase} error={!!error} />}
       {error && <StartError error={error} />}
