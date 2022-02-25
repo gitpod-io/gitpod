@@ -312,13 +312,14 @@ func podRunning(clientset client.Client, podName, namespace string) wait.Conditi
 		}
 
 		switch pod.Status.Phase {
-		case corev1.PodFailed, corev1.PodSucceeded:
-			return false, fmt.Errorf("pod ran to completion")
-		case corev1.PodPending:
+		case corev1.PodFailed:
 			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
 				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
 			}
-
+			return false, fmt.Errorf("pod failed with reason: %s", pod.Status.Reason)
+		case corev1.PodSucceeded:
+			return false, fmt.Errorf("pod ran to completion")
+		case corev1.PodPending:
 			for _, c := range pod.Status.Conditions {
 				if c.Type == corev1.PodScheduled && c.Status == corev1.ConditionTrue {
 					// even if pod is pending but was scheduled already, it means kubelet is pulling images and running init containers
