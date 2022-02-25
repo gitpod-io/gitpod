@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 )
@@ -53,7 +54,7 @@ A config file is required which can be generated with the init command.`,
 			}
 		}
 
-		yaml, err := renderKubernetesObjects(cfgVersion, cfg)
+		yaml, err := renderKubernetesObjects(cfgVersion, cfg, nil)
 		if err != nil {
 			return err
 		}
@@ -92,10 +93,14 @@ func loadConfig(cfgFN string) (rawCfg interface{}, cfgVersion string, cfg *confi
 	return rawCfg, cfgVersion, cfg, err
 }
 
-func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config) ([]string, error) {
-	versionMF, err := getVersionManifest()
-	if err != nil {
-		return nil, err
+func renderKubernetesObjects(cfgVersion string, cfg *configv1.Config, versionMF *versions.Manifest) ([]string, error) {
+
+	var err error
+	if versionMF == nil {
+		versionMF, err = getVersionManifest()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !renderOpts.ValidateConfigDisabled {
