@@ -83,5 +83,72 @@ func TestCfsSetLimit(t *testing.T) {
 			t.Fatalf("unexpected error: cfsQuotaUs is '%v' but expected '%v'", cfsQuotaUs, tc.cfsQuotaUs)
 		}
 	}
+}
 
+func TestReadCfsQuota(t *testing.T) {
+	tests := []int{
+		100000,
+		-1,
+	}
+	for _, tc := range tests {
+		tempdir := createTempDir(t, "cpu")
+		err := cgroups.WriteFile(tempdir, "cpu.cfs_quota_us", strconv.Itoa(tc))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		cfs := CgroupCFSController(tempdir)
+		v, err := cfs.readCfsQuota()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if v.Microseconds() != int64(tc) {
+			t.Fatalf("unexpected error: cfs quota is '%v' but expected '%v'", v, tc)
+		}
+	}
+}
+
+func TestReadCfsPeriod(t *testing.T) {
+	tests := []int{
+		10000,
+	}
+	for _, tc := range tests {
+		tempdir := createTempDir(t, "cpu")
+		err := cgroups.WriteFile(tempdir, "cpu.cfs_period_us", strconv.Itoa(tc))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		cfs := CgroupCFSController(tempdir)
+		v, err := cfs.readCfsPeriod()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if v.Microseconds() != int64(tc) {
+			t.Fatalf("unexpected error: cfs period is '%v' but expected '%v'", v, tc)
+		}
+	}
+}
+
+func TestReadCpuUsage(t *testing.T) {
+	tests := []int{
+		0,
+		100000,
+	}
+	for _, tc := range tests {
+		tempdir := createTempDir(t, "cpu")
+		err := cgroups.WriteFile(tempdir, "cpuacct.usage", strconv.Itoa(tc))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		cfs := CgroupCFSController(tempdir)
+		v, err := cfs.readCpuUsage()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if v.Nanoseconds() != int64(tc) {
+			t.Fatalf("unexpected error: cpu usage is '%v' but expected '%v'", v, tc)
+		}
+	}
 }
