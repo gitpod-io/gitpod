@@ -57,7 +57,6 @@ func TestCfsSetLimit(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-
 		tempdir := createTempDir(t, "cpu")
 		err := cgroups.WriteFile(tempdir, "cpu.cfs_period_us", strconv.Itoa(tc.beforeCfsPeriodUs))
 		if err != nil {

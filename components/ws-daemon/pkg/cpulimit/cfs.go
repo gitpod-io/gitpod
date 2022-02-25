@@ -39,7 +39,7 @@ func (basePath CgroupCFSController) SetLimit(limit Bandwidth) (changed bool, err
 	}
 	period := time.Duration(p) * time.Microsecond
 
-	q, err := basePath.readUint64("cpu.cfs_quota_us")
+	q, err := basePath.readInt64("cpu.cfs_quota_us")
 	if err != nil {
 		err = xerrors.Errorf("cannot parse CFS quota: %w", err)
 		return
@@ -60,7 +60,7 @@ func (basePath CgroupCFSController) SetLimit(limit Bandwidth) (changed bool, err
 
 func (basePath CgroupCFSController) readParentQuota() time.Duration {
 	parent := CgroupCFSController(filepath.Dir(string(basePath)))
-	pq, err := parent.readUint64("cpu.cfs_quota_us")
+	pq, err := parent.readInt64("cpu.cfs_quota_us")
 	if err != nil {
 		return time.Duration(0)
 	}
@@ -68,14 +68,22 @@ func (basePath CgroupCFSController) readParentQuota() time.Duration {
 	return time.Duration(pq) * time.Microsecond
 }
 
-func (basePath CgroupCFSController) readUint64(path string) (uint64, error) {
+func (basePath CgroupCFSController) readString(path string) (string, error) {
 	fn := filepath.Join(string(basePath), path)
 	fc, err := os.ReadFile(fn)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	s := strings.TrimSpace(string(fc))
+	return s, nil
+}
+
+func (basePath CgroupCFSController) readUint64(path string) (uint64, error) {
+	s, err := basePath.readString(path)
+	if err != nil {
+		return 0, err
+	}
 	if s == "max" {
 		return math.MaxUint64, nil
 	}
@@ -85,6 +93,23 @@ func (basePath CgroupCFSController) readUint64(path string) (uint64, error) {
 		return 0, err
 	}
 	return uint64(p), nil
+}
+
+func (basePath CgroupCFSController) readInt64(path string) (int64, error) {
+	s, err := basePath.readString(path)
+	if err != nil {
+		return 0, err
+	}
+
+	if s == "max" {
+		return math.MaxInt64, nil
+	}
+
+	p, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return int64(p), nil
 }
 
 // NrThrottled returns the number of CFS periods the cgroup was throttled in
