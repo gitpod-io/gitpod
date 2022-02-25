@@ -18,6 +18,9 @@ type Workspace struct {
 	NrThrottled uint64
 	Usage       CPUTime
 	QoS         int
+
+	BaseLimit  Bandwidth
+	BurstLimit Bandwidth
 }
 
 type WorkspaceHistory struct {
@@ -113,7 +116,7 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 		return DistributorDebug{}, err
 	}
 
-	f := make(map[string]struct{}, len(ws))
+	wsidx := make(map[string]Workspace, len(ws))
 	for _, w := range ws {
 		h, ok := d.History[w.ID]
 		if !ok {
@@ -123,10 +126,10 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 			d.History[w.ID] = h
 		}
 		h.Update(w)
-		f[w.ID] = struct{}{}
+		wsidx[w.ID] = w
 	}
 	for oldWS := range d.History {
-		if _, found := f[oldWS]; !found {
+		if _, found := wsidx[oldWS]; !found {
 			delete(d.History, oldWS)
 		}
 	}
@@ -172,7 +175,11 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 	var burstBandwidth Bandwidth
 	for _, id := range wsOrder {
 		ws := d.History[id]
-		limit := d.Limiter.Limit(ws.Usage())
+		limiter := d.Limiter
+		if w := wsidx[id]; w.BaseLimit > 0 {
+			limiter = FixedLimiter(w.BaseLimit)
+		}
+		limit := limiter.Limit(ws.Usage())
 
 		// if we didn't get the max bandwidth, but were throttled last time
 		// and there's still some bandwidth left to give, let's act as if had
@@ -180,7 +187,11 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 		// entire bandwidth at once.
 		var burst bool
 		if totalBandwidth < d.TotalBandwidth && ws.Throttled() {
-			limit = d.BurstLimiter.Limit(ws.Usage())
+			limiter := d.BurstLimiter
+			if w := wsidx[id]; w.BaseLimit > 0 {
+				limiter = FixedLimiter(w.BurstLimit)
+			}
+			limit = limiter.Limit(ws.Usage())
 
 			// We assume the workspace is going to use as much as their limit allows.
 			// This might not be true, because their process which consumed so much CPU
