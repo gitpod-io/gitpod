@@ -145,6 +145,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
+	clog.Info("StartWorkspace")
 	reqs, _ := protojson.Marshal(req)
 	safeReqs, _ := log.RedactJSON(reqs)
 	log.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
@@ -417,8 +418,12 @@ func areValidFeatureFlags(value interface{}) error {
 // StopWorkspace stops a running workspace
 func (m *Manager) StopWorkspace(ctx context.Context, req *api.StopWorkspaceRequest) (res *api.StopWorkspaceResponse, err error) {
 	span, ctx := tracing.FromContext(ctx, "StopWorkspace")
-	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
+	owi := log.OWI("", "", req.Id)
+	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
+
+	clog := log.WithFields(owi)
+	clog.Info("StopWorkspace")
 
 	gracePeriod := stopWorkspaceNormallyGracePeriod
 	if req.Policy == api.StopWorkspacePolicy_IMMEDIATELY {
