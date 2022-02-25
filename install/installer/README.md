@@ -170,7 +170,6 @@ yq eval-all --inplace \
 - All Gitpod components
 - Container registry*
 - MySQL database*
-- Jaeger operator*
 - RabbitMQ
 - Minio object storage*
 

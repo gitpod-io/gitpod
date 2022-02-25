@@ -46,7 +46,6 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Metadata.Region = "local"
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
 	cfg.ContainerRegistry.InCluster = pointer.Bool(true)
-	cfg.Jaeger.InCluster = pointer.Bool(true)
 	cfg.Workspace.Resources.Requests = corev1.ResourceList{
 		corev1.ResourceCPU:    resource.MustParse("1000m"),
 		corev1.ResourceMemory: resource.MustParse("2Gi"),
@@ -74,8 +73,6 @@ type Config struct {
 	ObjectStorage ObjectStorage `json:"objectStorage" validate:"required"`
 
 	ContainerRegistry ContainerRegistry `json:"containerRegistry" validate:"required"`
-
-	Jaeger Jaeger `json:"jaegerOperator" validate:"required"`
 
 	Certificate ObjectRef `json:"certificate" validate:"required"`
 
@@ -184,9 +181,6 @@ type ContainerRegistryExternal struct {
 type S3Storage struct {
 	Bucket      string    `json:"bucket" validate:"required"`
 	Certificate ObjectRef `json:"certificate" validate:"required"`
-}
-type Jaeger struct {
-	InCluster *bool `json:"inCluster,omitempty" validate:"required"`
 }
 
 type LogLevel string
