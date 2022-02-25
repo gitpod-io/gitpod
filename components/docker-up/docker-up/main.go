@@ -35,7 +35,7 @@ import (
 
 var log *logrus.Entry
 
-const DaemonArgs = "DOCKER_DAEMON_ARGS"
+const DaemonArgs = "DOCKERD_ARGS"
 
 var opts struct {
 	RuncFacade           bool
@@ -56,6 +56,7 @@ var aptUpdated = false
 
 const (
 	dockerSocketFN = "/var/run/docker.sock"
+	gitpodUserId   = 33333
 )
 
 func main() {
@@ -115,10 +116,11 @@ func runWithinNetns() (err error) {
 		)
 	}
 
-	args, err = setUserArgs(args)
+	userArgs, err := userArgs()
 	if err != nil {
 		return xerrors.Errorf("cannot add user supplied docker args: %w", err)
 	}
+	args = append(args, userArgs...)
 
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
@@ -175,12 +177,15 @@ func runWithinNetns() (err error) {
 	return nil
 }
 
-var allowedDockerArgs = map[string]string{
-	"remap-user": "userns-remap",
+type ConvertUserArg func(arg, value string) ([]string, error)
+
+var allowedDockerArgs = map[string]ConvertUserArg{
+	"remap-user": convertRemapUser,
 }
 
-func setUserArgs(args []string) ([]string, error) {
+func userArgs() ([]string, error) {
 	userArgs, exists := os.LookupEnv(DaemonArgs)
+	args := []string{}
 	if !exists {
 		return args, nil
 	}
@@ -191,31 +196,40 @@ func setUserArgs(args []string) ([]string, error) {
 	}
 
 	for userArg, userValue := range providedDockerArgs {
-		mapped, exists := allowedDockerArgs[userArg]
+		converter, exists := allowedDockerArgs[userArg]
 		if !exists {
 			continue
 		}
 
-		if userArg == "remap-user" {
-			id, err := strconv.Atoi(userValue)
+		if converter != nil {
+			cargs, err := converter(userArg, userValue)
 			if err != nil {
-				return nil, err
+				return nil, xerrors.Errorf("could not convert %v - %v: %w", userArg, userValue, err)
 			}
+			args = append(args, cargs...)
 
-			for _, f := range []string{"/etc/subuid", "/etc/subgid"} {
-				err := adaptSubid(f, id)
-				if err != nil {
-					return nil, xerrors.Errorf("could not adapt subid files: %w", err)
-				}
-			}
-
-			args = append(args, "--"+mapped, "gitpod")
 		} else {
 			args = append(args, "--"+userArg, userValue)
 		}
 	}
 
 	return args, nil
+}
+
+func convertRemapUser(arg, value string) ([]string, error) {
+	id, err := strconv.Atoi(value)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range []string{"/etc/subuid", "/etc/subgid"} {
+		err := adaptSubid(f, id)
+		if err != nil {
+			return nil, xerrors.Errorf("could not adapt subid files: %w", err)
+		}
+	}
+
+	return []string{"--userns-remap", "gitpod"}, nil
 }
 
 func adaptSubid(oldfile string, id int) error {
@@ -229,14 +243,15 @@ func adaptSubid(oldfile string, id int) error {
 		return err
 	}
 
-	if id != 0 {
-		newfile.WriteString(fmt.Sprintf("gitpod:%d:%d\n", 1, id))
-		newfile.WriteString("gitpod:33333:1\n")
+	mappingFmt := func(username string, id int, size int) string { return fmt.Sprintf("%s:%d:%d\n", username, id, size) }
 
+	if id != 0 {
+		newfile.WriteString(mappingFmt("gitpod", 1, id))
+		newfile.WriteString(mappingFmt("gitpod", gitpodUserId, 1))
 	} else {
-		newfile.WriteString("gitpod:33333:1\n")
-		newfile.WriteString(fmt.Sprintf("gitpod:%d:%d\n", 1, 33332))
-		newfile.WriteString(fmt.Sprintf("gitpod:%d:%d\n", 33334, 32200))
+		newfile.WriteString(mappingFmt("gitpod", gitpodUserId, 1))
+		newfile.WriteString(mappingFmt("gitpod", 1, gitpodUserId-1))
+		newfile.WriteString(mappingFmt("gitpod", gitpodUserId+1, 32200)) // map rest of user ids in the user namespace
 	}
 
 	uidScanner := bufio.NewScanner(uid)
