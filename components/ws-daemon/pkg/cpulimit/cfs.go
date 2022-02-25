@@ -6,7 +6,6 @@ package cpulimit
 
 import (
 	"bufio"
-	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -82,9 +81,6 @@ func (basePath CgroupCFSController) readCfsPeriod() (time.Duration, error) {
 	if err != nil {
 		return 0, err
 	}
-	if s == "max" {
-		return time.Duration(math.MaxInt64), nil
-	}
 
 	p, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
@@ -99,10 +95,6 @@ func (basePath CgroupCFSController) readCfsQuota() (time.Duration, error) {
 		return 0, err
 	}
 
-	if s == "max" {
-		return math.MaxInt64, nil
-	}
-
 	p, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return 0, err
@@ -114,9 +106,6 @@ func (basePath CgroupCFSController) readCpuUsage() (time.Duration, error) {
 	s, err := basePath.readString("cpuacct.usage")
 	if err != nil {
 		return 0, err
-	}
-	if s == "max" {
-		return time.Duration(math.MaxInt64), nil
 	}
 
 	p, err := strconv.ParseInt(s, 10, 64)
