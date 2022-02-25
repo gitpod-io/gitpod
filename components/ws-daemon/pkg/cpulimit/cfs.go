@@ -6,6 +6,7 @@ package cpulimit
 
 import (
 	"bufio"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -20,7 +21,6 @@ type CgroupCFSController string
 
 // Usage returns the cpuacct.usage value of the cgroup
 func (basePath CgroupCFSController) Usage() (usage CPUTime, err error) {
-
 	cputime, err := basePath.readCpuUsage()
 	if err != nil {
 		return 0, xerrors.Errorf("cannot read cpuacct.usage: %w", err)
@@ -98,6 +98,10 @@ func (basePath CgroupCFSController) readCfsQuota() (time.Duration, error) {
 	p, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return 0, err
+	}
+
+	if p < 0 {
+		return time.Duration(math.MaxInt64), nil
 	}
 	return time.Duration(p) * time.Microsecond, nil
 }
