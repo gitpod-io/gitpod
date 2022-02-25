@@ -29,6 +29,22 @@
   become: true
   when: "'/installer/gitpod-installer' is not file"
 
+- name: Copy tests
+  copy:
+    src: /tests
+    dest: /tests
+    mode: 0755
+  become: true
+  when: "'/tests' is directory"
+
+- name: Create /tests/run
+  become: true
+  copy:
+    src: run-tests.sh
+    dest: /tests/run
+    mode: 0755
+  when: "'/tests' is directory"
+
 - name: Ensure directories exist
   file:
     path: "{{ item }}"
