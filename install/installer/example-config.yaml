@@ -12,8 +12,6 @@ database:
   inCluster: true
 disableDefinitelyGp: false
 domain: ""
-jaegerOperator:
-  inCluster: true
 kind: Full
 metadata:
   region: local
