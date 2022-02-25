@@ -5,10 +5,12 @@
 package cpulimit
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 )
@@ -86,13 +88,24 @@ func TestCfsSetLimit(t *testing.T) {
 }
 
 func TestReadCfsQuota(t *testing.T) {
-	tests := []int{
-		100000,
-		-1,
+	type test struct {
+		value  int
+		expect int
 	}
+	tests := []test{
+		{
+			value:  100000,
+			expect: 100000,
+		},
+		{
+			value:  -1,
+			expect: int(time.Duration(math.MaxInt64).Microseconds()),
+		},
+	}
+
 	for _, tc := range tests {
 		tempdir := createTempDir(t, "cpu")
-		err := cgroups.WriteFile(tempdir, "cpu.cfs_quota_us", strconv.Itoa(tc))
+		err := cgroups.WriteFile(tempdir, "cpu.cfs_quota_us", strconv.Itoa(tc.value))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -102,8 +115,8 @@ func TestReadCfsQuota(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if v.Microseconds() != int64(tc) {
-			t.Fatalf("unexpected error: cfs quota is '%v' but expected '%v'", v, tc)
+		if v.Microseconds() != int64(tc.expect) {
+			t.Fatalf("unexpected error: cfs quota is '%v' but expected '%v'", v, tc.expect)
 		}
 	}
 }
