@@ -22,29 +22,27 @@ type CgroupCFSController string
 // Usage returns the cpuacct.usage value of the cgroup
 func (basePath CgroupCFSController) Usage() (usage CPUTime, err error) {
 
-	cpuTimeInNS, err := basePath.readUint64("cpuacct.usage")
+	cputime, err := basePath.readCpuUsage()
 	if err != nil {
 		return 0, xerrors.Errorf("cannot read cpuacct.usage: %w", err)
 	}
 
-	return CPUTime(time.Duration(cpuTimeInNS) * time.Nanosecond), nil
+	return CPUTime(cputime), nil
 }
 
 // SetQuota sets a new CFS quota on the cgroup
 func (basePath CgroupCFSController) SetLimit(limit Bandwidth) (changed bool, err error) {
-	p, err := basePath.readUint64("cpu.cfs_period_us")
+	period, err := basePath.readCfsPeriod()
 	if err != nil {
 		err = xerrors.Errorf("cannot parse CFS period: %w", err)
 		return
 	}
-	period := time.Duration(p) * time.Microsecond
 
-	q, err := basePath.readInt64("cpu.cfs_quota_us")
+	quota, err := basePath.readCfsQuota()
 	if err != nil {
 		err = xerrors.Errorf("cannot parse CFS quota: %w", err)
 		return
 	}
-	quota := time.Duration(q) * time.Microsecond
 	target := limit.Quota(period)
 	if quota == target {
 		return false, nil
@@ -60,7 +58,7 @@ func (basePath CgroupCFSController) SetLimit(limit Bandwidth) (changed bool, err
 
 func (basePath CgroupCFSController) readParentQuota() time.Duration {
 	parent := CgroupCFSController(filepath.Dir(string(basePath)))
-	pq, err := parent.readInt64("cpu.cfs_quota_us")
+	pq, err := parent.readCfsQuota()
 	if err != nil {
 		return time.Duration(0)
 	}
@@ -79,24 +77,24 @@ func (basePath CgroupCFSController) readString(path string) (string, error) {
 	return s, nil
 }
 
-func (basePath CgroupCFSController) readUint64(path string) (uint64, error) {
-	s, err := basePath.readString(path)
+func (basePath CgroupCFSController) readCfsPeriod() (time.Duration, error) {
+	s, err := basePath.readString("cpu.cfs_period_us")
 	if err != nil {
 		return 0, err
 	}
 	if s == "max" {
-		return math.MaxUint64, nil
+		return time.Duration(math.MaxInt64), nil
 	}
 
 	p, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return 0, err
 	}
-	return uint64(p), nil
+	return time.Duration(uint(p)) * time.Microsecond, nil
 }
 
-func (basePath CgroupCFSController) readInt64(path string) (int64, error) {
-	s, err := basePath.readString(path)
+func (basePath CgroupCFSController) readCfsQuota() (time.Duration, error) {
+	s, err := basePath.readString("cpu.cfs_quota_us")
 	if err != nil {
 		return 0, err
 	}
@@ -109,7 +107,23 @@ func (basePath CgroupCFSController) readInt64(path string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return int64(p), nil
+	return time.Duration(p) * time.Microsecond, nil
+}
+
+func (basePath CgroupCFSController) readCpuUsage() (time.Duration, error) {
+	s, err := basePath.readString("cpuacct.usage")
+	if err != nil {
+		return 0, err
+	}
+	if s == "max" {
+		return time.Duration(math.MaxInt64), nil
+	}
+
+	p, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return time.Duration(uint64(p)) * time.Nanosecond, nil
 }
 
 // NrThrottled returns the number of CFS periods the cgroup was throttled in
