@@ -68,7 +68,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-ws-man-bridge-audit.10
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bmp-leeway.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
