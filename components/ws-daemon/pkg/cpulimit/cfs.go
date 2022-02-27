@@ -16,11 +16,11 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// CgroupCFSController controls a cgroup's CFS settings
-type CgroupCFSController string
+// CgroupV1CFSController controls a cgroup's CFS settings
+type CgroupV1CFSController string
 
 // Usage returns the cpuacct.usage value of the cgroup
-func (basePath CgroupCFSController) Usage() (usage CPUTime, err error) {
+func (basePath CgroupV1CFSController) Usage() (usage CPUTime, err error) {
 	cputime, err := basePath.readCpuUsage()
 	if err != nil {
 		return 0, xerrors.Errorf("cannot read cpuacct.usage: %w", err)
@@ -30,7 +30,7 @@ func (basePath CgroupCFSController) Usage() (usage CPUTime, err error) {
 }
 
 // SetQuota sets a new CFS quota on the cgroup
-func (basePath CgroupCFSController) SetLimit(limit Bandwidth) (changed bool, err error) {
+func (basePath CgroupV1CFSController) SetLimit(limit Bandwidth) (changed bool, err error) {
 	period, err := basePath.readCfsPeriod()
 	if err != nil {
 		err = xerrors.Errorf("cannot parse CFS period: %w", err)
@@ -55,8 +55,8 @@ func (basePath CgroupCFSController) SetLimit(limit Bandwidth) (changed bool, err
 	return true, nil
 }
 
-func (basePath CgroupCFSController) readParentQuota() time.Duration {
-	parent := CgroupCFSController(filepath.Dir(string(basePath)))
+func (basePath CgroupV1CFSController) readParentQuota() time.Duration {
+	parent := CgroupV1CFSController(filepath.Dir(string(basePath)))
 	pq, err := parent.readCfsQuota()
 	if err != nil {
 		return time.Duration(0)
@@ -65,7 +65,7 @@ func (basePath CgroupCFSController) readParentQuota() time.Duration {
 	return time.Duration(pq) * time.Microsecond
 }
 
-func (basePath CgroupCFSController) readString(path string) (string, error) {
+func (basePath CgroupV1CFSController) readString(path string) (string, error) {
 	fn := filepath.Join(string(basePath), path)
 	fc, err := os.ReadFile(fn)
 	if err != nil {
@@ -76,7 +76,7 @@ func (basePath CgroupCFSController) readString(path string) (string, error) {
 	return s, nil
 }
 
-func (basePath CgroupCFSController) readCfsPeriod() (time.Duration, error) {
+func (basePath CgroupV1CFSController) readCfsPeriod() (time.Duration, error) {
 	s, err := basePath.readString("cpu.cfs_period_us")
 	if err != nil {
 		return 0, err
@@ -89,7 +89,7 @@ func (basePath CgroupCFSController) readCfsPeriod() (time.Duration, error) {
 	return time.Duration(uint64(p)) * time.Microsecond, nil
 }
 
-func (basePath CgroupCFSController) readCfsQuota() (time.Duration, error) {
+func (basePath CgroupV1CFSController) readCfsQuota() (time.Duration, error) {
 	s, err := basePath.readString("cpu.cfs_quota_us")
 	if err != nil {
 		return 0, err
@@ -106,7 +106,7 @@ func (basePath CgroupCFSController) readCfsQuota() (time.Duration, error) {
 	return time.Duration(p) * time.Microsecond, nil
 }
 
-func (basePath CgroupCFSController) readCpuUsage() (time.Duration, error) {
+func (basePath CgroupV1CFSController) readCpuUsage() (time.Duration, error) {
 	s, err := basePath.readString("cpuacct.usage")
 	if err != nil {
 		return 0, err
@@ -120,7 +120,7 @@ func (basePath CgroupCFSController) readCpuUsage() (time.Duration, error) {
 }
 
 // NrThrottled returns the number of CFS periods the cgroup was throttled in
-func (basePath CgroupCFSController) NrThrottled() (uint64, error) {
+func (basePath CgroupV1CFSController) NrThrottled() (uint64, error) {
 	f, err := os.Open(filepath.Join(string(basePath), "cpu.stat"))
 	if err != nil {
 		return 0, xerrors.Errorf("cannot read cpu.stat: %w", err)
