@@ -69,7 +69,7 @@ func TestCfsSetLimit(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		cfs := CgroupCFSController(tempdir)
+		cfs := CgroupV1CFSController(tempdir)
 		changed, err := cfs.SetLimit(tc.bandWidth)
 		if err != nil {
 			t.Fatal(err)
@@ -110,7 +110,7 @@ func TestReadCfsQuota(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		cfs := CgroupCFSController(tempdir)
+		cfs := CgroupV1CFSController(tempdir)
 		v, err := cfs.readCfsQuota()
 		if err != nil {
 			t.Fatal(err)
@@ -132,7 +132,7 @@ func TestReadCfsPeriod(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		cfs := CgroupCFSController(tempdir)
+		cfs := CgroupV1CFSController(tempdir)
 		v, err := cfs.readCfsPeriod()
 		if err != nil {
 			t.Fatal(err)
@@ -155,7 +155,7 @@ func TestReadCpuUsage(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		cfs := CgroupCFSController(tempdir)
+		cfs := CgroupV1CFSController(tempdir)
 		v, err := cfs.readCpuUsage()
 		if err != nil {
 			t.Fatal(err)

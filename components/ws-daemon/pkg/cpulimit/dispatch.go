@@ -6,10 +6,14 @@ package cpulimit
 
 import (
 	"context"
+	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/opencontainers/runc/libcontainer/cgroups/fs2"
+	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
@@ -97,7 +101,7 @@ type DispatchListener struct {
 }
 
 type workspace struct {
-	CFS       CgroupCFSController
+	CFS       CFSController
 	OWI       logrus.Fields
 	HardLimit ResourceLimiter
 
@@ -175,8 +179,13 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		return xerrors.Errorf("cannot start governer: %w", err)
 	}
 
+	controller, err := newCFSController(d.Config.CGroupBasePath, cgroupPath)
+	if err != nil {
+		return err
+	}
+
 	d.workspaces[ws.InstanceID] = &workspace{
-		CFS: CgroupCFSController(filepath.Join(d.Config.CGroupBasePath, "cpu", cgroupPath)),
+		CFS: controller,
 		OWI: ws.OWI(),
 	}
 	go func() {
@@ -213,4 +222,41 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 	}
 
 	return nil
+}
+
+func newCFSController(basePath, cgroupPath string) (CFSController, error) {
+	controllers := filepath.Join(basePath, "cgroup.controllers")
+	_, err := os.Stat(controllers)
+
+	if os.IsNotExist(err) {
+		return CgroupV1CFSController(filepath.Join(basePath, "cpu", cgroupPath)), nil
+	}
+
+	if err == nil {
+		fullPath := filepath.Join(basePath, cgroupPath)
+		if err := ensureControllerEnabled(fullPath, "cpu"); err != nil {
+			return nil, err
+		}
+
+		return CgroupV2CFSController(fullPath), nil
+	}
+
+	return nil, err
+}
+
+func ensureControllerEnabled(targetPath, controller string) error {
+	controllerFile := filepath.Join(targetPath, "cgroup.controllers")
+	controllers, err := os.ReadFile(controllerFile)
+	if err != nil {
+		return err
+	}
+
+	for _, ctrl := range strings.Fields(string(controllers)) {
+		if ctrl == controller {
+			// controller is already activated
+			return nil
+		}
+	}
+
+	return fs2.CreateCgroupPath(targetPath, &configs.Cgroup{})
 }
