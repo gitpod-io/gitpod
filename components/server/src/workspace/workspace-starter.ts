@@ -36,6 +36,7 @@ import { WithReferrerContext } from "@gitpod/gitpod-protocol/lib/protocol";
 import { IDEOption } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
+import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
 
 export interface StartWorkspaceOptions {
     rethrow?: boolean;
@@ -199,8 +200,10 @@ export class WorkspaceStarter {
 
             if (!resp) {
                 clusterSelectionFailed = true;
+                increaseFailedInstanceStartCounter("clusterSelectionFailed");
                 throw new Error("cannot start a workspace because no workspace clusters are available");
             }
+            increaseSuccessfulInstanceStartCounter(retries);
 
             span.log({ "resp": resp });
 
