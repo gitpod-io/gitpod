@@ -43,7 +43,7 @@
               severity: 'critical',
             },
             annotations: {
-              runbook_url: '',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsDaemonExcessiveGC.md',
               summary: 'Ws-daemon is doing excessive garbage collection.',
               description: 'Ws-daemon has excessive garbage collection time. Collecting garbage for more than 1 minute.',
             },
