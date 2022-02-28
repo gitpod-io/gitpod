@@ -26,7 +26,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-h9w2h"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"100Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-h9w2h"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-wh4cr"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"200Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-wh4cr"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
