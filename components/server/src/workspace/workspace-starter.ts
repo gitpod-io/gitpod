@@ -151,6 +151,7 @@ export class WorkspaceStarter {
     protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, mustHaveBackup: boolean, ideConfig: IDEConfig, userEnvVars: UserEnvVar[], projectEnvVars: ProjectEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
 
+        let clusterSelectionFailed = false;
         try {
             // build workspace image
             instance = await this.buildWorkspaceImage({ span }, user, workspace, instance, forceRebuild, forceRebuild);
@@ -217,6 +218,7 @@ export class WorkspaceStarter {
                 }
             }
             if (!resp) {
+                clusterSelectionFailed = true;
                 throw new Error("cannot start a workspace because no workspace clusters are available");
             }
 
@@ -245,7 +247,7 @@ export class WorkspaceStarter {
             return { instanceID: instance.id, workspaceURL: resp.url };
         } catch (err) {
             TraceContext.setError({ span }, err);
-            await this.failInstanceStart({ span }, err, workspace, instance);
+            await this.failInstanceStart({ span }, err, workspace, instance, clusterSelectionFailed);
 
             if (rethrow) {
                 throw err;
@@ -274,7 +276,7 @@ export class WorkspaceStarter {
      * failInstanceStart properly fails a workspace instance if something goes wrong before the instance ever reaches
      * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebulds).
      */
-    protected async failInstanceStart(ctx: TraceContext, err: Error, workspace: Workspace, instance: WorkspaceInstance) {
+    protected async failInstanceStart(ctx: TraceContext, err: Error, workspace: Workspace, instance: WorkspaceInstance, clusterSelectionFailed?: boolean) {
         const span = TraceContext.startSpan("failInstanceStart", ctx);
 
         try {
@@ -285,6 +287,9 @@ export class WorkspaceStarter {
             instance.stoppedTime = new Date().toISOString();
 
             instance.status.conditions.failed = err.toString();
+            if (!!clusterSelectionFailed) {
+                instance.status.conditions.clusterSelectionFailed = true;
+            }
             instance.status.message = `Workspace cannot be started: ${err}`;
             await this.workspaceDb.trace({ span }).storeInstance(instance);
             await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);

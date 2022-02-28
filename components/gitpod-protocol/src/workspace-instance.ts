@@ -153,6 +153,10 @@ export interface WorkspaceInstanceConditions {
 
     // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
     stoppedByRequest?: boolean;
+
+    // clusterSelectionFailed is true if the instance was never actually started because it could not be assigned to any workspace cluster.
+    // Different to most other conditions, this is set by `server` during UNKNOWN/PREPARING phase.
+    clusterSelectionFailed?: boolean;
 }
 
 // AdmissionLevel describes who can access a workspace instance and its ports.
