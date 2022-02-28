@@ -26,5 +26,10 @@
       <option name="name" value="maven" />
       <option name="url" value="https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/snapshots" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven" />
+      <option name="name" value="maven" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/releases" />
+    </remote-repository>
   </component>
 </project>

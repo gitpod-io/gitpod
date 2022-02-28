@@ -31,6 +31,7 @@ tasks:
       exit 0
   - name: Java
     init: |
+      scripts/intellij-warm-up.sh
       leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
       leeway exec --package components/ide/jetbrains/backend-plugin:plugin -- ./gradlew buildPlugin
       leeway exec --package components/ide/jetbrains/gateway-plugin:publish -- ./gradlew buildPlugin
