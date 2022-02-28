@@ -262,6 +262,13 @@ while [ "$i" -le "$DOCS" ]; do
       yq w -i k8s.yaml -d "$i" spec.ingress[0].ports[0].port "$WS_DAEMON_PORT"
    fi
 
+   # NetworkPolicy for workspace-default
+   if [[ "workspace-default" == "$NAME" ]] && [[ "$KIND" == "NetworkPolicy" ]]; then
+      WORK="overrides for $NAME $KIND"
+      echo "$WORK"
+      yq w -i k8s.yaml -d "$i" spec.egress[0].to[0].ipBlock.except[0] 169.254.169.254/30
+   fi
+
    # host ws-daemon on $WS_DAEMON_PORT
    if [[ "ws-daemon" == "$NAME" ]] && [[ "$KIND" == "ConfigMap" ]]; then
       WORK="overrides for $NAME $KIND"
