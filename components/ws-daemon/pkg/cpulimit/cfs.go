@@ -86,7 +86,7 @@ func (basePath CgroupCFSController) readCfsPeriod() (time.Duration, error) {
 	if err != nil {
 		return 0, err
 	}
-	return time.Duration(uint(p)) * time.Microsecond, nil
+	return time.Duration(uint64(p)) * time.Microsecond, nil
 }
 
 func (basePath CgroupCFSController) readCfsQuota() (time.Duration, error) {
