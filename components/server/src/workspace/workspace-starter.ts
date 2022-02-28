@@ -43,6 +43,9 @@ export interface StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
 }
 
+const MAX_INSTANCE_START_RETRIES = 2;
+const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
+
 @injectable()
 export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
@@ -181,42 +184,19 @@ export class WorkspaceStarter {
             const euser: ExtendedUser = {
                 ...user,
                 getsMoreResources: await this.userService.userGetsMoreResources(user),
-            }
+            };
 
-            // tell the world we're starting this instance
-            let resp: StartWorkspaceResponse.AsObject | undefined;
-            let lastInstallation = "";
-            const clusters = await this.clientProvider.getStartClusterSets(euser, workspace, instance);
-            for await (let cluster of clusters) {
-                try {
-                    // getStartManager will throw an exception if there's no cluster available and hence exit the loop
-                    const { manager, installation } = cluster;
-                    lastInstallation = installation;
-
-                    instance.status.phase = "pending";
-                    instance.region = installation;
-                    await this.workspaceDb.trace({ span }).storeInstance(instance);
-                    try {
-                        await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
-                    } catch (err) {
-                        // if sending the notification fails that's no reason to stop the workspace creation.
-                        // If the dashboard misses this event it will catch up at the next one.
-                        span.log({ "notifyOnInstanceUpdate.error": err });
-                        log.debug("cannot send instance update - this should be mostly inconsequential", err);
-                    }
-
-                    // start that thing
-                    log.info({ instanceId: instance.id }, 'starting instance');
-                    resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
+            // choose a cluster and start the instance
+            let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
+            let retries = 0;
+            for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
+                resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
+                if (resp) {
                     break;
-                } catch (err: any) {
-                    if ('code' in err && err.code !== grpc.status.OK && lastInstallation !== "") {
-                        log.error({ instanceId: instance.id }, "cannot start workspace on cluster, might retry", err, { cluster: lastInstallation });
-                    } else {
-                        throw err;
-                    }
                 }
+                await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
             }
+
             if (!resp) {
                 clusterSelectionFailed = true;
                 throw new Error("cannot start a workspace because no workspace clusters are available");
@@ -259,6 +239,42 @@ export class WorkspaceStarter {
         } finally {
             span.finish();
         }
+    }
+
+    protected async tryStartOnCluster(ctx: TraceContext, startRequest: StartWorkspaceRequest, euser: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance): Promise<StartWorkspaceResponse.AsObject | undefined> {
+        let lastInstallation = "";
+        const clusters = await this.clientProvider.getStartClusterSets(euser, workspace, instance);
+        for await (let cluster of clusters) {
+            try {
+                // getStartManager will throw an exception if there's no cluster available and hence exit the loop
+                const { manager, installation } = cluster;
+                lastInstallation = installation;
+
+                instance.status.phase = "pending";
+                instance.region = installation;
+                await this.workspaceDb.trace(ctx).storeInstance(instance);
+                try {
+                    await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+                } catch (err) {
+                    // if sending the notification fails that's no reason to stop the workspace creation.
+                    // If the dashboard misses this event it will catch up at the next one.
+                    ctx.span?.log({ "notifyOnInstanceUpdate.error": err });
+                    log.debug("cannot send instance update - this should be mostly inconsequential", err);
+                }
+
+                // start that thing
+                log.info({ instanceId: instance.id }, 'starting instance');
+                return (await manager.startWorkspace(ctx, startRequest)).toObject();
+            } catch (err: any) {
+                if ('code' in err && err.code !== grpc.status.OK && lastInstallation !== "") {
+                    log.error({ instanceId: instance.id }, "cannot start workspace on cluster, might retry", err, { cluster: lastInstallation });
+                } else {
+                    throw err;
+                }
+            }
+        }
+
+        return undefined;
     }
 
     protected async notifyOnPrebuildQueued(ctx: TraceContext, workspaceId: string) {
