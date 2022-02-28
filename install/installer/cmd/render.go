@@ -46,9 +46,9 @@ A config file is required which can be generated with the init command.`,
 
 		if cfg.Experimental != nil {
 			if renderOpts.UseExperimentalConfig {
-				fmt.Fprintf(os.Stderr, "rendering using experimental config - here be dragons\n")
+				fmt.Fprintf(os.Stderr, "rendering using experimental config\n")
 			} else {
-				fmt.Fprintf(os.Stderr, "config contains experimental options - ignoring them\n")
+				fmt.Fprintf(os.Stderr, "ignoring experimental config. Use `--use-experimental-config` to include the experimental section in config\n")
 				cfg.Experimental = nil
 			}
 		}
@@ -190,5 +190,5 @@ func init() {
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
 	renderCmd.PersistentFlags().StringVarP(&renderOpts.Namespace, "namespace", "n", "default", "namespace to deploy to")
 	renderCmd.Flags().BoolVar(&renderOpts.ValidateConfigDisabled, "no-validation", false, "if set, the config will not be validated before running")
-	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "danger-use-unsupported-config", false, "enable use of unsupported config")
+	renderCmd.Flags().BoolVar(&renderOpts.UseExperimentalConfig, "use-experimental-config", false, "enable the use of experimental config that is prone to be changed")
 }
