@@ -72,7 +72,7 @@ export default function UserSearch() {
                             <path fillRule="evenodd" clipRule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E" />
                         </svg>
                     </div>
-                    <input type="search" placeholder="Search Users" onKeyDown={(ke) => ke.key === 'Enter' && search() } onChange={(v) => { setSearchTerm(v.target.value) }} />
+                    <input type="search" placeholder="Search Users" onKeyDown={(ke) => ke.key === 'Enter' && search() } onChange={(v) => { setSearchTerm((v.target.value).trim()) }} />
                 </div>
                 <button disabled={searching} onClick={search}>Search</button>
             </div>

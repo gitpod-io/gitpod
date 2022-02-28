@@ -81,7 +81,7 @@ export interface WorkspaceDB {
     findWorkspacesForContentDeletion(minSoftDeletedTimeInDays: number, limit: number): Promise<WorkspaceOwnerAndSoftDeleted[]>;
     findPrebuiltWorkspacesForGC(daysUnused: number, limit: number): Promise<WorkspaceAndOwner[]>;
     findAllWorkspaces(offset: number, limit: number, orderBy: keyof Workspace, orderDir: "ASC" | "DESC", ownerId?: string, searchTerm?: string, minCreationTime?: Date, maxCreationDateTime?: Date, type?: WorkspaceType): Promise<{ total: number, rows: Workspace[] }>;
-    findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }>;
+    findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery): Promise<{ total: number, rows: WorkspaceAndInstance[] }>;
     findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined>;
     findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]>;
 

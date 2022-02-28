@@ -754,7 +754,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return await queryBuilder.getCount();
     }
 
-    public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }> {
+    public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery): Promise<{ total: number, rows: WorkspaceAndInstance[] }> {
         let whereConditions = [];
         let whereConditionParams: any = {};
         let instanceIdQuery: boolean = false;
@@ -765,6 +765,9 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                 whereConditions.push("(wsi.id = :instanceId OR ws.id = :workspaceId)");
                 whereConditionParams.instanceId = query.instanceIdOrWorkspaceId;
                 whereConditionParams.workspaceId = query.instanceIdOrWorkspaceId;
+            } else if (query.workspaceId) {
+                whereConditions.push("ws.id = :workspaceId");
+                whereConditionParams.workspaceId = query.workspaceId;
             } else if (query.instanceId) {
                 // in addition to adding "instanceId" to the "WHERE" clause like for the other workspace-guided queries,
                 // we modify the JOIN condition below to a) select the correct instance and b) make the query faster
@@ -772,19 +775,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
                 whereConditions.push("wsi.id = :instanceId");
                 whereConditionParams.instanceId = query.instanceId;
-            } else if (query.workspaceId) {
-                whereConditions.push("ws.id = :workspaceId");
-                whereConditionParams.workspaceId = query.workspaceId;
-            } else if (query.ownerId) {
-                // If an owner id is provided only search for workspaces belonging to that user.
-                whereConditions.push("ws.ownerId = :ownerId");
-                whereConditionParams.ownerId = query.ownerId;
             }
-        }
-
-        if (searchTerm) {
-            // If a search term is provided perform a wildcard search in the context url or exact match on the workspace id (aka workspace name) or the instance id.
-            whereConditions.push(`ws.contextURL LIKE '%${searchTerm}%'`);
         }
 
         let orderField: string = orderBy;

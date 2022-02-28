@@ -586,7 +586,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
 
-        return await this.workspaceDb.trace(ctx).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req, req.searchTerm);
+        return await this.workspaceDb.trace(ctx).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req);
     }
 
     async adminGetWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceAndInstance> {
