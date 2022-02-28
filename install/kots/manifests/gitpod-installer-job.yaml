@@ -157,8 +157,33 @@ spec:
                 fi
               fi
 
+              echo "Gitpod: Create a Helm template directory"
+              rm -Rf "${GITPOD_OBJECTS}"
+              mkdir -p "${GITPOD_OBJECTS}/templates"
+              cat <<EOF >> "${GITPOD_OBJECTS}/Chart.yaml"
+              apiVersion: v2
+              name: gitpod-kots
+              description: Always ready-to-code
+              Version: "1.0.0"
+              appVersion: "$(/app/installer version | yq e '.version' -)"
+              EOF
+
               echo "Gitpod: Generate the Kubernetes objects and apply"
-              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} | kubectl apply -f -
+              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} > "${GITPOD_OBJECTS}/templates/gitpod.yaml"
+
+              # The long timeout is to
+              helm upgrade \
+                --atomic \
+                --cleanup-on-fail \
+                --create-namespace \
+                --install \
+                --namespace="{{repl Namespace }}" \
+                --reset-values \
+                --timeout 1h \
+                --wait \
+                --wait-for-jobs \
+                gitpod \
+                "${GITPOD_OBJECTS}"
 
               echo "Gitpod: Installer job finished - goodbye"
       volumes:
