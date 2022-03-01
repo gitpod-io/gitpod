@@ -6,6 +6,7 @@ package openvsx_proxy
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -101,6 +102,10 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}},
 				},
 			},
+		},
+		Status: appsv1.StatefulSetStatus{
+			Replicas:          *pointer.Int32(1),
+			AvailableReplicas: *pointer.Int32(1),
 		},
 	}}, nil
 }
