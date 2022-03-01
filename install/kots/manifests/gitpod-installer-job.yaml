@@ -45,12 +45,17 @@ spec:
           # This will normally be the release tag - using this tag as need the license evaluator
           image: 'eu.gcr.io/gitpod-core-dev/build/installer:main.2569'
           volumeMounts:
+            - mountPath: /config-patch
+              name: config-patch
+              readOnly: true
             - mountPath: /mnt/node0
               name: node-fs0
               readOnly: true
           env:
             - name: CONFIG_FILE
               value: /tmp/gitpod-config.yaml
+            - name: CONFIG_PATCH_FILE
+              value: /config-patch/gitpod-config-patch.yaml
             - name: CONTAINERD_DIR_K3S
               value: /run/k3s/containerd/io.containerd.runtime.v2.task/k8s.io
             - name: CONTAINERD_SOCKET_K3S
@@ -167,11 +172,23 @@ spec:
                 yq e -i '.sshGatewayHostKey.name = "ssh-gateway-host-key"' "${CONFIG_FILE}"
               fi
 
+              echo "Gitpod: Patch Gitpod config"
+              base64 -d "${CONFIG_PATCH_FILE}" > /tmp/patch.yaml
+              config_patch=$(cat /tmp/patch.yaml)
+              echo "Gitpod: ${CONFIG_PATCH_FILE}=${config_patch}"
+              yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' "${CONFIG_FILE}" /tmp/patch.yaml
+
               echo "Gitpod: Generate the Kubernetes objects and apply"
+              config=$(cat "${CONFIG_FILE}")
+              echo "Gitpod: ${CONFIG_FILE}=${config}"
+
               /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} | kubectl apply -f -
 
               echo "Gitpod: Installer job finished - goodbye"
       volumes:
+        - name: config-patch
+          configMap:
+            name: gitpod-config-patch
         - name: node-fs0
           hostPath:
             path: /
