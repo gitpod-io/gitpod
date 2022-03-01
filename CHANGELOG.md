@@ -1,6 +1,10 @@
 # Change Log
 
 ## February 2022
+- Git Integrations UI – improve handling of host name. ([#7831](https://github.com/gitpod-io/gitpod/pull/7831)) - [@Shulammite-Aso](https://github.com/Shulammite-Aso)
+- Deal with when cpu.cfs_quota_us is negative ([#8428](https://github.com/gitpod-io/gitpod/pull/8428)) - [@utam0k](https://github.com/utam0k)
+- Remove ghost from the codebase ([#8363](https://github.com/gitpod-io/gitpod/pull/8363)) - [@aledbf](https://github.com/aledbf)
+- Docker in workspaces now allows mapping the user id of a container user to the workspace gitpod user ([#8435](https://github.com/gitpod-io/gitpod/pull/8435)) - [@Furisto](https://github.com/Furisto)
 - Improve handling of an error when pod fails to start due to out of memory error on the node ([#8463](https://github.com/gitpod-io/gitpod/pull/8463)) - [@sagor999](https://github.com/sagor999)
 - [installer]: remove jaeger operator from the config ([#8460](https://github.com/gitpod-io/gitpod/pull/8460)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Admins can find teams, see team details, and change a team member's role. ([#8402](https://github.com/gitpod-io/gitpod/pull/8402)) - [@laushinka](https://github.com/laushinka)
