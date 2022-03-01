@@ -331,3 +331,20 @@ spec:
           type: bool
           default: "0"
           help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes.'
+
+    - name: advanced
+      title: Advanced customizations (Expert Mode)
+      description: Use with care! Enable only when you know what you are doing!
+      items:
+        - name: advanced_mode_enabled
+          title: Enable advanced mode
+          type: bool
+          default: "0"
+          help_text: Enables advanced customization options. Enable only when you know what you are doing!
+
+        - name: config_patch
+          title: Gitpod config patch (YAML file)
+          type: file
+          required: false
+          when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
+          help_text: A file with Gitpod config that will be used to patch the generated Gitpod config.
