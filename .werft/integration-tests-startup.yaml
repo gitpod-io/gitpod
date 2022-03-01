@@ -35,43 +35,56 @@ pod:
 
       function cleanup ()
       {
-        werft run github -a namespace=staging-gitpod-test-main --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main
+        werft log phase "cleanup preview environment" "cleanup preview environment"
+        BUILD_ID=$(werft run github -a namespace=staging-gitpod-test-main -j .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main)
+
+        echo "start cleanup preview environment, job name: ${BUILD_ID}" | werft log slice "cleanup"
+        werft log result -d "cleanup job" url "https://werft.gitpod-dev.com/job/${BUILD_ID}"
+
+        werft job logs ${BUILD_ID} | werft log slice "cleanup"
       }
 
-
-      echo "[prep] preparing config."
+      echo "preparing config." | werft log slice prepare
       gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
       export GOOGLE_APPLICATION_CREDENTIALS="/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
       export DOCKER_HOST=tcp://$NODENAME:2375
-      echo "[prep] copied config..."
-      echo "[prep|DONE]"
+      echo "copied config..." | werft log slice prepare
+      werft log slice prepare --done
 
+      werft log phase "build preview environment" "build preview environment"
       # this is because we don't want to increate gitpod-build-main number, we can choose a name
       sudo cp .werft/build.yaml .werft/test.yaml
       # version is actual namespace that werft is build, --job-file should be same with above
-      VERSION=$(werft run github -j .werft/test.yaml github.com/gitpod-io/gitpod:main)
-      echo "[build test environment] start ${VERSION}"
+      VERSION=$(werft run github -j .werft/test.yaml -s .werft/test.yaml github.com/gitpod-io/gitpod:main)
+      echo "start build preview environment, job name: ${VERSION}, this will take long time" | werft log slice "build test environment"
+      werft log result -d "build job" url "https://werft.gitpod-dev.com/job/${VERSION}"
+
+      if ! werft job logs ${VERSION} | werft log slice "build test environment";
+      then
+          echo "build failed" | werft log slice "build test environment"
+          exit 1
+      fi
+      echo "build success" | werft log slice "build test environment"
+      werft log slice "build test environment" --done
 
       # clean preview environment when the script exits
       trap cleanup SIGINT SIGTERM EXIT
 
-      until werft job get ${VERSION} -o yaml | yq r - "phase" | grep '4' > /dev/null; do
-          sleep 1
-      done
-      echo "[build test environment] done"
-      echo "[build test environment|DONE]"
-
+      werft log phase "integration test" "integration test"
       # we need get integration-test version like: jp-run-integration-test.61
+      INTEGRATION_VERSION=$(docker run eu.gcr.io/gitpod-core-dev/build/versions:${VERSION} cat versions.yaml | yq r - 'components.integrationTest.version')
 
-      # INTEGRATION_VERSION=$(docker run eu.gcr.io/gitpod-core-dev/build/versions:${VERSION} cat versions.yaml | yq r - 'components.integrationTest.version')
+      echo "using integration-test image: ${INTEGRATION_VERSION}" | werft log slice "test"
 
-      # only for test now
-      INTEGRATION_VERSION=jp-run-integration-test.80
-      echo "[version] ${INTEGRATION_VERSION}"
 
       TEST_BUILD_ID=$(werft run github -a version=${INTEGRATION_VERSION} -a namespace=staging-gitpod-test-main -j .werft/run-integration-tests-ide.yaml -a testPattern=ide.test github.com/gitpod-io/gitpod:main)
-      until werft job get ${TEST_BUILD_ID} -o yaml | yq r - "phase" | grep '4' > /dev/null; do
-          sleep 1
-      done
 
-      werft job get ${TEST_BUILD_ID} -o yaml | yq r - "conditions.success" > /dev/null | grep "true"
+      echo "running integration, job name: ${TEST_BUILD_ID}" | werft log slice "test"
+      werft log result -d "integration test job" url "https://werft.gitpod-dev.com/job/${TEST_BUILD_ID}"
+
+      if ! werft job logs ${TEST_BUILD_ID} | werft log slice "test";
+      then
+          echo "ingetration test failed" | werft log slice "test"
+          exit 1
+      fi
+      echo "ingetration test success" | werft log slice "test"
