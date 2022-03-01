@@ -5,7 +5,7 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Project, ProjectEnvVar, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { CommitContext, Project, ProjectEnvVar, RateLimiterError, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { inject, injectable } from 'inversify';
@@ -16,6 +16,9 @@ import { ConfigProvider } from '../../../src/workspace/config-provider';
 import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
 import { Config } from '../../../src/config';
 import { ProjectsService } from '../../../src/projects/projects-service';
+import { startPrebuild, UserRateLimiter } from '../../../src/auth/rate-limiter';
+import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { ResponseError } from 'vscode-ws-jsonrpc';
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -119,12 +122,18 @@ export class PrebuildManager {
             const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, contextURL);
             const prebuildPromise = this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
 
-            // const canBuildNow = await this.prebuildRateLimiter.canBuildNow({ span }, user, cloneURL);
-            // if (!canBuildNow) {
-            //     // we cannot start building now because the rate limiter prevents it.
-            //     span.setTag("starting", false);
-            //     return { wsid: workspace.id, done: false };;
-            // }
+            // rate limiting
+            try {
+                await UserRateLimiter.instance(this.config.rateLimiter).consume(user.id, startPrebuild);
+            } catch (error) {
+                span.setTag("starting", false);
+                if (error instanceof Error) {
+                    log.error({ userId: user.id }, "Unexpected error in the rate limiter", error);
+                    throw error;
+                }
+                log.warn({ userId: user.id }, "Rate limiter prevents accessing method due to too many requests.", error, { method: "startPrebuild" });
+                throw new ResponseError<RateLimiterError>(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { method: "startPrebuild", retryAfter: Math.ceil(error.msBeforeNext / 1000) || 1 });
+            }
 
             span.setTag("starting", true);
             const projectEnvVars = await projectEnvVarsPromise;

@@ -358,7 +358,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                     throw rlRejected;
                 }
                 log.warn({ userId }, "Rate limiter prevents accessing method due to too many requests.", rlRejected, { method });
-                throw new ResponseError<RateLimiterError>(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { method, retryAfter: Math.round(rlRejected.msBeforeNext / 1000) || 1 });
+                throw new ResponseError<RateLimiterError>(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { method, retryAfter: Math.ceil(rlRejected.msBeforeNext / 1000) || 1 });
             }
 
             // access guard

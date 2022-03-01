@@ -11,8 +11,9 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 export const accessCodeSyncStorage = 'accessCodeSyncStorage';
 export const accessHeadlessLogs = 'accessHeadlessLogs';
-type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs;
-type GroupKey = "default" | "startWorkspace";
+export const startPrebuild = 'startPrebuild';
+type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs | typeof startPrebuild;
+type GroupKey = "default" | "startWorkspace" | "startPrebuild";
 type GroupsConfig = {
     [key: string]: {
         points: number,
@@ -161,10 +162,6 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "getLicenseInfo": { group: "default", points: 1 },
         "licenseIncludesFeature": { group: "default", points: 1 },
 
-        "accessCodeSyncStorage": { group: "default", points: 1 },
-
-        accessHeadlessLogs: { group: "default", points: 1 },
-
         "adminAddStudentEmailDomain":  { group: "default", points: 1 },
         "adminGetAccountStatement":  { group: "default", points: 1 },
         "adminIsStudent":  { group: "default", points: 1 },
@@ -197,6 +194,11 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "trackLocation": { group: "default", points: 1},
         "identifyUser": { group: "default", points: 1},
         "getIDEOptions": { group: "default", points: 1 },
+
+        // Non-server methods
+        "accessCodeSyncStorage": { group: "default", points: 1 },
+        "accessHeadlessLogs": { group: "default", points: 1 },
+        "startPrebuild":  { group: "startPrebuild", points: 1 },
     };
 
     return {
