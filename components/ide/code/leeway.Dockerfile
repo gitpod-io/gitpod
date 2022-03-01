@@ -20,7 +20,7 @@ FROM gitpod/openvscode-server-linux-build-agent:bionic-x64 as code_builder
 
 ARG CODE_COMMIT
 
-ARG NODE_VERSION=16.14.0
+ARG NODE_VERSION=14.19.0
 ARG NVM_DIR="/root/.nvm"
 RUN mkdir -p $NVM_DIR \
     && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | sh \
