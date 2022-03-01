@@ -6,6 +6,7 @@ package openvsx_proxy
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -101,6 +102,15 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}},
 				},
 			},
+		},
+		// In the ideal world, we wouldn't want to render the status field before applying a statefulset
+		// because it would be instanly overriden by the Kubernetes API server after getting applied.
+		// Unfortunately k8s client-go structures always add the Status field when marshiling it and
+		// 'Replicas' and 'AvailableReplicas' are required fields of 'StatefulSetStatus' struct.
+		// We're declaring StatefulSetStatus just so it can be applied to any k8s distribution without errors.
+		Status: appsv1.StatefulSetStatus{
+			Replicas:          1,
+			AvailableReplicas: 1,
 		},
 	}}, nil
 }
