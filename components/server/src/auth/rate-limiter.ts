@@ -40,6 +40,10 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
             points: 1,  // 1 workspace start per user per 10s
             durationsSec: 10
         },
+        startPrebuild: {
+            points: 50,  // 50 prebuild starts per user per minute
+            durationsSec: 60
+        },
     }
     const defaultFunctions: FunctionsConfig = {
         "getLoggedInUser": { group: "default", points: 1 },
@@ -105,7 +109,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "deleteProject":  { group: "default", points: 1 },
         "findPrebuilds":  { group: "default", points: 1 },
         "getProjectOverview":  { group: "default", points: 1 },
-        "triggerPrebuild":  { group: "default", points: 1 },
+        "triggerPrebuild":  { group: "startPrebuild", points: 1 },
         "cancelPrebuild":  { group: "default", points: 1 },
         "fetchProjectRepositoryConfiguration":  { group: "default", points: 1 },
         "guessProjectConfiguration":  { group: "default", points: 1 },
