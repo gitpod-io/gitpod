@@ -322,3 +322,12 @@ spec:
           required: true
           when: '{{repl ConfigOptionEquals "cert_manager_enabled" "0" }}'
           help_text: A file containing the TLS private key.
+
+    - name: features
+      title: Additional features
+      items:
+        - name: ssh_gateway
+          title: Allow login to your workspace via SSH
+          type: bool
+          default: "0"
+          help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes.'
