@@ -5,6 +5,7 @@ packages:
       - dev/image:docker
       - dev/poolkeeper:docker
       - dev/sweeper:docker
+      - :dev-utils
     config:
       commands:
         - ["sh", "-c", "tail -n1 dev-sweeper--docker/imgnames.txt > sweeper.txt"]
@@ -14,3 +15,19 @@ packages:
       - dev/blowtorch:app
       - dev/gpctl:app
       - dev/loadgen:app
+  - name: dev-utils
+    type: docker
+    deps:
+      - dev/gpctl:app
+      - dev/kubecdl:app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: dev-utils
+      image:
+        - ${imageRepoBase}/dev-utils:${version}
+        - ${imageRepoBase}/dev-utils:commit-${__git_commit}
