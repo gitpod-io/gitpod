@@ -16,6 +16,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"google.golang.org/grpc"
@@ -103,13 +104,11 @@ func main() {
 		log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("extensions with path installed")
 	}
 
+	// install extensions and run code server with exec
 	args = append(args, os.Args[1:]...)
 	args = append(args, "--do-not-sync")
 	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("starting server")
-	cmd := exec.Command(Code, args...)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	if err := cmd.Run(); err != nil {
+	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), os.Environ()); err != nil {
 		log.WithError(err).Error("install ext and start code server failed")
 	}
 }
