@@ -20,13 +20,15 @@ else
    echo "Running with the following params: ${REG_DAEMON_PORT} ${WS_DAEMON_PORT} ${NODE_POOL_INDEX} ${DEV_BRANCH}"
 fi
 
+echo "Use node pool index $NODE_POOL_INDEX"
+
 # Optional params
 # default yes, we add a license
 LICENSE=$(cat /tmp/license)
 # default, no, we do not add feature flags, file is empty
 DEFAULT_FEATURE_FLAGS=$(cat /tmp/defaultFeatureFlags)
 
-i=0
+
 
 # count YAML like lines in the k8s manifest file
 MATCHES="$(grep -c -- --- k8s.yaml)"
@@ -34,31 +36,30 @@ MATCHES="$(grep -c -- --- k8s.yaml)"
 # K8s object names and kinds are duplicated in a config map to faciliate deletion
 # subtract one (the config map) and then divide by 2 to get the actual # of docs we'll loop through
 DOCS="$((((MATCHES - 1) / 2) + 1))"
+documentIndex=0
 
-echo "Use node pool index $NODE_POOL_INDEX"
-
-while [ "$i" -le "$DOCS" ]; do
+while [ "$documentIndex" -le "$DOCS" ]; do
    # override daemon sets which bind to an actual node port via the hostPort setting on the pod
    unset PORT SIZE NAME UNSET
-   PORT=$(yq r k8s.yaml -d "$i" spec.template.spec.containers.[0].ports.[0].hostPort)
+   PORT=$(yq r k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].ports.[0].hostPort)
    SIZE="${#PORT}"
-   NAME=$(yq r k8s.yaml -d "$i" metadata.name)
-   KIND=$(yq r k8s.yaml -d "$i" kind)
+   NAME=$(yq r k8s.yaml -d "$documentIndex" metadata.name)
+   KIND=$(yq r k8s.yaml -d "$documentIndex" kind)
    if [[ "$SIZE" -ne "0" ]] && [[ "$NAME" == "registry-facade" ]] && [[ "$KIND" == "DaemonSet" ]] ; then
       echo "setting $NAME to $REG_DAEMON_PORT"
-      yq w -i k8s.yaml -d "$i" spec.template.spec.containers.[0].ports.[0].hostPort "$REG_DAEMON_PORT"
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].ports.[0].hostPort "$REG_DAEMON_PORT"
    fi
    if [[ "$SIZE" -ne "0" ]] && [[ "$NAME" == "ws-daemon" ]] && [[ "$KIND" == "DaemonSet" ]] ; then
       echo "setting $NAME to $WS_DAEMON_PORT"
-      yq w -i k8s.yaml -d "$i" spec.template.spec.containers.[0].ports.[0].hostPort "$WS_DAEMON_PORT"
-      yq w -i k8s.yaml -d "$i" spec.template.spec.containers.[0].ports.[0].containerPort "$WS_DAEMON_PORT"
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].ports.[0].hostPort "$WS_DAEMON_PORT"
+      yq w -i k8s.yaml -d "$documentIndex" spec.template.spec.containers.[0].ports.[0].containerPort "$WS_DAEMON_PORT"
    fi
 
    # override details for registry-facade service
    if [[ "registry-facade" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
-      yq w -i k8s.yaml -d "$i" spec.ports[0].port "$REG_DAEMON_PORT"
+      yq w -i k8s.yaml -d "$documentIndex" spec.ports[0].port "$REG_DAEMON_PORT"
    fi
 
    # override labels for pod scheduling on nodes
@@ -72,7 +73,7 @@ while [ "$i" -le "$DOCS" ]; do
       yq w -i /tmp/"$NAME"pool.yaml spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key "$LABEL"
       yq w -i /tmp/"$NAME"pool.yaml spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator Exists
       # append it
-      yq m --arrays=overwrite -i k8s.yaml -d "$i" /tmp/"$NAME"pool.yaml
+      yq m --arrays=overwrite -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"pool.yaml
    elif [[ "$KIND" == "DaemonSet" ]] || [[ "$KIND" == "Deployment" ]] || [[ "$KIND" == "StatefulSet" ]] || [[ "$KIND" == "Job" ]]; then
       LABEL="gitpod.io/workload_meta"
       echo "setting $LABEL for $NAME"
@@ -81,7 +82,7 @@ while [ "$i" -le "$DOCS" ]; do
       yq w -i /tmp/"$NAME"pool.yaml spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key "$LABEL"
       yq w -i /tmp/"$NAME"pool.yaml spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator Exists
       # append it
-      yq m --arrays=overwrite -i k8s.yaml -d "$i" /tmp/"$NAME"pool.yaml
+      yq m --arrays=overwrite -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"pool.yaml
    fi
 
    # overrides for server-config
@@ -89,7 +90,7 @@ while [ "$i" -le "$DOCS" ]; do
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
       touch /tmp/"$NAME"overrides.yaml
-      yq r k8s.yaml -d "$i" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
+      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       THEIA_BUCKET_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.theiaPluginsBucketNameOverride)
       THEIA_BUCKET_NAME_EXPR="s/\"theiaPluginsBucketNameOverride\": \"\"/\"theiaPluginsBucketNameOverride\": \"$THEIA_BUCKET_NAME\"/"
@@ -129,7 +130,7 @@ while [ "$i" -le "$DOCS" ]; do
       fi
 
       # Merge the changes
-      yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"overrides.yaml
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
    fi
 
    # overrides for ws-manager-bridge configmap
@@ -137,20 +138,20 @@ while [ "$i" -le "$DOCS" ]; do
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
       touch /tmp/"$NAME"overrides.yaml
-      yq r k8s.yaml -d "$i" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
+      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       # simliar to server, except the ConfigMap hierarchy, key, and value are different
       SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
       INSTALL_SHORT_NAME_EXPR="s/\"installation\": \"\"/\"installation\": \"$SHORT_NAME\"/"
       sed -i "$INSTALL_SHORT_NAME_EXPR" /tmp/"$NAME"overrides.yaml
-      yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"overrides.yaml
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
    fi
 
    # override details for Minio
    if [[ "minio" == "$NAME" ]] && [[ "$KIND" == "Deployment" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
-      yq -d "$i" w -i k8s.yaml spec.template.spec.serviceAccountName ws-daemon
+      yq -d "$documentIndex" w -i k8s.yaml spec.template.spec.serviceAccountName ws-daemon
    fi
 
    # overrides for ws-manager
@@ -158,7 +159,7 @@ while [ "$i" -le "$DOCS" ]; do
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
       touch /tmp/"$NAME"overrides.yaml
-      yq r k8s.yaml -d "$i" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
+      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
       STAGING_HOST_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml hostname)
@@ -192,7 +193,7 @@ while [ "$i" -le "$DOCS" ]; do
       yq w -i /tmp/"$NAME"-cm-overrides.yaml "data.[config.json]" -- "$(< /tmp/"$NAME"-cm-overrides.json)"
       yq m -x -i /tmp/"$NAME"overrides.yaml /tmp/"$NAME"-cm-overrides.yaml
 
-      yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"overrides.yaml
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
    fi
 
    # overrides for ws-proxy
@@ -200,7 +201,7 @@ while [ "$i" -le "$DOCS" ]; do
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
       touch /tmp/"$NAME"overrides.yaml
-      yq r k8s.yaml -d "$i" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
+      yq r k8s.yaml -d "$documentIndex" data | yq prefix - data > /tmp/"$NAME"overrides.yaml
 
       # simliar to server, except the ConfigMap hierarchy, key, and value are different
       SHORT_NAME=$(yq r ./.werft/jobs/build/helm/values.dev.yaml installation.shortname)
@@ -215,7 +216,7 @@ while [ "$i" -le "$DOCS" ]; do
       # In this, we only do a find replace on a given line if we find workspaceHostSuffixRegex on the line
       sed -i -e "/workspaceHostSuffixRegex/s/$CURRENT_WS_SUFFIX_REGEX/$DEV_BRANCH\\\\\\\\.staging\\\\\\\\.gitpod-dev\\\\\\\\.com/g" /tmp/"$NAME"overrides.yaml
 
-      yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"overrides.yaml
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"overrides.yaml
    fi
 
    if [[ "openvsx-proxy" == "$NAME" ]] && [[ "$KIND" == "StatefulSet" ]]; then
@@ -224,23 +225,23 @@ while [ "$i" -le "$DOCS" ]; do
       # We're being hit by this while trying to install Gitpod on GKE and k3s running different versions
       # where 'availableReplicas' is unkown in GKE while being required on k3s.
       # This workaround should be deleted when https://github.com/gitpod-io/gitpod/issues/8529 gets fixed.
-      yq d -i k8s.yaml -d "$i" 'status'
+      yq d -i k8s.yaml -d "$documentIndex" 'status'
    fi
 
     if [[ ! -v WITH_VM ]] && [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
-      yq w -i k8s.yaml -d "$i" "spec.ports[+].name" http-lb
-      yq w -i k8s.yaml -d "$i" "spec.ports.(name==http-lb).port" 80
-      yq w -i k8s.yaml -d "$i" "spec.ports.(name==http-lb).protocol" TCP
-      yq w -i k8s.yaml -d "$i" "spec.ports.(name==http-lb).targetPort" 8080
+      yq w -i k8s.yaml -d "$documentIndex" "spec.ports[+].name" http-lb
+      yq w -i k8s.yaml -d "$documentIndex" "spec.ports.(name==http-lb).port" 80
+      yq w -i k8s.yaml -d "$documentIndex" "spec.ports.(name==http-lb).protocol" TCP
+      yq w -i k8s.yaml -d "$documentIndex" "spec.ports.(name==http-lb).targetPort" 8080
 
-      yq w -i k8s.yaml -d "$i" "spec.ports[+].name" https-lb
-      yq w -i k8s.yaml -d "$i" "spec.ports.(name==https-lb).port" 443
-      yq w -i k8s.yaml -d "$i" "spec.ports.(name==https-lb).protocol" TCP
-      yq w -i k8s.yaml -d "$i" "spec.ports.(name==https-lb).targetPort" 9090
-      yq w -i k8s.yaml -d "$i" "metadata.annotations[cloud.google.com/neg]" '{"exposed_ports": {"22":{},"80":{},"443":{}}}'
-      yq w -i k8s.yaml -d "$i" spec.type LoadBalancer
+      yq w -i k8s.yaml -d "$documentIndex" "spec.ports[+].name" https-lb
+      yq w -i k8s.yaml -d "$documentIndex" "spec.ports.(name==https-lb).port" 443
+      yq w -i k8s.yaml -d "$documentIndex" "spec.ports.(name==https-lb).protocol" TCP
+      yq w -i k8s.yaml -d "$documentIndex" "spec.ports.(name==https-lb).targetPort" 9090
+      yq w -i k8s.yaml -d "$documentIndex" "metadata.annotations[cloud.google.com/neg]" '{"exposed_ports": {"22":{},"80":{},"443":{}}}'
+      yq w -i k8s.yaml -d "$documentIndex" spec.type LoadBalancer
    fi
 
    # update workspace-templates configmap to set affinity for workspace, ghosts, image builders, etc.
@@ -251,7 +252,7 @@ while [ "$i" -le "$DOCS" ]; do
       touch /tmp/"$NAME"overrides.yaml
 
       # get the data to modify
-      yq r k8s.yaml -d "$i" 'data.[default.yaml]' > /tmp/"$NAME"overrides.yaml
+      yq r k8s.yaml -d "$documentIndex" 'data.[default.yaml]' > /tmp/"$NAME"overrides.yaml
 
       # add the proper affinity
       LABEL="gitpod.io/workspace_$NODE_POOL_INDEX"
@@ -261,21 +262,21 @@ while [ "$i" -le "$DOCS" ]; do
       yq w -i /tmp/"$NAME"overrides.yaml "spec.containers.(name==workspace).env[+].name" GITPOD_PREVENT_METADATA_ACCESS
       yq w -i /tmp/"$NAME"overrides.yaml "spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value" "true"
 
-      yq w -i k8s.yaml -d "$i" "data.[default.yaml]" -- "$(< /tmp/"$NAME"overrides.yaml)"
+      yq w -i k8s.yaml -d "$documentIndex" "data.[default.yaml]" -- "$(< /tmp/"$NAME"overrides.yaml)"
    fi
 
    # NetworkPolicy for ws-daemon
    if [[ "ws-daemon" == "$NAME" ]] && [[ "$KIND" == "NetworkPolicy" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
-      yq w -i k8s.yaml -d "$i" spec.ingress[0].ports[0].port "$WS_DAEMON_PORT"
+      yq w -i k8s.yaml -d "$documentIndex" spec.ingress[0].ports[0].port "$WS_DAEMON_PORT"
    fi
 
    # NetworkPolicy for workspace-default
    if [[ "workspace-default" == "$NAME" ]] && [[ "$KIND" == "NetworkPolicy" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
-      yq w -i k8s.yaml -d "$i" spec.egress[0].to[0].ipBlock.except[0] 169.254.169.254/30
+      yq w -i k8s.yaml -d "$documentIndex" spec.egress[0].to[0].ipBlock.except[0] 169.254.169.254/30
    fi
 
    # host ws-daemon on $WS_DAEMON_PORT
@@ -283,7 +284,7 @@ while [ "$i" -le "$DOCS" ]; do
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
       # Get a copy of the config we're working with
-      yq r k8s.yaml -d "$i" > /tmp/"$NAME"-"$KIND"-overrides.yaml
+      yq r k8s.yaml -d "$documentIndex" > /tmp/"$NAME"-"$KIND"-overrides.yaml
       # Parse and update the JSON, and write it to a file
       yq r /tmp/"$NAME"-"$KIND"-overrides.yaml 'data.[config.json]' \
       | jq ".service.address = $WS_DAEMON_PORT" > /tmp/"$NAME"-"$KIND"-overrides.json
@@ -297,14 +298,14 @@ while [ "$i" -le "$DOCS" ]; do
       # merge the updated data object with existing config
       yq m -x -i /tmp/"$NAME"-"$KIND"-overrides.yaml /tmp/"$NAME"-"$KIND"-data-overrides.yaml
       # merge the updated config map with k8s.yaml
-      yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"-"$KIND"-overrides.yaml
+      yq m -x -i k8s.yaml -d "$documentIndex" /tmp/"$NAME"-"$KIND"-overrides.yaml
    fi
 
    # suspend telemetry cron job
    if [[ "gitpod-telemetry" == "$NAME" ]] && [[ "$KIND" == "CronJob" ]]; then
       WORK="suspend $NAME $KIND"
       echo "$WORK"
-      yq w -i k8s.yaml -d "$i" spec.suspend "true"
+      yq w -i k8s.yaml -d "$documentIndex" spec.suspend "true"
    fi
 
    # Uncomment to change or remove resources from the configmap which can be used to uninstall Gitpod
@@ -315,7 +316,7 @@ while [ "$i" -le "$DOCS" ]; do
    #    WORK="overrides for $NAME $KIND"
    #    echo "$WORK"
    #    # Get a copy of the config we're working with
-   #    yq r k8s.yaml -d "$i" > /tmp/"$NAME"-"$KIND".yaml
+   #    yq r k8s.yaml -d "$documentIndex" > /tmp/"$NAME"-"$KIND".yaml
    #    # Parse the YAML string from the config map
    #    yq r /tmp/"$NAME"-"$KIND".yaml 'data.[app.yaml]' > /tmp/"$NAME"-"$KIND"-original.yaml
    #    # Loop through the config YAML docs
@@ -355,13 +356,13 @@ while [ "$i" -le "$DOCS" ]; do
    #    # merge overrides into base
    #    yq w -i /tmp/"$NAME"-"$KIND".yaml "data.[app.yaml]" -- "$(< /tmp/"$NAME"-"$KIND"-overrides.yaml)"
    #    # merge base into k8s.yaml
-   #    yq m -x -i -d "$i" k8s.yaml /tmp/"$NAME"-"$KIND".yaml
+   #    yq m -x -i -d "$documentIndex" k8s.yaml /tmp/"$NAME"-"$KIND".yaml
    # fi
 
    # TODO: integrate with chargebees
    # won't fix now, use Helm
 
-   i=$((i + 1))
+   documentIndex=$((documentIndex + 1))
 done
 
 exit
