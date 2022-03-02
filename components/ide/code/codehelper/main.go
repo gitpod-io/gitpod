@@ -174,7 +174,7 @@ func getExtensions(repoRoot string) (extensions []Extension, err error) {
 		return
 	}
 	if config == nil || config.Vscode == nil {
-		err = errors.New("config.vscode field not exists: " + err.Error())
+		err = errors.New("config.vscode field not exists")
 		return
 	}
 	var wg sync.WaitGroup
