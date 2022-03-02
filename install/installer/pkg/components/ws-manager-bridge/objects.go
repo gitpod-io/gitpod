@@ -18,9 +18,9 @@ var Objects = common.CompositeRenderFunc(
 	common.DefaultServiceAccount(Component),
 )
 
-func WSManagerList() []WorkspaceCluster {
+func WSManagerList(ctx *common.RenderContext) []WorkspaceCluster {
 	return []WorkspaceCluster{{
-		Name: "default",
+		Name: ctx.InstallationShortname,
 		URL:  fmt.Sprintf("dns:///%s:%d", wsmanager.Component, wsmanager.RPCPort),
 		TLS: WorkspaceClusterTLS{
 			Authority:   "/ws-manager-client-tls-certs/ca.crt",

@@ -16,7 +16,7 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	wsmbcfg := Configuration{
-		Installation:                        "",
+		Installation:                        ctx.InstallationShortname,
 		WSClusterDBReconcileIntervalSeconds: 60,
 		ControllerIntervalSeconds:           60,
 		ControllerMaxDisconnectSeconds:      150,
@@ -31,7 +31,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			UnknownPhaseSeconds:              600,
 		},
 		EmulatePreparingIntervalSeconds: 10,
-		StaticBridges:                   WSManagerList(),
+		StaticBridges:                   WSManagerList(ctx),
 	}
 
 	fc, err := common.ToJSONString(wsmbcfg)

@@ -8,6 +8,7 @@ package init
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -51,6 +52,12 @@ func job(ctx *common.RenderContext) ([]runtime.Object, error) {
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Env: common.MergeEnv(
 							common.DatabaseEnv(&ctx.Config),
+							[]corev1.EnvVar{
+								{
+									Name:  "INSTALLATION_SHORTNAME",
+									Value: ctx.InstallationShortname,
+								},
+							},
 						),
 						Command: []string{
 							"sh",

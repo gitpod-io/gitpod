@@ -32,7 +32,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	// Convert to a JSON string
-	fc, err := common.ToJSONString(wsmanagerbridge.WSManagerList())
+	fc, err := common.ToJSONString(wsmanagerbridge.WSManagerList(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal server.WorkspaceManagerList config: %w", err)
 	}

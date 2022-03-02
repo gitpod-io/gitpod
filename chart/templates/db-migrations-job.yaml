@@ -43,6 +43,8 @@ spec:
       - name: db-migrations
         image: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" .Values "comp" $.Values.components.dbMigrations) }}"
         env:
+        - name: INSTALLATION_SHORTNAME
+          value: "{{ $.Values.installation.shortname }}"
         - name: "DB_USERNAME"
           value: "{{ $.Values.db.username }}"
         - name: "DB_PASSWORD"

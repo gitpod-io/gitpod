@@ -62,8 +62,10 @@ type GeneratedValues struct {
 type RenderContext struct {
 	VersionManifest versions.Manifest
 	Config          config.Config
-	Namespace       string
-	Values          GeneratedValues
+	// InstallationShortname establishes the "identity" of the (application) cluster.
+	InstallationShortname string
+	Namespace             string
+	Values                GeneratedValues
 
 	experimentalConfig *experimental.Config
 }
@@ -123,10 +125,11 @@ func NewRenderContext(cfg config.Config, versionManifest versions.Manifest, name
 	cfg.Experimental = nil
 
 	ctx := &RenderContext{
-		Config:             cfg,
-		VersionManifest:    versionManifest,
-		Namespace:          namespace,
-		experimentalConfig: us,
+		Config:                cfg,
+		VersionManifest:       versionManifest,
+		Namespace:             namespace,
+		InstallationShortname: "default", // TODO(gpl): we're tied to "default" here because that's what we put into static bridges in the past
+		experimentalConfig:    us,
 	}
 
 	err := ctx.generateValues()

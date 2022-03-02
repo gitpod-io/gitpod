@@ -29,8 +29,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
 		HostURL:               fmt.Sprintf("https://%s", ctx.Config.Domain),
-		InstallationShortname: ctx.Namespace, // todo(sje): is this needed?
-		Stage:                 "production",  // todo(sje): is this needed?
+		InstallationShortname: ctx.InstallationShortname,
+		Stage:                 "production", // todo(sje): is this needed?
 		LicenseFile:           license,
 		WorkspaceHeartbeat: WorkspaceHeartbeat{
 			IntervalSeconds: 60,
