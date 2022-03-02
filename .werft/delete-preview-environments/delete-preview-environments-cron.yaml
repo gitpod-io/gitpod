@@ -18,7 +18,7 @@ pod:
       secretName: gcp-sa-gitpod-release-deployer
   containers:
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bmp-leeway.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
