@@ -32,7 +32,7 @@ function toBool(b: WorkspaceConditionBool | undefined): boolean | undefined {
     return b === WorkspaceConditionBool.TRUE;
 }
 
-export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url" | "govern">;
+export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url" | "governedBy">;
 
 @injectable()
 export class WorkspaceManagerBridge implements Disposable {
@@ -63,7 +63,7 @@ export class WorkspaceManagerBridge implements Disposable {
     protected cluster: WorkspaceClusterInfo;
 
     public start(cluster: WorkspaceClusterInfo, clientProvider: ClientProvider) {
-        const logPayload = { name: cluster.name, url: cluster.url, govern: cluster.govern };
+        const logPayload = { name: cluster.name, url: cluster.url, governedBy: cluster.governedBy };
         log.info(`starting bridge to cluster...`, logPayload);
         this.cluster = cluster;
 
@@ -74,7 +74,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 .catch(err => log.error("cannot start status update handler", err));
         };
 
-        if (cluster.govern) {
+        if (cluster.governedBy === this.config.installation) {
             // notify servers and _update the DB_
             startStatusUpdateHandler(true);
 
@@ -85,7 +85,7 @@ export class WorkspaceManagerBridge implements Disposable {
             }
             log.debug(`starting controller: ${cluster.name}`, logPayload);
             this.startController(clientProvider, controllerInterval, this.config.controllerMaxDisconnectSeconds);
-        } else {
+        } else if (cluster.governedBy !== "") {
             // _DO NOT_ update the DB (another bridge is responsible for that)
             // Still, listen to all updates, generate/derive new state and distribute it locally!
             startStatusUpdateHandler(false);
@@ -94,6 +94,8 @@ export class WorkspaceManagerBridge implements Disposable {
             const updateEmulator = this.preparingUpdateEmulatorFactory() as PreparingUpdateEmulator;
             this.disposables.push(updateEmulator);
             updateEmulator.start(cluster.name);
+        } else {
+            // case governedBy === "": a state that we'll only have during a transition period for backwards-compatibilities sake
         }
         log.info(`started bridge to cluster.`, logPayload);
     }

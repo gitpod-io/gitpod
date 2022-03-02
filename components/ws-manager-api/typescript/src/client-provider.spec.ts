@@ -27,19 +27,19 @@ class TestClientProvider {
         c.bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
         c.bind(WorkspaceManagerClientProviderSource).toDynamicValue((): WorkspaceManagerClientProviderSource => {
             const cluster: WorkspaceCluster[] = [
-                { name: "c1", govern: true, maxScore: 100, score: 0, state: "cordoned", url: "", admissionConstraints: [] },
-                { name: "c2", govern: true, maxScore: 100, score: 50, state: "cordoned", url: "", admissionConstraints: [] },
-                { name: "c3", govern: false, maxScore: 100, score: 50, state: "cordoned", url: "", admissionConstraints: [] },
-                { name: "a1", govern: true, maxScore: 100, score: 0, state: "available", url: "", admissionConstraints: [] },
-                { name: "a2", govern: true, maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [] },
-                { name: "a3", govern: false, maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [] },
+                { name: "c1", govern: true, governedBy: "app1", maxScore: 100, score: 0, state: "cordoned", url: "", admissionConstraints: [] },
+                { name: "c2", govern: true, governedBy: "app1", maxScore: 100, score: 50, state: "cordoned", url: "", admissionConstraints: [] },
+                { name: "c3", govern: false, governedBy: "app1", maxScore: 100, score: 50, state: "cordoned", url: "", admissionConstraints: [] },
+                { name: "a1", govern: true, governedBy: "app1", maxScore: 100, score: 0, state: "available", url: "", admissionConstraints: [] },
+                { name: "a2", govern: true, governedBy: "app1", maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [] },
+                { name: "a3", govern: false, governedBy: "app1", maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [] },
                 {
-                    name: "con1", govern: true, maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [
+                    name: "con1", govern: true, governedBy: "app1", maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [
                         { type: "has-permission", permission: "new-workspace-cluster" },
                     ]
                 },
                 {
-                    name: "con2", govern: true, maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [
+                    name: "con2", govern: true, governedBy: "app1", maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [
                         { type: "has-permission", permission: "monitor" },    // This is meant to representent a permission that does not take special predence (cmp. constraints.ts)
                     ]
                 },

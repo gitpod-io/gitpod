@@ -25,6 +25,8 @@ message RegisterRequest {
   // DEPRECATED
   // repeated AdmissionPreference admission_preference = 6;
   reserved 6;
+
+  optional string governed_by = 7;
 }
 
 message RegisterResponse {}
@@ -38,6 +40,7 @@ message TlsConfig {
 message RegistrationHints {
   Preferability perfereability = 1;
   bool cordoned = 2;
+  // DEPRECATED
   bool govern = 3;
 }
 
@@ -67,6 +70,7 @@ message ClusterStatus {
   ClusterState state = 3;
   int32 score = 4;
   int32 max_score = 5;
+  // DEPRECATED
   bool governed = 6;
   repeated AdmissionConstraint admission_constraint = 7;
   bool static = 8;
@@ -74,6 +78,8 @@ message ClusterStatus {
   // DEPRECATED
   // repeated AdmissionPreference admission_preference = 9;
   reserved 9;
+
+  string governed_by = 10;
 }
 
 enum ClusterState {

@@ -13,6 +13,12 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     @PrimaryColumn()
     name: string;
 
+    @PrimaryColumn({
+        default: '',
+    })
+    /** This column is going to replace 'govern' in the near future. During the transition period - and to ease transition/reduce x-team dependencies - we make this part of the PK. */
+    governedBy: string;
+
     @Column({
         type: "varchar",
         length: 255,
@@ -58,6 +64,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     maxScore: number;
 
     @Column()
+    /** @deprecated */
     govern: boolean;
 
     @Column({

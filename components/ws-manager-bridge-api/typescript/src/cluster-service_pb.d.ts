@@ -32,6 +32,11 @@ export class RegisterRequest extends jspb.Message {
     setAdmissionConstraintsList(value: Array<AdmissionConstraint>): RegisterRequest;
     addAdmissionConstraints(value?: AdmissionConstraint, index?: number): AdmissionConstraint;
 
+    hasGovernedBy(): boolean;
+    clearGovernedBy(): void;
+    getGovernedBy(): string | undefined;
+    setGovernedBy(value: string): RegisterRequest;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): RegisterRequest.AsObject;
     static toObject(includeInstance: boolean, msg: RegisterRequest): RegisterRequest.AsObject;
@@ -49,6 +54,7 @@ export namespace RegisterRequest {
         tls?: TlsConfig.AsObject,
         hints?: RegistrationHints.AsObject,
         admissionConstraintsList: Array<AdmissionConstraint.AsObject>,
+        governedBy?: string,
     }
 }
 
@@ -231,6 +237,8 @@ export class ClusterStatus extends jspb.Message {
     addAdmissionConstraint(value?: AdmissionConstraint, index?: number): AdmissionConstraint;
     getStatic(): boolean;
     setStatic(value: boolean): ClusterStatus;
+    getGovernedBy(): string;
+    setGovernedBy(value: string): ClusterStatus;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ClusterStatus.AsObject;
@@ -252,6 +260,7 @@ export namespace ClusterStatus {
         governed: boolean,
         admissionConstraintList: Array<AdmissionConstraint.AsObject>,
         pb_static: boolean,
+        governedBy: string,
     }
 }
 

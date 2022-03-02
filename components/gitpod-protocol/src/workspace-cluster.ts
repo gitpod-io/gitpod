@@ -11,8 +11,7 @@ import { PermissionName } from './permission';
 
 export interface WorkspaceCluster {
     // Name of the workspace cluster.
-    // This is the string set in each
-    // Must be identical to the installationShortname of the cluster it represents!
+    // This is the string that is set to every WorkspaceInstance.region field
     name: string;
 
     // URL of the cluster's ws-manager API
@@ -31,7 +30,11 @@ export interface WorkspaceCluster {
     score: number;
 
     // True if this bridge should control this cluster
+    /** @deprecated */
     govern: boolean;
+
+    /** Contains the application cluster's installationShortname (e.g., eu01) that is in charge to govern this cluster */
+    governedBy: string;
 
     // An optional set of constraints that limit who can start workspaces on the cluster
     admissionConstraints?: AdmissionConstraint[];
@@ -99,6 +102,6 @@ export interface WorkspaceClusterDB {
      */
     findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]>;
 }
-export interface WorkspaceClusterFilter extends Pick<WorkspaceCluster, "state" | "govern" | "url"> {
+export interface WorkspaceClusterFilter extends Pick<WorkspaceCluster, "state" | "governedBy" | "url"> {
     minScore: number;
 }

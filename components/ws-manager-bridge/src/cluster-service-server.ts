@@ -90,12 +90,18 @@ export class ClusterService implements IClusterServiceServer {
 
                 // store the ws-manager into the database
                 let perfereability = Preferability.NONE;
+                let governedBy = '';    // defaults to empty for transition period for backwards compatibility reasons
                 let govern = false;
                 let state: WorkspaceClusterState = "available";
                 if (req.hints) {
                     perfereability = req.hints.perfereability;
-                    if (req.hints.govern) {
-                        govern = req.hints.govern;
+                    if (req.governedBy) {
+                        governedBy = req.governedBy;
+                        govern = this.config.installation === req.governedBy;
+                    } else if (req.hints.govern) {
+                        // deprecated
+                        governedBy = this.config.installation;
+                        govern = true;
                     }
                     state = mapCordoned(req.hints.cordoned);
                 }
@@ -123,6 +129,7 @@ export class ClusterService implements IClusterServiceServer {
                     score,
                     maxScore: 100,
                     govern,
+                    governedBy,
                     tls,
                     admissionConstraints,
                 };
@@ -284,6 +291,7 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
     clusterStatus.setScore(ws.score);
     clusterStatus.setMaxScore(ws.maxScore);
     clusterStatus.setGoverned(ws.govern);
+    clusterStatus.setGovernedBy(ws.governedBy);
     ws.admissionConstraints?.forEach(c => {
         const constraint = new GRPCAdmissionConstraint();
         switch (c.type) {
