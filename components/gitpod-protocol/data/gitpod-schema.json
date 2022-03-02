@@ -222,6 +222,21 @@
                 }
             }
         },
+        "jetbrains": {
+            "type": "object",
+            "description": "Configure JetBrains integration",
+            "deprecationMessage": "The 'jetbrains' property is experimental.",
+            "additionalProperties": false,
+            "properties": {
+                "plugins": {
+                    "type": "array",
+                    "description": "List of plugins which should be installed for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "experimentalNetwork": {
             "type": "boolean",
             "description": "Experimental network configuration in workspaces (deprecated). Enabled by default"

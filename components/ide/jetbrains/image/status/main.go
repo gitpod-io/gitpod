@@ -7,26 +7,44 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"syscall"
 	"time"
 
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	yaml "gopkg.in/yaml.v2"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 const defaultBackendPort = "63342"
 
-// proxy for the Code With Me status endpoints that transforms it into the supervisor status format.
+var (
+	// ServiceName is the name we use for tracing/logging.
+	ServiceName = "jetbrains-startup"
+	// Version of this service - set during build.
+	Version = ""
+)
+
+const RemoteDevServer = "/ide-desktop/backend/bin/remote-dev-server.sh"
+
+// JB startup entrypoint
 func main() {
+	log.Init(ServiceName, Version, true, false)
+	startTime := time.Now()
+
 	if len(os.Args) < 3 {
-		fmt.Printf("Usage: %s <port> <kind> [<link label>]\n", os.Args[0])
-		os.Exit(1)
+		log.Fatalf("Usage: %s <port> <kind> [<link label>]\n", os.Args[0])
 	}
 	port := os.Args[1]
 	kind := os.Args[2]
@@ -35,7 +53,18 @@ func main() {
 		label = os.Args[3]
 	}
 
-	errlog := log.New(os.Stderr, "JetBrains IDE status: ", log.LstdFlags)
+	// wait until content ready
+	contentStatus, wsInfo, err := resolveWorkspaceInfo(context.Background())
+	if err != nil || wsInfo == nil || contentStatus == nil || !contentStatus.Available {
+		log.WithError(err).WithField("wsInfo", wsInfo).WithField("cstate", contentStatus).Error("resolve workspace info failed")
+		return
+	}
+	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("content available")
+
+	installPlugins(wsInfo)
+	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("plugins installation")
+
+	go run(wsInfo)
 
 	http.HandleFunc("/joinLink", func(w http.ResponseWriter, r *http.Request) {
 		backendPort := r.URL.Query().Get("backendPort")
@@ -44,7 +73,7 @@ func main() {
 		}
 		jsonLink, err := resolveJsonLink(backendPort)
 		if err != nil {
-			errlog.Printf("cannot resolve join link: %v\n", err)
+			log.WithError(err).Error("cannot resolve join link")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
@@ -55,9 +84,9 @@ func main() {
 		if backendPort == "" {
 			backendPort = defaultBackendPort
 		}
-		jsonLink, err := resolveGatewayLink(backendPort)
+		jsonLink, err := resolveGatewayLink(backendPort, wsInfo)
 		if err != nil {
-			errlog.Printf("cannot resolve gateway link: %v\n", err)
+			log.WithError(err).Error("cannot resolve gateway link")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
@@ -68,9 +97,9 @@ func main() {
 		if backendPort == "" {
 			backendPort = defaultBackendPort
 		}
-		gatewayLink, err := resolveGatewayLink(backendPort)
+		gatewayLink, err := resolveGatewayLink(backendPort, wsInfo)
 		if err != nil {
-			errlog.Printf("cannot resolve gateway link: %v\n", err)
+			log.WithError(err).Error("cannot resolve gateway link")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
@@ -96,11 +125,7 @@ type Response struct {
 	Projects []Projects `json:"projects"`
 }
 
-func resolveGatewayLink(backendPort string) (string, error) {
-	wsInfo, err := resolveWorkspaceInfo(context.Background())
-	if err != nil {
-		return "", err
-	}
+func resolveGatewayLink(backendPort string, wsInfo *supervisor.WorkspaceInfoResponse) (string, error) {
 	gitpodUrl, err := url.Parse(wsInfo.GitpodHost)
 	if err != nil {
 		return "", err
@@ -141,19 +166,93 @@ func resolveJsonLink(backendPort string) (string, error) {
 	return jsonResp.Projects[0].JoinLink, nil
 }
 
-func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoResponse, error) {
-	supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-	if supervisorAddr == "" {
-		supervisorAddr = "localhost:22999"
+func resolveWorkspaceInfo(ctx context.Context) (*supervisor.ContentStatusResponse, *supervisor.WorkspaceInfoResponse, error) {
+	resolve := func(ctx context.Context) (contentStatus *supervisor.ContentStatusResponse, wsInfo *supervisor.WorkspaceInfoResponse, err error) {
+		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
+		if supervisorAddr == "" {
+			supervisorAddr = "localhost:22999"
+		}
+		supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+		if err != nil {
+			err = errors.New("dial supervisor failed: " + err.Error())
+			return
+		}
+		defer supervisorConn.Close()
+		if wsInfo, err = supervisor.NewInfoServiceClient(supervisorConn).WorkspaceInfo(ctx, &supervisor.WorkspaceInfoRequest{}); err != nil {
+			err = errors.New("get workspace info failed: " + err.Error())
+			return
+		}
+		contentStatus, err = supervisor.NewStatusServiceClient(supervisorConn).ContentStatus(ctx, &supervisor.ContentStatusRequest{Wait: true})
+		if err != nil {
+			err = errors.New("get content available failed: " + err.Error())
+		}
+		return
 	}
-	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
+	// try resolve workspace info 10 times
+	for attempt := 0; attempt < 10; attempt++ {
+		if contentStatus, wsInfo, err := resolve(ctx); err != nil {
+			log.WithError(err).Error("resolve workspace info failed")
+			time.Sleep(1 * time.Second)
+		} else {
+			return contentStatus, wsInfo, err
+		}
+	}
+	return nil, nil, errors.New("failed with attempt 10 times")
+}
+
+func run(wsInfo *supervisor.WorkspaceInfoResponse) {
+	var args []string
+	args = append(args, "run")
+	args = append(args, wsInfo.GetCheckoutLocation())
+	if err := syscall.Exec(RemoteDevServer, args, os.Environ()); err != nil {
+		log.WithError(err).Error("failed to run")
+	}
+}
+
+func installPlugins(wsInfo *supervisor.WorkspaceInfoResponse) {
+	plugins, err := getPlugins(wsInfo.GetCheckoutLocation())
 	if err != nil {
-		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
+		log.WithError(err).Error("failed to get plugins")
+		return
 	}
-	defer supervisorConn.Close()
-	wsinfo, err := supervisor.NewInfoServiceClient(supervisorConn).WorkspaceInfo(ctx, &supervisor.WorkspaceInfoRequest{})
+	if len(plugins) <= 0 {
+		return
+	}
+	var args []string
+	args = append(args, "installPlugins")
+	args = append(args, wsInfo.GetCheckoutLocation())
+	args = append(args, plugins...)
+	cmd := exec.Command(RemoteDevServer, args...)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		log.WithError(err).Error("failed to install plugins")
+	}
+}
+
+func getPlugins(repoRoot string) (plugins []string, err error) {
+	if repoRoot == "" {
+		err = errors.New("repoRoot is empty")
+		return
+	}
+	data, err := os.ReadFile(filepath.Join(repoRoot, ".gitpod.yml"))
 	if err != nil {
-		return nil, xerrors.Errorf("failed getting workspace info from supervisor: %w", err)
+		// .gitpod.yml not exist is ok
+		if errors.Is(err, os.ErrNotExist) {
+			err = nil
+			return
+		}
+		err = errors.New("read .gitpod.yml file failed: " + err.Error())
+		return
 	}
-	return wsinfo, nil
+	var config *gitpod.GitpodConfig
+	if err = yaml.Unmarshal(data, &config); err != nil {
+		err = errors.New("unmarshal .gitpod.yml file failed" + err.Error())
+		return
+	}
+	if config == nil || config.JetBrains == nil {
+		err = errors.New("config.vscode field not exists")
+		return
+	}
+	return config.JetBrains.Plugins, nil
 }

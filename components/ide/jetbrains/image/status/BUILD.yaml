@@ -12,3 +12,4 @@ packages:
       - components/supervisor-api/go:lib
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/jetbrains/status.Version=commit-${__git_commit}'"]
