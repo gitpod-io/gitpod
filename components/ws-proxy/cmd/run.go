@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/bombsimon/logrusr"
+	"github.com/bombsimon/logrusr/v2"
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
@@ -46,7 +46,7 @@ var runCmd = &cobra.Command{
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
 
-		ctrl.SetLogger(logrusr.NewLogger(log.Log))
+		ctrl.SetLogger(logrusr.New(log.Log))
 
 		opts := ctrl.Options{
 			Scheme:                 scheme,

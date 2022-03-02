@@ -34,7 +34,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 					{
 						Name: "workspace",
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								Exec: &corev1.ExecAction{Command: []string{"echo"}},
 							},
 						},

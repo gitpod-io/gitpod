@@ -260,19 +260,23 @@ fi
 					},
 				},
 				LivenessProbe: &corev1.Probe{
-					Handler: corev1.Handler{HTTPGet: &corev1.HTTPGetAction{
-						Path: "/",
-						Port: intstr.IntOrString{IntVal: 9999},
-					}},
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Path: "/",
+							Port: intstr.IntOrString{IntVal: 9999},
+						},
+					},
 					InitialDelaySeconds: 5,
 					PeriodSeconds:       10,
 					FailureThreshold:    10,
 				},
 				ReadinessProbe: &corev1.Probe{
-					Handler: corev1.Handler{HTTPGet: &corev1.HTTPGetAction{
-						Path: "/",
-						Port: intstr.IntOrString{IntVal: 9999},
-					}},
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Path: "/",
+							Port: intstr.IntOrString{IntVal: 9999},
+						},
+					},
 					InitialDelaySeconds: 5,
 					PeriodSeconds:       10,
 				},
@@ -281,14 +285,14 @@ fi
 					Privileged: pointer.Bool(true),
 				},
 				Lifecycle: &corev1.Lifecycle{
-					PostStart: &corev1.Handler{
+					PostStart: &corev1.LifecycleHandler{
 						Exec: &corev1.ExecAction{
 							Command: []string{
 								"/bin/bash", "-c", `kubectl label --overwrite nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}=true`,
 							},
 						},
 					},
-					PreStop: &corev1.Handler{
+					PreStop: &corev1.LifecycleHandler{
 						Exec: &corev1.ExecAction{
 							Command: []string{
 								"/bin/bash", "-c", `kubectl label nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}-`,
