@@ -163,6 +163,24 @@ yq eval-all --inplace \
   gitpod.yaml
 ```
 
+## Error validating `StatefulSet.status`
+
+```shell
+error: error validating "gitpod.yaml": error validating data: ValidationError(StatefulSet.status): missing required field "availableReplicas" in io.k8s.api.apps.v1.StatefulSetStatus; if you choose to ignore these errors, turn validation off with --validate=false
+```
+
+Depending upon your Kubernetes implementation, you may receive this error. This is
+due to a bug in the underlying StatefulSet dependency, which is used to generate the
+OpenVSX proxy (see [#8529](https://github.com/gitpod-io/gitpod/issues/8529)).
+
+To fix this, you will need to post-process the rendered YAML to remove the `status` field.
+
+```shell
+yq eval-all --inplace \
+  'del(select(.kind == "StatefulSet" and .metadata.name == "openvsx-proxy").status)' \
+  gitpod.yaml
+```
+
 ---
 
 # What is installed
