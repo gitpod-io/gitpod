@@ -456,7 +456,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
 
     try {
         werft.log(installerSlices.DEPLOYMENT_WAITING, "Server not ready. Let the waiting...commence!");
-        exec(`kubectl -n ${namespace} rollout status deployment/server --timeout=5m`, { slice: installerSlices.DEPLOYMENT_WAITING });
+        exec(`kubectl -n ${namespace} rollout status deployment/server --timeout=10m`, { slice: installerSlices.DEPLOYMENT_WAITING });
         werft.done(installerSlices.DEPLOYMENT_WAITING);
     } catch (err) {
         if (!jobConfig.mainBuild) {
