@@ -127,13 +127,14 @@ func TestPythonExtWorkspace(t *testing.T) {
 				Dir:     "/workspace/python-test-workspace",
 				Command: "yarn",
 				Args: []string{
-					"--silent",
 					"gp-code-server-test",
 					fmt.Sprintf("--endpoint=%s", nfo.LatestInstance.IdeURL),
-					fmt.Sprintf("--authCookie=%s", base64.StdEncoding.EncodeToString([]byte(jsonCookie))),
 					"--workspacePath=./src/testWorkspace",
 					"--extensionDevelopmentPath=./out",
 					"--extensionTestsPath=./out/test/suite",
+				},
+				Env: []string{
+					fmt.Sprintf("AUTH_COOKIE=%s", base64.StdEncoding.EncodeToString([]byte(jsonCookie))),
 				},
 			}, &resp)
 
@@ -141,8 +142,8 @@ func TestPythonExtWorkspace(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			t.Log("Ide integration stdout:\n", resp.Stdout)
 			if resp.ExitCode != 0 {
-				t.Log("Ide integration stdout:\n", resp.Stdout)
 				t.Log("Ide integration stderr:\n", resp.Stderr)
 				t.Fatal("There was an error running ide test")
 			}
