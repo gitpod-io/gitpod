@@ -104,6 +104,8 @@ if (process.env.NODE_ENV === 'development') {
 
 log.enableJSONLogging('server', process.env.VERSION, LogrusLogLevel.getFromEnv());
 
+log.info("Running changes from mp/first-pr")
+
 export async function start(container: Container) {
     const tracing = container.get(TracingManager);
     tracing.setup("server", {
