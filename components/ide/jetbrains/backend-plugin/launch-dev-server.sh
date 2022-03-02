@@ -32,4 +32,11 @@ fi
 export JB_DEV=true
 export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:0"
 
+# Set default config and system directories under /workspace to preserve between restarts
+export IJ_HOST_CONFIG_BASE_DIR=/workspace/.config/JetBrains
+export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
+
+# Enable host status endpoint
+export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
+
 $TEST_BACKEND_DIR/bin/remote-dev-server.sh run $TEST_DIR
