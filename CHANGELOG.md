@@ -1,6 +1,9 @@
 # Change Log
 
-## February 2022
+## March 2022
+- Try harder to update workspace annotation to prevent workspace from being marked as failed erroneously. ([#8519](https://github.com/gitpod-io/gitpod/pull/8519)) - [@sagor999](https://github.com/sagor999)
+
+##  February 2022
 - Git Integrations UI – improve handling of host name. ([#7831](https://github.com/gitpod-io/gitpod/pull/7831)) - [@Shulammite-Aso](https://github.com/Shulammite-Aso)
 - Deal with when cpu.cfs_quota_us is negative ([#8428](https://github.com/gitpod-io/gitpod/pull/8428)) - [@utam0k](https://github.com/utam0k)
 - Remove ghost from the codebase ([#8363](https://github.com/gitpod-io/gitpod/pull/8363)) - [@aledbf](https://github.com/aledbf)
