@@ -1495,6 +1495,7 @@ func trackReadiness(ctx context.Context, gitpodService *gitpod.APIoverJSONRPC, c
 		Timestamp           int64  `json:"timestamp,omitempty"`
 	}
 	trackFn := func(ctx context.Context, gitpodService *gitpod.APIoverJSONRPC, cfg *Config, kind string) {
+		log.WithField("kind", kind).Info("supervisor track supervisor_readiness")
 		err := gitpodService.TrackEvent(ctx, &gitpod.RemoteTrackMessage{
 			Event: "supervisor_readiness",
 			Properties: SupervisorReadiness{

@@ -2402,7 +2402,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //         the wire and we have no idea what's in it. Even passing the context and properties directly
         //         is questionable. Considering we're handing down the msg and do not know how the analytics library
         //         handles potentially broken or malicious input, we better err on the side of caution.
-
+        if (event.event === "supervisor_readiness") {
+            log.info(`server rcv trackEvent supervisor_readiness with kind ${event.properties?.kind} ${event.properties.workspaceId}`)
+        }
         const userId = this.user?.id;
         const anonymousId = event.anonymousId;
         const msg = {

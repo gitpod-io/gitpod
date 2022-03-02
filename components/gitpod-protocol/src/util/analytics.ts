@@ -47,6 +47,9 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
     }
 
     track(msg: TrackMessage) {
+        if (msg.event === "supervisor_readiness") {
+            log.info(`segment track supervisor_readiness with kind: ${msg.properties?.kind} ${msg.properties.workspaceId}`)
+        }
         try {
             this.analytics.track({
                 ...msg,
@@ -57,10 +60,20 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
             }, (err: Error) => {
                 if (err) {
                     log.warn("analytics.track failed", err);
+                    if (msg.event === "supervisor_readiness") {
+                        log.warn(`segment[1] track supervisor_readiness failed with kind: ${msg.properties?.kind} ${msg.properties.workspaceId}`, err)
+                    }
+                } else {
+                    if (msg.event === "supervisor_readiness") {
+                        log.info(`segment track supervisor_readiness done with kind: ${msg.properties?.kind} ${msg.properties.workspaceId}`)
+                    }
                 }
             });
         } catch (err) {
             log.warn("analytics.track failed", err);
+            if (msg.event === "supervisor_readiness") {
+                log.warn(`segment[2] track supervisor_readiness failed with kind: ${msg.properties?.kind}`, err)
+            }
         }
     }
 
