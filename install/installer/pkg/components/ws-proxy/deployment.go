@@ -145,7 +145,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								InitialDelaySeconds: int32(2),
 								PeriodSeconds:       int32(5),
 								FailureThreshold:    int32(10),
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/readyz",
 										Port: intstr.IntOrString{IntVal: ProbePort},
@@ -158,7 +158,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								FailureThreshold:    int32(10),
 								SuccessThreshold:    int32(1),
 								TimeoutSeconds:      int32(2),
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/healthz",
 										Port: intstr.IntOrString{IntVal: ProbePort},

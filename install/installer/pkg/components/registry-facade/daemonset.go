@@ -182,14 +182,14 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							*common.InternalCAVolumeMount(),
 						}, volumeMounts...),
 						Lifecycle: &corev1.Lifecycle{
-							PostStart: &corev1.Handler{
+							PostStart: &corev1.LifecycleHandler{
 								Exec: &corev1.ExecAction{
 									Command: []string{
 										"/bin/bash", "-c", `kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true`,
 									},
 								},
 							},
-							PreStop: &corev1.Handler{
+							PreStop: &corev1.LifecycleHandler{
 								Exec: &corev1.ExecAction{
 									Command: []string{
 										"/bin/bash", "-c", `kubectl label nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}-`,

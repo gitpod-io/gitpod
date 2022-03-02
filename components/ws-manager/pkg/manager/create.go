@@ -516,7 +516,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	var (
 		command        = []string{"/.supervisor/workspacekit", "ring0"}
 		readinessProbe = &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/_supervisor/v1/status/content/wait/true",
 					Port:   intstr.FromInt((int)(startContext.SupervisorPort)),

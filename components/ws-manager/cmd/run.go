@@ -12,7 +12,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"github.com/bombsimon/logrusr"
+	"github.com/bombsimon/logrusr/v2"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -48,7 +48,7 @@ var runCmd = &cobra.Command{
 
 		common_grpc.SetupLogging()
 
-		ctrl.SetLogger(logrusr.NewLogger(log.Log))
+		ctrl.SetLogger(logrusr.New(log.Log))
 
 		opts := ctrl.Options{
 			Scheme:    scheme,

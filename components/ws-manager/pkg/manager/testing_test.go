@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -90,6 +93,18 @@ func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 	}
 
 	ctrlClient, err := client.New(cfg, client.Options{Scheme: scheme})
+	if err != nil {
+		t.Errorf("cannot create test environment: %v", err)
+		return nil
+	}
+
+	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+		err := ctrlClient.Get(context.Background(), types.NamespacedName{Name: "default"}, &corev1.Namespace{})
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
 	if err != nil {
 		t.Errorf("cannot create test environment: %v", err)
 		return nil
