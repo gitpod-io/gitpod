@@ -171,7 +171,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
             getAccessToken(gitpodHost) != null
 
         fun getAccessToken(gitpodHost: String) =
-            PasswordSafe.instance.getPassword(getAccessTokenCredentialAttributes(gitpodHost))
+            System.getenv("GITPOD_TEST_ACCESSTOKEN") ?: PasswordSafe.instance.getPassword(getAccessTokenCredentialAttributes(gitpodHost))
 
         fun setAccessToken(gitpodHost: String, accessToken: String?) {
             PasswordSafe.instance.setPassword(getAccessTokenCredentialAttributes(gitpodHost), accessToken)
