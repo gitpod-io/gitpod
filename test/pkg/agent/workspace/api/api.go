@@ -31,6 +31,7 @@ type ExecRequest struct {
 	Dir     string
 	Command string
 	Args    []string
+	Env     []string
 }
 
 type ExecResponse struct {

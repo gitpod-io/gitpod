@@ -123,13 +123,15 @@ func (*WorkspaceAgent) WriteFile(req *api.WriteFileRequest, resp *api.WriteFileR
 // Exec executes a command in the workspace
 func (*WorkspaceAgent) Exec(req *api.ExecRequest, resp *api.ExecResponse) (err error) {
 	cmd := exec.Command(req.Command, req.Args...)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, req.Env...)
+	if req.Dir != "" {
+		cmd.Dir = req.Dir
+	}
 	var (
 		stdout bytes.Buffer
 		stderr bytes.Buffer
 	)
-	if req.Dir != "" {
-		cmd.Dir = req.Dir
-	}
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
