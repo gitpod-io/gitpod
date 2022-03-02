@@ -57,16 +57,13 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
                     "All": true,
                     "Mixpanel": !!msg.userId
                 }
-            }, (err: Error) => {
+                // @ts-ignore
+            }, (err: Error, data: any) => {
+                if (msg.event === "supervisor_readiness") {
+                  log.warn(`segment track supervisor_readiness done with kind: ${msg.properties?.kind} ${msg.properties.workspaceId} data: ${JSON.stringify(data)} ============`, err)
+                }
                 if (err) {
                     log.warn("analytics.track failed", err);
-                    if (msg.event === "supervisor_readiness") {
-                        log.warn(`segment[1] track supervisor_readiness failed with kind: ${msg.properties?.kind} ${msg.properties.workspaceId}`, err)
-                    }
-                } else {
-                    if (msg.event === "supervisor_readiness") {
-                        log.info(`segment track supervisor_readiness done with kind: ${msg.properties?.kind} ${msg.properties.workspaceId}`)
-                    }
                 }
             });
         } catch (err) {
