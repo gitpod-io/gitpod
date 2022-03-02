@@ -5,6 +5,7 @@
  */
 
 import Analytics = require("analytics-node");
+import axios from "axios";
 import { IAnalyticsWriter, IdentifyMessage, TrackMessage, PageMessage } from "../analytics";
 import { log } from './logging';
 
@@ -25,7 +26,18 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
     protected readonly analytics: Analytics;
 
     constructor(writeKey: string) {
-        this.analytics = new Analytics(writeKey);
+        const axiosInstance = axios.create()
+        axiosInstance.interceptors.response.use((response) => {
+            log.info(`Analytics response: config ${JSON.stringify(response.config)} status ${response.status} header ${JSON.stringify(response.headers)} data ${JSON.stringify(response.data)}`)
+            return response;
+        }, function (error) {
+            return Promise.reject(error);
+        });
+
+        this.analytics = new Analytics(writeKey, {
+            // @ts-ignore
+            axiosInstance,
+        });
     }
 
         identify(msg: IdentifyMessage) {

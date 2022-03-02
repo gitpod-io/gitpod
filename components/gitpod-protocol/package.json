@@ -11,6 +11,7 @@
     ],
     "devDependencies": {
         "@types/analytics-node": "^3.1.7",
+        "@types/axios": "^0.14.0",
         "@types/chai-subset": "^1.3.3",
         "@types/cookie": "^0.4.1",
         "@types/jaeger-client": "^3.18.3",
@@ -41,6 +42,7 @@
         "@types/react": "17.0.32",
         "ajv": "^6.5.4",
         "analytics-node": "^6.0.0",
+        "axios": "^0.26.0",
         "cookie": "^0.4.2",
         "inversify": "^5.1.1",
         "jaeger-client": "^3.18.1",
