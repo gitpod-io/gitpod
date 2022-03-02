@@ -22,5 +22,8 @@ done
 echo "building test tests/workspace"
 go test -trimpath -ldflags="-buildid= -w -s" -o bin/workspace.test -c ./tests/workspace
 
-echo "building test tests/ide"
-go test -trimpath -ldflags="-buildid= -w -s" -o bin/ide.test -c ./tests/ide
+for COMPONENT in tests/ide/*; do
+    echo "building test $COMPONENT"
+    OUTPUT=$(basename "$COMPONENT")
+    go test -trimpath -ldflags="-buildid= -w -s" -c -o bin/"$OUTPUT".test ./"$COMPONENT"
+done

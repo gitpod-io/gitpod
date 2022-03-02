@@ -205,6 +205,14 @@ func WithGitpodUser(name string) GitpodServerOpt {
 	}
 }
 
+func (c *ComponentAPI) CreateOAuth2Token(user string, scopes []string) (string, error) {
+	tkn, err := c.createGitpodToken(user, scopes)
+	if err != nil {
+		return "", err
+	}
+	return tkn, nil
+}
+
 // GitpodServer provides access to the Gitpod server API
 func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterface, error) {
 	var options gitpodServerOpts
@@ -224,7 +232,10 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterfac
 		tkn := c.serverStatus.Token[options.User]
 		if tkn == "" {
 			var err error
-			tkn, err = c.createGitpodToken(options.User)
+			tkn, err = c.createGitpodToken(options.User, []string{
+				"resource:default",
+				"function:*",
+			})
 			if err != nil {
 				return err
 			}
@@ -463,7 +474,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	return userId, nil
 }
 
-func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
+func (c *ComponentAPI) createGitpodToken(user string, scopes []string) (tkn string, err error) {
 	id, err := c.GetUserId(user)
 	if err != nil {
 		return "", err
@@ -491,7 +502,7 @@ func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
 		fmt.Sprintf("integration-test-%d", time.Now().UnixNano()),
 		tokenTypeMachineAuthToken,
 		id,
-		"resource:default,function:*",
+		strings.Join(scopes, ","),
 		time.Now().Format(time.RFC3339),
 	)
 	if err != nil {

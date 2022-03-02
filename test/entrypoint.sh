@@ -5,7 +5,6 @@
 
 # exclude 'e' (exit on any error)
 # there are many test binaries, each can have failures
-set -x
 
 test_pattern="*.test"
 for i in "$@"; do
@@ -25,7 +24,7 @@ FAILURE_COUNT=0
 # shellcheck disable=SC2045
 for i in $(find /tests/ -name "$test_pattern" | sort); do
     echo "running test: $i"
-    "$i" "$@";
+    "$i" "$@" -test.v;
     TEST_STATUS=$?
     if [ "$TEST_STATUS" -ne "0" ]; then
         FAILURE_COUNT=$((FAILURE_COUNT+1))
