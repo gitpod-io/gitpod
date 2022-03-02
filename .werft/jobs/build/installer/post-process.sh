@@ -218,6 +218,15 @@ while [ "$i" -le "$DOCS" ]; do
       yq m -x -i k8s.yaml -d "$i" /tmp/"$NAME"overrides.yaml
    fi
 
+   if [[ "openvsx-proxy" == "$NAME" ]] && [[ "$KIND" == "StatefulSet" ]]; then
+      # Our installer is rendering StatefulSet Status field although it is not a necessary field.
+      # In fact, the fields under StatefulSet status has changed over the last Kubernetes versions,
+      # We're being hit by this while trying to install Gitpod on GKE and k3s running different versions
+      # where 'availableReplicas' is unkown in GKE while being required on k3s.
+      # This workaround should be deleted when https://github.com/gitpod-io/gitpod/issues/8529 gets fixed.
+      yq d -i k8s.yaml -d "$i" 'status'
+   fi
+
     if [[ ! -v WITH_VM ]] && [[ "ws-proxy" == "$NAME" ]] && [[ "$KIND" == "Service" ]]; then
       WORK="overrides for $NAME $KIND"
       echo "$WORK"
