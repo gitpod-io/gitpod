@@ -33,17 +33,19 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}},
 				}},
 			}},
-			Egress: []networkingv1.NetworkPolicyEgressRule{{
-				To: []networkingv1.NetworkPolicyPeer{{
-					IPBlock: &networkingv1.IPBlock{
-						CIDR: "0.0.0.0/0",
-						Except: []string{
-							// Google Compute engine special, reserved VM metadata IP
-							"169.254.169.254/32",
+			Egress: []networkingv1.NetworkPolicyEgressRule{
+				{
+					To: []networkingv1.NetworkPolicyPeer{{
+						IPBlock: &networkingv1.IPBlock{
+							CIDR: "0.0.0.0/0",
+							Except: []string{
+								// Google Compute engine special, reserved VM metadata IP
+								"169.254.169.254/32",
+							},
 						},
-					},
-				}},
-			}},
+					}},
+				}, common.AllowKubeDnsEgressRule(),
+			},
 		},
 	}}, nil
 }
