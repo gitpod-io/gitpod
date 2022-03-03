@@ -6,26 +6,30 @@
 
 import { injectable, inject } from 'inversify';
 
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
-import { Commit, User, Repository } from "@gitpod/gitpod-protocol"
-import { GitLabApi, GitLab } from "./api";
+import { FileProvider, MaybeContent } from '../repohost/file-provider';
+import { Commit, User, Repository } from '@gitpod/gitpod-protocol';
+import { GitLabApi, GitLab } from './api';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class GitlabFileProvider implements FileProvider {
-
     @inject(GitLabApi) protected readonly gitlabApi: GitLabApi;
 
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
         const yamlVersion1 = await Promise.all([
             this.getFileContent(commit, user, '.gitpod.yml'),
-            this.getFileContent(commit, user, '.gitpod')
+            this.getFileContent(commit, user, '.gitpod'),
         ]);
-        return yamlVersion1.filter(f => !!f)[0];
+        return yamlVersion1.filter((f) => !!f)[0];
     }
 
-    public async getLastChangeRevision(repository: Repository, revisionOrBranch: string, user: User, path: string): Promise<string> {
-        const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async g => {
+    public async getLastChangeRevision(
+        repository: Repository,
+        revisionOrBranch: string,
+        user: User,
+        path: string,
+    ): Promise<string> {
+        const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async (g) => {
             return g.Commits.all(`${repository.owner}/${repository.name}`, { path, ref_name: revisionOrBranch });
         });
 

@@ -4,13 +4,12 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { injectable, inject } from "inversify";
-import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
-import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
+import { injectable, inject } from 'inversify';
+import { WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { AccountStatement } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
+import { AccountService } from '@gitpod/gitpod-payment-endpoint/lib/accounting';
 
-
-export type CachedAccountStatement = Pick<AccountStatement, "remainingHours" | "endDate">;
+export type CachedAccountStatement = Pick<AccountStatement, 'remainingHours' | 'endDate'>;
 
 /**
  * This represents shared functionality and _state_ between GitpodServerImplIO and EiligibilityServiceIO
@@ -35,7 +34,7 @@ export class AccountStatementProvider {
         // Fill cache
         this.setCachedStatement({
             remainingHours: statement.remainingHours,
-            endDate: statement.endDate
+            endDate: statement.endDate,
         });
         return statement;
     }

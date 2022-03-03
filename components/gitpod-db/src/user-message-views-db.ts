@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 export const UserMessageViewsDB = Symbol('UserMessageViewsDB');
 
 export interface UserMessageViewsDB {

@@ -4,19 +4,19 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from "inversify";
-import { User, Identity, WorkspaceTimeoutDuration, UserEnvVarValue, Token } from "@gitpod/gitpod-protocol";
-import { TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { HostContextProvider } from "../auth/host-context-provider";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Config } from "../config";
-import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
-import { BlockedUserFilter } from "../auth/blocked-user-filter";
+import { injectable, inject } from 'inversify';
+import { User, Identity, WorkspaceTimeoutDuration, UserEnvVarValue, Token } from '@gitpod/gitpod-protocol';
+import { TermsAcceptanceDB, UserDB } from '@gitpod/gitpod-db/lib';
+import { HostContextProvider } from '../auth/host-context-provider';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { Config } from '../config';
+import { AuthProviderParams, AuthUser } from '../auth/auth-provider';
+import { BlockedUserFilter } from '../auth/blocked-user-filter';
 import { v4 as uuidv4 } from 'uuid';
-import { TermsProvider } from "../terms/terms-provider";
-import { TokenService } from "./token-service";
-import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
-import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
+import { TermsProvider } from '../terms/terms-provider';
+import { TokenService } from './token-service';
+import { EmailAddressAlreadyTakenException, SelectAccountException } from '../auth/errors';
+import { SelectAccountPayload } from '@gitpod/gitpod-protocol/lib/auth';
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -47,7 +47,6 @@ export interface CheckIsBlockedParams {
 
 @injectable()
 export class UserService {
-
     @inject(BlockedUserFilter) protected readonly blockedUserFilter: BlockedUserFilter;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
@@ -75,7 +74,7 @@ export class UserService {
         }
 
         const identities = await this.userDb.findIdentitiesByName({ authProviderId, authName });
-        if (identities.length === 0)  {
+        if (identities.length === 0) {
             return undefined;
         } else if (identities.length > 1) {
             // TODO Choose a better solution here. It blocks this lookup until the old account logs in again and gets their authName updated
@@ -122,7 +121,7 @@ export class UserService {
         let isFirstUser = false;
         if (prevIsFirstUser === undefined) {
             // check user count only once
-            isFirstUser = (await this.userDb.getUserCount() === 0);
+            isFirstUser = (await this.userDb.getUserCount()) === 0;
         }
 
         let newUser = await this.userDb.newUser();
@@ -139,8 +138,9 @@ export class UserService {
     }
     protected handleNewUser(newUser: User, isFirstUser: boolean) {
         if (this.config.blockNewUsers.enabled) {
-            const emailDomainInPasslist = (mail: string) => this.config.blockNewUsers.passlist.some(e => mail.endsWith(`@${e}`));
-            const canPass = newUser.identities.some(i => !!i.primaryEmail && emailDomainInPasslist(i.primaryEmail));
+            const emailDomainInPasslist = (mail: string) =>
+                this.config.blockNewUsers.passlist.some((e) => mail.endsWith(`@${e}`));
+            const canPass = newUser.identities.some((i) => !!i.primaryEmail && emailDomainInPasslist(i.primaryEmail));
 
             newUser.blocked = !canPass;
         }
@@ -155,7 +155,7 @@ export class UserService {
      * @param date The date for which we want to know the default workspace timeout
      */
     async getDefaultWorkspaceTimeout(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
-        return "30m";
+        return '30m';
     }
 
     /**
@@ -248,7 +248,7 @@ export class UserService {
 
     async updateUserIdentity(user: User, candidate: Identity, token: Token) {
         // ensure single identity per auth provider instance
-        user.identities = user.identities.filter(i => i.authProviderId !== candidate.authProviderId);
+        user.identities = user.identities.filter((i) => i.authProviderId !== candidate.authProviderId);
         user.identities.push(candidate);
 
         await this.userDb.storeUser(user);
@@ -261,51 +261,70 @@ export class UserService {
         }
         const userId = user.id;
         const currentEnvVars = await this.userDb.getEnvVars(userId);
-        const findEnvVar = (name: string, repositoryPattern: string) => currentEnvVars.find(env => env.repositoryPattern === repositoryPattern && env.name === name);
+        const findEnvVar = (name: string, repositoryPattern: string) =>
+            currentEnvVars.find((env) => env.repositoryPattern === repositoryPattern && env.name === name);
         for (const { name, value, repositoryPattern } of envVars) {
             try {
                 const existingEnvVar = findEnvVar(name, repositoryPattern);
-                await this.userDb.setEnvVar(existingEnvVar ? {
-                    ...existingEnvVar,
-                    value
-                } : {
-                        repositoryPattern,
-                        name,
-                        userId,
-                        id: uuidv4(),
-                        value
-                    });
+                await this.userDb.setEnvVar(
+                    existingEnvVar
+                        ? {
+                              ...existingEnvVar,
+                              value,
+                          }
+                        : {
+                              repositoryPattern,
+                              name,
+                              userId,
+                              id: uuidv4(),
+                              value,
+                          },
+                );
             } catch (error) {
-                log.error(`Failed update user EnvVar on login!`, { error, user: User.censor(user), envVar: { name, value, repositoryPattern } });
+                log.error(`Failed update user EnvVar on login!`, {
+                    error,
+                    user: User.censor(user),
+                    envVar: { name, value, repositoryPattern },
+                });
             }
         }
     }
 
     async deauthorize(user: User, authProviderId: string) {
-        const builtInProviders = ["Public-GitLab", "Public-GitHub", "Public-Bitbucket"];
-        const externalIdentities = user.identities.filter(i => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID);
-        const identity = externalIdentities.find(i => i.authProviderId === authProviderId)
+        const builtInProviders = ['Public-GitLab', 'Public-GitHub', 'Public-Bitbucket'];
+        const externalIdentities = user.identities.filter(
+            (i) => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID,
+        );
+        const identity = externalIdentities.find((i) => i.authProviderId === authProviderId);
         if (!identity) {
             log.debug('Cannot deauthorize. Authorization not found.', { userId: user.id, authProviderId });
             return;
         }
-        const isBuiltin = (authProviderId: string) => !!this.hostContextProvider.findByAuthProviderId(authProviderId)?.authProvider?.params?.builtin;
-        const remainingLoginIdentities = externalIdentities.filter(i => i !== identity && (!this.config.disableDynamicAuthProviderLogin || isBuiltin(i.authProviderId)));
+        const isBuiltin = (authProviderId: string) =>
+            !!this.hostContextProvider.findByAuthProviderId(authProviderId)?.authProvider?.params?.builtin;
+        const remainingLoginIdentities = externalIdentities.filter(
+            (i) => i !== identity && (!this.config.disableDynamicAuthProviderLogin || isBuiltin(i.authProviderId)),
+        );
 
-        if (remainingLoginIdentities.length === 1 && !builtInProviders.includes(remainingLoginIdentities[0].authProviderId)) {
-            throw new Error("Cannot remove last authentication provider for logging in to Gitpod. Please delete account if you want to leave.");
+        if (
+            remainingLoginIdentities.length === 1 &&
+            !builtInProviders.includes(remainingLoginIdentities[0].authProviderId)
+        ) {
+            throw new Error(
+                'Cannot remove last authentication provider for logging in to Gitpod. Please delete account if you want to leave.',
+            );
         }
 
         // explicitly remove associated tokens
         await this.userDb.deleteTokens(identity);
 
         // effectively remove the provider authorization
-        user.identities = user.identities.filter(i => i.authProviderId !== authProviderId);
+        user.identities = user.identities.filter((i) => i.authProviderId !== authProviderId);
         await this.userDb.storeUser(user);
     }
 
     async asserNoTwinAccount(currentUser: User, authHost: string, authProviderId: string, candidate: Identity) {
-        if (currentUser.identities.some(i => Identity.equals(i, candidate))) {
+        if (currentUser.identities.some((i) => Identity.equals(i, candidate))) {
             return; // same user => OK
         }
         const otherUser = await this.findUserForLogin({ candidate });
@@ -317,13 +336,20 @@ export class UserService {
          * /!\ another user account is connected with this provider identity.
          */
 
-        const externalIdentities = currentUser.identities.filter(i => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID);
+        const externalIdentities = currentUser.identities.filter(
+            (i) => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID,
+        );
         const loginIdentityOfCurrentUser = externalIdentities[externalIdentities.length - 1];
-        const authProviderConfigOfCurrentUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === loginIdentityOfCurrentUser.authProviderId)?.authProvider?.params;
+        const authProviderConfigOfCurrentUser = this.hostContextProvider
+            .getAll()
+            .find((c) => c.authProvider.authProviderId === loginIdentityOfCurrentUser.authProviderId)
+            ?.authProvider?.params;
         const loginHostOfCurrentUser = authProviderConfigOfCurrentUser?.host;
         const authProviderTypeOfCurrentUser = authProviderConfigOfCurrentUser?.type;
 
-        const authProviderTypeOfOtherUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === candidate.authProviderId)?.authProvider?.params?.type;
+        const authProviderTypeOfOtherUser = this.hostContextProvider
+            .getAll()
+            .find((c) => c.authProvider.authProviderId === candidate.authProviderId)?.authProvider?.params?.type;
 
         const payload: SelectAccountPayload = {
             currentUser: {
@@ -339,8 +365,8 @@ export class UserService {
                 authHost,
                 authName: candidate.authName,
                 authProviderType: authProviderTypeOfOtherUser!,
-            }
-        }
+            },
+        };
         throw SelectAccountException.create(`User is trying to connect a provider identity twice.`, payload);
     }
 
@@ -354,10 +380,11 @@ export class UserService {
         /*
          * /!\ the given email address is used in another user account.
          */
-        const authProviderId = existingUser.identities.find(i => i.primaryEmail === email)?.authProviderId;
-        const host = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === authProviderId)?.authProvider?.info?.host || "unknown";
+        const authProviderId = existingUser.identities.find((i) => i.primaryEmail === email)?.authProviderId;
+        const host =
+            this.hostContextProvider.getAll().find((c) => c.authProvider.authProviderId === authProviderId)
+                ?.authProvider?.info?.host || 'unknown';
 
         throw EmailAddressAlreadyTakenException.create(`Email address is already in use.`, { host });
     }
-
 }

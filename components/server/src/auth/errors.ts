@@ -4,15 +4,15 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Identity } from "@gitpod/gitpod-protocol";
-import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
+import { Identity } from '@gitpod/gitpod-protocol';
+import { SelectAccountPayload } from '@gitpod/gitpod-protocol/lib/auth';
 
 export interface TosNotAcceptedYetException extends Error {
     readonly identity: Identity;
 }
 export namespace TosNotAcceptedYetException {
     export function create(identity: Identity) {
-        return Object.assign(new Error("TosNotAcceptedYetException"), { identity });
+        return Object.assign(new Error('TosNotAcceptedYetException'), { identity });
     }
     export function is(error: any): error is TosNotAcceptedYetException {
         return !!error && error.message === 'TosNotAcceptedYetException';
@@ -28,14 +28,14 @@ export namespace AuthException {
         return Object.assign(new Error(message), { payload, authException });
     }
     export function is(error: any): error is AuthException {
-        return error && "authException" in error;
+        return error && 'authException' in error;
     }
 }
 
-export interface EMailDomainFilterException extends AuthException { }
+export interface EMailDomainFilterException extends AuthException {}
 export namespace EMailDomainFilterException {
-    const type = "EMailDomainFilterException";
-    const message = "We do not allow disposable email addresses.";
+    const type = 'EMailDomainFilterException';
+    const message = 'We do not allow disposable email addresses.';
     export function create(email: string) {
         return AuthException.create(type, message, email);
     }
@@ -44,9 +44,9 @@ export namespace EMailDomainFilterException {
     }
 }
 
-export interface UnconfirmedUserException extends AuthException { }
+export interface UnconfirmedUserException extends AuthException {}
 export namespace UnconfirmedUserException {
-    const type = "UnconfirmedUserException";
+    const type = 'UnconfirmedUserException';
     export function create(message: string, payload: any) {
         return AuthException.create(type, message, payload);
     }
@@ -59,7 +59,7 @@ export interface SelectAccountException extends AuthException {
     payload: SelectAccountPayload;
 }
 export namespace SelectAccountException {
-    const type = "SelectAccountException";
+    const type = 'SelectAccountException';
     export function create(message: string, payload: SelectAccountPayload) {
         return AuthException.create(type, message, payload);
     }
@@ -68,10 +68,9 @@ export namespace SelectAccountException {
     }
 }
 
-export interface EmailAddressAlreadyTakenException extends AuthException {
-}
+export interface EmailAddressAlreadyTakenException extends AuthException {}
 export namespace EmailAddressAlreadyTakenException {
-    const type = "EmailAddressAlreadyTakenException";
+    const type = 'EmailAddressAlreadyTakenException';
     export function create(message: string, payload: object | undefined) {
         return AuthException.create(type, message, payload);
     }

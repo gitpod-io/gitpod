@@ -24,10 +24,8 @@ declare namespace Definitions {
          */
         starterToken?: string;
     }
-    export interface SupervisorSetTerminalSizeResponse {
-    }
-    export interface SupervisorShutdownTerminalResponse {
-    }
+    export interface SupervisorSetTerminalSizeResponse {}
+    export interface SupervisorShutdownTerminalResponse {}
     export interface SupervisorTerminal {
         alias?: string;
         command?: string[];

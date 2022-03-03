@@ -4,11 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
-import { TypeORM } from "./typeorm/typeorm";
-import { Config } from "./config";
-import { MigrateMigrations0_2_0 } from "./typeorm/migrate-migrations-0_2_0";
-
+import { TypeORM } from './typeorm/typeorm';
+import { Config } from './config';
+import { MigrateMigrations0_2_0 } from './typeorm/migrate-migrations-0_2_0';
 
 async function migrateMigrationsTable() {
     const config = new Config();

@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { User } from '@gitpod/gitpod-protocol';
 
 export const IClientDataPrometheusAdapter = Symbol('IClientDataPrometheusAdapter');
 export interface IClientDataPrometheusAdapter {
@@ -13,8 +13,8 @@ export interface IClientDataPrometheusAdapter {
 }
 
 import * as prom from 'prom-client';
-import { injectable, inject } from "inversify";
-import { Config } from "../config";
+import { injectable, inject } from 'inversify';
+import { Config } from '../config';
 
 @injectable()
 export class ClientDataPrometheusAdapterImpl implements IClientDataPrometheusAdapter {
@@ -26,17 +26,20 @@ export class ClientDataPrometheusAdapterImpl implements IClientDataPrometheusAda
         this.roundTripTimeGauge = new prom.Gauge({
             name: 'workspace_round_trip_time',
             help: 'The round-trip time of our users with respect to their workspace instance.',
-            labelNames: ['user', 'workspace', 'region']
+            labelNames: ['user', 'workspace', 'region'],
         });
         this.prebuildQueueSizeGauge = new prom.Gauge({
             name: 'prebuild_queue_size',
             help: 'The amount of prebuilds waiting to run',
-            labelNames: ['cloneURL', 'region']
-        })
+            labelNames: ['cloneURL', 'region'],
+        });
     }
 
     storeWorkspaceRoundTripTimeSample(user: User, workspaceId: string, roundTripTimeInMilliseconds: number): void {
-        this.roundTripTimeGauge.set({ user: user.id, workspace: workspaceId, region: this.config.installationShortname }, roundTripTimeInMilliseconds);
+        this.roundTripTimeGauge.set(
+            { user: user.id, workspace: workspaceId, region: this.config.installationShortname },
+            roundTripTimeInMilliseconds,
+        );
     }
 
     storePrebuildQueueLength(cloneURL: string, queueLength: number): void {

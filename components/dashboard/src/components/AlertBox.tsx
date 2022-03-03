@@ -6,9 +6,11 @@
 
 import exclamation from '../images/exclamation.svg';
 
-export default function AlertBox(p: { className?: string, children?: React.ReactNode }) {
-    return <div className={'flex rounded-xl bg-gitpod-kumquat-light text-gitpod-red p-4 ' + (p.className || '')}>
-        <img className="w-4 h-4 m-1 ml-2 mr-4" src={exclamation} />
-        <span>{p.children}</span>
-    </div>;
+export default function AlertBox(p: { className?: string; children?: React.ReactNode }) {
+    return (
+        <div className={'flex rounded-xl bg-gitpod-kumquat-light text-gitpod-red p-4 ' + (p.className || '')}>
+            <img className="w-4 h-4 m-1 ml-2 mr-4" src={exclamation} />
+            <span>{p.children}</span>
+        </div>
+    );
 }

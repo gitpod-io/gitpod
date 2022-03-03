@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { hoursToMilliseconds } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { hoursToMilliseconds } from '@gitpod/gitpod-protocol/lib/util/timeutil';
 
 export namespace Accounting {
     /**
@@ -14,7 +14,7 @@ export namespace Accounting {
         0,
         0.083333333333, // 5min
         0.166666666666, // 10min
-        0.5             // 30min
+        0.5, // 30min
     ];
 
     /**

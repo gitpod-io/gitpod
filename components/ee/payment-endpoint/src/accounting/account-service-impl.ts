@@ -4,19 +4,41 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { inject, injectable } from "inversify";
+import { inject, injectable } from 'inversify';
 
-import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
+import { AccountingDB } from '@gitpod/gitpod-db/lib/accounting-db';
 import { UserDB, WorkspaceDB, WorkspaceInstanceSessionWithWorkspace } from '@gitpod/gitpod-db/lib';
-import { hoursToMilliseconds, millisecondsToHours, oneMonthLater, rightBefore, oldest, earliest, durationInHours, isDateSmallerOrEqual, durationInMillis, addMillis } from "@gitpod/gitpod-protocol/lib/util/timeutil";
-import { AccountEntry, Subscription, AccountStatement, AccountEntryFixedPeriod, SessionDescription, CreditDescription, Debit, DebitAccountEntryKind, Credit, LossDebit } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import {
+    hoursToMilliseconds,
+    millisecondsToHours,
+    oneMonthLater,
+    rightBefore,
+    oldest,
+    earliest,
+    durationInHours,
+    isDateSmallerOrEqual,
+    durationInMillis,
+    addMillis,
+} from '@gitpod/gitpod-protocol/lib/util/timeutil';
+import {
+    AccountEntry,
+    Subscription,
+    AccountStatement,
+    AccountEntryFixedPeriod,
+    SessionDescription,
+    CreditDescription,
+    Debit,
+    DebitAccountEntryKind,
+    Credit,
+    LossDebit,
+} from '@gitpod/gitpod-protocol/lib/accounting-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
-import { Accounting } from "./accounting";
-import { orderByExpiryDateDesc, SortedArray, orderCreditFirst, within } from "./accounting-util";
-import { AccountService } from "./account-service";
-import { SubscriptionService } from "./subscription-service";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { Accounting } from './accounting';
+import { orderByExpiryDateDesc, SortedArray, orderCreditFirst, within } from './accounting-util';
+import { AccountService } from './account-service';
+import { SubscriptionService } from './subscription-service';
+import { Plans } from '@gitpod/gitpod-protocol/lib/plans';
 
 /**
  * There are some things to do/check which are not vital right now:
@@ -44,7 +66,11 @@ export class AccountServiceImpl implements AccountService {
      * @param numInstances
      * @param considerNextPeriod
      */
-    public getRemainingUsageHours(statement: AccountStatement, numInstances: number, considerNextPeriod: boolean = false): number {
+    public getRemainingUsageHours(
+        statement: AccountStatement,
+        numInstances: number,
+        considerNextPeriod: boolean = false,
+    ): number {
         numInstances = Math.max(numInstances, 1);
 
         // Gather all expected changes to our credits from now (statement.endDate) into the future
@@ -54,8 +80,8 @@ export class AccountServiceImpl implements AccountService {
         // Starting point: the credits we have now are the cummulated remainingAmounts of all credits in the statement
         // that are still valid at statement.endDate
         const creditsNow = statement.credits
-            .filter(c => within(statement.endDate, c))
-            .reduce((v, c) => (v + (c.remainingAmount !== undefined ? c.remainingAmount : c.amount)), 0);
+            .filter((c) => within(statement.endDate, c))
+            .reduce((v, c) => v + (c.remainingAmount !== undefined ? c.remainingAmount : c.amount), 0);
 
         // Cycle through all changes and check whether we hit zero credits on the way
         let credits = hoursToMilliseconds(creditsNow);
@@ -113,11 +139,11 @@ export class AccountServiceImpl implements AccountService {
             if (credit.remainingAmount !== undefined && credit.remainingAmount > 0) {
                 creditChanges.push({
                     date: credit.date,
-                    amount: credit.remainingAmount
+                    amount: credit.remainingAmount,
                 });
                 creditChanges.push({
                     date: credit.expiryDate,
-                    amount: -credit.remainingAmount
+                    amount: -credit.remainingAmount,
                 });
             }
         };
@@ -125,16 +151,24 @@ export class AccountServiceImpl implements AccountService {
         statement.credits.forEach(addCreditChange);
 
         // We're only interested in the first full subscription cycle after the last (possible irregular) credit expired
-        const lastCreditExpiryDate = statement.credits.reduce((p, c) => p < c.expiryDate ? c.expiryDate : p, statement.endDate);
+        const lastCreditExpiryDate = statement.credits.reduce(
+            (p, c) => (p < c.expiryDate ? c.expiryDate : p),
+            statement.endDate,
+        );
         const lastDateOfInterest = oneMonthLater(lastCreditExpiryDate);
-        const subscriptionCredits = this.projectSubscriptionsCredits(statement.subscriptions, statement.userId, statement.endDate, lastDateOfInterest, false);
+        const subscriptionCredits = this.projectSubscriptionsCredits(
+            statement.subscriptions,
+            statement.userId,
+            statement.endDate,
+            lastDateOfInterest,
+            false,
+        );
         subscriptionCredits.forEach(addCreditChange);
 
         if (considerNextPeriod) {
-            return creditChanges.filter(c => c.date > statement.endDate);
+            return creditChanges.filter((c) => c.date > statement.endDate);
         } else {
-            return creditChanges.filter(c => c.date > statement.endDate
-                && c.date < lastDateOfInterest);
+            return creditChanges.filter((c) => c.date > statement.endDate && c.date < lastDateOfInterest);
         }
     }
 
@@ -146,10 +180,13 @@ export class AccountServiceImpl implements AccountService {
      */
     public async getAccountStatement(userId: string, endDate: string): Promise<AccountStatement> {
         const userCreationDate = await this.getUserCreationDate(userId);
-        const startDate = userCreationDate;     // TODO persistence: Fetch from Accounting DB!
+        const startDate = userCreationDate; // TODO persistence: Fetch from Accounting DB!
         const unorderedOpenCredits = await this.projectCreditSources(userId, userCreationDate, startDate, endDate);
         const openCredits = new SortedArray<OpenCredit>(unorderedOpenCredits, orderByExpiryDateDesc);
-        const openDebits = new SortedArray<OpenDebit>(await this.projectDebits(userId, startDate, endDate), orderByDateDescEndDateDesc);
+        const openDebits = new SortedArray<OpenDebit>(
+            await this.projectDebits(userId, startDate, endDate),
+            orderByDateDescEndDateDesc,
+        );
 
         const { credits, debits } = this.enterDebits(userId, openDebits, openCredits, endDate);
         this.handleExpiry(userId, startDate, endDate, openCredits, credits, debits);
@@ -161,7 +198,7 @@ export class AccountServiceImpl implements AccountService {
             endDate,
             credits,
             debits,
-            remainingHours: this.getRemainingHours(credits, endDate)
+            remainingHours: this.getRemainingHours(credits, endDate),
         };
     }
 
@@ -173,10 +210,19 @@ export class AccountServiceImpl implements AccountService {
      * @param startDate
      * @param endDate
      */
-    protected async projectCreditSources(userId: string, userCreationDate: string, startDate: string, endDate: string): Promise<OpenCredit[]> {
+    protected async projectCreditSources(
+        userId: string,
+        userCreationDate: string,
+        startDate: string,
+        endDate: string,
+    ): Promise<OpenCredit[]> {
         const creditEntries: OpenCredit[] = [];
         // Subscriptions
-        const subscriptions = await this.subscriptionService.getSubscriptionHistoryForUserInPeriod({ id: userId, creationDate: userCreationDate }, startDate, endDate);
+        const subscriptions = await this.subscriptionService.getSubscriptionHistoryForUserInPeriod(
+            { id: userId, creationDate: userCreationDate },
+            startDate,
+            endDate,
+        );
         const subscriptionCredits = this.projectSubscriptionsCredits(subscriptions, userId, startDate, endDate);
         subscriptionCredits.forEach((c) => creditEntries.push(c));
 
@@ -195,18 +241,25 @@ export class AccountServiceImpl implements AccountService {
      * @param endDate
      * @param includeFirstTruncatedPeriod
      */
-    protected projectSubscriptionsCredits(subscriptions: Subscription[], userId: string, startDate: string, endDate: string, includeFirstTruncatedPeriod: boolean = true): OpenCredit[] {
+    protected projectSubscriptionsCredits(
+        subscriptions: Subscription[],
+        userId: string,
+        startDate: string,
+        endDate: string,
+        includeFirstTruncatedPeriod: boolean = true,
+    ): OpenCredit[] {
         const creditEntries: OpenCredit[] = [];
         for (const subscription of subscriptions) {
             // No overlap at all? Next.
-            if (subscription.startDate >= endDate
-                || (subscription.endDate && subscription.endDate <= startDate)) {
+            if (subscription.startDate >= endDate || (subscription.endDate && subscription.endDate <= startDate)) {
                 continue;
             }
 
             let billingPeriodStart = subscription.startDate;
-            while (billingPeriodStart < endDate
-                && (!subscription.endDate || billingPeriodStart < subscription.endDate)) {
+            while (
+                billingPeriodStart < endDate &&
+                (!subscription.endDate || billingPeriodStart < subscription.endDate)
+            ) {
                 let firstPeriod = false;
                 let billingPeriodEnd = oneMonthLater(billingPeriodStart, new Date(subscription.startDate).getDate());
                 if (billingPeriodEnd <= startDate) {
@@ -225,20 +278,25 @@ export class AccountServiceImpl implements AccountService {
                     }
                 }
                 billingPeriodEnd = earliest(billingPeriodEnd, subscription.endDate || billingPeriodEnd);
-                const amount = firstPeriod && !!subscription.firstMonthAmount ? subscription.firstMonthAmount : subscription.amount;
-                creditEntries.push(AccountEntry.create({
-                    userId: userId,
-                    amount,
-                    // TODO persistence: Need to insert newtrunc.amount=truncBefore.remainingAmount
-                    remainingAmount: subscription.amount,
-                    date: billingPeriodStart,
-                    expiryDate: billingPeriodEnd,
-                    kind: 'credit',
-                    description: <CreditDescription>{
-                        subscriptionId: subscription.uid,
-                        planId: subscription.planId
-                    }
-                }));
+                const amount =
+                    firstPeriod && !!subscription.firstMonthAmount
+                        ? subscription.firstMonthAmount
+                        : subscription.amount;
+                creditEntries.push(
+                    AccountEntry.create({
+                        userId: userId,
+                        amount,
+                        // TODO persistence: Need to insert newtrunc.amount=truncBefore.remainingAmount
+                        remainingAmount: subscription.amount,
+                        date: billingPeriodStart,
+                        expiryDate: billingPeriodEnd,
+                        kind: 'credit',
+                        description: <CreditDescription>{
+                            subscriptionId: subscription.uid,
+                            planId: subscription.planId,
+                        },
+                    }),
+                );
                 billingPeriodStart = billingPeriodEnd;
             }
         }
@@ -254,9 +312,9 @@ export class AccountServiceImpl implements AccountService {
     protected async projectDebits(userId: string, startDate: string, endDate: string): Promise<OpenDebit[]> {
         const sessions = await this.workspaceDB.findSessionsInPeriod(userId, startDate, endDate);
         return sessions
-            .filter(s => s.instance.startedTime !== undefined)
-            .filter(s => this.shouldGetBilled(s))
-            .map<OpenDebit>(s => {
+            .filter((s) => s.instance.startedTime !== undefined)
+            .filter((s) => this.shouldGetBilled(s))
+            .map<OpenDebit>((s) => {
                 const wsi = s.instance;
                 const sessionStartDate = oldest(wsi.startedTime!, startDate);
                 const sessionEndDate = earliest(wsi.stoppingTime || wsi.stoppedTime || endDate, endDate);
@@ -271,7 +329,7 @@ export class AccountServiceImpl implements AccountService {
                         contextUrl: s.workspace.contextURL,
                         workspaceId: s.workspace.id,
                         workspaceInstanceId: wsi.id,
-                    }
+                    },
                 };
             });
     }
@@ -289,16 +347,16 @@ export class AccountServiceImpl implements AccountService {
         }
 
         // no probe workspaces get billed (shouldn't matter - they're never on the account of a "real" user anyways)
-        if (s.workspace.type == "probe") {
+        if (s.workspace.type == 'probe') {
             return false;
         }
 
         // no prebuilds get billed
-        if (s.workspace.type == "prebuild") {
+        if (s.workspace.type == 'prebuild') {
             return false;
         }
 
-        log.warn("unknown workspace type - cannot decide if this workspace ought to be billed or not", s);
+        log.warn('unknown workspace type - cannot decide if this workspace ought to be billed or not', s);
         return false;
     }
 
@@ -312,14 +370,20 @@ export class AccountServiceImpl implements AccountService {
      * @param openCredits
      * @param endDate
      */
-    protected enterDebits(userId: string, openDebits: SortedArray<OpenDebit>, openCredits: SortedArray<OpenCredit>, endDate: string) {
+    protected enterDebits(
+        userId: string,
+        openDebits: SortedArray<OpenDebit>,
+        openCredits: SortedArray<OpenCredit>,
+        endDate: string,
+    ) {
         const debits: Debit[] = [];
         const credits: Credit[] = [];
-        let openDebit = openDebits.pop();   // Debit with earliest date first
+        let openDebit = openDebits.pop(); // Debit with earliest date first
         while (openDebit) {
             // Find a credit entry we can enter our debits against
             let openCredit: OpenCredit | undefined;
-            for (let i = openCredits.length - 1; i >= 0; i--) {  // Start from end (earliest first)
+            for (let i = openCredits.length - 1; i >= 0; i--) {
+                // Start from end (earliest first)
                 const oc = openCredits.get(i);
                 if (doesOverlapWith(openDebit, oc)) {
                     openCredit = oc;
@@ -330,13 +394,15 @@ export class AccountServiceImpl implements AccountService {
 
             // No credit to pay our debits with: Enter as loss
             if (!openCredit) {
-                debits.push(AccountEntry.create<LossDebit>({
-                    userId,
-                    amount: -openDebit.amount,
-                    date: openDebit.endDate,
-                    kind: 'loss',
-                    description: openDebit.description
-                }));
+                debits.push(
+                    AccountEntry.create<LossDebit>({
+                        userId,
+                        amount: -openDebit.amount,
+                        date: openDebit.endDate,
+                        kind: 'loss',
+                        description: openDebit.description,
+                    }),
+                );
                 openDebit = openDebits.pop();
                 continue;
             }
@@ -378,7 +444,15 @@ export class AccountServiceImpl implements AccountService {
      * @param credits
      * @param endDate
      */
-    protected enterDebit(openDebit: OpenDebit, openCredit: OpenCredit, openDebits: SortedArray<OpenDebit>, openCredits: SortedArray<OpenCredit>, debits: Debit[], credits: Credit[], endDate: string) {
+    protected enterDebit(
+        openDebit: OpenDebit,
+        openCredit: OpenCredit,
+        openDebits: SortedArray<OpenDebit>,
+        openCredits: SortedArray<OpenCredit>,
+        debits: Debit[],
+        credits: Credit[],
+        endDate: string,
+    ) {
         const debitAmountPos = -hoursToMilliseconds(openDebit.amount);
         const creditAmount = hoursToMilliseconds(openCredit.remainingAmount!);
         const accountableAmount = Math.min(debitAmountPos, creditAmount);
@@ -398,7 +472,7 @@ export class AccountServiceImpl implements AccountService {
         if (remainingDebitAmount > Accounting.GOODWILL_IN_HOURS) {
             const remainingDebit = {
                 ...openDebit,
-                amount: -remainingDebitAmount
+                amount: -remainingDebitAmount,
             };
             openDebits.push(remainingDebit);
         }
@@ -409,7 +483,7 @@ export class AccountServiceImpl implements AccountService {
      * @param debit
      * @param date
      */
-    protected truncateDebitLeft(debit: OpenDebit, date: string): { before?: OpenDebit, after: OpenDebit } {
+    protected truncateDebitLeft(debit: OpenDebit, date: string): { before?: OpenDebit; after: OpenDebit } {
         if (debit.date >= date) {
             return { after: { ...debit } };
         } else {
@@ -424,8 +498,8 @@ export class AccountServiceImpl implements AccountService {
                     ...debit,
                     amount: -durationInHours(debit.endDate, date),
                     date: date,
-                    endDate: debit.endDate
-                }
+                    endDate: debit.endDate,
+                },
             };
         }
     }
@@ -435,7 +509,7 @@ export class AccountServiceImpl implements AccountService {
      * @param debit
      * @param date
      */
-    protected truncateDebitRight(debit: OpenDebit, date: string | undefined): { before: OpenDebit, after?: OpenDebit } {
+    protected truncateDebitRight(debit: OpenDebit, date: string | undefined): { before: OpenDebit; after?: OpenDebit } {
         if (!date || isDateSmallerOrEqual(debit.endDate, date)) {
             return { before: { ...debit } };
         } else {
@@ -450,8 +524,8 @@ export class AccountServiceImpl implements AccountService {
                     ...debit,
                     amount: -durationInHours(debit.endDate, date),
                     date: date,
-                    endDate: debit.endDate
-                }
+                    endDate: debit.endDate,
+                },
             };
         }
     }
@@ -468,12 +542,12 @@ export class AccountServiceImpl implements AccountService {
         delete (ourDebit as any).endDate; // Introduced by spread
 
         const debitEntry = AccountEntry.create<Debit>({
-            ...(ourDebit as Omit<OpenDebit, "endDate">),
+            ...(ourDebit as Omit<OpenDebit, 'endDate'>),
             amount: millisecondsToHours(amount),
             // TODO This looks really strange: Judging by amount, endDate is inclusive; here it looks like it's not!
             // Maybe some irregularity aroun endDate and debits? Add tests and clarify!
             date: debit.endDate < endDate ? debit.endDate : rightBefore(debit.endDate),
-            creditId
+            creditId,
         });
         return debitEntry;
     }
@@ -487,26 +561,37 @@ export class AccountServiceImpl implements AccountService {
      * @param credits
      * @param debits
      */
-    protected handleExpiry(userId: string, startDate: string, endDate: string, openCredits: SortedArray<OpenCredit>, credits: Credit[], debits: Debit[]) {
-        openCredits.forEach(c => {
-            if (c.remainingAmount
-                && c.remainingAmount! >= 0
-                && c.expiryDate
-                && startDate <= c.expiryDate
-                && c.expiryDate <= endDate) {
-                debits.push(AccountEntry.create({
-                    userId,
-                    amount: -c.remainingAmount,
-                    date: rightBefore(c.expiryDate),
-                    creditId: c.uid,
-                    kind: 'expiry',
-                    description: c.description
-                }));
+    protected handleExpiry(
+        userId: string,
+        startDate: string,
+        endDate: string,
+        openCredits: SortedArray<OpenCredit>,
+        credits: Credit[],
+        debits: Debit[],
+    ) {
+        openCredits.forEach((c) => {
+            if (
+                c.remainingAmount &&
+                c.remainingAmount! >= 0 &&
+                c.expiryDate &&
+                startDate <= c.expiryDate &&
+                c.expiryDate <= endDate
+            ) {
+                debits.push(
+                    AccountEntry.create({
+                        userId,
+                        amount: -c.remainingAmount,
+                        date: rightBefore(c.expiryDate),
+                        creditId: c.uid,
+                        kind: 'expiry',
+                        description: c.description,
+                    }),
+                );
 
                 credits.push({
                     ...c,
-                    remainingAmount: 0
-                })
+                    remainingAmount: 0,
+                });
             } else {
                 credits.push(c);
             }
@@ -514,26 +599,28 @@ export class AccountServiceImpl implements AccountService {
     }
 
     protected getRemainingHours(credits: AccountEntryFixedPeriod[], date: string): number | 'unlimited' {
-        const hasUnlimitedPlan = !!credits.filter(c => within(date, c)).find(c => {
-            const desc = c.description as CreditDescription | undefined;
-            if (!desc) {
-                return false;
-            }
+        const hasUnlimitedPlan = !!credits
+            .filter((c) => within(date, c))
+            .find((c) => {
+                const desc = c.description as CreditDescription | undefined;
+                if (!desc) {
+                    return false;
+                }
 
-            const plan = Plans.getById(desc.planId);
-            if (!plan) {
-                return false;
-            }
+                const plan = Plans.getById(desc.planId);
+                if (!plan) {
+                    return false;
+                }
 
-            return plan.hoursPerMonth === 'unlimited';
-        });
+                return plan.hoursPerMonth === 'unlimited';
+            });
         if (hasUnlimitedPlan) {
             return 'unlimited';
         }
 
         return credits
-            .filter(c => within(date, c))
-            .reduce((v, c) => (v + (c.remainingAmount !== undefined ? c.remainingAmount : c.amount)), 0);
+            .filter((c) => within(date, c))
+            .reduce((v, c) => v + (c.remainingAmount !== undefined ? c.remainingAmount : c.amount), 0);
     }
 
     protected async getUserCreationDate(userId: string): Promise<string> {
@@ -544,8 +631,15 @@ export class AccountServiceImpl implements AccountService {
         return user.creationDate;
     }
 
-    protected async getNotYetCancelledSubscriptions(userId: string, userCreationDate: string, date: string): Promise<Subscription[]> {
-        const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions({ id: userId, creationDate: userCreationDate }, date);
+    protected async getNotYetCancelledSubscriptions(
+        userId: string,
+        userCreationDate: string,
+        date: string,
+    ): Promise<Subscription[]> {
+        const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(
+            { id: userId, creationDate: userCreationDate },
+            date,
+        );
         if (subscriptions.length === 0) {
             log.info({ userId }, `No uncancelled subscription found at ${date}`);
             throw Error(`No uncancelled subscription for ${userId} at ${date}!`);
@@ -555,22 +649,22 @@ export class AccountServiceImpl implements AccountService {
 }
 
 interface CreditChange {
-    date: string,
-    amount: number
+    date: string;
+    amount: number;
 }
 
 type OpenDebit = Omit<AccountEntry, 'uid'> & {
     endDate: string;
     kind: DebitAccountEntryKind;
-}
+};
 type OpenCredit = AccountEntry & {
     expiryDate: string;
     kind: 'credit';
-}
+};
 
 const doesOverlapWith = (debit: OpenDebit, entry: OpenCredit) => {
     return within(debit.date, entry) || within(debit.endDate, entry);
-}
+};
 
 const orderByDateDescEndDateDesc = (d1: OpenDebit, d2: OpenDebit) => {
     const toInt = (d: string) => new Date(d).getTime();
@@ -588,4 +682,4 @@ const orderByDateAscPosFirst = (c1: CreditChange, c2: CreditChange) => {
         return 1;
     }
     return 0;
-}
+};

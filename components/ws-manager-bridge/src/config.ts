@@ -4,10 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceCluster } from "@gitpod/gitpod-protocol/src/workspace-cluster";
-import { ClusterServiceServerOptions } from "./cluster-service-server";
+import { WorkspaceCluster } from '@gitpod/gitpod-protocol/src/workspace-cluster';
+import { ClusterServiceServerOptions } from './cluster-service-server';
 
-export const Configuration = Symbol("Configuration");
+export const Configuration = Symbol('Configuration');
 export interface Configuration {
     // the installation this ws-manager-bridge instance is a) running in and b) controls
     installation: string;
@@ -35,7 +35,7 @@ export interface Configuration {
         preparingPhaseSeconds: number;
         stoppingPhaseSeconds: number;
         unknownPhaseSeconds: number;
-    }
+    };
 
     // emulatePreparingIntervalSeconds configures how often we check for Workspaces in phase "preparing" for clusters we do not govern
     emulatePreparingIntervalSeconds: number;

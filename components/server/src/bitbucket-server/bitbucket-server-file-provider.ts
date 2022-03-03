@@ -4,13 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Commit, Repository, User } from "@gitpod/gitpod-protocol";
+import { Commit, Repository, User } from '@gitpod/gitpod-protocol';
 import { injectable } from 'inversify';
-import { FileProvider, MaybeContent } from "../repohost/file-provider";
+import { FileProvider, MaybeContent } from '../repohost/file-provider';
 
 @injectable()
 export class BitbucketServerFileProvider implements FileProvider {
-
     public async getGitpodFileContent(commit: Commit, user: User): Promise<MaybeContent> {
         return undefined;
         // const yamlVersion1 = await Promise.all([
@@ -20,7 +19,12 @@ export class BitbucketServerFileProvider implements FileProvider {
         // return yamlVersion1.filter(f => !!f)[0];
     }
 
-    public async getLastChangeRevision(repository: Repository, revisionOrBranch: string, user: User, path: string): Promise<string> {
+    public async getLastChangeRevision(
+        repository: Repository,
+        revisionOrBranch: string,
+        user: User,
+        path: string,
+    ): Promise<string> {
         // try {
         //     const api = await this.apiFactory.create(user);
         //     const fileMetaData = (await api.repositories.readSrc({ workspace: repository.owner, repo_slug: repository.name, commit: revisionOrBranch, path, format: "meta" })).data;
@@ -29,7 +33,7 @@ export class BitbucketServerFileProvider implements FileProvider {
         //     log.error({ userId: user.id }, err);
         //     throw new Error(`Could not fetch ${path} of repository ${repository.owner}/${repository.name}: ${err}`);
         // }
-        return "f00";
+        return 'f00';
     }
 
     public async getFileContent(commit: Commit, user: User, path: string) {

@@ -4,12 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from "inversify";
-import { WorkspaceSoftDeletion } from "@gitpod/gitpod-protocol";
-import { WorkspaceDB, WorkspaceAndOwner, WorkspaceOwnerAndSoftDeleted, TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib";
-import { StorageClient } from "../storage/storage-client";
-import { Config } from "../config";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { inject, injectable } from 'inversify';
+import { WorkspaceSoftDeletion } from '@gitpod/gitpod-protocol';
+import {
+    WorkspaceDB,
+    WorkspaceAndOwner,
+    WorkspaceOwnerAndSoftDeleted,
+    TracedWorkspaceDB,
+    DBWithTracing,
+} from '@gitpod/gitpod-db/lib';
+import { StorageClient } from '../storage/storage-client';
+import { Config } from '../config';
+import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 
 @injectable()
 export class WorkspaceDeletionService {
@@ -24,10 +30,14 @@ export class WorkspaceDeletionService {
      * @param ws
      * @param softDeleted
      */
-    public async softDeleteWorkspace(ctx: TraceContext, ws: WorkspaceAndOwner, softDeleted: WorkspaceSoftDeletion): Promise<void> {
+    public async softDeleteWorkspace(
+        ctx: TraceContext,
+        ws: WorkspaceAndOwner,
+        softDeleted: WorkspaceSoftDeletion,
+    ): Promise<void> {
         await this.db.trace(ctx).updatePartial(ws.id, {
             softDeleted,
-            softDeletedTime: new Date().toISOString()
+            softDeletedTime: new Date().toISOString(),
         });
     }
 
@@ -37,15 +47,15 @@ export class WorkspaceDeletionService {
      * @param ws
      */
     public async garbageCollectWorkspace(ctx: TraceContext, ws: WorkspaceOwnerAndSoftDeleted): Promise<boolean> {
-        const span = TraceContext.startSpan("garbageCollectWorkspace", ctx);
+        const span = TraceContext.startSpan('garbageCollectWorkspace', ctx);
 
         try {
-            const deleteSnapshots = ws.softDeleted === "user";
+            const deleteSnapshots = ws.softDeleted === 'user';
             const successfulDeleted = await this.deleteWorkspaceStorage(ws, deleteSnapshots);
-            await this.db.trace({span}).updatePartial(ws.id, { contentDeletedTime: new Date().toISOString() });
+            await this.db.trace({ span }).updatePartial(ws.id, { contentDeletedTime: new Date().toISOString() });
             return successfulDeleted;
         } catch (err) {
-            TraceContext.setError({span}, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -57,20 +67,20 @@ export class WorkspaceDeletionService {
      * @param wsAndOwner
      */
     public async garbageCollectPrebuild(ctx: TraceContext, ws: WorkspaceAndOwner): Promise<boolean> {
-        const span = TraceContext.startSpan("garbageCollectPrebuild", ctx);
+        const span = TraceContext.startSpan('garbageCollectPrebuild', ctx);
 
         try {
             const successfulDeleted = await this.deleteWorkspaceStorage(ws, true);
             const now = new Date().toISOString();
             // Note: soft & content deletion happens at the same time, because prebuilds are reproducible so there's no need for the extra time span.
-            await this.db.trace({span}).updatePartial(ws.id, {
+            await this.db.trace({ span }).updatePartial(ws.id, {
                 contentDeletedTime: now,
                 softDeletedTime: now,
-                softDeleted: 'gc'
+                softDeleted: 'gc',
             });
             return successfulDeleted;
         } catch (err) {
-            TraceContext.setError({span}, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();

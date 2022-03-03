@@ -38,7 +38,11 @@ import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { increaseHttpRequestCounter, observeHttpRequestDuration, setGitpodVersion } from './prometheus-metrics';
 import { OAuthController } from './oauth-server/oauth-controller';
-import { HeadlessLogController, HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from './workspace/headless-log-controller';
+import {
+    HeadlessLogController,
+    HEADLESS_LOGS_PATH_PREFIX,
+    HEADLESS_LOG_DOWNLOAD_PATH_PREFIX,
+} from './workspace/headless-log-controller';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config } from './config';
 import { DebugApp } from './debug-app';
@@ -78,7 +82,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
     @inject(OAuthController) protected readonly oauthController: OAuthController;
-    @inject(NewsletterSubscriptionController) protected readonly newsletterSubscriptionController: NewsletterSubscriptionController;
+    @inject(NewsletterSubscriptionController)
+    protected readonly newsletterSubscriptionController: NewsletterSubscriptionController;
 
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
@@ -94,22 +99,22 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         log.info('server initializing...');
 
         // print config
-        log.info("config", { config: JSON.stringify(this.config, undefined, 2) });
+        log.info('config', { config: JSON.stringify(this.config, undefined, 2) });
 
         // Set version info metric
-        setGitpodVersion(this.config.version)
+        setGitpodVersion(this.config.version);
 
         // ensure DB connection is established to avoid noisy error messages
         await this.typeOrm.connect();
-        log.info("connected to DB");
+        log.info('connected to DB');
 
         // metrics
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
             const startTime = Date.now();
-            req.on("end", () => {
+            req.on('end', () => {
                 const method = req.method;
-                const route = req.route?.path || req.baseUrl || "unknown";
-                observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000)
+                const route = req.route?.path || req.baseUrl || 'unknown';
+                observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000);
                 increaseHttpRequestCounter(method, route, res.statusCode);
             });
 
@@ -118,11 +123,11 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         // Express configuration
         // Read bodies as JSON
-        app.use(bodyParser.json())
-        app.use(bodyParser.urlencoded({ extended: true }))
+        app.use(bodyParser.json());
+        app.use(bodyParser.urlencoded({ extended: true }));
         // Add cookie Parser
         app.use(cookieParser());
-        app.set('trust proxy', 1)   // trust first proxy
+        app.set('trust proxy', 1); // trust first proxy
 
         // Install Sessionhandler
         app.use(this.sessionHandlerProvider.sessionHandler);
@@ -147,33 +152,33 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                     // On staging and devstaging, we want to allow Theia to be able to connect to the server from this magic port
                     // This enables debugging Theia from inside Gitpod
                     const url = new URL(origin);
-                    if (url.hostname.startsWith("13444-")) {
+                    if (url.hostname.startsWith('13444-')) {
                         allowedRequest = true;
                     }
                 }
                 if (!allowedRequest && this.config.insecureNoDomain) {
-                    log.warn("Websocket connection CSRF guard disabled");
+                    log.warn('Websocket connection CSRF guard disabled');
                     allowedRequest = true;
                 }
                 return allowedRequest;
-            }
+            };
 
             /**
              * Verify the web socket handshake request.
              */
             const verifyClient: ws.VerifyClientCallbackAsync = async (info, callback) => {
                 if (!verifyCSRF(info.origin)) {
-                    log.warn("Websocket connection attempt with non-matching Origin header: " + info.origin)
+                    log.warn('Websocket connection attempt with non-matching Origin header: ' + info.origin);
                     return callback(false, 403);
                 }
                 if (info.req.url === '/v1') {
                     try {
-                        await this.bearerAuth.auth(info.req as express.Request)
+                        await this.bearerAuth.auth(info.req as express.Request);
                     } catch (e) {
                         if (isBearerAuthError(e)) {
                             return callback(false, 401, e.message);
                         }
-                        log.warn("authentication failed: ", e)
+                        log.warn('authentication failed: ', e);
                         return callback(false, 500);
                     }
                 }
@@ -188,37 +193,49 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
             // Materialize user into req.user
             const initSessionHandlers = this.authenticator.initHandlers.map<WsRequestHandler>(
-                handler => (ws, req, next) => {
+                (handler) => (ws, req, next) => {
                     // The fake response needs to be create in a per-request context to avoid memory leaks
                     handler(req, {} as express.Response, next);
-                }
+                },
             );
 
             const wsPingPongHandler = new WsConnectionHandler();
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
-            wsHandler.ws(websocketConnectionHandler.path, (ws, request) => {
-                const websocket = toIWebSocket(ws);
-                (request as any).wsConnection = createWebSocketConnection(websocket, console);
-            }, handleSession, ...initSessionHandlers, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
-                websocketConnectionHandler.onConnection((req as any).wsConnection, req);
-            });
-            wsHandler.ws("/v1", (ws, request) => {
-                const websocket = toIWebSocket(ws);
-                (request as any).wsConnection = createWebSocketConnection(websocket, console);
-            }, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
-                websocketConnectionHandler.onConnection((req as any).wsConnection, req);
-            });
+            wsHandler.ws(
+                websocketConnectionHandler.path,
+                (ws, request) => {
+                    const websocket = toIWebSocket(ws);
+                    (request as any).wsConnection = createWebSocketConnection(websocket, console);
+                },
+                handleSession,
+                ...initSessionHandlers,
+                wsPingPongHandler.handler(),
+                (ws: ws, req: express.Request) => {
+                    websocketConnectionHandler.onConnection((req as any).wsConnection, req);
+                },
+            );
+            wsHandler.ws(
+                '/v1',
+                (ws, request) => {
+                    const websocket = toIWebSocket(ws);
+                    (request as any).wsConnection = createWebSocketConnection(websocket, console);
+                },
+                wsPingPongHandler.handler(),
+                (ws: ws, req: express.Request) => {
+                    websocketConnectionHandler.onConnection((req as any).wsConnection, req);
+                },
+            );
             wsHandler.ws(/.*/, (ws, request) => {
                 // fallthrough case
                 // note: this is suboptimal as we upgrade and than terminate the request. But we're not sure this is a problem at all, so we start out with this
-                log.warn("websocket path not matching", { path: request.path })
+                log.warn('websocket path not matching', { path: request.path });
                 ws.terminate();
             });
 
             // start ws heartbeat/ping-pong
             wsPingPongHandler.start();
             this.disposables.push(wsPingPongHandler);
-        })
+        });
 
         // register routers
         await this.registerRoutes(app);
@@ -228,7 +245,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         // Generic error handler
         app.use(bottomErrorHandler(log.debug));
-
 
         // Health check + metrics endpoints
         this.monitoringApp = this.monitoringEndpointsApp.create();
@@ -252,7 +268,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         await this.qorum.start();
 
         // Start workspace garbage collector
-        this.workspaceGC.start().catch((err) => log.error("wsgc: error during startup", err));
+        this.workspaceGC.start().catch((err) => log.error('wsgc: error during startup', err));
 
         // Start deleted entry GC
         this.deletedEntryGC.start();
@@ -261,7 +277,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         this.oneTimeSecretServer.startPruningExpiredSecrets();
 
         // Start DB updater
-        this.startDbDeleter().catch(err => log.error("starting DB deleter", err));
+        this.startDbDeleter().catch((err) => log.error('starting DB deleter', err));
 
         this.app = app;
         log.info('server initialized.');
@@ -286,7 +302,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);
         app.use(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, this.headlessLogController.headlessLogDownload);
         app.use(this.newsletterSubscriptionController.apiRouter);
-        app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        app.use('/version', (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.config.version);
         });
         app.use(this.oauthController.oauthRouter);
@@ -294,25 +310,31 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
     public async start(port: number) {
         if (!this.app) {
-            throw new Error("server cannot start, not initialized");
+            throw new Error('server cannot start, not initialized');
         }
 
         const httpServer = this.app.listen(port, () => {
             this.eventEmitter.emit(Server.EVENT_ON_START, httpServer);
             log.info(`server listening on port: ${(<AddressInfo>httpServer.address()).port}`);
-        })
+        });
         this.httpServer = httpServer;
 
         if (this.monitoringApp) {
             this.monitoringHttpServer = this.monitoringApp.listen(9500, 'localhost', () => {
-                log.info(`monitoring app listening on port: ${(<AddressInfo>this.monitoringHttpServer!.address()).port}`);
+                log.info(
+                    `monitoring app listening on port: ${(<AddressInfo>this.monitoringHttpServer!.address()).port}`,
+                );
             });
         }
 
         if (this.installationAdminApp) {
             this.installationAdminHttpServer = this.installationAdminApp.listen(9000, () => {
-                log.info(`installation admin app listening on port: ${(<AddressInfo>this.installationAdminHttpServer!.address()).port}`)
-            })
+                log.info(
+                    `installation admin app listening on port: ${
+                        (<AddressInfo>this.installationAdminHttpServer!.address()).port
+                    }`,
+                );
+            });
         }
 
         this.debugApp.start(6060);
@@ -331,31 +353,41 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         if (!server) {
             return;
         }
-        return new Promise((resolve) => server.close((err: any) => {
-            if (err) {
-                log.warn(`error on server close.`, { err });
-            }
-            resolve();
-        }));
+        return new Promise((resolve) =>
+            server.close((err: any) => {
+                if (err) {
+                    log.warn(`error on server close.`, { err });
+                }
+                resolve();
+            }),
+        );
     }
 
     protected installWebsocketConnectionGauge() {
         const gauge = new prom.Gauge({
             name: `server_websocket_connection_count`,
             help: 'Currently served websocket connections',
-            labelNames: ["clientType"],
+            labelNames: ['clientType'],
         });
-        this.websocketConnectionHandler.onConnectionCreated((s, _) => gauge.inc({ clientType: s.clientMetadata.type || "undefined" }));
-        this.websocketConnectionHandler.onConnectionClosed((s, _) => gauge.dec({ clientType: s.clientMetadata.type || "undefined" }));
+        this.websocketConnectionHandler.onConnectionCreated((s, _) =>
+            gauge.inc({ clientType: s.clientMetadata.type || 'undefined' }),
+        );
+        this.websocketConnectionHandler.onConnectionClosed((s, _) =>
+            gauge.dec({ clientType: s.clientMetadata.type || 'undefined' }),
+        );
     }
 
     protected installWebsocketClientContextGauge() {
         const gauge = new prom.Gauge({
             name: `server_websocket_client_context_count`,
             help: 'Currently served client contexts',
-            labelNames: ["authLevel"],
+            labelNames: ['authLevel'],
         });
-        this.websocketConnectionHandler.onClientContextCreated((ctx) => gauge.inc({ authLevel: ctx.clientMetadata.authLevel }));
-        this.websocketConnectionHandler.onClientContextClosed((ctx) => gauge.dec({ authLevel: ctx.clientMetadata.authLevel }));
+        this.websocketConnectionHandler.onClientContextCreated((ctx) =>
+            gauge.inc({ authLevel: ctx.clientMetadata.authLevel }),
+        );
+        this.websocketConnectionHandler.onClientContextClosed((ctx) =>
+            gauge.dec({ authLevel: ctx.clientMetadata.authLevel }),
+        );
     }
 }

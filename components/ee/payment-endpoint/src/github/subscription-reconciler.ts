@@ -4,22 +4,22 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Config } from "../config";
-import { inject, injectable } from "inversify";
+import { Config } from '../config';
+import { inject, injectable } from 'inversify';
 import * as fs from 'fs';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import * as jwt from 'jsonwebtoken';
-import { PendingGithubEventDB, TransactionalPendingGithubEventDBFactory, UserDB } from "@gitpod/gitpod-db/lib";
-import { GithubSubscriptionMapper, MarketplaceEventAll } from "./subscription-mapper";
-import { User, Queue } from "@gitpod/gitpod-protocol";
-import { UserPaidSubscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
-import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
-import { SubscriptionModel } from "../accounting/subscription-model";
-import { Plans, Plan } from "@gitpod/gitpod-protocol/lib/plans";
+import { PendingGithubEventDB, TransactionalPendingGithubEventDBFactory, UserDB } from '@gitpod/gitpod-db/lib';
+import { GithubSubscriptionMapper, MarketplaceEventAll } from './subscription-mapper';
+import { User, Queue } from '@gitpod/gitpod-protocol';
+import { UserPaidSubscription } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
+import { AccountingDB } from '@gitpod/gitpod-db/lib/accounting-db';
+import { SubscriptionModel } from '../accounting/subscription-model';
+import { Plans, Plan } from '@gitpod/gitpod-protocol/lib/plans';
 import * as Webhooks from '@octokit/webhooks';
-import fetch from "node-fetch";
+import fetch from 'node-fetch';
 import { EntityManager } from 'typeorm';
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { repeat } from '@gitpod/gitpod-protocol/lib/util/repeat';
 
 @injectable()
 export class GithubSubscriptionReconciler {
@@ -28,30 +28,32 @@ export class GithubSubscriptionReconciler {
     @inject(AccountingDB) protected readonly accountingDB: AccountingDB;
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(Config) protected readonly config: Config;
-    @inject(TransactionalPendingGithubEventDBFactory) protected readonly transactionalFactory: TransactionalPendingGithubEventDBFactory;
+    @inject(TransactionalPendingGithubEventDBFactory)
+    protected readonly transactionalFactory: TransactionalPendingGithubEventDBFactory;
     protected privateKey: string | undefined;
     protected reconciliationTasks = new Queue();
 
-
     public async handleIncomingEvent(evt: MarketplaceEventAll) {
         const authId: string = evt.payload.marketplace_purchase.account.id.toString();
-        const user = await this.userDB.findUserByIdentity({ authProviderId: "Public-GitHub", authId });
+        const user = await this.userDB.findUserByIdentity({ authProviderId: 'Public-GitHub', authId });
         if (user) {
             await this.reconciliationTasks.enqueue(() => this.reconcileEvent(user, evt));
         } else {
-            log.error("Received GitHub marketplace purchase event for an unknown user. Storing for later use.", {evt});
+            log.error('Received GitHub marketplace purchase event for an unknown user. Storing for later use.', {
+                evt,
+            });
             await this.pendingEventsDB.store({
                 creationDate: new Date(),
                 event: JSON.stringify(evt),
                 githubUserId: evt.payload.marketplace_purchase.account.id.toString(),
                 id: evt.id,
-                type: `marketplace_purchase.${evt.payload.action}`
+                type: `marketplace_purchase.${evt.payload.action}`,
             });
         }
     }
 
     protected async reconcilePendingEvents() {
-        const pendingPurchaseEvents = await this.pendingEventsDB.findWithUser("marketplace_purchase");
+        const pendingPurchaseEvents = await this.pendingEventsDB.findWithUser('marketplace_purchase');
         for (const evt of pendingPurchaseEvents) {
             try {
                 const githubEvt = JSON.parse(evt.event);
@@ -59,9 +61,9 @@ export class GithubSubscriptionReconciler {
                     const pendingEventsDB = this.transactionalFactory(em);
                     await pendingEventsDB.delete(evt);
                 });
-                log.debug({userId: evt.identity.user.id}, "followed up on pending purchasing event", {evt});
-            } catch(err) {
-                log.debug("could not follow up on pending event", err);
+                log.debug({ userId: evt.identity.user.id }, 'followed up on pending purchasing event', { evt });
+            } catch (err) {
+                log.debug('could not follow up on pending event', err);
             }
         }
     }
@@ -71,33 +73,44 @@ export class GithubSubscriptionReconciler {
             this.privateKey = loadPrivateKey(this.config.githubAppCertPath)!;
         }
 
-        const now = Math.floor(Date.now() / 1000)
+        const now = Math.floor(Date.now() / 1000);
         const payload = {
             iat: now, // Issued at time
             exp: now + 60, // JWT expiration time (10 minute maximum)
-            iss: this.config.githubAppAppID.toString()
+            iss: this.config.githubAppAppID.toString(),
         };
-        const token = jwt.sign(payload, this.privateKey, { algorithm: 'RS256' })
+        const token = jwt.sign(payload, this.privateKey, { algorithm: 'RS256' });
 
-        await Promise.all(Plans.getAvailablePlans('USD').filter(p => !!p.githubId).map(p => this.reconcilePlan(p, token)));
+        await Promise.all(
+            Plans.getAvailablePlans('USD')
+                .filter((p) => !!p.githubId)
+                .map((p) => this.reconcilePlan(p, token)),
+        );
     }
 
     protected async reconcilePlan(plan: Plan, token: string) {
-        log.debug("Reconciling plan", {name: plan.name, githubId: plan.githubId});
+        log.debug('Reconciling plan', { name: plan.name, githubId: plan.githubId });
 
         const maxPlanAccounts = 2000;
         let allPlanAccounts = new Map<number, MarketplaceAccountListing>();
         for (let i = 1; i < maxPlanAccounts; i++) {
-            const resp = await fetch(`https://api.github.com/marketplace_listing/plans/${plan.githubId}/accounts?sort=updated&direction=desc&page=${i}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    accept: 'application/vnd.github.machine-man-preview+json',
-                    'User-Agent': 'gitpod/payment'
-                }
-            });
+            const resp = await fetch(
+                `https://api.github.com/marketplace_listing/plans/${plan.githubId}/accounts?sort=updated&direction=desc&page=${i}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        Authorization: 'Bearer ' + token,
+                        accept: 'application/vnd.github.machine-man-preview+json',
+                        'User-Agent': 'gitpod/payment',
+                    },
+                },
+            );
             if (!resp.ok) {
-                log.error(`Error getting accounts for plan ${plan.name} from GitHub: '${resp.statusText}'`, { plan, statusText: resp.statusText, status: resp.status });
+                log.error(`Error getting accounts for plan ${plan.name} from GitHub: '${resp.statusText}'`, {
+                    plan,
+                    statusText: resp.statusText,
+                    status: resp.status,
+                });
                 break;
             }
 
@@ -109,10 +122,11 @@ export class GithubSubscriptionReconciler {
             for (const item of items) {
                 allPlanAccounts.set(item.id, item);
             }
-
         }
         if (allPlanAccounts.size > maxPlanAccounts) {
-            log.error(`Gitpod has ${allPlanAccounts.size} plan accounts on GitHub. That's awesome. Now we should rethink our reconciling strategy.`);
+            log.error(
+                `Gitpod has ${allPlanAccounts.size} plan accounts on GitHub. That's awesome. Now we should rethink our reconciling strategy.`,
+            );
         }
 
         // compare GitHub with database
@@ -121,9 +135,14 @@ export class GithubSubscriptionReconciler {
             return;
         }
 
-        const matchingSubscriptions = await this.accountingDB.findActiveSubscriptionsByIdentity(accounts.map(k => k.toString()), "Public-GitHub");
+        const matchingSubscriptions = await this.accountingDB.findActiveSubscriptionsByIdentity(
+            accounts.map((k) => k.toString()),
+            'Public-GitHub',
+        );
         for (const account of accounts) {
-            const subscriptions = (matchingSubscriptions[account.toString()] || []).filter(s => !!s.paymentReference && s.paymentReference.startsWith("github:"));
+            const subscriptions = (matchingSubscriptions[account.toString()] || []).filter(
+                (s) => !!s.paymentReference && s.paymentReference.startsWith('github:'),
+            );
             const githubUserAndPurchase = allPlanAccounts.get(account)!;
 
             let model: SubscriptionModel | undefined;
@@ -132,9 +151,15 @@ export class GithubSubscriptionReconciler {
 
                 // This is anything but optimal: we're performing an 1+N query here. Let's hope we don't have to do this
                 // all too often, i.e. we don't miss too many events.
-                const user = await this.userDB.findUserByIdentity({ authProviderId: "Public-GitHub", authId: account.toString() });
+                const user = await this.userDB.findUserByIdentity({
+                    authProviderId: 'Public-GitHub',
+                    authId: account.toString(),
+                });
                 if (!user) {
-                    log.debug("did not find user even though GitHub says they're paying for Gitpod. Maybe user didn't sign up yet.", {account, githubUserAndPurchase});
+                    log.debug(
+                        "did not find user even though GitHub says they're paying for Gitpod. Maybe user didn't sign up yet.",
+                        { account, githubUserAndPurchase },
+                    );
                     continue;
                 }
 
@@ -146,15 +171,19 @@ export class GithubSubscriptionReconciler {
 
                 // We have an active subscription, but not for this plan. Let's change to new plan.
                 model = new SubscriptionModel(user.id, subscriptions);
-                this.subscriptionMapper.mapSubscriptionChange(user, {
-                    accountID: account,
-                    effectiveDate: new Date().toISOString(),
-                    newAmount: Plans.getHoursPerMonth(plan),
-                    newPlan: plan,
-                    newStartDate: new Date().toISOString(),
-                    oldSubscription: subscriptions[0],
-                    prevPlan: Plans.getById(subscriptions[0].planId!)!
-                }, model);
+                this.subscriptionMapper.mapSubscriptionChange(
+                    user,
+                    {
+                        accountID: account,
+                        effectiveDate: new Date().toISOString(),
+                        newAmount: Plans.getHoursPerMonth(plan),
+                        newPlan: plan,
+                        newStartDate: new Date().toISOString(),
+                        oldSubscription: subscriptions[0],
+                        prevPlan: Plans.getById(subscriptions[0].planId!)!,
+                    },
+                    model,
+                );
             } else if (subscriptions.length > 1) {
                 // We have multiple subscriptions - for good measure we cancel all of them and start afresh.
                 // This is anything but optimal: we're performing an 1+N query here. Let's hope we don't have to do this.
@@ -176,10 +205,12 @@ export class GithubSubscriptionReconciler {
         }
 
         // compare database with GitHub
-        const subscriptionsInDB = (await this.accountingDB.findActiveSubscriptionByPlanID(plan.chargebeeId, new Date().toISOString())).filter(s => !!s.paymentReference && s.paymentReference.startsWith("github:"));
+        const subscriptionsInDB = (
+            await this.accountingDB.findActiveSubscriptionByPlanID(plan.chargebeeId, new Date().toISOString())
+        ).filter((s) => !!s.paymentReference && s.paymentReference.startsWith('github:'));
         for (const sub of subscriptionsInDB) {
-            const paymentRef = (sub.paymentReference || "").split(":");
-            if (paymentRef.length != 2 || paymentRef[0] != "github") {
+            const paymentRef = (sub.paymentReference || '').split(':');
+            if (paymentRef.length != 2 || paymentRef[0] != 'github') {
                 // not a GitHub subscription - we don't care
                 continue;
             }
@@ -189,10 +220,14 @@ export class GithubSubscriptionReconciler {
             if (!listing) {
                 // We have a subscription in our database which GitHub does not know about.
                 // We should end this subscription.
-                log.warn({ userId: sub.userId }, "Found subscription which GitHub does not know off. Ending subscription.", { subscription: sub });
+                log.warn(
+                    { userId: sub.userId },
+                    'Found subscription which GitHub does not know off. Ending subscription.',
+                    { subscription: sub },
+                );
 
                 // We have an active subscription, but not for this plan. Let's change to new plan.
-                const model = new SubscriptionModel(sub.userId, [ sub ]);
+                const model = new SubscriptionModel(sub.userId, [sub]);
                 this.subscriptionMapper.mapSubscriptionCancel(sub.userId, new Date().toISOString(), model);
                 await this.persistModel(model);
             }
@@ -201,44 +236,57 @@ export class GithubSubscriptionReconciler {
 
     public start() {
         repeat(() => this.reconciliationTasks.enqueue(() => this.reconcilePendingEvents()), 1 * 60 * 1000); // every one minute
-        repeat(() => this.reconciliationTasks.enqueue(async () => {
-            try {
-                // it's important we reconcile the latest pending events first before attempting to interpret GitHub's information.
-                await this.reconcilePendingEvents();
+        repeat(
+            () =>
+                this.reconciliationTasks.enqueue(async () => {
+                    try {
+                        // it's important we reconcile the latest pending events first before attempting to interpret GitHub's information.
+                        await this.reconcilePendingEvents();
 
-                await this.pollAndReconcilFromGithub();
-            } catch (err) {
-                log.warn("Error while reconciling latest GitHub state", err);
-            }
-        }), 24 * 60 * 1000); // once a day
+                        await this.pollAndReconcilFromGithub();
+                    } catch (err) {
+                        log.warn('Error while reconciling latest GitHub state', err);
+                    }
+                }),
+            24 * 60 * 1000,
+        ); // once a day
     }
 
-    public async reconcileEvent(user: User, evt: MarketplaceEventAll, runInTransaction?: (manager: EntityManager) => Promise<void>) {
+    public async reconcileEvent(
+        user: User,
+        evt: MarketplaceEventAll,
+        runInTransaction?: (manager: EntityManager) => Promise<void>,
+    ) {
         const userId = user.id;
         const subscriptions = await this.accountingDB.findAllSubscriptionsForUser(userId);
-        const userPaidSubscriptions = subscriptions.filter(s => UserPaidSubscription.is(s) && s.paymentReference.startsWith("github:"));
+        const userPaidSubscriptions = subscriptions.filter(
+            (s) => UserPaidSubscription.is(s) && s.paymentReference.startsWith('github:'),
+        );
 
         const model = new SubscriptionModel(userId, userPaidSubscriptions);
         const success = await this.subscriptionMapper.map(evt, model);
         if (!success) {
-            log.debug({userId}, "subscription mapper did not succeed for GitHub market purchase event. See errors above.", { evt });
+            log.debug(
+                { userId },
+                'subscription mapper did not succeed for GitHub market purchase event. See errors above.',
+                { evt },
+            );
             return;
         }
         await this.persistModel(model, runInTransaction);
     }
 
-    async persistModel(model: SubscriptionModel, runInTransaction?: ((manager: EntityManager) => Promise<void>)) {
+    async persistModel(model: SubscriptionModel, runInTransaction?: (manager: EntityManager) => Promise<void>) {
         const closures = runInTransaction ? [runInTransaction] : [];
         const delta = model.getResult();
-        await this.accountingDB.transaction(async db => {
+        await this.accountingDB.transaction(async (db) => {
             await Promise.all([
-                ...delta.updates.map(s => db.storeSubscription(s)),
-                ...delta.inserts.map(s => db.newSubscription(s)),
+                ...delta.updates.map((s) => db.storeSubscription(s)),
+                ...delta.inserts.map((s) => db.newSubscription(s)),
             ]);
         }, closures);
     }
 }
-
 
 function loadPrivateKey(filename: string | undefined): string | undefined {
     if (!filename) {
@@ -260,11 +308,11 @@ function loadPrivateKey(filename: string | undefined): string | undefined {
 }
 
 interface MarketplaceAccountListing {
-    url: string
+    url: string;
     type: string;
     id: number;
     login: string;
     email?: string;
     marketplace_pending_change?: any; // this seems broken on the GitHub side
-    marketplace_purchase: Webhooks.EmitterWebhookEvent<"marketplace_purchase">["payload"];
+    marketplace_purchase: Webhooks.EmitterWebhookEvent<'marketplace_purchase'>['payload'];
 }

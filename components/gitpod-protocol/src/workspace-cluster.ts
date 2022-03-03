@@ -6,7 +6,7 @@
 
 import * as fs from 'fs';
 import { filePathTelepresenceAware } from './env';
-import { DeepPartial } from "./util/deep-partial";
+import { DeepPartial } from './util/deep-partial';
 import { PermissionName } from './permission';
 
 export interface WorkspaceCluster {
@@ -37,7 +37,7 @@ export interface WorkspaceCluster {
     admissionConstraints?: AdmissionConstraint[];
 }
 
-export type WorkspaceClusterState = "available" | "cordoned" | "draining";
+export type WorkspaceClusterState = 'available' | 'cordoned' | 'draining';
 export interface TLSConfig {
     // the CA shared between client and server (base64 encoded)
     ca: string;
@@ -47,32 +47,35 @@ export interface TLSConfig {
     crt: string;
 }
 export namespace TLSConfig {
-    export const loadFromBase64File = (path: string): string => fs.readFileSync(filePathTelepresenceAware(path)).toString("base64");
+    export const loadFromBase64File = (path: string): string =>
+        fs.readFileSync(filePathTelepresenceAware(path)).toString('base64');
 }
-export type WorkspaceClusterWoTLS = Omit<WorkspaceCluster, "tls">;
-export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "name" | "url" | "tls">;
+export type WorkspaceClusterWoTLS = Omit<WorkspaceCluster, 'tls'>;
+export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, 'name' | 'url' | 'tls'>;
 
-export type AdmissionConstraint = AdmissionConstraintFeaturePreview | AdmissionConstraintHasPermission | AdmissionConstraintHasUserLevel | AdmissionConstraintHasMoreResources;
-export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
-export type AdmissionConstraintHasPermission = { type: "has-permission", permission: PermissionName };
-export type AdmissionConstraintHasUserLevel = { type: "has-user-level", level: string };
-export type AdmissionConstraintHasMoreResources = { type: "has-more-resources" };
+export type AdmissionConstraint =
+    | AdmissionConstraintFeaturePreview
+    | AdmissionConstraintHasPermission
+    | AdmissionConstraintHasUserLevel
+    | AdmissionConstraintHasMoreResources;
+export type AdmissionConstraintFeaturePreview = { type: 'has-feature-preview' };
+export type AdmissionConstraintHasPermission = { type: 'has-permission'; permission: PermissionName };
+export type AdmissionConstraintHasUserLevel = { type: 'has-user-level'; level: string };
+export type AdmissionConstraintHasMoreResources = { type: 'has-more-resources' };
 
 export namespace AdmissionConstraint {
     export function is(o: any): o is AdmissionConstraint {
-        return !!o
-            && 'type' in o;
+        return !!o && 'type' in o;
     }
     export function isHasPermissionConstraint(o: any): o is AdmissionConstraintHasPermission {
-        return is(o)
-            && o.type === "has-permission";
+        return is(o) && o.type === 'has-permission';
     }
     export function hasPermission(ac: AdmissionConstraint, permission: PermissionName): boolean {
         return isHasPermissionConstraint(ac) && ac.permission === permission;
     }
 }
 
-export const WorkspaceClusterDB = Symbol("WorkspaceClusterDB");
+export const WorkspaceClusterDB = Symbol('WorkspaceClusterDB');
 export interface WorkspaceClusterDB {
     /**
      * Stores the given WorkspaceCluster to the cluster-local DB in a consistent manner.
@@ -99,6 +102,6 @@ export interface WorkspaceClusterDB {
      */
     findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]>;
 }
-export interface WorkspaceClusterFilter extends Pick<WorkspaceCluster, "state" | "govern" | "url"> {
+export interface WorkspaceClusterFilter extends Pick<WorkspaceCluster, 'state' | 'govern' | 'url'> {
     minScore: number;
 }

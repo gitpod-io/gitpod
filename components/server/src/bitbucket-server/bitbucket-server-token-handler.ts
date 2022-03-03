@@ -4,22 +4,23 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Token, User } from "@gitpod/gitpod-protocol";
-import { inject, injectable } from "inversify";
-import { AuthProviderParams } from "../auth/auth-provider";
-import { UnauthorizedError } from "../errors";
-import { TokenProvider } from "../user/token-provider";
-import { BitbucketServerOAuthScopes } from "./bitbucket-server-oauth-scopes";
+import { Token, User } from '@gitpod/gitpod-protocol';
+import { inject, injectable } from 'inversify';
+import { AuthProviderParams } from '../auth/auth-provider';
+import { UnauthorizedError } from '../errors';
+import { TokenProvider } from '../user/token-provider';
+import { BitbucketServerOAuthScopes } from './bitbucket-server-oauth-scopes';
 
 @injectable()
 export class BitbucketServerTokenHelper {
-
     @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
 
     async getCurrentToken(user: User) {
         try {
-            return await this.getTokenWithScopes(user, [/* any scopes */]);
+            return await this.getTokenWithScopes(user, [
+                /* any scopes */
+            ]);
         } catch {
             // no token
         }
@@ -36,13 +37,13 @@ export class BitbucketServerTokenHelper {
             // no token
         }
         if (requiredScopes.length === 0) {
-            requiredScopes = BitbucketServerOAuthScopes.Requirements.DEFAULT
+            requiredScopes = BitbucketServerOAuthScopes.Requirements.DEFAULT;
         }
-        throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
+        throw UnauthorizedError.create(host, requiredScopes, 'missing-identity');
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const set = new Set(wantedScopes);
-        token.scopes.forEach(s => set.delete(s));
+        token.scopes.forEach((s) => set.delete(s));
         return set.size === 0;
     }
 }

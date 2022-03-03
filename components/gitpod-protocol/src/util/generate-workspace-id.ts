@@ -3,34 +3,34 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
-import randomNumber = require("random-number-csprng");
+import randomNumber = require('random-number-csprng');
 
 export async function generateWorkspaceID(firstSegment?: string, secondSegment?: string): Promise<string> {
-    const firstSeg = clean(firstSegment) || await random(colors);
-    const secSeg = clean(secondSegment, Math.min(15, 23 - firstSeg.length)) || await random(animals);
-    return firstSeg+'-'+secSeg+'-'+(await random(characters, 11));
+    const firstSeg = clean(firstSegment) || (await random(colors));
+    const secSeg = clean(secondSegment, Math.min(15, 23 - firstSeg.length)) || (await random(animals));
+    return firstSeg + '-' + secSeg + '-' + (await random(characters, 11));
 }
 
 function clean(segment: string | undefined, maxChars: number = 15) {
-  if (!segment) {
-    return undefined;
-  }
-  segment = segment.toLowerCase();
-  let result = '';
-  for (let i =0; i < segment.length; i++) {
-    if (characters.indexOf(segment[i]) !== -1) {
-      result += segment[i];
+    if (!segment) {
+        return undefined;
     }
-  }
-  if (result.length >= 2) {
-    return result.substring(0, maxChars);
-  }
+    segment = segment.toLowerCase();
+    let result = '';
+    for (let i = 0; i < segment.length; i++) {
+        if (characters.indexOf(segment[i]) !== -1) {
+            result += segment[i];
+        }
+    }
+    if (result.length >= 2) {
+        return result.substring(0, maxChars);
+    }
 }
 
 async function random(array: string[], length: number = 1): Promise<string> {
     var result = '';
-    for ( var i = 0; i < length; i++ ) {
-       result += array[await randomNumber(0, array.length-1)];
+    for (var i = 0; i < length; i++) {
+        result += array[await randomNumber(0, array.length - 1)];
     }
     return result;
 }
@@ -91,9 +91,9 @@ export const colors = [
     'violet',
     'white',
     'yellow',
-  ];
+];
 
-  export const animals = [
+export const animals = [
     'canidae',
     'felidae',
     'cat',
@@ -472,4 +472,4 @@ export const colors = [
     'sheep',
     'yak',
     'unicorn',
-  ]
+];

@@ -7,14 +7,14 @@
         { from: './content-service-api/initializer_pb.js', to: '@gitpod/content-service/lib' },
         { from: './content-service-api/initializer_pb', to: '@gitpod/content-service/lib' },
         { from: './content-service-api/blobs_pb.js', to: '@gitpod/content-service/lib' },
-        { from: './content-service-api/blobs_pb', to: '@gitpod/content-service/lib' }
-    ]
+        { from: './content-service-api/blobs_pb', to: '@gitpod/content-service/lib' },
+    ];
 
     for (const sub of replacements) {
         console.info(`🔧  >>> Patching code. Switching from '${sub.from}' to '${sub.to}'...`);
-        const cliProtocolPath = path.resolve(".");
+        const cliProtocolPath = path.resolve('.');
         for (const fileName of fs.readdirSync(cliProtocolPath)) {
-            if (fileName.indexOf("patch-grpc-js") !== -1) {
+            if (fileName.indexOf('patch-grpc-js') !== -1) {
                 continue;
             }
 

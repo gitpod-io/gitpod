@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Entity, Column, PrimaryColumn, Index } from "typeorm";
-import { TypeORM } from "../typeorm";
+import { Entity, Column, PrimaryColumn, Index } from 'typeorm';
+import { TypeORM } from '../typeorm';
 
 // should be aligned with https://github.com/gitpod-io/openvscode-server/blob/a9286bef87ed21bbf108371aa1f62d9a5bc48fc4/src/vs/platform/userDataSync/common/userDataSync.ts#L110-L160
 export interface IUserData {
@@ -21,23 +21,30 @@ export const enum SyncResource {
     Extensions = 'extensions',
     GlobalState = 'globalState',
 }
-export const ALL_SYNC_RESOURCES: SyncResource[] = [SyncResource.Settings, SyncResource.Keybindings, SyncResource.Snippets, SyncResource.Tasks, SyncResource.Extensions, SyncResource.GlobalState];
+export const ALL_SYNC_RESOURCES: SyncResource[] = [
+    SyncResource.Settings,
+    SyncResource.Keybindings,
+    SyncResource.Snippets,
+    SyncResource.Tasks,
+    SyncResource.Extensions,
+    SyncResource.GlobalState,
+];
 
 export interface IUserDataManifest {
-	readonly latest?: Record<ServerResource, string>;
-	readonly session: string;
+    readonly latest?: Record<ServerResource, string>;
+    readonly session: string;
     /**
      * This property reflects a weak ETag for caching code sync responses,
      * in the server, this is send in the Etag header and it's calculated by Express.js or we can override it manually.
      */
-	//readonly ref: string;
+    //readonly ref: string;
 }
 
 export type ServerResource = SyncResource | 'machines';
 export const ALL_SERVER_RESOURCES: ServerResource[] = [...ALL_SYNC_RESOURCES, 'machines'];
 
 @Entity()
-@Index('ind_dbsync', ['created'])   // DBSync
+@Index('ind_dbsync', ['created']) // DBSync
 export class DBCodeSyncResource {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     userId: string;
@@ -60,8 +67,8 @@ export class DBCodeSyncResource {
             from(value: any): any {
                 // From TIMESTAMP to ISO string
                 return new Date(value).toISOString();
-            }
-        }
+            },
+        },
     })
     created: string;
 

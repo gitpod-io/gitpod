@@ -4,9 +4,9 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Subscription, AccountEntry, AccountEntryFixedPeriod } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { Subscription, AccountEntry, AccountEntryFixedPeriod } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
 
-const toInt = (dateStr?: string) => dateStr ? new Date(dateStr).getTime() : Number.MAX_SAFE_INTEGER;
+const toInt = (dateStr?: string) => (dateStr ? new Date(dateStr).getTime() : Number.MAX_SAFE_INTEGER);
 export const orderByEndDateDescThenStartDateDesc = (s1: Subscription, s2: Subscription) => {
     return toInt(s2.endDate) - toInt(s1.endDate) || toInt(s2.startDate) - toInt(s1.startDate);
 };
@@ -39,9 +39,7 @@ export const orderCreditFirst = (c1: AccountEntry, c2: AccountEntry) => {
 };
 
 export class SortedArray<T> {
-    constructor(
-        protected readonly array: T[],
-        protected readonly comparator: (t1: T, t2: T) => number) {
+    constructor(protected readonly array: T[], protected readonly comparator: (t1: T, t2: T) => number) {
         this.array.sort(this.comparator);
     }
 

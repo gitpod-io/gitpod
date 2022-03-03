@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Column, Entity, PrimaryColumn } from "typeorm";
-import { PendingGithubEvent } from "@gitpod/gitpod-protocol";
-import { TypeORM } from "../typeorm";
+import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { PendingGithubEvent } from '@gitpod/gitpod-protocol';
+import { TypeORM } from '../typeorm';
 
 @Entity()
 export class DBPendingGithubEvent implements PendingGithubEvent {
@@ -16,7 +16,7 @@ export class DBPendingGithubEvent implements PendingGithubEvent {
     @Column()
     githubUserId: string;
 
-    @Column({type: 'timestamp', precision: 6})
+    @Column({ type: 'timestamp', precision: 6 })
     creationDate: Date;
 
     @Column()

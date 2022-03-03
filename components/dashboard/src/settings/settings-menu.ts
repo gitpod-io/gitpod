@@ -7,30 +7,30 @@
 export default [
     {
         title: 'Account',
-        link: ['/account','/settings']
+        link: ['/account', '/settings'],
     },
     {
         title: 'Notifications',
-        link: ['/notifications']
+        link: ['/notifications'],
     },
     {
         title: 'Plans',
-        link: ['/plans']
+        link: ['/plans'],
     },
     {
         title: 'Team Plans',
-        link: ['/teams']
+        link: ['/teams'],
     },
     {
         title: 'Variables',
-        link: ['/variables']
+        link: ['/variables'],
     },
     {
         title: 'Integrations',
-        link: ["/integrations", "/access-control"]
+        link: ['/integrations', '/access-control'],
     },
     {
         title: 'Preferences',
-        link: ['/preferences']
+        link: ['/preferences'],
     },
 ];

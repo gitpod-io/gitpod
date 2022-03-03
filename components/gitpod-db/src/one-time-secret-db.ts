@@ -4,11 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
-export const OneTimeSecretDB = Symbol("OneTimeSecretDB");
+export const OneTimeSecretDB = Symbol('OneTimeSecretDB');
 
 export interface OneTimeSecretDB {
-
     /**
      * Register registers a secret for one-time retrieval until a certain time.
      *
@@ -38,5 +36,4 @@ export interface OneTimeSecretDB {
      * Prune delets all expired one-time secretes.
      */
     pruneExpired(): Promise<void>;
-
 }

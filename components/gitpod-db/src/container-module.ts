@@ -27,7 +27,10 @@ import { TheiaPluginDBImpl } from './typeorm/theia-plugin-db-impl';
 import { TheiaPluginDB } from './theia-plugin-db';
 import { TypeORMOneTimeSecretDBImpl } from './typeorm/one-time-secret-db-impl';
 import { PendingGithubEventDB, TransactionalPendingGithubEventDBFactory } from './pending-github-event-db';
-import { TransactionalPendingGithubEventDBImpl, TypeORMPendingGithubEventDBImpl } from './typeorm/pending-github-event-db-impl';
+import {
+    TransactionalPendingGithubEventDBImpl,
+    TypeORMPendingGithubEventDBImpl,
+} from './typeorm/pending-github-event-db-impl';
 import { GitpodTableDescriptionProvider, TableDescriptionProvider } from './tables';
 import { PeriodicDbDeleter } from './periodic-deleter';
 import { TermsAcceptanceDB } from './terms-acceptance-db';
@@ -101,19 +104,21 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
 
     bind(TypeORMPendingGithubEventDBImpl).toSelf().inSingletonScope();
     bind(PendingGithubEventDB).toService(TypeORMPendingGithubEventDBImpl);
-    bind(TransactionalPendingGithubEventDBFactory).toFactory(ctx => {
+    bind(TransactionalPendingGithubEventDBFactory).toFactory((ctx) => {
         return (manager: EntityManager) => {
             return new TransactionalPendingGithubEventDBImpl(manager);
-        }
+        };
     });
 
     encryptionModule(bind, unbind, isBound, rebind);
-    bind(KeyProviderConfig).toDynamicValue(ctx => {
-        const config = ctx.container.get<Config>(Config);
-        return {
-            keys: KeyProviderImpl.loadKeyConfigFromJsonString(config.dbEncryptionKeys)
-        };
-    }).inSingletonScope();
+    bind(KeyProviderConfig)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            return {
+                keys: KeyProviderImpl.loadKeyConfigFromJsonString(config.dbEncryptionKeys),
+            };
+        })
+        .inSingletonScope();
 
     bind(GitpodTableDescriptionProvider).toSelf().inSingletonScope();
     bind(TableDescriptionProvider).toService(GitpodTableDescriptionProvider);
@@ -132,10 +137,10 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
 
     // com concerns
     bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();
-    bind(TransactionalAccountingDBFactory).toFactory(ctx => {
+    bind(TransactionalAccountingDBFactory).toFactory((ctx) => {
         return (manager: EntityManager) => {
             return new TransactionalAccountingDBImpl(manager);
-        }
+        };
     });
     bind(TeamSubscriptionDB).to(TeamSubscriptionDBImpl).inSingletonScope();
     bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();

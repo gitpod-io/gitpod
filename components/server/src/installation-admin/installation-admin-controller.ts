@@ -10,7 +10,8 @@ import { InstallationAdminTelemetryDataProvider } from './telemetry-data-provide
 
 @injectable()
 export class InstallationAdminController {
-    @inject(InstallationAdminTelemetryDataProvider) protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
+    @inject(InstallationAdminTelemetryDataProvider)
+    protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
 
     public create(): express.Application {
         const app = express();

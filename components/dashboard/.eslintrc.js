@@ -8,6 +8,6 @@ module.exports = {
     root: true,
     extends: ['react-app'],
     rules: {
-        "import/no-anonymous-default-export": "off",
-    }
-}
+        'import/no-anonymous-default-export': 'off',
+    },
+};

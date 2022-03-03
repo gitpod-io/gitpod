@@ -4,17 +4,24 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from "inversify";
-import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Branch, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, ProjectEnvVar, User } from "@gitpod/gitpod-protocol";
-import { HostContextProvider } from "../auth/host-context-provider";
-import { RepoURL } from "../repohost";
+import { inject, injectable } from 'inversify';
+import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
+import {
+    Branch,
+    PrebuildWithStatus,
+    CreateProjectParams,
+    FindPrebuildsParams,
+    Project,
+    ProjectEnvVar,
+    User,
+} from '@gitpod/gitpod-protocol';
+import { HostContextProvider } from '../auth/host-context-provider';
+import { RepoURL } from '../repohost';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { PartialProject } from "@gitpod/gitpod-protocol/src/teams-projects-protocol";
+import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-protocol';
 
 @injectable()
 export class ProjectsService {
-
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(UserDB) protected readonly userDB: UserDB;
@@ -42,11 +49,11 @@ export class ProjectsService {
         const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
 
         // ...but also refresh the cache on every request (asynchronously / in the background)
-        const refreshPromise = this.getBranchDetails(user, project).then(branches => {
+        const refreshPromise = this.getBranchDetails(user, project).then((branches) => {
             const overview = { branches };
             // No need to await here
-            this.projectDB.storeCachedProjectOverview(project.id, overview).catch(error => {
-                log.error(`Could not store cached project overview: ${error}`, { cloneUrl: project.cloneUrl })
+            this.projectDB.storeCachedProjectOverview(project.id, overview).catch((error) => {
+                log.error(`Could not store cached project overview: ${error}`, { cloneUrl: project.cloneUrl });
             });
             return overview;
         });
@@ -60,7 +67,8 @@ export class ProjectsService {
 
     protected getRepositoryProvider(project: Project) {
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
-        const repositoryProvider = parsedUrl && this.hostContextProvider.get(parsedUrl.host)?.services?.repositoryProvider;
+        const repositoryProvider =
+            parsedUrl && this.hostContextProvider.get(parsedUrl.host)?.services?.repositoryProvider;
         return repositoryProvider;
     }
 
@@ -95,24 +103,27 @@ export class ProjectsService {
                 changeTitle: commit.commitMessage,
                 changeAuthorAvatar: commit.authorAvatarUrl,
                 isDefault: repository.defaultBranch === branch.name,
-                changePR: "changePR", // todo: compute in repositoryProvider
-                changeUrl: "changeUrl", // todo: compute in repositoryProvider
+                changePR: 'changePR', // todo: compute in repositoryProvider
+                changeUrl: 'changeUrl', // todo: compute in repositoryProvider
             });
         }
-        result.sort((a, b) => (b.changeDate || "").localeCompare(a.changeDate || ""));
+        result.sort((a, b) => (b.changeDate || '').localeCompare(a.changeDate || ''));
         return result;
     }
 
-    async createProject({ name, slug, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams, installer: User): Promise<Project> {
+    async createProject(
+        { name, slug, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams,
+        installer: User,
+    ): Promise<Project> {
         const projects = await this.getProjectsByCloneUrls([cloneUrl]);
         if (projects.length > 0) {
-            throw new Error("Project for repository already exists.");
+            throw new Error('Project for repository already exists.');
         }
         // If the desired project slug already exists in this team or user account, add a unique suffix to avoid collisions.
         let uniqueSlug = slug;
         let uniqueSuffix = 0;
         const existingProjects = await (!!userId ? this.getUserProjects(userId) : this.getTeamProjects(teamId!));
-        while (existingProjects.some(p => p.slug === uniqueSlug)) {
+        while (existingProjects.some((p) => p.slug === uniqueSlug)) {
             uniqueSuffix++;
             uniqueSlug = `${slug}-${uniqueSuffix}`;
         }
@@ -121,7 +132,7 @@ export class ProjectsService {
             slug: uniqueSlug,
             cloneUrl,
             ...(!!userId ? { userId } : { teamId }),
-            appInstallationId
+            appInstallationId,
         });
         await this.projectDB.storeProject(project);
         await this.onDidCreateProject(project, installer);
@@ -130,21 +141,28 @@ export class ProjectsService {
 
     protected async onDidCreateProject(project: Project, installer: User) {
         // Pre-fetch project details in the background -- don't await
-        /** no await */ this.getProjectOverviewCached(installer, project).catch(err => {/** ignore */});
+        /** no await */ this.getProjectOverviewCached(installer, project).catch((err) => {
+            /** ignore */
+        });
 
         // Install the prebuilds webhook if possible
         let { userId, teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const type = hostContext && hostContext.authProvider.info.authProviderType;
-        if (type === "GitLab" || type === "Bitbucket") {
+        if (type === 'GitLab' || type === 'Bitbucket') {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
                 // in the project creation flow, we only propose repositories where the user is actually allowed to
                 // install a webhook.
                 if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
-                    log.info("Update prebuild installation for project.", { cloneUrl, teamId, userId, installerId: installer.id });
+                    log.info('Update prebuild installation for project.', {
+                        cloneUrl,
+                        teamId,
+                        userId,
+                        installerId: installer.id,
+                    });
                     await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
                 }
             }
@@ -183,16 +201,20 @@ export class ProjectsService {
                 limit = 1;
             }
             let branch = params.branch;
-            const prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id, branch, limit);
-            const infos = await this.workspaceDb.trace({}).findPrebuildInfos([...prebuilds.map(p => p.id)]);
-            result.push(...infos.map(info => {
-                const p = prebuilds.find(p => p.id === info.id)!;
-                const r: PrebuildWithStatus = { info, status: p.state };
-                if (p.error) {
-                    r.error = p.error;
-                }
-                return r;
-            }));
+            const prebuilds = await this.workspaceDb
+                .trace({})
+                .findPrebuiltWorkspacesByProject(project.id, branch, limit);
+            const infos = await this.workspaceDb.trace({}).findPrebuildInfos([...prebuilds.map((p) => p.id)]);
+            result.push(
+                ...infos.map((info) => {
+                    const p = prebuilds.find((p) => p.id === info.id)!;
+                    const r: PrebuildWithStatus = { info, status: p.state };
+                    if (p.error) {
+                        r.error = p.error;
+                    }
+                    return r;
+                }),
+            );
         }
         return result;
     }
@@ -201,7 +223,12 @@ export class ProjectsService {
         return this.projectDB.updateProject(partialProject);
     }
 
-    async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void> {
+    async setProjectEnvironmentVariable(
+        projectId: string,
+        name: string,
+        value: string,
+        censored: boolean,
+    ): Promise<void> {
         return this.projectDB.setProjectEnvironmentVariable(projectId, name, value, censored);
     }
 
@@ -216,5 +243,4 @@ export class ProjectsService {
     async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
-
 }

@@ -4,25 +4,25 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import moment from "moment";
-import { useState, useContext, useEffect } from "react";
+import moment from 'moment';
+import { useState, useContext, useEffect } from 'react';
 
-import TeamDetail from "./TeamDetail";
-import { adminMenu } from "./admin-menu";
-import { useLocation } from "react-router";
-import { Link, Redirect } from "react-router-dom";
-import { UserContext } from "../user-context";
-import { getGitpodService } from "../service/service";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { AdminGetListResult, Team } from "@gitpod/gitpod-protocol";
-import Label from "./Label";
+import TeamDetail from './TeamDetail';
+import { adminMenu } from './admin-menu';
+import { useLocation } from 'react-router';
+import { Link, Redirect } from 'react-router-dom';
+import { UserContext } from '../user-context';
+import { getGitpodService } from '../service/service';
+import { PageWithSubMenu } from '../components/PageWithSubMenu';
+import { AdminGetListResult, Team } from '@gitpod/gitpod-protocol';
+import Label from './Label';
 
 export default function TeamsSearchPage() {
     return (
         <PageWithSubMenu subMenu={adminMenu} title="Teams" subtitle="Search and manage teams.">
             <TeamsSearch />
         </PageWithSubMenu>
-    )
+    );
 }
 
 export function TeamsSearch() {
@@ -36,13 +36,14 @@ export function TeamsSearch() {
     useEffect(() => {
         const teamId = location.pathname.split('/')[3];
         if (teamId && searchResult) {
-            let foundTeam = searchResult.rows.find(team => team.id === teamId);
+            let foundTeam = searchResult.rows.find((team) => team.id === teamId);
             if (foundTeam) {
                 setCurrentTeam(foundTeam);
             } else {
-                getGitpodService().server.adminGetTeamById(teamId)
-                    .then(team => setCurrentTeam(team))
-                    .catch(e => console.error(e));
+                getGitpodService()
+                    .server.adminGetTeamById(teamId)
+                    .then((team) => setCurrentTeam(team))
+                    .catch((e) => console.error(e));
             }
         } else {
             setCurrentTeam(undefined);
@@ -50,7 +51,7 @@ export function TeamsSearch() {
     }, [location]);
 
     if (!user || !user?.rolesOrPermissions?.includes('admin')) {
-        return <Redirect to="/"/>
+        return <Redirect to="/" />;
     }
 
     if (currentTeam) {
@@ -65,54 +66,91 @@ export function TeamsSearch() {
                 limit: 100,
                 orderBy: 'creationTime',
                 offset: 0,
-                orderDir: "desc"
-            })
+                orderDir: 'desc',
+            });
             setSearchResult(result);
         } finally {
             setSearching(false);
         }
-    }
-    return <>
-        <div className="pt-8 flex">
-            <div className="flex justify-between w-full">
-                <div className="flex">
-                    <div className="py-4">
-                        <svg className={searching ? 'animate-spin' : ''} width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fillRule="evenodd" clipRule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E" />
+    };
+    return (
+        <>
+            <div className="pt-8 flex">
+                <div className="flex justify-between w-full">
+                    <div className="flex">
+                        <div className="py-4">
+                            <svg
+                                className={searching ? 'animate-spin' : ''}
+                                width="16"
+                                height="16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    fillRule="evenodd"
+                                    clipRule="evenodd"
+                                    d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
+                                    fill="#A8A29E"
+                                />
+                            </svg>
+                        </div>
+                        <input
+                            type="search"
+                            placeholder="Search Teams"
+                            onKeyDown={(k) => k.key === 'Enter' && search()}
+                            onChange={(v) => {
+                                setSearchTerm(v.target.value.trim());
+                            }}
+                        />
+                    </div>
+                    <button disabled={searching} onClick={search}>
+                        Search
+                    </button>
+                </div>
+            </div>
+            <div className="flex flex-col space-y-2">
+                <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
+                    <div className="w-7/12">Name</div>
+                    <div className="w-5/12 flex items-center">
+                        <span>Created</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" className="h-4 w-4" viewBox="0 0 16 16">
+                            <path
+                                fill="#A8A29E"
+                                fill-rule="evenodd"
+                                d="M13.366 8.234a.8.8 0 010 1.132l-4.8 4.8a.8.8 0 01-1.132 0l-4.8-4.8a.8.8 0 111.132-1.132L7.2 11.67V2.4a.8.8 0 111.6 0v9.269l3.434-3.435a.8.8 0 011.132 0z"
+                                clip-rule="evenodd"
+                            />
                         </svg>
                     </div>
-                    <input type="search" placeholder="Search Teams" onKeyDown={(k) => k.key === 'Enter' && search()} onChange={(v) => { setSearchTerm((v.target.value).trim()) }} />
                 </div>
-                <button disabled={searching} onClick={search}>Search</button>
+                {searchResult.rows.map((team) => (
+                    <TeamResultItem team={team} />
+                ))}
             </div>
-        </div>
-        <div className="flex flex-col space-y-2">
-            <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
-                <div className="w-7/12">Name</div>
-                <div className="w-5/12 flex items-center"><span>Created</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" className="h-4 w-4" viewBox="0 0 16 16"><path fill="#A8A29E" fill-rule="evenodd" d="M13.366 8.234a.8.8 0 010 1.132l-4.8 4.8a.8.8 0 01-1.132 0l-4.8-4.8a.8.8 0 111.132-1.132L7.2 11.67V2.4a.8.8 0 111.6 0v9.269l3.434-3.435a.8.8 0 011.132 0z" clip-rule="evenodd" /></svg>
-                </div>
+        </>
+    );
 
-
-            </div>
-            {searchResult.rows.map(team => <TeamResultItem team={team} />)}
-        </div>
-    </>
-
-function TeamResultItem(props: { team: Team }) {
-    return (
-        <Link key={'pr-' + props.team.name} to={'/admin/teams/' + props.team.id} data-analytics='{"button_type":"sidebar_menu"}'>
-            <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
-                <div className="flex flex-col w-7/12 truncate">
-                    <div className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-sm">{props.team.name}
-                    {props.team.markedDeleted && <Label text='Deleted' color="red"/>}
+    function TeamResultItem(props: { team: Team }) {
+        return (
+            <Link
+                key={'pr-' + props.team.name}
+                to={'/admin/teams/' + props.team.id}
+                data-analytics='{"button_type":"sidebar_menu"}'
+            >
+                <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+                    <div className="flex flex-col w-7/12 truncate">
+                        <div className="font-medium text-gray-800 dark:text-gray-100 truncate max-w-sm">
+                            {props.team.name}
+                            {props.team.markedDeleted && <Label text="Deleted" color="red" />}
+                        </div>
+                    </div>
+                    <div className="flex w-5/12 self-center">
+                        <div className="text-sm w-full text-gray-400 truncate">
+                            {moment(props.team.creationTime).format('MMM D, YYYY')}
+                        </div>
                     </div>
                 </div>
-                <div className="flex w-5/12 self-center">
-                    <div className="text-sm w-full text-gray-400 truncate">{moment(props.team.creationTime).format('MMM D, YYYY')}</div>
-                </div>
-            </div>
-        </Link>
-    )
-}
+            </Link>
+        );
+    }
 }

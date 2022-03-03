@@ -4,10 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { HostContext } from "./host-context";
-import { AuthProviderParams } from "./auth-provider";
+import { HostContext } from './host-context';
+import { AuthProviderParams } from './auth-provider';
 
-export const HostContextProvider = Symbol("HostContextProvider");
+export const HostContextProvider = Symbol('HostContextProvider');
 
 export interface HostContextProvider {
     init(): Promise<void>;
@@ -16,8 +16,7 @@ export interface HostContextProvider {
     findByAuthProviderId(authProviderId: string): HostContext | undefined;
 }
 
-
-export const HostContextProviderFactory = Symbol("HostContextProviderFactory");
+export const HostContextProviderFactory = Symbol('HostContextProviderFactory');
 
 export interface HostContextProviderFactory {
     createHostContext: (config: AuthProviderParams) => HostContext | undefined;

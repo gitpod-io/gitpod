@@ -4,18 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { connect, Channel, Connection, Options, ConfirmChannel, Message } from "amqplib";
+import { connect, Channel, Connection, Options, ConfirmChannel, Message } from 'amqplib';
 import { injectable, inject } from 'inversify';
-import { Disposable } from "@gitpod/gitpod-protocol";
+import { Disposable } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { MessagebusConfiguration } from "./config";
+import { MessagebusConfiguration } from './config';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { globalTracer, FORMAT_HTTP_HEADERS, childOf } from "opentracing";
+import { globalTracer, FORMAT_HTTP_HEADERS, childOf } from 'opentracing';
 import { CancellationToken } from 'vscode-jsonrpc/lib/cancellation';
 
-export type WorkspaceSubtopic = "updates" | "log" | "credit" | "headless-log" | "ports";
+export type WorkspaceSubtopic = 'updates' | 'log' | 'credit' | 'headless-log' | 'ports';
 
-export const MessageBusHelper = Symbol("MessageBusHelper");
+export const MessageBusHelper = Symbol('MessageBusHelper');
 export interface MessageBusHelper {
     /**
      * The name of the gitpod workspace exchange
@@ -34,7 +34,11 @@ export interface MessageBusHelper {
      * @param wsid an ID of a specific workspace we want to listen to, or none if we want to listen to all workspaces
      * @param subtopic a specific area of interest one might want to listen to
      */
-    getWsTopicForListening(userId: string | undefined, wsid: string | undefined, subtopic: WorkspaceSubtopic | undefined): string;
+    getWsTopicForListening(
+        userId: string | undefined,
+        wsid: string | undefined,
+        subtopic: WorkspaceSubtopic | undefined,
+    ): string;
 
     /**
      * Parses the userId from a workspace topic
@@ -59,20 +63,20 @@ export interface MessageBusHelper {
     getWsInformationFromTopic(topic: string): WorkspaceTopic | undefined;
 }
 
-export const WorkspaceTopic = Symbol("WorkspaceTopic");
+export const WorkspaceTopic = Symbol('WorkspaceTopic');
 export interface WorkspaceTopic {
-    userid: string,
-    wsid: string,
-    subtopic: string
+    userid: string;
+    wsid: string;
+    subtopic: string;
 }
 export interface WorkspaceInstanceTopic {
-    userid: string,
-    wsid: string,
-    instanceid: string,
-    subtopic: string
+    userid: string;
+    wsid: string;
+    instanceid: string;
+    subtopic: string;
 }
 
-const ASTERISK = "*";
+const ASTERISK = '*';
 
 @injectable()
 export class MessageBusHelperImpl implements MessageBusHelper {
@@ -82,7 +86,7 @@ export class MessageBusHelperImpl implements MessageBusHelper {
      * Ensures that the gitpod workspace exchange is present
      */
     async assertWorkspaceExchange(ch: Channel): Promise<void> {
-        await ch.assertExchange(this.workspaceExchange, 'topic', { 'durable': true });
+        await ch.assertExchange(this.workspaceExchange, 'topic', { durable: true });
     }
 
     /**
@@ -92,15 +96,19 @@ export class MessageBusHelperImpl implements MessageBusHelper {
      * @param wsid the ID of the workspace we want ot listen to
      * @param subtopic a specific area of interest one might want to listen to
      */
-    getWsTopicForListening(userid: string | undefined, wsid: string | undefined, subtopic: WorkspaceSubtopic | undefined): string {
-        return this.getWsTopicBase(userid, wsid) + `.${subtopic || "#"}`;
+    getWsTopicForListening(
+        userid: string | undefined,
+        wsid: string | undefined,
+        subtopic: WorkspaceSubtopic | undefined,
+    ): string {
+        return this.getWsTopicBase(userid, wsid) + `.${subtopic || '#'}`;
     }
 
     parseWsTopicBase(topic: string | undefined): { userId: string | undefined } {
         if (!topic) {
             return { userId: undefined };
         }
-        const parts = topic.split(".");
+        const parts = topic.split('.');
         if (parts.length < 1) {
             return { userId: undefined };
         }
@@ -142,23 +150,22 @@ export class MessageBusHelperImpl implements MessageBusHelper {
         return {
             userid: segments[0],
             wsid: segments[1],
-            subtopic: segments[2]
+            subtopic: segments[2],
         };
     }
 
     static async assertPrebuildWorkspaceUpdatableQueue(ch: Channel): Promise<void> {
         await ch.assertQueue(MessageBusHelperImpl.PREBUILD_UPDATABLE_QUEUE, {
             autoDelete: false,
-            durable: true
+            durable: true,
         });
     }
 }
 
 export namespace MessageBusHelperImpl {
-    export const WORKSPACE_EXCHANGE_LOCAL = "gitpod.ws.local";
-    export const PREBUILD_UPDATABLE_QUEUE = "pwsupdatable";
+    export const WORKSPACE_EXCHANGE_LOCAL = 'gitpod.ws.local';
+    export const PREBUILD_UPDATABLE_QUEUE = 'pwsupdatable';
 }
-
 
 export interface PublishMessageOptions {
     /**
@@ -167,12 +174,12 @@ export interface PublishMessageOptions {
      * ACK can take up to a few 100 milliseconds. See https://www.rabbitmq.com/confirms.html#when-publishes-are-confirmed
      * for more details.
      */
-    confirm?: boolean
+    confirm?: boolean;
 
     /**
      * Associate the message with a tracing span
      */
-    trace?: TraceContext
+    trace?: TraceContext;
 }
 
 /**
@@ -220,7 +227,11 @@ export abstract class AbstractMessageBusIntegration {
     /**
      * This method tries to establish a connection + channel multiple times. Throws an error if it fails.
      */
-    protected async doConnectWithRetries(retries: number, reconnectTimeoutInMs: number, connectTimeout: number): Promise<void> {
+    protected async doConnectWithRetries(
+        retries: number,
+        reconnectTimeoutInMs: number,
+        connectTimeout: number,
+    ): Promise<void> {
         for (var retry = 0; retry < retries; retry++) {
             try {
                 log.debug(`Try ${retry + 1}...`);
@@ -249,14 +260,14 @@ export abstract class AbstractMessageBusIntegration {
         if (!this.connection) {
             const connection = await connect(this.connectOptions, { timeout: connectTimeout });
 
-            connection.on("error", err => {
-                if (err.message !== "Connection closing") {
+            connection.on('error', (err) => {
+                if (err.message !== 'Connection closing') {
                     log.error('AMQP connection error', err);
                     this.doCloseConnection();
                     this.scheduleReconnect(reconnectTimeoutInMs);
                 }
             });
-            connection.on("close", () => {
+            connection.on('close', () => {
                 log.info('AMQP connection closed. Reconnecting...');
                 this.doCloseConnection();
                 this.scheduleReconnect(reconnectTimeoutInMs);
@@ -278,7 +289,7 @@ export abstract class AbstractMessageBusIntegration {
             });
 
             // Reestablish previous listeners
-            await Promise.all(this.listeners.map(l => l.establish(channel)));
+            await Promise.all(this.listeners.map((l) => l.establish(channel)));
             this.channel = channel;
 
             // Send signal
@@ -291,32 +302,32 @@ export abstract class AbstractMessageBusIntegration {
      */
     protected scheduleReconnect(reconnectTimeoutInMs: number) {
         if (this.reconnectTimer !== undefined) {
-            log.debug("Someone is already reconnecting. Drop this request.");
+            log.debug('Someone is already reconnecting. Drop this request.');
             return;
         }
 
         // reconnectTimout + [0..10)% , but MAX_RECONNECT_TIMEOUT_MILLIS max
-        const timeout = Math.min(reconnectTimeoutInMs + Math.floor(Math.random() * reconnectTimeoutInMs / 10), AbstractMessageBusIntegration.MAX_RECONNECT_TIMEOUT_MILLIS);
+        const timeout = Math.min(
+            reconnectTimeoutInMs + Math.floor((Math.random() * reconnectTimeoutInMs) / 10),
+            AbstractMessageBusIntegration.MAX_RECONNECT_TIMEOUT_MILLIS,
+        );
 
         this.reconnectTimer = setTimeout(() => {
             this.reconnectTimer = undefined;
-            this.connect()
-                .catch((err) => {
-                    log.debug('Error during reconnect. Retrying...');
-                    this.scheduleReconnect(reconnectTimeoutInMs * 1.1); // Slightly increase with each recursion
-                })
+            this.connect().catch((err) => {
+                log.debug('Error during reconnect. Retrying...');
+                this.scheduleReconnect(reconnectTimeoutInMs * 1.1); // Slightly increase with each recursion
+            });
         }, timeout);
     }
 
     protected doCloseConnection() {
         if (this.channel !== undefined) {
-            this.channel.close()
-                .catch((err) => { });
+            this.channel.close().catch((err) => {});
             this.channel = undefined;
         }
         if (this.connection != undefined) {
-            this.connection.close()
-                .catch((err) => { });
+            this.connection.close().catch((err) => {});
             this.connection = undefined;
         }
     }
@@ -333,19 +344,24 @@ export abstract class AbstractMessageBusIntegration {
         return this.channel !== undefined;
     }
 
-    protected async publish(exchange: string, routingKey: string, content: Buffer, options: (Options.Publish & PublishMessageOptions) | undefined = undefined): Promise<Boolean> {
+    protected async publish(
+        exchange: string,
+        routingKey: string,
+        content: Buffer,
+        options: (Options.Publish & PublishMessageOptions) | undefined = undefined,
+    ): Promise<Boolean> {
         const channel = this.channel;
         if (channel == undefined) {
-            throw new Error("Not connected to messagebus");
+            throw new Error('Not connected to messagebus');
         }
 
         /* This function has two different modes of operation:
-        *   1. confirmationMode: we resolve the promise once the message broker has acknowledged the message
-        *   2. !confirmationMode (default): we resolve the promise once the message was written to the socket
-        */
+         *   1. confirmationMode: we resolve the promise once the message broker has acknowledged the message
+         *   2. !confirmationMode (default): we resolve the promise once the message was written to the socket
+         */
         const confirmationMode = options && options.confirm;
 
-        let headers = {}
+        let headers = {};
         if (options && options.trace && options.trace.span) {
             globalTracer().inject(options.trace.span, FORMAT_HTTP_HEADERS, headers);
         }
@@ -353,7 +369,7 @@ export abstract class AbstractMessageBusIntegration {
         msgOptions.headers = headers;
 
         return new Promise<Boolean>((resolve, reject) => {
-            const result = channel.publish(exchange, routingKey, content, msgOptions, ((error, ok) => {
+            const result = channel.publish(exchange, routingKey, content, msgOptions, (error, ok) => {
                 if (error) {
                     log.error('Error while sending message', { routingKey, error });
 
@@ -365,7 +381,7 @@ export abstract class AbstractMessageBusIntegration {
                         resolve(true);
                     }
                 }
-            }));
+            });
 
             if (!confirmationMode) {
                 // do not wait for the broker ACK but resolve once we've written the message to the socket
@@ -376,13 +392,17 @@ export abstract class AbstractMessageBusIntegration {
 
     /* Callers beware: it is your responsibility to ensure the queue you're publishing to actually exists
      */
-    protected async publishToQueue(queue: string, content: Buffer, options: (Options.Publish & PublishMessageOptions) | undefined = undefined) {
+    protected async publishToQueue(
+        queue: string,
+        content: Buffer,
+        options: (Options.Publish & PublishMessageOptions) | undefined = undefined,
+    ) {
         const channel = this.channel;
         if (channel == undefined) {
-            throw new Error("Not connected to messagebus");
+            throw new Error('Not connected to messagebus');
         }
 
-        let headers = {}
+        let headers = {};
         if (options && options.trace && options.trace.span) {
             globalTracer().inject(options.trace.span, FORMAT_HTTP_HEADERS, headers);
         }
@@ -390,14 +410,13 @@ export abstract class AbstractMessageBusIntegration {
         msgOptions.headers = headers;
 
         await new Promise(async (resolve, reject) => {
-            channel.sendToQueue(queue, content, msgOptions,
-                (err, ok) => {
-                    if (!!err) {
-                        reject(err);
-                    } else {
-                        resolve(ok);
-                    }
-                });
+            channel.sendToQueue(queue, content, msgOptions, (err, ok) => {
+                if (!!err) {
+                    reject(err);
+                } else {
+                    resolve(ok);
+                }
+            });
         });
     }
 
@@ -412,7 +431,7 @@ export abstract class AbstractMessageBusIntegration {
         }
         if (token.isCancellationRequested) {
             listener.dispose();
-            return
+            return;
         }
         this.listeners.push(listener);
         token.onCancellationRequested(() => {
@@ -423,7 +442,7 @@ export abstract class AbstractMessageBusIntegration {
             }
 
             listener.dispose();
-        })
+        });
     }
 
     protected get connectOptions() {
@@ -434,7 +453,7 @@ export abstract class AbstractMessageBusIntegration {
         const tlsOpts = {
             cert: this.config.amqpCert!,
             key: this.config.amqpKey,
-            ca: [this.config.amqpCa]
+            ca: [this.config.amqpCa],
             // The typings do not include the TLS options mentioned in the docs
             // (http://www.squaremobius.net/amqp.node/ssl.html), so we need to satisfy the compiler here
         } as Options.Connect;
@@ -444,27 +463,26 @@ export abstract class AbstractMessageBusIntegration {
             port: Number.parseInt(this.config.amqpPort),
             username: this.config.amqpUsername,
             password: this.config.amqpPassword,
-            ...tlsOpts
+            ...tlsOpts,
         };
     }
 }
 
 export interface TopicListener<T> {
-    (ctx: TraceContext, data: T): void
+    (ctx: TraceContext, data: T): void;
 }
 interface InternalTopicListener<T> extends TopicListener<T> {
-    (ctx: TraceContext, data: T, routingKey: string): void
+    (ctx: TraceContext, data: T, routingKey: string): void;
 }
 export interface MessagebusListener extends Disposable {
     establish(channel: Channel): Promise<void>;
-
 }
 export abstract class AbstractTopicListener<T> implements MessagebusListener {
     protected channel?: Channel;
     protected consumerTag?: string;
     protected queueName?: string;
 
-    constructor(protected readonly exchangeName: string, protected readonly listener: InternalTopicListener<T>) { }
+    constructor(protected readonly exchangeName: string, protected readonly listener: InternalTopicListener<T>) {}
 
     async establish(channel: Channel): Promise<void> {
         const topic = this.topic();
@@ -475,7 +493,7 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
 
     protected async doEstablish(channel: Channel, topic: string): Promise<void> {
         if (channel === undefined) {
-            throw new Error("Not connected to message bus");
+            throw new Error('Not connected to message bus');
         }
         this.channel = channel;
 
@@ -488,9 +506,13 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
         /* Receive messages. The promise we're waiting for here resolves once we're registered at the broker.
          * It does NOT wait until we have received a message.
          */
-        const consumer = await this.channel.consume(this.queueName, message => {
-            this.handleMessage(message);
-        }, { noAck: false });
+        const consumer = await this.channel.consume(
+            this.queueName,
+            (message) => {
+                this.handleMessage(message);
+            },
+            { noAck: false },
+        );
         this.consumerTag = consumer.consumerTag;
 
         log.debug(`Established listener on ${topic}`);
@@ -513,7 +535,9 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
 
         if (msg) {
             const spanCtx = globalTracer().extract(FORMAT_HTTP_HEADERS, message.properties.headers);
-            const span = !!spanCtx ? globalTracer().startSpan(`/messagebus/${this.exchangeName}`, { references: [childOf(spanCtx!)] }) : undefined;
+            const span = !!spanCtx
+                ? globalTracer().startSpan(`/messagebus/${this.exchangeName}`, { references: [childOf(spanCtx!)] })
+                : undefined;
 
             try {
                 this.listener({ span }, msg, message.fields.routingKey);

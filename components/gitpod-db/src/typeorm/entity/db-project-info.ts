@@ -4,15 +4,14 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Entity, Column, PrimaryColumn } from "typeorm";
-import { Project } from "@gitpod/gitpod-protocol";
+import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Project } from '@gitpod/gitpod-protocol';
 
-import { TypeORM } from "../../typeorm/typeorm";
+import { TypeORM } from '../../typeorm/typeorm';
 
 @Entity()
 // on DB but not Typeorm: @Index("ind_dbsync", ["_lastModified"])   // DBSync
 export class DBProjectInfo {
-
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     projectId: string;
 
@@ -29,11 +28,10 @@ export class DBProjectInfo {
                         if (Project.Overview.is(obj)) {
                             return obj;
                         }
-                    } catch (error) {
-                    }
-                }
+                    } catch (error) {}
+                },
             };
-        })()
+        })(),
     })
     overview: Project.Overview;
 

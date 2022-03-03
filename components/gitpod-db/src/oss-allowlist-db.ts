@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export const OssAllowListDB = Symbol("OssAllowListDB");
+export const OssAllowListDB = Symbol('OssAllowListDB');
 
 export interface OssAllowListDB {
     delete(identity: string): Promise<void>;
-    hasAny(identities: string[]): Promise<boolean>
+    hasAny(identities: string[]): Promise<boolean>;
 }

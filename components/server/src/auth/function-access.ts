@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable } from "inversify";
+import { injectable } from 'inversify';
 
 export interface FunctionAccessGuard {
     canAccess(name: string): boolean;
@@ -25,9 +25,9 @@ export class AllAccessFunctionGuard {
 }
 
 export class ExplicitFunctionAccessGuard {
-    constructor(protected readonly allowedCalls: string[]) { }
+    constructor(protected readonly allowedCalls: string[]) {}
 
     canAccess(name: string): boolean {
-        return this.allowedCalls.some(c => c === name);
+        return this.allowedCalls.some((c) => c === name);
     }
 }

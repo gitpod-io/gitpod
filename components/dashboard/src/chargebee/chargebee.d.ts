@@ -5,7 +5,6 @@
  */
 
 declare module 'chargebee' {
-
     export interface Client {
         init(options: object): Client;
         openCheckout(callbacks: CheckoutCallbacks);
@@ -22,9 +21,7 @@ declare module 'chargebee' {
         close?: () => void;
     }
 
-    export interface OpenCheckoutParams {
-
-}
+    export interface OpenCheckoutParams {}
 
     export interface Portal {
         open(callbacks: object);

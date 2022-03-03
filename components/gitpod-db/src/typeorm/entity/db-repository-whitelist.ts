@@ -4,8 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
-import { PrimaryColumn, Entity, Column } from "typeorm";
+import { PrimaryColumn, Entity, Column } from 'typeorm';
 
 @Entity()
 export class DBRepositoryWhiteList {
@@ -13,18 +12,17 @@ export class DBRepositoryWhiteList {
 
     @PrimaryColumn({
         type: 'char',
-        length: 128
+        length: 128,
     })
     url: string;
 
     @Column({
-        type: 'text'
+        type: 'text',
     })
     description?: string;
 
     @Column({
-        default: 10
+        default: 10,
     })
     priority?: number;
-
 }

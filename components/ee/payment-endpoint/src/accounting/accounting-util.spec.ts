@@ -25,8 +25,8 @@ const s6 = { startDate: d1, endDate: undefined } as Subscription;
 const s7 = { startDate: '2018-11-20T15:25:48.000Z', endDate: '2018-11-27T15:25:48.000Z' } as Subscription;
 const s8 = { startDate: '2018-11-27T15:25:48.000Z', endDate: undefined } as Subscription;
 
-@suite class AccountingUtilSpec {
-
+@suite
+class AccountingUtilSpec {
     @test test_orderByEndDateDescThenStartDateDesc_overlap() {
         expect([s1, s2].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s2, s1]);
         expect([s2, s1].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s2, s1]);
@@ -81,7 +81,6 @@ const s8 = { startDate: '2018-11-27T15:25:48.000Z', endDate: undefined } as Subs
         expect([s1, s5].sort(orderByStartDateAscEndDateAsc)).to.deep.equal([s1, s5]);
         expect([s5, s1].sort(orderByStartDateAscEndDateAsc)).to.deep.equal([s1, s5]);
     }
-
 
     @test test_orderByStartDateAscEndDateAsc_OpenEndDate3() {
         expect([s2, s6].sort(orderByStartDateAscEndDateAsc)).to.deep.equal([s6, s2]);

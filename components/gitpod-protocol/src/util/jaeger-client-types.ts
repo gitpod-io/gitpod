@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { opentracing } from "jaeger-client";
+import { opentracing } from 'jaeger-client';
 
 // Type definitions for jaeger-client which are not exported by @types/jaeger-client
 // Project: https://github.com/uber/jaeger-client-node
@@ -93,10 +93,10 @@ export interface SamplingDecision {
 
 // added by TypeFox
 export interface Sampler {
-    name(): string
+    name(): string;
     isSampled(operation: string, tags: any): boolean;
     onCreateSpan(span: opentracing.Span): SamplingDecision;
     onSetOperationName(span: opentracing.Span, operationName: string): SamplingDecision;
     onSetTag(span: opentracing.Span, key: string, value: any): SamplingDecision;
-    close(callback: () => void): void
+    close(callback: () => void): void;
 }

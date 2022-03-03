@@ -4,11 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceContext, User } from "@gitpod/gitpod-protocol";
-import { injectable, multiInject, inject } from "inversify";
-import { HostContextProvider } from "../auth/host-context-provider";
-import { IPrefixContextParser, IContextParser } from "./context-parser";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { WorkspaceContext, User } from '@gitpod/gitpod-protocol';
+import { injectable, multiInject, inject } from 'inversify';
+import { HostContextProvider } from '../auth/host-context-provider';
+import { IPrefixContextParser, IContextParser } from './context-parser';
+import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 
 @injectable()
 export class ContextParser {
@@ -18,7 +18,10 @@ export class ContextParser {
 
     protected get allContextParsers(): IContextParser[] {
         const result = [...this.contextParsers];
-        const hostContextParsers = this.hostContextProvider.getAll().filter(host => !!host.contextParser).map(host => host.contextParser!);
+        const hostContextParsers = this.hostContextProvider
+            .getAll()
+            .filter((host) => !!host.contextParser)
+            .map((host) => host.contextParser!);
         result.push(...hostContextParsers);
         return result;
     }
@@ -34,8 +37,8 @@ export class ContextParser {
     }
 
     public async handle(ctx: TraceContext, user: User, contextURL: string): Promise<WorkspaceContext> {
-        const span = TraceContext.startSpan("ContextParser.handle", ctx);
-        span.setTag("contextURL", contextURL);
+        const span = TraceContext.startSpan('ContextParser.handle', ctx);
+        span.setTag('contextURL', contextURL);
 
         let result: WorkspaceContext | undefined;
         try {
@@ -61,7 +64,7 @@ export class ContextParser {
                 result = await prefixResult.parser.handle(user, prefixResult.prefix, result);
             }
         } catch (e) {
-            span.logEvent("error", e);
+            span.logEvent('error', e);
             throw e;
         } finally {
             span.finish();
@@ -70,7 +73,7 @@ export class ContextParser {
         return result;
     }
 
-    protected findPrefix(user: User, context: string): { prefix: string, parser: IPrefixContextParser } | undefined {
+    protected findPrefix(user: User, context: string): { prefix: string; parser: IPrefixContextParser } | undefined {
         for (const parser of this.prefixParser) {
             const prefix = parser.findPrefix(user, context);
             if (prefix) {
@@ -78,5 +81,4 @@ export class ContextParser {
             }
         }
     }
-
 }

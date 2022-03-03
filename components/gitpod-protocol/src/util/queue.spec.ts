@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { suite, test, slow, timeout } from 'mocha-typescript'
-import * as chai from 'chai'
+import { suite, test, slow, timeout } from 'mocha-typescript';
+import * as chai from 'chai';
 const chaiSubset = require('chai-subset');
 chai.use(chaiSubset);
 
@@ -13,10 +13,10 @@ import { Queue } from '..';
 import { fail } from 'assert';
 import { Deferred } from './deferred';
 
-const expect = chai.expect
+const expect = chai.expect;
 
-@suite class QueueSpec {
-
+@suite
+class QueueSpec {
     queue: Queue;
     seq: number[];
 
@@ -35,8 +35,7 @@ const expect = chai.expect
                             resolve(undefined);
                         }, sleep);
                     });
-                else
-                    this.seq.push(seqNr);
+                else this.seq.push(seqNr);
             };
 
             if (nextTick)
@@ -45,20 +44,22 @@ const expect = chai.expect
                         push().then(resolve);
                     });
                 });
-            else
-                await push();
+            else await push();
         });
     }
     execError(seqNr: number): Deferred<boolean> {
         const deferred = new Deferred<boolean>();
-        this.queue.enqueue(async () => {
-            this.seq.push(seqNr);
-            throw new Error('test error');
-        }).then(() => {
-            deferred.reject(false);
-        }).catch(() => {
-            deferred.resolve(true);
-        });
+        this.queue
+            .enqueue(async () => {
+                this.seq.push(seqNr);
+                throw new Error('test error');
+            })
+            .then(() => {
+                deferred.reject(false);
+            })
+            .catch(() => {
+                deferred.resolve(true);
+            });
 
         return deferred;
     }
@@ -67,7 +68,9 @@ const expect = chai.expect
         expect(actual).to.have.lengthOf(expected.length);
         const expIt = expected.entries();
         for (const act of actual) {
-            const { value: [, exp] } = expIt.next();
+            const {
+                value: [, exp],
+            } = expIt.next();
             expect(act).to.deep.equal(exp);
         }
     }
@@ -93,7 +96,6 @@ const expect = chai.expect
         this.expectArray(this.seq, [1, 2]);
     }
 
-
     @test public async continueDespiteError() {
         this.exec(1);
         const receivedError = this.execError(2);
@@ -107,7 +109,7 @@ const expect = chai.expect
     @test public async mustCatchError() {
         const f = async () => {
             throw new Error();
-        }
+        };
         try {
             const p = this.queue.enqueue(async () => {
                 return f();
@@ -117,19 +119,19 @@ const expect = chai.expect
                 // Silence unhandled promise rejection messages
             });
         } catch (err) {
-            fail("We expect to catch no error");
+            fail('We expect to catch no error');
         }
     }
 
     @test public async expectUncaughtError() {
         const f = async () => {
             throw new Error();
-        }
+        };
         const p = this.queue.enqueue(async () => {
             return f();
         });
         p.then((r) => {
-            fail("Expected to catch error!");
+            fail('Expected to catch error!');
         }).catch((err) => {
             // Silence unhandled promise rejection messages
         });

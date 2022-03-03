@@ -4,26 +4,37 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, ContextURL, GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { UnauthorizedError } from "../errors";
-import { HostContextProvider } from "./host-context-provider";
+import {
+    CommitContext,
+    ContextURL,
+    GitpodToken,
+    Snapshot,
+    Team,
+    TeamMemberInfo,
+    Token,
+    User,
+    UserEnvVar,
+    Workspace,
+    WorkspaceInstance,
+} from '@gitpod/gitpod-protocol';
+import { UnauthorizedError } from '../errors';
+import { HostContextProvider } from './host-context-provider';
 
 declare var resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
 
 export type GuardedResource =
-    GuardedWorkspace |
-    GuardedWorkspaceInstance |
-    GuardedUser |
-    GuardedSnapshot |
-    GuardedGitpodToken |
-    GuardedToken |
-    GuardedUserStorage |
-    GuardedContentBlob |
-    GuardEnvVar |
-    GuardedTeam |
-    GuardedWorkspaceLog
-    ;
+    | GuardedWorkspace
+    | GuardedWorkspaceInstance
+    | GuardedUser
+    | GuardedSnapshot
+    | GuardedGitpodToken
+    | GuardedToken
+    | GuardedUserStorage
+    | GuardedContentBlob
+    | GuardEnvVar
+    | GuardedTeam
+    | GuardedWorkspaceLog;
 
 const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
     'workspace',
@@ -36,84 +47,79 @@ const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
     'contentBlob',
     'envVar',
     'team',
-    'workspaceLog'
+    'workspaceLog',
 ]);
 export function isGuardedResourceKind(kind: any): kind is GuardedResourceKind {
     return typeof kind === 'string' && ALL_GUARDED_RESOURCE_KINDS.has(kind as GuardedResourceKind);
 }
 
 export interface GuardedWorkspace {
-    kind: "workspace";
+    kind: 'workspace';
     subject: Workspace;
     teamMembers?: TeamMemberInfo[];
 }
 
 export interface GuardedWorkspaceInstance {
-    kind: "workspaceInstance";
+    kind: 'workspaceInstance';
     subject: WorkspaceInstance | undefined;
     workspace: Workspace;
     teamMembers?: TeamMemberInfo[];
 }
 
 export interface GuardedUser {
-    kind: "user";
+    kind: 'user';
     subject: User;
 }
 
 export interface GuardedSnapshot {
-    kind: "snapshot";
+    kind: 'snapshot';
     subject?: Snapshot;
     workspace: Workspace;
 }
 
 export interface GuardedUserStorage {
-    kind: "userStorage";
+    kind: 'userStorage';
     userID: string;
     uri: string;
 }
 
 export interface GuardedContentBlob {
-    kind: "contentBlob";
+    kind: 'contentBlob';
     userID: string;
     name: string;
 }
 
 export interface GuardEnvVar {
-    kind: "envVar";
+    kind: 'envVar';
     subject: UserEnvVar;
 }
 
 export interface GuardedTeam {
-    kind: "team";
+    kind: 'team';
     subject: Team;
     members: TeamMemberInfo[];
 }
 
 export interface GuardedGitpodToken {
-    kind: "gitpodToken";
+    kind: 'gitpodToken';
     subject: GitpodToken;
 }
 
 export interface GuardedToken {
-    kind: "token";
+    kind: 'token';
     subject: Token;
     tokenOwnerID: string;
 }
 
 export interface GuardedWorkspaceLog {
-    kind: "workspaceLog";
+    kind: 'workspaceLog';
     subject: Workspace;
     teamMembers?: TeamMemberInfo[];
 }
 
-export type ResourceAccessOp =
-    "create" |
-    "update" |
-    "get" |
-    "delete"
-    ;
+export type ResourceAccessOp = 'create' | 'update' | 'get' | 'delete';
 
-export const ResourceAccessGuard = Symbol("ResourceAccessGuard");
+export const ResourceAccessGuard = Symbol('ResourceAccessGuard');
 
 export interface ResourceAccessGuard {
     canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean>;
@@ -127,27 +133,24 @@ export interface WithResourceAccessGuard {
  * CompositeResourceAccessGuard grants access to resources if at least one of its children does.
  */
 export class CompositeResourceAccessGuard implements ResourceAccessGuard {
-
-    constructor(protected readonly children: ResourceAccessGuard[]) { }
+    constructor(protected readonly children: ResourceAccessGuard[]) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         // if a single guard permitts access, we're good to go
-        return (await Promise.all(this.children.map(c => c.canAccess(resource, operation)))).some(x => x);
+        return (await Promise.all(this.children.map((c) => c.canAccess(resource, operation)))).some((x) => x);
     }
-
 }
 
 export class TeamMemberResourceGuard implements ResourceAccessGuard {
-
-    constructor(readonly userId: string) { }
+    constructor(readonly userId: string) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         switch (resource.kind) {
-            case "workspace":
+            case 'workspace':
                 return await this.hasAccessToWorkspace(resource.subject, resource.teamMembers);
-            case "workspaceInstance":
+            case 'workspaceInstance':
                 return await this.hasAccessToWorkspace(resource.workspace, resource.teamMembers);
-            case "workspaceLog":
+            case 'workspaceLog':
                 return await this.hasAccessToWorkspace(resource.subject, resource.teamMembers);
         }
         return false;
@@ -156,7 +159,7 @@ export class TeamMemberResourceGuard implements ResourceAccessGuard {
     protected async hasAccessToWorkspace(workspace: Workspace, teamMembers?: TeamMemberInfo[]): Promise<boolean> {
         // prebuilds are accessible by team members.
         if (workspace.type === 'prebuild' && !!teamMembers) {
-            return teamMembers.some(m => m.userId === this.userId);
+            return teamMembers.some((m) => m.userId === this.userId);
         }
         return false;
     }
@@ -167,57 +170,54 @@ export class TeamMemberResourceGuard implements ResourceAccessGuard {
  * resource.
  */
 export class OwnerResourceGuard implements ResourceAccessGuard {
-
-    constructor(readonly userId: string) { }
+    constructor(readonly userId: string) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         switch (resource.kind) {
-            case "contentBlob":
+            case 'contentBlob':
                 return resource.userID === this.userId;
-            case "gitpodToken":
+            case 'gitpodToken':
                 return resource.subject.user.id === this.userId;
-            case "snapshot":
+            case 'snapshot':
                 return resource.workspace.ownerId === this.userId;
-            case "token":
+            case 'token':
                 return resource.tokenOwnerID === this.userId;
-            case "user":
+            case 'user':
                 return resource.subject.id === this.userId;
-            case "userStorage":
+            case 'userStorage':
                 return resource.userID === this.userId;
-            case "workspace":
+            case 'workspace':
                 return resource.subject.ownerId === this.userId;
-            case "workspaceInstance":
+            case 'workspaceInstance':
                 return resource.workspace.ownerId === this.userId;
-            case "envVar":
+            case 'envVar':
                 return resource.subject.userId === this.userId;
-            case "team":
+            case 'team':
                 switch (operation) {
-                    case "create":
+                    case 'create':
                         // Anyone can create a new team.
                         return true;
-                    case "get":
+                    case 'get':
                         // Only members can get infos about a team.
-                        return resource.members.some(m => m.userId === this.userId);
-                    case "update":
-                    case "delete":
+                        return resource.members.some((m) => m.userId === this.userId);
+                    case 'update':
+                    case 'delete':
                         // Only owners can update or delete a team.
-                        return resource.members.some(m => m.userId === this.userId && m.role === "owner");
+                        return resource.members.some((m) => m.userId === this.userId && m.role === 'owner');
                 }
-                case "workspaceLog":
-                    return resource.subject.ownerId === this.userId;
+            case 'workspaceLog':
+                return resource.subject.ownerId === this.userId;
         }
     }
-
 }
 
 export class SharedWorkspaceAccessGuard implements ResourceAccessGuard {
-
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         switch (resource.kind) {
-            case "workspace":
-                return operation == "get" && resource.subject.shareable === true;
-            case "workspaceInstance":
-                return operation == "get" && !!resource.workspace.shareable;
+            case 'workspace':
+                return operation == 'get' && resource.subject.shareable === true;
+            case 'workspaceInstance':
+                return operation == 'get' && !!resource.workspace.shareable;
             default:
                 return false;
         }
@@ -253,11 +253,9 @@ export class ScopedResourceGuard<K extends GuardedResourceKind = GuardedResource
     protected pushScope(scope: ScopedResourceGuard.ResourceScope<K>): void {
         this.scopes.set(`${scope.kind}::${scope.subjectID}`, new Set(scope.operations));
     }
-
 }
 
 export class WorkspaceEnvVarAccessGuard extends ScopedResourceGuard<'envVar'> {
-
     private readAccessWildcardPatterns: Set<string> | undefined;
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
@@ -283,12 +281,10 @@ export class WorkspaceEnvVarAccessGuard extends ScopedResourceGuard<'envVar'> {
         this.readAccessWildcardPatterns.add(`${owner}/*`);
         this.readAccessWildcardPatterns.add(`*/${repo}`);
     }
-
 }
 
 export namespace ScopedResourceGuard {
-
-    export const SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX = 'ws-'
+    export const SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX = 'ws-';
 
     export interface ResourceScope<K extends GuardedResourceKind = GuardedResourceKind> {
         kind: K;
@@ -306,7 +302,7 @@ export namespace ScopedResourceGuard {
         if (child.subjectID !== parent.subjectID) {
             return false;
         }
-        if (child.operations.some(co => !parent.operations.includes(co))) {
+        if (child.operations.some((co) => !parent.operations.includes(co))) {
             return false;
         }
 
@@ -314,13 +310,13 @@ export namespace ScopedResourceGuard {
     }
 
     export function unmarshalResourceScope(scope: string): ResourceScope {
-        const segs = scope.split("::");
+        const segs = scope.split('::');
         if (segs.length != 3) {
-            throw new Error("invalid scope");
+            throw new Error('invalid scope');
         }
         const kind = segs[0];
         if (!isGuardedResourceKind(kind)) {
-            throw new Error("invalid resource kind");
+            throw new Error('invalid resource kind');
         }
         let subjectID = segs[1];
         if (kind === 'envVar') {
@@ -329,14 +325,14 @@ export namespace ScopedResourceGuard {
         return {
             kind,
             subjectID,
-            operations: segs[2].split("/").map(o => o.trim()) as ResourceAccessOp[],
+            operations: segs[2].split('/').map((o) => o.trim()) as ResourceAccessOp[],
         };
     }
 
     export function marshalResourceScopeFromResource(resource: GuardedResource, ops: ResourceAccessOp[]): string {
         const subjectID = ScopedResourceGuard.subjectID(resource);
         if (!subjectID) {
-            throw new Error("resource has no subject ID");
+            throw new Error('resource has no subject ID');
         }
 
         return marshalResourceScope({
@@ -347,34 +343,34 @@ export namespace ScopedResourceGuard {
     }
 
     export function marshalResourceScope(scope: ResourceScope): string {
-        return `${scope.kind}::${scope.subjectID}::${scope.operations.join("/")}`;
+        return `${scope.kind}::${scope.subjectID}::${scope.operations.join('/')}`;
     }
 
     export function subjectID(resource: GuardedResource): string | undefined {
         switch (resource.kind) {
-            case "contentBlob":
+            case 'contentBlob':
                 return `${resource.userID}:${resource.name}`;
-            case "gitpodToken":
+            case 'gitpodToken':
                 return resource.subject.tokenHash;
-            case "snapshot":
+            case 'snapshot':
                 if (resource.subject) {
                     return resource.subject.id;
                 }
                 return SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + resource.workspace.id;
-            case "token":
+            case 'token':
                 return resource.subject.value;
-            case "user":
+            case 'user':
                 return resource.subject.id;
-            case "userStorage":
+            case 'userStorage':
                 return `${resource.userID}:${resource.uri}`;
-            case "workspace":
+            case 'workspace':
                 return resource.subject.id;
-            case "workspaceInstance":
+            case 'workspaceInstance':
                 return resource.subject ? resource.subject.id : undefined;
-            case "envVar":
+            case 'envVar':
                 return resource.subject.repositoryPattern;
-            case "team":
-            case "workspaceLog":
+            case 'team':
+            case 'workspaceLog':
                 return resource.subject.id;
         }
     }
@@ -384,7 +380,7 @@ export class TokenResourceGuard implements ResourceAccessGuard {
     protected readonly delegate: ResourceAccessGuard;
 
     constructor(userID: string, protected readonly allTokenScopes: string[]) {
-        const hasDefaultResourceScope = allTokenScopes.some(s => s === TokenResourceGuard.DefaultResourceScope);
+        const hasDefaultResourceScope = allTokenScopes.some((s) => s === TokenResourceGuard.DefaultResourceScope);
         const ownerResourceGuard = new OwnerResourceGuard(userID);
 
         if (hasDefaultResourceScope) {
@@ -400,33 +396,32 @@ export class TokenResourceGuard implements ResourceAccessGuard {
                     otherScopes.push(scope);
                 }
             }
-            this.delegate = new ScopedResourceGuard(otherScopes, ownerResourceGuard)
+            this.delegate = new ScopedResourceGuard(otherScopes, ownerResourceGuard);
             if (envVarScopes.length) {
                 this.delegate = new CompositeResourceAccessGuard([
                     new WorkspaceEnvVarAccessGuard(envVarScopes, ownerResourceGuard),
-                    this.delegate
+                    this.delegate,
                 ]);
             }
         }
     }
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
-        if (resource.kind === "gitpodToken" && operation === "create") {
+        if (resource.kind === 'gitpodToken' && operation === 'create') {
             return TokenResourceGuard.areScopesSubsetOf(this.allTokenScopes, resource.subject.scopes);
         }
 
         return this.delegate.canAccess(resource, operation);
     }
-
 }
 
 export namespace TokenResourceGuard {
-
-    export const DefaultResourceScope = "resource:default";
+    export const DefaultResourceScope = 'resource:default';
 
     export function getResourceScopes(s: string[]): ScopedResourceGuard.ResourceScope[] {
-        return s.filter(s => s.startsWith("resource:") && s !== DefaultResourceScope)
-            .map(s => ScopedResourceGuard.unmarshalResourceScope(s.substring("resource:".length)));
+        return s
+            .filter((s) => s.startsWith('resource:') && s !== DefaultResourceScope)
+            .map((s) => ScopedResourceGuard.unmarshalResourceScope(s.substring('resource:'.length)));
     }
 
     export function areScopesSubsetOf(upperScopes: string[], lowerScopes: string[]) {
@@ -444,27 +439,26 @@ export namespace TokenResourceGuard {
         const upperResourceScopes = TokenResourceGuard.getResourceScopes(upperScopes);
         const lowerResourceScopes = TokenResourceGuard.getResourceScopes(lowerScopes);
 
-        const allNewScopesAllowed = lowerResourceScopes.every(lrs => upperResourceScopes.some(urs => ScopedResourceGuard.isAllowedUnder(urs, lrs)));
+        const allNewScopesAllowed = lowerResourceScopes.every((lrs) =>
+            upperResourceScopes.some((urs) => ScopedResourceGuard.isAllowedUnder(urs, lrs)),
+        );
         if (!allNewScopesAllowed) {
             return false;
         }
 
         const functionsAllowed = lowerScopes
-            .filter(s => s.startsWith("function:"))
-            .every(ns => upperScopes.includes(ns));
+            .filter((s) => s.startsWith('function:'))
+            .every((ns) => upperScopes.includes(ns));
         if (!functionsAllowed) {
             return false;
         }
 
         return true;
     }
-
 }
 
 export class RepositoryResourceGuard implements ResourceAccessGuard {
-    constructor(
-        protected readonly user: User,
-        protected readonly hostContextProvider: HostContextProvider) {}
+    constructor(protected readonly user: User, protected readonly hostContextProvider: HostContextProvider) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         if (resource.kind !== 'workspaceLog' && resource.kind !== 'snapshot') {
@@ -488,7 +482,11 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
         const { authProvider } = hostContext;
         const identity = User.getIdentity(this.user, authProvider.authProviderId);
         if (!identity) {
-            throw UnauthorizedError.create(contextURL.hostname, authProvider.info.requirements?.default || [], "missing-identity");
+            throw UnauthorizedError.create(
+                contextURL.hostname,
+                authProvider.info.requirements?.default || [],
+                'missing-identity',
+            );
         }
         const { services } = hostContext;
         if (!services) {

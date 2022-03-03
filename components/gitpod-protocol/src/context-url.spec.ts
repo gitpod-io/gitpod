@@ -10,44 +10,58 @@ import { Workspace } from '.';
 import { ContextURL } from './context-url';
 const expect = chai.expect;
 
-type WsContextUrl = Pick<Workspace, "context" | "contextURL">;
+type WsContextUrl = Pick<Workspace, 'context' | 'contextURL'>;
 
 @suite
 export class ContextUrlTest {
-
     @test public parseContextUrl_withEnvVar() {
-        const actual = ContextURL.getNormalizedURL({ contextURL: "passedin=test%20value/https://github.com/gitpod-io/gitpod-test-repo", context: {} } as WsContextUrl);
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
+        const actual = ContextURL.getNormalizedURL({
+            contextURL: 'passedin=test%20value/https://github.com/gitpod-io/gitpod-test-repo',
+            context: {},
+        } as WsContextUrl);
+        expect(actual?.host).to.equal('github.com');
+        expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo');
     }
 
     @test public parseContextUrl_withEnvVar_withoutSchema() {
-        const actual = ContextURL.getNormalizedURL({ contextURL: "passedin=test%20value/github.com/gitpod-io/gitpod-test-repo", context: {} } as WsContextUrl);
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
+        const actual = ContextURL.getNormalizedURL({
+            contextURL: 'passedin=test%20value/github.com/gitpod-io/gitpod-test-repo',
+            context: {},
+        } as WsContextUrl);
+        expect(actual?.host).to.equal('github.com');
+        expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo');
     }
 
     @test public parseContextUrl_withEnvVar_sshUrl() {
-        const actual = ContextURL.getNormalizedURL({ contextURL: "passedin=test%20value/git@github.com:gitpod-io/gitpod-test-repo.git", context: {} } as WsContextUrl);
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo.git");
+        const actual = ContextURL.getNormalizedURL({
+            contextURL: 'passedin=test%20value/git@github.com:gitpod-io/gitpod-test-repo.git',
+            context: {},
+        } as WsContextUrl);
+        expect(actual?.host).to.equal('github.com');
+        expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo.git');
     }
 
     @test public parseContextUrl_withPrebuild() {
-        const actual = ContextURL.getNormalizedURL({ contextURL: "prebuild/https://github.com/gitpod-io/gitpod-test-repo", context: {} } as WsContextUrl);
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
+        const actual = ContextURL.getNormalizedURL({
+            contextURL: 'prebuild/https://github.com/gitpod-io/gitpod-test-repo',
+            context: {},
+        } as WsContextUrl);
+        expect(actual?.host).to.equal('github.com');
+        expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo');
     }
 
     @test public parseContextUrl_withPrebuild_withoutSchema() {
-        const actual = ContextURL.getNormalizedURL({ contextURL: "prebuild/github.com/gitpod-io/gitpod-test-repo", context: {} } as WsContextUrl);
-        expect(actual?.host).to.equal("github.com");
-        expect(actual?.pathname).to.equal("/gitpod-io/gitpod-test-repo");
+        const actual = ContextURL.getNormalizedURL({
+            contextURL: 'prebuild/github.com/gitpod-io/gitpod-test-repo',
+            context: {},
+        } as WsContextUrl);
+        expect(actual?.host).to.equal('github.com');
+        expect(actual?.pathname).to.equal('/gitpod-io/gitpod-test-repo');
     }
 
     @test public parseContextUrl_badUrl() {
-        const actual = ContextURL.getNormalizedURL({ contextURL: "[Object object]", context: {} } as WsContextUrl);
+        const actual = ContextURL.getNormalizedURL({ contextURL: '[Object object]', context: {} } as WsContextUrl);
         expect(actual).to.be.undefined;
     }
 }
-module.exports = new ContextUrlTest()
+module.exports = new ContextUrlTest();

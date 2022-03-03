@@ -18,7 +18,7 @@ export class Config {
             port: getEnvVarParsed('DB_PORT', Number.parseInt, '3306'),
             username: process.env.DB_USERNAME || 'gitpod',
             password: process.env.DB_PASSWORD || 'test',
-            database: process.env.DB_NAME || 'gitpod'
+            database: process.env.DB_NAME || 'gitpod',
         };
 
         log.info(`Using DB: ${dbSetup.host}:${dbSetup.port}/${dbSetup.database}`);
@@ -33,7 +33,7 @@ export class Config {
             port: dbConfig.port,
             user: dbConfig.username,
             password: dbConfig.password,
-            database: dbConfig.database
+            database: dbConfig.database,
         };
     }
 

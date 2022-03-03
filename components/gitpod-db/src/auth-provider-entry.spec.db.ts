@@ -13,9 +13,9 @@ import { DBAuthProviderEntry } from './typeorm/entity/db-auth-provider-entry';
 import { DeepPartial } from '@gitpod/gitpod-protocol/lib/util/deep-partial';
 const expect = chai.expect;
 
-@suite @timeout(5000)
+@suite
+@timeout(5000)
 export class AuthProviderEntryDBSpec {
-
     typeORM = testContainer.get<TypeORM>(TypeORM);
     db = testContainer.get<AuthProviderEntryDB>(AuthProviderEntryDB);
 
@@ -34,27 +34,27 @@ export class AuthProviderEntryDBSpec {
     }
 
     protected authProvider(ap: DeepPartial<DBAuthProviderEntry> = {}): DBAuthProviderEntry {
-        const ownerId = "1234";
-        const host = "github.com";
+        const ownerId = '1234';
+        const host = 'github.com';
         return {
-            id: "0049b9d2-005f-43c2-a0ae-76377805d8b8",
+            id: '0049b9d2-005f-43c2-a0ae-76377805d8b8',
             host,
             ownerId,
             status: 'verified',
-            type: "GitHub",
+            type: 'GitHub',
             oauthRevision: undefined,
             deleted: false,
             ...ap,
             oauth: {
-                callBackUrl: "example.org/some/callback",
-                authorizationUrl: "example.org/some/auth",
-                settingsUrl: "example.org/settings",
-                configURL: "example.org/config",
-                clientId: "clientId",
-                clientSecret: "clientSecret",
-                tokenUrl: "example.org/get/token",
-                scope: "scope",
-                scopeSeparator: ",",
+                callBackUrl: 'example.org/some/callback',
+                authorizationUrl: 'example.org/some/auth',
+                settingsUrl: 'example.org/settings',
+                configURL: 'example.org/config',
+                clientId: 'clientId',
+                clientSecret: 'clientSecret',
+                tokenUrl: 'example.org/get/token',
+                scope: 'scope',
+                scopeSeparator: ',',
                 ...ap.oauth,
                 authorizationParams: {},
             },
@@ -66,29 +66,31 @@ export class AuthProviderEntryDBSpec {
         await this.db.storeAuthProvider(ap, false);
 
         const aap = await this.db.findByHost(ap.host);
-        expect(aap, "AuthProvider").to.deep.equal(ap);
+        expect(aap, 'AuthProvider').to.deep.equal(ap);
     }
 
     @test public async findAll() {
-        const ap1 = this.authProvider({ id: "1", oauthRevision: "rev1" });
-        const ap2 = this.authProvider({ id: "2", oauthRevision: "rev2" });
+        const ap1 = this.authProvider({ id: '1', oauthRevision: 'rev1' });
+        const ap2 = this.authProvider({ id: '2', oauthRevision: 'rev2' });
         await this.db.storeAuthProvider(ap1, false);
         await this.db.storeAuthProvider(ap2, false);
 
         const all = await this.db.findAll();
-        expect(all, "findAll([])").to.deep.equal([ap1, ap2]);
-        expect(await this.db.findAll([ap1.oauthRevision!, ap2.oauthRevision!]), "findAll([ap1, ap2])").to.be.empty;
-        expect(await this.db.findAll([ap1.oauthRevision!]), "findAll([ap1])").to.deep.equal([ap2]);
+        expect(all, 'findAll([])').to.deep.equal([ap1, ap2]);
+        expect(await this.db.findAll([ap1.oauthRevision!, ap2.oauthRevision!]), 'findAll([ap1, ap2])').to.be.empty;
+        expect(await this.db.findAll([ap1.oauthRevision!]), 'findAll([ap1])').to.deep.equal([ap2]);
     }
 
     @test public async oauthRevision() {
-        const ap = this.authProvider({ id: "1" });
+        const ap = this.authProvider({ id: '1' });
         await this.db.storeAuthProvider(ap, true);
 
         const loadedAp = await this.db.findByHost(ap.host);
-        expect(loadedAp, "findByHost()").to.deep.equal(ap);
-        expect(loadedAp?.oauthRevision, "findByHost()").to.equal("e05ea6fab8efcaba4b3246c2b2d3931af897c3bc2c1cf075c31614f0954f9840");
+        expect(loadedAp, 'findByHost()').to.deep.equal(ap);
+        expect(loadedAp?.oauthRevision, 'findByHost()').to.equal(
+            'e05ea6fab8efcaba4b3246c2b2d3931af897c3bc2c1cf075c31614f0954f9840',
+        );
     }
 }
 
-module.exports = AuthProviderEntryDBSpec
+module.exports = AuthProviderEntryDBSpec;

@@ -13,7 +13,7 @@ import { TeamSubscription } from '@gitpod/gitpod-protocol/lib/team-subscription-
 import { getCancelledAt, getStartDate } from './chargebee-subscription-helper';
 import { Chargebee as chargebee } from './chargebee-types';
 import { EventHandler } from './chargebee-event-handler';
-import { TeamSubscriptionService } from "../accounting/team-subscription-service";
+import { TeamSubscriptionService } from '../accounting/team-subscription-service';
 import { Config } from '../config';
 
 @injectable()
@@ -46,24 +46,30 @@ export class TeamSubscriptionHandler implements EventHandler<chargebee.Subscript
         try {
             await this.mapToTeamSubscription(userId, eventType, chargebeeSubscription);
         } catch (error) {
-            log.error(logContext, "Error in TeamSubscriptionHandler.handleSingleEvent", error);
+            log.error(logContext, 'Error in TeamSubscriptionHandler.handleSingleEvent', error);
             throw error;
         }
-        log.info(logContext, "Finished TeamSubscriptionHandler.handleSingleEvent", { eventType });
+        log.info(logContext, 'Finished TeamSubscriptionHandler.handleSingleEvent', { eventType });
         return true;
     }
 
-    async mapToTeamSubscription(userId: string, eventType: chargebee.EventType, chargebeeSubscription: chargebee.Subscription) {
+    async mapToTeamSubscription(
+        userId: string,
+        eventType: chargebee.EventType,
+        chargebeeSubscription: chargebee.Subscription,
+    ) {
         await this.db.transaction(async (db) => {
             const subs = await db.findTeamSubscriptions({
                 userId,
-                paymentReference: chargebeeSubscription.id
+                paymentReference: chargebeeSubscription.id,
             });
             if (subs.length === 0) {
                 // Sanity check: If we try to create too many slots here we OOM, so we error instead.
                 const quantity = chargebeeSubscription.plan_quantity;
                 if (quantity > this.config.maxTeamSlotsOnCreation) {
-                    throw new Error(`(TS ${chargebeeSubscription.id}): nr of slots on creation (${quantity}) is higher than configured maximum (${this.config.maxTeamSlotsOnCreation}). Skipping creation!`);
+                    throw new Error(
+                        `(TS ${chargebeeSubscription.id}): nr of slots on creation (${quantity}) is higher than configured maximum (${this.config.maxTeamSlotsOnCreation}). Skipping creation!`,
+                    );
                 }
 
                 const ts = TeamSubscription.create({
@@ -72,12 +78,12 @@ export class TeamSubscriptionHandler implements EventHandler<chargebee.Subscript
                     planId: chargebeeSubscription.plan_id,
                     startDate: getStartDate(chargebeeSubscription),
                     endDate: chargebeeSubscription.cancelled_at ? getCancelledAt(chargebeeSubscription) : undefined,
-                    quantity
+                    quantity,
                 });
                 await db.storeTeamSubscriptionEntry(ts);
                 await this.service.addSlots(ts, quantity);
             } else {
-                const oldSubscription = subs.find(s => s.paymentReference === chargebeeSubscription.id);
+                const oldSubscription = subs.find((s) => s.paymentReference === chargebeeSubscription.id);
                 if (!oldSubscription) {
                     throw new Error(`Cannot find TeamSubscription for paymentReference ${chargebeeSubscription.id}!`);
                 }

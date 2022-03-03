@@ -4,11 +4,10 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { UserController } from "../../../src/user/user-controller";
-import { inject } from "inversify";
+import { UserController } from '../../../src/user/user-controller';
+import { inject } from 'inversify';
 import { LicenseEvaluator } from '@gitpod/licensor/lib';
 
 export class UserControllerEE extends UserController {
     @inject(LicenseEvaluator) protected evaluator: LicenseEvaluator;
-
 }

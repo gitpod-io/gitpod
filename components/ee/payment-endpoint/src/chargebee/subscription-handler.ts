@@ -14,7 +14,7 @@ import { Plans } from '@gitpod/gitpod-protocol/lib/plans';
 import { Chargebee as chargebee } from './chargebee-types';
 import { EventHandler } from './chargebee-event-handler';
 import { UpgradeHelper } from './upgrade-helper';
-import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
+import { formatDate } from '@gitpod/gitpod-protocol/lib/util/date-time';
 import { getUpdatedAt } from './chargebee-subscription-helper';
 import { UserPaidSubscription } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
 import { DBSubscriptionAdditionalData } from '@gitpod/gitpod-db/lib/typeorm/entity/db-subscription';
@@ -48,7 +48,7 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
             } else {
                 try {
                     await this.storeAdditionalData(event.content.subscription, event.content.invoice);
-                } catch(err) {
+                } catch (err) {
                     log.error(logContext, 'Failed to store additional subscription data', event);
                 }
             }
@@ -59,10 +59,10 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
 
             await this.mapToGitpodSubscription(userId, event);
         } catch (error) {
-            log.error(logContext, "Error in SubscriptionHandler.handleSingleEvent", error);
+            log.error(logContext, 'Error in SubscriptionHandler.handleSingleEvent', error);
             throw error;
         }
-        log.debug(logContext, "Finished SubscriptionHandler.handleSingleEvent", { eventType });
+        log.debug(logContext, 'Finished SubscriptionHandler.handleSingleEvent', { eventType });
         return true;
     }
 
@@ -70,11 +70,12 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
         const paymentReference = subscription.id;
         const coupons = subscription.coupons;
         const mrr = subscription.mrr || 0;
-        const nextBilling = subscription.next_billing_at && new Date(subscription.next_billing_at * 1000).toISOString() || '';
+        const nextBilling =
+            (subscription.next_billing_at && new Date(subscription.next_billing_at * 1000).toISOString()) || '';
         let lastInvoice = '';
         let lastInvoiceAmount: number = 0;
         if (invoice) {
-            lastInvoice = invoice.date && new Date(invoice.date * 1000).toISOString() || '';
+            lastInvoice = (invoice.date && new Date(invoice.date * 1000).toISOString()) || '';
             lastInvoiceAmount = invoice.total || 0;
         }
 
@@ -84,7 +85,7 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
             mrr,
             lastInvoice,
             lastInvoiceAmount,
-            nextBilling
+            nextBilling,
         };
         await this.db.storeSubscriptionAdditionalData(data);
     }
@@ -100,18 +101,28 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
     protected async checkAndChargeForUpgrade(userId: string, chargebeeSubscription: chargebee.Subscription) {
         const gitpodSubscriptions = await this.db.findSubscriptionForUserByPaymentRef(userId, chargebeeSubscription.id);
         if (gitpodSubscriptions.length === 0) {
-            throw new Error(`Expected existing Gitpod subscription for PaymentRef ${chargebeeSubscription.id} and user ${userId}, found none.`);
+            throw new Error(
+                `Expected existing Gitpod subscription for PaymentRef ${chargebeeSubscription.id} and user ${userId}, found none.`,
+            );
         }
-        const currentGitpodSubscription = gitpodSubscriptions[0];   // Ordered by startDate DESC
+        const currentGitpodSubscription = gitpodSubscriptions[0]; // Ordered by startDate DESC
         const oldPlan = Plans.getById(currentGitpodSubscription.planId)!;
         const newPlan = Plans.getById(chargebeeSubscription.plan_id)!;
 
         if (newPlan.pricePerMonth > oldPlan.pricePerMonth) {
             // Upgrade: Charge for it!
-            const diffInCents = (newPlan.pricePerMonth * 100) - (oldPlan.pricePerMonth * 100);
+            const diffInCents = newPlan.pricePerMonth * 100 - oldPlan.pricePerMonth * 100;
             const upgradeTimestamp = getUpdatedAt(chargebeeSubscription);
-            const description = `Difference on Upgrade from '${oldPlan.name}' to '${newPlan.name}' (${formatDate(upgradeTimestamp)})`;
-            await this.upgradeHelper.chargeForUpgrade(userId, chargebeeSubscription.id, diffInCents, description, upgradeTimestamp);
+            const description = `Difference on Upgrade from '${oldPlan.name}' to '${newPlan.name}' (${formatDate(
+                upgradeTimestamp,
+            )})`;
+            await this.upgradeHelper.chargeForUpgrade(
+                userId,
+                chargebeeSubscription.id,
+                diffInCents,
+                description,
+                upgradeTimestamp,
+            );
         }
     }
 
@@ -123,14 +134,14 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
     protected async mapToGitpodSubscription(userId: string, event: chargebee.Event<chargebee.SubscriptionEventV2>) {
         await this.db.transaction(async (db) => {
             const subscriptions = await db.findAllSubscriptionsForUser(userId);
-            const userPaidSubscriptions = subscriptions.filter(s => UserPaidSubscription.is(s));
+            const userPaidSubscriptions = subscriptions.filter((s) => UserPaidSubscription.is(s));
 
             const mapper = this.mapperFactory.newMapper();
             const delta = mapper.map(userPaidSubscriptions, event).getResult();
 
             await Promise.all([
-                ...delta.updates.map(s => db.storeSubscription(s)),
-                ...delta.inserts.map(s => db.newSubscription(s))
+                ...delta.updates.map((s) => db.storeSubscription(s)),
+                ...delta.inserts.map((s) => db.newSubscription(s)),
             ]);
         });
     }

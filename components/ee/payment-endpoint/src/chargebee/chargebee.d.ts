@@ -7,7 +7,7 @@
 // Because the re-export of type definitions did not work the pure types are separated into chargebee-types.ts (export namespace Chargebee)
 declare module 'chargebee' {
     export function configure(options: object): any;
-    export const hosted_page : any;
+    export const hosted_page: any;
     export const portal_session: any;
     export const subscription: any;
     export const gift: any;

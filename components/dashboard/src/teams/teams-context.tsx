@@ -6,29 +6,24 @@
 
 import { Team } from '@gitpod/gitpod-protocol';
 import React, { createContext, useState } from 'react';
-import { Location } from "history";
+import { Location } from 'history';
 
 export const TeamsContext = createContext<{
-    teams?: Team[],
-    setTeams: React.Dispatch<Team[]>,
+    teams?: Team[];
+    setTeams: React.Dispatch<Team[]>;
 }>({
     setTeams: () => null,
 });
 
-
 export const TeamsContextProvider: React.FC = ({ children }) => {
-    const [ teams, setTeams ] = useState<Team[]>();
-    return (
-        <TeamsContext.Provider value={{ teams, setTeams }}>
-            {children}
-        </TeamsContext.Provider>
-    )
-}
+    const [teams, setTeams] = useState<Team[]>();
+    return <TeamsContext.Provider value={{ teams, setTeams }}>{children}</TeamsContext.Provider>;
+};
 
 export function getCurrentTeam(location: Location<any>, teams?: Team[]): Team | undefined {
     const slug = location.pathname.startsWith('/t/') ? location.pathname.split('/')[2] : undefined;
     if (!slug || !teams) {
         return;
     }
-    return teams.find(t => t.slug === slug);
+    return teams.find((t) => t.slug === slug);
 }

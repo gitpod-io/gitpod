@@ -23,9 +23,15 @@ export function install(): void {
 }
 
 function proxyUrl(scriptUrl: string | URL | TrustedScriptURL): string {
-    scriptUrl = scriptUrl instanceof URL ? scriptUrl : new URL(typeof scriptUrl === 'string' ? scriptUrl : scriptUrl.toString(), document.baseURI);
+    scriptUrl =
+        scriptUrl instanceof URL
+            ? scriptUrl
+            : new URL(typeof scriptUrl === 'string' ? scriptUrl : scriptUrl.toString(), document.baseURI);
     if (scriptUrl.origin !== location.origin || (scriptUrl.protocol !== 'http:' && scriptUrl.protocol !== 'https:')) {
         return scriptUrl.toString();
     }
-    return new URL('_supervisor/frontend/worker-proxy.js#' + encodeURI(scriptUrl.toString()), document.baseURI).toString();
-};
+    return new URL(
+        '_supervisor/frontend/worker-proxy.js#' + encodeURI(scriptUrl.toString()),
+        document.baseURI,
+    ).toString();
+}

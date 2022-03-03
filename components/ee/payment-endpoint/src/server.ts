@@ -30,11 +30,11 @@ export class Server {
         app.use(this.chargebeeController.apiRouter);
 
         if (this.config.githubAppEnabled) {
-            this.githubController.register("/github", app);
+            this.githubController.register('/github', app);
             this.githubSubscriptionReconciler.start();
-            log.info("GitHub integration is ENABLED");
+            log.info('GitHub integration is ENABLED');
         } else {
-            log.info("GitHub integration is disabled");
+            log.info('GitHub integration is disabled');
         }
 
         this.app = app;
@@ -47,10 +47,12 @@ export class Server {
 
         const app = this.app;
         await new Promise<void>((resolve, reject) => {
-            const httpServer = app.listen(port, () => {
-                log.info(`Server listening on port: ${(<AddressInfo> httpServer.address()).port}`);
-                resolve();
-            }).on('error', reject);
+            const httpServer = app
+                .listen(port, () => {
+                    log.info(`Server listening on port: ${(<AddressInfo>httpServer.address()).port}`);
+                    resolve();
+                })
+                .on('error', reject);
             this.httpServer = httpServer;
         });
     }
@@ -59,7 +61,7 @@ export class Server {
         const httpServer = this.httpServer;
         if (httpServer) {
             this.httpServer = undefined;
-            await new Promise ((resolve) => httpServer.close(resolve));
+            await new Promise((resolve) => httpServer.close(resolve));
         }
     }
 }

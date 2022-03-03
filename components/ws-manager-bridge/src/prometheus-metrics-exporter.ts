@@ -5,7 +5,7 @@
  */
 
 import * as prom from 'prom-client';
-import { injectable } from "inversify";
+import { injectable } from 'inversify';
 import { WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/src/workspace-cluster';
 
@@ -35,26 +35,30 @@ export class PrometheusMetricsExporter {
         this.clusterScore = new prom.Gauge({
             name: 'gitpod_ws_manager_bridge_cluster_score',
             help: 'Score of the individual registered workspace cluster',
-            labelNames: ["workspace_cluster"]
+            labelNames: ['workspace_cluster'],
         });
         this.clusterCordoned = new prom.Gauge({
             name: 'gitpod_ws_manager_bridge_cluster_cordoned',
             help: 'Cordoned status of the individual registered workspace cluster',
-            labelNames: ["workspace_cluster"]
+            labelNames: ['workspace_cluster'],
         });
         this.statusUpdatesTotal = new prom.Counter({
             name: 'gitpod_ws_manager_bridge_status_updates_total',
             help: 'Total workspace status updates received',
-            labelNames: ["workspace_cluster", "known_instance"]
+            labelNames: ['workspace_cluster', 'known_instance'],
         });
     }
 
     observeWorkspaceStartupTime(instance: WorkspaceInstance): void {
-        const timeToRunningSecs = (new Date(instance.startedTime!).getTime() - new Date(instance.creationTime).getTime()) / 1000;
-        this.workspaceStartupTimeHistogram.observe({
-            neededImageBuild: JSON.stringify(instance.status.conditions.neededImageBuild),
-            region: instance.region,
-        }, timeToRunningSecs);
+        const timeToRunningSecs =
+            (new Date(instance.startedTime!).getTime() - new Date(instance.creationTime).getTime()) / 1000;
+        this.workspaceStartupTimeHistogram.observe(
+            {
+                neededImageBuild: JSON.stringify(instance.status.conditions.neededImageBuild),
+                region: instance.region,
+            },
+            timeToRunningSecs,
+        );
     }
 
     observeFirstUserActivity(instance: WorkspaceInstance, firstUserActivity: string): void {
@@ -62,22 +66,26 @@ export class PrometheusMetricsExporter {
             return;
         }
 
-        const timeToFirstUserActivity = (new Date(firstUserActivity).getTime() - new Date(instance.startedTime!).getTime()) / 1000;
-        this.timeToFirstUserActivityHistogram.observe({
-            region: instance.region,
-        }, timeToFirstUserActivity);
+        const timeToFirstUserActivity =
+            (new Date(firstUserActivity).getTime() - new Date(instance.startedTime!).getTime()) / 1000;
+        this.timeToFirstUserActivityHistogram.observe(
+            {
+                region: instance.region,
+            },
+            timeToFirstUserActivity,
+        );
     }
 
     updateClusterMetrics(clusters: WorkspaceClusterWoTLS[]): void {
         let newActiveClusterNames = new Set<string>();
-        clusters.forEach(cluster => {
+        clusters.forEach((cluster) => {
             this.clusterCordoned.labels(cluster.name).set(cluster.state === 'cordoned' ? 1 : 0);
             this.clusterScore.labels(cluster.name).set(cluster.score);
             newActiveClusterNames.add(cluster.name);
         });
 
-        const noLongerActiveCluster = Array.from(this.activeClusterNames).filter(c => !newActiveClusterNames.has(c));
-        noLongerActiveCluster.forEach(clusterName => {
+        const noLongerActiveCluster = Array.from(this.activeClusterNames).filter((c) => !newActiveClusterNames.has(c));
+        noLongerActiveCluster.forEach((clusterName) => {
             this.clusterCordoned.remove(clusterName);
             this.clusterScore.remove(clusterName);
         });
@@ -85,7 +93,6 @@ export class PrometheusMetricsExporter {
     }
 
     statusUpdateReceived(installation: string, knownInstance: boolean): void {
-        this.statusUpdatesTotal.labels(installation, knownInstance ? "true" : "false").inc();
+        this.statusUpdatesTotal.labels(installation, knownInstance ? 'true' : 'false').inc();
     }
 }
-

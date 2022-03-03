@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Column, Entity, PrimaryColumn } from "typeorm";
-import { OssAllowList } from "@gitpod/gitpod-protocol";
+import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { OssAllowList } from '@gitpod/gitpod-protocol';
 
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync

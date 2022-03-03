@@ -4,15 +4,15 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { injectable, inject } from "inversify";
-import { EntityManager, Repository, DeepPartial } from "typeorm";
+import { injectable, inject } from 'inversify';
+import { EntityManager, Repository, DeepPartial } from 'typeorm';
 
-import { TeamSubscription, TeamSubscriptionSlot } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
+import { TeamSubscription, TeamSubscriptionSlot } from '@gitpod/gitpod-protocol/lib/team-subscription-protocol';
 
-import { TeamSubscriptionDB } from "../team-subscription-db";
-import { DBTeamSubscription } from "./entity/db-team-subscription";
-import { DBTeamSubscriptionSlot } from "./entity/db-team-subscription-slot";
-import { TypeORM } from "./typeorm";
+import { TeamSubscriptionDB } from '../team-subscription-db';
+import { DBTeamSubscription } from './entity/db-team-subscription';
+import { DBTeamSubscriptionSlot } from './entity/db-team-subscription-slot';
+import { TypeORM } from './typeorm';
 
 @injectable()
 export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
@@ -20,7 +20,7 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
 
     async transaction<T>(code: (db: TeamSubscriptionDB) => Promise<T>): Promise<T> {
         const manager = await this.getEntityManager();
-        return await manager.transaction(async manager => {
+        return await manager.transaction(async (manager) => {
             return await code(new TransactionalTeamSubscriptionDBImpl(manager));
         });
     }
@@ -51,14 +51,18 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
         return repo.findOne(id);
     }
 
-    async findTeamSubscriptionByPaymentRef(userId: string, paymentReference: string): Promise<TeamSubscription | undefined> {
+    async findTeamSubscriptionByPaymentRef(
+        userId: string,
+        paymentReference: string,
+    ): Promise<TeamSubscription | undefined> {
         const repo = await this.getRepo();
         return repo.findOne({ userId, paymentReference });
     }
 
     async findTeamSubscriptionsForUser(userId: string, date: string): Promise<TeamSubscription[]> {
         const repo = await this.getRepo();
-        const query = repo.createQueryBuilder('ts')
+        const query = repo
+            .createQueryBuilder('ts')
             .where('ts.userId = :userId', { userId: userId })
             .andWhere('ts.startDate <= :date', { date: date })
             .andWhere('ts.endDate = "" OR ts.endDate > :date', { date: date });

@@ -4,13 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
+import { Branch, CommitInfo, Repository, User } from '@gitpod/gitpod-protocol';
 import { injectable } from 'inversify';
 import { RepositoryProvider } from '../repohost/repository-provider';
 
 @injectable()
 export class BitbucketServerRepositoryProvider implements RepositoryProvider {
-
     async getRepo(user: User, owner: string, name: string): Promise<Repository> {
         // const api = await this.apiFactory.create(user);
         // const repo = (await api.repositories.get({ workspace: owner, repo_slug: name })).data;
@@ -26,7 +25,7 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         // const webUrl = repo.links!.html!.href;
         // const defaultBranch = repo.mainbranch?.name;
         // return { host, owner, name, cloneUrl, description, avatarUrl, webUrl, defaultBranch };
-        throw new Error("getRepo unimplemented");
+        throw new Error('getRepo unimplemented');
     }
 
     async getBranch(user: User, owner: string, repo: string, branchName: string): Promise<Branch> {
@@ -50,7 +49,7 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         //         commitMessage: branch.target?.message || "missing commit message",
         //     }
         // };
-        throw new Error("getBranch unimplemented");
+        throw new Error('getBranch unimplemented');
     }
 
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
@@ -106,5 +105,4 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         // TODO(janx): Not implemented yet
         return false;
     }
-
 }

@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Disposable } from "..";
-import { log } from "./logging";
+import { Disposable } from '..';
+import { log } from './logging';
 
 /**
  * This intends to be a drop-in replacement for 'setInterval' implemented with a 'setTimeout' chain

@@ -13,21 +13,21 @@ const updateLastActivitiy = () => {
 export const track = (w: Window) => {
     w.document.addEventListener('mousemove', updateLastActivitiy, { capture: true });
     w.document.addEventListener('keydown', updateLastActivitiy, { capture: true });
-}
+};
 
 let toCancel: DisposableCollection | undefined;
 export function schedule(instanceId: string): void {
     if (toCancel) {
         return;
     }
-    toCancel = new DisposableCollection()
+    toCancel = new DisposableCollection();
     const sendHeartBeat = async (wasClosed?: true) => {
         try {
             await window.gitpod.service.server.sendHeartBeat({ instanceId, wasClosed });
         } catch (err) {
             console.error('Failed to send hearbeat:', err);
         }
-    }
+    };
     sendHeartBeat();
     let unloadTimeout: any;
     const beforeUnloadListener = () => {
@@ -41,7 +41,7 @@ export function schedule(instanceId: string): void {
         if (unloadTimeout) {
             clearTimeout(unloadTimeout);
         }
-    }
+    };
     window.addEventListener('beforeunload', beforeUnloadListener);
     window.addEventListener('unload', unloadListener);
     toCancel.push(Disposable.create(() => window.removeEventListener('beforeunload', beforeUnloadListener)));
@@ -65,4 +65,4 @@ export const cancel = () => {
         toCancel.dispose();
         toCancel = undefined;
     }
-}
+};

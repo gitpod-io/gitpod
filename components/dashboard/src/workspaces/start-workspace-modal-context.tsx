@@ -7,14 +7,14 @@
 import React, { createContext, useEffect, useState } from 'react';
 
 export const StartWorkspaceModalContext = createContext<{
-    isStartWorkspaceModalVisible?: boolean,
-    setIsStartWorkspaceModalVisible: React.Dispatch<boolean>,
+    isStartWorkspaceModalVisible?: boolean;
+    setIsStartWorkspaceModalVisible: React.Dispatch<boolean>;
 }>({
     setIsStartWorkspaceModalVisible: () => null,
 });
 
 export const StartWorkspaceModalContextProvider: React.FC = ({ children }) => {
-    const [ isStartWorkspaceModalVisible, setIsStartWorkspaceModalVisible ] = useState<boolean>(false);
+    const [isStartWorkspaceModalVisible, setIsStartWorkspaceModalVisible] = useState<boolean>(false);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -26,12 +26,14 @@ export const StartWorkspaceModalContextProvider: React.FC = ({ children }) => {
         window.addEventListener('keydown', onKeyDown);
         return () => {
             window.removeEventListener('keydown', onKeyDown);
-        }
+        };
     }, []);
 
-    return <StartWorkspaceModalContext.Provider value={{ isStartWorkspaceModalVisible, setIsStartWorkspaceModalVisible }}>
-        {children}
-    </StartWorkspaceModalContext.Provider>;
-}
+    return (
+        <StartWorkspaceModalContext.Provider value={{ isStartWorkspaceModalVisible, setIsStartWorkspaceModalVisible }}>
+            {children}
+        </StartWorkspaceModalContext.Provider>
+    );
+};
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? '⌘' : 'Ctrl﹢'}O`;

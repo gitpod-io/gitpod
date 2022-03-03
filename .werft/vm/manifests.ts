@@ -1,25 +1,30 @@
 type NamespaceManifestOptions = {
-  namespace: string
-}
+    namespace: string;
+};
 
 export function NamespaceManifest({ namespace }: NamespaceManifestOptions) {
-  return `
+    return `
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ${namespace}
-`
+`;
 }
 
 type VirtualMachineManifestArguments = {
-  vmName: string
-  namespace: string
-  claimName: string
-  userDataSecretName: string
-}
+    vmName: string;
+    namespace: string;
+    claimName: string;
+    userDataSecretName: string;
+};
 
-export function VirtualMachineManifest({ vmName, namespace, claimName, userDataSecretName }: VirtualMachineManifestArguments) {
-  return `
+export function VirtualMachineManifest({
+    vmName,
+    namespace,
+    claimName,
+    userDataSecretName,
+}: VirtualMachineManifestArguments) {
+    return `
 apiVersion: kubevirt.io/v1
 type: kubevirt.io.virtualmachine
 kind: VirtualMachine
@@ -89,16 +94,16 @@ spec:
             secretRef:
               name: ${userDataSecretName}
 
-`
+`;
 }
 
 type ServiceManifestOptions = {
-  vmName: string
-  namespace: string
-}
+    vmName: string;
+    namespace: string;
+};
 
 export function ServiceManifest({ vmName, namespace }: ServiceManifestOptions) {
-  return `
+    return `
 apiVersion: v1
 kind: Service
 metadata:
@@ -137,17 +142,18 @@ spec:
   selector:
     harvesterhci.io/vmName: ${vmName}
   type: ClusterIP
-`
+`;
 }
 
 type UserDataSecretManifestOptions = {
-  vmName: string
-  namespace: string,
-  secretName: string
-}
+    vmName: string;
+    namespace: string;
+    secretName: string;
+};
 
-export function UserDataSecretManifest({vmName, namespace, secretName }: UserDataSecretManifestOptions) {
-  const userdata = Buffer.from(`#cloud-config
+export function UserDataSecretManifest({ vmName, namespace, secretName }: UserDataSecretManifestOptions) {
+    const userdata = Buffer.from(
+        `#cloud-config
 users:
 - name: ubuntu
   sudo: "ALL=(ALL) NOPASSWD: ALL"
@@ -213,8 +219,9 @@ write_files:
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       EOF
 runcmd:
- - bash /usr/local/bin/bootstrap-k3s.sh`).toString("base64")
-  return `
+ - bash /usr/local/bin/bootstrap-k3s.sh`,
+    ).toString('base64');
+    return `
 apiVersion: v1
 type: secret
 kind: Secret
@@ -224,5 +231,5 @@ data:
 metadata:
   name: ${secretName}
   namespace: ${namespace}
-`
+`;
 }

@@ -4,12 +4,12 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { injectable, inject } from "inversify";
-import { EMail } from "@gitpod/gitpod-protocol";
-import { TypeORM } from "../typeorm/typeorm";
-import { EntityManager, Repository } from "typeorm";
-import { DBEmail } from "./entity/db-email";
-import { EMailDB, PartialEMailUpdate } from "../email-db";
+import { injectable, inject } from 'inversify';
+import { EMail } from '@gitpod/gitpod-protocol';
+import { TypeORM } from '../typeorm/typeorm';
+import { EntityManager, Repository } from 'typeorm';
+import { DBEmail } from './entity/db-email';
+import { EMailDB, PartialEMailUpdate } from '../email-db';
 
 @injectable()
 export class TypeORMEMailDBImpl implements EMailDB {
@@ -37,9 +37,10 @@ export class TypeORMEMailDBImpl implements EMailDB {
 
     async findEMailsToSend(limit: number): Promise<EMail[]> {
         const repo = await this.getEMailRepo();
-        const query = repo.createQueryBuilder('email')
+        const query = repo
+            .createQueryBuilder('email')
             .where("email.scheduledSendgridTime = ''")
-            .orderBy("email.scheduledInternalTime")
+            .orderBy('email.scheduledInternalTime')
             .limit(limit);
 
         return await query.getMany();
@@ -47,9 +48,10 @@ export class TypeORMEMailDBImpl implements EMailDB {
 
     async findEMailsByCampaignAndUserId(campaignId: string, userId: string): Promise<EMail[]> {
         const repo = await this.getEMailRepo();
-        const qb = repo.createQueryBuilder('email')
-            .where("email.campaignId = :campaignId", { campaignId })
-            .andWhere("email.userId = :userId", { userId });
+        const qb = repo
+            .createQueryBuilder('email')
+            .where('email.campaignId = :campaignId', { campaignId })
+            .andWhere('email.userId = :userId', { userId });
         return qb.getMany();
     }
 }

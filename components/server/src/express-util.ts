@@ -12,10 +12,10 @@ import * as session from 'express-session';
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
-        return "";
+        return '';
     }
-    return "?" + tuples.map(t => `${t[0]}=${encodeURIComponent(t[1])}`).join("&");
-}
+    return '?' + tuples.map((t) => `${t[0]}=${encodeURIComponent(t[1])}`).join('&');
+};
 
 // We do not precise UUID parsing here, we just want to distinguish three cases:
 //  - the base domain
@@ -23,11 +23,11 @@ export const query = (...tuples: [string, string][]) => {
 //  - a workspace port domain
 // We control all of those values and the base domain, so we don't need to much effort
 export const isAllowedWebsocketDomain = (originHeader: any, gitpodHostName: string): boolean => {
-    if (!originHeader || typeof (originHeader) !== "string") {
+    if (!originHeader || typeof originHeader !== 'string') {
         return false;
     }
 
-    var originHostname = "";
+    var originHostname = '';
     try {
         const originUrl = new URL(originHeader);
         originHostname = originUrl.hostname;
@@ -35,15 +35,14 @@ export const isAllowedWebsocketDomain = (originHeader: any, gitpodHostName: stri
             return true;
         }
         if (looksLikeWorkspaceHostname(originUrl, gitpodHostName)) {
-            return true
+            return true;
         } else {
             return false;
         }
     } catch (err) {
         return false;
     }
-
-}
+};
 
 const looksLikeWorkspaceHostname = (originHostname: URL, gitpodHostName: string): boolean => {
     // Is prefix a valid (looking) workspace ID?
@@ -106,11 +105,12 @@ export function getRequestingClientInfo(req: express.Request) {
  * @param handler
  * @returns
  */
-export function asyncHandler(handler: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>): express.Handler {
+export function asyncHandler(
+    handler: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>,
+): express.Handler {
     return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        handler(req, res, next)
-            .catch(err => next(err));
-    }
+        handler(req, res, next).catch((err) => next(err));
+    };
 }
 
 /**
@@ -124,7 +124,7 @@ export function unhandledToError(req: express.Request, res: express.Response, ne
     if (isAnsweredRequest(req, res)) {
         return next();
     }
-    return next(new Error("unhandled request: " + req.method + " " + req.originalUrl));
+    return next(new Error('unhandled request: ' + req.method + ' ' + req.originalUrl));
 }
 
 /**
@@ -137,10 +137,10 @@ export function bottomErrorHandler(log: (...args: any[]) => void): express.Error
             return next();
         }
 
-        let msg = "undefined";
+        let msg = 'undefined';
         let status = 500;
         if (err instanceof Error) {
-            msg = err.toString() + "\nStack: " + err.stack;
+            msg = err.toString() + '\nStack: ' + err.stack;
             status = typeof (err as any).status === 'number' ? (err as any).status : 500;
         } else {
             msg = err.toString();
@@ -149,22 +149,22 @@ export function bottomErrorHandler(log: (...args: any[]) => void): express.Error
             originalUrl: req.originalUrl,
             headers: req.headers,
             cookies: req.cookies,
-            session: req.session
+            session: req.session,
         });
         if (!isAnsweredRequest(req, response)) {
             response.status(status).send({ error: msg });
         }
-    }
+    };
 }
 
 export function isAnsweredRequest(req: express.Request, res: express.Response) {
-    return res.headersSent || req.originalUrl.endsWith(".websocket");
+    return res.headersSent || req.originalUrl.endsWith('.websocket');
 }
 
 export const takeFirst = (h: string | string[] | undefined): string | undefined => {
     if (Array.isArray(h)) {
         if (h.length < 1) {
-            return undefined
+            return undefined;
         }
         return h[0];
     }

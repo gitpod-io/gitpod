@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Channel } from "amqplib";
-import { v4 as uuid } from "uuid";
-import { EventEmitter } from "events";
+import { Channel } from 'amqplib';
+import { v4 as uuid } from 'uuid';
+import { EventEmitter } from 'events';
 
 export const REPLY_QUEUE = 'amq.rabbitmq.reply-to';
 
@@ -18,13 +18,15 @@ export class RpcClient<Req, Resp> {
         if (!this.channel.rpcResponseEmitter) {
             this.channel.rpcResponseEmitter = new EventEmitter();
             this.channel.rpcResponseEmitter.setMaxListeners(0);
-            this.channel.consume(REPLY_QUEUE,
-                msg => {
+            this.channel.consume(
+                REPLY_QUEUE,
+                (msg) => {
                     if (msg) {
-                        this.channel.rpcResponseEmitter.emit(msg.properties.correlationId, msg.content)
+                        this.channel.rpcResponseEmitter.emit(msg.properties.correlationId, msg.content);
                     }
                 },
-                {noAck: true});
+                { noAck: true },
+            );
         }
     }
 
@@ -39,15 +41,12 @@ export class RpcClient<Req, Resp> {
     async waitForResponse(correlationId: string): Promise<Resp> {
         return new Promise<Resp>((resolve, reject) => {
             try {
-                this.channel.rpcResponseEmitter.once(correlationId, msg =>
-                    resolve(JSON.parse(msg))
-                );
-            } catch(err) {
-                reject(err)
+                this.channel.rpcResponseEmitter.once(correlationId, (msg) => resolve(JSON.parse(msg)));
+            } catch (err) {
+                reject(err);
             }
         });
     }
-
 }
 
 type RpcClientChannel = Channel & { rpcResponseEmitter: EventEmitter };

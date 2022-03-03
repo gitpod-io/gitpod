@@ -4,12 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from "inversify";
-import { AuthProviderParams } from "../auth/auth-provider";
-import { User, Token } from "@gitpod/gitpod-protocol";
-import { UnauthorizedError } from "../errors";
-import { GitHubScope } from "./scopes";
-import { TokenProvider } from "../user/token-provider";
+import { injectable, inject } from 'inversify';
+import { AuthProviderParams } from '../auth/auth-provider';
+import { User, Token } from '@gitpod/gitpod-protocol';
+import { UnauthorizedError } from '../errors';
+import { GitHubScope } from './scopes';
+import { TokenProvider } from '../user/token-provider';
 
 @injectable()
 export class GitHubTokenHelper {
@@ -18,7 +18,9 @@ export class GitHubTokenHelper {
 
     async getCurrentToken(user: User) {
         try {
-            return await this.getTokenWithScopes(user, [/* any scopes */]);
+            return await this.getTokenWithScopes(user, [
+                /* any scopes */
+            ]);
         } catch {
             // no token
         }
@@ -35,17 +37,17 @@ export class GitHubTokenHelper {
             // no token
         }
         if (requiredScopes.length === 0) {
-            requiredScopes = GitHubScope.Requirements.DEFAULT
+            requiredScopes = GitHubScope.Requirements.DEFAULT;
         }
-        throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
+        throw UnauthorizedError.create(host, requiredScopes, 'missing-identity');
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const wantedSet = new Set(wantedScopes);
         const currentScopes = [...token.scopes];
-        if (currentScopes.some(s => s === GitHubScope.PRIVATE)) {
+        if (currentScopes.some((s) => s === GitHubScope.PRIVATE)) {
             currentScopes.push(GitHubScope.PUBLIC); // normalize private_repo, which includes public_repo
         }
-        currentScopes.forEach(s => wantedSet.delete(s));
+        currentScopes.forEach((s) => wantedSet.delete(s));
         return wantedSet.size === 0;
     }
 }

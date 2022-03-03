@@ -1,5 +1,5 @@
 declare namespace Definitions {
-    export type NotifyRequestLevel = "ERROR" | "WARNING" | "INFO";
+    export type NotifyRequestLevel = 'ERROR' | 'WARNING' | 'INFO';
     export interface ProtobufAny {
         typeUrl?: string;
         value?: string; // byte
@@ -23,8 +23,7 @@ declare namespace Definitions {
          */
         action?: string;
     }
-    export interface SupervisorRespondResponse {
-    }
+    export interface SupervisorRespondResponse {}
     export interface SupervisorSubscribeResponse {
         requestId?: string; // uint64
         request?: SupervisorNotifyRequest;

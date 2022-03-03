@@ -5,14 +5,13 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { Disposable } from "./disposable";
+import { Disposable } from './disposable';
 import { log } from './logging';
 
 /**
  * Represents a typed event.
  */
 export interface Event<T> {
-
     /**
      *
      * @param listener The listener function will be call when the event happens.
@@ -24,12 +23,13 @@ export interface Event<T> {
 }
 
 export namespace Event {
-    const _disposable = { dispose() { } };
-    export const None: Event<any> = function () { return _disposable; };
+    const _disposable = { dispose() {} };
+    export const None: Event<any> = function () {
+        return _disposable;
+    };
 }
 
 class CallbackList {
-
     private _callbacks: Function[] | undefined;
     private _contexts: any[] | undefined;
 
@@ -105,14 +105,12 @@ export interface EmitterOptions {
 }
 
 export class Emitter<T> {
-
-    private static _noop = function () { };
+    private static _noop = function () {};
 
     private _event: Event<T>;
     private _callbacks: CallbackList | undefined;
 
-    constructor(private _options?: EmitterOptions) {
-    }
+    constructor(private _options?: EmitterOptions) {}
 
     /**
      * For the public to allow to subscribe
@@ -137,7 +135,7 @@ export class Emitter<T> {
                         if (this._options && this._options.onLastListenerRemove && this._callbacks!.isEmpty()) {
                             this._options.onLastListenerRemove(this);
                         }
-                    }
+                    },
                 };
                 if (Array.isArray(disposables)) {
                     disposables.push(result);

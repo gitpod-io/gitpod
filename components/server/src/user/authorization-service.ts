@@ -4,10 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable } from "inversify";
+import { injectable } from 'inversify';
 
-import { RoleOrPermission, PermissionName, RolesOrPermissions } from "@gitpod/gitpod-protocol/lib/permission";
-import { User } from "@gitpod/gitpod-protocol";
+import { RoleOrPermission, PermissionName, RolesOrPermissions } from '@gitpod/gitpod-protocol/lib/permission';
+import { User } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 export const AuthorizationService = Symbol('AuthorizationService');

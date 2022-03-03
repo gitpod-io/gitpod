@@ -6,7 +6,7 @@
 
 import React, { Suspense, useContext, useEffect, useState } from 'react';
 import Menu from './Menu';
-import { Redirect, Route, Switch } from "react-router";
+import { Redirect, Route, Switch } from 'react-router';
 
 import { Login } from './Login';
 import { UserContext } from './user-context';
@@ -23,8 +23,24 @@ import { User } from '@gitpod/gitpod-protocol';
 import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 import { Experiment } from './experiments';
 import { workspacesPathMain } from './workspaces/workspaces.routes';
-import { settingsPathAccount, settingsPathIntegrations, settingsPathMain, settingsPathNotifications, settingsPathPlans, settingsPathPreferences, settingsPathTeams, settingsPathTeamsJoin, settingsPathTeamsNew, settingsPathVariables } from './settings/settings.routes';
-import { projectsPathInstallGitHubApp, projectsPathMain, projectsPathMainWithParams, projectsPathNew } from './projects/projects.routes';
+import {
+    settingsPathAccount,
+    settingsPathIntegrations,
+    settingsPathMain,
+    settingsPathNotifications,
+    settingsPathPlans,
+    settingsPathPreferences,
+    settingsPathTeams,
+    settingsPathTeamsJoin,
+    settingsPathTeamsNew,
+    settingsPathVariables,
+} from './settings/settings.routes';
+import {
+    projectsPathInstallGitHubApp,
+    projectsPathMain,
+    projectsPathMainWithParams,
+    projectsPathNew,
+} from './projects/projects.routes';
 import { refreshSearchData } from './components/RepositoryFinder';
 import { StartWorkspaceModal } from './workspaces/StartWorkspaceModal';
 import { parseProps } from './start/StartWorkspace';
@@ -63,12 +79,16 @@ const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ './OauthClientApproval'));
 
 function Loading() {
-    return <>
-    </>;
+    return <></>;
 }
 
 function isGitpodIo() {
-    return window.location.hostname === 'gitpod.io' || window.location.hostname === 'gitpod-staging.com' || window.location.hostname.endsWith('gitpod-dev.com') || window.location.hostname.endsWith('gitpod-io-dev.com')
+    return (
+        window.location.hostname === 'gitpod.io' ||
+        window.location.hostname === 'gitpod-staging.com' ||
+        window.location.hostname.endsWith('gitpod-dev.com') ||
+        window.location.hostname.endsWith('gitpod-io-dev.com')
+    );
 }
 
 function isWebsiteSlug(pathName: string) {
@@ -94,9 +114,9 @@ function isWebsiteSlug(pathName: string) {
         'self-hosted',
         'support',
         'terms',
-        'values'
-    ]
-    return slugs.some(slug => pathName.startsWith('/' + slug + '/') || pathName === ('/' + slug));
+        'values',
+    ];
+    return slugs.some((slug) => pathName.startsWith('/' + slug + '/') || pathName === '/' + slug);
 }
 
 export function getURLHash() {
@@ -133,11 +153,10 @@ function App() {
                     if (isRoot) {
                         try {
                             const teamSlug = localStorage.getItem('team-selection');
-                            if (teams.some(t => t.slug === teamSlug)) {
+                            if (teams.some((t) => t.slug === teamSlug)) {
                                 history.push(`/t/${teamSlug}`);
                             }
-                        } catch {
-                        }
+                        } catch {}
                     }
                 }
                 setTeams(teams);
@@ -148,7 +167,7 @@ function App() {
                 }
             } catch (error) {
                 console.error(error);
-                if (error && "code" in error) {
+                if (error && 'code' in error) {
                     if (error.code === ErrorCodes.SETUP_REQUIRED) {
                         setSetupRequired(true);
                     }
@@ -163,11 +182,13 @@ function App() {
 
     useEffect(() => {
         const updateTheme = () => {
-            const isDark = localStorage.theme === 'dark' || (localStorage.theme !== 'light' && window.matchMedia("(prefers-color-scheme: dark)").matches);
+            const isDark =
+                localStorage.theme === 'dark' ||
+                (localStorage.theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             setIsDark(isDark);
-        }
+        };
         updateTheme();
-        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         if (mediaQuery instanceof EventTarget) {
             mediaQuery.addEventListener('change', updateTheme);
         } else {
@@ -183,7 +204,7 @@ function App() {
                 (mediaQuery as MediaQueryList).removeListener(updateTheme);
             }
             window.removeEventListener('storage', updateTheme);
-        }
+        };
     }, []);
 
     // listen and notify Segment of client-side path updates
@@ -192,33 +213,37 @@ function App() {
             // Choose which experiments to run for this session/user
             Experiment.set(Experiment.seed(true));
         }
-    })
+    });
 
     useEffect(() => {
         return history.listen((location: any) => {
             const path = window.location.pathname;
             trackPathChange({
                 prev: (window as any)._gp.path,
-                path: path
+                path: path,
             });
             (window as any)._gp.path = path;
-        })
-    }, [history])
+        });
+    }, [history]);
 
     useEffect(() => {
         const handleButtonOrAnchorTracking = (props: MouseEvent) => {
             var curr = props.target as HTMLElement;
             //check if current target or any ancestor up to document is button or anchor
             while (!(curr instanceof Document)) {
-                if (curr instanceof HTMLButtonElement || curr instanceof HTMLAnchorElement || (curr instanceof HTMLDivElement && curr.onclick)) {
+                if (
+                    curr instanceof HTMLButtonElement ||
+                    curr instanceof HTMLAnchorElement ||
+                    (curr instanceof HTMLDivElement && curr.onclick)
+                ) {
                     trackButtonOrAnchor(curr);
                     break; //finding first ancestor is sufficient
                 }
                 curr = curr.parentNode as HTMLElement;
             }
-        }
-        window.addEventListener("click", handleButtonOrAnchorTracking, true);
-        return () => window.removeEventListener("click", handleButtonOrAnchorTracking, true);
+        };
+        window.addEventListener('click', handleButtonOrAnchorTracking, true);
+        return () => window.removeEventListener('click', handleButtonOrAnchorTracking, true);
     }, []);
 
     useEffect(() => {
@@ -239,30 +264,42 @@ function App() {
             return <div></div>;
         } else {
             // explicitly render the Login page when the session is out-of-sync with the Gitpod cookie
-            return (<Login />);
+            return <Login />;
         }
     }
 
     if (loading) {
-        return (<Loading />);
+        return <Loading />;
     }
     if (isSetupRequired) {
-        return (<Suspense fallback={<Loading />}>
-            <Setup />
-        </Suspense>);
+        return (
+            <Suspense fallback={<Loading />}>
+                <Setup />
+            </Suspense>
+        );
     }
     if (!user) {
-        return (<Login />);
+        return <Login />;
     }
     if (window.location.pathname.startsWith('/blocked')) {
-        return <div className="mt-48 text-center">
-            <img src={gitpodIcon} className="h-16 mx-auto" alt="Gitpod's logo" />
-            <h1 className="mt-12 text-gray-500 text-3xl">Your account has been blocked.</h1>
-            <p className="mt-4 mb-8 text-lg w-96 mx-auto">Please contact support if you think this is an error. See also <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/terms/">terms of service</a>.</p>
-            <a className="mx-auto" href="mailto:support@gitpod.io?Subject=Blocked"><button className="secondary">Contact Support</button></a>
-        </div>;
+        return (
+            <div className="mt-48 text-center">
+                <img src={gitpodIcon} className="h-16 mx-auto" alt="Gitpod's logo" />
+                <h1 className="mt-12 text-gray-500 text-3xl">Your account has been blocked.</h1>
+                <p className="mt-4 mb-8 text-lg w-96 mx-auto">
+                    Please contact support if you think this is an error. See also{' '}
+                    <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/terms/">
+                        terms of service
+                    </a>
+                    .
+                </p>
+                <a className="mx-auto" href="mailto:support@gitpod.io?Subject=Blocked">
+                    <button className="secondary">Contact Support</button>
+                </a>
+            </div>
+        );
     }
-    const shouldWhatsNewShown = shouldSeeWhatsNew(user)
+    const shouldWhatsNewShown = shouldSeeWhatsNew(user);
     if (shouldWhatsNewShown !== isWhatsNewShown) {
         setWhatsNewShown(shouldWhatsNewShown);
     }
@@ -274,139 +311,159 @@ function App() {
         );
     }
 
-    window.addEventListener("hashchange", () => {
-        // Refresh on hash change if the path is '/' (new context URL)
-        if (window.location.pathname === '/') {
-            window.location.reload();
-        }
-    }, false);
+    window.addEventListener(
+        'hashchange',
+        () => {
+            // Refresh on hash change if the path is '/' (new context URL)
+            if (window.location.pathname === '/') {
+                window.location.reload();
+            }
+        },
+        false,
+    );
 
-    let toRender: React.ReactElement = <Route>
-        <div className="container">
-            <Menu />
-            <Switch>
-                <Route path={projectsPathNew} exact component={NewProject} />
-                <Route path="/open" exact component={Open} />
-                <Route path="/setup" exact component={Setup} />
-                <Route path={workspacesPathMain} exact component={Workspaces} />
-                <Route path={settingsPathAccount} exact component={Account} />
-                <Route path={settingsPathIntegrations} exact component={Integrations} />
-                <Route path={settingsPathNotifications} exact component={Notifications} />
-                <Route path={settingsPathPlans} exact component={Plans} />
-                <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
-                <Route path={settingsPathPreferences} exact component={Preferences} />
-                <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
-                <Route path="/from-referrer" exact component={FromReferrer} />
+    let toRender: React.ReactElement = (
+        <Route>
+            <div className="container">
+                <Menu />
+                <Switch>
+                    <Route path={projectsPathNew} exact component={NewProject} />
+                    <Route path="/open" exact component={Open} />
+                    <Route path="/setup" exact component={Setup} />
+                    <Route path={workspacesPathMain} exact component={Workspaces} />
+                    <Route path={settingsPathAccount} exact component={Account} />
+                    <Route path={settingsPathIntegrations} exact component={Integrations} />
+                    <Route path={settingsPathNotifications} exact component={Notifications} />
+                    <Route path={settingsPathPlans} exact component={Plans} />
+                    <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
+                    <Route path={settingsPathPreferences} exact component={Preferences} />
+                    <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
+                    <Route path="/from-referrer" exact component={FromReferrer} />
 
-                <Route path="/admin/users" component={UserSearch} />
-                <Route path="/admin/teams" component={TeamsSearch} />
-                <Route path="/admin/workspaces" component={WorkspacesSearch} />
-                <Route path="/admin/settings" component={AdminSettings} />
-                <Route path="/admin/projects" component={ProjectsSearch} />
+                    <Route path="/admin/users" component={UserSearch} />
+                    <Route path="/admin/teams" component={TeamsSearch} />
+                    <Route path="/admin/workspaces" component={WorkspacesSearch} />
+                    <Route path="/admin/settings" component={AdminSettings} />
+                    <Route path="/admin/projects" component={ProjectsSearch} />
 
-                <Route path={["/", "/login"]} exact>
-                    <Redirect to={workspacesPathMain} />
-                </Route>
-                <Route path={[settingsPathMain]} exact>
-                    <Redirect to={settingsPathAccount} />
-                </Route>
-                <Route path={["/access-control"]} exact>
-                    <Redirect to={settingsPathIntegrations} />
-                </Route>
-                <Route path={["/subscription", "/usage", "/upgrade-subscription"]} exact>
-                    <Redirect to={settingsPathPlans} />
-                </Route>
-                <Route path={["/admin"]} exact>
-                    <Redirect to="/admin/users" />
-                </Route>
-                <Route path="/sorry" exact>
-                    <div className="mt-48 text-center">
-                        <h1 className="text-gray-500 text-3xl">Oh, no! Something went wrong!</h1>
-                        <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
-                    </div>
-                </Route>
-                <Route path={projectsPathMain}>
-                    <Route exact path={projectsPathMain} component={Projects} />
-                    <Route exact path={projectsPathMainWithParams} render={(props) => {
-                        const { resourceOrPrebuild } = props.match.params;
-                        if (resourceOrPrebuild === "settings") {
-                            return <ProjectSettings />;
-                        }
-                        if (resourceOrPrebuild === "configure") {
-                            return <ConfigureProject />;
-                        }
-                        if (resourceOrPrebuild === "variables") {
-                            return <ProjectVariables />;
-                        }
-                        if (resourceOrPrebuild === "prebuilds") {
-                            return <Prebuilds />;
-                        }
-                        return resourceOrPrebuild ? <Prebuild /> : <Project />;
-                    }} />
-                </Route>
-                <Route path={settingsPathTeams}>
-                    <Route exact path={settingsPathTeams} component={Teams} />
-                    <Route exact path={settingsPathTeamsNew} component={NewTeam} />
-                    <Route exact path={settingsPathTeamsJoin} component={JoinTeam} />
-                </Route>
-                {(teams || []).map(team =>
-                    <Route path={`/t/${team.slug}`} key={team.slug}>
-                        <Route exact path={`/t/${team.slug}`}>
-                            <Redirect to={`/t/${team.slug}/projects`} />
+                    <Route path={['/', '/login']} exact>
+                        <Redirect to={workspacesPathMain} />
+                    </Route>
+                    <Route path={[settingsPathMain]} exact>
+                        <Redirect to={settingsPathAccount} />
+                    </Route>
+                    <Route path={['/access-control']} exact>
+                        <Redirect to={settingsPathIntegrations} />
+                    </Route>
+                    <Route path={['/subscription', '/usage', '/upgrade-subscription']} exact>
+                        <Redirect to={settingsPathPlans} />
+                    </Route>
+                    <Route path={['/admin']} exact>
+                        <Redirect to="/admin/users" />
+                    </Route>
+                    <Route path="/sorry" exact>
+                        <div className="mt-48 text-center">
+                            <h1 className="text-gray-500 text-3xl">Oh, no! Something went wrong!</h1>
+                            <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
+                        </div>
+                    </Route>
+                    <Route path={projectsPathMain}>
+                        <Route exact path={projectsPathMain} component={Projects} />
+                        <Route
+                            exact
+                            path={projectsPathMainWithParams}
+                            render={(props) => {
+                                const { resourceOrPrebuild } = props.match.params;
+                                if (resourceOrPrebuild === 'settings') {
+                                    return <ProjectSettings />;
+                                }
+                                if (resourceOrPrebuild === 'configure') {
+                                    return <ConfigureProject />;
+                                }
+                                if (resourceOrPrebuild === 'variables') {
+                                    return <ProjectVariables />;
+                                }
+                                if (resourceOrPrebuild === 'prebuilds') {
+                                    return <Prebuilds />;
+                                }
+                                return resourceOrPrebuild ? <Prebuild /> : <Project />;
+                            }}
+                        />
+                    </Route>
+                    <Route path={settingsPathTeams}>
+                        <Route exact path={settingsPathTeams} component={Teams} />
+                        <Route exact path={settingsPathTeamsNew} component={NewTeam} />
+                        <Route exact path={settingsPathTeamsJoin} component={JoinTeam} />
+                    </Route>
+                    {(teams || []).map((team) => (
+                        <Route path={`/t/${team.slug}`} key={team.slug}>
+                            <Route exact path={`/t/${team.slug}`}>
+                                <Redirect to={`/t/${team.slug}/projects`} />
+                            </Route>
+                            <Route
+                                exact
+                                path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`}
+                                render={(props) => {
+                                    const { maybeProject, resourceOrPrebuild } = props.match.params;
+                                    if (maybeProject === 'projects') {
+                                        return <Projects />;
+                                    }
+                                    if (maybeProject === 'workspaces') {
+                                        return <Workspaces />;
+                                    }
+                                    if (maybeProject === 'members') {
+                                        return <Members />;
+                                    }
+                                    if (maybeProject === 'settings') {
+                                        return <TeamSettings />;
+                                    }
+                                    if (resourceOrPrebuild === 'settings') {
+                                        return <ProjectSettings />;
+                                    }
+                                    if (resourceOrPrebuild === 'configure') {
+                                        return <ConfigureProject />;
+                                    }
+                                    if (resourceOrPrebuild === 'variables') {
+                                        return <ProjectVariables />;
+                                    }
+                                    if (resourceOrPrebuild === 'prebuilds') {
+                                        return <Prebuilds />;
+                                    }
+                                    return resourceOrPrebuild ? <Prebuild /> : <Project />;
+                                }}
+                            />
                         </Route>
-                        <Route exact path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`} render={(props) => {
-                            const { maybeProject, resourceOrPrebuild } = props.match.params;
-                            if (maybeProject === "projects") {
-                                return <Projects />;
-                            }
-                            if (maybeProject === "workspaces") {
-                                return <Workspaces />;
-                            }
-                            if (maybeProject === "members") {
-                                return <Members />;
-                            }
-                            if (maybeProject === "settings") {
-                                return <TeamSettings />;
-                            }
-                            if (resourceOrPrebuild === "settings") {
-                                return <ProjectSettings />;
-                            }
-                            if (resourceOrPrebuild === "configure") {
-                                return <ConfigureProject />;
-                            }
-                            if (resourceOrPrebuild === "variables") {
-                                return <ProjectVariables />;
-                            }
-                            if (resourceOrPrebuild === "prebuilds") {
-                                return <Prebuilds />;
-                            }
-                            return resourceOrPrebuild ? <Prebuild /> : <Project />;
-                        }} />
-                    </Route>)}
-                <Route path="*" render={
-                    (_match) => {
-
-                        return isGitpodIo() ?
-                            // delegate to our website to handle the request
-                            (window.location.host = 'www.gitpod.io') :
-                            <div className="mt-48 text-center">
-                                <h1 className="text-gray-500 text-3xl">404</h1>
-                                <p className="mt-4 text-lg">Page not found.</p>
-                            </div>;
-                    }}>
-                </Route>
-            </Switch>
-            <StartWorkspaceModal />
-        </div>
-    </Route>;
+                    ))}
+                    <Route
+                        path="*"
+                        render={(_match) => {
+                            return isGitpodIo() ? (
+                                // delegate to our website to handle the request
+                                (window.location.host = 'www.gitpod.io')
+                            ) : (
+                                <div className="mt-48 text-center">
+                                    <h1 className="text-gray-500 text-3xl">404</h1>
+                                    <p className="mt-4 text-lg">Page not found.</p>
+                                </div>
+                            );
+                        }}
+                    ></Route>
+                </Switch>
+                <StartWorkspaceModal />
+            </div>
+        </Route>
+    );
 
     const hash = getURLHash();
     if (/^(https:\/\/)?github\.dev\//i.test(hash)) {
-        window.location.hash = hash.replace(/^(https:\/\/)?github\.dev\//i, 'https://github.com/')
-        return <div></div>
+        window.location.hash = hash.replace(/^(https:\/\/)?github\.dev\//i, 'https://github.com/');
+        return <div></div>;
     } else if (/^([^\/]+?=[^\/]*?|prebuild)\/(https:\/\/)?github\.dev\//i.test(hash)) {
-        window.location.hash = hash.replace(/^([^\/]+?=[^\/]*?|prebuild)\/(https:\/\/)?github\.dev\//i, '$1/https://github.com/')
-        return <div></div>
+        window.location.hash = hash.replace(
+            /^([^\/]+?=[^\/]*?|prebuild)\/(https:\/\/)?github\.dev\//i,
+            '$1/https://github.com/',
+        );
+        return <div></div>;
     }
     const isCreation = window.location.pathname === '/' && hash !== '';
     const isWsStart = /\/start\/?/.test(window.location.pathname) && hash !== '';
@@ -417,18 +474,14 @@ function App() {
     } else if (isWsStart) {
         toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
     } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
-        let url = new URL(window.location.href)
-        url.hash = url.pathname
-        url.pathname = '/'
-        window.location.replace(url)
-        return <div></div>
+        let url = new URL(window.location.href);
+        url.hash = url.pathname;
+        url.pathname = '/';
+        window.location.replace(url);
+        return <div></div>;
     }
 
-    return (
-        <Suspense fallback={<Loading />}>
-            {toRender}
-        </Suspense>
-    );
+    return <Suspense fallback={<Loading />}>{toRender}</Suspense>;
 }
 
 export default App;

@@ -5,15 +5,40 @@
  */
 
 import {
-    User, WorkspaceInfo, WorkspaceCreationResult, WorkspaceInstanceUser,
-    WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, CreateWorkspaceMode,
-    Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
-    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
-    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, ProjectEnvVar
+    User,
+    WorkspaceInfo,
+    WorkspaceCreationResult,
+    WorkspaceInstanceUser,
+    WhitelistedRepository,
+    WorkspaceImageBuild,
+    AuthProviderInfo,
+    CreateWorkspaceMode,
+    Token,
+    UserEnvVarValue,
+    ResolvePluginsParams,
+    PreparePluginUploadParams,
+    Terms,
+    ResolvedPlugins,
+    Configuration,
+    InstallPluginsParams,
+    UninstallPluginParams,
+    UserInfo,
+    GitpodTokenType,
+    GitpodToken,
+    AuthProviderEntry,
+    GuessGitTokenScopesParams,
+    GuessedGitTokenScopes,
+    ProjectEnvVar,
 } from './protocol';
 import {
-    Team, TeamMemberInfo,
-    TeamMembershipInvite, Project, TeamMemberRole, PrebuildWithStatus, StartPrebuildResult, PartialProject
+    Team,
+    TeamMemberInfo,
+    TeamMembershipInvite,
+    Project,
+    TeamMemberRole,
+    PrebuildWithStatus,
+    StartPrebuildResult,
+    PartialProject,
 } from './teams-projects-protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
@@ -159,8 +184,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
 
     // content service
-    getContentBlobUploadUrl(name: string): Promise<string>
-    getContentBlobDownloadUrl(name: string): Promise<string>
+    getContentBlobUploadUrl(name: string): Promise<string>;
+    getContentBlobDownloadUrl(name: string): Promise<string>;
 
     // Gitpod token
     getGitpodTokens(): Promise<GitpodToken[]>;
@@ -201,7 +226,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * @param params
      * @returns promise resolves to an URL to be used for the upload
      */
-    preparePluginUpload(params: PreparePluginUploadParams): Promise<string>
+    preparePluginUpload(params: PreparePluginUploadParams): Promise<string>;
     resolvePlugins(workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins>;
     installUserPlugins(params: InstallPluginsParams): Promise<boolean>;
     uninstallUserPlugin(params: UninstallPluginParams): Promise<boolean>;
@@ -237,9 +262,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     tsGet(): Promise<TeamSubscription[]>;
     tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]>;
-    tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined>
+    tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined>;
     tsAddSlots(teamSubscriptionId: string, quantity: number): Promise<void>;
-    tsAssignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string | undefined): Promise<void>
+    tsAssignSlot(
+        teamSubscriptionId: string,
+        teamSubscriptionSlotId: string,
+        identityStr: string | undefined,
+    ): Promise<void>;
     tsReassignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void>;
     tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
     tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
@@ -255,13 +284,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 }
 
 export interface RateLimiterError {
-    method?: string,
+    method?: string;
 
     /**
      * Retry after this many seconds, earliest.
      * cmp.: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
      */
-    retryAfter: number,
+    retryAfter: number;
 }
 
 export interface CreateProjectParams {
@@ -306,15 +335,19 @@ export interface ClientHeaderFields {
     clientRegion?: string;
 }
 
-export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;
+export const WorkspaceTimeoutValues = ['30m', '60m', '180m'] as const;
 
-export const createServiceMock = function <C extends GitpodClient, S extends GitpodServer>(methods: Partial<JsonRpcProxy<S>>): GitpodServiceImpl<C, S> {
+export const createServiceMock = function <C extends GitpodClient, S extends GitpodServer>(
+    methods: Partial<JsonRpcProxy<S>>,
+): GitpodServiceImpl<C, S> {
     return new GitpodServiceImpl<C, S>(createServerMock(methods));
-}
+};
 
-export const createServerMock = function <C extends GitpodClient, S extends GitpodServer>(methods: Partial<JsonRpcProxy<S>>): JsonRpcProxy<S> {
-    methods.setClient = methods.setClient || (() => { });
-    methods.dispose = methods.dispose || (() => { });
+export const createServerMock = function <C extends GitpodClient, S extends GitpodServer>(
+    methods: Partial<JsonRpcProxy<S>>,
+): JsonRpcProxy<S> {
+    methods.setClient = methods.setClient || (() => {});
+    methods.dispose = methods.dispose || (() => {});
     return new Proxy<JsonRpcProxy<S>>(methods as any as JsonRpcProxy<S>, {
         // @ts-ignore
         get: (target: S, property: keyof S) => {
@@ -323,25 +356,25 @@ export const createServerMock = function <C extends GitpodClient, S extends Gitp
                 throw new Error(`Method ${property} not implemented`);
             }
             return result;
-        }
+        },
     });
-}
+};
 
 type WorkspaceTimeoutDurationTuple = typeof WorkspaceTimeoutValues;
 export type WorkspaceTimeoutDuration = WorkspaceTimeoutDurationTuple[number];
 
 export interface SetWorkspaceTimeoutResult {
-    resetTimeoutOnWorkspaces: string[]
+    resetTimeoutOnWorkspaces: string[];
 }
 
 export interface GetWorkspaceTimeoutResult {
-    duration: WorkspaceTimeoutDuration
-    canChange: boolean
+    duration: WorkspaceTimeoutDuration;
+    canChange: boolean;
 }
 
 export interface StartWorkspaceResult {
-    instanceID: string
-    workspaceURL?: string
+    instanceID: string;
+    workspaceURL?: string;
 }
 
 export namespace GitpodServer {
@@ -385,17 +418,17 @@ export namespace GitpodServer {
         readonly roundTripTime?: number;
     }
     export interface UpdateOwnAuthProviderParams {
-        readonly entry: AuthProviderEntry.UpdateEntry | AuthProviderEntry.NewEntry
+        readonly entry: AuthProviderEntry.UpdateEntry | AuthProviderEntry.NewEntry;
     }
     export interface DeleteOwnAuthProviderParams {
-        readonly id: string
+        readonly id: string;
     }
-    export type AdmissionLevel = "owner" | "everyone";
-    export type PinAction = "pin" | "unpin" | "toggle";
+    export type AdmissionLevel = 'owner' | 'everyone';
+    export type PinAction = 'pin' | 'unpin' | 'toggle';
     export interface GenerateNewGitpodTokenOptions {
-        name?: string
-        type: GitpodTokenType
-        scopes?: string[]
+        name?: string;
+        type: GitpodTokenType;
+        scopes?: string[];
     }
 }
 
@@ -415,8 +448,8 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
                 if (index > -1) {
                     this.clients.splice(index, 1);
                 }
-            }
-        }
+            },
+        };
     }
 
     onInstanceUpdate(instance: WorkspaceInstance): void {
@@ -425,7 +458,7 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
                 try {
                     client.onInstanceUpdate(instance);
                 } catch (error) {
-                    console.error(error)
+                    console.error(error);
                 }
             }
         }
@@ -437,19 +470,22 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
                 try {
                     client.onPrebuildUpdate(update);
                 } catch (error) {
-                    console.error(error)
+                    console.error(error);
                 }
             }
         }
     }
 
-    onWorkspaceImageBuildLogs(info: WorkspaceImageBuild.StateInfo, content: WorkspaceImageBuild.LogContent | undefined): void {
+    onWorkspaceImageBuildLogs(
+        info: WorkspaceImageBuild.StateInfo,
+        content: WorkspaceImageBuild.LogContent | undefined,
+    ): void {
         for (const client of this.clients) {
             if (client.onWorkspaceImageBuildLogs) {
                 try {
                     client.onWorkspaceImageBuildLogs(info, content);
                 } catch (error) {
-                    console.error(error)
+                    console.error(error);
                 }
             }
         }
@@ -461,7 +497,7 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
                 try {
                     client.notifyDidOpenConnection();
                 } catch (error) {
-                    console.error(error)
+                    console.error(error);
                 }
             }
         }
@@ -473,7 +509,7 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
                 try {
                     client.notifyDidCloseConnection();
                 } catch (error) {
-                    console.error(error)
+                    console.error(error);
                 }
             }
         }
@@ -485,17 +521,16 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
                 try {
                     client.onCreditAlert(creditAlert);
                 } catch (error) {
-                    console.error(error)
+                    console.error(error);
                 }
             }
         }
     }
-
 }
 
 export type GitpodService = GitpodServiceImpl<GitpodClient, GitpodServer>;
 
-const hasWindow = (typeof window !== 'undefined');
+const hasWindow = typeof window !== 'undefined';
 const phasesOrder: Record<WorkspaceInstancePhase, number> = {
     unknown: 0,
     preparing: 1,
@@ -505,7 +540,7 @@ const phasesOrder: Record<WorkspaceInstancePhase, number> = {
     running: 5,
     interrupted: 6,
     stopping: 7,
-    stopped: 8
+    stopped: 8,
 };
 export class WorkspaceInstanceUpdateListener {
     private readonly onDidChangeEmitter = new Emitter<void>();
@@ -517,12 +552,9 @@ export class WorkspaceInstanceUpdateListener {
         return this._info;
     }
 
-    constructor(
-        private readonly service: GitpodService,
-        private _info: WorkspaceInfo
-    ) {
+    constructor(private readonly service: GitpodService, private _info: WorkspaceInfo) {
         service.registerClient({
-            onInstanceUpdate: instance => {
+            onInstanceUpdate: (instance) => {
                 if (this.isOutOfOrder(instance)) {
                     return;
                 }
@@ -533,7 +565,7 @@ export class WorkspaceInstanceUpdateListener {
             },
             notifyDidOpenConnection: () => {
                 this.sync();
-            }
+            },
         });
         if (hasWindow) {
             // learn about page lifecycle here: https://developers.google.com/web/updates/2018/07/page-lifecycle-api
@@ -542,7 +574,7 @@ export class WorkspaceInstanceUpdateListener {
                     this.sync();
                 }
             });
-            window.addEventListener('pageshow', e => {
+            window.addEventListener('pageshow', (e) => {
                 if (e.persisted) {
                     this.sync();
                 }
@@ -573,9 +605,9 @@ export class WorkspaceInstanceUpdateListener {
                 this.source = 'sync';
                 this.onDidChangeEmitter.fire(undefined);
             } catch (e) {
-                console.error('failed to sync workspace instance:', e)
+                console.error('failed to sync workspace instance:', e);
             }
-        })
+        });
     }
     private cancelSync(): void {
         if (this.syncTokenSource) {
@@ -600,15 +632,13 @@ export class WorkspaceInstanceUpdateListener {
         }
         return phasesOrder[instance.status.phase] < phasesOrder[this.info.latestInstance.status.phase];
     }
-
 }
 
 export interface GitpodServiceOptions {
-    onReconnect?: () => (void | Promise<void>)
+    onReconnect?: () => void | Promise<void>;
 }
 
 export class GitpodServiceImpl<Client extends GitpodClient, Server extends GitpodServer> {
-
     private readonly compositeClient = new GitpodCompositeClient<Client>();
 
     constructor(public readonly server: JsonRpcProxy<Server>, private options?: GitpodServiceOptions) {
@@ -623,7 +653,8 @@ export class GitpodServiceImpl<Client extends GitpodClient, Server extends Gitpo
 
     private readonly instanceListeners = new Map<string, Promise<WorkspaceInstanceUpdateListener>>();
     listenToInstance(workspaceId: string): Promise<WorkspaceInstanceUpdateListener> {
-        const listener = this.instanceListeners.get(workspaceId) ||
+        const listener =
+            this.instanceListeners.get(workspaceId) ||
             (async () => {
                 const info = await this.server.getWorkspace(workspaceId);
                 return new WorkspaceInstanceUpdateListener(this, info);
@@ -639,26 +670,25 @@ export class GitpodServiceImpl<Client extends GitpodClient, Server extends Gitpo
     }
 }
 
-export function createGitpodService<C extends GitpodClient, S extends GitpodServer>(serverUrl: string | Promise<string>) {
+export function createGitpodService<C extends GitpodClient, S extends GitpodServer>(
+    serverUrl: string | Promise<string>,
+) {
     const toWsUrl = (serverUrl: string) => {
-        return new GitpodHostUrl(serverUrl)
-            .asWebsocket()
-            .withApi({ pathname: GitpodServerPath })
-            .toString();
+        return new GitpodHostUrl(serverUrl).asWebsocket().withApi({ pathname: GitpodServerPath }).toString();
     };
     let url: string | Promise<string>;
-    if (typeof serverUrl === "string") {
+    if (typeof serverUrl === 'string') {
         url = toWsUrl(serverUrl);
     } else {
-        url = serverUrl.then(url => toWsUrl(url));
+        url = serverUrl.then((url) => toWsUrl(url));
     }
 
     const connectionProvider = new WebSocketConnectionProvider();
-    let onReconnect = () => { };
+    let onReconnect = () => {};
     const gitpodServer = connectionProvider.createProxy<S>(url, undefined, {
-        onListening: socket => {
+        onListening: (socket) => {
             onReconnect = () => socket.reconnect();
-        }
+        },
     });
     return new GitpodServiceImpl<C, S>(gitpodServer, { onReconnect });
 }

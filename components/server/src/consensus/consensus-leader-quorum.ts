@@ -4,19 +4,25 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from "inversify";
-import { ConsensusLeaderMessenger, HeartbeatMessage, RequestVoteMessage, CastVoteMessage, RaftMessage } from "./consensus-leader-messenger";
-import { Disposable } from "@gitpod/gitpod-protocol";
-import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { injectable, inject } from 'inversify';
+import {
+    ConsensusLeaderMessenger,
+    HeartbeatMessage,
+    RequestVoteMessage,
+    CastVoteMessage,
+    RaftMessage,
+} from './consensus-leader-messenger';
+import { Disposable } from '@gitpod/gitpod-protocol';
+import { Deferred } from '@gitpod/gitpod-protocol/lib/util/deferred';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { repeat } from '@gitpod/gitpod-protocol/lib/util/repeat';
 
 @injectable()
 /* Implements the leader election mechanism of the Raft concensus algorithm:
-*      In Search of an Understandable Consensus Algorithm. Ongaro and Ousterhout. 2014.
-*      https://raft.github.io/raft.pdf
-*
-*/
+ *      In Search of an Understandable Consensus Algorithm. Ongaro and Ousterhout. 2014.
+ *      https://raft.github.io/raft.pdf
+ *
+ */
 export class ConsensusLeaderQorum implements Disposable {
     @inject(ConsensusLeaderMessenger) protected readonly messenger: ConsensusLeaderMessenger;
 
@@ -54,7 +60,6 @@ export class ConsensusLeaderQorum implements Disposable {
     protected readonly heartbeatPeriod = 4 * this.clockPeriod;
     protected readonly termTimeoutMilliseconds = 2 * this.heartbeatPeriod;
 
-
     public get name(): string {
         return this.uid;
     }
@@ -67,10 +72,12 @@ export class ConsensusLeaderQorum implements Disposable {
         // register with the messenger
         this.uid = await this.messenger.register();
 
-        this.disposables.push(repeat(() => this.beatClock().catch((err) => log.error("consensus beatClock", err)), this.clockPeriod));
-        this.disposables.push(this.messenger.on("heartbeat", msg => this.messages.push(msg)));
-        this.disposables.push(this.messenger.on("requestVote", msg => this.messages.push(msg)));
-        this.disposables.push(this.messenger.on("castVote", msg => this.messages.push(msg)));
+        this.disposables.push(
+            repeat(() => this.beatClock().catch((err) => log.error('consensus beatClock', err)), this.clockPeriod),
+        );
+        this.disposables.push(this.messenger.on('heartbeat', (msg) => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on('requestVote', (msg) => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on('castVote', (msg) => this.messages.push(msg)));
     }
 
     protected async beatClock() {
@@ -110,8 +117,9 @@ export class ConsensusLeaderQorum implements Disposable {
         if (this.role === 'leader') {
             if (!this.lastHeartbeatSend || Date.now() - this.lastHeartbeatSend > this.heartbeatPeriod) {
                 // we must send our regular heartbeats
-                /** no await */ this.messenger.sendHeartbeat(this.uid, this.currentTerm)
-                    .catch(err => {/** ignore */});
+                /** no await */ this.messenger.sendHeartbeat(this.uid, this.currentTerm).catch((err) => {
+                    /** ignore */
+                });
 
                 this.lastHeartbeatSend = Date.now();
             }
@@ -131,7 +139,8 @@ export class ConsensusLeaderQorum implements Disposable {
         if (this.role === 'candidate') {
             if (!this.electionDeadline) {
                 // we seem to have forgotten to record the election start.
-                this.electionDeadline = Date.now() + (Math.random() * this.electionTimeoutVariation + this.electionTimeout);
+                this.electionDeadline =
+                    Date.now() + (Math.random() * this.electionTimeoutVariation + this.electionTimeout);
             }
 
             // console.log(`[${this.uid} ${this.currentTerm} ${this.role} ${s}] beat (t - electionDeadline: ${Date.now() - this.electionDeadline})`);
@@ -215,7 +224,6 @@ export class ConsensusLeaderQorum implements Disposable {
     }
 
     public dispose() {
-        this.disposables.forEach(d => d.dispose());
+        this.disposables.forEach((d) => d.dispose());
     }
-
 }

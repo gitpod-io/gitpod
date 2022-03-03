@@ -16,16 +16,16 @@ class ChargebeeClientProvider {
         if (!this.client) {
             await new Promise<void>((resolve) => {
                 var scriptTag = document.createElement('script');
-                scriptTag.src = "https://js.chargebee.com/v2/chargebee.js";
+                scriptTag.src = 'https://js.chargebee.com/v2/chargebee.js';
                 scriptTag.async = true;
-                scriptTag.addEventListener("load", () => {
+                scriptTag.addEventListener('load', () => {
                     resolve();
                 });
                 document.head.appendChild(scriptTag);
-            })
+            });
             const site = await getGitpodService().server.getChargebeeSiteId();
-            this.client = (((window as any).Chargebee) as chargebee.Client).init({
-                site
+            this.client = ((window as any).Chargebee as chargebee.Client).init({
+                site,
             });
         }
         return this.client;
@@ -56,23 +56,29 @@ export class ChargebeeClient {
         return chargebeeClient;
     }
 
-    checkout(hostedPage: (paymentServer: GitpodServer) => Promise<{}>, params: Omit<chargebee.CheckoutCallbacks, 'hostedPage'> = { success: noOp })  {
+    checkout(
+        hostedPage: (paymentServer: GitpodServer) => Promise<{}>,
+        params: Omit<chargebee.CheckoutCallbacks, 'hostedPage'> = { success: noOp },
+    ) {
         const paymentServer = getGitpodService().server;
         this.client.openCheckout({
             ...params,
             async hostedPage(): Promise<any> {
                 return hostedPage(paymentServer);
-            }
+            },
         });
     }
 
-    checkoutExisting(hostedPage: (paymentServer: GitpodServer) => Promise<{}>, params: Omit<chargebee.CheckoutCallbacks, 'hostedPage'> = { success: noOp }) {
+    checkoutExisting(
+        hostedPage: (paymentServer: GitpodServer) => Promise<{}>,
+        params: Omit<chargebee.CheckoutCallbacks, 'hostedPage'> = { success: noOp },
+    ) {
         const paymentServer = getGitpodService().server;
         this.client.openCheckout({
             ...params,
             async hostedPage(): Promise<any> {
                 return hostedPage(paymentServer);
-            }
+            },
         });
     }
 
@@ -87,4 +93,6 @@ export class ChargebeeClient {
         this.client.createChargebeePortal().open(params);
     }
 }
-const noOp = () => { /* tslint:disable:no-empty */ };
+const noOp = () => {
+    /* tslint:disable:no-empty */
+};

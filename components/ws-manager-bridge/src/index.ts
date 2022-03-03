@@ -6,11 +6,11 @@
 
 require('reflect-metadata');
 
-import { Container } from "inversify";
-import { containerModule } from "./container-module";
-import { start } from "./main";
+import { Container } from 'inversify';
+import { containerModule } from './container-module';
+import { start } from './main';
 
-import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
+import { dbContainerModule } from '@gitpod/gitpod-db/lib/container-module';
 
 const container = new Container();
 container.load(containerModule);

@@ -9,7 +9,15 @@ import { getPrivateKey } from '@probot/get-private-key';
 import * as fs from 'fs-extra';
 import { injectable, inject } from 'inversify';
 import { Config } from '../../../src/config';
-import { AppInstallationDB, TracedWorkspaceDB, DBWithTracing, UserDB, WorkspaceDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
+import {
+    AppInstallationDB,
+    TracedWorkspaceDB,
+    DBWithTracing,
+    UserDB,
+    WorkspaceDB,
+    ProjectDB,
+    TeamDB,
+} from '@gitpod/gitpod-db/lib';
 import * as express from 'express';
 import { log, LogContext, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WorkspaceConfig, User, Project, StartPrebuildResult } from '@gitpod/gitpod-protocol';
@@ -54,16 +62,15 @@ export class GithubApp {
                     secret: config.githubApp.webhookSecret,
                     logLevel: GithubApp.mapToGitHubLogLevel(config.logLevel),
                     baseUrl: config.githubApp.baseUrl,
-                })
+                }),
             });
-            log.debug("Starting GitHub app integration", {
+            log.debug('Starting GitHub app integration', {
                 appId: config.githubApp.appId,
                 cert: config.githubApp.certPath,
-                secret: config.githubApp.webhookSecret
+                secret: config.githubApp.webhookSecret,
             });
 
-            this.server.load(this.buildApp.bind(this))
-                .catch(err => log.error("error loading probot server", err));
+            this.server.load(this.buildApp.bind(this)).catch((err) => log.error('error loading probot server', err));
         }
     }
 
@@ -73,95 +80,128 @@ export class GithubApp {
                 const githubApi = await app.auth(id);
                 return githubApi;
             } catch (error) {
-                log.error("Failes to authorize GH API for Probot", { error })
+                log.error('Failes to authorize GH API for Probot', { error });
             }
         });
 
         // Backward-compatibility: Redirect old badge URLs (e.g. "/api/apps/github/pbs/github.com/gitpod-io/gitpod/5431d5735c32ab7d5d840a4d1a7d7c688d1f0ce9.svg")
-        options.getRouter && options.getRouter('/pbs').get('/*', (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            res.redirect(301, this.getBadgeImageURL());
+        options.getRouter &&
+            options
+                .getRouter('/pbs')
+                .get('/*', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                    res.redirect(301, this.getBadgeImageURL());
+                });
+
+        app.on('installation.created', (ctx) => {
+            catchError(
+                (async () => {
+                    const targetAccountName = `${ctx.payload.installation.account.login}`;
+                    const installationId = `${ctx.payload.installation.id}`;
+
+                    // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
+                    const authId = `${ctx.payload.sender.id}`;
+
+                    const user = await this.userDB.findUserByIdentity({
+                        authProviderId: this.config.githubApp?.authProviderId || 'unknown',
+                        authId,
+                    });
+                    const userId = user ? user.id : undefined;
+                    await this.appInstallationDB.recordNewInstallation(
+                        'github',
+                        'platform',
+                        installationId,
+                        userId,
+                        authId,
+                    );
+                    log.debug({ userId }, 'New installation recorded', { userId, authId, targetAccountName });
+                })(),
+            );
+        });
+        app.on('installation.deleted', (ctx) => {
+            catchError(
+                (async () => {
+                    const installationId = `${ctx.payload.installation.id}`;
+                    await this.appInstallationDB.recordUninstallation('github', 'platform', installationId);
+                })(),
+            );
         });
 
-        app.on('installation.created', ctx => {
-            catchError((async () => {
-                const targetAccountName = `${ctx.payload.installation.account.login}`;
-                const installationId = `${ctx.payload.installation.id}`;
-
-                // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
-                const authId = `${ctx.payload.sender.id}`;
-
-                const user = await this.userDB.findUserByIdentity({ authProviderId: this.config.githubApp?.authProviderId || "unknown", authId });
-                const userId = user ? user.id : undefined;
-                await this.appInstallationDB.recordNewInstallation("github", 'platform', installationId, userId, authId);
-                log.debug({ userId }, "New installation recorded", { userId, authId, targetAccountName })
-            })());
-        });
-        app.on('installation.deleted', ctx => {
-            catchError((async () => {
-                const installationId = `${ctx.payload.installation.id}`;
-                await this.appInstallationDB.recordUninstallation("github", 'platform', installationId);
-            })());
-        });
-
-        app.on('repository.renamed', ctx => {
-            catchError((async () => {
-                const { action, repository, installation } = ctx.payload;
-                if (!installation) {
-                    return;
-                }
-                if (action === "renamed") {
-                    // HINT(AT): This is undocumented, but the event payload contains something like
-                    // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
-                    // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
-                    const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
-                    if (oldName) {
-                        const project = await this.projectDB.findProjectByCloneUrl(`https://github.com/${repository.owner.login}/${oldName}.git`)
-                        if (project) {
-                            project.cloneUrl = repository.clone_url;
-                            await this.projectDB.storeProject(project);
+        app.on('repository.renamed', (ctx) => {
+            catchError(
+                (async () => {
+                    const { action, repository, installation } = ctx.payload;
+                    if (!installation) {
+                        return;
+                    }
+                    if (action === 'renamed') {
+                        // HINT(AT): This is undocumented, but the event payload contains something like
+                        // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
+                        // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
+                        const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
+                        if (oldName) {
+                            const project = await this.projectDB.findProjectByCloneUrl(
+                                `https://github.com/${repository.owner.login}/${oldName}.git`,
+                            );
+                            if (project) {
+                                project.cloneUrl = repository.clone_url;
+                                await this.projectDB.storeProject(project);
+                            }
                         }
                     }
-                }
-            })())
+                })(),
+            );
             // TODO(at): handle deleted as well
         });
 
-        app.on('push', ctx => {
+        app.on('push', (ctx) => {
             catchError(this.handlePushEvent(ctx));
         });
 
-        app.on(['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'], ctx => {
+        app.on(['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'], (ctx) => {
             catchError(this.handlePullRequest(ctx));
         });
 
-        options.getRouter && options.getRouter('/reconfigure').get('/', asyncHandler(async (req: express.Request, res: express.Response) => {
-            const gh = await app.auth();
-            const data = await gh.apps.getAuthenticated();
-            const slug = data.data.slug;
+        options.getRouter &&
+            options.getRouter('/reconfigure').get(
+                '/',
+                asyncHandler(async (req: express.Request, res: express.Response) => {
+                    const gh = await app.auth();
+                    const data = await gh.apps.getAuthenticated();
+                    const slug = data.data.slug;
 
-            const state = req.query.state;
-            res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`)
-        }));
-        options.getRouter && options.getRouter('/setup').get('/', (req: express.Request, res: express.Response) => {
-            const state = req.query.state;
-            const installationId = req.query.installation_id;
-            const setupAction = req.query.setup_action;
-            const payload = { installationId, setupAction };
-            req.query
+                    const state = req.query.state;
+                    res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`);
+                }),
+            );
+        options.getRouter &&
+            options.getRouter('/setup').get('/', (req: express.Request, res: express.Response) => {
+                const state = req.query.state;
+                const installationId = req.query.installation_id;
+                const setupAction = req.query.setup_action;
+                const payload = { installationId, setupAction };
+                req.query;
 
-            if (state) {
-                const url = this.config.hostUrl.with({ pathname: '/complete-auth', search: "message=payload:" + Buffer.from(JSON.stringify(payload), "utf-8").toString('base64') }).toString();
-                res.redirect(url);
-            } else {
-                const url = this.config.hostUrl.with({ pathname: 'install-github-app', search: `installation_id=${installationId}` }).toString();
-                res.redirect(url);
-            }
-        });
+                if (state) {
+                    const url = this.config.hostUrl
+                        .with({
+                            pathname: '/complete-auth',
+                            search:
+                                'message=payload:' + Buffer.from(JSON.stringify(payload), 'utf-8').toString('base64'),
+                        })
+                        .toString();
+                    res.redirect(url);
+                } else {
+                    const url = this.config.hostUrl
+                        .with({ pathname: 'install-github-app', search: `installation_id=${installationId}` })
+                        .toString();
+                    res.redirect(url);
+                }
+            });
     }
 
     protected async handlePushEvent(ctx: Context<'push'>): Promise<void> {
-        const span = TraceContext.startSpan("GithubApp.handlePushEvent", {});
-        span.setTag("request", ctx.id);
+        const span = TraceContext.startSpan('GithubApp.handlePushEvent', {});
+        span.setTag('request', ctx.id);
 
         try {
             const installationId = ctx.payload.installation?.id;
@@ -170,7 +210,11 @@ export class GithubApp {
             const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
             const user = await this.selectUserForPrebuild(installationOwner, project);
             if (!user) {
-                log.info(`Did not find user for installation. Probably an incomplete app installation.`, { repo: ctx.payload.repository, installationId, project });
+                log.info(`Did not find user for installation. Probably an incomplete app installation.`, {
+                    repo: ctx.payload.repository,
+                    installationId,
+                    project,
+                });
                 return;
             }
             const logCtx: LogContext = { userId: user.id };
@@ -184,7 +228,7 @@ export class GithubApp {
             const branch = this.getBranchFromRef(pl.ref);
             if (!branch) {
                 // This is a valid case if we receive a tag push, for instance.
-                log.debug("Unable to get branch from ref", { ref: pl.ref });
+                log.debug('Unable to get branch from ref', { ref: pl.ref });
                 return;
             }
 
@@ -197,12 +241,16 @@ export class GithubApp {
             if (!runPrebuild) {
                 const reason = `Not running prebuild, the user did not enable it for this context`;
                 log.debug(logCtx, reason, { contextURL });
-                span.log({ "not-running": reason, "config": config });
+                span.log({ 'not-running': reason, config: config });
                 return;
             }
 
-            this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: repo.clone_url, commit: pl.after, branch, project})
-                .catch(err => log.error(logCtx, "Error while starting prebuild", err, { contextURL }));
+            this.prebuildManager
+                .startPrebuild(
+                    { span },
+                    { user, contextURL, cloneURL: repo.clone_url, commit: pl.after, branch, project },
+                )
+                .catch((err) => log.error(logCtx, 'Error while starting prebuild', err, { contextURL }));
         } catch (e) {
             TraceContext.setError({ span }, e);
             throw e;
@@ -212,7 +260,7 @@ export class GithubApp {
     }
 
     protected getBranchFromRef(ref: string): string | undefined {
-        const headsPrefix = "refs/heads/";
+        const headsPrefix = 'refs/heads/';
         if (ref.startsWith(headsPrefix)) {
             return ref.substring(headsPrefix.length);
         }
@@ -220,9 +268,11 @@ export class GithubApp {
         return undefined;
     }
 
-    protected async handlePullRequest(ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>): Promise<void> {
-        const span = TraceContext.startSpan("GithubApp.handlePullRequest", {});
-        span.setTag("request", ctx.id);
+    protected async handlePullRequest(
+        ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>,
+    ): Promise<void> {
+        const span = TraceContext.startSpan('GithubApp.handlePullRequest', {});
+        span.setTag('request', ctx.id);
 
         try {
             const installationId = ctx.payload.installation?.id;
@@ -231,7 +281,11 @@ export class GithubApp {
             const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
             const user = await this.selectUserForPrebuild(installationOwner, project);
             if (!user) {
-                log.info("Did not find user for installation. Probably an incomplete app installation.", { repo: ctx.payload.repository, installationId, project });
+                log.info('Did not find user for installation. Probably an incomplete app installation.', {
+                    repo: ctx.payload.repository,
+                    installationId,
+                    project,
+                });
                 return;
             }
 
@@ -240,9 +294,13 @@ export class GithubApp {
             const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
 
             const prebuildStartPromise = this.onPrStartPrebuild({ span }, ctx, config, user, project);
-            this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise).catch(() => {/** ignore */});
+            this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise).catch(() => {
+                /** ignore */
+            });
             this.onPrAddBadge(config, ctx);
-            this.onPrAddComment(config, ctx).catch(() => {/** ignore */});
+            this.onPrAddComment(config, ctx).catch(() => {
+                /** ignore */
+            });
         } catch (e) {
             TraceContext.setError({ span }, e);
             throw e;
@@ -251,7 +309,12 @@ export class GithubApp {
         }
     }
 
-    protected async onPrAddCheck(tracecContext: TraceContext, config: WorkspaceConfig | undefined, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>, start: Promise<StartPrebuildResult> | undefined) {
+    protected async onPrAddCheck(
+        tracecContext: TraceContext,
+        config: WorkspaceConfig | undefined,
+        ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>,
+        start: Promise<StartPrebuildResult> | undefined,
+    ) {
         if (!start) {
             return;
         }
@@ -260,7 +323,7 @@ export class GithubApp {
             return;
         }
 
-        const span = TraceContext.startSpan("onPrAddCheck", tracecContext);
+        const span = TraceContext.startSpan('onPrAddCheck', tracecContext);
         try {
             const spr = await start;
             const pws = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(spr.wsid);
@@ -270,14 +333,23 @@ export class GithubApp {
 
             const installationId = ctx.payload.installation?.id;
             if (!installationId) {
-                log.info("Did not find user for installation. Probably an incomplete app installation.", { repo: ctx.payload.repository, installationId });
+                log.info('Did not find user for installation. Probably an incomplete app installation.', {
+                    repo: ctx.payload.repository,
+                    installationId,
+                });
                 return;
             }
-            await this.statusMaintainer.registerCheckRun({ span }, installationId, pws, {
-                ...ctx.repo(),
-                head_sha: ctx.payload.pull_request.head.sha,
-                details_url: this.config.hostUrl.withContext(ctx.payload.pull_request.html_url).toString(),
-            }, config);
+            await this.statusMaintainer.registerCheckRun(
+                { span },
+                installationId,
+                pws,
+                {
+                    ...ctx.repo(),
+                    head_sha: ctx.payload.pull_request.head.sha,
+                    details_url: this.config.hostUrl.withContext(ctx.payload.pull_request.html_url).toString(),
+                },
+                config,
+            );
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
@@ -286,7 +358,13 @@ export class GithubApp {
         }
     }
 
-    protected onPrStartPrebuild(tracecContext: TraceContext, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>, config: WorkspaceConfig | undefined, user: User, project?: Project): Promise<StartPrebuildResult> | undefined {
+    protected onPrStartPrebuild(
+        tracecContext: TraceContext,
+        ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>,
+        config: WorkspaceConfig | undefined,
+        user: User,
+        project?: Project,
+    ): Promise<StartPrebuildResult> | undefined {
         const pr = ctx.payload.pull_request;
         const pr_head = pr.head;
         const contextURL = pr.html_url;
@@ -297,16 +375,30 @@ export class GithubApp {
         const runPrebuild = this.appRules.shouldRunPrebuild(config, false, true, isFork);
         let prebuildStartPromise: Promise<StartPrebuildResult> | undefined;
         if (runPrebuild) {
-            prebuildStartPromise = this.prebuildManager.startPrebuild(tracecContext, {user, contextURL, cloneURL, commit: pr_head.sha, branch, project});
-            prebuildStartPromise.catch(err => log.error(err, "Error while starting prebuild", { contextURL }));
+            prebuildStartPromise = this.prebuildManager.startPrebuild(tracecContext, {
+                user,
+                contextURL,
+                cloneURL,
+                commit: pr_head.sha,
+                branch,
+                project,
+            });
+            prebuildStartPromise.catch((err) => log.error(err, 'Error while starting prebuild', { contextURL }));
             return prebuildStartPromise;
         } else {
-            log.debug({ userId: user.id }, `Not running prebuild, the user did not enable it for this context`, { contextURL, user, project });
+            log.debug({ userId: user.id }, `Not running prebuild, the user did not enable it for this context`, {
+                contextURL,
+                user,
+                project,
+            });
             return;
         }
     }
 
-    protected onPrAddBadge(config: WorkspaceConfig | undefined, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>) {
+    protected onPrAddBadge(
+        config: WorkspaceConfig | undefined,
+        ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>,
+    ) {
         if (!this.appRules.shouldDo(config, 'addBadge')) {
             // we shouldn't add (or update) a button here
             return;
@@ -318,7 +410,9 @@ export class GithubApp {
         if (!body) {
             return;
         }
-        const button = `<a href="${this.config.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
+        const button = `<a href="${this.config.hostUrl.withContext(
+            contextURL,
+        )}"><img src="${this.getBadgeImageURL()}"/></a>`;
         if (body.includes(button)) {
             // the button is already in the comment
             return;
@@ -326,17 +420,22 @@ export class GithubApp {
 
         const newBody = body + `\n\n${button}\n\n`;
         const updatePrPromise = ctx.octokit.pulls.update({ ...ctx.repo(), pull_number: pr.number, body: newBody });
-        updatePrPromise.catch(err => log.error(err, "Error while updating PR body", { contextURL }));
+        updatePrPromise.catch((err) => log.error(err, 'Error while updating PR body', { contextURL }));
     }
 
-    protected async onPrAddComment(config: WorkspaceConfig | undefined, ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>) {
+    protected async onPrAddComment(
+        config: WorkspaceConfig | undefined,
+        ctx: Context<'pull_request.opened' | 'pull_request.synchronize' | 'pull_request.reopened'>,
+    ) {
         if (!this.appRules.shouldDo(config, 'addComment')) {
             return;
         }
 
         const pr = ctx.payload.pull_request;
         const contextURL = pr.html_url;
-        const button = `<a href="${this.config.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
+        const button = `<a href="${this.config.hostUrl.withContext(
+            contextURL,
+        )}"><img src="${this.getBadgeImageURL()}"/></a>`;
         const comments = await ctx.octokit.issues.listComments(ctx.issue());
         const existingComment = comments.data.find((c: any) => c.body.indexOf(button) > -1);
         if (existingComment) {
@@ -345,7 +444,7 @@ export class GithubApp {
 
         const newComment = ctx.issue({ body: `\n\n${button}\n\n` });
         const newCommentPromise = ctx.octokit.issues.createComment(newComment);
-        newCommentPromise.catch(err => log.error(err, "Error while adding new PR comment", { contextURL }));
+        newCommentPromise.catch((err) => log.error(err, 'Error while adding new PR comment', { contextURL }));
     }
 
     protected getBadgeImageURL(): string {
@@ -373,12 +472,12 @@ export class GithubApp {
             return installationOwner;
         }
         const teamMembers = await this.teamDB.findMembersByTeam(project.teamId);
-        if (!!installationOwner && teamMembers.some(t => t.userId === installationOwner.id)) {
+        if (!!installationOwner && teamMembers.some((t) => t.userId === installationOwner.id)) {
             return installationOwner;
         }
         for (const teamMember of teamMembers) {
             const user = await this.userDB.findUserById(teamMember.userId);
-            if (user && user.identities.some(i => i.authProviderId === "Public-GitHub")) {
+            if (user && user.identities.some((i) => i.authProviderId === 'Public-GitHub')) {
                 return user;
             }
         }
@@ -392,12 +491,12 @@ export class GithubApp {
     protected async findInstallationOwner(installationId: number): Promise<User | undefined> {
         // Legacy mode
         //
-        const installation = await this.appInstallationDB.findInstallation("github", String(installationId));
+        const installation = await this.appInstallationDB.findInstallation('github', String(installationId));
         if (!installation) {
             return;
         }
 
-        const ownerID = installation.ownerUserID || "this-should-never-happen";
+        const ownerID = installation.ownerUserID || 'this-should-never-happen';
         const user = await this.userDB.findUserById(ownerID);
         if (!user) {
             return;
@@ -433,12 +532,12 @@ export namespace GithubApp {
         }
     }
 
-    export function mapToGitHubLogLevel(logLevel: LogrusLogLevel): Options["logLevel"] {
+    export function mapToGitHubLogLevel(logLevel: LogrusLogLevel): Options['logLevel'] {
         switch (logLevel) {
-            case "warning":
-                return "warn";
-            case "panic":
-                return "fatal";
+            case 'warning':
+                return 'warn';
+            case 'panic':
+                return 'fatal';
             default:
                 return logLevel;
         }

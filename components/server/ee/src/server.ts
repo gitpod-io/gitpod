@@ -5,8 +5,8 @@
  */
 
 import * as express from 'express';
-import { Server } from "../../src/server";
-import { inject } from "inversify";
+import { Server } from '../../src/server';
+import { inject } from 'inversify';
 import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { GitLabApp } from './prebuilds/gitlab-app';
@@ -31,17 +31,17 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
         await super.registerRoutes(app);
 
         if (this.config.githubApp?.enabled && this.githubApp.server) {
-            log.info("Registered GitHub app at /apps/github")
+            log.info('Registered GitHub app at /apps/github');
             app.use('/apps/github/', this.githubApp.server?.expressApp);
             log.debug(`GitHub app ready under ${this.githubApp.server.expressApp.path()}`);
         } else {
-            log.info("GitHub app disabled");
+            log.info('GitHub app disabled');
         }
 
-        log.info("Registered GitLab app at " + GitLabApp.path);
+        log.info('Registered GitLab app at ' + GitLabApp.path);
         app.use(GitLabApp.path, this.gitLabApp.router);
 
-        log.info("Registered Bitbucket app at " + BitbucketApp.path);
+        log.info('Registered Bitbucket app at ' + BitbucketApp.path);
         app.use(BitbucketApp.path, this.bitbucketApp.router);
     }
 }

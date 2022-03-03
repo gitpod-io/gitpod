@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 import * as chai from 'chai';
 const expect = chai.expect;
 import { suite, test, timeout } from 'mocha-typescript';
@@ -15,10 +14,8 @@ import { DBUserMessageViewEntry } from './typeorm/entity/db-user-message-view-en
 import { Repository } from 'typeorm';
 import { UserMessageViewsDB } from './user-message-views-db';
 
-
 @suite
 class UserMessageViewsDBSpec {
-
     typeORM = testContainer.get<TypeORM>(TypeORM);
     viewsdb = testContainer.get<UserMessageViewsDB>(UserMessageViewsDB);
 
@@ -36,7 +33,7 @@ class UserMessageViewsDBSpec {
 
     async wipeRepo() {
         const repo = await this.getUserMessageViewsRepo();
-        await repo.createQueryBuilder("view").delete().execute();
+        await repo.createQueryBuilder('view').delete().execute();
     }
 
     @test(timeout(10000))
@@ -53,4 +50,4 @@ class UserMessageViewsDBSpec {
     }
 }
 
-module.exports = new UserMessageViewsDBSpec()
+module.exports = new UserMessageViewsDBSpec();

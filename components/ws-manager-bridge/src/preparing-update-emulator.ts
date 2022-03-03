@@ -3,23 +3,23 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { Disposable, DisposableCollection, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { inject, injectable } from "inversify";
-import { Configuration } from "./config";
-import { MessageBusIntegration } from "./messagebus-integration";
-import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
+import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
+import { Disposable, DisposableCollection, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { repeat } from '@gitpod/gitpod-protocol/lib/util/repeat';
+import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import { inject, injectable } from 'inversify';
+import { Configuration } from './config';
+import { MessageBusIntegration } from './messagebus-integration';
+import { GarbageCollectedCache } from '@gitpod/gitpod-protocol/lib/util/garbage-collected-cache';
 import * as crypto from 'crypto';
 
-export const PreparingUpdateEmulatorFactory = Symbol("PreparingUpdateEmulatorFactory");
+export const PreparingUpdateEmulatorFactory = Symbol('PreparingUpdateEmulatorFactory');
 
 interface CacheEntry {
-    instance: WorkspaceInstance,
-    userId: string,
-    hash: string,
+    instance: WorkspaceInstance;
+    userId: string;
+    hash: string;
 }
 
 /**
@@ -29,11 +29,9 @@ interface CacheEntry {
  */
 @injectable()
 export class PreparingUpdateEmulator implements Disposable {
-
     @inject(Configuration) protected readonly config: Configuration;
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
-
 
     protected readonly cachedResponses = new GarbageCollectedCache<CacheEntry>(600, 150);
     protected readonly disposables = new DisposableCollection();
@@ -41,11 +39,11 @@ export class PreparingUpdateEmulator implements Disposable {
     start(region: string) {
         this.disposables.push(
             repeat(async () => {
-                const span = TraceContext.startSpan("preparingUpdateEmulatorRun");
-                const ctx = {span};
+                const span = TraceContext.startSpan('preparingUpdateEmulatorRun');
+                const ctx = { span };
                 try {
-                    const instances = await this.workspaceDb.findInstancesByPhaseAndRegion("preparing", region);
-                    span.setTag("preparingUpdateEmulatorRun.nrOfInstances", instances.length);
+                    const instances = await this.workspaceDb.findInstancesByPhaseAndRegion('preparing', region);
+                    span.setTag('preparingUpdateEmulatorRun.nrOfInstances', instances.length);
                     for (const instance of instances) {
                         const hash = hasher(instance);
                         const entry = this.cachedResponses.get(instance.id);
@@ -57,7 +55,10 @@ export class PreparingUpdateEmulator implements Disposable {
                         if (!userId) {
                             const ws = await this.workspaceDb.findById(instance.workspaceId);
                             if (!ws) {
-                                log.debug({ instanceId: instance.id, workspaceId: instance.workspaceId }, "no workspace found for workspace instance");
+                                log.debug(
+                                    { instanceId: instance.id, workspaceId: instance.workspaceId },
+                                    'no workspace found for workspace instance',
+                                );
                                 continue;
                             }
                             userId = ws.ownerId;
@@ -75,7 +76,7 @@ export class PreparingUpdateEmulator implements Disposable {
                 } finally {
                     span.finish();
                 }
-            }, this.config.emulatePreparingIntervalSeconds * 1000)
+            }, this.config.emulatePreparingIntervalSeconds * 1000),
         );
     }
 
@@ -85,7 +86,5 @@ export class PreparingUpdateEmulator implements Disposable {
 }
 
 function hasher(o: {}): string {
-    return crypto.createHash('md5')
-        .update(JSON.stringify(o))
-        .digest('hex');
+    return crypto.createHash('md5').update(JSON.stringify(o)).digest('hex');
 }

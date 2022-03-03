@@ -4,8 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { TermsAcceptanceEntry } from "@gitpod/gitpod-protocol";
-
+import { TermsAcceptanceEntry } from '@gitpod/gitpod-protocol';
 
 export const TermsAcceptanceDB = Symbol('TermsAcceptanceDB');
 export interface TermsAcceptanceDB {

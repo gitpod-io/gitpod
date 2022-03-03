@@ -29,7 +29,7 @@ class IDEWebSocket extends ReconnectingWebSocket {
             WebSocket,
             startClosed: isWorkspaceOrigin(url) && !connected,
             maxRetries: 0,
-            connectionTimeout: 2147483647 // disable connection timeout, clients should handle it
+            connectionTimeout: 2147483647, // disable connection timeout, clients should handle it
         });
         if (isWorkspaceOrigin(url)) {
             workspaceSockets.add(this);

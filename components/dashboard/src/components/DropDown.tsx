@@ -11,13 +11,13 @@ import ContextMenu from './ContextMenu';
 export interface DropDownProps {
     prefix?: string;
     contextMenuWidth?: string;
-    activeEntry?: string,
+    activeEntry?: string;
     entries: DropDownEntry[];
 }
 
 export interface DropDownEntry {
-    title: string,
-    onClick: ()=>void
+    title: string;
+    onClick: () => void;
 }
 
 function DropDown(props: DropDownProps) {
@@ -25,20 +25,25 @@ function DropDown(props: DropDownProps) {
     useEffect(() => {
         setCurrent(props.activeEntry || props.entries[0].title);
     }, [props.activeEntry, props.entries]);
-    const enhancedEntries = props.entries.map(e => {
+    const enhancedEntries = props.entries.map((e) => {
         return {
             ...e,
             active: e.title === current,
             onClick: () => {
                 e.onClick();
                 setCurrent(e.title);
-            }
-        }
-    })
-    const font = "text-gray-400 dark:text-gray-500 text-sm leading-1 group hover:text-gray-600 dark:hover:text-gray-400 transition ease-in-out"
+            },
+        };
+    });
+    const font =
+        'text-gray-400 dark:text-gray-500 text-sm leading-1 group hover:text-gray-600 dark:hover:text-gray-400 transition ease-in-out';
     return (
         <ContextMenu menuEntries={enhancedEntries} classes={`${props.contextMenuWidth} right-0`}>
-            <span className={`py-2 cursor-pointer ${font}`}>{props.prefix}{current}<Arrow up={false}/></span>
+            <span className={`py-2 cursor-pointer ${font}`}>
+                {props.prefix}
+                {current}
+                <Arrow up={false} />
+            </span>
         </ContextMenu>
     );
 }

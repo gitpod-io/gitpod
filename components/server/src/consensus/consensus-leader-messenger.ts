@@ -4,19 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Disposable } from "@gitpod/gitpod-protocol";
+import { Disposable } from '@gitpod/gitpod-protocol';
 
 export type ConsensusLeaderMessageType = 'heartbeat' | 'requestVote' | 'castVote';
 
 export const ConsensusLeaderMessenger = Symbol('ConsensusLeaderMessenger');
 export interface ConsensusLeaderMessenger {
-
     // register makes a server known to the messenger. This has to be called prior to calling any other function.
     // The UID is optional. If not given, the messenger will come up with one and return it.
     register(uid?: string): Promise<string>;
 
-    on(event: 'heartbeat', cb: (msg: HeartbeatMessage) => void): Disposable,
-    on(event: 'requestVote', cb: (msg: RequestVoteMessage) => void): Disposable,
+    on(event: 'heartbeat', cb: (msg: HeartbeatMessage) => void): Disposable;
+    on(event: 'requestVote', cb: (msg: RequestVoteMessage) => void): Disposable;
     on(event: 'castVote', cb: (msg: CastVoteMessage) => void): Disposable;
 
     // requestVote is invoked by candidates to gather votes.

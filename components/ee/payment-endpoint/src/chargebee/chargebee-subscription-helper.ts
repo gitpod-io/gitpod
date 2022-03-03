@@ -9,7 +9,9 @@ import { Chargebee as chargebee } from './chargebee-types';
 export function getStartDate(chargebeeSubscription: chargebee.Subscription): string {
     const chargebeeStart = chargebeeSubscription.started_at || chargebeeSubscription.start_date;
     if (!chargebeeStart) {
-        throw new Error('subscription.started_at or subscription.start_date must be set on subscription created event.');
+        throw new Error(
+            'subscription.started_at or subscription.start_date must be set on subscription created event.',
+        );
     } else {
         return chargeBeTimestampToDate(chargebeeStart);
     }
@@ -38,6 +40,6 @@ export function getUpdatedAt(chargebeeSubscription: chargebee.Subscription): str
 /**
  * Chargebee times are in *seconds* since epoch start
  */
-function chargeBeTimestampToDate (cbTime: number): string {
+function chargeBeTimestampToDate(cbTime: number): string {
     return new Date(cbTime * 1000).toISOString();
 }

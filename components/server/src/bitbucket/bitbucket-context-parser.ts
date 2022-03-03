@@ -4,21 +4,27 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { IssueContext, NavigatorContext, PullRequestContext, Repository, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { Schema } from "bitbucket";
-import { inject, injectable } from "inversify";
-import { NotFoundError } from "../errors";
-import { AbstractContextParser, IContextParser, IssueContexts } from "../workspace/context-parser";
+import {
+    IssueContext,
+    NavigatorContext,
+    PullRequestContext,
+    Repository,
+    User,
+    WorkspaceContext,
+} from '@gitpod/gitpod-protocol';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import { Schema } from 'bitbucket';
+import { inject, injectable } from 'inversify';
+import { NotFoundError } from '../errors';
+import { AbstractContextParser, IContextParser, IssueContexts } from '../workspace/context-parser';
 import { BitbucketApiFactory } from './bitbucket-api-factory';
-import { BitbucketTokenHelper } from "./bitbucket-token-handler";
+import { BitbucketTokenHelper } from './bitbucket-token-handler';
 
-const DEFAULT_BRANCH = "master";
+const DEFAULT_BRANCH = 'master';
 
 @injectable()
 export class BitbucketContextParser extends AbstractContextParser implements IContextParser {
-
     @inject(BitbucketTokenHelper) protected readonly tokenHelper: BitbucketTokenHelper;
     @inject(BitbucketApiFactory) protected readonly apiFactory: BitbucketApiFactory;
 
@@ -27,68 +33,68 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
     }
 
     public async handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext> {
-        const span = TraceContext.startSpan("BitbucketContextParser.handle", ctx);
+        const span = TraceContext.startSpan('BitbucketContextParser.handle', ctx);
 
         try {
             const { host, owner, repoName, moreSegments, searchParams } = await this.parseURL(user, contextUrl);
             if (moreSegments.length > 0) {
                 switch (moreSegments[0]) {
-                    case "src": {
+                    case 'src': {
                         const more: Partial<NavigatorContext> = {};
-                        const branchTagOrHash = moreSegments.length > 1 ? moreSegments[1] : "";
+                        const branchTagOrHash = moreSegments.length > 1 ? moreSegments[1] : '';
                         const isHash = await this.isValidCommitHash(user, owner, repoName, branchTagOrHash);
                         if (isHash) {
                             more.revision = branchTagOrHash;
-                            if (searchParams.has("at")) {
-                                more.ref = searchParams.get("at")!;
-                                more.refType = "branch";
+                            if (searchParams.has('at')) {
+                                more.ref = searchParams.get('at')!;
+                                more.refType = 'branch';
                             }
                         } else {
                             if (await this.isTag(user, owner, repoName, branchTagOrHash)) {
                                 more.ref = branchTagOrHash;
-                                more.refType = "tag";
+                                more.refType = 'tag';
                             } else {
                                 more.ref = branchTagOrHash;
-                                more.refType = "branch";
+                                more.refType = 'branch';
                             }
                         }
                         const pathSegments = moreSegments.length > 2 ? moreSegments.slice(2) : [];
-                        more.path = pathSegments.join("/");
+                        more.path = pathSegments.join('/');
                         return this.handleNavigatorContext(ctx, user, host, owner, repoName, more);
                     }
-                    case "branch": {
+                    case 'branch': {
                         const more: Partial<NavigatorContext> = {};
                         const pathSegments = moreSegments.length > 1 ? moreSegments.slice(1) : [];
-                        more.ref = pathSegments.join("/");
-                        more.refType = "branch";
+                        more.ref = pathSegments.join('/');
+                        more.refType = 'branch';
                         return this.handleNavigatorContext(ctx, user, host, owner, repoName, more);
                     }
-                    case "commits": {
+                    case 'commits': {
                         const more: Partial<NavigatorContext> = {};
                         if (moreSegments.length > 1) {
-                            if (moreSegments[1] === "tag") {
+                            if (moreSegments[1] === 'tag') {
                                 if (moreSegments.length > 2) {
                                     more.ref = moreSegments[2];
-                                    more.refType = "tag";
+                                    more.refType = 'tag';
                                 }
-                            } else if (moreSegments[1] === "branch") {
+                            } else if (moreSegments[1] === 'branch') {
                                 if (moreSegments.length > 2) {
                                     more.ref = moreSegments[2];
-                                    more.refType = "branch";
+                                    more.refType = 'branch';
                                 }
                             } else {
-                                more.ref = "";
+                                more.ref = '';
                                 more.revision = moreSegments[1];
-                                more.refType = "revision";
+                                more.refType = 'revision';
                             }
                         }
                         return this.handleNavigatorContext(ctx, user, host, owner, repoName, more);
                     }
-                    case "pull-requests": {
+                    case 'pull-requests': {
                         const more = { nr: parseInt(moreSegments[1]) };
                         return await this.handlePullRequestContext(ctx, user, host, owner, repoName, more);
                     }
-                    case "issues": {
+                    case 'issues': {
                         const more = { nr: parseInt(moreSegments[1]) };
                         return await this.handleIssueContext(ctx, user, host, owner, repoName, more);
                     }
@@ -97,7 +103,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             return await this.handleNavigatorContext(ctx, user, host, owner, repoName);
         } catch (e) {
             span.addTags({ contextUrl }).log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket context", e);
+            log.error({ userId: user.id }, 'Error parsing Bitbucket context', e);
             throw e;
         } finally {
             span.finish();
@@ -110,7 +116,11 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         }
         try {
             const api = await this.api(user);
-            const result = (await api.repositories.getCommit({ workspace: owner, repo_slug: repoName, commit: potentialCommitHash }));
+            const result = await api.repositories.getCommit({
+                workspace: owner,
+                repo_slug: repoName,
+                commit: potentialCommitHash,
+            });
             return result.data.hash === potentialCommitHash;
         } catch {
             return false;
@@ -120,47 +130,77 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
     protected async isTag(user: User, owner: string, repoName: string, potentialTag: string) {
         try {
             const api = await this.api(user);
-            const result = (await api.repositories.getTag({ workspace: owner, repo_slug: repoName, name: potentialTag }));
+            const result = await api.repositories.getTag({ workspace: owner, repo_slug: repoName, name: potentialTag });
             return result.data.name === potentialTag;
         } catch {
             return false;
         }
     }
 
-    protected async handleNavigatorContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, more: Partial<NavigatorContext> = {}, givenRepo?: Schema.Repository): Promise<NavigatorContext> {
-        const span = TraceContext.startSpan("BitbucketContextParser.handleNavigatorContext", ctx);
+    protected async handleNavigatorContext(
+        ctx: TraceContext,
+        user: User,
+        host: string,
+        owner: string,
+        repoName: string,
+        more: Partial<NavigatorContext> = {},
+        givenRepo?: Schema.Repository,
+    ): Promise<NavigatorContext> {
+        const span = TraceContext.startSpan('BitbucketContextParser.handleNavigatorContext', ctx);
         try {
             const api = await this.api(user);
             const repo = givenRepo || (await api.repositories.get({ workspace: owner, repo_slug: repoName })).data;
             const repository = await this.toRepository(user, host, repo);
-            span.log({ "request.finished": "" });
+            span.log({ 'request.finished': '' });
 
             if (!repo) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                throw await NotFoundError.create(
+                    await this.tokenHelper.getCurrentToken(user),
+                    user,
+                    this.config.host,
+                    owner,
+                    repoName,
+                );
             }
 
             if (!more.revision) {
                 more.ref = more.ref || repository.defaultBranch;
             }
-            more.refType = more.refType || "branch";
+            more.refType = more.refType || 'branch';
 
             if (!more.revision) {
-                const commits = (await api.repositories.listCommitsAt({ workspace: owner, repo_slug: repoName, revision: more.ref!, pagelen: 1 })).data;
-                more.revision = commits.values && commits.values.length > 0 ? commits.values[0].hash : "";
+                const commits = (
+                    await api.repositories.listCommitsAt({
+                        workspace: owner,
+                        repo_slug: repoName,
+                        revision: more.ref!,
+                        pagelen: 1,
+                    })
+                ).data;
+                more.revision = commits.values && commits.values.length > 0 ? commits.values[0].hash : '';
                 if ((!commits.values || commits.values.length === 0) && more.ref === repository.defaultBranch) {
                     // empty repo
                     more.ref = undefined;
-                    more.revision = "";
+                    more.revision = '';
                     more.refType = undefined;
                 }
             }
 
             if (!more.path) {
                 more.isFile = false;
-                more.path = "";
+                more.path = '';
             } else if (more.isFile === undefined) {
-                const fileMeta = (await api.repositories.readSrc({ workspace: owner, repo_slug: repoName, format: "meta", commit: more.revision!, path: more.path!, pagelen: 1 })).data;
-                more.isFile = (fileMeta as any).type === "commit_file";
+                const fileMeta = (
+                    await api.repositories.readSrc({
+                        workspace: owner,
+                        repo_slug: repoName,
+                        format: 'meta',
+                        commit: more.revision!,
+                        path: more.path!,
+                        pagelen: 1,
+                    })
+                ).data;
+                more.isFile = (fileMeta as any).type === 'commit_file';
             }
 
             return {
@@ -170,57 +210,89 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             } as NavigatorContext;
         } catch (e) {
             span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", e);
+            log.error({ userId: user.id }, 'Error parsing Bitbucket navigator request context', e);
             throw e;
         } finally {
             span.finish();
         }
     }
 
-    protected async handlePullRequestContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, more: Partial<PullRequestContext> & { nr: number }): Promise<PullRequestContext> {
-        const span = TraceContext.startSpan("BitbucketContextParser.handleIssueContext", ctx);
+    protected async handlePullRequestContext(
+        ctx: TraceContext,
+        user: User,
+        host: string,
+        owner: string,
+        repoName: string,
+        more: Partial<PullRequestContext> & { nr: number },
+    ): Promise<PullRequestContext> {
+        const span = TraceContext.startSpan('BitbucketContextParser.handleIssueContext', ctx);
         try {
             const api = await this.api(user);
-            const pr = (await api.repositories.getPullRequest({ workspace: owner, repo_slug: repoName, pull_request_id: more.nr })).data;
-            more.title = pr.title || "";
+            const pr = (
+                await api.repositories.getPullRequest({
+                    workspace: owner,
+                    repo_slug: repoName,
+                    pull_request_id: more.nr,
+                })
+            ).data;
+            more.title = pr.title || '';
             const source = pr.source;
             const destination = pr.destination;
 
             if (!source || !destination) {
-                throw new Error("Bitbucket: Source or destination of PR is missing.");
+                throw new Error('Bitbucket: Source or destination of PR is missing.');
             }
 
-            const destRepo = (await api.repositories.get({ workspace: destination.repository!.full_name!.split("/")[0], repo_slug: destination.repository!.full_name!.split("/")[1] })).data
-            const sourceRepo = (await api.repositories.get({ workspace: source.repository!.full_name!.split("/")[0], repo_slug: source.repository!.full_name!.split("/")[1] })).data
+            const destRepo = (
+                await api.repositories.get({
+                    workspace: destination.repository!.full_name!.split('/')[0],
+                    repo_slug: destination.repository!.full_name!.split('/')[1],
+                })
+            ).data;
+            const sourceRepo = (
+                await api.repositories.get({
+                    workspace: source.repository!.full_name!.split('/')[0],
+                    repo_slug: source.repository!.full_name!.split('/')[1],
+                })
+            ).data;
 
             return <PullRequestContext>{
                 repository: await this.toRepository(user, host, sourceRepo),
                 ref: source.branch!.name,
-                refType: "branch",
+                refType: 'branch',
                 revision: source.commit!.hash,
                 base: {
                     repository: await this.toRepository(user, host, destRepo),
                     ref: destination.branch!.name,
-                    refType: "branch",
+                    refType: 'branch',
                 },
                 ...more,
                 owner,
             };
         } catch (e) {
             span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket pull request context", e);
+            log.error({ userId: user.id }, 'Error parsing Bitbucket pull request context', e);
             throw e;
         } finally {
             span.finish();
         }
     }
 
-    protected async handleIssueContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, more: Partial<IssueContext> & { nr: number }): Promise<IssueContext> {
-        const span = TraceContext.startSpan("BitbucketContextParser.handleIssueContext", ctx);
+    protected async handleIssueContext(
+        ctx: TraceContext,
+        user: User,
+        host: string,
+        owner: string,
+        repoName: string,
+        more: Partial<IssueContext> & { nr: number },
+    ): Promise<IssueContext> {
+        const span = TraceContext.startSpan('BitbucketContextParser.handleIssueContext', ctx);
         try {
             const api = await this.api(user);
-            const issue = (await api.repositories.getIssue({ workspace: owner, repo_slug: repoName, issue_id: `${more.nr}` })).data;
-            more.title = issue.title || "";
+            const issue = (
+                await api.repositories.getIssue({ workspace: owner, repo_slug: repoName, issue_id: `${more.nr}` })
+            ).data;
+            more.title = issue.title || '';
             const navigatorContext = await this.handleNavigatorContext(ctx, user, host, owner, repoName);
 
             return <IssueContext>{
@@ -231,7 +303,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             };
         } catch (e) {
             span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket issue context", e);
+            log.error({ userId: user.id }, 'Error parsing Bitbucket issue context', e);
             throw e;
         } finally {
             span.finish();
@@ -244,7 +316,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         }
         // full_name: string
         // The concatenation of the repository owner's username and the slugified name, e.g. "evzijst/interruptingcow". This is the same string used in Bitbucket URLs.
-        const fullName = repo.full_name!.split("/");
+        const fullName = repo.full_name!.split('/');
         const owner = fullName[0];
         const name = fullName[1];
 
@@ -255,20 +327,31 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             owner,
             private: !!repo.isPrivate,
             defaultBranch: repo.mainbranch ? repo.mainbranch.name : DEFAULT_BRANCH,
-        }
+        };
         if (!!repo.parent && !!repo.parent.full_name) {
             const api = await this.api(user);
-            const parentRepo = (await api.repositories.get({ workspace: repo.parent!.full_name!.split("/")[0], repo_slug: repo.parent!.full_name!.split("/")[1] })).data;
+            const parentRepo = (
+                await api.repositories.get({
+                    workspace: repo.parent!.full_name!.split('/')[0],
+                    repo_slug: repo.parent!.full_name!.split('/')[1],
+                })
+            ).data;
             result.fork = {
-                parent: await this.toRepository(user, host, parentRepo)
+                parent: await this.toRepository(user, host, parentRepo),
             };
         }
 
         return result;
     }
 
-    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[] | undefined> {
-        const span = TraceContext.startSpan("BitbucketContextParser.fetchCommitHistory", ctx);
+    public async fetchCommitHistory(
+        ctx: TraceContext,
+        user: User,
+        contextUrl: string,
+        sha: string,
+        maxDepth: number,
+    ): Promise<string[] | undefined> {
+        const span = TraceContext.startSpan('BitbucketContextParser.fetchCommitHistory', ctx);
         try {
             // TODO(janx): To get more results than Bitbucket API's max pagelen (seems to be 100), pagination should be handled.
             // The additional property 'page' may be helfpul.
@@ -288,7 +371,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             return commits.map((v: Schema.Commit) => v.hash!);
         } catch (e) {
             span.log({ error: e });
-            log.error({ userId: user.id }, "Error fetching Bitbucket commit history", e);
+            log.error({ userId: user.id }, 'Error fetching Bitbucket commit history', e);
             throw e;
         } finally {
             span.finish();

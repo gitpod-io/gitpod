@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Token, User } from "@gitpod/gitpod-protocol";
+import { Token, User } from '@gitpod/gitpod-protocol';
 
 export const TokenProvider = Symbol('TokenProvider');
 export interface TokenProvider {

@@ -4,13 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from "inversify";
+import { injectable, inject } from 'inversify';
 import * as express from 'express';
-import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Permission, User } from "@gitpod/gitpod-protocol";
-import { StorageClient } from "../storage/storage-client";
-import { AuthorizationService } from "../user/authorization-service";
+import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from '@gitpod/gitpod-db/lib';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { Permission, User } from '@gitpod/gitpod-protocol';
+import { StorageClient } from '../storage/storage-client';
+import { AuthorizationService } from '../user/authorization-service';
 
 @injectable()
 export class WorkspaceDownloadService {
@@ -25,7 +25,7 @@ export class WorkspaceDownloadService {
     }
 
     protected addDownloadHandler(router: express.Router) {
-        router.get("/get/:id", async (req, res, next) => {
+        router.get('/get/:id', async (req, res, next) => {
             if (!req.isAuthenticated() || !User.is(req.user)) {
                 res.sendStatus(500);
                 return;
@@ -40,7 +40,10 @@ export class WorkspaceDownloadService {
                     return;
                 }
 
-                if (wsi.ownerId !== userId && !this.authorizationService.hasPermission(req.user, Permission.ADMIN_WORKSPACES)) {
+                if (
+                    wsi.ownerId !== userId &&
+                    !this.authorizationService.hasPermission(req.user, Permission.ADMIN_WORKSPACES)
+                ) {
                     log.warn({ workspaceId, userId }, "user attempted to download someone else's workspace");
                     res.sendStatus(500);
                     return;
@@ -48,13 +51,12 @@ export class WorkspaceDownloadService {
 
                 const signedUrl = await this.storageClient.createWorkspaceContentDownloadUrl(userId, workspaceId);
 
-                log.info({ workspaceId, userId }, "user is downloading workspace content");
+                log.info({ workspaceId, userId }, 'user is downloading workspace content');
                 res.send(signedUrl);
             } catch (err) {
-                log.error({workspaceId}, "cannot prepare workspace download", err);
+                log.error({ workspaceId }, 'cannot prepare workspace download', err);
                 res.sendStatus(500);
             }
         });
     }
-
 }

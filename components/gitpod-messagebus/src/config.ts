@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable } from "inversify";
+import { injectable } from 'inversify';
 
 @injectable()
 export class MessagebusConfiguration {

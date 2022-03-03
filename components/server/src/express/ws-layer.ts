@@ -25,9 +25,7 @@ export namespace WsLayer {
 }
 
 export class WsLayerImpl implements WsLayer {
-    constructor(
-        protected readonly handler: WsHandler,
-        protected readonly nextLayer: WsLayer) { }
+    constructor(protected readonly handler: WsHandler, protected readonly nextLayer: WsLayer) {}
 
     async handleError(err: any | undefined, ws: websocket, req: express.Request, next: WsNextFunction) {
         if (this.handler.length !== 4) {
@@ -76,9 +74,17 @@ export class WsLayerImpl implements WsLayer {
 }
 
 class DoneLayerImpl extends WsLayerImpl {
-    handleError() { return Promise.resolve() };
-    handleRequest() { return Promise.resolve() };
-    dispatch() { return Promise.resolve() };
-    next() { return Promise.resolve() };
+    handleError() {
+        return Promise.resolve();
+    }
+    handleRequest() {
+        return Promise.resolve();
+    }
+    dispatch() {
+        return Promise.resolve();
+    }
+    next() {
+        return Promise.resolve();
+    }
 }
-const DONE = new DoneLayerImpl(() => { }, {} as WsLayer);
+const DONE = new DoneLayerImpl(() => {}, {} as WsLayer);

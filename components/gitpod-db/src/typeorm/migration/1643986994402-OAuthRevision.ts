@@ -4,24 +4,25 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
-import { MigrationInterface, QueryRunner } from "typeorm";
-import { dbContainerModule } from "../../container-module";
-import { columnExists, indexExists } from "./helper/helper";
+import { AuthProviderEntry } from '@gitpod/gitpod-protocol';
+import { MigrationInterface, QueryRunner } from 'typeorm';
+import { dbContainerModule } from '../../container-module';
+import { columnExists, indexExists } from './helper/helper';
 import { Container } from 'inversify';
-import { AuthProviderEntryDB } from "../../auth-provider-entry-db";
-import { UserDB } from "../../user-db";
+import { AuthProviderEntryDB } from '../../auth-provider-entry-db';
+import { UserDB } from '../../user-db';
 
-const TABLE_NAME = "d_b_auth_provider_entry";
-const COLUMN_NAME: keyof AuthProviderEntry = "oauthRevision";
-const INDEX_NAME = "ind_oauthRevision";
+const TABLE_NAME = 'd_b_auth_provider_entry';
+const COLUMN_NAME: keyof AuthProviderEntry = 'oauthRevision';
+const INDEX_NAME = 'ind_oauthRevision';
 
 export class OAuthRevision1643986994402 implements MigrationInterface {
-
     public async up(queryRunner: QueryRunner): Promise<void> {
         // create new column
         if (!(await columnExists(queryRunner, TABLE_NAME, COLUMN_NAME))) {
-            await queryRunner.query(`ALTER TABLE ${TABLE_NAME} ADD COLUMN ${COLUMN_NAME} varchar(128) NOT NULL DEFAULT ''`);
+            await queryRunner.query(
+                `ALTER TABLE ${TABLE_NAME} ADD COLUMN ${COLUMN_NAME} varchar(128) NOT NULL DEFAULT ''`,
+            );
         }
 
         // create index on said column
@@ -34,7 +35,7 @@ export class OAuthRevision1643986994402 implements MigrationInterface {
         const container = new Container();
         container.load(dbContainerModule);
 
-        container.get<UserDB>(UserDB);  // initializes encryptionProvider as side effect
+        container.get<UserDB>(UserDB); // initializes encryptionProvider as side effect
         const db = container.get<AuthProviderEntryDB>(AuthProviderEntryDB);
         const allProviders = await db.findAll([]);
         const writes: Promise<AuthProviderEntry>[] = [];
@@ -48,5 +49,4 @@ export class OAuthRevision1643986994402 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE ${TABLE_NAME} DROP INDEX ${INDEX_NAME}`);
         await queryRunner.query(`ALTER TABLE ${TABLE_NAME} DROP COLUMN ${COLUMN_NAME}`);
     }
-
 }

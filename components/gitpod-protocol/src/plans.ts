@@ -8,39 +8,49 @@ export type Currency = 'USD' | 'EUR';
 export namespace Currency {
     export const getAll = (): Currency[] => {
         return ['USD', 'EUR'];
-    }
+    };
     export const getSymbol = (c: Currency) => {
         return c === 'USD' ? '$' : '€';
-    }
+    };
 }
 
 /**
  * Different plans of the same type MAY have different prices ($/€, for example) but MUST have the same feature set.
  */
-export type PlanType = 'free' | 'free-50' | 'free-open-source' | 'student' | 'basic' | 'personal' | 'professional' | 'professional-new';
+export type PlanType =
+    | 'free'
+    | 'free-50'
+    | 'free-open-source'
+    | 'student'
+    | 'basic'
+    | 'personal'
+    | 'professional'
+    | 'professional-new';
 export type HoursPerMonthType = number | 'unlimited';
 export interface Plan {
-    chargebeeId: string
-    githubId?: number
-    githubPlanNumber?: number
+    chargebeeId: string;
+    githubId?: number;
+    githubPlanNumber?: number;
 
-    name: string
-    currency: Currency
+    name: string;
+    currency: Currency;
     /** In full currencies (Euro, US Dollar, ...) */
-    pricePerMonth: number
-    hoursPerMonth: HoursPerMonthType
-    type: PlanType
-    team?: boolean
+    pricePerMonth: number;
+    hoursPerMonth: HoursPerMonthType;
+    type: PlanType;
+    team?: boolean;
 }
 export namespace Plan {
     export const is = (o: any): o is Plan => {
-        return 'chargebeeId' in o
-            && 'name' in o
-            && 'currency' in o
-            && 'pricePerMonth' in o
-            && 'hoursPerMonth' in o
-            && 'type' in o;
-    }
+        return (
+            'chargebeeId' in o &&
+            'name' in o &&
+            'currency' in o &&
+            'pricePerMonth' in o &&
+            'hoursPerMonth' in o &&
+            'type' in o
+        );
+    };
 }
 
 export const MAX_PARALLEL_WORKSPACES = 16;
@@ -52,23 +62,23 @@ export interface Coupon {
 export namespace Coupon {
     export const is = (o: any): o is Coupon => {
         return 'id' in o;
-    }
+    };
 }
 export namespace Coupons {
     export const INTERNAL_GITPOD_GHSP: Coupon = {
-        id: "INTERNAL_GITPOD_GHSP",
-        isGithubStudentCoupon: true
+        id: 'INTERNAL_GITPOD_GHSP',
+        isGithubStudentCoupon: true,
     };
     export const INTERNAL_GITPOD_GHSP_2: Coupon = {
-        id: "INTERNAL_GITPOD_GHSP_2",
-        isGithubStudentCoupon: true
+        id: 'INTERNAL_GITPOD_GHSP_2',
+        isGithubStudentCoupon: true,
     };
     export const GITHUBSTUDENTPACKFORFACULTY: Coupon = {
-        id: "GITHUBSTUDENTPACKFORFACULTY",
-        isGithubStudentCoupon: true
+        id: 'GITHUBSTUDENTPACKFORFACULTY',
+        isGithubStudentCoupon: true,
     };
     export const isGithubStudentCoupon = (id: string): boolean | undefined => {
-        const c = getAllCoupons().find(ic => ic.id === id);
+        const c = getAllCoupons().find((ic) => ic.id === id);
         if (!c) {
             return undefined;
         }
@@ -76,8 +86,8 @@ export namespace Coupons {
     };
     export const getAllCoupons = (): Coupon[] => {
         return Object.keys(Coupons)
-            .map(k => (Coupons as any)[k])
-            .filter(a => typeof a === 'object' && Coupon.is(a));
+            .map((k) => (Coupons as any)[k])
+            .filter((a) => typeof a === 'object' && Coupon.is(a));
     };
 }
 
@@ -124,7 +134,7 @@ export namespace Plans {
         name: 'Open Source',
         currency: 'USD',
         pricePerMonth: 0,
-        hoursPerMonth: 100
+        hoursPerMonth: 100,
     };
 
     /**
@@ -139,7 +149,7 @@ export namespace Plans {
         name: 'Open Source',
         currency: 'USD',
         pricePerMonth: 0,
-        hoursPerMonth: 50
+        hoursPerMonth: 50,
     };
 
     /**
@@ -156,7 +166,7 @@ export namespace Plans {
         name: 'Professional Open Source',
         currency: 'USD',
         pricePerMonth: 0,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -168,7 +178,7 @@ export namespace Plans {
         name: 'Student Unleashed',
         currency: 'EUR',
         pricePerMonth: 8,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -180,7 +190,7 @@ export namespace Plans {
         name: 'Student Unleashed',
         currency: 'USD',
         pricePerMonth: 9,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -193,7 +203,7 @@ export namespace Plans {
         team: true,
         currency: 'EUR',
         pricePerMonth: 8,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -206,7 +216,7 @@ export namespace Plans {
         team: true,
         currency: 'USD',
         pricePerMonth: 9,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -218,7 +228,7 @@ export namespace Plans {
         name: 'Standard',
         currency: 'EUR',
         pricePerMonth: 17,
-        hoursPerMonth: 100
+        hoursPerMonth: 100,
     };
 
     /**
@@ -233,7 +243,7 @@ export namespace Plans {
         name: 'Standard',
         currency: 'USD',
         pricePerMonth: 19,
-        hoursPerMonth: 100
+        hoursPerMonth: 100,
     };
 
     /**
@@ -245,7 +255,7 @@ export namespace Plans {
         name: 'Personal',
         currency: 'EUR',
         pricePerMonth: 8,
-        hoursPerMonth: 100
+        hoursPerMonth: 100,
     };
 
     /**
@@ -260,7 +270,7 @@ export namespace Plans {
         name: 'Personal',
         currency: 'USD',
         pricePerMonth: 9,
-        hoursPerMonth: 100
+        hoursPerMonth: 100,
     };
 
     /**
@@ -273,7 +283,7 @@ export namespace Plans {
         name: 'Professional',
         currency: 'EUR',
         pricePerMonth: 23,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -286,7 +296,7 @@ export namespace Plans {
         name: 'Professional',
         currency: 'USD',
         pricePerMonth: 25,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -300,7 +310,7 @@ export namespace Plans {
         currency: 'EUR',
         team: true,
         pricePerMonth: 23,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -314,7 +324,7 @@ export namespace Plans {
         currency: 'USD',
         team: true,
         pricePerMonth: 25,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -327,7 +337,7 @@ export namespace Plans {
         name: 'Unleashed',
         currency: 'EUR',
         pricePerMonth: 35,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -343,7 +353,7 @@ export namespace Plans {
         name: 'Unleashed',
         currency: 'USD',
         pricePerMonth: 39,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -357,7 +367,7 @@ export namespace Plans {
         currency: 'USD',
         team: true,
         pricePerMonth: 39,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     /**
@@ -371,15 +381,14 @@ export namespace Plans {
         currency: 'EUR',
         team: true,
         pricePerMonth: 35,
-        hoursPerMonth: 'unlimited'
+        hoursPerMonth: 'unlimited',
     };
 
     const getAllPlans = (): Plan[] => {
         return Object.keys(Plans)
-            .map(k => (Plans as any)[k])
-            .filter(a => typeof a === 'object' && Plan.is(a));
+            .map((k) => (Plans as any)[k])
+            .filter((a) => typeof a === 'object' && Plan.is(a));
     };
-
 
     /**
      * This function returns all individual plans that might be active (= we have subscriptions for) at the moment
@@ -393,67 +402,71 @@ export namespace Plans {
             Plans.PROFESSIONAL_NEW_EUR,
             Plans.PROFESSIONAL_NEW_USD,
             Plans.PROFESSIONAL_EUR,
-            Plans.PROFESSIONAL_USD
+            Plans.PROFESSIONAL_USD,
         ];
-        return [
-            Plans.FREE,
-            Plans.FREE_50,
-            Plans.FREE_OPEN_SOURCE,
-            ...availablePaidPlans.filter(p => p.currency)
-        ]
-    };
+        return [Plans.FREE, Plans.FREE_50, Plans.FREE_OPEN_SOURCE, ...availablePaidPlans.filter((p) => p.currency)];
+    }
 
     export const getAvailableTeamPlans = (currency?: Currency): Plan[] => {
-        const teamPlans = getAllPlans().filter(p => !!p.team);
-        return currency ? teamPlans.filter(p => p.currency === currency) : teamPlans;
+        const teamPlans = getAllPlans().filter((p) => !!p.team);
+        return currency ? teamPlans.filter((p) => p.currency === currency) : teamPlans;
     };
 
     export function getById(id: string | undefined): Plan | undefined {
         if (id === undefined) {
             return undefined;
         }
-        return getAllPlans()
-            .find(p => p.chargebeeId === id) || undefined;
-    };
+        return getAllPlans().find((p) => p.chargebeeId === id) || undefined;
+    }
 
     export function getByTypeAndCurrency(type: PlanType, currency: Currency): Plan | undefined {
         return getAllPlans()
-            .filter(p => p.type)
-            .find(p => p.currency === currency);
+            .filter((p) => p.type)
+            .find((p) => p.currency === currency);
     }
 
     export function getProPlan(currency: Currency): Plan {
         switch (currency) {
-            case "EUR": return Plans.PROFESSIONAL_EUR;
-            case "USD": return Plans.PROFESSIONAL_USD;
+            case 'EUR':
+                return Plans.PROFESSIONAL_EUR;
+            case 'USD':
+                return Plans.PROFESSIONAL_USD;
         }
     }
 
     export function getNewProPlan(currency: Currency): Plan {
         switch (currency) {
-            case "EUR": return Plans.PROFESSIONAL_NEW_EUR;
-            case "USD": return Plans.PROFESSIONAL_NEW_USD;
+            case 'EUR':
+                return Plans.PROFESSIONAL_NEW_EUR;
+            case 'USD':
+                return Plans.PROFESSIONAL_NEW_USD;
         }
     }
 
     export function getStudentProPlan(currency: Currency): Plan {
         switch (currency) {
-            case "EUR": return Plans.PROFESSIONAL_STUDENT_EUR;
-            case "USD": return Plans.PROFESSIONAL_STUDENT_USD;
+            case 'EUR':
+                return Plans.PROFESSIONAL_STUDENT_EUR;
+            case 'USD':
+                return Plans.PROFESSIONAL_STUDENT_USD;
         }
     }
 
     export function getBasicPlan(currency: Currency): Plan {
         switch (currency) {
-            case "EUR": return Plans.BASIC_EUR;
-            case "USD": return Plans.BASIC_USD;
+            case 'EUR':
+                return Plans.BASIC_EUR;
+            case 'USD':
+                return Plans.BASIC_USD;
         }
     }
 
     export function getPersonalPlan(currency: Currency): Plan {
         switch (currency) {
-            case "EUR": return Plans.PERSONAL_EUR;
-            case "USD": return Plans.PERSONAL_USD;
+            case 'EUR':
+                return Plans.PERSONAL_EUR;
+            case 'USD':
+                return Plans.PERSONAL_USD;
         }
     }
 
@@ -462,9 +475,11 @@ export namespace Plans {
     }
 
     export function isFreePlan(chargebeeId: string | undefined): boolean {
-        return chargebeeId === Plans.FREE.chargebeeId
-            || chargebeeId === Plans.FREE_50.chargebeeId
-            || chargebeeId === Plans.FREE_OPEN_SOURCE.chargebeeId;
+        return (
+            chargebeeId === Plans.FREE.chargebeeId ||
+            chargebeeId === Plans.FREE_50.chargebeeId ||
+            chargebeeId === Plans.FREE_OPEN_SOURCE.chargebeeId
+        );
     }
 
     export function isFreeNonTransientPlan(chargebeeId: string | undefined): boolean {
@@ -494,16 +509,15 @@ export namespace Plans {
         }
 
         switch (plan.type) {
-            case "professional-new":
+            case 'professional-new':
                 return 8;
 
-            case "professional":
-            case "student":
+            case 'professional':
+            case 'student':
                 return 16;
         }
         return DEFAULT;
     }
-
 
     /**
      * This declares the plan structure we have in Gitpod: All entries in a sub-array have the same arity in this structure.
@@ -512,10 +526,10 @@ export namespace Plans {
      * This is used to be able to get the next "higher" plan (cmp. getNextHigherPlanType).
      */
     const planStructure: PlanType[][] = [
-        ["free-50", "free", "free-open-source"],
-        ["personal", "basic"],
-        ["professional-new"],
-        ["professional", "student"]
+        ['free-50', 'free', 'free-open-source'],
+        ['personal', 'basic'],
+        ['professional-new'],
+        ['professional', 'student'],
     ];
 
     function getPlanTypeArity(type: PlanType) {
@@ -536,7 +550,7 @@ export namespace Plans {
     export function getNextHigherPlanType(type: PlanType): PlanType {
         const arity = getPlanTypeArity(type);
         const nextHigherType = getPlanTypeForArity(arity + 1);
-        return nextHigherType || "professional";
+        return nextHigherType || 'professional';
     }
 
     /**
@@ -550,14 +564,14 @@ export namespace Plans {
         return va < vb ? -1 : va > vb ? 1 : 0;
     }
 
-    export function subscriptionChange(fromType: PlanType, toType: PlanType): "upgrade" | "downgrade" | "none" {
+    export function subscriptionChange(fromType: PlanType, toType: PlanType): 'upgrade' | 'downgrade' | 'none' {
         const cmp = Plans.compareTypes(fromType, toType);
         if (cmp < 0) {
-            return "upgrade";
+            return 'upgrade';
         } else if (cmp > 0) {
-            return "downgrade";
+            return 'downgrade';
         } else {
-            return "none";
+            return 'none';
         }
     }
 
@@ -570,61 +584,94 @@ export namespace Plans {
     export namespace Feature {
         export const getFeaturesFor = (p: Plan): Feature[] => {
             switch (p.type) {
-                case "free":
-                    return [
-                        { title: 'Public repositories' }
-                    ];
+                case 'free':
+                    return [{ title: 'Public repositories' }];
 
-                case "free-50":
-                    return [
-                        { title: 'Public repositories' }
-                    ];
+                case 'free-50':
+                    return [{ title: 'Public repositories' }];
 
-                case "free-open-source":
-                    return [
-                        { title: 'Public repositories' },
-                    ];
+                case 'free-open-source':
+                    return [{ title: 'Public repositories' }];
 
-                case "student":
+                case 'student':
                     return [
                         { title: 'Private & Public repos' },
-                        { title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`, tooltip: 'The number of workspaces running at the same time' },
-                        { title: 'Team Manageable', link: "/teams/", tooltip: 'Setup Gitpod for an entire Team with a single invoice and credit card' },
+                        {
+                            title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`,
+                            tooltip: 'The number of workspaces running at the same time',
+                        },
+                        {
+                            title: 'Team Manageable',
+                            link: '/teams/',
+                            tooltip: 'Setup Gitpod for an entire Team with a single invoice and credit card',
+                        },
                         { title: '1h Timeout', tooltip: 'Workspaces without user activity are stopped after 1 hour' },
-                        { title: '3h Timeout Boost', tooltip: 'You can manually boost the timeout to 3 hours within a running workspace' }
+                        {
+                            title: '3h Timeout Boost',
+                            tooltip: 'You can manually boost the timeout to 3 hours within a running workspace',
+                        },
                     ];
 
-                case "basic":
+                case 'basic':
                     return [
                         { title: 'Private & Public repos' },
-                        { title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`, tooltip: 'The number of workspaces running at the same time.' },
+                        {
+                            title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`,
+                            tooltip: 'The number of workspaces running at the same time.',
+                        },
                     ];
 
                 // Personal
-                case "personal":
+                case 'personal':
                     return [
                         { title: 'Private & Public repos' },
-                        { title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`, tooltip: 'The number of workspaces running at the same time' },
-                        { title: '30min Timeout', tooltip: 'Workspaces without user activity are stopped after 30 minutes' }
+                        {
+                            title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`,
+                            tooltip: 'The number of workspaces running at the same time',
+                        },
+                        {
+                            title: '30min Timeout',
+                            tooltip: 'Workspaces without user activity are stopped after 30 minutes',
+                        },
                     ];
 
                 // Professional
-                case "professional-new":
+                case 'professional-new':
                     return [
                         { title: 'Private & Public repos' },
-                        { title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`, tooltip: 'The number of workspaces running at the same time' },
-                        { title: 'Team Manageable', link: "/teams/", tooltip: 'Setup Gitpod for an entire Team with a single invoice and credit card' },
-                        { title: '30min Timeout', tooltip: 'Workspaces without user activity are stopped after 30 minutes' }
+                        {
+                            title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`,
+                            tooltip: 'The number of workspaces running at the same time',
+                        },
+                        {
+                            title: 'Team Manageable',
+                            link: '/teams/',
+                            tooltip: 'Setup Gitpod for an entire Team with a single invoice and credit card',
+                        },
+                        {
+                            title: '30min Timeout',
+                            tooltip: 'Workspaces without user activity are stopped after 30 minutes',
+                        },
                     ];
 
                 // Unleashed
-                case "professional":
+                case 'professional':
                     return [
                         { title: 'Private & Public repos' },
-                        { title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`, tooltip: 'The number of workspaces running at the same time' },
-                        { title: 'Team Manageable', link: "/teams/", tooltip: 'Setup Gitpod for an entire Team with a single invoice and credit card' },
+                        {
+                            title: `${Plans.getParallelWorkspaces(p)} Parallel Workspaces`,
+                            tooltip: 'The number of workspaces running at the same time',
+                        },
+                        {
+                            title: 'Team Manageable',
+                            link: '/teams/',
+                            tooltip: 'Setup Gitpod for an entire Team with a single invoice and credit card',
+                        },
                         { title: '1h Timeout', tooltip: 'Workspaces without user activity are stopped after 1 hour' },
-                        { title: '3h Timeout Boost', tooltip: 'You can manually boost the timeout to 3 hours within a running workspace' }
+                        {
+                            title: '3h Timeout Boost',
+                            tooltip: 'You can manually boost the timeout to 3 hours within a running workspace',
+                        },
                     ];
             }
         };

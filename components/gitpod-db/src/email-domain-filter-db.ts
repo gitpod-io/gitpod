@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { EmailDomainFilterEntry } from "@gitpod/gitpod-protocol";
+import { EmailDomainFilterEntry } from '@gitpod/gitpod-protocol';
 
 export const EmailDomainFilterDB = Symbol('EmailDomainFilterDB');
 export interface EmailDomainFilterDB {

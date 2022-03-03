@@ -17,7 +17,10 @@ import { GitpodServerImpl } from './workspace/gitpod-server-impl';
 import { ConfigProvider } from './workspace/config-provider';
 import { MessageBusIntegration } from './workspace/messagebus-integration';
 import { MessageBusHelper, MessageBusHelperImpl } from '@gitpod/gitpod-messagebus/lib';
-import { IClientDataPrometheusAdapter, ClientDataPrometheusAdapterImpl } from './workspace/client-data-prometheus-adapter';
+import {
+    IClientDataPrometheusAdapter,
+    ClientDataPrometheusAdapterImpl,
+} from './workspace/client-data-prometheus-adapter';
 import { ConfigurationService } from './config/configuration-service';
 import { IContextParser, IPrefixContextParser } from './workspace/context-parser';
 import { ContextParser } from './workspace/context-parser-service';
@@ -31,8 +34,16 @@ import { UserService } from './user/user-service';
 import { UserDeletionService } from './user/user-deletion-service';
 import { WorkspaceDeletionService } from './workspace/workspace-deletion-service';
 import { EnvvarPrefixParser } from './workspace/envvar-prefix-context-parser';
-import { IWorkspaceManagerClientCallMetrics, WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
-import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderEnvSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
+import {
+    IWorkspaceManagerClientCallMetrics,
+    WorkspaceManagerClientProvider,
+} from '@gitpod/ws-manager/lib/client-provider';
+import {
+    WorkspaceManagerClientProviderCompositeSource,
+    WorkspaceManagerClientProviderDBSource,
+    WorkspaceManagerClientProviderEnvSource,
+    WorkspaceManagerClientProviderSource,
+} from '@gitpod/ws-manager/lib/client-provider-source';
 import { WorkspaceStarter } from './workspace/workspace-starter';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { AuthorizationService, AuthorizationServiceImpl } from './user/authorization-service';
@@ -41,7 +52,12 @@ import { ConsensusLeaderMessenger } from './consensus/consensus-leader-messenger
 import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus-leader-messenger';
 import { ConsensusLeaderQorum } from './consensus/consensus-leader-quorum';
 import { StorageClient } from './storage/storage-client';
-import { ImageBuilderClientConfig, ImageBuilderClientProvider, CachingImageBuilderClientProvider, ImageBuilderClientCallMetrics } from '@gitpod/image-builder/lib';
+import {
+    ImageBuilderClientConfig,
+    ImageBuilderClientProvider,
+    CachingImageBuilderClientProvider,
+    ImageBuilderClientCallMetrics,
+} from '@gitpod/image-builder/lib';
 import { ImageSourceProvider } from './workspace/image-source-provider';
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { TokenGarbageCollector } from './user/token-garbage-collector';
@@ -58,7 +74,7 @@ import { MonitoringEndpointsApp } from './monitoring-endpoints';
 import { BearerAuth } from './auth/bearer-authenticator';
 import { TermsProvider } from './terms/terms-provider';
 import { TosCookie } from './user/tos-cookie';
-import * as grpc from "@grpc/grpc-js";
+import * as grpc from '@grpc/grpc-js';
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { ContentServiceStorageClient } from './storage/content-service-client';
 import { GitTokenScopeGuesser } from './workspace/git-token-scope-guesser';
@@ -75,7 +91,7 @@ import { NewsletterSubscriptionController } from './user/newsletter-subscription
 import { Config, ConfigFile } from './config';
 import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
 import { IDEConfigService } from './ide-config';
-import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
+import { PrometheusClientCallMetrics } from '@gitpod/gitpod-protocol/lib/messaging/client-call-metrics';
 import { IClientCallMetrics } from '@gitpod/content-service/lib/client-call-metrics';
 import { DebugApp } from './debug-app';
 import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from './messaging/local-message-broker';
@@ -127,20 +143,21 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(IClientDataPrometheusAdapter).to(ClientDataPrometheusAdapterImpl).inSingletonScope();
 
     bind(GitpodServerImpl).toSelf();
-    bind(WebsocketConnectionManager).toDynamicValue(ctx => {
-        const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
-        const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
-        const config = ctx.container.get<Config>(Config);
-        return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
-    }
-    ).inSingletonScope();
+    bind(WebsocketConnectionManager)
+        .toDynamicValue((ctx) => {
+            const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
+            const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
+            const config = ctx.container.get<Config>(Config);
+            return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
+        })
+        .inSingletonScope();
 
     bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
     bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
 
-    bind(ImageBuilderClientConfig).toDynamicValue(ctx => {
+    bind(ImageBuilderClientConfig).toDynamicValue((ctx) => {
         const config = ctx.container.get<Config>(Config);
-        return { address: config.imageBuilderAddr }
+        return { address: config.imageBuilderAddr };
     });
     bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
     bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
@@ -165,9 +182,12 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(MonitoringEndpointsApp).toSelf().inSingletonScope();
 
     bind(HostContainerMapping).toSelf().inSingletonScope();
-    bind(HostContextProviderFactory).toDynamicValue(({ container }) => ({
-        createHostContext: (config: AuthProviderParams) => HostContextProviderImpl.createHostContext(container, config)
-    })).inSingletonScope();
+    bind(HostContextProviderFactory)
+        .toDynamicValue(({ container }) => ({
+            createHostContext: (config: AuthProviderParams) =>
+                HostContextProviderImpl.createHostContext(container, config),
+        }))
+        .inSingletonScope();
     bind(HostContextProvider).to(HostContextProviderImpl).inSingletonScope();
 
     bind(TracingManager).toSelf().inSingletonScope();
@@ -197,7 +217,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(InstallationAdminTelemetryDataProvider).toSelf().inSingletonScope();
 
     // binds all content services
-    (contentServiceBinder((ctx) => {
+    contentServiceBinder((ctx) => {
         const config = ctx.container.get<Config>(Config);
         const options: grpc.ClientOptions = {
             ...defaultGRPCOptions,
@@ -206,8 +226,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
             address: config.contentServiceAddr,
             credentials: grpc.credentials.createInsecure(),
             options,
-        }
-    }))(bind, unbind, isBound, rebind);
+        };
+    })(bind, unbind, isBound, rebind);
 
     bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
 

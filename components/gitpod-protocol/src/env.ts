@@ -4,14 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable } from "inversify";
+import { injectable } from 'inversify';
 
 const legacyStagenameTranslation: { [key: string]: KubeStage } = {
-    "production": "production",
-    "staging": "prodcopy",
-    "devstaging": "dev",
-    "dev": "dev"
-}
+    production: 'production',
+    staging: 'prodcopy',
+    devstaging: 'dev',
+    dev: 'dev',
+};
 
 export function translateLegacyStagename(kubeStage: string): KubeStage {
     const stage = legacyStagenameTranslation[kubeStage];
@@ -26,8 +26,8 @@ export function translateLegacyStagename(kubeStage: string): KubeStage {
 export abstract class AbstractComponentEnv {
     readonly kubeStage: KubeStage = getEnvVarParsed('KUBE_STAGE', translateLegacyStagename);
 
-    readonly installationLongname: string = getEnvVar("GITPOD_INSTALLATION_LONGNAME")
-    readonly installationShortname: string = getEnvVar("GITPOD_INSTALLATION_SHORTNAME")
+    readonly installationLongname: string = getEnvVar('GITPOD_INSTALLATION_LONGNAME');
+    readonly installationShortname: string = getEnvVar('GITPOD_INSTALLATION_SHORTNAME');
 }
 
 export type KubeStage = 'production' | 'prodcopy' | 'staging' | 'dev';

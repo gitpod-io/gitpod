@@ -4,10 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { interfaces } from "inversify";
-import { KeyProvider, KeyProviderImpl } from "./key-provider";
-import { EncryptionEngine, EncryptionEngineImpl } from "./encryption-engine";
-import { EncryptionService, EncryptionServiceImpl } from "./encryption-service";
+import { interfaces } from 'inversify';
+import { KeyProvider, KeyProviderImpl } from './key-provider';
+import { EncryptionEngine, EncryptionEngineImpl } from './encryption-engine';
+import { EncryptionService, EncryptionServiceImpl } from './encryption-service';
 
 /**
  * User have to provide a binding for KeyProviderConfig!!!
@@ -19,8 +19,7 @@ import { EncryptionService, EncryptionServiceImpl } from "./encryption-service";
  *      };
  *  }).inSingletonScope();
  */
-export const encryptionModule: interfaces.ContainerModuleCallBack = bind => {
-
+export const encryptionModule: interfaces.ContainerModuleCallBack = (bind) => {
     bind(KeyProvider).to(KeyProviderImpl).inSingletonScope();
 
     bind(EncryptionEngine).to(EncryptionEngineImpl).inSingletonScope();

@@ -4,13 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User, Workspace, NamedWorkspaceFeatureFlag } from "./protocol";
-import { FindPrebuildsParams } from "./gitpod-service";
-import { Project, Team, PrebuildWithStatus, TeamMemberInfo, TeamMemberRole } from "./teams-projects-protocol"
-import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
-import { RoleOrPermission } from "./permission";
-import { AccountStatement } from "./accounting-protocol";
-import { InstallationAdminSettings } from "./installation-admin-protocol";
+import { User, Workspace, NamedWorkspaceFeatureFlag } from './protocol';
+import { FindPrebuildsParams } from './gitpod-service';
+import { Project, Team, PrebuildWithStatus, TeamMemberInfo, TeamMemberRole } from './teams-projects-protocol';
+import { WorkspaceInstance, WorkspaceInstancePhase } from './workspace-instance';
+import { RoleOrPermission } from './permission';
+import { AccountStatement } from './accounting-protocol';
+import { InstallationAdminSettings } from './installation-admin-protocol';
 
 export interface AdminServer {
     adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>>;
@@ -42,45 +42,47 @@ export interface AdminServer {
     adminAddStudentEmailDomain(userId: string, domain: string): Promise<void>;
     adminGrantExtraHours(userId: string, extraHours: number): Promise<void>;
 
-    adminGetSettings(): Promise<InstallationAdminSettings>
-    adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>
+    adminGetSettings(): Promise<InstallationAdminSettings>;
+    adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;
 }
 
 export interface AdminGetListRequest<T> {
-    offset: number
-    limit: number
-    orderBy: keyof T
-    orderDir: "asc" | "desc"
+    offset: number;
+    limit: number;
+    orderBy: keyof T;
+    orderDir: 'asc' | 'desc';
     searchTerm?: string;
 }
 
 export interface AdminGetListResult<T> {
-    total: number
-    rows: T[]
+    total: number;
+    rows: T[];
 }
 
 export interface AdminBlockUserRequest {
-    id: string
-    blocked: boolean
+    id: string;
+    blocked: boolean;
 }
 
 export interface AdminModifyRoleOrPermissionRequest {
     id: string;
     rpp: {
-        r: RoleOrPermission
-        add: boolean
-    }[]
+        r: RoleOrPermission;
+        add: boolean;
+    }[];
 }
 
 export interface AdminModifyPermanentWorkspaceFeatureFlagRequest {
     id: string;
     changes: {
-        featureFlag: NamedWorkspaceFeatureFlag
-        add: boolean
-    }[]
+        featureFlag: NamedWorkspaceFeatureFlag;
+        add: boolean;
+    }[];
 }
 
-export interface WorkspaceAndInstance extends Omit<Workspace, "id" | "creationTime">, Omit<WorkspaceInstance, "id" | "creationTime"> {
+export interface WorkspaceAndInstance
+    extends Omit<Workspace, 'id' | 'creationTime'>,
+        Omit<WorkspaceInstance, 'id' | 'creationTime'> {
     workspaceId: string;
     workspaceCreationTime: string;
     instanceId: string;
@@ -93,7 +95,7 @@ export namespace WorkspaceAndInstance {
         return {
             id: wai.workspaceId,
             creationTime: wai.workspaceCreationTime,
-            ...wai
+            ...wai,
         };
     }
 
@@ -104,7 +106,7 @@ export namespace WorkspaceAndInstance {
         return {
             id: wai.instanceId,
             creationTime: wai.instanceCreationTime,
-            ...wai
+            ...wai,
         };
     }
 }

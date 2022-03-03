@@ -5,14 +5,13 @@
  */
 
 import fetch from 'node-fetch';
-import { User } from "@gitpod/gitpod-protocol";
-import { inject, injectable } from "inversify";
-import { AuthProviderParams } from "../auth/auth-provider";
+import { User } from '@gitpod/gitpod-protocol';
+import { inject, injectable } from 'inversify';
+import { AuthProviderParams } from '../auth/auth-provider';
 import { BitbucketServerTokenHelper } from './bitbucket-server-token-handler';
 
 @injectable()
 export class BitbucketServerApi {
-
     @inject(AuthProviderParams) protected readonly config: AuthProviderParams;
     @inject(BitbucketServerTokenHelper) protected readonly tokenHelper: BitbucketServerTokenHelper;
 
@@ -24,8 +23,8 @@ export class BitbucketServerApi {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) {
             throw Error(response.statusText);
@@ -38,20 +37,37 @@ export class BitbucketServerApi {
         return `https://${this.config.host}/rest/api/1.0`;
     }
 
-    getRepository(user: User, params: { kind: "projects" | "users", userOrProject: string; repositorySlug: string; }): Promise<BitbucketServer.Repository> {
-        return this.runQuery<BitbucketServer.Repository>(user, `/${params.kind}/${params.userOrProject}/repos/${params.repositorySlug}`);
+    getRepository(
+        user: User,
+        params: { kind: 'projects' | 'users'; userOrProject: string; repositorySlug: string },
+    ): Promise<BitbucketServer.Repository> {
+        return this.runQuery<BitbucketServer.Repository>(
+            user,
+            `/${params.kind}/${params.userOrProject}/repos/${params.repositorySlug}`,
+        );
     }
 
-    getCommits(user: User, params: { kind: "projects" | "users", userOrProject: string, repositorySlug: string, q?: { limit: number } }): Promise<BitbucketServer.Paginated<BitbucketServer.Commit>> {
-        return this.runQuery<BitbucketServer.Paginated<BitbucketServer.Commit>>(user, `/${params.kind}/${params.userOrProject}/repos/${params.repositorySlug}/commits`);
+    getCommits(
+        user: User,
+        params: { kind: 'projects' | 'users'; userOrProject: string; repositorySlug: string; q?: { limit: number } },
+    ): Promise<BitbucketServer.Paginated<BitbucketServer.Commit>> {
+        return this.runQuery<BitbucketServer.Paginated<BitbucketServer.Commit>>(
+            user,
+            `/${params.kind}/${params.userOrProject}/repos/${params.repositorySlug}/commits`,
+        );
     }
 
-    getDefaultBranch(user: User, params: { kind: "projects" | "users", userOrProject: string, repositorySlug: string }): Promise<BitbucketServer.Branch> {
+    getDefaultBranch(
+        user: User,
+        params: { kind: 'projects' | 'users'; userOrProject: string; repositorySlug: string },
+    ): Promise<BitbucketServer.Branch> {
         //https://bitbucket.gitpod-self-hosted.com/rest/api/1.0/users/jldec/repos/test-repo/default-branch
-        return this.runQuery<BitbucketServer.Branch>(user, `/${params.kind}/${params.userOrProject}/repos/${params.repositorySlug}/default-branch`);
+        return this.runQuery<BitbucketServer.Branch>(
+            user,
+            `/${params.kind}/${params.userOrProject}/repos/${params.repositorySlug}/default-branch`,
+        );
     }
 }
-
 
 export namespace BitbucketServer {
     export interface Repository {
@@ -63,8 +79,8 @@ export namespace BitbucketServer {
             clone: {
                 href: string;
                 name: string;
-            }[]
-        }
+            }[];
+        };
         project: Project;
     }
 
@@ -77,34 +93,34 @@ export namespace BitbucketServer {
     }
 
     export interface Branch {
-        "id": string,
-        "displayId": string,
-        "type": "BRANCH" | string,
-        "latestCommit": string,
-        "isDefault": boolean
+        id: string;
+        displayId: string;
+        type: 'BRANCH' | string;
+        latestCommit: string;
+        isDefault: boolean;
     }
 
     export interface User {
-        "name": string,
-        "emailAddress": string,
-        "id": number,
-        "displayName": string,
-        "active": boolean,
-        "slug": string,
-        "type": string,
-        "links": {
-            "self": [
+        name: string;
+        emailAddress: string;
+        id: number;
+        displayName: string;
+        active: boolean;
+        slug: string;
+        type: string;
+        links: {
+            self: [
                 {
-                    "href": string
-                }
-            ]
-        }
+                    href: string;
+                },
+            ];
+        };
     }
 
     export interface Commit {
-        "id": string,
-        "displayId": string,
-        "author": BitbucketServer.User
+        id: string;
+        displayId: string;
+        author: BitbucketServer.User;
     }
 
     export interface Paginated<T> {
@@ -115,5 +131,4 @@ export namespace BitbucketServer {
         values?: T[];
         [k: string]: any;
     }
-
 }

@@ -4,19 +4,19 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { suite, test } from "mocha-typescript"
-import * as chai from "chai"
+import { suite, test } from 'mocha-typescript';
+import * as chai from 'chai';
 
 import { WorkspaceConfig } from './protocol';
 import { GitpodFileParser } from './gitpod-file-parser';
 
-const expect = chai.expect
+const expect = chai.expect;
 
-const DEFAULT_IMAGE = "default-image";
+const DEFAULT_IMAGE = 'default-image';
 const DEFAULT_CONFIG = <WorkspaceConfig>{ image: DEFAULT_IMAGE };
 
-@suite class TestGitpodFileParser {
-
+@suite
+class TestGitpodFileParser {
     protected parser: GitpodFileParser;
 
     public before() {
@@ -24,107 +24,102 @@ const DEFAULT_CONFIG = <WorkspaceConfig>{ image: DEFAULT_IMAGE };
     }
 
     @test public testOnlyOnePort() {
-        const content =
-            `ports:\n` +
-            `  - port: 5555`;
+        const content = `ports:\n` + `  - port: 5555`;
 
         const result = this.parser.parse(content, {}, DEFAULT_CONFIG);
         expect(result.config).to.deep.equal({
-            ports: [{
-                port: 5555
-            }],
-            image: DEFAULT_IMAGE
+            ports: [
+                {
+                    port: 5555,
+                },
+            ],
+            image: DEFAULT_IMAGE,
         });
     }
 
     @test public testPortRange() {
-        const content =
-            `ports:\n` +
-            `  - port: 5555\n` +
-            `  - port: 3000-3999`; // should be filtered out by default
+        const content = `ports:\n` + `  - port: 5555\n` + `  - port: 3000-3999`; // should be filtered out by default
 
         const result = this.parser.parse(content, {}, DEFAULT_CONFIG);
         expect(result.config).to.deep.equal({
-            ports: [{
-                port: 5555
-            }],
-            image: DEFAULT_IMAGE
+            ports: [
+                {
+                    port: 5555,
+                },
+            ],
+            image: DEFAULT_IMAGE,
         });
     }
 
     @test public testPortRangeAccepted() {
-        const content =
-            `ports:\n` +
-            `  - port: 5555\n` +
-            `  - port: 3000-3999`; // should be included if explicitly supported
+        const content = `ports:\n` + `  - port: 5555\n` + `  - port: 3000-3999`; // should be included if explicitly supported
 
         const result = this.parser.parse(content, { acceptPortRanges: true }, DEFAULT_CONFIG);
         expect(result.config).to.deep.equal({
-            ports: [{
-                port: 5555
-            }, {
-                port: '3000-3999'
-            }],
-            image: DEFAULT_IMAGE
+            ports: [
+                {
+                    port: 5555,
+                },
+                {
+                    port: '3000-3999',
+                },
+            ],
+            image: DEFAULT_IMAGE,
         });
     }
 
     @test public testSimpleTask() {
-        const content =
-            `tasks:\n` +
-            `  - command: yarn`;
+        const content = `tasks:\n` + `  - command: yarn`;
 
         const result = this.parser.parse(content, {}, DEFAULT_CONFIG);
         expect(result.config).to.deep.equal({
-            tasks: [{
-                command: "yarn"
-            }],
-            image: DEFAULT_IMAGE
+            tasks: [
+                {
+                    command: 'yarn',
+                },
+            ],
+            image: DEFAULT_IMAGE,
         });
     }
 
     @test public testSimpleImage() {
-        const imageName = "my-test-org/my-test-image:some-tag";
-        const content =
-            `image: "${imageName}"\n`;
+        const imageName = 'my-test-org/my-test-image:some-tag';
+        const content = `image: "${imageName}"\n`;
 
         const result = this.parser.parse(content);
         expect(result.config).to.deep.equal({
-            image: imageName
+            image: imageName,
         });
     }
 
     @test public testComplexImageWithoutContext() {
         const dockerFileName = 'Dockerfile';
-        const content =
-            `image:\n  file: ${dockerFileName}\n`;
+        const content = `image:\n  file: ${dockerFileName}\n`;
 
         const result = this.parser.parse(content);
         expect(result.config).to.deep.equal({
             image: {
-                file: dockerFileName
-            }
+                file: dockerFileName,
+            },
         });
     }
 
     @test public testComplexImageWithContext() {
         const dockerFileName = 'Dockerfile';
         const dockerContext = 'docker';
-        const content =
-            `image:\n  file: ${dockerFileName}\n  context: ${dockerContext}\n`;
+        const content = `image:\n  file: ${dockerFileName}\n  context: ${dockerContext}\n`;
 
         const result = this.parser.parse(content);
         expect(result.config).to.deep.equal({
             image: {
                 file: dockerFileName,
-                context: dockerContext
-            }
+                context: dockerContext,
+            },
         });
     }
 
     @test public testGitconfig() {
-        const content =
-`
+        const content = `
 gitConfig:
     core.autocrlf: input
 `;
@@ -132,20 +127,19 @@ gitConfig:
         const result = this.parser.parse(content, {}, DEFAULT_CONFIG);
         expect(result.config).to.deep.equal({
             gitConfig: {
-                "core.autocrlf": "input"
+                'core.autocrlf': 'input',
             },
-            image: DEFAULT_IMAGE
+            image: DEFAULT_IMAGE,
         });
     }
 
     @test public testBrokenConfig() {
-        const content =
-            `image: 42\n`;
+        const content = `image: 42\n`;
 
         const result = this.parser.parse(content, {}, DEFAULT_CONFIG);
         expect(result.config).to.deep.equal({
-            image: DEFAULT_IMAGE
+            image: DEFAULT_IMAGE,
         });
     }
 }
-module.exports = new TestGitpodFileParser()   // Only to circumvent no usage warning :-/
+module.exports = new TestGitpodFileParser(); // Only to circumvent no usage warning :-/

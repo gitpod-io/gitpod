@@ -4,16 +4,16 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from "inversify";
+import { injectable, inject } from 'inversify';
 
 export interface KeyMetadata {
-    name: string,
-    version: number
+    name: string;
+    version: number;
 }
 
 export interface Key {
-    metadata: KeyMetadata,
-    material: Buffer
+    metadata: KeyMetadata;
+    material: Buffer;
 }
 
 export const KeyProvider = Symbol('KeyProvider');
@@ -24,23 +24,20 @@ export interface KeyProvider {
 
 export type KeyConfig = KeyMetadata & {
     /** base64 encoded */
-    material: string,
-    primary?: boolean
-}
+    material: string;
+    primary?: boolean;
+};
 
 export const KeyProviderConfig = Symbol('KeyProviderConfig');
 export interface KeyProviderConfig {
-    keys: KeyConfig[]
+    keys: KeyConfig[];
 }
 
 @injectable()
 export class KeyProviderImpl implements KeyProvider {
-
     static loadKeyConfigFromJsonString(configStr: string): KeyConfig[] {
         const keys = (JSON.parse(configStr) || []) as KeyConfig[];
-        if (!Array.isArray(keys)
-            || keys.length < 0
-            || 1 !== keys.reduce((p, k) => k.primary ? p + 1 : p, 0)) {
+        if (!Array.isArray(keys) || keys.length < 0 || 1 !== keys.reduce((p, k) => (k.primary ? p + 1 : p), 0)) {
             throw new Error('Invalid key config!');
         }
         return keys;
@@ -49,7 +46,7 @@ export class KeyProviderImpl implements KeyProvider {
     constructor(@inject(KeyProviderConfig) protected readonly config: KeyProviderConfig) {}
 
     protected get keys() {
-        return this.config.keys
+        return this.config.keys;
     }
 
     getPrimaryKey(): Key {
@@ -72,9 +69,9 @@ export class KeyProviderImpl implements KeyProvider {
         return {
             metadata: {
                 name: config.name,
-                version: config.version
+                version: config.version,
             },
-            material: new Buffer(config.material, 'base64')
+            material: new Buffer(config.material, 'base64'),
         };
     }
 }

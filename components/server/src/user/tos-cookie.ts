@@ -16,9 +16,9 @@ export class TosCookie {
         if (res.headersSent) {
             return;
         }
-        res.cookie("tosHints", JSON.stringify(tosHints), {
+        res.cookie('tosHints', JSON.stringify(tosHints), {
             httpOnly: false, // we need this hin on frontend
-            domain: `${this.config.hostUrl.url.host}`
+            domain: `${this.config.hostUrl.url.host}`,
         });
     }
 
@@ -27,8 +27,8 @@ export class TosCookie {
             return;
         }
         res.clearCookie('tosHints', {
-            path: "/",
-            domain: `.${this.config.hostUrl.url.host}`
+            path: '/',
+            domain: `.${this.config.hostUrl.url.host}`,
         });
     }
 }

@@ -6,36 +6,52 @@
 
 import { DeepPartial } from 'typeorm';
 
-import { Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, PrebuiltWorkspaceUpdatable, RunningWorkspaceInfo, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery, SnapshotState } from '@gitpod/gitpod-protocol';
+import {
+    Workspace,
+    WorkspaceInfo,
+    WorkspaceInstance,
+    WorkspaceInstanceUser,
+    WhitelistedRepository,
+    Snapshot,
+    LayoutData,
+    PrebuiltWorkspace,
+    PrebuiltWorkspaceUpdatable,
+    RunningWorkspaceInfo,
+    WorkspaceAndInstance,
+    WorkspaceType,
+    PrebuildInfo,
+    AdminGetWorkspacesQuery,
+    SnapshotState,
+} from '@gitpod/gitpod-protocol';
 
 export type MaybeWorkspace = Workspace | undefined;
 export type MaybeWorkspaceInstance = WorkspaceInstance | undefined;
 
 export interface FindWorkspacesOptions {
-    userId: string
-    projectId?: string | string[]
+    userId: string;
+    projectId?: string | string[];
     includeWithoutProject?: boolean;
-    limit?: number
-    searchString?: string
-    includeHeadless?: boolean
-    pinnedOnly?: boolean
+    limit?: number;
+    searchString?: string;
+    includeHeadless?: boolean;
+    pinnedOnly?: boolean;
 }
 
 export interface PrebuiltUpdatableAndWorkspace extends PrebuiltWorkspaceUpdatable {
-    prebuild: PrebuiltWorkspace
-    workspace: Workspace
-    instance: WorkspaceInstance
+    prebuild: PrebuiltWorkspace;
+    workspace: Workspace;
+    instance: WorkspaceInstance;
 }
 
-export type WorkspaceAuthData = Pick<Workspace, "id" | "ownerId" | "shareable">;
-export type WorkspaceInstancePortsAuthData = Pick<WorkspaceInstance, "id" | "region">;
+export type WorkspaceAuthData = Pick<Workspace, 'id' | 'ownerId' | 'shareable'>;
+export type WorkspaceInstancePortsAuthData = Pick<WorkspaceInstance, 'id' | 'region'>;
 export interface WorkspacePortsAuthData {
     instance: WorkspaceInstancePortsAuthData;
     workspace: WorkspaceAuthData;
 }
 
-export type WorkspaceInstanceSession = Pick<WorkspaceInstance, "id" | "startedTime" | "stoppingTime" | "stoppedTime">;
-export type WorkspaceSessionData = Pick<Workspace, "id" | "contextURL" | "context" | "type">;
+export type WorkspaceInstanceSession = Pick<WorkspaceInstance, 'id' | 'startedTime' | 'stoppingTime' | 'stoppedTime'>;
+export type WorkspaceSessionData = Pick<Workspace, 'id' | 'contextURL' | 'context' | 'type'>;
 export interface WorkspaceInstanceSessionWithWorkspace {
     instance: WorkspaceInstanceSession;
     workspace: WorkspaceSessionData;
@@ -46,12 +62,11 @@ export interface PrebuildWithWorkspace {
     workspace: Workspace;
 }
 
-export type WorkspaceAndOwner = Pick<Workspace, "id" | "ownerId">;
-export type WorkspaceOwnerAndSoftDeleted = Pick<Workspace, "id" | "ownerId" | "softDeleted">;
+export type WorkspaceAndOwner = Pick<Workspace, 'id' | 'ownerId'>;
+export type WorkspaceOwnerAndSoftDeleted = Pick<Workspace, 'id' | 'ownerId' | 'softDeleted'>;
 
 export const WorkspaceDB = Symbol('WorkspaceDB');
 export interface WorkspaceDB {
-
     connect(maxTries: number, timeout: number): Promise<void>;
 
     transaction<T>(code: (db: WorkspaceDB) => Promise<T>): Promise<T>;
@@ -67,7 +82,7 @@ export interface WorkspaceDB {
 
     // Partial update: unconditional, single field updates. Enclose in a transaction if necessary
     updateLastHeartbeat(instanceId: string, userId: string, newHeartbeat: Date, wasClosed?: boolean): Promise<void>;
-    getLastOwnerHeartbeatFor(instance: WorkspaceInstance): Promise<{ lastSeen: Date, wasClosed?: boolean } | undefined>;
+    getLastOwnerHeartbeatFor(instance: WorkspaceInstance): Promise<{ lastSeen: Date; wasClosed?: boolean } | undefined>;
     getWorkspaceUsers(workspaceId: string, minLastSeen: number): Promise<WorkspaceInstanceUser[]>;
     updateInstancePartial(instanceId: string, partial: DeepPartial<WorkspaceInstance>): Promise<WorkspaceInstance>;
 
@@ -76,28 +91,69 @@ export interface WorkspaceDB {
     findWorkspacesByUser(userId: string): Promise<Workspace[]>;
     findCurrentInstance(workspaceId: string): Promise<MaybeWorkspaceInstance>;
     findRunningInstance(workspaceId: string): Promise<MaybeWorkspaceInstance>;
-    findSessionsInPeriod(userId: string, periodStart: string, periodEnd: string): Promise<WorkspaceInstanceSessionWithWorkspace[]>;
+    findSessionsInPeriod(
+        userId: string,
+        periodStart: string,
+        periodEnd: string,
+    ): Promise<WorkspaceInstanceSessionWithWorkspace[]>;
     findWorkspacesForGarbageCollection(minAgeInDays: number, limit: number): Promise<WorkspaceAndOwner[]>;
-    findWorkspacesForContentDeletion(minSoftDeletedTimeInDays: number, limit: number): Promise<WorkspaceOwnerAndSoftDeleted[]>;
+    findWorkspacesForContentDeletion(
+        minSoftDeletedTimeInDays: number,
+        limit: number,
+    ): Promise<WorkspaceOwnerAndSoftDeleted[]>;
     findPrebuiltWorkspacesForGC(daysUnused: number, limit: number): Promise<WorkspaceAndOwner[]>;
-    findAllWorkspaces(offset: number, limit: number, orderBy: keyof Workspace, orderDir: "ASC" | "DESC", ownerId?: string, searchTerm?: string, minCreationTime?: Date, maxCreationDateTime?: Date, type?: WorkspaceType): Promise<{ total: number, rows: Workspace[] }>;
-    findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery): Promise<{ total: number, rows: WorkspaceAndInstance[] }>;
+    findAllWorkspaces(
+        offset: number,
+        limit: number,
+        orderBy: keyof Workspace,
+        orderDir: 'ASC' | 'DESC',
+        ownerId?: string,
+        searchTerm?: string,
+        minCreationTime?: Date,
+        maxCreationDateTime?: Date,
+        type?: WorkspaceType,
+    ): Promise<{ total: number; rows: Workspace[] }>;
+    findAllWorkspaceAndInstances(
+        offset: number,
+        limit: number,
+        orderBy: keyof WorkspaceAndInstance,
+        orderDir: 'ASC' | 'DESC',
+        query?: AdminGetWorkspacesQuery,
+    ): Promise<{ total: number; rows: WorkspaceAndInstance[] }>;
     findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined>;
     findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]>;
 
     getWorkspaceCount(type?: String): Promise<Number>;
-    getInstanceCount(type?: string): Promise<number>
+    getInstanceCount(type?: string): Promise<number>;
 
-    findAllWorkspaceInstances(offset: number, limit: number, orderBy: keyof WorkspaceInstance, orderDir: "ASC" | "DESC", ownerId?: string, minCreationTime?: Date, maxCreationTime?: Date, onlyRunning?: boolean, type?: WorkspaceType): Promise<{ total: number, rows: WorkspaceInstance[] }>;
+    findAllWorkspaceInstances(
+        offset: number,
+        limit: number,
+        orderBy: keyof WorkspaceInstance,
+        orderDir: 'ASC' | 'DESC',
+        ownerId?: string,
+        minCreationTime?: Date,
+        maxCreationTime?: Date,
+        onlyRunning?: boolean,
+        type?: WorkspaceType,
+    ): Promise<{ total: number; rows: WorkspaceInstance[] }>;
 
     findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]>;
-    findRunningInstancesWithWorkspaces(installation?: string, userId?: string, includeStopping?: boolean): Promise<RunningWorkspaceInfo[]>;
+    findRunningInstancesWithWorkspaces(
+        installation?: string,
+        userId?: string,
+        includeStopping?: boolean,
+    ): Promise<RunningWorkspaceInfo[]>;
 
     isWhitelisted(repositoryUrl: string): Promise<boolean>;
     getFeaturedRepositories(): Promise<Partial<WhitelistedRepository>[]>;
 
     findSnapshotById(snapshotId: string): Promise<Snapshot | undefined>;
-    findSnapshotsWithState(state: SnapshotState, offset: number, limit: number): Promise<{ snapshots: Snapshot[], total: number }>;
+    findSnapshotsWithState(
+        state: SnapshotState,
+        offset: number,
+        limit: number,
+    ): Promise<{ snapshots: Snapshot[]; total: number }>;
     findSnapshotsByWorkspaceId(workspaceId: string): Promise<Snapshot[]>;
     storeSnapshot(snapshot: Snapshot): Promise<Snapshot>;
     deleteSnapshot(snapshotId: string): Promise<void>;

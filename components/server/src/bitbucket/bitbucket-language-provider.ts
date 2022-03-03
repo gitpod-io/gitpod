@@ -4,15 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Repository, User } from "@gitpod/gitpod-protocol";
+import { Repository, User } from '@gitpod/gitpod-protocol';
 import { inject, injectable } from 'inversify';
 import { LanguagesProvider } from '../repohost/languages-provider';
 import { BitbucketApiFactory } from './bitbucket-api-factory';
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class BitbucketLanguagesProvider implements LanguagesProvider {
-
     @inject(BitbucketApiFactory) protected readonly apiFactory: BitbucketApiFactory;
 
     async getLanguages(repository: Repository, user: User): Promise<object> {
@@ -24,7 +23,7 @@ export class BitbucketLanguagesProvider implements LanguagesProvider {
                 return { [language]: 100.0 };
             }
         } catch (e) {
-            log.warn({ userId: user.id }, "Could not get languages of Bitbucket repo.");
+            log.warn({ userId: user.id }, 'Could not get languages of Bitbucket repo.');
         }
         return {};
     }

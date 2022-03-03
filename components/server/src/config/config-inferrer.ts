@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceConfig } from "@gitpod/gitpod-protocol";
+import { WorkspaceConfig } from '@gitpod/gitpod-protocol';
 
 export interface Context {
     config: WorkspaceConfig;
@@ -14,7 +14,6 @@ export interface Context {
 }
 
 export class ConfigInferrer {
-
     protected contributions: ((ctx: Context) => Promise<void>)[] = [
         this.checkNode.bind(this),
         this.checkJava.bind(this),
@@ -24,7 +23,7 @@ export class ConfigInferrer {
         this.checkMake.bind(this),
         this.checkNuget.bind(this),
         this.checkRuby.bind(this),
-    ]
+    ];
 
     async getConfig(ctx: Context): Promise<WorkspaceConfig> {
         for (const contrib of this.contributions) {
@@ -99,7 +98,7 @@ export class ConfigInferrer {
         }
         if (!ctx.config.vscode || !ctx.config.vscode.extensions) {
             ctx.config.vscode = {
-                extensions: []
+                extensions: [],
             };
         }
         if (ctx.config.vscode.extensions?.indexOf(extensionName) === -1)
@@ -107,7 +106,7 @@ export class ConfigInferrer {
     }
 
     protected async isMake(ctx: Context) {
-        return await ctx.exists('Makefile') || await ctx.exists('makefile');
+        return (await ctx.exists('Makefile')) || (await ctx.exists('makefile'));
     }
 
     protected async checkMake(ctx: Context) {
@@ -179,7 +178,12 @@ export class ConfigInferrer {
         }
     }
 
-    protected addCommand(config: WorkspaceConfig, command: string, phase: 'before' | 'init' | 'command', unless?: string): void {
+    protected addCommand(
+        config: WorkspaceConfig,
+        command: string,
+        phase: 'before' | 'init' | 'command',
+        unless?: string,
+    ): void {
         if (!config.tasks) {
             config.tasks = [];
         }
@@ -198,11 +202,19 @@ export class ConfigInferrer {
         const i = '  ';
         let tasks = '';
         if (config.tasks) {
-            tasks = `tasks:\n${i}- ${config.tasks.map(task => Object.entries(task).map(([phase, command]) => `${phase}: ${command}`).join('\n    ')).join('\n  - ')}`
+            tasks = `tasks:\n${i}- ${config.tasks
+                .map((task) =>
+                    Object.entries(task)
+                        .map(([phase, command]) => `${phase}: ${command}`)
+                        .join('\n    '),
+                )
+                .join('\n  - ')}`;
         }
         let vscode = '';
         if (config.vscode?.extensions) {
-            vscode = `vscode:\n${i}extensions:\n${config.vscode.extensions.map(extension => `${i + i}- ${extension}`).join('\n')}`
+            vscode = `vscode:\n${i}extensions:\n${config.vscode.extensions
+                .map((extension) => `${i + i}- ${extension}`)
+                .join('\n')}`;
         }
         return `${tasks}
 ${vscode}

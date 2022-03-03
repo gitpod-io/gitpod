@@ -1,5 +1,5 @@
-import { exec } from "../../util/shell";
-import { Werft } from "../../util/werft";
+import { exec } from '../../util/shell';
+import { Werft } from '../../util/werft';
 
 export async function validateChanges(werft: Werft) {
     werft.phase('validate-changes', 'validating changes');
