@@ -18,7 +18,6 @@
             "annotations": {
                 "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
                 "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
-                "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
                 "gitpod/admission": "admit_owner_only",
                 "gitpod/contentInitializer": "GmcKZXdvcmtzcGFjZXMvY3J5cHRpYy1pZC1nb2VzLWhlcmcvZmQ2MjgwNGItNGNhYi0xMWU5LTg0M2EtNGU2NDUzNzMwNDhlLnRhckBnaXRwb2QtZGV2LXVzZXItY2hyaXN0ZXN0aW5n",
                 "gitpod/id": "test",
