@@ -68,7 +68,9 @@ export function WorkspaceSearch(props: Props) {
     const search = async () => {
         setSearching(true);
         try {
-            const query: AdminGetWorkspacesQuery = {};
+            const query: AdminGetWorkspacesQuery = {
+                ownerId: props?.user?.id, // Workspace search in admin user detail
+            };
             if (matchesInstanceIdOrLegacyWorkspaceIdExactly(queryTerm)) {
                 query.instanceIdOrWorkspaceId = queryTerm;
             } else if (matchesNewWorkspaceIdExactly(queryTerm)) {

@@ -768,6 +768,10 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             } else if (query.workspaceId) {
                 whereConditions.push("ws.id = :workspaceId");
                 whereConditionParams.workspaceId = query.workspaceId;
+            } else if (query.ownerId) {
+                // If an owner id is provided only search for workspaces belonging to that user.
+                whereConditions.push("ws.ownerId = :ownerId");
+                whereConditionParams.ownerId = query.ownerId;
             } else if (query.instanceId) {
                 // in addition to adding "instanceId" to the "WHERE" clause like for the other workspace-guided queries,
                 // we modify the JOIN condition below to a) select the correct instance and b) make the query faster
