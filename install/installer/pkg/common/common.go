@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
@@ -31,9 +30,8 @@ import (
 
 func DefaultLabels(component string) map[string]string {
 	return map[string]string{
-		"app":                        AppName,
-		"component":                  component,
-		wsk8s.GitpodNodeServiceLabel: component,
+		"app":       AppName,
+		"component": component,
 	}
 }
 
