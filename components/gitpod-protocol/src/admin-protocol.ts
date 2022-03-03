@@ -116,4 +116,5 @@ export type AdminGetWorkspacesQuery = {
     instanceIdOrWorkspaceId?: string;
     instanceId?: string;
     workspaceId?: string;
+    ownerId?: string;
 };
