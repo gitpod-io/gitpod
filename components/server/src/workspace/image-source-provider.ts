@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { ImageBuilderClientProvider, ResolveBaseImageRequest, BuildRegistryAuthTotal, BuildRegistryAuth } from "@gitpod/image-builder/lib";
+import { ImageBuilderClientProvider } from "@gitpod/image-builder/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { CommitContext, WorkspaceImageSource, WorkspaceConfig, WorkspaceImageSourceReference, WorkspaceImageSourceDocker, ImageConfigFile, ExternalImageConfigFile, User, AdditionalContentContext } from "@gitpod/gitpod-protocol";
@@ -57,27 +57,8 @@ export class ImageSourceProvider {
                     dockerFileHash: lastDockerFileSha,
                 }
             } else if (typeof (imgcfg) === "string") {
-                // We resolve this request allowing all configured auth because at this poing we don't have access to the user or permission service.
-                // If anyone feels like changing this and properly use the REGISTRY_ACCESS permission, be my guest.
-                //
-                // This might leak a tiny bit of information in that the workspace start failes
-                // differently if the image is present as compared to when it's not. This way users can find out if an image exists even if they don't
-                // have access to the registry themselves.
-                //
-                // If feel this issue is negligeble.
-                const req = new ResolveBaseImageRequest();
-                req.setRef(imgcfg);
-                const allowAll = new BuildRegistryAuthTotal();
-                allowAll.setAllowAll(true);
-                const auth = new BuildRegistryAuth();
-                auth.setTotal(allowAll);
-                req.setAuth(auth);
-
-                const client = this.imagebuilderClientProvider.getDefault();
-                const res = await client.resolveBaseImage({ span }, req);
-
                 result = <WorkspaceImageSourceReference>{
-                    baseImageResolved: res.getRef()
+                    baseImageResolved: imgcfg
                 }
             } else {
                 throw new Error("unknown workspace image source config");
