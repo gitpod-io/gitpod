@@ -42,3 +42,29 @@ func AllowKubeDnsEgressRule() v1.NetworkPolicyEgressRule {
 
 	return dnsEgressRule
 }
+
+func AllowWSManagerEgressRule() v1.NetworkPolicyEgressRule {
+	var tcp = corev1.ProtocolTCP
+
+	dnsEgressRule := v1.NetworkPolicyEgressRule{
+		Ports: []v1.NetworkPolicyPort{
+			{
+				Protocol: &tcp,
+				Port: &intstr.IntOrString{
+					IntVal: 8080,
+				},
+			},
+		},
+		To: []v1.NetworkPolicyPeer{{
+			PodSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app":       AppName,
+					"component": WSManagerComponent,
+				},
+			},
+			NamespaceSelector: &metav1.LabelSelector{},
+		}},
+	}
+
+	return dnsEgressRule
+}
