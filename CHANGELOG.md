@@ -1,6 +1,10 @@
 # Change Log
 
 ## March 2022
+- [kots]: add the KOTS installation manifests ([#8395](https://github.com/gitpod-io/gitpod/pull/8395)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Free text search on workspace admin dashboard is not enabled anymore. ([#8503](https://github.com/gitpod-io/gitpod/pull/8503)) - [@laushinka](https://github.com/laushinka)
+- Renamed `danger-use-unsupported-config` flag in the installer to `use-experimental-config` ([#8477](https://github.com/gitpod-io/gitpod/pull/8477)) - [@Pothulapati](https://github.com/Pothulapati)
+- [installer]: correct the stored config to include apiVersion ([#8527](https://github.com/gitpod-io/gitpod/pull/8527)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Try harder to update workspace annotation to prevent workspace from being marked as failed erroneously. ([#8519](https://github.com/gitpod-io/gitpod/pull/8519)) - [@sagor999](https://github.com/sagor999)
 
 ##  February 2022
