@@ -109,6 +109,7 @@ export interface WorkspaceDB {
     findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined>;
     findPrebuildByID(pwsid: string): Promise<PrebuiltWorkspace | undefined>;
     countRunningPrebuilds(cloneURL: string): Promise<number>;
+    countUnabortedPrebuildsSince(cloneURL: string, date: Date): Promise<number>;
     findQueuedPrebuilds(cloneURL?: string): Promise<PrebuildWithWorkspace[]>;
     attachUpdatableToPrebuild(pwsid: string, update: PrebuiltWorkspaceUpdatable): Promise<void>;
     findUpdatablesForPrebuild(pwsid: string): Promise<PrebuiltWorkspaceUpdatable[]>;

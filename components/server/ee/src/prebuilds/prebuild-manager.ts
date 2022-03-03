@@ -8,14 +8,17 @@ import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db
 import { CommitContext, Project, ProjectEnvVar, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { inject, injectable } from 'inversify';
-import { URL } from 'url';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
 import { WorkspaceFactory } from '../../../src/workspace/workspace-factory';
 import { ConfigProvider } from '../../../src/workspace/config-provider';
 import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
 import { Config } from '../../../src/config';
 import { ProjectsService } from '../../../src/projects/projects-service';
+import { secondsBefore } from '@gitpod/gitpod-protocol/lib/util/timeutil';
+
+import { inject, injectable } from 'inversify';
+import * as opentracing from 'opentracing';
+import { URL } from 'url';
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -31,6 +34,9 @@ export interface StartPrebuildParams {
     commit: string;
     project?: Project;
 }
+
+const PREBUILD_LIMITER_WINDOW_SECONDS = 60;
+const PREBUILD_LIMITER_DEFAULT_LIMIT = 50;
 
 @injectable()
 export class PrebuildManager {
@@ -66,6 +72,7 @@ export class PrebuildManager {
         span.setTag("contextURL", contextURL);
         span.setTag("cloneURL", cloneURL);
         span.setTag("commit", commit);
+
         try {
             if (user.blocked) {
                 throw new Error("Blocked users cannot start prebuilds.");
@@ -113,26 +120,32 @@ export class PrebuildManager {
                 prebuildContext.commitHistory = await contextParser.fetchCommitHistory({ span }, user, contextURL, commit, maxDepth);
             }
 
-            log.debug("Created prebuild context", prebuildContext);
+
 
             const projectEnvVarsPromise = project ? this.projectService.getProjectEnvironmentVariables(project.id) : [];
             const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, contextURL);
-            const prebuildPromise = this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
+            const prebuild = await this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
+            if (!prebuild) {
+                throw new Error(`Failed to create a prebuild for: ${contextURL}`);
+            }
 
-            // const canBuildNow = await this.prebuildRateLimiter.canBuildNow({ span }, user, cloneURL);
-            // if (!canBuildNow) {
-            //     // we cannot start building now because the rate limiter prevents it.
-            //     span.setTag("starting", false);
-            //     return { wsid: workspace.id, done: false };;
-            // }
+            if (await this.shouldRateLimitPrebuild(span, cloneURL)) {
+                prebuild.state = "aborted";
+                prebuild.error = "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
+
+                await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
+                span.setTag("starting", false);
+                span.setTag("ratelimited", true);
+                return {
+                    wsid: workspace.id,
+                    prebuildId: prebuild.id,
+                    done: false,
+                };
+            }
 
             span.setTag("starting", true);
             const projectEnvVars = await projectEnvVarsPromise;
             await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {excludeFeatureFlags: ['full_workspace_backup']});
-            const prebuild = await prebuildPromise;
-            if (!prebuild) {
-                throw new Error(`Failed to create a prebuild for: ${contextURL}`);
-            }
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.setError({ span }, err);
@@ -227,5 +240,34 @@ export class PrebuildManager {
             return undefined;
         }
         return hostContext.contextParser;
+    }
+
+    private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
+        const windowStart = secondsBefore(new Date().toISOString(), PREBUILD_LIMITER_WINDOW_SECONDS);
+        const unabortedCount = await this.workspaceDB.trace({span}).countUnabortedPrebuildsSince(cloneURL, new Date(windowStart));
+        const limit = this.getPrebuildRateLimitForCloneURL(cloneURL);
+
+        if (unabortedCount >= limit) {
+            log.debug("Prebuild exceeds rate limit", { limit, unabortedPrebuildsCount: unabortedCount, cloneURL });
+            return true;
+        }
+        return false;
+    }
+
+    private getPrebuildRateLimitForCloneURL(cloneURL: string): number {
+        // First we use any explicit overrides for a given cloneURL
+        let limit = this.config.prebuildLimiter[cloneURL];
+        if (limit > 0) {
+            return limit;
+        }
+
+        // Find if there is a default value set under the '*' key
+        limit = this.config.prebuildLimiter['*'];
+        if (limit > 0) {
+            return limit;
+        }
+
+        // Last resort default
+        return PREBUILD_LIMITER_DEFAULT_LIMIT;
     }
 }

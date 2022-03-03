@@ -99,6 +99,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		EnablePayment:                false,
 		InsecureNoDomain:             false,
 		ChargebeeProviderOptionsFile: "/chargebee/providerOptions",
+		PrebuildLimiter: map[string]int{
+			// default limit for all cloneURLs
+			"*": 50,
+		},
 	}
 
 	fc, err := common.ToJSONString(scfg)
