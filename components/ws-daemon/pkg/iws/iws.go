@@ -14,10 +14,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/containerd/cgroups"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
@@ -77,7 +79,7 @@ var (
 )
 
 // ServeWorkspace establishes the IWS server for a workspace
-func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx context.Context, ws *session.Workspace) error {
+func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMountPoint string) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
 		if _, running := ws.NonPersistentAttrs[session.AttrWorkspaceServer]; running {
 			return nil
@@ -88,9 +90,10 @@ func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx co
 		defer tracing.FinishSpan(span, &err)
 
 		helper := &InWorkspaceServiceServer{
-			Uidmapper: uidmapper,
-			Session:   ws,
-			FSShift:   fsshift,
+			Uidmapper:        uidmapper,
+			Session:          ws,
+			FSShift:          fsshift,
+			CGroupMountPoint: cgroupMountPoint,
 		}
 		err = helper.Start()
 		if err != nil {
@@ -127,9 +130,10 @@ func StopServingWorkspace(ctx context.Context, ws *session.Workspace) (err error
 
 // InWorkspaceServiceServer implements the workspace facing backup services
 type InWorkspaceServiceServer struct {
-	Uidmapper *Uidmapper
-	Session   *session.Workspace
-	FSShift   api.FSShiftMethod
+	Uidmapper        *Uidmapper
+	Session          *session.Workspace
+	FSShift          api.FSShiftMethod
+	CGroupMountPoint string
 
 	srv  *grpc.Server
 	sckt io.Closer
@@ -165,6 +169,9 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 
 	limits := ratelimitingInterceptor{
 		"/iws.InWorkspaceService/PrepareForUserNS": ratelimit{
+			UseOnce: true,
+		},
+		"/iws.InWorkspaceService/EvacuateCGroup": ratelimit{
 			UseOnce: true,
 		},
 		"/iws.InWorkspaceService/WriteIDMapping": ratelimit{
@@ -224,18 +231,11 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	//   - https://lists.linuxcontainers.org/pipermail/lxc-devel/2014-July/009797.html
 	//   - https://lists.linuxcontainers.org/pipermail/lxc-users/2014-October/007948.html
 	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "mknod-fuse", "--uid", strconv.Itoa(wsinit.GitpodUID), "--gid", strconv.Itoa(wsinit.GitpodGID))
+		c.Args = append(c.Args, "prepare-dev", "--uid", strconv.Itoa(wsinit.GitpodUID), "--gid", strconv.Itoa(wsinit.GitpodGID))
 	})
 	if err != nil {
-		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot mknod fuse")
-		return nil, status.Errorf(codes.Internal, "cannot prepare FUSE")
-	}
-	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "mknod-devnettun")
-	})
-	if err != nil {
-		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot create /dev/net/tun")
-		return nil, status.Errorf(codes.Internal, "cannot create /dev/net/tun")
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot prepare /dev")
+		return nil, status.Errorf(codes.Internal, "cannot prepare /dev")
 	}
 
 	// create overlayfs directories to be used in ring2 as rootfs and also upper layer to track changes in the workspace
@@ -287,10 +287,62 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
+	if cgroups.Mode() == cgroups.Unified {
+		cgroupBase, err := rt.ContainerCGroupPath(ctx, wscontainerID)
+		if err != nil {
+			log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot find workspace container CGroup path")
+			return nil, status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
+		}
+
+		err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, cgroupBase, "workspace")
+		if err != nil {
+			log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot create workspace cgroup")
+			return nil, status.Errorf(codes.FailedPrecondition, "cannot create workspace cgroup")
+		}
+	}
+
 	return &api.PrepareForUserNSResponse{
 		FsShift:             api.FSShiftMethod_SHIFTFS,
 		FullWorkspaceBackup: wbs.Session.FullWorkspaceBackup,
 	}, nil
+}
+
+func evacuateToCGroup(ctx context.Context, mountpoint, oldGroup, child string) error {
+	newGroup := filepath.Join(oldGroup, child)
+	oldPath := filepath.Join(mountpoint, oldGroup)
+	newPath := filepath.Join(mountpoint, newGroup)
+
+	if err := os.MkdirAll(newPath, 0755); err != nil {
+		return err
+	}
+
+	// evacuate existing procs from oldGroup to newGroup, so that we can enable all controllers including threaded ones
+	cgroupProcsBytes, err := os.ReadFile(filepath.Join(oldPath, "cgroup.procs"))
+	if err != nil {
+		return err
+	}
+	for _, pidStr := range strings.Split(string(cgroupProcsBytes), "\n") {
+		if pidStr == "" || pidStr == "0" {
+			continue
+		}
+		if err := os.WriteFile(filepath.Join(newPath, "cgroup.procs"), []byte(pidStr), 0644); err != nil {
+			log.WithError(err).Warnf("failed to move process %s to cgroup %q", pidStr, newGroup)
+		}
+	}
+
+	// enable controllers for all subgroups under the oldGroup
+	controllerBytes, err := os.ReadFile(filepath.Join(oldPath, "cgroup.controllers"))
+	if err != nil {
+		return err
+	}
+	for _, controller := range strings.Fields(string(controllerBytes)) {
+		log.Debugf("enabling controller %q", controller)
+		if err := os.WriteFile(filepath.Join(oldPath, "cgroup.subtree_control"), []byte("+"+controller), 0644); err != nil {
+			log.WithError(err).Warnf("failed to enable controller %q", controller)
+		}
+	}
+
+	return nil
 }
 
 // MountProc mounts a proc filesystem
@@ -767,6 +819,10 @@ func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *ap
 }
 
 func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *api.EvacuateCGroupRequest) (*api.EvacuateCGroupResponse, error) {
+	if cgroups.Mode() != cgroups.Unified {
+		return &api.EvacuateCGroupResponse{}, nil
+	}
+
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
@@ -774,13 +830,34 @@ func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *ap
 	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("EvacuateCGroup: cannot find workspace container")
-		return nil, status.Errorf(codes.Internal, "cannot find workspace container")
+		return nil, status.Errorf(codes.NotFound, "cannot find workspace container")
 	}
 
 	cgroupBase, err := rt.ContainerCGroupPath(ctx, wscontainerID)
-	log.WithField("cgroupBase", cgroupBase).Info("EvacuateCGroup")
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("EvacuateCGroup: cannot find workspace container CGroup path")
+		return nil, status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
+	}
 
-	return nil, status.Errorf(codes.Unimplemented, "method EvacuateCGroup not implemented")
+	workspaceCGroup := filepath.Join(cgroupBase, "workspace")
+	if _, err := os.Stat(filepath.Join(wbs.CGroupMountPoint, workspaceCGroup)); err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("path", workspaceCGroup).Error("EvacuateCGroup: workspace cgroup error")
+		return nil, status.Errorf(codes.FailedPrecondition, "cannot find workspace cgroup")
+	}
+
+	err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, workspaceCGroup, "user")
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("path", workspaceCGroup).Error("EvacuateCGroup: cannot produce user cgroup")
+		return nil, status.Errorf(codes.FailedPrecondition, "cannot produce user cgroup")
+	}
+
+	out, err := exec.CommandContext(ctx, "chown", "-R", fmt.Sprintf("%d:%d", wsinit.GitpodUID, wsinit.GitpodGID), filepath.Join(wbs.CGroupMountPoint, workspaceCGroup)).CombinedOutput()
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("path", workspaceCGroup).WithField("out", string(out)).Error("EvacuateCGroup: cannot chown workspace cgroup")
+		return nil, status.Errorf(codes.FailedPrecondition, "cannot chown workspace cgroup")
+	}
+
+	return &api.EvacuateCGroupResponse{}, nil
 }
 
 // Teardown triggers the final liev backup and possibly shiftfs mark unmount
