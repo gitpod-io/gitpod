@@ -215,8 +215,8 @@ export class BuildRequest extends jspb.Message {
     clearAuth(): void;
     getAuth(): BuildRegistryAuth | undefined;
     setAuth(value?: BuildRegistryAuth): BuildRequest;
-    getForcerebuild(): boolean;
-    setForcerebuild(value: boolean): BuildRequest;
+    getForceRebuild(): boolean;
+    setForceRebuild(value: boolean): BuildRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildRequest.AsObject;
@@ -232,7 +232,7 @@ export namespace BuildRequest {
     export type AsObject = {
         source?: BuildSource.AsObject,
         auth?: BuildRegistryAuth.AsObject,
-        forcerebuild: boolean,
+        forceRebuild: boolean,
     }
 }
 
@@ -247,6 +247,9 @@ export class BuildRegistryAuth extends jspb.Message {
     clearSelective(): void;
     getSelective(): BuildRegistryAuthSelective | undefined;
     setSelective(value?: BuildRegistryAuthSelective): BuildRegistryAuth;
+
+    getAdditionalMap(): jspb.Map<string, string>;
+    clearAdditionalMap(): void;
 
     getModeCase(): BuildRegistryAuth.ModeCase;
 
@@ -264,6 +267,8 @@ export namespace BuildRegistryAuth {
     export type AsObject = {
         total?: BuildRegistryAuthTotal.AsObject,
         selective?: BuildRegistryAuthSelective.AsObject,
+
+        additionalMap: Array<[string, string]>,
     }
 
     export enum ModeCase {

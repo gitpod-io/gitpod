@@ -7,7 +7,7 @@
 import { CloneTargetMode, FileDownloadInitializer, GitAuthMethod, GitConfig, GitInitializer, PrebuildInitializer, SnapshotInitializer, WorkspaceInitializer } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
 import { DBUser, DBWithTracing, ProjectDB, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile, ProjectEnvVar, ImageBuildLogInfo } from "@gitpod/gitpod-protocol";
+import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile, ImageBuildLogInfo, ProjectEnvVar } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -118,7 +118,8 @@ export class WorkspaceStarter {
             try {
                 // if we need to build the workspace image we musn't wait for actuallyStartWorkspace to return as that would block the
                 // frontend until the image is built.
-                needsImageBuild = forceRebuild || await this.needsImageBuild({ span }, user, workspace, instance);
+                const additionalAuth = await this.getAdditionalImageAuth(projectEnvVars);
+                needsImageBuild = forceRebuild || await this.needsImageBuild({ span }, user, workspace, instance, additionalAuth);
                 if (needsImageBuild) {
                     instance.status.conditions = {
                         neededImageBuild: true,
@@ -157,7 +158,8 @@ export class WorkspaceStarter {
 
         try {
             // build workspace image
-            instance = await this.buildWorkspaceImage({ span }, user, workspace, instance, forceRebuild, forceRebuild);
+            const additionalAuth = await this.getAdditionalImageAuth(projectEnvVars);
+            instance = await this.buildWorkspaceImage({ span }, user, workspace, instance, additionalAuth, forceRebuild, forceRebuild);
 
             let type: WorkspaceType = WorkspaceType.REGULAR;
             if (workspace.type === 'prebuild') {
@@ -281,6 +283,23 @@ export class WorkspaceStarter {
         }
 
         return undefined;
+    }
+
+    protected async getAdditionalImageAuth(projectEnvVars: ProjectEnvVar[]): Promise<Map<string, string>> {
+        const res = new Map<string, string>();
+        const imageAuth = projectEnvVars.find(e => e.name === 'GITPOD_IMAGE_AUTH');
+        if (!imageAuth) {
+            return res;
+        }
+
+        const imageAuthValue = (await this.projectDB.getProjectEnvironmentVariableValues([imageAuth]))[0];
+
+        (imageAuthValue.value || "")
+            .split(",")
+            .map(e => e.trim().split(":"))
+            .filter(e => e.length == 2)
+            .forEach(e => res.set(e[0], e[1]));
+        return res;
     }
 
     protected async notifyOnPrebuildQueued(ctx: TraceContext, workspaceId: string) {
@@ -466,7 +485,7 @@ export class WorkspaceStarter {
         return undefined;
     }
 
-    protected async prepareBuildRequest(ctx: TraceContext, workspace: Workspace, imgsrc: WorkspaceImageSource, user: User, ignoreBaseImageresolvedAndRebuildBase: boolean = false): Promise<{ src: BuildSource, auth: BuildRegistryAuth, disposable?: Disposable }> {
+    protected async prepareBuildRequest(ctx: TraceContext, workspace: Workspace, imgsrc: WorkspaceImageSource, user: User, additionalAuth: Map<string, string>, ignoreBaseImageresolvedAndRebuildBase: boolean = false): Promise<{ src: BuildSource, auth: BuildRegistryAuth, disposable?: Disposable }> {
         const span = TraceContext.startSpan("prepareBuildRequest", ctx);
 
         try {
@@ -507,6 +526,7 @@ export class WorkspaceStarter {
                 selectiveAuth.setAnyOfList(this.config.defaultBaseImageRegistryWhitelist);
                 auth.setSelective(selectiveAuth);
             }
+            additionalAuth.forEach((val, key) => auth.getAdditionalMap().set(key, val));
             if (WorkspaceImageSourceDocker.is(imgsrc)) {
                 let source: WorkspaceInitializer;
                 const disp = new DisposableCollection();
@@ -564,11 +584,11 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async needsImageBuild(ctx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<boolean> {
+    protected async needsImageBuild(ctx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, additionalAuth: Map<string, string>): Promise<boolean> {
         const span = TraceContext.startSpan("needsImageBuild", ctx);
         try {
             const client = this.imagebuilderClientProvider.getDefault();
-            const { src, auth, disposable } = await this.prepareBuildRequest({ span }, workspace, workspace.imageSource!, user);
+            const { src, auth, disposable } = await this.prepareBuildRequest({ span }, workspace, workspace.imageSource!, user, additionalAuth);
 
             const req = new ResolveWorkspaceImageRequest();
             req.setSource(src);
@@ -588,18 +608,18 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async buildWorkspaceImage(ctx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, ignoreBaseImageresolvedAndRebuildBase: boolean = false, forceRebuild: boolean = false): Promise<WorkspaceInstance> {
+    protected async buildWorkspaceImage(ctx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, additionalAuth: Map<string, string>, ignoreBaseImageresolvedAndRebuildBase: boolean = false, forceRebuild: boolean = false): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
 
         try {
             // Start build...
             const client = this.imagebuilderClientProvider.getDefault();
-            const { src, auth, disposable } = await this.prepareBuildRequest({ span }, workspace, workspace.imageSource!, user, ignoreBaseImageresolvedAndRebuildBase || forceRebuild);
+            const { src, auth, disposable } = await this.prepareBuildRequest({ span }, workspace, workspace.imageSource!, user, additionalAuth, ignoreBaseImageresolvedAndRebuildBase || forceRebuild);
 
             const req = new BuildRequest();
             req.setSource(src);
             req.setAuth(auth);
-            req.setForcerebuild(forceRebuild);
+            req.setForceRebuild(forceRebuild);
 
             // Make sure we persist logInfo as soon as we retrieve it
             const imageBuildLogInfo = new Deferred<ImageBuildLogInfo>();
@@ -636,7 +656,7 @@ export class WorkspaceStarter {
                 if (err && err.message && err.message.includes("base image does not exist") && !ignoreBaseImageresolvedAndRebuildBase) {
                     // we've attempted to add the base layer for a workspace whoose base image has gone missing.
                     // Ignore the previously built (now missing) base image and force a rebuild.
-                    return this.buildWorkspaceImage(ctx, user, workspace, instance, true, forceRebuild);
+                    return this.buildWorkspaceImage(ctx, user, workspace, instance, additionalAuth, true, forceRebuild);
                 } else {
                     throw err;
                 }
@@ -698,8 +718,16 @@ export class WorkspaceStarter {
             }
         }
         if (projectEnvVars.length > 0) {
-            const projectEnvVarsWithValues = await this.projectDB.getProjectEnvironmentVariableValues(projectEnvVars);
-            allEnvVars = allEnvVars.concat(projectEnvVarsWithValues);
+            // Instead of using an access guard for Project environment variables, we let Project owners decide whether
+            // a variable should be:
+            //   - exposed in all workspaces (even for non-Project members when the repository is public), or
+            //   - censored from all workspaces (even for Project members)
+            let availablePrjEnvVars = projectEnvVars;
+            if (workspace.type !== 'prebuild') {
+                availablePrjEnvVars = projectEnvVars.filter(variable => !variable.censored);
+            }
+            const withValues = await this.projectDB.getProjectEnvironmentVariableValues(availablePrjEnvVars);
+            allEnvVars = allEnvVars.concat(withValues);
         }
         if (WithEnvvarsContext.is(context)) {
             allEnvVars = allEnvVars.concat(context.envvars);

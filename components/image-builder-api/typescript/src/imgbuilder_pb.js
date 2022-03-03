@@ -1764,7 +1764,7 @@ proto.builder.BuildRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     source: (f = msg.getSource()) && proto.builder.BuildSource.toObject(includeInstance, f),
     auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f),
-    forcerebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
+    forceRebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -1813,7 +1813,7 @@ proto.builder.BuildRequest.deserializeBinaryFromReader = function(msg, reader) {
       break;
     case 3:
       var value = /** @type {boolean} */ (reader.readBool());
-      msg.setForcerebuild(value);
+      msg.setForceRebuild(value);
       break;
     default:
       reader.skipField();
@@ -1860,7 +1860,7 @@ proto.builder.BuildRequest.serializeBinaryToWriter = function(message, writer) {
       proto.builder.BuildRegistryAuth.serializeBinaryToWriter
     );
   }
-  f = message.getForcerebuild();
+  f = message.getForceRebuild();
   if (f) {
     writer.writeBool(
       3,
@@ -1945,10 +1945,10 @@ proto.builder.BuildRequest.prototype.hasAuth = function() {
 
 
 /**
- * optional bool forceRebuild = 3;
+ * optional bool force_rebuild = 3;
  * @return {boolean}
  */
-proto.builder.BuildRequest.prototype.getForcerebuild = function() {
+proto.builder.BuildRequest.prototype.getForceRebuild = function() {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
 };
 
@@ -1957,7 +1957,7 @@ proto.builder.BuildRequest.prototype.getForcerebuild = function() {
  * @param {boolean} value
  * @return {!proto.builder.BuildRequest} returns this
  */
-proto.builder.BuildRequest.prototype.setForcerebuild = function(value) {
+proto.builder.BuildRequest.prototype.setForceRebuild = function(value) {
   return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
@@ -2021,7 +2021,8 @@ proto.builder.BuildRegistryAuth.prototype.toObject = function(opt_includeInstanc
 proto.builder.BuildRegistryAuth.toObject = function(includeInstance, msg) {
   var f, obj = {
     total: (f = msg.getTotal()) && proto.builder.BuildRegistryAuthTotal.toObject(includeInstance, f),
-    selective: (f = msg.getSelective()) && proto.builder.BuildRegistryAuthSelective.toObject(includeInstance, f)
+    selective: (f = msg.getSelective()) && proto.builder.BuildRegistryAuthSelective.toObject(includeInstance, f),
+    additionalMap: (f = msg.getAdditionalMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
   if (includeInstance) {
@@ -2068,6 +2069,12 @@ proto.builder.BuildRegistryAuth.deserializeBinaryFromReader = function(msg, read
       reader.readMessage(value,proto.builder.BuildRegistryAuthSelective.deserializeBinaryFromReader);
       msg.setSelective(value);
       break;
+    case 3:
+      var value = msg.getAdditionalMap();
+      reader.readMessage(value, function(message, reader) {
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+         });
+      break;
     default:
       reader.skipField();
       break;
@@ -2112,6 +2119,10 @@ proto.builder.BuildRegistryAuth.serializeBinaryToWriter = function(message, writ
       f,
       proto.builder.BuildRegistryAuthSelective.serializeBinaryToWriter
     );
+  }
+  f = message.getAdditionalMap(true);
+  if (f && f.getLength() > 0) {
+    f.serializeBinary(3, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -2188,6 +2199,28 @@ proto.builder.BuildRegistryAuth.prototype.clearSelective = function() {
 proto.builder.BuildRegistryAuth.prototype.hasSelective = function() {
   return jspb.Message.getField(this, 2) != null;
 };
+
+
+/**
+ * map<string, string> additional = 3;
+ * @param {boolean=} opt_noLazyCreate Do not create the map if
+ * empty, instead returning `undefined`
+ * @return {!jspb.Map<string,string>}
+ */
+proto.builder.BuildRegistryAuth.prototype.getAdditionalMap = function(opt_noLazyCreate) {
+  return /** @type {!jspb.Map<string,string>} */ (
+      jspb.Message.getMapField(this, 3, opt_noLazyCreate,
+      null));
+};
+
+
+/**
+ * Clears values from the map. The map will be non-null.
+ * @return {!proto.builder.BuildRegistryAuth} returns this
+ */
+proto.builder.BuildRegistryAuth.prototype.clearAdditionalMap = function() {
+  this.getAdditionalMap().clear();
+  return this;};
 
 
 
