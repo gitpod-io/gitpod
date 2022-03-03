@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -129,6 +129,40 @@ export namespace WriteIDMappingRequest {
         }
     }
 
+}
+
+export class EvacuateCGroupRequest extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): EvacuateCGroupRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: EvacuateCGroupRequest): EvacuateCGroupRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: EvacuateCGroupRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): EvacuateCGroupRequest;
+    static deserializeBinaryFromReader(message: EvacuateCGroupRequest, reader: jspb.BinaryReader): EvacuateCGroupRequest;
+}
+
+export namespace EvacuateCGroupRequest {
+    export type AsObject = {
+    }
+}
+
+export class EvacuateCGroupResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): EvacuateCGroupResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: EvacuateCGroupResponse): EvacuateCGroupResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: EvacuateCGroupResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): EvacuateCGroupResponse;
+    static deserializeBinaryFromReader(message: EvacuateCGroupResponse, reader: jspb.BinaryReader): EvacuateCGroupResponse;
+}
+
+export namespace EvacuateCGroupResponse {
+    export type AsObject = {
+    }
 }
 
 export class MountProcRequest extends jspb.Message {
