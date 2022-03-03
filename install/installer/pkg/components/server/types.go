@@ -45,6 +45,9 @@ type ConfigSerialized struct {
 	OAuthServer                OAuthServer                `json:"oauthServer"`
 	RateLimiter                RateLimiter                `json:"rateLimiter"`
 	CodeSync                   CodeSync                   `json:"codeSync"`
+	// PrebuildLimiter defines the number of prebuilds allowed for each cloneURL in a given 1 minute interval
+	// Key of "*" defines the default limit, unless there exists a cloneURL in the map which overrides it.
+	PrebuildLimiter map[string]int `json:"prebuildLimiter"`
 }
 
 type CodeSyncResources struct {

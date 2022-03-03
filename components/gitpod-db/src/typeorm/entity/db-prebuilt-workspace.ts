@@ -9,9 +9,11 @@ import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 import { PrebuiltWorkspace, PrebuiltWorkspaceState } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
+import { PrebuildWorkspaceRateLimiterMigration1646739309660 } from "../migration/1646739309660-PrebuildWorskace-rate-limiter-migration";
 
 @Entity()
 @Index("ind_ac4a9aece1a455da0dc653888f", ["cloneURL", "commit"])
+@Index(PrebuildWorkspaceRateLimiterMigration1646739309660.INDEX_NAME, PrebuildWorkspaceRateLimiterMigration1646739309660.FIELDS)
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
 

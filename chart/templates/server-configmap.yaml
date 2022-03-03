@@ -67,5 +67,6 @@ data:
         {{- end }}
         "enablePayment": {{ $comp.enablePayment }},
         "insecureNoDomain": {{ $comp.insecureNoDomain }},
-        "chargebeeProviderOptionsFile": {{ $comp.chargebeeProviderOptionsFile | quote }}
+        "chargebeeProviderOptionsFile": {{ $comp.chargebeeProviderOptionsFile | quote }},
+        "prebuildLimiter": {{ $comp.prebuildLimiter | toJson }}
     }

@@ -332,6 +332,8 @@ components:
       timeoutSeconds: 300
     insecureNoDomain: false
     chargebeeProviderOptionsFile: "/chargebee/providerOptions"
+    prebuildLimiter:
+      '*': 50
 
   serviceWaiter:
     imageName: "service-waiter"

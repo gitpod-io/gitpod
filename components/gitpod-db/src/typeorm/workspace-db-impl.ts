@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import { MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
-import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery, SnapshotState } from "@gitpod/gitpod-protocol";
+import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo, AdminGetWorkspacesQuery, SnapshotState, PrebuiltWorkspaceState } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
@@ -644,6 +644,17 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                 workspace: withWorkspace.workspace,
             }
         });
+    }
+
+    public async countUnabortedPrebuildsSince(cloneURL: string, date: Date): Promise<number> {
+        const abortedState: PrebuiltWorkspaceState = 'aborted';
+        const repo = await this.getPrebuiltWorkspaceRepo();
+
+        let query = repo.createQueryBuilder('pws');
+        query = query.where('pws.cloneURL = :cloneURL', { cloneURL })
+        query = query.andWhere('pws.creationTime >= :time', {time: date.toISOString()})
+        query = query.andWhere('pws.state != :state', { state: abortedState })
+        return query.getCount();
     }
 
     public async findQueuedPrebuilds(cloneURL?: string): Promise<PrebuildWithWorkspace[]> {
