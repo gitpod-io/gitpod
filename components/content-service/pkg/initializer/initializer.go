@@ -315,6 +315,7 @@ func downloadOTS(ctx context.Context, url string) (user, pwd string, err error) 
 		log.WithError(err).WithField("attempt", i).Warn("cannot download OTS")
 	}
 	if err != nil {
+		log.WithError(err).Warn("failed to download OTS")
 		return "", "", err
 	}
 
