@@ -39,7 +39,7 @@ Select your desired binary, download and install
 1. Download the latest release with the command:
 
 ```shell
-curl -fsSLO https://github.com/gitpod-io/gitpod/releases/download/2022.01/gitpod-installer-linux-amd64
+curl -fsSLO https://github.com/gitpod-io/gitpod/releases/latest/download/gitpod-installer-linux-amd64
 ```
 
 2. Validate the binary (optional)
@@ -47,7 +47,7 @@ curl -fsSLO https://github.com/gitpod-io/gitpod/releases/download/2022.01/gitpod
 Download the checksum file:
 
 ```shell
-curl -fsSLO https://github.com/gitpod-io/gitpod/releases/download/2022.01/gitpod-installer-linux-amd64.sha256
+curl -fsSLO https://github.com/gitpod-io/gitpod/releases/latest/download/gitpod-installer-linux-amd64.sha256
 ```
 
 Validate the binary against the checksum file:
