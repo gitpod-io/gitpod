@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -16,6 +16,7 @@ import * as workspace_daemon_pb from "./workspace_daemon_pb";
 interface IInWorkspaceServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     prepareForUserNS: IInWorkspaceServiceService_IPrepareForUserNS;
     writeIDMapping: IInWorkspaceServiceService_IWriteIDMapping;
+    evacuateCGroup: IInWorkspaceServiceService_IEvacuateCGroup;
     mountProc: IInWorkspaceServiceService_IMountProc;
     umountProc: IInWorkspaceServiceService_IUmountProc;
     mountSysfs: IInWorkspaceServiceService_IMountSysfs;
@@ -40,6 +41,15 @@ interface IInWorkspaceServiceService_IWriteIDMapping extends grpc.MethodDefiniti
     requestDeserialize: grpc.deserialize<workspace_daemon_pb.WriteIDMappingRequest>;
     responseSerialize: grpc.serialize<workspace_daemon_pb.WriteIDMappingResponse>;
     responseDeserialize: grpc.deserialize<workspace_daemon_pb.WriteIDMappingResponse>;
+}
+interface IInWorkspaceServiceService_IEvacuateCGroup extends grpc.MethodDefinition<workspace_daemon_pb.EvacuateCGroupRequest, workspace_daemon_pb.EvacuateCGroupResponse> {
+    path: "/iws.InWorkspaceService/EvacuateCGroup";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_daemon_pb.EvacuateCGroupRequest>;
+    requestDeserialize: grpc.deserialize<workspace_daemon_pb.EvacuateCGroupRequest>;
+    responseSerialize: grpc.serialize<workspace_daemon_pb.EvacuateCGroupResponse>;
+    responseDeserialize: grpc.deserialize<workspace_daemon_pb.EvacuateCGroupResponse>;
 }
 interface IInWorkspaceServiceService_IMountProc extends grpc.MethodDefinition<workspace_daemon_pb.MountProcRequest, workspace_daemon_pb.MountProcResponse> {
     path: "/iws.InWorkspaceService/MountProc";
@@ -92,6 +102,7 @@ export const InWorkspaceServiceService: IInWorkspaceServiceService;
 export interface IInWorkspaceServiceServer extends grpc.UntypedServiceImplementation {
     prepareForUserNS: grpc.handleUnaryCall<workspace_daemon_pb.PrepareForUserNSRequest, workspace_daemon_pb.PrepareForUserNSResponse>;
     writeIDMapping: grpc.handleUnaryCall<workspace_daemon_pb.WriteIDMappingRequest, workspace_daemon_pb.WriteIDMappingResponse>;
+    evacuateCGroup: grpc.handleUnaryCall<workspace_daemon_pb.EvacuateCGroupRequest, workspace_daemon_pb.EvacuateCGroupResponse>;
     mountProc: grpc.handleUnaryCall<workspace_daemon_pb.MountProcRequest, workspace_daemon_pb.MountProcResponse>;
     umountProc: grpc.handleUnaryCall<workspace_daemon_pb.UmountProcRequest, workspace_daemon_pb.UmountProcResponse>;
     mountSysfs: grpc.handleUnaryCall<workspace_daemon_pb.MountProcRequest, workspace_daemon_pb.MountProcResponse>;
@@ -106,6 +117,9 @@ export interface IInWorkspaceServiceClient {
     writeIDMapping(request: workspace_daemon_pb.WriteIDMappingRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
     writeIDMapping(request: workspace_daemon_pb.WriteIDMappingRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
     writeIDMapping(request: workspace_daemon_pb.WriteIDMappingRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
+    evacuateCGroup(request: workspace_daemon_pb.EvacuateCGroupRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.EvacuateCGroupResponse) => void): grpc.ClientUnaryCall;
+    evacuateCGroup(request: workspace_daemon_pb.EvacuateCGroupRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.EvacuateCGroupResponse) => void): grpc.ClientUnaryCall;
+    evacuateCGroup(request: workspace_daemon_pb.EvacuateCGroupRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.EvacuateCGroupResponse) => void): grpc.ClientUnaryCall;
     mountProc(request: workspace_daemon_pb.MountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
     mountProc(request: workspace_daemon_pb.MountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
     mountProc(request: workspace_daemon_pb.MountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
@@ -131,6 +145,9 @@ export class InWorkspaceServiceClient extends grpc.Client implements IInWorkspac
     public writeIDMapping(request: workspace_daemon_pb.WriteIDMappingRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
     public writeIDMapping(request: workspace_daemon_pb.WriteIDMappingRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
     public writeIDMapping(request: workspace_daemon_pb.WriteIDMappingRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
+    public evacuateCGroup(request: workspace_daemon_pb.EvacuateCGroupRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.EvacuateCGroupResponse) => void): grpc.ClientUnaryCall;
+    public evacuateCGroup(request: workspace_daemon_pb.EvacuateCGroupRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.EvacuateCGroupResponse) => void): grpc.ClientUnaryCall;
+    public evacuateCGroup(request: workspace_daemon_pb.EvacuateCGroupRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.EvacuateCGroupResponse) => void): grpc.ClientUnaryCall;
     public mountProc(request: workspace_daemon_pb.MountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
     public mountProc(request: workspace_daemon_pb.MountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
     public mountProc(request: workspace_daemon_pb.MountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;

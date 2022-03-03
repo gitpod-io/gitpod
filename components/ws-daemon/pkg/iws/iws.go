@@ -766,6 +766,23 @@ func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *ap
 	return &api.WriteIDMappingResponse{}, nil
 }
 
+func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *api.EvacuateCGroupRequest) (*api.EvacuateCGroupResponse, error) {
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("EvacuateCGroup: cannot find workspace container")
+		return nil, status.Errorf(codes.Internal, "cannot find workspace container")
+	}
+
+	cgroupBase, err := rt.ContainerCGroupPath(ctx, wscontainerID)
+	log.WithField("cgroupBase", cgroupBase).Info("EvacuateCGroup")
+
+	return nil, status.Errorf(codes.Unimplemented, "method EvacuateCGroup not implemented")
+}
+
 // Teardown triggers the final liev backup and possibly shiftfs mark unmount
 func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.TeardownRequest) (*api.TeardownResponse, error) {
 	owi := wbs.Session.OWI()
