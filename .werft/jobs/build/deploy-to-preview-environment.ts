@@ -202,7 +202,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
     let nodeExporterPort = findLastHostPort(namespace, 'node-exporter', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
 
-    if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || isNaN(nodeExporterPort)) {
+    if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || (isNaN(nodeExporterPort) && !withVM && withObservability)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
         [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
             { start: 10000, end: 11000 },
@@ -261,7 +261,6 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
             const dockerConfig = { auths: { "eu.gcr.io": { auth: deploymentConfig.imagePullAuth }, "europe-docker.pkg.dev": { auth: deploymentConfig.imagePullAuth } } };
             fs.writeFileSync(`./${IMAGE_PULL_SECRET_NAME}`, JSON.stringify(dockerConfig));
             exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`);
-            werft.done(installerSlices.IMAGE_PULL_SECRET);
         }
         catch (err) {
             if (!jobConfig.mainBuild) {
@@ -270,6 +269,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
             exec('exit 0')
         }
     }
+    werft.done(installerSlices.IMAGE_PULL_SECRET);
 
     // download and init with the installer
     try {
