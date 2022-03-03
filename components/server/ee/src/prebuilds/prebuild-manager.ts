@@ -76,6 +76,9 @@ export class PrebuildManager {
                 // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
                 const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
                 const existingConfig = existingPBWS?.config;
+
+                log.debug("Fetching config")
+
                 const newConfig = await this.fetchConfig({ span }, user, contextURL);
                 log.debug(`startPrebuild | commit: ${commit}, existingPB: ${existingPB.id}, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(newConfig)}}`);
                 const filterPrebuildTasks = (tasks: TaskConfig[] = []) => (tasks
