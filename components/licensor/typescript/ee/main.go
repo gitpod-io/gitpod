@@ -16,7 +16,7 @@ import (
 
 var (
 	instances map[int]*licensor.Evaluator = make(map[int]*licensor.Evaluator)
-	nextID    int                        = 1
+	nextID    int                         = 1
 )
 
 // Init initializes the global license evaluator from an environment variable
@@ -49,13 +49,13 @@ func Validate(id int) (msg *C.char, valid bool) {
 
 // Enabled returns true if a license enables a feature
 //export Enabled
-func Enabled(id int, feature *C.char) (enabled, ok bool) {
+func Enabled(id int, feature *C.char, seats int) (enabled, ok bool) {
 	e, ok := instances[id]
 	if !ok {
 		return
 	}
 
-	return e.Enabled(licensor.Feature(C.GoString(feature))), true
+	return e.Enabled(licensor.Feature(C.GoString(feature)), seats), true
 }
 
 // HasEnoughSeats returns true if the license supports at least the given number of seats.

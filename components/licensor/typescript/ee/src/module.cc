@@ -95,7 +95,7 @@ void EnabledM(const FunctionCallbackInfo<Value> &args) {
     Isolate *isolate = args.GetIsolate();
     Local<Context> context = isolate->GetCurrentContext();
 
-    if (args.Length() < 2) {
+    if (args.Length() < 3) {
         isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "wrong number of arguments").ToLocalChecked()));
         return;
     }
@@ -108,6 +108,10 @@ void EnabledM(const FunctionCallbackInfo<Value> &args) {
         isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 1 must be a string").ToLocalChecked()));
         return;
     }
+    if (!args[2]->IsNumber() || args[2]->IsUndefined()) {
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "argument 2 must be a number").ToLocalChecked()));
+        return;
+    }
 
     double rid = args[0]->NumberValue(context).FromMaybe(0);
     int id = static_cast<int>(rid);
@@ -116,8 +120,15 @@ void EnabledM(const FunctionCallbackInfo<Value> &args) {
     const char* cstr = ToCString(str);
     char* featurestr = const_cast<char *>(cstr);
 
+    double rseats = args[2]->NumberValue(context).FromMaybe(-1);
+    int seats = static_cast<int>(rseats);
+    if (seats < 0) {
+        isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "cannot convert number of seats").ToLocalChecked()));
+        return;
+    }
+
     // Call exported Go function, which returns a C string
-    Enabled_return r = Enabled(id, featurestr);
+    Enabled_return r = Enabled(id, featurestr, seats);
 
     if (!r.r1) {
         isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, "invalid instance ID").ToLocalChecked()));

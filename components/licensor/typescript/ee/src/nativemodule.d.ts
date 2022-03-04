@@ -9,7 +9,7 @@ export type Instance = number;
 
 export function init(key: string, domain: string): Instance;
 export function validate(id: Instance): { msg: string, valid: boolean };
-export function isEnabled(id: Instance, feature: Feature): boolean;
+export function isEnabled(id: Instance, feature: Feature, seats: int): boolean;
 export function hasEnoughSeats(id: Instance, seats: int): boolean;
 export function inspect(id: Instance): string;
 export function dispose(id: Instance);
