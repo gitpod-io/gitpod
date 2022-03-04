@@ -153,10 +153,6 @@ export class AuthProviderService {
 
     protected callbackUrl = (host: string) => {
         const pathname = `/auth/${host}/callback`;
-        if (this.config.devBranch) {
-            // for example: https://staging.gitpod-dev.com/auth/mydomain.com/gitlab/callback
-            return this.config.hostUrl.withoutDomainPrefix(1).with({ pathname }).toString();
-        }
         return this.config.hostUrl.with({ pathname }).toString();
     };
 }
