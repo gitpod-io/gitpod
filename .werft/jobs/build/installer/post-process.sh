@@ -308,6 +308,13 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       yq w -i k8s.yaml -d "$documentIndex" spec.suspend "true"
    fi
 
+   # change registry-facade PodSecurityPolicy
+   NAMESPACE=$(kubens -c)
+   if [[ "$NAMESPACE-ns-registry-facade" == "$NAME" ]] && [[ "$KIND" == "PodSecurityPolicy" ]]; then
+      yq w -i k8s.yaml -d "$documentIndex" spec.hostPorts[0].min "$REG_DAEMON_PORT"
+      yq w -i k8s.yaml -d "$documentIndex" spec.hostPorts[0].max "$REG_DAEMON_PORT"
+   fi
+
    # Uncomment to change or remove resources from the configmap which can be used to uninstall Gitpod
    # There are a couple use cases where you may want to do this:
    # 1. We don't want to uninstall a shared resource that is needed by other preview env namespaces
