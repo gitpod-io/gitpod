@@ -8,11 +8,14 @@
 #
 # BEWARE: the properly built version of ws-daemon may behave differently.
 
+set -Eeuo pipefail
+
 docker ps &> /dev/null || (echo "You need a working Docker daemon. Maybe set DOCKER_HOST?"; exit 1)
-gcloud auth list | grep typefox &>/dev/null || (echo "Login using 'gcloud auth login' for the docker push to work"; exit 1)
 
-leeway build .:docker -Dversion=dev
-devImage=eu.gcr.io/gitpod-dev/ws-daemon:dev
+version=dev-0
+leeway build .:docker -Dversion="$version" -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev
+devImage=eu.gcr.io/gitpod-core-dev/dev/ws-daemon:"$version"
 
-kubectl patch daemonset ws-daemon --patch '{"spec": {"template": {"spec": {"containers": [{"name": "ws-daemon","image": "'$devImage'"}]}}}}'
-kubectl get pods --no-headers -o=custom-columns=:metadata.name | grep ws-daemon | xargs kubectl delete pod
+kubectl set image daemonset ws-daemon ws-daemon="$devImage"
+kubectl annotate daemonset ws-daemon kubernetes.io/change-cause="$version"
+kubectl rollout restart daemonset ws-daemon
