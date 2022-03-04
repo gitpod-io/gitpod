@@ -39,7 +39,9 @@ func podsecuritypolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 			HostPID:     false,
 			HostPorts: []v1beta1.HostPortRange{{
 				Min: 20000,
-				Max: 20000,
+				// we need a range here to not break the port replacement done in core-dev
+				// TODO: get rid of hostPort in registry-facade
+				Max: 33000,
 			}},
 			RunAsUser: v1beta1.RunAsUserStrategyOptions{
 				Rule: v1beta1.RunAsUserStrategyRunAsAny,
