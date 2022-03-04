@@ -6,11 +6,11 @@
 
 import { AuthCodeRepositoryDB } from '@gitpod/gitpod-db/lib/typeorm/auth-code-repository-db';
 import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
-import { User } from '@gitpod/gitpod-protocol';
+import { User } from "@gitpod/gitpod-protocol";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-server';
+import { OAuthException, OAuthRequest, OAuthResponse } from "@jmondi/oauth2-server";
 import * as express from 'express';
-import { inject, injectable } from 'inversify';
+import { inject, injectable } from "inversify";
 import { Config } from '../config';
 import { clientRepository, createAuthorizationServer } from './oauth-authorization-server';
 
@@ -24,7 +24,7 @@ export class OAuthController {
         if (!req.isAuthenticated() || !User.is(req.user)) {
             const redirectTarget = encodeURIComponent(`${this.config.hostUrl}api${req.originalUrl}`);
             const redirectTo = `${this.config.hostUrl}login?returnTo=${redirectTarget}`;
-            res.redirect(redirectTo);
+            res.redirect(redirectTo)
             return null;
         }
         const user = req.user as User;
@@ -39,12 +39,7 @@ export class OAuthController {
         return user;
     }
 
-    private async hasApproval(
-        user: User,
-        clientID: string,
-        req: express.Request,
-        res: express.Response,
-    ): Promise<boolean> {
+    private async hasApproval(user: User, clientID: string, req: express.Request, res: express.Response): Promise<boolean> {
         // Have they just authorized, or not, the local-app?
         const wasApproved = req.query['approved'] || '';
         if (wasApproved === 'no') {
@@ -56,31 +51,31 @@ export class OAuthController {
 
             // Let the local app know they rejected the approval
             const rt = req.query.redirect_uri?.toString();
-            if (!rt || !rt.startsWith('http://127.0.0.1:')) {
-                log.error(`/oauth/authorize: invalid returnTo URL: "${rt}"`);
+            if (!rt || !rt.startsWith("http://127.0.0.1:")) {
+                log.error(`/oauth/authorize: invalid returnTo URL: "${rt}"`)
                 res.sendStatus(400);
                 return false;
             }
             res.redirect(`${rt}/?approved=no`);
             return false;
         } else if (wasApproved == 'yes') {
-            const additionalData = (user.additionalData = user.additionalData || {});
+            const additionalData = user.additionalData = user.additionalData || {};
             additionalData.oauthClientsApproved = {
                 ...additionalData.oauthClientsApproved,
-                [clientID]: new Date().toISOString(),
-            };
+                [clientID]: new Date().toISOString()
+            }
             await this.userDb.updateUserPartial(user);
         } else {
             const oauthClientsApproved = user?.additionalData?.oauthClientsApproved;
             if (!oauthClientsApproved || !oauthClientsApproved[clientID]) {
-                const client = await clientRepository.getByIdentifier(clientID);
+                const client = await clientRepository.getByIdentifier(clientID)
                 if (client) {
                     const redirectTarget = encodeURIComponent(`${this.config.hostUrl}api${req.originalUrl}`);
                     const redirectTo = `${this.config.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
-                    res.redirect(redirectTo);
+                    res.redirect(redirectTo)
                     return false;
                 } else {
-                    log.error(`/oauth/authorize unknown client id: "${clientID}"`);
+                    log.error(`/oauth/authorize unknown client id: "${clientID}"`)
                     res.sendStatus(400);
                     return false;
                 }
@@ -92,17 +87,12 @@ export class OAuthController {
     get oauthRouter(): express.Router {
         const router = express.Router();
         if (!this.config.oauthServer.enabled) {
-            log.warn('OAuth server disabled!');
+            log.warn('OAuth server disabled!')
             return router;
         }
 
-        const authorizationServer = createAuthorizationServer(
-            this.authCodeRepositoryDb,
-            this.userDb,
-            this.userDb,
-            this.config.oauthServer.jwtSecret,
-        );
-        router.get('/oauth/authorize', async (req: express.Request, res: express.Response) => {
+        const authorizationServer = createAuthorizationServer(this.authCodeRepositoryDb, this.userDb, this.userDb, this.config.oauthServer.jwtSecret);
+        router.get("/oauth/authorize", async (req: express.Request, res: express.Response) => {
             const clientID = req.query.client_id;
             if (!clientID) {
                 res.sendStatus(400);
@@ -126,7 +116,7 @@ export class OAuthController {
                 const authRequest = await authorizationServer.validateAuthorizationRequest(request);
 
                 // Once the user has logged in set the user on the AuthorizationRequest
-                authRequest.user = { id: user.id };
+                authRequest.user = { id: user.id }
 
                 // The user has approved the client so update the status
                 authRequest.isAuthorizationApproved = true;
@@ -139,7 +129,7 @@ export class OAuthController {
             }
         });
 
-        router.post('/oauth/token', async (req: express.Request, res: express.Response) => {
+        router.post("/oauth/token", async (req: express.Request, res: express.Response) => {
             const response = new OAuthResponse(res);
             try {
                 const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
@@ -161,16 +151,16 @@ export class OAuthController {
                 return;
             }
             // Generic error
-            res.status(500);
+            res.status(500)
             res.send({
-                err: e,
-            });
+                err: e
+            })
         }
 
         function handleResponse(req: express.Request, res: express.Response, response: OAuthResponse) {
             if (response.status === 302) {
                 if (!response.headers.location) {
-                    throw new Error('missing redirect location');
+                    throw new Error("missing redirect location");
                 }
                 res.set(response.headers);
                 res.redirect(response.headers.location);

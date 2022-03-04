@@ -4,24 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import {
-    DateInterval,
-    OAuthAuthCode,
-    OAuthAuthCodeRepository,
-    OAuthClient,
-    OAuthScope,
-    OAuthUser,
-} from '@jmondi/oauth2-server';
+import { DateInterval, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
 import * as crypto from 'crypto';
-import { inject, injectable } from 'inversify';
-import { EntityManager, Repository } from 'typeorm';
+import { inject, injectable } from "inversify";
+import { EntityManager, Repository } from "typeorm";
 import { DBOAuthAuthCodeEntry } from './entity/db-oauth-auth-code';
 import { TypeORM } from './typeorm';
 
-const expiryInFuture = new DateInterval('5m');
+const expiryInFuture = new DateInterval("5m");
 
 @injectable()
 export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
+
     @inject(TypeORM)
     private readonly typeORM: TypeORM;
 
@@ -36,7 +30,7 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
     public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
         const authCodeRepo = await this.getOauthAuthCodeRepo();
         let authCodes = await authCodeRepo.find({ code: authCodeCode });
-        authCodes = authCodes.filter((te) => new Date(te.expiresAt).getTime() > Date.now());
+        authCodes = authCodes.filter(te => (new Date(te.expiresAt)).getTime() > Date.now());
         const authCode = authCodes.length > 0 ? authCodes[0] : undefined;
         if (!authCode) {
             throw new Error(`authentication code not found`);

@@ -7,5 +7,5 @@
 export const projectsPathMain = '/projects';
 export const projectsPathMainWithParams = [projectsPathMain, ':projectName', ':resourceOrPrebuild?'].join('/');
 
-export const projectsPathInstallGitHubApp = '/install-github-app';
-export const projectsPathNew = '/new';
+export const projectsPathInstallGitHubApp = "/install-github-app";
+export const projectsPathNew = '/new'

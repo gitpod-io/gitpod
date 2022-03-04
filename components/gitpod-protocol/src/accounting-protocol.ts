@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+ import { v4 as uuidv4 } from 'uuid';
 import { User } from './protocol';
 import { oneMonthLater } from './util/timeutil';
 
@@ -33,7 +33,7 @@ export interface AccountEntry {
     /**
      * credit: end of validity
      */
-    expiryDate?: string; // exclusive
+    expiryDate?: string;         // exclusive
 
     kind: AccountEntryKind;
 
@@ -50,7 +50,7 @@ export namespace AccountEntry {
         const result = entry as T;
         result.uid = uuidv4();
         return result;
-    }
+    };
 }
 
 export type DebitAccountEntryKind = 'session' | 'expiry' | 'loss';
@@ -80,7 +80,9 @@ export interface CreditDescription {
 }
 export namespace CreditDescription {
     export function is(obj: any): obj is CreditDescription {
-        return !!obj && obj.hasOwnProperty('subscriptionId') && obj.hasOwnProperty('planId');
+        return !!obj
+            && obj.hasOwnProperty('subscriptionId')
+            && obj.hasOwnProperty('planId');
     }
 }
 export interface SessionDescription {
@@ -91,13 +93,11 @@ export interface SessionDescription {
 }
 export namespace SessionDescription {
     export function is(obj: any): obj is SessionDescription {
-        return (
-            !!obj &&
-            obj.hasOwnProperty('contextTitle') &&
-            obj.hasOwnProperty('contextUrl') &&
-            obj.hasOwnProperty('workspaceId') &&
-            obj.hasOwnProperty('workspaceInstanceId')
-        );
+        return !!obj
+            && obj.hasOwnProperty('contextTitle')
+            && obj.hasOwnProperty('contextUrl')
+            && obj.hasOwnProperty('workspaceId')
+            && obj.hasOwnProperty('workspaceInstanceId')
     }
 }
 
@@ -111,11 +111,11 @@ export namespace SessionDescription {
 export interface Subscription {
     uid: string;
     userId: string;
-    startDate: string; // inclusive
+    startDate: string;           // inclusive
     /** When the subscription will end (must be >= cancellationDate!) */
-    endDate?: string; // exclusive
+    endDate?: string;            // exclusive
     /** When the subscription was cancelled */
-    cancellationDate?: string; // exclusive
+    cancellationDate?: string;   // exclusive
     /** Number of granted hours */
     amount: number;
     /** Number of granted hours for the first month: If this is set, use this value for the first month */
@@ -145,7 +145,8 @@ export interface UserPaidSubscription extends Subscription {
 }
 export namespace UserPaidSubscription {
     export function is(data: any): data is UserPaidSubscription {
-        return !!data && data.hasOwnProperty('paymentReference');
+        return !!data
+            && data.hasOwnProperty('paymentReference');
     }
 }
 
@@ -154,7 +155,8 @@ export interface AssignedTeamSubscription extends Subscription {
 }
 export namespace AssignedTeamSubscription {
     export function is(data: any): data is AssignedTeamSubscription {
-        return !!data && data.hasOwnProperty('teamSubscriptionSlotId');
+        return !!data
+            && data.hasOwnProperty('teamSubscriptionSlotId');
     }
 }
 
@@ -163,35 +165,31 @@ export namespace Subscription {
         const subscription = newSubscription as Subscription;
         subscription.uid = uuidv4();
         return subscription;
-    }
+    };
     export function cancelSubscription(s: Subscription, cancellationDate: string, endDate?: string) {
         s.endDate = endDate || cancellationDate;
         s.cancellationDate = cancellationDate;
-    }
+    };
     export function isSame(s1: Subscription | undefined, s2: Subscription | undefined): boolean {
-        return (
-            !!s1 &&
-            !!s2 &&
-            s1.userId === s2.userId &&
-            s1.planId === s2.planId &&
-            s1.startDate === s2.startDate &&
-            s1.endDate === s2.endDate &&
-            s1.amount === s2.amount &&
-            s1.cancellationDate === s2.cancellationDate &&
-            s1.deleted === s2.deleted &&
-            ((s1.paymentData === undefined && s2.paymentData === undefined) ||
-                (!!s1.paymentData &&
-                    !!s2.paymentData &&
-                    s1.paymentData.downgradeDate === s2.paymentData.downgradeDate &&
-                    s1.paymentData.newPlan === s2.paymentData.newPlan))
-        );
-    }
+        return !!s1 && !!s2
+            && s1.userId === s2.userId
+            && s1.planId === s2.planId
+            && s1.startDate === s2.startDate
+            && s1.endDate === s2.endDate
+            && s1.amount === s2.amount
+            && s1.cancellationDate === s2.cancellationDate
+            && s1.deleted === s2.deleted
+            && ((s1.paymentData === undefined && s2.paymentData === undefined)
+                || (!!s1.paymentData && !!s2.paymentData
+                    && s1.paymentData.downgradeDate === s2.paymentData.downgradeDate
+                    && s1.paymentData.newPlan === s2.paymentData.newPlan));
+    };
     export function isActive(s: Subscription, date: string): boolean {
         return s.startDate <= date && (s.endDate === undefined || date < s.endDate);
-    }
+    };
     export function isDowngraded(s: Subscription) {
         return s.paymentData && s.paymentData.downgradeDate;
-    }
+    };
     export function calculateCurrentPeriod(startDate: string, now: Date) {
         let nextStartDate = startDate;
         do {
@@ -199,14 +197,14 @@ export namespace Subscription {
             nextStartDate = oneMonthLater(startDate, new Date(startDate).getDate());
         } while (nextStartDate < now.toISOString());
         return { startDate, endDate: nextStartDate };
-    }
+    };
 }
 
 export type MaybeSubscription = Subscription | undefined;
 
 export interface Period {
-    startDate: string; // inclusive
-    endDate: string; // exclusive
+    startDate: string;           // inclusive
+    endDate: string;             // exclusive
 }
 
 export type MaybePeriod = Period | undefined;
@@ -226,6 +224,6 @@ export interface AccountStatement extends Period {
 export type RemainingHours = number | 'unlimited';
 
 export interface CreditAlert {
-    userId: string;
-    remainingUsageHours: number;
+    userId: string,
+    remainingUsageHours: number
 }

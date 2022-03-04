@@ -6,7 +6,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-export type EMailState = 'scheduledInternal' | 'scheduledSendgrid';
+export type EMailState = "scheduledInternal"
+    | "scheduledSendgrid";
 
 export interface EMailStatus {
     /** The time the email entry was inserted into the DB */
@@ -19,9 +20,9 @@ export interface EMailStatus {
 export namespace EMailStatus {
     export function getState(status: EMailStatus): EMailState {
         if (status.scheduledSendgridTime) {
-            return 'scheduledSendgrid';
+            return "scheduledSendgrid";
         }
-        return 'scheduledInternal';
+        return "scheduledInternal";
     }
 }
 
@@ -61,5 +62,5 @@ export namespace EMail {
         const withId = ts as EMail;
         withId.uid = uuidv4();
         return withId;
-    };
+    }
 }

@@ -4,5 +4,5 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export * from './cluster-service_pb';
-export * from './cluster-service_grpc_pb';
+export * from './cluster-service_pb'
+export * from './cluster-service_grpc_pb'

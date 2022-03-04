@@ -8,7 +8,7 @@ require('reflect-metadata');
 
 import * as express from 'express';
 import { Container } from 'inversify';
-import { Server } from './server';
+import { Server } from "./server";
 import { productionContainerModule } from './container-module';
 
 import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -28,10 +28,10 @@ const init = async () => {
     return { server, port: 3002 };
 };
 
-const start = async (initResult: { server: Server; port: number }) => {
+const start = async (initResult: { server: Server, port: number }) => {
     await initResult.server.start(initResult.port);
 
-    process.on('unhandledRejection', (error) => {
+    process.on('unhandledRejection', error => {
         log.error('Received an unhandledRejection event. Exiting.', error);
         process.exit(1);
     });
@@ -43,7 +43,7 @@ const start = async (initResult: { server: Server; port: number }) => {
 
 init()
     .then(start)
-    .catch((err) => {
-        log.error('Error during startup or operation. Exiting.', err);
+    .catch(err => {
+        log.error("Error during startup or operation. Exiting.", err);
         process.exit(1);
     });

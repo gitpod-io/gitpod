@@ -4,16 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import {
-    ConsensusLeaderMessenger,
-    HeartbeatMessage,
-    RequestVoteMessage,
-    ConsensusLeaderMessageType,
-    CastVoteMessage,
-} from './consensus-leader-messenger';
-import { Disposable } from '@gitpod/gitpod-protocol';
-import { EventEmitter } from 'events';
-import { injectable } from 'inversify';
+import { ConsensusLeaderMessenger, HeartbeatMessage, RequestVoteMessage, ConsensusLeaderMessageType, CastVoteMessage } from "./consensus-leader-messenger";
+import { Disposable } from "@gitpod/gitpod-protocol";
+import { EventEmitter } from "events";
+import { injectable } from "inversify";
 
 @injectable()
 export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenger {
@@ -29,7 +23,7 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
 
     on(event: ConsensusLeaderMessageType, cb: (msg: any) => void): Disposable {
         this.events.on(event, cb);
-        return { dispose: () => this.events.off(event, cb) };
+        return {dispose: () => this.events.off(event, cb)};
     }
 
     async requestVote(sender: string, term: number): Promise<void> {
@@ -52,7 +46,7 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
         this.events.emit(t, p);
 
         if (forCandidate == sender) {
-            forCandidate = 'SELF';
+            forCandidate = "SELF";
         }
     }
 
@@ -73,4 +67,5 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
     public blockSender(sender: string) {
         this.blockedSenders.set(sender, true);
     }
+
 }

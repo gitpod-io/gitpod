@@ -4,53 +4,40 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
-import { HeadlessLogUrls } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
-import { inject, injectable } from 'inversify';
-import * as url from 'url';
-import { Status, StatusServiceClient } from '@gitpod/supervisor-api-grpcweb/lib/status_pb_service';
-import {
-    TasksStatusRequest,
-    TasksStatusResponse,
-    TaskState,
-    TaskStatus,
-} from '@gitpod/supervisor-api-grpcweb/lib/status_pb';
-import { ResponseStream, TerminalServiceClient } from '@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service';
-import { ListenTerminalRequest, ListenTerminalResponse } from '@gitpod/supervisor-api-grpcweb/lib/terminal_pb';
-import { WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import { inject, injectable } from "inversify";
+import * as url from "url";
+import { Status, StatusServiceClient } from '@gitpod/supervisor-api-grpcweb/lib/status_pb_service'
+import { TasksStatusRequest, TasksStatusResponse, TaskState, TaskStatus } from "@gitpod/supervisor-api-grpcweb/lib/status_pb";
+import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
+import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
+import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import * as grpc from '@grpc/grpc-js';
-import { Config } from '../config';
-import * as browserHeaders from 'browser-headers';
+import { Config } from "../config";
+import * as browserHeaders from "browser-headers";
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { TextDecoder } from 'util';
-import { WebsocketTransport } from '../util/grpc-web-ws-transport';
-import { Deferred } from '@gitpod/gitpod-protocol/lib/util/deferred';
-import {
-    ListLogsRequest,
-    ListLogsResponse,
-    LogDownloadURLRequest,
-    LogDownloadURLResponse,
-} from '@gitpod/content-service/lib/headless-log_pb';
-import { HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from './headless-log-controller';
-import { CachingHeadlessLogServiceClientProvider } from '@gitpod/content-service/lib/sugar';
+import { TextDecoder } from "util";
+import { WebsocketTransport } from "../util/grpc-web-ws-transport";
+import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
+import { ListLogsRequest, ListLogsResponse, LogDownloadURLRequest, LogDownloadURLResponse } from '@gitpod/content-service/lib/headless-log_pb';
+import { HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./headless-log-controller";
+import { CachingHeadlessLogServiceClientProvider } from "@gitpod/content-service/lib/sugar";
 
 export type HeadlessLogEndpoint = {
-    url: string;
-    ownerToken?: string;
-    headers?: { [key: string]: string };
+    url: string,
+    ownerToken?: string,
+    headers?: { [key: string]: string },
 };
 export namespace HeadlessLogEndpoint {
-    export function authHeaders(
-        logCtx: LogContext,
-        logEndpoint: HeadlessLogEndpoint,
-    ): browserHeaders.BrowserHeaders | undefined {
+    export function authHeaders(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint): browserHeaders.BrowserHeaders | undefined {
         const headers = new browserHeaders.BrowserHeaders(logEndpoint.headers);
         if (logEndpoint.ownerToken) {
-            headers.set('x-gitpod-owner-token', logEndpoint.ownerToken);
+            headers.set("x-gitpod-owner-token", logEndpoint.ownerToken);
         }
 
         if (Object.keys(headers.headersMap).length === 0) {
-            log.warn(logCtx, 'workspace logs: no ownerToken nor headers!');
+            log.warn(logCtx, "workspace logs: no ownerToken nor headers!");
             return undefined;
         }
 
@@ -60,35 +47,24 @@ export namespace HeadlessLogEndpoint {
         return {
             url: wsi.ideUrl,
             ownerToken: wsi.status.ownerToken,
-        };
+        }
     }
 }
 
 @injectable()
 export class HeadlessLogService {
-    static readonly SUPERVISOR_API_PATH = '/_supervisor/v1';
+    static readonly SUPERVISOR_API_PATH = "/_supervisor/v1";
 
     @inject(WorkspaceDB) protected readonly db: WorkspaceDB;
     @inject(Config) protected readonly config: Config;
-    @inject(CachingHeadlessLogServiceClientProvider)
-    protected readonly headlessLogClientProvider: CachingHeadlessLogServiceClientProvider;
+    @inject(CachingHeadlessLogServiceClientProvider) protected readonly headlessLogClientProvider: CachingHeadlessLogServiceClientProvider;
 
-    public async getHeadlessLogURLs(
-        logCtx: LogContext,
-        wsi: WorkspaceInstance,
-        ownerId: string,
-        maxTimeoutSecs: number = 30,
-    ): Promise<HeadlessLogUrls | undefined> {
+    public async getHeadlessLogURLs(logCtx: LogContext, wsi: WorkspaceInstance, ownerId: string, maxTimeoutSecs: number = 30): Promise<HeadlessLogUrls | undefined> {
         if (isSupervisorAvailableSoon(wsi)) {
             const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(wsi);
             const aborted = new Deferred<boolean>();
             setTimeout(() => aborted.resolve(true), maxTimeoutSecs * 1000);
-            const streamIds = await this.retryOnError(
-                () => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint),
-                'list headless log streams',
-                this.continueWhileRunning(wsi.id),
-                aborted,
-            );
+            const streamIds = await this.retryOnError(() => this.supervisorListHeadlessLogs(logCtx, wsi.id, logEndpoint), "list headless log streams", this.continueWhileRunning(wsi.id), aborted);
             if (streamIds !== undefined) {
                 return streamIds;
             }
@@ -98,10 +74,7 @@ export class HeadlessLogService {
         return await this.contentServiceListLogs(wsi, ownerId);
     }
 
-    protected async contentServiceListLogs(
-        wsi: WorkspaceInstance,
-        ownerId: string,
-    ): Promise<HeadlessLogUrls | undefined> {
+    protected async contentServiceListLogs(wsi: WorkspaceInstance, ownerId: string): Promise<HeadlessLogUrls | undefined> {
         const req = new ListLogsRequest();
         req.setOwnerId(ownerId);
         req.setWorkspaceId(wsi.workspaceId);
@@ -120,28 +93,22 @@ export class HeadlessLogService {
         // send client to proxy with plugin, which in turn calls getHeadlessLogDownloadUrl below and redirects to that Url
         const streams: { [id: string]: string } = {};
         for (const taskId of response.getTaskIdList()) {
-            streams[taskId] = this.config.hostUrl
-                .with({
-                    pathname: `${HEADLESS_LOG_DOWNLOAD_PATH_PREFIX}/${wsi.id}/${taskId}`,
-                })
-                .toString();
+            streams[taskId] = this.config.hostUrl.with({
+                pathname: `${HEADLESS_LOG_DOWNLOAD_PATH_PREFIX}/${wsi.id}/${taskId}`,
+            }).toString();
         }
         return {
-            streams,
+            streams
         };
     }
 
-    protected async supervisorListHeadlessLogs(
-        logCtx: LogContext,
-        instanceId: string,
-        logEndpoint: HeadlessLogEndpoint,
-    ): Promise<HeadlessLogUrls | undefined> {
+    protected async supervisorListHeadlessLogs(logCtx: LogContext, instanceId: string, logEndpoint: HeadlessLogEndpoint): Promise<HeadlessLogUrls | undefined> {
         const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
         return this.renderTasksHeadlessLogUrls(logCtx, instanceId, tasks);
     }
 
     protected async supervisorListTasks(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint): Promise<TaskStatus[]> {
-        if (logEndpoint.url === '') {
+        if (logEndpoint.url === "") {
             // if ideUrl is not yet set we're too early and we deem the workspace not ready yet: retry later!
             throw new Error(`instance's ${logCtx.instanceId} has no ideUrl, yet`);
         }
@@ -151,7 +118,7 @@ export class HeadlessLogService {
                 transport: WebsocketTransport(),
             });
 
-            const req = new TasksStatusRequest(); // Note: Don't set observe here at all, else it won't work!
+            const req = new TasksStatusRequest();   // Note: Don't set observe here at all, else it won't work!
             const stream = client.tasksStatus(req, HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint));
             stream.on('data', (resp: TasksStatusResponse) => {
                 resolve(resp.getTasksList());
@@ -184,14 +151,12 @@ export class HeadlessLogService {
                 // if a task has already been closed we can no longer access it's terminal, and have to skip it.
                 continue;
             }
-            streams[taskId] = this.config.hostUrl
-                .with({
-                    pathname: `/headless-logs/${instanceId}/${terminalId}`,
-                })
-                .toString();
+            streams[taskId] = this.config.hostUrl.with({
+                pathname: `/headless-logs/${instanceId}/${terminalId}`,
+            }).toString();
         }
         return {
-            streams,
+            streams
         };
     }
 
@@ -204,12 +169,7 @@ export class HeadlessLogService {
      * @param taskId
      * @returns
      */
-    async getHeadlessLogDownloadUrl(
-        userId: string,
-        wsi: WorkspaceInstance,
-        ownerId: string,
-        taskId: string,
-    ): Promise<string | undefined> {
+    async getHeadlessLogDownloadUrl(userId: string, wsi: WorkspaceInstance, ownerId: string, taskId: string): Promise<string | undefined> {
         try {
             return await new Promise<string>((resolve, reject) => {
                 const req = new LogDownloadURLRequest();
@@ -227,12 +187,7 @@ export class HeadlessLogService {
                 });
             });
         } catch (err) {
-            log.debug(
-                { userId, workspaceId: wsi.workspaceId, instanceId: wsi.id },
-                'an error occurred retrieving a headless log download URL',
-                err,
-                { taskId },
-            );
+            log.debug({ userId, workspaceId: wsi.workspaceId, instanceId: wsi.id }, "an error occurred retrieving a headless log download URL", err, { taskId });
             return undefined;
         }
     }
@@ -247,22 +202,8 @@ export class HeadlessLogService {
      * @param doContinue
      * @param aborted
      */
-    async streamWorkspaceLogWhileRunning(
-        logCtx: LogContext,
-        logEndpoint: HeadlessLogEndpoint,
-        instanceId: string,
-        terminalID: string,
-        sink: (chunk: string) => Promise<void>,
-        aborted: Deferred<boolean>,
-    ): Promise<void> {
-        await this.streamWorkspaceLog(
-            logCtx,
-            logEndpoint,
-            terminalID,
-            sink,
-            this.continueWhileRunning(instanceId),
-            aborted,
-        );
+    async streamWorkspaceLogWhileRunning(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint, instanceId: string, terminalID: string, sink: (chunk: string) => Promise<void>, aborted: Deferred<boolean>): Promise<void> {
+        await this.streamWorkspaceLog(logCtx, logEndpoint, terminalID, sink, this.continueWhileRunning(instanceId), aborted);
     }
 
     /**
@@ -274,61 +215,50 @@ export class HeadlessLogService {
      * @param doContinue
      * @param aborted
      */
-    protected async streamWorkspaceLog(
-        logCtx: LogContext,
-        logEndpoint: HeadlessLogEndpoint,
-        terminalID: string,
-        sink: (chunk: string) => Promise<void>,
-        doContinue: () => Promise<boolean>,
-        aborted: Deferred<boolean>,
-    ): Promise<void> {
+    protected async streamWorkspaceLog(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint, terminalID: string, sink: (chunk: string) => Promise<void>, doContinue: () => Promise<boolean>, aborted: Deferred<boolean>): Promise<void> {
         const client = new TerminalServiceClient(toSupervisorURL(logEndpoint.url), {
-            transport: WebsocketTransport(), // necessary because HTTPTransport causes caching issues
+            transport: WebsocketTransport(),    // necessary because HTTPTransport causes caching issues
         });
         const req = new ListenTerminalRequest();
         req.setAlias(terminalID);
 
         let receivedDataYet = false;
         let stream: ResponseStream<ListenTerminalResponse> | undefined = undefined;
-        aborted.promise
-            .then(() => stream?.cancel())
-            .catch((err) => {
-                /** ignore */
-            });
-        const doStream = (retry: (doRetry?: boolean) => void) =>
-            new Promise<void>((resolve, reject) => {
-                // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
-                const decoder = new TextDecoder('utf-8');
-                stream = client.listen(req, HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint));
-                stream.on('data', (resp: ListenTerminalResponse) => {
-                    receivedDataYet = true;
+        aborted.promise.then(() => stream?.cancel()).catch((err) => {/** ignore */});
+        const doStream = (retry: (doRetry?: boolean) => void) => new Promise<void>((resolve, reject) => {
+            // [gpl] this is the very reason we cannot redirect the frontend to the supervisor URL: currently we only have ownerTokens for authentication
+            const decoder = new TextDecoder('utf-8')
+            stream = client.listen(req, HeadlessLogEndpoint.authHeaders(logCtx, logEndpoint));
+            stream.on('data', (resp: ListenTerminalResponse) => {
+                receivedDataYet = true;
 
-                    const raw = resp.getData();
-                    const data: string = typeof raw === 'string' ? raw : decoder.decode(raw);
-                    sink(data).catch((err) => {
-                        stream?.cancel(); // If downstream reports an error: cancel connection to upstream
-                        log.debug(logCtx, 'stream cancelled', err);
+                const raw = resp.getData();
+                const data: string = typeof raw === 'string' ? raw : decoder.decode(raw);
+                sink(data)
+                    .catch((err) => {
+                        stream?.cancel();    // If downstream reports an error: cancel connection to upstream
+                        log.debug(logCtx, "stream cancelled", err);
                     });
-                });
-                stream.on('end', (status?: Status) => {
-                    if (!status || status.code === grpc.status.OK) {
-                        resolve();
-                        return;
-                    }
-
-                    const err = new Error(`upstream ended with status code: ${status.code}`);
-                    (err as any).status = status;
-                    if (!receivedDataYet && status.code === grpc.status.UNAVAILABLE) {
-                        log.debug('stream headless workspace log', err);
-                        reject(err);
-                        return;
-                    }
-
-                    retry(false);
-                    reject(err);
-                });
             });
-        await this.retryOnError(doStream, 'stream workspace logs', doContinue, aborted);
+            stream.on('end', (status?: Status) => {
+                if (!status || status.code === grpc.status.OK) {
+                    resolve();
+                    return;
+                }
+
+                const err = new Error(`upstream ended with status code: ${status.code}`);
+                (err as any).status = status;
+                if (!receivedDataYet && status.code === grpc.status.UNAVAILABLE) {
+                    log.debug("stream headless workspace log", err);
+                    reject(err);
+                    return;
+                }
+
+                retry(false);
+                reject(err);
+            });
+        });
+        await this.retryOnError(doStream, "stream workspace logs", doContinue, aborted);
     }
 
     /**
@@ -338,12 +268,7 @@ export class HeadlessLogService {
      * @param sink
      * @param aborted
      */
-    async streamImageBuildLog(
-        logCtx: LogContext,
-        logEndpoint: HeadlessLogEndpoint,
-        sink: (chunk: string) => Promise<void>,
-        aborted: Deferred<boolean>,
-    ): Promise<void> {
+    async streamImageBuildLog(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint, sink: (chunk: string) => Promise<void>, aborted: Deferred<boolean>): Promise<void> {
         const tasks = await this.supervisorListTasks(logCtx, logEndpoint);
         if (tasks.length === 0) {
             throw new Error(`imagebuild logs: not tasks found for endpoint ${logEndpoint.url}!`);
@@ -351,14 +276,7 @@ export class HeadlessLogService {
 
         // we're just looking at the first stream; image builds just have one stream atm
         const task = tasks[0];
-        await this.streamWorkspaceLog(
-            logCtx,
-            logEndpoint,
-            task.getTerminal(),
-            sink,
-            () => Promise.resolve(true),
-            aborted,
-        );
+        await this.streamWorkspaceLog(logCtx, logEndpoint, task.getTerminal(), sink, () => Promise.resolve(true), aborted);
     }
 
     /**
@@ -372,18 +290,11 @@ export class HeadlessLogService {
      * @param aborted
      * @returns
      */
-    protected async retryOnError<T>(
-        op: (cancel: () => void) => Promise<T>,
-        description: string,
-        doContinue: () => Promise<boolean>,
-        aborted: Deferred<boolean>,
-    ): Promise<T | undefined> {
+    protected async retryOnError<T>(op: (cancel: () => void) => Promise<T>, description: string, doContinue: () => Promise<boolean>, aborted: Deferred<boolean>): Promise<T | undefined> {
         let retry = true;
-        const retryFunction = (doRetry: boolean = true) => {
-            retry = doRetry;
-        };
+        const retryFunction = (doRetry: boolean = true) => { retry = doRetry };
 
-        while (retry && !(aborted.isResolved && (await aborted.promise))) {
+        while (retry && !(aborted.isResolved && (await aborted.promise)) ) {
             try {
                 return await op(retryFunction);
             } catch (err) {
@@ -409,17 +320,17 @@ export class HeadlessLogService {
         return async () => {
             const maybeInstance = await db.findInstanceById(instanceId);
             return !!maybeInstance && isSupervisorAvailableSoon(maybeInstance);
-        };
-    }
+        }
+    };
 }
 
 function isSupervisorAvailableSoon(wsi: WorkspaceInstance): boolean {
     switch (wsi.status.phase) {
-        case 'creating':
-        case 'preparing':
-        case 'initializing':
-        case 'pending':
-        case 'running':
+        case "creating":
+        case "preparing":
+        case "initializing":
+        case "pending":
+        case "running":
             return true;
         default:
             return false;

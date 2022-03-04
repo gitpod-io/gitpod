@@ -9,6 +9,7 @@ import { injectable } from 'inversify';
 
 @injectable()
 export class MonitoringEndpointsApp {
+
     public create(): express.Application {
         // Monitoring is an EE feature
         return express();

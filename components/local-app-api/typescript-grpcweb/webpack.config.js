@@ -14,24 +14,24 @@ module.exports = {
         rules: [
             {
                 test: /\.ts$/,
-                loader: 'ts-loader',
+                loader: "ts-loader"
             },
             {
                 test: /\.js$/,
-                use: ['source-map-loader'],
-                enforce: 'pre',
-                exclude: /node_modules/,
-            },
-        ],
+                use: ["source-map-loader"],
+                enforce: "pre",
+                exclude: /node_modules/
+            }
+        ]
     },
     output: {
         filename: 'localapp.js',
         path: path.resolve('./lib'),
         libraryTarget: 'umd',
-        globalObject: "typeof self !== 'undefined' ? self : this",
+        globalObject: 'typeof self !== \'undefined\' ? self : this'
     },
     externals: {
         '@improbable-eng/grpc-web': 'commonjs2 @improbable-eng/grpc-web',
     },
-    mode: 'production',
+    mode: 'production'
 };

@@ -5,9 +5,9 @@
  */
 
 import * as express from 'express';
-import { inject, injectable } from 'inversify';
-import { UserDB } from '@gitpod/gitpod-db/lib';
-import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
+import { inject, injectable } from "inversify";
+import { UserDB } from "@gitpod/gitpod-db/lib";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 
 @injectable()
 export class NewsletterSubscriptionController {
@@ -17,7 +17,7 @@ export class NewsletterSubscriptionController {
     get apiRouter(): express.Router {
         const router = express.Router();
 
-        router.get('/unsubscribe', async (req: express.Request, res: express.Response) => {
+        router.get("/unsubscribe", async (req: express.Request, res: express.Response) => {
             const email: string | undefined = req.query.email?.toString();
             const newsletterType: string | undefined = req.query.type?.toString();
             if (!email || !newsletterType) {
@@ -25,21 +25,21 @@ export class NewsletterSubscriptionController {
                 return;
             }
 
-            const acceptedNewsletterTypes: string[] = ['changelog', 'devx', 'onboarding'];
-            const newsletterProperties: { [key: string]: { [key: string]: string } } = {
+            const acceptedNewsletterTypes: string[] = ["changelog", "devx", "onboarding"];
+            const newsletterProperties: {[key:string]: {[key: string]: string}} = {
                 changelog: {
-                    property: 'unsubscribed_changelog',
-                    value: 'allowsChangelogMail',
+                    property: "unsubscribed_changelog",
+                    value: "allowsChangelogMail"
                 },
                 devx: {
-                    property: 'unsubscribed_devx',
-                    value: 'allowsDevXMail',
+                    property: "unsubscribed_devx",
+                    value: "allowsDevXMail"
                 },
                 onboarding: {
-                    property: 'unsubscribed_onboarding',
-                    value: 'allowsOnboardingMail',
-                },
-            };
+                    property: "unsubscribed_onboarding",
+                    value: "allowsOnboardingMail"
+                }
+            }
 
             if (!acceptedNewsletterTypes.includes(newsletterType)) {
                 res.sendStatus(422);
@@ -59,34 +59,36 @@ export class NewsletterSubscriptionController {
                             ...user.additionalData,
                             emailNotificationSettings: {
                                 ...user.additionalData.emailNotificationSettings,
-                                [newsletterProperties[newsletterType].value]: false,
-                            },
-                        },
+                                [newsletterProperties[newsletterType].value]: false
+                            }
+                        }
                     });
                     this.analytics.identify({
                         userId: user.id,
                         traits: {
-                            [newsletterProperties[newsletterType].property]: true,
-                        },
+                            [newsletterProperties[newsletterType].property]: true
+                        }
                     });
                     res.redirect(successPageUrl);
-                } else {
+                }
+
+                else {
                     this.analytics.identify({
                         userId: email,
                         traits: {
-                            [newsletterProperties[newsletterType].property]: true,
-                        },
+                            [newsletterProperties[newsletterType].property]: true
+                        }
                     });
                     res.redirect(successPageUrl);
                 }
             } catch (error) {
                 res.send({
                     err: error.status,
-                    message: error.message,
+                    message: error.message
                 });
                 return;
             }
-        });
+        })
 
         return router;
     }

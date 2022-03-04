@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry as AuthProviderEntry } from '@gitpod/gitpod-protocol';
-import { createHash } from 'crypto';
+import { AuthProviderEntry as AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { createHash } from "crypto";
 
 export const AuthProviderEntryDB = Symbol('AuthProviderEntryDB');
 
@@ -20,6 +20,6 @@ export interface AuthProviderEntryDB {
     findByUserId(userId: string): Promise<AuthProviderEntry[]>;
 }
 
-export function hashOAuth(oauth: AuthProviderEntry['oauth']): string {
+export function hashOAuth(oauth: AuthProviderEntry["oauth"]): string {
     return createHash('sha256').update(JSON.stringify(oauth)).digest('hex');
 }

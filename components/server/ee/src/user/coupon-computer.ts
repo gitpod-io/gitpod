@@ -4,13 +4,13 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { injectable, inject } from 'inversify';
-import { User } from '@gitpod/gitpod-protocol';
-import { AccountingDB } from '@gitpod/gitpod-db/lib/accounting-db';
-import { EligibilityService } from '../user/eligibility-service';
+import { injectable, inject } from "inversify";
+import { User } from "@gitpod/gitpod-protocol";
+import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
+import { EligibilityService } from "../user/eligibility-service";
 
-const COUPON_GITHUB_STUDENT_PACK = 'INTERNAL_GITPOD_GHSP_2';
-const COUPON_GITHUB_TEACHER_PACK = 'INTERNAL_GITPOD_GHTT';
+const COUPON_GITHUB_STUDENT_PACK = "INTERNAL_GITPOD_GHSP_2";
+const COUPON_GITHUB_TEACHER_PACK = "INTERNAL_GITPOD_GHTT";
 
 @injectable()
 export class ChargebeeCouponComputer {
@@ -55,9 +55,7 @@ export class ChargebeeCouponComputer {
             if (!subscription.paymentReference) {
                 continue;
             }
-            const additionalData = await this.accountingDB.findSubscriptionAdditionalData(
-                subscription.paymentReference,
-            );
+            const additionalData = await this.accountingDB.findSubscriptionAdditionalData(subscription.paymentReference);
             if (!additionalData || !additionalData.coupons) {
                 continue;
             }

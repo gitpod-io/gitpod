@@ -5,16 +5,16 @@
  */
 
 import { injectable, inject, postConstruct } from 'inversify';
-import { init, Instance, dispose, isEnabled, hasEnoughSeats, inspect, validate } from './nativemodule';
+import { init, Instance, dispose, isEnabled, hasEnoughSeats, inspect, validate } from "./nativemodule";
 import { Feature, LicensePayload } from './api';
 
-export const LicenseKeySource = Symbol('LicenseKeySource');
+export const LicenseKeySource = Symbol("LicenseKeySource");
 
 export interface LicenseKeySource {
     // getKey returns a license key
     getKey(): Promise<{
-        key: string;
-        domain: string;
+        key: string,
+        domain: string
     }>;
 }
 
@@ -30,18 +30,18 @@ export class LicenseEvaluator {
 
         const { msg, valid } = validate(this.instanceID);
         if (!valid) {
-            console.error(`invalid license: falling back to default`, { domain, msg });
+            console.error(`invalid license: falling back to default`, {domain, msg});
         } else {
-            console.log('enterprise license accepted', this.inspect());
+            console.log("enterprise license accepted", this.inspect());
         }
     }
 
     public async reloadLicense() {
-        this.dispose();
-        await this.init();
+        this.dispose()
+        await this.init()
     }
 
-    public validate(): { msg?: string; valid: boolean } {
+    public validate(): { msg?: string, valid: boolean } {
         const v = validate(this.instanceID);
         if (v.valid) {
             return { valid: true };
@@ -64,4 +64,5 @@ export class LicenseEvaluator {
     public dispose() {
         dispose(this.instanceID);
     }
+
 }

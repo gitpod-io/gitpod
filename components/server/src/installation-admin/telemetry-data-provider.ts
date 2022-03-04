@@ -4,25 +4,25 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from 'inversify';
+ import { injectable, inject } from 'inversify';
 
-import { TelemetryData } from '@gitpod/gitpod-protocol';
-import { InstallationAdminDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
+ import { TelemetryData } from "@gitpod/gitpod-protocol"
+ import { InstallationAdminDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
 
-@injectable()
-export class InstallationAdminTelemetryDataProvider {
+ @injectable()
+ export class InstallationAdminTelemetryDataProvider {
     @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
-    @inject(UserDB) protected readonly userDb: UserDB;
-    @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
+    @inject(UserDB) protected readonly userDb: UserDB
+    @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB
 
-    async getTelemetryData(): Promise<TelemetryData> {
-        const data: TelemetryData = {
-            installationAdmin: await this.installationAdminDb.getData(),
-            totalUsers: await this.userDb.getUserCount(true),
-            totalWorkspaces: await this.workspaceDb.getWorkspaceCount(),
-            totalInstances: await this.workspaceDb.getInstanceCount(),
-        } as TelemetryData;
+     async getTelemetryData(): Promise<TelemetryData> {
+            const data: TelemetryData = {
+                installationAdmin: await this.installationAdminDb.getData(),
+                totalUsers: await this.userDb.getUserCount(true),
+                totalWorkspaces: await this.workspaceDb.getWorkspaceCount(),
+                totalInstances: await this.workspaceDb.getInstanceCount(),
+            } as TelemetryData;
 
-        return data;
-    }
-}
+            return data;
+        }
+ }

@@ -4,17 +4,17 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContainerModule } from 'inversify';
-import { AuthProvider } from '../auth/auth-provider';
-import { FileProvider, LanguagesProvider, RepositoryHost, RepositoryProvider } from '../repohost';
-import { IContextParser } from '../workspace/context-parser';
-import { BitbucketServerApi } from './bitbucket-server-api';
-import { BitbucketServerAuthProvider } from './bitbucket-server-auth-provider';
-import { BitbucketServerContextParser } from './bitbucket-server-context-parser';
-import { BitbucketServerFileProvider } from './bitbucket-server-file-provider';
-import { BitbucketServerLanguagesProvider } from './bitbucket-server-language-provider';
-import { BitbucketServerRepositoryProvider } from './bitbucket-server-repository-provider';
-import { BitbucketServerTokenHelper } from './bitbucket-server-token-handler';
+import { ContainerModule } from "inversify";
+import { AuthProvider } from "../auth/auth-provider";
+import { FileProvider, LanguagesProvider, RepositoryHost, RepositoryProvider } from "../repohost";
+import { IContextParser } from "../workspace/context-parser";
+import { BitbucketServerApi } from "./bitbucket-server-api";
+import { BitbucketServerAuthProvider } from "./bitbucket-server-auth-provider";
+import { BitbucketServerContextParser } from "./bitbucket-server-context-parser";
+import { BitbucketServerFileProvider } from "./bitbucket-server-file-provider";
+import { BitbucketServerLanguagesProvider } from "./bitbucket-server-language-provider";
+import { BitbucketServerRepositoryProvider } from "./bitbucket-server-repository-provider";
+import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 
 export const bitbucketServerContainerModule = new ContainerModule((bind, _unbind, _isBound, _rebind) => {
     bind(RepositoryHost).toSelf().inSingletonScope();

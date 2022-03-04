@@ -4,16 +4,17 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn } from "typeorm";
 
-import { AccountEntry, AccountEntryKind } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
-import { TypeORM } from '../../typeorm/typeorm';
-import { Transformer } from '../../typeorm/transformer';
+import { AccountEntry, AccountEntryKind } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { TypeORM } from "../../typeorm/typeorm";
+import { Transformer } from "../../typeorm/transformer";
 
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBAccountEntry implements AccountEntry {
-    @PrimaryColumn('uuid')
+
+    @PrimaryColumn("uuid")
     uid: string;
 
     @Column(TypeORM.UUID_COLUMN_TYPE)
@@ -27,26 +28,26 @@ export class DBAccountEntry implements AccountEntry {
 
     @Column({
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     expiryDate?: string;
 
     @Column({
         type: 'char',
-        length: 7,
+        length: 7
     })
-    kind: AccountEntryKind;
+    kind: AccountEntryKind
 
     @Column({
         type: 'simple-json',
-        nullable: true,
+        nullable: true
     })
     description?: object;
 
     @Column({
         type: 'char',
         length: 36,
-        nullable: true,
+        nullable: true
     })
     creditId?: string;
 }

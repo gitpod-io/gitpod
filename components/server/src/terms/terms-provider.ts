@@ -15,9 +15,9 @@ export class TermsProvider {
 }
 
 const currentTerms: Terms = {
-    activeSince: '2020-11',
+    activeSince: "2020-11",
     adminOnlyTerms: true,
-    revision: '2020-11',
+    revision: "2020-11",
     updateMessage: `
 # Terms and Conditions Update
 
@@ -27,5 +27,5 @@ Read the updated [terms](https://www.gitpod.io/self-hosted-terms/).
 # Create a new Gitpod account with {{AUTH_HOST}}
 
 Before we proceed, please read and accept the [terms](https://www.gitpod.io/self-hosted-terms/).
-`,
-};
+`
+}

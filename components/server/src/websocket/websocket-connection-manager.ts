@@ -4,84 +4,51 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import {
-    ClientHeaderFields,
-    Disposable,
-    GitpodClient as GitpodApiClient,
-    GitpodServerPath,
-    RateLimiterError,
-    User,
-} from '@gitpod/gitpod-protocol';
-import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { ConnectionHandler } from '@gitpod/gitpod-protocol/lib/messaging/handler';
-import {
-    JsonRpcConnectionHandler,
-    JsonRpcProxy,
-    JsonRpcProxyFactory,
-} from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { EventEmitter } from 'events';
-import * as express from 'express';
-import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from 'vscode-jsonrpc';
-import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from '../auth/function-access';
-import { HostContextProvider } from '../auth/host-context-provider';
-import { RateLimiter, RateLimiterConfig, UserRateLimiter } from '../auth/rate-limiter';
-import {
-    CompositeResourceAccessGuard,
-    OwnerResourceGuard,
-    ResourceAccessGuard,
-    SharedWorkspaceAccessGuard,
-    TeamMemberResourceGuard,
-    WithResourceAccessGuard,
-    RepositoryResourceGuard,
-} from '../auth/resource-access';
-import { takeFirst } from '../express-util';
-import {
-    increaseApiCallCounter,
-    increaseApiConnectionClosedCounter,
-    increaseApiConnectionCounter,
-    increaseApiCallUserCounter,
-    observeAPICallsDuration,
-    apiCallDurationHistogram,
-} from '../prometheus-metrics';
-import { GitpodServerImpl } from '../workspace/gitpod-server-impl';
+import { ClientHeaderFields, Disposable, GitpodClient as GitpodApiClient, GitpodServerPath, RateLimiterError, User } from "@gitpod/gitpod-protocol";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler";
+import { JsonRpcConnectionHandler, JsonRpcProxy, JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { EventEmitter } from "events";
+import * as express from "express";
+import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "vscode-jsonrpc";
+import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "../auth/function-access";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "../auth/rate-limiter";
+import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, TeamMemberResourceGuard, WithResourceAccessGuard, RepositoryResourceGuard } from "../auth/resource-access";
+import { takeFirst } from "../express-util";
+import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter, observeAPICallsDuration, apiCallDurationHistogram } from "../prometheus-metrics";
+import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import * as opentracing from 'opentracing';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
-const EVENT_CONNECTION_CREATED = 'EVENT_CONNECTION_CREATED';
-const EVENT_CONNECTION_CLOSED = 'EVENT_CONNECTION_CLOSED';
-const EVENT_CLIENT_CONTEXT_CREATED = 'EVENT_CLIENT_CONTEXT_CREATED';
-const EVENT_CLIENT_CONTEXT_CLOSED = 'EVENT_CLIENT_CONTEXT_CLOSED';
+const EVENT_CONNECTION_CREATED = "EVENT_CONNECTION_CREATED";
+const EVENT_CONNECTION_CLOSED = "EVENT_CONNECTION_CLOSED";
+const EVENT_CLIENT_CONTEXT_CREATED = "EVENT_CLIENT_CONTEXT_CREATED";
+const EVENT_CLIENT_CONTEXT_CLOSED = "EVENT_CLIENT_CONTEXT_CLOSED";
 
 /** TODO(gpl) Refine this list */
-export type WebsocketClientType =
-    | 'browser'
-    | 'go-client'
-    | 'gitpod-code'
-    | 'supervisor'
-    | 'local-companion'
-    | 'io.gitpod.jetbrains.remote'
-    | 'io.gitpod.jetbrains.gateway';
+export type WebsocketClientType = "browser" | "go-client" | "gitpod-code" | "supervisor" | "local-companion" | "io.gitpod.jetbrains.remote" | "io.gitpod.jetbrains.gateway";
 namespace WebsocketClientType {
     export function getClientType(req: express.Request): WebsocketClientType | undefined {
-        const userAgent = req.headers['user-agent'];
+        const userAgent = req.headers["user-agent"];
 
         let result: WebsocketClientType | undefined = undefined;
         if (userAgent) {
-            if (userAgent.startsWith('Go-http-client')) {
-                result = 'go-client';
-            } else if (userAgent.startsWith('Mozilla')) {
-                result = 'browser';
-            } else if (userAgent.startsWith('Gitpod Code')) {
-                result = 'gitpod-code';
-            } else if (userAgent.startsWith('gitpod/supervisor')) {
-                result = 'supervisor';
-            } else if (userAgent.startsWith('gitpod/local-companion')) {
-                result = 'local-companion';
-            } else if (userAgent === 'io.gitpod.jetbrains.remote' || userAgent === 'io.gitpod.jetbrains.gateway') {
+            if (userAgent.startsWith("Go-http-client")) {
+                result = "go-client";
+            } else if (userAgent.startsWith("Mozilla")) {
+                result = "browser";
+            } else if (userAgent.startsWith("Gitpod Code")) {
+                result = "gitpod-code";
+            } else if (userAgent.startsWith("gitpod/supervisor")) {
+                result = "supervisor";
+            } else if (userAgent.startsWith("gitpod/local-companion")) {
+                result = "local-companion";
+            } else if(userAgent === 'io.gitpod.jetbrains.remote' || userAgent === 'io.gitpod.jetbrains.gateway') {
                 result = userAgent;
             }
         }
@@ -91,38 +58,34 @@ namespace WebsocketClientType {
         return result;
     }
 }
-export type WebsocketAuthenticationLevel = 'user' | 'session' | 'anonymous';
+export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
 
 export interface ClientMetadata {
-    id: string;
-    authLevel: WebsocketAuthenticationLevel;
-    sessionId?: string;
-    userId?: string;
-    type?: WebsocketClientType;
-    origin: ClientOrigin;
-    version?: string;
-    userAgent?: string;
+    id: string,
+    authLevel: WebsocketAuthenticationLevel,
+    sessionId?: string,
+    userId?: string,
+    type?: WebsocketClientType,
+    origin: ClientOrigin,
+    version?: string,
+    userAgent?: string,
 }
 interface ClientOrigin {
-    workspaceId?: string;
-    instanceId?: string;
+    workspaceId?: string,
+    instanceId?: string,
 }
 export namespace ClientMetadata {
-    export function from(
-        userId: string | undefined,
-        sessionId?: string,
-        data?: Omit<ClientMetadata, 'id' | 'sessionId' | 'authLevel'>,
-    ): ClientMetadata {
-        let id = 'anonymous';
-        let authLevel: WebsocketAuthenticationLevel = 'anonymous';
+    export function from(userId: string | undefined, sessionId?: string, data?: Omit<ClientMetadata, "id" | "sessionId" | "authLevel">): ClientMetadata {
+        let id = "anonymous";
+        let authLevel: WebsocketAuthenticationLevel = "anonymous";
         if (userId) {
             id = userId;
-            authLevel = 'user';
+            authLevel = "user";
         } else if (sessionId) {
             id = `session-${sessionId}`;
-            authLevel = 'session';
+            authLevel = "session";
         }
-        return { id, authLevel, userId, sessionId, ...data, origin: data?.origin || {} };
+        return { id, authLevel, userId, sessionId, ...data, origin: data?.origin || {}, };
     }
 
     export function fromRequest(req: any) {
@@ -130,9 +93,9 @@ export namespace ClientMetadata {
         const user = expressReq.user;
         const sessionId = expressReq.session?.id;
         const type = WebsocketClientType.getClientType(expressReq);
-        const version = takeFirst(expressReq.headers['x-client-version']);
-        const userAgent = takeFirst(expressReq.headers['user-agent']);
-        const instanceId = takeFirst(expressReq.headers['x-workspace-instance-id']);
+        const version = takeFirst(expressReq.headers["x-client-version"]);
+        const userAgent = takeFirst(expressReq.headers["user-agent"]);
+        const instanceId = takeFirst(expressReq.headers["x-workspace-instance-id"]);
         const workspaceId = getOriginWorkspaceId(expressReq);
         const origin: ClientOrigin = {
             instanceId,
@@ -142,7 +105,7 @@ export namespace ClientMetadata {
     }
 
     function getOriginWorkspaceId(req: express.Request): string | undefined {
-        const origin = req.headers['origin'];
+        const origin = req.headers["origin"];
         if (!origin) {
             return undefined;
         }
@@ -158,7 +121,9 @@ export namespace ClientMetadata {
 }
 
 export class WebsocketClientContext {
-    constructor(public readonly clientMetadata: ClientMetadata) {}
+    constructor(
+        public readonly clientMetadata: ClientMetadata,
+    ) {}
 
     /** This list of endpoints serving client connections 1-1 */
     protected servers: GitpodServerImpl[] = [];
@@ -172,7 +137,7 @@ export class WebsocketClientContext {
     }
 
     removeEndpoint(server: GitpodServerImpl) {
-        const index = this.servers.findIndex((s) => s.uuid === server.uuid);
+        const index = this.servers.findIndex(s => s.uuid === server.uuid);
         if (index !== -1) {
             this.servers.splice(index, 1);
         }
@@ -196,8 +161,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
     constructor(
         protected readonly serverFactory: GitpodServiceFactory,
         protected readonly hostContextProvider: HostContextProvider,
-        protected readonly rateLimiterConfig: RateLimiterConfig,
-    ) {
+        protected readonly rateLimiterConfig: RateLimiterConfig) {
         this.jsonRpcConnectionHandler = new GitpodJsonRpcConnectionHandler<GitpodApiClient>(
             this.path,
             this.createProxyTarget.bind(this),
@@ -210,11 +174,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         this.jsonRpcConnectionHandler.onConnection(connection, session);
     }
 
-    protected createProxyTarget(
-        client: JsonRpcProxy<GitpodApiClient>,
-        request?: object,
-        connectionCtx?: TraceContext,
-    ): GitpodServerImpl {
+    protected createProxyTarget(client: JsonRpcProxy<GitpodApiClient>, request?: object, connectionCtx?: TraceContext): GitpodServerImpl {
         const expressReq = request as express.Request;
         const session = expressReq.session;
         const user: User | undefined = expressReq.user;
@@ -239,19 +199,12 @@ export class WebsocketConnectionManager implements ConnectionHandler {
 
         const clientHeaderFields: ClientHeaderFields = {
             ip: takeFirst(expressReq.ips),
-            userAgent: expressReq.headers['user-agent'],
+            userAgent: expressReq.headers["user-agent"],
             dnt: takeFirst(expressReq.headers.dnt),
-            clientRegion: takeFirst(expressReq.headers['x-glb-client-region']),
+            clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
         };
 
-        gitpodServer.initialize(
-            client,
-            user,
-            resourceGuard,
-            clientContext.clientMetadata,
-            connectionCtx,
-            clientHeaderFields,
-        );
+        gitpodServer.initialize(client, user, resourceGuard, clientContext.clientMetadata, connectionCtx, clientHeaderFields);
         client.onDidCloseConnection(() => {
             try {
                 gitpodServer.dispose();
@@ -265,7 +218,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
                 }
             } catch (err) {
                 // we want to be absolutely sure that we do not bubble up errors into ws.onClose here
-                log.error('onDidCloseConnection', err);
+                log.error("onDidCloseConnection", err);
             }
         });
         clientContext.addEndpoint(gitpodServer);
@@ -277,7 +230,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
                 if (session) session.touch();
 
                 return target[property];
-            },
+            }
         });
     }
 
@@ -293,31 +246,31 @@ export class WebsocketConnectionManager implements ConnectionHandler {
     }
 
     public onConnectionCreated(l: (server: GitpodServerImpl, req: express.Request) => void): Disposable {
-        this.events.on(EVENT_CONNECTION_CREATED, l);
+        this.events.on(EVENT_CONNECTION_CREATED, l)
         return {
-            dispose: () => this.events.off(EVENT_CONNECTION_CREATED, l),
-        };
+            dispose: () => this.events.off(EVENT_CONNECTION_CREATED, l)
+        }
     }
 
     public onConnectionClosed(l: (server: GitpodServerImpl, req: express.Request) => void): Disposable {
-        this.events.on(EVENT_CONNECTION_CLOSED, l);
+        this.events.on(EVENT_CONNECTION_CLOSED, l)
         return {
-            dispose: () => this.events.off(EVENT_CONNECTION_CLOSED, l),
-        };
+            dispose: () => this.events.off(EVENT_CONNECTION_CLOSED, l)
+        }
     }
 
     public onClientContextCreated(l: (ctx: WebsocketClientContext) => void): Disposable {
-        this.events.on(EVENT_CLIENT_CONTEXT_CREATED, l);
+        this.events.on(EVENT_CLIENT_CONTEXT_CREATED, l)
         return {
-            dispose: () => this.events.off(EVENT_CLIENT_CONTEXT_CREATED, l),
-        };
+            dispose: () => this.events.off(EVENT_CLIENT_CONTEXT_CREATED, l)
+        }
     }
 
     public onClientContextClosed(l: (ctx: WebsocketClientContext) => void): Disposable {
-        this.events.on(EVENT_CLIENT_CONTEXT_CLOSED, l);
+        this.events.on(EVENT_CLIENT_CONTEXT_CLOSED, l)
         return {
-            dispose: () => this.events.off(EVENT_CLIENT_CONTEXT_CLOSED, l),
-        };
+            dispose: () => this.events.off(EVENT_CLIENT_CONTEXT_CLOSED, l)
+        }
     }
 }
 
@@ -334,7 +287,7 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
         const clientMetadata = ClientMetadata.fromRequest(request);
 
         // trace the ws connection itself
-        const span = opentracing.globalTracer().startSpan('ws-connection');
+        const span = opentracing.globalTracer().startSpan("ws-connection");
         const ctx = { span };
         traceClientMetadata(ctx, clientMetadata);
         TraceContext.setOWI(ctx, {
@@ -358,7 +311,7 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
         return {
             user: clientId,
             consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(clientId, method),
-        };
+        }
     }
 
     protected createAccessGuard(request?: object): FunctionAccessGuard {
@@ -367,6 +320,7 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
 }
 
 class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T> {
+
     constructor(
         protected readonly accessGuard: FunctionAccessGuard,
         protected readonly rateLimiter: RateLimiter,
@@ -377,10 +331,10 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
     }
 
     protected async onRequest(method: string, ...args: any[]): Promise<any> {
-        if (!this.rateLimiter.user.startsWith('session-')) {
+        if (!this.rateLimiter.user.startsWith("session-")) {
             increaseApiCallUserCounter(method, this.rateLimiter.user);
         } else {
-            increaseApiCallUserCounter(method, 'anonymous');
+            increaseApiCallUserCounter(method, "anonymous");
         }
 
         const span = TraceContext.startSpan(method, undefined);
@@ -400,16 +354,11 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 await this.rateLimiter.consume(method);
             } catch (rlRejected) {
                 if (rlRejected instanceof Error) {
-                    log.error({ userId }, 'Unexpected error in the rate limiter', rlRejected);
+                    log.error({ userId }, "Unexpected error in the rate limiter", rlRejected);
                     throw rlRejected;
                 }
-                log.warn({ userId }, 'Rate limiter prevents accessing method due to too many requests.', rlRejected, {
-                    method,
-                });
-                throw new ResponseError<RateLimiterError>(ErrorCodes.TOO_MANY_REQUESTS, 'too many requests', {
-                    method,
-                    retryAfter: Math.round(rlRejected.msBeforeNext / 1000) || 1,
-                });
+                log.warn({ userId }, "Rate limiter prevents accessing method due to too many requests.", rlRejected, { method });
+                throw new ResponseError<RateLimiterError>(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { method, retryAfter: Math.round(rlRejected.msBeforeNext / 1000) || 1 });
             }
 
             // access guard
@@ -420,7 +369,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
             // actual call
             const end = apiCallDurationHistogram.startTimer();
-            const result = await this.target[method](ctx, ...args); // we can inject TraceContext here because of GitpodServerWithTracing
+            const result = await this.target[method](ctx, ...args);    // we can inject TraceContext here because of GitpodServerWithTracing
             increaseApiCallCounter(method, 200);
             observeAPICallsDuration(method, end());
             return result;
@@ -431,9 +380,9 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
                 log.info({ userId }, `Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
             } else {
-                TraceContext.setError(ctx, e); // this is a "real" error
+                TraceContext.setError(ctx, e);  // this is a "real" error
 
-                const err = new ResponseError(500, 'internal server error');
+                const err = new ResponseError(500, "internal server error");
                 increaseApiCallCounter(method, err.code);
                 TraceContext.setJsonRPCError(ctx, method, err, true);
 
@@ -446,8 +395,9 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
     }
 
     protected onNotification(method: string, ...args: any[]): void {
-        throw new ResponseError(RPCErrorCodes.InvalidRequest, 'notifications are not supported');
+        throw new ResponseError(RPCErrorCodes.InvalidRequest, "notifications are not supported");
     }
+
 }
 
 export function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) {

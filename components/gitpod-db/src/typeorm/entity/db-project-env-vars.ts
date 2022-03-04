@@ -4,11 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { PrimaryColumn, Entity, Column } from 'typeorm';
-import { TypeORM } from '../typeorm';
-import { ProjectEnvVarWithValue } from '@gitpod/gitpod-protocol';
-import { Transformer } from '../transformer';
-import { encryptionService } from '../user-db-impl';
+import { PrimaryColumn, Entity, Column } from "typeorm";
+import { TypeORM } from "../typeorm";
+import { ProjectEnvVarWithValue } from "@gitpod/gitpod-protocol";
+import { Transformer } from "../transformer";
+import { encryptionService } from "../user-db-impl";
 
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
@@ -26,18 +26,18 @@ export class DBProjectEnvVar implements ProjectEnvVarWithValue {
     name: string;
 
     @Column({
-        type: 'simple-json',
+        type: "simple-json",
         transformer: Transformer.compose(
             Transformer.SIMPLE_JSON([]),
-            Transformer.encrypted(() => encryptionService),
-        ),
+            Transformer.encrypted(() => encryptionService)
+        )
     })
     value: string;
 
     @Column()
     censored: boolean;
 
-    @Column('varchar')
+    @Column("varchar")
     creationTime: string;
 
     // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.

@@ -4,10 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Identity, Token, UserEnvVar, User } from '@gitpod/gitpod-protocol';
-import { AuthUser } from '../auth/auth-provider';
-import { saveSession } from '../express-util';
-import { Session } from '../express';
+import { Identity, Token, UserEnvVar, User } from "@gitpod/gitpod-protocol";
+import { AuthUser } from "../auth/auth-provider";
+import { saveSession } from "../express-util";
+import { Session } from "../express";
 
 export interface TosFlow {
     flowId?: string;
@@ -25,11 +25,11 @@ export namespace TosFlow {
         token: Token;
         additionalIdentity?: Identity;
         additionalToken?: Token;
-        envVars?: UserEnvVar[];
+        envVars?: UserEnvVar[]
     }
     export namespace WithIdentity {
         export function is(data?: any): data is WithIdentity {
-            return typeof data === 'object' && 'candidate' in data && 'authUser' in data;
+            return typeof data === "object" && "candidate" in data && "authUser" in data;
         }
     }
     export interface WithUser extends TosFlow {
@@ -39,7 +39,7 @@ export namespace TosFlow {
     }
     export namespace WithUser {
         export function is(data?: TosFlow): data is WithUser {
-            return typeof data === 'object' && 'user' in data;
+            return typeof data === "object" && "user" in data;
         }
     }
 
@@ -59,3 +59,4 @@ export namespace TosFlow {
         }
     }
 }
+

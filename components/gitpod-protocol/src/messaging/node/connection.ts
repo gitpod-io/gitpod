@@ -5,12 +5,12 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as ws from 'ws';
-import { IWebSocket } from 'vscode-ws-jsonrpc';
+import * as ws from "ws";
+import { IWebSocket } from "vscode-ws-jsonrpc";
 
 export function toIWebSocket(ws: ws) {
     return <IWebSocket>{
-        send: (content) => {
+        send: content => {
             if (ws.readyState >= ws.CLOSING) {
                 // ws is already CLOSING/CLOSED, send() would just return an error.
                 return;
@@ -18,7 +18,7 @@ export function toIWebSocket(ws: ws) {
 
             // in general send-errors should trigger an 'error' event already, we just make sure it actually happens.
             try {
-                ws.send(content, (err) => {
+                ws.send(content, err => {
                     if (!err) {
                         return;
                     }
@@ -28,13 +28,13 @@ export function toIWebSocket(ws: ws) {
                 ws.emit('error', err);
             }
         },
-        onMessage: (cb) => ws.on('message', cb),
-        onError: (cb) => ws.on('error', cb),
-        onClose: (cb) => ws.on('close', cb),
+        onMessage: cb => ws.on('message', cb),
+        onError: cb => ws.on('error', cb),
+        onClose: cb => ws.on('close', cb),
         dispose: () => {
             if (ws.readyState < ws.CLOSING) {
                 ws.close();
             }
-        },
+        }
     };
 }

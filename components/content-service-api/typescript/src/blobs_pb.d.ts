@@ -10,7 +10,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import * as jspb from 'google-protobuf';
+import * as jspb from "google-protobuf";
 
 export class UploadUrlRequest extends jspb.Message {
     getOwnerId(): string;
@@ -23,8 +23,8 @@ export class UploadUrlRequest extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UploadUrlRequest.AsObject;
     static toObject(includeInstance: boolean, msg: UploadUrlRequest): UploadUrlRequest.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
     static serializeBinaryToWriter(message: UploadUrlRequest, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): UploadUrlRequest;
     static deserializeBinaryFromReader(message: UploadUrlRequest, reader: jspb.BinaryReader): UploadUrlRequest;
@@ -32,10 +32,10 @@ export class UploadUrlRequest extends jspb.Message {
 
 export namespace UploadUrlRequest {
     export type AsObject = {
-        ownerId: string;
-        name: string;
-        contentType: string;
-    };
+        ownerId: string,
+        name: string,
+        contentType: string,
+    }
 }
 
 export class UploadUrlResponse extends jspb.Message {
@@ -45,8 +45,8 @@ export class UploadUrlResponse extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UploadUrlResponse.AsObject;
     static toObject(includeInstance: boolean, msg: UploadUrlResponse): UploadUrlResponse.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
     static serializeBinaryToWriter(message: UploadUrlResponse, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): UploadUrlResponse;
     static deserializeBinaryFromReader(message: UploadUrlResponse, reader: jspb.BinaryReader): UploadUrlResponse;
@@ -54,8 +54,8 @@ export class UploadUrlResponse extends jspb.Message {
 
 export namespace UploadUrlResponse {
     export type AsObject = {
-        url: string;
-    };
+        url: string,
+    }
 }
 
 export class DownloadUrlRequest extends jspb.Message {
@@ -69,8 +69,8 @@ export class DownloadUrlRequest extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DownloadUrlRequest.AsObject;
     static toObject(includeInstance: boolean, msg: DownloadUrlRequest): DownloadUrlRequest.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
     static serializeBinaryToWriter(message: DownloadUrlRequest, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): DownloadUrlRequest;
     static deserializeBinaryFromReader(message: DownloadUrlRequest, reader: jspb.BinaryReader): DownloadUrlRequest;
@@ -78,10 +78,10 @@ export class DownloadUrlRequest extends jspb.Message {
 
 export namespace DownloadUrlRequest {
     export type AsObject = {
-        ownerId: string;
-        name: string;
-        contentType: string;
-    };
+        ownerId: string,
+        name: string,
+        contentType: string,
+    }
 }
 
 export class DownloadUrlResponse extends jspb.Message {
@@ -91,8 +91,8 @@ export class DownloadUrlResponse extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DownloadUrlResponse.AsObject;
     static toObject(includeInstance: boolean, msg: DownloadUrlResponse): DownloadUrlResponse.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
     static serializeBinaryToWriter(message: DownloadUrlResponse, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): DownloadUrlResponse;
     static deserializeBinaryFromReader(message: DownloadUrlResponse, reader: jspb.BinaryReader): DownloadUrlResponse;
@@ -100,8 +100,8 @@ export class DownloadUrlResponse extends jspb.Message {
 
 export namespace DownloadUrlResponse {
     export type AsObject = {
-        url: string;
-    };
+        url: string,
+    }
 }
 
 export class DeleteRequest extends jspb.Message {
@@ -123,8 +123,8 @@ export class DeleteRequest extends jspb.Message {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteRequest.AsObject;
     static toObject(includeInstance: boolean, msg: DeleteRequest): DeleteRequest.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
     static serializeBinaryToWriter(message: DeleteRequest, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): DeleteRequest;
     static deserializeBinaryFromReader(message: DeleteRequest, reader: jspb.BinaryReader): DeleteRequest;
@@ -132,29 +132,32 @@ export class DeleteRequest extends jspb.Message {
 
 export namespace DeleteRequest {
     export type AsObject = {
-        ownerId: string;
-        exact: string;
-        prefix: string;
-    };
+        ownerId: string,
+        exact: string,
+        prefix: string,
+    }
 
     export enum NameCase {
         NAME_NOT_SET = 0,
         EXACT = 2,
         PREFIX = 3,
     }
+
 }
 
 export class DeleteResponse extends jspb.Message {
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteResponse.AsObject;
     static toObject(includeInstance: boolean, msg: DeleteResponse): DeleteResponse.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: { [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message> };
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
     static serializeBinaryToWriter(message: DeleteResponse, writer: jspb.BinaryWriter): void;
     static deserializeBinary(bytes: Uint8Array): DeleteResponse;
     static deserializeBinaryFromReader(message: DeleteResponse, reader: jspb.BinaryReader): DeleteResponse;
 }
 
 export namespace DeleteResponse {
-    export type AsObject = {};
+    export type AsObject = {
+    }
 }

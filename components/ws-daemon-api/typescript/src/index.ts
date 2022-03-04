@@ -4,4 +4,4 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export * from './daemon_pb';
+export * from './daemon_pb'

@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
-import { Event, Emitter } from './event';
+import { Event, Emitter } from "./event";
 
 export interface Disposable {
     /**
@@ -16,10 +16,10 @@ export interface Disposable {
 export namespace Disposable {
     export function create(func: () => void): Disposable {
         return {
-            dispose: func,
+            dispose: func
         };
     }
-    export const NULL = create(() => {});
+    export const NULL = create(() => { });
 }
 
 export class DisposableCollection implements Disposable {
@@ -69,6 +69,9 @@ export class DisposableCollection implements Disposable {
     }
 
     pushAll(disposables: Disposable[]): Disposable[] {
-        return disposables.map((disposable) => this.push(disposable));
+        return disposables.map(disposable =>
+            this.push(disposable)
+        );
     }
+
 }

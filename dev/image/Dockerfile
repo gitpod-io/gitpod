@@ -231,5 +231,9 @@ RUN curl -LO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONT
     tar -xzvf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     sudo mv gojsontoyaml /usr/local/bin/gojsontoyaml
 
+# Install Replicated and KOTS
+RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/install.sh | sudo bash && \
+    curl https://kots.io/install/1.65.0 | bash
+
 # Copy our own tools
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/

@@ -8,13 +8,13 @@ import * as crypto from 'crypto';
 import { injectable } from 'inversify';
 
 export interface KeyParams {
-    iv: string;
+    iv: string
 }
 
 export interface EncryptedData {
     /** utf8 encoded string */
-    data: string;
-    keyParams: KeyParams;
+    data: string,
+    keyParams: KeyParams
 }
 
 export const EncryptionEngine = Symbol('EncryptionEngine');
@@ -32,7 +32,7 @@ export interface EncryptionEngine {
  * - no salt, as we pass in a real key (no salting needed to turn a password into a key)
  * The implementation closely follows the exampes in https://nodejs.org/api/crypto.html.
  */
-@injectable()
+ @injectable()
 export class EncryptionEngineImpl {
     readonly algorithm = 'aes-256-cbc';
     readonly enc = 'base64';
@@ -45,8 +45,8 @@ export class EncryptionEngineImpl {
         return {
             data: finalEncrypted.toString(this.enc),
             keyParams: {
-                iv: iv.toString(this.enc),
-            },
+                iv: iv.toString(this.enc)
+            }
         };
     }
 

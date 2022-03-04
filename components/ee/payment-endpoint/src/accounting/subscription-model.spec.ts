@@ -12,8 +12,7 @@ import { SubscriptionModel } from './subscription-model';
 
 const expect = chai.expect;
 
-@suite
-class SubscriptionModelSpec {
+@suite class SubscriptionModelSpec {
     @test @only mergedWithFreeSubscriptions_total_overlap() {
         const userId = '123';
         const userCreationDate = new Date(Date.UTC(2000, 0, 1)).toISOString();
@@ -35,9 +34,12 @@ class SubscriptionModelSpec {
             cancellationDate: hoursLater(userCreationDate, 4), // one hour later
             endDate: hoursLater(userCreationDate, 4),
         };
-        const model = new SubscriptionModel(userId, [proOpenSourceSubscription, cancelledPaidSubscription]);
+        const model = new SubscriptionModel(userId, [
+            proOpenSourceSubscription,
+            cancelledPaidSubscription
+        ]);
         const blendedSubscriptions = model.mergedWithFreeSubscriptions(userCreationDate);
-        const redactedBlendedSubscriptions = blendedSubscriptions.map((s) => {
+        const redactedBlendedSubscriptions = blendedSubscriptions.map(s => {
             s.uid = '[...]';
             return s;
         });
@@ -99,9 +101,12 @@ class SubscriptionModelSpec {
             cancellationDate: hoursLater(userCreationDate, 5),
             endDate: hoursLater(userCreationDate, 5),
         };
-        const model = new SubscriptionModel(userId, [proOpenSourceSubscription, cancelledPaidSubscription]);
+        const model = new SubscriptionModel(userId, [
+            proOpenSourceSubscription,
+            cancelledPaidSubscription
+        ]);
         const blendedSubscriptions = model.mergedWithFreeSubscriptions(userCreationDate);
-        const redactedBlendedSubscriptions = blendedSubscriptions.map((s) => {
+        const redactedBlendedSubscriptions = blendedSubscriptions.map(s => {
             s.uid = '[...]';
             return s;
         });
@@ -163,9 +168,12 @@ class SubscriptionModelSpec {
             cancellationDate: hoursLater(userCreationDate, 7),
             endDate: hoursLater(userCreationDate, 7),
         };
-        const model = new SubscriptionModel(userId, [proOpenSourceSubscription, cancelledPaidSubscription]);
+        const model = new SubscriptionModel(userId, [
+            proOpenSourceSubscription,
+            cancelledPaidSubscription
+        ]);
         const blendedSubscriptions = model.mergedWithFreeSubscriptions(userCreationDate);
-        const redactedBlendedSubscriptions = blendedSubscriptions.map((s) => {
+        const redactedBlendedSubscriptions = blendedSubscriptions.map(s => {
             s.uid = '[...]';
             return s;
         });
@@ -217,4 +225,4 @@ class SubscriptionModelSpec {
     }
 }
 
-module.exports = new SubscriptionModelSpec();
+module.exports = new SubscriptionModelSpec()

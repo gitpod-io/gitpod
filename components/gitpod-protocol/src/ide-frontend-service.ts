@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Event } from './util/event';
-import { Disposable } from './util/disposable';
+import { Event } from "./util/event";
+import { Disposable } from "./util/disposable";
 
 export type IDEFrontendState = 'init' | 'ready' | 'terminated';
 

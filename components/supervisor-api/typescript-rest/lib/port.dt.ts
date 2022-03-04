@@ -8,8 +8,10 @@ declare namespace Definitions {
         message?: string;
         details?: ProtobufAny[];
     }
-    export interface SupervisorAutoTunnelResponse {}
-    export interface SupervisorCloseTunnelResponse {}
+    export interface SupervisorAutoTunnelResponse {
+    }
+    export interface SupervisorCloseTunnelResponse {
+    }
     export interface SupervisorEstablishTunnelResponse {
         data?: string; // byte
     }
@@ -19,8 +21,9 @@ declare namespace Definitions {
         visibility?: SupervisorTunnelVisiblity;
         clientId?: string;
     }
-    export interface SupervisorTunnelPortResponse {}
-    export type SupervisorTunnelVisiblity = 'none' | 'host' | 'network';
+    export interface SupervisorTunnelPortResponse {
+    }
+    export type SupervisorTunnelVisiblity = "none" | "host" | "network";
 }
 declare namespace Paths {
     namespace PortServiceAutoTunnel {

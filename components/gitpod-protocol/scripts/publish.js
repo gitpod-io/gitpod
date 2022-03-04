@@ -1,3 +1,4 @@
+
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
@@ -14,17 +15,13 @@ const qualifier = process.argv[2];
 const rootDir = process.cwd();
 const pckDir = path.join(rootDir, process.argv[3]);
 
-if (process.env.DO_PUBLISH === 'false') {
+if (process.env.DO_PUBLISH === "false") {
     console.warn('Skipping publishing per request.');
     process.exit(0);
 }
 
 if (process.env.NPM_AUTH_TOKEN) {
-    fs.writeFileSync(
-        path.join(pckDir, '.npmrc'),
-        `//registry.npmjs.org/:_authToken=${process.env.NPM_AUTH_TOKEN}\n`,
-        'utf-8',
-    );
+    fs.writeFileSync(path.join(pckDir, '.npmrc'), `//registry.npmjs.org/:_authToken=${process.env.NPM_AUTH_TOKEN}\n`, 'utf-8');
 } else {
     console.warn('NPM_AUTH_TOKEN env variable is not set');
 }
@@ -35,7 +32,16 @@ fs.writeFileSync(path.join(pckDir, 'package.json'), JSON.stringify(pck, undefine
 
 const tag = qualifier.substr(0, qualifier.lastIndexOf('.'));
 
-child_process.execSync(
-    ['yarn', '--cwd', pckDir, 'publish', '--tag', tag, '--access', 'public', '--ignore-scripts'].join(' '),
-    { stdio: 'inherit' },
-);
+child_process.execSync([
+    "yarn",
+    "--cwd",
+    pckDir,
+    "publish",
+    "--tag",
+    tag,
+    "--access",
+    "public",
+    "--ignore-scripts"
+].join(" "), { stdio: 'inherit' });
+
+

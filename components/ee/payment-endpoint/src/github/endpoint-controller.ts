@@ -25,15 +25,11 @@ export class GithubEndpointController {
 
     public register(path: string, app: App) {
         const webhooks = new Webhooks.Webhooks({ secret: this.config.githubAppWebhookSecret });
-        webhooks.on('marketplace_purchase', (evt) => {
-            log.debug('incoming event', {
-                event: `marketplace_purchase.${evt.payload.action}`,
-                githubUser: evt.payload.marketplace_purchase.account.login,
-            });
-            this.reconciler
-                .handleIncomingEvent(evt)
-                .catch((err) => log.error('error while processing GitHub marketplace event', { err, evt }));
+        webhooks.on("marketplace_purchase", evt => {
+            log.debug("incoming event", { event: `marketplace_purchase.${evt.payload.action}`, githubUser: evt.payload.marketplace_purchase.account.login });
+            this.reconciler.handleIncomingEvent(evt).catch(err => log.error("error while processing GitHub marketplace event", { err, evt }));
         });
         app.use(createNodeMiddleware(webhooks, { path }));
     }
+
 }

@@ -8,5 +8,6 @@ declare namespace Definitions {
         message?: string;
         details?: ProtobufAny[];
     }
-    export interface SupervisorExposePortResponse {}
+    export interface SupervisorExposePortResponse {
+    }
 }

@@ -11,7 +11,8 @@ declare namespace Definitions {
         message?: string;
         details?: ProtobufAny[];
     }
-    export interface SupervisorClearTokenResponse {}
+    export interface SupervisorClearTokenResponse {
+    }
     export interface SupervisorGetTokenRequest {
         host?: string;
         scope?: string[];
@@ -45,7 +46,8 @@ declare namespace Definitions {
         SupervisorTokenReuse;
         kind?: string;
     }
-    export interface SupervisorSetTokenResponse {}
+    export interface SupervisorSetTokenResponse {
+    }
     /**
      *  - REUSE_NEVER: REUSE_NEVER means the token can never be re-used.
      * This mode only makes sense when providing a token in response to a request.
@@ -54,7 +56,7 @@ declare namespace Definitions {
      *  - REUSE_WHEN_POSSIBLE: REUSE_WHEN_POSSIBLE means the token can be reused when the requested scopes
      * are a subset of the token's scopes.
      */
-    export type SupervisorTokenReuse = 'REUSE_NEVER' | 'REUSE_EXACTLY' | 'REUSE_WHEN_POSSIBLE';
+    export type SupervisorTokenReuse = "REUSE_NEVER" | "REUSE_EXACTLY" | "REUSE_WHEN_POSSIBLE";
 }
 declare namespace Paths {
     namespace TokenServiceClearToken {

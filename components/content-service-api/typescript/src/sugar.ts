@@ -4,22 +4,19 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable, interfaces, optional } from 'inversify';
-import * as grpc from '@grpc/grpc-js';
-import { createClientCallMetricsInterceptor, IClientCallMetrics } from './client-call-metrics';
-import { IDEPluginServiceClient } from './ideplugin_grpc_pb';
-import { ContentServiceClient } from './content_grpc_pb';
-import { BlobServiceClient } from './blobs_grpc_pb';
-import { WorkspaceServiceClient } from './workspace_grpc_pb';
-import { HeadlessLogServiceClient } from './headless-log_grpc_pb';
+import { inject, injectable, interfaces, optional } from "inversify";
+import * as grpc from "@grpc/grpc-js";
+import { createClientCallMetricsInterceptor, IClientCallMetrics } from "./client-call-metrics";
+import { IDEPluginServiceClient } from "./ideplugin_grpc_pb";
+import { ContentServiceClient } from "./content_grpc_pb";
+import { BlobServiceClient } from "./blobs_grpc_pb";
+import { WorkspaceServiceClient } from "./workspace_grpc_pb";
+import { HeadlessLogServiceClient } from "./headless-log_grpc_pb";
 
-export const ContentServiceClientConfig = Symbol('ContentServiceClientConfig');
-export const ContentServiceClientCallMetrics = Symbol('ContentServiceClientCallMetrics');
+export const ContentServiceClientConfig = Symbol("ContentServiceClientConfig");
+export const ContentServiceClientCallMetrics = Symbol("ContentServiceClientCallMetrics");
 
-export const contentServiceBinder = (
-    config: (ctx: interfaces.Context) => ContentServiceClientConfig,
-    clientCallMetrics?: IClientCallMetrics,
-): interfaces.ContainerModuleCallBack => {
+export const contentServiceBinder = (config: (ctx: interfaces.Context) => ContentServiceClientConfig, clientCallMetrics?: IClientCallMetrics): interfaces.ContainerModuleCallBack => {
     return (bind, unbind, isBound, rebind) => {
         bind(ContentServiceClientConfig).toDynamicValue(config).inSingletonScope();
         if (clientCallMetrics) {
@@ -53,8 +50,7 @@ export interface ContentServiceClientProvider<T> {
 abstract class CachingClientProvider<T> implements ContentServiceClientProvider<T> {
     @inject(ContentServiceClientConfig) protected readonly clientConfig: ContentServiceClientConfig;
 
-    @inject(ContentServiceClientCallMetrics)
-    @optional()
+    @inject(ContentServiceClientCallMetrics) @optional()
     protected readonly clientCallMetrics: IClientCallMetrics;
 
     protected readonly interceptors: grpc.Interceptor[] = [];
@@ -63,7 +59,9 @@ abstract class CachingClientProvider<T> implements ContentServiceClientProvider<
     // Thus it makes sense to cache them rather than create a new connection for each request.
     protected client: Client<T> | undefined;
 
-    constructor(protected readonly createClient: (config: ContentServiceClientConfig) => Client<T>) {
+    constructor(
+        protected readonly createClient: (config: ContentServiceClientConfig) => Client<T>,
+    ) {
         if (this.clientCallMetrics) {
             this.interceptors.push(createClientCallMetricsInterceptor(this.clientCallMetrics));
         }
@@ -91,8 +89,8 @@ abstract class CachingClientProvider<T> implements ContentServiceClientProvider<
                 options: {
                     ...(config.options || {}),
                     interceptors: [...(config.options?.interceptors || []), ...this.interceptors],
-                },
-            };
+                }
+            }
         }
         return config;
     }
@@ -103,7 +101,7 @@ export class CachingContentServiceClientProvider extends CachingClientProvider<C
     constructor() {
         super((config) => {
             return new ContentServiceClient(config.address, config.credentials, config.options);
-        });
+        })
     }
 }
 
@@ -112,7 +110,7 @@ export class CachingBlobServiceClientProvider extends CachingClientProvider<Blob
     constructor() {
         super((config) => {
             return new BlobServiceClient(config.address, config.credentials, config.options);
-        });
+        })
     }
 }
 
@@ -121,7 +119,7 @@ export class CachingWorkspaceServiceClientProvider extends CachingClientProvider
     constructor() {
         super((config) => {
             return new WorkspaceServiceClient(config.address, config.credentials, config.options);
-        });
+        })
     }
 }
 
@@ -130,7 +128,7 @@ export class CachingIDEPluginClientProvider extends CachingClientProvider<IDEPlu
     constructor() {
         super((config) => {
             return new IDEPluginServiceClient(config.address, config.credentials, config.options);
-        });
+        })
     }
 }
 
@@ -139,15 +137,11 @@ export class CachingHeadlessLogServiceClientProvider extends CachingClientProvid
     constructor() {
         super((config) => {
             return new HeadlessLogServiceClient(config.address, config.credentials, config.options);
-        });
+        })
     }
 }
 
 function isConnectionAlive(client: grpc.Client) {
     const cs = client.getChannel().getConnectivityState(false);
-    return (
-        cs == grpc.connectivityState.CONNECTING ||
-        cs == grpc.connectivityState.IDLE ||
-        cs == grpc.connectivityState.READY
-    );
+    return cs == grpc.connectivityState.CONNECTING || cs == grpc.connectivityState.IDLE || cs == grpc.connectivityState.READY;
 }

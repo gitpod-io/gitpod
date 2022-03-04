@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-const UI_EXPERIMENTS_KEY = 'gitpod-ui-experiments';
+const UI_EXPERIMENTS_KEY = "gitpod-ui-experiments";
 
 /**
  * This enables UI-experiments: Dashboard-local changes that we'd like to try out and get some feedback on/validate
@@ -27,10 +27,10 @@ const Experiments = {
     /**
      * Experiment "example" will be activate on login for 10% of all clients.
      */
-    example: 0.1,
+    "example": 0.1,
 };
 type Experiments = Partial<{ [e in Experiment]: boolean }>;
-export type Experiment = keyof typeof Experiments;
+export type Experiment = keyof (typeof Experiments);
 
 export namespace Experiment {
     /**

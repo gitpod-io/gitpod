@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export const StorageClient = Symbol('StorageClient');
+export const StorageClient = Symbol("StorageClient")
 
 export interface StorageClient {
     // deleteUserContent deletes the bucket of a user

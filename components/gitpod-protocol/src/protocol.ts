@@ -4,29 +4,29 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInstance, PortVisibility } from './workspace-instance';
-import { RoleOrPermission } from './permission';
-import { Project } from './teams-projects-protocol';
+import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
+import { RoleOrPermission } from "./permission";
+import { Project } from "./teams-projects-protocol";
 
 export interface UserInfo {
-    name?: string;
+    name?: string
 }
 
 export interface User {
     /** The user id */
-    id: string;
+    id: string
 
     /** The timestamp when the user entry was created */
-    creationDate: string;
+    creationDate: string
 
-    avatarUrl?: string;
+    avatarUrl?: string
 
-    name?: string;
+    name?: string
 
     /** Optional for backwards compatibility */
-    fullName?: string;
+    fullName?: string
 
-    identities: Identity[];
+    identities: Identity[]
 
     /**
      * Whether the user has been blocked to use our service, because of TOS violation for example.
@@ -48,27 +48,29 @@ export interface User {
 
 export namespace User {
     export function is(data: any): data is User {
-        return data && data.hasOwnProperty('id') && data.hasOwnProperty('identities');
+        return data
+            && data.hasOwnProperty('id')
+            && data.hasOwnProperty('identities')
     }
     export function getIdentity(user: User, authProviderId: string): Identity | undefined {
-        return user.identities.find((id) => id.authProviderId === authProviderId);
+        return user.identities.find(id => id.authProviderId === authProviderId);
     }
     export function censor(user: User): User {
         const res = { ...user };
-        delete res.additionalData;
-        res.identities = res.identities.map((i) => {
-            delete i.tokens;
+        delete (res.additionalData);
+        res.identities = res.identities.map(i => {
+            delete (i.tokens);
 
             // The user field is not in the Identity shape, but actually exists on DBIdentity.
             // Trying to push this object out via JSON RPC will fail because of the cyclic nature
             // of this field.
-            delete (i as any).user;
+            delete ((i as any).user);
             return i;
         });
         return res;
     }
     export function getPrimaryEmail(user: User): string {
-        const identities = user.identities.filter((i) => !!i.primaryEmail);
+        const identities = user.identities.filter(i => !!i.primaryEmail);
         if (identities.length <= 0) {
             throw new Error(`No identity with primary email for user: ${user.id}!`);
         }
@@ -82,7 +84,7 @@ export namespace User {
         }
 
         for (const id of user.identities) {
-            if (id.authName !== '') {
+            if (id.authName !== "") {
                 return id.authName;
             }
         }
@@ -96,10 +98,10 @@ export interface AdditionalUserData {
     featurePreview?: boolean;
     ideSettings?: IDESettings;
     // key is the name of the news, string the iso date when it was seen
-    whatsNewSeen?: { [key: string]: string };
+    whatsNewSeen?: { [key: string]: string }
     // key is the name of the OAuth client i.e. local app, string the iso date when it was approved
     // TODO(rl): provide a management UX to allow rescinding of approval
-    oauthClientsApproved?: { [key: string]: string };
+    oauthClientsApproved?: { [key: string]: string }
     // to remember GH Orgs the user installed/updated the GH App for
     knownGitHubOrgs?: string[];
 
@@ -114,11 +116,11 @@ export interface EmailNotificationSettings {
 }
 
 export type IDESettings = {
-    defaultIde?: string;
-    useDesktopIde?: boolean;
-    defaultDesktopIde?: string;
-    useLatestVersion?: boolean;
-};
+    defaultIde?: string
+    useDesktopIde?: boolean
+    defaultDesktopIde?: string
+    useLatestVersion?: boolean
+}
 
 export interface UserPlatform {
     uid: string;
@@ -150,8 +152,8 @@ export interface UserFeatureSettings {
  * The values of this type MUST MATCH enum values in WorkspaceFeatureFlag from ws-manager/client/core_pb.d.ts
  * If they don't we'll break things during workspace startup.
  */
-export const WorkspaceFeatureFlags = { full_workspace_backup: undefined, fixed_resources: undefined };
-export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
+export const WorkspaceFeatureFlags = { "full_workspace_backup": undefined, "fixed_resources": undefined };
+export type NamedWorkspaceFeatureFlag = keyof (typeof WorkspaceFeatureFlags);
 
 export interface EnvVarWithValue {
     name: string;
@@ -177,6 +179,7 @@ export interface UserEnvVar extends UserEnvVarValue {
 }
 
 export namespace UserEnvVar {
+
     // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function normalizeRepoPattern(pattern: string) {
         return pattern.toLocaleLowerCase();
@@ -193,13 +196,13 @@ export namespace UserEnvVar {
         // the lower the score, the higher the precedence.
         const [ownerPattern, repoPattern] = splitRepositoryPattern(value.repositoryPattern);
         let score = 0;
-        if (repoPattern == '*') {
+        if (repoPattern == "*") {
             score += 1;
         }
         if (ownerPattern == '*') {
             score += 2;
         }
-        if (ownerPattern == '#' || repoPattern == '#') {
+        if (ownerPattern == "#" || repoPattern == "#") {
             score = 4;
         }
         return score;
@@ -207,20 +210,20 @@ export namespace UserEnvVar {
 
     // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
-        let result = vars.filter((e) => {
+        let result = vars.filter(e => {
             const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
-            if (ownerPattern !== '*' && ownerPattern !== '#' && !!owner && ownerPattern !== owner.toLocaleLowerCase()) {
+            if (ownerPattern !== '*' && ownerPattern !== '#' && (!!owner && ownerPattern !== owner.toLocaleLowerCase())) {
                 return false;
             }
-            if (repoPattern !== '*' && repoPattern !== '#' && !!repo && repoPattern !== repo.toLocaleLowerCase()) {
+            if (repoPattern !== '*' && repoPattern !== '#' && (!!repo && repoPattern !== repo.toLocaleLowerCase())) {
                 return false;
             }
             return true;
         });
 
         const resmap = new Map<string, T[]>();
-        result.forEach((e) => {
-            const l = resmap.get(e.name) || [];
+        result.forEach(e => {
+            const l = (resmap.get(e.name) || []);
             l.push(e);
             resmap.set(e.name, l);
         });
@@ -256,44 +259,45 @@ export namespace UserEnvVar {
     // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function splitRepositoryPattern(repositoryPattern: string): string[] {
         const patterns = repositoryPattern.split('/');
-        const repoPattern = patterns.slice(1).join('/');
+        const repoPattern = patterns.slice(1).join('/')
         const ownerPattern = patterns[0];
         return [ownerPattern, repoPattern];
     }
 }
 
 export interface GitpodToken {
+
     /** Hash value (SHA256) of the token (primary key). */
-    tokenHash: string;
+    tokenHash: string
 
     /** Human readable name of the token */
-    name?: string;
+    name?: string
 
     /** Token kind */
-    type: GitpodTokenType;
+    type: GitpodTokenType
 
     /** The user the token belongs to. */
-    user: User;
+    user: User
 
     /** Scopes (e.g. limition to read-only) */
-    scopes: string[];
+    scopes: string[]
 
     /** Created timestamp */
-    created: string;
+    created: string
 
     // token is deleted on the database and about to be collected by db-sync
-    deleted?: boolean;
+    deleted?: boolean
 }
 
 export enum GitpodTokenType {
     API_AUTH_TOKEN = 0,
-    MACHINE_AUTH_TOKEN = 1,
+    MACHINE_AUTH_TOKEN = 1
 }
 
 export interface OneTimeSecret {
-    id: string;
+    id: string
 
-    value: string;
+    value: string
 
     expirationTime: string;
 
@@ -321,16 +325,17 @@ export interface Identity {
     readonly?: boolean;
 }
 
-export type IdentityLookup = Pick<Identity, 'authProviderId' | 'authId'>;
+export type IdentityLookup = Pick<Identity, "authProviderId" | "authId">;
 
 export namespace Identity {
     export function is(data: any): data is Identity {
-        return (
-            data.hasOwnProperty('authProviderId') && data.hasOwnProperty('authId') && data.hasOwnProperty('authName')
-        );
+        return data.hasOwnProperty('authProviderId')
+            && data.hasOwnProperty('authId')
+            && data.hasOwnProperty('authName')
     }
     export function equals(id1: IdentityLookup, id2: IdentityLookup) {
-        return id1.authProviderId === id2.authProviderId && id1.authId === id2.authId;
+        return id1.authProviderId === id2.authProviderId
+            && id1.authId === id2.authId
     }
 }
 
@@ -363,8 +368,8 @@ export interface EduEmailDomain {
     domain: string;
 }
 
-export type AppInstallationPlatform = 'github';
-export type AppInstallationState = 'claimed.user' | 'claimed.platform' | 'installed' | 'uninstalled';
+export type AppInstallationPlatform = "github";
+export type AppInstallationState = "claimed.user" | "claimed.platform" | "installed" | "uninstalled";
 export interface AppInstallation {
     platform: AppInstallationPlatform;
     installationID: string;
@@ -423,13 +428,13 @@ export interface Workspace {
      * The resolved, fix name of the workspace image. We only use this
      * to access the logs during an image build.
      */
-    imageNameResolved?: string;
+    imageNameResolved?: string
 
     /**
      * The resolved/built fixed named of the base image. This field is only set if the workspace
      * already has its base image built.
      */
-    baseImageNameResolved?: string;
+    baseImageNameResolved?: string
 
     shareable?: boolean;
     pinned?: boolean;
@@ -461,21 +466,22 @@ export interface Workspace {
     basedOnSnapshotId?: string;
 }
 
-export type WorkspaceSoftDeletion = 'user' | 'gc';
+export type WorkspaceSoftDeletion = "user" | "gc";
 
-export type WorkspaceType = 'regular' | 'prebuild' | 'probe';
+export type WorkspaceType = "regular" | "prebuild" | "probe";
 
 export namespace Workspace {
+
     export function getFullRepositoryName(ws: Workspace): string | undefined {
         if (CommitContext.is(ws.context)) {
-            return ws.context.repository.owner + '/' + ws.context.repository.name;
+            return ws.context.repository.owner + '/' + ws.context.repository.name
         }
         return undefined;
     }
 
     export function getFullRepositoryUrl(ws: Workspace): string | undefined {
         if (CommitContext.is(ws.context)) {
-            return `https://${ws.context.repository.host}/${getFullRepositoryName(ws)}`;
+            return `https://${ws.context.repository.host}/${getFullRepositoryName(ws)}`
         }
         return undefined;
     }
@@ -514,13 +520,13 @@ export interface PreparePluginUploadParams {
 }
 
 export interface ResolvePluginsParams {
-    config?: WorkspaceConfig;
-    builtins?: ResolvedPlugins;
-    vsxRegistryUrl?: string;
+    config?: WorkspaceConfig
+    builtins?: ResolvedPlugins
+    vsxRegistryUrl?: string
 }
 
 export interface InstallPluginsParams {
-    pluginIds: string[];
+    pluginIds: string[]
 }
 
 export interface UninstallPluginParams {
@@ -528,27 +534,27 @@ export interface UninstallPluginParams {
 }
 
 export interface GuessGitTokenScopesParams {
-    host: string;
-    repoUrl: string;
-    gitCommand: string;
-    currentToken: GitToken;
+    host: string
+    repoUrl: string
+	gitCommand: string
+    currentToken: GitToken
 }
 
 export interface GitToken {
-    token: string;
-    user: string;
-    scopes: string[];
+    token: string
+    user: string
+    scopes: string[]
 }
 
 export interface GuessedGitTokenScopes {
-    message?: string;
-    scopes?: string[];
+    message?: string
+    scopes?: string[]
 }
 
 export type ResolvedPluginKind = 'user' | 'workspace' | 'builtin';
 
 export interface ResolvedPlugins {
-    [pluginId: string]: ResolvedPlugin | undefined;
+    [pluginId: string]: ResolvedPlugin | undefined
 }
 
 export interface ResolvedPlugin {
@@ -594,17 +600,17 @@ export interface WorkspaceConfig {
 }
 
 export interface GithubAppConfig {
-    prebuilds?: GithubAppPrebuildConfig;
+    prebuilds?: GithubAppPrebuildConfig
 }
 export interface GithubAppPrebuildConfig {
-    master?: boolean;
-    branches?: boolean;
-    pullRequests?: boolean;
-    pullRequestsFromForks?: boolean;
-    addCheck?: boolean | 'prevent-merge-on-error';
-    addBadge?: boolean;
-    addLabel?: boolean | string;
-    addComment?: boolean;
+    master?: boolean
+    branches?: boolean
+    pullRequests?: boolean
+    pullRequestsFromForks?: boolean
+    addCheck?: boolean | 'prevent-merge-on-error'
+    addBadge?: boolean
+    addLabel?: boolean | string
+    addComment?: boolean
 }
 export namespace GithubAppPrebuildConfig {
     export function is(obj: boolean | GithubAppPrebuildConfig): obj is GithubAppPrebuildConfig {
@@ -614,13 +620,14 @@ export namespace GithubAppPrebuildConfig {
 
 export type WorkspaceImageSource = WorkspaceImageSourceDocker | WorkspaceImageSourceReference;
 export interface WorkspaceImageSourceDocker {
-    dockerFilePath: string;
-    dockerFileHash: string;
-    dockerFileSource?: Commit;
+    dockerFilePath: string
+    dockerFileHash: string
+    dockerFileSource?: Commit
 }
 export namespace WorkspaceImageSourceDocker {
     export function is(obj: object): obj is WorkspaceImageSourceDocker {
-        return 'dockerFileHash' in obj && 'dockerFilePath' in obj;
+        return 'dockerFileHash' in obj
+            && 'dockerFilePath' in obj;
     }
 }
 export interface WorkspaceImageSourceReference {
@@ -633,17 +640,17 @@ export namespace WorkspaceImageSourceReference {
     }
 }
 
-export type PrebuiltWorkspaceState =
+export type PrebuiltWorkspaceState
     // the prebuild is queued and may start at anytime
-    | 'queued'
+    = "queued"
     // the workspace prebuild is currently running (i.e. there's a workspace pod deployed)
-    | 'building'
+    | "building"
     // the prebuild failed due to some issue with the system (e.g. missed a message, could not start workspace)
-    | 'aborted'
+    | "aborted"
     // the prebuild timed out
-    | 'timeout'
+    | "timeout"
     // the prebuild has finished and a snapshot is available
-    | 'available';
+    | "available";
 
 export interface PrebuiltWorkspace {
     id: string;
@@ -660,15 +667,15 @@ export interface PrebuiltWorkspace {
 
 export namespace PrebuiltWorkspace {
     export function isDone(pws: PrebuiltWorkspace) {
-        return pws.state === 'available' || pws.state === 'timeout' || pws.state === 'aborted';
+        return pws.state === "available" || pws.state === "timeout" || pws.state === 'aborted';
     }
 
     export function isAvailable(pws: PrebuiltWorkspace) {
-        return pws.state === 'available' && !!pws.snapshot;
+        return pws.state === "available" && !!pws.snapshot;
     }
 
     export function buildDidSucceed(pws: PrebuiltWorkspace) {
-        return pws.state === 'available' && !pws.error;
+        return pws.state === "available" && !pws.error;
     }
 }
 
@@ -684,10 +691,10 @@ export interface PrebuiltWorkspaceUpdatable {
 }
 
 export interface WhitelistedRepository {
-    url: string;
-    name: string;
-    description?: string;
-    avatar?: string;
+    url: string
+    name: string
+    description?: string
+    avatar?: string
 }
 
 export type PortOnOpen = 'open-browser' | 'open-preview' | 'notify' | 'ignore';
@@ -701,7 +708,7 @@ export interface PortConfig {
 }
 export namespace PortConfig {
     export function is(config: any): config is PortConfig {
-        return config && 'port' in config && typeof config.port === 'number';
+        return config && ('port' in config) && (typeof config.port === 'number');
     }
 }
 
@@ -711,7 +718,7 @@ export interface PortRangeConfig {
 }
 export namespace PortRangeConfig {
     export function is(config: any): config is PortRangeConfig {
-        return config && 'port' in config && (typeof config.port === 'string' || config.port instanceof String);
+        return config && ('port' in config) && (typeof config.port === 'string' || config.port instanceof String);
     }
 }
 
@@ -728,21 +735,22 @@ export interface TaskConfig {
 
 export namespace TaskConfig {
     export function is(config: any): config is TaskConfig {
-        return config && ('command' in config || 'init' in config || 'before' in config);
+        return config
+            && ('command' in config || 'init' in config || 'before' in config);
     }
 }
 
 export namespace WorkspaceImageBuild {
     export type Phase = 'BaseImage' | 'GitpodLayer' | 'Error' | 'Done';
     export interface StateInfo {
-        phase: Phase;
-        currentStep?: number;
-        maxSteps?: number;
+        phase: Phase
+        currentStep?: number
+        maxSteps?: number
     }
     export interface LogContent {
-        text: string;
-        upToLine?: number;
-        isDiff?: boolean;
+        text: string
+        upToLine?: number
+        isDiff?: boolean
     }
     export type LogCallback = (info: StateInfo, content: LogContent | undefined) => void;
     export namespace LogLine {
@@ -757,16 +765,18 @@ export namespace ImageConfigString {
     export function is(config: ImageConfig | undefined): config is ImageConfigString {
         return typeof config === 'string';
     }
+
 }
 export interface ImageConfigFile {
     // Path to the Dockerfile relative to repository root
-    file: string;
+    file: string,
     // Path to the docker build context relative to repository root
-    context?: string;
+    context?: string
 }
 export namespace ImageConfigFile {
     export function is(config: ImageConfig | undefined): config is ImageConfigFile {
-        return typeof config === 'object' && 'file' in config;
+        return typeof config === 'object'
+            && 'file' in config;
     }
 }
 export interface ExternalImageConfigFile extends ImageConfigFile {
@@ -774,7 +784,9 @@ export interface ExternalImageConfigFile extends ImageConfigFile {
 }
 export namespace ExternalImageConfigFile {
     export function is(config: any | undefined): config is ExternalImageConfigFile {
-        return typeof config === 'object' && 'file' in config && 'externalSource' in config;
+        return typeof config === 'object'
+            && 'file' in config
+            && 'externalSource' in config;
     }
 }
 
@@ -788,7 +800,8 @@ export interface WorkspaceContext {
 
 export namespace WorkspaceContext {
     export function is(context: any): context is WorkspaceContext {
-        return context && 'title' in context;
+        return context
+            && 'title' in context;
     }
 }
 
@@ -797,7 +810,8 @@ export interface WithSnapshot {
 }
 export namespace WithSnapshot {
     export function is(context: any): context is WithSnapshot {
-        return context && 'snapshotBucketId' in context;
+        return context
+            && 'snapshotBucketId' in context;
     }
 }
 
@@ -807,7 +821,10 @@ export interface WithPrebuild extends WithSnapshot {
 }
 export namespace WithPrebuild {
     export function is(context: any): context is WithPrebuild {
-        return context && WithSnapshot.is(context) && 'prebuildWorkspaceId' in context && 'wasPrebuilt' in context;
+        return context
+            && WithSnapshot.is(context)
+            && 'prebuildWorkspaceId' in context
+            && 'wasPrebuilt' in context;
     }
 }
 
@@ -821,14 +838,16 @@ export interface WithDefaultConfig {
 
 export namespace WithDefaultConfig {
     export function is(context: any): context is WithDefaultConfig {
-        return context && 'withDefaultConfig' in context && context.withDefaultConfig;
+        return context
+            && 'withDefaultConfig' in context
+            && context.withDefaultConfig;
     }
 
     export function mark(ctx: WorkspaceContext): WorkspaceContext & WithDefaultConfig {
         return {
             ...ctx,
-            withDefaultConfig: true,
-        };
+            withDefaultConfig: true
+        }
     }
 }
 
@@ -838,7 +857,9 @@ export interface SnapshotContext extends WorkspaceContext, WithSnapshot {
 
 export namespace SnapshotContext {
     export function is(context: any): context is SnapshotContext {
-        return context && WithSnapshot.is(context) && 'snapshotId' in context;
+        return context
+            && WithSnapshot.is(context)
+            && 'snapshotId' in context;
     }
 }
 
@@ -851,7 +872,8 @@ export interface StartPrebuildContext extends WorkspaceContext {
 
 export namespace StartPrebuildContext {
     export function is(context: any): context is StartPrebuildContext {
-        return context && 'actual' in context;
+        return context
+            && 'actual' in context;
     }
 }
 
@@ -863,18 +885,21 @@ export interface PrebuiltWorkspaceContext extends WorkspaceContext {
 
 export namespace PrebuiltWorkspaceContext {
     export function is(context: any): context is PrebuiltWorkspaceContext {
-        return context && 'originalContext' in context && 'prebuiltWorkspace' in context;
+        return context
+            && 'originalContext' in context
+            && 'prebuiltWorkspace' in context;
     }
 }
 
 export interface WithReferrerContext extends WorkspaceContext {
-    referrer: string;
-    referrerIde?: string;
+    referrer: string
+    referrerIde?: string
 }
 
 export namespace WithReferrerContext {
     export function is(context: any): context is WithReferrerContext {
-        return context && 'referrer' in context;
+        return context
+            && 'referrer' in context;
     }
 }
 
@@ -884,48 +909,53 @@ export interface WithEnvvarsContext extends WorkspaceContext {
 
 export namespace WithEnvvarsContext {
     export function is(context: any): context is WithEnvvarsContext {
-        return context && 'envvars' in context;
+        return context
+            && 'envvars' in context
     }
 }
 
 export interface WorkspaceProbeContext extends WorkspaceContext {
-    responseURL: string;
-    responseToken: string;
+    responseURL: string
+    responseToken: string
 }
 
 export namespace WorkspaceProbeContext {
     export function is(context: any): context is WorkspaceProbeContext {
-        return context && 'responseURL' in context && 'responseToken' in context;
+        return context
+            && 'responseURL' in context
+            && 'responseToken' in context;
     }
 }
 
-export type RefType = 'branch' | 'tag' | 'revision';
+export type RefType = "branch" | "tag" | "revision";
 export namespace RefType {
     export const getRefType = (commit: Commit): RefType => {
         if (!commit.ref) {
-            return 'revision';
+            return "revision";
         }
         // This fallback is meant to handle the cases where (for historic reasons) ref is present but refType is missing
-        return commit.refType || 'branch';
-    };
+        return commit.refType || "branch";
+    }
 }
 
 export interface Commit {
-    repository: Repository;
-    revision: string;
+    repository: Repository
+    revision: string
 
     // Might contain either a branch or a tag (determined by refType)
-    ref?: string;
+    ref?: string
 
     // refType is only set if ref is present (and not for old workspaces, before this feature was added)
-    refType?: RefType;
+    refType?: RefType
 }
 
 export interface AdditionalContentContext extends WorkspaceContext {
+
     /**
      * utf-8 encoded contents that will be copied on top of the workspace's filesystem
      */
-    additionalFiles: { [filePath: string]: string };
+    additionalFiles: {[filePath: string]: string};
+
 }
 
 export namespace AdditionalContentContext {
@@ -940,12 +970,14 @@ export namespace AdditionalContentContext {
 
 export interface CommitContext extends WorkspaceContext, Commit {
     /** @deprecated Moved to .repository.cloneUrl, left here for backwards-compatibility for old workspace contextes in the DB */
-    cloneUrl?: string;
+    cloneUrl?: string
 }
 
 export namespace CommitContext {
     export function is(commit: any): commit is CommitContext {
-        return WorkspaceContext.is(commit) && 'repository' in commit && 'revision' in commit;
+        return WorkspaceContext.is(commit)
+            && 'repository' in commit
+            && 'revision' in commit
     }
 }
 
@@ -953,14 +985,17 @@ export interface PullRequestContext extends CommitContext {
     nr: number;
     ref: string;
     base: {
-        repository: Repository;
-        ref: string;
-    };
+        repository: Repository
+        ref: string
+    }
 }
 
 export namespace PullRequestContext {
     export function is(ctx: any): ctx is PullRequestContext {
-        return CommitContext.is(ctx) && 'nr' in ctx && 'ref' in ctx && 'base' in ctx;
+        return CommitContext.is(ctx)
+            && 'nr' in ctx
+            && 'ref' in ctx
+            && 'base' in ctx
     }
 }
 
@@ -972,7 +1007,10 @@ export interface IssueContext extends CommitContext {
 
 export namespace IssueContext {
     export function is(ctx: any): ctx is IssueContext {
-        return CommitContext.is(ctx) && 'nr' in ctx && 'ref' in ctx && 'localBranch' in ctx;
+        return CommitContext.is(ctx)
+            && 'nr' in ctx
+            && 'ref' in ctx
+            && 'localBranch' in ctx
     }
 }
 
@@ -983,7 +1021,9 @@ export interface NavigatorContext extends CommitContext {
 
 export namespace NavigatorContext {
     export function is(ctx: any): ctx is NavigatorContext {
-        return CommitContext.is(ctx) && 'path' in ctx && 'isFile' in ctx;
+        return CommitContext.is(ctx)
+            && 'path' in ctx
+            && 'isFile' in ctx
     }
 }
 
@@ -1000,8 +1040,8 @@ export interface Repository {
     private?: boolean;
     fork?: {
         // The direct parent of this fork
-        parent: Repository;
-    };
+        parent: Repository
+    }
 }
 export interface Branch {
     name: string;
@@ -1024,21 +1064,23 @@ export namespace Repository {
 }
 
 export interface WorkspaceInstancePortsChangedEvent {
-    type: 'PortsChanged';
+    type: "PortsChanged";
     instanceID: string;
-    portsOpened: number[];
-    portsClosed: number[];
+    portsOpened: number[]
+    portsClosed: number[]
 }
 
 export namespace WorkspaceInstancePortsChangedEvent {
+
     export function is(data: any): data is WorkspaceInstancePortsChangedEvent {
-        return data && data.type == 'PortsChanged';
+        return data && data.type == "PortsChanged";
     }
+
 }
 
 export interface WorkspaceInfo {
-    workspace: Workspace;
-    latestInstance?: WorkspaceInstance;
+    workspace: Workspace
+    latestInstance?: WorkspaceInstance
 }
 
 export namespace WorkspaceInfo {
@@ -1054,12 +1096,12 @@ export interface WorkspaceCreationResult {
     workspaceURL?: string;
     existingWorkspaces?: WorkspaceInfo[];
     runningWorkspacePrebuild?: {
-        prebuildID: string;
-        workspaceID: string;
-        instanceID: string;
-        starting: RunningWorkspacePrebuildStarting;
-        sameCluster: boolean;
-    };
+        prebuildID: string
+        workspaceID: string
+        instanceID: string
+        starting: RunningWorkspacePrebuildStarting
+        sameCluster: boolean
+    }
     runningPrebuildWorkspaceID?: string;
 }
 export type RunningWorkspacePrebuildStarting = 'queued' | 'starting' | 'running';
@@ -1077,13 +1119,12 @@ export enum CreateWorkspaceMode {
 
 export namespace WorkspaceCreationResult {
     export function is(data: any): data is WorkspaceCreationResult {
-        return (
-            data &&
-            ('createdWorkspaceId' in data ||
-                'existingWorkspaces' in data ||
-                'runningWorkspacePrebuild' in data ||
-                'runningPrebuildWorkspaceID' in data)
-        );
+        return data && (
+            'createdWorkspaceId' in data
+            || 'existingWorkspaces' in data
+            || 'runningWorkspacePrebuild' in data
+            || 'runningPrebuildWorkspaceID' in data
+        )
     }
 }
 
@@ -1117,7 +1158,7 @@ export interface AuthProviderInfo {
         readonly default: string[];
         readonly publicRepo: string[];
         readonly privateRepo: string[];
-    };
+    }
 }
 
 export interface AuthProviderEntry {
@@ -1143,27 +1184,23 @@ export interface OAuth2Config {
     readonly scopeSeparator?: string;
 
     readonly settingsUrl?: string;
-    readonly authorizationParams?: { [key: string]: string };
+    readonly authorizationParams?: { [key: string]: string }
     readonly configURL?: string;
 }
 
 export namespace AuthProviderEntry {
-    export type Type = 'GitHub' | 'GitLab' | string;
-    export type Status = 'pending' | 'verified';
-    export type NewEntry = Pick<AuthProviderEntry, 'ownerId' | 'host' | 'type'> & {
-        clientId?: string;
-        clientSecret?: string;
-    };
-    export type UpdateEntry = Pick<AuthProviderEntry, 'id' | 'ownerId'> &
-        Pick<OAuth2Config, 'clientId' | 'clientSecret'>;
+    export type Type = "GitHub" | "GitLab" | string;
+    export type Status = "pending" | "verified";
+    export type NewEntry = Pick<AuthProviderEntry, "ownerId" | "host" | "type"> & { clientId?: string, clientSecret?: string };
+    export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> & Pick<OAuth2Config, "clientId" | "clientSecret">;
     export function redact(entry: AuthProviderEntry): AuthProviderEntry {
         return {
             ...entry,
             oauth: {
                 ...entry.oauth,
-                clientSecret: 'redacted',
-            },
-        };
+                clientSecret: "redacted"
+            }
+        }
     }
 }
 
@@ -1187,9 +1224,9 @@ export interface TheiaPlugin {
 }
 export namespace TheiaPlugin {
     export enum State {
-        Uploading = 'uploading',
-        Uploaded = 'uploaded',
-        CheckinFailed = 'checkin-failed',
+        Uploading = "uploading",
+        Uploaded = "uploaded",
+        CheckinFailed = "checkin-failed",
     }
 }
 

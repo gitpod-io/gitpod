@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { PrebuiltWorkspaceState } from './protocol';
+import { PrebuiltWorkspaceState } from "./protocol";
 import { v4 as uuidv4 } from 'uuid';
-import { DeepPartial } from './util/deep-partial';
+import { DeepPartial } from "./util/deep-partial";
 
 export interface ProjectConfig {
     '.gitpod.yml': string;
@@ -37,9 +37,9 @@ export namespace Project {
         return {
             ...project,
             id: uuidv4(),
-            creationTime: new Date().toISOString(),
+            creationTime: new Date().toISOString()
         };
-    };
+    }
 
     export interface Overview {
         branches: BranchDetails[];
@@ -103,7 +103,7 @@ export interface PrebuildInfo {
 }
 export namespace PrebuildInfo {
     export function is(data?: any): data is PrebuildInfo {
-        return typeof data === 'object' && ['id', 'buildWorkspaceId', 'projectId', 'branch'].every((p) => p in data);
+        return typeof data === "object" && ["id", "buildWorkspaceId", "projectId", "branch"].every(p => p in data);
     }
 }
 
@@ -123,7 +123,7 @@ export interface Team {
     deleted?: boolean;
 }
 
-export type TeamMemberRole = 'owner' | 'member';
+export type TeamMemberRole = "owner" | "member";
 
 export interface TeamMemberInfo {
     userId: string;

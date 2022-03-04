@@ -8,7 +8,7 @@ import { inject, injectable } from 'inversify';
 import * as express from 'express';
 import { User } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { Config } from '../config';
+import { Config } from "../config";
 import { AuthFlow } from './auth-provider';
 import { HostContextProvider } from './host-context-provider';
 import { AuthProviderService } from './auth-provider-service';
@@ -24,6 +24,7 @@ import { SubscriptionService } from '@gitpod/gitpod-payment-endpoint/lib/account
  */
 @injectable()
 export class LoginCompletionHandler {
+
     @inject(Config) protected readonly config: Config;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
@@ -31,16 +32,12 @@ export class LoginCompletionHandler {
     @inject(UserService) protected readonly userService: UserService;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
 
-    async complete(
-        request: express.Request,
-        response: express.Response,
-        { user, returnToUrl, authHost, elevateScopes }: LoginCompletionHandler.CompleteParams,
-    ) {
+    async complete(request: express.Request, response: express.Response, { user, returnToUrl, authHost, elevateScopes }: LoginCompletionHandler.CompleteParams) {
         const logContext = LogContext.from({ user, request });
 
         try {
             await new Promise<void>((resolve, reject) => {
-                request.login(user, (err) => {
+                request.login(user, err => {
                     if (err) {
                         reject(err);
                     } else {
@@ -48,30 +45,26 @@ export class LoginCompletionHandler {
                     }
                 });
             });
-        } catch (err) {
+        } catch(err) {
             // Clean up the session & avoid loops
             await TosFlow.clear(request.session);
             await AuthFlow.clear(request.session);
 
             if (authHost) {
-                increaseLoginCounter('failed', authHost);
+                increaseLoginCounter("failed", authHost)
             }
             log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
-            response.redirect(this.config.hostUrl.asSorry('Oops! Something went wrong during login.').toString());
+            response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
         }
 
         // Update session info
         let returnTo = returnToUrl || this.config.hostUrl.asDashboard().toString();
         if (elevateScopes) {
-            const elevateScopesUrl = this.config.hostUrl
-                .withApi({
-                    pathname: '/authorize',
-                    search: `returnTo=${encodeURIComponent(returnTo)}&host=${authHost}&scopes=${elevateScopes.join(
-                        ',',
-                    )}`,
-                })
-                .toString();
+            const elevateScopesUrl = this.config.hostUrl.withApi({
+                pathname: '/authorize',
+                search: `returnTo=${encodeURIComponent(returnTo)}&host=${authHost}&scopes=${elevateScopes.join(',')}`
+            }).toString();
             returnTo = elevateScopesUrl;
         }
         log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { session: request.session });
@@ -86,17 +79,16 @@ export class LoginCompletionHandler {
         await AuthFlow.clear(request.session);
 
         if (authHost) {
-            increaseLoginCounter('succeeded', authHost);
 
-            /** no await */ trackLogin(user, request, authHost, this.analytics).catch((err) =>
-                log.error({ userId: user.id }, err),
-            );
+            increaseLoginCounter("succeeded", authHost);
+
+            /** no await */ trackLogin(user, request, authHost, this.analytics)
+                .catch(err => log.error({ userId: user.id }, err));
         }
 
         // Check for and automatically subscribe to Professional OpenSource subscription
-        /** no await */ this.checkForAndSubscribeToProfessionalOss(user).catch((err) => {
-            /** ignore */
-        });
+        /** no await */ this.checkForAndSubscribeToProfessionalOss(user)
+            .catch(err => {/** ignore */});
 
         response.redirect(returnTo);
     }
@@ -118,7 +110,7 @@ export class LoginCompletionHandler {
 
     protected async checkForAndSubscribeToProfessionalOss(user: User) {
         const eligible = await this.userService.checkAutomaticOssEligibility(user);
-        log.debug({ userId: user.id }, 'user eligible for OSS subscription?', { eligible });
+        log.debug({ userId: user.id }, "user eligible for OSS subscription?", { eligible });
         if (!eligible) {
             return;
         }

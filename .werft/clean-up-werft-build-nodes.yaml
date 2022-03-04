@@ -16,7 +16,7 @@ pod:
         type: Directory
   containers:
     - name: build
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bmp-leeway.0
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
       workingDir: /workspace
       imagePullPolicy: IfNotPresent
       env:

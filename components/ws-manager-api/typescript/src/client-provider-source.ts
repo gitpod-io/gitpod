@@ -4,27 +4,23 @@
  * See License-AGPL.txt in the project root for license information.
  */
 import { injectable, inject, multiInject } from 'inversify';
-import {
-    TLSConfig,
-    WorkspaceCluster,
-    WorkspaceClusterDB,
-    WorkspaceClusterWoTLS,
-} from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { TLSConfig, WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
-export const WorkspaceManagerClientProviderSource = Symbol('WorkspaceManagerClientProviderSource');
+export const WorkspaceManagerClientProviderSource = Symbol("WorkspaceManagerClientProviderSource");
 
 export interface WorkspaceManagerClientProviderSource {
     getWorkspaceCluster(name: string): Promise<WorkspaceCluster | undefined>;
     getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]>;
 }
 
+
 @injectable()
 export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManagerClientProviderSource {
     protected _clusters: WorkspaceCluster[] | undefined = undefined;
 
     public async getWorkspaceCluster(name: string): Promise<WorkspaceCluster | undefined> {
-        return this.clusters.find((m) => m.name === name);
+        return this.clusters.find(m => m.name === name);
     }
 
     public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
@@ -41,12 +37,12 @@ export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManager
     protected loadConfigFromEnv(): WorkspaceCluster[] {
         const configEncoded = process.env.WSMAN_CFG_MANAGERS;
         if (!configEncoded) {
-            throw new Error('WSMAN_CFG_MANAGERS not set!');
+            throw new Error("WSMAN_CFG_MANAGERS not set!");
         }
 
         const decoded = Buffer.from(configEncoded, 'base64').toString();
         const clusters = JSON.parse(decoded) as WorkspaceCluster[];
-        return clusters.map((c) => {
+        return clusters.map(c => {
             if (!c.tls) {
                 return c;
             }
@@ -57,8 +53,8 @@ export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManager
                     ca: TLSConfig.loadFromBase64File(c.tls.ca),
                     crt: TLSConfig.loadFromBase64File(c.tls.crt),
                     key: TLSConfig.loadFromBase64File(c.tls.key),
-                },
-            };
+                }
+            }
         });
     }
 }
@@ -98,9 +94,7 @@ export class WorkspaceManagerClientProviderCompositeSource implements WorkspaceM
             const clusters = await source.getAllWorkspaceClusters();
             for (const cluster of clusters) {
                 if (allClusters.has(cluster.name)) {
-                    log.warn(
-                        `${cluster.name} is specified multiple times, overriding with: \n${JSON.stringify(cluster)}`,
-                    );
+                    log.warn(`${cluster.name} is specified multiple times, overriding with: \n${JSON.stringify(cluster)}`);
                 }
                 allClusters.set(cluster.name, cluster);
             }

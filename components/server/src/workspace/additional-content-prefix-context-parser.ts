@@ -4,12 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { AdditionalContentContext, User, WorkspaceContext } from '@gitpod/gitpod-protocol';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { base64decode } from '@jmondi/oauth2-server';
-import { inject, injectable } from 'inversify';
-import { Config } from '../config';
-import { IPrefixContextParser } from './context-parser';
+import { AdditionalContentContext, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { base64decode } from "@jmondi/oauth2-server";
+import { inject, injectable } from "inversify";
+import { Config } from "../config";
+import { IPrefixContextParser } from "./context-parser";
+
 
 /**
  * mostly for testing purpose
@@ -37,7 +38,7 @@ export class AdditionalContentPrefixContextParser implements IPrefixContextParse
         }
         const text = base64decode(decodeURIComponent(match[1]));
         const files = JSON.parse(text);
-        (context as AdditionalContentContext).additionalFiles = files;
+        (context as AdditionalContentContext).additionalFiles = files
         return context;
     }
 }

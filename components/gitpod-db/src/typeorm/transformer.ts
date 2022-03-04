@@ -4,8 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ValueTransformer } from 'typeorm/decorator/options/ValueTransformer';
-import { EncryptionService } from '@gitpod/gitpod-protocol/lib/encryption/encryption-service';
+import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
+import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+
 
 export namespace Transformer {
     export const MAP_EMPTY_STR_TO_UNDEFINED: ValueTransformer = {
@@ -20,7 +21,7 @@ export namespace Transformer {
                 return undefined;
             }
             return value;
-        },
+        }
     };
 
     export const MAP_ISO_STRING_TO_TIMESTAMP_DROP: ValueTransformer = {
@@ -35,19 +36,19 @@ export namespace Transformer {
         from(value: any): any {
             // From TIMESTAMP to ISO string
             return new Date(Date.parse(value)).toISOString();
-        },
+        }
     };
 
     export const SIMPLE_JSON = (defaultValue: any) => {
-        return <ValueTransformer>{
+        return <ValueTransformer> {
             to(value: any): any {
                 return JSON.stringify(value || defaultValue);
             },
             from(value: any): any {
                 return JSON.parse(value);
-            },
+            }
         };
-    };
+    }
 
     export const encrypted = (encryptionServiceProvider: () => EncryptionService): ValueTransformer => {
         return {
@@ -56,17 +57,18 @@ export namespace Transformer {
             },
             from(value: any): any {
                 return encryptionServiceProvider().decrypt(value);
-            },
+            }
         };
-    };
+    }
 
     export const compose = (upper: ValueTransformer, lower: ValueTransformer) => {
         return new CompositeValueTransformer(upper, lower);
-    };
+    }
 }
 
 export class CompositeValueTransformer implements ValueTransformer {
-    constructor(protected readonly upper: ValueTransformer, protected readonly lower: ValueTransformer) {}
+    constructor(protected readonly upper: ValueTransformer,
+                protected readonly lower: ValueTransformer) {}
 
     to(value: any): any {
         return this.lower.to(this.upper.to(value));

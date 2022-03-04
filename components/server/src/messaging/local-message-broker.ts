@@ -4,18 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import {
-    Disposable,
-    DisposableCollection,
-    HeadlessWorkspaceEvent,
-    PrebuildWithStatus,
-    WorkspaceInstance,
-} from '@gitpod/gitpod-protocol';
-import { CreditAlert } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { inject, injectable } from 'inversify';
-import { MessageBusIntegration } from '../workspace/messagebus-integration';
+import { Disposable, DisposableCollection, HeadlessWorkspaceEvent, PrebuildWithStatus, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { inject, injectable } from "inversify";
+import { MessageBusIntegration } from "../workspace/messagebus-integration";
+
 
 export interface PrebuildUpdateListener {
     (ctx: TraceContext, evt: PrebuildWithStatus): void;
@@ -30,7 +25,7 @@ export interface WorkspaceInstanceUpdateListener {
     (ctx: TraceContext, instance: WorkspaceInstance): void;
 }
 
-export const LocalMessageBroker = Symbol('LocalMessageBroker');
+export const LocalMessageBroker = Symbol("LocalMessageBroker");
 export interface LocalMessageBroker {
     start(): Promise<void>;
 
@@ -61,7 +56,8 @@ export interface LocalMessageBroker {
  */
 @injectable()
 export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
-    static readonly UNDEFINED_KEY = 'undefined';
+
+    static readonly UNDEFINED_KEY = "undefined";
 
     @inject(MessageBusIntegration) protected readonly messageBusIntegration: MessageBusIntegration;
 
@@ -73,31 +69,25 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
     protected readonly disposables = new DisposableCollection();
 
     async start() {
-        this.disposables.push(
-            this.messageBusIntegration.listenForPrebuildUpdates(
-                undefined,
-                (ctx: TraceContext, update: PrebuildWithStatus) => {
-                    TraceContext.setOWI(ctx, { workspaceId: update.info.buildWorkspaceId });
+        this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdates(
+            undefined,
+            (ctx: TraceContext, update: PrebuildWithStatus) => {
+                TraceContext.setOWI(ctx, { workspaceId: update.info.buildWorkspaceId });
 
-                    const listeners = this.prebuildUpdateListeners.get(update.info.projectId) || [];
-                    for (const l of listeners) {
-                        try {
-                            l(ctx, update);
-                        } catch (err) {
-                            TraceContext.setError(ctx, err);
-                            log.error(
-                                { userId: update.info.userId, workspaceId: update.info.buildWorkspaceId },
-                                'listenForPrebuildUpdates',
-                                err,
-                                { projectId: update.info.projectId, prebuildId: update.info.id },
-                            );
-                        }
+                const listeners = this.prebuildUpdateListeners.get(update.info.projectId) || [];
+                for (const l of listeners) {
+                    try {
+                        l(ctx, update);
+                    } catch (err) {
+                        TraceContext.setError(ctx, err);
+                        log.error({ userId: update.info.userId, workspaceId: update.info.buildWorkspaceId }, "listenForPrebuildUpdates", err, { projectId: update.info.projectId, prebuildId: update.info.id });
                     }
-                },
-            ),
-        );
-        this.disposables.push(
-            this.messageBusIntegration.listenToCreditAlerts(undefined, (ctx: TraceContext, alert: CreditAlert) => {
+                }
+            }
+        ));
+        this.disposables.push(this.messageBusIntegration.listenToCreditAlerts(
+            undefined,
+            (ctx: TraceContext, alert: CreditAlert) => {
                 TraceContext.setOWI(ctx, { userId: alert.userId });
 
                 const listeners = this.creditAlertsListeners.get(alert.userId) || [];
@@ -106,51 +96,46 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
                         l(ctx, alert);
                     } catch (err) {
                         TraceContext.setError(ctx, err);
-                        log.error({ userId: alert.userId }, 'listenToCreditAlerts', err, { alert });
+                        log.error({ userId: alert.userId }, "listenToCreditAlerts", err, { alert });
                     }
                 }
-            }),
-        );
-        this.disposables.push(
-            this.messageBusIntegration.listenForPrebuildUpdatableQueue(
-                (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
-                    TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
+            }
+        ));
+        this.disposables.push(this.messageBusIntegration.listenForPrebuildUpdatableQueue(
+            (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
+                TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
 
-                    const listeners =
-                        this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
-                    for (const l of listeners) {
-                        try {
-                            l(ctx, evt);
-                        } catch (err) {
-                            TraceContext.setError(ctx, err);
-                            log.error({ workspaceId: evt.workspaceID }, 'listenForPrebuildUpdatableQueue', err);
-                        }
+                const listeners = this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
+                for (const l of listeners) {
+                    try {
+                        l(ctx, evt);
+                    } catch (err) {
+                        TraceContext.setError(ctx, err);
+                        log.error({ workspaceId: evt.workspaceID }, "listenForPrebuildUpdatableQueue", err);
                     }
-                },
-            ),
-        );
-        this.disposables.push(
-            this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
-                undefined,
-                (ctx: TraceContext, instance: WorkspaceInstance, userId: string | undefined) => {
-                    TraceContext.setOWI(ctx, { userId, instanceId: instance.id });
+                }
+            }
+        ));
+        this.disposables.push(this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
+            undefined,
+            (ctx: TraceContext, instance: WorkspaceInstance, userId: string | undefined) => {
+                TraceContext.setOWI(ctx, { userId, instanceId: instance.id });
 
-                    if (!userId) {
-                        return;
-                    }
+                if (!userId) {
+                    return;
+                }
 
-                    const listeners = this.workspaceInstanceUpdateListeners.get(userId) || [];
-                    for (const l of listeners) {
-                        try {
-                            l(ctx, instance);
-                        } catch (err) {
-                            TraceContext.setError(ctx, err);
-                            log.error({ userId, instanceId: instance.id }, 'listenForWorkspaceInstanceUpdates', err);
-                        }
+                const listeners = this.workspaceInstanceUpdateListeners.get(userId) || [];
+                for (const l of listeners) {
+                    try {
+                        l(ctx, instance);
+                    } catch (err) {
+                        TraceContext.setError(ctx, err);
+                        log.error({ userId, instanceId: instance.id }, "listenForWorkspaceInstanceUpdates", err);
                     }
-                },
-            ),
-        );
+                }
+            }
+        ));
     }
 
     async stop() {
@@ -167,11 +152,7 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
         // we're being cheap here in re-using a map where it just needs to be a plain array.
-        return this.doRegister(
-            LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY,
-            listener,
-            this.headlessWorkspaceEventListeners,
-        );
+        return this.doRegister(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY, listener, this.headlessWorkspaceEventListeners);
     }
 
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable {

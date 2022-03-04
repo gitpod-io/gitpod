@@ -4,14 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { PrimaryColumn, Column, Entity, Index } from 'typeorm';
-import {
-    AdmissionConstraint,
-    TLSConfig,
-    WorkspaceCluster,
-    WorkspaceClusterState,
-} from '@gitpod/gitpod-protocol/lib/workspace-cluster';
-import { ValueTransformer } from 'typeorm/decorator/options/ValueTransformer';
+import { PrimaryColumn, Column, Entity, Index } from "typeorm";
+import { AdmissionConstraint, TLSConfig, WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
 
 @Entity()
 export class DBWorkspaceCluster implements WorkspaceCluster {
@@ -19,17 +14,17 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     name: string;
 
     @Column({
-        type: 'varchar',
+        type: "varchar",
         length: 255,
     })
     url: string;
 
     @Column({
-        type: 'simple-json',
+        type: "simple-json",
         transformer: (() => {
             const defaultValue = {};
             const jsonifiedDefault = JSON.stringify(defaultValue);
-            return <ValueTransformer>{
+            return <ValueTransformer> {
                 // tls | undefined => <tls> | "{}"
                 to(value: any): any {
                     if (!value) {
@@ -43,15 +38,15 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
                         return undefined;
                     }
                     return JSON.parse(value);
-                },
+                }
             };
-        })(),
+        })()
     })
     tls?: TLSConfig;
 
-    @Index('ind_state')
+    @Index("ind_state")
     @Column({
-        type: 'char',
+        type: "char",
         length: 20,
     })
     state: WorkspaceClusterState;
@@ -66,11 +61,11 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     govern: boolean;
 
     @Column({
-        type: 'simple-json',
+        type: "simple-json",
         transformer: (() => {
             const defaultValue: AdmissionConstraint[] = [];
             const jsonifiedDefault = JSON.stringify(defaultValue);
-            return <ValueTransformer>{
+            return <ValueTransformer> {
                 to(value: any): any {
                     if (!value) {
                         return jsonifiedDefault;
@@ -79,9 +74,9 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
                 },
                 from(value: any): any {
                     return JSON.parse(value);
-                },
+                }
             };
-        })(),
+        })()
     })
     admissionConstraints?: AdmissionConstraint[];
 }

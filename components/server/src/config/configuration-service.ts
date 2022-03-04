@@ -4,32 +4,26 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, User, WorkspaceConfig } from '@gitpod/gitpod-protocol';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { inject, injectable } from 'inversify';
-import { HostContextProvider } from '../auth/host-context-provider';
-import { FileProvider } from '../repohost';
-import { ContextParser } from '../workspace/context-parser-service';
-import { ConfigInferrer } from './config-inferrer';
+import { CommitContext, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { inject, injectable } from "inversify";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { FileProvider } from "../repohost";
+import { ContextParser } from "../workspace/context-parser-service";
+import { ConfigInferrer } from "./config-inferrer";
+
 
 @injectable()
 export class ConfigurationService {
+
     @inject(ContextParser) protected contextParser: ContextParser;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
     // a static cache used to prefetch inferrer related files in parallel in advance
     private requestedPaths = new Set<string>();
 
-    async guessRepositoryConfiguration(
-        ctx: TraceContext,
-        user: User,
-        contextURLOrContext: string | CommitContext,
-    ): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(
-            ctx,
-            user,
-            contextURLOrContext,
-        );
+    async guessRepositoryConfiguration(ctx: TraceContext, user: User, contextURLOrContext: string | CommitContext): Promise<string | undefined> {
+        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, contextURLOrContext);
         const cache: { [path: string]: Promise<string | undefined> } = {};
         const readFile = async (path: string) => {
             if (path in cache) {
@@ -39,9 +33,9 @@ export class ConfigurationService {
             const content = fileProvider.getFileContent(commitContext, user, path);
             cache[path] = content;
             return await content;
-        };
+        }
         // eagerly fetch for all files that the inferrer usually asks for.
-        this.requestedPaths.forEach((path) => !(path in cache) && readFile(path));
+        this.requestedPaths.forEach(path => !(path in cache) && readFile(path));
         const configInferrer = new ConfigInferrer();
         const config: WorkspaceConfig = await configInferrer.getConfig({
             // TODO(se) pass down information about currently used IDE. Defaulting to disabling vscode extensions for now, to not bother non VS Code users.
@@ -63,20 +57,12 @@ ${configString}
     }
 
     async fetchRepositoryConfiguration(ctx: TraceContext, user: User, contextURL: string): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(
-            ctx,
-            user,
-            contextURL,
-        );
+        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, contextURL);
         const configString = await fileProvider.getGitpodFileContent(commitContext, user);
         return configString;
     }
 
-    protected async getRepositoryFileProviderAndCommitContext(
-        ctx: TraceContext,
-        user: User,
-        contextURLOrContext: string | CommitContext,
-    ): Promise<{ fileProvider: FileProvider; commitContext: CommitContext }> {
+    protected async getRepositoryFileProviderAndCommitContext(ctx: TraceContext, user: User, contextURLOrContext: string | CommitContext): Promise<{fileProvider: FileProvider, commitContext: CommitContext}> {
         let commitContext: CommitContext;
         if (typeof contextURLOrContext === 'string') {
             const normalizedContextUrl = this.contextParser.normalizeContextURL(contextURLOrContext);

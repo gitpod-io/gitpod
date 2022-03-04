@@ -4,13 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { IPrefixContextParser } from './context-parser';
-import { User, WorkspaceContext, WithEnvvarsContext } from '@gitpod/gitpod-protocol';
-import { injectable } from 'inversify';
-import { EnvVarWithValue } from '@gitpod/gitpod-protocol/src/protocol';
+import { IPrefixContextParser } from "./context-parser";
+import { User, WorkspaceContext, WithEnvvarsContext } from "@gitpod/gitpod-protocol";
+import { injectable } from "inversify";
+import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
 
 @injectable()
 export class EnvvarPrefixParser implements IPrefixContextParser {
+
     public findPrefix(user: User, context: string): string | undefined {
         const result = this.parse(context);
         return result && result.prefix;
@@ -28,20 +29,20 @@ export class EnvvarPrefixParser implements IPrefixContextParser {
         }
         return <WithEnvvarsContext>{
             ...context,
-            envvars,
+            envvars
         };
     }
 
     protected parse(ctx: string) {
-        const splitBySlash = ctx.split('/');
+        const splitBySlash = ctx.split("/");
         if (splitBySlash.length < 2) {
             return; // "/" not found
         }
         const envVarMap = new Map<string, string>();
         const prefix = splitBySlash[0];
-        const kvCandidates = prefix.split(',');
+        const kvCandidates = prefix.split(",");
         for (let kvCandidate of kvCandidates) {
-            const kv = kvCandidate.split('=');
+            const kv = kvCandidate.split("=");
             if (kv.length !== 2 || !kv[0] || !kv[1] || !kv[0].match(/^[\w-_]+$/)) {
                 continue;
             }
@@ -51,8 +52,9 @@ export class EnvvarPrefixParser implements IPrefixContextParser {
             return undefined;
         }
         return {
-            prefix: prefix + '/',
-            envVarMap,
-        };
+            prefix: prefix + "/",
+            envVarMap
+        }
     }
+
 }

@@ -20,7 +20,7 @@ const REGEX_WORKSPACE_ID_LEGACY_FROM_HOSTNAME = new RegExp(`(${REGEX_WORKSPACE_I
  *  - webview-1234-moccasin-ferret-155799b3.ws-eu01.gitpod.io (or any other string replacing webview)
  * @param hostname The hostname the request is headed to
  */
-export const parseWorkspaceIdFromHostname = function (hostname: string) {
+export const parseWorkspaceIdFromHostname = function(hostname: string) {
     const match = REGEX_WORKSPACE_ID_FROM_HOSTNAME.exec(hostname);
     if (match && match.length >= 2) {
         return match[1];
@@ -41,14 +41,15 @@ const REGEX_INSTANCE_ID_EXACT = new RegExp(`^${REGEX_INSTANCE_ID.source}$`);
  * @param maybeId
  * @returns
  */
-export const matchesInstanceIdOrLegacyWorkspaceIdExactly = function (maybeId: string): boolean {
-    return REGEX_INSTANCE_ID_EXACT.test(maybeId) || REGEX_WORKSPACE_ID_LEGACY_EXACT.test(maybeId);
+export const matchesInstanceIdOrLegacyWorkspaceIdExactly = function(maybeId: string): boolean {
+    return REGEX_INSTANCE_ID_EXACT.test(maybeId)
+        || REGEX_WORKSPACE_ID_LEGACY_EXACT.test(maybeId);
 };
 
 /**
  * @param maybeWorkspaceId
  * @returns
  */
-export const matchesNewWorkspaceIdExactly = function (maybeWorkspaceId: string): boolean {
+export const matchesNewWorkspaceIdExactly = function(maybeWorkspaceId: string): boolean {
     return REGEX_WORKSPACE_ID_EXACT.test(maybeWorkspaceId);
 };

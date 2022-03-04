@@ -38,8 +38,8 @@ func podsecuritypolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 			HostIPC:     false,
 			HostPID:     false,
 			HostPorts: []v1beta1.HostPortRange{{
-				Min: 30000,
-				Max: 33000,
+				Min: 20000,
+				Max: 20000,
 			}},
 			RunAsUser: v1beta1.RunAsUserStrategyOptions{
 				Rule: v1beta1.RunAsUserStrategyRunAsAny,

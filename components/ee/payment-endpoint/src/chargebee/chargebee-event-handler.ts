@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { injectable, multiInject, optional } from 'inversify';
+import { injectable, multiInject, optional } from "inversify";
 
 import { Chargebee as chargebee } from './chargebee-types';
 
@@ -19,11 +19,12 @@ export class CompositeEventHandler {
     @multiInject(EventHandler) @optional() protected readonly _handlers?: EventHandler<any>[];
 
     async handle(event: any): Promise<boolean> {
+
         const handlers = this._handlers || [];
         let handled = false;
         for (const handler of handlers) {
             if (handler.canHandle(event)) {
-                handled = (await handler.handleSingleEvent(event)) || handled;
+                handled = await handler.handleSingleEvent(event) || handled;
             }
         }
 

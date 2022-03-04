@@ -7,6 +7,6 @@
 export const LicenseDB = Symbol('LicenseDB');
 
 export interface LicenseDB {
-    store(id: string, key: string): Promise<void>;
-    get(): Promise<string | undefined>;
+    store(id: string, key: string): Promise<void>
+    get(): Promise<string | undefined>
 }

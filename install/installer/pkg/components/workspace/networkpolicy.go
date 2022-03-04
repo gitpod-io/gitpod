@@ -101,6 +101,7 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 				},
+				common.AllowKubeDnsEgressRule(),
 			},
 		},
 	}}, nil

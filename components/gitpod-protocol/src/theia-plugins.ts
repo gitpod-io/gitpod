@@ -5,7 +5,7 @@
  */
 
 export interface PluginIndexEntry {
-    loc: string;
-    name: string;
-    url: string;
+    loc: string
+    name: string
+    url: string
 }

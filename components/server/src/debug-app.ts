@@ -6,15 +6,17 @@
 
 import * as http from 'http';
 import * as express from 'express';
-import { injectable, postConstruct } from 'inversify';
+import { injectable, postConstruct } from "inversify";
 import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
 
+
 export interface SetLogLevelRequest {
-    level: LogrusLogLevel;
+    level: LogrusLogLevel,
 }
 export namespace SetLogLevelRequest {
     export function is(o: any): o is SetLogLevelRequest {
-        return typeof o === 'object' && 'level' in o;
+        return typeof o === 'object'
+            && 'level' in o;
     }
 }
 
@@ -38,13 +40,13 @@ export class DebugApp {
             try {
                 const levelRequest = req.body;
                 if (!SetLogLevelRequest.is(levelRequest)) {
-                    res.status(400).end('not a SetLogLevelRequest');
+                    res.status(400).end("not a SetLogLevelRequest");
                     return;
                 }
 
                 const newLogLevel = levelRequest.level;
                 log.setLogLevel(newLogLevel);
-                log.info('set log level', { newLogLevel });
+                log.info("set log level", { newLogLevel });
                 res.status(200).end(JSON.stringify(levelRequest));
             } catch (err) {
                 res.status(500).end(err);
@@ -64,15 +66,13 @@ export class DebugApp {
         if (!server) {
             return;
         }
-        return new Promise<void>((resolve) =>
-            server.close((err: any) => {
-                if (err) {
-                    log.warn(`error while closing http server`, { err });
-                }
-                this.httpServer = undefined;
-                resolve();
-            }),
-        );
+        return new Promise<void>((resolve) => server.close((err: any) => {
+            if (err) {
+                log.warn(`error while closing http server`, { err });
+            }
+            this.httpServer = undefined;
+            resolve();
+        }));
     }
 
     public get app(): express.Application {

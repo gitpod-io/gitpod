@@ -4,12 +4,12 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { injectable, inject } from 'inversify';
+import { injectable, inject } from "inversify";
 import * as SwotJs from 'swot-js';
 
-import { EmailDomainFilterDB } from '@gitpod/gitpod-db/lib/email-domain-filter-db';
-import { EduEmailDomainDB } from '@gitpod/gitpod-db/lib/edu-email-domain-db';
-import { BlockedUserFilter } from '../../../src/auth/blocked-user-filter';
+import { EmailDomainFilterDB } from "@gitpod/gitpod-db/lib/email-domain-filter-db";
+import { EduEmailDomainDB } from "@gitpod/gitpod-db/lib/edu-email-domain-db";
+import { BlockedUserFilter } from "../../../src/auth/blocked-user-filter"
 
 export const EMailDomainService = Symbol('EMailDomainService');
 export interface EMailDomainService extends BlockedUserFilter {
@@ -39,8 +39,8 @@ export class EMailDomainServiceImpl implements EMailDomainService {
 
     protected async checkDBForEducationalInstitutionSuffix(domain: string): Promise<boolean> {
         const entries = await this.eduDomainDb.readEducationalInstitutionDomains();
-        const domains = entries.map((entry) => entry.domain);
-        return domains.some((d) => domain === d);
+        const domains = entries.map(entry => entry.domain);
+        return domains.some(d => domain === d);
     }
 
     protected async checkSwotJsForEducationalInstitutionSuffix(email: string): Promise<boolean> {
@@ -48,7 +48,7 @@ export class EMailDomainServiceImpl implements EMailDomainService {
         return !!swotJs.check(email);
     }
 
-    protected parseMail(email: string): { user: string; domain: string } {
+    protected parseMail(email: string): { user: string, domain: string } {
         const parts = email.split('@');
         if (parts.length !== 2) {
             throw new Error('Invalid E-Mail address: ' + email);
@@ -59,7 +59,7 @@ export class EMailDomainServiceImpl implements EMailDomainService {
     protected initSwotJs(): Promise<any> {
         return new Promise((resolve, reject) => {
             const swotCallback = () => resolve(result);
-            const result = new SwotJs(swotCallback);
+            const result = new SwotJs(swotCallback)
         });
     }
 }

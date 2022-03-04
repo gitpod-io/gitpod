@@ -4,9 +4,9 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Subscription } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
-import { Plans } from '@gitpod/gitpod-protocol/lib/plans';
-import { orderByEndDateDescThenStartDateDesc, orderByStartDateAscEndDateAsc } from './accounting-util';
+import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { orderByEndDateDescThenStartDateDesc, orderByStartDateAscEndDateAsc } from "./accounting-util";
 
 /**
  * This class maintains the following invariant on a given set of Subscriptions and over the offered operations:
@@ -16,7 +16,9 @@ import { orderByEndDateDescThenStartDateDesc, orderByStartDateAscEndDateAsc } fr
 export class SubscriptionModel {
     protected readonly result: SubscriptionModel.Result = SubscriptionModel.Result.create();
 
-    constructor(protected readonly userId: string, protected readonly subscriptions: Subscription[]) {}
+    constructor(
+        protected readonly userId: string,
+        protected readonly subscriptions: Subscription[]) {}
 
     add(newSubscription: Subscription): SubscriptionModel.Result {
         this.result.inserts.push(newSubscription);
@@ -35,26 +37,24 @@ export class SubscriptionModel {
     }
 
     findOpenSubscriptions(planId?: string): Subscription[] {
-        let subscriptionsForPaymentRef = this.subscriptions.filter((s) => !s.endDate);
+        let subscriptionsForPaymentRef = this.subscriptions.filter(s => !s.endDate);
         if (planId) {
-            subscriptionsForPaymentRef = subscriptionsForPaymentRef.filter((s) => s.planId == planId);
+            subscriptionsForPaymentRef = subscriptionsForPaymentRef.filter(s => s.planId == planId);
         }
 
         return subscriptionsForPaymentRef.sort(orderByEndDateDescThenStartDateDesc);
     }
 
     findSubscriptionByPaymentReference(paymentReference: string): Subscription {
-        const subscriptionsForPaymentRef = this.subscriptions.filter((s) => s.paymentReference === paymentReference);
+        const subscriptionsForPaymentRef = this.subscriptions.filter(s => s.paymentReference === paymentReference);
         if (subscriptionsForPaymentRef.length === 0) {
-            throw new Error(
-                `Expected to find an existing Gitpod subscription for payment reference: ${paymentReference}`,
-            );
+            throw new Error(`Expected to find an existing Gitpod subscription for payment reference: ${paymentReference}`);
         }
         return subscriptionsForPaymentRef.sort(orderByEndDateDescThenStartDateDesc)[0];
     }
 
     findSubscriptionByTeamSubscriptionSlotId(slotId: string): Subscription | undefined {
-        const subscriptionsForSlot = this.subscriptions.filter((s) => s.teamSubscriptionSlotId === slotId);
+        const subscriptionsForSlot = this.subscriptions.filter(s => s.teamSubscriptionSlotId === slotId);
         if (subscriptionsForSlot.length === 0) {
             return undefined;
         }
@@ -69,27 +69,28 @@ export class SubscriptionModel {
      * Merge operations with subscriptions
      */
     merged(): Subscription[] {
-        const subs = this.subscriptions.map((s) => ({ ...s }));
+        const subs = this.subscriptions.map(s => ({ ...s }));
         const operations = this.result;
 
         for (const s2 of operations.updates) {
-            const index = subs.findIndex((s) => s.uid === s2.uid);
+            const index = subs.findIndex(s => s.uid === s2.uid);
             if (index === -1) {
                 subs.push({ ...s2 });
             } else {
                 subs[index] = {
                     ...subs[index],
-                    ...s2,
+                    ...s2
                 };
             }
         }
-        operations.inserts.forEach((i) => subs.push(i));
+        operations.inserts.forEach(i => subs.push(i));
         return subs.sort(orderByEndDateDescThenStartDateDesc);
     }
 
     mergedWithFreeSubscriptions(userCreationDate: string): Subscription[] {
         const subscriptions = this.merged();
-        return this.insertFreeSubscriptions(subscriptions, userCreationDate).sort(orderByEndDateDescThenStartDateDesc);
+        return this.insertFreeSubscriptions(subscriptions, userCreationDate)
+            .sort(orderByEndDateDescThenStartDateDesc);
     }
 
     /**
@@ -107,13 +108,13 @@ export class SubscriptionModel {
                 userId: this.userId,
                 startDate: startDate,
                 planId: freePlan.chargebeeId,
-                amount: Plans.getHoursPerMonth(freePlan),
+                amount: Plans.getHoursPerMonth(freePlan)
             });
             if (cancellationDate) {
                 Subscription.cancelSubscription(s, cancellationDate);
             }
             subscriptions.push(s);
-        };
+        }
 
         // Go over all time periods the user already has an (paid) subscription and insert FREE subscriptions in between
         const periods = this.calcSubscriptionPeriods(subscriptions);
@@ -141,7 +142,7 @@ export class SubscriptionModel {
 
     protected calcSubscriptionPeriods(subscriptions: Subscription[]): Period[] {
         if (subscriptions.length === 0) return [];
-        subscriptions = subscriptions.sort(orderByStartDateAscEndDateAsc);
+        subscriptions = subscriptions.sort(orderByStartDateAscEndDateAsc)
 
         const it = subscriptions.entries();
         const periods: Period[] = [];
@@ -169,13 +170,9 @@ export class SubscriptionModel {
     }
 }
 
-interface Period {
-    startDate: string;
-    endDate?: string;
-}
+interface Period { startDate: string, endDate?: string };
 namespace Period {
-    export const within = (date: string, p: Period) =>
-        p.startDate <= date && (p.endDate === undefined || date < p.endDate);
+    export const within = (date: string, p: Period) => p.startDate <= date && (p.endDate === undefined || date < p.endDate);
     export const from = (p: Period): Period => ({ startDate: p.startDate, endDate: p.endDate });
 }
 
@@ -190,8 +187,8 @@ export namespace SubscriptionModel {
         };
         export const copy = (other: Result) => {
             return {
-                updates: [...other.updates],
-                inserts: [...other.inserts],
+                updates: [ ...other.updates ],
+                inserts: [ ...other.inserts ]
             };
         };
     }

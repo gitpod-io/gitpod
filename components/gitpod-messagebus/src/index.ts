@@ -4,6 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export * from './messagebus';
-export * from './jsonrpc-client';
-export * from './jsonrpc-server';
+export * from './messagebus'
+export * from './jsonrpc-client'
+export * from './jsonrpc-server'

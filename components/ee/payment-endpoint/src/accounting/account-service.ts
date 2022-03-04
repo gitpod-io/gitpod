@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { AccountStatement } from '@gitpod/gitpod-protocol/lib/accounting-protocol';
+import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 
 export const AccountService = Symbol('AccountService');
 export interface AccountService {

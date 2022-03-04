@@ -19,12 +19,12 @@ export class Deferred<T> {
     promise = new Promise<T>((resolve, reject) => {
         this.resolve = (o) => {
             this.isResolved = true;
-            resolve(o as any);
-            clearTimeout(this.timer);
+            resolve(o as any)
+            clearTimeout(this.timer)
         };
         this.reject = (e) => {
-            reject(e);
-            clearTimeout(this.timer);
-        };
+            reject(e)
+            clearTimeout(this.timer)
+        }
     });
 }

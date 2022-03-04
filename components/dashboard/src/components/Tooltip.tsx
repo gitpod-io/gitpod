@@ -17,18 +17,16 @@ function Tooltip(props: TooltipProps) {
 
     return (
         <div onMouseLeave={() => setExpanded(false)} onMouseEnter={() => setExpanded(true)} className="relative">
-            <div>{props.children}</div>
-            {expanded ? (
-                <div
-                    style={{ top: '-0.5rem', left: '50%', transform: 'translate(-50%, -100%)' }}
-                    className={
-                        `max-w-md mt-2 z-50 py-1 px-2 bg-gray-900 text-gray-100 text-sm absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-md truncated ` +
-                        (props.allowWrap ? 'whitespace-normal' : 'whitespace-nowrap')
-                    }
-                >
+            <div>
+                {props.children}
+            </div>
+            {expanded ?
+                <div style={{top: '-0.5rem', left: '50%', transform: 'translate(-50%, -100%)'}} className={`max-w-md mt-2 z-50 py-1 px-2 bg-gray-900 text-gray-100 text-sm absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-md truncated ` + (props.allowWrap ? 'whitespace-normal' : 'whitespace-nowrap')}>
                     {props.content}
                 </div>
-            ) : null}
+                :
+                null
+            }
         </div>
     );
 }

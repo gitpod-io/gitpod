@@ -4,12 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Repository, User } from '@gitpod/gitpod-protocol';
+import { Repository, User } from "@gitpod/gitpod-protocol";
 import { injectable } from 'inversify';
 import { LanguagesProvider } from '../repohost/languages-provider';
 
 @injectable()
 export class BitbucketServerLanguagesProvider implements LanguagesProvider {
+
     async getLanguages(repository: Repository, user: User): Promise<object> {
         // try {
         //     const api = await this.apiFactory.create(user);

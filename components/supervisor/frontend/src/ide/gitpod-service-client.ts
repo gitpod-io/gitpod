@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInfo, Event, Emitter } from '@gitpod/gitpod-protocol';
-import { workspaceUrl } from '../shared/urls';
+import { WorkspaceInfo, Event, Emitter } from "@gitpod/gitpod-protocol";
+import { workspaceUrl } from "../shared/urls";
 
 export interface GitpodServiceClient {
     readonly auth: Promise<void>;
@@ -27,13 +27,13 @@ export async function create(): Promise<GitpodServiceClient> {
     let resolveAuth: () => void;
     let rejectAuth: (reason?: any) => void;
     const _auth = new Promise<void>((resolve, reject) => {
-        resolveAuth = resolve;
-        rejectAuth = reject;
+        resolveAuth = resolve
+        rejectAuth = reject
     });
     async function auth(workspaceInstanceId: string): Promise<void> {
         try {
             const response = await fetch(wsUrl.asStart().asWorkspaceAuth(workspaceInstanceId).toString(), {
-                credentials: 'include',
+                credentials: 'include'
             });
             if (response.ok) {
                 resolveAuth!();
@@ -57,12 +57,8 @@ export async function create(): Promise<GitpodServiceClient> {
     //#endregion
 
     return {
-        get auth() {
-            return _auth;
-        },
-        get info() {
-            return listener.info;
-        },
-        onDidChangeInfo: listener.onDidChange,
-    };
+        get auth() { return _auth },
+        get info() { return listener.info },
+        onDidChangeInfo: listener.onDidChange
+    }
 }

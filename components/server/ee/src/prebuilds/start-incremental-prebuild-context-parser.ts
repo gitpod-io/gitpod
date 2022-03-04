@@ -4,12 +4,12 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { User, WorkspaceContext, StartPrebuildContext, CommitContext, ContextURL } from '@gitpod/gitpod-protocol';
-import { inject, injectable } from 'inversify';
-import { URL } from 'url';
+import { User, WorkspaceContext, StartPrebuildContext, CommitContext, ContextURL } from "@gitpod/gitpod-protocol";
+import { inject, injectable } from "inversify";
+import { URL } from "url";
 import { Config } from '../../../src/config';
-import { HostContextProvider } from '../../../src/auth/host-context-provider';
-import { IPrefixContextParser } from '../../../src/workspace/context-parser';
+import { HostContextProvider } from "../../../src/auth/host-context-provider";
+import { IPrefixContextParser } from "../../../src/workspace/context-parser";
 
 @injectable()
 export class StartIncrementalPrebuildContextParser implements IPrefixContextParser {
@@ -25,7 +25,7 @@ export class StartIncrementalPrebuildContextParser implements IPrefixContextPars
 
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
         if (!CommitContext.is(context)) {
-            throw new Error('can only start incremental prebuilds on a commit context');
+            throw new Error("can only start incremental prebuilds on a commit context")
         }
 
         const host = new URL(context.repository.cloneUrl).hostname;
@@ -34,14 +34,9 @@ export class StartIncrementalPrebuildContextParser implements IPrefixContextPars
         const result: StartPrebuildContext = {
             title: `Prebuild of "${context.title}"`,
             actual: context,
-            commitHistory: await (hostContext?.contextParser?.fetchCommitHistory(
-                {},
-                user,
-                context.repository.cloneUrl,
-                context.revision,
-                maxDepth,
-            ) || []),
+            commitHistory: await (hostContext?.contextParser?.fetchCommitHistory({}, user, context.repository.cloneUrl, context.revision, maxDepth) || [])
         };
         return result;
     }
+
 }

@@ -15,50 +15,50 @@ import { Plan } from '@gitpod/gitpod-protocol/lib/plans';
 const expect = chai.expect;
 
 @timeout(10000)
-@suite
-class SubscriptionServiceSpec {
+@suite class SubscriptionServiceSpec {
+
     typeORM = localTestContainer.get<TypeORM>(TypeORM);
     subscriptionService = localTestContainer.get<SubscriptionService>(SubscriptionService);
     acocuntingDB = localTestContainer.get<AccountingDB>(AccountingDB);
 
-    plan50 = <Plan>{
+    plan50 = <Plan> {
         name: 'Plan 50',
         chargebeeId: 'plan50',
         currency: 'USD',
         hoursPerMonth: 50,
-        pricePerMonth: 50,
-    };
+        pricePerMonth: 50
+    }
 
-    plan20 = <Plan>{
+    plan20 = <Plan> {
         name: 'Plan 20',
         chargebeeId: 'plan20',
         currency: 'USD',
         hoursPerMonth: 20,
-        pricePerMonth: 20,
-    };
+        pricePerMonth: 20
+    }
 
-    plan30 = <Plan>{
+    plan30 = <Plan> {
         name: 'Plan 30',
         chargebeeId: 'plan30',
         currency: 'USD',
         hoursPerMonth: 30,
-        pricePerMonth: 30,
-    };
+        pricePerMonth: 30
+    }
 
-    plan40 = <Plan>{
+    plan40 = <Plan> {
         name: 'Plan 40',
         chargebeeId: 'plan40',
         currency: 'USD',
         hoursPerMonth: 40,
-        pricePerMonth: 40,
-    };
+        pricePerMonth: 40
+    }
 
     async before() {
         const manager = (await this.typeORM.getConnection()).manager;
-        await manager.clear(DBSubscription);
+        await manager.clear(DBSubscription)
     }
 
-    @test.skip async subscriptions() {
+    @test.skip async subscriptions()  {
         const start = new Date(Date.UTC(2000, 0, 1)).toISOString();
         const secondMonth = new Date(Date.UTC(2000, 1, 1)).toISOString();
         const thirdMonth = new Date(Date.UTC(2000, 2, 1)).toISOString();
@@ -68,20 +68,20 @@ class SubscriptionServiceSpec {
             amount: 20,
             planId: 'plan20',
             paymentReference: '02',
-            startDate: start,
+            startDate: start
         });
         expectExactlyOne(await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', secondMonth), {
             amount: 20,
             planId: 'plan20',
             paymentReference: '02',
-            startDate: start,
+            startDate: start
         });
         const subscriptionsThirdMonth = await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', thirdMonth);
         expectExactlyOne(subscriptionsThirdMonth, {
             amount: 20,
             planId: 'plan20',
             paymentReference: '02',
-            startDate: start,
+            startDate: start
         });
 
         const [{ planId: thirdMonthPlanId }] = subscriptionsThirdMonth;
@@ -90,13 +90,13 @@ class SubscriptionServiceSpec {
             amount: 20,
             planId: 'plan20',
             paymentReference: '02',
-            startDate: start,
+            startDate: start
         });
         expectExactlyOne(await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', secondMonth), {
             amount: 20,
             planId: 'plan20',
             paymentReference: '02',
-            startDate: start,
+            startDate: start
         });
         expect(await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', thirdMonth)).to.be.an('array').and.empty;
 
@@ -106,35 +106,35 @@ class SubscriptionServiceSpec {
             planId: 'plan20',
             paymentReference: '02',
             startDate: start,
-            endDate: thirdMonth,
+            endDate: thirdMonth
         });
         expectExactlyOne(await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', secondMonth), {
             amount: 20,
             planId: 'plan20',
             paymentReference: '02',
             startDate: start,
-            endDate: thirdMonth,
+            endDate: thirdMonth
         });
         expectExactlyOne(await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', thirdMonth), {
             amount: 30,
             planId: 'plan30',
             paymentReference: '03',
-            startDate: thirdMonth,
+            startDate: thirdMonth
         });
 
-        await this.subscriptionService.subscribe('Jan', this.plan40, '04', secondMonth, thirdMonth);
+        await this.subscriptionService.subscribe('Jan', this.plan40, '04',secondMonth, thirdMonth);
         expectExactlyOne(await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', start), {
             amount: 20,
             planId: 'plan20',
             paymentReference: '02',
             startDate: start,
-            endDate: secondMonth,
+            endDate: secondMonth
         });
         expectExactlyOne(await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', secondMonth), {
             amount: 40,
             planId: 'plan40',
             paymentReference: '04',
-            startDate: secondMonth,
+            startDate: secondMonth
         });
         expect(await this.acocuntingDB.findActiveSubscriptionsForUser('Jan', thirdMonth)).to.be.an('array').and.empty;
 
@@ -145,7 +145,7 @@ class SubscriptionServiceSpec {
             endDate: thirdMonth,
             planId: 'plan30',
             paymentReference: '03',
-            amount: 30,
+            amount: 30
         });
     }
 }
@@ -158,4 +158,4 @@ const expectExactlyOne = <T>(actualSubscriptions: T[], expected: Partial<T>) => 
 const localTestContainer = testContainer.createChild();
 localTestContainer.bind(SubscriptionService).toSelf().inSingletonScope();
 
-module.exports = new SubscriptionServiceSpec();
+module.exports = new SubscriptionServiceSpec()

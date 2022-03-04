@@ -4,16 +4,17 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject, postConstruct } from 'inversify';
-import { Token, Identity, User, TokenEntry } from '@gitpod/gitpod-protocol';
-import { HostContextProvider } from '../auth/host-context-provider';
-import { UserDB } from '@gitpod/gitpod-db/lib';
+import { injectable, inject, postConstruct } from "inversify";
+import { Token, Identity, User, TokenEntry } from "@gitpod/gitpod-protocol";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { UserDB } from "@gitpod/gitpod-db/lib";
 import { v4 as uuidv4 } from 'uuid';
-import { TokenProvider } from './token-provider';
-import { TokenGarbageCollector } from './token-garbage-collector';
+import { TokenProvider } from "./token-provider";
+import { TokenGarbageCollector } from "./token-garbage-collector";
 
 @injectable()
 export class TokenService implements TokenProvider {
+
     static readonly GITPOD_AUTH_PROVIDER_ID = 'Gitpod';
     static readonly GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS = 30 * 60 * 1000;
 
@@ -23,18 +24,14 @@ export class TokenService implements TokenProvider {
 
     @postConstruct()
     init() {
-        /** no await */ this.tokenGC.start().catch((err) => {
-            /** ignore */
-        });
+        /** no await */ this.tokenGC.start().catch(err => {/** ignore */});
     }
 
     async getTokenForHost(user: User, host: string): Promise<Token> {
         const identity = this.getIdentityForHost(user, host);
         let token = await this.userDB.findTokenForIdentity(identity);
         if (!token) {
-            throw new Error(
-                `No token found for user ${identity.authProviderId}/${identity.authId}/${identity.authName}!`,
-            );
+            throw new Error(`No token found for user ${identity.authProviderId}/${identity.authId}/${identity.authName}!`);
         }
         const refreshTime = new Date();
         refreshTime.setTime(refreshTime.getTime() + 30 * 60 * 1000);
@@ -54,8 +51,8 @@ export class TokenService implements TokenProvider {
             identity = {
                 authProviderId: TokenService.GITPOD_AUTH_PROVIDER_ID,
                 authId: user.id,
-                authName: user.name || user.id,
-            };
+                authName: user.name || user.id
+            }
             user.identities.push(identity);
             await this.userDB.storeUser(user);
         }
@@ -64,16 +61,15 @@ export class TokenService implements TokenProvider {
 
     async createGitpodToken(user: User, ...scopes: string[]): Promise<TokenEntry> {
         const identity = await this.getOrCreateGitpodIdentity(user);
-        await this.userDB.deleteTokens(
-            identity,
+        await this.userDB.deleteTokens(identity,
             // delete any tokens with the same scopes
-            (tokenEntry) => tokenEntry.token.scopes.every((s) => scopes.indexOf(s) !== -1),
+            tokenEntry => tokenEntry.token.scopes.every(s => scopes.indexOf(s) !== -1)
         );
         const token: Token = {
             value: uuidv4(),
             scopes: scopes || [],
-            updateDate: new Date().toISOString(),
-        };
+            updateDate: new Date().toISOString()
+        }
         return await this.userDB.addToken(identity, token);
     }
 

@@ -4,8 +4,8 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import * as chai from 'chai';
-const expect = chai.expect;
+ import * as chai from 'chai';
+ const expect = chai.expect;
 import { suite, test, timeout } from 'mocha-typescript';
 
 import { testContainer } from './test-container';
@@ -17,8 +17,8 @@ import { DBTeamMembership } from './typeorm/entity/db-team-membership';
 import { DBUser } from './typeorm/entity/db-user';
 import { DBIdentity } from './typeorm/entity/db-identity';
 
-@suite
-class TeamDBSpec {
+@suite class TeamDBSpec {
+
     db = testContainer.get<TeamDBImpl>(TeamDBImpl);
     userDb = testContainer.get<TypeORMUserDBImpl>(TypeORMUserDBImpl);
 
@@ -53,12 +53,7 @@ class TeamDBSpec {
     @test(timeout(10000))
     public async findTeamMembers() {
         const user = await this.userDb.newUser();
-        user.identities.push({
-            authProviderId: 'GitHub',
-            authId: '1234',
-            authName: 'Major Tom',
-            primaryEmail: 'tom@example.com',
-        });
+        user.identities.push({ authProviderId: 'GitHub', authId: '1234', authName: 'Major Tom', primaryEmail: 'tom@example.com' });
         await this.userDb.storeUser(user);
         const team = await this.db.createTeam(user.id, 'Flight Crew');
         const members = await this.db.findMembersByTeam(team.id);
@@ -70,12 +65,7 @@ class TeamDBSpec {
     @test(timeout(15000))
     public async findTeamWhenUserIsSoleOwner() {
         const user = await this.userDb.newUser();
-        user.identities.push({
-            authProviderId: 'GitHub',
-            authId: '2345',
-            authName: 'Nana',
-            primaryEmail: 'nana@example.com',
-        });
+        user.identities.push({ authProviderId: 'GitHub', authId: '2345', authName: 'Nana', primaryEmail: 'nana@example.com' });
         await this.userDb.storeUser(user);
 
         const ownTeam = await this.db.createTeam(user.id, 'My Own Team');
@@ -84,25 +74,16 @@ class TeamDBSpec {
 
         expect(teams.length).to.eq(1);
         expect(teams[0].id).to.eq(ownTeam.id);
+
     }
 
     @test(timeout(10000))
     public async findTeamWhenUserIsSoleOwnerWithMembers() {
         const user = await this.userDb.newUser();
-        user.identities.push({
-            authProviderId: 'GitHub',
-            authId: '2345',
-            authName: 'Nana',
-            primaryEmail: 'nana@example.com',
-        });
+        user.identities.push({ authProviderId: 'GitHub', authId: '2345', authName: 'Nana', primaryEmail: 'nana@example.com' });
         await this.userDb.storeUser(user);
         const user2 = await this.userDb.newUser();
-        user2.identities.push({
-            authProviderId: 'GitLab',
-            authId: '4567',
-            authName: 'Dudu',
-            primaryEmail: 'dudu@example.com',
-        });
+        user2.identities.push({ authProviderId: 'GitLab', authId: '4567', authName: 'Dudu', primaryEmail: 'dudu@example.com' });
         await this.userDb.storeUser(user2);
 
         const ownTeam = await this.db.createTeam(user.id, 'My Own Team With Members');
@@ -111,25 +92,16 @@ class TeamDBSpec {
 
         expect(teams.length).to.eq(1);
         expect(teams[0].id).to.eq(ownTeam.id);
+
     }
 
     @test(timeout(10000))
     public async findNoTeamWhenCoOwned() {
         const user = await this.userDb.newUser();
-        user.identities.push({
-            authProviderId: 'GitHub',
-            authId: '2345',
-            authName: 'Nana',
-            primaryEmail: 'nana@example.com',
-        });
+        user.identities.push({ authProviderId: 'GitHub', authId: '2345', authName: 'Nana', primaryEmail: 'nana@example.com' });
         await this.userDb.storeUser(user);
         const user2 = await this.userDb.newUser();
-        user2.identities.push({
-            authProviderId: 'GitLab',
-            authId: '4567',
-            authName: 'Dudu',
-            primaryEmail: 'dudu@example.com',
-        });
+        user2.identities.push({ authProviderId: 'GitLab', authId: '4567', authName: 'Dudu', primaryEmail: 'dudu@example.com' });
         await this.userDb.storeUser(user2);
 
         const jointTeam = await this.db.createTeam(user.id, 'Joint Team');
@@ -148,9 +120,9 @@ class TeamDBSpec {
         await this.db.createTeam(user.id, 'Second Team');
 
         const searchTerm = 'first';
-        const result = await this.db.findTeams(0, 10, 'creationTime', 'DESC', searchTerm);
+        const result = await this.db.findTeams(0, 10, "creationTime", "DESC", searchTerm);
         expect(result.rows.length).to.eq(1);
     }
 }
 
-module.exports = new TeamDBSpec();
+module.exports = new TeamDBSpec()

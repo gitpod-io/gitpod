@@ -5,9 +5,9 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { MessageConnection, ResponseError } from 'vscode-jsonrpc';
-import { Event, Emitter } from '../util/event';
-import { Disposable } from '../util/disposable';
+import { MessageConnection, ResponseError } from "vscode-jsonrpc";
+import { Event, Emitter } from "../util/event";
+import { Disposable } from "../util/disposable";
 import { ConnectionHandler } from './handler';
 import { log } from '../util/logging';
 
@@ -27,7 +27,10 @@ export interface JsonRpcConnectionEventEmitter {
 export type JsonRpcProxy<T> = T & JsonRpcConnectionEventEmitter;
 
 export class JsonRpcConnectionHandler<T extends object> implements ConnectionHandler {
-    constructor(readonly path: string, readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object) => any) {}
+    constructor(
+        readonly path: string,
+        readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object) => any
+    ) { }
 
     onConnection(connection: MessageConnection, request?: object): void {
         const factory = new JsonRpcProxyFactory<T>();
@@ -80,6 +83,7 @@ export class JsonRpcConnectionHandler<T extends object> implements ConnectionHan
  * @param <T> - The type of the object to expose to JSON-RPC.
  */
 export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
+
     protected readonly onDidOpenConnectionEmitter = new Emitter<void>();
     protected readonly onDidCloseConnectionEmitter = new Emitter<void>();
 
@@ -97,15 +101,17 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
     }
 
     protected waitForConnection(): void {
-        this.connectionPromise = new Promise((resolve) => (this.connectionPromiseResolve = resolve));
-        this.connectionPromise.then((connection) => {
+        this.connectionPromise = new Promise(resolve =>
+            this.connectionPromiseResolve = resolve
+        );
+        this.connectionPromise.then(connection => {
             connection.onClose(() => this.fireConnectionClosed());
             this.fireConnectionOpened();
         });
     }
 
     fireConnectionClosed() {
-        this.onDidCloseConnectionEmitter.fire(undefined);
+        this.onDidCloseConnectionEmitter.fire(undefined)
     }
 
     fireConnectionOpened() {
@@ -211,21 +217,22 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
         }
         const isNotify = this.isNotification(p);
         return (...args: any[]) =>
-            this.connectionPromise.then(
-                (connection) =>
-                    new Promise((resolve, reject) => {
-                        try {
-                            if (isNotify) {
-                                connection.sendNotification(p.toString(), ...args);
-                                resolve(undefined);
-                            } else {
-                                const resultPromise = connection.sendRequest(p.toString(), ...args) as Promise<any>;
-                                resultPromise.catch((err: any) => reject(err)).then((result: any) => resolve(result));
-                            }
-                        } catch (err) {
-                            reject(err);
+            this.connectionPromise.then(connection =>
+                new Promise((resolve, reject) => {
+                    try {
+                        if (isNotify) {
+                            connection.sendNotification(p.toString(), ...args);
+                            resolve(undefined);
+                        } else {
+                            const resultPromise = connection.sendRequest(p.toString(), ...args) as Promise<any>;
+                            resultPromise
+                                .catch((err: any) => reject(err))
+                                .then((result: any) => resolve(result));
                         }
-                    }),
+                    } catch (err) {
+                        reject(err);
+                    }
+                })
             );
     }
 
@@ -239,6 +246,6 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
      * @return Whether `p` represents a notification.
      */
     protected isNotification(p: PropertyKey): boolean {
-        return p.toString().startsWith('notify') || p.toString().startsWith('on');
+        return p.toString().startsWith("notify") || p.toString().startsWith("on");
     }
 }

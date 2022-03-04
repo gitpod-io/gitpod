@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export namespace PaymentProtocol {
-    export const UPDATE_GITPOD_SUBSCRIPTION_PATH = '/payment/chargebee';
+ export namespace PaymentProtocol {
+    export const UPDATE_GITPOD_SUBSCRIPTION_PATH = '/payment/chargebee'
 }
 
 export interface PlanCoupon {

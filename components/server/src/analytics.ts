@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
+* Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+* Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 import { User } from '@gitpod/gitpod-protocol';
@@ -15,77 +15,77 @@ export async function trackLogin(user: User, request: Request, authHost: string,
     analytics.track({
         userId: user.id,
         anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
-        event: 'login',
+        event: "login",
         properties: {
-            loginContext: authHost,
-        },
+            "loginContext": authHost
+        }
     });
 }
 
 export async function trackSignup(user: User, request: Request, analytics: IAnalyticsWriter) {
-    //make new complete identify call for each signup
-    fullIdentify(user, request, analytics);
+        //make new complete identify call for each signup
+        fullIdentify(user,request,analytics);
 
-    //track the signup
-    analytics.track({
-        userId: user.id,
-        anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
-        event: 'signup',
-        properties: {
-            auth_provider: user.identities[0].authProviderId,
-            qualified: !!request.cookies['gitpod-marketing-website-visited'],
-        },
-    });
+        //track the signup
+        analytics.track({
+            userId: user.id,
+            anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
+            event: "signup",
+            properties: {
+                "auth_provider": user.identities[0].authProviderId,
+                "qualified": !!request.cookies["gitpod-marketing-website-visited"]
+            }
+        });
 }
 
 function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter) {
     //makes a full identify call for authenticated users
-    const coords = request.get('x-glb-client-city-lat-long')?.split(', ');
-    const ip = request.get('x-forwarded-for')?.split(',')[0];
+    const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
+    const ip = request.get("x-forwarded-for")?.split(",")[0];
     analytics.identify({
         anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
-        userId: user.id,
+        userId:user.id,
         context: {
-            ip: ip ? maskIp(ip) : undefined,
-            userAgent: request.get('User-Agent'),
-            location: {
-                city: request.get('x-glb-client-city'),
-                country: request.get('x-glb-client-region'),
-                region: request.get('x-glb-client-region-subdivision'),
-                latitude: coords?.length == 2 ? coords[0] : undefined,
-                longitude: coords?.length == 2 ? coords[1] : undefined,
-            },
+            "ip": ip ? maskIp(ip): undefined,
+            "userAgent": request.get("User-Agent"),
+            "location": {
+                "city": request.get("x-glb-client-city"),
+                "country": request.get("x-glb-client-region"),
+                "region": request.get("x-glb-client-region-subdivision"),
+                "latitude": coords?.length == 2 ? coords[0] : undefined,
+                "longitude": coords?.length == 2 ? coords[1] : undefined
+            }
         },
         traits: {
             ...resolveIdentities(user),
-            email: User.getPrimaryEmail(user),
-            full_name: user.fullName,
-            created_at: user.creationDate,
-            unsubscribed_onboarding: !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
-            unsubscribed_changelog: !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
-            unsubscribed_devx: !user.additionalData?.emailNotificationSettings?.allowsDevXMail,
-        },
+            "email": User.getPrimaryEmail(user),
+            "full_name": user.fullName,
+            "created_at": user.creationDate,
+            "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
+            "unsubscribed_changelog": !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
+            "unsubscribed_devx": !user.additionalData?.emailNotificationSettings?.allowsDevXMail
+        }
     });
 }
 
 function maskIp(ip: string) {
     const octets = ip.split('.');
-    return octets?.length == 4 ? octets.slice(0, 3).concat(['0']).join('.') : undefined;
+    return octets?.length == 4 ? octets.slice(0,3).concat(["0"]).join(".") : undefined;
 }
 
 function resolveIdentities(user: User) {
-    let identities: { github_slug?: String; gitlab_slug?: String; bitbucket_slug?: String } = {};
+    let identities: { github_slug?: String, gitlab_slug?: String, bitbucket_slug?: String } = {};
     user.identities.forEach((value) => {
-        switch (value.authProviderId) {
-            case 'Public-GitHub': {
+        switch(value.authProviderId) {
+            case "Public-GitHub": {
                 identities.github_slug = value.authName;
                 break;
             }
-            case 'Public-GitLab': {
+            case "Public-GitLab": {
                 identities.gitlab_slug = value.authName;
                 break;
             }
-            case 'Public-Bitbucket': {
+            case "Public-Bitbucket": {
                 identities.bitbucket_slug = value.authName;
                 break;
             }
@@ -97,7 +97,8 @@ function resolveIdentities(user: User) {
 function stripCookie(cookie: string) {
     if (cookie && cookie.length >= 2 && cookie.charAt(0) == '"' && cookie.charAt(cookie.length - 1) == '"') {
         return cookie.substring(1, cookie.length - 1);
-    } else {
+    }
+    else {
         return cookie;
     }
 }

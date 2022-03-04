@@ -4,28 +4,21 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { PrimaryColumn, Column, Entity, Index } from 'typeorm';
+import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 
-import {
-    Workspace,
-    WorkspaceConfig,
-    WorkspaceContext,
-    WorkspaceImageSource,
-    WorkspaceType,
-    WorkspaceSoftDeletion,
-} from '@gitpod/gitpod-protocol';
-import { TypeORM } from '../typeorm';
-import { Transformer } from '../transformer';
+import { Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceImageSource, WorkspaceType, WorkspaceSoftDeletion } from "@gitpod/gitpod-protocol";
+import { TypeORM } from "../typeorm";
+import { Transformer } from "../transformer";
 
 @Entity()
-@Index('ind_contentDeletion', ['contentDeletedTime', 'creationTime'])
-@Index('ind_softDeletion', ['softDeletedTime', 'softDeleted'])
+@Index("ind_contentDeletion", ["contentDeletedTime", "creationTime"])
+@Index("ind_softDeletion", ["softDeletedTime", "softDeleted"])
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBWorkspace implements Workspace {
     @PrimaryColumn(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
     id: string;
 
-    @Column('varchar')
+    @Column("varchar")
     @Index('ind_creationTime')
     creationTime: string;
 
@@ -33,43 +26,43 @@ export class DBWorkspace implements Workspace {
     @Index()
     ownerId: string;
 
-    @Column('text')
+    @Column("text")
     contextURL: string;
 
     @Column({
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     projectId?: string;
 
     @Column()
     description: string;
 
-    @Column('simple-json')
+    @Column("simple-json")
     context: WorkspaceContext;
 
-    @Column('simple-json')
+    @Column("simple-json")
     config: WorkspaceConfig;
 
-    @Column('simple-json', { nullable: true })
+    @Column("simple-json", { nullable: true })
     imageSource?: WorkspaceImageSource;
 
     @Column({
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
-    imageNameResolved?: string;
+    imageNameResolved?: string
 
     @Column()
-    baseImageNameResolved?: string;
+    baseImageNameResolved?: string
 
     @Column({
-        default: false,
+        default: false
     })
     shareable?: boolean;
 
     @Column({
-        default: 'regular',
+        default: 'regular'
     })
     type: WorkspaceType;
 
@@ -78,13 +71,13 @@ export class DBWorkspace implements Workspace {
 
     @Column({
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     softDeletedTime?: string;
 
     @Column({
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     contentDeletedTime?: string;
 
@@ -93,14 +86,14 @@ export class DBWorkspace implements Workspace {
     deleted?: boolean;
 
     @Column({
-        default: false,
+        default: false
     })
     pinned?: boolean;
 
     @Column({
         ...TypeORM.UUID_COLUMN_TYPE,
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     @Index('ind_basedOnPrebuildId')
     basedOnPrebuildId?: string;
@@ -108,7 +101,7 @@ export class DBWorkspace implements Workspace {
     @Column({
         ...TypeORM.UUID_COLUMN_TYPE,
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     @Index('ind_basedOnSnapshotId')
     basedOnSnapshotId?: string;

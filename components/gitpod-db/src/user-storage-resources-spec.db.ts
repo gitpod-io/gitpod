@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+
 import * as chai from 'chai';
 const expect = chai.expect;
 import { suite, test, timeout } from 'mocha-typescript';
@@ -14,8 +15,10 @@ import { Repository } from 'typeorm';
 import { UserStorageResourcesDB } from './user-storage-resources-db';
 import { DBUserStorageResource } from './typeorm/entity/db-user-storage-resource';
 
+
 @suite
 class UserStorageResourcesDBSpec {
+
     typeORM = testContainer.get<TypeORM>(TypeORM);
     resourcesDb = testContainer.get<UserStorageResourcesDB>(UserStorageResourcesDB);
 
@@ -25,7 +28,7 @@ class UserStorageResourcesDBSpec {
 
     async after() {
         const repo = await this.getRepo();
-        await repo.createQueryBuilder('resource').delete().execute();
+        await repo.createQueryBuilder("resource").delete().execute();
     }
 
     @test(timeout(10000))
@@ -42,4 +45,4 @@ class UserStorageResourcesDBSpec {
     }
 }
 
-module.exports = new UserStorageResourcesDBSpec();
+module.exports = new UserStorageResourcesDBSpec()

@@ -9,7 +9,10 @@ const colors = require('tailwindcss/colors');
 
 module.exports = {
     jit: true,
-    purge: ['./public/**/*.html', './src/**/*.{js,ts,tsx}'],
+    purge: [
+        './public/**/*.html',
+        './src/**/*.{js,ts,tsx}',
+    ],
     important: true,
     darkMode: 'class',
     theme: {
@@ -56,22 +59,29 @@ module.exports = {
                 'Segoe UI Symbol',
                 'Noto Color Emoji',
             ],
-            mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', 'monospace'],
+            mono: [
+                'SF Mono',
+                'Monaco',
+                'Inconsolata',
+                'Fira Mono',
+                'Droid Sans Mono',
+                'Source Code Pro',
+                'monospace'
+            ],
         },
         underlineThickness: {
-            thin: '2px',
-            thick: '5px',
+            'thin': '2px',
+            'thick': '5px'
         },
         underlineOffset: {
-            small: '2px',
-            medium: '5px',
+            'small': '2px',
+            'medium': '5px',
         },
-        filter: {
-            // defaults to {}
+        filter: { // defaults to {}
             // https://github.com/benface/tailwindcss-filters#usage
-            none: 'none',
-            grayscale: 'grayscale(1)',
-            invert: 'invert(1)',
+            'none': 'none',
+            'grayscale': 'grayscale(1)',
+            'invert': 'invert(1)',
             'brightness-10': 'brightness(10)',
         },
     },
@@ -79,7 +89,7 @@ module.exports = {
         extend: {
             opacity: ['disabled'],
             display: ['dark'],
-        },
+        }
     },
     plugins: [
         require('@tailwindcss/forms'),

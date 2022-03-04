@@ -4,11 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
-import { BUILTIN_WORKSPACE_PROBE_USER_ID } from '../../user-db';
+import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../../user-db";
 
 export class Baseline1592203031938 implements MigrationInterface {
+
     public async up(queryRunner: QueryRunner): Promise<any> {
         const createTables = [
             `CREATE TABLE IF NOT EXISTS d_b_account_entry (  id int(11) DEFAULT NULL,  userId char(36) NOT NULL,  amount double NOT NULL,  date varchar(255) NOT NULL,  expiryDate varchar(255) NOT NULL DEFAULT '',  kind char(7) NOT NULL,  description text,  uid char(36) NOT NULL,  creditId char(36) DEFAULT NULL,  _lastModified timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),  PRIMARY KEY (uid),  KEY ind_dbsync (_lastModified),  KEY ind_expiryDate (expiryDate)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
@@ -53,50 +54,15 @@ export class Baseline1592203031938 implements MigrationInterface {
             const count = (await queryRunner.query(`SELECT COUNT(1) AS cnt FROM d_b_repository_white_list`))[0].cnt;
             if (Number.parseInt(count) < 1) {
                 const entries = [
-                    {
-                        url: 'https://github.com/gitpod-io/go-gin-app.git',
-                        description: '**Go** - A simple web app implemented in Go and Gin',
-                        priority: 7,
-                    },
-                    {
-                        url: 'https://github.com/gitpod-io/rails_sample_app',
-                        description: '**Ruby on Rails** - Tutorial sample application',
-                        priority: 6,
-                    },
-                    {
-                        url: 'https://github.com/gitpod-io/NextSimpleStarter.git',
-                        description: '**JavaScript** - Simple PWA boilerplate with Next.js and Redux',
-                        priority: 8,
-                    },
-                    {
-                        url: 'https://github.com/gitpod-io/django-locallibrary-tutorial',
-                        description: '**Python** - Tutorial "Local Library" website written in Django',
-                        priority: 10,
-                    },
-                    {
-                        url: 'https://github.com/gitpod-io/gs-spring-boot.git',
-                        description: '**Java** - Building an Application with Spring Boot',
-                        priority: 9,
-                    },
-                    {
-                        url: 'https://github.com/gitpod-io/symfony-demo.git',
-                        description: '**PHP** - Symfony Demo Application',
-                        priority: 5,
-                    },
-                    {
-                        url: 'https://github.com/theia-ide/theia.git',
-                        description: "**Typescript** - Deep dive into Gitpod\\'s open-source IDE, Theia.",
-                        priority: 4,
-                    },
-                ];
-                await Promise.all(
-                    entries.map((e) =>
-                        queryRunner.query(
-                            `INSERT IGNORE INTO d_b_repository_white_list (url, description, priority) VALUES (?, ?, ?)`,
-                            [e.url, e.description, e.priority],
-                        ),
-                    ),
-                );
+                    { url: 'https://github.com/gitpod-io/go-gin-app.git', description: '**Go** - A simple web app implemented in Go and Gin', priority: 7 },
+                    { url: 'https://github.com/gitpod-io/rails_sample_app', description: '**Ruby on Rails** - Tutorial sample application', priority: 6 },
+                    { url: 'https://github.com/gitpod-io/NextSimpleStarter.git', description: '**JavaScript** - Simple PWA boilerplate with Next.js and Redux', priority: 8 },
+                    { url: 'https://github.com/gitpod-io/django-locallibrary-tutorial', description: '**Python** - Tutorial "Local Library" website written in Django', priority: 10 },
+                    { url: 'https://github.com/gitpod-io/gs-spring-boot.git', description: '**Java** - Building an Application with Spring Boot', priority: 9 },
+                    { url: 'https://github.com/gitpod-io/symfony-demo.git', description: '**PHP** - Symfony Demo Application', priority: 5 },
+                    { url: 'https://github.com/theia-ide/theia.git', description: '**Typescript** - Deep dive into Gitpod\\\'s open-source IDE, Theia.', priority: 4 }
+                ]
+                await Promise.all(entries.map(e => queryRunner.query(`INSERT IGNORE INTO d_b_repository_white_list (url, description, priority) VALUES (?, ?, ?)`, [e.url, e.description, e.priority])));
             }
         }
 
@@ -105,24 +71,17 @@ export class Baseline1592203031938 implements MigrationInterface {
             const entries = [
                 { domain: 'tempail.com', negative: true },
                 { domain: 'ezehe.com', negative: true },
-                { domain: 'radiodale.com', negative: true },
+                { domain: 'radiodale.com', negative: true }
             ];
-            const values = entries.map((e) => `('${e.domain}', '${e.negative ? 1 : 0}')`).join(',');
+            const values = entries.map(e => `('${e.domain}', '${e.negative ? 1 : 0}')`).join(",");
             await queryRunner.query(`INSERT IGNORE INTO d_b_email_domain_filter (domain, negative) VALUES ${values}`);
         }
 
         // probe user
         {
-            const exists =
-                (
-                    await queryRunner.query(
-                        `SELECT COUNT(1) AS cnt FROM d_b_user WHERE id = 'builtin-user-workspace-probe-0000000'`,
-                    )
-                )[0].cnt == 1;
+            const exists = (await queryRunner.query(`SELECT COUNT(1) AS cnt FROM d_b_user WHERE id = 'builtin-user-workspace-probe-0000000'`))[0].cnt == 1;
             if (!exists) {
-                await queryRunner.query(
-                    `INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName) VALUES ('${BUILTIN_WORKSPACE_PROBE_USER_ID}', '${new Date().toISOString()}', '', 'builtin-workspace-prober', '')`,
-                );
+                await queryRunner.query(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName) VALUES ('${BUILTIN_WORKSPACE_PROBE_USER_ID}', '${new Date().toISOString()}', '', 'builtin-workspace-prober', '')`)
             }
         }
     }
@@ -130,4 +89,5 @@ export class Baseline1592203031938 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<any> {
         // this is a one-way idempotent 'migration', no rollback possible for a nonempty DB
     }
+
 }

@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Deferred } from './deferred';
+import { Deferred } from "./deferred";
 
 /**
  * Queues asynchronous operations in a synchronous context

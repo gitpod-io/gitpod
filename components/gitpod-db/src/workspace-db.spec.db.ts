@@ -17,8 +17,8 @@ import { DBWorkspace } from './typeorm/entity/db-workspace';
 import { DBPrebuiltWorkspace } from './typeorm/entity/db-prebuilt-workspace';
 import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
 
-@suite
-class WorkspaceDBSpec {
+@suite class WorkspaceDBSpec {
+
     db = testContainer.get<TypeORMWorkspaceDBImpl>(TypeORMWorkspaceDBImpl);
     typeorm = testContainer.get<TypeORM>(TypeORM);
 
@@ -35,13 +35,13 @@ class WorkspaceDBSpec {
         config: {
             ports: [],
             image: '',
-            tasks: [],
+            tasks: []
         },
         projectId: this.projectAID,
         context: { title: 'example' },
         contextURL: 'example.org',
         description: 'blabla',
-        ownerId: this.userId,
+        ownerId: this.userId
     };
     readonly wsi1: WorkspaceInstance = {
         workspaceId: this.ws.id,
@@ -55,14 +55,14 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
-            phase: 'preparing',
+            phase: "preparing",
             conditions: {},
         },
         configuration: {
-            theiaVersion: 'unknown',
-            ideImage: 'unknown',
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
-        deleted: false,
+        deleted: false
     };
     readonly wsi2: WorkspaceInstance = {
         workspaceId: this.ws.id,
@@ -76,14 +76,14 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
-            phase: 'running',
+            phase: "running",
             conditions: {},
         },
         configuration: {
-            theiaVersion: 'unknown',
-            ideImage: 'unknown',
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
-        deleted: false,
+        deleted: false
     };
     readonly ws2: Workspace = {
         id: '2',
@@ -92,13 +92,13 @@ class WorkspaceDBSpec {
         config: {
             ports: [],
             image: '',
-            tasks: [],
+            tasks: []
         },
         projectId: this.projectBID,
         context: { title: 'example' },
         contextURL: 'https://github.com/gitpod-io/gitpod',
         description: 'Gitpod',
-        ownerId: this.userId,
+        ownerId: this.userId
     };
     readonly ws2i1: WorkspaceInstance = {
         workspaceId: this.ws2.id,
@@ -112,14 +112,14 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
-            phase: 'preparing',
+            phase: "preparing",
             conditions: {},
         },
         configuration: {
-            theiaVersion: 'unknown',
-            ideImage: 'unknown',
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
-        deleted: false,
+        deleted: false
     };
 
     readonly ws3: Workspace = {
@@ -129,12 +129,12 @@ class WorkspaceDBSpec {
         config: {
             ports: [],
             image: '',
-            tasks: [],
+            tasks: []
         },
         context: { title: 'example' },
         contextURL: 'example.org',
         description: 'blabla',
-        ownerId: this.userId,
+        ownerId: this.userId
     };
     readonly ws3i1: WorkspaceInstance = {
         workspaceId: this.ws3.id,
@@ -148,14 +148,14 @@ class WorkspaceDBSpec {
         stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
-            phase: 'preparing',
+            phase: "preparing",
             conditions: {},
         },
         configuration: {
-            theiaVersion: 'unknown',
-            ideImage: 'unknown',
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
-        deleted: false,
+        deleted: false
     };
 
     async before() {
@@ -167,7 +167,7 @@ class WorkspaceDBSpec {
     }
 
     async wipeRepo() {
-        const mnr = await this.typeorm.getConnection();
+        const mnr = await (this.typeorm.getConnection());
         await mnr.getRepository(DBWorkspace).delete({});
         await mnr.getRepository(DBWorkspaceInstance).delete({});
         await mnr.getRepository(DBPrebuiltWorkspace).delete({});
@@ -176,19 +176,24 @@ class WorkspaceDBSpec {
     @test(timeout(10000))
     public async testFindInstancesLast() {
         try {
-            await this.db.transaction(async (db) => {
-                await Promise.all([db.store(this.ws), db.storeInstance(this.wsi1), db.storeInstance(this.wsi2)]);
+            await this.db.transaction(async db => {
+                await Promise.all([
+                    db.store(this.ws),
+                    db.storeInstance(this.wsi1),
+                    db.storeInstance(this.wsi2)
+                ]);
                 const dbResult = await db.findInstances(this.ws.id);
                 expect(dbResult).to.have.deep.members([this.wsi1, this.wsi2]);
                 throw 'rollback';
-            });
+            })
         } catch (e) {
-            if (e !== 'rollback') throw e;
+            if (e !== 'rollback')
+                throw e;
             const dbResult = await this.db.findInstances(this.ws.id);
             expect(dbResult).to.not.have.deep.members([this.wsi1, this.wsi2]);
             return;
         }
-        fail('Rollback failed');
+        fail('Rollback failed')
     }
 
     @test(timeout(10000))
@@ -234,10 +239,10 @@ class WorkspaceDBSpec {
             contextURL: 'https://github.com/foo/bar',
             ownerId: '1221423',
             context: {
-                title: 'my title',
+                title: 'my title'
             },
             config: {},
-            type: 'prebuild',
+            type: 'prebuild'
         });
         await this.db.storePrebuiltWorkspace({
             id: 'prebuild123',
@@ -245,7 +250,7 @@ class WorkspaceDBSpec {
             creationTime,
             cloneURL: '',
             commit: '',
-            state: 'available',
+            state: 'available'
         });
         if (usageDaysAgo !== undefined) {
             const now = new Date();
@@ -257,18 +262,22 @@ class WorkspaceDBSpec {
                 contextURL: 'https://github.com/foo/bar',
                 ownerId: '1221423',
                 context: {
-                    title: 'my title',
+                    title: 'my title'
                 },
                 config: {},
                 basedOnPrebuildId: 'prebuild123',
-                type: 'regular',
+                type: 'regular'
             });
         }
     }
 
     @test(timeout(10000))
     public async testFindWorkspacesForGarbageCollection() {
-        await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
+        await Promise.all([
+            this.db.store(this.ws),
+            this.db.storeInstance(this.wsi1),
+            this.db.storeInstance(this.wsi2)
+        ]);
         const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
         expect(dbResult[0].id).to.eq(this.ws.id);
         expect(dbResult[0].ownerId).to.eq(this.ws.ownerId);
@@ -276,7 +285,9 @@ class WorkspaceDBSpec {
 
     @test(timeout(10000))
     public async testFindWorkspacesForGarbageCollection_no_instance() {
-        await Promise.all([this.db.store(this.ws)]);
+        await Promise.all([
+            this.db.store(this.ws)
+        ]);
         const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
         expect(dbResult[0].id).to.eq(this.ws.id);
         expect(dbResult[0].ownerId).to.eq(this.ws.ownerId);
@@ -285,15 +296,21 @@ class WorkspaceDBSpec {
     @test(timeout(10000))
     public async testFindWorkspacesForGarbageCollection_latelyUsed() {
         this.wsi2.creationTime = new Date().toISOString();
-        await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
+        await Promise.all([
+            this.db.store(this.ws),
+            this.db.storeInstance(this.wsi1),
+            this.db.storeInstance(this.wsi2)
+        ]);
         const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
         expect(dbResult.length).to.eq(0);
     }
 
     @test(timeout(10000))
     public async testFindAllWorkspaces_contextUrl() {
-        await Promise.all([this.db.store(this.ws)]);
-        const dbResult = await this.db.findAllWorkspaces(0, 10, 'contextURL', 'DESC', undefined, this.ws.contextURL);
+        await Promise.all([
+            this.db.store(this.ws)
+        ]);
+        const dbResult = await this.db.findAllWorkspaces(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
         expect(dbResult.total).to.eq(1);
     }
 
@@ -305,15 +322,13 @@ class WorkspaceDBSpec {
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, 'workspaceId', 'DESC', {
-            workspaceId: this.ws2.id,
-        });
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { workspaceId: this.ws2.id });
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);
 
         // It should find the workspace with the queried id
-        const workspaceAndInstance = dbResult.rows[0];
-        expect(workspaceAndInstance.workspaceId).to.eq(this.ws2.id);
+        const workspaceAndInstance = dbResult.rows[0]
+        expect(workspaceAndInstance.workspaceId).to.eq(this.ws2.id)
     }
 
     @test(timeout(10000))
@@ -324,15 +339,13 @@ class WorkspaceDBSpec {
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, 'workspaceId', 'DESC', {
-            instanceIdOrWorkspaceId: this.ws2.id,
-        });
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { instanceIdOrWorkspaceId: this.ws2.id });
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);
 
         // It should find the workspace with the queried id
-        const workspaceAndInstance = dbResult.rows[0];
-        expect(workspaceAndInstance.workspaceId).to.eq(this.ws2.id);
+        const workspaceAndInstance = dbResult.rows[0]
+        expect(workspaceAndInstance.workspaceId).to.eq(this.ws2.id)
     }
 
     @test(timeout(10000))
@@ -344,19 +357,17 @@ class WorkspaceDBSpec {
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, 'instanceId', 'DESC', {
-            instanceId: this.wsi1.id,
-        });
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "instanceId", "DESC", { instanceId: this.wsi1.id });
 
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);
 
         // It should find the workspace with the queried id
-        const workspaceAndInstance = dbResult.rows[0];
-        expect(workspaceAndInstance.workspaceId).to.eq(this.ws.id);
+        const workspaceAndInstance = dbResult.rows[0]
+        expect(workspaceAndInstance.workspaceId).to.eq(this.ws.id)
 
         // It should select the workspace instance that was queried, not the most recent one
-        expect(workspaceAndInstance.instanceId).to.eq(this.wsi1.id);
+        expect(workspaceAndInstance.instanceId).to.eq(this.wsi1.id)
     }
 
     @test(timeout(10000))
@@ -372,7 +383,7 @@ class WorkspaceDBSpec {
             userId: this.userId,
             includeHeadless: false,
             projectId: [this.projectAID],
-            includeWithoutProject: false,
+            includeWithoutProject: false
         });
 
         // It should only find one workspace instance
@@ -394,7 +405,7 @@ class WorkspaceDBSpec {
             userId: this.userId,
             includeHeadless: false,
             projectId: [this.projectBID],
-            includeWithoutProject: false,
+            includeWithoutProject: false
         });
 
         // It should only find one workspace instance
@@ -416,7 +427,7 @@ class WorkspaceDBSpec {
             userId: this.userId,
             includeHeadless: false,
             projectId: [this.projectAID, this.projectBID],
-            includeWithoutProject: false,
+            includeWithoutProject: false
         });
 
         expect(dbResult.length).to.eq(2);
@@ -438,7 +449,7 @@ class WorkspaceDBSpec {
             userId: this.userId,
             includeHeadless: false,
             projectId: [],
-            includeWithoutProject: false,
+            includeWithoutProject: false
         });
 
         expect(dbResult.length).to.eq(0);
@@ -462,7 +473,7 @@ class WorkspaceDBSpec {
             userId: this.userId,
             includeHeadless: false,
             projectId: [],
-            includeWithoutProject: true,
+            includeWithoutProject: true
         });
 
         expect(dbResult.length).to.eq(1);
@@ -485,7 +496,7 @@ class WorkspaceDBSpec {
             userId: this.userId,
             includeHeadless: false,
             projectId: [this.projectBID],
-            includeWithoutProject: true,
+            includeWithoutProject: true
         });
 
         expect(dbResult.length).to.eq(2);
@@ -494,4 +505,4 @@ class WorkspaceDBSpec {
         expect(dbResult[1].workspace.id).to.eq(this.ws3.id);
     }
 }
-module.exports = new WorkspaceDBSpec();
+module.exports = new WorkspaceDBSpec()

@@ -23,14 +23,14 @@ export class EMailDomainServiceSpec {
         const svc = testContainer.get<EMailDomainService>(EMailDomainService);
         const test = (emailOrDomain: string) => (svc as any).checkSwotJsForEducationalInstitutionSuffix(emailOrDomain);
 
-        expect(await test('')).to.be.false;
-        expect(await test('hdm-stuttgart.de')).to.be.true;
-        expect(await test('purdue.edu')).to.be.true;
-        expect(await test('@miau.miau')).to.be.false;
+        expect(await test("")).to.be.false;
+        expect(await test("hdm-stuttgart.de")).to.be.true;
+        expect(await test("purdue.edu")).to.be.true;
+        expect(await test("@miau.miau")).to.be.false;
 
-        expect(await test('asd@miau.miau')).to.be.false;
-        expect(await test('asd@hdm-stuttgart.de')).to.be.true;
-        expect(await test('as@purdue.edu')).to.be.true;
+        expect(await test("asd@miau.miau")).to.be.false;
+        expect(await test("asd@hdm-stuttgart.de")).to.be.true;
+        expect(await test("as@purdue.edu")).to.be.true;
     }
 }
 

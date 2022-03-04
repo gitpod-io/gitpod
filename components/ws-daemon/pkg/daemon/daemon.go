@@ -69,6 +69,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		containerRuntime,
 		dsptch.WorkspaceExistsOnNode,
 		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+		config.Resources.CGroupBasePath,
 		reg,
 	)
 	if err != nil {

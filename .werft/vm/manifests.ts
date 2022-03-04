@@ -1,37 +1,32 @@
 type NamespaceManifestOptions = {
-    namespace: string;
-};
+  namespace: string
+}
 
 export function NamespaceManifest({ namespace }: NamespaceManifestOptions) {
-    return `
+  return `
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ${namespace}
-`;
+`
 }
 
 type VirtualMachineManifestArguments = {
-    vmName: string;
-    namespace: string;
-    claimName: string;
-    userDataSecretName: string;
-};
+  vmName: string
+  namespace: string
+  claimName: string
+  userDataSecretName: string
+}
 
-export function VirtualMachineManifest({
-    vmName,
-    namespace,
-    claimName,
-    userDataSecretName,
-}: VirtualMachineManifestArguments) {
-    return `
+export function VirtualMachineManifest({ vmName, namespace, claimName, userDataSecretName }: VirtualMachineManifestArguments) {
+  return `
 apiVersion: kubevirt.io/v1
 type: kubevirt.io.virtualmachine
 kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-7cw7x"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"150Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-7cw7x"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-l8zh4"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"100Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-l8zh4"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -94,16 +89,16 @@ spec:
             secretRef:
               name: ${userDataSecretName}
 
-`;
+`
 }
 
 type ServiceManifestOptions = {
-    vmName: string;
-    namespace: string;
-};
+  vmName: string
+  namespace: string
+}
 
 export function ServiceManifest({ vmName, namespace }: ServiceManifestOptions) {
-    return `
+  return `
 apiVersion: v1
 kind: Service
 metadata:
@@ -142,18 +137,17 @@ spec:
   selector:
     harvesterhci.io/vmName: ${vmName}
   type: ClusterIP
-`;
+`
 }
 
 type UserDataSecretManifestOptions = {
-    vmName: string;
-    namespace: string;
-    secretName: string;
-};
+  vmName: string
+  namespace: string,
+  secretName: string
+}
 
-export function UserDataSecretManifest({ vmName, namespace, secretName }: UserDataSecretManifestOptions) {
-    const userdata = Buffer.from(
-        `#cloud-config
+export function UserDataSecretManifest({vmName, namespace, secretName }: UserDataSecretManifestOptions) {
+  const userdata = Buffer.from(`#cloud-config
 users:
 - name: ubuntu
   sudo: "ALL=(ALL) NOPASSWD: ALL"
@@ -219,9 +213,8 @@ write_files:
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       EOF
 runcmd:
- - bash /usr/local/bin/bootstrap-k3s.sh`,
-    ).toString('base64');
-    return `
+ - bash /usr/local/bin/bootstrap-k3s.sh`).toString("base64")
+  return `
 apiVersion: v1
 type: secret
 kind: Secret
@@ -231,5 +224,5 @@ data:
 metadata:
   name: ${secretName}
   namespace: ${namespace}
-`;
+`
 }

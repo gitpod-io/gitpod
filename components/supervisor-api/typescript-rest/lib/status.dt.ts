@@ -11,7 +11,7 @@ declare namespace Definitions {
     export interface SupervisorBackupStatusResponse {
         canaryAvailable?: boolean;
     }
-    export type SupervisorContentSource = 'from_other' | 'from_backup' | 'from_prebuild';
+    export type SupervisorContentSource = "from_other" | "from_backup" | "from_prebuild";
     export interface SupervisorContentStatusResponse {
         /**
          * true if the workspace content is available
@@ -39,13 +39,8 @@ declare namespace Definitions {
     export interface SupervisorIDEStatusResponse {
         ok?: boolean;
     }
-    export type SupervisorOnPortExposedAction =
-        | 'ignore'
-        | 'open_browser'
-        | 'open_preview'
-        | 'notify'
-        | 'notify_private';
-    export type SupervisorPortVisibility = 'private' | 'public';
+    export type SupervisorOnPortExposedAction = "ignore" | "open_browser" | "open_preview" | "notify" | "notify_private";
+    export type SupervisorPortVisibility = "private" | "public";
     export interface SupervisorPortsStatus {
         /**
          * local_port is the port a service actually bound to. Some services bind
@@ -82,7 +77,7 @@ declare namespace Definitions {
         openIn?: string;
         openMode?: string;
     }
-    export type SupervisorTaskState = 'opening' | 'running' | 'closed';
+    export type SupervisorTaskState = "opening" | "running" | "closed";
     export interface SupervisorTaskStatus {
         id?: string;
         state?: SupervisorTaskState;
@@ -92,7 +87,7 @@ declare namespace Definitions {
     export interface SupervisorTasksStatusResponse {
         tasks?: SupervisorTaskStatus[];
     }
-    export type SupervisorTunnelVisiblity = 'none' | 'host' | 'network';
+    export type SupervisorTunnelVisiblity = "none" | "host" | "network";
     export interface SupervisorTunneledPortInfo {
         /**
          * target port is the desired port on the remote machine

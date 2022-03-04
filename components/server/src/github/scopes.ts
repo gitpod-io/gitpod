@@ -4,13 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+
 export namespace GitHubScope {
-    export const EMAIL = 'user:email';
-    export const READ_USER = 'read:user';
-    export const PUBLIC = 'public_repo';
-    export const PRIVATE = 'repo';
-    export const ORGS = 'read:org';
-    export const WORKFLOW = 'workflow';
+    export const EMAIL = "user:email";
+    export const READ_USER = "read:user";
+    export const PUBLIC = "public_repo";
+    export const PRIVATE = "repo";
+    export const ORGS = "read:org";
+    export const WORKFLOW = "workflow";
 
     export const All = [EMAIL, READ_USER, PUBLIC, PRIVATE, ORGS, WORKFLOW];
     export const Requirements = {
@@ -22,5 +23,5 @@ export namespace GitHubScope {
 
         PUBLIC_REPO: [PUBLIC],
         PRIVATE_REPO: [PRIVATE],
-    };
+    }
 }

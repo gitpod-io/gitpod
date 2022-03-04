@@ -4,20 +4,21 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Entity, Column, PrimaryColumn, Index } from 'typeorm';
-import { EMail, EMailParameters } from '@gitpod/gitpod-protocol';
-import { TypeORM } from '../../typeorm/typeorm';
-import { Transformer } from '../../typeorm/transformer';
+import { Entity, Column, PrimaryColumn, Index } from "typeorm";
+import { EMail, EMailParameters } from "@gitpod/gitpod-protocol";
+import { TypeORM } from "../../typeorm/typeorm";
+import { Transformer } from "../../typeorm/transformer";
 
 @Entity('d_b_email')
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
-@Index('ind_campaignId_userId', ['campaignId', 'userId'])
+@Index("ind_campaignId_userId", ["campaignId", "userId"])
 export class DBEmail implements EMail {
+
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     uid: string;
 
     @Column({
-        length: 30,
+        length: 30
     })
     campaignId: string;
 
@@ -35,13 +36,13 @@ export class DBEmail implements EMail {
 
     @Column({
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     scheduledSendgridTime?: string;
 
     @Column({
         default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     error?: string;
 }

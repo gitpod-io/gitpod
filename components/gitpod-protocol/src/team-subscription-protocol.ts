@@ -5,7 +5,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { Subscription } from './accounting-protocol';
+import { Subscription } from "./accounting-protocol";
 
 export interface TeamSubscription {
     id: string;
@@ -25,10 +25,10 @@ export namespace TeamSubscription {
         const withId = ts as TeamSubscription;
         withId.id = uuidv4();
         return withId;
-    };
+    }
     export const isActive = (ts: TeamSubscription, date: string): boolean => {
         return ts.startDate <= date && (ts.endDate === undefined || date < ts.endDate);
-    };
+    }
 }
 
 /**
@@ -42,12 +42,8 @@ export interface TeamSubscriptionSlot {
     subscriptionId?: string;
     cancellationDate?: string;
 }
-export type TeamSubscriptionSlotDeactivated = TeamSubscriptionSlot & {
-    assigneeId: string;
-    assigneeIdentifier: AssigneeIdentifier;
-};
-export type TeamSubscriptionSlotAssigned = TeamSubscriptionSlot &
-    TeamSubscriptionSlotDeactivated & { subscriptionId: string };
+export type TeamSubscriptionSlotDeactivated = TeamSubscriptionSlot & { assigneeId: string, assigneeIdentifier: AssigneeIdentifier };
+export type TeamSubscriptionSlotAssigned = TeamSubscriptionSlot & TeamSubscriptionSlotDeactivated & { subscriptionId: string };
 
 export type TeamSubscriptionSlotState = 'unassigned' | 'assigned' | 'deactivated' | 'cancelled';
 
@@ -56,25 +52,20 @@ export namespace TeamSubscriptionSlot {
         const withId = ts as TeamSubscriptionSlot;
         withId.id = uuidv4();
         return withId;
-    };
-    export const assign = (
-        slot: TeamSubscriptionSlot,
-        assigneeId: string,
-        subscriptionId: string,
-        assigneeIdentifier: AssigneeIdentifier,
-    ) => {
+    }
+    export const assign = (slot: TeamSubscriptionSlot, assigneeId: string, subscriptionId: string, assigneeIdentifier: AssigneeIdentifier) => {
         slot.assigneeId = assigneeId;
         slot.subscriptionId = subscriptionId;
         slot.assigneeIdentifier = assigneeIdentifier;
-    };
+    }
     export const deactivate = (slot: TeamSubscriptionSlot, cancellationDate: string) => {
         slot.subscriptionId = undefined;
         slot.cancellationDate = cancellationDate;
-    };
+    }
     export const reactivate = (slot: TeamSubscriptionSlot, subscriptionId?: string) => {
         slot.subscriptionId = subscriptionId;
         slot.cancellationDate = undefined;
-    };
+    }
     export const status = (slot: TeamSubscriptionSlot, now: string): TeamSubscriptionSlotState => {
         if (slot.cancellationDate) {
             if (slot.cancellationDate < now) {
@@ -89,10 +80,11 @@ export namespace TeamSubscriptionSlot {
                 return 'unassigned';
             }
         }
-    };
+
+    }
     export const isActive = (slot: TeamSubscriptionSlot): boolean => {
         return !slot.cancellationDate;
-    };
+    }
 }
 
 /**
@@ -115,7 +107,7 @@ export interface TeamSubscriptionSlotResolved {
 export type AssigneeIdentifier = AssigneeIdentityIdentifier;
 export interface AssigneeIdentityIdentifier {
     identity: {
-        authHost: string;
-        authName: string;
-    };
+        authHost: string,
+        authName: string
+    }
 }

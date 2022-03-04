@@ -14,7 +14,7 @@ const loginCounter = new prometheusClient.Counter({
     name: 'gitpod_server_login_requests_total',
     help: 'Total amount of login requests',
     labelNames: ['status', 'auth_host'],
-    registers: [prometheusClient.register],
+    registers: [prometheusClient.register]
 });
 
 export function increaseLoginCounter(status: string, auth_host: string) {
@@ -61,7 +61,7 @@ export const apiCallDurationHistogram = new prometheusClient.Histogram({
     labelNames: ['method'],
     buckets: [0.01, 0.05, 0.1, 0.5, 1, 5, 10],
     registers: [prometheusClient.register],
-});
+})
 
 export function observeAPICallsDuration(method: string, duration: number) {
     apiCallDurationHistogram.observe({ method }, duration);
@@ -97,35 +97,30 @@ const httpRequestDuration = new prometheusClient.Histogram({
     registers: [prometheusClient.register],
 });
 
-export function observeHttpRequestDuration(
-    method: string,
-    route: string,
-    statusCode: number,
-    durationInSeconds: number,
-) {
+export function observeHttpRequestDuration(method: string, route: string, statusCode: number, durationInSeconds: number) {
     httpRequestDuration.observe({ method, route, statusCode }, durationInSeconds);
 }
 
 const messagebusTopicReads = new prometheusClient.Counter({
-    name: 'gitpod_server_topic_reads_total',
-    help: 'The amount of reads from messagebus topics.',
-    labelNames: ['topic'],
-    registers: [prometheusClient.register],
+   name: 'gitpod_server_topic_reads_total',
+   help: 'The amount of reads from messagebus topics.',
+   labelNames: ['topic'],
+   registers: [prometheusClient.register]
 });
 
 export function increaseMessagebusTopicReads(topic: string) {
     messagebusTopicReads.inc({
         topic,
-    });
+    })
 }
 
 const gitpodVersionInfo = new prometheusClient.Gauge({
     name: 'gitpod_version_info',
     help: "Gitpod's version",
-    labelNames: ['gitpod_version'],
-    registers: [prometheusClient.register],
+    labelNames: ["gitpod_version"],
+    registers: [prometheusClient.register]
 });
 
-export function setGitpodVersion(gitpod_version: string) {
-    gitpodVersionInfo.set({ gitpod_version }, 1);
+export function setGitpodVersion(gitpod_version: string){
+    gitpodVersionInfo.set({gitpod_version}, 1)
 }

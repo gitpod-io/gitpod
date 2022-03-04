@@ -8,7 +8,7 @@ import * as chargebeeApi from 'chargebee';
 import { Chargebee as chargebee } from './chargebee-types';
 import { injectable, inject, postConstruct, optional } from 'inversify';
 import * as fs from 'fs';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export const ChargebeeProviderOptions = Symbol('ChargebeeProviderOptions');
 export interface ChargebeeProviderOptions {
@@ -27,7 +27,8 @@ export const readOptionsFromFile = (optionsPath: string): ChargebeeProviderOptio
 export const parseOptions = (optionsStr: string): ChargebeeProviderOptions => {
     try {
         const options = JSON.parse(optionsStr);
-        if ('site' in options && 'api_key' in options) {
+        if ('site' in options &&
+            'api_key' in options) {
             return options as ChargebeeProviderOptions;
         }
         throw new Error();
@@ -38,6 +39,7 @@ export const parseOptions = (optionsStr: string): ChargebeeProviderOptions => {
 
 @injectable()
 export class ChargebeeProvider {
+
     @inject(ChargebeeProviderOptions)
     @optional() /* To allow for precise error message instead of generic inversify one */
     protected readonly options: ChargebeeProviderOptions;

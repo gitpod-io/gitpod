@@ -4,6 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export * from './core_pb';
-export * from './core_grpc_pb';
-export * from './promisified-client';
+export * from './core_pb'
+export * from './core_grpc_pb'
+export * from './promisified-client'

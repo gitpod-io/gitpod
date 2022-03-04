@@ -13,9 +13,10 @@ const expect = chai.expect;
 
 @suite
 export class PermissionSpec {
+
     @test public hasPermission_viewer() {
         const userViewer: User = {
-            rolesOrPermissions: ['viewer'],
+            rolesOrPermissions: ["viewer"]
         } as User;
 
         const cut: AuthorizationService = new AuthorizationServiceImpl();
@@ -27,7 +28,7 @@ export class PermissionSpec {
 
     @test public hasPermission_dev() {
         const userDev: User = {
-            rolesOrPermissions: ['devops'],
+            rolesOrPermissions: ["devops"]
         } as User;
 
         const cut: AuthorizationService = new AuthorizationServiceImpl();
@@ -38,4 +39,4 @@ export class PermissionSpec {
     }
 }
 
-module.exports = new PermissionSpec();
+module.exports = new PermissionSpec()

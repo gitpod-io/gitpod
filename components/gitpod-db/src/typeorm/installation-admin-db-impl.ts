@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from 'inversify';
+import { inject, injectable, } from 'inversify';
 import { InstallationAdmin, InstallationAdminSettings } from '@gitpod/gitpod-protocol';
 import { Repository } from 'typeorm';
 import { TypeORM } from './typeorm';
@@ -54,7 +54,7 @@ export class TypeORMInstallationAdminImpl implements InstallationAdminDB {
         const record = await this.getData();
         record.settings = {
             ...settings,
-        };
+        }
 
         const repo = await this.getInstallationAdminRepo();
         await repo.save(record);

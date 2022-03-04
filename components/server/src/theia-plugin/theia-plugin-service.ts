@@ -6,23 +6,15 @@
 
 import * as url from 'url';
 import { injectable, inject } from 'inversify';
-import {
-    ResolvePluginsParams,
-    ResolvedPlugins,
-    TheiaPlugin,
-    PreparePluginUploadParams,
-    InstallPluginsParams,
-    UninstallPluginParams,
-    ResolvedPluginKind,
-} from '@gitpod/gitpod-protocol';
-import { TheiaPluginDB, UserStorageResourcesDB } from '@gitpod/gitpod-db/lib';
+import { ResolvePluginsParams, ResolvedPlugins, TheiaPlugin, PreparePluginUploadParams, InstallPluginsParams, UninstallPluginParams, ResolvedPluginKind } from '@gitpod/gitpod-protocol';
+import { TheiaPluginDB, UserStorageResourcesDB } from "@gitpod/gitpod-db/lib";
 import { Config } from '../config';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { PluginIndexEntry } from '@gitpod/gitpod-protocol/lib/theia-plugins';
 import { StorageClient } from '../storage/storage-client';
-import {} from '@gitpod/gitpod-db/lib';
+import {  } from '@gitpod/gitpod-db/lib';
 import fetch from 'node-fetch';
 
 const builtinExtensions: PluginIndexEntry[] = require('@gitpod/gitpod-protocol/data/builtin-theia-plugins.json');
@@ -30,12 +22,13 @@ const builtinExtensions: PluginIndexEntry[] = require('@gitpod/gitpod-protocol/d
 const userPluginsUri = 'user-plugins://';
 
 export interface ResolvedPluginsResult {
-    resolved: ResolvedPlugins;
-    external: string[];
+    resolved: ResolvedPlugins
+    external: string[]
 }
 
 @injectable()
 export class TheiaPluginService {
+
     @inject(Config) protected readonly config: Config;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
     @inject(TheiaPluginDB) protected readonly pluginDB: TheiaPluginDB;
@@ -63,14 +56,14 @@ export class TheiaPluginService {
      *
      * @returns a signed URL for the proxy pass
      */
-    async preflight(pluginEntryId: string, type: 'upload' | 'download'): Promise<string> {
+    async preflight(pluginEntryId: string, type: "upload" | "download"): Promise<string> {
         const pluginEntry = await this.pluginDB.findById(pluginEntryId);
         if (!pluginEntry) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, 'Plugin not found.');
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Plugin not found.");
         }
         const { bucketName, path, state } = pluginEntry;
-        if (state == TheiaPlugin.State.Uploaded && type == 'upload') {
-            throw new ResponseError(ErrorCodes.CONFLICT, 'Plugin already exists.');
+        if (state == TheiaPlugin.State.Uploaded && type == "upload") {
+            throw new ResponseError(ErrorCodes.CONFLICT, "Plugin already exists.");
         }
         try {
             if (state == TheiaPlugin.State.Uploading) {
@@ -81,11 +74,7 @@ export class TheiaPluginService {
                 return signedUrl;
             }
         } catch (error) {
-            log.warn(`Failed to create a signed URL for plugin with DB id ${pluginEntryId}!`, error, {
-                bucketName,
-                path,
-                state,
-            });
+            log.warn(`Failed to create a signed URL for plugin with DB id ${pluginEntryId}!`, error, { bucketName, path, state })
             throw error;
         }
     }
@@ -98,14 +87,14 @@ export class TheiaPluginService {
     async checkin(pluginEntryId: string): Promise<string> {
         const pluginEntry = await this.pluginDB.findById(pluginEntryId);
         if (!pluginEntry) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, 'Plugin not found.');
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Plugin not found.");
         }
         const { state, bucketName, path, pluginId } = pluginEntry;
         if (state == TheiaPlugin.State.Uploaded && pluginId) {
             return pluginId; // nothing to do
         }
         if (state != TheiaPlugin.State.Uploading) {
-            throw new ResponseError(ErrorCodes.CONFLICT, 'Plugin already processed.');
+            throw new ResponseError(ErrorCodes.CONFLICT, "Plugin already processed.");
         }
         let error;
         try {
@@ -116,14 +105,14 @@ export class TheiaPluginService {
             await this.pluginDB.storePlugin(pluginEntry);
             return pluginEntry.pluginId;
         } catch (err) {
-            log.error('Failed to checkin a plugin.', err, { pluginEntryId });
+            log.error("Failed to checkin a plugin.", err, { pluginEntryId });
             error = err;
         }
         try {
             pluginEntry.state = TheiaPlugin.State.CheckinFailed;
             await this.pluginDB.storePlugin(pluginEntry);
         } catch (err) {
-            log.error('Failed to mark a failed plugin checkin.', err, { pluginEntryId });
+            log.error("Failed to mark a failed plugin checkin.", err, { pluginEntryId });
         }
         throw error;
     }
@@ -141,11 +130,11 @@ export class TheiaPluginService {
         return this.getPublicPluginURL(pluginEntryId);
     }
 
-    private parseFullPluginName(fullPluginName: string): { name: string; version?: string } {
+    private parseFullPluginName(fullPluginName: string): { name: string, version?: string } {
         const idx = fullPluginName.lastIndexOf('@');
         if (idx === -1) {
             return {
-                name: fullPluginName.toLowerCase(),
+                name: fullPluginName.toLowerCase()
             };
         }
         const name = fullPluginName.substring(0, idx).toLowerCase();
@@ -158,22 +147,18 @@ export class TheiaPluginService {
     }
 
     protected toFullPluginName(pluginId: string): string {
-        return (pluginId.substring(0, pluginId.lastIndexOf(':')) || pluginId).toLowerCase();
+        return (pluginId.substring(0, pluginId.lastIndexOf(":")) || pluginId).toLowerCase();
     }
 
     protected getPublicPluginURL(pluginEntryId: string) {
         return this.config.hostUrl
             .with({
                 pathname: '/plugins',
-                search: `id=${pluginEntryId}`,
-            })
-            .toString();
+                search: `id=${pluginEntryId}`
+            }).toString();
     }
 
-    async resolvePlugins(
-        userId: string,
-        { config, builtins, vsxRegistryUrl }: ResolvePluginsParams,
-    ): Promise<ResolvedPluginsResult> {
+    async resolvePlugins(userId: string, { config, builtins, vsxRegistryUrl }: ResolvePluginsParams): Promise<ResolvedPluginsResult> {
         const resolved: ResolvedPlugins = {};
         const external = new Set<string>();
         const addedPlugins = new Set<string>();
@@ -181,28 +166,24 @@ export class TheiaPluginService {
         const resolvePlugin = (extension: string, kind: ResolvedPluginKind) => {
             const pluginId = extension.trim();
             const parsed = this.parseFullPluginName(pluginId);
-            if (!addedPlugins.has(parsed.name)) {
+            if (!(addedPlugins.has(parsed.name))) {
                 addedPlugins.add(parsed.name);
                 if (kind === 'builtin') {
-                    resolved[pluginId] = { fullPluginName: this.toFullPluginName(pluginId), url: 'local', kind };
+                    resolved[pluginId] = { fullPluginName: this.toFullPluginName(pluginId), url: 'local', kind }
                 } else {
-                    resolving.push(
-                        (async () => {
-                            try {
-                                const resolvedPlugin =
-                                    (await this.resolveFromUploaded(pluginId)) ||
-                                    (await this.resolveFromOpenVSX(parsed, vsxRegistryUrl));
-                                resolved[pluginId] =
-                                    (resolvedPlugin && Object.assign(resolvedPlugin, { kind })) || undefined;
-                            } catch (e) {
-                                console.error(`Failed to resolve '${pluginId}' plugin:`, e);
-                            }
-                        })(),
-                    );
+                    resolving.push((async () => {
+                        try {
+                            const resolvedPlugin = await this.resolveFromUploaded(pluginId)
+                                || await this.resolveFromOpenVSX(parsed, vsxRegistryUrl);
+                            resolved[pluginId] = resolvedPlugin && Object.assign(resolvedPlugin, { kind }) || undefined;
+                        } catch (e) {
+                            console.error(`Failed to resolve '${pluginId}' plugin:`, e);
+                        }
+                    })());
                 }
             }
-        };
-        const workspaceExtensions = (config && config.vscode && config.vscode.extensions) || [];
+        }
+        const workspaceExtensions = config && config.vscode && config.vscode.extensions || [];
         for (const extension of workspaceExtensions) {
             try {
                 const externalURL = new url.URL(extension);
@@ -230,15 +211,12 @@ export class TheiaPluginService {
         return { resolved, external: [...external.values()] };
     }
 
-    private async resolveFromUploaded(pluginId: string): Promise<
-        | {
-              url: string;
-              fullPluginName: string;
-          }
-        | undefined
-    > {
+    private async resolveFromUploaded(pluginId: string): Promise<{
+        url: string
+        fullPluginName: string
+    } | undefined> {
         const pluginEntries = await this.pluginDB.findByPluginId(pluginId);
-        const uploadedPlugins = pluginEntries.filter((e) => e.state == TheiaPlugin.State.Uploaded);
+        const uploadedPlugins = pluginEntries.filter(e => e.state == TheiaPlugin.State.Uploaded);
         if (uploadedPlugins.length < 1) {
             log.debug(`No uploaded plugin with id "${pluginId}" found`);
             return undefined;
@@ -249,55 +227,42 @@ export class TheiaPluginService {
         const pluginEntry = uploadedPlugins[0];
         return {
             fullPluginName: this.toFullPluginName(pluginId),
-            url: this.getPublicPluginURL(pluginEntry.id),
+            url: this.getPublicPluginURL(pluginEntry.id)
         };
     }
 
-    private async resolveFromOpenVSX(
-        { name, version }: { name: string; version?: string },
-        vsxRegistryUrl = this.config.vsxRegistryUrl,
-    ): Promise<
-        | {
-              url: string;
-              fullPluginName: string;
-          }
-        | undefined
-    > {
+    private async resolveFromOpenVSX({ name, version }: { name: string, version?: string }, vsxRegistryUrl = this.config.vsxRegistryUrl): Promise<{
+        url: string
+        fullPluginName: string
+    } | undefined> {
         try {
             const queryUrl = url.parse(vsxRegistryUrl);
             queryUrl.pathname = '/api/-/query';
-            const queryHref = url.format(queryUrl);
+            const queryHref = url.format(queryUrl)
             const response = await fetch(queryHref, {
                 method: 'POST',
                 timeout: 5000,
                 headers: {
                     'Content-Type': 'application/json',
-                    Accept: 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     extensionId: name,
-                    extensionVersion: version,
-                }),
+                    extensionVersion: version
+                })
             });
             if (response.status !== 200) {
-                log.error(
-                    `Failed to find extension '${name}@${version || 'latest'}' with '${queryHref}': ${
-                        response.status
-                    } (${response.statusText}).`,
-                );
+                log.error(`Failed to find extension '${name}@${version || 'latest'}' with '${queryHref}': ${response.status} (${response.statusText}).`);
                 return undefined;
             }
             const result: {
-                extensions: [
-                    | {
-                          namespace: string;
-                          name: string;
-                          version: string;
-                          files: { download: string };
-                      }
-                    | undefined,
-                ];
-            } = JSON.parse(await response.text());
+                extensions: [{
+                    namespace: string
+                    name: string
+                    version: string
+                    files: { download: string }
+                } | undefined]
+            } = JSON.parse(await response.text())
             const extension = result.extensions[0];
             if (!extension) {
                 log.debug(`Extension '${name}@${version || 'latest'}' not found in '${vsxRegistryUrl}' registry.`);
@@ -317,7 +282,7 @@ export class TheiaPluginService {
         if (!params.pluginIds.length) {
             return false;
         }
-        return await this.updateUserPlugins(userId, (pluginIds) => {
+        return await this.updateUserPlugins(userId, pluginIds => {
             let shouldUpdate = false;
             for (const pluginId of params.pluginIds) {
                 if (!pluginIds.has(pluginId)) {
@@ -330,13 +295,12 @@ export class TheiaPluginService {
     }
 
     async uninstallUserPlugin(userId: string, params: UninstallPluginParams): Promise<boolean> {
-        return await this.updateUserPlugins(userId, (pluginIds) => pluginIds.delete(params.pluginId));
+        return await this.updateUserPlugins(userId, pluginIds =>
+            pluginIds.delete(params.pluginId)
+        );
     }
 
-    protected async updateUserPlugins(
-        userId: string,
-        doUpdate: (pluginsIds: Set<string>) => boolean,
-    ): Promise<boolean> {
+    protected async updateUserPlugins(userId: string, doUpdate: (pluginsIds: Set<string>) => boolean): Promise<boolean> {
         const pluginIds = await this.getUserPlugins(userId);
         if (!doUpdate(pluginIds)) {
             return false;
@@ -354,12 +318,12 @@ export class TheiaPluginService {
     async getCodeSyncResource(userId: string): Promise<string> {
         interface ISyncExtension {
             identifier: {
-                id: string;
+                id: string
             };
             version?: string;
             installed?: boolean;
         }
-        const extensions: ISyncExtension[] = [];
+        const extensions: ISyncExtension[] = []
         const userPlugins = await this.getUserPlugins(userId);
         for (const userPlugin of userPlugins) {
             const fullPluginName = this.toFullPluginName(userPlugin); // drop hash
@@ -367,9 +331,10 @@ export class TheiaPluginService {
             extensions.push({
                 identifier: { id: name },
                 version,
-                installed: true,
+                installed: true
             });
         }
         return JSON.stringify(extensions);
     }
+
 }

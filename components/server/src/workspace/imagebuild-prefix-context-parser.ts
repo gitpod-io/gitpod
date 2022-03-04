@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, User, WorkspaceContext } from '@gitpod/gitpod-protocol';
-import { injectable } from 'inversify';
-import { IPrefixContextParser } from './context-parser';
+import { ContextURL, User, WorkspaceContext } from "@gitpod/gitpod-protocol";
+import { injectable } from "inversify";
+import { IPrefixContextParser } from "./context-parser";
 
 @injectable()
 export class ImageBuildPrefixContextParser implements IPrefixContextParser {
@@ -19,7 +19,7 @@ export class ImageBuildPrefixContextParser implements IPrefixContextParser {
     }
 
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
-        context.forceImageBuild = true;
+        context.forceImageBuild = true
         return context;
     }
 }

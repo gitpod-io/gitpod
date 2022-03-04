@@ -4,18 +4,12 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import {
-    Workspace,
-    User,
-    WorkspaceInstance,
-    WorkspaceInstanceConfiguration,
-    NamedWorkspaceFeatureFlag,
-} from '@gitpod/gitpod-protocol';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { inject, injectable } from 'inversify';
-import { IDEConfig } from '../../../src/ide-config';
-import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
-import { EligibilityService } from '../user/eligibility-service';
+import { Workspace, User, WorkspaceInstance, WorkspaceInstanceConfiguration, NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { inject, injectable } from "inversify";
+import { IDEConfig } from "../../../src/ide-config";
+import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
+import { EligibilityService } from "../user/eligibility-service";
 
 @injectable()
 export class WorkspaceStarterEE extends WorkspaceStarter {
@@ -26,22 +20,17 @@ export class WorkspaceStarterEE extends WorkspaceStarter {
      *
      * @param workspace the workspace to create an instance for
      */
-    protected async newInstance(
-        ctx: TraceContext,
-        workspace: Workspace,
-        user: User,
-        excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
-        ideConfig: IDEConfig,
-    ): Promise<WorkspaceInstance> {
+    protected async newInstance(ctx: TraceContext, workspace: Workspace, user: User, excludeFeatureFlags: NamedWorkspaceFeatureFlag[], ideConfig: IDEConfig): Promise<WorkspaceInstance> {
         const instance = await super.newInstance(ctx, workspace, user, excludeFeatureFlags, ideConfig);
         if (await this.eligibilityService.hasFixedWorkspaceResources(user)) {
             const config: WorkspaceInstanceConfiguration = instance.configuration!;
-            const ff = config.featureFlags || [];
-            ff.push('fixed_resources');
+            const ff = (config.featureFlags || []);
+            ff.push("fixed_resources");
             config.featureFlags = ff;
             instance.configuration = config;
         }
 
         return instance;
     }
+
 }

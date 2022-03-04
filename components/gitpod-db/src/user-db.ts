@@ -4,20 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import {
-    AdditionalUserData,
-    GitpodToken,
-    GitpodTokenType,
-    Identity,
-    IdentityLookup,
-    Token,
-    TokenEntry,
-    User,
-    UserEnvVar,
-} from '@gitpod/gitpod-protocol';
-import { OAuthTokenRepository, OAuthUserRepository } from '@jmondi/oauth2-server';
-import { Repository } from 'typeorm';
-import { DBUser } from './typeorm/entity/db-user';
+import { AdditionalUserData, GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
+import { OAuthTokenRepository, OAuthUserRepository } from "@jmondi/oauth2-server";
+import { Repository } from "typeorm";
+import { DBUser } from "./typeorm/entity/db-user";
 
 export type MaybeUser = User | undefined;
 
@@ -63,7 +53,7 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
      * @param identity
      * @param shouldDelete optional predicate to suppress deletion of certain entries
      */
-    deleteTokens(identity: Identity, shouldDelete?: (entry: TokenEntry) => boolean): Promise<void>;
+    deleteTokens(identity: Identity, shouldDelete?: (entry: TokenEntry) => boolean): Promise<void>
 
     /**
      * Find TokenEntry by id
@@ -91,7 +81,7 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
      *
      * @param tokenEntry
      */
-    updateTokenEntry(tokenEntry: Partial<TokenEntry> & Pick<TokenEntry, 'uid'>): Promise<void>;
+    updateTokenEntry(tokenEntry: Partial<TokenEntry> & Pick<TokenEntry, "uid">): Promise<void>
 
     /**
      * @param identity
@@ -117,37 +107,25 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
     deleteEnvVar(envVar: UserEnvVar): Promise<void>;
     getEnvVars(userId: string): Promise<UserEnvVar[]>;
 
-    findAllUsers(
-        offset: number,
-        limit: number,
-        orderBy: keyof User,
-        orderDir: 'ASC' | 'DESC',
-        searchTerm?: string,
-        minCreationDate?: Date,
-        maxCreationDate?: Date,
-        excludeBuiltinUsers?: boolean,
-    ): Promise<{ total: number; rows: User[] }>;
+    findAllUsers(offset: number, limit: number, orderBy: keyof User, orderDir: "ASC" | "DESC", searchTerm?: string, minCreationDate?: Date, maxCreationDate?: Date, excludeBuiltinUsers?: boolean): Promise<{ total: number, rows: User[] }>;
     findUserByName(name: string): Promise<User | undefined>;
 
-    findUserByGitpodToken(
-        tokenHash: string,
-        tokenType?: GitpodTokenType,
-    ): Promise<{ user: User; token: GitpodToken } | undefined>;
+    findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<{ user: User, token: GitpodToken } | undefined>;
     findGitpodTokensOfUser(userId: string, tokenHash: string): Promise<GitpodToken | undefined>;
     findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]>;
     storeGitpodToken(token: GitpodToken & { user: DBUser }): Promise<void>;
     deleteGitpodToken(tokenHash: string): Promise<void>;
     deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void>;
 }
-export type PartialUserUpdate = Partial<Omit<User, 'identities'>> & Pick<User, 'id'>;
+export type PartialUserUpdate = Partial<Omit<User, "identities">> & Pick<User, "id">
 
-export const BUILTIN_WORKSPACE_PROBE_USER_ID = 'builtin-user-workspace-probe-0000000';
+export const BUILTIN_WORKSPACE_PROBE_USER_ID = "builtin-user-workspace-probe-0000000";
 
 export interface OwnerAndRepo {
-    owner: string;
-    repo: string;
+    owner: string
+    repo: string
 }
 
-export type UserEmailContact = Pick<User, 'id' | 'name'> & { primaryEmail: string } & {
-    additionalData?: Pick<AdditionalUserData, 'emailNotificationSettings'>;
-};
+export type UserEmailContact = Pick<User, 'id' | 'name'>
+    & { primaryEmail: string }
+    & { additionalData?: Pick<AdditionalUserData, 'emailNotificationSettings'> }

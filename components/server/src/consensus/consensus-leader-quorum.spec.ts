@@ -8,29 +8,26 @@
 if (typeof (Symbol as any).asyncIterator === 'undefined') {
     (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol('asyncIterator');
 }
-import 'reflect-metadata';
+import "reflect-metadata";
 
-import { suite, test, timeout, retries } from 'mocha-typescript';
+import { suite, test, timeout, retries } from "mocha-typescript";
 import * as chai from 'chai';
 const expect = chai.expect;
 
-import { ContainerModule, Container } from 'inversify';
-import { ConsensusLeaderQorum } from './consensus-leader-quorum';
-import { ConsensusLeaderMessenger } from './consensus-leader-messenger';
-import { InMemoryConsensusLeaderMessenger } from './inmemory-consensus-leader-messenger';
+import { ContainerModule, Container } from "inversify";
+import { ConsensusLeaderQorum } from "./consensus-leader-quorum";
+import { ConsensusLeaderMessenger } from "./consensus-leader-messenger";
+import { InMemoryConsensusLeaderMessenger } from "./inmemory-consensus-leader-messenger";
 
-@suite.skip(timeout(10000), retries(0))
-class TestConsensusLeaderQuorum {
+@suite.skip(timeout(10000), retries(0)) class TestConsensusLeaderQuorum {
     protected container: Container;
 
     public before() {
         this.container = new Container();
-        this.container.load(
-            new ContainerModule((bind, unbind, isBound, rebind) => {
-                bind(ConsensusLeaderQorum).toSelf().inRequestScope();
-                bind(ConsensusLeaderMessenger).to(InMemoryConsensusLeaderMessenger).inSingletonScope();
-            }),
-        );
+        this.container.load(new ContainerModule((bind, unbind, isBound, rebind) => {
+            bind(ConsensusLeaderQorum).toSelf().inRequestScope();
+            bind(ConsensusLeaderMessenger).to(InMemoryConsensusLeaderMessenger).inSingletonScope();
+        }));
     }
 
     @test public async testSingleServer() {
@@ -52,12 +49,10 @@ class TestConsensusLeaderQuorum {
             ps.push(this.container.get(ConsensusLeaderQorum));
         }
 
-        await Promise.all(ps.map((p) => p.start()));
-        await Promise.all(ps.map((p) => p.awaitConsensus()));
+        await Promise.all(ps.map(p => p.start()));
+        await Promise.all(ps.map(p => p.awaitConsensus()));
 
-        const leaders = (await Promise.all(ps.map((p) => p.areWeLeader())))
-            .map((p) => (p ? 1 : 0) as number)
-            .reduce((a, b) => a + b);
+        const leaders = (await Promise.all(ps.map(p => p.areWeLeader()))).map(p => (p ? 1 : 0) as number).reduce((a, b) => a + b);
         expect(leaders).to.equal(1);
     }
 
@@ -67,12 +62,10 @@ class TestConsensusLeaderQuorum {
             ps.push(this.container.get(ConsensusLeaderQorum));
         }
 
-        await Promise.all(ps.map((p) => p.start()));
-        await Promise.all(ps.map((p) => p.awaitConsensus()));
+        await Promise.all(ps.map(p => p.start()));
+        await Promise.all(ps.map(p => p.awaitConsensus()));
 
-        const leaders = (await Promise.all(ps.map((p) => p.areWeLeader())))
-            .map((p) => (p ? 1 : 0) as number)
-            .reduce((a, b) => a + b);
+        const leaders = (await Promise.all(ps.map(p => p.areWeLeader()))).map(p => (p ? 1 : 0) as number).reduce((a, b) => a + b);
         expect(leaders).to.equal(1);
 
         // block the leader
@@ -88,9 +81,7 @@ class TestConsensusLeaderQuorum {
         // wait for the term to time out
         await new Promise((resolve, reject) => setTimeout(resolve, 2000));
 
-        const newLeaders = (await Promise.all(ps.map((p) => p.areWeLeader())))
-            .map((p) => (p ? 1 : 0) as number)
-            .reduce((a, b) => a + b);
+        const newLeaders = (await Promise.all(ps.map(p => p.areWeLeader()))).map(p => (p ? 1 : 0) as number).reduce((a, b) => a + b);
         expect(newLeaders).to.equal(1);
     }
 
@@ -100,8 +91,8 @@ class TestConsensusLeaderQuorum {
             ps.push(this.container.get(ConsensusLeaderQorum));
         }
 
-        await Promise.all(ps.map((p) => p.start()));
-        await Promise.all(ps.map((p) => p.awaitConsensus()));
+        await Promise.all(ps.map(p => p.start()));
+        await Promise.all(ps.map(p => p.awaitConsensus()));
 
         let previousLeader: string | undefined;
         for (var i = 0; i < 10; i++) {
@@ -126,6 +117,7 @@ class TestConsensusLeaderQuorum {
             expect(p.term).to.equal(1);
         }
     }
+
 }
 
-module.exports = new TestConsensusLeaderQuorum(); // Only to circumvent no usage warning :-/
+module.exports = new TestConsensusLeaderQuorum()   // Only to circumvent no usage warning :-/

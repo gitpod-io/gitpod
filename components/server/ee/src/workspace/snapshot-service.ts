@@ -4,14 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from 'inversify';
+import { inject, injectable } from "inversify";
 import { v4 as uuidv4 } from 'uuid';
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { Disposable, GitpodServer, Snapshot } from '@gitpod/gitpod-protocol';
-import { StorageClient } from '../../../src/storage/storage-client';
-import { ConsensusLeaderQorum } from '../../../src/consensus/consensus-leader-quorum';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { repeat } from '@gitpod/gitpod-protocol/lib/util/repeat';
+import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { Disposable, GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
+import { StorageClient } from "../../../src/storage/storage-client";
+import { ConsensusLeaderQorum } from "../../../src/consensus/consensus-leader-quorum";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 const SNAPSHOT_TIMEOUT_SECONDS = 60 * 30;
 const SNAPSHOT_POLL_INTERVAL_SECONDS = 5;
@@ -35,47 +35,35 @@ export class SnapshotService {
     protected readonly runningSnapshots: Map<string, Promise<void>> = new Map();
 
     public async start(): Promise<Disposable> {
-        return repeat(
-            () => this.pickupAndDriveFromDbIfWeAreLeader().catch(log.error),
-            SNAPSHOT_DB_POLL_INTERVAL_SECONDS * 1000,
-        );
+        return repeat(() => this.pickupAndDriveFromDbIfWeAreLeader().catch(log.error), SNAPSHOT_DB_POLL_INTERVAL_SECONDS * 1000);
     }
 
     public async pickupAndDriveFromDbIfWeAreLeader() {
-        if (!(await this.leaderQuorum.areWeLeader())) {
-            return;
+        if (!await this.leaderQuorum.areWeLeader()) {
+            return
         }
 
         log.info("snapshots: we're leading the quorum. picking up pending snapshots and driving them home.");
-        const step = 50; // make sure we're not flooding ourselves
-        const { snapshots: pendingSnapshots, total } = await this.workspaceDb.findSnapshotsWithState(
-            'pending',
-            0,
-            step,
-        );
+        const step = 50;    // make sure we're not flooding ourselves
+        const { snapshots: pendingSnapshots, total } = await this.workspaceDb.findSnapshotsWithState('pending', 0, step);
         if (total > step) {
-            log.warn('snapshots: looks like we have more pending snapshots then we can handle!');
+            log.warn("snapshots: looks like we have more pending snapshots then we can handle!");
         }
 
         for (const snapshot of pendingSnapshots) {
             const workspace = await this.workspaceDb.findById(snapshot.originalWorkspaceId);
             if (!workspace) {
-                log.error(
-                    { workspaceId: snapshot.originalWorkspaceId },
-                    `snapshots: unable to find workspace for snapshot`,
-                    { snapshotId: snapshot.id },
-                );
+                log.error({ workspaceId: snapshot.originalWorkspaceId }, `snapshots: unable to find workspace for snapshot`, { snapshotId: snapshot.id });
                 continue;
             }
 
-            this.driveSnapshotCached({ workspaceOwner: workspace.ownerId, snapshot }).catch((err) => {
-                /** ignore */
-            });
+            this.driveSnapshotCached({ workspaceOwner: workspace.ownerId, snapshot })
+                .catch(err => {/** ignore */});
         }
     }
 
     public async createSnapshot(options: GitpodServer.TakeSnapshotOptions, snapshotUrl: string): Promise<Snapshot> {
-        const id = uuidv4();
+        const id = uuidv4()
         return await this.workspaceDb.storeSnapshot({
             id,
             creationTime: new Date().toISOString(),
@@ -98,7 +86,7 @@ export class SnapshotService {
 
         const started = this.driveSnapshot(opts)
             .finally(() => this.runningSnapshots.delete(opts.snapshot.id))
-            .catch((err) => log.error('driveSnapshot', err));
+            .catch(err => log.error("driveSnapshot", err));
         this.runningSnapshots.set(opts.snapshot.id, started);
         return started;
     }
@@ -113,13 +101,13 @@ export class SnapshotService {
 
         const { id: snapshotId, bucketId, originalWorkspaceId, creationTime } = opts.snapshot;
         const start = new Date(creationTime).getTime();
-        while (start + SNAPSHOT_TIMEOUT_SECONDS * 1000 > Date.now()) {
+        while (start + (SNAPSHOT_TIMEOUT_SECONDS * 1000) > Date.now()) {
             await new Promise((resolve) => setTimeout(resolve, SNAPSHOT_POLL_INTERVAL_SECONDS * 1000));
 
             // did somebody else complete that snapshot?
             const snapshot = await this.workspaceDb.findSnapshotById(snapshotId);
             if (!snapshot) {
-                throw new Error(`no snapshot with id '${snapshotId}' found.`);
+                throw new Error(`no snapshot with id '${snapshotId}' found.`)
             }
             if (snapshot.state === 'available') {
                 return;
@@ -129,11 +117,7 @@ export class SnapshotService {
             }
 
             // pending: check if the snapshot is there
-            const exists = await this.storageClient.workspaceSnapshotExists(
-                opts.workspaceOwner,
-                originalWorkspaceId,
-                bucketId,
-            );
+            const exists = await this.storageClient.workspaceSnapshotExists(opts.workspaceOwner, originalWorkspaceId, bucketId);
             if (exists) {
                 await this.workspaceDb.updateSnapshot({
                     id: snapshotId,

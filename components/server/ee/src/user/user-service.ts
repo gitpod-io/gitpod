@@ -4,16 +4,16 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { UserService, CheckSignUpParams, CheckTermsParams } from '../../../src/user/user-service';
-import { User, WorkspaceTimeoutDuration } from '@gitpod/gitpod-protocol';
-import { inject } from 'inversify';
-import { LicenseEvaluator } from '@gitpod/licensor/lib';
-import { Feature } from '@gitpod/licensor/lib/api';
-import { AuthException } from '../../../src/auth/errors';
-import { EligibilityService } from './eligibility-service';
-import { SubscriptionService } from '@gitpod/gitpod-payment-endpoint/lib/accounting';
-import { OssAllowListDB } from '@gitpod/gitpod-db/lib/oss-allowlist-db';
-import { HostContextProvider } from '../../../src/auth/host-context-provider';
+import { UserService, CheckSignUpParams, CheckTermsParams } from "../../../src/user/user-service";
+import { User, WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
+import { inject } from "inversify";
+import { LicenseEvaluator } from "@gitpod/licensor/lib";
+import { Feature } from "@gitpod/licensor/lib/api";
+import { AuthException } from "../../../src/auth/errors";
+import { EligibilityService } from "./eligibility-service";
+import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
+import { OssAllowListDB } from "@gitpod/gitpod-db/lib/oss-allowlist-db";
+import { HostContextProvider } from "../../../src/auth/host-context-provider";
 
 export class UserServiceEE extends UserService {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
@@ -30,10 +30,10 @@ export class UserServiceEE extends UserService {
 
         // the self-hosted case
         if (!this.licenseEvaluator.isEnabled(Feature.FeatureSetTimeout)) {
-            return '30m';
+            return "30m";
         }
 
-        return '60m';
+        return "60m";
     }
 
     async userGetsMoreResources(user: User): Promise<boolean> {
@@ -45,13 +45,14 @@ export class UserServiceEE extends UserService {
     }
 
     async checkSignUp(params: CheckSignUpParams) {
+
         // todo@at: check if we need an optimization for SaaS here. used to be a no-op there.
 
         // 1. check the license
         const userCount = await this.userDb.getUserCount(true);
         if (!this.licenseEvaluator.hasEnoughSeats(userCount)) {
             const msg = `Maximum number of users permitted by the license exceeded`;
-            throw AuthException.create('Cannot sign up', msg, { userCount, params });
+            throw AuthException.create("Cannot sign up", msg, { userCount, params });
         }
 
         // 2. check defaults
@@ -77,16 +78,14 @@ export class UserServiceEE extends UserService {
     }
 
     async checkAutomaticOssEligibility(user: User): Promise<boolean> {
-        const idsWithHost = user.identities
-            .map((id) => {
-                const hostContext = this.hostContextProvider.findByAuthProviderId(id.authProviderId);
-                if (!hostContext) {
-                    return undefined;
-                }
-                const info = hostContext.authProvider.info;
-                return `${info.host}/${id.authName}`;
-            })
-            .filter((i) => !!i) as string[];
+        const idsWithHost = user.identities.map(id => {
+            const hostContext = this.hostContextProvider.findByAuthProviderId(id.authProviderId);
+            if (!hostContext) {
+                return undefined;
+            }
+            const info = hostContext.authProvider.info;
+            return `${info.host}/${id.authName}`;
+        }).filter(i => !!i) as string[];
 
         return this.OssAllowListDb.hasAny(idsWithHost);
     }

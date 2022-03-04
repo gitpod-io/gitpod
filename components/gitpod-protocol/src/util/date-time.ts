@@ -13,18 +13,18 @@ export function formatHours(hours?: number) {
         return '';
     }
     const h = Math.floor(Math.abs(hours));
-    const rm = (Math.abs(hours) - h) * 60;
+    const rm = (Math.abs(hours) - h) * 60.;
     const m = Math.floor(rm);
-    const rs = (rm - m) * 60;
+    const rs = (rm - m) * 60.;
     const s = Math.floor(rs);
     const result = h + ':' + pad2(m) + ':' + pad2(s);
     if (hours < 0) {
-        return `-${result}`;
+        return `-${result}`
     } else {
-        return `${result}`;
+        return `${result}`
     }
 }
 
 function pad2(n: number) {
-    return n < 10 ? '0' + n : '' + n;
+    return n  < 10 ? '0' + n : '' + n;
 }

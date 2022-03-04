@@ -7,18 +7,18 @@
 import React, { createContext, useEffect, useState } from 'react';
 
 export const ThemeContext = createContext<{
-    isDark?: boolean;
-    setIsDark: React.Dispatch<boolean>;
+    isDark?: boolean,
+    setIsDark: React.Dispatch<boolean>,
 }>({
     setIsDark: () => null,
 });
 
 export const ThemeContextProvider: React.FC = ({ children }) => {
-    const [isDark, setIsDark] = useState<boolean>(document.documentElement.classList.contains('dark'));
+    const [ isDark, setIsDark ] = useState<boolean>(document.documentElement.classList.contains('dark'));
     const actuallySetIsDark = (dark: boolean) => {
-        document.documentElement.classList.toggle('dark', dark);
-        setIsDark(dark);
-    };
+      document.documentElement.classList.toggle('dark', dark);
+      setIsDark(dark);
+    }
 
     useEffect(() => {
         const observer = new MutationObserver(() => {
@@ -29,8 +29,12 @@ export const ThemeContextProvider: React.FC = ({ children }) => {
         observer.observe(document.documentElement, { attributes: true });
         return function cleanUp() {
             observer.disconnect();
-        };
+        }
     }, []);
 
-    return <ThemeContext.Provider value={{ isDark, setIsDark: actuallySetIsDark }}>{children}</ThemeContext.Provider>;
-};
+    return (
+        <ThemeContext.Provider value={{ isDark, setIsDark: actuallySetIsDark }}>
+            {children}
+        </ThemeContext.Provider>
+    )
+}

@@ -4,16 +4,17 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from 'inversify';
-import { ConsensusLeaderQorum } from '../consensus/consensus-leader-quorum';
-import { Disposable } from '@gitpod/gitpod-protocol';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceDeletionService } from './workspace-deletion-service';
+
+import { injectable, inject } from "inversify";
+import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
+import { Disposable } from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { WorkspaceDeletionService } from "./workspace-deletion-service";
 import * as opentracing from 'opentracing';
-import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { Config } from '../config';
-import { repeat } from '@gitpod/gitpod-protocol/lib/util/repeat';
+import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { Config } from "../config";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:
@@ -31,20 +32,18 @@ export class WorkspaceGarbageCollector {
         if (this.config.workspaceGarbageCollection.disabled) {
             console.log('wsgc: Garabage collection is disabled');
             return {
-                dispose: () => {},
-            };
+                dispose: () => {}
+            }
         }
         return repeat(async () => this.garbageCollectWorkspacesIfLeader(), 30 * 60 * 1000);
     }
 
     public async garbageCollectWorkspacesIfLeader() {
         if (await this.leaderQuorum.areWeLeader()) {
-            log.info("wsgc: we're leading the quorum. Collecting old workspaces");
-            this.softDeleteOldWorkspaces().catch((err) => log.error('wsgc: error during soft-deletion', err));
-            this.deleteWorkspaceContentAfterRetentionPeriod().catch((err) =>
-                log.error('wsgc: error during content deletion', err),
-            );
-            this.deleteOldPrebuilds().catch((err) => log.error('wsgc: error during prebuild deletion', err));
+            log.info("wsgc: we're leading the quorum. Collecting old workspaces")
+            this.softDeleteOldWorkspaces().catch((err) => log.error("wsgc: error during soft-deletion", err));
+            this.deleteWorkspaceContentAfterRetentionPeriod().catch((err) => log.error("wsgc: error during content deletion", err));
+            this.deleteOldPrebuilds().catch((err) => log.error("wsgc: error during prebuild deletion", err));
         }
     }
 
@@ -57,22 +56,15 @@ export class WorkspaceGarbageCollector {
             return;
         }
 
-        const span = opentracing.globalTracer().startSpan('softDeleteOldWorkspaces');
+        const span = opentracing.globalTracer().startSpan("softDeleteOldWorkspaces");
         try {
-            const workspaces = await this.workspaceDB
-                .trace({ span })
-                .findWorkspacesForGarbageCollection(
-                    this.config.workspaceGarbageCollection.minAgeDays,
-                    this.config.workspaceGarbageCollection.chunkLimit,
-                );
-            const deletes = await Promise.all(
-                workspaces.map((ws) => this.deletionService.softDeleteWorkspace({ span }, ws, 'gc')),
-            );
+            const workspaces = await this.workspaceDB.trace({span}).findWorkspacesForGarbageCollection(this.config.workspaceGarbageCollection.minAgeDays, this.config.workspaceGarbageCollection.chunkLimit);
+            const deletes = await Promise.all(workspaces.map(ws => this.deletionService.softDeleteWorkspace({span}, ws, "gc")))
 
             log.info(`wsgc: successfully soft-deleted ${deletes.length} workspaces`);
-            span.addTags({ nrOfCollectedWorkspaces: deletes.length });
+            span.addTags({ 'nrOfCollectedWorkspaces': deletes.length });
         } catch (err) {
-            TraceContext.setError({ span }, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();
@@ -80,22 +72,15 @@ export class WorkspaceGarbageCollector {
     }
 
     protected async deleteWorkspaceContentAfterRetentionPeriod() {
-        const span = opentracing.globalTracer().startSpan('deleteWorkspaceContentAfterRetentionPeriod');
+        const span = opentracing.globalTracer().startSpan("deleteWorkspaceContentAfterRetentionPeriod");
         try {
-            const workspaces = await this.workspaceDB
-                .trace({ span })
-                .findWorkspacesForContentDeletion(
-                    this.config.workspaceGarbageCollection.contentRetentionPeriodDays,
-                    this.config.workspaceGarbageCollection.contentChunkLimit,
-                );
-            const deletes = await Promise.all(
-                workspaces.map((ws) => this.deletionService.garbageCollectWorkspace({ span }, ws)),
-            );
+            const workspaces = await this.workspaceDB.trace({span}).findWorkspacesForContentDeletion(this.config.workspaceGarbageCollection.contentRetentionPeriodDays, this.config.workspaceGarbageCollection.contentChunkLimit);
+            const deletes = await Promise.all(workspaces.map(ws => this.deletionService.garbageCollectWorkspace({span}, ws)))
 
             log.info(`wsgc: successfully deleted the content of ${deletes.length} workspaces`);
-            span.addTags({ nrOfCollectedWorkspaces: deletes.length });
+            span.addTags({ 'nrOfCollectedWorkspaces': deletes.length });
         } catch (err) {
-            TraceContext.setError({ span }, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();
@@ -103,22 +88,15 @@ export class WorkspaceGarbageCollector {
     }
 
     protected async deleteOldPrebuilds() {
-        const span = opentracing.globalTracer().startSpan('deleteOldPrebuilds');
+        const span = opentracing.globalTracer().startSpan("deleteOldPrebuilds");
         try {
-            const workspaces = await this.workspaceDB
-                .trace({ span })
-                .findPrebuiltWorkspacesForGC(
-                    this.config.workspaceGarbageCollection.minAgePrebuildDays,
-                    this.config.workspaceGarbageCollection.chunkLimit,
-                );
-            const deletes = await Promise.all(
-                workspaces.map((ws) => this.deletionService.garbageCollectPrebuild({ span }, ws)),
-            );
+            const workspaces = await this.workspaceDB.trace({span}).findPrebuiltWorkspacesForGC(this.config.workspaceGarbageCollection.minAgePrebuildDays, this.config.workspaceGarbageCollection.chunkLimit);
+            const deletes = await Promise.all(workspaces.map(ws => this.deletionService.garbageCollectPrebuild({span}, ws)))
 
             log.info(`wsgc: successfully deleted ${deletes.length} prebuilds`);
-            span.addTags({ nrOfCollectedPrebuilds: deletes.length });
+            span.addTags({ 'nrOfCollectedPrebuilds': deletes.length });
         } catch (err) {
-            TraceContext.setError({ span }, err);
+            TraceContext.setError({span}, err);
             throw err;
         } finally {
             span.finish();

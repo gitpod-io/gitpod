@@ -4,19 +4,21 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as express from 'express';
+import * as express from "express";
 import { injectable } from 'inversify';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { AuthProviderInfo } from '@gitpod/gitpod-protocol';
-import { GitLabScope } from './scopes';
-import { UnconfirmedUserException } from '../auth/errors';
-import { GitLab } from './api';
-import { GenericAuthProvider } from '../auth/generic-auth-provider';
-import { AuthUserSetup } from '../auth/auth-provider';
-import { oauthUrls } from './gitlab-urls';
+import { GitLabScope } from "./scopes";
+import { UnconfirmedUserException } from "../auth/errors";
+import { GitLab } from "./api";
+import { GenericAuthProvider } from "../auth/generic-auth-provider";
+import { AuthUserSetup } from "../auth/auth-provider";
+import { oauthUrls } from "./gitlab-urls";
 
 @injectable()
 export class GitLabAuthProvider extends GenericAuthProvider {
+
+
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
@@ -26,7 +28,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                 publicRepo: GitLabScope.Requirements.REPO,
                 privateRepo: GitLabScope.Requirements.REPO,
             },
-        };
+        }
     }
 
     /**
@@ -35,14 +37,14 @@ export class GitLabAuthProvider extends GenericAuthProvider {
     protected get oauthConfig() {
         const oauth = this.params.oauth!;
         const defaultUrls = oauthUrls(this.params.host);
-        const scopeSeparator = ' ';
+        const scopeSeparator = " ";
         return <typeof oauth>{
             ...oauth,
             authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
             settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
             scope: GitLabScope.All.join(scopeSeparator),
-            scopeSeparator,
+            scopeSeparator
         };
     }
 
@@ -57,13 +59,13 @@ export class GitLabAuthProvider extends GenericAuthProvider {
     protected readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
         const api = GitLab.create({
             oauthToken: accessToken,
-            host: this.baseURL,
+            host: this.baseURL
         });
         const getCurrentUser = async () => {
             const response = await api.Users.current();
             return response as unknown as GitLab.User;
-        };
-        const unconfirmedUserMessage = 'Please confirm your GitLab account and try again.';
+        }
+        const unconfirmedUserMessage = "Please confirm your GitLab account and try again.";
         try {
             const result = await getCurrentUser();
             if (result) {
@@ -79,12 +81,12 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                     authName: username,
                     avatarUrl: avatar_url || undefined,
                     name,
-                    primaryEmail: email,
+                    primaryEmail: email
                 },
-                currentScopes: this.readScopesFromVerifyParams(tokenResponse),
-            };
+                currentScopes: this.readScopesFromVerifyParams(tokenResponse)
+            }
         } catch (error) {
-            if (error && typeof error.description === 'string' && error.description.includes('403 Forbidden')) {
+            if (error && typeof error.description === "string" && error.description.includes("403 Forbidden")) {
                 // If GitLab is configured to disallow OAuth-token based API access for unconfirmed users, we need to reject this attempt
                 // 403 Forbidden  - You (@...) must accept the Terms of Service in order to perform this action. Please access GitLab from a web browser to accept these terms.
                 throw UnconfirmedUserException.create(error.description, error);
@@ -93,7 +95,9 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                 throw error;
             }
         }
-    };
+
+    }
+
 
     protected readScopesFromVerifyParams(params: any) {
         if (params && typeof params.scope === 'string') {
@@ -105,4 +109,5 @@ export class GitLabAuthProvider extends GenericAuthProvider {
         const set = new Set(scopes);
         return Array.from(set).sort();
     }
+
 }

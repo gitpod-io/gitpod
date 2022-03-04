@@ -11,13 +11,13 @@ export interface SnapshotUrl {
 }
 export namespace SnapshotUrl {
     export function parse(url: string): SnapshotUrl {
-        const parts = url.split('@');
+        const parts = url.split("@");
         if (parts.length !== 2) {
             throw new Error(`cannot parse snapshot URL: ${url}`);
         }
         const [fullPath, bucketId] = parts;
 
-        const pathParts = fullPath.split('/');
+        const pathParts = fullPath.split("/");
         if (pathParts.length < 1) {
             throw new Error(`cannot parse snapshot URL: ${url}`);
         }

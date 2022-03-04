@@ -9,7 +9,7 @@ export interface OssAllowList {
      * A string that identifies a GitHub/GitLab/Bitbucket identity of the form "<host>/<profilename>"
      * E.g., "github.com/geropl"
      */
-    identity: string;
+    identity: string,
 
-    deleted?: boolean;
+    deleted?: boolean,
 }

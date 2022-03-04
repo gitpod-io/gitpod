@@ -26,7 +26,7 @@ export const start = async (container: Container) => {
         await msgbus.connect();
 
         const tracingManager = container.get(TracingManager);
-        tracingManager.setup('ws-manager-bridge');
+        tracingManager.setup("ws-manager-bridge");
 
         const metricsApp = express();
         prometheusClient.collectDefaultMetrics();
@@ -49,7 +49,7 @@ export const start = async (container: Container) => {
         metaInstanceController.start();
 
         process.on('SIGTERM', async () => {
-            log.info('SIGTERM received, stopping');
+            log.info("SIGTERM received, stopping");
             bridgeController.dispose();
 
             if (metricsHttpServer) {
@@ -59,12 +59,13 @@ export const start = async (container: Container) => {
                     }
                 });
             }
-            clusterServiceServer.stop().then(() => log.info('gRPC shutdown completed'));
+            clusterServiceServer.stop()
+                .then(() => log.info("gRPC shutdown completed"));
         });
-        log.info('ws-manager-bridge is up and running');
+        log.info("ws-manager-bridge is up and running");
         await new Promise((rs, rj) => {});
-    } catch (err) {
-        log.error('Error during startup. Exiting.', err);
+    } catch(err) {
+        log.error("Error during startup. Exiting.", err);
         process.exit(1);
     }
-};
+}

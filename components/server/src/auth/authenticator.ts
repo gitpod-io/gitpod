@@ -5,7 +5,7 @@
  */
 
 import * as express from 'express';
-import * as passport from 'passport';
+import * as passport from "passport"
 import { injectable, postConstruct, inject } from 'inversify';
 import { User } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -20,6 +20,7 @@ import { increaseLoginCounter } from '../../src/prometheus-metrics';
 
 @injectable()
 export class Authenticator {
+
     protected passportInitialize: express.Handler;
     protected passportSession: express.Handler;
 
@@ -48,7 +49,7 @@ export class Authenticator {
                 if (user) {
                     done(null, user);
                 } else {
-                    done(new Error('User not found.'));
+                    done(new Error("User not found."));
                 }
             } catch (err) {
                 done(err);
@@ -58,19 +59,19 @@ export class Authenticator {
 
     get initHandlers(): express.Handler[] {
         return [
-            this.passportInitialize, // adds `passport.user` to session
-            this.passportSession, // deserializes session user into  `req.user`
+            this.passportInitialize,    // adds `passport.user` to session
+            this.passportSession        // deserializes session user into  `req.user`
         ];
     }
 
     async init(app: express.Application) {
-        this.initHandlers.forEach((handler) => app.use(handler));
+        this.initHandlers.forEach(handler => app.use(handler));
         app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             await this.authCallbackHandler(req, res, next);
         });
     }
     protected async authCallbackHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
-        if (req.url.startsWith('/auth/')) {
+        if (req.url.startsWith("/auth/")) {
             const hostContexts = this.hostContextProvider.getAll();
             for (const { authProvider } of hostContexts) {
                 const authCallbackPath = authProvider.authCallbackPath;
@@ -101,8 +102,8 @@ export class Authenticator {
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
         returnTo = returnTo || workspaceUrl;
-        const host: string = req.query.host?.toString() || '';
-        const authProvider = host && (await this.getAuthProviderForHost(host));
+        const host: string = req.query.host?.toString() || "";
+        const authProvider = host && await this.getAuthProviderForHost(host);
         if (!host || !authProvider) {
             log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { req, 'login-flow': true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
@@ -114,19 +115,15 @@ export class Authenticator {
             return;
         }
         if (!req.session) {
-            increaseLoginCounter('failed', authProvider.info.host);
-            log.info({}, `No session.`, { req, 'login-flow': true });
+            increaseLoginCounter("failed", authProvider.info.host)
+            log.info({ }, `No session.`, { req, 'login-flow': true });
             res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
             return;
         }
 
         if (!authProvider.info.verified && !(await this.isInSetupMode())) {
-            increaseLoginCounter('failed', authProvider.info.host);
-            log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, {
-                req,
-                'login-flow': true,
-                ap: authProvider.info,
-            });
+            increaseLoginCounter("failed", authProvider.info.host)
+            log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, { req, 'login-flow': true, ap: authProvider.info });
             res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
             return;
         }
@@ -134,15 +131,13 @@ export class Authenticator {
         // prepare session
         await AuthFlow.attach(req.session, {
             host,
-            returnTo,
+            returnTo
         });
         // authenticate user
         authProvider.authorize(req, res, next);
     }
     protected async isInSetupMode() {
-        const hasAnyStaticProviders = this.hostContextProvider
-            .getAll()
-            .some((hc) => hc.authProvider.params.builtin === true);
+        const hasAnyStaticProviders = this.hostContextProvider.getAll().some(hc => hc.authProvider.params.builtin === true);
         if (hasAnyStaticProviders) {
             return false;
         }
@@ -160,7 +155,7 @@ export class Authenticator {
         const returnTo: string = req.query.returnTo?.toString() || this.config.hostUrl.asDashboard().toString();
         const host: string | undefined = req.query.host?.toString();
 
-        const authProvider = host && (await this.getAuthProviderForHost(host));
+        const authProvider = host && await this.getAuthProviderForHost(host);
 
         if (!host || !authProvider) {
             log.warn({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { req });
@@ -173,22 +168,14 @@ export class Authenticator {
             res.redirect(returnTo);
         } catch (error) {
             next(error);
-            log.error({ sessionId: req.sessionID }, `Failed to disconnect a provider.`, error, {
-                req,
-                host,
-                userId: user.id,
-            });
-            res.redirect(
-                this.getSorryUrl(
-                    `Failed to disconnect a provider: ${error && error.message ? error.message : 'unknown reason'}`,
-                ),
-            );
+            log.error({ sessionId: req.sessionID }, `Failed to disconnect a provider.`, error, { req, host, userId: user.id });
+            res.redirect(this.getSorryUrl(`Failed to disconnect a provider: ${ error && error.message ? error.message : "unknown reason"}`));
         }
     }
 
     async authorize(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!req.session) {
-            log.info({}, `No session.`, { req, 'authorize-flow': true });
+            log.info({ }, `No session.`, { req, 'authorize-flow': true });
             res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
             return;
         }
@@ -200,9 +187,9 @@ export class Authenticator {
         }
         const returnTo: string | undefined = req.query.returnTo?.toString();
         const host: string | undefined = req.query.host?.toString();
-        const scopes: string = req.query.scopes?.toString() || '';
+        const scopes: string = req.query.scopes?.toString() || "";
         const override = req.query.override === 'true';
-        const authProvider = host && (await this.getAuthProviderForHost(host));
+        const authProvider = host && await this.getAuthProviderForHost(host);
         if (!returnTo || !host || !authProvider) {
             log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { req, 'authorize-flow': true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
@@ -210,11 +197,7 @@ export class Authenticator {
         }
 
         if (!authProvider.info.verified && user.id !== authProvider.info.ownerId) {
-            log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
-                req,
-                'authorize-flow': true,
-                ap: authProvider.info,
-            });
+            log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, { req, 'authorize-flow': true, ap: authProvider.info });
             res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
             return;
         }
@@ -238,18 +221,15 @@ export class Authenticator {
             }
         }
         // authorize Gitpod
-        log.info(
-            { sessionId: req.sessionID },
-            `(doAuthorize) wanted scopes (${override ? 'overriding' : 'merging'}): ${wantedScopes.join(',')}`,
-        );
+        log.info({ sessionId: req.sessionID }, `(doAuthorize) wanted scopes (${override ? 'overriding' : 'merging'}): ${ wantedScopes.join(',') }`);
         authProvider.authorize(req, res, next, wantedScopes);
     }
     protected mergeScopes(a: string[], b: string[]) {
         const set = new Set(a);
-        b.forEach((s) => set.add(s));
+        b.forEach(s => set.add(s));
         return Array.from(set).sort();
     }
-    protected async getCurrentScopes(user: any, authProvider: AuthProvider) {
+    protected async getCurrentScopes(user: any, authProvider: AuthProvider){
         if (User.is(user)) {
             try {
                 const token = await this.tokenProvider.getTokenForHost(user, authProvider.params.host);

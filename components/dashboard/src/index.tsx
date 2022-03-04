@@ -15,7 +15,7 @@ import { ThemeContextProvider } from './theme-context';
 import { StartWorkspaceModalContextProvider } from './workspaces/start-workspace-modal-context';
 import { BrowserRouter } from 'react-router-dom';
 
-import './index.css';
+import "./index.css"
 
 ReactDOM.render(
     <React.StrictMode>
@@ -35,5 +35,5 @@ ReactDOM.render(
             </AdminContextProvider>
         </UserContextProvider>
     </React.StrictMode>,
-    document.getElementById('root'),
+    document.getElementById('root')
 );

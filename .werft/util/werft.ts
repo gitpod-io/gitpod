@@ -8,9 +8,9 @@ let werft: Werft;
  */
 export function getGlobalWerftInstance() {
     if (!werft) {
-        throw new Error("Trying to fetch global Werft instance but it hasn't been instantiated yet");
+        throw new Error("Trying to fetch global Werft instance but it hasn't been instantiated yet")
     }
-    return werft;
+    return werft
 }
 
 /**
@@ -19,14 +19,14 @@ export function getGlobalWerftInstance() {
 export class Werft {
     private tracer: Tracer;
     public rootSpan: Span;
-    private sliceSpans: { [slice: string]: Span } = {};
+    private sliceSpans: { [slice: string]: Span } = {}
     public currentPhaseSpan: Span;
 
     constructor(job: string) {
         if (werft) {
-            throw new Error('Only one Werft instance should be instantiated per job');
+            throw new Error("Only one Werft instance should be instantiated per job")
         }
-        this.tracer = trace.getTracer('default');
+        this.tracer = trace.getTracer("default");
         this.rootSpan = this.tracer.startSpan(`job: ${job}`, { root: true, attributes: { 'werft.job.name': job } });
 
         // Expose this instance as part of getGlobalWerftInstance
@@ -36,37 +36,31 @@ export class Werft {
     public phase(name, desc?: string) {
         // When you start a new phase the previous phase is implicitly closed.
         if (this.currentPhaseSpan) {
-            this.endPhase();
+            this.endPhase()
         }
 
         const rootSpanCtx = trace.setSpan(context.active(), this.rootSpan);
-        this.currentPhaseSpan = this.tracer.startSpan(
-            `phase: ${name}`,
-            {
-                attributes: {
-                    'werft.phase.name': name,
-                    'werft.phase.description': desc,
-                },
-            },
-            rootSpanCtx,
-        );
+        this.currentPhaseSpan = this.tracer.startSpan(`phase: ${name}`, {
+            attributes: {
+                'werft.phase.name': name,
+                'werft.phase.description': desc
+            }
+        }, rootSpanCtx)
 
-        console.log(`[${name}|PHASE] ${desc || name}`);
+        console.log(`[${name}|PHASE] ${desc || name}`)
     }
 
     public log(slice, msg) {
         if (!this.sliceSpans[slice]) {
             const parentSpanCtx = trace.setSpan(context.active(), this.currentPhaseSpan);
-            const sliceSpan = this.tracer.startSpan(`slice: ${slice}`, undefined, parentSpanCtx);
-            this.sliceSpans[slice] = sliceSpan;
+            const sliceSpan = this.tracer.startSpan(`slice: ${slice}`, undefined, parentSpanCtx)
+            this.sliceSpans[slice] = sliceSpan
         }
-        console.log(`[${slice}] ${msg}`);
+        console.log(`[${slice}] ${msg}`)
     }
 
     public logOutput(slice, cmd) {
-        cmd.toString()
-            .split('\n')
-            .forEach((line: string) => this.log(slice, line));
+        cmd.toString().split("\n").forEach((line: string) => this.log(slice, line))
     }
 
     public fail(slice, err) {
@@ -74,27 +68,27 @@ export class Werft {
         // as well so we can query on all phases that had an error regardless of which slice produced the error.
         [this.sliceSpans[slice], this.rootSpan, this.currentPhaseSpan].forEach((span: Span) => {
             if (!span) {
-                return;
+                return
             }
             span.setStatus({
                 code: SpanStatusCode.ERROR,
-                message: err,
-            });
-        });
+                message: err
+            })
+        })
 
-        this.endAllSpans();
+        this.endAllSpans()
 
         console.log(`[${slice}|FAIL] ${err}`);
         throw err;
     }
 
     public done(slice: string) {
-        const span = this.sliceSpans[slice];
+        const span = this.sliceSpans[slice]
         if (span) {
-            span.end();
-            delete this.sliceSpans[slice];
+            span.end()
+            delete this.sliceSpans[slice]
         }
-        console.log(`[${slice}|DONE]`);
+        console.log(`[${slice}|DONE]`)
     }
 
     public result(description: string, channel: string, value: string) {
@@ -104,25 +98,21 @@ export class Werft {
     private endPhase() {
         // End all open slices
         Object.entries(this.sliceSpans).forEach((kv) => {
-            const [id, span] = kv;
-            span.end();
-            delete this.sliceSpans[id];
-        });
+            const [id, span] = kv
+            span.end()
+            delete this.sliceSpans[id]
+        })
         // End the phase
-        this.currentPhaseSpan.end();
+        this.currentPhaseSpan.end()
     }
 
     public endAllSpans() {
-        const traceID = this.rootSpan.spanContext().traceId;
-        const nowUnix = Math.round(new Date().getTime() / 1000);
+        const traceID = this.rootSpan.spanContext().traceId
+        const nowUnix =  Math.round(new Date().getTime() / 1000);
         // At the moment we're just looking for traces in a 30 minutes timerange with the specific traceID
         // A smarter approach would be to get a start timestamp from tracing.Initialize()
-        exec(
-            `werft log result -d "Honeycomb trace" -c github-check-honeycomb-trace url "https://ui.honeycomb.io/gitpod/datasets/werft/trace?trace_id=${traceID}&trace_start_ts=${
-                nowUnix - 1800
-            }&trace_end_ts=${nowUnix + 5}"`,
-        );
-        this.endPhase();
-        this.rootSpan.end();
+        exec(`werft log result -d "Honeycomb trace" -c github-check-honeycomb-trace url "https://ui.honeycomb.io/gitpod/datasets/werft/trace?trace_id=${traceID}&trace_start_ts=${nowUnix - 1800}&trace_end_ts=${nowUnix + 5}"`);
+        this.endPhase()
+        this.rootSpan.end()
     }
 }

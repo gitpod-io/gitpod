@@ -5,28 +5,23 @@
  */
 
 import { injectable, inject, postConstruct } from 'inversify';
-import * as express from 'express';
-import * as passport from 'passport';
-import * as OAuth2Strategy from 'passport-oauth2';
-import { UserDB } from '@gitpod/gitpod-db/lib';
+import * as express from "express"
+import * as passport from "passport"
+import * as OAuth2Strategy from "passport-oauth2";
+import { UserDB } from "@gitpod/gitpod-db/lib";
 import { AuthProviderInfo, Identity, Token, User } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import fetch from 'node-fetch';
+import fetch from "node-fetch";
 import { oauth2tokenCallback, OAuth2 } from 'oauth';
 import { URL } from 'url';
-import { runInNewContext } from 'vm';
-import { AuthFlow, AuthProvider } from '../auth/auth-provider';
-import { AuthProviderParams, AuthUserSetup } from '../auth/auth-provider';
-import {
-    AuthException,
-    EmailAddressAlreadyTakenException,
-    SelectAccountException,
-    UnconfirmedUserException,
-} from '../auth/errors';
+import { runInNewContext } from "vm";
+import { AuthFlow, AuthProvider } from "../auth/auth-provider";
+import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
+import { AuthException, EmailAddressAlreadyTakenException, SelectAccountException, UnconfirmedUserException } from "../auth/errors";
 import { Config } from '../config';
-import { getRequestingClientInfo } from '../express-util';
+import { getRequestingClientInfo } from "../express-util";
 import { TokenProvider } from '../user/token-provider';
-import { UserService } from '../user/user-service';
+import { UserService } from "../user/user-service";
 import { AuthProviderService } from './auth-provider-service';
 import { LoginCompletionHandler } from './login-completion-handler';
 import { TosFlow } from '../terms/tos-flow';
@@ -62,6 +57,7 @@ import { OutgoingHttpHeaders } from 'http2';
  */
 @injectable()
 export class GenericAuthProvider implements AuthProvider {
+
     @inject(AuthProviderParams) params: AuthProviderParams;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserDB) protected userDb: UserDB;
@@ -82,18 +78,7 @@ export class GenericAuthProvider implements AuthProvider {
 
     protected defaultInfo(): AuthProviderInfo {
         const scopes = this.oauthScopes;
-        const {
-            id,
-            type,
-            icon,
-            host,
-            ownerId,
-            verified,
-            hiddenOnDashboard,
-            disallowLogin,
-            description,
-            loginContextMatcher,
-        } = this.params;
+        const { id, type, icon, host, ownerId, verified, hiddenOnDashboard, disallowLogin, description, loginContextMatcher } = this.params;
         return {
             authProviderId: id,
             authProviderType: type,
@@ -110,9 +95,9 @@ export class GenericAuthProvider implements AuthProvider {
             requirements: {
                 default: scopes,
                 publicRepo: scopes,
-                privateRepo: scopes,
-            },
-        };
+                privateRepo: scopes
+            }
+        }
     }
 
     protected get USER_AGENT() {
@@ -135,30 +120,20 @@ export class GenericAuthProvider implements AuthProvider {
         if (!this.oauthConfig.scope) {
             return [];
         }
-        const scopes = this.oauthConfig.scope
-            .split(this.oauthConfig.scopeSeparator || ' ')
-            .map((s) => s.trim())
-            .filter((s) => !!s);
+        const scopes = this.oauthConfig.scope.split(this.oauthConfig.scopeSeparator || " ").map(s => s.trim()).filter(s => !!s);
         return scopes;
     }
 
     protected readAuthUserSetup?: (accessToken: string, tokenResponse: object) => Promise<AuthUserSetup>;
 
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        const handler = passport.authenticate(this.getStrategy() as any, {
-            ...this.defaultStrategyOptions,
-            ...{ scope },
-        });
+        const handler = passport.authenticate(this.getStrategy() as any, { ...this.defaultStrategyOptions, ...{ scope } });
         handler(req, res, next);
     }
 
     protected getStrategy() {
-        return new GenericOAuth2Strategy(
-            this.strategyName,
-            { ...this.defaultStrategyOptions },
-            async (req, accessToken, refreshToken, tokenResponse, _profile, done) =>
-                await this.verify(req, accessToken, refreshToken, tokenResponse, _profile, done),
-        );
+        return new GenericOAuth2Strategy(this.strategyName, { ...this.defaultStrategyOptions },
+            async (req, accessToken, refreshToken, tokenResponse, _profile, done) => await this.verify(req, accessToken, refreshToken, tokenResponse, _profile, done));
     }
 
     async refreshToken(user: User) {
@@ -177,44 +152,32 @@ export class GenericAuthProvider implements AuthProvider {
             throw new Error(`Cannot refresh token for ${authProviderId}`);
         }
         try {
-            const refreshResult = await new Promise<{ access_token: string; refresh_token: string; result: any }>(
-                (resolve, reject) => {
-                    this.getStrategy().requestNewAccessToken(
-                        refreshToken,
-                        {},
-                        (error, access_token, refresh_token, result) => {
-                            if (error) {
-                                reject(error);
-                                return;
-                            }
-                            resolve({ access_token, refresh_token, result });
-                        },
-                    );
-                },
-            );
+            const refreshResult = await new Promise<{ access_token: string, refresh_token: string, result: any }>((resolve, reject) => {
+                this.getStrategy().requestNewAccessToken(refreshToken, {}, (error, access_token, refresh_token, result) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve({ access_token, refresh_token, result });
+                });
+            });
             const { access_token, refresh_token, result } = refreshResult;
 
             // update token
             const now = new Date();
             const updateDate = now.toISOString();
-            const tokenExpiresInSeconds = typeof result.expires_in === 'number' ? result.expires_in : undefined;
-            const expiryDate = tokenExpiresInSeconds
-                ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString()
-                : undefined;
+            const tokenExpiresInSeconds = typeof result.expires_in === "number" ? result.expires_in : undefined;
+            const expiryDate = tokenExpiresInSeconds ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString() : undefined;
             const newToken: Token = {
                 value: access_token,
                 username: this.tokenUsername,
                 scopes: token.scopes,
                 updateDate,
                 expiryDate,
-                refreshToken: refresh_token,
+                refreshToken: refresh_token
             };
             await this.userDb.storeSingleToken(identity, newToken);
-            log.info(`(${this.strategyName}) Token refreshed and updated.`, {
-                userId: user.id,
-                updateDate,
-                expiryDate,
-            });
+            log.info(`(${this.strategyName}) Token refreshed and updated.`, { userId: user.id, updateDate, expiryDate });
         } catch (error) {
             log.error(`(${this.strategyName}) Failed to refresh token!`, { error, token });
             throw error;
@@ -232,15 +195,15 @@ export class GenericAuthProvider implements AuthProvider {
                 try {
                     const fetchResult = await fetch(configURL, {
                         timeout: 10000,
-                        method: 'POST',
+                        method: "POST",
                         headers: {
-                            Accept: 'application/json',
-                            'Content-Type': 'application/json',
+                            "Accept": "application/json",
+                            "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
                             accessToken,
-                            tokenResponse,
-                        }),
+                            tokenResponse
+                        })
                     });
                     if (fetchResult.ok) {
                         const jsonResult = await fetchResult.json();
@@ -249,42 +212,30 @@ export class GenericAuthProvider implements AuthProvider {
                         throw new Error(fetchResult.statusText);
                     }
                 } catch (error) {
-                    log.error(`(${this.strategyName}) Failed to fetch from "configURL"`, {
-                        error,
-                        configURL,
-                        accessToken,
-                    });
-                    throw new Error('Error while reading user profile.');
+                    log.error(`(${this.strategyName}) Failed to fetch from "configURL"`, { error, configURL, accessToken });
+                    throw new Error("Error while reading user profile.");
                 }
-            };
+            }
             return;
         }
         if (configFn) {
             this.readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
                 let promise: Promise<AuthUserSetup>;
                 try {
-                    promise = runInNewContext(
-                        `tokenResponse = ${JSON.stringify(
-                            tokenResponse,
-                        )} || {}; (${configFn})("${accessToken}", tokenResponse)`,
+                    promise = runInNewContext(`tokenResponse = ${JSON.stringify(tokenResponse)} || {}; (${configFn})("${accessToken}", tokenResponse)`,
                         { fetch, console },
-                        { filename: `${this.strategyName}-fetchAuthUser`, timeout: 5000 },
-                    );
+                        { filename: `${this.strategyName}-fetchAuthUser`, timeout: 5000 });
                 } catch (error) {
-                    log.error(`(${this.strategyName}) Failed to call "fetchAuthUserSetup"`, {
-                        error,
-                        configFn,
-                        accessToken,
-                    });
-                    throw new Error('Error with the Auth Provider Configuration.');
+                    log.error(`(${this.strategyName}) Failed to call "fetchAuthUserSetup"`, { error, configFn, accessToken });
+                    throw new Error("Error with the Auth Provider Configuration.");
                 }
                 try {
                     return await promise;
                 } catch (error) {
                     log.error(`(${this.strategyName}) Failed to run "configFn"`, { error, configFn, accessToken });
-                    throw new Error('Error while reading user profile.');
+                    throw new Error("Error while reading user profile.");
                 }
-            };
+            }
         }
     }
 
@@ -296,6 +247,7 @@ export class GenericAuthProvider implements AuthProvider {
         }
         return this.cachedAuthCallbackPath;
     }
+
 
     /**
      * Once the auth service and the user agreed to continue with the OAuth2 flow, this callback function
@@ -316,22 +268,13 @@ export class GenericAuthProvider implements AuthProvider {
             log.warn(cxt, `(${strategyName}) Callback called repeatedly.`, { request, clientInfo });
             return;
         }
-        log.info(cxt, `(${strategyName}) OAuth2 callback call. `, {
-            clientInfo,
-            authProviderId,
-            requestUrl: request.originalUrl,
-            request,
-        });
+        log.info(cxt, `(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl, request });
 
         const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
         const authFlow = AuthFlow.get(request.session);
         if (isAlreadyLoggedIn) {
             if (!authFlow) {
-                log.warn(
-                    cxt,
-                    `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`,
-                    { request, clientInfo },
-                );
+                log.warn(cxt, `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`, { request, clientInfo });
                 response.redirect(this.config.hostUrl.asDashboard().toString());
                 return;
             }
@@ -339,7 +282,7 @@ export class GenericAuthProvider implements AuthProvider {
 
         // assert additional infomation is attached to current session
         if (!authFlow) {
-            increaseLoginCounter('failed', this.host);
+            increaseLoginCounter("failed", this.host);
 
             log.error(cxt, `(${strategyName}) No session found during auth callback.`, { request, clientInfo });
             response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
@@ -347,7 +290,7 @@ export class GenericAuthProvider implements AuthProvider {
         }
 
         if (authFlow.host !== this.host) {
-            increaseLoginCounter('failed', this.host);
+            increaseLoginCounter("failed", this.host);
 
             log.error(cxt, `(${strategyName}) Host does not match.`, { request, clientInfo });
             response.redirect(this.getSorryUrl(`Host does not match.`));
@@ -358,31 +301,24 @@ export class GenericAuthProvider implements AuthProvider {
 
         // check OAuth2 errors
         const callbackParams = new URL(`https://anyhost${request.originalUrl}`).searchParams;
-        const callbackError = callbackParams.get('error');
-        const callbackErrorDescription: string | null = callbackParams.get('error_description');
+        const callbackError = callbackParams.get("error");
+        const callbackErrorDescription: string | null = callbackParams.get("error_description");
 
-        if (callbackError) {
-            // e.g. "access_denied"
+        if (callbackError) { // e.g. "access_denied"
             // Clean up the session
             await AuthFlow.clear(request.session);
             await TosFlow.clear(request.session);
 
-            increaseLoginCounter('failed', this.host);
-            return this.sendCompletionRedirectWithError(response, {
-                error: callbackError,
-                description: callbackErrorDescription,
-            });
+            increaseLoginCounter("failed", this.host);
+            return this.sendCompletionRedirectWithError(response, { error: callbackError, description: callbackErrorDescription });
         }
 
         let result: Parameters<VerifyCallback>;
         try {
             result = await new Promise((resolve) => {
-                const authenticate = passport.authenticate(
-                    this.getStrategy() as any,
-                    (...params: Parameters<VerifyCallback>) => resolve(params),
-                );
+                const authenticate = passport.authenticate(this.getStrategy() as any, (...params: Parameters<VerifyCallback>) => resolve(params));
                 authenticate(request, response, next);
-            });
+            })
         } catch (error) {
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
@@ -405,10 +341,7 @@ export class GenericAuthProvider implements AuthProvider {
          * - redirect to `returnTo` (from request parameter)
          */
 
-        const context = LogContext.from({
-            user: User.is(userOrIdentity) ? { userId: userOrIdentity.id } : undefined,
-            request,
-        });
+        const context = LogContext.from( { user: User.is(userOrIdentity) ? { userId: userOrIdentity.id } : undefined, request} );
 
         if (err) {
             await AuthFlow.clear(request.session);
@@ -418,10 +351,7 @@ export class GenericAuthProvider implements AuthProvider {
                 return this.sendCompletionRedirectWithError(response, err.payload);
             }
             if (EmailAddressAlreadyTakenException.is(err)) {
-                return this.sendCompletionRedirectWithError(response, {
-                    error: 'email_taken',
-                    host: err.payload?.host,
-                });
+                return this.sendCompletionRedirectWithError(response, { error: "email_taken", host: err.payload?.host });
             }
 
             let message = 'Authorization failed. Please try again.';
@@ -436,47 +366,32 @@ export class GenericAuthProvider implements AuthProvider {
                 return this.sendCompletionRedirectWithError(response, { error: err.message });
             }
 
-            increaseLoginCounter('failed', this.host);
-            log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, {
-                ...defaultLogPayload,
-                err,
-            });
+            increaseLoginCounter("failed", this.host);
+            log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, { ...defaultLogPayload, err });
             response.redirect(this.getSorryUrl(message));
             return;
         }
 
         if (flowContext) {
-            if (
-                TosFlow.WithIdentity.is(flowContext) ||
-                (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)
-            ) {
+
+            if (TosFlow.WithIdentity.is(flowContext) || (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)) {
+
                 // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
                 // account yet, as we require to accept the terms first.
-                log.info(context, `(${strategyName}) Redirect to /api/tos`, {
-                    info: flowContext,
-                    ...defaultLogPayload,
-                });
+                log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext, ...defaultLogPayload });
 
                 // attach the sign up info to the session, in order to proceed after acceptance of terms
                 await TosFlow.attach(request.session!, flowContext);
 
-                response.redirect(this.config.hostUrl.withApi({ pathname: '/tos', search: 'mode=login' }).toString());
+                response.redirect(this.config.hostUrl.withApi({ pathname: '/tos', search: "mode=login" }).toString());
                 return;
-            } else {
+            } else  {
                 const { user, elevateScopes } = flowContext as TosFlow.WithUser;
-                log.info(context, `(${strategyName}) Directly log in and proceed.`, {
-                    info: flowContext,
-                    ...defaultLogPayload,
-                });
+                log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext, ...defaultLogPayload });
 
                 // Complete login
                 const { host, returnTo } = authFlow;
-                await this.loginCompletionHandler.complete(request, response, {
-                    user,
-                    returnToUrl: returnTo,
-                    authHost: host,
-                    elevateScopes,
-                });
+                await this.loginCompletionHandler.complete(request, response, { user, returnToUrl: returnTo, authHost: host, elevateScopes });
             }
         }
     }
@@ -484,12 +399,7 @@ export class GenericAuthProvider implements AuthProvider {
     protected sendCompletionRedirectWithError(response: express.Response, error: object): void {
         log.info(`(${this.strategyName}) Send completion redirect with error`, { error });
 
-        const url = this.config.hostUrl
-            .with({
-                pathname: '/complete-auth',
-                search: 'message=error:' + Buffer.from(JSON.stringify(error), 'utf-8').toString('base64'),
-            })
-            .toString();
+        const url = this.config.hostUrl.with({ pathname: '/complete-auth', search: "message=error:" + Buffer.from(JSON.stringify(error), "utf-8").toString('base64') }).toString();
         response.redirect(url);
     }
 
@@ -502,14 +412,7 @@ export class GenericAuthProvider implements AuthProvider {
      * - it's expected to identify missing requirements, e.g. missing terms acceptance
      * - finally, it's expected to call `done` and provide the computed result in order to finalize the auth process
      */
-    protected async verify(
-        req: express.Request,
-        accessToken: string,
-        refreshToken: string | undefined,
-        tokenResponse: any,
-        _profile: undefined,
-        _done: VerifyCallbackInternal,
-    ) {
+    protected async verify(req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, _done: VerifyCallbackInternal) {
         const done = _done as VerifyCallback;
         let flowContext: VerifyResult;
         const { strategyName, params: config } = this;
@@ -522,10 +425,7 @@ export class GenericAuthProvider implements AuthProvider {
 
         try {
             const tokenResponseObject = this.ensureIsObject(tokenResponse);
-            const { authUser, currentScopes, envVars } = await this.fetchAuthUserSetup(
-                accessToken,
-                tokenResponseObject,
-            );
+            const { authUser, currentScopes, envVars } = await this.fetchAuthUserSetup(accessToken, tokenResponseObject);
             const { authName, primaryEmail } = authUser;
             candidate = { authProviderId, ...authUser };
 
@@ -535,44 +435,18 @@ export class GenericAuthProvider implements AuthProvider {
                 // user is already logged in
 
                 // check for matching auth ID
-                const currentIdentity = currentGitpodUser.identities.find(
-                    (i) => i.authProviderId === this.authProviderId,
-                );
+                const currentIdentity = currentGitpodUser.identities.find(i => i.authProviderId === this.authProviderId);
                 if (currentIdentity && currentIdentity.authId !== candidate.authId) {
-                    log.warn(`User is trying to connect with another provider identity.`, {
-                        ...defaultLogPayload,
-                        authUser,
-                        candidate,
-                        currentGitpodUser: User.censor(currentGitpodUser),
-                        clientInfo,
-                    });
-                    done(
-                        AuthException.create(
-                            'authId-mismatch',
-                            'Auth ID does not match with existing provider identity.',
-                            {},
-                        ),
-                        undefined,
-                    );
+                    log.warn(`User is trying to connect with another provider identity.`, { ...defaultLogPayload, authUser, candidate, currentGitpodUser: User.censor(currentGitpodUser), clientInfo });
+                    done(AuthException.create("authId-mismatch", "Auth ID does not match with existing provider identity.", {}), undefined);
                     return;
                 }
 
                 // we need to check current provider authorizations first...
                 try {
-                    await this.userService.asserNoTwinAccount(
-                        currentGitpodUser,
-                        this.host,
-                        this.authProviderId,
-                        candidate,
-                    );
+                    await this.userService.asserNoTwinAccount(currentGitpodUser, this.host, this.authProviderId, candidate);
                 } catch (error) {
-                    log.warn(`User is trying to connect a provider identity twice.`, {
-                        ...defaultLogPayload,
-                        authUser,
-                        candidate,
-                        currentGitpodUser: User.censor(currentGitpodUser),
-                        clientInfo,
-                    });
+                    log.warn(`User is trying to connect a provider identity twice.`, { ...defaultLogPayload, authUser, candidate, currentGitpodUser: User.censor(currentGitpodUser), clientInfo });
                     done(error, undefined);
                     return;
                 }
@@ -581,42 +455,26 @@ export class GenericAuthProvider implements AuthProvider {
                 currentGitpodUser = await this.userService.findUserForLogin({ candidate });
 
                 if (!currentGitpodUser) {
+
                     // signup new accounts with email adresses already taken is disallowed
                     try {
                         await this.userService.asserNoAccountWithEmail(primaryEmail);
                     } catch (error) {
-                        log.warn(`Login attempt with matching email address.`, {
-                            ...defaultLogPayload,
-                            authUser,
-                            candidate,
-                            clientInfo,
-                        });
+                        log.warn(`Login attempt with matching email address.`, { ...defaultLogPayload, authUser, candidate, clientInfo });
                         done(error, undefined);
                         return;
                     }
                 }
             }
 
-            const token = this.createToken(
-                this.tokenUsername,
-                accessToken,
-                refreshToken,
-                currentScopes,
-                tokenResponse.expires_in,
-            );
+            const token = this.createToken(this.tokenUsername, accessToken, refreshToken, currentScopes, tokenResponse.expires_in);
 
             if (currentGitpodUser) {
-                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({
-                    config,
-                    identity: candidate,
-                    user: currentGitpodUser,
-                });
-                const elevateScopes = authFlow.overrideScopes
-                    ? undefined
-                    : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
+                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({ config, identity: candidate, user: currentGitpodUser });
+                const elevateScopes = authFlow.overrideScopes ? undefined : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
                 const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
 
-                await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
+                await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token)
                 await this.userService.updateUserEnvVarsOnLogin(currentGitpodUser, envVars); // derived from AuthProvider
 
                 flowContext = <TosFlow.WithUser>{
@@ -625,13 +483,10 @@ export class GenericAuthProvider implements AuthProvider {
                     termsAcceptanceRequired,
                     returnToUrl: authFlow.returnTo,
                     authHost: this.host,
-                    elevateScopes,
-                };
+                    elevateScopes
+                }
             } else {
-                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({
-                    config,
-                    identity: candidate,
-                });
+                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({ config, identity: candidate });
 
                 // `checkSignUp` might throgh `AuthError`s with the intention to block the signup process.
                 await this.userService.checkSignUp({ config, identity: candidate });
@@ -647,8 +502,8 @@ export class GenericAuthProvider implements AuthProvider {
                     additionalToken: githubToken,
                     authHost: this.host,
                     isBlocked,
-                    termsAcceptanceRequired,
-                };
+                    termsAcceptanceRequired
+                }
             }
             done(undefined, currentGitpodUser || candidate, flowContext);
         } catch (err) {
@@ -672,31 +527,23 @@ export class GenericAuthProvider implements AuthProvider {
         }
     }
 
-    protected createToken(
-        username: string,
-        value: string,
-        refreshToken: string | undefined,
-        scopes: string[],
-        expires_in: any,
-    ): Token {
+    protected createToken(username: string, value: string, refreshToken: string | undefined, scopes: string[], expires_in: any): Token {
         const now = new Date();
         const updateDate = now.toISOString();
-        const tokenExpiresInSeconds = typeof expires_in === 'number' ? expires_in : undefined;
-        const expiryDate = tokenExpiresInSeconds
-            ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString()
-            : undefined;
+        const tokenExpiresInSeconds = typeof expires_in === "number" ? expires_in : undefined;
+        const expiryDate = tokenExpiresInSeconds ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString() : undefined;
         return {
             value,
             username,
             scopes,
             updateDate,
             expiryDate,
-            refreshToken,
+            refreshToken
         };
     }
 
     protected get tokenUsername(): string {
-        return 'oauth2';
+        return "oauth2";
     }
 
     protected async fetchAuthUserSetup(accessToken: string, tokenResponse: object): Promise<AuthUserSetup> {
@@ -707,7 +554,7 @@ export class GenericAuthProvider implements AuthProvider {
     }
 
     protected ensureIsObject(value: any): object {
-        if (typeof value === 'object') {
+        if (typeof value === "object") {
             return value;
         }
         return {};
@@ -724,7 +571,7 @@ export class GenericAuthProvider implements AuthProvider {
 
     protected prevScopesAreMissing(currentScopes: string[], prevScopes: string[]): boolean {
         const set = new Set(prevScopes);
-        currentScopes.forEach((s) => set.delete(s));
+        currentScopes.forEach(s => set.delete(s));
         return set.size > 0;
     }
 
@@ -733,46 +580,35 @@ export class GenericAuthProvider implements AuthProvider {
         if (!githubTokenValue) {
             return {};
         }
-        const publicGitHubAuthProviderId = 'Public-GitHub';
+        const publicGitHubAuthProviderId = "Public-GitHub";
 
         const githubIdentity: Identity = {
             authProviderId: publicGitHubAuthProviderId,
             authId: `proxy-${originalIdentity.authId}`,
             authName: `proxy-${originalIdentity.authName}`,
             primaryEmail: originalIdentity.primaryEmail,
-            readonly: false, // THIS ENABLES US TO UPGRADE FROM PROXY TO REAL GITHUB ACCOUNT
-        };
+            readonly: false // THIS ENABLES US TO UPGRADE FROM PROXY TO REAL GITHUB ACCOUNT
+        }
         // this proxy identity should allow instant read access for GitHub API
         const githubToken: Token = {
             value: githubTokenValue,
-            username: 'oauth2',
-            scopes: ['user:email'],
-            updateDate: new Date().toISOString(),
+            username: "oauth2",
+            scopes: ["user:email"],
+            updateDate: new Date().toISOString()
         };
         return { githubIdentity, githubToken };
     }
 
     protected isOAuthError(err: any): boolean {
-        if (typeof err === 'object' && (err.name == 'InternalOAuthError' || err.name === 'AuthorizationError')) {
+        if (typeof err === "object" && (err.name == "InternalOAuthError" || err.name === "AuthorizationError")) {
             return true;
         }
         return false;
     }
 
     protected get defaultStrategyOptions(): StrategyOptionsWithRequest {
-        const {
-            authorizationUrl,
-            tokenUrl,
-            clientId,
-            clientSecret,
-            callBackUrl,
-            scope,
-            scopeSeparator,
-            authorizationParams,
-        } = this.oauthConfig;
-        const augmentedAuthParams = this.config.devBranch
-            ? { ...authorizationParams, state: this.config.devBranch }
-            : authorizationParams;
+        const { authorizationUrl, tokenUrl, clientId, clientSecret, callBackUrl, scope, scopeSeparator, authorizationParams } = this.oauthConfig;
+        const augmentedAuthParams = this.config.devBranch ? { ...authorizationParams, state: this.config.devBranch } : authorizationParams;
         return {
             authorizationURL: authorizationUrl,
             tokenURL: tokenUrl,
@@ -781,10 +617,10 @@ export class GenericAuthProvider implements AuthProvider {
             clientSecret: clientSecret,
             callbackURL: callBackUrl,
             scope,
-            scopeSeparator: scopeSeparator || ' ',
+            scopeSeparator: scopeSeparator || " ",
             userAgent: this.USER_AGENT,
             passReqToCallback: true,
-            authorizationParams: augmentedAuthParams,
+            authorizationParams: augmentedAuthParams
         };
     }
 
@@ -800,10 +636,11 @@ export class GenericAuthProvider implements AuthProvider {
             } catch (error) {
                 lastError = error;
             }
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 200));
         }
         throw lastError;
-    };
+    }
+
 }
 
 export type VerifyResult = TosFlow.WithIdentity | TosFlow.WithUser;
@@ -827,20 +664,15 @@ interface GenericOAuthStrategyOptions {
 /**
  * Refinement of OAuth2Strategy.VerifyCallback
  */
-type VerifyCallbackInternal = (err?: Error | undefined, user?: User, info?: VerifyResult) => void;
-type VerifyCallback = (err?: Error | undefined, user?: User | Identity, info?: VerifyResult) => void;
+type VerifyCallbackInternal = (err?: Error | undefined, user?: User, info?: VerifyResult) => void
+type VerifyCallback = (err?: Error | undefined, user?: User | Identity, info?: VerifyResult) => void
 
-export interface StrategyOptionsWithRequest
-    extends OAuth2Strategy.StrategyOptionsWithRequest,
-        GenericOAuthStrategyOptions {}
+export interface StrategyOptionsWithRequest extends OAuth2Strategy.StrategyOptionsWithRequest, GenericOAuthStrategyOptions { }
 
 export class GenericOAuth2Strategy extends OAuth2Strategy {
+
     protected refreshOAuth2: OAuth2;
-    constructor(
-        readonly name: string,
-        options: StrategyOptionsWithRequest,
-        verify: OAuth2Strategy.VerifyFunctionWithRequest,
-    ) {
+    constructor(readonly name: string, options: StrategyOptionsWithRequest, verify: OAuth2Strategy.VerifyFunctionWithRequest) {
         super(GenericOAuth2Strategy.augmentOptions(options), verify);
         this._oauth2.useAuthorizationHeaderforGET(true);
         this.patch_getOAuthAccessToken();
@@ -853,44 +685,32 @@ export class GenericOAuth2Strategy extends OAuth2Strategy {
             oa2._baseSite,
             oa2._authorizeUrl,
             oa2._accessTokenUrl,
-            oa2._customHeaders,
-        );
+            oa2._customHeaders);
         this.refreshOAuth2.getOAuthAccessToken = oa2.getOAuthAccessToken;
     }
 
     requestNewAccessToken(refreshToken: string, params: any, callback: oauth2tokenCallback) {
         params = params || {};
-        params.grant_type = 'refresh_token';
+        params.grant_type = "refresh_token";
         this.refreshOAuth2.getOAuthAccessToken(refreshToken, params, callback);
     }
 
     protected patch_getOAuthAccessToken() {
         const oauth2 = this._oauth2;
-        const _oauth2_getOAuthAccessToken = oauth2.getOAuthAccessToken as (
-            code: string,
-            params: any,
-            callback: oauth2tokenCallback,
-        ) => void;
+        const _oauth2_getOAuthAccessToken = oauth2.getOAuthAccessToken as (code: string, params: any, callback: oauth2tokenCallback) => void;
         (oauth2 as any).getOAuthAccessToken = (code: string, params: any, callback: oauth2tokenCallback) => {
             const patchedCallback: oauth2tokenCallback = (err, accessToken, refreshToken, params) => {
-                if (err) {
-                    return callback(err, null as any, null as any, null as any);
-                }
+                if (err) { return callback(err, null as any, null as any, null as any); }
                 if (!accessToken) {
-                    return callback(
-                        {
-                            statusCode: 400,
-                            data: JSON.stringify(params),
-                        },
-                        null as any,
-                        null as any,
-                        null as any,
-                    );
+                    return callback({
+                        statusCode: 400,
+                        data: JSON.stringify(params)
+                    }, null as any, null as any, null as any);
                 }
                 callback(null as any, accessToken, refreshToken, params);
             };
             _oauth2_getOAuthAccessToken.call(oauth2, code, params, patchedCallback);
-        };
+        }
     }
 
     static augmentOptions(options: StrategyOptionsWithRequest): StrategyOptionsWithRequest {
@@ -910,4 +730,5 @@ export class GenericOAuth2Strategy extends OAuth2Strategy {
         }
         return {};
     }
+
 }

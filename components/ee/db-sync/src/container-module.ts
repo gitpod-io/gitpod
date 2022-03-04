@@ -6,11 +6,7 @@
 
 import { ContainerModule } from 'inversify';
 import { ICommand, RunCommand, ExportCommand } from './commands';
-import {
-    TableDescriptionProvider,
-    GitpodTableDescriptionProvider,
-    GitpodSessionTableDescriptionProvider,
-} from '@gitpod/gitpod-db/lib/tables';
+import { TableDescriptionProvider, GitpodTableDescriptionProvider, GitpodSessionTableDescriptionProvider } from '@gitpod/gitpod-db/lib/tables';
 import { PeriodicReplicatorProvider, PeriodicReplicator } from './replication';
 import { TableUpdateProvider } from './export';
 import { NamedConnection } from './database';
@@ -24,17 +20,11 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(TableUpdateProvider).toSelf().inSingletonScope();
 
     bind(PeriodicReplicator).to(PeriodicReplicator).inRequestScope();
-    bind(PeriodicReplicatorProvider).toProvider<PeriodicReplicator>(
-        (ctx) =>
-            async (
-                source: NamedConnection,
-                targets: NamedConnection[],
-                syncInterval: number,
-                tableSet: string | undefined,
-            ) => {
-                const r = ctx.container.get(PeriodicReplicator);
-                r.setup(source, targets, syncInterval, tableSet);
-                return r;
-            },
+    bind(PeriodicReplicatorProvider).toProvider<PeriodicReplicator>(ctx =>
+        async (source: NamedConnection, targets: NamedConnection[], syncInterval: number, tableSet: string | undefined) => {
+            const r = ctx.container.get(PeriodicReplicator);
+            r.setup(source, targets, syncInterval, tableSet);
+            return r;
+        }
     );
 });

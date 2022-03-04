@@ -6,15 +6,7 @@
 
 import { injectable, inject } from 'inversify';
 
-import {
-    NavigatorContext,
-    User,
-    CommitContext,
-    Repository,
-    PullRequestContext,
-    IssueContext,
-    RefType,
-} from '@gitpod/gitpod-protocol';
+import { NavigatorContext, User, CommitContext, Repository, PullRequestContext, IssueContext, RefType } from '@gitpod/gitpod-protocol';
 import { GitLabApi, GitLab } from './api';
 import { UnauthorizedError, NotFoundError } from '../errors';
 import { GitLabScope } from './scopes';
@@ -27,6 +19,7 @@ import { URL } from 'url';
 
 @injectable()
 export class GitlabContextParser extends AbstractContextParser implements IContextParser {
+
     @inject(GitLabApi) protected readonly gitlabApi: GitLabApi;
     @inject(GitLabTokenHelper) protected readonly tokenHelper: GitLabTokenHelper;
 
@@ -35,21 +28,15 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     }
 
     public async handle(ctx: TraceContext, user: User, contextUrl: string): Promise<CommitContext> {
-        const span = TraceContext.startSpan('GitlabContextParser', ctx);
-        span.setTag('contextUrl', contextUrl);
+        const span = TraceContext.startSpan("GitlabContextParser", ctx);
+        span.setTag("contextUrl", contextUrl);
 
         try {
             const { host, owner, repoName, moreSegments } = await this.parseURL(user, contextUrl);
             if (moreSegments.length > 0) {
                 switch (moreSegments[0]) {
                     case 'merge_requests': {
-                        return await this.handlePullRequestContext(
-                            user,
-                            host,
-                            owner,
-                            repoName,
-                            parseInt(moreSegments[1]),
-                        );
+                        return await this.handlePullRequestContext(user, host, owner, repoName, parseInt(moreSegments[1]));
                     }
                     case 'tree':
                     case 'blob':
@@ -72,7 +59,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 if (token) {
                     const scopes = token.scopes;
                     // most likely the token needs to be updated after revoking by user.
-                    throw UnauthorizedError.create(this.config.host, scopes, 'http-unauthorized');
+                    throw UnauthorizedError.create(this.config.host, scopes, "http-unauthorized");
                 }
                 throw UnauthorizedError.create(this.config.host, GitLabScope.Requirements.REPO);
             }
@@ -85,9 +72,9 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     public async parseURL(user: User, contextUrl: string): Promise<URLParts> {
         var { host, owner, repoName, moreSegments, searchParams } = await super.parseURL(user, contextUrl);
         // TODO: we remove the /-/ in the path in the next line as quick fix for #3809 -- improve this in the long term
-        const segments = [owner, repoName, ...moreSegments.filter((s) => s !== '-')]
+        const segments = [owner, repoName, ...moreSegments.filter(s => s !== '-')]
             // Replace URL encoded '#' sign. Don't use decodeURI() because GitLab seems to be inconsistent in what needs to be decoded and what not.
-            .map((x) => x.replace(/%23/g, '#'));
+            .map(x => x.replace(/%23/g, '#'));
         var moreSegmentsStart: number = 2;
         /*
             We cannot deduce the namespace (aka `owner`) and project name (aka `repoName`) from the URI with certainty.
@@ -130,16 +117,11 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             repoName: this.parseRepoName(repoName, endsWithRepoName),
             moreSegments: endsWithRepoName ? [] : segments.slice(moreSegmentsStart),
             searchParams,
-        };
+        }
     }
 
     // https://gitlab.com/AlexTugarev/gp-test
-    protected async handleDefaultContext(
-        user: User,
-        host: string,
-        owner: string,
-        repoName: string,
-    ): Promise<NavigatorContext> {
+    protected async handleDefaultContext(user: User, host: string, owner: string, repoName: string): Promise<NavigatorContext> {
         try {
             const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
             if (!repository.defaultBranch) {
@@ -147,8 +129,8 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                     isFile: false,
                     path: '',
                     title: `${owner}/${repoName}`,
-                    repository,
-                };
+                    repository
+                }
             }
 
             try {
@@ -160,22 +142,18 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                     ref: branchOrTag.name,
                     revision: branchOrTag.revision,
                     refType: branchOrTag.type,
-                    repository,
+                    repository
                 };
             } catch (error) {
-                if (
-                    error &&
-                    error.message &&
-                    (error.message as string).startsWith('Cannot find tag/branch for context')
-                ) {
+                if (error && error.message && (error.message as string).startsWith("Cannot find tag/branch for context")) {
                     // the repo is empty (has no branches)
                     return <NavigatorContext>{
                         isFile: false,
                         path: '',
                         title: `${owner}/${repoName} - ${repository.defaultBranch}`,
                         revision: '',
-                        repository,
-                    };
+                        repository
+                    }
                 } else {
                     throw error;
                 }
@@ -192,16 +170,10 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     // https://gitlab.com/AlexTugarev/gp-test/tree/wip
     // https://gitlab.com/AlexTugarev/gp-test/tree/wip/folder
     // https://gitlab.com/AlexTugarev/gp-test/blob/wip/folder/empty.file.jpeg
-    protected async handleTreeContext(
-        user: User,
-        host: string,
-        owner: string,
-        repoName: string,
-        segments: string[],
-    ): Promise<NavigatorContext> {
+    protected async handleTreeContext(user: User, host: string, owner: string, repoName: string, segments: string[]): Promise<NavigatorContext> {
+
         try {
-            const branchOrTagPromise =
-                segments.length > 0 ? this.getBranchOrTag(user, owner, repoName, segments) : undefined;
+            const branchOrTagPromise = segments.length > 0 ? this.getBranchOrTag(user, owner, repoName, segments) : undefined;
             const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
             const branchOrTag = await branchOrTagPromise;
             const context = <NavigatorContext>{
@@ -211,7 +183,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 ref: branchOrTag && branchOrTag.name,
                 revision: branchOrTag && branchOrTag.revision,
                 refType: branchOrTag && branchOrTag.type,
-                repository,
+                repository
             };
             if (!branchOrTag) {
                 return context;
@@ -220,84 +192,66 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 return context;
             }
 
-            const result = await this.gitlabApi.run<GitLab.TreeObject[]>(user, async (g) => {
-                return g.Repositories.tree(`${owner}/${repoName}`, {
-                    ref: branchOrTag.name,
-                    path: path.dirname(branchOrTag.fullPath),
-                });
+            const result = await this.gitlabApi.run<GitLab.TreeObject[]>(user, async g => {
+                return g.Repositories.tree(`${owner}/${repoName}`, { ref: branchOrTag.name, path: path.dirname(branchOrTag.fullPath) });
             });
             if (GitLab.ApiError.is(result)) {
                 throw new Error(`Error reading TREE ${owner}/${repoName}/tree/${segments.join('/')}: ${result}`);
             } else {
-                const object = result.find((o) => o.path === branchOrTag.fullPath);
+                const object = result.find(o => o.path === branchOrTag.fullPath);
                 if (object) {
-                    const isFile = object.type === 'blob';
+                    const isFile = object.type === "blob";
                     context.isFile = isFile;
                     context.path = branchOrTag.fullPath;
                 }
             }
             return context;
         } catch (e) {
-            log.debug('GitLab context parser: Error handle tree context.', e);
+            log.debug("GitLab context parser: Error handle tree context.", e);
             throw e;
         }
     }
 
-    protected async getBranchOrTag(
-        user: User,
-        owner: string,
-        repoName: string,
-        segments: string[],
-    ): Promise<{ type: RefType; name: string; revision: string; fullPath: string }> {
-        let branchOrTagObject: { type: RefType; name: string; revision: string } | undefined = undefined;
+    protected async getBranchOrTag(user: User, owner: string, repoName: string, segments: string[]): Promise<{ type: RefType, name: string, revision: string, fullPath: string }> {
+
+        let branchOrTagObject: { type: RefType, name: string, revision: string } | undefined = undefined;
 
         // `segments` could have branch/tag name parts as well as file path parts.
         // We never know which segments belong to the branch/tag name and which are already folder names.
         // Here we generate a list of candidates for branch/tag names.
         const branchOrTagCandidates: string[] = [];
         // Try the concatination of all segments first.
-        branchOrTagCandidates.push(segments.join('/'));
+        branchOrTagCandidates.push(segments.join("/"));
         // Then all subsets.
         for (let i = 1; i < segments.length; i++) {
-            branchOrTagCandidates.push(segments.slice(0, i).join('/'));
+            branchOrTagCandidates.push(segments.slice(0, i).join("/"));
         }
 
         for (const candidate of branchOrTagCandidates) {
+
             // Check if there is a BRANCH with name `candidate`:
-            const possibleBranch = await this.gitlabApi.run<GitLab.Branch>(user, async (g) => {
+            const possibleBranch = await this.gitlabApi.run<GitLab.Branch>(user, async g => {
                 return g.Branches.show(`${owner}/${repoName}`, candidate);
             });
             // If the branch does not exist, the GitLab API returns with NotFound or InternalServerError.
-            const isNotFoundBranch =
-                GitLab.ApiError.is(possibleBranch) &&
-                (GitLab.ApiError.isNotFound(possibleBranch) || GitLab.ApiError.isInternalServerError(possibleBranch));
+            const isNotFoundBranch = GitLab.ApiError.is(possibleBranch) && (GitLab.ApiError.isNotFound(possibleBranch) || GitLab.ApiError.isInternalServerError(possibleBranch));
             if (!isNotFoundBranch) {
                 if (GitLab.ApiError.is(possibleBranch)) {
-                    throw new Error(
-                        `GitLab ApiError on searching for possible branches for ${owner}/${repoName}/tree/${segments.join(
-                            '/',
-                        )}: ${possibleBranch}`,
-                    );
+                    throw new Error(`GitLab ApiError on searching for possible branches for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleBranch}`);
                 }
                 branchOrTagObject = { type: 'branch', name: possibleBranch.name, revision: possibleBranch.commit.id };
                 break;
             }
 
             // Check if there is a TAG with name `candidate`:
-            const possibleTag = await this.gitlabApi.run<GitLab.Tag>(user, async (g) => {
+            const possibleTag = await this.gitlabApi.run<GitLab.Tag>(user, async g => {
                 return g.Tags.show(`${owner}/${repoName}`, candidate);
             });
             // If the tag does not exist, the GitLab API returns with NotFound or InternalServerError.
-            const isNotFoundTag =
-                GitLab.ApiError.is(possibleTag) &&
-                (GitLab.ApiError.isNotFound(possibleTag) || GitLab.ApiError.isInternalServerError(possibleTag));
+            const isNotFoundTag = GitLab.ApiError.is(possibleTag) && (GitLab.ApiError.isNotFound(possibleTag) || GitLab.ApiError.isInternalServerError(possibleTag));
             if (!isNotFoundTag) {
                 if (GitLab.ApiError.is(possibleTag)) {
-                    throw new Error(
-                        `GitLab ApiError on searching for possible tags for ${owner}/${repoName}/tree/${segments.join(
-                            '/',
-                        )}: ${possibleTag}`,
-                    );
+                    throw new Error(`GitLab ApiError on searching for possible tags for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleTag}`);
                 }
                 branchOrTagObject = { type: 'tag', name: possibleTag.name, revision: possibleTag.commit.id };
                 break;
@@ -306,32 +260,21 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
 
         // There seems to be no matching branch or tag.
         if (branchOrTagObject === undefined) {
-            log.debug(`Cannot find tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`, {
-                branchOrTagCandidates,
-            });
+            log.debug(`Cannot find tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`,
+                { branchOrTagCandidates }
+            );
             throw new Error(`Cannot find tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`);
         }
 
         const remainingSegmentsIndex = branchOrTagObject.name.split('/').length;
-        const fullPath = decodeURIComponent(
-            segments
-                .slice(remainingSegmentsIndex)
-                .filter((s) => s.length > 0)
-                .join('/'),
-        );
+        const fullPath = decodeURIComponent(segments.slice(remainingSegmentsIndex).filter(s => s.length > 0).join('/'));
 
         return { ...branchOrTagObject, fullPath };
     }
 
     // https://gitlab.com/AlexTugarev/gp-test/merge_requests/1
-    protected async handlePullRequestContext(
-        user: User,
-        host: string,
-        owner: string,
-        repoName: string,
-        nr: number,
-    ): Promise<PullRequestContext> {
-        const result = await this.gitlabApi.run<GitLab.MergeRequest>(user, async (g) => {
+    protected async handlePullRequestContext(user: User, host: string, owner: string, repoName: string, nr: number): Promise<PullRequestContext> {
+        const result = await this.gitlabApi.run<GitLab.MergeRequest>(user, async g => {
             return g.MergeRequests.show(`${owner}/${repoName}`, nr);
         });
         if (GitLab.ApiError.is(result)) {
@@ -340,8 +283,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         const sourceProjectId = result.source_project_id;
         const targetProjectId = result.target_project_id;
         const sourceRepo = await this.fetchRepo(user, sourceProjectId);
-        const tagetRepo =
-            sourceProjectId === targetProjectId ? sourceRepo : await this.fetchRepo(user, targetProjectId);
+        const tagetRepo = sourceProjectId === targetProjectId ? sourceRepo : await this.fetchRepo(user, targetProjectId);
         return <PullRequestContext>{
             title: result.title,
             repository: sourceRepo,
@@ -353,14 +295,14 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 repository: tagetRepo,
                 ref: result.target_branch,
                 refType: 'branch',
-            },
+            }
         };
     }
     protected async fetchRepo(user: User, projectId: number | string): Promise<Repository> {
         // host might be a relative URL
         const host = this.host; // as per contract, cf. `canHandle(user, contextURL)`
 
-        const result = await this.gitlabApi.run<GitLab.Project>(user, async (g) => {
+        const result = await this.gitlabApi.run<GitLab.Project>(user, async g => {
             return g.Projects.show(projectId);
         });
         if (GitLab.ApiError.is(result)) {
@@ -373,9 +315,10 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             owner: namespace.full_path,
             cloneUrl: http_url_to_repo,
             defaultBranch: default_branch,
-            private: visibility === 'private',
-        };
+            private: visibility === 'private'
+        }
         if (forked_from_project) {
+
             // host might be a relative URL, let's compute the prefix
             const url = new URL(forked_from_project.http_url_to_repo.split(forked_from_project.namespace.full_path)[0]);
             const relativePath = url.pathname.slice(1); // hint: pathname always starts with `/`
@@ -387,15 +330,15 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                     host,
                     owner: forked_from_project.namespace.full_path,
                     cloneUrl: forked_from_project.http_url_to_repo,
-                    defaultBranch: forked_from_project.default_branch,
-                },
-            };
+                    defaultBranch: forked_from_project.default_branch
+                }
+            }
         }
         return repo;
     }
 
     protected async fetchCommit(user: User, projectId: number | string, sha: string) {
-        const result = await this.gitlabApi.run<GitLab.Commit>(user, async (g) => {
+        const result = await this.gitlabApi.run<GitLab.Commit>(user, async g => {
             return g.Commits.show(projectId, sha);
         });
         if (GitLab.ApiError.is(result)) {
@@ -406,20 +349,14 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         }
         return {
             id: result.id,
-            title: result.title,
-        };
+            title: result.title
+        }
     }
 
     // https://gitlab.com/AlexTugarev/gp-test/issues/1
-    protected async handleIssueContext(
-        user: User,
-        host: string,
-        owner: string,
-        repoName: string,
-        nr: number,
-    ): Promise<IssueContext> {
+    protected async handleIssueContext(user: User, host: string, owner: string, repoName: string, nr: number): Promise<IssueContext> {
         const ctxPromise = this.handleDefaultContext(user, host, owner, repoName);
-        const result = await this.gitlabApi.run<GitLab.Issue>(user, async (g) => {
+        const result = await this.gitlabApi.run<GitLab.Issue>(user, async g => {
             return g.Issues.show(`${owner}/${repoName}`, nr);
         });
         if (GitLab.ApiError.is(result)) {
@@ -427,22 +364,16 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         }
         const context = await ctxPromise;
         return <IssueContext>{
-            ...context,
+            ... context,
             title: result.title,
             owner,
             nr,
-            localBranch: IssueContexts.toBranchName(user, result.title, result.iid),
+            localBranch: IssueContexts.toBranchName(user, result.title, result.iid)
         };
     }
 
     // https://gitlab.com/AlexTugarev/gp-test/-/commit/80948e8cc8f0e851e89a10bc7c2ee234d1a5fbe7
-    protected async handleCommitContext(
-        user: User,
-        host: string,
-        owner: string,
-        repoName: string,
-        sha: string,
-    ): Promise<NavigatorContext> {
+    protected async handleCommitContext(user: User, host: string, owner: string, repoName: string, sha: string): Promise<NavigatorContext> {
         const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
         if (GitLab.ApiError.is(repository)) {
             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
@@ -463,17 +394,11 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         };
     }
 
-    public async fetchCommitHistory(
-        ctx: TraceContext,
-        user: User,
-        contextUrl: string,
-        sha: string,
-        maxDepth: number,
-    ): Promise<string[]> {
+    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[]> {
         // TODO(janx): To get more results than GitLab API's max per_page (seems to be 100), pagination should be handled.
         const { owner, repoName } = await this.parseURL(user, contextUrl);
         const projectId = `${owner}/${repoName}`;
-        const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async (g) => {
+        const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async g => {
             return g.Commits.all(projectId, {
                 ref_name: sha,
                 per_page: maxDepth,

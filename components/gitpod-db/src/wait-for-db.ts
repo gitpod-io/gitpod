@@ -7,15 +7,15 @@
 /**
  * Script that waits for a database to become available
  */
-import 'reflect-metadata';
-import { Config } from './config';
+import "reflect-metadata";
+import { Config } from "./config";
 import * as mysql from 'mysql';
 
 const retryPeriod = 5000; // [ms]
 const totalAttempts = 30;
 const connCfg = {
     ...new Config().mysqlConfig,
-    timeout: retryPeriod,
+    timeout: retryPeriod
 };
 
 function connectOrReschedule(attempt: number) {
@@ -25,19 +25,20 @@ function connectOrReschedule(attempt: number) {
             if (err) {
                 rescheduleConnectionAttempt(attempt, err);
             } else {
-                console.log('DB is available');
+                console.log("DB is available");
                 con.destroy();
                 process.exit(0);
             }
         });
-    } catch (err) {
+    } catch(err) {
         rescheduleConnectionAttempt(attempt, err);
     }
+
 }
 
 function rescheduleConnectionAttempt(attempt: number, err: Error) {
-    if (attempt == totalAttempts) {
-        console.log(`Could not connect within ${totalAttempts} attempts. Stopping.`);
+    if(attempt == totalAttempts) {
+        console.log(`Could not connect within ${totalAttempts} attempts. Stopping.`)
         process.exit(1);
     }
     console.log(`Connection attempt ${attempt}/${totalAttempts} failed. Retrying in ${retryPeriod / 1000} seconds.`);

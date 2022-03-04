@@ -4,4 +4,4 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-module.exports = require('../build/Release/licensor');
+module.exports = require("../build/Release/licensor");

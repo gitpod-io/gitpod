@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { injectable, inject } from 'inversify';
+import { injectable, inject } from "inversify";
 import * as express from 'express';
 import * as passport from 'passport';
 import { BasicStrategy } from 'passport-http';
@@ -12,8 +12,8 @@ import { BasicStrategy } from 'passport-http';
 import { PaymentProtocol } from '@gitpod/gitpod-protocol/lib/payment-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
-import { Config } from '../config';
-import { CompositeEventHandler } from './chargebee-event-handler';
+import { Config } from "../config";
+import { CompositeEventHandler } from "./chargebee-event-handler";
 import * as bodyParser from 'body-parser';
 
 @injectable()
@@ -22,24 +22,19 @@ export class EndpointController {
     @inject(CompositeEventHandler) protected readonly eventHandler: CompositeEventHandler;
 
     get apiRouter(): express.Router {
-        passport.use(
-            new BasicStrategy((username, password, cb) => {
-                if (
-                    username === this.config.chargebeeWebhook.user &&
-                    password === this.config.chargebeeWebhook.password
-                ) {
-                    return cb(null, username);
-                } else {
-                    return cb(null, false);
-                }
-            }),
-        );
+        passport.use(new BasicStrategy((username, password, cb) => {
+            if (username === this.config.chargebeeWebhook.user
+                && password === this.config.chargebeeWebhook.password) {
+                return cb(null, username);
+            } else {
+                return cb(null, false);
+            }
+        }));
 
         const router = express.Router();
-        router.use(bodyParser.json());
-        router.use(bodyParser.urlencoded({ extended: true }));
-        router.post(
-            PaymentProtocol.UPDATE_GITPOD_SUBSCRIPTION_PATH,
+        router.use(bodyParser.json())
+        router.use(bodyParser.urlencoded({ extended: true }))
+        router.post(PaymentProtocol.UPDATE_GITPOD_SUBSCRIPTION_PATH,
             (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 passport.authenticate('basic', { session: false }, (err: any, user: any, info: any) => {
                     if (err) {
@@ -55,7 +50,7 @@ export class EndpointController {
             },
             (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 this.handleUpdateGitpodSubscription(req, res);
-            },
+            }
         );
         return router;
     }
@@ -79,7 +74,7 @@ export class EndpointController {
             }
             res.status(200).send();
         } catch (err) {
-            log.error('Error handling subscription update', err);
+            log.error("Error handling subscription update", err);
             res.status(500).send();
         }
     }

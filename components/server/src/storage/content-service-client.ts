@@ -4,40 +4,20 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { DeleteUserContentRequest, DeleteUserContentResponse } from '@gitpod/content-service/lib/content_pb';
-import {
-    PluginDownloadURLRequest,
-    PluginDownloadURLResponse,
-    PluginHashRequest,
-    PluginHashResponse,
-    PluginUploadURLRequest,
-    PluginUploadURLResponse,
-} from '@gitpod/content-service/lib/ideplugin_pb';
-import {
-    DeleteWorkspaceRequest,
-    DeleteWorkspaceResponse,
-    WorkspaceDownloadURLRequest,
-    WorkspaceDownloadURLResponse,
-    WorkspaceSnapshotExistsRequest,
-    WorkspaceSnapshotExistsResponse,
-} from '@gitpod/content-service/lib/workspace_pb';
-import {
-    CachingContentServiceClientProvider,
-    CachingIDEPluginClientProvider,
-    CachingWorkspaceServiceClientProvider,
-} from '@gitpod/content-service/lib/sugar';
+import { DeleteUserContentRequest, DeleteUserContentResponse } from "@gitpod/content-service/lib/content_pb";
+import { PluginDownloadURLRequest, PluginDownloadURLResponse, PluginHashRequest, PluginHashResponse, PluginUploadURLRequest, PluginUploadURLResponse } from "@gitpod/content-service/lib/ideplugin_pb";
+import { DeleteWorkspaceRequest, DeleteWorkspaceResponse, WorkspaceDownloadURLRequest, WorkspaceDownloadURLResponse, WorkspaceSnapshotExistsRequest, WorkspaceSnapshotExistsResponse } from "@gitpod/content-service/lib/workspace_pb";
+import { CachingContentServiceClientProvider, CachingIDEPluginClientProvider, CachingWorkspaceServiceClientProvider } from '@gitpod/content-service/lib/sugar';
 import { SnapshotUrl } from '@gitpod/gitpod-protocol';
-import { inject, injectable } from 'inversify';
-import { StorageClient } from './storage-client';
+import { inject, injectable } from "inversify";
+import { StorageClient } from "./storage-client";
 
 @injectable()
 export class ContentServiceStorageClient implements StorageClient {
-    @inject(CachingContentServiceClientProvider)
-    private readonly contentServiceClientProvider: CachingContentServiceClientProvider;
-    @inject(CachingWorkspaceServiceClientProvider)
-    private readonly workspaceServiceClientProvider: CachingWorkspaceServiceClientProvider;
-    @inject(CachingIDEPluginClientProvider)
-    private readonly idePluginServiceClientProvider: CachingIDEPluginClientProvider;
+
+    @inject(CachingContentServiceClientProvider) private readonly contentServiceClientProvider: CachingContentServiceClientProvider;
+    @inject(CachingWorkspaceServiceClientProvider) private readonly workspaceServiceClientProvider: CachingWorkspaceServiceClientProvider;
+    @inject(CachingIDEPluginClientProvider) private readonly idePluginServiceClientProvider: CachingIDEPluginClientProvider;
 
     public async deleteUserContent(ownerId: string): Promise<void> {
         const request = new DeleteUserContentRequest();
@@ -55,11 +35,7 @@ export class ContentServiceStorageClient implements StorageClient {
         });
     }
 
-    public async deleteWorkspaceBackups(
-        ownerId: string,
-        workspaceId: string,
-        includeSnapshots: boolean,
-    ): Promise<void> {
+    public async deleteWorkspaceBackups(ownerId: string, workspaceId: string, includeSnapshots: boolean): Promise<void> {
         const request = new DeleteWorkspaceRequest();
         request.setOwnerId(ownerId);
         request.setWorkspaceId(workspaceId);

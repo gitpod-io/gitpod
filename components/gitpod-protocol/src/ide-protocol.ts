@@ -45,12 +45,12 @@ export interface IDEClient {
     /**
      * Desktop IDEs supported by the client.
      */
-    desktopIDEs?: string[];
+    desktopIDEs?: string[]
 
     /**
      * Steps to install the client on user machine.
      */
-    installationSteps?: string[];
+    installationSteps?: string[]
 }
 
 export interface IDEOption {
@@ -70,9 +70,9 @@ export interface IDEOption {
     type: 'browser' | 'desktop';
 
     /**
-     * The logo for the IDE. That could be a key in (see
-     * components/dashboard/src/images/ideLogos.ts) or a URL.
-     */
+    * The logo for the IDE. That could be a key in (see
+    * components/dashboard/src/images/ideLogos.ts) or a URL.
+    */
     logo: string;
 
     /**
@@ -93,8 +93,8 @@ export interface IDEOption {
     notes?: string[];
 
     /**
-     * If `true` this IDE option is not visible in the IDE preferences.
-     */
+    * If `true` this IDE option is not visible in the IDE preferences.
+    */
     hidden?: boolean;
 
     /**

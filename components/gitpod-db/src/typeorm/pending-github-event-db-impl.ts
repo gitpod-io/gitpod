@@ -4,23 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from 'inversify';
-import { PendingGithubEvent } from '@gitpod/gitpod-protocol';
-import { EntityManager, Repository } from 'typeorm';
+import { inject, injectable } from "inversify";
+import { PendingGithubEvent } from "@gitpod/gitpod-protocol";
+import { EntityManager, Repository } from "typeorm";
 import { TypeORM } from './typeorm';
-import {
-    PendingGithubEventDB,
-    PendingGithubEventWithUser,
-    TransactionalPendingGithubEventDBFactory,
-} from '../pending-github-event-db';
-import { DBPendingGithubEvent } from './entity/db-pending-github-event';
-import { DBIdentity } from './entity/db-identity';
+import { PendingGithubEventDB, PendingGithubEventWithUser, TransactionalPendingGithubEventDBFactory } from "../pending-github-event-db";
+import { DBPendingGithubEvent } from "./entity/db-pending-github-event";
+import { DBIdentity } from "./entity/db-identity";
 
 @injectable()
 export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
     @inject(TypeORM) protected readonly typeorm: TypeORM;
-    @inject(TransactionalPendingGithubEventDBFactory)
-    protected readonly transactionalFactory: TransactionalPendingGithubEventDBFactory;
+    @inject(TransactionalPendingGithubEventDBFactory) protected readonly transactionalFactory: TransactionalPendingGithubEventDBFactory;
 
     protected async getManager(): Promise<EntityManager> {
         return (await this.typeorm.getConnection()).manager;
@@ -55,7 +50,7 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
             .innerJoinAndSelect('ident.user', 'user')
             .where('ident.authProviderId = "Public-GitHub"')
             .andWhere(`ident.deleted != true`)
-            .orderBy('pghe.creationDate', 'ASC')
+            .orderBy("pghe.creationDate", "ASC")
             .getMany();
 
         return res as PendingGithubEventWithUser[];
@@ -63,7 +58,7 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
 
     async transaction<T>(code: (db: PendingGithubEventDB) => Promise<T>): Promise<T> {
         const manager = await this.getManager();
-        return await manager.transaction(async (manager) => {
+        return await manager.transaction(async manager => {
             const transactionalDB = this.transactionalFactory(manager);
             return await code(transactionalDB);
         });
@@ -71,7 +66,9 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
 }
 
 export class TransactionalPendingGithubEventDBImpl extends TypeORMPendingGithubEventDBImpl {
-    constructor(protected readonly manager: EntityManager) {
+
+    constructor(
+        protected readonly manager: EntityManager) {
         super();
     }
 

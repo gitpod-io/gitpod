@@ -4,15 +4,15 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { UserEnvVarValue } from '@gitpod/gitpod-protocol';
-import { useEffect, useRef, useState } from 'react';
-import ConfirmationModal from '../components/ConfirmationModal';
-import { Item, ItemField, ItemFieldContextMenu, ItemsList } from '../components/ItemsList';
-import Modal from '../components/Modal';
-import { PageWithSubMenu } from '../components/PageWithSubMenu';
-import { getGitpodService } from '../service/service';
-import settingsMenu from './settings-menu';
-import CodeText from '../components/CodeText';
+import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
+import { useEffect, useRef, useState } from "react";
+import ConfirmationModal from "../components/ConfirmationModal";
+import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
+import Modal from "../components/Modal";
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import { getGitpodService } from "../service/service";
+import settingsMenu from "./settings-menu";
+import CodeText from "../components/CodeText";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -22,18 +22,18 @@ interface EnvVarModalProps {
 }
 
 function AddEnvVarModal(p: EnvVarModalProps) {
-    const [ev, setEv] = useState({ ...p.envVar });
+    const [ev, setEv] = useState({...p.envVar});
     const [error, setError] = useState('');
     const ref = useRef(ev);
 
     const update = (pev: Partial<UserEnvVarValue>) => {
-        const newEnv = { ...ref.current, ...pev };
+        const newEnv = { ...ref.current, ... pev};
         setEv(newEnv);
         ref.current = newEnv;
     };
 
     useEffect(() => {
-        setEv({ ...p.envVar });
+        setEv({...p.envVar});
         setError('');
     }, [p.envVar]);
 
@@ -51,80 +51,45 @@ function AddEnvVarModal(p: EnvVarModalProps) {
         }
     };
 
-    return (
-        <Modal visible={true} onClose={p.onClose} onEnter={save}>
-            <h3 className="mb-4">{isNew ? 'New' : 'Edit'} Variable</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
-                {error ? (
-                    <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{error}</div>
-                ) : null}
-                <div>
-                    <h4>Name</h4>
-                    <input
-                        autoFocus
-                        className="w-full"
-                        type="text"
-                        value={ev.name}
-                        onChange={(v) => {
-                            update({ name: v.target.value });
-                        }}
-                    />
-                </div>
-                <div className="mt-4">
-                    <h4>Value</h4>
-                    <input
-                        className="w-full"
-                        type="text"
-                        value={ev.value}
-                        onChange={(v) => {
-                            update({ value: v.target.value });
-                        }}
-                    />
-                </div>
-                <div className="mt-4">
-                    <h4>Scope</h4>
-                    <input
-                        className="w-full"
-                        type="text"
-                        value={ev.repositoryPattern}
-                        placeholder="e.g. owner/repository"
-                        onChange={(v) => {
-                            update({ repositoryPattern: v.target.value });
-                        }}
-                    />
-                </div>
-                <div className="mt-1">
-                    <p className="text-gray-500">
-                        You can pass a variable for a specific project or use wildcard character (
-                        <CodeText>*/*</CodeText>) to make it available in more projects.
-                    </p>
-                </div>
+    return <Modal visible={true} onClose={p.onClose} onEnter={save}>
+        <h3 className="mb-4">{isNew ? 'New' : 'Edit'} Variable</h3>
+        <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
+            {error ? <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">
+                {error}
+            </div> : null}
+            <div>
+                <h4>Name</h4>
+                <input autoFocus className="w-full" type="text" value={ev.name} onChange={(v) => { update({name: v.target.value}) }} />
             </div>
-            <div className="flex justify-end mt-6">
-                <button className="secondary" onClick={p.onClose}>
-                    Cancel
-                </button>
-                <button className="ml-2" onClick={save}>
-                    {isNew ? 'Add' : 'Update'} Variable
-                </button>
+            <div className="mt-4">
+                <h4>Value</h4>
+                <input className="w-full" type="text" value={ev.value} onChange={(v) => { update({value: v.target.value}) }} />
             </div>
-        </Modal>
-    );
+            <div className="mt-4">
+                <h4>Scope</h4>
+                <input className="w-full" type="text" value={ev.repositoryPattern} placeholder="e.g. owner/repository"
+                    onChange={(v) => { update({repositoryPattern: v.target.value}) }} />
+            </div>
+            <div className="mt-1">
+                <p className="text-gray-500">You can pass a variable for a specific project or use wildcard character (<CodeText>*/*</CodeText>) to make it available in more projects.</p>
+            </div>
+        </div>
+        <div className="flex justify-end mt-6">
+            <button className="secondary" onClick={p.onClose}>Cancel</button>
+            <button className="ml-2" onClick={save} >{isNew ? 'Add' : 'Update'} Variable</button>
+        </div>
+    </Modal>
 }
 
-function DeleteEnvVarModal(p: { variable: UserEnvVarValue; deleteVariable: () => void; onClose: () => void }) {
-    return (
-        <ConfirmationModal
-            title="Delete Variable"
-            areYouSureText="Are you sure you want to delete this variable?"
-            buttonText="Delete Variable"
-            onClose={p.onClose}
-            onConfirm={() => {
-                p.deleteVariable();
-                p.onClose();
-            }}
-        >
-            <div className="grid grid-cols-2 gap-4 px-3 text-sm text-gray-400">
+function DeleteEnvVarModal(p: { variable: UserEnvVarValue, deleteVariable: () => void, onClose: () => void }) {
+    return <ConfirmationModal
+        title="Delete Variable"
+        areYouSureText="Are you sure you want to delete this variable?"
+        buttonText="Delete Variable"
+        onClose={p.onClose}
+        onConfirm={() => { p.deleteVariable(); p.onClose(); }}
+    >
+        <div className="grid grid-cols-2 gap-4 px-3 text-sm text-gray-400">
                 <span className="truncate">Name</span>
                 <span className="truncate">Scope</span>
             </div>
@@ -132,8 +97,7 @@ function DeleteEnvVarModal(p: { variable: UserEnvVarValue; deleteVariable: () =>
                 <span className="truncate text-gray-900 dark:text-gray-50">{p.variable.name}</span>
                 <span className="truncate text-sm">{p.variable.repositoryPattern}</span>
             </div>
-        </ConfirmationModal>
-    );
+    </ConfirmationModal>;
 }
 
 function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
@@ -145,40 +109,35 @@ function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
 
 export default function EnvVars() {
     const [envVars, setEnvVars] = useState([] as UserEnvVarValue[]);
-    const [currentEnvVar, setCurrentEnvVar] = useState({
-        name: '',
-        value: '',
-        repositoryPattern: '',
-    } as UserEnvVarValue);
+    const [currentEnvVar, setCurrentEnvVar] = useState({ name: '', value: '', repositoryPattern: '' } as UserEnvVarValue);
     const [isAddEnvVarModalVisible, setAddEnvVarModalVisible] = useState(false);
     const [isDeleteEnvVarModalVisible, setDeleteEnvVarModalVisible] = useState(false);
     const update = async () => {
-        await getGitpodService()
-            .server.getAllEnvVars()
-            .then((r) => setEnvVars(r.sort(sortEnvVars)));
-    };
+        await getGitpodService().server.getAllEnvVars().then(r => setEnvVars(r.sort(sortEnvVars)));
+    }
 
     useEffect(() => {
-        update();
+        update()
     }, []);
+
 
     const add = () => {
         setCurrentEnvVar({ name: '', value: '', repositoryPattern: '' });
         setAddEnvVarModalVisible(true);
         setDeleteEnvVarModalVisible(false);
-    };
+    }
 
     const edit = (variable: UserEnvVarValue) => {
         setCurrentEnvVar(variable);
         setAddEnvVarModalVisible(true);
         setDeleteEnvVarModalVisible(false);
-    };
+    }
 
     const confirmDeleteVariable = (variable: UserEnvVarValue) => {
         setCurrentEnvVar(variable);
         setAddEnvVarModalVisible(false);
         setDeleteEnvVarModalVisible(true);
-    };
+    }
 
     const save = async (variable: UserEnvVarValue) => {
         await getGitpodService().server.setEnvVar(variable);
@@ -216,98 +175,65 @@ export default function EnvVars() {
                 }
             }
         }
-        if (!variable.id && envVars.some((v) => v.name === name && v.repositoryPattern === pattern)) {
+        if (!variable.id && envVars.some(v => v.name === name && v.repositoryPattern === pattern)) {
             return 'A variable with this name and scope already exists';
         }
         return '';
     };
 
-    return (
-        <PageWithSubMenu
-            subMenu={settingsMenu}
-            title="Variables"
-            subtitle="Configure environment variables for all workspaces."
-        >
-            {isAddEnvVarModalVisible && (
-                <AddEnvVarModal
-                    save={save}
-                    envVar={currentEnvVar}
-                    validate={validate}
-                    onClose={() => setAddEnvVarModalVisible(false)}
-                />
-            )}
-            {isDeleteEnvVarModalVisible && (
-                <DeleteEnvVarModal
-                    variable={currentEnvVar}
-                    deleteVariable={() => deleteVariable(currentEnvVar)}
-                    onClose={() => setDeleteEnvVarModalVisible(false)}
-                />
-            )}
-            <div className="flex items-start sm:justify-between mb-2">
-                <div>
-                    <h3>Environment Variables</h3>
-                    <h2 className="text-gray-500">Variables are used to store information like passwords.</h2>
-                </div>
-                {envVars.length !== 0 ? (
-                    <div className="mt-3 flex mt-0">
-                        <button onClick={add} className="ml-2">
-                            New Variable
-                        </button>
-                    </div>
-                ) : null}
+    return <PageWithSubMenu subMenu={settingsMenu} title='Variables' subtitle='Configure environment variables for all workspaces.'>
+        {isAddEnvVarModalVisible && <AddEnvVarModal
+            save={save}
+            envVar={currentEnvVar}
+            validate={validate}
+            onClose={() => setAddEnvVarModalVisible(false)} />}
+        {isDeleteEnvVarModalVisible && <DeleteEnvVarModal
+            variable={currentEnvVar}
+            deleteVariable={() => deleteVariable(currentEnvVar)}
+            onClose={() => setDeleteEnvVarModalVisible(false)} />}
+        <div className="flex items-start sm:justify-between mb-2">
+            <div>
+                <h3>Environment Variables</h3>
+                <h2 className="text-gray-500">Variables are used to store information like passwords.</h2>
             </div>
-            {envVars.length === 0 ? (
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
-                    <div className="pt-28 flex flex-col items-center w-96 m-auto">
-                        <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Environment Variables</h3>
-                        <div className="text-center pb-6 text-gray-500">
-                            In addition to user-specific environment variables you can also pass variables through a
-                            workspace creation URL.{' '}
-                            <a
-                                className="gp-link"
-                                href="https://www.gitpod.io/docs/environment-variables/#using-the-account-settings"
-                            >
-                                Learn more
-                            </a>
-                        </div>
-                        <button onClick={add}>New Variable</button>
-                    </div>
+            {envVars.length !== 0
+                ? <div className="mt-3 flex mt-0">
+                    <button onClick={add} className="ml-2">New Variable</button>
                 </div>
-            ) : (
-                <ItemsList>
-                    <Item header={true}>
-                        <ItemField className="w-5/12 my-auto">Name</ItemField>
-                        <ItemField className="w-5/12 my-auto">Scope</ItemField>
+                : null}
+        </div>
+        {envVars.length === 0
+            ? <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
+                <div className="pt-28 flex flex-col items-center w-96 m-auto">
+                    <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Environment Variables</h3>
+                    <div className="text-center pb-6 text-gray-500">In addition to user-specific environment variables you can also pass variables through a workspace creation URL. <a className="gp-link" href="https://www.gitpod.io/docs/environment-variables/#using-the-account-settings">Learn more</a></div>
+                    <button onClick={add}>New Variable</button>
+                </div>
+            </div>
+            : <ItemsList>
+                <Item header={true}>
+                    <ItemField className="w-5/12 my-auto">Name</ItemField>
+                    <ItemField className="w-5/12 my-auto">Scope</ItemField>
+                </Item>
+                {envVars.map(variable => {
+                    return <Item className="whitespace-nowrap">
+                        <ItemField className="w-5/12 overflow-ellipsis truncate my-auto">{variable.name}</ItemField>
+                        <ItemField className="w-5/12 overflow-ellipsis truncate text-sm text-gray-400 my-auto">{variable.repositoryPattern}</ItemField>
+                        <ItemFieldContextMenu menuEntries={[
+                            {
+                                title: 'Edit',
+                                onClick: () => edit(variable),
+                                separator: true
+                            },
+                            {
+                                title: 'Delete',
+                                customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
+                                onClick: () => confirmDeleteVariable(variable)
+                            },
+                        ]} />
                     </Item>
-                    {envVars.map((variable) => {
-                        return (
-                            <Item className="whitespace-nowrap">
-                                <ItemField className="w-5/12 overflow-ellipsis truncate my-auto">
-                                    {variable.name}
-                                </ItemField>
-                                <ItemField className="w-5/12 overflow-ellipsis truncate text-sm text-gray-400 my-auto">
-                                    {variable.repositoryPattern}
-                                </ItemField>
-                                <ItemFieldContextMenu
-                                    menuEntries={[
-                                        {
-                                            title: 'Edit',
-                                            onClick: () => edit(variable),
-                                            separator: true,
-                                        },
-                                        {
-                                            title: 'Delete',
-                                            customFontStyle:
-                                                'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
-                                            onClick: () => confirmDeleteVariable(variable),
-                                        },
-                                    ]}
-                                />
-                            </Item>
-                        );
-                    })}
-                </ItemsList>
-            )}
-        </PageWithSubMenu>
-    );
+                })}
+            </ItemsList>
+        }
+    </PageWithSubMenu>;
 }

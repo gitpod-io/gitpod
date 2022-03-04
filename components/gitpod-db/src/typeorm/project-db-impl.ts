@@ -4,16 +4,16 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from 'inversify';
-import { TypeORM } from './typeorm';
-import { Repository } from 'typeorm';
+import { inject, injectable } from "inversify";
+import { TypeORM } from "./typeorm";
+import { Repository } from "typeorm";
 import { v4 as uuidv4 } from 'uuid';
-import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue } from '@gitpod/gitpod-protocol';
-import { EncryptionService } from '@gitpod/gitpod-protocol/lib/encryption/encryption-service';
-import { ProjectDB } from '../project-db';
-import { DBProject } from './entity/db-project';
-import { DBProjectEnvVar } from './entity/db-project-env-vars';
-import { DBProjectInfo } from './entity/db-project-info';
+import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue } from "@gitpod/gitpod-protocol";
+import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+import { ProjectDB } from "../project-db";
+import { DBProject } from "./entity/db-project";
+import { DBProjectEnvVar } from "./entity/db-project-env-vars";
+import { DBProjectInfo } from "./entity/db-project-info";
 
 function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
@@ -57,33 +57,24 @@ export class ProjectDBImpl implements ProjectDB {
             return [];
         }
         const repo = await this.getRepo();
-        const q = repo
-            .createQueryBuilder('project')
-            .where('project.markedDeleted = false')
-            .andWhere(`project.cloneUrl in (${cloneUrls.map((u) => `'${u}'`).join(', ')})`);
+        const q = repo.createQueryBuilder("project")
+            .where("project.markedDeleted = false")
+            .andWhere(`project.cloneUrl in (${ cloneUrls.map(u => `'${u}'`).join(", ") })`)
         const projects = await q.getMany();
 
-        const teamIds = Array.from(new Set(projects.map((p) => p.teamId).filter((id) => !!id)));
+        const teamIds = Array.from(new Set(projects.map(p => p.teamId).filter(id => !!id)));
 
-        const teamIdsAndOwners =
-            teamIds.length === 0
-                ? []
-                : ((await (
-                      await this.getEntityManager()
-                  ).query(`
+        const teamIdsAndOwners = teamIds.length === 0 ? [] : (await (await this.getEntityManager()).query(`
                 SELECT member.teamId AS teamId, user.name AS owner FROM d_b_user AS user
                     LEFT JOIN d_b_team_membership AS member ON (user.id = member.userId)
-                    WHERE member.teamId IN (${teamIds.map((id) => `'${id}'`).join(', ')})
+                    WHERE member.teamId IN (${teamIds.map(id => `'${id}'`).join(", ")})
                     AND member.deleted = 0
                     AND member.role = 'owner'
-            `)) as { teamId: string; owner: string }[]);
+            `)) as { teamId: string, owner: string }[];
 
         const result: (Project & { teamOwners?: string[] })[] = [];
         for (const project of projects) {
-            result.push({
-                ...project,
-                teamOwners: teamIdsAndOwners.filter((i) => i.teamId === project.teamId).map((i) => i.owner),
-            });
+            result.push({...project, teamOwners: teamIdsAndOwners.filter(i => i.teamId === project.teamId).map(i => i.owner)});
         }
 
         return result;
@@ -103,17 +94,16 @@ export class ProjectDBImpl implements ProjectDB {
         offset: number,
         limit: number,
         orderBy: keyof Project,
-        orderDir: 'DESC' | 'ASC',
-        searchTerm?: string,
-    ): Promise<{ total: number; rows: Project[] }> {
+        orderDir: "DESC" | "ASC",
+        searchTerm?: string
+        ): Promise<{ total: number, rows: Project[] }> {
         const projectRepo = await this.getRepo();
 
-        const queryBuilder = projectRepo
-            .createQueryBuilder('project')
-            .where('project.cloneUrl LIKE :searchTerm', { searchTerm: `%${searchTerm}%` })
+        const queryBuilder = projectRepo.createQueryBuilder('project')
+            .where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
             .skip(offset)
             .take(limit)
-            .orderBy(orderBy, orderDir);
+            .orderBy(orderBy, orderDir)
 
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };
@@ -148,27 +138,17 @@ export class ProjectDBImpl implements ProjectDB {
         }
     }
 
-    public async setProjectEnvironmentVariable(
-        projectId: string,
-        name: string,
-        value: string,
-        censored: boolean,
-    ): Promise<void> {
+    public async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void> {
         if (!name) {
             throw new Error('Variable name cannot be empty');
         }
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-            throw new Error(
-                "Please choose a variable name containing only letters, numbers, or _, and which doesn't start with a number",
-            );
+            throw new Error('Please choose a variable name containing only letters, numbers, or _, and which doesn\'t start with a number');
         }
         const envVarRepo = await this.getProjectEnvVarRepo();
         const envVarWithValue = await envVarRepo.findOne({ projectId, name, deleted: false });
         if (envVarWithValue) {
-            await envVarRepo.update(
-                { id: envVarWithValue.id, projectId: envVarWithValue.projectId },
-                { value, censored },
-            );
+            await envVarRepo.update({ id: envVarWithValue.id, projectId: envVarWithValue.projectId }, { value, censored });
             return;
         }
         await envVarRepo.save({

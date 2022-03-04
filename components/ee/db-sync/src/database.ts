@@ -4,14 +4,14 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { createConnection, Connection, QueryOptions } from 'mysql';
-import { NamedConnectionConfig } from './config';
+import { createConnection, Connection, QueryOptions } from "mysql";
+import { NamedConnectionConfig } from "./config";
 
 export type NamedConnection = Connection & { name: string };
 
 export async function connect(db: NamedConnectionConfig): Promise<NamedConnection> {
     const conn = createConnection({
-        ...(db as Omit<NamedConnectionConfig, 'name'>),
+        ...db as Omit<NamedConnectionConfig, 'name'>,
         multipleStatements: true,
         charset: 'utf8mb4',
 
@@ -20,7 +20,7 @@ export async function connect(db: NamedConnectionConfig): Promise<NamedConnectio
         timezone: 'UTC',
 
         // do NOT convert timestamps to Date objects
-        dateStrings: true,
+        dateStrings: true
     }) as NamedConnection;
     return new Promise<NamedConnection>((resolve, reject) => {
         conn.name = db.name || `${db.host}:${db.port}/${db.database}`;
@@ -34,7 +34,7 @@ export async function connect(db: NamedConnectionConfig): Promise<NamedConnectio
     });
 }
 
-export async function query(conn: Connection, sql: string, args?: Omit<QueryOptions, 'sql'>) {
+export async function query(conn: Connection, sql: string, args?: Omit<QueryOptions, "sql">) {
     return new Promise((resolve, reject) => {
         conn.query({ sql, ...args }, (err, rows) => {
             if (err) {
@@ -45,3 +45,4 @@ export async function query(conn: Connection, sql: string, args?: Omit<QueryOpti
         });
     });
 }
+
