@@ -140,11 +140,46 @@ func matchesDomain(pattern, domain string) bool {
 	return false
 }
 
-type Evaluator interface {
-	Enabled(feature Feature) bool
-	HasEnoughSeats(seats int) bool
-	Inspect() LicensePayload
-	Validate() (msg string, valid bool)
+// Evaluator determines what a license allows for
+type Evaluator struct {
+	invalid string
+	lic     LicensePayload
+}
+
+// Validate returns false if the license isn't valid and a message explaining why that is.
+func (e *Evaluator) Validate() (msg string, valid bool) {
+	if e.invalid == "" {
+		return "", true
+	}
+
+	return e.invalid, false
+}
+
+// Enabled determines if a feature is enabled by the license
+func (e *Evaluator) Enabled(feature Feature) bool {
+	if e.invalid != "" {
+		return false
+	}
+
+	_, ok := e.lic.Level.allowance().Features[feature]
+	return ok
+}
+
+// HasEnoughSeats returns true if the license supports at least the give amount of seats
+func (e *Evaluator) HasEnoughSeats(seats int) bool {
+	if e.invalid != "" {
+		return false
+	}
+
+	return e.lic.Seats == 0 || seats <= e.lic.Seats
+}
+
+// Inspect returns the license information this evaluator holds.
+// This function is intended for transparency/debugging purposes only and must
+// never be used to determine feature eligibility under a license. All code making
+// those kinds of decisions must be part of the Evaluator.
+func (e *Evaluator) Inspect() LicensePayload {
+	return e.lic
 }
 
 // Sign signs a license so that it can be used with the evaluator

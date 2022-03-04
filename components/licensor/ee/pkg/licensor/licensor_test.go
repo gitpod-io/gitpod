@@ -25,7 +25,7 @@ const (
 type licenseTest struct {
 	Name         string
 	License      *LicensePayload
-	Validate     func(t *testing.T, eval Evaluator)
+	Validate     func(t *testing.T, eval *Evaluator)
 	Type         LicenseType
 	NeverExpires bool
 }
@@ -47,7 +47,7 @@ func newTestClient(fn roundTripFunc) *http.Client {
 
 func (test *licenseTest) Run(t *testing.T) {
 	t.Run(test.Name, func(t *testing.T) {
-		var eval Evaluator
+		var eval *Evaluator
 		if test.Type == LicenseTypeGitpod {
 			if test.NeverExpires {
 				t.Fatal("gitpod licenses must have an expiry date")
@@ -195,7 +195,7 @@ func TestSeats(t *testing.T) {
 				Seats:      test.Licensed,
 				ValidUntil: validUntil,
 			},
-			Validate: func(t *testing.T, eval Evaluator) {
+			Validate: func(t *testing.T, eval *Evaluator) {
 				withinLimits := eval.HasEnoughSeats(test.Probe)
 				if withinLimits != test.WithinLimits {
 					t.Errorf("HasEnoughSeats did not behave as expected: lic=%d probe=%d expected=%v actual=%v", test.Licensed, test.Probe, test.WithinLimits, withinLimits)
@@ -253,7 +253,7 @@ func TestFeatures(t *testing.T) {
 		lt := licenseTest{
 			Name:    test.Name,
 			License: lic,
-			Validate: func(t *testing.T, eval Evaluator) {
+			Validate: func(t *testing.T, eval *Evaluator) {
 				unavailableFeatures := featureSet{}
 				for f := range allowanceMap[LevelEnterprise].Features {
 					unavailableFeatures[f] = struct{}{}

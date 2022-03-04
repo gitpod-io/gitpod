@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	instances map[int]licensor.Evaluator = make(map[int]licensor.Evaluator)
+	instances map[int]*licensor.Evaluator = make(map[int]*licensor.Evaluator)
 	nextID    int                        = 1
 )
 
