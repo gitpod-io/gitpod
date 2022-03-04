@@ -1,6 +1,13 @@
 # Change Log
 
 ## March 2022
+- Support user-modifiable cgroupv2 structure ([#8578](https://github.com/gitpod-io/gitpod/pull/8578)) - [@csweichel](https://github.com/csweichel)
+- Update k8s go dependencies to v1.23.4 ([#8533](https://github.com/gitpod-io/gitpod/pull/8533)) - [@aledbf](https://github.com/aledbf)
+- Update prometheus to v1.12.1 [CVE-2022-21698](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-21698) ([#8533](https://github.com/gitpod-io/gitpod/pull/8533)) - [@aledbf](https://github.com/aledbf)
+- Update containerd to v1.6.0 ([#8533](https://github.com/gitpod-io/gitpod/pull/8533)) - [@aledbf](https://github.com/aledbf)
+- Fix user detail bug that fetches all workspaces. ([#8562](https://github.com/gitpod-io/gitpod/pull/8562)) - [@laushinka](https://github.com/laushinka)
+- [dashboard] Don't always print 'Connecting to workspace logs...' (it's somewhat misleading) ([#8558](https://github.com/gitpod-io/gitpod/pull/8558)) - [@jankeromnes](https://github.com/jankeromnes)
+- Link to privacy policy from login page ([#8546](https://github.com/gitpod-io/gitpod/pull/8546)) - [@jldec](https://github.com/jldec)
 - [kots]: add the KOTS installation manifests ([#8395](https://github.com/gitpod-io/gitpod/pull/8395)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Free text search on workspace admin dashboard is not enabled anymore. ([#8503](https://github.com/gitpod-io/gitpod/pull/8503)) - [@laushinka](https://github.com/laushinka)
 - Renamed `danger-use-unsupported-config` flag in the installer to `use-experimental-config` ([#8477](https://github.com/gitpod-io/gitpod/pull/8477)) - [@Pothulapati](https://github.com/Pothulapati)
