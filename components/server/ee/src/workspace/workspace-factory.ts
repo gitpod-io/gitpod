@@ -15,6 +15,7 @@ import { Feature } from '@gitpod/licensor/lib/api';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
+import { UserDB } from '@gitpod/gitpod-db/lib';
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
@@ -22,8 +23,12 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
-    protected requireEELicense(feature: Feature) {
-        if (!this.licenseEvaluator.isEnabled(feature)) {
+    @inject(UserDB) protected readonly userDB: UserDB;
+
+    protected async requireEELicense(feature: Feature) {
+        const userCount = await this.userDB.getUserCount(true);
+
+        if (!this.licenseEvaluator.isEnabled(feature, userCount)) {
             throw new ResponseError(ErrorCodes.EE_LICENSE_REQUIRED, "enterprise license required");
         }
     }
@@ -39,7 +44,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
     }
 
     protected async createForStartPrebuild(ctx: TraceContext, user: User, context: StartPrebuildContext, normalizedContextURL: string): Promise<Workspace> {
-        this.requireEELicense(Feature.FeaturePrebuild);
+        await this.requireEELicense(Feature.FeaturePrebuild);
         const span = TraceContext.startSpan("createForStartPrebuild", ctx);
 
         try {
@@ -177,7 +182,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
     }
 
     protected async createForPrebuiltWorkspace(ctx: TraceContext, user: User, context: PrebuiltWorkspaceContext, normalizedContextURL: string): Promise<Workspace> {
-        this.requireEELicense(Feature.FeaturePrebuild);
+        await this.requireEELicense(Feature.FeaturePrebuild);
         const span = TraceContext.startSpan("createForPrebuiltWorkspace", ctx);
 
         try {

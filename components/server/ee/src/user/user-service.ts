@@ -28,8 +28,10 @@ export class UserServiceEE extends UserService {
             return this.eligibilityService.getDefaultWorkspaceTimeout(user, date);
         }
 
+        const userCount = await this.userDb.getUserCount(true);
+
         // the self-hosted case
-        if (!this.licenseEvaluator.isEnabled(Feature.FeatureSetTimeout)) {
+        if (!this.licenseEvaluator.isEnabled(Feature.FeatureSetTimeout, userCount)) {
             return "30m";
         }
 
