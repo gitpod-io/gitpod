@@ -23,15 +23,25 @@ type replicatedFields struct {
 	Value interface{} `json:"value"` // This is of type "fieldType"
 }
 
+type ReplicatedLicenseType string
+
+// variable names are what Replicated calls them in the vendor portal
+const (
+	ReplicatedLicenseTypeCommunity   ReplicatedLicenseType = "community"
+	ReplicatedLicenseTypeDevelopment ReplicatedLicenseType = "dev"
+	ReplicatedLicenseTypePaid        ReplicatedLicenseType = "prod"
+	ReplicatedLicenseTypeTrial       ReplicatedLicenseType = "trial"
+)
+
 // replicatedLicensePayload exists to convert the JSON structure to a LicensePayload
 type replicatedLicensePayload struct {
-	LicenseID      string             `json:"license_id"`
-	InstallationID string             `json:"installation_id"`
-	Assignee       string             `json:"assignee"`
-	ReleaseChannel string             `json:"release_channel"`
-	LicenseType    string             `json:"license_type"`
-	ExpirationTime *time.Time         `json:"expiration_time,omitempty"` // Not set if license never expires
-	Fields         []replicatedFields `json:"fields"`
+	LicenseID      string                `json:"license_id"`
+	InstallationID string                `json:"installation_id"`
+	Assignee       string                `json:"assignee"`
+	ReleaseChannel string                `json:"release_channel"`
+	LicenseType    ReplicatedLicenseType `json:"license_type"`
+	ExpirationTime *time.Time            `json:"expiration_time,omitempty"` // Not set if license never expires
+	Fields         []replicatedFields    `json:"fields"`
 }
 
 type ReplicatedEvaluator struct {
@@ -90,7 +100,8 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator)
 	}
 
 	lic := LicensePayload{
-		ID: replicatedPayload.LicenseID,
+		ID:    replicatedPayload.LicenseID,
+		Level: LevelEnterprise,
 	}
 
 	// Search for the fields
@@ -98,9 +109,6 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator)
 		switch i.Field {
 		case "domain":
 			lic.Domain = i.Value.(string)
-
-		case "levelId":
-			lic.Level = LicenseLevel(i.Value.(float64))
 
 		case "seats":
 			lic.Seats = int(i.Value.(float64))
@@ -120,7 +128,8 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator)
 	}
 
 	return &Evaluator{
-		lic: lic,
+		lic:           lic,
+		allowFallback: replicatedPayload.LicenseType == ReplicatedLicenseTypeCommunity, // Only community licenses are allowed to fallback
 	}
 }
 
