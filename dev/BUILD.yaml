@@ -26,8 +26,6 @@ packages:
       buildArgs:
         VERSION: ${version}
       dockerfile: leeway.Dockerfile
-      metadata:
-        helm-component: dev-utils
       image:
         - ${imageRepoBase}/dev-utils:${version}
         - ${imageRepoBase}/dev-utils:commit-${__git_commit}
