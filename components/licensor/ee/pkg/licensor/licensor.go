@@ -117,9 +117,18 @@ func (lvl LicenseLevel) allowance() allowance {
 	return a
 }
 
+// Fallback license is used when the instance exceeds the number of licenses - it allows limited access
+var fallbackLicense = LicensePayload{
+	ID:    "fallback-license",
+	Level: LevelTeam,
+	Seats: 0,
+	// Domain, ValidUntil are free for all
+}
+
+// Default license is used when no valid license is given - it allows full access up to 10 users
 var defaultLicense = LicensePayload{
 	ID:    "default-license",
-	Level: LevelTeam,
+	Level: LevelEnterprise,
 	Seats: 10,
 	// Domain, ValidUntil are free for all
 }
@@ -144,8 +153,9 @@ func matchesDomain(pattern, domain string) bool {
 
 // Evaluator determines what a license allows for
 type Evaluator struct {
-	invalid string
-	lic     LicensePayload
+	invalid       string
+	allowFallback bool // Paid licenses cannot fallback and prevent additional signups
+	lic           LicensePayload
 }
 
 // Validate returns false if the license isn't valid and a message explaining why that is.
@@ -158,22 +168,43 @@ func (e *Evaluator) Validate() (msg string, valid bool) {
 }
 
 // Enabled determines if a feature is enabled by the license
-func (e *Evaluator) Enabled(feature Feature) bool {
+func (e *Evaluator) Enabled(feature Feature, seats int) bool {
 	if e.invalid != "" {
 		return false
 	}
 
-	_, ok := e.lic.Level.allowance().Features[feature]
+	var ok bool
+	if e.hasEnoughSeats(seats) {
+		// License has enough seats available - evaluate this license
+		_, ok = e.lic.Level.allowance().Features[feature]
+	} else if e.allowFallback {
+		// License has run out of seats - use the fallback license
+		_, ok = fallbackLicense.Level.allowance().Features[feature]
+	}
+
 	return ok
 }
 
-// HasEnoughSeats returns true if the license supports at least the give amount of seats
-func (e *Evaluator) HasEnoughSeats(seats int) bool {
+// hasEnoughSeats returns true if the license supports at least the give amount of seats
+func (e *Evaluator) hasEnoughSeats(seats int) bool {
 	if e.invalid != "" {
 		return false
 	}
 
 	return e.lic.Seats == 0 || seats <= e.lic.Seats
+}
+
+// HasEnoughSeats is the public method to hasEnoughSeats. Will use fallback license if allowable
+func (e *Evaluator) HasEnoughSeats(seats int) bool {
+	if e.invalid != "" {
+		return false
+	}
+
+	if !e.allowFallback {
+		return e.hasEnoughSeats(seats)
+	}
+	// There is always more space if can use a fallback license
+	return true
 }
 
 // Inspect returns the license information this evaluator holds.
