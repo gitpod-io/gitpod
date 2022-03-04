@@ -1,0 +1,40 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- if .Values.components.restarter.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: restarter
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: restarter
+    kind: cronjob
+    stage: {{ .Values.installation.stage }}
+spec:
+  # every sunday morning
+  schedule: {{ .Values.components.restarter.schedule | quote }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          enableServiceLinks: false
+          containers:
+          - name: kubectl
+            image: {{ .Values.components.restarter.image }}
+            command:
+            - /scripts/run.sh
+            volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+          serviceAccountName: restarter
+          restartPolicy: OnFailure
+          volumes:
+          - name: scripts
+            configMap:
+              name: restarter-scripts
+              defaultMode: 0555
+{{- end }}

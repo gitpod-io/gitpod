@@ -1,0 +1,55 @@
+dist/
+components/*/lib/
+components/ee/*/lib/
+components/*/typescript/lib/
+components/local-app-api/*/lib/
+components/supervisor/frontend/lib/
+src-gen/
+css-gen/
+node_modules/
+yarn-error.log
+lerna-debug.log
+**/telepresence.log
+.env
+.tmp
+.sass-cache
+
+# build artifacts
+.terraform/
+*.tfstate
+*.tfstate.backup
+/versions.yaml
+
+.deploy/
+.create-cluster-tmp/
+components/versions/versions.json
+
+.npmrc
+.context
+.npm-packages-offline-cache
+.helm-chart-release
+*.tgz
+
+# Symbolic links created by scripts for building docker images
+/.dockerignore
+
+# Python
+venv/
+.eggs/
+*.egg-info
+*.pyc
+
+# Generated (in Jenkins builds)
+/dev-http-cache/
+
+# Helm charts testing
+.helm-render
+
+# Decrypted secrets
+charts/gitpod_io/secrets/decrypted
+
+# Build artifacts
+components/ws-proxy/ws-proxy
+
+# Logs
+components/server/*.log

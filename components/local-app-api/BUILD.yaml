@@ -1,0 +1,10 @@
+packages:
+  - name: proto
+    type: generic
+    srcs:
+      - "*.proto"
+    deps:
+      - components/supervisor-api:proto
+    config:
+      commands:
+        - ["echo"]

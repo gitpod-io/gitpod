@@ -1,0 +1,30 @@
+{
+    "actions": [
+        {
+            "Func": "modifyFinalizer",
+            "Params": {
+                "add": true,
+                "finalizer": "gitpod.io/finalizer",
+                "workspaceID": "0c5a8ef3-052b-44a7-b11c-3542a0928076"
+            }
+        },
+        {
+            "Func": "markWorkspace",
+            "Params": {
+                "annotations": [
+                    {
+                        "Name": "gitpod/traceid",
+                        "Value": "",
+                        "Delete": true
+                    },
+                    {
+                        "Name": "gitpod.io/nodeName",
+                        "Value": "gke-production--gitp-workspace-pool-1-c73d13c7-fzbk",
+                        "Delete": false
+                    }
+                ],
+                "workspaceID": "0c5a8ef3-052b-44a7-b11c-3542a0928076"
+            }
+        }
+    ]
+}

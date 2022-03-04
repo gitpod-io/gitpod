@@ -1,0 +1,20 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installPodSecurityPolicies -}}
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Namespace }}-ns-psp:restricted-root-user
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: cluster
+    kind: clusterrole
+    stage: {{ .Values.installation.stage }}
+rules:
+  - apiGroups: ["policy"]
+    resources: ["podsecuritypolicies"]
+    verbs: ["use"]
+    resourceNames:
+    - {{ .Release.Namespace }}-ns-restricted-root-user
+{{- end -}}

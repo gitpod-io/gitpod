@@ -1,0 +1,28 @@
+{
+    "status": {
+        "id": "4f8ea7b8-b87d-42f2-b8dd-1a32fdbdf0d4",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "3a4f0616-f287-4523-aaf7-6d60ca458563",
+            "meta_id": "eb694666-269a-4d8c-a031-3cd6ea8135f9",
+            "started_at": {
+                "seconds": 1560927009
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images/b24b4698d67f493b801d17196870fd8a422ffa1e/eu.gcr.io/gitpod-dev/workspace-full:sha256-535009d8cf429001e17f0f6388f33065c53cb70a62904800aa3f424403c7cb7e",
+            "url": "http://eb694666-269a-4d8c-a031-3cd6ea8135f9.ws-eu.gh-2510.staging.gitpod.io",
+            "ide_image": {}
+        },
+        "phase": 6,
+        "conditions": {
+            "failed": "cannot init workspace content: rpc error: code = Internal desc = cannot initialize workspace"
+        },
+        "runtime": {
+            "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-fltt",
+            "pod_name": "ws-4f8ea7b8-b87d-42f2-b8dd-1a32fdbdf0d4",
+            "node_ip": "10.132.0.42"
+        },
+        "auth": {}
+    }
+}

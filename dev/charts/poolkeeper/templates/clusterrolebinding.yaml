@@ -1,0 +1,16 @@
+{{ if .Values.installPodSecurityPolicies -}}
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: poolkeeper
+  labels:
+    {{- include "poolkeeper.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: poolkeeper
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: poolkeeper
+  apiGroup: rbac.authorization.k8s.io
+{{- end -}}

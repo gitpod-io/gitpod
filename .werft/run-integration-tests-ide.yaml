@@ -1,0 +1,110 @@
+args:
+- name: version
+  desc: "The version of the integration tests to use"
+  required: true
+- name: namespace
+  desc: "The namespace to run the integration test against"
+  required: true
+- name: testPattern
+  desc: "The test file pattern to filter the tests to run"
+  required: false
+pod:
+  serviceAccount: werft
+  nodeSelector:
+    dev/workload: builds
+  imagePullSecrets:
+  - name: eu-gcr-io-pull-secret
+  volumes:
+  - name: gcp-sa
+    secret:
+      secretName: gcp-sa-gitpod-dev-deployer
+  - name: integration-test-user
+    secret:
+      secretName: integration-test-user
+  - name: config
+    emptyDir: {}
+  initContainers:
+  - name: gcloud
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-ws-man-bridge-audit.10
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: gcp-sa
+      mountPath: /mnt/secrets/gcp-sa
+      readOnly: true
+    - name: config
+      mountPath: /config
+      readOnly: false
+    command:
+    - bash
+    - -c
+    - |
+
+      echo "[prep] preparing config."
+
+      gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
+      cp -R /home/gitpod/.config/gcloud /config/gcloud
+      cp /home/gitpod/.kube/config /config/kubeconfig
+
+      echo "[prep] copied config..."
+  containers:
+  - name: tests
+    image: eu.gcr.io/gitpod-core-dev/build/integration-tests:{{ .Annotations.version }}
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: config
+      mountPath: /config
+      readOnly: true
+    env:
+    - name: USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: integration-test-user
+          key: username
+    - name: USER_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: integration-test-user
+          key: token
+    - name: ROBOQUAT_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-roboquat-automatic-changelog
+          key: token
+    command:
+    - /bin/bash
+    - -c
+    - |
+      sleep 1
+      set -Eeuo pipefail
+
+      printf '{{ toJson .Annotations }}' > context.json
+
+      echo "[prep] receiving config..."
+      export GOOGLE_APPLICATION_CREDENTIALS="/config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
+      echo "[prep] received config."
+
+      echo "[prep] using username: $USERNAME"
+
+      TEST_PATTERN="{{ .Annotations.testPattern }}"
+      if [[ "$TEST_PATTERN" == "<no value>" ]]; then
+        TEST_PATTERN=""
+      fi
+      echo "[prep] using testPattern: $TEST_PATTERN"
+
+      args=()
+      [[ "$TEST_PATTERN" != "" ]] && args+=( "-testPattern=$TEST_PATTERN" )
+      args+=( '-kubeconfig=/config/kubeconfig' )
+      args+=( "-namespace={{ .Annotations.namespace }}" )
+      [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
+      echo "[prep|DONE]"
+
+      /entrypoint.sh "${args[@]}" 2>&1 | ts "[int-tests] "
+
+      RC=${PIPESTATUS[0]}
+      if [ $RC -eq 1 ]; then
+        echo "[int-tests|FAIL]"
+      else
+        echo "[int-tests|DONE]"
+      fi

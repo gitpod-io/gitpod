@@ -1,0 +1,43 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package localapp;
+option go_package = "github.com/gitpod-io/gitpod/local-app/api";
+
+import "supervisor-api/port.proto";
+
+service LocalApp {
+  rpc TunnelStatus(TunnelStatusRequest) returns (stream TunnelStatusResponse) {}
+  rpc AutoTunnel(AutoTunnelRequest) returns (AutoTunnelResponse) {}
+  rpc ResolveSSHConnection(ResolveSSHConnectionRequest) returns (ResolveSSHConnectionResponse) {}
+}
+message TunnelStatusRequest {
+  string instance_id = 1;
+  // if observe is true, we'll return a stream of changes rather than just the
+  // current state of affairs.
+  bool observe = 2;
+}
+message TunnelStatusResponse { repeated TunnelStatus tunnels = 1; }
+message TunnelStatus {
+  uint32 remote_port = 1;
+  uint32 local_port = 2;
+  supervisor.TunnelVisiblity visibility = 3;
+}
+
+message AutoTunnelRequest {
+  string instance_id = 1;
+  bool enabled = 2;
+}
+message AutoTunnelResponse {}
+
+message ResolveSSHConnectionRequest {
+  string instance_id = 1;
+  string workspace_id = 2;
+}
+message ResolveSSHConnectionResponse {
+  string config_file = 1;
+  string host = 2;
+}

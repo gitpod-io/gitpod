@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "noEmitOnError": false,
+        "noUnusedLocals": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "strictPropertyInitialization": false,
+        "downlevelIteration": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es6",
+        "jsx": "react",
+        "lib": [
+            "es6",
+            "dom",
+            "esnext.asynciterable"
+        ],
+        "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true,
+        "skipLibCheck": true,
+        "rootDir": "src",
+        "outDir": "lib",
+        "useUnknownInCatchVariables": false
+    },
+    "include": [
+        "src"
+    ]
+}

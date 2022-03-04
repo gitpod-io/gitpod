@@ -1,0 +1,53 @@
+packages:
+- name: app
+  type: go
+  srcs:
+  - "cmd/*.go"
+  - "pkg/**/*.go"
+  - "main.go"
+  - "go.mod"
+  - "go.sum"
+  env:
+  - CGO_ENABLED=0
+  - GOOS=linux
+  deps:
+  - components/common-go:lib
+  prep:
+  - ["go", "mod", "tidy"]
+  config:
+    packaging: app
+- name: runc-facade
+  type: go
+  srcs:
+  - "cmd/runc-facade/*.go"
+  - "go.mod"
+  - "go.sum"
+  env:
+  - CGO_ENABLED=0
+  - GOOS=linux
+  deps:
+  - components/common-go:lib
+  prep:
+    - ["mv", "cmd/runc-facade/main.go", "main.go"]
+    - ["go", "mod", "tidy"]
+  config:
+    packaging: app
+- name: docker
+  type: docker
+  srcs:
+  - supervisor-ide-config.json
+  - ide-startup.sh
+  deps:
+  - :app
+  - :runc-facade
+  config:
+    buildArgs:
+      VERSION: ${version}
+    argdeps:
+        - imageRepoBase
+    dockerfile: leeway.Dockerfile
+    metadata:
+      helm-component: imageBuilderMk3.builderImage
+    image:
+    - ${imageRepoBase}/image-builder-mk3/bob:${version}
+    - ${imageRepoBase}/image-builder-mk3/bob:${__git_commit}

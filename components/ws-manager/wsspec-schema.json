@@ -1,0 +1,298 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/StartWorkspaceSpec",
+  "title": "ws-manager wsspec schema - generated using wsman generate wsspec",
+  "definitions": {
+    "EmptyInitializer": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EnvironmentVariable": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "GitConfig": {
+      "properties": {
+        "authPassword": {
+          "type": "string"
+        },
+        "authUser": {
+          "type": "string"
+        },
+        "authentication": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        },
+        "customConfig": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "GitInitializer": {
+      "properties": {
+        "checkoutLocation": {
+          "type": "string"
+        },
+        "cloneTaget": {
+          "type": "string"
+        },
+        "config": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/GitConfig"
+        },
+        "remoteUri": {
+          "type": "string"
+        },
+        "targetMode": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        },
+        "upstream_RemoteUri": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "GitSpec": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "PortSpec": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "target": {
+          "type": "integer"
+        },
+        "visibility": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "PrebuildInitializer": {
+      "properties": {
+        "git": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/GitInitializer"
+        },
+        "prebuild": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/SnapshotInitializer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "SnapshotInitializer": {
+      "properties": {
+        "snapshot": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "StartWorkspaceRequest": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "metadata": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/WorkspaceMetadata"
+        },
+        "servicePrefix": {
+          "type": "string"
+        },
+        "spec": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/StartWorkspaceSpec"
+        },
+        "type": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "StartWorkspaceSpec": {
+      "properties": {
+        "checkoutLocation": {
+          "type": "string"
+        },
+        "envvars": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/EnvironmentVariable"
+          },
+          "type": "array"
+        },
+        "featureFlags": {
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "git": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/GitSpec"
+        },
+        "initializer": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/WorkspaceInitializer"
+        },
+        "ports": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/PortSpec"
+          },
+          "type": "array"
+        },
+        "theiaVersion": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "string"
+        },
+        "workspaceImage": {
+          "type": "string"
+        },
+        "workspaceLocation": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceInitializer": {
+      "additionalProperties": true,
+      "type": "object",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/WorkspaceInitializer_Empty"
+        },
+        {
+          "$ref": "#/definitions/WorkspaceInitializer_Git"
+        },
+        {
+          "$ref": "#/definitions/WorkspaceInitializer_Snapshot"
+        },
+        {
+          "$ref": "#/definitions/WorkspaceInitializer_Prebuild"
+        }
+      ]
+    },
+    "WorkspaceInitializer_Empty": {
+      "properties": {
+        "empty": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/EmptyInitializer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceInitializer_Git": {
+      "properties": {
+        "git": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/GitInitializer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceInitializer_Prebuild": {
+      "properties": {
+        "prebuild": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PrebuildInitializer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceInitializer_Snapshot": {
+      "properties": {
+        "snapshot": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/SnapshotInitializer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceMetadata": {
+      "properties": {
+        "metaId": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}

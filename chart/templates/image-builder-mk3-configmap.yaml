@@ -1,0 +1,67 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.imageBuilderMk3 -}}
+{{ $compImgbldr := .Values.components.imageBuilder -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp "compImgbldr" $compImgbldr -}}
+
+{{- define "registry-name" -}}
+{{- $comp := .comp -}}
+{{- $compImgbldr := .compImgbldr -}}
+{{- $ := .root -}}
+{{- if eq (default $comp.registry $compImgbldr.registry).name "builtin" -}}
+{{ template "gitpod.builtinRegistry.name" $ }}
+{{- else -}}
+{{ (default $comp.registry $compImgbldr.registry).name }}
+{{- end -}}
+{{- end -}}
+
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-builder-mk3-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  image-builder.json: |-
+    {
+        "orchestrator": {
+            "gitpodLayerLoc": "/app/workspace-image-layer.tar.gz",
+            "baseImageRepository": "{{ or (default $comp.registry $compImgbldr.registry).baseImageName (print (include "registry-name" $this) "/base-images") }}",
+            "workspaceImageRepository": "{{ or (default $comp.registry $compImgbldr.registry).workspaceImageName (print (include "registry-name" $this) "/workspace-images") }}",
+            "imageBuildSalt": "{{ $comp.imageBuildSalt | default "" }}",
+            {{- if $comp.wsman -}}
+            {{ $comp.wsman | fromYaml | toJson }}
+            {{- else -}}
+            "wsman": {
+                "address": "ws-manager:8080",
+                "tls": {
+                    "ca": "/wsman-certs/ca.crt",
+                    "crt": "/wsman-certs/tls.crt",
+                    "key": "/wsman-certs/tls.key"
+                }
+            },
+            {{- end -}}
+            "builderImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.builderImage) }}",
+            {{- if (default $comp.registry $compImgbldr.registry).secretName -}}"pullSecretFile": "/config/pull-secret.json",{{- end -}}
+            "pullSecret": {{ (default $compImgbldr.registry).secretName | quote }}
+        },
+        "refCache": {
+            "interval": "6h",
+            "refs": ["{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}"]
+        },
+        "pprof": {
+            "address": ":6060"
+        },
+        "prometheus": {
+            "address": "127.0.0.1:9500"
+        },
+        "service": {
+            "address": ":8080"
+        }
+    }
+{{- end -}}

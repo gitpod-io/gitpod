@@ -1,0 +1,59 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.blobserve -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blobserve-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        {{ if .Values.components.workspace.pullSecret.secretName -}}"dockerAuth": "/mnt/pull-secret.json",{{- end }}
+        "pprofAddr": ":6060",
+        "prometheusAddr": "127.0.0.1:9500"
+        , "blobserve": {
+            "port": {{ $comp.ports.service.containerPort }},
+            "timeout": {{ ($comp.timeout | default "5s") | quote }},
+            "repos": {
+                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}": {
+                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) -}}"],
+                    "workdir": "/ide",
+                    "replacements": [
+                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" },
+                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.main.js" },
+                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js" }
+                        {{- if not .Values.components.openVsxProxy.disabled }}
+                        , { "search": "https://open-vsx.org", "replacement": "https://open-vsx.{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" }
+                        , { "search": "https://open-vsx.org", "replacement": "https://open-vsx.{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.main.js" }
+                        {{- else if (and .Values.components.openVsxProxy.vsxRegistryUrl (ne .Values.components.openVsxProxy.vsxRegistryUrl "https://open-vsx.org")) }}
+                        , { "search": "https://open-vsx.org", "replacement": "{{ .Values.components.openVsxProxy.vsxRegistryUrl }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" }
+                        , { "search": "https://open-vsx.org", "replacement": "{{ .Values.components.openVsxProxy.vsxRegistryUrl }}", "path": "/ide/out/vs/workbench/workbench.web.main.js" }
+                        {{- end }}
+                    ],
+                    "inlineStatic": [
+                        { "search": "${window.location.origin}", "replacement": "." },
+                        { "search": "value.startsWith(window.location.origin)", "replacement": "value.startsWith(window.location.origin) || value.startsWith('${ide}')" },
+                        { "search": "./out", "replacement": "${ide}/out" },
+                        { "search": "./node_modules", "replacement": "${ide}/node_modules" },
+                        { "search": "/_supervisor/frontend", "replacement": "${supervisor}" }
+                    ]
+                },
+                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}": {
+                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) -}}"],
+                    "workdir": "/.supervisor/frontend"
+                }
+            },
+            "blobSpace": {
+                "location": "/mnt/cache/blobserve",
+                "maxSizeBytes": {{ $comp.maxCacheSize | default 1073741824 }}
+            }
+        }
+    }
+{{- end -}}

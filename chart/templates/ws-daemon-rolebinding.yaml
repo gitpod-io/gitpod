@@ -1,0 +1,40 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Namespace }}-ns-ws-daemon-rb
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-daemon
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: ws-daemon
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-ns-ws-daemon
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Namespace }}-ws-daemon-rb-kube-rbac-proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-daemon
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: ws-daemon
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name:  {{ .Release.Namespace }}-kube-rbac-proxy
+  apiGroup: rbac.authorization.k8s.io

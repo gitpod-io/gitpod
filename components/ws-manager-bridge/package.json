@@ -1,0 +1,45 @@
+{
+  "private": true,
+  "name": "@gitpod/ws-manager-bridge",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "node ./dist/src/index.js",
+    "start-ee": "node ./dist/ee/src/index.js",
+    "prepare": "yarn clean && yarn build",
+    "build": "npx tsc",
+    "build:clean": "yarn clean && yarn build",
+    "rebuild": "yarn build:clean",
+    "build:watch": "watch 'yarn build' .",
+    "watch": "leeway exec --package .:app --transitive-dependencies --filter-type yarn --components --parallel -- yarn build -w --preserveWatchOutput",
+    "clean": "rimraf dist",
+    "clean:node": "rimraf node_modules",
+    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
+    "debug": "nodemon -w ./dist --inspect=9300 ./dist/index.js",
+    "telepresence": "leeway run .:telepresence"
+  },
+  "files": [
+    "/dist"
+  ],
+  "dependencies": {
+    "@gitpod/gitpod-db": "0.1.5",
+    "@gitpod/gitpod-messagebus": "0.1.5",
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/ws-daemon": "0.1.5",
+    "@gitpod/ws-manager": "0.1.5",
+    "@gitpod/ws-manager-bridge-api": "0.1.5",
+    "amqplib": "^0.8.0",
+    "express": "^4.17.3",
+    "inversify": "^5.0.1",
+    "prom-client": "^13.2.0",
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.8.2",
+    "@types/express": "^4.17.13",
+    "@types/google-protobuf": "^3.7.4",
+    "tslint": "^5.9.1",
+    "typescript": "~4.4.2",
+    "watch": "^1.0.2"
+  }
+}

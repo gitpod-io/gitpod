@@ -1,0 +1,47 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Namespace }}-ns-ws-daemon
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-daemon
+    kind: clusterrole
+    stage: {{ .Values.installation.stage }}
+rules:
+- apiGroups:
+  - "policy"
+  resources:
+  - "podsecuritypolicies"
+  verbs:
+  - "use"
+  resourceNames:
+  - "{{ .Release.Namespace }}-ns-privileged-unconfined"
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - delete
+  - update
+  - patch

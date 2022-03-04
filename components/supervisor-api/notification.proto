@@ -1,0 +1,70 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
+
+// Notification serivce allows external processes to notify the user and ask for decisions.
+service NotificationService {
+
+    // Prompts the user and asks for a decision. Typically called by some external process.
+    // If the list of actions is empty this service returns immediately,
+    // otherwise it blocks until the user has made their choice.
+    rpc Notify(NotifyRequest) returns (NotifyResponse) {
+        option (google.api.http) = {
+            post: "/v1/notification/notify"
+        };
+    }
+
+    // Subscribe to notifications. Typically called by the IDE.
+    rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {
+        option (google.api.http) = {
+            get: "/v1/notification/subscribe"
+        };
+    }
+
+    // Report a user's choice as a response to a notification. Typically called by the IDE.
+    rpc Respond(RespondRequest) returns (RespondResponse) {
+        option (google.api.http) = {
+            post: "/v1/notification/respond"
+        };
+    }
+}
+
+message NotifyRequest {
+    enum Level {
+        ERROR = 0;
+        WARNING = 1;
+        INFO = 2;
+    }
+    Level level = 1;
+    string message = 2;
+    // if actions are empty, Notify will return immediately
+    repeated string actions = 3;
+}
+
+message NotifyResponse {
+    // action chosen by the user or empty string if cancelled
+    string action = 1;
+}
+
+message SubscribeRequest {}
+
+message SubscribeResponse {
+    uint64 requestId = 1;
+    NotifyRequest request = 2;
+}
+
+message RespondRequest {
+    uint64 requestId = 1;
+    NotifyResponse response = 2;
+}
+
+message RespondResponse {}

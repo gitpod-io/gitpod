@@ -1,0 +1,100 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.imageBuilderMk3 -}}
+{{ $compImgbldr := .Values.components.imageBuilder -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp "compImgbldr" $compImgbldr -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-builder-mk3
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: image-builder-mk3
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: image-builder-mk3
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: image-builder-mk3
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: image-builder-mk3
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+      annotations:
+{{- if index .Values "docker-registry" "enabled" }}
+        checksum/builtin-registry-auth: {{ include (print $.Template.BasePath "/builtin-registry-auth-secret.yaml") . | sha256sum }}
+{{- end -}}
+{{ include "gitpod.pod.dependsOn" $this | indent 8 }}
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      serviceAccountName: image-builder-mk3
+      volumes:
+      - name: configuration
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      {{- if (default $compImgbldr.registry).secretName }}
+      - name: pull-secret
+        secret:
+          secretName: {{ (default $compImgbldr.registry).secretName }}
+      {{- end }}
+{{- range $idx, $sec := (default $comp.registryCerts $compImgbldr.registryCerts) }}
+      - name: docker-tls-certs-{{ $idx }}
+        secret:
+          secretName: {{ $sec.secret }}
+{{- end }}
+      - name: wsman-tls-certs
+        secret:
+          secretName: {{ .Values.components.wsManager.tls.server.secretName }}
+      enableServiceLinks: false
+      containers:
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+      - name: image-builder-mk3
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args:
+        - "run"
+        - "--config"
+        - "/config/image-builder.json"
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+        volumeMounts:
+        - mountPath: /config/image-builder.json
+          subPath: "image-builder.json"
+          name: configuration
+        - mountPath: /wsman-certs
+          name: wsman-tls-certs
+          readOnly: true
+{{- if (default $comp $compImgbldr).registry }}
+{{- if (default $comp $compImgbldr).registry.secretName }}
+        - mountPath: /config/pull-secret.json
+          subPath: .dockerconfigjson
+          name: pull-secret
+{{- end }}
+{{- end }}
+        resources:
+          requests:
+            cpu: {{ $.Values.resources.default.cpu }}
+            memory: {{ $.Values.resources.default.memory }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        securityContext:
+          runAsUser: 33333
+          privileged: false
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

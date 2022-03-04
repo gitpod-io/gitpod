@@ -1,0 +1,98 @@
+packages:
+  - name: docker
+    type: generic
+    argdeps:
+      - version
+    deps:
+      - :intellij
+      - :goland
+      - :pycharm
+      - :phpstorm
+  - name: intellij
+    type: docker
+    srcs:
+      - "startup.sh"
+      - "supervisor-ide-config_intellij.json"
+    deps:
+      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/cli:app
+    argdeps:
+      - imageRepoBase
+      - intellijDownloadUrl
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.intellij
+      buildArgs:
+        JETBRAINS_BACKEND_URL: ${intellijDownloadUrl}
+        SUPERVISOR_IDE_CONFIG: supervisor-ide-config_intellij.json
+      image:
+        - ${imageRepoBase}/ide/intellij:${version}
+        - ${imageRepoBase}/ide/intellij:commit-${__git_commit}
+  - name: goland
+    type: docker
+    srcs:
+      - "startup.sh"
+      - "supervisor-ide-config_goland.json"
+    deps:
+      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/cli:app
+    argdeps:
+      - imageRepoBase
+      - golandDownloadUrl
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.goland
+      buildArgs:
+        JETBRAINS_BACKEND_URL: ${golandDownloadUrl}
+        SUPERVISOR_IDE_CONFIG: supervisor-ide-config_goland.json
+      image:
+        - ${imageRepoBase}/ide/goland:${version}
+        - ${imageRepoBase}/ide/goland:commit-${__git_commit}
+  - name: pycharm
+    type: docker
+    srcs:
+      - "startup.sh"
+      - "supervisor-ide-config_pycharm.json"
+    deps:
+      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/cli:app
+    argdeps:
+      - imageRepoBase
+      - pycharmDownloadUrl
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.pycharm
+      buildArgs:
+        JETBRAINS_BACKEND_URL: ${pycharmDownloadUrl}
+        SUPERVISOR_IDE_CONFIG: supervisor-ide-config_pycharm.json
+      image:
+        - ${imageRepoBase}/ide/pycharm:${version}
+        - ${imageRepoBase}/ide/pycharm:commit-${__git_commit}
+  - name: phpstorm
+    type: docker
+    srcs:
+      - "startup.sh"
+      - "supervisor-ide-config_phpstorm.json"
+    deps:
+      - components/ide/jetbrains/backend-plugin:plugin
+      - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/cli:app
+    argdeps:
+      - imageRepoBase
+      - phpstormDownloadUrl
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.phpstorm
+      buildArgs:
+        JETBRAINS_BACKEND_URL: ${phpstormDownloadUrl}
+        SUPERVISOR_IDE_CONFIG: supervisor-ide-config_phpstorm.json
+      image:
+        - ${imageRepoBase}/ide/phpstorm:${version}
+        - ${imageRepoBase}/ide/phpstorm:commit-${__git_commit}

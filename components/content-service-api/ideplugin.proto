@@ -1,0 +1,47 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package ideplugin;
+
+option go_package = "github.com/gitpod-io/gitpod/content-service/api";
+
+service IDEPluginService {
+  // UploadURL provides a URL to which clients can upload the content via HTTP PUT.
+  rpc UploadURL(PluginUploadURLRequest) returns (PluginUploadURLResponse) {}
+
+  // DownloadURL provides a URL from which clients can download the content via HTTP GET.
+  rpc DownloadURL(PluginDownloadURLRequest) returns (PluginDownloadURLResponse) {}
+
+  // PluginHash provides a hash of the plugin
+  rpc PluginHash(PluginHashRequest) returns (PluginHashResponse) {}
+}
+
+message PluginUploadURLRequest {
+  string bucket = 1;
+  string name = 2;
+}
+
+message PluginUploadURLResponse {
+  string url = 1;
+}
+
+message PluginDownloadURLRequest {
+  string bucket = 1;
+  string name = 2;
+}
+
+message PluginDownloadURLResponse {
+  string url = 1;
+}
+
+message PluginHashRequest {
+    string bucket = 1;
+    string name = 2;
+}
+
+message PluginHashResponse {
+    string hash = 1;
+}

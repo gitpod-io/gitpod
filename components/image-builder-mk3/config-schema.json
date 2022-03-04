@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/config",
+  "title": "image-builder config schema - generated using img generate config",
+  "definitions": {
+    "": {
+      "required": [
+        "address",
+        "tls"
+      ],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "tls": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/tlsConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Configuration": {
+      "required": [
+        "baseImageRepository",
+        "workspaceImageRepository",
+        "gitpodLayerLoc",
+        "workdir"
+      ],
+      "properties": {
+        "baseImageRepository": {
+          "type": "string"
+        },
+        "dockerCfgFile": {
+          "type": "string"
+        },
+        "gitpodLayerLoc": {
+          "type": "string"
+        },
+        "imageBuildSalt": {
+          "type": "string"
+        },
+        "imagebuilderRef": {
+          "type": "string"
+        },
+        "workdir": {
+          "type": "string"
+        },
+        "workspaceImageRepository": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "config": {
+      "required": [
+        "builder",
+        "service",
+        "prometheus",
+        "pprof"
+      ],
+      "properties": {
+        "builder": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Configuration"
+        },
+        "pprof": {
+          "$ref": "#/definitions/"
+        },
+        "prometheus": {
+          "$ref": "#/definitions/"
+        },
+        "refCache": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/refcacheConfig"
+        },
+        "service": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "refcacheConfig": {
+      "required": [
+        "interval",
+        "refs"
+      ],
+      "properties": {
+        "interval": {
+          "type": "string"
+        },
+        "refs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "tlsConfig": {
+      "required": [
+        "ca",
+        "crt",
+        "key"
+      ],
+      "properties": {
+        "ca": {
+          "type": "string"
+        },
+        "crt": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}

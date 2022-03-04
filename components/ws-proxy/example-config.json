@@ -1,0 +1,29 @@
+{
+  "namespace": "default",
+  "ingress": {
+    "address": "8080",
+    "https": false,
+    "header": "x-wsproxy-host"
+  },
+  "proxy": {
+    "transportConfig": {
+      "connectTimeout": "10s",
+      "idleConnTimeout": "60s",
+      "maxIdleConns": 0,
+      "maxIdleConnsPerHost": 100
+    },
+    "gitpodInstallation": {
+      "scheme": "http",
+      "hostName": "gpl-portal.staging.gitpod-dev.com",
+      "workspaceHostSuffix": ".ws-dev.gpl-portal.staging.gitpod-dev.com",
+      "workspaceHostSuffixRegex": "\\.ws[^\\.]*\\.gpl-portal\\.staging\\.gitpod-dev\\.com"
+    },
+    "workspacePodConfig": {
+      "theiaPort": 23000,
+      "supervisorPort": 22999
+    },
+    "builtinPages": {
+      "location": "public/"
+    }
+  }
+}

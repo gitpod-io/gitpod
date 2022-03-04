@@ -1,0 +1,97 @@
+{
+    "status": {
+        "id": "dbc45dce-611a-49a8-bd76-7afda76a1e24",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "a0dfe7e6-351b-4fd8-80c2-5ed45814f44a",
+            "meta_id": "gray-lemming-0wlyvzy5",
+            "started_at": {
+                "seconds": 1622467314
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:81c4fb602a540d261f210cfc8ba0435b63b24238c1762ec029d8edaec816afb6",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:gpl-headless-log-wsman.25",
+            "headless": true,
+            "url": "https://gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com",
+            "exposed_ports": [
+                {
+                    "port": 1337,
+                    "visibility": 1,
+                    "url": "https://1337-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 3000,
+                    "visibility": 1,
+                    "url": "https://3000-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 3001,
+                    "visibility": 1,
+                    "url": "https://3001-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 3306,
+                    "visibility": 1,
+                    "url": "https://3306-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 4000,
+                    "visibility": 1,
+                    "url": "https://4000-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 5900,
+                    "visibility": 1,
+                    "url": "https://5900-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 6080,
+                    "url": "https://6080-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 9229,
+                    "visibility": 1,
+                    "url": "https://9229-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 9999,
+                    "visibility": 1,
+                    "url": "https://9999-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 13001,
+                    "visibility": 1,
+                    "url": "https://13001-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 7777,
+                    "visibility": 1,
+                    "url": "https://7777-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 13444,
+                    "visibility": 1,
+                    "url": "https://13444-gray-lemming-0wlyvzy5.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                }
+            ],
+            "type": 1,
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:gpl-headless-log-wsman.25"
+            }
+        },
+        "phase": 6,
+        "conditions": {
+            "snapshot": "workspaces/gray-lemming-0wlyvzy5/snapshot-1622467387276004249.tar@gitpod-user-a0dfe7e6-351b-4fd8-80c2-5ed45814f44a",
+            "final_backup_complete": 1
+        },
+        "runtime": {
+            "node_name": "gke-dev-workload-1-49d27f81-3xfh",
+            "pod_name": "prebuild-dbc45dce-611a-49a8-bd76-7afda76a1e24",
+            "node_ip": "10.132.15.219"
+        },
+        "auth": {
+            "owner_token": "y5-JYhqDzGGprABkr36-fTas8PCeA4sZ"
+        }
+    }
+}

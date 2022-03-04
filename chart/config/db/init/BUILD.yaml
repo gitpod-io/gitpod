@@ -1,0 +1,18 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+packages:
+  - name: init-scripts
+    srcs:
+      - "*.sql"
+    type: generic
+    config:
+      commands: [["ls"]]
+  - name: release-tar
+    srcs:
+     - "*.sql"
+    type: generic
+    config:
+      commands:
+      # exclude as it's for test installations only
+      - ["rm", "-f", "00-testdb-user.sql"]

@@ -1,0 +1,14 @@
+packages:
+  - name: lib
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "*.sh"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: library
+      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid="]

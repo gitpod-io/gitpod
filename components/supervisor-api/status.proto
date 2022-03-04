@@ -1,0 +1,222 @@
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+import "port.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
+
+// StatusService provides status feedback for the various in-workspace services.
+service StatusService {
+
+    // SupervisorStatus returns once supervisor is running.
+    rpc SupervisorStatus(SupervisorStatusRequest) returns (SupervisorStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/supervisor"
+        };
+    }
+
+    // IDEStatus returns OK if the IDE can serve requests.
+    rpc IDEStatus(IDEStatusRequest) returns (IDEStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/ide"
+            additional_bindings {
+                get: "/v1/status/ide/wait/{wait=true}",
+            }
+        };
+    }
+
+    // ContentStatus returns the status of the workspace content. When used with `wait`, the call
+    // returns when the content has become available.
+    rpc ContentStatus(ContentStatusRequest) returns (ContentStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/content",
+            additional_bindings {
+                get: "/v1/status/content/wait/{wait=true}",
+            }
+        };
+    }
+
+    // BackupStatus offers feedback on the workspace backup status. This status information can
+    // be relayed to the user to provide transparency as to how "safe" their files/content
+    // data are w.r.t. to being lost.
+    rpc BackupStatus(BackupStatusRequest) returns (BackupStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/backup"
+        };
+    }
+
+    // PortsStatus provides feedback about the network ports currently in use.
+    rpc PortsStatus(PortsStatusRequest) returns (stream PortsStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/ports"
+            additional_bindings {
+                get: "/v1/status/ports/observe/{observe=true}",
+            }
+        };
+    }
+
+    // TasksStatus provides tasks status information.
+    rpc TasksStatus(TasksStatusRequest) returns (stream TasksStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/tasks"
+            additional_bindings {
+                get: "/v1/status/tasks/observe/{observe=true}",
+            }
+        };
+    }
+
+}
+
+message SupervisorStatusRequest {}
+message SupervisorStatusResponse {
+    bool ok = 1;
+}
+
+message IDEStatusRequest {
+    // if true this request will return either when it times out or when the workspace IDE
+    // has become available.
+    bool wait = 1;
+}
+message IDEStatusResponse {
+    bool ok = 1;
+
+    message DesktopStatus {
+        string link = 1;
+        string label = 2;
+        string clientID = 3;
+        string kind = 4;
+    }
+
+    DesktopStatus desktop = 2;
+}
+
+message ContentStatusRequest {
+    // if true this request will return either when it times out or when the workspace content
+    // has become available.
+    bool wait = 1;
+}
+
+message ContentStatusResponse {
+    // true if the workspace content is available
+    bool available = 1;
+
+    // source indicates where the workspace content came from
+    ContentSource source = 2;
+}
+
+enum ContentSource {
+    from_other = 0;
+    from_backup = 1;
+    from_prebuild = 2;
+}
+
+message BackupStatusRequest {}
+message BackupStatusResponse {
+    bool canary_available = 1;
+}
+
+message PortsStatusRequest {
+    // if observe is true, we'll return a stream of changes rather than just the
+    // current state of affairs.
+    bool observe = 1;
+}
+message PortsStatusResponse {
+    repeated PortsStatus ports = 1;
+}
+
+enum PortVisibility {
+    private = 0;
+    public = 1;
+}
+enum OnPortExposedAction {
+    ignore = 0;
+    open_browser = 1;
+    open_preview = 2;
+    notify = 3;
+    notify_private = 4;
+}
+message ExposedPortInfo {
+    // public determines if the port is available without authentication or not
+    PortVisibility visibility = 1;
+    // url is the URL at which the port is available
+    string url = 2;
+    // action hint on expose
+    OnPortExposedAction on_exposed = 3;
+}
+message TunneledPortInfo {
+  // target port is the desired port on the remote machine
+  uint32 target_port = 1;
+  // visibility determines if the listener on remote machine should accept connections from localhost or network
+  // visibility none means that the port should not be tunneled
+  TunnelVisiblity visibility = 2;
+  // map of remote clients indicates on which remote port each client is listening to
+  map<string, uint32> clients = 3;
+}
+enum PortAutoExposure {
+    trying = 0;
+    succeeded = 1;
+    failed = 2;
+}
+message PortsStatus {
+    // local_port is the port a service actually bound to. Some services bind
+    // to localhost:<port>, in which case they cannot be made accessible from
+    // outside the container. To help with this, supervisor then starts a proxy
+    // that forwards traffic to this local port. In those cases, global_port
+    // contains the port where the proxy is listening on.
+    uint32 local_port = 1;
+
+    // DEPRECATED global_port
+    reserved 2;
+
+    // served is true if there is a process in the workspace that serves this port.
+    bool served = 4;
+
+    // Exposed provides information when a port is exposed. If this field isn't set,
+    // the port is not available from outside the workspace (i.e. the internet).
+    ExposedPortInfo exposed = 5;
+
+    // AutoExposure indicates the state of auto exposure
+    PortAutoExposure auto_exposure = 7;
+
+    // Tunneled provides information when a port is tunneled. If not present then
+    // the port is not tunneled.
+    TunneledPortInfo tunneled = 6;
+
+    // Port description, obtained from Gitpod PortConfig.
+    string description = 8;
+
+    // Port name, obtained from Gitpod PortConfig.
+    string name = 9;
+}
+
+message TasksStatusRequest {
+    // if observe is true, we'll return a stream of changes rather than just the
+    // current state of affairs.
+    bool observe = 1;
+}
+message TasksStatusResponse {
+    repeated TaskStatus tasks = 1;
+}
+message TaskStatus {
+    string id = 1;
+    TaskState state = 2;
+    string terminal = 3;
+    TaskPresentation presentation = 4;
+}
+enum TaskState {
+    opening = 0;
+    running = 1;
+    closed = 2;
+}
+message TaskPresentation {
+    string name = 1;
+    string open_in = 2;
+    string open_mode = 3;
+}

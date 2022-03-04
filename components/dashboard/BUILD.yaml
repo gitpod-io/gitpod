@@ -1,0 +1,63 @@
+packages:
+  - name: app
+    type: yarn
+    srcs:
+      - "public/**"
+      - "build/**"
+      - "src/**/*.ts*"
+      - "src/**/*.css"
+      - "src/**/*.svg"
+      - "typings/**"
+      - package.json
+      - tailwind.config.js
+      - tsconfig.*
+      - craco.config.js
+      - postcss.config.js
+      - .eslintrc.js
+      - scripts/run-integration-tests.sh
+    deps:
+      - components/gitpod-protocol:lib
+    config:
+      commands:
+        build: ["yarn", "build"]
+        test: ["yarn", "test"]
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      dontTest: true
+      packaging: archive
+  - name: static
+    type: generic
+    srcs:
+      - "conf/**"
+      - "public/**"
+      - "ee/public/**"
+    config:
+      commands:
+        - ["echo"]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+      - :static
+      - components/gitpod-protocol:gitpod-schema
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: dashboard
+      image:
+        - ${imageRepoBase}/dashboard:${version}
+        - ${imageRepoBase}/dashboard:commit-${__git_commit}
+scripts:
+  - name: telepresence
+    script: |-
+      trap "kill 0" EXIT
+      export NODE_OPTIONS='--max-old-space-size=3192'
+      PORT=3001 yarn start &
+
+      telepresence --swap-deployment dashboard \
+                   --method inject-tcp \
+                   --expose 13001:80 \
+                   --run socat TCP-LISTEN:13001,reuseaddr,fork TCP:localhost:3001

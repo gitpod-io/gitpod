@@ -1,0 +1,39 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ws-manager
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-manager
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ws-manager
+subjects:
+- kind: ServiceAccount
+  name: ws-manager
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Namespace }}-ws-manager-kube-rbac-proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-manager
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: ws-manager
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name:  {{ .Release.Namespace }}-kube-rbac-proxy
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package wsdaemon;
+
+option go_package = "github.com/gitpod-io/gitpod/ws-daemon/api";
+
+import "content-service-api/initializer.proto";
+
+service WorkspaceContentService {
+    // initWorkspace intialises a new workspace folder in the working area
+    rpc InitWorkspace(InitWorkspaceRequest) returns (InitWorkspaceResponse) {}
+
+    // WaitForInit waits until a workspace is fully initialized.
+    // If the workspace is already initialized, this function returns immediately.
+    // If there is no initialization is going on, an error is returned.
+    rpc WaitForInit(WaitForInitRequest) returns (WaitForInitResponse) {}
+
+    // TakeSnapshot creates a backup/snapshot of a workspace
+    rpc TakeSnapshot(TakeSnapshotRequest) returns (TakeSnapshotResponse) {}
+
+    // disposeWorkspace cleans up a workspace, possibly after taking a final backup
+    rpc DisposeWorkspace(DisposeWorkspaceRequest) returns (DisposeWorkspaceResponse) {}
+
+    // BackupWorkspace creates a backup of a workspace
+    rpc BackupWorkspace(BackupWorkspaceRequest) returns (BackupWorkspaceResponse) {}
+
+}
+
+// InitWorkspaceRequest intialises a new workspace folder in the working area
+message InitWorkspaceRequest {
+    // ID is a unique identifier of this workspace. No other workspace with the same name must exist in the realm of this daemon
+    string id = 1;
+
+    // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
+    WorkspaceMetadata metadata = 2;
+
+    // Initializer specifies how the workspace is to be initialized
+    contentservice.WorkspaceInitializer initializer = 3;
+
+    // full_workspace_backup means we ignore the initializer and wait for a workspace pod with the given instance ID to
+    // appear at our local containerd.
+    bool full_workspace_backup = 4;
+
+    // content_manifest describes the layers that comprise the workspace image content.
+    // This manifest is not used to actually download content, but to produce a new manifest for snapshots and backups.
+    // This field is ignored if full_workspace_backup is false.
+    bytes content_manifest = 5;
+
+    // Was used for user_namespaced
+    reserved 6;
+
+    // remote_storage_disabled disables any support for remote storage operations, specifically backups and snapshots.
+    // When any such operation is attempted, a FAILED_PRECONDITION error will be the result.
+    bool remote_storage_disabled = 7;
+}
+
+// WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
+message WorkspaceMetadata {
+    // owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+    string owner = 1;
+
+    // meta_id is the workspace ID of this currently running workspace instance on the "meta pool" side
+    string meta_id = 2;
+}
+
+message InitWorkspaceResponse {}
+
+// WaitForInitRequest waits for a workspace to be initialized
+message WaitForInitRequest {
+    // ID is a unique identifier of the workspace
+    string id = 1;
+}
+
+message WaitForInitResponse {}
+
+// TakeSnapshotRequest creates a backup/snapshot of a workspace
+message TakeSnapshotRequest {
+    // ID is the identifier of the workspace of which we want to create a snapshot of
+    string id = 1;
+
+    // return_immediately means we're not waiting until the snapshot is done but return immediately after starting it
+    bool return_immediately = 2;
+}
+
+message TakeSnapshotResponse {
+    // url is the name of the resulting snapshot
+    string url = 1;
+}
+
+// WorkspaceContentState describes the availability and reliability of the workspace content
+enum WorkspaceContentState {
+    // NONE means that there currently is no workspace content and no work is underway to change that.
+    NONE = 0;
+
+    // SETTING_UP indicates that the workspace content is currently being produced/checked out/unarchived and is
+    // very likely to change. In this state one must not modify or rely on the workspace content.
+    SETTING_UP = 1;
+
+    // AVAILABLE indicates that the workspace content is fully present and ready for use.
+    AVAILABLE = 2;
+
+    // WRAPPING_UP means that the workspace is being torn down, i.e. a final backup is being produced and the content
+    // is deleted locally. In this state one must not modify or rely on the workspace content.
+    WRAPPING_UP = 3;
+}
+
+message DisposeWorkspaceRequest {
+    // ID is a unique identifier of the workspace to dispose of
+    string id = 1;
+
+    // Backup triggers a final backup prior to disposal
+    bool backup = 2;
+
+    // backup_logs triggers the upload of terminal logs
+    bool backup_logs = 3;
+}
+
+message DisposeWorkspaceResponse {
+    // git_status is the current state of the Git repo in this workspace prior to disposal.
+    // If the workspace has no Git repo at its checkout location, this is nil.
+    contentservice.GitStatus git_status = 1;
+}
+
+// BackupWorkspaceRequest creates a backup of a workspace
+// TODO(rl): do we need an optional bool 'backup_logs' to capture the logs as well?
+message BackupWorkspaceRequest {
+    // ID is the identifier of the workspace of which we want to create a backup of
+    string id = 1;
+}
+
+message BackupWorkspaceResponse {
+    // url is the name of the resulting backup
+    string url = 1;
+}

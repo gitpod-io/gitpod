@@ -1,0 +1,27 @@
+{
+    "spec": {
+        "ideImage": {
+            "webRef": "eu.gcr.io/gitpod-core-dev/buid/theia-ide:someversion"
+        },
+        "workspaceImage": "eu.gcr.io/gitpod-dev/workspace-images/ac1c0755007966e4d6e090ea821729ac747d22ac/eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
+        "initializer": {
+            "snapshot": {
+                "snapshot": "workspaces/cryptic-id-goes-herg/fd62804b-4cab-11e9-843a-4e645373048e.tar@gitpod-dev-user-christesting"
+            }
+        },
+        "envvars": [
+            {
+              "name": "GITPOD_TASKS",
+              "value": "foobar"
+            },
+            {
+                "name": "foo",
+                "value": "bar"
+            }
+        ],
+        "git": {
+            "username": "usernameGoesHere",
+            "email": "some@user.com"
+        }
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "status": {
+        "id": "283522ed-51f1-4838-951b-0f115c0a7aae",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "ec566d71-62a8-492e-8040-51850d9a97c4",
+            "meta_id": "b246b28e-4776-47d5-961d-10548ffac9a8",
+            "started_at": {
+                "seconds": 1563173030
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images/623f173cfe0a23726157e720c57fe329a3bb4241/eu.gcr.io/gitpod-dev/workspace-full:sha256-535009d8cf429001e17f0f6388f33065c53cb70a62904800aa3f424403c7cb7e",
+            "url": "https://b246b28e-4776-47d5-961d-10548ffac9a8.ws-eu0.gitpod-staging.com",
+            "exposed_ports": [
+                {
+                    "port": 5900
+                },
+                {
+                    "port": 8080
+                }
+            ],
+            "ide_image": {}
+        },
+        "phase": 7,
+        "conditions": {},
+        "message": "container workspace was terminated unexpectedly - workspace should recover",
+        "runtime": {
+            "node_name": "gke-gitpod-staging-e-workspace-pool-2-2eb903d0-g86k",
+            "pod_name": "ws-283522ed-51f1-4838-951b-0f115c0a7aae",
+            "node_ip": "10.132.0.35"
+        },
+        "auth": {}
+    }
+}

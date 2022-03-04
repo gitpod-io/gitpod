@@ -1,0 +1,57 @@
+version: '3'
+services:
+
+  gitpod:
+    image: gcr.io/gitpod-io/self-hosted/gitpod-k3s:${VERSION:-latest}
+    command: --flannel-backend=none --disable-network-policy
+    privileged: true
+    volumes:
+      - ./calico.yaml:/var/lib/rancher/k3s/server/manifests/calico.yaml
+      - gitpod-docker:/var/gitpod/docker
+      - gitpod-docker-registry:/var/gitpod/docker-registry
+      - gitpod-minio:/var/gitpod/minio
+      - gitpod-mysql:/var/gitpod/mysql
+      - gitpod-workspaces:/var/gitpod/workspaces
+      - ./values:/values
+      - ./certs:/certs
+    ports:
+      - 443:443
+      - 80:80
+    environment:
+      - DOMAIN=${DOMAIN}
+      - K3S_CLUSTER_SECRET=qWo6sn3VWERh3dBBQniPLTqtZzEHURsriJNhTqus
+      - K3S_NODE_NAME=main
+      - REMOVE_NETWORKPOLICIES=true
+
+  node1:
+    image: rancher/k3s:v1.20.0-k3s2
+    privileged: true
+    volumes:
+      - gitpod-workspaces-node1:/var/gitpod/workspaces
+      - ./node-entrypoint.sh:/entrypoint
+    environment:
+      - K3S_URL=https://gitpod:6443
+      - K3S_CLUSTER_SECRET=qWo6sn3VWERh3dBBQniPLTqtZzEHURsriJNhTqus
+      - K3S_NODE_NAME=node1
+    entrypoint: /entrypoint
+
+  node2:
+    image: rancher/k3s:v1.20.0-k3s2
+    privileged: true
+    volumes:
+      - gitpod-workspaces-node2:/var/gitpod/workspaces
+      - ./node-entrypoint.sh:/entrypoint
+    environment:
+      - K3S_URL=https://gitpod:6443
+      - K3S_CLUSTER_SECRET=qWo6sn3VWERh3dBBQniPLTqtZzEHURsriJNhTqus
+      - K3S_NODE_NAME=node2
+    entrypoint: /entrypoint
+
+volumes:
+  gitpod-docker:
+  gitpod-docker-registry:
+  gitpod-minio:
+  gitpod-mysql:
+  gitpod-workspaces:
+  gitpod-workspaces-node1:
+  gitpod-workspaces-node2:

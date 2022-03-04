@@ -1,0 +1,27 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $cm := (index .Values "cert-manager") }}
+{{- if $cm.enabled }}
+{{- if $cm.ca.certificate.selfSigned }}
+{{ $tls := genCA "gitpod-ca" 365 }}
+kind: Secret
+apiVersion: v1
+metadata:
+  name: {{ $cm.ca.certificate.secretName }}
+  namespace: {{ .Release.Namespace }}
+data:
+  tls.crt: {{ $tls.Cert | b64enc }}
+  tls.key: {{ $tls.Key | b64enc }}
+type: kubernetes.io/tls
+---
+{{- end }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ $cm.ca.issuerName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ca:
+    secretName: {{ $cm.ca.certificate.secretName }}
+{{- end }}

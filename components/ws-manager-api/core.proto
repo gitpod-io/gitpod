@@ -1,0 +1,576 @@
+syntax = "proto3";
+
+package wsman;
+
+option go_package = "github.com/gitpod-io/gitpod/ws-manager/api";
+
+import "content-service-api/initializer.proto";
+import "google/protobuf/timestamp.proto";
+
+service WorkspaceManager {
+    // getWorkspaces produces a list of running workspaces and their status
+    rpc GetWorkspaces(GetWorkspacesRequest) returns (GetWorkspacesResponse) {}
+
+    // startWorkspace creates a new running workspace within the manager's cluster
+    rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+
+    // stopWorkspace stops a running workspace
+    rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse) {}
+
+    // describeWorkspace investigates a workspace and returns its status, and configuration
+    rpc DescribeWorkspace(DescribeWorkspaceRequest) returns (DescribeWorkspaceResponse) {}
+
+    // backupWorkspace backs up a running workspace
+    rpc BackupWorkspace(BackupWorkspaceRequest) returns (BackupWorkspaceResponse) {}
+
+    // subscribe streams all status updates to a client
+    rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
+
+    // markActive records a workspace as being active which prevents it from timing out
+    rpc MarkActive(MarkActiveRequest) returns (MarkActiveResponse) {}
+
+    // setTimeout changes the default timeout for a running workspace
+    rpc SetTimeout(SetTimeoutRequest) returns (SetTimeoutResponse) {}
+
+    // controlPort publicly exposes or un-exposes a network port for a workspace
+    rpc ControlPort(ControlPortRequest) returns (ControlPortResponse) {}
+
+    // takeSnapshot creates a copy of the workspace content which can initialize a new workspace.
+    rpc TakeSnapshot(TakeSnapshotRequest) returns (TakeSnapshotResponse) {}
+
+    // controlAdmission makes a workspace accessible for everyone or for the owner only
+    rpc ControlAdmission(ControlAdmissionRequest) returns (ControlAdmissionResponse) {}
+}
+
+// MetadataFilter describes conditions for matching a set of workspaces.
+// The values of the fields have to match exactly, and set values must match.
+message MetadataFilter {
+    // owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+	string owner = 1;
+
+    // meta_id is the workspace ID of this currently running workspace instance on the "meta pool" side
+    string meta_id = 2;
+
+    // annotations must be a subset of the annotations of a workspace's metadata
+    map<string, string> annotations = 3;
+}
+
+// GetWorkspacesRequest requests a list of running workspaces
+message GetWorkspacesRequest {
+    // MustMatch can specify an exactly matching filter for listing workspaces.
+    // If not set, or all fields are empty, all workspaces are returned.
+    MetadataFilter must_match = 1;
+}
+
+// GetWorkspacesResponse is the response to a get w
+message GetWorkspacesResponse {
+    // status are the status of all running workspaces
+    repeated WorkspaceStatus status = 1;
+}
+
+// StartWorkspaceRequest requests that the workspace manager starts a workspace in its cluster
+message StartWorkspaceRequest {
+    // ID is a unique identifier of this workspace. No other workspace with the same name must be managed by this workspace manager
+    string id = 1;
+
+    // service_prefix is the unique ID/name that's prepended before the services associated with a workspace.
+    // For example if the service_prefix is foobar there will be the services foobar-theia and foobar-ports.
+    // If this field is empty the workspace ID becomes the service prefix.
+    string service_prefix = 2;
+
+    // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
+    WorkspaceMetadata metadata = 3;
+
+    // Spec is the configuration of the workspace that's required for the ws-manager to start the workspace
+    StartWorkspaceSpec spec = 4;
+
+    // DEPRECATED bool headless = 5
+    // see https://developers.google.com/protocol-buffers/docs/proto3#reserved reg. gRPC field deprecation
+    reserved 5;
+
+    // Type denots the kind of workspace we ought to start
+    WorkspaceType type = 6;
+}
+
+message StartWorkspaceResponse {
+    // URL is the external URL of the workspace
+    string url = 1;
+
+    // OwnerToken is the token of the workspace owner used for authentication
+    string owner_token = 2;
+}
+
+// StopWorkspaceRequest requests that the workspace manager stops a workspace
+message StopWorkspaceRequest {
+    // ID is the unique identifier of the workspace to stop
+    string id = 1;
+
+    // Policy determines how quickly a workspace will be stopped
+    StopWorkspacePolicy policy = 2;
+}
+
+enum StopWorkspacePolicy {
+    NORMALLY = 0;
+    IMMEDIATELY = 1;
+}
+
+// StopWorkspaceResponse is the answer to a stop workspace request
+message StopWorkspaceResponse {}
+
+// DescribeWorkspaceRequest requests the status of a workspace
+message DescribeWorkspaceRequest {
+    // ID is the unique identifier of the workspace to describe
+    string id = 1;
+}
+
+// DescribeWorkspaceResponse is the answer to a workspace description request
+message DescribeWorkspaceResponse {
+    WorkspaceStatus status = 1;
+
+    // LastActivity is the time when the workspace was last marked active - ISO8601 formated
+    string lastActivity = 2;
+}
+
+// SubscribeRequest requests to be notified whenever the workspace status changes
+message SubscribeRequest {
+    // MustMatch can specify an exactly matching filter for listening to workspaces.
+    // If not set, or all fields are empty, all workspace status updates or log output are returned.
+    MetadataFilter must_match = 1;
+}
+
+// SubscribeResponse notifies a client when a workspace's status changes
+message SubscribeResponse {
+    WorkspaceStatus status = 1;
+    // was used for logs
+    reserved 2;
+    map<string, string> header = 3;
+}
+
+// MarkActiveRequest marks a workspace as still in use
+message MarkActiveRequest {
+    // id is the ID of the workspace
+    string id = 1;
+
+    // closed marks a workspace as closed which will shorten its timeout
+    bool closed = 2;
+}
+
+// MarkActiveResponse is the answer to a mark workspace active request
+message MarkActiveResponse {}
+
+// SetTimeoutRequest configures the timeout of a workspace
+message SetTimeoutRequest {
+    // id is the ID of the workspace
+    string id = 1;
+
+    // duration is the new timeout duration. Must be a valid Go duration (see https://golang.org/pkg/time/#ParseDuration)
+    string duration = 2;
+}
+
+// SetTimeoutResponse is the answer to a set timeout request
+message SetTimeoutResponse {}
+
+// ControlPortRequest exposes or un-exposes networking ports of a workspace
+message ControlPortRequest {
+    // ID is the unique identifier of the workspace whose port to control
+    string id = 1;
+
+    // expose controls whether to make the port publicly available or bar if from being accessible outside of the worksapce.
+    // If true, the port will become publicly available, if false it will become inaccessible from outside the workspace.
+    bool expose = 2;
+
+    // spec defines the port under control
+    PortSpec spec = 3;
+}
+
+// ControlPortResponse is the answer to a workspace port control request
+message ControlPortResponse {}
+
+// TakeSnapshotRequest creates a copy of the workspace content. This copy can be used to initialize a new workspace.
+message TakeSnapshotRequest {
+    // ID is the unique identifier of the workspace of which to take a snapshot
+    string id = 1;
+
+    // return_immediately means we're not waiting until the snapshot is done but return immediately after starting it
+    bool return_immediately = 2;
+}
+
+// TakeSnapshotResponse is the answer to a take snapshot request
+message TakeSnapshotResponse {
+    // URL is the location of the snapshot encoded such that it can be passed back to a snapshot initializer.
+    string url = 1;
+}
+
+// ControlAdmissionRequest controls the admission of users to a workspace
+message ControlAdmissionRequest {
+    // ID is the unique identifier of the workspace whoose admission to control
+    string id = 1;
+
+    // level is the new workspace admission level
+    AdmissionLevel level = 2;
+}
+
+message ControlAdmissionResponse {}
+
+enum AdmissionLevel {
+    // WORKSPACE_ADMIT_OWNER_ONLY means the workspace can only be accessed using the owner token
+    ADMIT_OWNER_ONLY = 0;
+
+    // WORKSPACE_ADMIT_EVERYONE means the workspace (including ports) can be accessed by everyone.
+    ADMIT_EVERYONE = 1;
+}
+
+// BackupWorkspaceRequest backs up a running workspace
+message BackupWorkspaceRequest {
+    // ID is the unique identifier of the workspace of which to take a backup
+    string id = 1;
+}
+
+// BackupWorkspaceResponse is the answer to a backup workspace request
+message BackupWorkspaceResponse {
+    // URL is the location of the backup
+    string url = 1;
+}
+
+// WorkspaceStatus describes a workspace status
+message WorkspaceStatus {
+    // ID is the unique identifier of the workspace
+    string id = 1;
+
+    // version of the status update. Workspace instances themselves are unversioned,
+    // but their statuus has different versions.
+    // The value of this field has no semantic meaning (e.g. don't interpret it as
+    // as a timestemp), but it can be used to impose a partial order.
+    // If a.status_version < b.status_version then a was the status before b.
+    uint64 status_version = 10;
+
+    // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
+    WorkspaceMetadata metadata = 2;
+
+    // Spec is the workspace spec during runtime
+    WorkspaceSpec spec = 3;
+
+    // the phase of a workspace is a simple, high-level summary of where the workspace is in its lifecycle
+    WorkspacePhase phase = 4;
+
+    // conditions detail the current state of the workspace
+    WorkspaceConditions conditions = 5;
+
+    // message is an optional human-readable message detailing the current phase
+    string message = 6;
+
+    // repo details the Git working copy status of the workspace.
+    // Note: this is a best-effort field and more often than not will not be present. Its absence does not
+    // indicate the absence of a working copy.
+    contentservice.GitStatus repo = 7;
+
+    // runtime contains information about the workspace's runtime environment
+    WorkspaceRuntimeInfo runtime = 8;
+
+    // auth provides authentication information about the workspace. This info is primarily used by ws-proxy.
+    WorkspaceAuthentication auth = 9;
+}
+
+    // IDEImage configures the IDE images a workspace will use
+    message IDEImage {
+        // web_ref is a reference to an OCI image used for serving the web-based IDE
+        string web_ref = 1;
+        // desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
+        string desktop_ref = 2;
+        // supervisor_ref is a reference to an OCI image used as supervisor
+        string supervisor_ref = 3;
+    }
+
+// WorkspaceSpec is the specification of a workspace at runtime
+message WorkspaceSpec {
+    // workspace_image is the name of the Docker image this workspace runs
+    string workspace_image = 1;
+
+    // deprecated_ide_image is a field present for backwards compatibility and the same
+    // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
+    string deprecated_ide_image = 2;
+
+    // headless marks this workspace a headless one - headless workspaces are not intended for users but for automation
+    bool headless = 3;
+
+    // URL is the external URL of the workspace
+    string url = 4;
+
+    // exposed_ports lists all ports which this workspace has exposed to the outside world
+    repeated PortSpec exposed_ports = 5;
+
+    // workspace type denotes what kind of workspace this is, e.g. if it's user-facing, prebuilding content or probing the service
+    WorkspaceType type = 6;
+
+    // The intervals in which a heartbeat must be received for the workspace not to time out
+    string timeout = 7;
+
+    // ide_image is the name of the Docker image used as IDE
+    IDEImage ide_image = 8;
+}
+
+// PortSpec describes a networking port exposed on a workspace
+message PortSpec {
+    // port is the outward-facing port
+    uint32 port = 1;
+
+    // DEPRECATED target is the inward-facing target port
+    reserved 2;
+
+    // visibility defines the visibility of the port
+    PortVisibility visibility = 3;
+
+    // url is the public-facing URL this port is available at
+    string url = 4;
+}
+
+// PortVisibility defines who may access a workspace port which is guarded by an authentication in the proxy
+enum PortVisibility {
+    // private (default) means the port is accessible by the workspace owner only, unless the workspace's admission is
+    // set to everyone.
+    PORT_VISIBILITY_PRIVATE = 0;
+
+    // public means the port is accessible by everybody using the workspace port URL
+    PORT_VISIBILITY_PUBLIC = 1;
+}
+
+// WorkspaceCondition gives more detailed information as to the state of the workspace. Which condition actually
+// has a value depends on the phase the workspace is in.
+message WorkspaceConditions {
+    // failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
+    string failed = 1;
+
+    // timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
+    string timeout = 2;
+
+    // pulling_images marks if the workspace is currently pulling its images. This condition can only be set during PhaseCreating
+    WorkspaceConditionBool pulling_images = 3;
+
+    // DEPRECATED service_exists denotes if the workspace theia-/ports- services exist. This condition will be true if either of the two services exist.
+    reserved 4;
+
+    // snapshot contains a snapshot URL if a snapshot was produced prior to shutting the workspace down. This condition is only used for headless workspaces.
+    string snapshot = 5;
+
+    // final_backup_complete determines if the last state of the workspace has been backed up to remote storage.
+    // Once this is true, a new workspace with the same ID will be able to use this backup.
+    WorkspaceConditionBool final_backup_complete = 6;
+
+    // deployed indicates if a workspace container is currently deployed. If this condition is false, there is no means for the user to alter the workspace content.
+    WorkspaceConditionBool deployed = 7;
+
+    // network_not_ready indicates if a workspace container is currently experiencing a network problem.
+    WorkspaceConditionBool network_not_ready = 8;
+
+    // first_user_activity is the time when MarkActive was first called on the workspace
+    google.protobuf.Timestamp first_user_activity = 9;
+
+    // headless_task_failed indicates that a headless workspace task failed
+    string headless_task_failed = 10;
+
+    // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
+    WorkspaceConditionBool stopped_by_request = 11;
+}
+
+// WorkspaceConditionBool is a trinary bool: true/false/empty
+enum WorkspaceConditionBool {
+    FALSE = 0;
+    TRUE = 1;
+    EMPTY = 2;
+}
+
+// WorkspacePhase is a simple, high-level summary of where the workspace is in its lifecycle.
+// The phase is not intended to be a comprehensive rollup of observations of the workspace state,
+// nor is it intended to be a comprehensive state machine.
+// (based on  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase)
+enum WorkspacePhase {
+    // Unknown indicates an issue within the workspace manager in that it cannot determine the actual phase of
+    // a workspace. This phase is usually accompanied by an error.
+    UNKNOWN = 0;
+
+    // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
+    // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+    // workspace, the workspace will be in Pending state until that happened.
+    PENDING = 1;
+
+    // Creating means the workspace is currently being created. That includes downloading the images required
+    // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
+    // network speed, image size and cache states.
+    CREATING = 2;
+
+    // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
+    // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
+    INITIALIZING = 3;
+
+    // Running means the workspace is able to actively perform work, either by serving a user through Theia,
+    // or as a headless workspace.
+    RUNNING = 4;
+
+    // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
+    // When in this state, we expect it to become running or stopping anytime soon.
+    INTERRUPTED = 7;
+
+    // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
+    STOPPING = 5;
+
+    // Stopped means the workspace ended regularly because it was shut down.
+    STOPPED = 6;
+}
+
+// WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
+message WorkspaceMetadata {
+    // owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+    string owner = 1;
+
+    // meta_id is the workspace ID of this currently running workspace instance on the "meta pool" side
+    string meta_id = 2;
+
+    // started_at is the time when this workspace was started. Consider this field read-only, i.e. setting in a request will have no effect.
+    google.protobuf.Timestamp started_at = 3;
+
+    // Annotations are key/value pairs that gets attached to the workspace.
+    // This is primarily intended for annotating headless workspace loads.
+    map<string, string> annotations = 4;
+}
+
+// WorkspaceRuntimeInfo details the workspace's runtime, e.g. executing system, node other information
+// about the environment the workspace runs in. This information serves a diangostic purpose only and
+// should not be directly acted upon.
+message WorkspaceRuntimeInfo {
+    // node_name is the name of the node the workspace runs on
+    string node_name = 1;
+    // pod_name is the name of the pod the workspace runs in
+    string pod_name = 2;
+    // node_ip is the IP of the node the workspace runs on
+    string node_ip = 3;
+}
+
+// WorkspaceAuthentication contains authentication information used by ws-proxy to allow/deny access to
+// workspaces and their ports.
+message WorkspaceAuthentication {
+    // Admission describes who can access the workspace and its ports.
+    AdmissionLevel admission = 1;
+
+    // Owner token is the token one needs to access the workspace. Its presence is checked by ws-proxy.
+    string owner_token = 2;
+}
+
+// StartWorkspaceSpec specifies the configuration of a workspace for a workspace start
+message StartWorkspaceSpec {
+    // workspace_image is the Docker image name of the workspace container
+    string workspace_image = 1;
+
+    // deprecated_ide_image is a field present for backwards compatibility and the same
+    // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
+    string deprecated_ide_image = 2;
+
+    // feature_flags provide a means for starting variants of workspaces (e.g. a privileged one)
+    repeated WorkspaceFeatureFlag feature_flags = 3;
+
+    // initializer configures how the workspace is to be initialized
+    contentservice.WorkspaceInitializer initializer = 4;
+
+    // ports is the set of ports which ought to be exposed to the internet
+    repeated PortSpec ports = 5;
+
+    // envvars are user-defined environment variables which ought to be available in the workspace
+    repeated EnvironmentVariable envvars = 6;
+
+    // checkout_location describes where the code has been checked out to
+    string checkout_location = 7;
+
+    // workspace_location describes where the workspace root of Theia will be
+    string workspace_location = 8;
+
+    // Git configures the Git user in the workspace
+    GitSpec git = 9;
+
+    // timeout optionally sets a custom workspace timeout
+    string timeout = 10;
+
+    // admission controlls who can access the workspace and its ports.
+    AdmissionLevel admission = 11;
+
+    // ide_image is the Docker image name of the IDE image
+    IDEImage ide_image = 12;
+}
+
+// WorkspaceFeatureFlag enable non-standard behaviour in workspaces
+enum WorkspaceFeatureFlag {
+    // NOOP feature flag is just here because I don't want privileged to be 0
+    NOOP = 0;
+
+    // Privileged workspaces allowed users to become root by making them root on the machine.
+    // They've been the precursor to user-namespaced workspaces.
+    reserved 1;
+
+    // Was used for appplitools-specific workspace config (e.g., proxy + network restriction)
+    // APPLITOOLS = 2;
+    reserved 2;
+
+    // Was used for RegistryFacade which enabled the image pull through the registry facade.
+    // Now this is the standard way.
+    reserved 3;
+
+    // FullWorkspaceBackup does away with the /workspace host mount. All workspace content lives
+    // in the ephemeral container storage. We initlialize workspaces using content layer served by
+    // the registry facade and back them up using regular "hardlink backups".
+    FULL_WORKSPACE_BACKUP = 4;
+
+    // FixedResources ensures this workspace is not subject to ws-daemon's dynamic resource limits.
+    // In this sence it's akin to "guaranteed" (as compared to burstable) resources for workspaces.
+    FIXED_RESOURCES = 5;
+
+    // Was used for UserNamespace
+    reserved 6;
+}
+
+// GitSpec configures the Git available within the workspace
+message GitSpec {
+    // The Git username
+    string username = 1;
+
+    // The Git email address
+    string email = 2;
+}
+
+// EnvironmentVariable describes an env var as key/value pair
+message EnvironmentVariable {
+    message SecretKeyRef {
+        string secret_name = 1;
+        string key = 2;
+    }
+
+    string name = 1;
+    string value = 2;
+
+    // Pulls the value from a secret in the cluster.
+    // Use this field with great caution: if the name is wrong or Kubernetes cannot find the secret,
+    // your workspace will not start. Value takes precedence over this field.
+    SecretKeyRef secret = 3;
+}
+
+// WorkspaceType specifies the purpose/use of a workspace. Different workspace types are handled differently by all parts of the system.
+enum WorkspaceType {
+    // Regular workspaces are your off-the-mill workspaces intended for users. They are directly user-facing and hence are most important.
+    REGULAR = 0;
+
+    // Prebuild workspaces are workspaces used to pre-build the content of other workspaces. They run headless and have no direct user-interaction.
+    PREBUILD = 1;
+
+    // Probe workspaces are used to perform end-to-end health checks on the system. They require little to no resources, run headless and never
+    // interact with users directly.
+    PROBE = 2;
+
+    // DEPRECATED Ghost workspaces
+    reserved 3;
+
+    // Imagebuild workspaces build a workspace, incl. their Gitpod layer. They run headless and have no direct user-interaction.
+    IMAGEBUILD = 4;
+}
+
+// ExposedPorts describes the exposed ports of a workspace
+message ExposedPorts {
+    // ports is the set of ports which ought to be exposed to the internet
+    repeated PortSpec ports = 1;
+}

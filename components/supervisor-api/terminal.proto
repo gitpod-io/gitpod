@@ -1,0 +1,172 @@
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
+
+service TerminalService {
+    // Open opens a new terminal running the login shell
+    rpc Open(OpenTerminalRequest) returns (OpenTerminalResponse) {}
+
+    // Shutdown closes a terminal for the given alias, SIGKILL'ing all child processes
+    // before closing the pseudo-terminal.
+    rpc Shutdown(ShutdownTerminalRequest) returns (ShutdownTerminalResponse) {
+        option (google.api.http) = {
+            get: "/v1/terminal/shutdown/{alias}"
+        };
+    }
+
+    // Get returns an opened terminal info
+    rpc Get(GetTerminalRequest) returns (Terminal) {
+        option (google.api.http) = {
+            get: "/v1/terminal/get/{alias}"
+        };
+    }
+
+    // List lists all open terminals
+    rpc List(ListTerminalsRequest) returns (ListTerminalsResponse) {
+        option (google.api.http) = {
+            get: "/v1/terminal/list"
+        };
+    }
+
+    // Listen listens to a terminal
+    rpc Listen(ListenTerminalRequest) returns (stream ListenTerminalResponse) {
+        option (google.api.http) = {
+            get: "/v1/terminal/listen/{alias}"
+        };
+    }
+
+    // Write writes to a terminal
+    rpc Write(WriteTerminalRequest) returns (WriteTerminalResponse) {
+        option (google.api.http) = {
+            post: "/v1/terminal/write/{alias}"
+        };
+    }
+
+    // SetSize sets the terminal's size
+    rpc SetSize(SetTerminalSizeRequest) returns (SetTerminalSizeResponse) {}
+
+    // SetTitle sets the terminal's title
+    rpc SetTitle(SetTerminalTitleRequest) returns (SetTerminalTitleResponse) {}
+
+    // UpdateAnnotations updates the terminal's annotations
+    rpc UpdateAnnotations(UpdateTerminalAnnotationsRequest) returns (UpdateTerminalAnnotationsResponse) {}
+}
+
+message TerminalSize {
+    uint32 rows = 1;
+    uint32 cols = 2;
+    uint32 widthPx = 3;
+    uint32 heightPx = 4;
+}
+
+message OpenTerminalRequest {
+    string workdir = 1;
+    map<string, string> env = 2;
+    map<string, string> annotations = 3;
+
+    string shell = 4;
+    repeated string shell_args = 5;
+
+    TerminalSize size = 6;
+}
+message OpenTerminalResponse {
+    Terminal terminal = 1;
+
+    // starter_token can be used to change the terminal size if there are
+    // multiple listerns, without having to force your way in.
+    string starter_token = 2;
+}
+
+message ShutdownTerminalRequest {
+    string alias = 1;
+}
+message ShutdownTerminalResponse {}
+
+enum TerminalTitleSource {
+    // From the foreground process
+    process = 0;
+    // From SetTitle API
+    api = 1;
+}
+message Terminal {
+    string alias = 1;
+    repeated string command = 2;
+    string title = 3;
+    int64 pid = 4;
+    string initial_workdir = 5;
+    string current_workdir = 6;
+    map<string, string> annotations = 7;
+    TerminalTitleSource title_source = 8;
+}
+
+message GetTerminalRequest {
+    string alias = 1;
+}
+
+message ListTerminalsRequest {}
+message ListTerminalsResponse {
+    repeated Terminal terminals = 1;
+}
+
+message ListenTerminalRequest {
+    string alias = 1;
+}
+message ListenTerminalResponse {
+    oneof output {
+        bytes data = 1;
+        int32 exit_code = 2;
+        string title = 3;
+    };
+    // only present if output is title
+    TerminalTitleSource title_source = 4;
+}
+
+message WriteTerminalRequest {
+    string alias = 1;
+    bytes stdin = 2;
+}
+message WriteTerminalResponse {
+    uint32 bytes_written = 1;
+}
+
+message SetTerminalSizeRequest {
+    string alias = 1;
+
+    // token is the starter_token that Open() returned.
+    // Without token it's possible that the request is ignored.
+    // If you want to force your size, indendently of all other listener,
+    // use force.
+    oneof priority {
+        string token = 2;
+        bool force = 3;
+    };
+
+    TerminalSize size = 4;
+}
+message SetTerminalSizeResponse {}
+
+message SetTerminalTitleRequest {
+    string alias = 1;
+    // omitting title will reset to process title
+    string title = 2;
+}
+message SetTerminalTitleResponse {}
+
+
+message UpdateTerminalAnnotationsRequest {
+    string alias = 1;
+    // annotations to create or update
+    map<string, string> changed = 2;
+    // annotations to remove
+    repeated string deleted = 3;
+}
+message UpdateTerminalAnnotationsResponse {}

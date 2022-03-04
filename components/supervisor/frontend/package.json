@@ -1,0 +1,32 @@
+{
+  "private": true,
+  "name": "@gitpod/supervisor-frontend",
+  "license": "UNLICENSED",
+  "version": "0.0.0",
+  "dependencies": {
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/supervisor-api-grpc": "0.1.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.10.0",
+    "@babel/plugin-transform-classes": "^7.10.0",
+    "@babel/plugin-transform-runtime": "^7.10.0",
+    "@babel/preset-env": "^7.10.0",
+    "@types/sharedworker": "^0.0.29",
+    "@types/trusted-types": "^2.0.0",
+    "babel-loader": "^8.1.0",
+    "concurrently": "^5.3.0",
+    "copy-webpack-plugin": "^6.2.0",
+    "css-loader": "^0.28.11",
+    "source-map-loader": "^1.1.0",
+    "style-loader": "^0.23.1",
+    "typescript": "~4.4.2",
+    "webpack": "^4.40.0",
+    "webpack-cli": "^3.1.1"
+  },
+  "scripts": {
+    "build": "tsc && webpack --mode=production",
+    "watch": "concurrently \"tsc --watch --preserveWatchOutput\" \"webpack --mode=development\"",
+    "clean": "rm -rf lib && rm -rf dist"
+  }
+}

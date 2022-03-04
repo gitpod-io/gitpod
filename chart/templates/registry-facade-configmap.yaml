@@ -1,0 +1,55 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.registryFacade -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-facade-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        {{ if .Values.components.workspace.pullSecret.secretName -}}"dockerAuth": "/mnt/pull-secret.json",{{- end }}
+        "registry": {
+            "port": {{ $comp.ports.registry.containerPort }},
+            {{- if (or .Values.certificatesSecret.secretName $comp.certificatesSecret.secretName) }}
+            "tls": {
+                "crt": "/mnt/certificates/tls.crt",
+                "key": "/mnt/certificates/tls.key"
+            },
+            {{ end -}}
+            "remoteSpecProvider": {
+                "addr": "dns:///ws-manager:{{ .Values.components.wsManager.ports.rpc.containerPort }}",
+                "tls": {
+                    "ca": "/ws-manager-client-tls-certs/ca.crt",
+                    "crt": "/ws-manager-client-tls-certs/tls.crt",
+                    "key": "/ws-manager-client-tls-certs/tls.key"
+                }
+            },
+            "store": "/mnt/cache/registry",
+            "requireAuth": false,
+            "staticLayer": [
+                {
+                    "ref": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}",
+                    "type": "image"
+                },
+                {
+                    "ref": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.workspacekit) }}",
+                    "type": "image"
+                },
+                {
+                    "ref": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.dockerUp) }}",
+                    "type": "image"
+                }
+            ]
+        },
+        "pprofAddr": ":6060",
+        "prometheusAddr": "127.0.0.1:9500"
+    }
+{{- end -}}

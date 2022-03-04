@@ -1,0 +1,118 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.components.proxy.name }}-config
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  vhost.empty: |
+    # Placeholder to avoid errors loading files using a glob pattern
+{{- if index .Values "minio" "enabled" }}
+  vhost.minio: |
+    https://minio.{$GITPOD_DOMAIN} {
+      import enable_log
+      import remove_server_header
+      import ssl_configuration
+
+      reverse_proxy {{ index .Values "minio" "fullnameOverride" }}.{{ .Release.Namespace }}.{$KUBE_DOMAIN}:9000 {
+        flush_interval -1
+      }
+    }
+{{- end }}
+{{- if index .Values "docker-registry" "enabled" }}
+{{- if index .Values "docker-registry" "authentication" -}}
+{{ $t := set . "username" (index .Values "docker-registry" "authentication" "username") }}
+{{ $t := set . "password" (index .Values "docker-registry" "authentication" "password") }}
+{{- else }}
+{{ $t := set . "username" (randAlphaNum 20) }}
+{{ $t := set . "password" (randAlphaNum 20) }}
+{{- end }}
+  vhost.docker-registry: |
+    https://registry.{$GITPOD_DOMAIN} {
+      import enable_log
+      import remove_server_header
+      import ssl_configuration
+
+      basicauth bcrypt "Docker Registry" {
+        {{ .username }} {{ bcrypt .password | b64enc }}
+      }
+
+      reverse_proxy https://{{ include "gitpod.builtinRegistry.internal_name" . }} {
+        flush_interval -1
+        transport http {
+          tls_trusted_ca_certs /etc/caddy/registry-certs/ca.crt
+        }
+      }
+    }
+{{- end }}
+{{- if not .Values.components.openVsxProxy.disabled }}
+  vhost.open-vsx: |
+    https://open-vsx.{$GITPOD_DOMAIN} {
+      import enable_log_debug
+      import remove_server_header
+      import ssl_configuration
+
+      reverse_proxy  {
+        to openvsx-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:{{.Values.components.openVsxProxy.ports.http.servicePort}}
+      }
+    }
+{{- end }}
+
+{{- if not .Values.components.ideProxy.disabled }}
+  vhost.ide: |
+    https://ide.{$GITPOD_DOMAIN} {
+      import enable_log_debug
+      import remove_server_header
+      import ssl_configuration
+
+      reverse_proxy  {
+        to ide-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:{{.Values.components.ideProxy.ports.http.servicePort}}
+      }
+    }
+{{- end }}
+
+{{- if not .Values.components.paymentEndpoint.disabled }}
+  vhost.payment-endpoint: |
+    https://payment.{$GITPOD_DOMAIN} {
+      import enable_log
+      import remove_server_header
+      import ssl_configuration
+      import debug_headers
+
+      reverse_proxy payment-endpoint.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3002 {
+        import upstream_headers
+        import upstream_connection
+      }
+
+      handle_errors {
+        respond "Internal Server Error" 500
+      }
+    }
+{{- end }}
+
+{{- if not .Values.components.kedge.disabled }}
+  vhost.kedge: |
+    https://*.{$GITPOD_DOMAIN} {
+      import enable_log
+      import remove_server_header
+      import ssl_configuration
+      import debug_headers
+
+      @kedge header_regexp host Host ^kedge-([a-z0-9]+).{$GITPOD_DOMAIN}
+      handle @kedge {
+        reverse_proxy kedge.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:{{.Values.components.kedge.ports.http.servicePort}} {
+          import upstream_headers
+          import upstream_connection
+        }
+      }
+
+      respond "Not found" 404
+    }
+{{- end }}
+

@@ -1,0 +1,243 @@
+{
+    "creationDelta": "50m",
+    "wso": {
+        "pod": {
+            "metadata": {
+                "name": "ws-foobaz",
+                "namespace": "default",
+                "selfLink": "/api/v1/namespaces/default/pods/ws-foobaz",
+                "uid": "86ab7da1-43cf-11e9-aee4-080027861af1",
+                "resourceVersion": "72874",
+                "creationTimestamp": "2019-03-11T07:30:20Z",
+                "labels": {
+                    "gpwsman": "true",
+                    "headless": "true",
+                    "owner": "foobar",
+                    "metaID": "metameta",
+                    "workspaceID": "foobaz",
+                    "workspaceType": "probe"
+                },
+                "annotations": {
+                    "gitpod/id": "foobaz",
+                    "gitpod/servicePrefix": "foobaz",
+                    "gitpod/url": "http://10.0.0.114:8082",
+                    "gitpod/never-ready": "true",
+                    "prometheus.io/path": "/metrics",
+                    "prometheus.io/port": "23000",
+                    "prometheus.io/scrape": "true"
+                }
+            },
+            "spec": {
+                "volumes": [
+                    {
+                        "name": "vol-this-workspace",
+                        "hostPath": {
+                            "path": "/tmp/workspaces/foobaz",
+                            "type": "DirectoryOrCreate"
+                        }
+                    },
+                    {
+                        "name": "vol-sync-tmp",
+                        "hostPath": {
+                            "path": "/tmp/workspaces/sync-tmp",
+                            "type": "DirectoryOrCreate"
+                        }
+                    },
+                    {
+                        "name": "default-token-6qnvx",
+                        "secret": {
+                            "secretName": "default-token-6qnvx",
+                            "defaultMode": 420
+                        }
+                    }
+                ],
+                "containers": [
+                    {
+                        "name": "workspace",
+                        "image": "nginx:latest",
+                        "ports": [
+                            {
+                                "containerPort": 23000,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "env": [
+                            {
+                                "name": "THEIA_WORKSPACE_ROOT",
+                                "value": "/workspace"
+                            },
+                            {
+                                "name": "GITPOD_THEIA_PORT",
+                                "value": "23000"
+                            },
+                            {
+                                "name": "GITPOD_HOST",
+                                "value": "gitpod.io"
+                            },
+                            {
+                                "name": "GITPOD_INTERVAL",
+                                "value": "30"
+                            },
+                            {
+                                "name": "GITPOD_HEADLESS",
+                                "value": "true"
+                            },
+                            {
+                                "name": "GITPOD_WSSYNC_APITOKEN",
+                                "value": "bb3e5b0e-2c82-409c-96c6-1ae8ce279519"
+                            },
+                            {
+                                "name": "GITPOD_WSSYNC_APIPORT",
+                                "value": "44444"
+                            },
+                            {
+                                "name": "GITPOD_REPO_ROOT",
+                                "value": "/workspace"
+                            },
+                            {
+                                "name": "GITPOD_CLI_APITOKEN",
+                                "value": "3c4d173e-91d9-48ff-b957-307a8b91cb86"
+                            },
+                            {
+                                "name": "GITPOD_WORKSPACE_ID",
+                                "value": "foobaz"
+                            },
+                            {
+                                "name": "GITPOD_GIT_USER_NAME",
+                                "value": "usernameGoesHere"
+                            },
+                            {
+                                "name": "GITPOD_GIT_USER_EMAIL",
+                                "value": "some@user.com"
+                            }
+                        ],
+                        "resources": {
+                            "limits": {
+                                "cpu": "100m",
+                                "memory": "100Mi"
+                            },
+                            "requests": {
+                                "cpu": "100m",
+                                "memory": "100Mi"
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "name": "vol-this-workspace",
+                                "mountPath": "/workspace"
+                            },
+                            {
+                                "name": "default-token-6qnvx",
+                                "readOnly": true,
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+                            }
+                        ],
+                        "livenessProbe": {
+                            "httpGet": {
+                                "path": "/",
+                                "port": 23000,
+                                "scheme": "HTTP"
+                            },
+                            "timeoutSeconds": 1,
+                            "periodSeconds": 30,
+                            "successThreshold": 1,
+                            "failureThreshold": 3
+                        },
+                        "readinessProbe": {
+                            "httpGet": {
+                                "path": "/",
+                                "port": 23000,
+                                "scheme": "HTTP"
+                            },
+                            "timeoutSeconds": 1,
+                            "periodSeconds": 1,
+                            "successThreshold": 1,
+                            "failureThreshold": 3
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "imagePullPolicy": "Always"
+                    }
+                ],
+                "restartPolicy": "Always",
+                "terminationGracePeriodSeconds": 30,
+                "dnsPolicy": "ClusterFirst",
+                "serviceAccountName": "default",
+                "serviceAccount": "default",
+                "nodeName": "minikube",
+                "securityContext": {},
+                "schedulerName": "default-scheduler",
+                "tolerations": [
+                    {
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "effect": "NoExecute",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "effect": "NoExecute",
+                        "tolerationSeconds": 300
+                    }
+                ]
+            },
+            "status": {
+                "phase": "Pending",
+                "conditions": [
+                    {
+                        "type": "Initialized",
+                        "status": "True",
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2019-03-11T07:30:20Z"
+                    },
+                    {
+                        "type": "Ready",
+                        "status": "False",
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2019-03-11T07:30:20Z",
+                        "reason": "ContainersNotReady",
+                        "message": "containers with unready status: [workspace sync]"
+                    },
+                    {
+                        "type": "PodScheduled",
+                        "status": "True",
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2019-03-11T07:30:20Z"
+                    }
+                ],
+                "hostIP": "10.0.2.15",
+                "startTime": "2019-03-11T07:30:20Z",
+                "containerStatuses": [
+                    {
+                        "name": "sync",
+                        "state": {
+                            "waiting": {
+                                "reason": "ContainerCreating"
+                            }
+                        },
+                        "lastState": {},
+                        "ready": false,
+                        "restartCount": 0,
+                        "image": "csweichel/noop:latest",
+                        "imageID": ""
+                    },
+                    {
+                        "name": "workspace",
+                        "state": {
+                            "waiting": {
+                                "reason": "ContainerCreating"
+                            }
+                        },
+                        "lastState": {},
+                        "ready": false,
+                        "restartCount": 0,
+                        "image": "nginx:latest",
+                        "imageID": ""
+                    }
+                ],
+                "qosClass": "Guaranteed"
+            }
+        }
+    }
+}

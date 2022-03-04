@@ -1,0 +1,93 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "cmd/**/*.go"
+      - "pkg/**/*.go"
+      - "main.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/content-service:lib
+      - components/ws-daemon-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid= -X 'github.com/gitpod-io/gitpod/ws-daemon/cmd.Version=commit-${__git_commit}'"]
+  - name: lib
+    type: go
+    srcs:
+      - "cmd/**/*.go"
+      - "pkg/**/*.go"
+      - "main.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/content-service:lib
+      - components/ws-daemon-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: library
+  - name: content-initializer
+    type: go
+    srcs:
+      - "pkg/**/*.go"
+      - "cmd/content-initializer/**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/content-service:lib
+      - components/ws-daemon-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    prep:
+      - ["mv", "cmd/content-initializer/main.go", "."]
+    config:
+      packaging: app
+      dontTest: true
+      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid="]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+      - :content-initializer
+      - components/ws-daemon/nsinsider:app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: wsDaemon
+      image:
+        - ${imageRepoBase}/ws-daemon:${version}
+        - ${imageRepoBase}/ws-daemon:commit-${__git_commit}
+scripts:
+  - name: kube-exec
+    description: Executes into the ws-daemon for a workspace pod in $WS
+    script: |-
+      if [ -z "$WS" ]; then
+        echo "usage: WS=<workspacePodName> leeway run components/ws-daemon:kube-exec"
+        exit 1
+      fi
+      node=$(kubectl get pod -o jsonpath='{.spec.nodeName}' $WS)
+      if [ -z "$node" ]; then
+        echo "did not find a node"
+        exit 1
+      fi
+      daemon=$(kubectl describe node $node | grep ws-daemon | grep $(kubens -c) | cut -d ' ' -f 4-30)
+      echo node: $node
+      echo daemon: $daemon
+      kubectl exec -it $daemon -- sh

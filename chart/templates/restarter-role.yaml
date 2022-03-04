@@ -1,0 +1,23 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- if .Values.components.restarter.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: restarter
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: restarter
+    kind: role
+    stage: {{ .Values.installation.stage }}
+rules:
+  - apiGroups: ['apps']
+    resources: ['deployments','daemonsets']
+    verbs: ['get','patch']
+  - apiGroups: ['policy']
+    resources: ['podsecuritypolicies']
+    verbs:     ['use']
+    resourceNames:
+    - {{ .Release.Namespace }}-ns-unprivileged
+{{- end }}

@@ -1,0 +1,6 @@
+.DS_Store
+Thumbs.db
+.idea
+charts/*/charts
+charts/*/Chart.lock
+*.tgz

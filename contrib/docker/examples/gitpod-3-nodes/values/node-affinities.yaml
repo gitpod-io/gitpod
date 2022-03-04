@@ -1,0 +1,22 @@
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: gitpod.io/main-node
+          operator: In
+          values:
+          - "true"
+components:
+  workspace:
+    affinity:
+      default: "gitpod.io/workload_workspace"
+docker-registry:
+  nodeSelector:
+    gitpod.io/main-node: "true"
+minio:
+  nodeSelector:
+    gitpod.io/main-node: "true"
+mysql:
+  nodeSelector:
+    gitpod.io/main-node: "true"

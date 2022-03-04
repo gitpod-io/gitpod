@@ -1,0 +1,46 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+packages:
+  - name: lib
+    type: go
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+    srcs:
+      - "**"
+    config:
+      packaging: library
+      dontTest: false
+  - name: app
+    type: go
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "**/*.json"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/content-service/cmd.Version=commit-${__git_commit}'"]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: contentService
+      image:
+        - ${imageRepoBase}/content-service:${version}
+        - ${imageRepoBase}/content-service:commit-${__git_commit}

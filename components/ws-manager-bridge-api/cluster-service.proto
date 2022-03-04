@@ -1,0 +1,117 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package workspacemanagerbridge;
+
+option go_package = "github.com/gitpod-io/gitpod/workspace-manager-bridge/api";
+
+service ClusterService {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+  rpc Deregister(DeregisterRequest) returns (DeregisterResponse) {}
+  rpc List(ListRequest) returns (ListResponse) {}
+}
+
+message RegisterRequest {
+  string name = 1;
+  string url = 2;
+  TlsConfig tls = 3;
+  RegistrationHints hints = 4;
+  repeated AdmissionConstraint admission_constraints = 5;
+
+  // DEPRECATED
+  // repeated AdmissionPreference admission_preference = 6;
+  reserved 6;
+}
+
+message RegisterResponse {}
+
+message TlsConfig {
+  string ca = 1;
+  string crt = 2;
+  string key = 3;
+}
+
+message RegistrationHints {
+  Preferability perfereability = 1;
+  bool cordoned = 2;
+  bool govern = 3;
+}
+
+message AdmissionConstraint {
+  message FeaturePreview {}
+  message HasPermission {
+    string permission = 1;
+  }
+
+  oneof constraint {
+    FeaturePreview has_feature_preview = 1;
+    HasPermission has_permission = 2;
+    string has_user_level = 3;
+    bool has_more_resources = 4;
+  }
+}
+
+enum Preferability {
+  None = 0;
+  Prefer = 1;
+  DontSchedule = 2;
+}
+
+message ClusterStatus {
+  string name = 1;
+  string url = 2;
+  ClusterState state = 3;
+  int32 score = 4;
+  int32 max_score = 5;
+  bool governed = 6;
+  repeated AdmissionConstraint admission_constraint = 7;
+  bool static = 8;
+
+  // DEPRECATED
+  // repeated AdmissionPreference admission_preference = 9;
+  reserved 9;
+}
+
+enum ClusterState {
+  UNKNOWN = 0;
+  AVAILABLE = 1;
+  CORDONED = 2;
+  DRAINING = 3;
+}
+
+message UpdateRequest {
+  string name = 1;
+  oneof property {
+    int32 score = 2;
+    int32 max_score = 3;
+    bool cordoned = 4;
+    ModifyAdmissionConstraint admission_constraint = 5;
+
+    // DEPRECATED
+    // ModifyAdmissionPreference admission_preference = 6;
+  }
+}
+
+message ModifyAdmissionConstraint {
+  bool add = 1;
+  AdmissionConstraint constraint = 2;
+}
+
+message UpdateResponse {}
+
+message DeregisterRequest {
+  string name = 1;
+  bool force = 2;
+}
+
+message DeregisterResponse {}
+
+message ListRequest {}
+
+message ListResponse {
+  repeated ClusterStatus status = 1;
+}

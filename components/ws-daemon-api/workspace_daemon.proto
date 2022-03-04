@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package iws;
+
+option go_package = "github.com/gitpod-io/gitpod/ws-daemon/api";
+
+service InWorkspaceService {
+    // PrepareForUserNS prepares a workspace container for wrapping it in a user namespace.
+    // A container that called this function MUST call Teardown.
+    //
+    // This call will make the workspace container's rootfs shared, and mount the workspace
+    // container's rootfs as a shiftfs mark under `/.workspace/mark` if the workspace has
+    // the daemon hostPath mount. Can only be used once per workspace.
+    rpc PrepareForUserNS(PrepareForUserNSRequest) returns (PrepareForUserNSResponse) {}
+
+    // WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
+    // for user namespaces and is available four times every 10 seconds.
+    rpc WriteIDMapping(WriteIDMappingRequest) returns (WriteIDMappingResponse) {}
+
+    // EvacuateCGroup empties the workspace pod cgroup and produces a new substructure.
+    // In combincation with introducing a new cgroup namespace, we can create a situation
+    // where the subcontroller are enabled and the ring2-visible cgroup is of type "domain".
+    rpc EvacuateCGroup(EvacuateCGroupRequest) returns (EvacuateCGroupResponse) {}
+
+    // MountProc mounts a masked proc in the container's rootfs.
+    // The PID must be in the PID namespace of the workspace container.
+    // The path is relative to the mount namespace of the PID.
+    rpc MountProc(MountProcRequest) returns (MountProcResponse) {}
+
+    // UmountProc unmounts a masked proc from the container's rootfs.
+    // The PID must be in the PID namespace of the workspace container.
+    // The path is relative to the mount namespace of the PID.
+    rpc UmountProc(UmountProcRequest) returns (UmountProcResponse) {}
+
+    // MountSysfs mounts a masked sysfs in the container's rootfs.
+    // The PID must be in the PID namespace of the workspace container.
+    // The path is relative to the mount namespace of the PID.
+    rpc MountSysfs(MountProcRequest) returns (MountProcResponse) {}
+
+    // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+    // The PID must be in the PID namespace of the workspace container.
+    // The path is relative to the mount namespace of the PID.
+    rpc UmountSysfs(UmountProcRequest) returns (UmountProcResponse) {}
+
+    // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
+    // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
+    rpc Teardown(TeardownRequest) returns (TeardownResponse) {}
+}
+
+message PrepareForUserNSRequest {}
+message PrepareForUserNSResponse {
+    FSShiftMethod fs_shift = 1;
+    bool full_workspace_backup = 2;
+}
+
+// FSShiftMethod describes the means by which we establish the ID shift for
+// user namespaced workspaces.
+enum FSShiftMethod {
+    SHIFTFS = 0;
+    FUSE = 1;
+}
+
+message WriteIDMappingResponse {
+    string message = 1;
+    uint32 error_code = 2;
+}
+message WriteIDMappingRequest {
+    message Mapping {
+        uint32 container_id = 1;
+        uint32 host_id = 2;
+        uint32 size = 3;
+    }
+
+    int64 pid = 1;
+    bool gid = 2;
+    repeated Mapping mapping = 3;
+}
+
+message EvacuateCGroupRequest {}
+message EvacuateCGroupResponse {}
+
+message MountProcRequest {
+    string target = 1;
+    int64 pid = 2;
+}
+message MountProcResponse {
+}
+
+message UmountProcRequest {
+    string target = 1;
+    int64 pid = 2;
+}
+message UmountProcResponse {}
+
+message TeardownRequest {
+}
+message TeardownResponse {
+    bool success = 2;
+}

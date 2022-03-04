@@ -1,0 +1,19 @@
+{{- if eq .Values.jaeger.storage "badger" -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: jaeger
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  name: {{ .Release.Name }}-jaeger-pvc-{{ .Values.global.timestamp }}
+spec:
+  storageClassName: ""
+  volumeName: {{ .Release.Name }}-jaeger-pv-{{ .Values.global.timestamp }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.jaeger.persistentVolume.storage }}
+{{- end -}}

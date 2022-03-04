@@ -1,0 +1,17 @@
+packages:
+  - name: docker
+    type: docker
+    srcs:
+      - entrypoint.sh
+      - gitpod-helm-installer.yaml
+      - persistent-volumes.yaml
+      - values.yaml
+    deps:
+      - chart:helm
+    argdeps:
+      - version
+    config:
+      dockerfile: Dockerfile
+      image:
+        - ${imageRepoBase}/gitpod-k3s:${version}
+        - ${imageRepoBase}/gitpod-k3s:commit-${__git_commit}

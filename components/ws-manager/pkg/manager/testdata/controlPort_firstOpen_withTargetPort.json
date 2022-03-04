@@ -1,0 +1,10 @@
+{
+    "request": {
+        "id": "foobar",
+        "expose": true,
+        "spec": {
+            "port": 8080,
+            "visibility": 1
+        }
+    }
+}

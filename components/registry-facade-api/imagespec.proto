@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package registryfacade;
+
+option go_package = "github.com/gitpod-io/gitpod/registry-facade/api";
+
+// ImageSpec configures the image one wishes to pull from a registry facade
+message ImageSpec {
+    // base_ref points to an image in another registry
+    string base_ref = 1;
+    // ide_ref points to an image denoting the IDE to use
+    string ide_ref = 2;
+    // content_layer describe the last few layers which provide the workspace's content
+    repeated ContentLayer content_layer = 3;
+    // desktop_ide_ref points to an image denotign the desktop IDE to use
+    string desktop_ide_ref = 4;
+    // supervisor_ref points to an image denotign the supervisor to use
+    string supervisor_ref = 5;
+}
+
+// ContentLayer is a layer that provides a workspace's content
+message ContentLayer {
+    oneof spec {
+        RemoteContentLayer remote = 1;
+        DirectContentLayer direct = 2;
+    };
+}
+
+// RemoteContentLayer is a layer which can be downloaded from a remote URL.
+// If the diff_id is empty or equals the digest the layer is expected to be uncompressed.
+message RemoteContentLayer {
+    // url points to the actual content location. This must be a valid HTTPS URL pointing
+    // to a tar.gz file.
+    string url = 1;
+    // digest is the digest (content hash) of the file the URL points to.
+    string digest = 2;
+    // diff_id is the digest (content hash) of the uncompressed data the URL points to if the
+    // the URL points to a compressed file. If the file is uncompressed to begin with this field
+    // can either be empty or the same as digest.
+    string diff_id = 3;
+    // media_type is the content type of the layer and is expected to be one of:
+    //  application/vnd.oci.image.layer.v1.tar
+    //  application/vnd.oci.image.layer.v1.tar+gzip
+    //  application/vnd.oci.image.layer.v1.tar+zstd
+    string media_type = 4;
+    // size is the size of the layer download in bytes
+    int64 size = 5;
+}
+
+// DirectContentLayer is an uncompressed tar file which is directly added as layer
+message DirectContentLayer {
+    // the bytes of the uncompressed tar file which is served as layer
+    bytes content = 1;
+}

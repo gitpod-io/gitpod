@@ -1,0 +1,42 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installNetworkPolicies -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: proxy-deny-all-allow-explicit
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: proxy
+    kind: networkpolicy
+    stage: {{ .Values.installation.stage }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: proxy
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow access to HTTP(S)/SSH ports from everywhere
+  - ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 22
+  # Allow prometheus scraping from proxy /metrics endpoint
+  - ports:
+    - protocol: TCP
+      port: 9500
+    from:
+    - namespaceSelector:
+        matchLabels:
+          chart: monitoring
+    - podSelector:
+        matchLabels:
+          app: prometheus
+          component: server
+{{- end -}}

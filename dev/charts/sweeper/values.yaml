@@ -1,0 +1,37 @@
+# Default values for sweeper.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: eu.gcr.io/gitpod-core-dev/dev/sweeper
+  pullPolicy: Always
+
+command: ""
+args: []
+
+githubToken:
+  envVar: GITHUB_TOKEN
+  # secret:
+  # key:
+
+
+serviceAccountName: server
+
+securityContext:
+  privileged: false
+  runAsUser: 1000
+
+imagePullSecrets:
+- name: workspace-registry-pull-secret
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: dev/workload
+          operator: In
+          values:
+          - "workload"

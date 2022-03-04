@@ -1,0 +1,36 @@
+{
+    "status": {
+        "id": "60116ccc-1593-41f5-880e-6c4010dc4d1d",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "71548797-a589-45fa-bf22-6aec554dded0",
+            "meta_id": "sapphire-alligator-jakcgz44",
+            "started_at": {
+                "seconds": 1627410546
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:295486e99855b59cf8d32b8d9b6c3c0abcf4b76acb8e511f7c919b0341c60f35",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-c77d5c144ba894ff5ae71a25af7fe3af4d4bd398",
+            "headless": true,
+            "url": "https://sapphire-alligator-jakcgz44.ws-dev.csweichel-don-t-abort-prebuild-4964.staging.gitpod-dev.com",
+            "type": 1,
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-c77d5c144ba894ff5ae71a25af7fe3af4d4bd398"
+            }
+        },
+        "phase": 5,
+        "conditions": {
+            "headless_task_failed": "headless task failed"
+        },
+        "message": "headless workspace is stopping",
+        "runtime": {
+            "node_name": "gke-dev-workload-4-5712746c-38bw",
+            "pod_name": "prebuild-60116ccc-1593-41f5-880e-6c4010dc4d1d",
+            "node_ip": "10.132.15.209"
+        },
+        "auth": {
+            "owner_token": "E8-X0p-tciJQOuPB4DLCyvAXN-6_PM3n"
+        }
+    }
+}

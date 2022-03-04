@@ -1,0 +1,65 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gitpod-helm-installer
+spec:
+    containers:
+      - name: gitpod-helm-installer
+        image: $HELMIMAGE
+        volumeMounts:
+          - name: kubeconfig
+            mountPath: /root/.kube/config
+          - name: installfiles
+            mountPath: /root/install
+          - name: chart
+            mountPath: /root/chart
+        command: ["sh", "/root/install/command.sh"]
+    volumes:
+      - name: kubeconfig
+        hostPath:
+          path: /etc/rancher/k3s/k3s_.yaml
+      - name: installfiles
+        configMap:
+          name: gitpod-helm-installer
+      - name: chart
+        hostPath:
+          path: /chart
+    restartPolicy: OnFailure
+    nodeSelector:
+      gitpod.io/main-node: "true"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitpod-helm-installer
+data:
+  command.sh: |-
+    #!/bin/sh
+    set -eux
+
+    echo ""
+    echo "values.yaml file:"
+    cat /root/install/values.yaml
+    echo ""
+
+    if [ -z "$(ls /root/chart)" ]; then
+      echo "Installing Gitpod from charts.gitpod.io"
+      helm repo add gitpod https://charts.gitpod.io
+      helm repo update
+      helm install gitpod gitpod/gitpod --timeout 60m --values /root/install/values.yaml
+    else
+      echo "Installing Gitpod from local chart folder"
+      cd /root/chart
+      helm dependency update
+      helm install gitpod . --timeout 60m --values /root/install/values.yaml
+    fi
+
+    echo ""
+    echo "Done"
+  values.yaml: |-
+    # values.yaml added by Docker entrypoint.sh

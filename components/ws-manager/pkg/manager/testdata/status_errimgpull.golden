@@ -1,0 +1,28 @@
+{
+    "status": {
+        "id": "f9d04251-f057-4287-b7b1-956093140c5d",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "bc043c78-9042-43cf-b521-8296457afc19",
+            "meta_id": "ba66e4d4-3eae-4c9c-83da-75b6dbc2f592",
+            "started_at": {
+                "seconds": 1567668824
+            }
+        },
+        "spec": {
+            "workspace_image": "registry.staging-cw-minio-core.svc.cluster.local/workspace-images/aadf89d3be804eeb2cab063f217a1b57dd984be5/registry.hub.docker.com/gitpod/workspace-full:sha256-1f5a29431048784d1e133769db5918bd6ea1e5b7530f04013f2d55026478e766",
+            "url": "http://ba66e4d4-3eae-4c9c-83da-75b6dbc2f592.cw-minio-core.staging.gitpod.io",
+            "ide_image": {}
+        },
+        "phase": 2,
+        "conditions": {
+            "failed": "cannot pull image: rpc error: code = Unknown desc = Error response from daemon: Get https://registry.staging-cw-minio-core.svc.cluster.local/v1/_ping: dial tcp: lookup registry.staging-cw-minio-core.svc.cluster.local: no such host"
+        },
+        "runtime": {
+            "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-wl2d",
+            "pod_name": "ws-f9d04251-f057-4287-b7b1-956093140c5d",
+            "node_ip": "10.132.15.195"
+        },
+        "auth": {}
+    }
+}

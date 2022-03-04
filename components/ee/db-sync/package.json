@@ -1,0 +1,42 @@
+{
+  "private": true,
+  "name": "@gitpod/db-sync",
+  "version": "0.1.5",
+  "scripts": {
+    "start": "node lib/main.js",
+    "prepare": "yarn clean && yarn build",
+    "build": "npx tsc",
+    "build:clean": "yarn clean && yarn build",
+    "rebuild": "yarn build:clean",
+    "build:watch": "watch 'yarn build' .",
+    "watch": "leeway exec --package .:app --transitive-dependencies --filter-type yarn --components --parallel -- yarn build -w --preserveWatchOutput",
+    "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run;}; r",
+    "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
+    "clean": "yarn run rimraf lib",
+    "clean:node": "yarn run rimraf node_modules",
+    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
+    "telepresence": "leeway run .:telepresence"
+  },
+  "dependencies": {
+    "@gitpod/gitpod-db": "0.1.5",
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "argparse": "^2.0.1",
+    "moment": "^2.21.0",
+    "mysql": "^2.15.0",
+    "progress": "^2.0.1",
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "@types/argparse": "^2.0.10",
+    "@types/chai": "^4.0.4",
+    "@types/mocha": "^5.2.7",
+    "@types/mysql": "^2.15.0",
+    "@types/progress": "^2.0.1",
+    "chai": "^4.1.2",
+    "mocha": "^4.1.0",
+    "mocha-typescript": "^1.1.17",
+    "rimraf": "^2.6.1",
+    "ts-node": "<7.0.0",
+    "typescript": "^4.4.2"
+  }
+}

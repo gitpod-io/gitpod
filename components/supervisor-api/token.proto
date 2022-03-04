@@ -1,0 +1,100 @@
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
+
+service TokenService {
+    rpc GetToken(GetTokenRequest) returns (GetTokenResponse) {
+        option (google.api.http) = {
+            get: "/v1/token/{kind}/{host}/{scope}"
+        };
+    }
+
+    rpc SetToken(SetTokenRequest) returns (SetTokenResponse) {
+        option (google.api.http) = {
+            post: "/v1/token/{kind}/{host}"
+            body: "*"
+        };
+    }
+
+    rpc ClearToken(ClearTokenRequest) returns (ClearTokenResponse) {
+        option (google.api.http) = {
+            delete: "/v1/token/{kind}/{value}",
+            additional_bindings {
+                delete: "/v1/token/{kind}/clear/all/{all=true}",
+            }
+        };
+    }
+
+    rpc ProvideToken(stream ProvideTokenRequest) returns (stream ProvideTokenResponse) {}
+}
+
+message GetTokenRequest {
+    string host = 1;
+    repeated string scope = 2;
+    string description = 3;
+    string kind = 4;
+}
+message GetTokenResponse {
+    string token = 1;
+    /** The username of the account associated with the token. */
+    string user = 2;
+    repeated string scope = 3;
+}
+
+message SetTokenRequest {
+    string host = 1;
+    repeated string scope = 2;
+    string token = 3;
+    google.protobuf.Timestamp expiry_date = 4;
+    TokenReuse reuse = 5;
+    string kind = 6;
+}
+message SetTokenResponse {}
+
+enum TokenReuse {
+    // REUSE_NEVER means the token can never be re-used.
+    // This mode only makes sense when providing a token in response to a request.
+    REUSE_NEVER = 0;
+
+    // REUSE_EXACTLY means the token can only be reused when the requested scopes
+    // exactly match those of the token.
+    REUSE_EXACTLY = 1;
+
+    // REUSE_WHEN_POSSIBLE means the token can be reused when the requested scopes
+    // are a subset of the token's scopes.
+    REUSE_WHEN_POSSIBLE = 2;
+}
+
+message ClearTokenRequest {
+    oneof token {
+        string value = 1;
+        bool all = 2;
+    };
+    string kind = 3;
+}
+
+message ClearTokenResponse {}
+
+message ProvideTokenRequest {
+    message RegisterProvider {
+        string kind = 1;
+    }
+
+    oneof message {
+        RegisterProvider registration = 1;
+        SetTokenRequest answer = 2;
+    };
+}
+message ProvideTokenResponse {
+    GetTokenRequest request = 1;
+}

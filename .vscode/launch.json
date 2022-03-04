@@ -1,0 +1,39 @@
+{
+    "configurations": [
+        {
+            "name": "Attach to Node",
+            "type": "node",
+            "request": "attach",
+            "smartStep": true,
+            "port": 9229,
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/node_modules/*",
+                "webpack://?:*/*": "${workspaceFolder}/*",
+                "file:///app/node_modules/*": "${workspaceFolder}/node_modules/*"
+            }
+        },
+        {
+            "name": "Attach to Delve",
+            "type": "go",
+            "request": "attach",
+            "port": 32991,
+            "mode": "remote"
+        },
+        {
+            // This will run the db-test yarn target in the gitpod-db component.
+            // This allows you to set breakpoints in your tests and step through
+            // them with the VSCode debugger.
+            "type": "node",
+            "request": "launch",
+            "name": "gitpod-db-tests",
+            "cwd": "${workspaceFolder}/components/gitpod-db",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": ["db-test"],
+            "internalConsoleOptions": "openOnSessionStart",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ]
+}

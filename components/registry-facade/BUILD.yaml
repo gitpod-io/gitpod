@@ -1,0 +1,49 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "pkg/**/*.json"
+      - "pkg/**/*.golden"
+    deps:
+      - components/common-go:lib
+      - components/registry-facade-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/registry-facade/cmd.Version=commit-${__git_commit}'"]
+  - name: lib
+    type: go
+    srcs:
+      - "go.mod"
+      - "go.sum"
+      - "pkg/**/*.go"
+      - "pkg/**/*.json"
+      - "pkg/**/*.golden"
+    deps:
+      - components/common-go:lib
+      - components/registry-facade-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: library
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: registryFacade
+      image:
+        - ${imageRepoBase}/registry-facade:${version}
+        - ${imageRepoBase}/registry-facade:commit-${__git_commit}

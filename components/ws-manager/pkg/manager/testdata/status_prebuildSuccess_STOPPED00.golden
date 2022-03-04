@@ -1,0 +1,97 @@
+{
+    "status": {
+        "id": "8e0bbcdf-a926-4670-8c40-b718f035b2ae",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "d98c5b92-2066-4fce-bea6-1e08b58642ab",
+            "meta_id": "green-wombat-62dzneud",
+            "started_at": {
+                "seconds": 1622206099
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:81c4fb602a540d261f210cfc8ba0435b63b24238c1762ec029d8edaec816afb6",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:gpl-headless-log-wsman.17",
+            "headless": true,
+            "url": "https://green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com",
+            "exposed_ports": [
+                {
+                    "port": 1337,
+                    "visibility": 1,
+                    "url": "https://1337-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 3000,
+                    "visibility": 1,
+                    "url": "https://3000-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 3001,
+                    "visibility": 1,
+                    "url": "https://3001-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 3306,
+                    "visibility": 1,
+                    "url": "https://3306-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 4000,
+                    "visibility": 1,
+                    "url": "https://4000-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 5900,
+                    "visibility": 1,
+                    "url": "https://5900-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 6080,
+                    "url": "https://6080-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 9229,
+                    "visibility": 1,
+                    "url": "https://9229-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 9999,
+                    "visibility": 1,
+                    "url": "https://9999-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 13001,
+                    "visibility": 1,
+                    "url": "https://13001-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 7777,
+                    "visibility": 1,
+                    "url": "https://7777-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                },
+                {
+                    "port": 13444,
+                    "visibility": 1,
+                    "url": "https://13444-green-wombat-62dzneud.ws-dev.gpl-headless-log-wsman.staging.gitpod-dev.com"
+                }
+            ],
+            "type": 1,
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:gpl-headless-log-wsman.17"
+            }
+        },
+        "phase": 6,
+        "conditions": {
+            "snapshot": "workspaces/green-wombat-62dzneud/snapshot-1622206186881521445.tar@gitpod-user-d98c5b92-2066-4fce-bea6-1e08b58642ab",
+            "final_backup_complete": 1
+        },
+        "runtime": {
+            "node_name": "gke-dev-workload-1-49d27f81-pd35",
+            "pod_name": "prebuild-8e0bbcdf-a926-4670-8c40-b718f035b2ae",
+            "node_ip": "10.132.15.221"
+        },
+        "auth": {
+            "owner_token": "FZ2k9zbSCo9e85Y21yh.SHLJbya7pW2Y"
+        }
+    }
+}

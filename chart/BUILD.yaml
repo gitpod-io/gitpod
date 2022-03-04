@@ -1,0 +1,49 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+packages:
+  - name: helm
+    type: generic
+    srcs:
+      - "**/*.yaml"
+      - "**/*.tpl"
+      - "secrets/**/*"
+      - "config/**/*"
+      # Required for semver check below
+      - test-semver.js
+    argdeps:
+      - version
+      - imageRepoBase
+    config:
+      commands:
+        # Chart.version has to be semver compliant for "helm package to work".
+        # We use this in two modes:
+        #  - publishing "Gitpod Self-Hosted" releases: version _is_ semver compliant
+        #  - publishing "branch builds": version is <branch-name>.<nr> (_not_ semver compliant)
+        # To fix this locally (without poisoning the leeway upstream deps) we detect semver compliance here, and in case of non-compliance, prefix with "0.1.0-".
+        # Note: This assumes all clients of the resulting "branch builds" package do not care about the actual version used.
+        - ["sh", "-c", "(npm install semver && node test-semver.js ${version}) && yq w -i Chart.yaml version ${version} || yq w -i Chart.yaml version 0.1.0-${version}"]
+        - ["rm", "-f", "test-semver.js"]
+        # set values
+        - ["yq", "w", "-i", "values.yaml", "version", "${version}"]
+        - ["yq", "w", "-i", "values.yaml", "imagePrefix", "${imageRepoBase}/"]
+        # prepare chart
+        - ["sh", "-c", "ls -A | grep -v BUILD.yaml | grep -v original_files > original_files.txt"]
+        - ["mkdir", "gitpod"]
+        - ["sh", "-c", "mv $(cat original_files.txt) gitpod"]
+        # pack up
+        - ["helm", "dependency", "build", "gitpod"]
+        - ["helm", "package", "gitpod", "--destination", "."]
+        - ["rm", "-rf", "yq", "BUILD.yaml", "original_files.txt"]
+  - name: release-tars
+    type: generic
+    argdeps:
+    - version
+    deps:
+    - chart/config/db/init:release-tar
+    - :helm
+    config:
+      commands:
+      # re-wrap/mv into named tars
+      - ["sh", "-c", "tar czf gitpod-database-init-${version}.tar.gz -C chart-config-db-init--release-tar . && rm -rf chart-config-db-init--release-tar"]
+      - ["sh", "-c", "mv chart--helm/*.tgz gitpod-helm-${version}.tar.gz && rm -rf chart--helm"]

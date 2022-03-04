@@ -1,0 +1,76 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.wsManagerBridge -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ws-manager-bridge
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-manager-bridge
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: ws-manager-bridge
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: ws-manager-bridge
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: ws-manager-bridge
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+      priorityClassName: system-node-critical
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: ws-manager-bridge
+      enableServiceLinks: false
+      initContainers:
+{{ include "gitpod.databaseWaiter.container" $this | indent 6 }}
+{{ include "gitpod.msgbusWaiter.container" $this | indent 6 }}
+      containers:
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+      - name: ws-manager-bridge
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        securityContext:
+          privileged: false
+          runAsUser: 31001
+        volumeMounts:
+        - name: config
+          mountPath: "/config"
+          readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
+          readOnly: true
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.dbEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ include "gitpod.container.analyticsEnv" $this | indent 8 }}
+{{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
+        - name: WSMAN_BRIDGE_CONFIGPATH
+          value: /config/ws-manager-bridge.json
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: {{ .Values.components.wsManager.tls.client.secretName }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

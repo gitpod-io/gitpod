@@ -1,0 +1,33 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.paymentEndpoint -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: payment-endpoint-deny-all-allow-explicit
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: payment-endpoint
+    kind: networkpolicy
+    stage: {{ .Values.installation.stage }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: payment-endpoint
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 3002
+    from:
+    # Allow ingress on port 3002 from component:
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" . }}
+          component: proxy
+{{ end }}

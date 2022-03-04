@@ -1,0 +1,32 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- define "content-service.config" }}
+{{ $comp := .comp -}}
+{{ with .root }}
+service:
+  address: ":{{ $comp.ports.rpc.containerPort }}"
+prometheus:
+  address: ":{{ $comp.ports.metrics.containerPort }}"
+pprof:
+  address: ":6060"
+{{ include "gitpod.remoteStorage.config" (dict "root" . "remoteStorage" $comp.remoteStorage) }}
+{{ end }}
+{{ end }}
+
+{{ $comp := .Values.components.contentService -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: content-service-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+{{ (include "content-service.config" $this) | fromYaml | toPrettyJson | indent 4 }}
+{{- end }}

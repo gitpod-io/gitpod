@@ -1,0 +1,80 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
+
+service PortService {
+  // Tunnel notifies clients to install listeners on remote machines.
+	// After that such clients should call EstablishTunnel to forward incoming connections.
+	rpc Tunnel(TunnelPortRequest) returns (TunnelPortResponse) {
+    option (google.api.http) = {
+      post : "/v1/port/tunnel/{port}"
+      body : "*"
+    };
+  }
+
+  // CloseTunnel notifies clients to remove listeners on remote machines.
+  rpc CloseTunnel(CloseTunnelRequest) returns (CloseTunnelResponse) {
+    option (google.api.http) = {
+      delete : "/v1/port/tunnel/{port}"
+    };
+  }
+
+  // EstablishTunnel actually establishes the tunnel for an incoming connection on a remote machine.
+	rpc EstablishTunnel(stream EstablishTunnelRequest)
+      returns (stream EstablishTunnelResponse);
+
+  // AutoTunnel controls enablement of auto tunneling
+  rpc AutoTunnel(AutoTunnelRequest) returns (AutoTunnelResponse) {
+    option (google.api.http) = {
+      post : "/v1/port/tunnel/auto/{enabled}"
+    };
+  }
+
+  // RetryAutoExpose retries auto exposing the give port
+  rpc RetryAutoExpose(RetryAutoExposeRequest) returns (RetryAutoExposeResponse) {
+    option (google.api.http) = {
+      post : "/v1/port/ports/exposed/retry/{port}"
+    };
+  }
+}
+enum TunnelVisiblity {
+  none = 0;
+  host = 1;
+  network = 2;
+}
+message TunnelPortRequest {
+  uint32 port = 1;
+  uint32 target_port = 2;
+  TunnelVisiblity visibility = 3;
+  string client_id = 4;
+}
+message TunnelPortResponse {}
+
+message CloseTunnelRequest { uint32 port = 1; }
+message CloseTunnelResponse {}
+
+message EstablishTunnelRequest {
+  oneof output {
+    TunnelPortRequest desc = 1;
+    bytes data = 2;
+  };
+}
+
+message EstablishTunnelResponse { bytes data = 1; }
+
+message AutoTunnelRequest { bool enabled = 1; }
+message AutoTunnelResponse {}
+
+message RetryAutoExposeRequest {
+  uint32 port = 1;
+}
+message RetryAutoExposeResponse {}

@@ -1,0 +1,52 @@
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package contentservice;
+
+option go_package = "github.com/gitpod-io/gitpod/content-service/api";
+
+service BlobService {
+  // UploadUrl provides a URL to which clients can upload the content via HTTP PUT.
+  rpc UploadUrl(UploadUrlRequest) returns (UploadUrlResponse) {}
+
+  // DownloadUrl provides a URL from which clients can download the content via HTTP GET.
+  rpc DownloadUrl(DownloadUrlRequest) returns (DownloadUrlResponse) {}
+
+  // Delete deletes the uploaded content.
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+}
+
+message UploadUrlRequest {
+  string owner_id = 1;
+  string name = 2;
+  string content_type = 3;
+}
+
+message UploadUrlResponse {
+  string url = 1;
+}
+
+
+message DownloadUrlRequest {
+  string owner_id = 1;
+  string name = 2;
+  string content_type = 3;
+}
+
+message DownloadUrlResponse {
+  string url = 1;
+}
+
+message DeleteRequest {
+  string owner_id = 1;
+  oneof name {
+    string exact = 2;
+    string prefix = 3;
+  }
+}
+
+message DeleteResponse {
+}

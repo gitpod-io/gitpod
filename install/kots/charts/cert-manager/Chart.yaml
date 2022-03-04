@@ -1,0 +1,8 @@
+apiVersion: v2
+description: Gitpod cert-manager
+name: cert-manager
+version: 1.7.0
+dependencies:
+  - name: cert-manager
+    version: 1.7.0
+    repository: https://charts.jetstack.io

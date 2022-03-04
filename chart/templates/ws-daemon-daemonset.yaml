@@ -1,0 +1,316 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.wsDaemon -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $gp := $.Values -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ws-daemon
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: ws-daemon
+    kind: daemonset
+    stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: ws-daemon
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" $ }}
+      component: ws-daemon
+      kind: daemonset
+      stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: ws-daemon
+  template:
+    metadata:
+      labels:
+        app: {{ template "gitpod.fullname" $ }}
+        component: ws-daemon
+        kind: daemonset
+        stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: ws-daemon
+      annotations:
+        checksum/tlskey: {{ include (print $.Template.BasePath "/ws-daemon-tlssecret.yaml") $ | sha256sum }}
+        {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+        seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
+        {{- end }}
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      priorityClassName: system-node-critical
+      tolerations:
+      - key: node.kubernetes.io/disk-pressure
+        operator: "Exists"
+        effect: "NoExecute"
+      - key: node.kubernetes.io/memory-pressure
+        operator: "Exists"
+        effect: "NoExecute"
+      - key: node.kubernetes.io/out-of-disk
+        operator: "Exists"
+        effect: "NoExecute"
+      serviceAccountName: ws-daemon
+      hostPID: true
+      volumes:
+      - name: hostfs
+        hostPath:
+          path: /
+      - hostPath:
+          path: {{ $comp.hostWorkspaceArea }}
+          type: DirectoryOrCreate
+        name: working-area
+      - name: tls-certs
+        secret:
+          secretName: ws-daemon-tls
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      - name: containerd-socket
+        hostPath:
+          path: {{ $comp.containerRuntime.containerd.socket }}
+          type: Socket
+      {{- range $idx, $pth := $comp.containerRuntime.nodeRoots }}
+      - name: node-fs{{ $idx }}
+        hostPath:
+          path: {{ $pth }}
+          type: Directory
+      {{- end }}
+      - name: node-mounts
+        hostPath:
+          path: /proc/mounts
+          type: File
+      - name: node-cgroups
+        hostPath:
+          path: {{ $comp.cgroupsRoot | default "/sys/fs/cgroup" }}
+          type: Directory
+      - name: node-hosts
+        hostPath:
+          path: {{ $comp.nodeHosts | default "/etc/hosts" }}
+          type: File
+      {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+      - name: node-linux-src
+        hostPath:
+          path: /usr/src
+          type: Directory
+      {{- end }}
+      {{- if $comp.userNamespaces.seccompProfileInstaller.enabled }}
+      - name: hostseccomp
+        hostPath:
+          path: /var/lib/kubelet/seccomp
+      {{- end }}
+{{- if $comp.volumes }}
+{{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
+      enableServiceLinks: false
+{{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
+      initContainers:
+{{- end }}
+{{- if $comp.disableKubeHealthMonitor }}
+      - name: disable-kube-health-monitor
+        # 20.4 is Ubuntu Focal, which we run on GKE atm
+        image: ubuntu:20.04
+        securityContext:
+          privileged: true
+          procMount: Default
+        # use nsenter to run code on the node
+        command:
+          - /usr/bin/nsenter
+          - -t
+          - "1"
+          - -a
+          - /bin/bash
+          - -c
+        args:
+          - |
+            exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
+            set -euExo pipefail
+            systemctl status kube-container-runtime-monitor.service || true
+            if [ "$(systemctl is-active kube-container-runtime-monitor.service)" == "active" ]
+            then
+                echo "kube-container-runtime-monitor.service is active"
+                systemctl stop kube-container-runtime-monitor.service
+                systemctl disable kube-container-runtime-monitor.service
+                systemctl status kube-container-runtime-monitor.service || true
+            else
+                echo "kube-container-runtime-monitor.service is not active, not doing anything"
+            fi
+{{- end }}
+{{- if $comp.setupSSDRaid }}
+      - name: raid-local-disks
+        image: scylladb/raid-setup:0.1
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: hostfs
+          mountPath: /mnt/hostfs
+          mountPropagation: Bidirectional
+        command:
+          - /bin/bash
+          - -c
+        args:
+          - |
+            exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
+            set -euExo pipefail
+            RAID_DEVICE="/dev/md42"
+            RAID_DIR="/mnt/hostfs{{ $comp.hostWorkspaceArea }}"
+            DISK_DEV_PREFIX="/dev/sd"
+
+            # If the disk has already been created, sleep indefinitely
+            if [ -b "${RAID_DEVICE}" ] && [ -d "${RAID_DIR}" ]; then
+                echo "raid array already created!"
+                mount -o noatime,prjquota "${RAID_DEVICE}" "${RAID_DIR}" || true
+                exit 0
+            fi
+            # Discover how many disks there are
+            DISK_DEV_SUFFIX=(b c d e f g h i)
+            MAX_NUM_DISKS=8
+            NUM_DISKS=0
+            declare -a DISKS
+            for i in `seq 0 $((MAX_NUM_DISKS-1))`;
+            do
+                CURR_DISK="${DISK_DEV_PREFIX}${DISK_DEV_SUFFIX[$i]}"
+                if [ ! -b "$CURR_DISK" ]; then
+                  break
+                fi
+                DISKS[$i]="$CURR_DISK"
+                NUM_DISKS=$((i+1))
+            done
+            if [ $NUM_DISKS -eq 0 ]; then
+              echo "no local disks detected!"
+              exit 1
+            fi
+            # Unmount disks from host filesystem
+            for i in `seq 0 $((NUM_DISKS-1))`;
+            do
+                CURR_DISK=${DISKS[$i]}
+                DISCARD_FLAG_PATH="/sys/block/${CURR_DISK#'/dev/'}/queue/discard_granularity"
+                umount $CURR_DISK &> /dev/null || echo "Disk $CURR_DISK already unmounted."
+                if [ "`cat $DISCARD_FLAG_PATH`" != "0" ]; then
+                    blkdiscard $CURR_DISK || true
+                fi
+            done
+            # Waits till udev reread device data
+            udevadm settle
+            # Create a raid array
+            mdadm --create "${RAID_DEVICE}" --force --level=0 -c1024 --raid-devices="${NUM_DISKS}" "${DISKS[@]}"
+            # Waits till udev reread md0 device data
+            udevadm settle
+            # Format the raid array as xfs
+            mkfs.xfs "${RAID_DEVICE}"
+            # Mount the raid array in a predefined location
+            mkdir -p "${RAID_DIR}"
+            mount -o noatime,prjquota "${RAID_DEVICE}" "${RAID_DIR}"
+            ls -l /dev/md*
+            cat /proc/mdstat
+{{- end }}
+{{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+      - name: shiftfs-module-loader
+        volumeMounts:
+        - mountPath: /usr/src_node
+          name: node-linux-src
+          readOnly: true
+        image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.userNamespaces.shiftfsModuleLoader) }}
+        securityContext:
+          privileged: true
+{{- end }}
+{{- if $comp.userNamespaces.seccompProfileInstaller.enabled }}
+      - name: seccomp-profile-installer
+        volumeMounts:
+        - mountPath: /mnt/dst
+          name: hostseccomp
+        image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.userNamespaces.seccompProfileInstaller) }}
+        securityContext:
+          privileged: true
+        command: ["/bin/sh", "-c", "cp -f /installer/workspace_default.json /mnt/dst/workspace_default_{{ $gp.version }}.json"]
+{{- end }}
+      - name: sysctl
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        securityContext:
+          privileged: true
+        command:
+          - sh
+          - -c
+          - >
+            (
+              echo "running sysctls" &&
+              sysctl -w net.core.somaxconn=4096 &&
+              sysctl -w "net.ipv4.ip_local_port_range=5000 65000" &&
+              sysctl -w "net.ipv4.tcp_tw_reuse=1" &&
+              sysctl -w fs.inotify.max_user_watches=1000000 &&
+              sysctl -w "kernel.dmesg_restrict=1" &&
+              sysctl -w vm.unprivileged_userfaultfd=0
+            ) && echo "done!" || echo "failed!"
+      containers:
+      - name: ws-daemon
+        volumeMounts:
+        - mountPath: /mnt/workingarea
+          name: working-area
+          mountPropagation: Bidirectional
+        - mountPath: /config
+          name: config
+        - mountPath: /mnt/containerd.sock
+          name: containerd-socket
+        {{- range $idx, $pth := $comp.containerRuntime.nodeRoots }}
+        - mountPath: /mnt/node{{ $idx }}
+          name: node-fs{{ $idx }}
+        {{- end }}
+        - mountPath: /mnt/mounts
+          name: node-mounts
+          readOnly: true
+          mountPropagation: HostToContainer
+        - mountPath: /mnt/node-cgroups
+          name: node-cgroups
+          mountPropagation: HostToContainer
+        - mountPath: /mnt/hosts
+          name: node-hosts
+        - mountPath: /certs
+          name: tls-certs
+{{- if $comp.volumeMounts }}
+{{ toYaml $comp.volumeMounts | indent 8 }}
+{{- end }}
+        args: ["run", "--config", "/config/config.json"]
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - name: rpc
+          containerPort: {{ $comp.servicePort }}
+          hostPort: {{ $comp.servicePort }}
+        readinessProbe:
+          httpGet:
+            port: 9999
+            path: "/"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - kubectl label --overwrite nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}=true
+          preStop:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - kubectl label nodes ${NODENAME} gitpod.io/ws-daemon_ready_ns_${KUBE_NAMESPACE}-
+        livenessProbe:
+          httpGet:
+            port: 9999
+            path: "/"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 10
+        securityContext:
+          privileged: true
+          procMount: Default
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

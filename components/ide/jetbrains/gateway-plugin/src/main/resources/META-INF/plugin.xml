@@ -1,0 +1,34 @@
+<!--
+ Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ Licensed under the GNU Affero General Public License (AGPL).
+ See License-AGPL.txt in the project root for license information.
+-->
+
+<idea-plugin require-restart="false">
+    <id>io.gitpod.jetbrains.gateway</id>
+    <name>Gitpod Gateway</name>
+    <vendor>Gitpod</vendor>
+
+    <!-- Product and plugin compatibility requirements -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <!-- uncomment when versin mismatch in JB Marketpace for GW plugin verifier is resolved
+    see https://jetbrains.slack.com/archives/C02BRJLGPGF/p1643369943314119?thread_ts=1643358812.185799&cid=C02BRJLGPGF
+    <depends>com.jetbrains.gateway</depends> -->
+
+    <extensions defaultExtensionNs="com.intellij">
+        <httpRequestHandler implementation="io.gitpod.jetbrains.auth.GitpodAuthCallbackHandler"/>
+        <applicationService serviceImplementation="io.gitpod.jetbrains.gateway.GitpodSettingsState"/>
+        <applicationConfigurable parentId="tools" instance="io.gitpod.jetbrains.gateway.GitpodSettingsConfigurable"
+                                 id="io.gitpod.jetbrains.gateway.GitpodSettingsConfigurable"
+                                 displayName="Gitpod"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.jetbrains">
+        <gatewayConnectionProvider implementation="io.gitpod.jetbrains.gateway.GitpodConnectionProvider"/>
+        <gatewayConnector implementation="io.gitpod.jetbrains.gateway.GitpodConnector"/>
+    </extensions>
+
+    <applicationListeners>
+    </applicationListeners>
+</idea-plugin>

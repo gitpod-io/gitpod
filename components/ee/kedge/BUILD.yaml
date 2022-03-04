@@ -1,0 +1,31 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "**/fixtures/*"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/kedge/cmd.Version=commit-${__git_commit}'"]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: kedge
+      image:
+        - ${imageRepoBase}/kedge:${version}
+        - ${imageRepoBase}/kedge:commit-${__git_commit}

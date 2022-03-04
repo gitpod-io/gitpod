@@ -1,0 +1,40 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.dbSync -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- define "dbsync.cfg" }}
+{{- $ts := .tableSet -}}
+syncPeriod: 10000
+roundRobin: true
+tableSet: {{ .tableSet }}
+disableTransactions: false
+replicationLogDir: "/var/log/db-sync"
+targets:
+{{- range $index, $target := .targets }}
+- name: "{{ $target.instance }}"
+  host: "localhost"
+  port: 330{{- $index }}
+  database: "{{ $target.database | default $ts }}"
+  user: "{{ $target.username | default "gitpod" }}"
+  password: "{{ $target.password }}"
+  {{- end }}
+{{- end }}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-sync-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: db
+    kind: secret
+    stage: {{ .Values.installation.stage }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  "db-sync-gitpod.json": {{ include "dbsync.cfg" (dict "targets" $comp.targets "tableSet" "gitpod") | fromYaml | toJson | b64enc }}
+  "db-sync-sessions.json": {{ include "dbsync.cfg" (dict "targets" $comp.targets "tableSet" "gitpod-sessions") | fromYaml | toJson | b64enc }}
+
+{{- end -}}

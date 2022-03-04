@@ -1,0 +1,44 @@
+name: JB Nightly
+on:
+  workflow_dispatch:
+  schedule:
+    # At 11:00 on every day.
+    - cron: "0 11 * * *"
+
+jobs:
+  intellij:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: intellij
+      productCode: IIU
+    secrets:
+      projectId: ${{ secrets.GCP_PROJECT_ID }}
+      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  goland:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: goland
+      productCode: GO
+    secrets:
+      projectId: ${{ secrets.GCP_PROJECT_ID }}
+      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  pycharm:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: pycharm
+      productCode: PCP
+    secrets:
+      projectId: ${{ secrets.GCP_PROJECT_ID }}
+      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}
+  phpstorm:
+    uses: ./.github/workflows/jetbrains-auto-update-template.yml
+    with:
+      productId: phpstorm
+      productCode: PS
+    secrets:
+      projectId: ${{ secrets.GCP_PROJECT_ID }}
+      serviceAccountKey: ${{ secrets.GCP_SA_KEY }}
+      slackWebhook: ${{ secrets.IDE_SLACK_WEBHOOK }}

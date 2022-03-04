@@ -1,0 +1,18 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: workspace
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: workspace
+    kind: role
+    stage: {{ .Values.installation.stage }}
+rules:
+  - apiGroups: ["policy"]
+    resources: ["podsecuritypolicies"]
+    verbs: ["use"]
+    resourceNames:
+    - {{ .Release.Namespace }}-ns-workspace

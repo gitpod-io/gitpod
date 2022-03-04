@@ -1,0 +1,4 @@
+*.md
+values.*.yaml
+.helmignore
+debug

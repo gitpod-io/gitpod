@@ -1,0 +1,81 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.blobserve -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blobserve
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: blobserve
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: blobserve
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: blobserve
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: blobserve
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: blobserve
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: blobserve
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: blobserve
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      serviceAccountName: blobserve
+      enableServiceLinks: false
+      containers:
+      - name: blobserve
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args: ["run", "/mnt/config/config.json"]
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+        securityContext:
+          privileged: false
+          runAsUser: 1000
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        volumeMounts:
+        - name: config
+          mountPath: "/mnt/config"
+          readOnly: true
+        - name: cache
+          mountPath: "/mnt/cache"
+        {{- if .Values.components.workspace.pullSecret.secretName }}
+        - name: pull-secret
+          mountPath: /mnt/pull-secret.json
+          subPath: .dockerconfigjson
+        {{- end }}
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+      volumes:
+      - name: cache
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      {{- if .Values.components.workspace.pullSecret.secretName }}
+      - name: pull-secret
+        secret:
+          secretName: {{ .Values.components.workspace.pullSecret.secretName }}
+      {{- end }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

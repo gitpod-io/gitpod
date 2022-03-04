@@ -1,0 +1,132 @@
+packages:
+  - name: app
+    type: yarn
+    srcs:
+      - "src/**"
+      - "ee/**"
+      - "test/**"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/content-service-api/typescript:lib
+      - components/gitpod-db:lib
+      - components/gitpod-messagebus:lib
+      - components/ee/payment-endpoint:lib
+      - components/gitpod-protocol:lib
+      - components/image-builder-api/typescript:lib
+      - components/licensor/typescript:lib
+      - components/ws-manager-api/typescript:lib
+      - components/supervisor-api/typescript-grpcweb:lib
+    config:
+      packaging: offline-mirror
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: server
+      image:
+        - ${imageRepoBase}/server:${version}
+        - ${imageRepoBase}/server:commit-${__git_commit}
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**"
+      - "ee/**"
+      - "test/**"
+      - package.json
+      - mocha.opts
+      - tslint.yaml
+    deps:
+      - components/content-service-api/typescript:lib
+      - components/gitpod-db:lib
+      - components/gitpod-messagebus:lib
+      - components/ee/payment-endpoint:lib
+      - components/gitpod-protocol:lib
+      - components/image-builder-api/typescript:lib
+      - components/licensor/typescript:lib
+      - components/ws-manager-api/typescript:lib
+      - components/supervisor-api/typescript-grpcweb:lib
+      - :dbtest
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "test"]
+        build: ["yarn", "build"]
+  - name: dbtest
+    type: yarn
+    srcs:
+      - "**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:dbtest-init
+      - components/gitpod-db:lib
+      - components/content-service-api/typescript:lib
+      - components/gitpod-messagebus:lib
+      - components/ee/payment-endpoint:lib
+      - components/gitpod-protocol:lib
+      - components/image-builder-api/typescript:lib
+      - components/licensor/typescript:lib
+      - components/ws-manager-api/typescript:lib
+      - components/supervisor-api/typescript-grpcweb:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "db-test"]
+        build: ["yarn", "build"]
+scripts:
+  - name: telepresence
+    deps:
+      - dev/telepresence-hack:copy-mounts
+    script: |
+      set -e
+      export GITPOD_LAYER_NAME=`git log -n 1 --pretty=format:%H -- ../../devops/images/workspace-image-builder/`
+
+      export DST=$(mktemp -d)
+      echo Preparing filesystem in $DST
+      mkdir -p $DST/mounts
+      echo $(which copy-mounts)
+      $DEV_TELEPRESENCE_HACK__COPY_MOUNTS/telepresence-hack --destination=$DST/mounts --deployment=server
+
+      cat > $DST/patch.yaml <<EOF
+      spec:
+        template:
+          spec:
+            containers:
+            - name: server
+              securityContext:
+                privileged: true
+                runAsUser: 0
+            serviceAccountName: ws-daemon
+      EOF
+      kubectl patch deployments.apps server --patch-file $DST/patch.yaml
+
+      export > $DST/env
+      cat > $DST/run.sh <<EOF
+      #!/bin/bash
+      EOF
+      for i in $(ls $DST/mounts/); do
+        echo mkdir -p /$i >> $DST/run.sh
+        echo mount --rbind $DST/mounts/$i /$i >> $DST/run.sh
+      done
+      cat >> $DST/run.sh <<EOF
+      cd $PWD
+      su --pty - gitpod -c "source $DST/env; cd $PWD; TELEPRESENCE_USE_DEPLOYMENT=1 telepresence --mount $DST/mounts --swap-deployment server \
+                   --method inject-tcp \
+                   --run yarn start-ee-inspect"
+      EOF
+      chmod +x $DST/run.sh
+      sudo unshare -m --propagation=unchanged $DST/run.sh

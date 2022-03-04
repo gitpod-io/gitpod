@@ -1,0 +1,27 @@
+{
+  "private": true,
+  "name": "@gitpod/build",
+  "version": "0.0.0",
+  "license": "UNLICENSED",
+  "scripts": {
+    "run": "npx ts-node build.ts"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.4.1",
+    "@opentelemetry/api": "^1.0.3",
+    "@opentelemetry/auto-instrumentations-node": "^0.26.0",
+    "@opentelemetry/exporter-collector-grpc": "^0.25.0",
+    "@opentelemetry/sdk-node": "^0.26.0",
+    "semver": "7.3.5",
+    "shelljs": "^0.8.4",
+    "ts-node": "^9.0.0",
+    "typescript": "~4.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.0",
+    "@types/semver": "7.3.5",
+    "@types/shelljs": "^0.8.8",
+    "typescript": "~4.4.2",
+    "tslib": "^2.3.0"
+  }
+}

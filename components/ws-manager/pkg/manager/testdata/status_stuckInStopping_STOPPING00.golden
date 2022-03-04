@@ -1,0 +1,32 @@
+{
+    "status": {
+        "id": "48f13cc4-6311-48c2-950a-4b7ddedc3037",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "00000000-0000-0000-0000-000000000000",
+            "meta_id": "purple-raven-cu9cj532",
+            "started_at": {
+                "seconds": 1629350059
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:68c61eb0bb4e8fbafd16b876390fc2c78a7887866ef0bd53534bb8ffc2682bdc",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
+            "url": "https://purple-raven-cu9cj532.ws-us14.gitpod.io",
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb"
+            }
+        },
+        "phase": 6,
+        "conditions": {},
+        "runtime": {
+            "node_name": "gke-gp-prod-ws-us14-us-workspace-pool-67d93ed3-l67s",
+            "pod_name": "ws-48f13cc4-6311-48c2-950a-4b7ddedc3037",
+            "node_ip": "10.138.0.13"
+        },
+        "auth": {
+            "owner_token": "T.DhLiYyx1ZfeOgyf5zYE4MYLnCMBJ8p"
+        }
+    }
+}

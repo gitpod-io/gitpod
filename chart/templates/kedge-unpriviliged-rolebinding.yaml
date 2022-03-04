@@ -1,0 +1,23 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.kedge -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kedge-unprivileged
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: kedge
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: kedge
+roleRef:
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-ns-psp:unprivileged
+  apiGroup: rbac.authorization.k8s.io
+{{ end }}

@@ -1,0 +1,15 @@
+{{- if eq .Values.jaeger.storage "badger" -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-jaeger-pv-{{ .Values.global.timestamp }}
+spec:
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  gcePersistentDisk:
+    pdName: {{ .Values.jaeger.persistentVolume.gcePersistentDiskName }}
+    fsType: ext4
+  capacity:
+    storage: {{ .Values.jaeger.persistentVolume.storage }}
+{{- end -}}

@@ -1,0 +1,10 @@
+{
+    "entrypoint": "/ide-desktop/startup.sh",
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "Open in VS Code Insiders on Desktop", "vscode-insiders" ],
+    "readinessProbe": {
+        "type": "http",
+        "http": {
+            "path": "/status"
+        }
+      }
+}

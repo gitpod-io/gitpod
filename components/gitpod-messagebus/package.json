@@ -1,0 +1,34 @@
+{
+  "name": "@gitpod/gitpod-messagebus",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.js",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "prepare": "yarn clean && yarn build",
+    "build": "npx tsc",
+    "build:clean": "yarn clean && yarn build",
+    "rebuild": "yarn build:clean",
+    "build:watch": "watch 'yarn build' .",
+    "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
+    "clean": "yarn run rimraf lib",
+    "clean:node": "yarn run rimraf node_modules",
+    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock"
+  },
+  "dependencies": {
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "amqplib": "^0.8.0",
+    "opentracing": "^0.14.4",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.8.2",
+    "@types/uuid": "^8.3.1",
+    "rimraf": "^2.6.1",
+    "typescript": "~4.4.2"
+  }
+}

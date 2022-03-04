@@ -1,0 +1,41 @@
+{
+    "status": {
+        "id": "f07f0f2e-08fb-433a-8282-fef07b596909",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "2acc5341-73be-4bf7-ba69-7b93b633bde1",
+            "meta_id": "ba826db9-9d93-4f3b-a10e-8bc08bbb99f1",
+            "started_at": {
+                "seconds": 1604645309
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:5c7c2d28d53990d0ec6b76f73918b2a9af6eb2dbd060822986abad1ba9512aaf",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/theia-ide:cw-debug-registry-facade.6",
+            "url": "https://ba826db9-9d93-4f3b-a10e-8bc08bbb99f1.ws-dev.cw-debug-registry-facade.staging.gitpod-dev.com",
+            "exposed_ports": [
+                {
+                    "port": 8080,
+                    "visibility": 1,
+                    "url": "https://8080-ba826db9-9d93-4f3b-a10e-8bc08bbb99f1.ws-dev.cw-debug-registry-facade.staging.gitpod-dev.com"
+                }
+            ],
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/theia-ide:cw-debug-registry-facade.6"
+            }
+        },
+        "phase": 4,
+        "conditions": {
+            "failed": "IDE failed to start: fork/exec /theia/node_modules/@gitpod/gitpod-ide/startup.sh: no such file or directory"
+        },
+        "runtime": {
+            "node_name": "gke-dev-workload-7fd27879-kn1v",
+            "pod_name": "ws-f07f0f2e-08fb-433a-8282-fef07b596909",
+            "node_ip": "10.132.0.35"
+        },
+        "auth": {
+            "owner_token": "l\u003cM3U,%$Fe3/Y/515B;/*D:1HhQAaq0c"
+        }
+    }
+}

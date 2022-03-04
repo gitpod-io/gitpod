@@ -1,0 +1,47 @@
+id: gitpod-self-hosted
+name: Gitpod Self-Hosted
+description: Manual tests to conduct before releasing Gitpod self-hosted
+testset: []
+case:
+- id: helm-installer
+  name: Helm Installer
+  group: helm-installer
+  description: ""
+  steps: |
+      - Log into AWS via https://gitpod.awsapps.com/start#/
+      - create a new subdomain in dns-for-playgrounds via https://www.notion.so/gitpod/GCP-Playgrounds-5b49f9c92e5c42438af73343b98253b1
+      - Install Gitpod in the new Playground project following https://www.gitpod.io/docs/self-hosted/latest/install/install-on-aws-script/ using that hostname
+      - Start a workspace on https://github.com/gitpod-io/spring-petclinic, modify a file, stop the workspace, start the workspace, check if the modification is still there.
+      - Start a workspace on https://github.com/gitpod-io/spring-petclinic, expose the port of the running application and open it in a new browser window.
+      - Start a workspace on https://github.com/eclipse-theia/theia and see if the image build passes.
+  mustpass: false
+  mintestercount: 1
+  annotations: {}
+- id: gke-installer
+  name: GKE Installer
+  group: gke-installer
+  description: ""
+  steps: |
+      - Create a new Playground Project on GKE via https://www.notion.so/gitpod/GCP-Playgrounds-5b49f9c92e5c42438af73343b98253b1
+      - Install Gitpod in the new Playground project following https://www.gitpod.io/docs/self-hosted/latest/install/install-on-gcp-script/
+      - Start a workspace on https://github.com/gitpod-io/spring-petclinic, modify a file, stop the workspace, start the workspace, check if the modification is still there.
+      - Start a workspace on https://github.com/gitpod-io/spring-petclinic, expose the port of the running application and open it in a new browser window.
+      - Start a workspace on https://github.com/eclipse-theia/theia and see if the image build passes.
+      - Start a workspace on https://github.com/gitpod-io/spring-petclinic, and install a VS Code extension, e.g. https://open-vsx.org/extension/Tyriar/sort-lines
+  mustpass: false
+  mintestercount: 1
+  annotations: {}
+- id: aws-installer
+  name: AWS Installer
+  group: aws-installer
+  description: ""
+  steps: |
+      - Log into AWS via https://gitpod.awsapps.com/start#/
+      - Install Gitpod in the new Playground project following https://www.gitpod.io/docs/self-hosted/latest/install/install-on-aws-script/
+      - Start a workspace on https://github.com/gitpod-io/spring-petclinic, modify a file, stop the workspace, start the workspace, check if the modification is still there.
+      - Start a workspace on https://github.com/gitpod-io/spring-petclinic, expose the port of the running application and open it in a new browser window.
+      - Start a workspace on https://github.com/eclipse-theia/theia and see if the image build passes.
+      - Start a workspace on https://github.com/gitpod-io/spring-petclinic, and install a VS Code extension, e.g. https://open-vsx.org/extension/Tyriar/sort-lines
+  mustpass: false
+  mintestercount: 1
+  annotations: {}

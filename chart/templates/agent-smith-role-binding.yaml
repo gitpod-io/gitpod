@@ -1,0 +1,44 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.agentSmith -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: agent-smith
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: agent-smith
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: agent-smith
+roleRef:
+  kind: Role
+  name: agent-smith
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Namespace }}-agent-smith-rb-kube-rbac-proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: agent-smith
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: agent-smith
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name:  {{ .Release.Namespace }}-kube-rbac-proxy
+  apiGroup: rbac.authorization.k8s.io
+
+{{- end -}}

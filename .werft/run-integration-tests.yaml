@@ -1,0 +1,87 @@
+args:
+- name: version
+  desc: "The version of the integration tests to use"
+  required: true
+- name: namespace
+  desc: "The namespace to run the integration test against"
+  required: true
+- name: username
+  desc: "The username to run the integration test with"
+  required: false
+pod:
+  serviceAccount: werft
+  nodeSelector:
+    dev/workload: builds
+  imagePullSecrets:
+  - name: eu-gcr-io-pull-secret
+  volumes:
+  - name: gcp-sa
+    secret:
+      secretName: gcp-sa-gitpod-dev-deployer
+  - name: config
+    emptyDir: {}
+  initContainers:
+  - name: gcloud
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: gcp-sa
+      mountPath: /mnt/secrets/gcp-sa
+      readOnly: true
+    - name: config
+      mountPath: /config
+      readOnly: false
+    command:
+    - bash
+    - -c
+    - |
+
+      echo "[prep] preparing config."
+
+      gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
+      cp -R /home/gitpod/.config/gcloud /config/gcloud
+      cp /home/gitpod/.kube/config /config/kubeconfig
+
+      echo "[prep] copied config..."
+  containers:
+  - name: tests
+    image: eu.gcr.io/gitpod-core-dev/build/integration-tests:{{ .Annotations.version }}
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: config
+      mountPath: /config
+      readOnly: true
+    command:
+    - /bin/bash
+    - -c
+    - |
+      sleep 1
+      set -Eeuo pipefail
+
+      echo "[prep] receiving config..."
+      export GOOGLE_APPLICATION_CREDENTIALS="/config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
+      echo "[prep] received config."
+
+      USERNAME="{{ .Annotations.username }}"
+      if [[ "$USERNAME" == "<no value>" ]]; then
+        USERNAME=""
+      fi
+      echo "[prep] using username: $USERNAME"
+
+      args=()
+      args+=( '-kubeconfig=/config/kubeconfig' )
+      args+=( "-namespace={{ .Annotations.namespace }}" )
+      [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
+      echo "[prep] args: ${args[@]}"
+      echo "[prep|DONE]"
+
+      /entrypoint.sh "${args[@]}" 2>&1 | ts "[int-tests] "
+
+      RC=${PIPESTATUS[0]}
+      if [ $RC -eq 1 ]; then
+        echo "[int-tests|FAIL]"
+      else
+        echo "[int-tests|DONE]"
+      fi

@@ -1,0 +1,75 @@
+{
+    "error": "",
+    "layer": [
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:8310ac70065dae6c4e3c8029f227d47ede9783e6d4b738a4e9202e3a36f4e59c",
+                "size": 86258378
+            },
+            "DiffID": "sha256:0069a1a7b160da9bc047bbe59b49f156cfaa30a9edd28521112f613d78001156"
+        },
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:fa1c677ef58d09168f53442f86ba840dda1e016d80856bc91e24b99836711a0f",
+                "size": 126
+            },
+            "DiffID": "sha256:f585a818813349aae5b0115a24202f1c2a05091ac3798f3490af3a91da1becdd"
+        },
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:11625493e20de80c7dbd872097cab5bc6f0b78faf23f44c9d6f8f5ba73d4febc",
+                "size": 257
+            },
+            "DiffID": "sha256:5b4a25d1762e5a85283bd2dbe7ce749a5b88b385cf7d09f75027c6875529c6e7"
+        },
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:ababade078a6b03a9f8f6a7658af8d58dae451e40fbdeb50b855e7da67998a3f",
+                "size": 128057289
+            },
+            "DiffID": "sha256:0239d621c5ae0119b453849681fcfe33b48a3748fc8ff79145f260391b27ee33"
+        },
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:f9c0b9d4950d7b716e0c738002d0a4c6d06c660f3d1787639c56406a6324d84d",
+                "size": 5958911
+            },
+            "DiffID": "sha256:aaf63a886571d1aef9317eb5a402bc0a4624b57e357acf7baf4fa04a39e778f1"
+        },
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:4593642d7a53805f88fdc15506f255062926170ab09384fb374c874cf7bc81b8",
+                "size": 5401055
+            },
+            "DiffID": "sha256:c1dd231ce458370ee2a9340ea59d9d87e916a51ce786a61003cfd787f5a1aeee"
+        },
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:f0c9dd12506389100d709b264f7bc8922f4fdabbe62f43be312157ba137b224a",
+                "size": 333
+            },
+            "DiffID": "sha256:d49abb2c212f21fc5703c10b13338f3355279e93b4901f1bd0225266e87bc6fb"
+        },
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:43d388224b61ce48248bd943204201d8092fa5baeaf60c505e0f73cc2f5842f0",
+                "size": 218
+            },
+            "DiffID": "sha256:9e6c3d13cda3454df40884fc8b17663a0e4a06ca429754a50d248bae9940f8ff"
+        }
+    ],
+    "envs": [
+        "PATH=/ide/bin:",
+        "EDITOR=gp open -w",
+        "VISUAL=gp open -w",
+        "GIT_EDITOR=gp open -w"
+    ]
+}

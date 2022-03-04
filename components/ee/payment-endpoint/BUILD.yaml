@@ -1,0 +1,70 @@
+packages:
+  - name: app
+    type: yarn
+    srcs:
+      - "src/**/*.ts"
+      - "test/**/*.ts"
+      - "test/fixtures/**/*"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:lib
+      - components/gitpod-protocol:lib
+    config:
+      packaging: offline-mirror
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**/*.ts"
+      - "test/**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:lib
+      - components/gitpod-protocol:lib
+      - :dbtest
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: paymentEndpoint
+      image:
+        - ${imageRepoBase}/payment-endpoint:${version}
+        - ${imageRepoBase}/payment-endpoint:commit-${__git_commit}
+  - name: dbtest
+    type: yarn
+    srcs:
+      - "**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:dbtest-init
+      - components/gitpod-db:lib
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "db-test"]
+        build: ["yarn", "build"]
+scripts:
+  - name: telepresence
+    script: |-
+      telepresence --swap-deployment payment-endpoint \
+                   --method inject-tcp \
+                   --run node --inspect dist/main.js | \
+        leeway run gitpod-core/components:dejson-log-output

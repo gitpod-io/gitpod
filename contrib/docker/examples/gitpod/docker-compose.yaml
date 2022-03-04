@@ -1,0 +1,14 @@
+version: '3'
+services:
+
+  gitpod:
+    image: gcr.io/gitpod-io/self-hosted/gitpod-k3s:${VERSION:-latest}
+    privileged: true
+    volumes:
+      - ./values:/values
+      - ./certs:/certs
+    ports:
+      - 443:443
+      - 80:80
+    environment:
+      - DOMAIN=${DOMAIN}

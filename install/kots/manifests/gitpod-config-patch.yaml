@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitpod-config-patch
+  labels:
+    app: gitpod
+data:
+  gitpod-config-patch.yaml: '{{repl if and (ConfigOptionEquals "advanced_mode_enabled" "1") (ConfigOptionNotEquals "config_patch" "") }}{{repl ConfigOption "config_patch" }}{{repl else }}{{repl printf "{}" | Base64Encode }}{{repl end }}'

@@ -1,0 +1,52 @@
+packages:
+  - name: all
+    type: generic
+    deps:
+      - :lib
+      - components/gitpod-protocol/go:lib
+      - components/gitpod-protocol/java:lib
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**"
+      - "test/**"
+      - package.json
+      - mocha.opts
+      - "data/*.json"
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+  - name: theia-plugin-list
+    type: generic
+    srcs:
+      - data/builtin-theia-plugins.json
+    config:
+      commands:
+        - ["mv", "data/builtin-theia-plugins.json", "manifest.json"]
+  - name: gitpod-schema
+    type: generic
+    srcs:
+      - data/gitpod-schema.json
+    config:
+      commands:
+        - ["mv", "data/gitpod-schema.json", "gitpod-schema.json"]
+  - name: scripts
+    type: generic
+    srcs:
+      - "scripts/*"
+    config:
+      commands:
+        - ["sh", "-c", "mv scripts/* ."]
+  - name: publish
+    type: generic
+    env:
+      - DO_PUBLISH=${publishToNPM}
+    argdeps:
+      - npmPublishTrigger
+    deps:
+      - :lib
+      - :scripts
+    config:
+      commands:
+        - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-gitpod-protocol--lib/package"]

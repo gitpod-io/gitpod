@@ -1,0 +1,92 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- define "ws-daemon.config" }}
+{{ $comp := .comp -}}
+{{ with .root }}
+daemon:
+  readiness:
+    enabled: true
+    addr: ":9999"
+  runtime:
+    namespace: {{ .Release.Namespace | quote }}
+    containerRuntime:
+      runtime: "containerd"
+      containerd:
+        socket: "/mnt/containerd.sock"
+      nodeToContainerMapping:
+        {{- range $idx, $pth := $comp.containerRuntime.nodeRoots }}
+        {{ $pth | quote }}: "/mnt/node{{ $idx }}"
+        {{- end }}
+      mounts:
+        proc: "/mnt/mounts"
+  content:
+    workingArea: "/mnt/workingarea"
+    workingAreaNode: {{ $comp.hostWorkspaceArea | quote }}
+    {{- if (and $comp.workspaceSizeLimit (not (eq $comp.workspaceSizeLimit ""))) }}
+    workspaceSizeLimit: {{ ($comp.workspaceSizeLimit | default "0g") | quote }}
+    {{- end }}
+    tempDir: {{ $comp.backupTempDir | default "/tmp" }}
+{{ include "gitpod.remoteStorage.config" (dict "root" . "remoteStorage" .Values.components.contentService.remoteStorage) | indent 4 }}
+    backup:
+      timeout: "5m"
+      attempts: 3
+    userNamespaces:
+      fsShift: {{ $comp.userNamespaces.fsShift | default "fuse" }}
+    initializer:
+      command: "/app/content-initializer"
+  uidmapper:
+    procLocation: "/proc"
+    rootUIDRange:
+      start: 33333
+      size: 1
+    userUIDRange:
+      - start: 100000
+        size: 70000
+  cpuLimit:
+    enabled: {{ $comp.cpuLimit.enabled }}
+    totalBandwidth: {{ $comp.cpuLimit.totalBandwidth }}
+    limit: {{ $comp.cpuLimit.limit }}
+    burstLimit: {{ $comp.cpuLimit.limit}}
+    controlPeriod: {{ $comp.cpuLimit.controlPeriod }}
+    cgroupBasePath: {{ $comp.cpuLimit.cgroupBasePath }}
+  hosts:
+    enabled: true
+    nodeHostsFile: "/mnt/hosts"
+    fixedHosts:
+      registryFacade:
+        - name: {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }}
+          addr: 127.0.0.1
+  disk:
+    locations:
+    - path: "/mnt/wsdaemon-workingarea"
+      minBytesAvail: 21474836480
+service:
+  address: ":{{ $comp.servicePort }}"
+  tls:
+    ca: "/certs/ca.crt"
+    crt: "/certs/tls.crt"
+    key: "/certs/tls.key"
+prometheus:
+  address: "127.0.0.1:9500"
+pprof:
+  address: ":6060"
+{{ end }}
+{{ end }}
+
+{{ $comp := .Values.components.wsDaemon -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-daemon-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+{{ (include "ws-daemon.config" $this) | fromYaml | toPrettyJson | indent 4 }}
+{{- end }}

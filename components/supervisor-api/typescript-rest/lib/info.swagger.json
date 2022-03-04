@@ -1,0 +1,145 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "info.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "InfoService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/info/workspace": {
+      "get": {
+        "operationId": "InfoService_WorkspaceInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorWorkspaceInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "InfoService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "WorkspaceInfoResponseGitpodAPI": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint is the websocket URL on which the token-accessible Gitpod API is served on"
+        },
+        "host": {
+          "type": "string",
+          "description": "host is the host of the endpoint. Use this host to ask supervisor a token."
+        }
+      }
+    },
+    "WorkspaceInfoResponseRepository": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "title": "owner is the repository owner"
+        },
+        "name": {
+          "type": "string",
+          "title": "name is the repository name"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "supervisorWorkspaceInfoResponse": {
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "description": "workspace_id is the workspace ID of this workspace."
+        },
+        "instanceId": {
+          "type": "string",
+          "description": "instance_id is the instance ID of this workspace."
+        },
+        "checkoutLocation": {
+          "type": "string",
+          "title": "checkout_location is the path where we initialized the workspace content"
+        },
+        "workspaceLocationFile": {
+          "type": "string",
+          "description": "file means the workspace root is a file describing the workspace layout."
+        },
+        "workspaceLocationFolder": {
+          "type": "string",
+          "description": "folder means the workspace root is a simple folder."
+        },
+        "userHome": {
+          "type": "string",
+          "description": "user_home is the path to the user's home."
+        },
+        "gitpodApi": {
+          "$ref": "#/definitions/WorkspaceInfoResponseGitpodAPI",
+          "description": "GitpodAPI provides information to reach the Gitpod server API."
+        },
+        "gitpodHost": {
+          "type": "string",
+          "description": "gitpod_host provides Gitpod host URL."
+        },
+        "workspaceContextUrl": {
+          "type": "string",
+          "description": "workspace_context_url is an URL for which the workspace was created."
+        },
+        "repository": {
+          "$ref": "#/definitions/WorkspaceInfoResponseRepository",
+          "title": "repository is a repository from which this workspace was created"
+        }
+      }
+    }
+  }
+}

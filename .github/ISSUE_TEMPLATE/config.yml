@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Community
+    url: https://www.gitpod.io/chat
+    about: Please ask and answer usage questions here.

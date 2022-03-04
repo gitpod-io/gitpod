@@ -1,0 +1,231 @@
+{
+    "$id": "https://gitpod.io/gitpod.schema.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Gitpod Config",
+    "type": "object",
+    "properties": {
+        "ports": {
+            "type": "array",
+            "description": "List of exposed ports.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "port"
+                ],
+                "properties": {
+                    "port": {
+                        "type": ["number", "string"],
+                        "pattern": "^\\d+[:-]\\d+$",
+                        "description": "The port number (e.g. 1337) or range (e.g. 3000-3999) to expose."
+                    },
+                    "onOpen": {
+                        "type": "string",
+                        "enum": [
+                            "open-browser",
+                            "open-preview",
+                            "notify",
+                            "ignore"
+                        ],
+                        "description": "What to do when a service on this port was detected. 'notify' (default) will show a notification asking the user what to do. 'open-browser' will open a new browser tab. 'open-preview' will open in the preview on the right of the IDE. 'ignore' will do nothing."
+                    },
+                    "visibility": {
+                        "type": "string",
+                        "enum": [
+                            "private",
+                            "public"
+                        ],
+                        "default": "private",
+                        "description": "Whether the port visibility should be private or public. 'private' (default) will only allow users with workspace access to access the port. 'public' will allow everyone with the port URL to access the port."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Port name."
+                    },
+                    "protocol": {
+                        "type": "string",
+                        "enum": [
+                            "http",
+                            "TCP",
+                            "UDP"
+                        ],
+                        "deprecationMessage": "The 'protocol' property is deprecated.",
+                        "description": "The protocol to be used. (deprecated)"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "A description to identify what is this port used for."
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "tasks": {
+            "type": "array",
+            "description": "List of tasks to run on start. Each task will open a terminal in the IDE.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the task. Shown on the tab of the opened terminal."
+                    },
+                    "before": {
+                        "type": "string",
+                        "description": "A shell command to run before `init` and the main `command`. This command is executed on every start and is expected to terminate. If it fails, the following commands will not be executed."
+                    },
+                    "init": {
+                        "type": "string",
+                        "description": "A shell command to run between `before` and the main `command`. This command is executed only on after initializing a workspace with a fresh clone, but not on restarts and snapshots. This command is expected to terminate. If it fails, the `command` property will not be executed."
+                    },
+                    "prebuild": {
+                        "type": "string",
+                        "description": "A shell command to run after `before`. This command is executed only on during workspace prebuilds. This command is expected to terminate. If it fails, the workspace build fails.",
+                        "deprecationMessage": "Deprecated. Please use `init` task instead. See https://www.gitpod.io/docs/config-start-tasks."
+                    },
+                    "command": {
+                        "type": "string",
+                        "description": "The main shell command to run after `before` and `init`. This command is executed last on every start and doesn't have to terminate."
+                    },
+                    "env": {
+                        "type": "object",
+                        "description": "Environment variables to set."
+                    },
+                    "openIn": {
+                        "type": "string",
+                        "enum": [
+                            "bottom",
+                            "main",
+                            "left",
+                            "right"
+                        ],
+                        "description": "The panel/area where to open the terminal. Default is 'bottom' panel."
+                    },
+                    "openMode": {
+                        "type": "string",
+                        "enum": [
+                            "split-left",
+                            "split-right",
+                            "tab-before",
+                            "tab-after"
+                        ],
+                        "description": "The opening mode. Default is 'tab-after'."
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "image": {
+            "type": [
+                "object",
+                "string"
+            ],
+            "description": "The Docker image to run your workspace in.",
+            "default": "gitpod/workspace-full",
+            "required": [
+                "file"
+            ],
+            "properties": {
+                "file": {
+                    "type": "string",
+                    "description": "Relative path to a docker file."
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Relative path to the context path (optional). Should only be set if you need to copy files into the image."
+                }
+            },
+            "additionalProperties": false
+        },
+        "checkoutLocation": {
+            "type": "string",
+            "description": "Path to where the repository should be checked out."
+        },
+        "workspaceLocation": {
+            "type": "string",
+            "description": "Path to where the IDE's workspace should be opened."
+        },
+        "gitConfig": {
+            "type": [
+                "object"
+            ],
+            "description": "Git config values should be provided in pairs. E.g. `core.autocrlf: input`. See https://git-scm.com/docs/git-config#_values.",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "github": {
+            "type": "object",
+            "description": "Configures Gitpod's GitHub app",
+            "properties": {
+                "prebuilds": {
+                    "type": [
+                        "boolean",
+                        "object"
+                    ],
+                    "description": "Set to true to enable workspace prebuilds, false to disable them. Defaults to true.",
+                    "properties": {
+                        "master": {
+                            "type": "boolean",
+                            "description": "Enable prebuilds for the default branch (typically master). Defaults to true."
+                        },
+                        "branches": {
+                            "type": "boolean",
+                            "description": "Enable prebuilds for all branches. Defaults to false."
+                        },
+                        "pullRequests": {
+                            "type": "boolean",
+                            "description": "Enable prebuilds for pull-requests from the original repo. Defaults to true."
+                        },
+                        "pullRequestsFromForks": {
+                            "type": "boolean",
+                            "description": "Enable prebuilds for pull-requests from any repo (e.g. from forks). Defaults to false."
+                        },
+                        "addBadge": {
+                            "type": "boolean",
+                            "description": "Add a Review in Gitpod badge to pull requests. Defaults to true."
+                        },
+                        "addCheck": {
+                            "type": [
+                                "boolean",
+                                "string"
+                            ],
+                            "enum": [
+                                true,
+                                false,
+                                "prevent-merge-on-error"
+                            ],
+                            "description": "Add a commit check to pull requests. Set to 'fail-on-error' if you want broken prebuilds to block merging. Defaults to true."
+                        },
+                        "addLabel": {
+                            "type": [
+                                "boolean",
+                                "string"
+                            ],
+                            "description": "Add a label to a PR when it's prebuilt. Set to true to use the default label (prebuilt-in-gitpod) or set to a string to use a different label name. This is a beta feature and may be unreliable. Defaults to false."
+                        }
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "vscode": {
+            "type": "object",
+            "description": "Configure VS Code integration",
+            "additionalProperties": false,
+            "properties": {
+                "extensions": {
+                    "type": "array",
+                    "description": "List of extensions which should be installed for users of this workspace. The identifier of an extension is always '${publisher}.${name}'. For example: 'vscode.csharp'.",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "experimentalNetwork": {
+            "type": "boolean",
+            "description": "Experimental network configuration in workspaces (deprecated). Enabled by default"
+        }
+    },
+    "additionalProperties": false
+}

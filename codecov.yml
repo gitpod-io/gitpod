@@ -1,0 +1,106 @@
+# curl --data-binary @codecov.yml https://codecov.io/validate
+codecov:
+  require_ci_to_pass: yes # wait for all other statuses to pass before sending its status
+  branch: main
+  # strict_yaml_branch: main
+
+coverage:
+  precision: 2
+  round: down
+  range: "40...100"         # less than 40% having a red background
+
+comment:
+  layout: "reach,diff,flags"
+  behavior: default         #  update, if exists. Otherwise post new.
+  require_changes: true     # if true: only post the comment if coverage changes
+  require_base: no          # [yes :: must have a base report to post]
+  require_head: yes         # [yes :: must have a head report to post]
+
+flags:
+  components-blobserve-app:
+    paths:
+      - components/blobserve/
+  components-common-go-lib:
+    paths:
+      - components/common-go/
+  components-content-service-app:
+    paths:
+      - components/content-service/
+  components-dashboard-app:
+    paths:
+      - components/dashboard/
+  components-ee-agent-smith-app:
+    paths:
+      - components/ee/agent-smith/
+  components-ee-kedge-app:
+    paths:
+      - components/ee/kedge/
+  components-gitpod-cli-app:
+    paths:
+      - components/gitpod-cli/
+  components-gitpod-protocol-go-lib:
+    paths:
+      - components/gitpod-protocol/go/
+  components-image-builder-app:
+    paths:
+      - components/image-builder/
+  components-licensor-app:
+    paths:
+      - components/licensor/
+  components-local-app-api-go-lib:
+    paths:
+      - components/local-app-api/go/
+  components-local-app-app-linux:
+    paths:
+      - components/local-app/
+  components-registry-facade-app:
+    paths:
+      - components/registry-facade/
+  components-registry-facade-api-go-lib:
+    paths:
+      - components/registry-facade-api/
+  components-service-waiter-app:
+    paths:
+      - components/service-waiter/
+  components-supervisor-app:
+    paths:
+      - components/supervisor/
+  components-supervisor-api-go-lib:
+    paths:
+      - components/supervisor-api/go/
+  components-workspacekit-app:
+    paths:
+      - components/workspacekit/
+  components-ws-daemon-api-go-lib:
+    paths:
+      - components/ws-daemon-api/go/
+  components-ws-daemon-nsinsider-app:
+    paths:
+      - components/ws-daemon/nsinsider/
+  components-ws-daemon-seccomp-profile-installer-app:
+    paths:
+      - components/ws-daemon/seccomp-profile-installer/
+  components-ws-daemon-app:
+    paths:
+      - components/ws-daemon/
+  components-ws-manager-bridge-app:
+    paths:
+      - components/ws-manager-bridge/
+  components-ws-manager-app:
+    paths:
+      - components/ws-manager/
+  dev-blowtorch-app:
+    paths:
+      - dev/blowtorch/
+  dev-loadgen-app:
+    paths:
+      - dev/loadgen/
+  dev-poolkeeper-app:
+    paths:
+      - dev/poolkeeper/
+  dev-sweeper-app:
+    paths:
+      - dev/sweeper/
+  dev-version-manifest-app:
+    paths:
+      - dev/version-manifest/

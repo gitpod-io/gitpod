@@ -1,0 +1,575 @@
+id: gitpod
+name: Gitpod
+description: "Testsuite for testing gitpod-io/gitpod."
+testset: []
+case:
+- id: Circuito-io-ComponentEditor
+  name: Circuito-io/ComponentEditor (C++)
+  group: Repositories
+  description: Check the C++ dev experience in the ComponentEditor repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/Circuito-io/ComponentEditor in Gitpod
+    - Verify that the circuito web app works properly
+    - Open a few `*.cpp` component files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: GitLab-Project
+  name: GitLab Context URLs
+  group: GitLab
+  description: Testing the GitLab integration.
+  steps: |+
+    Testing different contexts:
+     - default: https://gitpod-staging.com/#https://gitlab.com/AlexTugarev/gp-test
+     - branch: https://gitpod-staging.com/#https://gitlab.com/AlexTugarev/gp-test/tree/wip
+     - issue: https://gitpod-staging.com/#https://gitlab.com/AlexTugarev/gp-test/issues/1
+     - merge-request: https://gitpod-staging.com/#https://gitlab.com/AlexTugarev/gp-test/merge_requests/2
+
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: access-control
+  name: Access Control
+  group: Dashboard
+  description: Verify that Access Control page works properly
+  steps: |
+    1. Check push to remote is not possible, if no write permissions were granted
+    1. Check push to remote is possible, if write permissions were granted
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: ant-design
+  name: ant-design/ant-design (JavaScript)
+  group: Repositories
+  description: Check the JavaScript dev experience in the Ant Design repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/ant-design/ant-design in Gitpod
+    - Verify that the Ant Design web app opens in a preview
+    - Open a few `*.js` files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: vue-router
+  name: vuejs/vue-router (HTML/CSS)
+  group: Repositories
+  description: Check the HTML/CSS dev experience in the Vue Router repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/vuejs/vue-router in Gitpod
+    - Open an `*.html` file (e.g. `/examples/index.html`)
+    - Add a new paragraph after the heading (`h1`) element
+    - Type `<p>` and it should autocomplete itself with a closing tag like `<p></p>`
+    - Open a `*.css` file (e.g. `/examples/global.css` )
+    - Add a background property in the `a` selector
+    - Type `background: red;` inside the `a { }` selector under the `text-decoration` property
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: change_color_theme
+  name: Change color theme
+  group: IDE
+  description: Change color theme via File > Settings
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: commit-and-push
+  name: Commit and push
+  group: IDE
+  description: Use the side panels to commit some change, then push it to an upstream
+    repository
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: delete-workspace
+  name: Delete a workspace
+  group: Dashboard
+  description: ""
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: devto
+  name: thepracticaldev/dev.to (Ruby)
+  group: Repositories
+  description: Check the Ruby dev experience in the dev.to repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/thepracticaldev/dev.to in Gitpod
+    - Verify the web app works properly (requires creating free Algolia credentials, as explained in the Terminal)
+    - Open a few `*.rb` files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: envvar_smoketest
+  name: Basic environment variable test
+  group: Dashbord
+  description: Set an env var in the dashboard, pass as context and manipulate using gp
+  steps: |
+    1. On the dashboard go to "Environment Variables" in the menu
+    2. Click the `+` button and use `testvar` as name, `foobar` as value and `gitpod-io/*` as repo pattern
+    3. Click the `+` button and use `notpresent` as name, `foobar` as value and `doesnotexist/*` as repo pattern
+    4. Start a workspace with https://gitpod-staging.com/#passedin=test%20value/https://github.com/gitpod-io/gitpod-test-repo
+    5. In the workspace run:
+        - `env | grep testvar` to verify that `testvar == foobar`
+        - `env | grep notpresent` to verify that `notpresent` is not present
+        - `env | grep passedin` to verify that `passedin == "test value"`
+        - `gp env` to verify that only `testvar` is found
+        - `gp env another=value && gp env | grep another` to verify that setting env vars works
+        - `gp env another=differentValue && gp env | grep another` to verify that overriding env vars works
+        - `gp env -u another && gp env | grep another` to verify that unsetting env vars works
+    6. In the dashboard's "environment variables" section delete `testvar`
+    7. In the workspace run `gp env | grep testvar` to verify that the variable was deleted
+    8. In the dashboard's "environment variables" section add a new variable and use `testvar` as name, `newvalue` as value and `gitpod-io/*` as repo pattern
+    9. In the workspace run `gp env | grep testvar` to verify that the new version of `testvar` was created
+    10. Stop the workspace, wait until it is stopped and re-start that very same workspace
+    11. In the restarted workspace run:
+        - `env | grep testvar` to verify that `testvar == newvalue`
+        - `env | grep passedin` to verify that `passedin == "test value"`
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: external-links
+  name: External links
+  group: IDE
+  description: Verify all external links in Help; Avatar-Menu; and bottom bar (chat
+    icon)
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: fork-repository
+  name: Fork repository
+  group: IDE
+  description: |
+    Open a repository for which you don't have write access.
+    Create a commit and see a yellow box on top of the git view.
+    Press the action to fork.
+    Also: Press `F1` and use the 'fork' feature
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: git_status
+  name: Workspace Git status
+  group: Dashboard
+  description: ""
+  steps: |-
+    1. Open a fresh workspace: https://gitpod-staging.com/#github.com/32leaves/bel
+    2. Create an untracked file: `touch untracked`
+    3. Create an unpushed change: `echo foo > README.md; git commit -a -m 'foo'`
+    4. Create an uncommited change: `echo bar > doc.go`
+    5. Stop the workspace
+    6. Once stopped, make sure the three unpushed changes are shown in the dashboard
+    7. Download the workspace from the dashboard, and verify it contains the three unpushed changes
+    8. Restart the workspace, then verify that the uncommitted, untracked and unpushed changes are restored
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: gitlab-auth
+  name: GitLab Authentication and Authorization
+  group: GitLab
+  description: ""
+  steps: |-
+    Test1)
+    - Delete GitpodStaging entry from https://gitlab.com/-/profile/applications if present.
+    - open a new private browser
+    - open https://gitpod-staging.com/#https://gitlab.com/AlexTugarev/gp-test
+    - ensure the onboarding flow works nicely.
+
+    Test2)
+    - Delete GitpodStaging entry from https://gitlab.com/-/profile/applications if present.
+    - open a new private browser
+    - login to https://gitpod-staging.com/login/ using GitHub Auth
+    - open https://gitpod-staging.com/#https://gitlab.com/AlexTugarev/gp-test
+    - ensure the onboarding flow works nicely.
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: gitlab-prebuilds
+  name: Prebuilds in GitLab
+  group: GitLab
+  description: Prebuilds in GitLab are configured automatically when openeing a project
+    with `/#prebuild/` context.
+  steps: |-
+    - Create a fresh fork of https://gitlab.com/AlexTugarev/gp-test (or any other project).
+    - open it in Gitpod and add an init task
+    - push and open with https://gitpod-staging.com/#prebuild/  context.
+    - ensure the prebuild runs through.
+    - ensure opening a project on that branch opens a prebuilt snapshot.
+    - ensure pushing a new branch triggers a prebuild on that branch as well.
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: go-gin-app
+  name: gitpod-io/go-gin-app (Go)
+  group: Repositories
+  description: Check the Go dev experience in the Go gin app repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/gitpod-io/go-gin-app in Gitpod
+    - Verify that the gin web app appears in a preview and works properly
+    - Open a few `*.go` files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: go-swagger
+  name: go-swagger/go-swagger (Go)
+  group: Repositories
+  description: Check the Go dev experience in the go-swagger repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/go-swagger/go-swagger in Gitpod
+    - Verify that you can run the `swagger` CLI after the build
+    - Open a few `*.go` files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+    - Run a test through a code lense (debug should work)
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: gs-spring-boot
+  name: gitpod-io/spring-petclinic (Java)
+  group: Repositories
+  description: Check the Java dev experience in the Spring Pet Clinic Example
+  steps: |
+    - Open https://gitpod-staging.com/#https://gitlab.com/gitpod/spring-petclinic
+    - Verify that the demo web app opens
+    - Open a few `*.java` files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+    - Check debugging!
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: ide_stop_workspace
+  name: Stop Workspace
+  group: IDE
+  description: ""
+  steps: |-
+    1. start a workspace
+    2. once the IDE is open, use the command palette to stop the workspace
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: install-vscode-extension
+  name: Install VS Code extension
+  group: IDE
+  description: Install a VS Code extension
+  steps: |
+    - Download TODO.vsix, then install it in a Gitpod workspace
+    - Verify that the extension works, and that it was added to .gitpod.yml
+    - push commit to a branch
+    - start new workspace and verify that the TODO extension is installed.
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: logout-and-login
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Log out and log in again
+  steps: |
+    1. On logout, you should be redirected to the empty dashboard (or whatever is configured at that time)
+    2. Next, on login noo ToS page should be shown (unless there was a update in the meantime)
+- id: login-with-second-provider
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Login with second privider
+  steps: |
+    1. First of, log out.
+    2. Try to log in with a different provider;
+      - If the provider was already connected, you get logged in into the account.
+        BEFORE proceeding with the following steps, go to Access Control and disconnect that provider.
+      - (ALTERNATIVE 1) If the primary email address is matching your existing account (and first provider,) you should be able to log in into the first account.
+        Verify in Access Control, that you have both providers connected.
+      - (ALTERNATIVE 2) If the primary email address is NOT matching, you are about to create a new account.
+        Verify in Access Control, that you have connected just a single provider.
+- id: connect-with-second-provider
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Connect with second provider
+  steps: |
+    1. First of, ensure you are logged in, and in Access Control only one provider is connected.
+    2. Connect to a second provider.
+- id: connect-with-provider-already-connected
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Connect with a provider which is already connected
+  steps: |
+    1. First of, ensure you have two accounts with distict provider connections, e.g. one with GitHub and one with GitLab.
+    2. Log in with user A.
+    3. Go to Access Controll, try to connect with second provider (which is connected to user B)
+    4. See the Select Account page explaining the current situation. Verify the shown information.
+    5. Select the `Switch Account` action, and notice that you're logged into the other account.
+    6. Go to Access Controll, try to connect with second provider (which is connected to user A)
+    7. Disconnect a provider in one account (or delete one account) to proceed with connecting in the other account.
+- id: disconnect-providers
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Disconnect second provider
+  steps: |
+    1. First of, ensure you are logged in, and in Access Control two providers are connected.
+    2. Disconnect one provider. Verify, a single provider is left connected.
+    3. Try to disconnect the single provider, notice the message tells you to delete account in Settings.
+- id: tos-update
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: ToS Update
+  steps: |
+    1. First of, ensure you are logged in, and terms were already accepted.
+    2. Start a workspace. Keep running in background. (cf. 4.)
+    3. Connect to DB, and run `update d_b_user_acceptance_entry set termsRevision='' where userId='YOUR_ID'`
+    4. Verify the running workspace was not impacted.
+    5. Verify, you can load the workspaces list. (/workspaces)
+    6. Verify, you can load Settings page.
+    7. Verify, you see /tos page with the update message when trying to create/start a workspace. Once accepted, workspace start should be resumed.
+    8. (repeat 3.)
+    9. Log out.
+    10. Verify, you see the /tos page with the update on login.
+    11. Verify, you get logged out if you decline.
+- id: open-branch
+  name: Open a GitHub branch
+  group: IDE
+  description: Open Gitpod on a branch, e.g. https://gitpod-staging.com/#https://github.com/gitpod-io/website/tree/cloud-tweaks
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: open-from-referrer
+  name: Open a workspace using /from-referrer/
+  group: Dashboard
+  description: Open Gitpod from a GitHub button using https://gitpod-staging.com/from-referrer/
+  steps: |-
+    - Click on the link https://gitpod-staging.com/from-referrer/ embeded on a GitHub README. E.g. https://github.com/geropl/gitpod-redirect/blob/master/README.md (must be a non-private repo!!!)
+    - Should parse the context and open workspace successfully
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: open-issue
+  name: Open a GitHub issue
+  group: IDE
+  description: Open Gitpod on a issue, e.g. https://gitpod-staging.com/#https://github.com/gitpod-io/website/issues/202
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: open-prebuild
+  name: Open a prebuilt workspace
+  group: IDE
+  description: ""
+  steps: |
+    - Trigger prebuild with https://gitpod-staging.com/#prebuild/<contextURL> (will show an error, but that's expected, the prebuild should still be triggered)
+    - Open https://gitpod-staging.com/<contextURL> while the prebuild is running, test 'Skip Prebuild' button
+    - Once the prebuild is complete, open a new workspace on the same repo, then verify the prebuild worked
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: open-tag
+  name: Open a GitHub tag
+  group: IDE
+  description: Open Gitpod on a tag, e.g. https://gitpod-staging.com/#https://github.com/JanitorTechnology/selfapi/tree/0.3.3
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: rails_sample_app
+  name: gitpod-io/rails_sample_app (Ruby)
+  group: Repositories
+  description: Check the Ruby dev experience in the Rails repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/gitpod-io/rails_sample_app in Gitpod
+    - Verify that the sample app works properly
+    - Open a few `*.rb` files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - [not supported] Check format document
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: rename-workspace
+  name: Rename workspace
+  group: Dashboard
+  description: Rename a workspace, then find its by name using the search feature
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: review-a-pull-request
+  name: Review a Pull Request
+  group: IDE
+  description: Open a Pull Request in Gitpod, then make a few comments and publish
+    a code review
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: rust-repo-ripgrep
+  name: BurntSushi/ripgrep (Rust)
+  group: Repositories
+  description: |
+    - Open https://gitpod-staging.com/#https://github.com/BurntSushi/ripgrep
+    - Verify that the ripgrep tests passed
+    - Open a few *.rs files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: search-in-repository
+  name: Search in repository
+  group: IDE
+  description: Use all IDE search features inside a repository
+  steps: |
+    - Press `Cmd+P` and search for a file name
+    - Use the Search panel to search for files containing some text
+    - Search & replace some text from within the editor
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: share-snapshot
+  name: Share snapshot
+  group: IDE
+  description: Take a Snapshot of a workspace, share the link with someone, then verify
+    that they get the same workspace state
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: share-unshare
+  name: Share and unshare a workspace
+  group: Dashboard
+  description: Share and unshare a workspace from the Dashboard, ask someone to confirm
+    both states
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: ssloy-tinyraytracer
+  name: ssloy/tinyraytracer (C++)
+  group: Repositories
+  description: Check the C++ dev experience in the tinyraytracer repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/ssloy/tinyraytracer in Gitpod
+    - Verify that `out.png` gets generated and displayed properly
+    - Open `geometry.h` and `tinyraytracer.cpp`
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+    - Check there are no C++ errors in the Problems panel
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: symfony-demo
+  name: gitpod-io/symfony-demo (PHP)
+  group: Repositories
+  description: Check the PHP dev experience in the Symfony Demo Application repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/gitpod-io/symfony-demo in Gitpod
+    - Verify that the demo app works properly
+    - Open a few `*.php` files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - //Check rename symbol
+    - Check format document
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: openai-gym
+  name: openai/gym (Python)
+  group: Repositories
+  description: Check the Python dev experience in the OpenAI Gym repo
+  steps: |
+    - Open https://gitpod-staging.com/#https://github.com/openai/gym in Gitpod
+    - Verify that the videos are successfully generated (in the preview, click on any .mp4)
+    - Open a few `*.py` files
+    - Check syntax highlighting
+    - Check hovers
+    - Check auto-complete
+    - Check go to definition
+    - Check rename symbol
+    - Check format document
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: workspace-timeout
+  name: Workspace timeout
+  group: Dashboard
+  description: Workspace timeout, when closing tab and just leaving it in the background
+  steps: ""
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+- id: wsdl-fraught
+  name: Download other user's workspace
+  group: Dashboard
+  description: Check if workspace content download prevents ilicit access
+  steps: |
+    - Start a workspace on any repo
+    - Stop that workspace
+    - Copy the workspace download link from the dashboard (right click on the download button)
+    - Log in as a different user than the one who started the workspace
+    - Attempt to access the previously copied URL
+    - You should see an error page
+  mustpass: true
+  mintestercount: 1
+  annotations: {}

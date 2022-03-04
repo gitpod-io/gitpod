@@ -1,0 +1,33 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+  - name: profile
+    type: generic
+    deps:
+      - :app
+      - components/ws-manager:userns-test-fixtures
+    config:
+      commands:
+        - ["sh", "-c", "components-ws-daemon-seccomp-profile-installer--app/seccomp-profile-installer $(cat components-ws-manager--userns-test-fixtures/pod.json  | jq -r '.reason.spec.containers[0].securityContext.capabilities.add | map(\"CAP_\"+.) | join(\" \")') > workspace_default.json"]
+  - name: docker
+    type: docker
+    deps:
+      - :profile
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: wsDaemon.userNamespaces.seccompProfileInstaller
+      image:
+        - ${imageRepoBase}/seccomp-profile-installer:${version}
+        - ${imageRepoBase}/seccomp-profile-installer:commit-${__git_commit}

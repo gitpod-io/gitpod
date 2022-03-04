@@ -1,0 +1,34 @@
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
+option java_package = "io.gitpod.supervisor.api";
+
+// ControlService provides workspace-facing, misc control related services
+service ControlService {
+
+  // ExposePort exposes a port
+  rpc ExposePort(ExposePortRequest) returns (ExposePortResponse) {}
+
+  // CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
+  rpc CreateSSHKeyPair(CreateSSHKeyPairRequest) returns (CreateSSHKeyPairResponse) {}
+}
+
+message ExposePortRequest {
+  // local port
+  uint32 port = 1;
+  // external port if missing the the same as port
+  reserved 2;
+}
+message ExposePortResponse {}
+
+message CreateSSHKeyPairRequest {}
+message CreateSSHKeyPairResponse {
+    // Return privateKey for ws-proxy
+    string private_key = 1;
+}

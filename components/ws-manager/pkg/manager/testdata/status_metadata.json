@@ -1,0 +1,348 @@
+{
+  "pod": {
+    "metadata": {
+      "name": "ws-foobas",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/pods/ws-foobas",
+      "uid": "486e5f88-4354-11e9-aee4-080027861af1",
+      "resourceVersion": "64953",
+      "creationTimestamp": "2019-03-10T16:48:08Z",
+      "labels": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "metaID": "metameta",
+        "workspaceID": "foobas",
+        "workspaceType": "regular"
+      },
+      "annotations": {
+        "gitpod.io/annotation.foo": "barbar",
+        "gitpod/id": "foobas",
+        "gitpod/servicePrefix": "foobas",
+        "gitpod/url": "http://10.0.0.114:8082",
+        "gitpod/exposedPorts": "CgMIkD8=",
+        "prometheus.io/path": "/metrics",
+        "prometheus.io/port": "23000",
+        "prometheus.io/scrape": "true"
+      }
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "vol-this-workspace",
+          "hostPath": {
+            "path": "/tmp/workspaces/foobas",
+            "type": "DirectoryOrCreate"
+          }
+        },
+        {
+          "name": "vol-sync-tmp",
+          "hostPath": {
+            "path": "/tmp/workspaces/sync-tmp",
+            "type": "DirectoryOrCreate"
+          }
+        },
+        {
+          "name": "default-token-6qnvx",
+          "secret": {
+            "secretName": "default-token-6qnvx",
+            "defaultMode": 420
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "workspace",
+          "image": "nginx:latest",
+          "ports": [
+            {
+              "containerPort": 23000,
+              "protocol": "TCP"
+            }
+          ],
+          "env": [
+            {
+              "name": "THEIA_WORKSPACE_ROOT",
+              "value": "/workspace"
+            },
+            {
+              "name": "GITPOD_THEIA_PORT",
+              "value": "23000"
+            },
+            {
+              "name": "GITPOD_HOST",
+              "value": "gitpod.io"
+            },
+            {
+              "name": "GITPOD_INTERVAL",
+              "value": "30"
+            },
+            {
+              "name": "GITPOD_WSSYNC_APITOKEN",
+              "value": "c17a7eaf-e5de-4e9d-815a-7919379e2bf8"
+            },
+            {
+              "name": "GITPOD_WSSYNC_APIPORT",
+              "value": "44444"
+            },
+            {
+              "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace"
+            },
+            {
+              "name": "GITPOD_CLI_APITOKEN",
+              "value": "690516e2-c416-4a28-ba74-e36f125922aa"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_ID",
+              "value": "foobas"
+            },
+            {
+              "name": "GITPOD_GIT_USER_NAME",
+              "value": "32leaves"
+            },
+            {
+              "name": "GITPOD_GIT_USER_EMAIL",
+              "value": "christian.weichel@typefox.io"
+            }
+          ],
+          "resources": {
+            "limits": {
+              "cpu": "100m",
+              "memory": "100Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "100Mi"
+            }
+          },
+          "volumeMounts": [
+            {
+              "name": "vol-this-workspace",
+              "mountPath": "/workspace"
+            },
+            {
+              "name": "default-token-6qnvx",
+              "readOnly": true,
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+            }
+          ],
+          "livenessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 30,
+            "successThreshold": 1,
+            "failureThreshold": 3
+          },
+          "readinessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 1,
+            "successThreshold": 1,
+            "failureThreshold": 3
+          },
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "imagePullPolicy": "IfNotPresent"
+        },
+        {
+          "name": "sync",
+          "image": "csweichel/noop:latest",
+          "env": [
+            {
+              "name": "WSSYNCD",
+              "value": "{\"workspace\":{\"location\":\"/workspace\",\"name\":\"foobas\",\"cleanup\":true},\"remoteStorage\":{\"kind\":\"\"},\"gcloud\":{\"credentialsFile\":\"\",\"region\":\"\",\"project\":\"\",\"tmpdir\":\"\",\"maximumBackupSize\":0,\"maximumBackupCount\":0},\"initializer\":{\"kind\":\"\",\"git\":{\"remoteURI\":\"\",\"targetMode\":\"\"}},\"notification\":{\"url\":\"http://localhost:23000/gitpod/syncd\"},\"syncDisabled\":true,\"apiserver\":{\"enabled\":true,\"host\":\"127.0.0.1\",\"port\":44444,\"apitoken\":\"c17a7eaf-e5de-4e9d-815a-7919379e2bf8\"}}"
+            }
+          ],
+          "resources": {
+            "limits": {
+              "cpu": "100m",
+              "memory": "100Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "100Mi"
+            }
+          },
+          "volumeMounts": [
+            {
+              "name": "vol-sync-tmp",
+              "mountPath": "/tmp/sync"
+            },
+            {
+              "name": "vol-this-workspace",
+              "mountPath": "/workspace"
+            },
+            {
+              "name": "default-token-6qnvx",
+              "readOnly": true,
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+            }
+          ],
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "imagePullPolicy": "IfNotPresent"
+        }
+      ],
+      "restartPolicy": "Always",
+      "terminationGracePeriodSeconds": 30,
+      "dnsPolicy": "ClusterFirst",
+      "serviceAccountName": "default",
+      "serviceAccount": "default",
+      "nodeName": "minikube",
+      "securityContext": {},
+      "schedulerName": "default-scheduler",
+      "tolerations": [
+        {
+          "key": "node.kubernetes.io/not-ready",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "node.kubernetes.io/unreachable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        }
+      ]
+    },
+    "status": {
+      "phase": "Running",
+      "conditions": [
+        {
+          "type": "Initialized",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-03-10T16:48:08Z"
+        },
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-03-10T16:48:13Z"
+        },
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-03-10T16:48:08Z"
+        }
+      ],
+      "hostIP": "10.0.2.15",
+      "podIP": "172.17.0.5",
+      "startTime": "2019-03-10T16:48:08Z",
+      "containerStatuses": [
+        {
+          "name": "sync",
+          "state": {
+            "running": {
+              "startedAt": "2019-03-10T16:48:13Z"
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "csweichel/noop:latest",
+          "imageID": "docker-pullable://csweichel/noop@sha256:aaa6b993f4c853fac7101aa7fc087926f829004e62cbce6e1852e5a3aac87c52",
+          "containerID": "docker://9961f75ea72f36bb0ba1e42b3b2da98eb44a9dc12e7c7e8edfb52512b3b04016"
+        },
+        {
+          "name": "workspace",
+          "state": {
+            "running": {
+              "startedAt": "2019-03-10T16:48:12Z"
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "nginx:latest",
+          "imageID": "docker-pullable://nginx@sha256:98efe605f61725fd817ea69521b0eeb32bef007af0e3d0aeb6258c6e6fe7fc1a",
+          "containerID": "docker://e7080b843a47db414d6c94cfda7f657b99d8aa5bbf7c9c118ec98c0eefb6c0df"
+        }
+      ],
+      "qosClass": "Guaranteed"
+    }
+  },
+  "theiaService": {
+    "metadata": {
+      "name": "foobas-theia",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/services/foobas-theia",
+      "uid": "48687212-4354-11e9-aee4-080027861af1",
+      "resourceVersion": "64923",
+      "creationTimestamp": "2019-03-10T16:48:08Z",
+      "labels": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "metaID": "metameta",
+        "workspaceID": "foobas"
+      }
+    },
+    "spec": {
+      "ports": [
+        {
+          "name": "theia",
+          "protocol": "TCP",
+          "port": 23000,
+          "targetPort": 23000
+        }
+      ],
+      "selector": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "workspaceID": "foobas"
+      },
+      "clusterIP": "10.103.194.121",
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  "portsService": {
+    "metadata": {
+      "name": "foobas-ports",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/services/foobas-ports",
+      "uid": "486cb304-4354-11e9-aee4-080027861af1",
+      "resourceVersion": "64926",
+      "creationTimestamp": "2019-03-10T16:48:08Z",
+      "labels": {
+        "gpwsman": "true",
+        "workspaceID": "foobas"
+      }
+    },
+    "spec": {
+      "ports": [
+        {
+          "protocol": "TCP",
+          "port": 8080,
+          "targetPort": 8080
+        }
+      ],
+      "selector": {
+        "gpwsman": "true",
+        "workspaceID": "foobas"
+      },
+      "clusterIP": "10.110.184.222",
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  }
+}

@@ -1,0 +1,135 @@
+<!doctype html>
+<!--
+ Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ Licensed under the GNU Affero General Public License (AGPL).
+ See License-AGPL.txt in the project root for license information.
+-->
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+    content="user-scalable=0, initial-scale=1, minimum-scale=1, width=device-width, height=device-height">
+  <!-- PWA primary color -->
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="https://gitpod.io/manifest.webmanifest">
+  <link rel="apple-touch-icon" type="image/png" href="https://gitpod.io/images/apple-touch-icon.png" sizes="180x180" />
+  <link rel="icon" type="image/png" href="https://gitpod.io/images/gitpod-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/svg+xml" href="https://gitpod.io/images/gitpod.svg" sizes="any" />
+  <title>Workspace Port Not Found - Gitpod</title>
+  <meta name="description"
+    content="Describe your dev environment as code and get fully prebuilt, ready-to-code development environments for any GitLab, GitHub, and Bitbucket project.">
+  <meta name="keywords"
+    content="dev environment, development environment, devops, cloud ide, github ide, gitlab ide, javascript, online ide, web ide, code review">
+</head>
+
+<body>
+  <noscript>
+    You need to enable JavaScript to run this app.
+  </noscript>
+  <style>
+    html {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif,
+        'Apple Color Emoji',
+        'Segoe UI Emoji';
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: inherit;
+    }
+
+    button {
+      border: none;
+      color: #78716C;
+      font-weight:600;
+      padding: 8px 16px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #F5F5F4;
+      height: 40px;
+    }
+
+    button:hover {
+      background-color: #E5E5E4;
+    }
+
+    .title {
+      font-style: normal;
+      font-weight: bold;
+      font-size: 32px;
+      line-height: 40px;
+      text-align: center;
+      letter-spacing: -0.01em;
+      color: #78716C;
+      margin-block-start: 48px;
+      margin-block-end: 0;
+    }
+
+    .text {
+      font-style: normal;
+      font-weight: 500;
+      font-size: 18px;
+      line-height: 28px;
+      max-width: 500px;
+      margin-block-start: 8px;
+      margin-bottom: 32px;
+      text-align: center;
+      letter-spacing: 0.04em;
+      color: #A8A29E;
+    }
+
+  </style>
+  <div id="root" style="display: flex; align-items: center; height: 100vh;">
+    <div style="max-width: 64em; margin: auto; padding: 6em 2em; text-align: center;">
+      <div class="sorry">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd"
+            d="M37.496 3.18719C39.2305 6.21936 38.176 10.082 35.1406 11.8147L16.2669 22.5882C15.7681 22.873 15.4601 23.4033 15.4601 23.9778V40.89C15.4601 41.4644 15.7681 41.9948 16.2669 42.2796L31.2068 50.8076C31.6984 51.0882 32.3016 51.0882 32.7932 50.8076L47.733 42.2796C48.2319 41.9948 48.5399 41.4644 48.5399 40.89V30.372L35.1106 37.9411C32.0658 39.6573 28.2049 38.5828 26.4869 35.5412C24.769 32.4997 25.8446 28.6428 28.8894 26.9267L48.1049 16.0963C53.958 12.7972 61.2 17.0218 61.2 23.7353V42.1741C61.2 46.4929 58.8834 50.4806 55.1297 52.6233L37.9772 62.4143C34.2734 64.5286 29.7265 64.5286 26.0227 62.4143L8.87028 52.6233C5.11656 50.4806 2.79999 46.4929 2.79999 42.1741V22.6937C2.79999 18.3749 5.11656 14.3872 8.87028 12.2445L28.8594 0.834231C31.8948 -0.898439 35.7615 0.155016 37.496 3.18719Z"
+            fill="url(#paint0_linear)" />
+          <defs>
+            <linearGradient id="paint0_linear" x1="46.7553" y1="9.67805" x2="16.825" y2="56.7825"
+              gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FFB45B" />
+              <stop offset="1" stop-color="#FF8A00" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <h2 class="title">Port <span id="port"></span> Not Found</h2>
+        <p class="text">Please make sure this port is exposed and your application is up and running.</p>
+        <button class="secondary" id="refresh" tabindex="0" type="button">
+          <span>Try Again</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <script>
+    let port = parseInt(window.location.hostname.split('-')[0], 10);
+    if (port) {
+      document.getElementById('port').textContent = port;
+    }
+    document.getElementById('refresh').addEventListener('click', function () {
+      window.location.reload(true);
+    });
+    window.setInterval('window.location.reload(true);', 5000);
+  </script>
+</body>
+
+</html>

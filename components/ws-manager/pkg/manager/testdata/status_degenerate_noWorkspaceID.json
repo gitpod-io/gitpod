@@ -1,0 +1,237 @@
+{
+  "pod": {
+    "metadata": {
+      "name": "ws-foobaz",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/pods/ws-foobaz",
+      "uid": "fabadddc-4351-11e9-aee4-080027861af1",
+      "resourceVersion": "63782",
+      "creationTimestamp": "2019-03-10T16:31:38Z",
+      "labels": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "workspaceType": "regular"
+      },
+      "annotations": {
+        "gitpod/servicePrefix": "foobaz",
+        "gitpod/url": "http://10.0.0.114:8082",
+        "gitpod/never-ready": "true",
+        "prometheus.io/path": "/metrics",
+        "prometheus.io/port": "23000",
+        "prometheus.io/scrape": "true"
+      }
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "vol-this-workspace",
+          "hostPath": {
+            "path": "/tmp/workspaces/foobaz",
+            "type": "DirectoryOrCreate"
+          }
+        },
+        {
+          "name": "default-token-6qnvx",
+          "secret": {
+            "secretName": "default-token-6qnvx",
+            "defaultMode": 420
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "workspace",
+          "image": "nginx:latest",
+          "ports": [
+            {
+              "containerPort": 23000,
+              "protocol": "TCP"
+            }
+          ],
+          "env": [
+            {
+              "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace"
+            },
+            {
+              "name": "GITPOD_CLI_APITOKEN",
+              "value": "c295eb70-a45c-42d8-b9a3-770a062ca3e2"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_ID",
+              "value": "foobaz"
+            },
+            {
+              "name": "GITPOD_GIT_USER_NAME",
+              "value": "usernameGoesHere"
+            },
+            {
+              "name": "GITPOD_GIT_USER_EMAIL",
+              "value": "some@user.com"
+            },
+            {
+              "name": "THEIA_WORKSPACE_ROOT",
+              "value": "/workspace"
+            },
+            {
+              "name": "GITPOD_THEIA_PORT",
+              "value": "23000"
+            },
+            {
+              "name": "GITPOD_HOST",
+              "value": "gitpod.io"
+            },
+            {
+              "name": "GITPOD_INTERVAL",
+              "value": "30"
+            }
+          ],
+          "resources": {
+            "limits": {
+              "cpu": "100m",
+              "memory": "100Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "100Mi"
+            }
+          },
+          "volumeMounts": [
+            {
+              "name": "vol-this-workspace",
+              "mountPath": "/workspace"
+            },
+            {
+              "name": "default-token-6qnvx",
+              "readOnly": true,
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+            }
+          ],
+          "livenessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 30,
+            "successThreshold": 1,
+            "failureThreshold": 3
+          },
+          "readinessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 1,
+            "successThreshold": 1,
+            "failureThreshold": 3
+          },
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "imagePullPolicy": "Always"
+        }
+      ],
+      "restartPolicy": "Always",
+      "terminationGracePeriodSeconds": 30,
+      "dnsPolicy": "ClusterFirst",
+      "serviceAccountName": "default",
+      "serviceAccount": "default",
+      "securityContext": {},
+      "schedulerName": "default-scheduler",
+      "tolerations": [
+        {
+          "key": "node.kubernetes.io/not-ready",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "node.kubernetes.io/unreachable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        }
+      ]
+    },
+    "status": {
+      "phase": "Pending",
+      "qosClass": "Guaranteed"
+    }
+  },
+  "theiaService": {
+    "metadata": {
+      "name": "foobaz-theia",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/services/foobaz-theia",
+      "uid": "fab63703-4351-11e9-aee4-080027861af1",
+      "resourceVersion": "63777",
+      "creationTimestamp": "2019-03-10T16:31:38Z",
+      "labels": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "metaID": "metameta",
+        "workspaceID": "foobaz"
+      }
+    },
+    "spec": {
+      "ports": [
+        {
+          "name": "theia",
+          "protocol": "TCP",
+          "port": 23000,
+          "targetPort": 23000
+        }
+      ],
+      "selector": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "workspaceID": "foobaz"
+      },
+      "clusterIP": "10.111.112.192",
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  "portsService": {
+    "metadata": {
+      "name": "foobaz-ports",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/services/foobaz-ports",
+      "uid": "fab97a53-4351-11e9-aee4-080027861af1",
+      "resourceVersion": "63780",
+      "creationTimestamp": "2019-03-10T16:31:38Z",
+      "labels": {
+        "gpwsman": "true",
+        "workspaceID": "foobaz"
+      }
+    },
+    "spec": {
+      "ports": [
+        {
+          "protocol": "TCP",
+          "port": 8080,
+          "targetPort": 8080
+        }
+      ],
+      "selector": {
+        "gpwsman": "true",
+        "workspaceID": "foobaz"
+      },
+      "clusterIP": "10.100.65.85",
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@gitpod/supervisor-api-grpc",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "sh build.sh"
+  },
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@grpc/grpc-js": "^1.3.7",
+    "google-protobuf": "^3.19.1"
+  },
+  "devDependencies": {
+    "@types/google-protobuf": "^3.15.5",
+    "grpc-tools": "^1.11.2",
+    "grpc_tools_node_protoc_ts": "^5.3.2",
+    "typescript": "~4.4.2",
+    "typescript-formatter": "^7.2.2"
+  }
+}

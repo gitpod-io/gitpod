@@ -1,0 +1,13 @@
+packages:
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**"
+      - package.json
+    deps:
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      dontTest: true

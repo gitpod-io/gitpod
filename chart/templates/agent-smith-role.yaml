@@ -1,0 +1,32 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.agentSmith -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: agent-smith
+    kind: role
+    stage: {{ .Values.installation.stage }}
+  name: agent-smith
+rules:
+- apiGroups:
+  - "policy"
+  resources:
+  - "podsecuritypolicies"
+  verbs:
+  - "use"
+  resourceNames:
+  - "{{ .Release.Namespace }}-ns-privileged-unconfined"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - update
+{{- end -}}

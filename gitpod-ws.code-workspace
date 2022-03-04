@@ -1,0 +1,60 @@
+{
+   "folders": [
+      { "path": "." },
+      { "path": "components/blobserve" },
+      { "path": "components/common-go" },
+      { "path": "components/content-service" },
+      { "path": "components/docker-up" },
+      { "path": "components/ee/agent-smith" },
+      { "path": "components/gitpod-cli" },
+      { "path": "components/gitpod-protocol" },
+      { "path": "components/image-builder-bob" },
+      { "path": "components/image-builder-mk3" },
+      { "path": "components/licensor" },
+      { "path": "components/local-app" },
+      { "path": "components/registry-facade" },
+      { "path": "components/service-waiter" },
+      { "path": "components/supervisor" },
+      { "path": "components/workspacekit" },
+      { "path": "components/ws-daemon" },
+      { "path": "components/ws-manager" },
+      { "path": "components/ws-proxy" },
+      { "path": "test" },
+      { "path": "dev/blowtorch" },
+      { "path": "dev/changelog" },
+      { "path": "dev/gpctl" },
+      { "path": "dev/loadgen" },
+      { "path": "dev/poolkeeper" },
+      { "path": "dev/sweeper" },
+      { "path": "install/installer" }
+   ],
+   "settings": {
+      "typescript.tsdk": "gitpod/node_modules/typescript/lib",
+      "[json]": {
+         "editor.insertSpaces": true,
+         "editor.tabSize": 2
+      },
+      "[yaml]": {
+         "editor.insertSpaces": true,
+         "editor.tabSize": 2
+      },
+      "[go]": {
+         "editor.formatOnSave": true
+      },
+      "[tf]": {
+         "editor.insertSpaces": true,
+         "editor.tabSize": 2
+      },
+      "go.formatTool": "goimports",
+      "go.useLanguageServer": true,
+      "workspace.supportMultiRootWorkspace": true,
+      "launch": {},
+      "files.exclude": {
+         "**/.git": true
+      },
+      "go.lintTool": "golangci-lint",
+      "gopls": {
+         "allowModfileModifications": true
+      }
+   }
+}

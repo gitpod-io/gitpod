@@ -1,0 +1,23 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if not .Values.components.db.gcloudSqlProxy.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init-scripts
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: db
+    kind: configmap
+    stage: {{ .Values.installation.stage }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  init.sql: |-
+{{- $root := . }}
+{{- range $path, $bytes := .Files.Glob "config/db/init/**.sql" }}
+{{ $root.Files.Get $path | indent 4 }}
+{{- end }}
+{{- end -}}

@@ -1,0 +1,39 @@
+{
+    "status": {
+        "id": "0dd5700a790e7ca2-95291c91f6e61c2e-e06ba50b",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "image-builder",
+            "meta_id": "0dd5700a790e7ca2-95291c91f6e61c2e-e06ba50b",
+            "started_at": {
+                "seconds": 1626883365
+            },
+            "annotations": {
+                "baseref": "eu.gcr.io/gitpod-core-dev/registry/base-images:d04c64d5d108632a1768e4af9c3a8a3e6a87c96d2566fb1b0d1aec2fd630e8bd",
+                "ref": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:a277dab62e839192eb320da283d4e8488a2b2f46fceb4677a7d571431e239aa5"
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:2cf747867ff804ee0edc0a2607cb8ca06242083a",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:2cf747867ff804ee0edc0a2607cb8ca06242083a",
+            "headless": true,
+            "url": "https://0dd5700a790e7ca2-95291c91f6e61c2e-e06ba50b.ws-dev.cw-imgbuilder-mk3-rebase.staging.gitpod-dev.com",
+            "type": 4,
+            "timeout": "1h0m0s",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:2cf747867ff804ee0edc0a2607cb8ca06242083a"
+            }
+        },
+        "phase": 5,
+        "conditions": {},
+        "message": "headless workspace is stopping",
+        "runtime": {
+            "node_name": "gke-dev-workload-1-49d27f81-8s5c",
+            "pod_name": "imagebuild-0dd5700a790e7ca2-95291c91f6e61c2e-e06ba50b",
+            "node_ip": "10.132.0.17"
+        },
+        "auth": {
+            "owner_token": "osZStmqg3TI0NrkLe3edax9bYCknXWtr"
+        }
+    }
+}

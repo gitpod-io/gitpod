@@ -1,0 +1,683 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+# version of Gitpod will be set by the CI job on publishing to https://charts.gitpod.io/
+version:
+
+hostname: localhost
+certificatesSecret:
+  secretName: https-certificates
+
+imagePrefix: gcr.io/gitpod-io/self-hosted/
+
+installation:
+  stage: production
+  tenant: gitpod
+  region: local
+  cluster: "00"
+  shortname: ""
+  kubedomain: "svc.cluster.local"
+license: ""
+installNetworkPolicies: true
+installPodSecurityPolicies: true
+imagePullPolicy: IfNotPresent
+
+# configure default log level
+log:
+  level: info
+
+resources:
+  default:
+    cpu: 100m
+    memory: 200Mi
+workspaceSizing:
+  requests:
+    cpu: "1m"
+    memory: "2.25Gi"
+    ephemeral-storage: "5Gi"
+  limits:
+    cpu: "6"
+    memory: "12Gi"
+  dynamic:
+    # Gitpod supports dynamic CPU limiting. We express those limits in "buckets of CPU time" (jiffies where 1 jiffie is 1% of a vCPU).
+    # Each bucket has a limit (i.e. max CPU rate in jiffies/sec, 100 jiffies/sec = 1 vCPU).
+    #
+    # For example:
+    #   # three minutes of 5 CPUs: 5 [numCPU] * 100 [jiffies/sec] * (3 * 60) [seconds] = 90000
+    #   - budget: 90000
+    #     limit: 500
+    #   # five minutes  of 4 CPUs: 4 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 120000
+    #   - budget: 120000
+    #     limit: 400
+    #   # remainder of 2 CPUs where a user has to stay below sustained use of 1.8 CPUs for 5 minutes:
+    #   #                       1.8 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 54000
+    #   - budget: 54000
+    #     limit: 200
+    #
+    # if there are no buckets configured, the dynamic CPU limiting is disabled.
+    cpu:
+      buckets: []
+      samplingPeriod: "10s"
+      controlPeriod: "15m"
+db:
+  host: db
+  port: 3306
+  username: gitpod
+  password: test
+
+defaults:
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  terminationGracePeriodSeconds: 30
+
+dbEncryptionKeys:
+  secretName: null
+  file: secrets/encryption-key.json
+
+tracing: {}
+authProviders: []
+# Example authProvider configurations below:
+# - id: "Public-GitHub"
+#   host: "github.com"
+#   type: "GitHub"
+#   oauth:
+#     clientId: "CLIENT_ID"
+#     clientSecret: "SECRET"
+#     callBackUrl: "https://gitpod.io/auth/github/callback"
+#     settingsUrl: "https://github.com/settings/connections/applications/CLIENT_ID"
+#   description: ""
+#   icon: ""
+# - id: "Public-GitLab"
+#   host: "gitlab.com"
+#   type: "GitLab"
+#   oauth:
+#     clientId: "CLIENT_ID"
+#     clientSecret: "SECRET"
+#     callBackUrl: "https://gitpod.io/auth/gitlab/callback"
+#     settingsUrl: "https://gitlab.com/-/profile/applications"
+#   description: ""
+#   icon: ""
+
+components:
+
+  agentSmith:
+    name: "agent-smith"
+    disabled: true
+    resources:
+      cpu: 100m
+      memory: 32Mi
+
+  blobserve:
+    name: "blobserve"
+    disabled: false
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      service:
+        expose: true
+        containerPort: 32224
+        servicePort: 4000
+
+  contentService:
+    name: "content-service"
+    disabled: false
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      rpc:
+        expose: true
+        containerPort: 8080
+      metrics:
+        expose: false
+        containerPort: 9500
+    remoteStorage:
+      kind: minio
+      blobQuota: 0
+
+  dbMigrations:
+    enabled: true
+    name: db-migrations
+
+  db:
+    name: "db"
+    autoMigrate: true
+    gcloudSqlProxy:
+      enabled: false
+      instance: not-set
+      credentials: not-set
+    serviceType: ClusterIP
+
+  dbSync:
+    name: "db-sync"
+    disabled: true
+
+  ideProxy:
+    name: "ide-proxy"
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      http:
+        expose: true
+        containerPort: 80
+        servicePort: 80
+    serviceType: ClusterIP
+
+  dashboard:
+    name: "dashboard"
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      http:
+        expose: true
+        containerPort: 80
+        servicePort: 3001
+    serviceType: ClusterIP
+
+  imageBuilderMk3:
+    name: "image-builder-mk3"
+    registry:
+      name: builtin
+      secretName: builtin-registry-auth
+      path: ""
+      baseImageName: ""
+      workspaceImageName: ""
+      # By default, the builtin registry is accessed through the proxy.
+      # If bypassProxy is true, the builtin registry is accessed via <registry-name>.<namespace>.svc.cluster.local directly.
+      bypassProxy: false
+    # When your registry uses self-signed certs (that's the default) and you set `bypassProxy: true`,
+    # then you should set the certs here like this:
+    # registryCerts:
+    #   - name: builtin
+    #     secret: builtin-registry-certs
+    registryCerts: []
+    dependsOn:
+    - "image-builder-mk3-configmap.yaml"
+    alpineImage: alpine:3.15
+    builderImage:
+      imageName: "image-builder-mk3/bob"
+    ports:
+      rpc:
+        expose: true
+        containerPort: 8080
+
+  kedge:
+    name: "kedge"
+    disabled: true
+    resources:
+      memory: 128Mi
+    ports:
+      http:
+        expose: true
+        containerPort: 8080
+        servicePort: 8080
+
+  registryFacade:
+    name: "registry-facade"
+    disabled: false
+    dependsOn:
+    - "registry-facade-configmap.yaml"
+    certificatesSecret: {}
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      registry:
+        expose: true
+        containerPort: 32223
+        servicePort: 3000
+    svcLabels:
+      feature: registry
+    serviceType: "ClusterIP"
+
+  # enabled cronjob to restart the proxy deployment
+  restarter:
+    enabled: false
+    schedule: '0 0 * * 0'
+    image: bitnami/kubectl:latest
+    targets:
+    - name: proxy
+      kind: deployment
+    - name: registry-facade
+      kind: daemonset
+    - name: ws-proxy
+      kind: deployment
+
+  server:
+    name: "server"
+    dependsOn:
+    - "server-configmap.yaml"
+    resources:
+      cpu: "200m"
+    githubApp:
+      enabled: false
+      authProviderId: "Public-GitHub"
+    blockNewUsers:
+      enabled: false
+      passlist: []
+    runDbDeleter: true
+    serverIdeConfigDeploy:
+      enabled: true
+    storage: {}
+    wsman: []
+    defaultBaseImageRegistryWhitelist: []
+    session:
+      # 3 days
+      maxAgeMs: 259200000
+      secret: Important!Really-Change-This-Key!
+    previewFeatureFlags: []
+    defaultFeatureFlags: []
+    incrementalPrebuilds:
+      repositoryPasslist: []
+      commitHistory: 100
+    ports:
+      http:
+        expose: true
+        containerPort: 3000
+        servicePort: 3000
+      metrics:
+        expose: true
+        containerPort: 9500
+      debugNode:
+        expose: false
+        containerPort: 9229
+      debug:
+        expose: false
+        containerPort: 6060
+    serviceSessionAffinity: None
+    serverContainer:
+      volumeMounts: null
+      env: null
+    volumes: null
+    garbageCollection:
+      disabled: false
+      startDate: null
+      chunkLimit: 1000
+      minAgeDays: 14
+      minAgePrebuildDays: 7
+      contentRetentionPeriodDays: 21
+      contentChunkLimit: 1000
+    definitelyGpDisabled: "false"
+    enableLocalApp: false
+    disableDynamicAuthProviderLogin: false
+    maxEnvvarPerUserCount: 4048
+    maxConcurrentPrebuildsPerRef: 10
+    makeNewUsersAdmin: false
+    theiaPluginsBucketNameOverride: null
+    oauthServer:
+      enabled: false
+    rateLimiter:
+      groups:
+        inWorkspaceUserAction:
+          points: 10
+          durationsSec: 2
+      functions:
+        openPort:
+          group: inWorkspaceUserAction
+        closePort:
+          group: inWorkspaceUserAction
+        controlAdmission:
+          group: inWorkspaceUserAction
+        shareSnapshot:
+          group: inWorkspaceUserAction
+    contentServiceAddr: "content-service:8080"
+    imageBuilderAddr: "image-builder-mk3:8080"
+    codeSync: {}
+    enablePayment: false
+    workspaceHeartbeat:
+      intervalSeconds: 60
+      timeoutSeconds: 300
+    insecureNoDomain: false
+    chargebeeProviderOptionsFile: "/chargebee/providerOptions"
+
+  serviceWaiter:
+    imageName: "service-waiter"
+
+  paymentEndpoint:
+    name: "payment-endpoint"
+    disabled: true
+    ports:
+      http:
+        expose: true
+        containerPort: 3002
+        servicePort: 3002
+
+  workspace:
+    ports:
+      http:
+        containerPort: 23000
+        supervisorPort: 22999
+    defaultImage:
+      imagePrefix: "gitpod/"
+      imageName: "workspace-full"
+      version: "latest"
+    codeImage:
+      imageName: "ide/code"
+      stableVersion: "commit-890de80174c7dd9d073d63ef2b1f9eac68f063c1"
+      insidersVersion: "nightly"
+    desktopIdeImages:
+      codeDesktop:
+        imageName: "ide/code-desktop"
+      codeDesktopInsiders:
+        imageName: "ide/code-desktop-insiders"
+      intellij:
+        imageName: "ide/intellij"
+      goland:
+        imageName: "ide/goland"
+      pycharm:
+        imageName: "ide/pycharm"
+      phpstorm:
+        imageName: "ide/phpstorm"
+    supervisor:
+      imageName: "supervisor"
+    workspacekit:
+      imageName: "workspacekit"
+    dockerUp:
+      imageName: "docker-up"
+    pullSecret:
+      secretName: builtin-registry-auth
+    template:
+      default:
+        spec:
+            enableServiceLinks: false
+            dnsConfig:
+            nameservers:
+            - 1.1.1.1
+            - 8.8.8.8
+            dnsPolicy: None
+
+  proxy:
+    name: "proxy"
+    svcName: "proxy"
+    dependsOn:
+    - "proxy-configmap.yaml"
+    ports:
+      http:
+        containerPort: 80
+      https:
+        expose: true
+        containerPort: 443
+      ssh:
+        expose: true
+        containerPort: 22
+      metrics:
+        expose: false
+        containerPort: 9500
+    loadBalancerIP: null
+    serviceType: "LoadBalancer"
+    serviceSessionAffinity: "None"
+    serviceExternalTrafficPolicy: null
+
+  openVsxProxy:
+    disabled: true
+    name: "openvsx-proxy"
+    svcName: "openvsx-proxy"
+    dependsOn:
+    - "openvsx-proxy-configmap.yaml"
+    ports:
+      http:
+        expose: true
+        containerPort: 8080
+        servicePort: 8080
+      metrics:
+        expose: false
+        containerPort: 9500
+    vsxRegistryUrl: https://open-vsx.org
+    # cacheDurationRegular is how long to use a cached value during normal operation (when upstream is reachable)
+    # set it to 0 to disable caching during normal operation and always call upstream when reachable
+    cacheDurationRegular: 5m
+    # cacheDurationBackup is the TTL of a cached value that is used on an upstream outage
+    # this value is used for the in-memory cache only
+    # this value has no effect when enableRedis == true
+    cacheDurationBackup: 72h  # 3 days
+    maxIdleConns: 1000
+    maxIdleConnsPerHost: 1000
+    enableRedis: true
+    redisMaxMemory: 100mb
+
+  wsManager:
+    name: "ws-manager"
+    dependsOn:
+    - "ws-manager-configmap.yaml"
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    tls:
+      server:
+        secretName: ws-manager-tls
+      client:
+        secretName: ws-manager-client-tls
+    ports:
+      rpc:
+        expose: true
+        containerPort: 8080
+
+  wsManagerBridge:
+    name: "ws-manager-bridge"
+    defaultConfig: true
+    resources:
+      cpu: 100m
+      memory: 64Mi
+    ports:
+      metrics:
+        expose: false
+        containerPort: 9500
+
+  wsDaemon:
+    name: "ws-daemon"
+    # Use an initContainer to use local SSDs to setup a RAID0 for the workspace area
+    # The raid skips the first two disks (/dev/sda and /dev/sdb), i.e., we can use up to six disks.
+    setupSSDRaid: false
+    hostWorkspaceArea: /var/gitpod/workspaces
+    servicePort: 8080
+    clusterIP: "None"
+    selectorKind: daemonset
+    workspaceSizeLimit: "50g"
+    cpuLimit:
+      enabled: true
+      totalBandwidth: 12
+      limit: 2
+      burstLimit: 6
+      controlPeriod: "15s"
+      cgroupBasePath: "/mnt/node-cgroups"
+    containerRuntime:
+      enabled: true
+      runtime: containerd
+      containerd:
+        socket: /run/containerd/containerd.sock
+      nodeRoots:
+      - /var/lib
+      - /run/containerd/io.containerd.runtime.v2.task/k8s.io
+      # On some hosts systems containerd uses different paths to store it's containers in, for example:
+      # Find out by ssh onto a node and "mount | grep rootfs" and have a look at the paths
+      # - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
+      # - /run/containerd/io.containerd.runtime.v1.linux/moby
+      # - /run/containerd/io.containerd.runtime.v2.task/k8s.io
+    userNamespaces:
+      # Valid values for fsShift are:
+      #    fuse: uses fuse-overlayfs
+      #    shiftfs: uses shiftfs. Depending on the underlying OS/distribution you
+      #             might want to enable the shiftfsModuleLoader.
+      fsShift: shiftfs
+      shiftfsModuleLoader:
+        enabled: false
+        imageName: "shiftfs-module-loader"
+      seccompProfileInstaller:
+        enabled: true
+        imageName: "seccomp-profile-installer"
+
+  wsProxy:
+    name: "ws-proxy"
+    disabled: false
+    resources:
+      cpu: 100m
+      memory: 64Mi
+    replicas: 1
+    hostHeader: "x-wsproxy-host"
+    # hostKeySecretName: "host-key"
+    ports:
+      httpProxy:
+        expose: true
+        containerPort: 8080
+      httpsProxy:
+        expose: true
+        containerPort: 9090
+      metrics:
+        expose: false
+        containerPort: 9500
+      ssh:
+        expose: false
+        containerPort: 2200
+        servicePort: 22
+
+docker-registry:
+  enabled: true
+  fullnameOverride: registry
+  service:
+    port: 443
+  tlsSecretName: builtin-registry-certs
+
+minio:
+  enabled: true
+  fullnameOverride: minio
+  accessKey: # create random accesskey and secretkey
+  secretKey: # create random accesskey and secretkey
+  serviceAccount:
+    create: true
+    name: minio
+  resources:
+    requests:
+      # defaults to 4GB, set to 2GB to be able to start on smaller instances
+      memory: 2G
+
+mysql:
+  enabled: true
+  fullnameOverride: mysql
+  image:
+    # We switched to the specific version because "5.7" was broken at least once
+    tag: 5.7.34-debian-10-r55
+  primary:
+    extraEnvVars:
+      # We rely on this in our DB implementations: NULL (re-)sets configured columns to be initialized with CURRENT_TIMESTAMP.
+      # OFF is the default as documented [here](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_explicit_defaults_for_timestamp) (we also see this in GCP), but not for this chart.
+    - name: MYSQL_EXTRA_FLAGS
+      value: --explicit-defaults-for-timestamp=OFF
+    resources:
+      requests:
+        memory: 128Mi
+  auth:
+    existingSecret: db-password
+  serviceAccount:
+    create: false
+    name: db
+  initdbScriptsConfigMap: db-init-scripts
+  volumePermissions:
+    enabled: true
+
+rabbitmq:
+  enabled: true
+  fullnameOverride: "messagebus"
+  persistence:
+    enabled: false
+  replicaCount: 1
+  auth:
+    username: ""
+    password: ""
+    existingErlangSecret: messagebus-erlang-cookie
+    tls:
+      enabled: true
+      existingSecret: messagebus-certificates-secret-core
+      existingSecretFullChain: true
+  metrics:
+    enabled: true
+  extraEnvVars:
+    # Disable Speculative Scheduler Busy Waiting
+    # https://www.rabbitmq.com/runtime.html#busy-waiting
+    - name: RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
+      value: "+sbwt none +sbwtdcpu none +sbwtdio none"
+  networkPolicy:
+    enabled: true
+    allowExternal: true
+  plugins: "rabbitmq_management rabbitmq_peer_discovery_k8s"
+  extraPlugins: ""
+  extraSecrets:
+    load-definition:
+      load_definition.json: |
+        {
+          "users": [{
+            "name": {{ required "rabbitmq username is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.username=xxxxx" .Values.auth.username | quote }},
+            "password": {{ required "rabbitmq password is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.password=xxxxx" .Values.auth.password | quote }},
+            "tags": "administrator"
+          }],
+          "vhosts": [{
+            "name": "/"
+          }],
+          "parameters": [],
+          "permissions": [{
+            "user": {{ .Values.auth.username | quote }},
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+          }],
+          "exchanges": [{
+            "name": "gitpod.ws.local",
+            "vhost": "/",
+            "type": "topic",
+            "durable": true,
+            "auto_delete": false
+          }, {
+            "name": "consensus-leader",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": false,
+            "auto_delete": false
+          }],
+          "bindings": [],
+          "queues": [{
+            "name": "consensus-peers",
+            "vhost": "/",
+            "durable": false,
+            "auto_delete": false,
+            "arguments": {}
+          }, {
+            "name": "pwsupdatable",
+            "vhost": "/",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+          }],
+          "policies": [{
+            "name": "ha-all",
+            "vhost": "/",
+            "pattern": ".*",
+            "definition": {
+              "ha-mode": "all",
+              "ha-sync-mode": "automatic",
+              "ha-sync-batch-size": 5
+            }
+          }]
+        }
+  loadDefinition:
+    enabled: true
+    existingSecret: load-definition
+  extraConfiguration: |
+    load_definitions = /app/load_definition.json
+    # Increase statistics emission interval https://www.rabbitmq.com/management.html#statistics-interval
+    collect_statistics_interval = 15000
+  pdb:
+    create: true
+    minAvailable: 0
+    maxUnavailable: 1
+
+cert-manager:
+  enabled: false
+  installCRDs: true
+  ca:
+    issuerName: ca-issuer
+    certificate:
+      selfSigned: true
+      secretName: gitpod-ca-certificate

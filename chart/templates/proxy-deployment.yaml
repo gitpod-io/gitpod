@@ -1,0 +1,127 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.proxy -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $wsProxy := .Values.components.wsProxy -}}
+{{- if not $comp.disabled -}}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: proxy
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: proxy
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      name: proxy
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: proxy
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccount: proxy
+      securityContext:
+        runAsNonRoot: false
+      enableServiceLinks: false
+      initContainers:
+        - name: "sysctl"
+          image: "alpine:3.15"
+          securityContext:
+            privileged: true
+          command:
+            - sh
+            - -c
+            - "sysctl -w net.core.somaxconn=32768; sysctl -w net.ipv4.ip_local_port_range='1024 65000'"
+      containers:
+      # TODO: remove once Caddy can listen only in localhost
+      - name: kube-rbac-proxy
+        args:
+        - --v=10
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9545/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.11.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9500
+          name: metrics
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+      - name: proxy
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        securityContext:
+          privileged: false
+        readinessProbe:
+          httpGet:
+            path: "/ready"
+            port: 8003
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        volumeMounts:
+        - name: vhosts
+          mountPath: "/etc/caddy/vhosts"
+{{- if index .Values "docker-registry" "enabled" }}
+        - name: builtin-registry-auth
+          mountPath: "/etc/caddy/registry-auth"
+        - name: builtin-registry-certs
+          mountPath: "/etc/caddy/registry-certs"
+{{- end }}
+        - name: config-certificates
+          mountPath: "/etc/caddy/certificates"
+{{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $comp) | indent 8 }}
+        - name: PROXY_DOMAIN
+          value: "{{ $.Values.hostname }}"
+      volumes:
+      - name: vhosts
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+{{- if index .Values "docker-registry" "enabled" }}
+      - name: builtin-registry-auth
+        secret:
+          secretName: builtin-registry-auth
+      - name: builtin-registry-certs
+        secret:
+          secretName: builtin-registry-certs
+{{- end }}
+      - name: config-certificates
+        secret:
+          secretName: {{ $.Values.certificatesSecret.secretName }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

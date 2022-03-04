@@ -1,0 +1,103 @@
+packages:
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - :dbtest
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      dontTest: true
+  - name: migrations
+    type: yarn
+    srcs:
+      - "src/**/*.ts"
+      - package.json
+    deps:
+      - components/gitpod-protocol:lib
+    config:
+      dontTest: true
+      packaging: offline-mirror
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+  - name: dbtest
+    type: yarn
+    srcs:
+      - "**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - :dbtest-init
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "db-test"]
+        build: ["yarn", "build"]
+  - name: dbtest-init
+    type: generic
+    srcs:
+      - package.json
+    deps:
+      - :migrations
+      - chart/config/db/init:init-scripts
+    env:
+      - DB_HOST=127.0.0.1
+      - DB_PORT=23306
+      - DB_USER=root
+      - DB_PASSWORD=test
+      - DB_ENCRYPTION_KEYS=[{"name":"general","version":1,"primary":true,"material":"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c="}]
+    ephemeral: true
+    config:
+      commands:
+        # Check if a DB is present. If not: start one and wait until it's up
+        # Note: In CI there is a DB running as sidecar; in workspaces we're starting it once.
+        #       Re-use of the instance because of the init scripts (cmp. next step).
+        - ["sh", "-c", "mysqladmin ping -h \"$DB_HOST\" \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER --silent || (docker run -d -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD -e MYSQL_TCP_PORT=$DB_PORT -p $DB_PORT:$DB_PORT mysql:5.7; while ! mysqladmin ping -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER --silent; do echo \"waiting for DB...\"; sleep 2; done)"]
+        # Apply the DB initialization scripts (re-creates the "gitpod" DB if already there)
+        - ["sh", "-c", "find chart-config-db-init--init-scripts -name \"*.sql\" | sort | xargs cat | mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER"]
+        # Run DB migrations
+        - ["sh", "-c", "mkdir -p mig; cd mig; ../components-gitpod-db--migrations/install.sh"]
+        # migrate 'migrations'
+        - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "run", "migrate-migrations"]
+        # Run actual migrations
+        - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "typeorm", "migrations:run"]
+        # Clean out package to not bload the build artifact
+        - ["rm", "-rf", "mig"]
+  - name: docker
+    type: docker
+    srcs:
+      - migrate.sh
+      - migrate_gcp.sh
+      - typeorm.sh
+      - typeorm_gcp.sh
+    deps:
+      - :migrations
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: dbMigrations
+      image:
+        - ${imageRepoBase}/db-migrations:${version}
+        - ${imageRepoBase}/db-migrations:commit-${__git_commit}
+scripts:
+- name: db-test-env
+  description: "Creates a file with env vars necessary for running DB tests. The file delets itself after being sourced. Usage: '. $(leeway run components/gitpod-db:db-test-env)'"
+  deps: []
+  script: |
+    TMP="$(mktemp)"
+    echo '#!/bin/bash' > $TMP
+    echo 'export DB_ENCRYPTION_KEYS="[{\"name\":\"general\",\"version\":1,\"primary\":true,\"material\":\"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c=\"}]";export DB_HOST=127.0.0.1;export DB_PORT=23306;export DB_USER=root;export DB_PASSWORD=test;' >> $TMP
+    echo "rm -f $TMP" >> $TMP
+    echo $TMP

@@ -1,0 +1,84 @@
+{
+  "name": "@gitpod/dashboard",
+  "license": "UNLICENSED",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "countries-list": "^2.6.1",
+    "js-cookie": "^3.0.1",
+    "moment": "^2.29.1",
+    "monaco-editor": "^0.25.2",
+    "query-string": "^7.1.1",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-router-dom": "^5.2.0",
+    "xterm": "^4.11.0",
+    "xterm-addon-fit": "^0.5.0"
+  },
+  "devDependencies": {
+    "@craco/craco": "^6.1.2",
+    "@tailwindcss/forms": "^0.3.2",
+    "@tailwindcss/postcss7-compat": "^2.2.4",
+    "@testing-library/cypress": "^8.0.2",
+    "@testing-library/jest-dom": "^5.11.10",
+    "@testing-library/react": "^11.2.6",
+    "@testing-library/user-event": "^12.1.10",
+    "@types/jest": "^26.0.22",
+    "@types/js-cookie": "^2.2.7",
+    "@types/node": "^16.11.0",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.3",
+    "@types/react-router": "^5.1.13",
+    "@types/react-router-dom": "^5.1.7",
+    "@types/uuid": "^8.3.1",
+    "@typescript-eslint/eslint-plugin": "^4.21.0",
+    "@typescript-eslint/parser": "^4.21.0",
+    "autoprefixer": "^9.8.6",
+    "classnames": "^2.3.1",
+    "cypress": "^9.2.1",
+    "eslint": "^7.24.0",
+    "eslint-config-react-app": "^6.0.0",
+    "postcss": "^7.0.36",
+    "react-scripts": "^4.0.3",
+    "tailwind-underline-utils": "^1.1.2",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.4",
+    "tailwindcss-filters": "^3.0.0",
+    "typescript": "~4.4.2",
+    "web-vitals": "^1.1.1"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build --verbose",
+    "test": "yarn test:unit && ./scripts/run-integration-tests.sh",
+    "test:unit": "craco test --all --watchAll=false",
+    "test:unit:watch": "craco test --all",
+    "test:integration:watch": "cypress open",
+    "test:integration:run": "cypress install && cypress run",
+    "eject": "react-scripts eject",
+    "telepresence": "TELEPRESENCE_USE_DEPLOYMENT=1 leeway run .:telepresence"
+  },
+  "files": [
+    "conf",
+    "build",
+    "public"
+  ],
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+packages:
+  - name: docker
+    type: docker
+    argdeps:
+      - imageRepoBase
+    srcs:
+      - entrypoint.sh
+      - dkms.conf
+      - Makefile
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: wsDaemon.userNamespaces.shiftfsModuleLoader
+      image:
+        - ${imageRepoBase}/shiftfs-module-loader:${version}
+        - ${imageRepoBase}/shiftfs-module-loader:commit-${__git_commit}

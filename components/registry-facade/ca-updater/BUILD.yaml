@@ -1,0 +1,14 @@
+packages:
+  - name: docker
+    type: docker
+    srcs:
+      - "install-packages"
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: Dockerfile
+      metadata:
+        helm-component: caUpdater
+      image:
+        - ${imageRepoBase}/ca-updater:${version}
+        - ${imageRepoBase}/ca-updater:commit-${__git_commit}

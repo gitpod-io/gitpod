@@ -1,0 +1,169 @@
+cloud.google.com/go                                                                             Apache License 2.0
+cloud.google.com/go/storage                                                                     Apache License 2.0
+github.com/alecthomas/jsonschema                                                                MIT License
+github.com/alecthomas/repr                                                                      MIT License
+github.com/allegro/bigcache                                                                     Apache License 2.0
+github.com/asaskevich/govalidator                                                               MIT License
+github.com/Azure/go-autorest/autorest/adal                                                      Apache License 2.0
+github.com/Azure/go-autorest/autorest                                                           Apache License 2.0
+github.com/Azure/go-autorest/autorest/date                                                      Apache License 2.0
+github.com/Azure/go-autorest/logger                                                             Apache License 2.0
+github.com/Azure/go-autorest/tracing                                                            Apache License 2.0
+github.com/beorn7/perks                                                                         MIT License
+github.com/bombsimon/logrusr                                                                    MIT License
+github.com/bradfitz/gomemcache                                                                  Apache License 2.0
+github.com/cenkalti/backoff                                                                     MIT License
+github.com/cespare/xxhash                                                                       MIT License
+github.com/chzyer/readline                                                                      MIT License
+github.com/containerd/console                                                                   Apache License 2.0
+github.com/containerd/containerd                                                                Apache License 2.0
+github.com/containerd/continuity                                                                Apache License 2.0
+github.com/containerd/typeurl                                                                   Apache License 2.0
+github.com/cpuguy83/go-md2man                                                                   MIT License
+github.com/creack/pty                                                                           MIT License
+github.com/davecgh/go-spew                                                                      ISC License
+github.com/desertbit/timer                                                                      MIT License
+github.com/dgrijalva/jwt-go                                                                     MIT License
+github.com/docker/cli                                                                           Apache License 2.0
+github.com/docker/distribution                                                                  Apache License 2.0
+github.com/docker/docker                                                                        Apache License 2.0
+github.com/docker/docker-credential-helpers                                                     MIT License
+github.com/docker/go-connections                                                                Apache License 2.0
+github.com/docker/go-units                                                                      Apache License 2.0
+github.com/eko/gocache                                                                          MIT License
+github.com/evanphx/json-patch                                                                   BSD 3-Clause "New" or "Revised" License
+github.com/felixge/httpsnoop                                                                    MIT License
+github.com/form3tech-oss/jwt-go                                                                 MIT License
+github.com/fsnotify/fsnotify                                                                    BSD 3-Clause "New" or "Revised" License
+github.com/godbus/dbus                                                                          BSD 2-Clause "Simplified" License
+github.com/gofrs/flock                                                                          BSD 3-Clause "New" or "Revised" License
+github.com/gogo/googleapis                                                                      Apache License 2.0
+github.com/gogo/protobuf                                                                        <license not found or detected>
+github.com/golang/groupcache                                                                    Apache License 2.0
+github.com/golang/mock                                                                          Apache License 2.0
+github.com/golang/protobuf                                                                      BSD 3-Clause "New" or "Revised" License
+github.com/golang/snappy                                                                        BSD 3-Clause "New" or "Revised" License
+github.com/go-logr/logr                                                                         Apache License 2.0
+github.com/googleapis/gax-go                                                                    BSD 3-Clause "New" or "Revised" License
+github.com/googleapis/gnostic                                                                   Apache License 2.0
+github.com/google/go-cmp                                                                        BSD 3-Clause "New" or "Revised" License
+github.com/google/gofuzz                                                                        Apache License 2.0
+github.com/google/shlex                                                                         Apache License 2.0
+github.com/google/tcpproxy                                                                      Apache License 2.0
+github.com/google/uuid                                                                          BSD 3-Clause "New" or "Revised" License
+github.com/go-ozzo/ozzo-validation                                                              MIT License
+github.com/go-redis/redis                                                                       BSD 2-Clause "Simplified" License
+github.com/gorilla/handlers                                                                     BSD 2-Clause "Simplified" License
+github.com/gorilla/mux                                                                          BSD 3-Clause "New" or "Revised" License
+github.com/gorilla/websocket                                                                    BSD 2-Clause "Simplified" License
+github.com/go-sql-driver/mysql                                                                  Mozilla Public License 2.0
+github.com/grpc-ecosystem/go-grpc-middleware                                                    Apache License 2.0
+github.com/grpc-ecosystem/go-grpc-prometheus                                                    Apache License 2.0
+github.com/grpc-ecosystem/grpc-gateway                                                          BSD 3-Clause "New" or "Revised" License
+github.com/hashicorp/go-cleanhttp                                                               Mozilla Public License 2.0
+github.com/hashicorp/golang-lru                                                                 Mozilla Public License 2.0
+github.com/hashicorp/go-retryablehttp                                                           Mozilla Public License 2.0
+github.com/hashicorp/hcl                                                                        Mozilla Public License 2.0
+github.com/iancoleman/orderedmap                                                                MIT License
+github.com/imdario/mergo                                                                        BSD 3-Clause "New" or "Revised" License
+github.com/improbable-eng/grpc-web                                                              Apache License 2.0
+github.com/json-iterator/go                                                                     MIT License
+github.com/juju/ansiterm                                                                        LGPLv3
+github.com/kevinburke/ssh_config                                                                MIT License
+github.com/klauspost/compress                                                                   MIT License
+github.com/klauspost/cpuid                                                                      MIT License
+github.com/lunixbochs/vtclean                                                                   MIT License
+github.com/magiconair/properties                                                                BSD 2-Clause "Simplified" License
+github.com/mailru/easygo                                                                        MIT License
+github.com/manifoldco/promptui                                                                  BSD 3-Clause "New" or "Revised" License
+github.com/mattn/go-colorable                                                                   MIT License
+github.com/mattn/go-isatty                                                                      MIT License
+github.com/matttproud/golang_protobuf_extensions                                                Apache License 2.0
+github.com/minio/md5-simd                                                                       Apache License 2.0
+github.com/minio/minio-go                                                                       Apache License 2.0
+github.com/minio/sha256-simd                                                                    Apache License 2.0
+github.com/mitchellh/go-homedir                                                                 MIT License
+github.com/mitchellh/mapstructure                                                               MIT License
+github.com/moby/buildkit                                                                        Apache License 2.0
+github.com/moby/locker                                                                          Apache License 2.0
+github.com/moby/moby                                                                            Apache License 2.0
+github.com/moby/sys/mount                                                                       Apache License 2.0
+github.com/moby/sys/mountinfo                                                                   Apache License 2.0
+github.com/modern-go/concurrent                                                                 Apache License 2.0
+github.com/modern-go/reflect2                                                                   Apache License 2.0
+github.com/morikuni/aec                                                                         MIT License
+github.com/Netflix/go-env                                                                       Apache License 2.0
+github.com/opencontainers/go-digest                                                             Apache 2.0
+github.com/opencontainers/image-spec                                                            Apache License 2.0
+github.com/opentracing/opentracing-go                                                           Apache License 2.0
+github.com/pelletier/go-toml                                                                    MIT License
+github.com/pkg/errors                                                                           BSD 2-Clause "Simplified" License
+github.com/prometheus/client_golang                                                             Apache License 2.0
+github.com/prometheus/client_model                                                              Apache License 2.0
+github.com/prometheus/common                                                                    Apache License 2.0
+github.com/prometheus/procfs                                                                    Apache License 2.0
+github.com/rs/cors                                                                              MIT License
+github.com/rs/xid                                                                               MIT License
+github.com/russross/blackfriday                                                                 Simplified BSD License
+github.com/segmentio/backo-go                                                                   MIT License
+github.com/shurcooL/sanitized_anchor_name                                                       MIT License
+github.com/sirupsen/logrus                                                                      MIT License
+github.com/skratchdot/open-golang                                                               MIT License
+github.com/soheilhy/cmux                                                                        Apache License 2.0
+github.com/sourcegraph/jsonrpc2                                                                 MIT License
+github.com/spf13/afero                                                                          Apache License 2.0
+github.com/spf13/cast                                                                           MIT License
+github.com/spf13/cobra                                                                          Apache License 2.0
+github.com/spf13/jwalterweatherman                                                              MIT License
+github.com/spf13/pflag                                                                          BSD 3-Clause "New" or "Revised" License
+github.com/spf13/viper                                                                          MIT License
+github.com/streadway/amqp                                                                       BSD 2-Clause "Simplified" License
+github.com/subosito/gotenv                                                                      MIT License
+github.com/tonistiigi/fsutil                                                                    MIT License
+github.com/tonistiigi/opentelemetry-go-contrib/instrumentation/google.golang.org/grpc/otelgrpc  Apache License 2.0
+github.com/tonistiigi/units                                                                     MIT License
+github.com/tonistiigi/vt100                                                                     MIT License
+github.com/uber/jaeger-client-go                                                                Apache License 2.0
+github.com/uber/jaeger-lib                                                                      Apache License 2.0
+github.com/urfave/cli                                                                           MIT License
+github.com/xtgo/uuid                                                                            BSD 3-Clause "New" or "Revised" License
+github.com/zalando/go-keyring                                                                   MIT License
+golang.org/x/crypto                                                                             BSD 3-Clause "New" or "Revised" License
+golang.org/x/net                                                                                BSD 3-Clause "New" or "Revised" License
+golang.org/x/oauth2                                                                             BSD 3-Clause "New" or "Revised" License
+golang.org/x/sync                                                                               BSD 3-Clause "New" or "Revised" License
+golang.org/x/sys                                                                                BSD 3-Clause "New" or "Revised" License
+golang.org/x/term                                                                               BSD 3-Clause "New" or "Revised" License
+golang.org/x/text                                                                               BSD 3-Clause "New" or "Revised" License
+golang.org/x/time                                                                               BSD 3-Clause "New" or "Revised" License
+golang.org/x/xerrors                                                                            BSD 3-Clause "New" or "Revised" License
+gomodules.xyz/jsonpatch                                                                         Apache License 2.0
+google.golang.org/api                                                                           BSD 3-Clause "New" or "Revised" License
+google.golang.org/genproto                                                                      Apache License 2.0
+google.golang.org/grpc                                                                          Apache License 2.0
+google.golang.org/protobuf                                                                      BSD 3-Clause "New" or "Revised" License
+go.opencensus.io                                                                                Apache License 2.0
+go.opentelemetry.io/contrib                                                                     Apache License 2.0
+go.opentelemetry.io/otel                                                                        Apache License 2.0
+go.opentelemetry.io/otel/exporters/otlp/otlptrace                                               Apache License 2.0
+go.opentelemetry.io/otel/sdk                                                                    Apache License 2.0
+go.opentelemetry.io/otel/trace                                                                  Apache License 2.0
+go.opentelemetry.io/proto/otlp                                                                  Apache License 2.0
+gopkg.in/inf.v0                                                                                 BSD 3-Clause "New" or "Revised" License
+gopkg.in/ini.v1                                                                                 Apache License 2.0
+gopkg.in/segmentio/analytics-go.v3                                                              MIT License
+gopkg.in/yaml.v2                                                                                Apache License 2.0
+gopkg.in/yaml.v3                                                                                Apache License 2.0
+go.uber.org/atomic                                                                              MIT License
+k8s.io/api                                                                                      Apache License 2.0
+k8s.io/apiextensions-apiserver                                                                  Apache License 2.0
+k8s.io/apimachinery                                                                             Apache License 2.0
+k8s.io/client-go                                                                                Apache License 2.0
+k8s.io/component-base                                                                           Apache License 2.0
+k8s.io/klog                                                                                     Apache License 2.0
+k8s.io/kube-openapi                                                                             Apache License 2.0
+k8s.io/utils                                                                                    Apache License 2.0
+nhooyr.io/websocket                                                                             MIT License
+sigs.k8s.io/controller-runtime                                                                  Apache License 2.0
+sigs.k8s.io/structured-merge-diff                                                               Apache License 2.0
+sigs.k8s.io/yaml                                                                                MIT License

@@ -1,0 +1,38 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.wsManagerBridge -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+{{- if $comp.defaultConfig -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-manager-bridge-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  ws-manager-bridge.json: |-
+    {
+        "installation": "{{ template "gitpod.installation.shortname" $this }}",
+        "wsClusterDBReconcileIntervalSeconds": 60,
+        "controllerIntervalSeconds": 60,
+        "controllerMaxDisconnectSeconds": 150,
+        "clusterService": {
+          "host": "localhost",
+          "port": "8080"
+        },
+        "timeouts": {
+          "metaInstanceCheckIntervalSeconds": 60,
+          "preparingPhaseSeconds": 3600,
+          "stoppingPhaseSeconds": 3600,
+          "unknownPhaseSeconds": 600
+        },
+        "emulatePreparingIntervalSeconds": "10",
+        "staticBridges": {{ index (include "ws-manager-list" (dict "root" . "gp" $.Values "comp" .Values.components.server) | fromYaml) "manager" | default list | toJson }}
+    }
+{{- end -}}
+{{- end -}}

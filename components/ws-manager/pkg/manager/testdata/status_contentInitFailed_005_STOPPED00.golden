@@ -1,0 +1,35 @@
+{
+    "status": {
+        "id": "50bff6fd-2b1f-4d33-8b74-5362739add6f",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "00000000-0000-0000-0000-000000000000",
+            "meta_id": "aqua-chimpanzee-35q6f08k",
+            "started_at": {
+                "seconds": 1629374870
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:034fe685a5830014534c14a1bcd7c7b2b0c4e94bc4062de4f91646d95c5f23fd",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
+            "headless": true,
+            "url": "https://aqua-chimpanzee-35q6f08k.ws-us15.gitpod.io",
+            "type": 1,
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb"
+            }
+        },
+        "phase": 6,
+        "conditions": {
+            "failed": "cannot initialize workspace: cannot initialize workspace: content initializer failed"
+        },
+        "runtime": {
+            "node_name": "gke-gp-prod-ws-us15-us--headless-pool-64a87cf8-bw7v",
+            "pod_name": "prebuild-50bff6fd-2b1f-4d33-8b74-5362739add6f",
+            "node_ip": "10.138.15.219"
+        },
+        "auth": {
+            "owner_token": "jRA_Te5snD4sq5C2Bfh-OeZ6BCh4YA4X"
+        }
+    }
+}

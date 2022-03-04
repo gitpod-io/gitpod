@@ -1,0 +1,5 @@
+bin
+docker-compose
+docker.tgz
+slirp4netns
+runc

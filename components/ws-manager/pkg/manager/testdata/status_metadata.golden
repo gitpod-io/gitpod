@@ -1,0 +1,34 @@
+{
+    "status": {
+        "id": "foobas",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "foobar",
+            "meta_id": "metameta",
+            "started_at": {
+                "seconds": 1552236488
+            },
+            "annotations": {
+                "foo": "barbar"
+            }
+        },
+        "spec": {
+            "workspace_image": "nginx:latest",
+            "url": "http://10.0.0.114:8082",
+            "exposed_ports": [
+                {
+                    "port": 8080
+                }
+            ],
+            "ide_image": {}
+        },
+        "phase": 4,
+        "conditions": {},
+        "runtime": {
+            "node_name": "minikube",
+            "pod_name": "ws-foobas",
+            "node_ip": "10.0.2.15"
+        },
+        "auth": {}
+    }
+}

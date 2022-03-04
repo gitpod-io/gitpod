@@ -1,0 +1,44 @@
+{
+  "name": "@gitpod/gitpod-db",
+  "license": "UNLICENSED",
+  "version": "0.1.5",
+  "scripts": {
+    "prepare": "yarn clean && yarn build",
+    "build": "npx tsc",
+    "build:clean": "yarn clean && yarn build",
+    "rebuild": "yarn build:clean",
+    "build:watch": "watch 'yarn build' .",
+    "test": "leeway build components/gitpod-db:dbtest",
+    "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
+    "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
+    "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
+    "wait-for-db": "node ./lib/wait-for-db.js",
+    "typeorm": "typeorm -f lib/typeorm/ormconfig",
+    "migrate-migrations": "node ./lib/migrate-migrations.js",
+    "clean": "yarn run rimraf lib",
+    "clean:node": "yarn run rimraf node_modules",
+    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock"
+  },
+  "files": [
+    "/lib"
+  ],
+  "dependencies": {
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@jmondi/oauth2-server": "^1.1.0",
+    "mysql": "^2.18.1",
+    "reflect-metadata": "^0.1.13",
+    "the-big-username-blacklist": "^1.5.2",
+    "typeorm": "0.2.38"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.2",
+    "@types/mysql": "^2.15.0",
+    "@types/uuid": "^8.3.1",
+    "chai": "^4.2.0",
+    "mocha": "^4.1.0",
+    "mocha-typescript": "^1.1.17",
+    "rimraf": "^2.6.1",
+    "ts-node": "<7.0.0",
+    "typescript": "~4.4.2"
+  }
+}

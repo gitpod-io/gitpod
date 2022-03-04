@@ -1,0 +1,14 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    deps:
+      - components/supervisor-api/go:lib
+    config:
+      packaging: app

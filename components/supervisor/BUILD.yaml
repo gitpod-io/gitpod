@@ -1,0 +1,39 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/content-service:lib
+      - components/gitpod-protocol/go:lib
+      - components/supervisor-api/go:lib
+      - components/ws-daemon-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/supervisor/cmd.Version=commit-${__git_commit}'"]
+  - name: docker
+    type: docker
+    srcs:
+      - "supervisor-config.json"
+    deps:
+      - :app
+      - components/supervisor/frontend:app
+      - components/supervisor/openssh:app
+      - components/gitpod-cli:app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.supervisor
+      image:
+        - ${imageRepoBase}/supervisor:${version}
+        - ${imageRepoBase}/supervisor:commit-${__git_commit}

@@ -1,0 +1,40 @@
+{
+    "description": "changes the target port of a previously opened port",
+    "portsService": {
+        "metadata": {
+            "name": "ws-prefixthis-ports",
+            "namespace": "default",
+            "creationTimestamp": null,
+            "labels": {
+                "gpwsman": "true",
+                "workspaceID": "foobar",
+                "workspaceType": "regular"
+            }
+        },
+        "spec": {
+            "ports": [
+                {
+                    "name": "p3000",
+                    "protocol": "TCP",
+                    "port": 3000
+                }
+            ],
+            "selector": {
+                "gpwsman": "true",
+                "workspaceID": "foobar"
+            },
+            "type": "ClusterIP"
+        },
+        "status": {
+            "loadBalancer": {}
+        }
+    },
+    "request": {
+        "id": "foobar",
+        "expose": true,
+        "spec": {
+            "port": 3000,
+            "visibility": 1
+        }
+    }
+}

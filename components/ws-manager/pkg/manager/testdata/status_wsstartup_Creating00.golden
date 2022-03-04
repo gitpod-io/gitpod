@@ -1,0 +1,29 @@
+{
+    "status": {
+        "id": "foobar",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "foobar",
+            "meta_id": "metameta",
+            "started_at": {
+                "seconds": 1555618414
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images/ac1c0755007966e4d6e090ea821729ac747d22ac/eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
+            "url": "http://10.0.0.114:8082",
+            "ide_image": {}
+        },
+        "phase": 3,
+        "conditions": {
+            "failed": "container sync completed; containers of a workspace pod are not supposed to do that"
+        },
+        "message": "workspace initializer is running",
+        "runtime": {
+            "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-g6l3",
+            "pod_name": "ws-foobar",
+            "node_ip": "10.132.15.216"
+        },
+        "auth": {}
+    }
+}

@@ -1,0 +1,72 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.agentSmith -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $gp := $.Values -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: agent-smith
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: agent-smith
+    kind: daemonset
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" $ }}
+      component: agent-smith
+      kind: daemonset
+      stage: {{ .Values.installation.stage }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "gitpod.fullname" $ }}
+        component: agent-smith
+        kind: daemonset
+        stage: {{ .Values.installation.stage }}
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      serviceAccountName: agent-smith
+      hostPID: true
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+{{- if $comp.volumes }}
+{{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
+      enableServiceLinks: false
+      containers:
+      - name: agent-smith
+        volumeMounts:
+        - mountPath: /config
+          name: config
+{{- if $comp.volumeMounts }}
+{{ toYaml $comp.volumeMounts | indent 8 }}
+{{- end }}
+        args: ["run", "--config", "/config/config.json"]
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        # readinessProbe:
+        #   httpGet:
+        #     port: 9999
+        #     path: "/"
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 10
+        securityContext:
+          privileged: true
+          procMount: Default
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

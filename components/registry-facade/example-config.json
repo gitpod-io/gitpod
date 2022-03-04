@@ -1,0 +1,29 @@
+{
+  "dockerAuth": "/home/gitpod/.docker/config.json",
+  "registry": {
+    "port": 8080,
+    "staticLayer": [
+      {
+        "type": "file",
+        "ref": "example-layer.tar.gz"
+      }
+    ],
+    "store": "/tmp/store",
+    "requireAuth": false
+  },
+  "blobserve": {
+    "port": 8081,
+    "timeout": "5s",
+    "repos": {
+      "eu.gcr.io/gitpod-core-dev/build/theia-ide": {
+        "prePull": ["master.28"],
+        "workdir": "/theia/node_modules/@gitpod/gitpod-ide/lib"
+      }
+    },
+    "blobSpace": {
+      "location": "/tmp/bs",
+      "maxSizeBytes": 44631060
+    }
+  },
+  "pprofAddr": ":6060"
+}

@@ -1,0 +1,31 @@
+{
+    "result": [
+        {
+            "id": "d6835d33-116f-4d3f-aeb6-ad628f4004b6",
+            "metadata": {
+                "owner": "builtin-user-workspace-probe-0000000",
+                "meta_id": "be07f480-150a-40db-a699-7c8afc8a7122",
+            },
+            "spec": {
+                "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:a4d95e78185ee17b09e21a79939393f4eec08d6c247c1b52696172db0a6349f7",
+                "headless": true,
+                "url": "https://be07f480-150a-40db-a699-7c8afc8a7122.ws-eu01.gitpod-staging.com",
+                "type": 2,
+                "timeout": "1h0m0s"
+            },
+            "phase": 4,
+            "conditions": {
+                "deployed": 1
+            },
+            "runtime": {
+                "node_name": "gke-staging--gitpod--workspace-pool-1-f122a8ea-bb2l",
+                "pod_name": "ws-d6835d33-116f-4d3f-aeb6-ad628f4004b6",
+                "node_ip": "10.132.15.200"
+            },
+            "auth": {
+                "admission": 1,
+                "owner_token": "%7J'[Of/8NDiWE+9F,I6^Jcj_1\u0026}-F8p"
+            }
+        }
+    ]
+}

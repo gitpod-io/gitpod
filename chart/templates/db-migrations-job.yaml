@@ -1,0 +1,55 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.db }}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if $comp.autoMigrate }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrations
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: db-migrations
+    kind: job
+    stage: {{ .Values.installation.stage }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    # see https://github.com/helm/helm/blob/master/docs/charts_hooks.md
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+    "helm.sh/hook-delete-timeout": "0"
+spec:
+  template:
+    metadata:
+      name: db-migrations
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: db-migrations
+        kind: job
+        stage: {{ .Values.installation.stage }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      restartPolicy: Never
+      serviceAccountName: db-migrations
+      imagePullSecrets:
+{{- range $key, $value := .Values.defaults.imagePullSecrets }}
+      - name: {{ $value.name }}
+{{- end }}
+      enableServiceLinks: false
+      containers:
+      - name: db-migrations
+        image: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" .Values "comp" $.Values.components.dbMigrations) }}"
+        env:
+        - name: "DB_USERNAME"
+          value: "{{ $.Values.db.username }}"
+        - name: "DB_PASSWORD"
+          value: "{{ $.Values.db.password }}"
+        - name: "DB_PORT"
+          value: "{{ $.Values.db.port }}"
+        - name: "DB_HOST"
+          value: "{{ $.Values.db.host }}"
+        command: ["sh","-c","/app/migrate.sh"]
+{{- end }}

@@ -1,0 +1,10 @@
+{
+    "response": {},
+    "postChangeStatus": [
+        {
+            "port": 8080,
+            "visibility": 1,
+            "url": "8080-foobar-servicePrefix-gitpod.io"
+        }
+    ]
+}

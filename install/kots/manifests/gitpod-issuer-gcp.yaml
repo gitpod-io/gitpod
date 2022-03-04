@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: gitpod-issuer
+  annotations:
+    kots.io/when: '{{repl and (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
+spec:
+  acme:
+    email: '{{repl ConfigOption "cert_manager_email" }}'
+    server: '{{repl ConfigOption "cert_manager_acme_url" }}'
+    privateKeySecretRef:
+      name: issuer-account-key
+    solvers:
+      - dns01:
+          cloudDNS:
+            project: '{{repl ConfigOption "cert_manager_gcp_project" }}'
+            serviceAccountSecretRef:
+              name: cert-manager-gcp-dns-solver
+              key: key.json

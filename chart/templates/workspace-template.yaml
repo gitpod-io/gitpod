@@ -1,0 +1,63 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.workspace -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- define "coreWorkspaceConfig" }}
+{{- $comp := .comp -}}
+spec:
+  {{- if $comp.pullSecret }}
+  imagePullSecrets:
+  - name: {{ toYaml $comp.pullSecret.secretName }}
+  {{- end }}
+{{- end }}
+{{- define "coreWorkspaceAffinity" -}}
+{{- $comp := .comp -}}
+{{- $tpe := .tpe -}}
+{{- if (index $comp "affinity") -}}
+{{- $affinity := (index $comp "affinity" $tpe | default (index $comp "affinity" "default")) -}}
+{{- if $affinity -}}
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: {{ $affinity }}
+            operator: Exists
+{{- end -}}
+{{- end -}}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workspace-template
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+{{- if $comp.templates }}
+  "default.yaml": |
+{{ dict | merge $comp.templates.default (include "coreWorkspaceConfig" $this | fromYaml) | toJson | indent 4 }}
+{{ if (or $comp.templates.prebuild $comp.affinity) }}
+  "prebuild.yaml": |
+{{ dict | merge ($comp.templates.prebuild | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "prebuild") | fromYaml) | toJson | indent 4 }}
+{{- end }}
+{{ if (or $comp.templates.probe $comp.affinity) }}
+  "probe.yaml": |
+{{ dict | merge ($comp.templates.probe | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "probe") | fromYaml) | toJson | indent 4 }}
+{{- end }}
+{{ if (or $comp.templates.imagebuild $comp.affinity) }}
+  "imagebuild.yaml": |
+{{ dict | merge ($comp.templates.imagebuild | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "imagebuild") | fromYaml) | toJson | indent 4 }}
+{{- end }}
+{{ if (or $comp.templates.regular $comp.affinity) }}
+  "regular.yaml": |
+{{ dict | merge ($comp.templates.regular | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "regular") | fromYaml) | toJson | indent 4 }}
+{{- end }}
+{{- else }}
+  "default.yaml": |
+{{ dict | merge $comp.template (include "coreWorkspaceConfig" $this | fromYaml) | toJson | indent 4 }}
+{{- end }}

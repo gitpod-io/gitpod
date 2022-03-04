@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package registryfacade;
+
+import "imagespec.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/registry-facade/api";
+
+service SpecProvider {
+    // GetImageSpec provides the image spec for a particular ID. What the ID referes to is specific to
+    // the spec provider. For example, in case of ws-manager providing the spec, the ID is a
+    // workspace instance ID.
+    rpc GetImageSpec(GetImageSpecRequest) returns (GetImageSpecResponse) {};
+}
+
+message GetImageSpecRequest {
+    string id = 1;
+}
+
+message GetImageSpecResponse {
+    ImageSpec spec = 1;
+}

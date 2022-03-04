@@ -1,0 +1,10 @@
+{
+    "entrypoint": "/ide-desktop/startup.sh",
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "goland", "Open in GoLand" ],
+    "readinessProbe": {
+        "type": "http",
+        "http": {
+            "path": "/status"
+        }
+      }
+}

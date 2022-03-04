@@ -1,0 +1,145 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.server -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+
+{{- define "stable-image-full" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- $comp := .comp -}}
+{{ template "gitpod.comp.imageRepo" . }}:{{ $comp.stableVersion }}
+{{- end -}}
+
+{{- define "insider-image-full" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- $comp := .comp -}}
+{{ template "gitpod.comp.imageRepo" . }}:{{- $comp.insidersVersion | default (include "gitpod.comp.version" .) -}}
+{{- end -}}
+
+# For backwards compability - remove me soon
+{{- define "ide-images-aliases"}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+code: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+code-latest: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+{{ end }}
+
+# For backwards compability - remove me soon
+{{- define "desktop-ide-images-aliases"}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+code-desktop: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktop)) }}
+code-desktop-insiders: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktopInsiders)) }}
+intellij: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
+goland: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+{{ end }}
+
+{{- define "ide-options" }}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+options:
+
+  # Browser IDEs
+  code:
+    orderKey: "00"
+    title: "VS Code"
+    type: "browser"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscode.svg"
+    image: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+  code-latest:
+    orderKey: "01"
+    title: "VS Code"
+    type: "browser"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscodeInsiders.svg"
+    tooltip: "Early access version, still subject to testing."
+    label: "Insiders"
+    image: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
+    resolveImageDigest: true
+
+  # Desktop IDEs
+  code-desktop:
+    orderKey: "02"
+    title: "VS Code"
+    type: "desktop"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscode.svg"
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktop)) }}
+  code-desktop-insiders:
+    orderKey: "03"
+    title: "VS Code"
+    type: "desktop"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscodeInsiders.svg"
+    tooltip: "Visual Studio Code Insiders for early adopters."
+    label: "Insiders"
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktopInsiders)) }}
+  intellij:
+    orderKey: "04"
+    title: "IntelliJ IDEA"
+    type: "desktop"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/intellijIdeaLogo.svg"
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
+  goland:
+    orderKey: "05"
+    title: "GoLand"
+    type: "desktop"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/golandLogo.svg"
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+  pycharm:
+    orderKey: "06"
+    title: "PyCharm"
+    type: "desktop"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/pycharmLogo.svg"
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
+  phpstorm:
+    orderKey: "07"
+    title: "PhpStorm"
+    type: "desktop"
+    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/phpstormLogo.svg"
+    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
+
+defaultIde: "code"
+defaultDesktopIde: "code-desktop"
+
+clients:
+  vscode:
+    defaultDesktopIDE: "code-desktop"
+    desktopIDEs: ["code-desktop"]
+    installationSteps: [
+      "If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/download'>VS Code</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
+  vscode-insiders:
+    defaultDesktopIDE: "code-desktop-insiders"
+    desktopIDEs: ["code-desktop-insiders"]
+    installationSteps: [
+      "If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
+  jetbrains-gateway:
+    defaultDesktopIDE: "intellij"
+    desktopIDEs: ["intellij", "goland", "pycharm", "phpstorm"]
+    installationSteps: [
+      "If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
+{{ end }}
+
+{{- if $comp.serverIdeConfigDeploy.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: server-ide-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}",
+        "ideOptions": {{ (include "ide-options" (dict "root" . "gp" $.Values)) | fromYaml | toJson }}
+    }
+{{- end }}

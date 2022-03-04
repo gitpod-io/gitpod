@@ -1,0 +1,43 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: gitlab
+  namespace: kube-system
+spec:
+  chart: gitlab
+  version: 4.0.4
+  repo: https://charts.gitlab.io/
+  targetNamespace: default
+  valuesContent: |-
+    global:
+      hosts:
+        domain: $BASEDOMAIN
+      ingress:
+        configureCertmanager: false
+        tls:
+          secretName: tls-cert
+    certmanager.install: false
+
+    gitlab:
+      gitaly:
+        persistence:
+          storageClass: manual
+          matchLabels:
+            app: gitaly
+    minio:
+      persistence:
+        storageClass: manual
+        matchLabels:
+          app: minio
+    postgresql:
+      persistence:
+        existingClaim: postgresql
+    redis:
+      master:
+        persistence:
+          storageClass: manual
+          matchLabels:
+            app: redis

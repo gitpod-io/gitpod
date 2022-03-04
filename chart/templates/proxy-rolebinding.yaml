@@ -1,0 +1,39 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: proxy
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: proxy
+roleRef:
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-ns-psp:restricted-root-user
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Namespace }}-proxy-kube-rbac-proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: proxy
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: proxy
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name:  {{ .Release.Namespace }}-kube-rbac-proxy
+  apiGroup: rbac.authorization.k8s.io

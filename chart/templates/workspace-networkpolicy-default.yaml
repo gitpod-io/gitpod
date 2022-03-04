@@ -1,0 +1,95 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installNetworkPolicies -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: workspace-default
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: workspace
+    kind: networkpolicy
+    stage: {{ .Values.installation.stage }}
+spec:
+  podSelector:
+    matchLabels:
+      # not {{ template "gitpod.fullname" . }} here because the workspaces know nothing about the helm deployment
+      app: gitpod
+      component: workspace
+      gitpod.io/networkpolicy: default
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # TODO WSPROXY remove
+  # ALLOW ingress from proxy
+  - from:
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" . }}
+          component: proxy
+  - from:
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" . }}
+          component: ws-proxy
+  # ALLOW ingress from agent-smith
+  - from:
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" . }}
+          component: agent-smith
+  # ALLOW ingress from ws-daemon
+  - from:
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" . }}
+          component: ws-daemon
+  # ALLOW prometheus scraping from theia backend
+  - ports:
+    - protocol: TCP
+      port: 23000
+    from:
+    - namespaceSelector:
+        matchLabels:
+          chart: monitoring
+    - podSelector:
+        matchLabels:
+          app: prometheus
+          component: server
+  # egress:
+  # - to:
+  #   - podSelector:
+  #       matchLabels:
+  #         app: gitpod
+  #         component: proxy
+  # - to:
+  #   - namespaceSelector:
+  #       matchLabels:
+  #         component: proxy
+  #     podSelector:
+  #       matchLabels:
+  #         app: staging-proxy
+  # Allow egress to everywhere, except...
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        # The condition is necessary because the network setup in the devstaging cluster is different to prod/staging atm
+# {{- if not (eq .Values.installation.stage "devstaging") }}
+#         # Local DNS server
+#         - 10.0.0.0/24
+#         # Cluster local traffic (pods, services)
+#         - 10.0.0.0/8
+# {{- end }}
+        # Google Compute engine special, reserved VM metadata IP
+        - 169.254.169.254/32
+  # As the except rules (10.0.0.0/x) above block access to the proxy (even via external IPs!!!): Explicitly allow it here!
+  - to:
+    - podSelector:
+        matchLabels:
+          app: gitpod
+          component: proxy
+{{- end -}}

@@ -1,0 +1,66 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.db }}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if $comp.gcloudSqlProxy.enabled -}}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ $comp.name }}
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: {{ $comp.name }}
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" $ }}
+      component: db
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  template:
+    metadata:
+      name: db
+      labels:
+        app: {{ template "gitpod.fullname" $ }}
+        component: db
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: db
+      enableServiceLinks: false
+      containers:
+      - name: cloud-sql-proxy
+        securityContext:
+          privileged: false
+          runAsNonRoot: false
+        image: b.gcr.io/cloudsql-docker/gce-proxy:1.11
+        command:
+        - /cloud_sql_proxy
+        - -dir=/cloudsql
+        - -instances={{ $comp.gcloudSqlProxy.instance }}=tcp:0.0.0.0:3306
+        - -credential_file=/credentials/credentials.json
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - mountPath: /cloudsql
+          name: cloudsql
+        - mountPath: /credentials
+          name: gcloud-sql-token
+      volumes:
+      - emptyDir: {}
+        name: cloudsql
+      - name: gcloud-sql-token
+        secret:
+          secretName: gcloud-sql-token
+{{ toYaml .Values.defaults | indent 6 }}
+{{- end -}}

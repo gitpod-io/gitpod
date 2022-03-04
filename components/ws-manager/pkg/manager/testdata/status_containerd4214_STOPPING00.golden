@@ -1,0 +1,38 @@
+{
+    "status": {
+        "id": "cc1a3979-4e0e-42cc-bba5-a8d66485bdee",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "26488517-271b-44f5-8739-96a6d9f6759a",
+            "meta_id": "amber-swallow-sbhsd9w0",
+            "started_at": {
+                "seconds": 1617004536
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-core-dev/registry/workspace-images:4821db66dd61e6944f8940c4328386612ccdb60d542d65f0456d4fd38f51f36a",
+            "deprecated_ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:cw-wsdaemon-patch.0",
+            "url": "https://amber-swallow-sbhsd9w0.ws-dev.cw-wsdaemon-patch.staging.gitpod-dev.com",
+            "timeout": "30m",
+            "ide_image": {
+                "web_ref": "eu.gcr.io/gitpod-core-dev/build/ide/code:cw-wsdaemon-patch.0"
+            }
+        },
+        "phase": 6,
+        "conditions": {
+            "final_backup_complete": 1
+        },
+        "repo": {
+            "branch": "master",
+            "latest_commit": "82457ccee52cfec99c3d491063f9fadfdd78607d"
+        },
+        "runtime": {
+            "node_name": "gke-dev-workload-1-49d27f81-hhx0",
+            "pod_name": "ws-cc1a3979-4e0e-42cc-bba5-a8d66485bdee",
+            "node_ip": "10.132.0.14"
+        },
+        "auth": {
+            "owner_token": "{pKaZ75.$$hIiW2z2!-h#HcmldG#U?Dl"
+        }
+    }
+}

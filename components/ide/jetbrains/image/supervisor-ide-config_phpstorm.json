@@ -1,0 +1,10 @@
+{
+    "entrypoint": "/ide-desktop/startup.sh",
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "phpstorm", "Open in PhpStorm" ],
+    "readinessProbe": {
+        "type": "http",
+        "http": {
+            "path": "/status"
+        }
+      }
+}

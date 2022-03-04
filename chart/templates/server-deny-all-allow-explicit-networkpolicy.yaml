@@ -1,0 +1,43 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installNetworkPolicies -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: server-deny-all-allow-explicit
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: server
+    kind: networkpolicy
+    stage: {{ .Values.installation.stage }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: server
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 3000
+    from:
+    # Allow ingress on port 3000 from component:
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" . }}
+          component: proxy
+  # Allow to access health and mornitoring endpoints listening on port 9500
+  - ports:
+    - protocol: TCP
+      port: 9500
+    from:
+    - namespaceSelector:
+        matchLabels:
+          chart: monitoring
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" . }}
+          component: proxy
+{{- end -}}

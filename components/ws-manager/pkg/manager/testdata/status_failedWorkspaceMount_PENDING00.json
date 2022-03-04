@@ -1,0 +1,386 @@
+{
+  "pod": {
+    "metadata": {
+      "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148",
+      "namespace": "staging-cw-fail-on-mount-failure",
+      "selfLink": "/api/v1/namespaces/staging-cw-fail-on-mount-failure/pods/ws-b3242d9b-6920-41b5-8e72-c3d5637ca148",
+      "uid": "0f8383f0-8125-11e9-8a1b-42010a840224",
+      "resourceVersion": "103359526",
+      "creationTimestamp": "2019-05-28T08:46:18Z",
+      "labels": {
+        "app": "gitpod",
+        "component": "workspace",
+        "gitpod.io/networkpolicy": "default",
+        "gpwsman": "true",
+        "headless": "false",
+        "metaID": "d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3",
+        "owner": "1ef0e007-4247-4501-bcf9-8c5711f422b6",
+        "workspaceID": "b3242d9b-6920-41b5-8e72-c3d5637ca148",
+        "workspaceType": "regular"
+      },
+      "annotations": {
+        "gitpod/id": "b3242d9b-6920-41b5-8e72-c3d5637ca148",
+        "gitpod/servicePrefix": "d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3",
+        "gitpod/traceid": "AAAAAAAAAAAKKiUk7m4PY1BOxC/NSqfQCUjtNDaUFjkBAAAAAA==",
+        "gitpod/url": "http://d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3.ws-eu.cw-fail-on-mount-failure.staging.gitpod.io",
+        "gitpod/never-ready": "true",
+        "prometheus.io/path": "/metrics",
+        "prometheus.io/port": "23000",
+        "prometheus.io/scrape": "true"
+      }
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "vol-this-workspace",
+          "hostPath": {
+            "path": "/mnt/disks/ssd0/workspaces/b3242d9b-6920-41b5-8e72-c3d5637ca148",
+            "type": "DirectoryOrCreate"
+          }
+        },
+        {
+          "name": "vol-sync-tmp",
+          "hostPath": {
+            "path": "/mnt/disks/ssd0/workspaces/sync-tmp",
+            "type": "DirectoryOrCreate"
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "workspace",
+          "image": "eu.gcr.io/gitpod-dev/workspace-images/edf0748dca3905f46a5fcf841db2a36f277d9b79/eu.gcr.io/gitpod-dev/workspace-full:sha256-4543f6df3549a443f1109779878540a635163ef86da30c959464a61256bfc569",
+          "ports": [
+            {
+              "containerPort": 23000,
+              "protocol": "TCP"
+            }
+          ],
+          "env": [
+            {
+              "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace/bel"
+            },
+            {
+              "name": "GITPOD_CLI_APITOKEN",
+              "value": "f0af6840-29b6-406a-819c-c51840ee275d"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_ID",
+              "value": "d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3"
+            },
+            {
+              "name": "GITPOD_INSTANCE_ID",
+              "value": "b3242d9b-6920-41b5-8e72-c3d5637ca148"
+            },
+            {
+              "name": "GITPOD_GIT_USER_NAME",
+              "value": "Christian Weichel"
+            },
+            {
+              "name": "GITPOD_GIT_USER_EMAIL",
+              "value": "some@user.com"
+            },
+            {
+              "name": "GITPOD_THEIA_PORT",
+              "value": "23000"
+            },
+            {
+              "name": "THEIA_WORKSPACE_ROOT",
+              "value": "/workspace"
+            },
+            {
+              "name": "GITPOD_HOST",
+              "value": "http://cw-fail-on-mount-failure.staging.gitpod.io"
+            },
+            {
+              "name": "GITPOD_WSSYNC_APITOKEN",
+              "value": "0d777ed9-7989-4028-a5f9-503da6839d0c"
+            },
+            {
+              "name": "GITPOD_WSSYNC_APIPORT",
+              "value": "44444"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_URL",
+              "value": "http://d4562d0d-46ae-4a4b-b0a4-a5e94ea4a2f3.ws-eu.cw-fail-on-mount-failure.staging.gitpod.io"
+            },
+            {
+              "name": "GITPOD_INTERVAL",
+              "value": "30000"
+            },
+            {
+              "name": "GITPOD_MEMORY",
+              "value": "3403"
+            },
+            {
+              "name": "GITPOD_TASKS",
+              "value": "[{\"init\":\"cd /workspace/bel \u0026\u0026 go get -v \u0026\u0026 go test -v ./...\",\"command\":\"cd /workspace/bel \u0026\u0026 go run examples/*\"}]"
+            }
+          ],
+          "resources": {
+            "limits": {
+              "cpu": "7",
+              "memory": "3246Mi"
+            },
+            "requests": {
+              "cpu": "1m",
+              "memory": "3246Mi"
+            }
+          },
+          "volumeMounts": [
+            {
+              "name": "vol-this-workspace",
+              "mountPath": "/workspace"
+            }
+          ],
+          "livenessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 30,
+            "successThreshold": 1,
+            "failureThreshold": 3
+          },
+          "readinessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 1,
+            "successThreshold": 1,
+            "failureThreshold": 600
+          },
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "imagePullPolicy": "IfNotPresent",
+          "securityContext": {
+            "capabilities": {
+              "add": [
+                "AUDIT_WRITE",
+                "FSETID",
+                "KILL",
+                "NET_BIND_SERVICE"
+              ],
+              "drop": [
+                "SETPCAP",
+                "CHOWN",
+                "NET_RAW",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "SYS_CHROOT",
+                "SETFCAP",
+                "SETUID",
+                "SETGID"
+              ]
+            },
+            "privileged": false,
+            "runAsUser": 33333,
+            "runAsNonRoot": true,
+            "readOnlyRootFilesystem": false,
+            "allowPrivilegeEscalation": false
+          }
+        }
+      ],
+      "restartPolicy": "Always",
+      "terminationGracePeriodSeconds": 30,
+      "dnsPolicy": "None",
+      "serviceAccountName": "workspace",
+      "serviceAccount": "workspace",
+      "automountServiceAccountToken": false,
+      "nodeName": "gke-gitpod-dev-worker-pool-2-184c607e-1wgf",
+      "securityContext": {},
+      "imagePullSecrets": [
+        {
+          "name": "dockerhub-typefox"
+        },
+        {
+          "name": "eu.gcr.io-gitpod"
+        }
+      ],
+      "affinity": {
+        "nodeAffinity": {
+          "requiredDuringSchedulingIgnoredDuringExecution": {
+            "nodeSelectorTerms": [
+              {
+                "matchExpressions": [
+                  {
+                    "key": "gitpod.io/workload_workspace_regular",
+                    "operator": "In",
+                    "values": [
+                      "true"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "schedulerName": "default-scheduler",
+      "tolerations": [
+        {
+          "key": "node.kubernetes.io/not-ready",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "node.kubernetes.io/unreachable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        }
+      ],
+      "priority": 0,
+      "dnsConfig": {
+        "nameservers": [
+          "1.1.1.1",
+          "8.8.8.8"
+        ]
+      }
+    },
+    "status": {
+      "phase": "Pending",
+      "conditions": [
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-05-28T08:46:18Z"
+        }
+      ],
+      "qosClass": "Burstable"
+    }
+  },
+  "events": [
+    {
+      "metadata": {
+        "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148.15a2cc6a72571730",
+        "namespace": "staging-cw-fail-on-mount-failure",
+        "selfLink": "/api/v1/namespaces/staging-cw-fail-on-mount-failure/events/ws-b3242d9b-6920-41b5-8e72-c3d5637ca148.15a2cc6a72571730",
+        "uid": "0f876b0f-8125-11e9-8a1b-42010a840224",
+        "resourceVersion": "3354499",
+        "creationTimestamp": "2019-05-28T08:46:18Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fail-on-mount-failure",
+        "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148",
+        "uid": "0f8383f0-8125-11e9-8a1b-42010a840224",
+        "apiVersion": "v1",
+        "resourceVersion": "103359524"
+      },
+      "reason": "Scheduled",
+      "message": "Successfully assigned staging-cw-fail-on-mount-failure/ws-b3242d9b-6920-41b5-8e72-c3d5637ca148 to gke-gitpod-dev-worker-pool-2-184c607e-1wgf",
+      "source": {
+        "component": "default-scheduler"
+      },
+      "firstTimestamp": "2019-05-28T08:46:18Z",
+      "lastTimestamp": "2019-05-28T08:46:18Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148.15a2cc6a7d01c15f",
+        "namespace": "staging-cw-fail-on-mount-failure",
+        "selfLink": "/api/v1/namespaces/staging-cw-fail-on-mount-failure/events/ws-b3242d9b-6920-41b5-8e72-c3d5637ca148.15a2cc6a7d01c15f",
+        "uid": "0fa34f04-8125-11e9-8a1b-42010a840224",
+        "resourceVersion": "3354501",
+        "creationTimestamp": "2019-05-28T08:46:18Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fail-on-mount-failure",
+        "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148",
+        "uid": "0f8383f0-8125-11e9-8a1b-42010a840224",
+        "apiVersion": "v1",
+        "resourceVersion": "103359526"
+      },
+      "reason": "SuccessfulMountVolume",
+      "message": "MountVolume.SetUp succeeded for volume \"vol-sync-tmp\" ",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-gitpod-dev-worker-pool-2-184c607e-1wgf"
+      },
+      "firstTimestamp": "2019-05-28T08:46:18Z",
+      "lastTimestamp": "2019-05-28T08:46:18Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148.15a2cc6a7d01c163",
+        "namespace": "staging-cw-fail-on-mount-failure",
+        "selfLink": "/api/v1/namespaces/staging-cw-fail-on-mount-failure/events/ws-b3242d9b-6920-41b5-8e72-c3d5637ca148.15a2cc6a7d01c163",
+        "uid": "0fa3ff54-8125-11e9-8a1b-42010a840224",
+        "resourceVersion": "3354504",
+        "creationTimestamp": "2019-05-28T08:46:18Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fail-on-mount-failure",
+        "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148",
+        "uid": "0f8383f0-8125-11e9-8a1b-42010a840224",
+        "apiVersion": "v1",
+        "resourceVersion": "103359526"
+      },
+      "reason": "FailedMount",
+      "message": "MountVolume.SetUp failed for volume \"vol-this-workspace\" : hostPath type check failed: /mnt/disks/ssd0/workspaces/b3242d9b-6920-41b5-8e72-c3d5637ca148 is not a directory",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-gitpod-dev-worker-pool-2-184c607e-1wgf"
+      },
+      "firstTimestamp": "2019-05-28T08:46:18Z",
+      "lastTimestamp": "2019-05-28T08:46:20Z",
+      "count": 3,
+      "type": "Warning",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148.15a2cc6a7d02287f",
+        "namespace": "staging-cw-fail-on-mount-failure",
+        "selfLink": "/api/v1/namespaces/staging-cw-fail-on-mount-failure/events/ws-b3242d9b-6920-41b5-8e72-c3d5637ca148.15a2cc6a7d02287f",
+        "uid": "0fa2b56f-8125-11e9-8a1b-42010a840224",
+        "resourceVersion": "3354500",
+        "creationTimestamp": "2019-05-28T08:46:18Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-fail-on-mount-failure",
+        "name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148",
+        "uid": "0f8383f0-8125-11e9-8a1b-42010a840224",
+        "apiVersion": "v1",
+        "resourceVersion": "103359526"
+      },
+      "reason": "SuccessfulMountVolume",
+      "message": "MountVolume.SetUp succeeded for volume \"vol-this-workspace\" ",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-gitpod-dev-worker-pool-2-184c607e-1wgf"
+      },
+      "firstTimestamp": "2019-05-28T08:46:18Z",
+      "lastTimestamp": "2019-05-28T08:46:18Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    }
+  ]
+}

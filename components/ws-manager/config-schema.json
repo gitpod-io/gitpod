@@ -1,0 +1,245 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/config",
+  "title": "ws-manager config schema - generated using wsman generate config",
+  "definitions": {
+    "": {
+      "required": [
+        "ca",
+        "crt",
+        "key"
+      ],
+      "properties": {
+        "ca": {
+          "type": "string"
+        },
+        "crt": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "AllContainerConfiguration": {
+      "required": [
+        "workspace"
+      ],
+      "properties": {
+        "workspace": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/ContainerConfiguration"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Configuration": {
+      "required": [
+        "namespace",
+        "schedulerName",
+        "container",
+        "timeouts",
+        "initProbe",
+        "urlTemplate",
+        "workspaceHostPath",
+        "theiaHostPath",
+        "heartbeatInterval",
+        "hostURL",
+        "reconnectionInterval",
+        "wsdaemon"
+      ],
+      "properties": {
+        "container": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/AllContainerConfiguration"
+        },
+        "dryRun": {
+          "type": "boolean"
+        },
+        "eventTraceLog": {
+          "type": "string"
+        },
+        "heartbeatInterval": {
+          "type": "string"
+        },
+        "hostURL": {
+          "type": "string"
+        },
+        "initProbe": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/InitProbeConfiguration"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "podTemplatePath": {
+          "type": "string"
+        },
+        "reconnectionInterval": {
+          "type": "string"
+        },
+        "schedulerName": {
+          "type": "string"
+        },
+        "theiaHostPath": {
+          "type": "string"
+        },
+        "timeouts": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/WorkspaceTimeoutConfiguration"
+        },
+        "urlTemplate": {
+          "type": "string"
+        },
+        "workspaceHostPath": {
+          "type": "string"
+        },
+        "wsdaemon": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/WorkspaceSyncConfiguration"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ContainerConfiguration": {
+      "required": [
+        "image",
+        "requests",
+        "limits"
+      ],
+      "properties": {
+        "image": {
+          "type": "string"
+        },
+        "limits": {
+          "$ref": "#/definitions/ResourceConfiguration"
+        },
+        "requests": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/ResourceConfiguration"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "InitProbeConfiguration": {
+      "properties": {
+        "timeout": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ResourceConfiguration": {
+      "required": [
+        "cpu",
+        "memory"
+      ],
+      "properties": {
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceSyncConfiguration": {
+      "required": [
+        "port",
+        "tls"
+      ],
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "tls": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceTimeoutConfiguration": {
+      "required": [
+        "startup",
+        "initialization",
+        "regularWorkspace",
+        "maxLifetime",
+        "headlessWorkspace",
+        "afterClose",
+        "stopping",
+        "interrupted"
+      ],
+      "properties": {
+        "afterClose": {
+          "type": "string"
+        },
+        "headlessWorkspace": {
+          "type": "string"
+        },
+        "initialization": {
+          "type": "string"
+        },
+        "interrupted": {
+          "type": "string"
+        },
+        "regularWorkspace": {
+          "type": "string"
+        },
+        "maxLifetime": {
+          "type": "string"
+        },
+        "startup": {
+          "type": "string"
+        },
+        "stopping": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "config": {
+      "required": [
+        "messagebusURL",
+        "manager",
+        "rpcServerAddr",
+        "tls",
+        "pprofAddr",
+        "prometheusAddr"
+      ],
+      "properties": {
+        "manager": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Configuration"
+        },
+        "messagebusURL": {
+          "type": "string"
+        },
+        "pprofAddr": {
+          "type": "string"
+        },
+        "prometheusAddr": {
+          "type": "string"
+        },
+        "rpcServerAddr": {
+          "type": "string"
+        },
+        "tls": {
+          "$ref": "#/definitions/"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}

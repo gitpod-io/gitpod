@@ -1,0 +1,27 @@
+{
+    "status": {
+        "id": "cecf2a75-7225-4056-a125-fa3144b9c012",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "ff63604f-d711-489a-8bb7-ab7e3fa76a5e",
+            "meta_id": "ab451d8b-7a3a-42ec-b173-20a0e49773d4",
+            "started_at": {
+                "seconds": 1581948130
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:0fc76cd1c6eda009603bed31928a1cfaf53e455b27d6b3260c3d75022bd4d784",
+            "url": "https://ab451d8b-7a3a-42ec-b173-20a0e49773d4.ws-eu01.gitpod.io",
+            "timeout": "60m",
+            "ide_image": {}
+        },
+        "conditions": {
+            "failed": "Evicted: Pod The node was low on resource: [DiskPressure]. "
+        },
+        "runtime": {
+            "node_name": "gke-production--gitp-workspace-pool-2-a3afc0b4-nmbw",
+            "pod_name": "ws-cecf2a75-7225-4056-a125-fa3144b9c012"
+        },
+        "auth": {}
+    }
+}

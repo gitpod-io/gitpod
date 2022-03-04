@@ -1,0 +1,241 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+packages:
+  - name: all
+    type: generic
+    argdeps:
+      - version
+    deps:
+      - :all-docker
+      - :docker-versions
+      - :publish-api
+      - dev:all-app
+      - install/installer:docker
+      - components/gitpod-protocol:all
+      - operations/observability/mixins:lint
+  - name: docker-versions
+    type: docker
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/versions:${version}
+    deps:
+      - :all-docker
+  - name: all-docker
+    type: generic
+    argdeps:
+      - version
+      - imageRepoBase
+    deps:
+      - components/blobserve:docker
+      - components/content-service:docker
+      - components/dashboard:docker
+      - components/docker-up:docker
+      - components/ee/agent-smith:docker
+      - components/ee/db-sync:docker
+      - components/ee/kedge:docker
+      - components/ee/payment-endpoint:docker
+      - components/gitpod-db:docker
+      - components/ide/code-desktop:docker
+      - components/ide/code-desktop:docker-insiders
+      - components/ide/code:docker
+      - components/ide/jetbrains/image:goland
+      - components/ide/jetbrains/image:intellij
+      - components/ide/jetbrains/image:phpstorm
+      - components/ide/jetbrains/image:pycharm
+      - components/image-builder-bob:docker
+      - components/image-builder-mk3:docker
+      - components/local-app:docker
+      - components/openvsx-proxy:docker
+      - components/proxy:docker
+      - components/registry-facade:docker
+      - components/registry-facade/ca-updater:docker
+      - components/server:docker
+      - components/service-waiter:docker
+      - components/supervisor:docker
+      - components/installation-telemetry:docker
+      - components/workspacekit:docker
+      - components/ws-daemon:docker
+      - components/ws-daemon/seccomp-profile-installer:docker
+      - components/ws-daemon/shiftfs-module-loader:docker
+      - components/ws-manager-bridge:docker
+      - components/ws-manager:docker
+      - components/ws-proxy:docker
+      - components/ide-proxy:docker
+      - test:docker
+      - dev/version-manifest:app
+    config:
+      commands:
+        - ["sh", "-c", "echo \"commit: ${__git_commit}\" > versions.yaml"]
+        - ["sh", "-c", "echo \"version: ${version}\" >> versions.yaml"]
+        - ["sh", "-c", "dev-version-manifest--app/version-manifest >> versions.yaml"]
+        - ["sh", "-c", "rm -r components* dev-*"]
+  - name: publish-api
+    type: generic
+    deps:
+      - components/gitpod-protocol:publish
+      - components/local-app-api/typescript-grpcweb:publish
+      - components/supervisor-api/typescript-grpc:publish
+      - components/supervisor-api/typescript-grpcweb:publish
+      - components/ide/jetbrains/gateway-plugin:publish
+  - name: all-apps
+    type: generic
+    deps:
+      - components/blobserve:app
+      - components/content-service:app
+      - components/dashboard:app
+      - components/docker-up:app
+      - components/ee/agent-smith:app
+      - components/ee/db-sync:app
+      - components/ee/kedge:app
+      - components/ee/payment-endpoint:app
+      - components/image-builder-mk3:app
+      - components/openvsx-proxy:app
+      - components/registry-facade:app
+      - components/server:app
+      - components/service-waiter:app
+      - components/supervisor:app
+      - components/supervisor/frontend:app
+      - components/installation-telemetry:app
+      - components/workspacekit:app
+      - components/ws-daemon:app
+      - components/ws-manager-bridge:app
+      - components/ws-manager:app
+scripts:
+  - name: update-license-header
+    description: Updates the license header in all source files
+    deps:
+      - dev/addlicense:app
+    script: |
+      tmpdir=$(mktemp -d)
+      echo "Temp Dir: $tmpdir"
+
+      leeway collect files               --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/all
+      leeway collect files --variant oss --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/oss
+
+      grep -v -f $tmpdir/oss $tmpdir/all > $tmpdir/ee
+      grep -E "^components\/ee\/" $tmpdir/oss >> $tmpdir/ee
+      grep -v -E "^chart\/" $tmpdir/oss | grep -v -E "^install\/" > $tmpdir/agpl
+      grep -v -f $tmpdir/agpl $tmpdir/oss > $tmpdir/mit
+
+      # set `export LICENCE_HEADER_CHECK_ONLY=true` to just check if all headers are there (and exit with status code 1 if not)
+      check=$([ "$LICENCE_HEADER_CHECK_ONLY" = true ] && printf "%s" '-check')
+
+      cat $tmpdir/ee   | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l gpshf . || exit 1
+      cat $tmpdir/agpl | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l agpl  . || exit 1
+      cat $tmpdir/mit  | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l mit   . || exit 1
+  - name: dejson-log-output
+    script: |-
+      jq -Rr '. as $line |
+      try (
+          fromjson |
+          .time + " " + .component + " " + .severity
+              + if .message == null then "" else .message | " \"" + tostring + "\"" end
+              + if .context == null then "" else .context | " context:" + tostring end
+              + if .payload == null then "" else .payload | " payload:" + tostring end
+              + if .error == null then "" else .error | "\n" + tostring end
+      ) catch $line'
+  - name: generate-code-from-protobuf
+    srcs:
+      - components/**/*
+    script: |
+      GO_COMPONENTS=( local-app-api content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api )
+
+      for COMPONENT in "${GO_COMPONENTS[@]}";do
+        echo "Generating code for component $COMPONENT..."
+        pushd $COMPONENT > /dev/null
+        ./generate.sh
+        popd > /dev/null
+      done
+
+      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb )
+      for COMPONENT in "${WEB_COMPONENTS[@]}";do
+        echo "Generating code for component $COMPONENT..."
+        pushd $COMPONENT > /dev/null
+        yarn install
+        ./build.sh
+        popd > /dev/null
+      done
+
+  - name: update-go-modules
+    srcs:
+      - components/**/*
+      - test/**/*
+      - dev/**/*
+    script: |
+      leeway exec --filter-type go -v -- go mod tidy -compat=1.17
+
+      # not all the code is present in leeway.
+      # ensure we update everything containing a go.mod file
+      for COMPONENT in $(find . -name go.mod); do
+        DIRECTORY=$(dirname $COMPONENT)
+        pushd $DIRECTORY > /dev/null
+        go mod tidy -compat=1.17
+        popd > /dev/null
+      done
+
+  - name: unblock-user
+    deps:
+      - components/service-waiter:app
+    script: |
+      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
+      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
+      kubectl port-forward statefulset/mysql 3306 &
+      PID=$!
+      service-waiter database -t 10s
+      if [ $? -ne 0 ]; then
+        echo "could not connect to DB"
+        kill $PID || true
+        exit 1
+      fi
+      query="select name, blocked from d_b_user limit 10;"
+      result=$(mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod)
+
+      printf "\nCurrent context:           $(kubectx -c)"
+      printf "\nCurrent namespace:         $(kubens -c)\n"
+
+      printf "\nAvailable users (max 10):\n$result\n\n"
+      printf "Enter user to unblock (empty to abort): "
+      read user
+      if [[ -z "$user" ]]; then
+        echo "No input."
+      else
+        echo "User: $user"
+        query="update d_b_user set blocked=0 where name=\"$user\";"
+        mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
+      fi
+      kill $PID || true
+
+  - name: make-user-admin
+    deps:
+      - components/service-waiter:app
+    script: |
+      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
+      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
+      kubectl port-forward statefulset/mysql 3306 &
+      PID=$!
+      service-waiter database -t 10s
+      if [ $? -ne 0 ]; then
+        echo "could not connect to DB"
+        kill $PID || true
+        exit 1
+      fi
+      query="select name, rolesOrPermissions from d_b_user limit 10;"
+      result=$(mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod)
+
+      printf "\nCurrent context:           $(kubectx -c)"
+      printf "\nCurrent namespace:         $(kubens -c)\n"
+
+      printf "\nAvailable users (max 10):\n$result\n\n"
+      printf "Enter user to make admin (empty to abort): "
+      read user
+      if [[ -z "$user" ]]; then
+        echo "No input."
+      else
+        echo "User: $user"
+        query="update d_b_user set rolesOrPermissions = '[\"admin\"]' where name=\"$user\";"
+        mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
+      fi
+      kill $PID || true

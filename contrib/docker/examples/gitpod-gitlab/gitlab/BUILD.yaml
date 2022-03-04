@@ -1,0 +1,16 @@
+packages:
+  - name: docker
+    type: docker
+    srcs:
+      - entrypoint.sh
+      - gitlab-helm-installer.yaml
+      - persistent-volumes.yaml
+    deps:
+      - chart:helm
+    argdeps:
+      - version
+    config:
+      dockerfile: Dockerfile
+      image:
+        - ${imageRepoBase}/gitlab-k3s:${version}
+        - ${imageRepoBase}/gitlab-k3s:commit-${__git_commit}

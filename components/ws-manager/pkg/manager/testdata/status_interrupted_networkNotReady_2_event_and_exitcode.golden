@@ -1,0 +1,36 @@
+{
+    "status": {
+        "id": "0c5a8ef3-052b-44a7-b11c-3542a0928076",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "fcbe5290-4b18-4872-b9f8-aeb4b5b1fc4b",
+            "meta_id": "d6427c17-62b8-4bb5-a974-f97f77b370dc",
+            "started_at": {
+                "seconds": 1576850904
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:65c49e535a9449415c7cbaf186879897ccc6066d29c990b495a5f77f35413dda",
+            "url": "https://d6427c17-62b8-4bb5-a974-f97f77b370dc.ws-eu01.gitpod.io",
+            "exposed_ports": [
+                {
+                    "port": 8080,
+                    "visibility": 1
+                }
+            ],
+            "timeout": "30m",
+            "ide_image": {}
+        },
+        "phase": 7,
+        "conditions": {
+            "network_not_ready": 1
+        },
+        "message": "container network not ready - workspace should recover shortly",
+        "runtime": {
+            "node_name": "gke-production--gitp-workspace-pool-1-c73d13c7-fzbk",
+            "pod_name": "ws-0c5a8ef3-052b-44a7-b11c-3542a0928076",
+            "node_ip": "10.132.0.17"
+        },
+        "auth": {}
+    }
+}

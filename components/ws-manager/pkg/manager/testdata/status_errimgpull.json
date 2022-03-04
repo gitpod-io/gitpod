@@ -1,0 +1,491 @@
+{
+  "pod": {
+    "metadata": {
+      "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d",
+      "namespace": "staging-cw-minio-core",
+      "selfLink": "/api/v1/namespaces/staging-cw-minio-core/pods/ws-f9d04251-f057-4287-b7b1-956093140c5d",
+      "uid": "7d75e393-cfaf-11e9-9f0a-42010a840008",
+      "resourceVersion": "135351465",
+      "creationTimestamp": "2019-09-05T07:33:44Z",
+      "labels": {
+        "app": "gitpod",
+        "component": "workspace",
+        "gitpod.io/networkpolicy": "default",
+        "gpwsman": "true",
+        "headless": "false",
+        "metaID": "ba66e4d4-3eae-4c9c-83da-75b6dbc2f592",
+        "owner": "bc043c78-9042-43cf-b521-8296457afc19",
+        "workspaceID": "f9d04251-f057-4287-b7b1-956093140c5d",
+        "workspaceType": "regular"
+      },
+      "annotations": {
+        "cni.projectcalico.org/podIP": "10.0.251.47/32",
+        "gitpod/contentInitializer": "[redacted]",
+        "gitpod/id": "f9d04251-f057-4287-b7b1-956093140c5d",
+        "gitpod/servicePrefix": "ba66e4d4-3eae-4c9c-83da-75b6dbc2f592",
+        "gitpod/traceid": "AAAAAAAAAADhGTsriIyxPTTDrd1As99VVqvzdzhPjzsBAAAAAA==",
+        "gitpod/url": "http://ba66e4d4-3eae-4c9c-83da-75b6dbc2f592.cw-minio-core.staging.gitpod.io",
+        "gitpod/never-ready": "true",
+        "prometheus.io/path": "/metrics",
+        "prometheus.io/port": "23000",
+        "prometheus.io/scrape": "true"
+      }
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "vol-this-workspace",
+          "hostPath": {
+            "path": "/workspaces/f9d04251-f057-4287-b7b1-956093140c5d",
+            "type": "DirectoryOrCreate"
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "workspace",
+          "image": "registry.staging-cw-minio-core.svc.cluster.local/workspace-images/aadf89d3be804eeb2cab063f217a1b57dd984be5/registry.hub.docker.com/gitpod/workspace-full:sha256-1f5a29431048784d1e133769db5918bd6ea1e5b7530f04013f2d55026478e766",
+          "ports": [
+            {
+              "containerPort": 23000,
+              "protocol": "TCP"
+            }
+          ],
+          "env": [
+            {
+              "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace/bel"
+            },
+            {
+              "name": "GITPOD_CLI_APITOKEN",
+              "value": "6bbf5c36-9c48-4a8a-a777-d4e85d65621d"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_ID",
+              "value": "ba66e4d4-3eae-4c9c-83da-75b6dbc2f592"
+            },
+            {
+              "name": "GITPOD_INSTANCE_ID",
+              "value": "f9d04251-f057-4287-b7b1-956093140c5d"
+            },
+            {
+              "name": "GITPOD_THEIA_PORT",
+              "value": "23000"
+            },
+            {
+              "name": "THEIA_WORKSPACE_ROOT",
+              "value": "/workspace"
+            },
+            {
+              "name": "GITPOD_HOST",
+              "value": "http://cw-minio-core.staging.gitpod.io"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_URL",
+              "value": "http://ba66e4d4-3eae-4c9c-83da-75b6dbc2f592.cw-minio-core.staging.gitpod.io"
+            },
+            {
+              "name": "GITPOD_GIT_USER_NAME",
+              "value": "Christian Weichel"
+            },
+            {
+              "name": "GITPOD_GIT_USER_EMAIL",
+              "value": "some@user.com"
+            },
+            {
+              "name": "GITPOD_TASKS",
+              "value": "[{\"init\":\"cd /workspace/bel && go get -v && go test -v ./...\",\"command\":\"cd /workspace/bel && go run examples/*\"}]"
+            },
+            {
+              "name": "GITPOD_RESOLVED_EXTENSIONS",
+              "value": "{\"ms-vscode.Go@0.10.1\":{\"fullPluginName\":\"ms-vscode.Go@0.10.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"rust-lang.rust@0.6.1\":{\"fullPluginName\":\"rust-lang.rust@0.6.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"GrammarCraft.xtend-lang@0.1.0\":{\"fullPluginName\":\"GrammarCraft.xtend-lang@0.1.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"grammarcraft.xtext-lang@0.2.0\":{\"fullPluginName\":\"grammarcraft.xtext-lang@0.2.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscode.@theia/vscode-builtin-emmet@0.2.1\":{\"fullPluginName\":\"vscode.@theia/vscode-builtin-emmet@0.2.1\",\"url\":\"local\",\"kind\":\"builtin\"},\"redhat.java@0.47.0\":{\"fullPluginName\":\"redhat.java@0.47.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscjava.vscode-java-debug@0.21.0\":{\"fullPluginName\":\"vscjava.vscode-java-debug@0.21.0\",\"url\":\"local\",\"kind\":\"builtin\"},\"vscjava.vscode-java-dependency@0.5.1\":{\"fullPluginName\":\"vscjava.vscode-java-dependency@0.5.1\",\"url\":\"local\",\"kind\":\"builtin\"}}"
+            },
+            {
+              "name": "GITPOD_INTERVAL",
+              "value": "30000"
+            },
+            {
+              "name": "GITPOD_MEMORY",
+              "value": "3543"
+            }
+          ],
+          "resources": {
+            "limits": {
+              "cpu": "7",
+              "memory": "8499Mi"
+            },
+            "requests": {
+              "cpu": "1m",
+              "memory": "3379Mi"
+            }
+          },
+          "volumeMounts": [
+            {
+              "name": "vol-this-workspace",
+              "mountPath": "/workspace"
+            }
+          ],
+          "livenessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 30,
+            "successThreshold": 1,
+            "failureThreshold": 3
+          },
+          "readinessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 1,
+            "successThreshold": 1,
+            "failureThreshold": 600
+          },
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "imagePullPolicy": "IfNotPresent",
+          "securityContext": {
+            "capabilities": {
+              "add": [
+                "AUDIT_WRITE",
+                "FSETID",
+                "KILL",
+                "NET_BIND_SERVICE"
+              ],
+              "drop": [
+                "SETPCAP",
+                "CHOWN",
+                "NET_RAW",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "SYS_CHROOT",
+                "SETFCAP",
+                "SETUID",
+                "SETGID"
+              ]
+            },
+            "privileged": false,
+            "runAsUser": 33333,
+            "runAsNonRoot": true,
+            "readOnlyRootFilesystem": false,
+            "allowPrivilegeEscalation": false
+          }
+        }
+      ],
+      "restartPolicy": "Always",
+      "terminationGracePeriodSeconds": 30,
+      "dnsPolicy": "ClusterFirst",
+      "serviceAccountName": "workspace",
+      "serviceAccount": "workspace",
+      "automountServiceAccountToken": false,
+      "nodeName": "gke-gitpod-dev-worker-pool-2-184c607e-wl2d",
+      "securityContext": {},
+      "affinity": {
+        "nodeAffinity": {
+          "requiredDuringSchedulingIgnoredDuringExecution": {
+            "nodeSelectorTerms": [
+              {
+                "matchExpressions": [
+                  {
+                    "key": "gitpod.io/theia.cw-minio-core.24",
+                    "operator": "Exists"
+                  },
+                  {
+                    "key": "gitpod.io/ws-daemon",
+                    "operator": "Exists"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "schedulerName": "default-scheduler",
+      "tolerations": [
+        {
+          "key": "node.kubernetes.io/not-ready",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "node.kubernetes.io/unreachable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        }
+      ],
+      "priority": 0
+    },
+    "status": {
+      "phase": "Pending",
+      "conditions": [
+        {
+          "type": "Initialized",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-09-05T07:33:44Z"
+        },
+        {
+          "type": "Ready",
+          "status": "False",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-09-05T07:33:44Z",
+          "reason": "ContainersNotReady",
+          "message": "containers with unready status: [workspace]"
+        },
+        {
+          "type": "ContainersReady",
+          "status": "False",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-09-05T07:33:44Z",
+          "reason": "ContainersNotReady",
+          "message": "containers with unready status: [workspace]"
+        },
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-09-05T07:33:44Z"
+        }
+      ],
+      "hostIP": "10.132.15.195",
+      "startTime": "2019-09-05T07:33:44Z",
+      "containerStatuses": [
+        {
+          "name": "workspace",
+          "state": {
+            "waiting": {
+              "reason": "ErrImagePull",
+              "message": "rpc error: code = Unknown desc = Error response from daemon: Get https://registry.staging-cw-minio-core.svc.cluster.local/v1/_ping: dial tcp: lookup registry.staging-cw-minio-core.svc.cluster.local: no such host"
+            }
+          },
+          "lastState": {},
+          "ready": false,
+          "restartCount": 0,
+          "image": "registry.staging-cw-minio-core.svc.cluster.local/workspace-images/aadf89d3be804eeb2cab063f217a1b57dd984be5/registry.hub.docker.com/gitpod/workspace-full:sha256-1f5a29431048784d1e133769db5918bd6ea1e5b7530f04013f2d55026478e766",
+          "imageID": ""
+        }
+      ],
+      "qosClass": "Burstable"
+    }
+  },
+  "theiaService": {
+    "metadata": {
+      "name": "ws-ba66e4d4-3eae-4c9c-83da-75b6dbc2f592-theia",
+      "namespace": "staging-cw-minio-core",
+      "selfLink": "/api/v1/namespaces/staging-cw-minio-core/services/ws-ba66e4d4-3eae-4c9c-83da-75b6dbc2f592-theia",
+      "uid": "7d79af3e-cfaf-11e9-9f0a-42010a840008",
+      "resourceVersion": "135351453",
+      "creationTimestamp": "2019-09-05T07:33:44Z",
+      "labels": {
+        "app": "gitpod",
+        "component": "workspace",
+        "gpwsman": "true",
+        "headless": "false",
+        "metaID": "ba66e4d4-3eae-4c9c-83da-75b6dbc2f592",
+        "owner": "bc043c78-9042-43cf-b521-8296457afc19",
+        "workspaceID": "f9d04251-f057-4287-b7b1-956093140c5d"
+      }
+    },
+    "spec": {
+      "ports": [
+        {
+          "name": "theia",
+          "protocol": "TCP",
+          "port": 23000,
+          "targetPort": 23000
+        }
+      ],
+      "selector": {
+        "app": "gitpod",
+        "component": "workspace",
+        "gpwsman": "true",
+        "headless": "false",
+        "metaID": "ba66e4d4-3eae-4c9c-83da-75b6dbc2f592",
+        "owner": "bc043c78-9042-43cf-b521-8296457afc19",
+        "workspaceID": "f9d04251-f057-4287-b7b1-956093140c5d"
+      },
+      "clusterIP": "10.3.243.208",
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  "events": [
+    {
+      "metadata": {
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7d64ac7d9c",
+        "namespace": "staging-cw-minio-core",
+        "selfLink": "/api/v1/namespaces/staging-cw-minio-core/events/ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7d64ac7d9c",
+        "uid": "7d78f861-cfaf-11e9-9f0a-42010a840008",
+        "resourceVersion": "4090586",
+        "creationTimestamp": "2019-09-05T07:33:44Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-minio-core",
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d",
+        "uid": "7d75e393-cfaf-11e9-9f0a-42010a840008",
+        "apiVersion": "v1",
+        "resourceVersion": "135351449"
+      },
+      "reason": "Scheduled",
+      "message": "Successfully assigned staging-cw-minio-core/ws-f9d04251-f057-4287-b7b1-956093140c5d to gke-gitpod-dev-worker-pool-2-184c607e-wl2d",
+      "source": {
+        "component": "default-scheduler"
+      },
+      "firstTimestamp": "2019-09-05T07:33:44Z",
+      "lastTimestamp": "2019-09-05T07:33:44Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7d9914b756",
+        "namespace": "staging-cw-minio-core",
+        "selfLink": "/api/v1/namespaces/staging-cw-minio-core/events/ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7d9914b756",
+        "uid": "7e055212-cfaf-11e9-9f0a-42010a840008",
+        "resourceVersion": "4090587",
+        "creationTimestamp": "2019-09-05T07:33:45Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-minio-core",
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d",
+        "uid": "7d75e393-cfaf-11e9-9f0a-42010a840008",
+        "apiVersion": "v1",
+        "resourceVersion": "135351450",
+        "fieldPath": "spec.containers{workspace}"
+      },
+      "reason": "Pulling",
+      "message": "pulling image \"registry.staging-cw-minio-core.svc.cluster.local/workspace-images/aadf89d3be804eeb2cab063f217a1b57dd984be5/registry.hub.docker.com/gitpod/workspace-full:sha256-1f5a29431048784d1e133769db5918bd6ea1e5b7530f04013f2d55026478e766\"",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-gitpod-dev-worker-pool-2-184c607e-wl2d"
+      },
+      "firstTimestamp": "2019-09-05T07:33:45Z",
+      "lastTimestamp": "2019-09-05T07:33:45Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7d9a3865ae",
+        "namespace": "staging-cw-minio-core",
+        "selfLink": "/api/v1/namespaces/staging-cw-minio-core/events/ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7d9a3865ae",
+        "uid": "7e08375a-cfaf-11e9-9f0a-42010a840008",
+        "resourceVersion": "4090588",
+        "creationTimestamp": "2019-09-05T07:33:45Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-minio-core",
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d",
+        "uid": "7d75e393-cfaf-11e9-9f0a-42010a840008",
+        "apiVersion": "v1",
+        "resourceVersion": "135351450",
+        "fieldPath": "spec.containers{workspace}"
+      },
+      "reason": "Failed",
+      "message": "Failed to pull image \"registry.staging-cw-minio-core.svc.cluster.local/workspace-images/aadf89d3be804eeb2cab063f217a1b57dd984be5/registry.hub.docker.com/gitpod/workspace-full:sha256-1f5a29431048784d1e133769db5918bd6ea1e5b7530f04013f2d55026478e766\": rpc error: code = Unknown desc = Error response from daemon: Get https://registry.staging-cw-minio-core.svc.cluster.local/v1/_ping: dial tcp: lookup registry.staging-cw-minio-core.svc.cluster.local: no such host",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-gitpod-dev-worker-pool-2-184c607e-wl2d"
+      },
+      "firstTimestamp": "2019-09-05T07:33:45Z",
+      "lastTimestamp": "2019-09-05T07:33:45Z",
+      "count": 1,
+      "type": "Warning",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7d9a38be34",
+        "namespace": "staging-cw-minio-core",
+        "selfLink": "/api/v1/namespaces/staging-cw-minio-core/events/ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7d9a38be34",
+        "uid": "7e08cef2-cfaf-11e9-9f0a-42010a840008",
+        "resourceVersion": "4090589",
+        "creationTimestamp": "2019-09-05T07:33:45Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-minio-core",
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d",
+        "uid": "7d75e393-cfaf-11e9-9f0a-42010a840008",
+        "apiVersion": "v1",
+        "resourceVersion": "135351450",
+        "fieldPath": "spec.containers{workspace}"
+      },
+      "reason": "Failed",
+      "message": "Error: ErrImagePull",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-gitpod-dev-worker-pool-2-184c607e-wl2d"
+      },
+      "firstTimestamp": "2019-09-05T07:33:45Z",
+      "lastTimestamp": "2019-09-05T07:33:45Z",
+      "count": 1,
+      "type": "Warning",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7dcf0df442",
+        "namespace": "staging-cw-minio-core",
+        "selfLink": "/api/v1/namespaces/staging-cw-minio-core/events/ws-f9d04251-f057-4287-b7b1-956093140c5d.15c17a7dcf0df442",
+        "uid": "7e8fa1c0-cfaf-11e9-9f0a-42010a840008",
+        "resourceVersion": "4090590",
+        "creationTimestamp": "2019-09-05T07:33:46Z"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "namespace": "staging-cw-minio-core",
+        "name": "ws-f9d04251-f057-4287-b7b1-956093140c5d",
+        "uid": "7d75e393-cfaf-11e9-9f0a-42010a840008",
+        "apiVersion": "v1",
+        "resourceVersion": "135351450"
+      },
+      "reason": "SandboxChanged",
+      "message": "Pod sandbox changed, it will be killed and re-created.",
+      "source": {
+        "component": "kubelet",
+        "host": "gke-gitpod-dev-worker-pool-2-184c607e-wl2d"
+      },
+      "firstTimestamp": "2019-09-05T07:33:46Z",
+      "lastTimestamp": "2019-09-05T07:33:46Z",
+      "count": 1,
+      "type": "Normal",
+      "eventTime": null,
+      "reportingComponent": "",
+      "reportingInstance": ""
+    }
+  ],
+  "wso": {
+    "pod": {
+      "metadata": {
+        "annotations": {
+          "gitpod/contentInitializer": "[redacted]"
+        }
+      }
+    }
+  }
+}

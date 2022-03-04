@@ -1,0 +1,64 @@
+name: JetBrains Test
+on:
+  workflow_dispatch:
+    inputs:
+      secret_gateway_link:
+        type: string
+        description: Gateway Link
+        required: true
+      secret_access_token:
+        type: string
+        description: OAuth2 Access Token
+        required: true
+      secret_endpoint:
+        type: string
+        description: IDE Endpoint
+        required: true
+jobs:
+  jetbrains-smoke-test-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.3'
+      - uses: actions/setup-java@v2
+        with:
+          distribution: zulu
+          java-version: "11"
+      - name: Setup FFmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Gateway Plugin
+        working-directory: components/ide/jetbrains/gateway-plugin
+        run: |
+          ./gradlew -PpluginVersion=test buildPlugin
+      - name: Smoke Test
+        env:
+          LEEWAY_REMOTE_CACHE_BUCKET: gitpod-core-leeway-cache-branch
+        working-directory: dev/jetbrains-test
+        run: |
+          mkdir ./build && cp -r ../../components/ide/jetbrains/gateway-plugin/build/distributions/gitpod-gateway-test.zip build/gateway-test.zip
+
+          export GATEWAY_LINK=$(jq -r '.inputs.secret_gateway_link' $GITHUB_EVENT_PATH)
+          export GITPOD_TEST_ACCESSTOKEN=$(jq -r '.inputs.secret_access_token' $GITHUB_EVENT_PATH)
+          export WS_ENDPOINT=$(jq -r '.inputs.secret_endpoint' $GITHUB_EVENT_PATH)
+          export GATEWAY_PLUGIN_PATH=$(pwd)/build/gateway-test.zip
+
+          mkdir -p ~/Library/Application\ Support/JetBrains/consentOptions
+          echo -n "rsch.send.usage.stat:1.1:0:1644945193441" > ~/Library/Application\ Support/JetBrains/consentOptions/accepted
+          mkdir -p ~/Library/Application\ Support/JetBrains/JetBrainsClient/options
+          touch ~/Library/Application\ Support/JetBrains/JetBrainsClient/options/ide.general.xml
+          gradle :test
+      - name: Move video
+        if: always()
+        run: |
+          cp -r dev/jetbrains-test/video dev/jetbrains-test/build/reports
+      - name: Save report
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: video
+          path: |
+            dev/jetbrains-test/build/reports

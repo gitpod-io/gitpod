@@ -1,0 +1,112 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.registryFacade -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: registry-facade
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: registry-facade
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: registry-facade
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: registry-facade
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: registry-facade
+  template:
+    metadata:
+      name: registry-facade
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: registry-facade
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: registry-facade
+    spec:
+      priorityClassName: system-node-critical
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      serviceAccountName: registry-facade
+      enableServiceLinks: false
+      containers:
+      - name: registry-facade
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args: ["run", "/mnt/config/config.json"]
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+        ports:
+        - name: registry
+          containerPort: {{ $comp.ports.registry.containerPort }}
+          hostPort: {{ $comp.ports.registry.servicePort }}
+        securityContext:
+          privileged: false
+          runAsUser: 1000
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        - name: GRPC_GO_RETRY
+          value: "on"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: cache
+          mountPath: "/mnt/cache"
+        - name: config
+          mountPath: "/mnt/config"
+          readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
+          readOnly: true
+        {{- if .Values.components.workspace.pullSecret.secretName }}
+        - name: pull-secret
+          mountPath: /mnt/pull-secret.json
+          subPath: .dockerconfigjson
+        {{- end }}
+        {{- if (or $comp.certificatesSecret.secretName .Values.certificatesSecret.secretName) }}
+        - name: https-certificates
+          mountPath: "/mnt/certificates"
+        {{- end }}
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true
+          preStop:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - kubectl label nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}-
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+      volumes:
+      - name: cache
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: {{ .Values.components.wsManager.tls.client.secretName }}
+      {{- if .Values.components.workspace.pullSecret.secretName }}
+      - name: pull-secret
+        secret:
+          secretName: {{ .Values.components.workspace.pullSecret.secretName }}
+      {{- end }}
+      {{- if .Values.certificatesSecret.secretName }}
+      - name: https-certificates
+        secret:
+          secretName: {{ .Values.certificatesSecret.secretName }}
+      {{- end }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

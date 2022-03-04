@@ -1,0 +1,1401 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "7.4.3"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 1,
+  "id": null,
+  "iteration": 1617982637622,
+  "links": [],
+  "panels": [
+    {
+      "cacheTimeout": null,
+      "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "light-red",
+                "value": null
+              },
+              {
+                "color": "dark-green",
+                "value": 0
+              },
+              {
+                "color": "rgb(255, 255, 255)",
+                "value": 0.95
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 11,
+        "x": 6,
+        "y": 0
+      },
+      "id": 4,
+      "interval": null,
+      "links": [],
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "7.4.3",
+      "repeat": null,
+      "targets": [
+        {
+          "expr": "0.95",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "Availability target",
+          "refId": "A"
+        },
+        {
+          "expr": "(1 - (\n  sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[30d]))\n  /\n  sum(rate(gitpod_server_login_requests_total[30d]))\n)) - 0.95",
+          "interval": "",
+          "legendFormat": "Monthly error budget remaining",
+          "refId": "B"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "SLO and Error budget",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 14,
+      "panels": [],
+      "title": "Burn ratios",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "$datasource",
+      "decimals": 2,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.4.3",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "Failure ratio threshold",
+          "color": "#C4162A",
+          "fill": 0
+        },
+        {
+          "alias": "/.*failure ratio$/",
+          "color": "#E02F44",
+          "fillBelowTo": "Failure ratio threshold",
+          "lines": false,
+          "spaceLength": 20
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[5m]))\n/\nsum(rate(gitpod_server_login_requests_total[5m]))",
+          "interval": "",
+          "legendFormat": "5m failure ratio",
+          "queryType": "randomWalk",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[30m]))\n/\nsum(rate(gitpod_server_login_requests_total[30m]))",
+          "interval": "",
+          "legendFormat": "30m failure ratio",
+          "queryType": "randomWalk",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[1h]))\n/\nsum(rate(gitpod_server_login_requests_total[1h]))",
+          "interval": "",
+          "legendFormat": "1h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[2h]))\n/\nsum(rate(gitpod_server_login_requests_total[2h]))",
+          "interval": "",
+          "legendFormat": "2h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "D"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[6h]))\n/\nsum(rate(gitpod_server_login_requests_total[6h]))",
+          "interval": "",
+          "legendFormat": "6h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "E"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[1d]))\n/\nsum(rate(gitpod_server_login_requests_total[1d]))",
+          "interval": "",
+          "legendFormat": "1d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "F"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[3d]))\n/\nsum(rate(gitpod_server_login_requests_total[3d]))",
+          "interval": "",
+          "legendFormat": "3d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "G"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\"}[30d]))\n/\nsum(rate(gitpod_server_login_requests_total[30d]))",
+          "interval": "",
+          "legendFormat": "30d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "H"
+        },
+        {
+          "expr": "0.05",
+          "interval": "",
+          "legendFormat": "Failure ratio threshold",
+          "refId": "I"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Login failure ratio",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percentunit",
+          "label": null,
+          "logBase": 1,
+          "max": "1",
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "$datasource",
+      "decimals": 2,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 9,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.4.3",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "cluster",
+      "seriesOverrides": [
+        {
+          "alias": "Failure ratio threshold",
+          "color": "#C4162A",
+          "fill": 0
+        },
+        {
+          "alias": "/.*failure ratio$/",
+          "color": "#E02F44",
+          "fillBelowTo": "Failure ratio threshold",
+          "lines": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", cluster=~\"$cluster\"}[5m]))\n/\nsum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[5m]))",
+          "interval": "",
+          "legendFormat": "5m failure ratio",
+          "queryType": "randomWalk",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", cluster=~\"$cluster\"}[30m]))\n/\nsum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[30m]))",
+          "interval": "",
+          "legendFormat": "30m failure ratio",
+          "queryType": "randomWalk",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", cluster=~\"$cluster\"}[1h]))\n/\nsum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[1h]))",
+          "interval": "",
+          "legendFormat": "1h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", cluster=~\"$cluster\"}[2h]))\n/\nsum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[2h]))",
+          "interval": "",
+          "legendFormat": "2h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "D"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", cluster=~\"$cluster\"}[6h]))\n/\nsum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[6h]))",
+          "interval": "",
+          "legendFormat": "6h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "E"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", cluster=~\"$cluster\"}[1d]))\n/\nsum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[1d]))",
+          "interval": "",
+          "legendFormat": "1d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "F"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", cluster=~\"$cluster\"}[3d]))\n/\nsum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[3d]))",
+          "interval": "",
+          "legendFormat": "3d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "G"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", cluster=~\"$cluster\"}[30d]))\n/\nsum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[30d]))",
+          "interval": "",
+          "legendFormat": "30d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "H"
+        },
+        {
+          "expr": "0.05",
+          "interval": "",
+          "legendFormat": "Failure ratio threshold",
+          "refId": "I"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$cluster: Login failure ratio",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 2,
+          "format": "percentunit",
+          "label": null,
+          "logBase": 1,
+          "max": "1",
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "$datasource",
+      "decimals": 2,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 15
+      },
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.4.3",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "auth_host",
+      "seriesOverrides": [
+        {
+          "alias": "Failure ratio threshold",
+          "color": "#C4162A",
+          "fill": 0
+        },
+        {
+          "alias": "/.*failure ratio$/",
+          "color": "#E02F44",
+          "fillBelowTo": "Failure ratio threshold",
+          "lines": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", auth_host=~\"$auth_host\"}[5m]))\n/\nsum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[5m]))",
+          "interval": "",
+          "legendFormat": "5m failure ratio",
+          "queryType": "randomWalk",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", auth_host=~\"$auth_host\"}[30m]))\n/\nsum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[30m]))",
+          "interval": "",
+          "legendFormat": "30m failure ratio",
+          "queryType": "randomWalk",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", auth_host=~\"$auth_host\"}[1h]))\n/\nsum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[1h]))",
+          "interval": "",
+          "legendFormat": "1h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", auth_host=~\"$auth_host\"}[2h]))\n/\nsum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[2h]))",
+          "interval": "",
+          "legendFormat": "2h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "D"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", auth_host=~\"$auth_host\"}[6h]))\n/\nsum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[6h]))",
+          "interval": "",
+          "legendFormat": "6h failure ratio",
+          "queryType": "randomWalk",
+          "refId": "E"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", auth_host=~\"$auth_host\"}[1d]))\n/\nsum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[1d]))",
+          "interval": "",
+          "legendFormat": "1d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "F"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", auth_host=~\"$auth_host\"}[3d]))\n/\nsum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[3d]))",
+          "interval": "",
+          "legendFormat": "3d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "G"
+        },
+        {
+          "expr": "sum(rate(gitpod_server_login_requests_total{status=\"failed\", auth_host=~\"$auth_host\"}[30d]))\n/\nsum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[30d]))",
+          "interval": "",
+          "legendFormat": "30d failure ratio",
+          "queryType": "randomWalk",
+          "refId": "H"
+        },
+        {
+          "expr": "0.05",
+          "interval": "",
+          "legendFormat": "Failure ratio threshold",
+          "refId": "I"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$auth_host: Login failure ratio",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 2,
+          "format": "percentunit",
+          "label": null,
+          "logBase": 1,
+          "max": "1",
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 19,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "$datasource",
+          "decimals": 2,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 6,
+            "w": 24,
+            "x": 0,
+            "y": 25
+          },
+          "hiddenSeries": false,
+          "id": 23,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.4.3",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(gitpod_server_login_requests_total[5m]))",
+              "interval": "",
+              "legendFormat": "5m login rate",
+              "queryType": "randomWalk",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Login rate",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "reqps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "$datasource",
+          "decimals": 2,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 0,
+            "y": 31
+          },
+          "hiddenSeries": false,
+          "id": 24,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.4.3",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "cluster",
+          "scopedVars": {
+            "cluster": {
+              "selected": false,
+              "text": "production.gitpod-io.us-west1.03",
+              "value": "production.gitpod-io.us-west1.03"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Failure ratio threshold",
+              "color": "#C4162A",
+              "fill": 0
+            },
+            {
+              "alias": "/.*failure ratio$/",
+              "color": "#E02F44",
+              "fillBelowTo": "Failure ratio threshold",
+              "lines": false
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[5m]))",
+              "interval": "",
+              "legendFormat": "5m login rate",
+              "queryType": "randomWalk",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "$cluster: Login rate",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": 2,
+              "format": "reqps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "$datasource",
+          "decimals": 2,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 12,
+            "y": 31
+          },
+          "hiddenSeries": false,
+          "id": 33,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.4.3",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "repeatIteration": 1617982637617,
+          "repeatPanelId": 24,
+          "scopedVars": {
+            "cluster": {
+              "selected": false,
+              "text": "production.gitpod-io.europe-west1.03",
+              "value": "production.gitpod-io.europe-west1.03"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "Failure ratio threshold",
+              "color": "#C4162A",
+              "fill": 0
+            },
+            {
+              "alias": "/.*failure ratio$/",
+              "color": "#E02F44",
+              "fillBelowTo": "Failure ratio threshold",
+              "lines": false
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(gitpod_server_login_requests_total{cluster=~\"$cluster\"}[5m]))",
+              "interval": "",
+              "legendFormat": "5m login rate",
+              "queryType": "randomWalk",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "$cluster: Login rate",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": 2,
+              "format": "reqps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "$datasource",
+          "decimals": 2,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 37
+          },
+          "hiddenSeries": false,
+          "id": 29,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.4.3",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "repeat": "auth_host",
+          "scopedVars": {
+            "auth_host": {
+              "selected": false,
+              "text": "gitlab.com",
+              "value": "gitlab.com"
+            }
+          },
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[5m]))",
+              "interval": "",
+              "legendFormat": "5m login rate",
+              "queryType": "randomWalk",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "$auth_host: Login rate",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": 2,
+              "format": "reqps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "$datasource",
+          "decimals": 2,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 37
+          },
+          "hiddenSeries": false,
+          "id": 34,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.4.3",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "repeatIteration": 1617982637617,
+          "repeatPanelId": 29,
+          "scopedVars": {
+            "auth_host": {
+              "selected": false,
+              "text": "github.com",
+              "value": "github.com"
+            }
+          },
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[5m]))",
+              "interval": "",
+              "legendFormat": "5m login rate",
+              "queryType": "randomWalk",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "$auth_host: Login rate",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": 2,
+              "format": "reqps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "$datasource",
+          "decimals": 2,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 37
+          },
+          "hiddenSeries": false,
+          "id": 35,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.4.3",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "repeatIteration": 1617982637617,
+          "repeatPanelId": 29,
+          "scopedVars": {
+            "auth_host": {
+              "selected": false,
+              "text": "bitbucket.org",
+              "value": "bitbucket.org"
+            }
+          },
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(gitpod_server_login_requests_total{auth_host=~\"$auth_host\"}[5m]))",
+              "interval": "",
+              "legendFormat": "5m login rate",
+              "queryType": "randomWalk",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "$auth_host: Login rate",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": 2,
+              "format": "reqps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "title": "Rates",
+      "type": "row"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": [
+    "gitpod-mixin"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "$datasource",
+        "definition": "label_values(gitpod_server_login_requests_total{auth_host=~\"gitlab.com|github.com|bitbucket.org\"}, auth_host)",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "auth_host",
+        "options": [],
+        "query": {
+          "query": "label_values(gitpod_server_login_requests_total{auth_host=~\"gitlab.com|github.com|bitbucket.org\"}, auth_host)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 2,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "$datasource",
+        "definition": "label_values(gitpod_server_login_requests_total{auth_host=~\"gitlab.com|github.com|bitbucket.org\"}, cluster)",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "cluster",
+        "options": [],
+        "query": {
+          "query": "label_values(gitpod_server_login_requests_total{auth_host=~\"gitlab.com|github.com|bitbucket.org\"}, cluster)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Metrics Long Term Storage",
+          "value": "Metrics Long Term Storage"
+        },
+        "description": null,
+        "error": null,
+        "hide": 2,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Gitpod / SLOs / Login",
+  "uid": "login-slo"
+}

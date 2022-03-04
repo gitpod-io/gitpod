@@ -1,0 +1,29 @@
+packages:
+  - name: lib
+    type: yarn
+    srcs:
+      - package.json
+      - build.sh
+    deps:
+      - components/supervisor-api:proto
+    env:
+      - PROTOLOC=components-supervisor-api--proto
+    config:
+      packaging: library
+      dontTest: true
+      commands:
+        build: ["yarn", "build"]
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json
+  - name: publish
+    type: generic
+    env:
+      - DO_PUBLISH=${publishToNPM}
+    argdeps:
+      - npmPublishTrigger
+    deps:
+      - :lib
+      - components/gitpod-protocol:scripts
+    config:
+      commands:
+        - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-supervisor-api-typescript-grpc--lib/package"]

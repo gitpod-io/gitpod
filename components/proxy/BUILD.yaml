@@ -1,0 +1,17 @@
+packages:
+  - name: docker
+    type: docker
+    srcs:
+      - "conf/**"
+      - "plugins/**"
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: Dockerfile
+      metadata:
+        helm-component: proxy
+      image:
+        - ${imageRepoBase}/proxy:${version}
+        - ${imageRepoBase}/proxy:commit-${__git_commit}

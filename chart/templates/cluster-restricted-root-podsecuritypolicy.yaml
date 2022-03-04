@@ -1,0 +1,69 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installPodSecurityPolicies -}}
+# Taken from the examples here:
+# Examples: https://kubernetes.io/docs/concepts/policy/pod-security-policy/#example-policies
+# File: https://raw.githubusercontent.com/kubernetes/website/master/content/en/examples/policy/restricted-psp.yaml
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ .Release.Namespace }}-ns-restricted-root-user
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: cluster
+    kind: podsecuritypolicy
+    stage: {{ .Values.installation.stage }}
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+    seccomp.security.alpha.kubernetes.io/defaultProfileName:  'runtime/default'
+    apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'
+spec:
+  #####
+  # The nginx master process (currently?) runs as root, thus we have to turn some safe things off
+  #####
+  ### TODO root proxy
+  privileged: true
+  # # Required to prevent escalations to root.
+  # allowPrivilegeEscalation: false
+  # # This is redundant with non-root + disallow privilege escalation,
+  # # but we can provide it for defense in depth.
+  # requiredDropCapabilities:
+  #   - ALL
+  ### TODO root proxy
+  # Allow core volume types.
+  volumes:
+    - 'configMap'
+    - 'projected'
+    - 'secret'
+    - 'emptyDir'
+    - 'persistentVolumeClaim'
+    - 'hostPath'
+  hostNetwork: true
+  hostIPC: false
+  hostPID: false
+  hostPorts:
+  - min: 30000
+    max: 33000
+  runAsUser:
+    ### TODO root proxy
+    rule: 'RunAsAny'
+    ### TODO root proxy
+  seLinux:
+    # This policy assumes the nodes are using AppArmor rather than SELinux.
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+  {{- end -}}

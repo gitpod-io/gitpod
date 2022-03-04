@@ -1,0 +1,39 @@
+{
+    "portsService": {
+        "metadata": {
+            "name": "ws-serviceprefix-ports",
+            "namespace": "default",
+            "creationTimestamp": null,
+            "labels": {
+                "gpwsman": "true",
+                "workspaceID": "foobar"
+            }
+        },
+        "spec": {
+            "ports": [
+                {
+                    "name": "p3000-public",
+                    "protocol": "TCP",
+                    "port": 3000
+                }
+            ],
+            "selector": {
+                "gpwsman": "true",
+                "workspaceID": "foobar"
+            },
+            "type": "ClusterIP"
+        },
+        "status": {
+            "loadBalancer": {}
+        }
+    },
+    "request": {
+        "id": "foobar",
+        "expose": true,
+        "spec": {
+            "port": 3000,
+            "visibility": 0
+        }
+    },
+    "noAllocator": true
+}

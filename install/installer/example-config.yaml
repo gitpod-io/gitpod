@@ -1,0 +1,33 @@
+apiVersion: v1
+authProviders: []
+blockNewUsers:
+  enabled: false
+  passlist: []
+certificate:
+  kind: secret
+  name: https-certificates
+containerRegistry:
+  inCluster: true
+database:
+  inCluster: true
+disableDefinitelyGp: false
+domain: ""
+kind: Full
+metadata:
+  region: local
+objectStorage:
+  inCluster: true
+observability:
+  logLevel: info
+openVSX:
+  url: https://open-vsx.org
+repository: eu.gcr.io/gitpod-core-dev/build
+workspace:
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+  runtime:
+    containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
+    containerdSocket: /run/containerd/containerd.sock
+    fsShiftMethod: fuse

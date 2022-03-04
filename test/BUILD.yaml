@@ -1,0 +1,43 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+packages:
+  - name: app
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+      - leeway-build.sh
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/content-service:lib
+      - components/gitpod-protocol/go:lib
+      - components/image-builder-api/go:lib
+      - components/supervisor-api/go:lib
+      - components/ws-manager-api/go:lib
+    prep:
+      - ["go", "get", "-v", "./..."]
+      - ["sh", "-c", "echo package main > main.go"]
+      - ["sh", "-c", "echo 'func main() {}' >> main.go"]
+      - ["go", "fmt", "main.go"]
+      - ["sh", "leeway-build.sh"]
+    config:
+      dontTest: true
+  - name: docker
+    type: docker
+    srcs:
+      - entrypoint.sh
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: integrationTest
+      image:
+        - ${imageRepoBase}/integration-tests:${version}
+        - ${imageRepoBase}/integration-tests:commit-${__git_commit}

@@ -1,0 +1,55 @@
+packages:
+  - name: app
+    type: yarn
+    srcs:
+      - "**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - :dbtest
+      - components/gitpod-db:lib
+      - components/gitpod-protocol:lib
+    config:
+      packaging: offline-mirror
+      yarnLock: ../../../yarn.lock
+      tsconfig: tsconfig.json
+      dontTest: true
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      buildArgs:
+        VERSION: ${version}
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: dbSync
+      image:
+        - ${imageRepoBase}/db-sync:${version}
+        - ${imageRepoBase}/db-sync:commit-${__git_commit}
+  - name: dbtest
+    type: yarn
+    srcs:
+      - "**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:dbtest-init
+      - components/gitpod-db:lib
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "db-test"]
+        build: ["yarn", "build"]
+scripts:
+  - name: telepresence
+    script: |-
+      telepresence --swap-deployment db-sync \
+                   --method inject-tcp \
+                   --run node --inspect lib/main.js --verbose run --soft-start | \
+        leeway run components:dejson-log-output

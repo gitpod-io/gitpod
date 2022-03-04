@@ -1,0 +1,18 @@
+{{- if .Values.jaeger.roleBinding -}}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: jaeger
+  labels:
+    app: jaeger
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+subjects:
+- kind: ServiceAccount
+  name: monitoring-jaeger
+roleRef:
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-ns-psp:unprivileged
+  apiGroup: rbac.authorization.k8s.io
+{{ end }}

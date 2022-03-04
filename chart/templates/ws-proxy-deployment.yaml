@@ -1,0 +1,105 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.wsProxy -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ws-proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: ws-proxy
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: ws-proxy
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: ws-proxy
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: ws-proxy
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+      priorityClassName: system-node-critical
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: ws-proxy
+      securityContext:
+        runAsUser: 31002
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: {{ .Values.components.wsManager.tls.client.secretName }}
+{{- if $.Values.certificatesSecret.secretName }}
+      - name: config-certificates
+        secret:
+          secretName: {{ $.Values.certificatesSecret.secretName }}
+{{- end }}
+{{- if $comp.hostKeySecretName }}
+      - name: host-key
+        secret:
+          secretName: {{ $comp.hostKeySecretName }}
+{{- end }}
+      enableServiceLinks: false
+      containers:
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+      - name: ws-proxy
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args: ["run", "/config/config.json"]
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        readinessProbe:
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          failureThreshold: 10
+          httpGet:
+            path: /readyz
+            port: 60088
+        livenessProbe:
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          failureThreshold: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+          httpGet:
+            path: /healthz
+            port: 60088
+        volumeMounts:
+        - name: config
+          mountPath: "/config"
+          readOnly: true
+        - name: ws-manager-client-tls-certs
+          mountPath: "/ws-manager-client-tls-certs"
+          readOnly: true
+{{- if $.Values.certificatesSecret.secretName }}
+        - name: config-certificates
+          mountPath: "/mnt/certificates"
+{{- end }}
+{{- if $comp.hostKeySecretName }}
+        - name: host-key
+          mountPath: "/mnt/host-key"
+{{- end }}
+        securityContext:
+          privileged: false
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

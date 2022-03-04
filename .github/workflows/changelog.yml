@@ -1,0 +1,34 @@
+name: Changelog
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    container: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.36
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          export PR_BRANCH=$(date '+rq/changelog_%Y%m%d%H%M')
+          git checkout -b $PR_BRANCH
+          /app/changelog update -t $TOKEN -o gitpod-io -r gitpod -b $GITHUB_REF
+          if [[ $(git status --porcelain) ]]; then
+            git config --global user.name $GITHUB_USER
+            git config --global user.email $GITHUB_EMAIL
+            git add CHANGELOG.md
+            git commit -m "[changelog] updated changelog"
+            git push origin $PR_BRANCH
+            /app/changelog pr -t $TOKEN -a $APPROVAL_TOKEN -o gitpod-io -r gitpod -b $GITHUB_REF -H $PR_BRANCH
+          fi
+        env:
+          GITHUB_USER: roboquat
+          GITHUB_EMAIL: roboquat@gitpod.io
+          TOKEN: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
+          APPROVAL_TOKEN: ${{ secrets.GITOPS_BOT_PR_APPROVAL_TOKEN }}
+        shell: bash

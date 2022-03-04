@@ -1,0 +1,68 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.wsProxy -}}
+{{- $gp := .Values -}}
+{{- $this := dict "root" . "gp" $gp "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-proxy-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        "namespace": {{ .Release.Namespace | quote }},
+        "ingress": {
+            "httpAddress": ":{{- $comp.ports.httpProxy.containerPort -}}",
+            "httpsAddress": ":{{- $comp.ports.httpsProxy.containerPort -}}",
+            "header": "{{- $comp.hostHeader -}}"
+        },
+        "proxy": {
+            "https": {
+                "crt": "/mnt/certificates/tls.crt",
+                "key": "/mnt/certificates/tls.key"
+            },
+            "transportConfig": {
+                "connectTimeout": "10s",
+                "idleConnTimeout": "60s",
+                "maxIdleConns": 0,
+                "maxIdleConnsPerHost": 100
+            },
+            "blobServer": {
+                "scheme": "http",
+                "host": "blobserve.{{- .Release.Namespace -}}.svc.cluster.local:{{ .Values.components.blobserve.ports.service.servicePort }}"
+            },
+            "gitpodInstallation": {
+                "scheme": "https",
+                "hostName": "{{- $gp.hostname -}}",
+                "workspaceHostSuffix": ".ws{{- if $gp.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+                "workspaceHostSuffixRegex": {{ ($comp.workspaceHostSuffixRegex | default (printf "%s%s" "\\.ws[^\\.]*\\." ($.Values.hostname | replace "." "\\."))) | quote }}
+            },
+            "workspacePodConfig": {
+                "theiaPort": {{ .Values.components.workspace.ports.http.containerPort }},
+                "supervisorPort": {{ .Values.components.workspace.ports.http.supervisorPort }},
+                "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}"
+            },
+            "builtinPages": {
+                "location": "/app/public"
+            }
+        },
+        "pprofAddr": ":6060",
+        "readinessProbeAddr": ":60088",
+        "prometheusAddr": "localhost:9500",
+        "wsManager": {
+            "addr": "ws-manager:8080",
+            "tls": {
+                "ca": "/ws-manager-client-tls-certs/ca.crt",
+                "crt": "/ws-manager-client-tls-certs/tls.crt",
+                "key": "/ws-manager-client-tls-certs/tls.key"
+            }
+        }
+    }
+{{- end -}}

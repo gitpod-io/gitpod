@@ -1,0 +1,149 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ define "ws-manager-list" -}}
+{{- $ := .root -}}
+{{- $comp := .comp -}}
+{{- if (and $comp.wsmanSkipSelf (eq (len $comp.wsman) 0)) -}}
+manager: []
+{{- else }}
+manager:
+{{- if not $comp.wsmanSkipSelf }}
+- name: "{{ template "gitpod.installation.shortname" . }}"
+  url: "dns:///ws-manager:8080"
+  state: "available"
+  maxScore: 100
+  score: 50
+  govern: true
+  tls:
+    ca: /ws-manager-client-tls-certs/ca.crt
+    crt: /ws-manager-client-tls-certs/tls.crt
+    key: /ws-manager-client-tls-certs/tls.key
+{{- end }}
+{{- range $_, $wsman := $comp.wsman }}
+{{ "- " -}}
+{{ $wsman | toYaml | indent 2 | trim }}
+  tls:
+    ca: /ws-manager-client-tls-certs/ca.crt
+    crt: /ws-manager-client-tls-certs/tls.crt
+    key: /ws-manager-client-tls-certs/tls.key
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "stable-image-full" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- $comp := .comp -}}
+{{ template "gitpod.comp.imageRepo" . }}:{{ $comp.stableVersion }}
+{{- end -}}
+
+{{ $comp := .Values.components.server -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $thisWorkspace := dict "root" . "comp" .Values.components.workspace -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: server
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: server
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: server
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: server
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+      annotations:
+{{ include "gitpod.pod.dependsOn" $this | indent 8 }}
+    spec:
+      priorityClassName: system-node-critical
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: server
+      enableServiceLinks: false
+      initContainers:
+{{ include "gitpod.msgbusWaiter.container" $this | indent 6 }}
+{{ include "gitpod.databaseWaiter.container" $this | indent 6 }}
+      containers:
+      - name: server
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        securityContext:
+          privileged: false
+          runAsUser: 31001
+        volumeMounts:
+        - mountPath: /config
+          name: config
+          readOnly: true
+        - mountPath: /ide-config
+          name: ide-config
+          readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
+          readOnly: true
+{{- if and $comp.githubApp $comp.githubApp.enabled }}
+        - name: github-app-cert-secret
+          mountPath: "{{ dir $comp.githubApp.certPath }}"
+          readOnly: true
+{{- end }}
+{{- if $comp.serverContainer.volumeMounts }}
+{{ toYaml $comp.serverContainer.volumeMounts | indent 8 }}
+{{- end }}
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.dbEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ include "gitpod.container.analyticsEnv" $this | indent 8 }}
+{{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
+        - name: CONFIG_PATH
+          value: "/config/config.json"
+        - name: IDE_CONFIG_PATH
+          value: "/ide-config/config.json"
+        - name: NODE_ENV
+          value: "{{ .Values.installation.stage }}"
+        - name: SHLVL
+          value: "1"
+        - name: WSMAN_CFG_MANAGERS
+          value: {{ index (include "ws-manager-list" $this | fromYaml) "manager" | default list | toJson | b64enc | quote }}
+{{- if $comp.serverContainer.env }}
+{{ toYaml $comp.serverContainer.env | indent 8 }}
+{{- end }}
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+      volumes:
+      - name: config
+        configMap:
+          name: server-config
+      - name: ide-config
+        configMap:
+          name: server-ide-config
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: {{ .Values.components.wsManager.tls.client.secretName }}
+{{- if and $comp.githubApp $comp.githubApp.enabled }}
+      - name: github-app-cert-secret
+        secret:
+          secretName: {{ $comp.githubApp.certSecretName }}
+{{- end }}
+{{- if $comp.volumes }}
+{{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

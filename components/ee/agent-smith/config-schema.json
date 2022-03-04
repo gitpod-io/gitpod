@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/config",
+  "title": "agent-smith config schema - generated using agent-smith config-schema",
+  "definitions": {
+    "": {
+      "required": [
+        "hostURL",
+        "apiToken"
+      ],
+      "properties": {
+        "hostURL": {
+          "type": "string"
+        },
+        "apiToken": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "config": {
+      "required": [
+        "gitpodAPI",
+        "namespace"
+      ],
+      "properties": {
+        "gitpodAPI": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "blacklists": {
+          "$ref": "#/definitions/"
+        },
+        "egressTraffic": {
+          "$ref": "#/definitions/"
+        },
+        "enforcement": {
+          "$ref": "#/definitions/"
+        },
+        "excessiveCPUCheck": {
+          "$ref": "#/definitions/"
+        },
+        "slackWebhooks": {
+          "$ref": "#/definitions/"
+        },
+        "probePath": {
+          "type": "string"
+        },
+        "pprofAddr": {
+          "type": "string"
+        },
+        "prometheusAddr": {
+          "type": "string"
+        },
+        "systemMemoryLimitMib": {
+          "type": "integer"
+        },
+        "hostURL": {
+          "type": "string"
+        },
+        "gitpodAPIToken": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+dependencies:
+- name: docker-registry
+  repository: https://helm.twun.io
+  version: 1.11.0
+- name: minio
+  repository: file://dependencies/minio
+  version: 8.0.10
+- name: mysql
+  repository: https://charts.bitnami.com/bitnami
+  version: 8.6.2
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 8.16.0
+digest: sha256:774cb30f3a24d3686aabccc3a04c00529dff72ed0ee25b027655d48cb3b7f95c
+generated: "2021-11-26T07:27:07.255023294Z"

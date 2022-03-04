@@ -1,0 +1,108 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.dbSync -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-sync
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: db-sync
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: db-sync
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: db-sync
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: db-sync
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: db-sync
+      securityContext:
+        runAsUser: 31002
+      enableServiceLinks: false
+      containers:
+      {{- range $index, $target := $comp.targets }}
+      - name: cloud-sql-proxy-{{- $index }}
+        image: b.gcr.io/cloudsql-docker/gce-proxy:1.11
+        command:
+        - /cloud_sql_proxy
+        - -dir=/cloudsql
+        - -instances={{ $target.instance }}=tcp:0.0.0.0:330{{- $index }}
+        - -credential_file=/credentials/credentials.json
+        volumeMounts:
+        - mountPath: /cloudsql
+          name: cloudsql
+        - mountPath: /credentials
+          name: gcloud-sql-token
+      {{- end }}
+      - name: db-sync-gitpod
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        command: [ "node", "--max-old-space-size=2048", "lib/main.js" ]
+        args: [ "run", "--soft-start" ]
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 2Gi
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        volumeMounts:
+        - mountPath: /db-sync-config.json
+          name: db-sync-config
+          subPath: db-sync-gitpod.json
+        - mountPath: /var/log/db-sync
+          name: db-sync-logs
+        securityContext:
+          privileged: false
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+      - name: db-sync-sessions
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        command: [ "node", "--max-old-space-size=2048", "lib/main.js" ]
+        args: [ "run", "--soft-start" ]
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 2Gi
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        volumeMounts:
+        - mountPath: /db-sync-config.json
+          name: db-sync-config
+          subPath: db-sync-sessions.json
+        - mountPath: /var/log/db-sync
+          name: db-sync-logs
+        securityContext:
+          privileged: false
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+      volumes:
+      - emptyDir: {}
+        name: db-sync-logs
+      - emptyDir: {}
+        name: cloudsql
+      - name: db-sync-config
+        secret:
+          secretName: db-sync-config
+      - name: gcloud-sql-token
+        secret:
+          secretName: gcloud-sql-token
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

@@ -1,0 +1,15 @@
+packages:
+  - name: app
+    type: yarn
+    srcs:
+      - "src/**"
+      - "public/**"
+      - package.json
+      - webpack.config.js
+      - tsconfig.json
+    deps:
+      - components/gitpod-protocol:lib
+      - components/supervisor-api/typescript-grpc:lib
+    config:
+      dontTest: true
+      yarnLock: ${coreYarnLockBase}/../yarn.lock

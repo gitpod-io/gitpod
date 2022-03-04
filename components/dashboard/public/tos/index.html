@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!--
+ Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ Licensed under the GNU Affero General Public License (AGPL).
+ See License-AGPL.txt in the project root for license information.
+-->
+
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Terms of Service</title>
+    <script>
+
+    </script>
+</head>
+<body>
+    <div className='content'>
+        <form action="/api/tos/proceed" method="post" id="accept-tos-form">
+            <input type="hidden" id="flowId" name="flowId" value="defined" />
+            <input type="hidden" value="true" name="agreeTOS" />
+            <button type="submit" form="accept-tos-form" value="Submit">Accept to continue</button>
+        </form>
+    </div>
+</body>
+</html>

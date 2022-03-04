@@ -1,0 +1,28 @@
+{
+    "$schema": "file:///workspace/gitpod/components/ee/agent-smith/config-schema.json",
+    "probePath": "./probe.o",
+    "blacklists": {
+        "very": {
+            "signatures": [
+                {
+                    "name": "testtarget",
+                    "domain": "process",
+                    "kind": "elf",
+                    "pattern": "YWdlbnRTbWl0aFRlc3RUYXJnZXQ=",
+                    "regexp": false
+                }
+            ]
+        }
+    },
+    "egressTraffic": {
+        "dt": "2m",
+        "excessive": {
+            "baseBudget": "300Mi",
+            "perDtThreshold": "100Mi"
+        },
+        "veryExcessive": {
+            "baseBudget": "2Gi",
+            "perDtThreshold": "250Mi"
+        }
+    }
+}

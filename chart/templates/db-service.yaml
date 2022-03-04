@@ -1,0 +1,32 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.db }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ $comp.name }}
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: {{ $comp.name }}
+    kind: service
+    stage: {{ .Values.installation.stage }}
+spec:
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+    {{- if eq $comp.serviceType "NodePort" }}
+    nodePort: 3306
+    {{- end }}
+  selector:
+    {{- if $comp.gcloudSqlProxy.enabled }}
+    app: {{ template "gitpod.fullname" $ }}
+    stage: {{ .Values.installation.stage }}
+    component: {{ $comp.name }}
+    kind: pod
+    {{- else }}
+    app.kubernetes.io/name: mysql
+    {{- end }}
+  type: {{ $comp.serviceType }}
+  sessionAffinity: None

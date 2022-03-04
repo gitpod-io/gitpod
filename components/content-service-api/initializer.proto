@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package contentservice;
+
+option go_package = "github.com/gitpod-io/gitpod/content-service/api";
+
+// WorkspaceInitializer specifies how a workspace is to be initialized
+message WorkspaceInitializer {
+    oneof spec {
+        EmptyInitializer empty = 1;
+        GitInitializer git = 2;
+        SnapshotInitializer snapshot = 3;
+        PrebuildInitializer prebuild = 4;
+        CompositeInitializer composite = 5;
+        FileDownloadInitializer download = 6;
+        FromBackupInitializer backup = 7;
+    }
+}
+
+// CompositeInitializer uses a collection of initializer to produce workspace content.
+// All initializer are executed in the order they're provided.
+message CompositeInitializer {
+    repeated WorkspaceInitializer initializer = 1;
+}
+
+// FileDownloadInitializer downloads files and uses them as workspace content.
+message FileDownloadInitializer {
+    message FileInfo {
+       string url = 1;
+       // file_path is relative to the target_location, e.g. if target_location is in `/workspace/myrepo`
+       // a file_path of `foobar/file` would produce a file in `/workspace/myrepo/foobar/file`.
+       // file_path must include the filename. The FileDownloadInitializer will create any parent directories
+       // necessary to place the file.
+       string file_path = 2;
+       // digest is a hash of the file content in the OCI digest format (see https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
+       // This information is used to compute subsequent
+       // content versions, and to validate the file content was downloaded correctly.
+       string digest = 3;
+    }
+    repeated FileInfo files = 1;
+    string target_location = 2;
+}
+
+message EmptyInitializer { }
+
+message GitInitializer {
+    // remote_uri is the Git remote origin
+    string remote_uri = 1;
+
+    // upstream_Remote_uri is the fork upstream of a repository
+	string upstream_Remote_uri = 2;
+
+    // the target mode determines what gets checked out
+    CloneTargetMode target_mode = 3;
+
+	// the value for the clone target mode - use depends on the target mode
+	string clone_taget = 4;
+
+	// a path relative to the workspace root in which the code will be checked out to
+	string checkout_location = 5;
+
+    // config specifies the Git configuration for this workspace
+    GitConfig config = 6;
+}
+
+// CloneTargetMode is the target state in which we want to leave a GitWorkspace
+enum CloneTargetMode {
+    // REMOTE_HEAD has the local WS point at the remote branch head
+	REMOTE_HEAD = 0;
+
+	// REMOTE_COMMIT has the local WS point at a specific commit
+	REMOTE_COMMIT = 1;
+
+	// REMOTE_BRANCH has the local WS point at a remote branch
+	REMOTE_BRANCH = 2;
+
+	// LOCAL_BRANCH creates a local branch in the workspace
+	LOCAL_BRANCH = 3;
+}
+
+message GitConfig {
+    // custom config values to be set on clone provided through `.gitpod.yml`
+	map<string, string> custom_config = 1;
+
+	// authentication method
+	GitAuthMethod authentication = 2;
+
+    // auth_user is the username used to authenticate the clone
+	string auth_user = 3;
+
+	// auth_password is the password used to authenticate the clone (can also be an API token)
+    string auth_password = 4;
+
+    // auth_ots is a URL where one can download the authentication secret (<username>:<password>)
+    // using a GET request.
+    string auth_ots = 5;
+}
+
+// GitAuthMethod is the means of authentication used during clone
+enum GitAuthMethod {
+    // NO_AUTH disables authentication during clone
+    NO_AUTH = 0;
+
+    // BASIC_AUTH uses HTTP basic auth during clone (fails if repo is not cloned through http)
+    BASIC_AUTH = 1;
+
+    // BASIC_AUTH_OTS uses HTTP basic auth during the clone with the secrets coming from the OTS URL.
+    // Fails if either the OTS download or the clone fail.
+    BASIC_AUTH_OTS = 2;
+}
+
+message SnapshotInitializer {
+    // name of the snapshot to restore
+    string snapshot = 1;
+}
+
+// A prebuild initializer combines snapshots with Git: first we try the snapshot, then apply the Git clone target.
+// If restoring the snapshot fails, we fall back to a regular Git initializer.
+message PrebuildInitializer {
+    SnapshotInitializer prebuild = 1;
+    GitInitializer git = 2;
+}
+
+// FromBackupInitializer initializes content from a previously made backup
+message FromBackupInitializer {}
+
+// GitStatus describes the current Git working copy status, akin to a combination of "git status" and "git branch"
+message GitStatus {
+    // branch is branch we're currently on
+    string branch = 1;
+
+    // latest_commit is the most recent commit on the current branch
+    string latest_commit = 2;
+
+    // uncommited_files is the number of uncommitted files, possibly truncated
+    repeated string uncommited_files = 3;
+
+    // the total number of uncommited files
+    int64 total_uncommited_files = 6;
+
+    // untracked_files is the number of untracked files in the workspace, possibly truncated
+    repeated string untracked_files = 4;
+
+    // the total number of untracked files
+    int64 total_untracked_files = 7;
+
+    // unpushed_commits is the number of unpushed changes in the workspace, possibly truncated
+    repeated string unpushed_commits = 5;
+
+    // the total number of unpushed changes
+    int64 total_unpushed_commits = 8;
+}

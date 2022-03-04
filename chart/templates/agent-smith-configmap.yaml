@@ -1,0 +1,53 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.agentSmith -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-smith-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: agent-smith
+    kind: secret
+    stage: {{ .Values.installation.stage }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |
+    {
+      "blocklists": {
+        "very": {
+          "signatures": [
+            {
+              "name": "testtarget",
+              "domain": "process",
+              "kind": "elf",
+              "pattern": "YWdlbnRTbWl0aFRlc3RUYXJnZXQ=",
+              "regexp": false
+            }
+          ]
+        }
+      },
+      "pprofAddr": "localhost:6060",
+      "prometheusAddr": "localhost:9500",
+      "hostURL": "https://{{ $.Values.hostname }}",
+      "egressTraffic": {
+        "dt": "2m",
+        "excessive": {
+          "baseBudget": "300Mi",
+          "perDtThreshold": "100Mi"
+        },
+        "veryExcessive": {
+          "baseBudget": "2Gi",
+          "perDtThreshold": "250Mi"
+        }
+      },
+      "kubernetes": {
+        "enabled": true
+      }
+    }
+{{- end -}}

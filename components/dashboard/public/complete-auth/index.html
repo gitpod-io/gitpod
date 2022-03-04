@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--
+ Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ Licensed under the GNU Affero General Public License (AGPL).
+ See License-AGPL.txt in the project root for license information.
+-->
+
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Done</title>
+    <script>
+        if (window.opener) {
+            const search = new URLSearchParams(window.location.search);
+            let message = search.get("message");
+            const returnTo = search.get("returnTo");
+            if (returnTo) {
+                message = `${message}&returnTo=${encodeURIComponent(returnTo)}`;
+            }
+            window.opener.postMessage(message, `https://${window.location.hostname}`);
+        } else {
+            console.log("This page is supposed to be opened by Gitpod.")
+        }
+    </script>
+</head>
+<body>
+    If this tab is not closed automatically, feel free to close it and proceed. <button type="button" onclick="window.open('', '_self', ''); window.close();">Close</button>
+</body>
+</html>

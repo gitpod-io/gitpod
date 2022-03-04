@@ -1,0 +1,52 @@
+{
+  "$schema": "./config-schema.json",
+  "manager": {
+    "namespace": "default",
+    "schedulerName": "default-scheduler",
+    "container": {
+      "workspace": {
+        "image": "csweichel/noop:latest",
+        "requests": {
+          "cpu": "1m",
+          "memory": "3246Mi"
+        },
+        "limits": {
+          "cpu": "7",
+          "memory": "3246Mi"
+        }
+      },
+      "sync": {
+        "image": "eu.gcr.io/gitpod-dev/gitpod-ws-daemon:cw-ws-manager.24",
+        "requests": {
+          "cpu": "1m",
+          "memory": "1073741824m"
+        },
+        "limits": {
+          "cpu": "7",
+          "memory": "1000Gi"
+        }
+      }
+    },
+    "heartbeatInterval": "30s",
+    "hostURL": "gitpod.io",
+    "initProbe": {
+      "retries": 10,
+      "timeout": "10s"
+    },
+    "urlTemplate": "http://{{ .Prefix }}.ws-eu.cw-ws-manager.staging.gitpod.io",
+    "workspaceHostPath": "/tmp/workspaces",
+    "theiaHostPath": "/tmp/theia-xyz",
+    "timeouts": {
+      "afterClose": "2m",
+      "headlessWorkspace": "60m",
+      "initialization": "30m",
+      "regularWorkspace": "30m",
+      "maxLifetime": "36h",
+      "startup": "30m"
+    },
+    "eventTraceLog": "-",
+    "reconnectionInterval": "30s"
+  },
+  "messagebusURL": "amqp://gitpod:4B6e7m2QjpCgrz9DQT@localhost",
+  "rpcServerAddr": ":8080"
+}

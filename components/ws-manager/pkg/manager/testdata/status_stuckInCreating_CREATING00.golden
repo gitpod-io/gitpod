@@ -1,0 +1,29 @@
+{
+    "status": {
+        "id": "2513d0b4-3c18-4735-b32e-1bbdead24b78",
+        "status_version": 65536,
+        "metadata": {
+            "owner": "e9df772d-3e9e-4990-bfce-92d8816fe364",
+            "meta_id": "afccd13d-fc9c-4fd2-a27e-3bd8f4e138f6",
+            "started_at": {
+                "seconds": 1582720051
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:51186696bfea6fc9fc5882b2fcd69c42b8f2cf93c8139f20b24566ae6c3eedcb",
+            "url": "https://afccd13d-fc9c-4fd2-a27e-3bd8f4e138f6.ws-eu01.gitpod.io",
+            "timeout": "30m",
+            "ide_image": {}
+        },
+        "phase": 4,
+        "conditions": {
+            "timeout": "workspace timed out after I've meddled with this test data set"
+        },
+        "runtime": {
+            "node_name": "gke-production--gitp-workspace-pool-2-a3afc0b4-tmz8",
+            "pod_name": "ws-2513d0b4-3c18-4735-b32e-1bbdead24b78",
+            "node_ip": "10.132.0.10"
+        },
+        "auth": {}
+    }
+}

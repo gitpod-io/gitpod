@@ -1,0 +1,40 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installNetworkPolicies -}}
+{{ if and (not .Values.components.openVsxProxy.disabled) (not .Values.components.openVsxProxy.deployDisabled) -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openvsx-proxy-deny-all-allow-explicit
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: openvsx-proxy
+    kind: networkpolicy
+    stage: {{ .Values.installation.stage }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: openvsx-proxy
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow access to HTTP on port 8080 from everywhere
+  - ports:
+    - protocol: TCP
+      port: 8080
+  # Allow prometheus scraping from openvsx-proxy /metrics endpoint
+  - ports:
+    - protocol: TCP
+      port: 9500
+    from:
+    - namespaceSelector:
+        matchLabels:
+          chart: monitoring
+    - podSelector:
+        matchLabels:
+          app: prometheus
+          component: server
+{{- end -}}
+{{- end -}}

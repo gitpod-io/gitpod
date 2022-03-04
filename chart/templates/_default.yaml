@@ -1,0 +1,62 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ define "gitpod.service.default" }}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- $comp := .comp -}}
+{{- if not $comp.disabled -}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ $comp.svcName | default $comp.name }}
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: {{ $comp.name }}
+    kind: service
+    stage: {{ $gp.installation.stage }}
+    {{- range $k, $v := $comp.svcLabels }}
+    {{ $k }}: {{ $v }}
+    {{- end }}
+{{- if $comp.serviceAnnotations }}
+  annotations:
+{{ toYaml $comp.serviceAnnotations | indent 4 }}
+{{- end }}
+spec:
+  ports:
+  {{- range $key, $val := $comp.ports }}
+  - name: {{ $key | lower }}
+    protocol: TCP
+    {{ if $val.nodePort -}}nodePort: {{ $val.nodePort }}{{ end }}
+    {{ if $val.servicePort }}
+    port: {{ $val.servicePort }}
+    {{ if $val.containerPort -}}targetPort: {{ $val.containerPort }}{{ end -}}
+    {{- else -}}
+    port: {{ $val.containerPort }}
+    {{ end -}}
+  {{ end }}
+  {{- if $comp.portRange }}
+  {{- range $index, $port := untilStep (int $comp.portRange.start) (int (add $comp.portRange.end 1)) 1 }}
+  - name: "range-{{ $port }}"
+    protocol: TCP
+    port: {{ $port }}
+  {{- end }}
+  {{- end }}
+  selector:
+    app: {{ template "gitpod.fullname" $ }}
+    component: {{ $comp.name }}
+    kind: {{ $comp.selectorKind | default "pod" }}
+    stage: {{ $gp.installation.stage }}
+  type: {{ $comp.serviceType | default "ClusterIP" }}
+  {{- if $comp.clusterIP }}
+  clusterIP: {{ $comp.clusterIP }}
+  {{- end }}
+  sessionAffinity: {{ $comp.serviceSessionAffinity | default "None" }}
+  {{ if $comp.serviceExternalTrafficPolicy -}}
+  externalTrafficPolicy: {{ $comp.serviceExternalTrafficPolicy }}
+  {{- end }}
+  {{- if $comp.loadBalancerIP }}
+  loadBalancerIP: {{ $comp.loadBalancerIP }}
+  {{- end }}
+{{ end }}
+{{- end -}}

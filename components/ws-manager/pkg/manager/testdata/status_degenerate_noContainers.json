@@ -1,0 +1,184 @@
+{
+  "pod": {
+    "metadata": {
+      "name": "ws-foobaz",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/pods/ws-foobaz",
+      "uid": "fabadddc-4351-11e9-aee4-080027861af1",
+      "resourceVersion": "63786",
+      "creationTimestamp": "2019-03-10T16:31:38Z",
+      "labels": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "metaID": "metameta",
+        "workspaceID": "foobaz",
+        "workspaceType": "regular"
+      },
+      "annotations": {
+        "gitpod/id": "foobaz",
+        "gitpod/servicePrefix": "foobaz",
+        "gitpod/url": "http://10.0.0.114:8082",
+        "gitpod/never-ready": "true",
+        "prometheus.io/path": "/metrics",
+        "prometheus.io/port": "23000",
+        "prometheus.io/scrape": "true"
+      }
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "vol-this-workspace",
+          "hostPath": {
+            "path": "/tmp/workspaces/foobaz",
+            "type": "DirectoryOrCreate"
+          }
+        },
+        {
+          "name": "default-token-6qnvx",
+          "secret": {
+            "secretName": "default-token-6qnvx",
+            "defaultMode": 420
+          }
+        }
+      ],
+      "containers": [],
+      "restartPolicy": "Always",
+      "terminationGracePeriodSeconds": 30,
+      "dnsPolicy": "ClusterFirst",
+      "serviceAccountName": "default",
+      "serviceAccount": "default",
+      "nodeName": "minikube",
+      "securityContext": {},
+      "tolerations": [
+        {
+          "key": "node.kubernetes.io/not-ready",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "node.kubernetes.io/unreachable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        }
+      ]
+    },
+    "status": {
+      "phase": "Pending",
+      "conditions": [
+        {
+          "type": "Initialized",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-03-10T16:31:39Z"
+        },
+        {
+          "type": "Ready",
+          "status": "False",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-03-10T16:31:39Z",
+          "reason": "ContainersNotReady",
+          "message": "containers with unready status: [workspace]"
+        },
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-03-10T16:31:38Z"
+        }
+      ],
+      "hostIP": "10.0.2.15",
+      "startTime": "2019-03-10T16:31:39Z",
+      "containerStatuses": [
+        {
+          "name": "workspace",
+          "state": {
+            "waiting": {
+              "reason": "ContainerCreating"
+            }
+          },
+          "lastState": {},
+          "ready": false,
+          "restartCount": 0,
+          "image": "nginx:latest",
+          "imageID": ""
+        }
+      ],
+      "qosClass": "Guaranteed"
+    }
+  },
+  "theiaService": {
+    "metadata": {
+      "name": "foobaz-theia",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/services/foobaz-theia",
+      "uid": "fab63703-4351-11e9-aee4-080027861af1",
+      "resourceVersion": "63777",
+      "creationTimestamp": "2019-03-10T16:31:38Z",
+      "labels": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "metaID": "metameta",
+        "workspaceID": "foobaz"
+      }
+    },
+    "spec": {
+      "ports": [
+        {
+          "name": "theia",
+          "protocol": "TCP",
+          "port": 23000,
+          "targetPort": 23000
+        }
+      ],
+      "selector": {
+        "gpwsman": "true",
+        "headless": "false",
+        "owner": "foobar",
+        "workspaceID": "foobaz"
+      },
+      "clusterIP": "10.111.112.192",
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  "portsService": {
+    "metadata": {
+      "name": "foobaz-ports",
+      "namespace": "default",
+      "selfLink": "/api/v1/namespaces/default/services/foobaz-ports",
+      "uid": "fab97a53-4351-11e9-aee4-080027861af1",
+      "resourceVersion": "63780",
+      "creationTimestamp": "2019-03-10T16:31:38Z",
+      "labels": {
+        "gpwsman": "true",
+        "workspaceID": "foobaz"
+      }
+    },
+    "spec": {
+      "ports": [
+        {
+          "protocol": "TCP",
+          "port": 8080,
+          "targetPort": 8080
+        }
+      ],
+      "selector": {
+        "gpwsman": "true",
+        "workspaceID": "foobaz"
+      },
+      "clusterIP": "10.100.65.85",
+      "type": "ClusterIP",
+      "sessionAffinity": "None"
+    },
+    "status": {
+      "loadBalancer": {}
+    }
+  }
+}

@@ -1,0 +1,14 @@
+workspaceSizing:
+  dynamic:
+    cpu:
+      buckets:
+        # three minutes of 5 CPUs: 5 [numCPU] * 100 [jiffies/sec] * (3 * 60) [seconds] = 90000
+        - budget: 90000
+          limit: 500
+        # five minutes  of 4 CPUs: 4 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 120000
+        - budget: 120000
+          limit: 400
+        # remainder of 2 CPUs where a user has to stay below sustained use of 1.8 CPUs for 5 minutes:
+        #                       1.8 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 54000
+        - budget: 54000
+          limit: 200

@@ -1,0 +1,48 @@
+{
+	auto_https off
+	admin off
+}
+
+:80 {
+	header -Server
+
+	root * /www
+	file_server {
+		precompressed gzip br
+	}
+
+	rewrite /static/bin/gitpod-local-companion-linux /static/bin/gitpod-local-companion-linux-amd64
+	rewrite /static/bin/gitpod-local-companion-darwin /static/bin/gitpod-local-companion-darwin-amd64
+	rewrite /static/bin/gitpod-local-companion-windows.exe /static/bin/gitpod-local-companion-windows-amd64.exe
+	rewrite /static/bin/gitpod-local-companion-linux.gz /static/bin/gitpod-local-companion-linux-amd64.gz
+	rewrite /static/bin/gitpod-local-companion-darwin.gz /static/bin/gitpod-local-companion-darwin-amd64.gz
+	rewrite /static/bin/gitpod-local-companion-windows.exe.gz /static/bin/gitpod-local-companion-windows-amd64.exe.gz
+
+	@bin_asset {
+		file
+		path /static/bin/*
+	}
+
+	header @bin_asset {
+		Content-Type application/octet-stream
+		Content-Disposition attachment
+	}
+
+	@static_path {
+		path /*
+	}
+
+	handle @static_path {
+		try_files {path}
+	}
+
+	handle {
+		respond "404 - Not Found" 404
+	}
+}
+
+# health-check
+:8080 {
+	respond /live 200
+	respond /ready 200
+}

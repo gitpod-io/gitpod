@@ -1,0 +1,39 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: blobserve
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: blobserve
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: blobserve
+roleRef:
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-ns-psp:restricted-root-user
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Namespace }}-blobserve-kube-rbac-proxy
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: blobserve
+    kind: role-binding
+    stage: {{ .Values.installation.stage }}
+subjects:
+- kind: ServiceAccount
+  name: blobserve
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name:  {{ .Release.Namespace }}-kube-rbac-proxy
+  apiGroup: rbac.authorization.k8s.io

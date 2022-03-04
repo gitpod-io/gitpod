@@ -1,0 +1,9 @@
+{
+    "response": {},
+    "postChangeStatus": [
+        {
+            "port": 3000,
+            "url": "3000-foobar-servicePrefix-gitpod.io"
+        }
+    ]
+}

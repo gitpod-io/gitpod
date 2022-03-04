@@ -1,0 +1,48 @@
+args:
+- name: namespace
+  desc: "The namespace to remove - if left empty this job removes all preview environments"
+  required: false
+pod:
+  serviceAccount: werft
+  nodeSelector:
+    dev/workload: workload
+  imagePullSecrets:
+  - name: eu-gcr-io-pull-secret
+  volumes:
+  - name: gcp-sa
+    secret:
+      secretName: gcp-sa-gitpod-dev-deployer
+  containers:
+  - name: wipe-devstaging
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: gcp-sa
+      mountPath: /mnt/secrets/gcp-sa
+      readOnly: true
+    env:
+    - name: HONEYCOMB_DATASET
+      value: "werft"
+    - name: HONEYCOMB_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: honeycomb-api-key
+          key: apikey
+    command:
+    - bash
+    - -c
+    - |
+      sleep 1
+      set -Eeuo pipefail
+
+      werft log phase prepare
+      gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
+      gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev
+
+      export NAMESPACE="{{ .Annotations.namespace }}"
+      sudo chown -R gitpod:gitpod /workspace
+
+      cd .werft
+      yarn install
+      npx ts-node ./wipe-devstaging.ts

@@ -1,0 +1,16 @@
+To determine under which license you may use a file from the Gitpod source code,
+please resort to the header of that file.
+
+If the file has no header, the following rules apply
+1. install scripts are licensed under MIT, see License.MIT.txt
+2. enterprise features are licensed under Gitpod Self-Hosted Free Licensing Terms, see License.GPF.txt
+3. source code that is neither (1) nor (2) is licensed under AGPL, see License.AGPL.txt
+
+On request, licenses under different terms are available.
+
+Install scripts can be found in the folders install/ and chart/
+
+Source code of enterprise features are files that
+* are in folders named "ee" or in subfolders of such folders.
+* contain the strings "_ee" or "ee_" in its file name.
+The files can be found by running the command `find . -iname ee -or -iname "*_ee*" -or -iname "*ee_*"`

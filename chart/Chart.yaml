@@ -1,0 +1,27 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v2
+appVersion: "0.1.5"
+description: The core chart for Gitpod
+name: gitpod
+version: 0.4.0
+kubeVersion: ">=1.17.0-0"
+
+dependencies:
+- name: docker-registry
+  version: 1.11.0
+  repository: https://helm.twun.io
+  condition: docker-registry.enabled
+- name: minio
+  version: 8.0.10
+  repository: "file://dependencies/minio"
+  condition: minio.enabled
+- name: mysql
+  version: 8.6.2
+  repository: https://charts.bitnami.com/bitnami
+  condition: mysql.enabled
+- name: rabbitmq
+  version: 8.16.0
+  repository: https://charts.bitnami.com/bitnami
+  condition: rabbitmq.enabled

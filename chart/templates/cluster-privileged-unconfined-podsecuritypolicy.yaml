@@ -1,0 +1,42 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installPodSecurityPolicies -}}
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  # This PSP *must* be used before the psp:privileged coming from gitpod. The PSP controller will order them alphabetically by name.
+  # See https://kubernetes.io/docs/concepts/policy/pod-security-policy/#policy-order.
+  name: {{ .Release.Namespace }}-ns-privileged-unconfined
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: cluster
+    kind: podsecuritypolicy
+    stage: {{ .Values.installation.stage }}
+  annotations:
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'unconfined'
+    apparmor.security.beta.kubernetes.io/defaultProfileName:  'unconfined'
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default,unconfined'
+    seccomp.security.alpha.kubernetes.io/defaultProfileName:  'runtime/default'
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - '*'
+  volumes:
+  - '*'
+  hostNetwork: false
+  hostPorts:
+  - min: 0
+    max: 65535
+  hostIPC: false
+  hostPID: true
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+{{- end -}}

@@ -1,0 +1,15 @@
+global:
+  timestamp: timestamp
+
+jaeger:
+  storage: "memory"
+  roleBinding: true
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: In
+                values:
+                  - 'true'
