@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl, traceAPIParams, traceWI, censor } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { GitpodServer, GitpodClient, AdminGetListRequest, User, Team, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace, FindPrebuildsParams } from "@gitpod/gitpod-protocol";
+import { GitpodServer, GitpodClient, AdminGetListRequest, User, Team, TeamMemberInfo, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace, FindPrebuildsParams, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -25,7 +25,7 @@ import { AccountStatementProvider } from "../user/account-statement-provider";
 import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import { AssigneeIdentityIdentifier, TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
-import pThrottle, { ThrottledFunction } from "p-throttle";
+import * as pThrottle from "p-throttle";
 import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
 import { FindUserByIdentityStrResult } from "../../../src/user/user-service";
 import { Accounting, AccountService, SubscriptionService, TeamSubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
@@ -39,7 +39,7 @@ import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
-import { ClientMetadata } from "../../../src/websocket/websocket-connection-manager";
+import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from 'url';
 
@@ -89,9 +89,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         for (const projectId of projects) {
             this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
                 projectId,
-                (ctx: TraceContext, update: PrebuildWithStatus) => {
+                (ctx: TraceContext, update: PrebuildWithStatus) => TraceContext.withSpan("forwardPrebuildUpdateToClient", (ctx) => {
+                    traceClientMetadata(ctx, this.clientMetadata);
+                    TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
+
                     this.client?.onPrebuildUpdate(update);
-                }
+                }, ctx)
             ));
         }
 
@@ -122,12 +125,17 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         this.disposables.push(this.localMessageBroker.listenToCreditAlerts(
             this.user.id,
-            async (ctx: TraceContext, creditAlert: CreditAlert) => {
-                this.client?.onCreditAlert(creditAlert);
-                if (creditAlert.remainingUsageHours < 1e-6) {
-                    const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(creditAlert.userId);
-                    runningInstances.forEach(async instance => await this.stopWorkspace(ctx, instance.workspaceId));
-                }
+            (ctx: TraceContext, creditAlert: CreditAlert) => {
+                TraceContext.withSpan("forwardCreditAlertToClient", async (ctx) => {
+                    traceClientMetadata(ctx, this.clientMetadata);
+                    TraceContext.setJsonRPCMetadata(ctx, "onCreditAlert");
+
+                    this.client?.onCreditAlert(creditAlert);
+                    if (creditAlert.remainingUsageHours < 1e-6) {
+                        const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(creditAlert.userId);
+                        runningInstances.forEach(async instance => await this.stopWorkspace(ctx, instance.workspaceId));
+                    }
+                }, ctx);
             }
         ));
     }
@@ -351,7 +359,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!workspace || workspace.ownerId !== userId) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
-        await this.guardAccess({ kind: "snapshot", subject: undefined, workspaceOwnerID: workspace.ownerId, workspaceID: workspace.id }, "create");
+        await this.guardAccess({ kind: "snapshot", subject: undefined, workspace }, "create");
 
         return workspace;
     }
@@ -398,7 +406,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         const snapshots = await this.workspaceDb.trace(ctx).findSnapshotsByWorkspaceId(workspaceId);
-        await Promise.all(snapshots.map(s => this.guardAccess({ kind: "snapshot", subject: s, workspaceOwnerID: workspace.ownerId }, "get")));
+        await Promise.all(snapshots.map(s => this.guardAccess({ kind: "snapshot", subject: s, workspace }, "get")));
 
         return snapshots.map(s => s.id);
     }
@@ -540,10 +548,35 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.censorUser(target);
     }
 
+    async adminGetTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+        await this.guardAdminAccess("adminGetTeamMembers", { teamId }, Permission.ADMIN_WORKSPACES);
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        return members;
+    }
+
+    async adminGetTeams(ctx: TraceContext, req: AdminGetListRequest<Team>): Promise<AdminGetListResult<Team>> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+        await this.guardAdminAccess("adminGetTeams", { req }, Permission.ADMIN_WORKSPACES);
+
+        return await this.teamDB.findTeams(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.searchTerm as string);
+    }
+
     async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
         await this.guardAdminAccess("adminGetTeamById", { id }, Permission.ADMIN_WORKSPACES);
         return await this.teamDB.findTeamById(id);
+    }
+
+    async adminSetTeamMemberRole(ctx: TraceContext, teamId: string, userId: string, role: TeamMemberRole): Promise<void> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+        await this.guardAdminAccess("adminSetTeamMemberRole", { teamId, userId, role }, Permission.ADMIN_WORKSPACES);
+        return this.teamDB.setTeamMemberRole(userId, teamId, role);
     }
 
     async adminGetWorkspaces(ctx: TraceContext, req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
@@ -553,7 +586,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
 
-        return await this.workspaceDb.trace(ctx).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req, req.searchTerm);
+        return await this.workspaceDb.trace(ctx).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req);
     }
 
     async adminGetWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceAndInstance> {
@@ -1190,7 +1223,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected readonly findAssigneeThrottled: ThrottledFunction<any[], FindUserByIdentityStrResult> = pThrottle(async (logCtx: LogContext, identityStr: string): Promise<FindUserByIdentityStrResult> => {
+    protected readonly findAssigneeThrottler = pThrottle({ limit: 1, interval: 1000 });
+    protected readonly findAssigneeThrottled: pThrottle.ThrottledFunction<any[], FindUserByIdentityStrResult> = this.findAssigneeThrottler(async (logCtx: LogContext, identityStr: string): Promise<FindUserByIdentityStrResult> => {
         let assigneeInfo = undefined;
         try {
             assigneeInfo = await this.userService.findUserByIdentityStr(identityStr);
@@ -1201,7 +1235,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw new ResponseError(ErrorCodes.TEAM_SUBSCRIPTION_ASSIGNMENT_FAILED, `Gitpod user not found`, { msg: `Gitpod user not found` });
         }
         return assigneeInfo;
-    }, 1, 1000);
+    });
 
     protected async findAssignee(logCtx: LogContext, identityStr: string) {
         return await this.findAssigneeThrottled(logCtx, identityStr);
@@ -1559,9 +1593,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         // update client registration for the logged in user
         this.disposables.push(this.localMessageBroker.listenForPrebuildUpdates(
             project.id,
-            (ctx: TraceContext, update: PrebuildWithStatus) => {
+            (ctx: TraceContext, update: PrebuildWithStatus) =>  TraceContext.withSpan("forwardPrebuildUpdateToClient", (ctx) => {
+                traceClientMetadata(ctx, this.clientMetadata);
+                TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
+
                 this.client?.onPrebuildUpdate(update);
-            }
+            }, ctx)
         ));
         return project;
     }

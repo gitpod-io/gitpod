@@ -10,6 +10,7 @@ import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
+import { identifyUser } from "../Analytics";
 
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
@@ -30,9 +31,7 @@ export default function Notifications() {
                     }
                 }
             });
-            await getGitpodService().server.identifyUser({
-                traits: { "unsubscribed_onboarding": !newIsOnboardingMail }
-            })
+            identifyUser({"unsubscribed_onboarding": !newIsOnboardingMail});
             setUser(user);
             setOnboardingMail(newIsOnboardingMail);
         }
@@ -51,9 +50,7 @@ export default function Notifications() {
                     }
                 }
             });
-            await getGitpodService().server.identifyUser({
-                traits: { "unsubscribed_changelog": !newIsChangelogMail }
-            })
+            identifyUser({ "unsubscribed_changelog": !newIsChangelogMail });
             setUser(user);
             setChangelogMail(newIsChangelogMail);
         }
@@ -72,9 +69,7 @@ export default function Notifications() {
                     }
                 }
             });
-            await getGitpodService().server.identifyUser({
-                traits: { "unsubscribed_devx": !newIsDevXMail }
-            })
+            identifyUser({ "unsubscribed_devx": !newIsDevXMail });
             setUser(user);
             setDevXMail(newIsDevXMail);
         }

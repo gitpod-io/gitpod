@@ -103,7 +103,11 @@ export class IDEConfigService {
         this.configPath = filePathTelepresenceAware(configPath);
         this.validate = this.ajv.compile(scheme);
         this.reconcile("initial");
-        fs.watchFile(this.configPath, () => this.reconcile("file changed"));
+        fs.watchFile(this.configPath, (curr, prev) => {
+            if (curr.mtimeMs != prev.mtimeMs) {
+                this.reconcile("file changed");
+            }
+        });
         repeat(() => this.reconcile("interval"), 60 * 60 * 1000 /* 1 hour */);
     }
 
@@ -134,7 +138,8 @@ export class IDEConfigService {
 
             const newValue: IDEConfig = JSON.parse(fileContent);
             const contentHash = crypto.createHash('sha256').update(fileContent, 'utf8').digest('hex');
-            if (this.contentHash !== contentHash) {
+            const contentChanged = this.contentHash !== contentHash
+            if (contentChanged) {
                 this.contentHash = contentHash;
 
                 this.validate(newValue);
@@ -175,6 +180,11 @@ export class IDEConfigService {
 
             if (!value) {
                 return;
+            }
+
+            // we only want to resolve image by interval or content changed
+            if (!(contentChanged || trigger === 'interval')) {
+                return
             }
 
             for (const [id, option] of Object.entries(newValue.ideOptions.options).filter(([_, x]) => !!x.resolveImageDigest)) {

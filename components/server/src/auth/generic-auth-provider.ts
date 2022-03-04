@@ -194,6 +194,7 @@ export class GenericAuthProvider implements AuthProvider {
             this.readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
                 try {
                     const fetchResult = await fetch(configURL, {
+                        timeout: 10000,
                         method: "POST",
                         headers: {
                             "Accept": "application/json",
@@ -238,8 +239,13 @@ export class GenericAuthProvider implements AuthProvider {
         }
     }
 
+    protected cachedAuthCallbackPath: string | undefined = undefined;
     get authCallbackPath() {
-        return new URL(this.oauthConfig.callBackUrl).pathname;
+        // This ends up being called quite often so we cache the URL constructor
+        if (this.cachedAuthCallbackPath === undefined) {
+            this.cachedAuthCallbackPath = new URL(this.oauthConfig.callBackUrl).pathname;
+        }
+        return this.cachedAuthCallbackPath;
     }
 
 

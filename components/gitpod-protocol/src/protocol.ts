@@ -815,15 +815,14 @@ export namespace WithSnapshot {
     }
 }
 
-export interface WithPrebuild {
-    snapshotBucketId: string;
+export interface WithPrebuild extends WithSnapshot {
     prebuildWorkspaceId: string;
     wasPrebuilt: true;
 }
 export namespace WithPrebuild {
     export function is(context: any): context is WithPrebuild {
         return context
-            && 'snapshotBucketId' in context
+            && WithSnapshot.is(context)
             && 'prebuildWorkspaceId' in context
             && 'wasPrebuilt' in context;
     }
@@ -1171,6 +1170,8 @@ export interface AuthProviderEntry {
     readonly status: AuthProviderEntry.Status;
 
     readonly oauth: OAuth2Config;
+    /** A random string that is to change whenever oauth changes (enforced on DB level) */
+    readonly oauthRevision?: string;
 }
 
 export interface OAuth2Config {

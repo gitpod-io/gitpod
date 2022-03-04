@@ -37,20 +37,11 @@ const (
 	// ServiceTypeLabel help differentiate between port service and IDE service
 	ServiceTypeLabel = "serviceType"
 
-	// GitpodDiskPressureLabel marks a node as having disk pressure (besides the root disk - used for the workspace SSDs, set by ws-daemon)
-	GitpodDiskPressureLabel = "gitpod.io/diskPressure"
-
-	// GitpodNodeServiceLabel marks a pod as providing a particular service to a node
-	GitpodNodeServiceLabel = "gitpod.io/nodeService"
-
 	// TraceIDAnnotation adds a Jaeger/OpenTracing header to the pod so that we can trace it's behaviour
 	TraceIDAnnotation = "gitpod/traceid"
 
 	// CPULimitAnnotation enforces a strict CPU limit on a workspace by virtue of ws-daemon
 	CPULimitAnnotation = "gitpod.io/cpuLimit"
-
-	// RequiredNodeServicesAnnotation lists all Gitpod services required on the node
-	RequiredNodeServicesAnnotation = "gitpod.io/requiredNodeServices"
 
 	// ContainerIsGoneAnnotation is used as workaround for containerd https://github.com/containerd/containerd/pull/4214
 	// which might cause workspace container status propagation to fail, which in turn would keep a workspace running indefinitely.
@@ -128,15 +119,6 @@ func IsHeadlessWorkspace(pod *corev1.Pod) bool {
 	return ok && val == "true"
 }
 
-func IsGhostWorkspace(pod *corev1.Pod) bool {
-	if !IsWorkspace(pod) {
-		return false
-	}
-
-	val, ok := pod.ObjectMeta.Labels[TypeLabel]
-	return ok && val == "ghost"
-}
-
 func IsRegularWorkspace(pod *corev1.Pod) bool {
 	if !IsWorkspace(pod) {
 		return false
@@ -144,11 +126,6 @@ func IsRegularWorkspace(pod *corev1.Pod) bool {
 
 	val, ok := pod.ObjectMeta.Labels[TypeLabel]
 	return ok && val == "regular"
-}
-
-func IsNonGhostWorkspace(pod *corev1.Pod) bool {
-	return IsWorkspace(pod) &&
-		!IsGhostWorkspace(pod)
 }
 
 func GetWorkspaceType(pod *corev1.Pod) string {

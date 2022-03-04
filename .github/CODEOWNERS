@@ -1,8 +1,8 @@
 #
-# The CODEOWNERS files is owned by all teams.
-# To change ownerhip all teams need to approve.
+# For the CODEONWERS file we don't want to have a specific CODEOWNER.
+# A single review from anyone who is allowed to review PRs is sufficent.
 #
-/.github/CODEOWNERS @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/engineering-self-hosted  @gitpod-io/platform
+/.github/CODEOWNERS
 
 /components/blobserve @gitpod-io/engineering-workspace
 /components/common-go @gitpod-io/engineering-workspace
@@ -25,6 +25,28 @@
 /components/image-builder-bob @gitpod-io/engineering-workspace
 /components/image-builder-mk3 @gitpod-io/engineering-workspace
 /components/installation-telemetry @gitpod-io/engineering-self-hosted
+/install @gitpod-io/engineering-self-hosted
+/install/installer @gitpod-io/engineering-self-hosted
+/install/installer/pkg/components/agent-smith @gitpod-io/engineering-workspace
+/install/installer/pkg/components/blobserve @gitpod-io/engineering-workspace
+/install/installer/pkg/components/components-webapp @gitpod-io/engineering-webapp
+/install/installer/pkg/components/components-workspace @gitpod-io/engineering-workspace
+/install/installer/pkg/components/content-service @gitpod-io/engineering-workspace
+/install/installer/pkg/components/dashboard @gitpod-io/engineering-webapp
+/install/installer/pkg/components/ide-proxy @gitpod-io/engineering-ide
+/install/installer/pkg/components/image-builder-mk3 @gitpod-io/engineering-workspace
+/install/installer/pkg/components/openvsx-proxy @gitpod-io/engineering-ide
+/install/installer/pkg/components/proxy @gitpod-io/engineering-webapp
+/install/installer/pkg/components/registry-facade @gitpod-io/engineering-workspace
+/install/installer/pkg/components/server @gitpod-io/engineering-webapp
+/install/installer/pkg/components/server/ide @gitpod-io/engineering-ide
+/install/installer/pkg/components/workspace @gitpod-io/engineering-workspace
+/install/installer/pkg/components/workspace/ide @gitpod-io/engineering-ide
+/install/installer/pkg/components/ws-daemon @gitpod-io/engineering-workspace
+/install/installer/pkg/components/ws-manager @gitpod-io/engineering-workspace
+/install/installer/pkg/components/ws-manager-bridge @gitpod-io/engineering-webapp
+/install/installer/pkg/components/ws-proxy @gitpod-io/engineering-workspace
+/install/installer/pkg/config/versions @gitpod-io/engineering-ide
 /components/licensor @gitpod-io/engineering-webapp
 /components/local-app-api @csweichel @akosyakov
 /components/local-app @gitpod-io/engineering-ide
@@ -46,33 +68,14 @@
 /components/ws-proxy @gitpod-io/engineering-workspace
 /dev/gpctl @gitpod-io/engineering-workspace
 /dev/loadgen @gitpod-io/engineering-workspace
-/installer @gitpod-io/engineering-self-hosted
-/installer/pkg/components/agent-smith @gitpod-io/engineering-workspace
-/installer/pkg/components/blobserve @gitpod-io/engineering-workspace
-/installer/pkg/components/components-webapp @gitpod-io/engineering-webapp
-/installer/pkg/components/components-workspace @gitpod-io/engineering-workspace
-/installer/pkg/components/content-service @gitpod-io/engineering-workspace
-/installer/pkg/components/dashboard @gitpod-io/engineering-webapp
-/installer/pkg/components/ide-proxy @gitpod-io/engineering-ide
-/installer/pkg/components/image-builder-mk3 @gitpod-io/engineering-workspace
-/installer/pkg/components/openvsx-proxy @gitpod-io/engineering-ide
-/installer/pkg/components/proxy @gitpod-io/engineering-webapp
-/installer/pkg/components/registry-facade @gitpod-io/engineering-workspace
-/installer/pkg/components/server @gitpod-io/engineering-webapp
-/installer/pkg/components/server/ide @gitpod-io/engineering-ide
-/installer/pkg/components/workspace @gitpod-io/engineering-workspace
-/installer/pkg/components/workspace/ide @gitpod-io/engineering-ide
-/installer/pkg/components/ws-daemon @gitpod-io/engineering-workspace
-/installer/pkg/components/ws-manager-bridge @gitpod-io/engineering-webapp
-/installer/pkg/components/ws-manager @gitpod-io/engineering-workspace
-/installer/pkg/components/ws-proxy @gitpod-io/engineering-workspace
-/installer/pkg/config/versions @gitpod-io/engineering-ide
+/dev/preview @gitpod-io/platform
 /operations/observability/mixins @gitpod-io/platform
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
 /operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/platform
 /.werft/observability @gitpod-io/platform
+/.werft/delete-preview-environments @gitpod-io/platform
 
 #
 # Automation

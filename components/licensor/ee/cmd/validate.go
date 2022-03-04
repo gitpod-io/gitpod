@@ -22,18 +22,28 @@ var validateCmd = &cobra.Command{
 	Short: "Validates a license - reads from stdin if no argument is provided",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		var lic []byte
-		if len(args) == 0 {
-			lic, err = io.ReadAll(os.Stdin)
-			if err != nil {
-				return err
+		domain, _ := cmd.Flags().GetString("domain")
+		licensorType, _ := cmd.Flags().GetString("licensor")
+
+		var e licensor.Evaluator
+		switch licensorType {
+		case string(licensor.LicenseTypeReplicated):
+			e = licensor.NewReplicatedEvaluator(domain)
+			break
+		default:
+			var lic []byte
+			if len(args) == 0 {
+				lic, err = io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+			} else {
+				lic = []byte(args[0])
 			}
-		} else {
-			lic = []byte(args[0])
+
+			e = licensor.NewGitpodEvaluator(lic, domain)
 		}
 
-		domain, _ := cmd.Flags().GetString("domain")
-		e := licensor.NewEvaluator(lic, domain)
 		if msg, valid := e.Validate(); !valid {
 			return xerrors.Errorf(msg)
 		}
@@ -47,4 +57,5 @@ var validateCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(validateCmd)
 	validateCmd.Flags().String("domain", "", "domain to evaluate the license against")
+	validateCmd.Flags().String("licensor", "gitpod", "licensor to use")
 }

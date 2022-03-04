@@ -14,11 +14,11 @@
             "url": "http://10.0.0.114:8082",
             "ide_image": {}
         },
-        "phase": 2,
+        "phase": 3,
         "conditions": {
             "failed": "container sync completed; containers of a workspace pod are not supposed to do that"
         },
-        "message": "containers are starting",
+        "message": "workspace initializer is running",
         "runtime": {
             "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-g6l3",
             "pod_name": "ws-foobar",

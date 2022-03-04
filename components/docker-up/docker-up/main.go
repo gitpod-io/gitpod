@@ -9,9 +9,12 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"compress/gzip"
 	"context"
 	"embed"
+	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -32,6 +35,8 @@ import (
 
 var log *logrus.Entry
 
+const DaemonArgs = "DOCKERD_ARGS"
+
 var opts struct {
 	RuncFacade           bool
 	BinDir               string
@@ -43,10 +48,15 @@ var opts struct {
 
 //go:embed docker.tgz
 //go:embed docker-compose
+//go:embed runc
 var binaries embed.FS
+
+// ensure apt update is run only once
+var aptUpdated = false
 
 const (
 	dockerSocketFN = "/var/run/docker.sock"
+	gitpodUserId   = 33333
 )
 
 func main() {
@@ -106,6 +116,12 @@ func runWithinNetns() (err error) {
 		)
 	}
 
+	userArgs, err := userArgs()
+	if err != nil {
+		return xerrors.Errorf("cannot add user supplied docker args: %w", err)
+	}
+	args = append(args, userArgs...)
+
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
 		args = append(args, "-H", "fd://")
@@ -161,10 +177,104 @@ func runWithinNetns() (err error) {
 	return nil
 }
 
+type ConvertUserArg func(arg, value string) ([]string, error)
+
+var allowedDockerArgs = map[string]ConvertUserArg{
+	"remap-user": convertRemapUser,
+}
+
+func userArgs() ([]string, error) {
+	userArgs, exists := os.LookupEnv(DaemonArgs)
+	args := []string{}
+	if !exists {
+		return args, nil
+	}
+
+	var providedDockerArgs map[string]string
+	if err := json.Unmarshal([]byte(userArgs), &providedDockerArgs); err != nil {
+		return nil, xerrors.Errorf("unable to deserialize docker args: %w", err)
+	}
+
+	for userArg, userValue := range providedDockerArgs {
+		converter, exists := allowedDockerArgs[userArg]
+		if !exists {
+			continue
+		}
+
+		if converter != nil {
+			cargs, err := converter(userArg, userValue)
+			if err != nil {
+				return nil, xerrors.Errorf("could not convert %v - %v: %w", userArg, userValue, err)
+			}
+			args = append(args, cargs...)
+
+		} else {
+			args = append(args, "--"+userArg, userValue)
+		}
+	}
+
+	return args, nil
+}
+
+func convertRemapUser(arg, value string) ([]string, error) {
+	id, err := strconv.Atoi(value)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range []string{"/etc/subuid", "/etc/subgid"} {
+		err := adaptSubid(f, id)
+		if err != nil {
+			return nil, xerrors.Errorf("could not adapt subid files: %w", err)
+		}
+	}
+
+	return []string{"--userns-remap", "gitpod"}, nil
+}
+
+func adaptSubid(oldfile string, id int) error {
+	uid, err := os.Open(oldfile)
+	if err != nil {
+		return err
+	}
+
+	newfile, err := os.Create(oldfile + ".new")
+	if err != nil {
+		return err
+	}
+
+	mappingFmt := func(username string, id int, size int) string { return fmt.Sprintf("%s:%d:%d\n", username, id, size) }
+
+	if id != 0 {
+		newfile.WriteString(mappingFmt("gitpod", 1, id))
+		newfile.WriteString(mappingFmt("gitpod", gitpodUserId, 1))
+	} else {
+		newfile.WriteString(mappingFmt("gitpod", gitpodUserId, 1))
+		newfile.WriteString(mappingFmt("gitpod", 1, gitpodUserId-1))
+		newfile.WriteString(mappingFmt("gitpod", gitpodUserId+1, 32200)) // map rest of user ids in the user namespace
+	}
+
+	uidScanner := bufio.NewScanner(uid)
+	for uidScanner.Scan() {
+		l := uidScanner.Text()
+		if !strings.HasPrefix(l, "gitpod") {
+			newfile.WriteString(l + "\n")
+		}
+	}
+
+	if err = os.Rename(newfile.Name(), oldfile); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var prerequisites = map[string]func() error{
 	"dockerd":        installDocker,
 	"docker-compose": installDockerCompose,
 	"iptables":       installIptables,
+	"uidmap":         installUidMap,
+	"runcV1.1.0":     installRunc,
 }
 
 func ensurePrerequisites() error {
@@ -253,20 +363,12 @@ func installDockerCompose() error {
 }
 
 func installIptables() error {
-	pth, _ := exec.LookPath("apt-get")
-	if pth != "" {
-		cmd := exec.Command("/bin/sh", "-c", "apt-get update && apt-get install -y iptables xz-utils")
-		cmd.Stdin = os.Stdin
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig: syscall.SIGKILL,
-		}
-
-		return cmd.Run()
+	err := installPackages("iptables", "xz-utils")
+	if err != nil {
+		return xerrors.Errorf("could not install iptables: %w", err)
 	}
 
-	pth, _ = exec.LookPath("apk")
+	pth, _ := exec.LookPath("apk")
 	if pth != "" {
 		cmd := exec.Command("/bin/sh", "-c", "apk add --no-cache iptables xz")
 		cmd.Stdin = os.Stdin
@@ -282,6 +384,139 @@ func installIptables() error {
 	// the container is not debian/ubuntu/alpine
 	log.WithField("command", "dockerd").Warn("Please install dockerd dependencies: iptables")
 	return nil
+}
+
+func installUidMap() error {
+	_, exists := os.LookupEnv(DaemonArgs)
+	if !exists {
+		return nil
+	}
+
+	needInstall := false
+	if _, err := exec.LookPath("newuidmap"); err != nil {
+		needInstall = true
+	}
+
+	if _, err := exec.LookPath("newgidmap"); err != nil {
+		needInstall = true
+	}
+
+	if !needInstall {
+		return nil
+	}
+
+	err := installPackages("uidmap")
+	if err != nil {
+		return xerrors.Errorf("could not install uidmap: %w", err)
+	}
+
+	return nil
+}
+
+func installRunc() error {
+	_, exists := os.LookupEnv(DaemonArgs)
+	if !exists {
+		return nil
+	}
+
+	runc, _ := exec.LookPath("runc")
+	if runc != "" {
+		// if the required version or a more recent one is already
+		// installed do nothing
+		if !needInstallRunc() {
+			return nil
+		}
+	} else {
+		runc = "/bin/runc"
+	}
+
+	err := installBinary("runc", runc)
+	if err != nil {
+		return xerrors.Errorf("could not install runc: %w", err)
+	}
+
+	return nil
+}
+
+func needInstallRunc() bool {
+	cmd := exec.Command("runc", "--version")
+	output, err := cmd.Output()
+	if err != nil {
+		return true
+	}
+
+	major, minor, err := detectRuncVersion(string(output))
+	if err != nil {
+		return true
+	}
+
+	return major < 1 || major == 1 && minor < 1
+}
+
+func detectRuncVersion(output string) (major, minor int, err error) {
+	versionInfo := strings.Split(output, "\n")
+	for _, l := range versionInfo {
+		if !strings.HasPrefix(l, "runc version") {
+			continue
+		}
+
+		l = strings.TrimPrefix(l, "runc version")
+		l = strings.TrimSpace(l)
+
+		n := strings.Split(l, ".")
+		if len(n) < 2 {
+			return 0, 0, xerrors.Errorf("could not parse %s", l)
+		}
+
+		major, err = strconv.Atoi(n[0])
+		if err != nil {
+			return 0, 0, xerrors.Errorf("could not parse major %s: %w", n[0])
+		}
+
+		minor, err = strconv.Atoi(n[1])
+		if err != nil {
+			return 0, 0, xerrors.Errorf("could not parse minor %s: %w", n[1])
+		}
+
+		return major, minor, nil
+	}
+
+	return 0, 0, xerrors.Errorf("could not detect runc version")
+}
+
+func installPackages(packages ...string) error {
+	apt, _ := exec.LookPath("apt-get")
+	if apt != "" {
+		cmd := exec.Command("/bin/sh", "-c")
+
+		var installCommand string
+		if !aptUpdated {
+			installCommand = "apt-get update && "
+		}
+
+		installCommand = installCommand + "apt-get install -y"
+		for _, p := range packages {
+			installCommand = installCommand + " " + p
+		}
+
+		cmd.Args = append(cmd.Args, installCommand)
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Pdeathsig: syscall.SIGKILL,
+		}
+
+		err := cmd.Run()
+		if err != nil {
+			return err
+		}
+
+		aptUpdated = true
+		return nil
+	} else {
+		return xerrors.Errorf("apt-get is not available")
+	}
 }
 
 func installBinary(name, dst string) error {

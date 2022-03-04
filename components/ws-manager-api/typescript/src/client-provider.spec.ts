@@ -14,7 +14,7 @@ import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientPr
 import { WorkspaceCluster, WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { PromisifiedWorkspaceManagerClient } from ".";
-import { Constraint, constraintInverseMoreResources, constraintMoreResources, constraintNewWorkspaceCluster, ExtendedUser, intersect, invert } from "./constraints";
+import { Constraint, constraintHasPermissions, constraintInverseMoreResources, constraintMoreResources, ExtendedUser, intersect, invert } from "./constraints";
 const expect = chai.expect;
 
 @suite
@@ -38,6 +38,11 @@ class TestClientProvider {
                         { type: "has-permission", permission: "new-workspace-cluster" },
                     ]
                 },
+                {
+                    name: "con2", govern: true, maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [
+                        { type: "has-permission", permission: "monitor" },    // This is meant to representent a permission that does not take special predence (cmp. constraints.ts)
+                    ]
+                },
             ];
             return <WorkspaceManagerClientProviderSource>{
                 getAllWorkspaceClusters: async () => { return cluster as WorkspaceClusterWoTLS[] },
@@ -55,9 +60,12 @@ class TestClientProvider {
     @test
     public async getStartClusterSets() {
         await this.expectInstallations([["a2", "a3"]], await this.provider.getStartClusterSets({} as User, {} as Workspace, {} as WorkspaceInstance), "default case");
-        await this.expectInstallations([["con1"], ["a2", "a3"]], await this.provider.getStartClusterSets({
-            rolesOrPermissions: ["new-workspace-cluster"]
-        } as User, {} as Workspace, {} as WorkspaceInstance), "new workspace cluster");
+        await this.expectInstallations([["con1"], ["a2", "a3", "con1"]], await this.provider.getStartClusterSets({ rolesOrPermissions: ["new-workspace-cluster"] } as User,
+            {} as Workspace, {} as WorkspaceInstance), "new workspace cluster");
+        await this.expectInstallations([["a2", "a3", "con2"]], await this.provider.getStartClusterSets({ rolesOrPermissions: ["monitor"] } as User,
+            {} as Workspace, {} as WorkspaceInstance), "cluster has permission w/o precedence, user too");
+        await this.expectInstallations([["a2", "a3"]], await this.provider.getStartClusterSets({} as User,
+            {} as Workspace, {} as WorkspaceInstance), "cluster has permission w/o precedence, user NOT");
     }
 
     @test
@@ -86,8 +94,8 @@ class TestClientProvider {
             {name: "a1", admissionConstraints: [{ type: "has-permission", permission: "new-workspace-cluster" }]} as WorkspaceClusterWoTLS,
             {name: "b1" } as WorkspaceClusterWoTLS,
         ]
-        expect(constraintNewWorkspaceCluster(clusters, {} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name)).to.be.empty;
-        expect(constraintNewWorkspaceCluster(clusters, {rolesOrPermissions:["new-workspace-cluster"]} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name)).to.be.eql(["a1"]);
+        expect(constraintHasPermissions("monitor")(clusters, {} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name)).to.be.empty;
+        expect(constraintHasPermissions("new-workspace-cluster")(clusters, {rolesOrPermissions:["new-workspace-cluster"]} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name)).to.be.eql(["a1"]);
     }
 
     @test
@@ -96,10 +104,8 @@ class TestClientProvider {
             {name: "a1", admissionConstraints: [{ type: "has-more-resources" }]} as WorkspaceClusterWoTLS,
             {name: "b1" } as WorkspaceClusterWoTLS,
         ]
-        expect(constraintMoreResources(clusters, {} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "gets no more resources").to.be.empty;
-        expect(constraintMoreResources(clusters, {getsMoreResources: true} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "gets more resources").to.be.eql(["a1"]);
+        expect(constraintMoreResources(clusters, {} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "more resources").to.be.eql(["a1"]);
         expect(constraintInverseMoreResources(clusters, {} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "inverse more resources").to.be.eql(["b1"]);
-        expect(constraintInverseMoreResources(clusters, {getsMoreResources: true} as ExtendedUser, {} as Workspace, {} as WorkspaceInstance).map(c => c.name), "inverse more resources").to.be.eql(["b1"]);
     }
 
     private async expectInstallations(expectedSets: string[][], actual: IWorkspaceClusterStartSet, msg: string) {

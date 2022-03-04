@@ -10,4 +10,3 @@ packages:
     config:
       packaging: app
       dontTest: true
-

@@ -59,7 +59,7 @@ RUN cd /usr/bin && curl -L https://github.com/praetorian-inc/gokart/releases/dow
 
 # leeway
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.16/leeway_0.2.16_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.17/leeway_0.2.17_Linux_x86_64.tar.gz | tar xz
 
 # dazzle
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.4/dazzle_0.1.4_Darwin_x86_64.tar.gz| tar xz
@@ -126,7 +126,7 @@ RUN install-packages netcat
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=16.13.1
+ARG GITPOD_NODE_VERSION=16.14.0
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
@@ -230,6 +230,10 @@ ARG GOJSONTOYAML_VERSION="0.1.0"
 RUN curl -LO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONTOYAML_VERSION}/gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     tar -xzvf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     sudo mv gojsontoyaml /usr/local/bin/gojsontoyaml
+
+# Install Replicated and KOTS
+RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/install.sh | sudo bash && \
+    curl https://kots.io/install/1.65.0 | bash
 
 # Copy our own tools
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/

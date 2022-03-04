@@ -27,19 +27,25 @@ export class AuthProviderService {
     /**
      * Returns all auth providers.
      */
-    async getAllAuthProviders(): Promise<AuthProviderParams[]> {
-        const all = await this.authProviderDB.findAll();
+    async getAllAuthProviders(exceptOAuthRevisions: string[] = []): Promise<AuthProviderParams[]> {
+        const all = await this.authProviderDB.findAll(exceptOAuthRevisions);
         const transformed = all.map(this.toAuthProviderParams.bind(this));
 
         // as a precaution, let's remove duplicates
-        const unique = transformed.reduce((prev, current) => {
-            const duplicate = prev.some(a => a.host === current.host);
+        const unique = new Map<string, AuthProviderParams>();
+        for (const current of transformed) {
+            const duplicate = unique.get(current.host);
             if (duplicate) {
                 log.warn(`Duplicate dynamic Auth Provider detected.`, { rawResult: all, duplicate: current.host });
+                continue;
             }
-            return duplicate ? prev : [...prev, current];
-        }, [] as AuthProviderParams[]);
-        return unique;
+            unique.set(current.host, current);
+        }
+        return Array.from(unique.values());
+    }
+
+    async getAllAuthProviderHosts(): Promise<string[]> {
+        return this.authProviderDB.findAllHosts();
     }
 
     protected toAuthProviderParams = (oap: AuthProviderEntry) => <AuthProviderParams>{
@@ -81,13 +87,14 @@ export class AuthProviderService {
             }
 
             // update config on demand
+            const oauth = {
+                ...existing.oauth,
+                clientId: entry.clientId,
+                clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
+            };
             authProvider = {
                 ...existing,
-                oauth: {
-                    ...existing.oauth,
-                    clientId: entry.clientId,
-                    clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
-                },
+                oauth,
                 status: "pending",
             }
         } else {
@@ -97,7 +104,7 @@ export class AuthProviderService {
             }
             authProvider = this.initializeNewProvider(entry);
         }
-        return await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry);
+        return await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry, true);
     }
     protected initializeNewProvider(newEntry: AuthProviderEntry.NewEntry): AuthProviderEntry {
         const { host, type, clientId, clientSecret } = newEntry;
@@ -105,16 +112,17 @@ export class AuthProviderService {
         if (!urls) {
             throw new Error("Unexpected service type.");
         }
-        return <AuthProviderEntry>{
+        const oauth: AuthProviderEntry["oauth"] = {
+            ...urls,
+            callBackUrl: this.callbackUrl(host),
+            clientId: clientId!,
+            clientSecret: clientSecret!,
+        };
+        return {
             ...newEntry,
             id: uuidv4(),
             type,
-            oauth: {
-                ...urls,
-                callBackUrl: this.callbackUrl(host),
-                clientId,
-                clientSecret,
-            },
+            oauth,
             status: "pending",
         };
     }
@@ -135,7 +143,7 @@ export class AuthProviderService {
                     ownerId: ownerId,
                     status: "verified"
                 };
-                await this.authProviderDB.storeAuthProvider(ap);
+                await this.authProviderDB.storeAuthProvider(ap, true);
             } else {
                 log.warn("Failed to find the AuthProviderEntry to be activated.", { params, id, ap });
             }

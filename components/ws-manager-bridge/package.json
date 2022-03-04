@@ -29,7 +29,7 @@
     "@gitpod/ws-manager": "0.1.5",
     "@gitpod/ws-manager-bridge-api": "0.1.5",
     "amqplib": "^0.8.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "inversify": "^5.0.1",
     "prom-client": "^13.2.0",
     "reflect-metadata": "^0.1.13"

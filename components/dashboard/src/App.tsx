@@ -27,6 +27,7 @@ import { settingsPathAccount, settingsPathIntegrations, settingsPathMain, settin
 import { projectsPathInstallGitHubApp, projectsPathMain, projectsPathMainWithParams, projectsPathNew } from './projects/projects.routes';
 import { refreshSearchData } from './components/RepositoryFinder';
 import { StartWorkspaceModal } from './workspaces/StartWorkspaceModal';
+import { parseProps } from './start/StartWorkspace';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -58,6 +59,7 @@ const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/
 const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/WorkspacesSearch'));
 const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ './admin/Settings'));
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/ProjectsSearch'));
+const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/TeamsSearch'));
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ './OauthClientApproval'));
 
 function Loading() {
@@ -209,7 +211,7 @@ function App() {
             //check if current target or any ancestor up to document is button or anchor
             while (!(curr instanceof Document)) {
                 if (curr instanceof HTMLButtonElement || curr instanceof HTMLAnchorElement || (curr instanceof HTMLDivElement && curr.onclick)) {
-                    trackButtonOrAnchor(curr, !!user);
+                    trackButtonOrAnchor(curr);
                     break; //finding first ancestor is sufficient
                 }
                 curr = curr.parentNode as HTMLElement;
@@ -297,6 +299,7 @@ function App() {
                 <Route path="/from-referrer" exact component={FromReferrer} />
 
                 <Route path="/admin/users" component={UserSearch} />
+                <Route path="/admin/teams" component={TeamsSearch} />
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
                 <Route path="/admin/settings" component={AdminSettings} />
                 <Route path="/admin/projects" component={ProjectsSearch} />
@@ -412,7 +415,7 @@ function App() {
     } else if (isCreation) {
         toRender = <CreateWorkspace contextUrl={hash} />;
     } else if (isWsStart) {
-        toRender = <StartWorkspace workspaceId={hash} />;
+        toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
     } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
         let url = new URL(window.location.href)
         url.hash = url.pathname

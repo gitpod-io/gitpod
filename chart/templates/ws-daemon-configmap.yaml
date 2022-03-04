@@ -43,17 +43,13 @@ daemon:
     userUIDRange:
       - start: 100000
         size: 70000
-  resources:
-    cgroupBasePath: "/mnt/node-cgroups"
-    cpuBuckets:
-{{ .Values.workspaceSizing.dynamic.cpu.buckets | toYaml | indent 6 }}
-    processPriorities:
-      supervisor: 0
-      theia: 5
-      shell: 6
-      default: 10
-    controlPeriod: {{ .Values.workspaceSizing.dynamic.cpu.controlPeriod | quote }}
-    samplingPeriod: {{ .Values.workspaceSizing.dynamic.cpu.samplingPeriod | quote }}
+  cpuLimit:
+    enabled: {{ $comp.cpuLimit.enabled }}
+    totalBandwidth: {{ $comp.cpuLimit.totalBandwidth }}
+    limit: {{ $comp.cpuLimit.limit }}
+    burstLimit: {{ $comp.cpuLimit.limit}}
+    controlPeriod: {{ $comp.cpuLimit.controlPeriod }}
+    cgroupBasePath: {{ $comp.cpuLimit.cgroupBasePath }}
   hosts:
     enabled: true
     nodeHostsFile: "/mnt/hosts"

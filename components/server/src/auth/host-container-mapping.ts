@@ -10,25 +10,26 @@ import { gitlabContainerModule } from "../gitlab/gitlab-container-module";
 import { genericAuthContainerModule } from "./oauth-container-module";
 import { bitbucketContainerModule } from "../bitbucket/bitbucket-container-module";
 import { giteaContainerModule } from "../gitea/gitea-container-module";
+import { bitbucketServerContainerModule } from "../bitbucket-server/bitbucket-server-container-module";
 
 @injectable()
 export class HostContainerMapping {
-
-    public get(type: string): interfaces.ContainerModule[] | undefined {
-        switch (type) {
-        case "GitHub":
-            return [githubContainerModule];
-        case "GitLab":
-            return [gitlabContainerModule];
-        case "OAuth":
-            return [genericAuthContainerModule];
-        case "Bitbucket":
-            return [bitbucketContainerModule];
-        case "Gitea":
-            return [giteaContainerModule];
-        default:
-            return undefined;
-        }
+  public get(type: string): interfaces.ContainerModule[] | undefined {
+    switch (type) {
+      case "GitHub":
+        return [githubContainerModule];
+      case "GitLab":
+        return [gitlabContainerModule];
+      case "OAuth":
+        return [genericAuthContainerModule];
+      case "Bitbucket":
+        return [bitbucketContainerModule];
+      case "Gitea":
+        return [giteaContainerModule];
+      case "BitbucketServer":
+        return [bitbucketServerContainerModule];
+      default:
+        return undefined;
     }
-
+  }
 }

@@ -178,7 +178,7 @@ import { UserEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
                     guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
                         "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "snapshot", subjectID: ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspaceResource.subject.id, operations: ["create"] }),
                     ]),
-                    resource: { kind: "snapshot", subject: undefined, workspaceID: workspaceResource.subject.id, workspaceOwnerID: workspaceResource.subject.ownerId },
+                    resource: { kind: "snapshot", subject: undefined, workspace: workspaceResource.subject },
                     operation: "create",
                     expectation: true,
                 },
@@ -187,7 +187,7 @@ import { UserEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
                     guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
                         "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "snapshot", subjectID: workspaceResource.subject.id, operations: ["create"] }),
                     ]),
-                    resource: { kind: "snapshot", subject: undefined, workspaceID: workspaceResource.subject.id, workspaceOwnerID: workspaceResource.subject.ownerId },
+                    resource: { kind: "snapshot", subject: undefined, workspace: workspaceResource.subject },
                     operation: "create",
                     expectation: false,
                 },
@@ -196,9 +196,18 @@ import { UserEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
                     guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
                         "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "snapshot", subjectID: workspaceResource.subject.id, operations: ["create"] }),
                     ]),
-                    resource: { kind: "snapshot", subject: undefined, workspaceID: workspaceResource.subject.id, workspaceOwnerID: "other_owner" },
+                    resource: { kind: "snapshot", subject: undefined, workspace: { ...workspaceResource.subject, ownerId: "other_owner" } },
                     operation: "create",
                     expectation: false,
+                },
+                {
+                    name: "snaphshot get",
+                    guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
+                        "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "snapshot", subjectID: ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspaceResource.subject.id, operations: ["get"] }),
+                    ]),
+                    resource: { kind: "snapshot", subject: undefined, workspace: workspaceResource.subject },
+                    operation: "get",
+                    expectation: true,
                 },
             ]
 

@@ -137,7 +137,10 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "adminDeleteUser": { group: "default", points: 1 },
         "adminModifyRoleOrPermission": { group: "default", points: 1 },
         "adminModifyPermanentWorkspaceFeatureFlag": { group: "default", points: 1 },
+        "adminGetTeams": { group: "default", points: 1 },
+        "adminGetTeamMembers": { group: "default", points: 1 },
         "adminGetTeamById": { group: "default", points: 1 },
+        "adminSetTeamMemberRole": { group: "default", points: 1 },
         "adminGetWorkspaces": { group: "default", points: 1 },
         "adminGetWorkspace": { group: "default", points: 1 },
         "adminForceStopWorkspace": { group: "default", points: 1 },
@@ -148,6 +151,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "adminSetLicense": { group: "default", points: 1 },
         "adminGetSettings": { group: "default", points: 1 },
         "adminUpdateSettings": { group: "default", points: 1 },
+        "adminGetTelemetryData": {group: "default", points: 1},
 
         "validateLicense": { group: "default", points: 1 },
         "getLicenseInfo": { group: "default", points: 1 },

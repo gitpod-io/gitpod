@@ -5,34 +5,13 @@
  */
 
 import { injectable, inject } from 'inversify';
-import { MessageBusHelper, AbstractMessageBusIntegration, TopicListener, AbstractTopicListener, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
-import { WorkspaceStatus } from '@gitpod/ws-manager/lib';
+import { MessageBusHelper, AbstractMessageBusIntegration, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
 import { HeadlessWorkspaceEventType, WorkspaceInstance, HeadlessWorkspaceEvent, PrebuildWithStatus } from '@gitpod/gitpod-protocol';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 
 @injectable()
 export class MessageBusIntegration extends AbstractMessageBusIntegration {
     @inject(MessageBusHelper) protected readonly messageBusHelper: MessageBusHelper;
-
-    async connect(): Promise<void> {
-        await super.connect();
-        if (!this.channel) {
-            return
-        }
-
-        await this.channel.assertExchange(MessageBusIntegration.WORKSPACE_EXCHANGE, 'topic', { 'durable': false });
-        await this.channel.assertExchange(MessageBusIntegration.LOCAL_WORKSPACE_EXCHANGE, 'topic', { 'durable': false });
-
-        await this.channel.bindExchange(MessageBusHelperImpl.WORKSPACE_EXCHANGE, MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, "#");
-    }
-
-    listenForWorkspaceStatusUpdates(topic: string, callback: (ctx: TraceContext, status: WorkspaceStatus.AsObject) => void): Disposable {
-        const listener = new WorkspaceStatusUpdateListener(callback, MessageBusIntegration.WORKSPACE_EXCHANGE, topic);
-        const cancellationTokenSource = new CancellationTokenSource()
-        this.listen(listener, cancellationTokenSource.token);
-        return Disposable.create(() => cancellationTokenSource.cancel())
-    }
 
     async notifyOnPrebuildUpdate(prebuildInfo: PrebuildWithStatus) {
         if (!this.channel) {
@@ -93,20 +72,4 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         }
     }
 
-}
-
-export namespace MessageBusIntegration {
-    export const WORKSPACE_EXCHANGE = "wsman";
-    export const LOCAL_WORKSPACE_EXCHANGE = "wsman.local";
-}
-
-class WorkspaceStatusUpdateListener extends AbstractTopicListener<WorkspaceStatus.AsObject> {
-
-    constructor(listener: TopicListener<WorkspaceStatus.AsObject>, workspaceExchange: string, protected readonly _topic: string) {
-        super(MessageBusIntegration.WORKSPACE_EXCHANGE, listener);
-    }
-
-    topic() {
-        return this._topic;
-    }
 }

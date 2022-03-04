@@ -128,4 +128,21 @@ export class GithubRepositoryProvider implements RepositoryProvider {
             }`);
         return (result.data.viewer?.repositoriesContributedTo?.edges || []).map((edge: any) => edge.node.url)
     }
+
+    async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
+        try {
+            // If you have no "viewerPermission" on a repository you may not read it
+            // Ref: https://docs.github.com/en/graphql/reference/enums#repositorypermission
+            const result: any = await this.githubQueryApi.runQuery(user, `
+                query {
+                    repository(name: "${repo}", owner: "${owner}") {
+                        viewerPermission
+                    }
+                }
+            `);
+            return result.data.repository !== null;
+        } catch (err) {
+            return false;
+        }
+    }
 }

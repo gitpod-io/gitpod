@@ -22,7 +22,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/process"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -171,9 +170,7 @@ func (term *Term) gracefullyShutdownProcess(gracePeriod time.Duration) error {
 			// process is gone now - we're good
 			return nil
 		}
-		if !process.IsNotChildProcess(err) {
-			log.WithError(err).Warn("unexpected terminal error")
-		}
+		log.WithError(err).Warn("unexpected terminal error")
 	case <-time.After(gracePeriod):
 	}
 

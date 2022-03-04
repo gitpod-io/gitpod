@@ -158,7 +158,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .addOrderBy('GREATEST(ws.creationTime, wsi.creationTime, wsi.startedTime, wsi.stoppedTime)', 'DESC')
             .limit(options.limit || 10);
         if (options.searchString) {
-            qb.andWhere("ws.description LIKE :searchString", {searchString: `%${options.searchString}%`});
+            qb.andWhere("ws.description LIKE :searchString", { searchString: `%${options.searchString}%` });
         }
         if (!options.includeHeadless) {
             qb.andWhere("ws.type = 'regular'");
@@ -332,6 +332,15 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         }
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };
+    }
+
+    public async getInstanceCount(type?: string): Promise<number> {
+        const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
+        const queryBuilder = workspaceInstanceRepo.createQueryBuilder("wsi")
+            .leftJoinAndMapOne("wsi.workspace", DBWorkspace, "ws", "wsi.workspaceId = ws.id")
+            .where("ws.type = :type", { type: type ? type.toString() : "regular" }); // only regular workspaces by default
+
+        return await queryBuilder.getCount();
     }
 
     public async findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]> {
@@ -578,7 +587,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async findSnapshotsByWorkspaceId(workspaceId: string): Promise<Snapshot[]> {
         const snapshots = await this.getSnapshotRepo();
-        return snapshots.find({where: {originalWorkspaceId: workspaceId}});
+        return snapshots.find({ where: { originalWorkspaceId: workspaceId } });
     }
 
     public async storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace> {
@@ -596,7 +605,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         }
         const repo = await this.getPrebuiltWorkspaceRepo();
         return await repo.createQueryBuilder('pws')
-            .where('pws.cloneURL = :cloneURL AND pws.commit LIKE :commit', { cloneURL, commit: commit+'%' })
+            .where('pws.cloneURL = :cloneURL AND pws.commit LIKE :commit', { cloneURL, commit: commit + '%' })
             .orderBy('pws.creationTime', 'DESC')
             .innerJoinAndMapOne('pws.workspace', DBWorkspace, 'ws', "pws.buildWorkspaceId = ws.id and ws.contentDeletedTime = ''")
             .getOne();
@@ -737,9 +746,15 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return { total, rows };
     }
 
+    public async getWorkspaceCount(type?: String): Promise<Number> {
+        const workspaceRepo = await this.getWorkspaceRepo();
+        const queryBuilder = workspaceRepo.createQueryBuilder("ws")
+            .where("ws.type = :type", { type: type ? type.toString() : "regular" }); // only regular workspaces by default
 
+        return await queryBuilder.getCount();
+    }
 
-    public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }> {
+    public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery): Promise<{ total: number, rows: WorkspaceAndInstance[] }> {
         let whereConditions = [];
         let whereConditionParams: any = {};
         let instanceIdQuery: boolean = false;
@@ -750,13 +765,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                 whereConditions.push("(wsi.id = :instanceId OR ws.id = :workspaceId)");
                 whereConditionParams.instanceId = query.instanceIdOrWorkspaceId;
                 whereConditionParams.workspaceId = query.instanceIdOrWorkspaceId;
-            } else if (query.instanceId) {
-                // in addition to adding "instanceId" to the "WHERE" clause like for the other workspace-guided queries,
-                // we modify the JOIN condition below to a) select the correct instance and b) make the query faster
-                instanceIdQuery = true;
-
-                whereConditions.push("wsi.id = :instanceId");
-                whereConditionParams.instanceId = query.instanceId;
             } else if (query.workspaceId) {
                 whereConditions.push("ws.id = :workspaceId");
                 whereConditionParams.workspaceId = query.workspaceId;
@@ -764,12 +772,14 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                 // If an owner id is provided only search for workspaces belonging to that user.
                 whereConditions.push("ws.ownerId = :ownerId");
                 whereConditionParams.ownerId = query.ownerId;
-            }
-        }
+            } else if (query.instanceId) {
+                // in addition to adding "instanceId" to the "WHERE" clause like for the other workspace-guided queries,
+                // we modify the JOIN condition below to a) select the correct instance and b) make the query faster
+                instanceIdQuery = true;
 
-        if (searchTerm) {
-            // If a search term is provided perform a wildcard search in the context url or exact match on the workspace id (aka workspace name) or the instance id.
-            whereConditions.push(`ws.contextURL LIKE '%${searchTerm}%'`);
+                whereConditions.push("wsi.id = :instanceId");
+                whereConditionParams.instanceId = query.instanceId;
+            }
         }
 
         let orderField: string = orderBy;
@@ -827,7 +837,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const workspaceRepo = await this.getWorkspaceRepo();
         const workspace = await workspaceRepo.findOne(id);
         if (!workspace) {
-             return;
+            return;
         }
 
         const instance = await this.findCurrentInstance(id);
@@ -850,6 +860,15 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         delete res["creationTime"];
 
         return <WorkspaceAndInstance>(res);
+    }
+
+    async findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]> {
+        const repo = await this.getWorkspaceInstanceRepo();
+        // uses index: ind_phasePersisted_region
+        const qb = repo.createQueryBuilder("wsi")
+            .where("wsi.phasePersisted = :phase", { phase })
+            .andWhere("wsi.region = :region", { region });
+        return qb.getMany();
     }
 
     async findPrebuiltWorkspacesByProject(projectId: string, branch?: string, limit?: number): Promise<PrebuiltWorkspace[]> {
@@ -890,7 +909,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         });
     }
 
-    async findPrebuildInfos(prebuildIds: string[]): Promise<PrebuildInfo[]>{
+    async findPrebuildInfos(prebuildIds: string[]): Promise<PrebuildInfo[]> {
         const repo = await this.getPrebuildInfoRepo();
 
         const query = repo.createQueryBuilder('pi');
@@ -899,7 +918,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         if (filteredIds.length === 0) {
             return [];
         }
-        query.andWhere(`pi.prebuildId in (${ filteredIds.map(id => `'${id}'`).join(", ") })`)
+        query.andWhere(`pi.prebuildId in (${filteredIds.map(id => `'${id}'`).join(", ")})`)
 
         const res = await query.getMany();
         return res.map(r => r.info);

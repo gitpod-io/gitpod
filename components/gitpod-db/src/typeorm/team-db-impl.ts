@@ -41,6 +41,25 @@ export class TeamDBImpl implements TeamDB {
         return (await this.getEntityManager()).getRepository<DBUser>(DBUser);
     }
 
+    public async findTeams(
+        offset: number,
+        limit: number,
+        orderBy: keyof Team,
+        orderDir: "DESC" | "ASC",
+        searchTerm?: string
+        ): Promise<{ total: number, rows: Team[] }> {
+
+        const teamRepo = await this.getTeamRepo();
+        const queryBuilder = teamRepo.createQueryBuilder('team')
+            .where("team.name LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
+            .skip(offset)
+            .take(limit)
+            .orderBy(orderBy, orderDir)
+
+        const [rows, total] = await queryBuilder.getManyAndCount();
+        return { total, rows };
+    }
+
     public async findTeamById(teamId: string): Promise<Team | undefined> {
         const teamRepo = await this.getTeamRepo();
         return teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false});

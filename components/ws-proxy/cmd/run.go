@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/bombsimon/logrusr"
+	"github.com/bombsimon/logrusr/v2"
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
@@ -46,7 +46,7 @@ var runCmd = &cobra.Command{
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
 
-		ctrl.SetLogger(logrusr.NewLogger(log.Log))
+		ctrl.SetLogger(logrusr.New(log.Log))
 
 		opts := ctrl.Options{
 			Scheme:                 scheme,
@@ -112,12 +112,10 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider).MustServe()
-		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
-
+		// SSH Gateway
+		var signers []ssh.Signer
 		flist, err := os.ReadDir("/mnt/host-key")
 		if err == nil && len(flist) > 0 {
-			var signers []ssh.Signer
 			for _, f := range flist {
 				if f.IsDir() {
 					continue
@@ -142,6 +140,9 @@ var runCmd = &cobra.Command{
 				log.Info("SSHGateway is up and running")
 			}
 		}
+
+		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider, signers).MustServe()
+		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
 
 		log.Info("🚪 ws-proxy is up and running")
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

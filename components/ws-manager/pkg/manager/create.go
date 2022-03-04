@@ -53,8 +53,6 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.PrebuildPath)
 	case api.WorkspaceType_PROBE:
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ProbePath)
-	case api.WorkspaceType_GHOST:
-		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.GhostPath)
 	case api.WorkspaceType_IMAGEBUILD:
 		typeSpecificTpl, err = config.GetWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ImagebuildPath)
 	}
@@ -278,8 +276,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		prefix = "prebuild"
 	case api.WorkspaceType_PROBE:
 		prefix = "probe"
-	case api.WorkspaceType_GHOST:
-		prefix = "ghost"
 	case api.WorkspaceType_IMAGEBUILD:
 		prefix = "imagebuild"
 		// mount self-signed gitpod CA certificate to ensure
@@ -309,7 +305,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		kubernetes.WorkspaceImageSpecAnnotation: imageSpec,
 		kubernetes.OwnerTokenAnnotation:         startContext.OwnerToken,
 		wsk8s.TraceIDAnnotation:                 startContext.TraceID,
-		wsk8s.RequiredNodeServicesAnnotation:    "ws-daemon,registry-facade",
 		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
 		// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
@@ -520,7 +515,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	var (
 		command        = []string{"/.supervisor/workspacekit", "ring0"}
 		readinessProbe = &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/_supervisor/v1/status/content/wait/true",
 					Port:   intstr.FromInt((int)(startContext.SupervisorPort)),
@@ -537,11 +532,6 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			InitialDelaySeconds: 3,
 		}
 	)
-
-	if startContext.Request.Type == api.WorkspaceType_GHOST {
-		command = []string{"/.supervisor/supervisor", "ghost"}
-		readinessProbe = nil
-	}
 
 	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 

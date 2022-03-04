@@ -7,7 +7,7 @@
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel, AdmissionConstraintHasMoreResources } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasPermission, WorkspaceClusterWoTLS, AdmissionConstraintHasUserLevel, AdmissionConstraintHasMoreResources } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -70,20 +70,23 @@ export class ClusterService implements IClusterServiceServer {
             try {
                 // check if the name or URL are already registered/in use
                 const req = call.request.toObject();
-                await Promise.all([
-                    async () => {
-                        const oldCluster = await this.clusterDB.findByName(req.name);
-                        if (!oldCluster) {
-                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB`);
-                        }
-                    },
-                    async () => {
-                        const oldCluster = await this.clusterDB.findFiltered({ url: req.url });
-                        if (!oldCluster) {
-                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with url ${req.url} already exists in the DB`);
-                        }
-                    }
+
+                const clusterByNamePromise = this.clusterDB.findByName(req.name);
+                const clusterByUrlPromise = this.clusterDB.findFiltered({ url: req.url })
+
+                const [clusterByName, clusterByUrl] = await Promise.all([
+                    clusterByNamePromise,
+                    clusterByUrlPromise
                 ]);
+
+                if (!!clusterByName) {
+                    throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB`);
+                }
+                if (!!clusterByUrl) {
+                    if (clusterByUrl.length > 0) {
+                        throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with url ${req.url} already exists in the DB`);
+                    }
+                }
 
                 // store the ws-manager into the database
                 let perfereability = Preferability.NONE;
@@ -154,7 +157,7 @@ export class ClusterService implements IClusterServiceServer {
                 const req = call.request.toObject();
                 const cluster = await this.clusterDB.findByName(req.name);
                 if (!cluster) {
-                    throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB!`);
+                    throw new GRPCError(grpc.status.NOT_FOUND, `a WorkspaceCluster with name ${req.name} does not exist in the DB!`);
                 }
 
                 if (call.request.hasMaxScore()) {
@@ -182,7 +185,7 @@ export class ClusterService implements IClusterServiceServer {
                                     case "has-feature-preview":
                                         return false;
                                     case "has-permission":
-                                        if (v.permission === (c as AdmissionConstraintHasRole).permission) {
+                                        if (v.permission === (c as AdmissionConstraintHasPermission).permission) {
                                             return false;
                                         }
                                         break;
@@ -294,8 +297,10 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
                 break;
             case "has-user-level":
                 constraint.setHasUserLevel(c.level);
+                break;
             case "has-more-resources":
                 constraint.setHasMoreResources(true);
+                break;
             default:
                 return;
         }
@@ -318,7 +323,7 @@ function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): Admissi
             return;
         }
 
-        return <AdmissionConstraintHasRole>{type: "has-permission", permission};
+        return <AdmissionConstraintHasPermission>{type: "has-permission", permission};
     }
     if (c.hasHasUserLevel()) {
         const level = c.getHasUserLevel();

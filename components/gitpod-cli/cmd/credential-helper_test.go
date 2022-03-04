@@ -19,46 +19,54 @@ func Test_parse_git_command_and_remote(t *testing.T) {
 		{
 			Name: "Detect push command",
 			Commands: []string{
-				"/usr/lib/git-core/git-remote-https origin https://github.com/jeanp413/test-gp-bug.git ",
-				"/usr/lib/git-core/git push ",
+				"/usr/lib/git-core/git-remote-https origin https://github.com/jeanp413/test-gp-bug.git",
+				"/usr/lib/git-core/git push",
 			},
 			Expected: gitCommandInfo{RepoUrl: "https://github.com/jeanp413/test-gp-bug.git", GitCommand: "push"},
 		},
 		{
 			Name: "Detect with remote named origin",
 			Commands: []string{
-				"/usr/lib/git-core/git-remote-https origin https://github.com/jeanp413/test-gp-bug.git ",
-				"/usr/lib/git-core/git remote-https origin https://github.com/jeanp413/test-gp-bug.git ",
-				"git push origin master ",
+				"/usr/lib/git-core/git-remote-https origin https://github.com/jeanp413/test-gp-bug.git",
+				"/usr/lib/git-core/git remote-https origin https://github.com/jeanp413/test-gp-bug.git",
+				"git push origin master",
 			},
 			Expected: gitCommandInfo{RepoUrl: "https://github.com/jeanp413/test-gp-bug.git", GitCommand: "push"},
 		},
 		{
 			Name: "Detect with remote named foo",
 			Commands: []string{
-				"/usr/lib/git-core/git-remote-https foo https://github.com/jeanp413/test-private-package.git ",
-				"/usr/lib/git-core/git remote-https foo https://github.com/jeanp413/test-private-package.git ",
-				"git push foo master ",
+				"/usr/lib/git-core/git-remote-https foo https://github.com/jeanp413/test-private-package.git",
+				"/usr/lib/git-core/git remote-https foo https://github.com/jeanp413/test-private-package.git",
+				"git push foo master",
 			},
 			Expected: gitCommandInfo{RepoUrl: "https://github.com/jeanp413/test-private-package.git", GitCommand: "push"},
 		},
 		{
 			Name: "Detect ls-remote command",
 			Commands: []string{
-				"/usr/lib/git-core/git-remote-https https://github.com/joepurdy/private-npm-package.git https://github.com/joepurdy/private-npm-package.git ",
-				"/usr/lib/git-core/git remote-https https://github.com/joepurdy/private-npm-package.git https://github.com/joepurdy/private-npm-package.git ",
-				"git --no-replace-objects ls-remote https://github.com/joepurdy/private-npm-package.git ",
+				"/usr/lib/git-core/git-remote-https https://github.com/joepurdy/private-npm-package.git https://github.com/joepurdy/private-npm-package.git",
+				"/usr/lib/git-core/git remote-https https://github.com/joepurdy/private-npm-package.git https://github.com/joepurdy/private-npm-package.git",
+				"git --no-replace-objects ls-remote https://github.com/joepurdy/private-npm-package.git",
 			},
 			Expected: gitCommandInfo{RepoUrl: "https://github.com/joepurdy/private-npm-package.git", GitCommand: "ls-remote"},
 		},
 		{
 			Name: "Detect clone command",
 			Commands: []string{
-				"/usr/lib/git-core/git-remote-https origin https://github.com/jeanp413/test-private-package.git ",
-				"/usr/lib/git-core/git remote-https origin https://github.com/jeanp413/test-private-package.git ",
-				"git --no-replace-objects clone https://github.com/jeanp413/test-private-package.git /home/gitpod/.npm/_cacache/tmp/git-cloneUsL7Mf --recurse-submodules --depth=1 ",
+				"/usr/lib/git-core/git-remote-https origin https://github.com/jeanp413/test-private-package.git",
+				"/usr/lib/git-core/git remote-https origin https://github.com/jeanp413/test-private-package.git",
+				"git --no-replace-objects clone https://github.com/jeanp413/test-private-package.git /home/gitpod/.npm/_cacache/tmp/git-cloneUsL7Mf --recurse-submodules --depth=1",
 			},
 			Expected: gitCommandInfo{RepoUrl: "https://github.com/jeanp413/test-private-package.git", GitCommand: "clone"},
+		},
+		{
+			Name: "JB push command",
+			Commands: []string{
+				"/usr/lib/git-core/git remote-https origin https://github.com/gitpod-io/spring-petclinic.git",
+				"/bin/git -c core.quotepath=false -c log.showSignature=false push --progress --porcelain origin refs/heads/master:master",
+			},
+			Expected: gitCommandInfo{RepoUrl: "https://github.com/gitpod-io/spring-petclinic.git", GitCommand: "push"},
 		},
 	}
 	for _, tt := range tests {

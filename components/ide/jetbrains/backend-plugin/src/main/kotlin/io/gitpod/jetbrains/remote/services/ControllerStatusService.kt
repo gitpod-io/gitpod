@@ -17,7 +17,6 @@ import java.net.http.HttpResponse
 import java.time.Duration
 
 object ControllerStatusService {
-    private val port = BuiltInServerManager.getInstance().port
     private val cwmToken = System.getenv("CWM_HOST_STATUS_OVER_HTTP_TOKEN")
     private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
         .connectTimeout(Duration.ofSeconds(2))
@@ -33,6 +32,7 @@ object ControllerStatusService {
     suspend fun fetch(): ControllerStatus =
         @Suppress("MagicNumber")
         retry(3) {
+            val port = BuiltInServerManager.getInstance().waitForStart().port
             val httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:$port/codeWithMe/unattendedHostStatus?token=$cwmToken"))
                 .header("Content-Type", "application/json")

@@ -6,13 +6,13 @@
 
 import EventEmitter from "events";
 import React, { useEffect, Suspense, useContext, useState } from "react";
-import { CreateWorkspaceMode, WorkspaceCreationResult, RunningWorkspacePrebuildStarting } from "@gitpod/gitpod-protocol";
+import { CreateWorkspaceMode, WorkspaceCreationResult, RunningWorkspacePrebuildStarting, ContextURL } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
-import StartWorkspace from "./StartWorkspace";
+import StartWorkspace, { parseProps } from "./StartWorkspace";
 import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
@@ -129,6 +129,9 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             }}>Authorize with {error.data.host}</button>
           </div>;
           break;
+        case ErrorCodes.PERMISSION_DENIED:
+          statusMessage = <p className="text-base text-gitpod-red w-96">Access is not allowed</p>;
+          break;
         case ErrorCodes.USER_BLOCKED:
           window.location.href = '/blocked';
           return;
@@ -154,7 +157,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
 
     const result = this.state?.result;
     if (result?.createdWorkspaceId) {
-      return <StartWorkspace workspaceId={result.createdWorkspaceId} />;
+      return <StartWorkspace {...parseProps(result?.createdWorkspaceId, window.location.search)} />;
     }
 
     else if (result?.existingWorkspaces) {
@@ -163,14 +166,17 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
           <p className="mt-1 mb-2 text-base">You already have running workspaces with the same context. You can open an existing one or open a new workspace.</p>
           <>
-            {result?.existingWorkspaces?.map(w =>
-              <a href={w.latestInstance?.ideUrl || gitpodHostUrl.with({ pathname: '/start/', hash: '#' + w.latestInstance?.workspaceId }).toString()} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1">
-                <div className="w-full">
-                  <p className="text-base text-black dark:text-gray-100 font-bold">{w.workspace.id}</p>
-                  <p className="truncate" title={w.workspace.contextURL}>{w.workspace.contextURL}</p>
-                </div>
-              </a>
-            )}
+            {result?.existingWorkspaces?.map(w => {
+              const normalizedContextUrl = ContextURL.getNormalizedURL(w.workspace)?.toString() || "undefined";
+              return (
+                <a href={w.latestInstance?.ideUrl || gitpodHostUrl.with({ pathname: '/start/', hash: '#' + w.latestInstance?.workspaceId }).toString()} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1">
+                  <div className="w-full">
+                    <p className="text-base text-black dark:text-gray-100 font-bold">{w.workspace.id}</p>
+                    <p className="truncate" title={normalizedContextUrl}>{normalizedContextUrl}</p>
+                  </div>
+                </a>
+              );
+            })}
           </>
         </div>
         <div className="flex justify-end mt-6">

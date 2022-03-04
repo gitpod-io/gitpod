@@ -16,6 +16,7 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
       - intellijDownloadUrl
@@ -37,6 +38,7 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
       - golandDownloadUrl
@@ -58,6 +60,7 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
       - pycharmDownloadUrl
@@ -79,6 +82,7 @@ packages:
     deps:
       - components/ide/jetbrains/backend-plugin:plugin
       - components/ide/jetbrains/image/status:app
+      - components/ide/jetbrains/cli:app
     argdeps:
       - imageRepoBase
       - phpstormDownloadUrl

@@ -17,7 +17,7 @@ export class PrometheusMetricsExporter {
     protected readonly clusterCordoned: prom.Gauge<string>;
     protected readonly statusUpdatesTotal: prom.Counter<string>;
 
-    protected activeClusterNames: string[] = [];
+    protected activeClusterNames = new Set<string>();
 
     constructor() {
         this.workspaceStartupTimeHistogram = new prom.Histogram({
@@ -69,18 +69,18 @@ export class PrometheusMetricsExporter {
     }
 
     updateClusterMetrics(clusters: WorkspaceClusterWoTLS[]): void {
-        let newActiveClusterNames: string[] = [];
+        let newActiveClusterNames = new Set<string>();
         clusters.forEach(cluster => {
             this.clusterCordoned.labels(cluster.name).set(cluster.state === 'cordoned' ? 1 : 0);
             this.clusterScore.labels(cluster.name).set(cluster.score);
-            newActiveClusterNames.push(cluster.name);
+            newActiveClusterNames.add(cluster.name);
         });
 
-        const noLongerActiveCluster = this.activeClusterNames.filter(c => !newActiveClusterNames.includes(c));
-        if (noLongerActiveCluster.length > 0) {
-            this.clusterScore.remove(...noLongerActiveCluster);
-            this.clusterCordoned.remove(...noLongerActiveCluster);
-        }
+        const noLongerActiveCluster = Array.from(this.activeClusterNames).filter(c => !newActiveClusterNames.has(c));
+        noLongerActiveCluster.forEach(clusterName => {
+            this.clusterCordoned.remove(clusterName);
+            this.clusterScore.remove(clusterName);
+        });
         this.activeClusterNames = newActiveClusterNames;
     }
 

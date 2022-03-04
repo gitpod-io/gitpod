@@ -73,7 +73,7 @@ export class BitbucketService extends RepositoryService {
             }
             console.log('Installed Bitbucket Webhook for ' + cloneUrl);
         } catch (error) {
-            console.error(error);
+            console.error('Failed to install Bitbucket webhook for ' + cloneUrl, error);
         }
     }
 

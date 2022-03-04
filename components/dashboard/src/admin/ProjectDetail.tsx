@@ -32,7 +32,7 @@ export default function ProjectDetail(props: { project: Project, owner: string |
                     :
                     <Property name="Owner">
                         <>
-                            {props.owner}
+                            <Link className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400 truncate" to={"/admin/teams/" + props.project.teamId}>{props.owner}</Link>
                             <span className="text-gray-400 dark:text-gray-500"> (Team)</span>
                         </>
                     </Property>}

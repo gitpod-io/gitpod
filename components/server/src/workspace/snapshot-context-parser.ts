@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User, SnapshotContext } from "@gitpod/gitpod-protocol";
+import { User, SnapshotContext, ContextURL } from "@gitpod/gitpod-protocol";
 import { injectable, inject } from "inversify";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { IContextParser } from "../workspace/context-parser";
@@ -15,7 +15,7 @@ export class SnapshotContextParser implements IContextParser {
 
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
 
-    static PREFIX = 'snapshot/';
+    static PREFIX = ContextURL.SNAPSHOT_PREFIX + '/';
 
     public canHandle(user: User, context: string): boolean {
         return context.startsWith(SnapshotContextParser.PREFIX);

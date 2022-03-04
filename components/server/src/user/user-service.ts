@@ -282,15 +282,18 @@ export class UserService {
     }
 
     async deauthorize(user: User, authProviderId: string) {
+        const builtInProviders = ["Public-GitLab", "Public-GitHub", "Public-Bitbucket"];
         const externalIdentities = user.identities.filter(i => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID);
         const identity = externalIdentities.find(i => i.authProviderId === authProviderId)
         if (!identity) {
             log.debug('Cannot deauthorize. Authorization not found.', { userId: user.id, authProviderId });
             return;
         }
+        const isBuiltin = (authProviderId: string) => !!this.hostContextProvider.findByAuthProviderId(authProviderId)?.authProvider?.params?.builtin;
+        const remainingLoginIdentities = externalIdentities.filter(i => i !== identity && (!this.config.disableDynamicAuthProviderLogin || isBuiltin(i.authProviderId)));
 
-        if (externalIdentities.length === 1) {
-            throw new Error("Cannot remove last provider authorization. Please delete account instead.");
+        if (remainingLoginIdentities.length === 1 && !builtInProviders.includes(remainingLoginIdentities[0].authProviderId)) {
+            throw new Error("Cannot remove last authentication provider for logging in to Gitpod. Please delete account if you want to leave.");
         }
 
         // explicitly remove associated tokens

@@ -122,6 +122,8 @@ type WorkspaceTimeoutConfiguration struct {
 	Initialization util.Duration `json:"initialization"`
 	// RegularWorkspace is the time a regular workspace can be without activity before it's shutdown
 	RegularWorkspace util.Duration `json:"regularWorkspace"`
+	// MaxLifetime is the maximum lifetime of a regular workspace
+	MaxLifetime util.Duration `json:"maxLifetime"`
 	// HeadlessWorkspace is the maximum runtime a headless workspace can have (including startup)
 	HeadlessWorkspace util.Duration `json:"headlessWorkspace"`
 	// AfterClose is the time a workspace lives after it has been marked closed
@@ -156,8 +158,6 @@ type WorkspacePodTemplateConfiguration struct {
 	PrebuildPath string `json:"prebuildPath,omitempty"`
 	// ProbePath is a path to an additional workspace pod template YAML file for probe workspaces
 	ProbePath string `json:"probePath,omitempty"`
-	// GhostPath is a path to an additional workspace pod template YAML file for ghost workspaces
-	GhostPath string `json:"ghostPath,omitempty"`
 	// ImagebuildPath is a path to an additional workspace pod template YAML file for imagebuild workspaces
 	ImagebuildPath string `json:"imagebuildPath,omitempty"`
 }
@@ -188,6 +188,7 @@ func (c *Configuration) Validate() error {
 		validation.Field(&c.Timeouts.HeadlessWorkspace, validation.Required),
 		validation.Field(&c.Timeouts.Initialization, validation.Required),
 		validation.Field(&c.Timeouts.RegularWorkspace, validation.Required),
+		validation.Field(&c.Timeouts.MaxLifetime, validation.Required),
 		validation.Field(&c.Timeouts.TotalStartup, validation.Required),
 		validation.Field(&c.Timeouts.ContentFinalization, validation.Required),
 		validation.Field(&c.Timeouts.Stopping, validation.Required),
@@ -203,7 +204,6 @@ func (c *Configuration) Validate() error {
 		validation.Field(&c.WorkspacePodTemplate.DefaultPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.PrebuildPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.ProbePath, validPodTemplate),
-		validation.Field(&c.WorkspacePodTemplate.GhostPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.RegularPath, validPodTemplate),
 	)
 	if err != nil {

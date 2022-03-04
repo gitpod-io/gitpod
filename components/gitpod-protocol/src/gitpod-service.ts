@@ -30,7 +30,7 @@ import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from './analytics';
 import { IDEServer } from './ide-protocol';
-import { InstallationAdminSettings } from './installation-admin-protocol';
+import { InstallationAdminSettings, TelemetryData } from './installation-admin-protocol';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -136,6 +136,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     // Admin Settings
     adminGetSettings(): Promise<InstallationAdminSettings>;
     adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;
+    adminGetTelemetryData(): Promise<TelemetryData>;
 
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;

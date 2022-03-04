@@ -101,12 +101,12 @@ const toStop = new DisposableCollection();
     window.addEventListener('message', hideDesktopIdeEventListener, false);
     toStop.push({ dispose: () => window.removeEventListener('message', hideDesktopIdeEventListener) });
 
+    type DesktopIDEStatus = { link: string, label: string, clientID?: string, kind?: String }
     let isDesktopIde: undefined | boolean = undefined;
-    let ideStatus: undefined | { desktop: { link: string, label: string, clientID?: string } } = undefined;
+    let ideStatus: undefined | { desktop: DesktopIDEStatus } = undefined;
 
     //#region current-frame
     let current: HTMLElement = loading.frame;
-    let stopped = false;
     let desktopRedirected = false;
     const nextFrame = () => {
         const instance = gitpodServiceClient.info.latestInstance;
@@ -117,6 +117,7 @@ const toStop = new DisposableCollection();
                         return loading.frame;
                     }
                     if (isDesktopIde && !!ideStatus) {
+                        trackDesktopIDEReady(ideStatus.desktop);
                         loading.setState({
                             desktopIdeLink: ideStatus.desktop.link,
                             desktopIdeLabel: ideStatus.desktop.label || "Open Desktop IDE",
@@ -141,19 +142,6 @@ const toStop = new DisposableCollection();
                 if (ideService.state === 'ready') {
                     return document.body;
                 }
-            }
-            if (instance.status.phase === 'stopped') {
-                stopped = true;
-            }
-            if (stopped && (
-                instance.status.phase === 'preparing' ||
-                instance.status.phase === 'pending' ||
-                instance.status.phase === 'creating' ||
-                instance.status.phase === 'initializing')) {
-                // reload the page if the workspace was restarted to ensure:
-                // - graceful reconnection of IDEs
-                // - new owner token is set
-                window.location.href = startUrl.toString();
             }
         }
         return loading.frame;
@@ -181,7 +169,9 @@ const toStop = new DisposableCollection();
             ideFrontendFailureCause: ideService.failureCause?.message
         });
     }
-    const trackStatusRenderedEvent = (phase: string, error?: string) => {
+    const trackStatusRenderedEvent = (phase: string, properties?: {
+        [prop: string]: any
+    }) => {
         window.gitpod.service.server.trackEvent({
             event: "status_rendered",
             properties: {
@@ -190,16 +180,24 @@ const toStop = new DisposableCollection();
                 workspaceId: gitpodServiceClient.info.workspace.id,
                 type: gitpodServiceClient.info.workspace.type,
                 phase,
-                error,
+                ...properties
             },
         });
+    }
+    let trackedDesktopIDEReady = false;
+    const trackDesktopIDEReady = ({ clientID, kind }: DesktopIDEStatus) => {
+        if (trackedDesktopIDEReady) {
+            return;
+        }
+        trackedDesktopIDEReady = true
+        trackStatusRenderedEvent('desktop-ide-ready', { clientID, kind });
     }
     const trackIDEStatusRenderedEvent = () => {
         let error: string | undefined;
         if (ideService.failureCause) {
             error = `${ideService.failureCause.message}\n${ideService.failureCause.stack}`;
         }
-        trackStatusRenderedEvent(`ide-${ideService.state}`, error);
+        trackStatusRenderedEvent(`ide-${ideService.state}`, { error });
     }
 
     updateCurrentFrame();

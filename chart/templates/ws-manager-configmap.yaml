@@ -44,7 +44,7 @@ data:
                         "memory": "{{ .Values.workspaceSizing.memoryRequest }}Mi"
                     },
                     "limits": {
-                        "cpu": "5",
+                        "cpu": "6",
                         "memory": "{{ .Values.workspaceSizing.memoryLimit }}Mi"
                     },
                     {{ else -}}
@@ -71,7 +71,6 @@ data:
                 {{- if $wscomp.templates }}
                 {{ if (or $wscomp.templates.prebuild $wscomp.affinity) -}}"prebuildPath": "/workspace-template/prebuild.yaml",{{- end }}
                 {{ if (or $wscomp.templates.probe $wscomp.affinity) -}}"probePath": "/workspace-template/probe.yaml",{{- end }}
-                {{ if (or $wscomp.templates.ghost $wscomp.affinity) -}}"ghostPath": "/workspace-template/ghost.yaml",{{- end }}
                 {{ if (or $wscomp.templates.imagebuild $wscomp.affinity) -}}"imagebuildPath": "/workspace-template/imagebuild.yaml",{{- end }}
                 {{ if (or $wscomp.templates.regular $wscomp.affinity) -}}"regularPath": "/workspace-template/regular.yaml",{{- end }}
                 {{ end -}}
@@ -82,6 +81,7 @@ data:
                 "headlessWorkspace": "60m",
                 "initialization": "30m",
                 "regularWorkspace": "30m",
+                "maxLifetime": "36h",
                 "startup": "60m",
                 "contentFinalization": "60m",
                 "stopping": "60m",

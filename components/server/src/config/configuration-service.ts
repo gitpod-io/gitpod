@@ -38,6 +38,8 @@ export class ConfigurationService {
         this.requestedPaths.forEach(path => !(path in cache) && readFile(path));
         const configInferrer = new ConfigInferrer();
         const config: WorkspaceConfig = await configInferrer.getConfig({
+            // TODO(se) pass down information about currently used IDE. Defaulting to disabling vscode extensions for now, to not bother non VS Code users.
+            excludeVsCodeConfig: true,
             config: {},
             read: readFile,
             exists: async (path: string) => !!(await readFile(path)),

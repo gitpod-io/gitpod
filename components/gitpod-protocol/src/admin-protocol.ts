@@ -6,8 +6,7 @@
 
 import { User, Workspace, NamedWorkspaceFeatureFlag } from "./protocol";
 import { FindPrebuildsParams } from "./gitpod-service";
-import { PrebuildWithStatus } from "./teams-projects-protocol"
-import { Project, Team } from "./teams-projects-protocol";
+import { Project, Team, PrebuildWithStatus, TeamMemberInfo, TeamMemberRole } from "./teams-projects-protocol"
 import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { AccountStatement } from "./accounting-protocol";
@@ -21,7 +20,10 @@ export interface AdminServer {
     adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User>;
     adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User>;
 
+    adminGetTeamMembers(teamId: string): Promise<TeamMemberInfo[]>;
+    adminGetTeams(req: AdminGetListRequest<Team>): Promise<AdminGetListResult<Team>>;
     adminGetTeamById(id: string): Promise<Team | undefined>;
+    adminSetTeamMemberRole(teamId: string, userId: string, role: TeamMemberRole): Promise<void>;
 
     adminGetWorkspaces(req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>>;
     adminGetWorkspace(id: string): Promise<WorkspaceAndInstance>;

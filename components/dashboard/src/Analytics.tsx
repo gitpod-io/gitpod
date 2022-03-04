@@ -50,23 +50,28 @@ interface TrackUIExperiments {
   ui_experiments?: {},
 }
 
+interface Traits {
+  unsubscribed_onboarding?: boolean,
+  unsubscribed_changelog?: boolean,
+  unsubscribed_devx?: boolean
+}
+
 //call this to track all events outside of button and anchor clicks
 export const trackEvent = (event: Event, properties: EventProperties) => {
   trackEventInternal(event, properties);
 }
 
-const trackEventInternal = (event: InternalEvent, properties: InternalEventProperties, userKnown?: boolean) => {
+const trackEventInternal = (event: InternalEvent, properties: InternalEventProperties) => {
   properties.ui_experiments = Experiment.get();
 
   getGitpodService().server.trackEvent({
-    //if the user is authenticated, let server determine the id. else, pass anonymousId explicitly.
-    anonymousId: userKnown ? undefined : getAnonymousId(),
+    anonymousId: getAnonymousId(),
     event,
     properties,
   });
 };
 
-export const trackButtonOrAnchor = (target: HTMLAnchorElement | HTMLButtonElement | HTMLDivElement, userKnown: boolean) => {
+export const trackButtonOrAnchor = (target: HTMLAnchorElement | HTMLButtonElement | HTMLDivElement) => {
   //read manually passed analytics props from 'data-analytics' attribute of event target
   let passedProps: TrackDashboardClick | undefined;
   if (target.dataset.analytics) {
@@ -119,7 +124,7 @@ export const trackButtonOrAnchor = (target: HTMLAnchorElement | HTMLButtonElemen
   //props that were passed directly to the event target take precedence over those passed to ancestor elements, which take precedence over those implicitly determined.
   trackingMsg = {...trackingMsg, ...ancestorProps, ...passedProps};
 
-  trackEventInternal("dashboard_clicked", trackingMsg, userKnown);
+  trackEventInternal("dashboard_clicked", trackingMsg);
 }
 
 //call this when the path changes. Complete page call is unnecessary for SPA after initial call
@@ -135,7 +140,7 @@ type TrackLocationProperties = TrackUIExperiments & {
   url: string,
 };
 
-export const trackLocation = async (userKnown: boolean) => {
+export const trackLocation = async (includePII: boolean) => {
   const props: TrackLocationProperties = {
     referrer: document.referrer,
     path: window.location.pathname,
@@ -146,8 +151,16 @@ export const trackLocation = async (userKnown: boolean) => {
 
   getGitpodService().server.trackLocation({
     //if the user is authenticated, let server determine the id. else, pass anonymousId explicitly.
-    anonymousId: userKnown ? undefined : getAnonymousId(),
+    includePII: includePII,
+    anonymousId: getAnonymousId(),
     properties: props
+  });
+}
+
+export const identifyUser = async (traits: Traits) => {
+  getGitpodService().server.identifyUser({
+    anonymousId: getAnonymousId(),
+    traits: traits
   });
 }
 

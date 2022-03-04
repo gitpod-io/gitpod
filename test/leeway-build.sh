@@ -8,15 +8,22 @@ export CGO_ENABLED=0
 mkdir -p bin
 
 for AGENT in pkg/agent/*; do
-    echo building agent "$AGENT"
+    echo "building agent $AGENT"
     base=$(basename "$AGENT")
     go build -trimpath -ldflags="-buildid= -w -s" -o bin/gitpod-integration-test-"${base%_agent}"-agent ./"$AGENT"
 done
 
 for COMPONENT in tests/components/*; do
-    echo building test "$COMPONENT"
+    echo "building test $COMPONENT"
     OUTPUT=$(basename "$COMPONENT")
     go test -trimpath -ldflags="-buildid= -w -s" -c -o bin/"$OUTPUT".test ./"$COMPONENT"
 done
 
-go test -trimpath -ldflags="-buildid= -w -s" -o bin/workspace -c ./tests/workspace
+echo "building test tests/workspace"
+go test -trimpath -ldflags="-buildid= -w -s" -o bin/workspace.test -c ./tests/workspace
+
+for COMPONENT in tests/ide/*; do
+    echo "building test $COMPONENT"
+    OUTPUT=$(basename "$COMPONENT")
+    go test -trimpath -ldflags="-buildid= -w -s" -c -o bin/"$OUTPUT".test ./"$COMPONENT"
+done

@@ -11,10 +11,21 @@
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
-    <depends>com.intellij.modules.platform</depends>
+    <dependencies>
+        <plugin id="com.intellij.modules.platform"/>
+        <plugin id="Git4Idea"/>
+    </dependencies>
 
-    <applicationListeners>
-        <listener class="io.gitpod.jetbrains.remote.listeners.MyApplicationActivationListener"
-                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    </applicationListeners>
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.HeartbeatService" preload="true"/>
+        <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager" preload="true"/>
+        <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false" />
+        <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker" client="guest" preload="true"/>
+        <!-- <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodBranding"
+                            serviceInterface="com.intellij.remoteDev.customization.GatewayBranding"
+                            overrides="true" /> -->
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodProjectManager" preload="true"/>
+    </extensions>
+
 </idea-plugin>

@@ -54,6 +54,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	}
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
 		cpulimit.NewDispatchListener(&config.Resources, reg),
+		CacheReclaim(config.Resources.CGroupBasePath),
 		cgCustomizer,
 		markUnmountFallback,
 	)
@@ -68,6 +69,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		containerRuntime,
 		dsptch.WorkspaceExistsOnNode,
 		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+		config.Resources.CGroupBasePath,
 		reg,
 	)
 	if err != nil {

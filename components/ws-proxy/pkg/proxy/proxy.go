@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/klauspost/cpuid/v2"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
@@ -22,15 +23,17 @@ type WorkspaceProxy struct {
 	Config                Config
 	WorkspaceRouter       WorkspaceRouter
 	WorkspaceInfoProvider WorkspaceInfoProvider
+	SSHHostSigners        []ssh.Signer
 }
 
 // NewWorkspaceProxy creates a new workspace proxy.
-func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider WorkspaceInfoProvider) *WorkspaceProxy {
+func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider WorkspaceInfoProvider, signers []ssh.Signer) *WorkspaceProxy {
 	return &WorkspaceProxy{
 		Ingress:               ingress,
 		Config:                config,
 		WorkspaceRouter:       workspaceRouter,
 		WorkspaceInfoProvider: workspaceInfoProvider,
+		SSHHostSigners:        signers,
 	}
 }
 
@@ -95,7 +98,7 @@ func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 		return nil, err
 	}
 	ideRouter, portRouter, blobserveRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
-	installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider)
+	installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHHostSigners)
 	err = installWorkspacePortRoutes(portRouter, handlerConfig, p.WorkspaceInfoProvider)
 	if err != nil {
 		return nil, err

@@ -129,6 +129,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         }
     }
 
+    const normalizedContextUrl = ContextURL.getNormalizedURL(ws)?.toString() || "undefined";
     return <Item className="whitespace-nowrap py-6 px-6">
         <ItemFieldIcon>
             <WorkspaceStatusIndicator instance={desc?.latestInstance} />
@@ -141,8 +142,8 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         </ItemField>
         <ItemField className="w-4/12 flex flex-col my-auto">
             <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{workspaceDescription}</div>
-            <a href={ContextURL.parseToURL(ws.contextURL)?.toString()}>
-                <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.contextURL}</div>
+            <a href={normalizedContextUrl}>
+                <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{normalizedContextUrl}</div>
             </a>
         </ItemField>
         <ItemField className="w-2/12 flex flex-col my-auto">

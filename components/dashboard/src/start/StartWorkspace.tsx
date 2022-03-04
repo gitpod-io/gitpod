@@ -8,6 +8,7 @@ import { ContextURL, DisposableCollection, GitpodServer, RateLimiterError, Start
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
+import * as queryString from "query-string";
 import React, { Suspense, useEffect } from "react";
 import { v4 } from 'uuid';
 import Arrow from "../components/Arrow";
@@ -21,10 +22,54 @@ const sessionId = v4();
 const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
 
 export interface StartWorkspaceProps {
-  workspaceId: string;
+  workspaceId: string,
+  runsInIFrame: boolean,
+  /**
+   * This flag is used to break the autostart-cycle explained in https://github.com/gitpod-io/gitpod/issues/8043
+   */
+  dontAutostart: boolean,
+}
+
+export function parseProps(workspaceId: string, search?: string): StartWorkspaceProps {
+  const params = parseParameters(search);
+  const runsInIFrame = window.top !== window.self;
+  return {
+    workspaceId,
+    runsInIFrame: window.top !== window.self,
+    // Either:
+    //  - not_found: we were sent back from a workspace cluster/IDE URL where we expected a workspace to be running but it wasn't because either:
+    //    - this is a (very) old tab and the workspace already timed out
+    //    - due to a start error our workspace terminated very quickly between:
+    //      a) us being redirected to that IDEUrl (based on the first ws-manager update) and
+    //      b) our requests being validated by ws-proxy
+    //  - runsInIFrame (IDE case):
+    //    - we assume the workspace has already been started for us
+    //    - we don't know it's instanceId
+    dontAutostart: params.notFound || runsInIFrame,
+  }
+}
+
+function parseParameters(search?: string): { notFound?: boolean } {
+  try {
+    if (search === undefined) {
+      return {};
+    }
+    const params = queryString.parse(search, {parseBooleans: true});
+    const notFound = !!(params && params["not_found"]);
+    return {
+      notFound,
+    };
+  } catch (err) {
+    console.error("/start: error parsing search params", err);
+    return {};
+  }
 }
 
 export interface StartWorkspaceState {
+  /**
+   * This is set to the istanceId we started (think we started on).
+   * We only receive updates for this particular instance, or none if not set.
+  */
   startedInstanceId?: string;
   workspaceInstance?: WorkspaceInstance;
   workspace?: Workspace;
@@ -34,8 +79,8 @@ export interface StartWorkspaceState {
     link: string
     label: string
     clientID?: string
-  }
-  ideOptions?: IDEOptions
+  };
+  ideOptions?: IDEOptions;
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
@@ -47,7 +92,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
   private readonly toDispose = new DisposableCollection();
   componentWillMount() {
-    if (this.runsInIFrame()) {
+    if (this.props.runsInIFrame) {
       window.parent.postMessage({ type: '$setSessionId', sessionId }, '*');
       const setStateEventListener = (event: MessageEvent) => {
         if (event.data.type === 'setState' && 'state' in event.data && typeof event.data['state'] === 'object') {
@@ -75,8 +120,16 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       this.setState({ error });
     }
 
-    this.startWorkspace();
-    getGitpodService().server.getIDEOptions().then(ideOptions => this.setState({ ideOptions }))
+    if (this.props.dontAutostart) {
+      // we saw errors previously, or run in-frame
+      this.fetchWorkspaceInfo(undefined);
+    } else {
+      // dashboard case (w/o previous errors): start workspace as quickly as possible
+      this.startWorkspace();
+    }
+
+    // query IDE options so we can show them if necessary once the workspace is running
+    this.fetchIDEOptions();
   }
 
   componentWillUnmount() {
@@ -130,14 +183,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       }
       console.log("/start: started workspace instance: " + result.instanceID);
       // redirect to workspaceURL if we are not yet running in an iframe
-      if (!this.runsInIFrame() && result.workspaceURL) {
+      if (!this.props.runsInIFrame && result.workspaceURL) {
         this.redirectTo(result.workspaceURL);
         return;
       }
-      this.setState({ startedInstanceId: result.instanceID });
-      // Explicitly query state to guarantee we get at least one update
+      // Start listening too instance updates - and explicitly query state once to guarantee we get at least one update
       // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
-      this.fetchWorkspaceInfo();
+      this.fetchWorkspaceInfo(result.instanceID);
     } catch (error) {
       console.error(error);
       if (typeof error === 'string') {
@@ -180,15 +232,28 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
   }
 
-  async fetchWorkspaceInfo() {
+  /**
+   * Fetches initial WorkspaceInfo from the server. If there is a WorkspaceInstance for workspaceId, we feed it
+   * into "onInstanceUpdate" and start accepting further updates.
+   *
+   * @param startedInstanceId The instanceId we want to listen on
+   */
+  async fetchWorkspaceInfo(startedInstanceId: string | undefined) {
+    // this ensures we're receiving updates for this instance
+    if (startedInstanceId) {
+      this.setState({ startedInstanceId });
+    }
+
     const { workspaceId } = this.props;
     try {
       const info = await getGitpodService().server.getWorkspace(workspaceId);
       if (info.latestInstance) {
-        this.setState({
-          workspace: info.workspace
-        });
-        this.onInstanceUpdate(info.latestInstance);
+        const instance = info.latestInstance;
+        this.setState((s) => ({
+          workspace: info.workspace,
+          startedInstanceId: s.startedInstanceId || instance.id,  // note: here's a potential mismatch between startedInstanceId and instance.id. TODO(gpl) How to handle this?
+        }));
+        this.onInstanceUpdate(instance);
       }
     } catch (error) {
       console.error(error);
@@ -196,21 +261,50 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
   }
 
+  /**
+   * Fetches the current IDEOptions config for this user
+   *
+   * TODO(gpl) Ideally this would be part of the WorkspaceInstance shape, really. And we'd display options based on
+   * what support it was started with.
+   */
+  protected async fetchIDEOptions() {
+    const ideOptions = await getGitpodService().server.getIDEOptions();
+    this.setState({ ideOptions });
+  }
+
   notifyDidOpenConnection() {
-    this.fetchWorkspaceInfo();
+    this.fetchWorkspaceInfo(undefined);
   }
 
   async onInstanceUpdate(workspaceInstance: WorkspaceInstance) {
-    const startedInstanceId = this.state?.startedInstanceId;
-    if (workspaceInstance.workspaceId !== this.props.workspaceId || startedInstanceId !== workspaceInstance.id) {
+    if (workspaceInstance.workspaceId !== this.props.workspaceId) {
       return;
+    }
+
+    // Here we filter out updates to instances we haven't started to avoid issues with updates coming in out-of-order
+    // (e.g., multiple "stopped" events from the older instance, where we already started a fresh one after the first)
+    // Only exception is when we do the switch from the "old" to the "new" one.
+    const startedInstanceId = this.state?.startedInstanceId;
+    if (startedInstanceId !== workspaceInstance.id) {
+      // do we want to switch to "new" instance we just received an update for?
+      const switchToNewInstance = this.state.workspaceInstance?.status.phase === "stopped" && workspaceInstance.status.phase !== "stopped";
+      if (!switchToNewInstance) {
+        return;
+      }
+      this.setState({
+        startedInstanceId: workspaceInstance.id,
+        workspaceInstance,
+      });
+
+      // now we're listening to a new instance, which might have been started with other IDEoptions
+      this.fetchIDEOptions();
     }
 
     await this.ensureWorkspaceAuth(workspaceInstance.id);
 
     // Redirect to workspaceURL if we are not yet running in an iframe.
     // It happens this late if we were waiting for a docker build.
-    if (!this.runsInIFrame() && workspaceInstance.ideUrl) {
+    if (!this.props.runsInIFrame && workspaceInstance.ideUrl && !this.props.dontAutostart) {
       this.redirectTo(workspaceInstance.ideUrl);
       return;
     }
@@ -226,7 +320,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     // Successfully stopped and headless: the prebuild is done, let's try to use it!
     if (!error && workspaceInstance.status.phase === 'stopped' && this.state.workspace?.type !== 'regular') {
-      const contextURL = ContextURL.parseToURL(this.state.workspace?.contextURL);
+      // here we want to point to the original context, w/o any modifiers "workspace" was started with (as this might have been a manually triggered prebuild!)
+      const contextURL = ContextURL.getNormalizedURL(this.state.workspace);
       if (contextURL) {
         this.redirectTo(gitpodHostUrl.withContext(contextURL.toString()).toString());
       } else {
@@ -254,25 +349,21 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
   }
 
   redirectTo(url: string) {
-    if (this.runsInIFrame()) {
+    if (this.props.runsInIFrame) {
       window.parent.postMessage({ type: 'relocate', url }, '*');
     } else {
       window.location.href = url;
     }
   }
 
-  runsInIFrame() {
-    return window.top !== window.self;
-  }
-
   render() {
     const { error } = this.state;
     const isHeadless = this.state.workspace?.type !== 'regular';
     const isPrebuilt = WithPrebuild.is(this.state.workspace?.context);
-    let phase = StartPhase.Preparing;
+    let phase: StartPhase | undefined = StartPhase.Preparing;
     let title = undefined;
     let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
-    const contextURL = this.state.workspace?.context.normalizedContextURL || ContextURL.parseToURL(this.state.workspace?.contextURL)?.toString();
+    const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
 
     switch (this.state?.workspaceInstance?.status.phase) {
       // unknown indicates an issue within the system in that it cannot determine the actual phase of
@@ -316,7 +407,29 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
         if (!this.state.desktopIde) {
           phase = StartPhase.Running;
-          statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
+
+          if (this.props.dontAutostart) {
+            // hide the progress bar, as we're already running
+            phase = undefined;
+            title = 'Running';
+
+            // in case we dontAutostart the IDE we have to provide controls to do so
+            statusMessage = <div>
+                <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
+                  <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
+                  <div>
+                    <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">{this.state.workspaceInstance.workspaceId}</p>
+                    <a target="_parent" href={contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{contextURL}</p></a>
+                  </div>
+                </div>
+                <div className="mt-10 justify-center flex space-x-2">
+                  <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}><button className="secondary">Go to Dashboard</button></a>
+                  <a target="_parent" href={gitpodHostUrl.asStart(this.props.workspaceId).toString() /** move over 'start' here to fetch fresh credentials in case this is an older tab */}><button>Open Workspace</button></a>
+                </div>
+            </div>;
+          } else {
+            statusMessage = <p className="text-base text-gray-400">Opening Workspace …</p>;
+          }
         } else {
           phase = StartPhase.IdeReady;
           const openLink = this.state.desktopIde.link;
@@ -390,7 +503,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
           <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100 dark:bg-gray-800">
             <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
             <div>
-              <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
+              <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">{this.state.workspaceInstance.workspaceId}</p>
               <a target="_parent" href={contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{contextURL}</p></a>
             </div>
           </div>
@@ -417,7 +530,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
           <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
-              <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
+              <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">{this.state.workspaceInstance.workspaceId}</p>
               <a target="_parent" href={contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{contextURL}</p></a>
             </div>
           </div>

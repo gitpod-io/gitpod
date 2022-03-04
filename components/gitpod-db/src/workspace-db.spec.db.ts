@@ -315,28 +315,6 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
     }
 
     @test(timeout(10000))
-    public async testFindAllWorkspaceAndInstances_contextUrl() {
-        await Promise.all([
-            this.db.store(this.ws),
-            this.db.storeInstance(this.wsi1),
-            this.db.storeInstance(this.wsi2),
-            this.db.store(this.ws2),
-            this.db.storeInstance(this.ws2i1),
-        ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
-        // It should only find one workspace instance
-        expect(dbResult.total).to.eq(1);
-
-        const workspaceAndInstance = dbResult.rows[0]
-
-        // It should find the workspace that uses the queried context url
-        expect(workspaceAndInstance.workspaceId).to.eq(this.ws.id)
-
-        // It should select the workspace instance that was most recently created
-        expect(workspaceAndInstance.instanceId).to.eq(this.wsi2.id)
-    }
-
-    @test(timeout(10000))
     public async testFindAllWorkspaceAndInstances_workspaceId() {
         await Promise.all([
             this.db.store(this.ws),
@@ -344,7 +322,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { workspaceId: this.ws2.id }, undefined);
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { workspaceId: this.ws2.id });
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);
 
@@ -361,7 +339,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { instanceIdOrWorkspaceId: this.ws2.id }, undefined);
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { instanceIdOrWorkspaceId: this.ws2.id });
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);
 
@@ -379,7 +357,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "instanceId", "DESC", { instanceId: this.wsi1.id }, undefined);
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "instanceId", "DESC", { instanceId: this.wsi1.id });
 
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);

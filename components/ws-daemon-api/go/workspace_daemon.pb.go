@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -283,6 +283,82 @@ func (x *WriteIDMappingRequest) GetMapping() []*WriteIDMappingRequest_Mapping {
 	return nil
 }
 
+type EvacuateCGroupRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *EvacuateCGroupRequest) Reset() {
+	*x = EvacuateCGroupRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_workspace_daemon_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EvacuateCGroupRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EvacuateCGroupRequest) ProtoMessage() {}
+
+func (x *EvacuateCGroupRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_workspace_daemon_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EvacuateCGroupRequest.ProtoReflect.Descriptor instead.
+func (*EvacuateCGroupRequest) Descriptor() ([]byte, []int) {
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{4}
+}
+
+type EvacuateCGroupResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *EvacuateCGroupResponse) Reset() {
+	*x = EvacuateCGroupResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_workspace_daemon_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EvacuateCGroupResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EvacuateCGroupResponse) ProtoMessage() {}
+
+func (x *EvacuateCGroupResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_workspace_daemon_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EvacuateCGroupResponse.ProtoReflect.Descriptor instead.
+func (*EvacuateCGroupResponse) Descriptor() ([]byte, []int) {
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{5}
+}
+
 type MountProcRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -295,7 +371,7 @@ type MountProcRequest struct {
 func (x *MountProcRequest) Reset() {
 	*x = MountProcRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[4]
+		mi := &file_workspace_daemon_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -308,7 +384,7 @@ func (x *MountProcRequest) String() string {
 func (*MountProcRequest) ProtoMessage() {}
 
 func (x *MountProcRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[4]
+	mi := &file_workspace_daemon_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +397,7 @@ func (x *MountProcRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MountProcRequest.ProtoReflect.Descriptor instead.
 func (*MountProcRequest) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{4}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *MountProcRequest) GetTarget() string {
@@ -347,7 +423,7 @@ type MountProcResponse struct {
 func (x *MountProcResponse) Reset() {
 	*x = MountProcResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[5]
+		mi := &file_workspace_daemon_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -360,7 +436,7 @@ func (x *MountProcResponse) String() string {
 func (*MountProcResponse) ProtoMessage() {}
 
 func (x *MountProcResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[5]
+	mi := &file_workspace_daemon_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -373,7 +449,7 @@ func (x *MountProcResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MountProcResponse.ProtoReflect.Descriptor instead.
 func (*MountProcResponse) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{5}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{7}
 }
 
 type UmountProcRequest struct {
@@ -388,7 +464,7 @@ type UmountProcRequest struct {
 func (x *UmountProcRequest) Reset() {
 	*x = UmountProcRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[6]
+		mi := &file_workspace_daemon_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -401,7 +477,7 @@ func (x *UmountProcRequest) String() string {
 func (*UmountProcRequest) ProtoMessage() {}
 
 func (x *UmountProcRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[6]
+	mi := &file_workspace_daemon_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -414,7 +490,7 @@ func (x *UmountProcRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UmountProcRequest.ProtoReflect.Descriptor instead.
 func (*UmountProcRequest) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{6}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UmountProcRequest) GetTarget() string {
@@ -440,7 +516,7 @@ type UmountProcResponse struct {
 func (x *UmountProcResponse) Reset() {
 	*x = UmountProcResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[7]
+		mi := &file_workspace_daemon_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -453,7 +529,7 @@ func (x *UmountProcResponse) String() string {
 func (*UmountProcResponse) ProtoMessage() {}
 
 func (x *UmountProcResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[7]
+	mi := &file_workspace_daemon_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -466,7 +542,7 @@ func (x *UmountProcResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UmountProcResponse.ProtoReflect.Descriptor instead.
 func (*UmountProcResponse) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{7}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{9}
 }
 
 type TeardownRequest struct {
@@ -478,7 +554,7 @@ type TeardownRequest struct {
 func (x *TeardownRequest) Reset() {
 	*x = TeardownRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[8]
+		mi := &file_workspace_daemon_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -491,7 +567,7 @@ func (x *TeardownRequest) String() string {
 func (*TeardownRequest) ProtoMessage() {}
 
 func (x *TeardownRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[8]
+	mi := &file_workspace_daemon_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -504,7 +580,7 @@ func (x *TeardownRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TeardownRequest.ProtoReflect.Descriptor instead.
 func (*TeardownRequest) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{8}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{10}
 }
 
 type TeardownResponse struct {
@@ -518,7 +594,7 @@ type TeardownResponse struct {
 func (x *TeardownResponse) Reset() {
 	*x = TeardownResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[9]
+		mi := &file_workspace_daemon_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -531,7 +607,7 @@ func (x *TeardownResponse) String() string {
 func (*TeardownResponse) ProtoMessage() {}
 
 func (x *TeardownResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[9]
+	mi := &file_workspace_daemon_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -544,7 +620,7 @@ func (x *TeardownResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TeardownResponse.ProtoReflect.Descriptor instead.
 func (*TeardownResponse) Descriptor() ([]byte, []int) {
-	return file_workspace_daemon_proto_rawDescGZIP(), []int{9}
+	return file_workspace_daemon_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TeardownResponse) GetSuccess() bool {
@@ -567,7 +643,7 @@ type WriteIDMappingRequest_Mapping struct {
 func (x *WriteIDMappingRequest_Mapping) Reset() {
 	*x = WriteIDMappingRequest_Mapping{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_workspace_daemon_proto_msgTypes[10]
+		mi := &file_workspace_daemon_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -580,7 +656,7 @@ func (x *WriteIDMappingRequest_Mapping) String() string {
 func (*WriteIDMappingRequest_Mapping) ProtoMessage() {}
 
 func (x *WriteIDMappingRequest_Mapping) ProtoReflect() protoreflect.Message {
-	mi := &file_workspace_daemon_proto_msgTypes[10]
+	mi := &file_workspace_daemon_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,34 +726,42 @@ var file_workspace_daemon_proto_rawDesc = []byte{
 	0x65, 0x72, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x68, 0x6f, 0x73, 0x74, 0x5f, 0x69, 0x64, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x06, 0x68, 0x6f, 0x73, 0x74, 0x49, 0x64, 0x12, 0x12, 0x0a,
 	0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x04, 0x73, 0x69, 0x7a,
-	0x65, 0x22, 0x3c, 0x0a, 0x10, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x63, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x12, 0x10, 0x0a,
-	0x03, 0x70, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x70, 0x69, 0x64, 0x22,
-	0x13, 0x0a, 0x11, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x63, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3d, 0x0a, 0x11, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x72,
-	0x6f, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x74, 0x61, 0x72,
-	0x67, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65,
-	0x74, 0x12, 0x10, 0x0a, 0x03, 0x70, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03,
-	0x70, 0x69, 0x64, 0x22, 0x14, 0x0a, 0x12, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x72, 0x6f,
-	0x63, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x11, 0x0a, 0x0f, 0x54, 0x65, 0x61,
-	0x72, 0x64, 0x6f, 0x77, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x2c, 0x0a, 0x10,
-	0x54, 0x65, 0x61, 0x72, 0x64, 0x6f, 0x77, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x2a, 0x26, 0x0a, 0x0d, 0x46, 0x53,
-	0x53, 0x68, 0x69, 0x66, 0x74, 0x4d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x12, 0x0b, 0x0a, 0x07, 0x53,
-	0x48, 0x49, 0x46, 0x54, 0x46, 0x53, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04, 0x46, 0x55, 0x53, 0x45,
-	0x10, 0x01, 0x32, 0xef, 0x03, 0x0a, 0x12, 0x49, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
-	0x63, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x51, 0x0a, 0x10, 0x50, 0x72, 0x65,
-	0x70, 0x61, 0x72, 0x65, 0x46, 0x6f, 0x72, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x53, 0x12, 0x1c, 0x2e,
-	0x69, 0x77, 0x73, 0x2e, 0x50, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x46, 0x6f, 0x72, 0x55, 0x73,
-	0x65, 0x72, 0x4e, 0x53, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x69, 0x77,
-	0x73, 0x2e, 0x50, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x46, 0x6f, 0x72, 0x55, 0x73, 0x65, 0x72,
-	0x4e, 0x53, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4b, 0x0a, 0x0e,
-	0x57, 0x72, 0x69, 0x74, 0x65, 0x49, 0x44, 0x4d, 0x61, 0x70, 0x70, 0x69, 0x6e, 0x67, 0x12, 0x1a,
-	0x2e, 0x69, 0x77, 0x73, 0x2e, 0x57, 0x72, 0x69, 0x74, 0x65, 0x49, 0x44, 0x4d, 0x61, 0x70, 0x70,
-	0x69, 0x6e, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x69, 0x77, 0x73,
-	0x2e, 0x57, 0x72, 0x69, 0x74, 0x65, 0x49, 0x44, 0x4d, 0x61, 0x70, 0x70, 0x69, 0x6e, 0x67, 0x52,
+	0x65, 0x22, 0x17, 0x0a, 0x15, 0x45, 0x76, 0x61, 0x63, 0x75, 0x61, 0x74, 0x65, 0x43, 0x47, 0x72,
+	0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x18, 0x0a, 0x16, 0x45, 0x76,
+	0x61, 0x63, 0x75, 0x61, 0x74, 0x65, 0x43, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3c, 0x0a, 0x10, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x72, 0x6f,
+	0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x74, 0x61, 0x72, 0x67,
+	0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74,
+	0x12, 0x10, 0x0a, 0x03, 0x70, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x70,
+	0x69, 0x64, 0x22, 0x13, 0x0a, 0x11, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x63, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3d, 0x0a, 0x11, 0x55, 0x6d, 0x6f, 0x75, 0x6e,
+	0x74, 0x50, 0x72, 0x6f, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06,
+	0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x61,
+	0x72, 0x67, 0x65, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x70, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x03, 0x52, 0x03, 0x70, 0x69, 0x64, 0x22, 0x14, 0x0a, 0x12, 0x55, 0x6d, 0x6f, 0x75, 0x6e, 0x74,
+	0x50, 0x72, 0x6f, 0x63, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x11, 0x0a, 0x0f,
+	0x54, 0x65, 0x61, 0x72, 0x64, 0x6f, 0x77, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22,
+	0x2c, 0x0a, 0x10, 0x54, 0x65, 0x61, 0x72, 0x64, 0x6f, 0x77, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x2a, 0x26, 0x0a,
+	0x0d, 0x46, 0x53, 0x53, 0x68, 0x69, 0x66, 0x74, 0x4d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x12, 0x0b,
+	0x0a, 0x07, 0x53, 0x48, 0x49, 0x46, 0x54, 0x46, 0x53, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04, 0x46,
+	0x55, 0x53, 0x45, 0x10, 0x01, 0x32, 0xbc, 0x04, 0x0a, 0x12, 0x49, 0x6e, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x51, 0x0a, 0x10,
+	0x50, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x46, 0x6f, 0x72, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x53,
+	0x12, 0x1c, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x50, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x46, 0x6f,
+	0x72, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x53, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d,
+	0x2e, 0x69, 0x77, 0x73, 0x2e, 0x50, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x46, 0x6f, 0x72, 0x55,
+	0x73, 0x65, 0x72, 0x4e, 0x53, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x4b, 0x0a, 0x0e, 0x57, 0x72, 0x69, 0x74, 0x65, 0x49, 0x44, 0x4d, 0x61, 0x70, 0x70, 0x69, 0x6e,
+	0x67, 0x12, 0x1a, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x57, 0x72, 0x69, 0x74, 0x65, 0x49, 0x44, 0x4d,
+	0x61, 0x70, 0x70, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e,
+	0x69, 0x77, 0x73, 0x2e, 0x57, 0x72, 0x69, 0x74, 0x65, 0x49, 0x44, 0x4d, 0x61, 0x70, 0x70, 0x69,
+	0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4b, 0x0a, 0x0e,
+	0x45, 0x76, 0x61, 0x63, 0x75, 0x61, 0x74, 0x65, 0x43, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x1a,
+	0x2e, 0x69, 0x77, 0x73, 0x2e, 0x45, 0x76, 0x61, 0x63, 0x75, 0x61, 0x74, 0x65, 0x43, 0x47, 0x72,
+	0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x69, 0x77, 0x73,
+	0x2e, 0x45, 0x76, 0x61, 0x63, 0x75, 0x61, 0x74, 0x65, 0x43, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52,
 	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3c, 0x0a, 0x09, 0x4d, 0x6f, 0x75,
 	0x6e, 0x74, 0x50, 0x72, 0x6f, 0x63, 0x12, 0x15, 0x2e, 0x69, 0x77, 0x73, 0x2e, 0x4d, 0x6f, 0x75,
 	0x6e, 0x74, 0x50, 0x72, 0x6f, 0x63, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e,
@@ -717,40 +801,44 @@ func file_workspace_daemon_proto_rawDescGZIP() []byte {
 }
 
 var file_workspace_daemon_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_workspace_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_workspace_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_workspace_daemon_proto_goTypes = []interface{}{
 	(FSShiftMethod)(0),                    // 0: iws.FSShiftMethod
 	(*PrepareForUserNSRequest)(nil),       // 1: iws.PrepareForUserNSRequest
 	(*PrepareForUserNSResponse)(nil),      // 2: iws.PrepareForUserNSResponse
 	(*WriteIDMappingResponse)(nil),        // 3: iws.WriteIDMappingResponse
 	(*WriteIDMappingRequest)(nil),         // 4: iws.WriteIDMappingRequest
-	(*MountProcRequest)(nil),              // 5: iws.MountProcRequest
-	(*MountProcResponse)(nil),             // 6: iws.MountProcResponse
-	(*UmountProcRequest)(nil),             // 7: iws.UmountProcRequest
-	(*UmountProcResponse)(nil),            // 8: iws.UmountProcResponse
-	(*TeardownRequest)(nil),               // 9: iws.TeardownRequest
-	(*TeardownResponse)(nil),              // 10: iws.TeardownResponse
-	(*WriteIDMappingRequest_Mapping)(nil), // 11: iws.WriteIDMappingRequest.Mapping
+	(*EvacuateCGroupRequest)(nil),         // 5: iws.EvacuateCGroupRequest
+	(*EvacuateCGroupResponse)(nil),        // 6: iws.EvacuateCGroupResponse
+	(*MountProcRequest)(nil),              // 7: iws.MountProcRequest
+	(*MountProcResponse)(nil),             // 8: iws.MountProcResponse
+	(*UmountProcRequest)(nil),             // 9: iws.UmountProcRequest
+	(*UmountProcResponse)(nil),            // 10: iws.UmountProcResponse
+	(*TeardownRequest)(nil),               // 11: iws.TeardownRequest
+	(*TeardownResponse)(nil),              // 12: iws.TeardownResponse
+	(*WriteIDMappingRequest_Mapping)(nil), // 13: iws.WriteIDMappingRequest.Mapping
 }
 var file_workspace_daemon_proto_depIdxs = []int32{
 	0,  // 0: iws.PrepareForUserNSResponse.fs_shift:type_name -> iws.FSShiftMethod
-	11, // 1: iws.WriteIDMappingRequest.mapping:type_name -> iws.WriteIDMappingRequest.Mapping
+	13, // 1: iws.WriteIDMappingRequest.mapping:type_name -> iws.WriteIDMappingRequest.Mapping
 	1,  // 2: iws.InWorkspaceService.PrepareForUserNS:input_type -> iws.PrepareForUserNSRequest
 	4,  // 3: iws.InWorkspaceService.WriteIDMapping:input_type -> iws.WriteIDMappingRequest
-	5,  // 4: iws.InWorkspaceService.MountProc:input_type -> iws.MountProcRequest
-	7,  // 5: iws.InWorkspaceService.UmountProc:input_type -> iws.UmountProcRequest
-	5,  // 6: iws.InWorkspaceService.MountSysfs:input_type -> iws.MountProcRequest
-	7,  // 7: iws.InWorkspaceService.UmountSysfs:input_type -> iws.UmountProcRequest
-	9,  // 8: iws.InWorkspaceService.Teardown:input_type -> iws.TeardownRequest
-	2,  // 9: iws.InWorkspaceService.PrepareForUserNS:output_type -> iws.PrepareForUserNSResponse
-	3,  // 10: iws.InWorkspaceService.WriteIDMapping:output_type -> iws.WriteIDMappingResponse
-	6,  // 11: iws.InWorkspaceService.MountProc:output_type -> iws.MountProcResponse
-	8,  // 12: iws.InWorkspaceService.UmountProc:output_type -> iws.UmountProcResponse
-	6,  // 13: iws.InWorkspaceService.MountSysfs:output_type -> iws.MountProcResponse
-	8,  // 14: iws.InWorkspaceService.UmountSysfs:output_type -> iws.UmountProcResponse
-	10, // 15: iws.InWorkspaceService.Teardown:output_type -> iws.TeardownResponse
-	9,  // [9:16] is the sub-list for method output_type
-	2,  // [2:9] is the sub-list for method input_type
+	5,  // 4: iws.InWorkspaceService.EvacuateCGroup:input_type -> iws.EvacuateCGroupRequest
+	7,  // 5: iws.InWorkspaceService.MountProc:input_type -> iws.MountProcRequest
+	9,  // 6: iws.InWorkspaceService.UmountProc:input_type -> iws.UmountProcRequest
+	7,  // 7: iws.InWorkspaceService.MountSysfs:input_type -> iws.MountProcRequest
+	9,  // 8: iws.InWorkspaceService.UmountSysfs:input_type -> iws.UmountProcRequest
+	11, // 9: iws.InWorkspaceService.Teardown:input_type -> iws.TeardownRequest
+	2,  // 10: iws.InWorkspaceService.PrepareForUserNS:output_type -> iws.PrepareForUserNSResponse
+	3,  // 11: iws.InWorkspaceService.WriteIDMapping:output_type -> iws.WriteIDMappingResponse
+	6,  // 12: iws.InWorkspaceService.EvacuateCGroup:output_type -> iws.EvacuateCGroupResponse
+	8,  // 13: iws.InWorkspaceService.MountProc:output_type -> iws.MountProcResponse
+	10, // 14: iws.InWorkspaceService.UmountProc:output_type -> iws.UmountProcResponse
+	8,  // 15: iws.InWorkspaceService.MountSysfs:output_type -> iws.MountProcResponse
+	10, // 16: iws.InWorkspaceService.UmountSysfs:output_type -> iws.UmountProcResponse
+	12, // 17: iws.InWorkspaceService.Teardown:output_type -> iws.TeardownResponse
+	10, // [10:18] is the sub-list for method output_type
+	2,  // [2:10] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name
@@ -811,7 +899,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MountProcRequest); i {
+			switch v := v.(*EvacuateCGroupRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -823,7 +911,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MountProcResponse); i {
+			switch v := v.(*EvacuateCGroupResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -835,7 +923,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UmountProcRequest); i {
+			switch v := v.(*MountProcRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -847,7 +935,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UmountProcResponse); i {
+			switch v := v.(*MountProcResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -859,7 +947,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TeardownRequest); i {
+			switch v := v.(*UmountProcRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -871,7 +959,7 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TeardownResponse); i {
+			switch v := v.(*UmountProcResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -883,6 +971,30 @@ func file_workspace_daemon_proto_init() {
 			}
 		}
 		file_workspace_daemon_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TeardownRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_workspace_daemon_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TeardownResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_workspace_daemon_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*WriteIDMappingRequest_Mapping); i {
 			case 0:
 				return &v.state
@@ -901,7 +1013,7 @@ func file_workspace_daemon_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_workspace_daemon_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

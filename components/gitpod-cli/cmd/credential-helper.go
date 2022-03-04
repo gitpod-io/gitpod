@@ -9,14 +9,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/prometheus/procfs"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -42,27 +41,28 @@ var credentialHelper = &cobra.Command{
 			return
 		}
 
-		var user, token string
-		defer func() {
-			// Credentials not found, return `quit=true` so no further helpers will be consulted, nor will the user be prompted.
-			// From https://git-scm.com/docs/gitcredentials#_custom_helpers
-			if token == "" {
-				fmt.Print("quit=true\n")
-				return
-			}
-			// Server could return only the token and not the username, so we fallback to hardcoded `oauth2` username.
-			// See https://github.com/gitpod-io/gitpod/pull/7889#discussion_r801670957
-			if user == "" {
-				user = "oauth2"
-			}
-			fmt.Printf("username=%s\npassword=%s\n", user, token)
-		}()
-
-		host, err := parseHostFromStdin()
-		if err != nil {
+		result, err := parseFromStdin()
+		host := result["host"]
+		if err != nil || host == "" {
 			log.WithError(err).Print("error parsing 'host' from stdin")
 			return
 		}
+
+		var user, token string
+		defer func() {
+			// Server could return only the token and not the username, so we fallback to hardcoded `oauth2` username.
+			// See https://github.com/gitpod-io/gitpod/pull/7889#discussion_r801670957
+			if token != "" && user == "" {
+				user = "oauth2"
+			}
+			if token != "" {
+				result["username"] = user
+				result["password"] = token
+			}
+			for k, v := range result {
+				fmt.Printf("%s=%s\n", k, v)
+			}
+		}()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cancel()
@@ -90,14 +90,14 @@ var credentialHelper = &cobra.Command{
 		token = resp.Token
 
 		gitCmdInfo := &gitCommandInfo{}
-		err = walkProcessTree(os.Getpid(), func(pid int) bool {
-			cmdLine, err := readProc(pid, "cmdline")
+		err = walkProcessTree(os.Getpid(), func(proc procfs.Proc) bool {
+			cmdLine, err := proc.CmdLine()
 			if err != nil {
 				log.WithError(err).Print("error reading proc cmdline")
 				return true
 			}
 
-			cmdLineString := strings.ReplaceAll(cmdLine, string(byte(0)), " ")
+			cmdLineString := strings.Join(cmdLine, " ")
 			log.Printf("cmdLineString -> %v", cmdLineString)
 			gitCmdInfo.parseGitCommandAndRemote(cmdLineString)
 
@@ -147,27 +147,22 @@ var credentialHelper = &cobra.Command{
 	},
 }
 
-func parseHostFromStdin() (host string, err error) {
+func parseFromStdin() (map[string]string, error) {
+	result := make(map[string]string)
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if len(line) > 0 {
 			tuple := strings.Split(line, "=")
 			if len(tuple) == 2 {
-				if strings.TrimSpace(tuple[0]) == "host" {
-					host = strings.TrimSpace(tuple[1])
-				}
+				result[tuple[0]] = strings.TrimSpace(tuple[1])
 			}
 		}
 	}
-
-	err = scanner.Err()
-	if err != nil {
-		err = fmt.Errorf("parseHostFromStdin error: %v", err)
-	} else if host == "" {
-		err = fmt.Errorf("parseHostFromStdin error 'host' is missing")
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
-	return
+	return result, nil
 }
 
 type gitCommandInfo struct {
@@ -179,8 +174,8 @@ func (g *gitCommandInfo) Ok() bool {
 	return g.RepoUrl != "" && g.GitCommand != ""
 }
 
-var gitCommandRegExp = regexp.MustCompile(`git(\s+(?:[\w\-]+\s+)*)(push|clone|fetch|pull|diff|ls-remote)`)
-var repoUrlRegExp = regexp.MustCompile(`remote-https?\s([^\s]+)\s+(https?:[^\s]+)\s`)
+var gitCommandRegExp = regexp.MustCompile(`git(?:\s+(?:\S+\s+)*)(push|clone|fetch|pull|diff|ls-remote)(?:\s+(?:\S+\s+)*)?`)
+var repoUrlRegExp = regexp.MustCompile(`remote-https?\s([^\s]+)\s+(https?:[^\s]+)`)
 
 // This method needs to be called multiple times to fill all the required info
 // from different git commands
@@ -190,8 +185,8 @@ var repoUrlRegExp = regexp.MustCompile(`remote-https?\s([^\s]+)\s+(https?:[^\s]+
 // `/usr/lib/git-core/git push`
 func (g *gitCommandInfo) parseGitCommandAndRemote(cmdLineString string) {
 	matchCommand := gitCommandRegExp.FindStringSubmatch(cmdLineString)
-	if len(matchCommand) == 3 {
-		g.GitCommand = matchCommand[2]
+	if len(matchCommand) == 2 {
+		g.GitCommand = matchCommand[1]
 	}
 
 	matchRepo := repoUrlRegExp.FindStringSubmatch(cmdLineString)
@@ -203,70 +198,29 @@ func (g *gitCommandInfo) parseGitCommandAndRemote(cmdLineString string) {
 	}
 }
 
-type pidCallbackFn func(int) bool
+type pidCallbackFn func(procfs.Proc) bool
 
 func walkProcessTree(pid int, fn pidCallbackFn) error {
 	for {
-		stop := fn(pid)
+		proc, err := procfs.NewProc(pid)
+		if err != nil {
+			return err
+		}
+
+		stop := fn(proc)
 		if stop {
 			return nil
 		}
 
-		ppid, err := getProcesParentId(pid)
+		procStat, err := proc.Stat()
 		if err != nil {
 			return err
 		}
-		if ppid == pid || ppid == 1 /* supervisor pid*/ {
+		if procStat.PPID == pid || procStat.PPID == 1 /* supervisor pid*/ {
 			return nil
 		}
-		pid = ppid
+		pid = procStat.PPID
 	}
-}
-
-var procStatPidRegExp = regexp.MustCompile(`\d+\ \(.+?\)\ .+?\ (\d+)`)
-
-func getProcesParentId(pid int) (ppid int, err error) {
-	statsString, err := readProc(pid, "stat")
-	if err != nil {
-		return
-	}
-
-	match := procStatPidRegExp.FindStringSubmatch(statsString)
-	if len(match) != 2 {
-		err = fmt.Errorf("CredentialHelper error cannot parse stats string: %s", statsString)
-		return
-	}
-
-	parentId, err := strconv.Atoi(match[1])
-	if err != nil {
-		err = fmt.Errorf("CredentialHelper error cannot parse ppid: %s", match[1])
-		return
-	}
-
-	ppid = parentId
-	return
-}
-
-func readProc(pid int, file string) (data string, err error) {
-	procFile := fmt.Sprintf("/proc/%d/%s", pid, file)
-	// read file not using os.Stat
-	// see https://github.com/prometheus/procfs/blob/5162bec877a860b5ff140b5d13db31ebb0643dd3/internal/util/readfile.go#L27
-	const maxBufferSize = 1024 * 512
-	f, err := os.Open(procFile)
-	if err != nil {
-		err = fmt.Errorf("CredentialHelper error opening proc file: %v", err)
-		return
-	}
-	defer f.Close()
-	reader := io.LimitReader(f, maxBufferSize)
-	buffer, err := ioutil.ReadAll(reader)
-	if err != nil {
-		err = fmt.Errorf("CredentialHelper error reading proc file: %v", err)
-		return
-	}
-
-	data = string(buffer)
-	return
 }
 
 // How to smoke test:
@@ -278,6 +232,8 @@ func readProc(pid int, file string) (data string, err error) {
 // - Private npm package no access
 //   - Open this workspace https://github.com/jeanp413/test-gp-bug and run `npm install`
 //   - Observe NO notification with this message appears `Unknown repository '' Please grant the necessary permissions.`
+// - Clone private repo without permission
+//   - Start a workspace, then run `git clone 'https://gitlab.ebizmarts.com/ebizmarts/magento2-pos-api-request.git`, you should see a prompt ask your username and password, instead of `'gp credential-helper' told us to quit`
 func init() {
 	rootCmd.AddCommand(credentialHelper)
 }

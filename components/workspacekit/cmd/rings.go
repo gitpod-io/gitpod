@@ -104,7 +104,7 @@ var ring0Cmd = &cobra.Command{
 		cmd := exec.Command("/proc/self/exe", "ring1")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS,
+			Cloneflags: syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS | unix.CLONE_NEWCGROUP,
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -288,6 +288,12 @@ var ring1Cmd = &cobra.Command{
 		}
 		mnts = append(mnts, mnte{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"})
 
+		// If this is a cgroupv2 machine, we'll want to mount the cgroup2 FS ourselves
+		if _, err := os.Stat("/sys/fs/cgroup/cgroup.controllers"); err == nil {
+			mnts = append(mnts, mnte{Target: "/sys/fs/cgroup", Source: "tmpfs", FSType: "tmpfs"})
+			mnts = append(mnts, mnte{Target: "/sys/fs/cgroup", Source: "cgroup", FSType: "cgroup2"})
+		}
+
 		if adds := os.Getenv("GITPOD_WORKSPACEKIT_BIND_MOUNTS"); adds != "" {
 			var additionalMounts []string
 			err = json.Unmarshal([]byte(adds), &additionalMounts)
@@ -335,14 +341,13 @@ var ring1Cmd = &cobra.Command{
 			}).Debug("mounting new rootfs")
 			err = unix.Mount(m.Source, dst, m.FSType, m.Flags, "")
 			if err != nil {
-				log.WithError(err).WithField("dest", dst).Error("cannot establish mount")
+				log.WithError(err).WithField("dest", dst).WithField("fsType", m.FSType).Error("cannot establish mount")
 				return
 			}
 		}
 
 		// We deliberately do not bind mount `/etc/resolv.conf` and `/etc/hosts`, but instead place a copy
 		// so that users in the workspace can modify the file.
-
 		copyPaths := []string{"/etc/resolv.conf", "/etc/hosts"}
 		for _, fn := range copyPaths {
 			err = copyRing2Root(ring2Root, fn)
@@ -398,7 +403,7 @@ var ring1Cmd = &cobra.Command{
 		procLoc := filepath.Join(ring2Root, "proc")
 		err = os.MkdirAll(procLoc, 0755)
 		if err != nil {
-			log.WithError(err).Error("cannot mount proc")
+			log.WithError(err).Error("cannot create directory for mounting proc")
 			return
 		}
 
@@ -411,12 +416,18 @@ var ring1Cmd = &cobra.Command{
 			Target: procLoc,
 			Pid:    int64(cmd.Process.Pid),
 		})
-		client.Close()
-
 		if err != nil {
+			client.Close()
 			log.WithError(err).Error("cannot mount proc")
 			return
 		}
+		_, err = client.EvacuateCGroup(ctx, &daemonapi.EvacuateCGroupRequest{})
+		if err != nil {
+			client.Close()
+			log.WithError(err).Error("cannot evacuate cgroup")
+			return
+		}
+		client.Close()
 
 		// We have to wait for ring2 to come back to us and connect to the socket we've passed along.
 		// There's a chance that ring2 crashes or misbehaves, so we don't want to wait forever, hence
@@ -618,7 +629,7 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 			reject bool
 		)
 		switch fs {
-		case "cgroup", "devpts", "mqueue", "shm", "proc", "sysfs":
+		case "cgroup", "devpts", "mqueue", "shm", "proc", "sysfs", "cgroup2":
 			reject = true
 		}
 		if reject {
@@ -806,7 +817,7 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "run"}, os.Environ())
+		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "init"}, os.Environ())
 		if err != nil {
 			if eerr, ok := err.(*exec.ExitError); ok {
 				exitCode = eerr.ExitCode()
@@ -828,20 +839,6 @@ func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
 	// /proc/self/cwd being the old root. Since we can play around with the cwd
 	// with pivot_root this allows us to pivot without creating directories in
 	// the rootfs. Shout-outs to the LXC developers for giving us this idea.
-
-	if fsshift == api.FSShiftMethod_FUSE {
-		err := unix.Chroot(rootfs)
-		if err != nil {
-			return xerrors.Errorf("cannot chroot: %v", err)
-		}
-
-		err = unix.Chdir("/")
-		if err != nil {
-			return xerrors.Errorf("cannot chdir to new root :%v", err)
-		}
-
-		return nil
-	}
 
 	oldroot, err := unix.Open("/", unix.O_DIRECTORY|unix.O_RDONLY, 0)
 	if err != nil {

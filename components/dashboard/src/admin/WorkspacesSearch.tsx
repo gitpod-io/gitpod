@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { AdminGetListResult, AdminGetWorkspacesQuery, User, WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
+import { AdminGetListResult, AdminGetWorkspacesQuery, ContextURL, User, WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
 import { matchesInstanceIdOrLegacyWorkspaceIdExactly, matchesNewWorkspaceIdExactly } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import moment from "moment";
 import { useContext, useEffect, useState } from "react";
@@ -68,27 +68,21 @@ export function WorkspaceSearch(props: Props) {
     const search = async () => {
         setSearching(true);
         try {
-            let searchTerm: string | undefined = queryTerm;
             const query: AdminGetWorkspacesQuery = {
-                ownerId: props?.user?.id,
+                ownerId: props?.user?.id, // Workspace search in admin user detail
             };
-            if (matchesInstanceIdOrLegacyWorkspaceIdExactly(searchTerm)) {
-                query.instanceIdOrWorkspaceId = searchTerm;
-            } else if (matchesNewWorkspaceIdExactly(searchTerm)) {
-                query.workspaceId = searchTerm;
-            }
-            if (query.workspaceId || query.instanceId || query.instanceIdOrWorkspaceId) {
-                searchTerm = undefined;
+            if (matchesInstanceIdOrLegacyWorkspaceIdExactly(queryTerm)) {
+                query.instanceIdOrWorkspaceId = queryTerm;
+            } else if (matchesNewWorkspaceIdExactly(queryTerm)) {
+                query.workspaceId = queryTerm;
             }
 
-            // const searchTerm = searchTerm;
             const result = await getGitpodService().server.adminGetWorkspaces({
                 limit: 100,
                 orderBy: 'instanceCreationTime',
                 offset: 0,
                 orderDir: "desc",
                 ...query,
-                searchTerm,
             });
             setSearchResult(result);
         } finally {
@@ -104,7 +98,9 @@ export function WorkspaceSearch(props: Props) {
                             <path fillRule="evenodd" clipRule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E" />
                         </svg>
                     </div>
-                    <input type="search" placeholder="Search Workspaces" onKeyDown={(ke) => ke.key === 'Enter' && search() } onChange={(v) => { setQueryTerm(v.target.value) }} />
+                    <input type="search" placeholder="Search Workspace IDs"
+                        onKeyDown={(ke) => ke.key === 'Enter' && search() }
+                        onChange={(v) => { setQueryTerm((v.target.value).trim()) }} />
                 </div>
                 <button disabled={searching} onClick={search}>Search</button>
             </div>
@@ -133,7 +129,7 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
             </div>
             <div className="flex flex-col w-5/12 self-center truncate">
                 <div className="text-gray-500 overflow-ellipsis truncate">{p.ws.description}</div>
-                <div className="text-sm text-gray-400 overflow-ellipsis truncate">{p.ws.contextURL}</div>
+                <div className="text-sm text-gray-400 overflow-ellipsis truncate">{ContextURL.getNormalizedURL(p.ws)?.toString()}</div>
             </div>
             <div className="flex w-2/12 self-center">
                 <div className="text-sm w-full text-gray-400 truncate">{moment(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}</div>

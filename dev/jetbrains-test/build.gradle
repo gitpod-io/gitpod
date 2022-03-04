@@ -1,0 +1,36 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.6.10'
+}
+
+group 'io.gitpod'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies" }
+}
+
+test {
+    systemProperty('video.save.mode', 'ALL')
+    systemProperty('gateway_link', System.getenv('GATEWAY_LINK'))
+    systemProperty('gateway_plugin_path', System.getenv('GATEWAY_PLUGIN_PATH'))
+    useJUnitPlatform()
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+
+    implementation("com.google.code.gson:gson:2.8.9")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.intellij.remoterobot:remote-robot:0.11.12")
+    implementation("com.intellij.remoterobot:remote-fixtures:0.11.12")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+
+    // Logging Network Calls
+    testImplementation('com.squareup.okhttp3:logging-interceptor:4.9.3')
+
+    // Video Recording
+    implementation('com.automation-remarks:video-recorder-junit5:2.0')
+}

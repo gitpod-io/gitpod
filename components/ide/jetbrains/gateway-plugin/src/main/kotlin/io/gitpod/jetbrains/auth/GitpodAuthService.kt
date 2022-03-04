@@ -54,7 +54,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
 
     private class GitpodAuthRequest : OAuthRequest<Credentials> {
 
-        private val port = BuiltInServerManager.getInstance().port
+        private val port = BuiltInServerManager.getInstance().waitForStart().port
 
         override val authorizationCodeUrl =
             newFromEncoded("http://127.0.0.1:$port/${RestService.PREFIX}/$SERVICE_NAME/authorization_code")
@@ -171,7 +171,7 @@ internal class GitpodAuthService : OAuthServiceBase<Credentials>() {
             getAccessToken(gitpodHost) != null
 
         fun getAccessToken(gitpodHost: String) =
-            PasswordSafe.instance.getPassword(getAccessTokenCredentialAttributes(gitpodHost))
+            System.getenv("GITPOD_TEST_ACCESSTOKEN") ?: PasswordSafe.instance.getPassword(getAccessTokenCredentialAttributes(gitpodHost))
 
         fun setAccessToken(gitpodHost: String, accessToken: String?) {
             PasswordSafe.instance.setPassword(getAccessTokenCredentialAttributes(gitpodHost), accessToken)

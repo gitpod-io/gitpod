@@ -6,7 +6,7 @@
 
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB, InstallationAdminDB, ProjectDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields, Permission } from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields, Permission, SnapshotContext } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -17,7 +17,7 @@ import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } 
 import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { InterfaceWithTraceContext, TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { IdentifyMessage, PageMessage, RemoteIdentifyMessage, RemotePageMessage, RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
+import { IdentifyMessage, RemoteIdentifyMessage, RemotePageMessage, RemoteTrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
 import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { ControlPortRequest, DescribeWorkspaceRequest, MarkActiveRequest, PortSpec, PortVisibility as ProtoPortVisibility, StopWorkspacePolicy, StopWorkspaceRequest } from '@gitpod/ws-manager/lib/core_pb';
@@ -54,11 +54,12 @@ import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/su
 import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
 import { IDEConfigService } from '../ide-config';
 import { PartialProject } from '@gitpod/gitpod-protocol/src/teams-projects-protocol';
-import { ClientMetadata } from '../websocket/websocket-connection-manager';
+import { ClientMetadata, traceClientMetadata } from '../websocket/websocket-connection-manager';
 import { ConfigurationService } from '../config/configuration-service';
 import { ProjectEnvVar } from '@gitpod/gitpod-protocol/src/protocol';
-import { InstallationAdminSettings } from '@gitpod/gitpod-protocol';
+import { InstallationAdminSettings, TelemetryData } from '@gitpod/gitpod-protocol';
 import { Deferred } from '@gitpod/gitpod-protocol/lib/util/deferred';
+import { InstallationAdminTelemetryDataProvider } from '../installation-admin/telemetry-data-provider';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -80,6 +81,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
     @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
+    @inject(InstallationAdminTelemetryDataProvider) protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
+
 
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(WorkspaceManagerClientProvider) protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
@@ -160,7 +163,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //           to clients who might not otherwise have access to that information.
         this.disposables.push(this.localMessageBroker.listenForWorkspaceInstanceUpdates(
             this.user.id,
-            (ctx, instance) => TraceContext.withSpan("forwardInstanceUpdateToClient", () => this.client?.onInstanceUpdate(this.censorInstance(instance)), ctx, this.connectionCtx?.span)
+            (ctx, instance) => TraceContext.withSpan("forwardInstanceUpdateToClient", (ctx) => {
+                traceClientMetadata(ctx, this.clientMetadata);
+                TraceContext.setJsonRPCMetadata(ctx, "onInstanceUpdate");
+
+                this.client?.onInstanceUpdate(this.censorInstance(instance));
+            }, ctx)
         ));
 
     }
@@ -827,6 +835,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 this.mayStartWorkspace(ctx, user, runningInstancesPromise),
             ]);
 
+            if (SnapshotContext.is(context)) {
+                // TODO(janx): Remove snapshot access tracking once we're certain that enforcing repository read access doesn't disrupt the snapshot UX.
+                this.trackEvent(ctx, { event: "snapshot_access_request", properties: { snapshot_id: context.snapshotId } }).catch();
+                const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(context.snapshotId);
+                if (!snapshot) {
+                    throw new ResponseError(ErrorCodes.NOT_FOUND, "No snapshot with id '" + context.snapshotId + "' found.");
+                }
+                const workspace = await this.workspaceDb.trace(ctx).findById(snapshot.originalWorkspaceId);
+                if (!workspace) {
+                    throw new ResponseError(ErrorCodes.NOT_FOUND, "No workspace with id '" + snapshot.originalWorkspaceId + "' found.");
+                }
+                try {
+                    await this.guardAccess({ kind: "snapshot", subject: snapshot, workspace }, "get");
+                } catch (error) {
+                    this.trackEvent(ctx, { event: "snapshot_access_denied", properties: { snapshot_id: context.snapshotId, error: String(error) } }).catch();
+                    if (UnauthorizedError.is(error)) {
+                        throw error;
+                    }
+                    throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Snapshot URLs require read access to the underlying repository. Please request access from the repository owner.`)
+                }
+                this.trackEvent(ctx, { event: "snapshot_access_granted", properties: { snapshot_id: context.snapshotId } }).catch();
+            }
+
             // if we're forced to use the default config, mark the context as such
             if (!!options.forceDefaultConfig) {
                 context = WithDefaultConfig.mark(context);
@@ -998,7 +1029,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getSuggestedContextURLs(ctx: TraceContext): Promise<string[]> {
         const user = this.checkUser("getSuggestedContextURLs");
-        const suggestions: string[] = [];
+        const suggestions: Array<{ url: string, lastUse?: string }> = [];
         const logCtx: LogContext = { userId: user.id };
 
         // Fetch all data sources in parallel for maximum speed (don't await in this scope before `Promise.allSettled(promises)` below!)
@@ -1006,7 +1037,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Example repositories
         promises.push(this.getFeaturedRepositories(ctx).then(exampleRepos => {
-            exampleRepos.forEach(r => suggestions.push(r.url));
+            exampleRepos.forEach(r => suggestions.push({ url: r.url }));
         }).catch(error => {
             log.error(logCtx, 'Could not get example repositories', error);
         }));
@@ -1015,7 +1046,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         promises.push(this.getAuthProviders(ctx).then(authProviders => Promise.all(authProviders.map(async (p) => {
             try {
                 const userRepos = await this.getProviderRepositoriesForUser(ctx, { provider: p.host });
-                userRepos.forEach(r => suggestions.push(r.cloneUrl.replace(/\.git$/, '')));
+                userRepos.forEach(r => suggestions.push({ url: r.cloneUrl.replace(/\.git$/, '') }));
             } catch (error) {
                 log.debug(logCtx, 'Could not get user repositories from App for ' + p.host, error);
             }
@@ -1033,7 +1064,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     return;
                 }
                 const userRepos = await services.repositoryProvider.getUserRepos(user);
-                userRepos.forEach(r => suggestions.push(r.replace(/\.git$/, '')));
+                userRepos.forEach(r => suggestions.push({ url: r.replace(/\.git$/, '') }));
             } catch (error) {
                 log.debug(logCtx, 'Could not get user repositories from host ' + p.host, error);
             }
@@ -1046,7 +1077,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             workspaces.forEach(ws => {
                 const repoUrl = Workspace.getFullRepositoryUrl(ws.workspace);
                 if (repoUrl) {
-                    suggestions.push(repoUrl);
+                    const lastUse = WorkspaceInfo.lastActiveISODate(ws);
+                    suggestions.push({ url: repoUrl, lastUse });
                 }
             });
         }).catch(error => {
@@ -1057,14 +1089,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const uniqueURLs = new Set();
         return suggestions
-            .sort((a, b) => a > b ? 1 : -1)
-            .filter(r => {
-                if (uniqueURLs.has(r)) {
+            .sort((a, b) => {
+                // Most recently used first
+                if (b.lastUse || a.lastUse) {
+                    const la = a.lastUse || '';
+                    const lb = b.lastUse || '';
+                    return la < lb ? 1 : (la === lb ? 0 : -1);
+                }
+                // Otherwise, alphasort
+                const ua = a.url.toLowerCase();
+                const ub = b.url.toLowerCase();
+                return ua > ub ? 1 : (ua === ub ? 0 : -1);
+            })
+            .filter(s => {
+                if (uniqueURLs.has(s.url)) {
                     return false;
                 }
-                uniqueURLs.add(r);
+                uniqueURLs.add(s.url);
                 return true;
-            });
+            }).map(s => s.url);
     }
 
     public async setWorkspaceTimeout(ctx: TraceContext, workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
@@ -2160,6 +2203,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
+    async adminGetTeams(ctx: TraceContext, req: AdminGetListRequest<Team>): Promise<AdminGetListResult<Team>> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    async adminGetTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
+    async adminSetTeamMemberRole(ctx: TraceContext, teamId: string, userId: string, role: TeamMemberRole): Promise<void> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
     async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
@@ -2197,6 +2252,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.installationAdminDb.setSettings(newSettings);
     }
+
+    async adminGetTelemetryData(ctx: TraceContext): Promise<TelemetryData> {
+        traceAPIParams(ctx, {});
+
+        await this.guardAdminAccess("adminGetTelemetryData", {}, Permission.ADMIN_API);
+
+       return await this.telemetryDataProvider.getTelemetryData();
+    }
+
+
 
     async getLicenseInfo(): Promise<GetLicenseInfoResult> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Licensing is implemented in Gitpod's Enterprise Edition`);
@@ -2337,6 +2402,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //         the wire and we have no idea what's in it. Even passing the context and properties directly
         //         is questionable. Considering we're handing down the msg and do not know how the analytics library
         //         handles potentially broken or malicious input, we better err on the side of caution.
+
+        const userId = this.user?.id;
+        const anonymousId = event.anonymousId;
         const msg = {
             event: event.event,
             messageId: event.messageId,
@@ -2344,51 +2412,47 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             properties: event.properties
         }
 
-        //either the user is authenticated...
-        if (this.user) {
-            const trackMessage: TrackMessage = {
-                userId: this.user.id,
+        //only track if at least one identifier is known
+        if (userId) {
+            this.analytics.track({
+                userId: userId,
+                anonymousId: anonymousId,
                 ...msg
-            }
-            this.analytics.track(trackMessage);
-            return;
-        }
-
-        //... or an anonymous id was passed. else, no tracking call is made
-        if (event.anonymousId) {
-            const trackMessage: TrackMessage = {
-                anonymousId: event.anonymousId,
+            });
+        } else if (anonymousId) {
+            this.analytics.track({
+                anonymousId: anonymousId as string | number,
                 ...msg
-            }
-            this.analytics.track(trackMessage);
+            });
         };
     }
 
     public async trackLocation(ctx: TraceContext, event: RemotePageMessage): Promise<void> {
-        //either an anonymousId was passed, signifying that we want to make a privacy preserving page call...
-        if (event.anonymousId) {
-            // we are making a reduced page call that respects user's privacy by not using any PII
-            this.analytics.page({
-                anonymousId: event.anonymousId,
-                messageId: event.messageId,
-                context: {},
-                properties: event.properties
-            });
-            return;
+
+        const userId = this.user?.id;
+        const anonymousId = event.anonymousId;
+        let msg = {
+            messageId: event.messageId,
+            context: {},
+            properties: event.properties
         }
 
-        //...or we associate the page call with the authenticated user. else no page call is made.
-        if (this.user) {
-            const msg: PageMessage = {
-                userId: this.user.id,
-                messageId: event.messageId,
-                context: {
-                    ip: this.clientHeaderFields?.ip,
-                    userAgent: this.clientHeaderFields?.userAgent
-                },
-                properties: event.properties,
+        //only page if at least one identifier is known
+        if(userId) {
+            msg.context = {
+                ip: this.clientHeaderFields?.ip,
+                userAgent: this.clientHeaderFields?.userAgent
             }
-            this.analytics.page(msg);
+            this.analytics.page({
+                userId: userId,
+                anonymousId: anonymousId,
+                ...msg,
+            });
+        } else if (anonymousId) {
+            this.analytics.page({
+                anonymousId: anonymousId as string | number,
+                ...msg
+            });
         }
     }
 
@@ -2398,12 +2462,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
         const user = this.checkUser("IdentifyUser");
 
-        const msg: IdentifyMessage = {
+        const identifyMessage: IdentifyMessage = {
             userId: user.id,
+            anonymousId: event.anonymousId,
             traits: event.traits,
             context: event.context
         };
-        this.analytics.identify(msg);
+        this.analytics.identify(identifyMessage);
     }
 
     async getTerms(ctx: TraceContext): Promise<Terms> {

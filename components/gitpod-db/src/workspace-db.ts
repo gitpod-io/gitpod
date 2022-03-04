@@ -34,7 +34,7 @@ export interface WorkspacePortsAuthData {
     workspace: WorkspaceAuthData;
 }
 
-export type WorkspaceInstanceSession = Pick<WorkspaceInstance, "id" | "startedTime"| "stoppingTime" | "stoppedTime">;
+export type WorkspaceInstanceSession = Pick<WorkspaceInstance, "id" | "startedTime" | "stoppingTime" | "stoppedTime">;
 export type WorkspaceSessionData = Pick<Workspace, "id" | "contextURL" | "context" | "type">;
 export interface WorkspaceInstanceSessionWithWorkspace {
     instance: WorkspaceInstanceSession;
@@ -67,7 +67,7 @@ export interface WorkspaceDB {
 
     // Partial update: unconditional, single field updates. Enclose in a transaction if necessary
     updateLastHeartbeat(instanceId: string, userId: string, newHeartbeat: Date, wasClosed?: boolean): Promise<void>;
-    getLastOwnerHeartbeatFor(instance: WorkspaceInstance): Promise<{ lastSeen:Date, wasClosed?: boolean} | undefined>;
+    getLastOwnerHeartbeatFor(instance: WorkspaceInstance): Promise<{ lastSeen: Date, wasClosed?: boolean } | undefined>;
     getWorkspaceUsers(workspaceId: string, minLastSeen: number): Promise<WorkspaceInstanceUser[]>;
     updateInstancePartial(instanceId: string, partial: DeepPartial<WorkspaceInstance>): Promise<WorkspaceInstance>;
 
@@ -81,15 +81,19 @@ export interface WorkspaceDB {
     findWorkspacesForContentDeletion(minSoftDeletedTimeInDays: number, limit: number): Promise<WorkspaceOwnerAndSoftDeleted[]>;
     findPrebuiltWorkspacesForGC(daysUnused: number, limit: number): Promise<WorkspaceAndOwner[]>;
     findAllWorkspaces(offset: number, limit: number, orderBy: keyof Workspace, orderDir: "ASC" | "DESC", ownerId?: string, searchTerm?: string, minCreationTime?: Date, maxCreationDateTime?: Date, type?: WorkspaceType): Promise<{ total: number, rows: Workspace[] }>;
-    findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }>;
+    findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", query?: AdminGetWorkspacesQuery): Promise<{ total: number, rows: WorkspaceAndInstance[] }>;
     findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined>;
+    findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]>;
+
+    getWorkspaceCount(type?: String): Promise<Number>;
+    getInstanceCount(type?: string): Promise<number>
 
     findAllWorkspaceInstances(offset: number, limit: number, orderBy: keyof WorkspaceInstance, orderDir: "ASC" | "DESC", ownerId?: string, minCreationTime?: Date, maxCreationTime?: Date, onlyRunning?: boolean, type?: WorkspaceType): Promise<{ total: number, rows: WorkspaceInstance[] }>;
 
     findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]>;
     findRunningInstancesWithWorkspaces(installation?: string, userId?: string, includeStopping?: boolean): Promise<RunningWorkspaceInfo[]>;
 
-    isWhitelisted(repositoryUrl : string): Promise<boolean>;
+    isWhitelisted(repositoryUrl: string): Promise<boolean>;
     getFeaturedRepositories(): Promise<Partial<WhitelistedRepository>[]>;
 
     findSnapshotById(snapshotId: string): Promise<Snapshot | undefined>;
