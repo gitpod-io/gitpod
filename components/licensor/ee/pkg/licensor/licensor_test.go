@@ -219,7 +219,7 @@ func TestFeatures(t *testing.T) {
 		Features       []Feature
 		LicenseType    LicenseType
 	}{
-		{"Gitpod: no license", true, LicenseLevel(0), []Feature{FeaturePrebuild}, LicenseTypeGitpod},
+		{"Gitpod: no license", true, LicenseLevel(0), []Feature{FeaturePrebuild, FeatureAdminDashboard}, LicenseTypeGitpod},
 		{"Gitpod: invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeGitpod},
 		{"Gitpod: enterprise license", false, LevelEnterprise, []Feature{
 			FeatureAdminDashboard,

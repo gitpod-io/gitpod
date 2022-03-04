@@ -90,6 +90,8 @@ var allowanceMap = map[LicenseLevel]allowance{
 		PrebuildTime: 50 * time.Hour,
 		Features: featureSet{
 			FeaturePrebuild: struct{}{},
+
+			FeatureAdminDashboard: struct{}{},
 		},
 	},
 	LevelEnterprise: {
