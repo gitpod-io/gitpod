@@ -69,24 +69,24 @@ func (e *ReplicatedEvaluator) Validate() (msg string, valid bool) {
 }
 
 // defaultReplicatedLicense this is the default license if call fails
-func defaultReplicatedLicense() *ReplicatedEvaluator {
-	return &ReplicatedEvaluator{
+func defaultReplicatedLicense() *Evaluator {
+	return &Evaluator{
 		lic: defaultLicense,
 	}
 }
 
 // newReplicatedEvaluator exists to allow mocking of client
-func newReplicatedEvaluator(client *http.Client, domain string) (res *ReplicatedEvaluator) {
+func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator) {
 	resp, err := client.Get(replicatedLicenseApiEndpoint)
 	if err != nil {
-		return &ReplicatedEvaluator{invalid: fmt.Sprintf("cannot query kots admin, %q", err)}
+		return &Evaluator{invalid: fmt.Sprintf("cannot query kots admin, %q", err)}
 	}
 	defer resp.Body.Close()
 
 	var replicatedPayload replicatedLicensePayload
 	err = json.NewDecoder(resp.Body).Decode(&replicatedPayload)
 	if err != nil {
-		return &ReplicatedEvaluator{invalid: fmt.Sprintf("cannot decode json data, %q", err)}
+		return &Evaluator{invalid: fmt.Sprintf("cannot decode json data, %q", err)}
 	}
 
 	lic := LicensePayload{
@@ -119,12 +119,12 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Replicated
 		}
 	}
 
-	return &ReplicatedEvaluator{
+	return &Evaluator{
 		lic: lic,
 	}
 }
 
 // NewReplicatedEvaluator gets the license data from the kots admin panel
-func NewReplicatedEvaluator(domain string) (res *ReplicatedEvaluator) {
+func NewReplicatedEvaluator(domain string) (res *Evaluator) {
 	return newReplicatedEvaluator(&http.Client{Timeout: replicatedLicenseApiTimeout}, domain)
 }

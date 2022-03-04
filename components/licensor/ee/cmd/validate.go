@@ -25,7 +25,7 @@ var validateCmd = &cobra.Command{
 		domain, _ := cmd.Flags().GetString("domain")
 		licensorType, _ := cmd.Flags().GetString("licensor")
 
-		var e licensor.Evaluator
+		var e *licensor.Evaluator
 		switch licensorType {
 		case string(licensor.LicenseTypeReplicated):
 			e = licensor.NewReplicatedEvaluator(domain)
