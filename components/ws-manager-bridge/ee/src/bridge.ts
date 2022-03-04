@@ -77,9 +77,9 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     prebuild.error = status.conditions!.timeout;
                     headlessUpdateType = HeadlessWorkspaceEventType.AbortedTimedOut;
                 } else if (!!status.conditions!.failed) {
-                    prebuild.state = "aborted";
+                    prebuild.state = "failed";
                     prebuild.error = status.conditions!.failed;
-                    headlessUpdateType = HeadlessWorkspaceEventType.Aborted;
+                    headlessUpdateType = HeadlessWorkspaceEventType.Failed;
                 } else if (!!status.conditions!.stoppedByRequest) {
                     prebuild.state = "aborted";
                     prebuild.error = "Cancelled";
@@ -89,6 +89,9 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     prebuild.error = status.conditions!.headlessTaskFailed;
                     prebuild.snapshot = status.conditions!.snapshot;
                     headlessUpdateType = HeadlessWorkspaceEventType.FinishedButFailed;
+                } else if (!status.conditions!.snapshot) {
+                    prebuild.state = "failed";
+                    headlessUpdateType = HeadlessWorkspaceEventType.Failed;
                 } else {
                     prebuild.state = "available";
                     prebuild.snapshot = status.conditions!.snapshot;

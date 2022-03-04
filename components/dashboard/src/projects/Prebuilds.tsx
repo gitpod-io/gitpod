@@ -248,6 +248,8 @@ export function prebuildStatusLabel(prebuild?: PrebuildWithStatus) {
             return (<span className="font-medium text-blue-500 uppercase">running</span>);
         case "aborted":
             return (<span className="font-medium text-gray-500 uppercase">canceled</span>);
+        case "failed":
+            return (<span className="font-medium text-red-500 uppercase">failed</span>);
         case "timeout":
             return (<span className="font-medium text-red-500 uppercase">failed</span>);
         case "available":

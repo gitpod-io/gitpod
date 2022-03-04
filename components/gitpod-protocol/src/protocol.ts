@@ -650,7 +650,9 @@ export type PrebuiltWorkspaceState
     // the prebuild timed out
     | "timeout"
     // the prebuild has finished and a snapshot is available
-    | "available";
+    | "available"
+    //
+    | "failed";
 
 export interface PrebuiltWorkspace {
     id: string;
