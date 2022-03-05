@@ -20,12 +20,12 @@ export namespace Gitea {
         constructor(msg?: string, httpError?: any) {
             super(msg);
             this.httpError = httpError;
-            this.name = 'GitLabApiError';
+            this.name = 'GiteaApiError';
         }
     }
     export namespace ApiError {
         export function is(something: any): something is ApiError {
-            return !!something && something.name === 'GitLabApiError';
+            return !!something && something.name === 'GiteaApiError';
         }
         export function isNotFound(error: ApiError): boolean {
             return !!error.httpError?.description.startsWith("404");
@@ -70,8 +70,6 @@ export class GiteaRestApi {
             oauthToken = giteaToken.value;
         }
         const api = Gitea.create(this.config.host, oauthToken);
-        const repo = api.repos.repoGet('anbraten', 'gitea-js');
-        console.log(repo);
         return api;
     }
 

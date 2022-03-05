@@ -80,7 +80,7 @@ export class GiteaApp {
 interface GiteaPushHook {
 }
 
-interface GiteaRepository {
-}
+// interface GiteaRepository {
+// }
 
-interface GiteaProject {}
+// interface GiteaProject {}

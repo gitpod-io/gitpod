@@ -81,7 +81,7 @@
                  currentScopes: this.readScopesFromVerifyParams(tokenResponse)
              }
          } catch (error) {
-             // TODO: cleanup
+            // TODO: cleanup & check for Gitea instead of Gitlab
             //  if (error && typeof error.description === "string" && error.description.includes("403 Forbidden")) {
             //      // If Gitlab is configured to disallow OAuth-token based API access for unconfirmed users, we need to reject this attempt
             //      // 403 Forbidden  - You (@...) must accept the Terms of Service in order to perform this action. Please access GitLab from a web browser to accept these terms.

@@ -28,7 +28,7 @@ import { convertRepo } from './convert';
      }
 
      public async handle(ctx: TraceContext, user: User, contextUrl: string): Promise<CommitContext> {
-         const span = TraceContext.startSpan("GitlabContextParser", ctx);
+         const span = TraceContext.startSpan("GiteaContextParser", ctx);
          span.setTag("contextUrl", contextUrl);
 
          try {
@@ -69,7 +69,6 @@ import { convertRepo } from './convert';
          }
      }
 
-     // https://gitlab.com/AlexTugarev/gp-test
      protected async handleDefaultContext(user: User, host: string, owner: string, repoName: string): Promise<NavigatorContext> {
          try {
              const repository = await this.fetchRepo(user, owner, repoName);
@@ -116,9 +115,6 @@ import { convertRepo } from './convert';
          }
      }
 
-     // https://gitlab.com/AlexTugarev/gp-test/tree/wip
-     // https://gitlab.com/AlexTugarev/gp-test/tree/wip/folder
-     // https://gitlab.com/AlexTugarev/gp-test/blob/wip/folder/empty.file.jpeg
      protected async handleTreeContext(user: User, host: string, owner: string, repoName: string, segments: string[]): Promise<NavigatorContext> {
 
          try {
@@ -201,11 +197,12 @@ import { convertRepo } from './convert';
              const possibleTag = await this.giteaApi.run<Gitea.Tag>(user, async g => {
                  return g.repos.repoGetTag(owner, repoName, candidate);
              });
+             // TODO
              // If the tag does not exist, the GitLab API returns with NotFound or InternalServerError.
              const isNotFoundTag = Gitea.ApiError.is(possibleTag) && (Gitea.ApiError.isNotFound(possibleTag) || Gitea.ApiError.isInternalServerError(possibleTag));
              if (!isNotFoundTag) {
                 if (Gitea.ApiError.is(possibleTag)) {
-                    throw new Error(`GitLab ApiError on searching for possible tags for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleTag}`);
+                    throw new Error(`Gitea ApiError on searching for possible tags for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleTag}`);
                 }
 
                 if (!possibleTag.commit?.sha || !possibleTag.name) {
@@ -231,7 +228,6 @@ import { convertRepo } from './convert';
          return { ...branchOrTagObject, fullPath };
      }
 
-     // https://gitlab.com/AlexTugarev/gp-test/merge_requests/1
      protected async handlePullRequestContext(user: User, host: string, owner: string, repoName: string, nr: number): Promise<PullRequestContext> {
          const result = await this.giteaApi.run<Gitea.PullRequest>(user, async g => {
              return g.repos.repoGetPullRequest(owner, repoName, nr);
@@ -307,7 +303,7 @@ import { convertRepo } from './convert';
              return g.repos.repoGetSingleCommit(owner, repoName, sha);
          });
          if (Gitea.ApiError.is(result)) {
-             if (result.message === 'GitLab responded with code 404') {
+             if (result.message === 'Gitea responded with code 404') {
                  throw new Error(`Couldn't find commit #${sha} in repository ${owner}/${repoName}.`);
              }
              throw result;
@@ -323,7 +319,6 @@ import { convertRepo } from './convert';
          }
      }
 
-     // https://gitlab.com/AlexTugarev/gp-test/issues/1
      protected async handleIssueContext(user: User, host: string, owner: string, repoName: string, nr: number): Promise<IssueContext> {
          const ctxPromise = this.handleDefaultContext(user, host, owner, repoName);
          const result = await this.giteaApi.run<Gitea.Issue>(user, async g => {
@@ -342,7 +337,6 @@ import { convertRepo } from './convert';
          };
      }
 
-     // https://gitlab.com/AlexTugarev/gp-test/-/commit/80948e8cc8f0e851e89a10bc7c2ee234d1a5fbe7
      protected async handleCommitContext(user: User, host: string, owner: string, repoName: string, sha: string): Promise<NavigatorContext> {
          const repository = await this.fetchRepo(user, owner, repoName);
          if (Gitea.ApiError.is(repository)) {

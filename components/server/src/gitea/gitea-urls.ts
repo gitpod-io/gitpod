@@ -9,5 +9,6 @@ export function oauthUrls(host: string) {
     return {
         authorizationUrl: `https://${host}/login/oauth/authorize`,
         tokenUrl: `https://${host}/login/oauth/access_token`,
+        settingsUrl: `https://${host}/user/settings/applications`,
     }
 }

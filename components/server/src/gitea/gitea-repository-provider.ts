@@ -109,4 +109,18 @@ export class GiteaRepositoryProvider implements RepositoryProvider {
         // TODO: do we need the html url or clone urls?
         return (result || []).map((repo) => repo.html_url || '').filter(s => s !== "")
     }
+
+    async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
+        try {
+            // If we can "see" a project we are allowed to read it
+            const api = await this.giteaApi;
+            const response = await api.run(user, (g => g.repos.repoGet(owner, repo)));
+            if (Gitea.ApiError.is(response)) {
+                return false;
+            }
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
 }

@@ -108,7 +108,14 @@ export class AuthProviderService {
     }
     protected initializeNewProvider(newEntry: AuthProviderEntry.NewEntry): AuthProviderEntry {
         const { host, type, clientId, clientSecret } = newEntry;
-        const urls = type === "GitHub" ? githubUrls(host) : (type === "GitLab" ? gitlabUrls(host) : (type === "Gitea" ? giteaUrls(host) : undefined));
+        let urls: { authorizationUrl: string, tokenUrl: string } | undefined = undefined;
+        if (type === "GitHub") {
+            urls =githubUrls(host);
+        } else if (type === "GitLab") {
+            urls =gitlabUrls(host);
+        } else if (type === "Gitea") {
+            urls = giteaUrls(host);
+        }
         if (!urls) {
             throw new Error("Unexpected service type.");
         }

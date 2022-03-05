@@ -648,7 +648,7 @@ export function GitIntegrationModal(props: ({
                 <AlertBox>You need to activate this integration.</AlertBox>
             )}
             <div className="flex flex-col">
-                <span className="text-gray-500">{props.headerText || "Configure a Git integration with a GitLab or GitHub self-hosted instance."}</span>
+                <span className="text-gray-500">{props.headerText || "Configure a Git integration with a GitLab, GitHub or Gitea self-hosted instance."}</span>
             </div>
 
             <div className="overscroll-contain max-h-96 overflow-y-auto pr-2">
