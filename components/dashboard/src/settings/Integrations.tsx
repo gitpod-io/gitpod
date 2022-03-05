@@ -384,7 +384,7 @@ function GitIntegrations() {
         <div className="flex items-start sm:justify-between mb-2">
             <div>
                 <h3>Git Integrations</h3>
-                <h2>Manage Git integrations for GitLab or GitHub self-hosted instances.</h2>
+                <h2>Manage Git integrations for GitLab, GitHub or Gitea self-hosted instances.</h2>
             </div>
             {providers.length !== 0
                 ?
@@ -603,6 +603,9 @@ export function GitIntegrationModal(props: ({
             case "GitLab":
                 settingsUrl = `${host}/-/profile/applications`;
                 break;
+            case "Gitea":
+                settingsUrl = `${host}/user/settings/applications`;
+                break;
             default: return undefined;
         }
         let docsUrl = ``;
@@ -612,6 +615,9 @@ export function GitIntegrationModal(props: ({
                 break;
             case "GitLab":
                 docsUrl = `https://www.gitpod.io/docs/gitlab-integration/#oauth-application`;
+                break;
+            case "Gitea":
+                docsUrl = `https://www.gitpod.io/docs/gitea-integration/#oauth-application`;
                 break;
             default: return undefined;
         }
@@ -653,6 +659,7 @@ export function GitIntegrationModal(props: ({
                             onChange={(e) => setType(e.target.value)}>
                             <option value="GitHub">GitHub</option>
                             <option value="GitLab">GitLab</option>
+                            <option value="GitLab">Gitea</option>
                         </select>
                     </div>
                 )}

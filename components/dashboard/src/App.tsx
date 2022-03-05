@@ -416,7 +416,7 @@ function App() {
         toRender = <CreateWorkspace contextUrl={hash} />;
     } else if (isWsStart) {
         toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
-    } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
+    } else if (/^(github|gitlab|gitea)\.com\/.+?/i.test(window.location.pathname)) {
         let url = new URL(window.location.href)
         url.hash = url.pathname
         url.pathname = '/'
