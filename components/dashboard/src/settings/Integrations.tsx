@@ -659,7 +659,7 @@ export function GitIntegrationModal(props: ({
                             onChange={(e) => setType(e.target.value)}>
                             <option value="GitHub">GitHub</option>
                             <option value="GitLab">GitLab</option>
-                            <option value="GitLab">Gitea</option>
+                            <option value="Gitea">Gitea</option>
                         </select>
                     </div>
                 )}
