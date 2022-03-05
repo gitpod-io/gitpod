@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Api, Commit as ICommit, Repository as IRepository, ContentsResponse as IContentsResponse, Branch as IBranch, Tag as ITag, PullRequest as IPullRequest, Issue as IIssue, User as IUser } from "gitea-js"
-import fetch from 'node-fetch'
+import { giteaApi, Api, Commit as ICommit, Repository as IRepository, ContentsResponse as IContentsResponse, Branch as IBranch, Tag as ITag, PullRequest as IPullRequest, Issue as IIssue, User as IUser } from "gitea-js"
+import fetch from 'cross-fetch'
 
 import { User } from "@gitpod/gitpod-protocol"
 import { injectable, inject } from 'inversify';
@@ -36,14 +36,10 @@ export namespace Gitea {
     }
 
     export function create(host: string, token: string) {
-        return new Api({
+        return giteaApi(`https://${host}`, {
             customFetch: fetch,
-            baseUrl: `https://${host}`,
-            baseApiParams: {
-            headers: {
-                "Authorization": token,
-            },
-        }});
+            token,
+        });
     }
 
     export type Commit = ICommit;
