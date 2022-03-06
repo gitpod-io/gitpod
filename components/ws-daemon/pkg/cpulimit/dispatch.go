@@ -6,19 +6,16 @@ package cpulimit
 
 import (
 	"context"
-	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/opencontainers/runc/libcontainer/cgroups/fs2"
-	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/api/resource"
 
+	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -225,38 +222,19 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 }
 
 func newCFSController(basePath, cgroupPath string) (CFSController, error) {
-	controllers := filepath.Join(basePath, "cgroup.controllers")
-	_, err := os.Stat(controllers)
-
-	if os.IsNotExist(err) {
-		return CgroupV1CFSController(filepath.Join(basePath, "cpu", cgroupPath)), nil
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		return nil, xerrors.Errorf("could not determine cgroup setup: %w", err)
 	}
 
-	if err == nil {
+	if unified {
 		fullPath := filepath.Join(basePath, cgroupPath)
-		if err := ensureControllerEnabled(fullPath, "cpu"); err != nil {
+		if err := cgroups.EnsureCpuControllerEnabled(basePath, cgroupPath); err != nil {
 			return nil, err
 		}
 
 		return CgroupV2CFSController(fullPath), nil
+	} else {
+		return CgroupV1CFSController(filepath.Join(basePath, "cpu", cgroupPath)), nil
 	}
-
-	return nil, err
-}
-
-func ensureControllerEnabled(targetPath, controller string) error {
-	controllerFile := filepath.Join(targetPath, "cgroup.controllers")
-	controllers, err := os.ReadFile(controllerFile)
-	if err != nil {
-		return err
-	}
-
-	for _, ctrl := range strings.Fields(string(controllers)) {
-		if ctrl == controller {
-			// controller is already activated
-			return nil
-		}
-	}
-
-	return fs2.CreateCgroupPath(targetPath, &configs.Cgroup{})
 }
