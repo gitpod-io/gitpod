@@ -30,14 +30,24 @@ func AllowKubeDnsEgressRule() v1.NetworkPolicyEgressRule {
 				},
 			},
 		},
-		To: []v1.NetworkPolicyPeer{{
-			PodSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"k8s-app": "kube-dns",
+		// Enable access to DNS service in the cluster: kube-dns or coredns
+		To: []v1.NetworkPolicyPeer{
+			{
+				PodSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"k8s-app": "kube-dns",
+					},
 				},
+				NamespaceSelector: &metav1.LabelSelector{},
+			}, {
+				PodSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"k8s-app": "coredns",
+					},
+				},
+				NamespaceSelector: &metav1.LabelSelector{},
 			},
-			NamespaceSelector: &metav1.LabelSelector{},
-		}},
+		},
 	}
 
 	return dnsEgressRule
