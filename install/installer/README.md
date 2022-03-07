@@ -68,7 +68,7 @@ gitpod-installer-linux-amd64: OK
 sudo install -o root -g root gitpod-installer-linux-amd64 /usr/local/bin/gitpod-installer
 ```
 
-4. Test to ensure the version you installed it up-to-date:
+4. Test to ensure the version you installed is up-to-date:
 
 ```shell
 gitpod-installer version
@@ -385,7 +385,7 @@ The `az-storage-token` secret must contain the following key/value pairs:
 ### S3
 
 > This is currently only tested with AWS. Other S3-compatible providers should
-> work but there may compatability issues - please raise a ticket if you have
+> work but there may be compatibility issues - please raise a ticket if you have
 > issues with other providers
 
 ```yaml
