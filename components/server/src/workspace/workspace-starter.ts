@@ -189,12 +189,17 @@ export class WorkspaceStarter {
             // choose a cluster and start the instance
             let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
             let retries = 0;
-            for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
-                resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
-                if (resp) {
-                    break;
+            try {
+                for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
+                    resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
+                    if (resp) {
+                        break;
+                    }
+                    await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
                 }
-                await new Promise((resolve) => setTimeout(resolve, INSTANCE_START_RETRY_INTERVAL_SECONDS * 1000));
+            } catch (err) {
+                increaseFailedInstanceStartCounter("startOnClusterFailed");
+                throw err;
             }
 
             if (!resp) {
