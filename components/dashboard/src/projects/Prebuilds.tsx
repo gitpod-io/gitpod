@@ -103,7 +103,7 @@ export default function (props: { project?: Project, isAdminDashboard?: boolean 
     }, [prebuilds])
 
     const prebuildContextMenu = (p: PrebuildWithStatus) => {
-        const isFailed = p.status === "aborted" || p.status === "timeout" || !!p.error;
+        const isFailed = p.status === "aborted" || p.status === "timeout" || p.status === "failed"|| !!p.error;
         const isRunning = p.status === "building";
         const entries: ContextMenuEntry[] = [];
         if (isFailed) {
@@ -248,8 +248,10 @@ export function prebuildStatusLabel(prebuild?: PrebuildWithStatus) {
             return (<span className="font-medium text-blue-500 uppercase">running</span>);
         case "aborted":
             return (<span className="font-medium text-gray-500 uppercase">canceled</span>);
+        case "failed":
+            return (<span className="font-medium text-red-500 uppercase">system error</span>);
         case "timeout":
-            return (<span className="font-medium text-red-500 uppercase">failed</span>);
+            return (<span className="font-medium text-red-500 uppercase">timed out</span>);
         case "available":
             if (prebuild?.error) {
                 return (<span className="font-medium text-red-500 uppercase">failed</span>);
@@ -267,6 +269,8 @@ export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
             return <img alt="" className="h-4 w-4" src={StatusRunning} />;
         case "aborted":
             return <img alt="" className="h-4 w-4" src={StatusCanceled} />;
+        case "failed":
+            return <img alt="" className="h-4 w-4" src={StatusFailed} />;
         case "timeout":
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
         case "available":

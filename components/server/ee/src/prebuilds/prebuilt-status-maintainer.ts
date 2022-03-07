@@ -102,16 +102,18 @@ export class PrebuildStatusMaintainer implements Disposable {
     protected getConclusionFromPrebuildState(pws: PrebuiltWorkspace): "error" | "failure" | "pending" | "success" {
         if (pws.state === "aborted") {
             return "error";
-        } else if (pws.state === "queued") {
-            return "pending";
+        } else if (pws.state === "failed") {
+            return "error";
         } else if (pws.state === "timeout") {
             return "error";
+        } else if (pws.state === "queued") {
+            return "pending";
+        } else if (pws.state === "building") {
+            return "pending";
         } else if (pws.state === "available" && !pws.error) {
             return "success";
         } else if (pws.state === "available" && !!pws.error) {
             return "failure";
-        } else if (pws.state === "building") {
-            return "pending";
         } else {
             log.warn("Should have updated prebuilt workspace updatable, but don't know how. Resorting to error conclusion.", { pws });
             return "error";
