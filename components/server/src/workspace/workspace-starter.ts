@@ -292,13 +292,13 @@ export class WorkspaceStarter {
             // If we just attempted to start a workspace for a prebuild - and that failed, we have to fail the prebuild itself.
             if (workspace.type === 'prebuild') {
                 const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByWorkspaceID(workspace.id);
-                if (prebuild && prebuild.state !== 'aborted') {
-                    prebuild.state = "aborted";
+                if (prebuild && prebuild.state !== 'failed') {
+                    prebuild.state = "failed";
                     prebuild.error = err.toString();
 
                     await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild)
                     await this.messageBus.notifyHeadlessUpdate({ span }, workspace.ownerId, workspace.id, <HeadlessWorkspaceEvent>{
-                        type: HeadlessWorkspaceEventType.Aborted,
+                        type: HeadlessWorkspaceEventType.Failed,
                         // TODO: `workspaceID: workspace.id` not needed here? (found in ee/src/prebuilds/prebuild-queue-maintainer.ts and ee/src/bridge.ts)
                     });
                 }
