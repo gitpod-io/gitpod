@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { status, ServiceError } from '@grpc/grpc-js';
-import fetch from "node-fetch";
+import { status } from '@grpc/grpc-js';
+import fetch from 'node-fetch';
 import { User } from '@gitpod/gitpod-protocol/lib/protocol';
 import bodyParser = require('body-parser');
 import * as util from 'util';
@@ -14,7 +14,7 @@ import { inject, injectable } from 'inversify';
 import { BearerAuth } from '../auth/bearer-authenticator';
 import { isWithFunctionAccessGuard } from '../auth/function-access';
 import { CodeSyncResourceDB, UserStorageResourcesDB, ALL_SERVER_RESOURCES, ServerResource, SyncResource } from '@gitpod/gitpod-db/lib';
-import { DeleteRequest, DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
+import { DeleteRequest, DeleteResponse, DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { v4 as uuidv4 } from 'uuid';
 import { accessCodeSyncStorage, UserRateLimiter } from '../auth/rate-limiter';
@@ -23,17 +23,17 @@ import { Config } from '../config';
 import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/sugar';
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
-const defautltRevLimit = 20;
+const defaultRevLimit = 20;
 // It should keep it aligned with client_max_body_size for /code-sync location.
 const defaultContentLimit = '1Mb';
 export type CodeSyncConfig = Partial<{
-    revLimit: number
-    contentLimit: number
+    revLimit: number;
+    contentLimit: number;
     resources: {
         [resource: string]: {
-            revLimit?: number
-        }
-    }
+            revLimit?: number;
+        };
+    };
 }>;
 
 const objectPrefix = 'code-sync/';
@@ -125,14 +125,14 @@ export class CodeSyncService {
                 return;
             }
             const resourceKey = ALL_SERVER_RESOURCES.find(key => key === req.params.resource);
-            const revs = resourceKey && await this.db.getResources(req.user.id, resourceKey)
+            const revs = resourceKey && (await this.db.getResources(req.user.id, resourceKey));
             if (!revs || !revs.length) {
                 res.sendStatus(204);
                 return;
             }
-            const result: { url: string, created: number }[] = revs.map(e => ({
+            const result: { url: string; created: number }[] = revs.map(e => ({
                 url: req.originalUrl + '/' + e.rev,
-                created: Date.parse(e.created) / 1000 /* client expects in secondsm */
+                created: Date.parse(e.created) / 1000 /* client expects in secondsm */,
             }));
             res.json(result);
             return;
@@ -189,8 +189,8 @@ export class CodeSyncService {
                     const response = await fetch(urlResponse.getUrl(), {
                         timeout: 10000,
                         headers: {
-                            'content-type': contentType
-                        }
+                            'content-type': contentType,
+                        },
                     });
                     if (response.status !== 200) {
                         throw new Error(`code sync: blob service: download failed with ${response.status} ${response.statusText}`);
@@ -224,11 +224,11 @@ export class CodeSyncService {
             if (latestRev === fromTheiaRev) {
                 latestRev = undefined;
             }
-            const revLimit = resourceKey === 'machines' ? 1 : config.resources?.[resourceKey]?.revLimit || config?.revLimit || defautltRevLimit;
+            const revLimit = resourceKey === 'machines' ? 1 : config.resources?.[resourceKey]?.revLimit || config?.revLimit || defaultRevLimit;
             const userId = req.user.id;
-            let oldObject: string | undefined;
             const contentType = req.headers['content-type'] || '*/*';
-            const rev = await this.db.insert(userId, resourceKey, async (rev, oldRev) => {
+            let oldRevList: string[] = [];
+            const rev = await this.db.insert(userId, resourceKey, async (rev, oldRevs) => {
                 const request = new UploadUrlRequest();
                 request.setOwnerId(userId);
                 request.setName(toObjectName(resourceKey, rev));
@@ -249,24 +249,10 @@ export class CodeSyncService {
                 if (response.status !== 200) {
                     throw new Error(`code sync: blob service: upload failed with ${response.status} ${response.statusText}`);
                 }
-                oldObject = oldRev && toObjectName(resourceKey, oldRev);
+                oldRevList = oldRevs
             }, { latestRev, revLimit });
-            if (oldObject) {
-                const request = new DeleteRequest();
-                request.setOwnerId(userId);
-                request.setExact(oldObject);
-
-                const blobsClient = this.blobsProvider.getDefault();
-                blobsClient.delete(request, (err: ServiceError | null) => {
-                    if (err) {
-                        if (err.code === status.NOT_FOUND) {
-                            // we're good here
-                            return;
-                        }
-                        log.error({ userId }, 'code sync: failed to delete', err, { object: oldObject });
-                    }
-                });
-            }
+            // sync delete old revs from storage
+            this.deleteObjects(userId, resourceKey, oldRevList).catch(e => {});
             if (!rev) {
                 res.sendStatus(412);
                 return;
@@ -311,7 +297,6 @@ export class CodeSyncService {
         return { name, version };
     }
 
-
     protected async getTheiaCodeSyncResource(userId: string) {
         interface ISyncExtension {
             identifier: {
@@ -334,5 +319,28 @@ export class CodeSyncService {
             });
         }
         return JSON.stringify(extensions);
+    }
+
+    protected async deleteObjects(userId: string, resourceKey: ServerResource, revs: string[]) {
+        const tasks = revs.map(rev => this.db.deleteResource(userId, resourceKey, rev, async (rev: string) => {
+            const obj = toObjectName(resourceKey, rev);
+            try {
+                const request = new DeleteRequest();
+                request.setOwnerId(userId);
+                request.setExact(obj);
+                const blobsClient = this.blobsProvider.getDefault();
+                await util.promisify<DeleteRequest, DeleteResponse>(blobsClient.delete.bind(blobsClient))(request);
+            } catch (err) {
+                if (err.code === status.NOT_FOUND) {
+                    return;
+                }
+                log.error({ userId }, 'code sync: failed to delete obj', err, { object: obj });
+                throw err;
+            }
+        }).catch(err => {
+            log.error({ userId }, 'code sync: failed to delete', err);
+        }))
+        await Promise.allSettled(tasks);
+        return;
     }
 }
