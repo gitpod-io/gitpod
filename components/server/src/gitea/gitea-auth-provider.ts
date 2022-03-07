@@ -42,7 +42,7 @@
              ...oauth,
              authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
              tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
-            //  settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
+             settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
              scope: GiteaScope.All.join(scopeSeparator),
              scopeSeparator
          };
@@ -52,12 +52,8 @@
          super.authorize(req, res, next, scope ? scope : GiteaScope.Requirements.DEFAULT);
      }
 
-     protected get baseURL() {
-         return `https://${this.params.host}`;
-     }
-
      protected readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
-         const api = Gitea.create(this.baseURL, accessToken);
+         const api = Gitea.create(this.params.host, accessToken);
          const getCurrentUser = async () => {
              const response = await api.user.userGetCurrent();
              return response.data as unknown as Gitea.User;
@@ -65,7 +61,7 @@
          try {
              const result = await getCurrentUser();
              if (result) {
-                 if (!result.active || !result.created || !result.prohibit_login) {
+                 if (!result.active || result.prohibit_login) {
                     throw UnconfirmedUserException.create("Please confirm and activate your Gitea account and try again.", result);
                  }
              }
