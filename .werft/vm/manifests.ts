@@ -146,7 +146,7 @@ type UserDataSecretManifestOptions = {
   secretName: string
 }
 
-export function UserDataSecretManifest({vmName, namespace, secretName }: UserDataSecretManifestOptions) {
+export function UserDataSecretManifest({ vmName, namespace, secretName }: UserDataSecretManifestOptions) {
   const userdata = Buffer.from(`#cloud-config
 users:
 - name: ubuntu
@@ -158,6 +158,20 @@ chpasswd:
     ubuntu:ubuntu
   expire: False
 write_files:
+  - path: /etc/disable-services.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      systemctl disable google-guest-agent &
+      systemctl disable google-startup-scripts &
+      systemctl disable google-osconfig-agent &
+      systemctl disable google-oslogin-cache.timer &
+      systemctl disable google-shutdown-scripts &
+      systemctl stop google-guest-agent &
+      systemctl stop google-startup-scripts &
+      systemctl stop google-osconfig-agent &
+      systemctl stop google-oslogin-cache.timer &
+      systemctl stop google-shutdown-scripts &
   - path: /etc/ssh/sshd_config.d/101-change-ssh-port.conf
     permission: 0644
     owner: root
@@ -213,6 +227,7 @@ write_files:
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       EOF
 runcmd:
+ - bash /etc/disable-services.sh
  - bash /usr/local/bin/bootstrap-k3s.sh`).toString("base64")
   return `
 apiVersion: v1
