@@ -52,12 +52,17 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	if err != nil {
 		return nil, err
 	}
-	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
+
+	listener := []dispatch.Listener{
 		cpulimit.NewDispatchListener(&config.Resources, reg),
-		CacheReclaim(config.Resources.CGroupBasePath),
 		cgCustomizer,
 		markUnmountFallback,
-	)
+	}
+	if _, err := os.Stat("/sys/fs/cgroup/cgroup.controllers"); os.IsNotExist(err) {
+		listener = append(listener, CacheReclaim(config.Resources.CGroupBasePath))
+	}
+
+	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
 	if err != nil {
 		return nil, err
 	}
