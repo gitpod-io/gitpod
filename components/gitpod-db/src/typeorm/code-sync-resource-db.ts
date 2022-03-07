@@ -70,38 +70,44 @@ export class CodeSyncResourceDB {
         });
     }
 
-    async insert(userId: string, kind: ServerResource, doInsert: (rev: string, oldRev?: string) => Promise<void>, params?: CodeSyncInsertOptions): Promise<string | undefined> {
+    async deleteResource(userId: string, kind: ServerResource, rev: string, doDelete: (rev: string) => Promise<void>): Promise<void> {
+        const connection = await this.typeORM.getConnection();
+        await connection.transaction(async manager => {
+            await manager.createQueryBuilder()
+                .delete()
+                .from(DBCodeSyncResource)
+                .where("userId = :userId AND kind = :kind AND rev = :rev", { userId, kind, rev: rev })
+                .execute();
+            await doDelete(rev);
+        });
+    }
+
+    async insert(userId: string, kind: ServerResource, doInsert: (rev: string, oldRevs: string[]) => Promise<void>, params?: CodeSyncInsertOptions): Promise<string | undefined> {
         const connection = await this.typeORM.getConnection();
         return await connection.transaction(async manager => {
             let latest: DBCodeSyncResource | undefined;
-            let toUpdated: DBCodeSyncResource | undefined;
+            let toDeleted: DBCodeSyncResource[] = [];
             if (params?.revLimit) {
                 const resources = await this.doGetResources(manager, userId, kind);
                 latest = resources[0];
                 if (resources.length >= params.revLimit) {
-                    toUpdated = resources[resources.length - 1];
+                    // delete + 1 to insert instead of update
+                    toDeleted = resources.splice(params?.revLimit - 1);
                 }
             } else {
                 latest = await this.doGetResource(manager, userId, kind, 'latest');
             }
+            // user setting always show with diff so we need to make sure it’s changed from prev revision
             if (params?.latestRev && latest?.rev !== params.latestRev) {
                 return undefined;
             }
             const rev = uuid.v4();
-            await doInsert(rev, toUpdated?.rev);
-            if (toUpdated) {
-                await manager.createQueryBuilder().
-                    update(DBCodeSyncResource)
-                    .set({ rev })
-                    .where("userId = :userId AND kind = :kind AND rev = :rev", { userId, kind, rev: toUpdated.rev })
-                    .execute();
-            } else {
-                await manager.createQueryBuilder()
-                    .insert()
-                    .into(DBCodeSyncResource)
-                    .values({ userId, kind, rev })
-                    .execute();
-            }
+            await manager.createQueryBuilder()
+                .insert()
+                .into(DBCodeSyncResource)
+                .values({ userId, kind, rev })
+                .execute();
+            await doInsert(rev, toDeleted.map(e => e.rev));
             return rev;
         });
     }
