@@ -44,20 +44,7 @@ Tracing.initialize()
 async function run(context: any) {
     const config = jobConfig(werft, context)
 
-    //TODO: This is only a temporary solution and needs to be removed when we migrate to one prev-environment per cluster
-    // Because of a workspace label the branch name that can be used to create a preview environment is limited to 20 chars
-    // echo -n "gitpod.io/registry-facade_ready_ns_staging-" | wc -c
-    if (!config.noPreview) {
-        werft.phase("check-branchname","This checks if the branchname is to long to create a preview-environment successfully.")
-        const maxBranchNameLength = 20;
-        if (config.previewEnvironment.destname.length > maxBranchNameLength) {
-            werft.fail("check-branchname", `The branch name ${config.previewEnvironment.destname} is more than ${maxBranchNameLength} character. Please choose a shorter name!`)
-        }
-        werft.done("check-branchname")
-    }
-
-
-    await validateChanges(werft)
+    await validateChanges(werft, config)
     await prepare(werft)
     await buildAndPublish(werft, config)
     await coverage(werft, config)
