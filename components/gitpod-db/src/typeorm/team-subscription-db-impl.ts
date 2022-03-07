@@ -51,6 +51,14 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
         return repo.findOne(id);
     }
 
+    async findTeamSubscriptionBySlotId(slotId: string): Promise<TeamSubscription | undefined> {
+        const repo = await this.getRepo();
+        const query = repo.createQueryBuilder("ts")
+            .leftJoinAndMapOne("ts.id", DBTeamSubscriptionSlot, "slot", "slot.teamSubscriptionId = ts.id")
+            .where("slot.id = :slotId", { slotId });
+        return query.getOne();
+    }
+
     async findTeamSubscriptionByPaymentRef(userId: string, paymentReference: string): Promise<TeamSubscription | undefined> {
         const repo = await this.getRepo();
         return repo.findOne({ userId, paymentReference });

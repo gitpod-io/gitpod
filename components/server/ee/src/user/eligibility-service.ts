@@ -5,8 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { UserDB } from "@gitpod/gitpod-db/lib";
-import { HostContextProvider } from "../../../src/auth/host-context-provider";
+import { TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { TokenProvider } from "../../../src/user/token-provider";
 import { User, WorkspaceTimeoutDuration, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { RemainingHours } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
@@ -47,10 +46,10 @@ export class EligibilityService {
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(EMailDomainService) protected readonly domainService: EMailDomainService;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(AccountStatementProvider) protected readonly accountStatementProvider: AccountStatementProvider;
+    @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
 
     /**
      * Whether the given user is recognized as a student within Gitpod
@@ -270,7 +269,26 @@ export class EligibilityService {
             Plans.TEAM_PROFESSIONAL_USD,
         ].map(p => p.chargebeeId);
 
-        return subscriptions.filter(s => eligblePlans.includes(s.planId!)).length > 0;
+        const relevantSubscriptions = subscriptions.filter(s => eligblePlans.includes(s.planId!));
+        if (relevantSubscriptions.length === 0) {
+            // user has no subscription that grants "more resources"
+            return false;
+        }
+
+        // some TeamSubscriptions are marked with 'excludeFromMoreResources' to convey that those are _not_ receiving more resources
+        const excludeFromMoreResources = await Promise.all(relevantSubscriptions.map(async (s): Promise<boolean> => {
+            if (!s.teamSubscriptionSlotId) {
+                return false;
+            }
+            const ts = await this.teamSubscriptionDb.findTeamSubscriptionBySlotId(s.teamSubscriptionSlotId);
+            return !!ts?.excludeFromMoreResources;
+        }));
+        if (excludeFromMoreResources.every(b => b)) {
+            // if all TS the user is part of are marked this way, we deny that privilege
+            return false;
+        }
+
+        return true;
     }
 
     protected async getUser(user: User | string): Promise<User> {
