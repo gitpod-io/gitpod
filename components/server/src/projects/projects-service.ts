@@ -137,7 +137,7 @@ export class ProjectsService {
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const type = hostContext && hostContext.authProvider.info.authProviderType;
-        if (type === "GitLab" || type === "Bitbucket") {
+        if (type !== "github.com") {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier

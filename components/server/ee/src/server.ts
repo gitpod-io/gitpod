@@ -13,12 +13,14 @@ import { GitLabApp } from './prebuilds/gitlab-app';
 import { BitbucketApp } from './prebuilds/bitbucket-app';
 import { GithubApp } from './prebuilds/github-app';
 import { SnapshotService } from './workspace/snapshot-service';
+import { GitHubEnterpriseApp } from './prebuilds/github-enterprise-app';
 
 export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Server<C, S> {
     @inject(GithubApp) protected readonly githubApp: GithubApp;
     @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
     @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
+    @inject(GitHubEnterpriseApp) protected readonly gitHubEnterpriseApp: GitHubEnterpriseApp;
 
     public async init(app: express.Application) {
         await super.init(app);
@@ -43,5 +45,8 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
 
         log.info("Registered Bitbucket app at " + BitbucketApp.path);
         app.use(BitbucketApp.path, this.bitbucketApp.router);
+
+        log.info("Registered GitHub EnterpriseApp app at " + GitHubEnterpriseApp.path);
+        app.use(GitHubEnterpriseApp.path, this.gitHubEnterpriseApp.router);
     }
 }

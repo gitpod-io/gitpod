@@ -23,6 +23,7 @@ import { GithubAppRules } from "./prebuilds/github-app-rules";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
+import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { IPrefixContextParser } from "../../src/workspace/context-parser";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { StartIncrementalPrebuildContextParser } from "./prebuilds/start-incremental-prebuild-context-parser";
@@ -68,6 +69,7 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(GitLabAppSupport).toSelf().inSingletonScope();
     bind(BitbucketApp).toSelf().inSingletonScope();
     bind(BitbucketAppSupport).toSelf().inSingletonScope();
+    bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
 
     bind(LicenseEvaluator).toSelf().inSingletonScope();
     bind(LicenseKeySource).to(DBLicenseKeySource).inSingletonScope();

@@ -174,7 +174,7 @@ export class GitHubRestApi {
         try {
             const response = (await operation(userApi));
             const statusCode = response.status;
-            if (statusCode !== 200) {
+            if (!(statusCode >= 200 && statusCode < 300)) {
                 throw new GitHubApiError(response);
             }
             return response;

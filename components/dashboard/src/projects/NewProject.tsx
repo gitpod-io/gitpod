@@ -525,8 +525,7 @@ function GitProviders(props: {
         });
     }
 
-    // for now we exclude GitHub Enterprise
-    const filteredProviders = () => props.authProviders.filter(p => p.host === "github.com" || p.host === "bitbucket.org" || p.authProviderType === "GitLab");
+    const filteredProviders = () => props.authProviders.filter(p => p.authProviderType === "GitHub" || p.host === "bitbucket.org" || p.authProviderType === "GitLab");
 
     return (
         <div className="mt-8 border rounded-t-xl border-gray-100 dark:border-gray-800 flex-col">
