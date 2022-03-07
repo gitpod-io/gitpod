@@ -73,7 +73,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     const url = `https://${domain}`;
     const imagePullAuth = exec(`printf "%s" "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
         | yq r - data['.dockerconfigjson'] \
-        | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
+        | base64 -d)" | base64 -w 0`, { silent: true}).stdout.trim();
 
     const sweeperImage = exec(`tar xfO /tmp/dev.tar.gz ./sweeper.txt`).stdout.trim();
 
