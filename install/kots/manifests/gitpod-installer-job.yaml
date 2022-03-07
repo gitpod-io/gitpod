@@ -43,7 +43,7 @@ spec:
       containers:
         - name: installer
           # This will normally be the release tag - using this tag as need the license evaluator
-          image: 'eu.gcr.io/gitpod-core-dev/build/installer:main.2569'
+          image: 'eu.gcr.io/gitpod-core-dev/build/installer:sje-licensing.24'
           volumeMounts:
             - mountPath: /config-patch
               name: config-patch

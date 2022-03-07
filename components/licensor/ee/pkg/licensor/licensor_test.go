@@ -238,9 +238,7 @@ func TestFeatures(t *testing.T) {
 			FeaturePrebuild,
 		}, LicenseTypeGitpod, seats, nil},
 
-		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{
-			FeaturePrebuild,
-		}, LicenseTypeGitpod, 11, nil},
+		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{}, LicenseTypeGitpod, 11, nil},
 		{"Gitpod (over seats): invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeGitpod, seats + 1, nil},
 		{"Gitpod (over seats): enterprise license", false, LevelEnterprise, []Feature{}, LicenseTypeGitpod, seats + 1, nil},
 
@@ -274,14 +272,8 @@ func TestFeatures(t *testing.T) {
 			FeaturePrebuild,
 		}, LicenseTypeReplicated, seats + 1, &replicatedPaid},
 
-		{"Replicated (over seats - fallback): invalid license level", false, LicenseLevel(666), []Feature{
-			FeatureAdminDashboard,
-			FeaturePrebuild,
-		}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
-		{"Replicated (over seats - fallback): enterprise license", false, LevelEnterprise, []Feature{
-			FeatureAdminDashboard,
-			FeaturePrebuild,
-		}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
+		{"Replicated (over seats - fallback): invalid license level", false, LicenseLevel(666), []Feature{FeatureAdminDashboard}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
+		{"Replicated (over seats - fallback): enterprise license", false, LevelEnterprise, []Feature{FeatureAdminDashboard}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
 	}
 
 	for _, test := range tests {
