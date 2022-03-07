@@ -18,6 +18,8 @@ export interface TeamSubscription {
     paymentReference: string;
     cancellationDate?: string;
     deleted?: boolean;
+    /** If this flag is set slots are not eligibile for clusters with "more-resources" - even if their plan might be */
+    excludeFromMoreResources: boolean;
 }
 
 export namespace TeamSubscription {
