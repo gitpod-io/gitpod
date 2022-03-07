@@ -1476,6 +1476,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         if (providerHost === "github.com") {
             repositories.push(...(await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params })));
+        } else if (provider?.authProviderType === "GitHub") {
+            const hostContext = this.hostContextProvider.get(providerHost);
+            if (hostContext?.services) {
+                repositories.push(...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user)));
+            }
         } else if (providerHost === "bitbucket.org" && provider) {
             repositories.push(...(await this.bitbucketAppSupport.getProviderRepositoriesForUser({ user, provider })));
         } else if (provider?.authProviderType === "GitLab") {
