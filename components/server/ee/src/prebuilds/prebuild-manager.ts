@@ -69,9 +69,11 @@ export class PrebuildManager {
 
     async startPrebuild(ctx: TraceContext, { contextURL, cloneURL, commit, branch, project, user }: StartPrebuildParams): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
-        span.setTag("contextURL", contextURL);
-        span.setTag("cloneURL", cloneURL);
-        span.setTag("commit", commit);
+        span.setTag("prebuild.contextURL", contextURL);
+        span.setTag("prebuild.cloneURL", cloneURL);
+        span.setTag("prebuild.commit", commit);
+        span.setTag("prebuild.branch", branch);
+        span.setTag("prebuild.project", project);
 
         try {
             if (user.blocked) {
@@ -134,8 +136,8 @@ export class PrebuildManager {
                 prebuild.error = "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
 
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
-                span.setTag("starting", false);
-                span.setTag("ratelimited", true);
+                span.setTag("prebuild.starting", false);
+                span.setTag("prebuild.ratelimited", true);
                 return {
                     wsid: workspace.id,
                     prebuildId: prebuild.id,
@@ -143,7 +145,7 @@ export class PrebuildManager {
                 };
             }
 
-            span.setTag("starting", true);
+            span.setTag("prebuild.starting", true);
             const projectEnvVars = await projectEnvVarsPromise;
             await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {excludeFeatureFlags: ['full_workspace_backup']});
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
