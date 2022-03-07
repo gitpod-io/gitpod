@@ -122,10 +122,15 @@ export class CodeSyncResourceDBSpec {
     async roundRobinInsert(): Promise<void> {
         const kind = 'machines';
         const expectation: string[] = [];
-        const doInsert = async () => { };
+        const doInsert = async (rev: string, oldRevs: string[]) => {
+            for (let rev of oldRevs) {
+                await this.db.deleteResource(this.userId, kind, rev, async () => {});
+            }
+        }
         const revLimit = 3;
 
         const assertResources = async () => {
+
             const resources = await this.db.getResources(this.userId, kind);
             expect(resources.map(r => r.rev)).to.deep.eq(expectation);
         }
