@@ -246,10 +246,17 @@ spec:
       title: TLS certificates
       description: Certificates are required to maintain a secure connection. The DNS names must be for `$DOMAIN`, `*.$DOMAIN` and `*.ws.$DOMAIN`.
       items:
+        - name: tls_self_signed_enabled
+          title: Use a self-signed TLS certificate
+          type: bool
+          default: "0"
+          help_text: A self-signed certficate should only be used if applying TLS termination to your load balancer or other proxy.
+
         - name: cert_manager_enabled
           title: Use cert-manager
           type: bool
           default: "1"
+          when: '{{repl ConfigOptionEquals "tls_self_signed_enabled" "0" }}'
           help_text: Automate certificate management with [cert-manager](https://cert-manager.io).
 
         - name: cert_manager_acme_url
@@ -257,54 +264,52 @@ spec:
           type: text
           value: https://acme-v02.api.letsencrypt.org/directory
           required: true
-          when: '{{repl ConfigOptionEquals "cert_manager_enabled" "1" }}'
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
           help_text: The ACME URL is used to issue the certificates.
 
         - name: cert_manager_email
           title: Email address
           type: text
           required: false
-          when: '{{repl ConfigOptionEquals "cert_manager_enabled" "1" }}'
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
           help_text: The email address to send renewal notifications to.
 
         - name: cert_manager_provider
           title: DNS01 provider
           type: select_one
           required: true
-          when: '{{repl ConfigOptionEquals "cert_manager_enabled" "1" }}'
-          help_text: A DNS01 challenge provider is used by cert-manager in order to generate the certificate. See the [specific documentation](https://cert-manager.io/docs/configuration/acme/dns01) for instructions on configuring your provider. In-cluster should only be used if applying TLS termination to your load balancer or other proxy.
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
+          help_text: A DNS01 challenge provider is used by cert-manager in order to generate the certificate. See the [specific documentation](https://cert-manager.io/docs/configuration/acme/dns01) for instructions on configuring your provider.
           items:
             - name: azure
               title: AzureDNS
             - name: gcp
               title: Google CloudDNS
-            - name: incluster
-              title: In-cluster
 
         - name: cert_manager_azure_subscription_id
           title: Subscription ID
           type: text
           required: true
-          when: '{{repl and (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
           help_text: The Azure subscription ID.
 
         - name: cert_manager_azure_resource_group
           title: Resource group
           type: text
           required: true
-          when: '{{repl and (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
           help_text: The name of the resource group where the DNS zone exists.
 
         - name: cert_manager_gcp_project
           title: Project ID
           type: text
           required: true
-          when: '{{repl and (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
           help_text: The ID of your GCP project.
 
         - name: cert_manager_gcp_credentials
           title: GCP service account key
-          when: '{{repl and (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
           type: file
           required: true
           help_text: Download a [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) with the `roles/dns.admin` role attached.
@@ -313,14 +318,14 @@ spec:
           title: Certificate
           type: file
           required: true
-          when: '{{repl ConfigOptionEquals "cert_manager_enabled" "0" }}'
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
           help_text: A file containing the TLS crt.
 
         - name: tls_key
           title: Private key
           type: file
           required: true
-          when: '{{repl ConfigOptionEquals "cert_manager_enabled" "0" }}'
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
           help_text: A file containing the TLS private key.
 
     - name: features
