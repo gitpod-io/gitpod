@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User, Workspace, NamedWorkspaceFeatureFlag } from "./protocol";
+import { User, Workspace, NamedWorkspaceFeatureFlag, Identity } from "./protocol";
 import { FindPrebuildsParams } from "./gitpod-service";
 import { Project, Team, PrebuildWithStatus, TeamMemberInfo, TeamMemberRole } from "./teams-projects-protocol"
 import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
@@ -17,6 +17,7 @@ export interface AdminServer {
     adminGetUser(id: string): Promise<User>;
     adminBlockUser(req: AdminBlockUserRequest): Promise<User>;
     adminDeleteUser(id: string): Promise<void>;
+    adminGetAuthProviderIdsOfUser(userId: string): Promise<Identity[]>;
     adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User>;
     adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User>;
 

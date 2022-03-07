@@ -112,6 +112,7 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
 
     findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<{ user: User, token: GitpodToken } | undefined>;
     findGitpodTokensOfUser(userId: string, tokenHash: string): Promise<GitpodToken | undefined>;
+    findAuthProviderIdsOfUser(userId: string): Promise<Identity[]>;
     findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]>;
     storeGitpodToken(token: GitpodToken & { user: DBUser }): Promise<void>;
     deleteGitpodToken(tokenHash: string): Promise<void>;

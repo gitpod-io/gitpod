@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl, traceAPIParams, traceWI, censor } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { GitpodServer, GitpodClient, AdminGetListRequest, User, Team, TeamMemberInfo, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace, FindPrebuildsParams, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { GitpodServer, GitpodClient, AdminGetListRequest, User, Team, TeamMemberInfo, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue, PrebuildWithStatus, CreateProjectParams, Project, StartPrebuildResult, ClientHeaderFields, Workspace, FindPrebuildsParams, TeamMemberRole, Identity } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -487,6 +487,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         } catch (e) {
             throw new ResponseError(500, e.toString());
         }
+    }
+
+    async adminGetAuthProviderIdsOfUser(ctx: TraceContext, userId: string): Promise<Identity[]> {
+        traceAPIParams(ctx, { userId });
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+        await this.guardAdminAccess("adminGetAuthProviderIdsOfUser", { userId }, Permission.ADMIN_USERS);
+
+        return await this.userDB.findAuthProviderIdsOfUser(userId);
     }
 
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {

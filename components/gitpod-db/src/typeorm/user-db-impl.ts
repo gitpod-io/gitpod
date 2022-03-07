@@ -187,6 +187,13 @@ export class TypeORMUserDBImpl implements UserDB {
         return qBuilder.getOne();
     }
 
+    public async findAuthProviderIdsOfUser(userId: string): Promise<Identity[]> {
+        const repo = await this.getIdentitiesRepo();
+        const queryBuilder = repo.createQueryBuilder('identity')
+            .where('identity.userId', { userId });
+        return queryBuilder.getMany();
+    }
+
     public async findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]> {
         const repo = await this.getGitpodTokenRepo()
         const qBuilder = repo.createQueryBuilder('gitpodToken')

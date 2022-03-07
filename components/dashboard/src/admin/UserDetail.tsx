@@ -25,6 +25,7 @@ export default function UserDetail(p: { user: User }) {
     const [isStudent, setIsStudent] = useState<boolean>();
     const [editFeatureFlags, setEditFeatureFlags] = useState(false);
     const [editRoles, setEditRoles] = useState(false);
+    const [authProviders, setAuthProviders] = useState<string[]>();
     const userRef = useRef(user);
 
     const isProfessionalOpenSource = accountStatement && accountStatement.subscriptions.some(s => s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId)
@@ -39,6 +40,9 @@ export default function UserDetail(p: { user: User }) {
         });
         getGitpodService().server.adminIsStudent(p.user.id).then(
             isStud => setIsStudent(isStud)
+        );
+        getGitpodService().server.adminGetAuthProviderIdsOfUser(p.user.id).then(
+            result => setAuthProviders(result.map(r => r.authProviderId))
         );
     }, [p.user]);
 
@@ -168,6 +172,12 @@ export default function UserDetail(p: { user: User }) {
                                 onClick: addStudentDomain
                             }] :  undefined}
                         >{isStudent === undefined ? '---' : (isStudent ? 'Enabled' : 'Disabled')}</Property>
+                    </div>
+                    <div className="flex w-full mt-6 overflow-scroll">
+                        {authProviders && authProviders.length > 0 &&
+                            <Property name="Git providers">
+                                <div className="overflow-scroll">{authProviders?.join(", ")}</div>
+                            </Property>}
                     </div>
                 </div>
             </div>

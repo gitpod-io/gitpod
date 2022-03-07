@@ -153,6 +153,16 @@ const WRONG_ID = '123';    // no uuid
         expect(r1).to.be.not.undefined;
         expect(r1!.name).to.be.eq("XYZ");
     }
+
+    @test(timeout(10000))
+    public async findAuthProviderIdsByUserId() {
+        let user = await this.db.newUser();
+        user.identities.push(this.IDENTITY1);
+        user = await this.db.storeUser(user);
+
+        const identity = await this.db.findAuthProviderIdsOfUser(user.id);
+        expect(identity[0].authProviderId).to.eq("GitHub");
+    }
 }
 
 namespace TestData {
