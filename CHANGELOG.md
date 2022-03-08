@@ -1,6 +1,14 @@
 # Change Log
 
 ## March 2022
+- Support cpu limiting using cgroup v2 ([#8471](https://github.com/gitpod-io/gitpod/pull/8471)) - [@Furisto](https://github.com/Furisto)
+- improve robustness of startWorkspace ([#8486](https://github.com/gitpod-io/gitpod/pull/8486)) - [@geropl](https://github.com/geropl)
+- improve feedback for errors during cluster selection ([#8486](https://github.com/gitpod-io/gitpod/pull/8486)) - [@geropl](https://github.com/geropl)
+- improve monitoring for cluster selection errors ([#8486](https://github.com/gitpod-io/gitpod/pull/8486)) - [@geropl](https://github.com/geropl)
+- [installer]: add annotation to make DB resources restart if changes ([#8547](https://github.com/gitpod-io/gitpod/pull/8547)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Admins cannot search empty strings or partial matches on workspace search. ([#8632](https://github.com/gitpod-io/gitpod/pull/8632)) - [@laushinka](https://github.com/laushinka)
+- [installer] Add network policy for registry-facade access to coredns ([#8622](https://github.com/gitpod-io/gitpod/pull/8622)) - [@aledbf](https://github.com/aledbf)
+- Update the docs for cgroup v2 ([#8590](https://github.com/gitpod-io/gitpod/pull/8590)) - [@utam0k](https://github.com/utam0k)
 - Add docker images for gpctl and kubecdl ([#8555](https://github.com/gitpod-io/gitpod/pull/8555)) - [@sagor999](https://github.com/sagor999)
 - [installer] Registry facade should not use a port from node ports range ([#8580](https://github.com/gitpod-io/gitpod/pull/8580)) - [@aledbf](https://github.com/aledbf)
 - Remove unused pod labels ([#8583](https://github.com/gitpod-io/gitpod/pull/8583)) - [@aledbf](https://github.com/aledbf)
