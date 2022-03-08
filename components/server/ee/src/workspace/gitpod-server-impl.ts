@@ -42,6 +42,7 @@ import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from 'url';
+import { UserCounter } from "../user/user-counter";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -74,6 +75,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(Config) protected readonly config: Config;
 
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
+
+    @inject(UserCounter) protected readonly userCounter: UserCounter;
 
     initialize(client: GitpodClient | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientMetadata: ClientMetadata, connectionCtx: TraceContext | undefined, clientHeaderFields: ClientHeaderFields): void {
         super.initialize(client, user, accessGuard, clientMetadata, connectionCtx, clientHeaderFields);
@@ -153,7 +156,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     protected async requireEELicense(feature: Feature) {
-        const userCount = await this.userDB.getUserCount(true);
+        const cachedUserCount = this.userCounter.count;
+
+        let userCount: number;
+        if (cachedUserCount === null) {
+            userCount = await this.userDB.getUserCount(true);
+            this.userCounter.count = userCount;
+        } else {
+            userCount = cachedUserCount;
+        }
 
         if (!this.licenseEvaluator.isEnabled(feature, userCount)) {
             throw new ResponseError(ErrorCodes.EE_LICENSE_REQUIRED, "enterprise license required");
