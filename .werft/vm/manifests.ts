@@ -44,10 +44,10 @@ spec:
       readinessProbe:
         tcpSocket:
           port: 2200
-        initialDelaySeconds: 120
-        periodSeconds: 20
-        timeoutSeconds: 10
-        failureThreshold: 10
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 60
         successThreshold: 1
       domain:
         hostname: ${vmName}
