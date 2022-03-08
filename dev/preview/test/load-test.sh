@@ -21,7 +21,7 @@ BASE_BRANCH_NAME="vm-load-test"
 BRANCH_SUFFIX="with-vm"
 
 opts=$(getopt \
-  --longoptions "start:,end:,base-branch-name:" \
+  --longoptions "start:,end:,base-branch-name:,interval:" \
   --name "$(basename "$0")" \
   --options "" \
   -- "$@"
