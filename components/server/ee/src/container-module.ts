@@ -49,6 +49,7 @@ import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { Config } from "../../src/config";
 import { SnapshotService } from "./workspace/snapshot-service";
 import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
+import { UserCounter } from "./user/user-counter";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -68,6 +69,8 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(BitbucketApp).toSelf().inSingletonScope();
     bind(BitbucketAppSupport).toSelf().inSingletonScope();
     bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
+
+    bind(UserCounter).toSelf().inSingletonScope();
 
     bind(LicenseEvaluator).toSelf().inSingletonScope();
     bind(LicenseKeySource).to(DBLicenseKeySource).inSingletonScope();
