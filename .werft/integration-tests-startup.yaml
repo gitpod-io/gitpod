@@ -77,14 +77,14 @@ pod:
       echo "using integration-test image: ${INTEGRATION_VERSION}" | werft log slice "test"
 
 
-      TEST_BUILD_ID=$(werft run github -a version=${INTEGRATION_VERSION} -a namespace=staging-gitpod-test-main -j .werft/run-integration-tests-ide.yaml -a testPattern=ide.test github.com/gitpod-io/gitpod:main)
+      TEST_BUILD_ID=$(werft run github -a version=${INTEGRATION_VERSION} -a namespace=staging-gitpod-test-main -j .werft/run-integration-tests-ide.yaml -a testPattern=vscode.test github.com/gitpod-io/gitpod:main)
 
       echo "running integration, job name: ${TEST_BUILD_ID}" | werft log slice "test"
       werft log result -d "integration test job" url "https://werft.gitpod-dev.com/job/${TEST_BUILD_ID}"
 
       if ! werft job logs ${TEST_BUILD_ID} | werft log slice "test";
       then
-          echo "ingetration test failed" | werft log slice "test"
+          echo "integration test failed" | werft log slice "test"
           exit 1
       fi
-      echo "ingetration test success" | werft log slice "test"
+      echo "integration test success" | werft log slice "test"
