@@ -18,7 +18,6 @@ import { Transformer } from "../transformer";
 @Index("ind_prebuiltWorkspaceId_isResolved", ["prebuiltWorkspaceId", "isResolved"])
 @Entity()
 export class DBPrebuiltWorkspaceUpdatable implements PrebuiltWorkspaceUpdatable {
-
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     id: string;
 
@@ -32,8 +31,8 @@ export class DBPrebuiltWorkspaceUpdatable implements PrebuiltWorkspaceUpdatable 
     repo: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     commitSHA?: string;
 
@@ -43,23 +42,21 @@ export class DBPrebuiltWorkspaceUpdatable implements PrebuiltWorkspaceUpdatable 
     @Column()
     installationId: string;
 
-
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     contextUrl?: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     issue?: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     label?: string;
-
 }

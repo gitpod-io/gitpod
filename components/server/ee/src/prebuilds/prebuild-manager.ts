@@ -4,6 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
+<<<<<<< HEAD
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
@@ -31,6 +32,29 @@ import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 import { inject, injectable } from "inversify";
 import * as opentracing from "opentracing";
+=======
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
+import { CommitContext, CommitInfo, PrebuiltWorkspace, Project, ProjectEnvVar, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, Workspace, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import { getCommitInfo, HostContextProvider } from '../../../src/auth/host-context-provider';
+import { WorkspaceFactory } from '../../../src/workspace/workspace-factory';
+import { ConfigProvider } from '../../../src/workspace/config-provider';
+import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
+import { Config } from '../../../src/config';
+import { ProjectsService } from '../../../src/projects/projects-service';
+import { secondsBefore } from '@gitpod/gitpod-protocol/lib/util/timeutil';
+
+import { inject, injectable } from 'inversify';
+import * as opentracing from 'opentracing';
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import { URL } from 'url';
+>>>>>>> 3e7b850b (regen)
+>>>>>>> 6359a743 (regen)
+=======
+>>>>>>> 67b9f012 (Regen)
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -153,6 +177,7 @@ export class PrebuildManager {
 
             const projectEnvVarsPromise = project ? this.projectService.getProjectEnvironmentVariables(project.id) : [];
 
+<<<<<<< HEAD
             const workspace = await this.workspaceFactory.createForContext(
                 { span },
                 user,
@@ -166,6 +191,18 @@ export class PrebuildManager {
             await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {
                 excludeFeatureFlags: ["full_workspace_backup"],
             });
+=======
+            const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, context.normalizedContextURL!);
+            const prebuildPromise = this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
+
+            span.setTag("starting", true);
+            const projectEnvVars = await projectEnvVarsPromise;
+            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {excludeFeatureFlags: ['full_workspace_backup']});
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 6359a743 (regen)
+=======
+>>>>>>> 67b9f012 (Regen)
             const prebuild = await prebuildPromise;
             if (!prebuild) {
                 throw new Error(`Failed to create a prebuild for: ${context.normalizedContextURL}`);
@@ -347,4 +384,40 @@ export class PrebuildManager {
         // Last resort default
         return PREBUILD_LIMITER_DEFAULT_LIMIT;
     }
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+    private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
+        const windowStart = secondsBefore(new Date().toISOString(), PREBUILD_LIMITER_WINDOW_SECONDS);
+        const unabortedCount = await this.workspaceDB.trace({span}).countUnabortedPrebuildsSince(cloneURL, new Date(windowStart));
+        const limit = this.getPrebuildRateLimitForCloneURL(cloneURL);
+
+        if (unabortedCount >= limit) {
+            log.debug("Prebuild exceeds rate limit", { limit, unabortedPrebuildsCount: unabortedCount, cloneURL });
+            return true;
+        }
+        return false;
+    }
+
+    private getPrebuildRateLimitForCloneURL(cloneURL: string): number {
+        // First we use any explicit overrides for a given cloneURL
+        let limit = this.config.prebuildLimiter[cloneURL];
+        if (limit > 0) {
+            return limit;
+        }
+
+        // Find if there is a default value set under the '*' key
+        limit = this.config.prebuildLimiter['*'];
+        if (limit > 0) {
+            return limit;
+        }
+
+        // Last resort default
+        return PREBUILD_LIMITER_DEFAULT_LIMIT;
+    }
+>>>>>>> 6359a743 (regen)
 }
+=======
+}
+>>>>>>> 67b9f012 (Regen)

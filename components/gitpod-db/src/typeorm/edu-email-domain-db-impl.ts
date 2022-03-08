@@ -14,7 +14,6 @@ import { DBEduEmailDomain } from "./entity/db-edu-email-domain";
 
 @injectable()
 export class EduEmailDomainDBImpl implements EduEmailDomainDB {
-
     @inject(TypeORM) typeorm: TypeORM;
 
     protected async getManager(): Promise<EntityManager> {
@@ -32,8 +31,7 @@ export class EduEmailDomainDBImpl implements EduEmailDomainDB {
 
     async readEducationalInstitutionDomains(): Promise<EduEmailDomain[]> {
         const repo = await this.getRepo();
-        const result = await repo.createQueryBuilder("entry")
-            .getMany();
+        const result = await repo.createQueryBuilder("entry").getMany();
         return result;
     }
 }

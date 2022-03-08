@@ -15,7 +15,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class TypeORMAppInstallationDBImpl implements AppInstallationDB {
-
     @inject(TypeORM) typeORM: TypeORM;
 
     protected async getEntityManager() {
@@ -26,7 +25,13 @@ export class TypeORMAppInstallationDBImpl implements AppInstallationDB {
         return (await this.getEntityManager()).getRepository(DBAppInstallation);
     }
 
-    public async recordNewInstallation(platform: AppInstallationPlatform, source: 'user' | 'platform', installationID: string, ownerUserID?: string, platformUserID?: string): Promise<void> {
+    public async recordNewInstallation(
+        platform: AppInstallationPlatform,
+        source: "user" | "platform",
+        installationID: string,
+        ownerUserID?: string,
+        platformUserID?: string,
+    ): Promise<void> {
         const repo = await this.getRepo();
 
         const obj = new DBAppInstallation();
@@ -39,9 +44,13 @@ export class TypeORMAppInstallationDBImpl implements AppInstallationDB {
         await repo.insert(obj);
     }
 
-    public async findInstallation(platform: AppInstallationPlatform, installationID: string): Promise<AppInstallation | undefined> {
+    public async findInstallation(
+        platform: AppInstallationPlatform,
+        installationID: string,
+    ): Promise<AppInstallation | undefined> {
         const repo = await this.getRepo();
-        const qb = repo.createQueryBuilder('installation')
+        const qb = repo
+            .createQueryBuilder("installation")
             .where("installation.installationID = :installationID", { installationID })
             .andWhere('installation.state != "uninstalled"')
             .orderBy("installation.lastUpdateTime", "DESC")
@@ -50,18 +59,20 @@ export class TypeORMAppInstallationDBImpl implements AppInstallationDB {
         return (await qb.getMany())[0];
     }
 
-    public async recordUninstallation(platform: AppInstallationPlatform, source: 'user' | 'platform', installationID: string) {
+    public async recordUninstallation(
+        platform: AppInstallationPlatform,
+        source: "user" | "platform",
+        installationID: string,
+    ) {
         const installation = await this.findInstallation(platform, installationID);
         if (!installation) {
             log.warn("Cannot record uninstallation of non-existent installation", { platform, installationID });
             return;
         }
 
-        installation.state = 'uninstalled';
+        installation.state = "uninstalled";
 
         const repo = await this.getRepo();
         await repo.save(installation);
     }
-
-
 }

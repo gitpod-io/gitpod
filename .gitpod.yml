@@ -41,9 +41,6 @@ tasks:
     before: pre-commit install
     init: leeway exec --filter-type go -v -- go mod verify
     openMode: split-right
-  - name: pre-commit
-    # install pre-commit hooks into git
-    before: pre-commit install
 vscode:
   extensions:
     - bradlc.vscode-tailwindcss

@@ -4,39 +4,39 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from 'inversify';
-import { EntityManager } from 'typeorm';
-import uuid = require('uuid');
-import { DBCodeSyncResource, IUserDataManifest, ServerResource } from './entity/db-code-sync-resource';
-import { TypeORM } from './typeorm';
+import { inject, injectable } from "inversify";
+import { EntityManager } from "typeorm";
+import uuid = require("uuid");
+import { DBCodeSyncResource, IUserDataManifest, ServerResource } from "./entity/db-code-sync-resource";
+import { TypeORM } from "./typeorm";
 
 export interface CodeSyncInsertOptions {
-    latestRev?: string
-    revLimit?: number
+    latestRev?: string;
+    revLimit?: number;
 }
 
 @injectable()
 export class CodeSyncResourceDB {
-
     @inject(TypeORM)
     private readonly typeORM: TypeORM;
 
     async getManifest(userId: string): Promise<IUserDataManifest> {
         const connection = await this.typeORM.getConnection();
         const resources = await connection.manager
-            .createQueryBuilder(DBCodeSyncResource, 'resource')
-            .where('resource.userId = :userId AND resource.deleted = 0', { userId })
-            .andWhere(qb => {
-                const subQuery = qb.subQuery()
-                    .select('resource2.userId')
-                    .addSelect('resource2.kind')
-                    .addSelect('max(resource2.created)')
-                    .from(DBCodeSyncResource, 'resource2')
-                    .where('resource2.userId = :userId AND resource2.deleted = 0', { userId })
-                    .groupBy('resource2.kind')
-                    .orderBy('resource2.created', 'DESC')
+            .createQueryBuilder(DBCodeSyncResource, "resource")
+            .where("resource.userId = :userId AND resource.deleted = 0", { userId })
+            .andWhere((qb) => {
+                const subQuery = qb
+                    .subQuery()
+                    .select("resource2.userId")
+                    .addSelect("resource2.kind")
+                    .addSelect("max(resource2.created)")
+                    .from(DBCodeSyncResource, "resource2")
+                    .where("resource2.userId = :userId AND resource2.deleted = 0", { userId })
+                    .groupBy("resource2.kind")
+                    .orderBy("resource2.created", "DESC")
                     .getQuery();
-                return '(resource.userId,resource.kind,resource.created) IN ' + subQuery;
+                return "(resource.userId,resource.kind,resource.created) IN " + subQuery;
             })
             .getMany();
 
@@ -60,8 +60,9 @@ export class CodeSyncResourceDB {
 
     async delete(userId: string, doDelete: () => Promise<void>): Promise<void> {
         const connection = await this.typeORM.getConnection();
-        await connection.transaction(async manager => {
-            await manager.createQueryBuilder()
+        await connection.transaction(async (manager) => {
+            await manager
+                .createQueryBuilder()
                 .update(DBCodeSyncResource)
                 .set({ deleted: true })
                 .where("userId = :userId AND deleted = 0", { userId })
@@ -70,10 +71,16 @@ export class CodeSyncResourceDB {
         });
     }
 
-    async deleteResource(userId: string, kind: ServerResource, rev: string, doDelete: (rev: string) => Promise<void>): Promise<void> {
+    async deleteResource(
+        userId: string,
+        kind: ServerResource,
+        rev: string,
+        doDelete: (rev: string) => Promise<void>,
+    ): Promise<void> {
         const connection = await this.typeORM.getConnection();
-        await connection.transaction(async manager => {
-            await manager.createQueryBuilder()
+        await connection.transaction(async (manager) => {
+            await manager
+                .createQueryBuilder()
                 .delete()
                 .from(DBCodeSyncResource)
                 .where("userId = :userId AND kind = :kind AND rev = :rev", { userId, kind, rev: rev })
@@ -82,9 +89,14 @@ export class CodeSyncResourceDB {
         });
     }
 
-    async insert(userId: string, kind: ServerResource, doInsert: (rev: string, oldRevs: string[]) => Promise<void>, params?: CodeSyncInsertOptions): Promise<string | undefined> {
+    async insert(
+        userId: string,
+        kind: ServerResource,
+        doInsert: (rev: string, oldRevs: string[]) => Promise<void>,
+        params?: CodeSyncInsertOptions,
+    ): Promise<string | undefined> {
         const connection = await this.typeORM.getConnection();
-        return await connection.transaction(async manager => {
+        return await connection.transaction(async (manager) => {
             let latest: DBCodeSyncResource | undefined;
             let toDeleted: DBCodeSyncResource[] = [];
             if (params?.revLimit) {
@@ -95,41 +107,54 @@ export class CodeSyncResourceDB {
                     toDeleted = resources.splice(params?.revLimit - 1);
                 }
             } else {
-                latest = await this.doGetResource(manager, userId, kind, 'latest');
+                latest = await this.doGetResource(manager, userId, kind, "latest");
             }
             // user setting always show with diff so we need to make sure it’s changed from prev revision
             if (params?.latestRev && latest?.rev !== params.latestRev) {
                 return undefined;
             }
             const rev = uuid.v4();
-            await manager.createQueryBuilder()
+            await manager
+                .createQueryBuilder()
                 .insert()
                 .into(DBCodeSyncResource)
                 .values({ userId, kind, rev })
                 .execute();
-            await doInsert(rev, toDeleted.map(e => e.rev));
+            await doInsert(
+                rev,
+                toDeleted.map((e) => e.rev),
+            );
             return rev;
         });
     }
 
-    private doGetResource(manager: EntityManager, userId: string, kind: ServerResource, rev: string | 'latest'): Promise<DBCodeSyncResource | undefined> {
+    private doGetResource(
+        manager: EntityManager,
+        userId: string,
+        kind: ServerResource,
+        rev: string | "latest",
+    ): Promise<DBCodeSyncResource | undefined> {
         let qb = manager
-            .createQueryBuilder(DBCodeSyncResource, 'resource')
-            .where('resource.userId = :userId AND resource.kind = :kind AND resource.deleted = 0', { userId, kind });
-        if (rev === 'latest') {
-            qb.orderBy('resource.created', 'DESC');
+            .createQueryBuilder(DBCodeSyncResource, "resource")
+            .where("resource.userId = :userId AND resource.kind = :kind AND resource.deleted = 0", { userId, kind });
+        if (rev === "latest") {
+            qb.orderBy("resource.created", "DESC");
         } else {
-            qb = qb.andWhere('resource.rev = :rev', { rev });
+            qb = qb.andWhere("resource.rev = :rev", { rev });
         }
         return qb.getOne();
     }
 
-    private doGetResources(manager: EntityManager, userId: string, kind: ServerResource): Promise<DBCodeSyncResource[]> {
-        return manager.getRepository(DBCodeSyncResource)
-            .createQueryBuilder('resource')
-            .where('resource.userId = :userId AND resource.kind = :kind AND resource.deleted = 0', { userId, kind })
-            .orderBy('resource.created', 'DESC')
+    private doGetResources(
+        manager: EntityManager,
+        userId: string,
+        kind: ServerResource,
+    ): Promise<DBCodeSyncResource[]> {
+        return manager
+            .getRepository(DBCodeSyncResource)
+            .createQueryBuilder("resource")
+            .where("resource.userId = :userId AND resource.kind = :kind AND resource.deleted = 0", { userId, kind })
+            .orderBy("resource.created", "DESC")
             .getMany();
     }
-
 }

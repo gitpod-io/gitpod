@@ -11,25 +11,25 @@ import { DBUser } from "./db-user";
 import { Transformer } from "../transformer";
 
 @Entity()
-@Index("ind_authProviderId_authName", ['authProviderId', 'authName'])
+@Index("ind_authProviderId_authName", ["authProviderId", "authName"])
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBIdentity implements Identity {
-    @PrimaryColumn('varchar')
+    @PrimaryColumn("varchar")
     authProviderId: string;
 
-    @PrimaryColumn('varchar')
+    @PrimaryColumn("varchar")
     authId: string;
 
     /** Workaround: Typeorm does not (yet) support uni-directional OneToMany relations */
-    @ManyToOne(type => DBUser, user => user.identities)
+    @ManyToOne((type) => DBUser, (user) => user.identities)
     user: DBUser;
 
     @Column()
     authName: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     primaryEmail?: string;
 
@@ -43,8 +43,8 @@ export class DBIdentity implements Identity {
             },
             from(value: any): any {
                 return [];
-            }
-        }
+            },
+        },
     })
     tokens: Token[];
 
