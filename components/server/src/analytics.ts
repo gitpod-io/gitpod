@@ -6,12 +6,19 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { Request } from "express";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 
-export async function trackLogin(user: User, request: Request, authHost: string, analytics: IAnalyticsWriter) {
-    //make new complete identify call for each login
-    fullIdentify(user, request, analytics);
+export async function trackLogin(
+    user: User,
+    request: Request,
+    authHost: string,
+    analytics: IAnalyticsWriter,
+    subscriptionService: SubscriptionService,
+) {
+    // make new complete identify call for each login
+    fullIdentify(user, request, analytics, subscriptionService);
 
-    //track the login
+    // track the login
     analytics.track({
         userId: user.id,
         anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
@@ -23,10 +30,10 @@ export async function trackLogin(user: User, request: Request, authHost: string,
 }
 
 export async function trackSignup(user: User, request: Request, analytics: IAnalyticsWriter) {
-    //make new complete identify call for each signup
+    // make new complete identify call for each signup
     fullIdentify(user, request, analytics);
 
-    //track the signup
+    // track the signup
     analytics.track({
         userId: user.id,
         anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
@@ -38,10 +45,20 @@ export async function trackSignup(user: User, request: Request, analytics: IAnal
     });
 }
 
-function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter) {
-    //makes a full identify call for authenticated users
+async function fullIdentify(
+    user: User,
+    request: Request,
+    analytics: IAnalyticsWriter,
+    subscriptionService?: SubscriptionService,
+) {
+    // makes a full identify call for authenticated users
     const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
     const ip = request.get("x-forwarded-for")?.split(",")[0];
+    var subscriptionIDs: string[] = [];
+    const subscriptions = await subscriptionService?.getNotYetCancelledSubscriptions(user, new Date().toISOString());
+    if (subscriptions) {
+        subscriptionIDs = subscriptions.filter((sub) => !!sub.planId).map((sub) => sub.planId!);
+    }
     analytics.identify({
         anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
         userId: user.id,
@@ -64,6 +81,7 @@ function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter)
             unsubscribed_onboarding: user.additionalData?.emailNotificationSettings?.allowsOnboardingMail === false,
             unsubscribed_changelog: user.additionalData?.emailNotificationSettings?.allowsChangelogMail === false,
             unsubscribed_devx: user.additionalData?.emailNotificationSettings?.allowsDevXMail === false,
+            subscriptions: subscriptionIDs,
         },
     });
 }
