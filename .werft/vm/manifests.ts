@@ -48,7 +48,7 @@ spec:
         periodSeconds: 20
         timeoutSeconds: 10
         failureThreshold: 10
-        successThreshold: 10
+        successThreshold: 1
       domain:
         hostname: ${vmName}
         machine:
