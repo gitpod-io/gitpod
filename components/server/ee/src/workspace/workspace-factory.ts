@@ -16,17 +16,27 @@ import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
 import { UserDB } from '@gitpod/gitpod-db/lib';
+import { UserCounter } from '../user/user-counter';
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
 
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
+    @inject(UserCounter) protected readonly userCounter: UserCounter;
 
     @inject(UserDB) protected readonly userDB: UserDB;
 
     protected async requireEELicense(feature: Feature) {
-        const userCount = await this.userDB.getUserCount(true);
+        const cachedUserCount = this.userCounter.count;
+
+        let userCount: number;
+        if (cachedUserCount === null) {
+            userCount = await this.userDB.getUserCount(true);
+            this.userCounter.count = userCount;
+        } else {
+            userCount = cachedUserCount;
+        }
 
         if (!this.licenseEvaluator.isEnabled(feature, userCount)) {
             throw new ResponseError(ErrorCodes.EE_LICENSE_REQUIRED, "enterprise license required");
