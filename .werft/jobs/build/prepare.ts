@@ -27,7 +27,8 @@ export async function prepare(werft: Werft, config: JobConfig) {
     werft.done(phaseName);
 }
 
-// TODO: The reasoning behind this step should be clarified
+// We want to assure that our Workspace behaves the exactly same way as
+// it behaves when running a werft job. Therefore, we want them to always be equal.
 function compareWerftAndGitpodImage() {
     const werftImg = exec("cat .werft/build.yaml | grep dev-environment", { silent: true }).trim().split(": ")[1];
     const devImg = exec("yq r .gitpod.yml image", { silent: true }).trim();
