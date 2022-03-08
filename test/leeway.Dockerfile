@@ -9,7 +9,8 @@ RUN  apk upgrade --no-cache \
   && apk add --no-cache \
     ca-certificates \
     coreutils \
-    curl
+    curl \
+    jq
 
 # convenience scripting tools
 RUN apk add --no-cache bash moreutils
