@@ -45,7 +45,7 @@ async function run(context: any) {
     const config = jobConfig(werft, context)
 
     await validateChanges(werft, config)
-    await prepare(werft)
+    await prepare(werft, config)
     await buildAndPublish(werft, config)
     await coverage(werft, config)
 
