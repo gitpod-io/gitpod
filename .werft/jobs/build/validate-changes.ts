@@ -29,7 +29,7 @@ async function branchNameCheck(werft: Werft, config: JobConfig) {
 
 async function preCommitCheck(werft: Werft) {
     werft.log("pre-commit checks", "Running pre-commit hooks.")
-    const preCommitCmd = exec(`pre-commit run --all-files --show-diff-on-failure`, { slice: "pre-commit checks" });
+    const preCommitCmd = exec(`pre-commit run --show-diff-on-failure`, { slice: "pre-commit checks" });
 
     if (preCommitCmd.code != 0) {
         throw new Error(preCommitCmd.stderr.toString().trim())
