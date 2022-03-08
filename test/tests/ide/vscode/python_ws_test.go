@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	agent "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 )
@@ -58,6 +59,23 @@ func TestPythonExtWorkspace(t *testing.T) {
 			userId, err := api.CreateUser(username, userToken)
 			if err != nil {
 				t.Fatal(err)
+			}
+
+			serverOpts := []integration.GitpodServerOpt{integration.WithGitpodUser(username)}
+			server, err := api.GitpodServer(serverOpts...)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = server.UpdateLoggedInUser(ctx, &protocol.User{
+				AdditionalData: &protocol.AdditionalUserData{
+					IdeSettings: &protocol.IDESettings{
+						DefaultIde: "code-latest",
+					},
+				},
+			})
+			if err != nil {
+				t.Fatalf("cannot set ide to vscode insiders: %q", err)
 			}
 
 			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "github.com/jeanp413/python-test-workspace", username, api)

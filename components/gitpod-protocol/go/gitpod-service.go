@@ -2056,6 +2056,15 @@ type UpdateUserStorageResourceOptions struct {
 type AdditionalUserData struct {
 	EmailNotificationSettings *EmailNotificationSettings `json:"emailNotificationSettings,omitempty"`
 	Platforms                 []*UserPlatform            `json:"platforms,omitempty"`
+	IdeSettings               *IDESettings               `json:"ideSettings,omitempty"`
+}
+
+// IDESettings is the IDESettings message type
+type IDESettings struct {
+	DefaultIde        string `json:"defaultIde,omitempty"`
+	UseDesktopIde     bool   `json:"useDesktopIde,omitempty"`
+	DefaultDesktopIde string `json:"defaultDesktopIde,omitempty"`
+	UseLatestVersion  bool   `json:"useLatestVersion,omitempty"`
 }
 
 // EmailNotificationSettings is the EmailNotificationSettings message type
