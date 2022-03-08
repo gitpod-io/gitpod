@@ -6,10 +6,11 @@
 import { User } from '@gitpod/gitpod-protocol';
 import { Request } from 'express';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
+import { SubscriptionService } from '@gitpod/gitpod-payment-endpoint/lib/accounting';
 
-export async function trackLogin(user: User, request: Request, authHost: string, analytics: IAnalyticsWriter) {
+export async function trackLogin(user: User, request: Request, authHost: string, analytics: IAnalyticsWriter, subscriptionService: SubscriptionService) {
     //make new complete identify call for each login
-    fullIdentify(user, request, analytics);
+    fullIdentify(user, request, analytics, subscriptionService);
 
     //track the login
     analytics.track({
@@ -22,9 +23,9 @@ export async function trackLogin(user: User, request: Request, authHost: string,
     });
 }
 
-export async function trackSignup(user: User, request: Request, analytics: IAnalyticsWriter) {
+export async function trackSignup(user: User, request: Request, analytics: IAnalyticsWriter, subscriptionService?: SubscriptionService) {
         //make new complete identify call for each signup
-        fullIdentify(user,request,analytics);
+        fullIdentify(user,request,analytics, subscriptionService);
 
         //track the signup
         analytics.track({
@@ -38,10 +39,11 @@ export async function trackSignup(user: User, request: Request, analytics: IAnal
         });
 }
 
-function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter) {
+function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter, subscriptionService?: SubscriptionService) {
     //makes a full identify call for authenticated users
     const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
     const ip = request.get("x-forwarded-for")?.split(",")[0];
+    const subscriptions = subscriptionService ? subscriptionService.getNotYetCancelledSubscriptions(user,new Date(Date.now()).toISOString()) : undefined;
     analytics.identify({
         anonymousId: stripCookie(request.cookies.ajs_anonymous_id),
         userId:user.id,
@@ -63,7 +65,8 @@ function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter)
             "created_at": user.creationDate,
             "unsubscribed_onboarding": !user.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
             "unsubscribed_changelog": !user.additionalData?.emailNotificationSettings?.allowsChangelogMail,
-            "unsubscribed_devx": !user.additionalData?.emailNotificationSettings?.allowsDevXMail
+            "unsubscribed_devx": !user.additionalData?.emailNotificationSettings?.allowsDevXMail,
+            "subscriptions": subscriptions
         }
     });
 }
