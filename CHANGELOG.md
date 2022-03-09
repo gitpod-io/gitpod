@@ -1,6 +1,10 @@
 # Change Log
 
 ## March 2022
+- Add support for private registries ([#8550](https://github.com/gitpod-io/gitpod/pull/8550)) - [@csweichel](https://github.com/csweichel)
+- Rate-limit workspace prebuilds to 50 per minute (rolling-window) by default, configurable through config. ([#8568](https://github.com/gitpod-io/gitpod/pull/8568)) - [@andrew-farries](https://github.com/andrew-farries)
+- [kots]: make the self-hosted cert more explicitly selectable ([#8633](https://github.com/gitpod-io/gitpod/pull/8633)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Disable cache reclaim when cgroup v2 ([#8629](https://github.com/gitpod-io/gitpod/pull/8629)) - [@utam0k](https://github.com/utam0k)
 - Support cpu limiting using cgroup v2 ([#8471](https://github.com/gitpod-io/gitpod/pull/8471)) - [@Furisto](https://github.com/Furisto)
 - improve robustness of startWorkspace ([#8486](https://github.com/gitpod-io/gitpod/pull/8486)) - [@geropl](https://github.com/geropl)
 - improve feedback for errors during cluster selection ([#8486](https://github.com/gitpod-io/gitpod/pull/8486)) - [@geropl](https://github.com/geropl)
