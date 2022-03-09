@@ -282,8 +282,10 @@ func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
 		}
 	}
 	if ir, ok := spec.(*csapi.WorkspaceInitializer_Prebuild); ok {
-		if ir.Prebuild != nil && ir.Prebuild.Git != nil {
-			return ir.Prebuild.Git.CheckoutLocation
+		if ir.Prebuild != nil {
+			if len(ir.Prebuild.Git) > 0 {
+				return ir.Prebuild.Git[0].CheckoutLocation
+			}
 		}
 	}
 	return ""

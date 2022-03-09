@@ -4,8 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, ContextURL, GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { CommitContext, GitpodToken, Repository, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { UnauthorizedError } from "../errors";
+import { RepoURL } from "../repohost";
 import { HostContextProvider } from "./host-context-provider";
 
 declare var resourceInstance: GuardedResource;
@@ -477,27 +479,40 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
 
         // Check if user has at least read access to the repository
         const workspace = resource.kind === 'snapshot' ? resource.workspace : resource.subject;
-        const contextURL = ContextURL.getNormalizedURL(workspace);
-        if (!contextURL) {
-            throw new Error(`unable to parse ContextURL: ${contextURL}`);
+        const repos: Repository[] = [];
+        if (CommitContext.is(workspace.context)) {
+            repos.push(workspace.context.repository);
+            for (const additionalRepo of workspace.context.additionalRepositoryCheckoutInfo || []) {
+                repos.push(additionalRepo.repository);
+            }
         }
-        const hostContext = this.hostContextProvider.get(contextURL.hostname);
-        if (!hostContext) {
-            throw new Error(`no HostContext found for hostname: ${contextURL.hostname}`);
-        }
-        const { authProvider } = hostContext;
-        const identity = User.getIdentity(this.user, authProvider.authProviderId);
-        if (!identity) {
-            throw UnauthorizedError.create(contextURL.hostname, authProvider.info.requirements?.default || [], "missing-identity");
-        }
-        const { services } = hostContext;
-        if (!services) {
-            throw new Error(`no services found in HostContext for hostname: ${contextURL.hostname}`);
-        }
-        if (!CommitContext.is(workspace.context)) {
-            return false;
-        }
-        const { owner, name: repo } = workspace.context.repository;
-        return services.repositoryProvider.hasReadAccess(this.user, owner, repo);
+        const result = await Promise.all(
+            repos.map(
+                async repo => {
+                    const repoUrl = RepoURL.parseRepoUrl(repo.cloneUrl);
+                    if (!repoUrl) {
+                        log.error("Cannot parse repoURL", {repo})
+                        return false;
+                    }
+                    const hostContext = this.hostContextProvider.get(repoUrl.host)
+                    if (!hostContext) {
+                        throw new Error(`no HostContext found for hostname: ${repoUrl.host}`);
+                    }
+                    const { authProvider } = hostContext;
+                    const identity = User.getIdentity(this.user, authProvider.authProviderId);
+                    if (!identity) {
+                        throw UnauthorizedError.create(repoUrl!.host, authProvider.info.requirements?.default || [], "missing-identity");
+                    }
+                    const { services } = hostContext;
+                    if (!services) {
+                        throw new Error(`no services found in HostContext for hostname: ${repoUrl.host}`);
+                    }
+                    if (!CommitContext.is(workspace.context)) {
+                        return false;
+                    }
+                    return services.repositoryProvider.hasReadAccess(this.user, repo.owner, repo.name);
+                }
+        ));
+        return result.every(b => b);
     }
 }

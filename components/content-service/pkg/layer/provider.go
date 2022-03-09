@@ -184,7 +184,21 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 			span.LogKV("fallback-to-git", err.Error())
 
 			// we failed creating a prebuild initializer, so let's try falling back to the Git part.
-			initializer = &csapi.WorkspaceInitializer{Spec: &csapi.WorkspaceInitializer_Git{Git: pis.Git}}
+			var init []*csapi.WorkspaceInitializer
+			for _, gi := range pis.Git {
+				init = append(init, &csapi.WorkspaceInitializer{
+					Spec: &csapi.WorkspaceInitializer_Git{
+						Git: gi,
+					},
+				})
+			}
+			initializer = &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Composite{
+					Composite: &csapi.CompositeInitializer{
+						Initializer: init,
+					},
+				},
+			}
 		} else {
 			// creating the initializer worked - we're done here
 			return

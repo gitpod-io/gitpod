@@ -15,4 +15,5 @@ export interface RepositoryProvider {
     getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined>;
     getUserRepos(user: User): Promise<string[]>;
     hasReadAccess(user: User, owner: string, repo: string): Promise<boolean>;
+    getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number): Promise<string[]>;
 }

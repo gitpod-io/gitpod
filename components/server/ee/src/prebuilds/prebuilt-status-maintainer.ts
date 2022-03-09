@@ -46,7 +46,7 @@ export class PrebuildStatusMaintainer implements Disposable {
         this.disposables.push(
             repeat(this.periodicUpdatableCheck.bind(this), 60 * 1000)
         );
-        log.debug("prebuild updatatable status maintainer started");
+        log.debug("prebuild updatable status maintainer started");
     }
 
     public async registerCheckRun(ctx: TraceContext, installationId: number, pws: PrebuiltWorkspace, cri: CheckRunInfo, config?: WorkspaceConfig) {
@@ -64,6 +64,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                     id: uuidv4(),
                     owner: cri.owner,
                     repo: cri.repo,
+                    commitSHA: cri.head_sha,
                     isResolved: false,
                     installationId: installationId.toString(),
                     contextUrl: cri.details_url,
@@ -131,8 +132,8 @@ export class PrebuildStatusMaintainer implements Disposable {
                 return;
             }
 
-            const updatatables = await this.workspaceDB.trace({span}).findUpdatablesForPrebuild(prebuild.id);
-            await Promise.all(updatatables.filter(u => !u.isResolved).map(u => this.doUpdate({span}, u, prebuild)));
+            const updatables = await this.workspaceDB.trace({span}).findUpdatablesForPrebuild(prebuild.id);
+            await Promise.all(updatables.filter(u => !u.isResolved).map(u => this.doUpdate({span}, u, prebuild)));
         } catch (err) {
             TraceContext.setError({span}, err);
             throw err;
@@ -141,38 +142,38 @@ export class PrebuildStatusMaintainer implements Disposable {
         }
     }
 
-    protected async doUpdate(ctx: TraceContext, updatatable: PrebuiltWorkspaceUpdatable, pws: PrebuiltWorkspace): Promise<void> {
+    protected async doUpdate(ctx: TraceContext, updatable: PrebuiltWorkspaceUpdatable, pws: PrebuiltWorkspace): Promise<void> {
         const span = TraceContext.startSpan("doUpdate", ctx);
 
         try {
-            const githubApi = await this.getGitHubApi(Number.parseInt(updatatable.installationId));
+            const githubApi = await this.getGitHubApi(Number.parseInt(updatable.installationId));
             if (!githubApi) {
                 log.error("unable to authenticate GitHub app - this leaves user-facing checks dangling.");
                 return;
             }
             const workspace = await this.workspaceDB.trace({span}).findById(pws.buildWorkspaceId);
 
-            if (!!updatatable.contextUrl && !!workspace) {
+            if (!!updatable.contextUrl && !!workspace) {
                 const conclusion = this.getConclusionFromPrebuildState(pws);
                 if (conclusion === 'pending') {
-                    log.info(`Prebuild is still running.`, { prebuiltWorkspaceId: updatatable.prebuiltWorkspaceId });
+                    log.info(`Prebuild is still running.`, { prebuiltWorkspaceId: updatable.prebuiltWorkspaceId });
                     return;
                 }
 
                 let found = true;
                 try {
                     await githubApi.repos.createCommitStatus({
-                        owner: updatatable.owner,
-                        repo: updatatable.repo,
+                        owner: updatable.owner,
+                        repo: updatable.repo,
                         context: "Gitpod",
-                        sha: pws.commit,
-                        target_url: updatatable.contextUrl,
-                        description: conclusion === 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
+                        sha: updatable.commitSHA || pws.commit,
+                        target_url: updatable.contextUrl,
+                        description: conclusion == 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
                         state: (workspace?.config?.github?.prebuilds?.addCheck === 'prevent-merge-on-error' ? conclusion : 'success')
                     });
                 } catch (err) {
                     if (err.message == "Not Found") {
-                        log.info("Did not find repository while updating updatable. Probably we lost the GitHub permission for the repo.", {owner: updatatable.owner, repo: updatatable.repo});
+                        log.info("Did not find repository while updating updatable. Probably we lost the GitHub permission for the repo.", {owner: updatable.owner, repo: updatable.repo});
                         found = true;
                     } else {
                         throw err;
@@ -185,10 +186,10 @@ export class PrebuildStatusMaintainer implements Disposable {
                     },
                 });
 
-                await this.workspaceDB.trace({span}).markUpdatableResolved(updatatable.id);
-                log.info(`Resolved updatable. Marked check on ${updatatable.contextUrl} as ${conclusion}`);
-            } else if (!!updatatable.issue) {
-                // this updatatable updates a label
+                await this.workspaceDB.trace({span}).markUpdatableResolved(updatable.id);
+                log.info(`Resolved updatable. Marked check on ${updatable.contextUrl} as ${conclusion}`);
+            } else if (!!updatable.issue) {
+                // this updatable updates a label
                 log.debug("Update label on a PR - we're not using this yet");
             }
         } catch (err) {

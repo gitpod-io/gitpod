@@ -26,7 +26,7 @@ import (
 // PrebuildInitializer first tries to restore the snapshot/prebuild and if that succeeds performs Git operations.
 // If restoring the prebuild does not succeed we fall back to Git entriely.
 type PrebuildInitializer struct {
-	Git      *GitInitializer
+	Git      []*GitInitializer
 	Prebuild *SnapshotInitializer
 }
 
@@ -45,14 +45,11 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 			tracelog.String("snapshot", p.Prebuild.Snapshot),
 		)
 	}
-	if p.Git == nil {
+	if len(p.Git) == 0 {
 		spandata = append(spandata, tracelog.Bool("hasGit", false))
 	} else {
 		spandata = append(spandata,
 			tracelog.Bool("hasGit", true),
-			tracelog.String("git.targetMode", string(p.Git.TargetMode)),
-			tracelog.String("git.cloneTarget", string(p.Git.CloneTarget)),
-			tracelog.String("git.location", string(p.Git.Location)),
 		)
 	}
 	span.LogFields(spandata...)
@@ -71,7 +68,12 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 				return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: %w", err)
 			}
 
-			return p.Git.Run(ctx, mappings)
+			for _, gi := range p.Git {
+				_, err = gi.Run(ctx, mappings)
+				if err != nil {
+					return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: Git fallback: %w", err)
+				}
+			}
 		}
 	}
 
@@ -80,47 +82,12 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	src = csapi.WorkspaceInitFromPrebuild
 
 	// make sure we're on the correct branch
-	span.LogFields(
-		tracelog.String("IsWorkingCopy", fmt.Sprintf("%v", git.IsWorkingCopy(p.Git.Location))),
-		tracelog.String("location", fmt.Sprintf("%v", p.Git.Location)),
-	)
-	if git.IsWorkingCopy(p.Git.Location) {
-		out, err := p.Git.GitWithOutput(ctx, "stash", "push", "-u")
+	for _, gi := range p.Git {
+		err = runGitInit(ctx, gi)
 		if err != nil {
-			var giterr git.OpFailedError
-			if errors.As(err, &giterr) && strings.Contains(giterr.Output, "You do not have the initial commit yet") {
-				// git stash push returns a non-zero exit code if the repository does not have a single commit.
-				// In this case that's not an error though, hence we don't want to fail here.
-			} else {
-				// git returned a non-zero exit code because of some reason we did not anticipate or an actual failure.
-				return src, xerrors.Errorf("prebuild initializer: %w", err)
-			}
+			return src, err
 		}
-		didStash := !strings.Contains(string(out), "No local changes to save")
-
-		err = p.Git.Fetch(ctx)
-		if err != nil {
-			return src, xerrors.Errorf("prebuild initializer: %w", err)
-		}
-		err = p.Git.realizeCloneTarget(ctx)
-		if err != nil {
-			return src, xerrors.Errorf("prebuild initializer: %w", err)
-		}
-
-		// If any of these cleanup operations fail that's no reason to fail ws initialization.
-		// It just results in a slightly degraded state.
-		if didStash {
-			err = p.Git.Git(ctx, "stash", "pop")
-			if err != nil {
-				// If restoring the stashed changes produces merge conflicts on the new Git ref, simply
-				// throw them away (they'll remain in the stash, but are likely outdated anyway).
-				_ = p.Git.Git(ctx, "reset", "--hard")
-			}
-		}
-
-		log.Debug("prebuild initializer Git operations complete")
 	}
-
 	log.Debug("Initialized workspace with prebuilt snapshot")
 	return
 }
@@ -135,6 +102,51 @@ func clearWorkspace(location string) error {
 		if err != nil {
 			return xerrors.Errorf("prebuild initializer: %w", err)
 		}
+	}
+	return nil
+}
+
+func runGitInit(ctx context.Context, gInit *GitInitializer) (err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "runGitInit")
+	span.LogFields(
+		tracelog.String("IsWorkingCopy", fmt.Sprintf("%v", git.IsWorkingCopy(gInit.Location))),
+		tracelog.String("location", fmt.Sprintf("%v", gInit.Location)),
+	)
+	if git.IsWorkingCopy(gInit.Location) {
+		out, err := gInit.GitWithOutput(ctx, "stash", "push", "-u")
+		if err != nil {
+			var giterr git.OpFailedError
+			if errors.As(err, &giterr) && strings.Contains(giterr.Output, "You do not have the initial commit yet") {
+				// git stash push returns a non-zero exit code if the repository does not have a single commit.
+				// In this case that's not an error though, hence we don't want to fail here.
+			} else {
+				// git returned a non-zero exit code because of some reason we did not anticipate or an actual failure.
+				return xerrors.Errorf("prebuild initializer: %w", err)
+			}
+		}
+		didStash := !strings.Contains(string(out), "No local changes to save")
+
+		err = gInit.Fetch(ctx)
+		if err != nil {
+			return xerrors.Errorf("prebuild initializer: %w", err)
+		}
+		err = gInit.realizeCloneTarget(ctx)
+		if err != nil {
+			return xerrors.Errorf("prebuild initializer: %w", err)
+		}
+
+		// If any of these cleanup operations fail that's no reason to fail ws initialization.
+		// It just results in a slightly degraded state.
+		if didStash {
+			err = gInit.Git(ctx, "stash", "pop")
+			if err != nil {
+				// If restoring the stashed changes produces merge conflicts on the new Git ref, simply
+				// throw them away (they'll remain in the stash, but are likely outdated anyway).
+				_ = gInit.Git(ctx, "reset", "--hard")
+			}
+		}
+
+		log.Debug("prebuild initializer Git operations complete")
 	}
 	return nil
 }
