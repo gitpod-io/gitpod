@@ -139,6 +139,8 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         werft.log(vmSlices.KUBECONFIG, 'all pods in kube-system are ready')
 
 
+
+        exec(`kubectl wait --for=condition=Complete -n cert-manager job --all --timeout=600s`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER })
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
         werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
