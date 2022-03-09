@@ -1,0 +1,34 @@
+{
+  "private": true,
+  "name": "@gitpod/public-api",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "files": [
+    "client",
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc && cp -f src/*.js src/*d.ts lib",
+    "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
+    "test": "mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
+    "test:brk": "yarn test --inspect-brk"
+  },
+  "dependencies": {
+    "@gitpod/content-service": "0.1.5",
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@grpc/grpc-js": "^1.3.7",
+    "google-protobuf": "^3.19.1",
+    "inversify": "^5.0.1",
+    "opentracing": "^0.14.4"
+  },
+  "devDependencies": {
+    "@testdeck/mocha": "0.1.2",
+    "@types/chai": "^4.1.2",
+    "@types/google-protobuf": "^3.15.5",
+    "@types/node": "^16.11.0",
+    "grpc-tools": "^1.11.2",
+    "grpc_tools_node_protoc_ts": "^5.3.2",
+    "typescript": "~4.4.2",
+    "typescript-formatter": "^7.2.2"
+  }
+}
