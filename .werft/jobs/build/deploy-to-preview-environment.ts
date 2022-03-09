@@ -279,7 +279,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         // get some values we need to customize the config and write them to file
         exec(`yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers \
         | yq prefix - 'blockNewUsers' > ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing | yq prefix - 'workspace' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
+        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
 
         // merge values from files
         exec(`yq m -i --overwrite config.yaml ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
@@ -292,8 +292,6 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         exec(`yq w -i config.yaml containerRegistry.external.certificate.kind secret`, { slice: installerSlices.INSTALLER_RENDER });
         exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, { slice: installerSlices.INSTALLER_RENDER });
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, { slice: installerSlices.INSTALLER_RENDER });
-        // TODO: Get rid of JaegerOperator as part of https://github.com/gitpod-io/ops/issues/875
-        exec(`yq w -i config.yaml jaegerOperator.inCluster false`, { slice: installerSlices.INSTALLER_RENDER });
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: installerSlices.INSTALLER_RENDER });
 
         // Relax CPU contraints
