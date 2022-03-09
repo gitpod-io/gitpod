@@ -4,7 +4,7 @@ package gitpod.v1;
 
 option go_package = "github.com/gitpod-io/gitpod/public-api/v1";
 
-import "gitpod/v1/pagination.proto";
+// import "gitpod/v1/pagination.proto";
 
 service PrebuildsService {
 

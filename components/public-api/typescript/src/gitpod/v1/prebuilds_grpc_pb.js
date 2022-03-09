@@ -3,7 +3,6 @@
 'use strict';
 var grpc = require('@grpc/grpc-js');
 var gitpod_v1_prebuilds_pb = require('../../gitpod/v1/prebuilds_pb.js');
-var gitpod_v1_pagination_pb = require('../../gitpod/v1/pagination_pb.js');
 
 function serialize_gitpod_v1_GetRunningPrebuildRequest(arg) {
   if (!(arg instanceof gitpod_v1_prebuilds_pb.GetRunningPrebuildRequest)) {
@@ -28,6 +27,8 @@ function deserialize_gitpod_v1_GetRunningPrebuildResponse(buffer_arg) {
 }
 
 
+// import "gitpod/v1/pagination.proto";
+//
 var PrebuildsServiceService = exports.PrebuildsServiceService = {
   // GetRunningPrebuild returns the prebuild ID of a running prebuild,
 // or NOT_FOUND if there is no prebuild running for the content_url.

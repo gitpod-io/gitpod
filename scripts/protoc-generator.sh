@@ -17,6 +17,12 @@ install_dependencies() {
     chmod +x /tmp/protoc-gen-grpc-java
 }
 
+lint() {
+    local PROTO_DIR=${1:-.}
+
+    docker run --volume "$PWD/$PROTO_DIR:/workspace" --workdir /workspace bufbuild/buf lint || exit 1
+}
+
 go_protoc() {
     local ROOT_DIR=$1
     local PROTO_DIR=${2:-.}
