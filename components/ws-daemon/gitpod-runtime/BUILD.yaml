@@ -1,0 +1,14 @@
+packages:
+  - name: gitpod-runtime
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      dontTest: true
+      packaging: app
+      buildCommand: ["go", "build", "-ldflags", "-w -extldflags \"-static\""]
