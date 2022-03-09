@@ -197,7 +197,7 @@ is `true`. External dependencies can be used in their place
 # Config
 
 > Not every parameter is discussed in this table, just ones that are likely
-> to need changing. The full config structure is available in [config.go](/install/installer/config/v1/config.go).
+> to need changing. The full config structure is available in [config.go](/install/installer/pkg/config/v1/config.go).
 
 | Property | Required | Description | Notes |
 | --- | --- | --- | --- |

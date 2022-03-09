@@ -6,6 +6,7 @@ package config
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/go-playground/validator/v10"
@@ -102,8 +103,13 @@ func Load(overrideConfig string) (cfg interface{}, version string, err error) {
 		return
 	}
 
+	// `apiVersion: vx` line is removed from config since the version dependant
+	// Config structure doesn't have that field
+	apiVersionRegexp := regexp.MustCompile(`apiVersion: .+\n`)
+	overrideConfig = apiVersionRegexp.ReplaceAllString(overrideConfig, "")
+
 	// Override passed configuration onto the default
-	err = yaml.Unmarshal([]byte(overrideConfig), cfg)
+	err = yaml.UnmarshalStrict([]byte(overrideConfig), cfg)
 	if err != nil {
 		return
 	}
