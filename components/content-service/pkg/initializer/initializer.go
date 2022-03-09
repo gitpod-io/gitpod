@@ -111,14 +111,6 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		if ir.Prebuild == nil {
 			return nil, status.Error(codes.InvalidArgument, "missing prebuild initializer spec")
 		}
-		if ir.Prebuild.Git == nil {
-			return nil, status.Error(codes.InvalidArgument, "missing prebuild Git initializer spec")
-		}
-
-		gitinit, err := newGitInitializer(ctx, loc, ir.Prebuild.Git, opts.ForceGitpodUserForGit)
-		if err != nil {
-			return nil, err
-		}
 		var snapshot *SnapshotInitializer
 		if ir.Prebuild.Prebuild != nil {
 			snapshot, err = newSnapshotInitializer(loc, rs, ir.Prebuild.Prebuild)
@@ -126,10 +118,17 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 				return nil, status.Error(codes.Internal, fmt.Sprintf("cannot setup prebuild init: %v", err))
 			}
 		}
-
+		var gits []*GitInitializer
+		for _, gi := range ir.Prebuild.Git {
+			gitinit, err := newGitInitializer(ctx, loc, gi, opts.ForceGitpodUserForGit)
+			if err != nil {
+				return nil, err
+			}
+			gits = append(gits, gitinit)
+		}
 		initializer = &PrebuildInitializer{
-			Git:      gitinit,
 			Prebuild: snapshot,
+			Git:      gits,
 		}
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Snapshot); ok {
 		initializer, err = newSnapshotInitializer(loc, rs, ir.Snapshot)

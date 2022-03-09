@@ -107,4 +107,7 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         return false;
     }
 
+    async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number): Promise<string[]>  {
+        return [];
+    }
 }

@@ -94,9 +94,7 @@ export class ProjectsService {
                 changeHash: commit.sha,
                 changeTitle: commit.commitMessage,
                 changeAuthorAvatar: commit.authorAvatarUrl,
-                isDefault: repository.defaultBranch === branch.name,
-                changePR: "changePR", // todo: compute in repositoryProvider
-                changeUrl: "changeUrl", // todo: compute in repositoryProvider
+                isDefault: repository.defaultBranch === branch.name
             });
         }
         result.sort((a, b) => (b.changeDate || "").localeCompare(a.changeDate || ""));

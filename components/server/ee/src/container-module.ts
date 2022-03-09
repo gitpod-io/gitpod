@@ -26,7 +26,6 @@ import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { IPrefixContextParser } from "../../src/workspace/context-parser";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
-import { StartIncrementalPrebuildContextParser } from "./prebuilds/start-incremental-prebuild-context-parser";
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { MonitoringEndpointsAppEE } from "./monitoring-endpoint-ee";
@@ -60,7 +59,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(WorkspaceHealthMonitoring).toSelf().inSingletonScope();
     bind(PrebuildManager).toSelf().inSingletonScope();
     bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
-    bind(IPrefixContextParser).to(StartIncrementalPrebuildContextParser).inSingletonScope();
     bind(GithubApp).toSelf().inSingletonScope();
     bind(GitHubAppSupport).toSelf().inSingletonScope();
     bind(GithubAppRules).toSelf().inSingletonScope();

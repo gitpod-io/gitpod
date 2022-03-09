@@ -65,21 +65,25 @@ export class ContextParser {
 
     protected async internalHandleWithoutPrefix(ctx: TraceContext, user: User, nonPrefixedContextURL: string): Promise<WorkspaceContext> {
         const span = TraceContext.startSpan("ContextParser.internalHandle", ctx);
-        let result: WorkspaceContext | undefined;
+        try {
+            let result: WorkspaceContext | undefined;
 
-        for (const parser of this.allContextParsers) {
-            if (parser.canHandle(user, nonPrefixedContextURL)) {
-                result = await parser.handle({ span }, user, nonPrefixedContextURL);
-                break;
+            for (const parser of this.allContextParsers) {
+                if (parser.canHandle(user, nonPrefixedContextURL)) {
+                    result = await parser.handle({ span }, user, nonPrefixedContextURL);
+                    break;
+                }
             }
-        }
-        if (!result) {
-            throw new Error(`Couldn't parse context '${nonPrefixedContextURL}'.`);
-        }
+            if (!result) {
+                throw new Error(`Couldn't parse context '${nonPrefixedContextURL}'.`);
+            }
 
-        // TODO: Make the parsers return the context with normalizedContextURL set
-        result.normalizedContextURL = nonPrefixedContextURL;
-        return result;
+            // TODO: Make the parsers return the context with normalizedContextURL set
+            result.normalizedContextURL = nonPrefixedContextURL;
+            return result;
+        } finally {
+            span.finish();
+        }
     }
 
     protected buildUpstreamCloneUrl(context: CommitContext): string | undefined {
@@ -101,47 +105,52 @@ export class ContextParser {
             return context;
         }
         const span = TraceContext.startSpan("ContextParser.handleMultiRepositoryContext", ctx);
-        let config = await this.configProvider.fetchConfig({ span }, user, context);
-        let mainRepoContext: WorkspaceContext | undefined;
-        if (config.config.mainRepository) {
-            mainRepoContext = await this.internalHandleWithoutPrefix({ span }, user, config.config.mainRepository);
-            if (!CommitContext.is(mainRepoContext)) {
-                throw new InvalidGitpodYMLError([`Cannot find main repository '${config.config.mainRepository}'.`]);
-            }
-            config = await this.configProvider.fetchConfig({ span }, user, mainRepoContext);
-        }
-
-        if (config.config.subRepositories && config.config.subRepositories.length > 0) {
-            const subRepoCommits: GitCheckoutInfo[] = [];
-            for (const subRepo of config.config.subRepositories) {
-                let subContext = await this.internalHandleWithoutPrefix({ span }, user, subRepo.url) as CommitContext;
-                if (!CommitContext.is(subContext)) {
-                    throw new InvalidGitpodYMLError([`Cannot find sub-repository '${subRepo.url}'.`]);
+        try {
+            let config = await this.configProvider.fetchConfig({ span }, user, context);
+            let mainRepoContext: WorkspaceContext | undefined;
+            if (config.config.mainConfiguration) {
+                mainRepoContext = await this.internalHandleWithoutPrefix({ span }, user, config.config.mainConfiguration);
+                if (!CommitContext.is(mainRepoContext)) {
+                    throw new InvalidGitpodYMLError([`Cannot find main repository '${config.config.mainConfiguration}'.`]);
                 }
-                if (context.repository.cloneUrl === subContext.repository.cloneUrl) {
-                    // if it's the repo from the original context we want to use that commit.
-                    subContext = JSON.parse(JSON.stringify(context));
-                }
-
-                subRepoCommits.push({
-                    ... subContext,
-                    checkoutLocation: (subRepo.checkoutLocation || subContext.repository.name),
-                    upstreamRemoteURI: this.buildUpstreamCloneUrl(subContext),
-                    localBranch: context.localBranch // we want to create a local branch on all repos, in case it's a multi-repo change. If it's not there are no drawbacks anyway.
-                });
+                config = await this.configProvider.fetchConfig({ span }, user, mainRepoContext);
             }
-            context.subRepositoryCheckoutInfo = subRepoCommits;
+
+            if (config.config.additionalRepositories && config.config.additionalRepositories.length > 0) {
+                const subRepoCommits: GitCheckoutInfo[] = [];
+                for (const subRepo of config.config.additionalRepositories) {
+                    let subContext = await this.internalHandleWithoutPrefix({ span }, user, subRepo.url) as CommitContext;
+                    if (!CommitContext.is(subContext)) {
+                        throw new InvalidGitpodYMLError([`Cannot find sub-repository '${subRepo.url}'.`]);
+                    }
+                    if (context.repository.cloneUrl === subContext.repository.cloneUrl) {
+                        // if it's the repo from the original context we want to use that commit.
+                        subContext = JSON.parse(JSON.stringify(context));
+                    }
+
+                    subRepoCommits.push({
+                        ... subContext,
+                        checkoutLocation: (subRepo.checkoutLocation || subContext.repository.name),
+                        upstreamRemoteURI: this.buildUpstreamCloneUrl(subContext),
+                        // we want to create a local branch on all repos, in case it's a multi-repo change. If it's not there are no drawbacks anyway.
+                        ref: context.ref,
+                        refType: context.refType,
+                        localBranch: context.localBranch
+                    });
+                }
+                context.additionalRepositoryCheckoutInfo = subRepoCommits;
+            }
+            // if the original contexturl was pointing to a subrepo we update the commit information with the mainContext.
+            if (mainRepoContext && CommitContext.is(mainRepoContext)) {
+                context.repository = mainRepoContext.repository;
+                context.revision = mainRepoContext.revision;
+            }
+            context.checkoutLocation = (config.config.checkoutLocation || context.repository.name);
+            context.upstreamRemoteURI = this.buildUpstreamCloneUrl(context);
+            return context;
+        } finally {
+            span.finish();
         }
-        // if the original contexturl was pointing to a subrepo we update the commit information with the mainContext.
-        if (mainRepoContext && CommitContext.is(mainRepoContext)) {
-            context.repository = mainRepoContext.repository;
-            context.revision = mainRepoContext.revision;
-            context.ref = mainRepoContext.revision;
-            context.refType = mainRepoContext.refType;
-        }
-        context.checkoutLocation = (config.config.checkoutLocation || context.repository.name);
-        context.upstreamRemoteURI = this.buildUpstreamCloneUrl(context);
-        return context;
     }
 
     protected findPrefix(user: User, context: string): { prefix: string, parser: IPrefixContextParser } | undefined {

@@ -7,10 +7,13 @@
 import * as express from 'express';
 import { postConstruct, injectable, inject } from 'inversify';
 import { ProjectDB, TeamDB, UserDB } from '@gitpod/gitpod-db/lib';
-import { User, StartPrebuildResult, Project } from '@gitpod/gitpod-protocol';
+import { User, StartPrebuildResult, CommitContext, CommitInfo, Project } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TokenService } from '../../../src/user/token-service';
+import { ContextParser } from '../../../src/workspace/context-parser-service';
+import { HostContextProvider } from '../../../src/auth/host-context-provider';
+import { RepoURL } from '../../../src/repohost';
 
 @injectable()
 export class BitbucketApp {
@@ -20,6 +23,8 @@ export class BitbucketApp {
     @inject(TokenService) protected readonly tokenService: TokenService;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(ContextParser) protected readonly contextParser: ContextParser;
+    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
 
     protected _router = express.Router();
     public static path = '/apps/bitbucket/';
@@ -88,25 +93,24 @@ export class BitbucketApp {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
             const contextURL = this.createContextUrl(data);
+            const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
             span.setTag('contextURL', contextURL);
-            const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 console.log('Bitbucket push event: No config. No prebuild.');
                 return undefined;
             }
 
-            console.debug('Bitbucket push event: Starting prebuild.', { contextURL });
-
+            console.log('Starting prebuild.', { contextURL })
+            const {host, owner, repo} = RepoURL.parseRepoUrl(data.repoUrl)!;
+            const hostCtx = this.hostCtxProvider.get(host);
+            let commitInfo: CommitInfo | undefined;
+            if (hostCtx?.services?.repositoryProvider) {
+                commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(user, owner, repo, data.commitHash);
+            }
             const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
-
-            const ws = await this.prebuildManager.startPrebuild({ span }, {
-                user: projectAndOwner.user,
-                project: projectAndOwner?.project,
-                branch: data.branchName,
-                contextURL,
-                cloneURL: data.gitCloneUrl,
-                commit: data.commitHash
-            });
+            // todo@alex: add branch and project args
+            const ws = await this.prebuildManager.startPrebuild({ span }, { user, project: projectAndOwner?.project, context, commitInfo });
             return ws;
         } finally {
             span.finish();

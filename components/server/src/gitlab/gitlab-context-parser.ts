@@ -394,23 +394,4 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         };
     }
 
-    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[]> {
-        // TODO(janx): To get more results than GitLab API's max per_page (seems to be 100), pagination should be handled.
-        const { owner, repoName } = await this.parseURL(user, contextUrl);
-        const projectId = `${owner}/${repoName}`;
-        const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async g => {
-            return g.Commits.all(projectId, {
-                ref_name: sha,
-                per_page: maxDepth,
-                page: 1,
-            });
-        });
-        if (GitLab.ApiError.is(result)) {
-            if (result.message === 'GitLab responded with code 404') {
-                throw new Error(`Couldn't find commit #${sha} in repository ${projectId}.`);
-            }
-            throw result;
-        }
-        return result.slice(1).map((c: GitLab.Commit) => c.id);
-    }
 }

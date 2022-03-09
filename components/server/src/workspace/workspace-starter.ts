@@ -7,7 +7,7 @@
 import { CloneTargetMode, FileDownloadInitializer, GitAuthMethod, GitConfig, GitInitializer, PrebuildInitializer, SnapshotInitializer, WorkspaceInitializer } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
 import { DBUser, DBWithTracing, ProjectDB, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile, ImageBuildLogInfo, ProjectEnvVar } from "@gitpod/gitpod-protocol";
+import { CommitContext, Disposable, GitpodToken, GitpodTokenType, GitCheckoutInfo, NamedWorkspaceFeatureFlag, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessWorkspaceEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext, ImageConfigFile, ProjectEnvVar, ImageBuildLogInfo } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -1016,9 +1016,13 @@ export class WorkspaceStarter {
             const init = new PrebuildInitializer();
             init.setPrebuild(snapshot);
             if (initializer instanceof CompositeInitializer) {
-                init.setComposite(initializer);
+                for (const myInit of initializer.getInitializerList()) {
+                    if (myInit instanceof WorkspaceInitializer && myInit.hasGit()) {
+                        init.addGit(myInit.getGit());
+                    }
+                }
             } else {
-                init.setGit(initializer);
+                init.addGit(initializer);
             }
             result.setPrebuild(init);
         } else if (WorkspaceProbeContext.is(context)) {
@@ -1073,13 +1077,13 @@ export class WorkspaceStarter {
     protected async createCommitInitializer(ctx: TraceContext, workspace: Workspace, context: CommitContext, user: User): Promise<{initializer: GitInitializer | CompositeInitializer, disposable: Disposable}> {
         const span = TraceContext.startSpan("createInitializerForCommit", ctx);
         const mainGit = this.createGitInitializer({ span }, workspace, context, user);
-        if (!context.subRepositoryCheckoutInfo || context.subRepositoryCheckoutInfo.length === 0) {
+        if (!context.additionalRepositoryCheckoutInfo || context.additionalRepositoryCheckoutInfo.length === 0) {
             return mainGit;
         }
         const subRepoInitializers = [mainGit];
-        await Promise.all(context.subRepositoryCheckoutInfo.map(async subRepo => {
-                subRepoInitializers.push(this.createGitInitializer({ span }, workspace, subRepo , user));
-            }));
+        for (const subRepo of context.additionalRepositoryCheckoutInfo) {
+            subRepoInitializers.push(this.createGitInitializer({ span }, workspace, subRepo , user));
+        }
         const inits = await Promise.all(subRepoInitializers);
         const compositeInit = new CompositeInitializer();
         const compositeDisposable = new DisposableCollection();

@@ -5,10 +5,10 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, Project, ProjectEnvVar, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { CommitContext, CommitInfo, PrebuiltWorkspace, Project, ProjectEnvVar, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, Workspace, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { HostContextProvider } from '../../../src/auth/host-context-provider';
+import { getCommitInfo, HostContextProvider } from '../../../src/auth/host-context-provider';
 import { WorkspaceFactory } from '../../../src/workspace/workspace-factory';
 import { ConfigProvider } from '../../../src/workspace/config-provider';
 import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
@@ -18,7 +18,6 @@ import { secondsBefore } from '@gitpod/gitpod-protocol/lib/util/timeutil';
 
 import { inject, injectable } from 'inversify';
 import * as opentracing from 'opentracing';
-import { URL } from 'url';
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -28,11 +27,9 @@ export class WorkspaceRunningError extends Error {
 
 export interface StartPrebuildParams {
     user: User;
-    contextURL: string;
-    cloneURL: string;
-    branch?: string;
-    commit: string;
+    context: CommitContext;
     project?: Project;
+    commitInfo?: CommitInfo;
 }
 
 const PREBUILD_LIMITER_WINDOW_SECONDS = 60;
@@ -48,43 +45,25 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
 
-    async hasAutomatedPrebuilds(ctx: TraceContext, cloneURL: string): Promise<boolean> {
-        const span = TraceContext.startSpan("hasPrebuilds", ctx);
-        span.setTag(cloneURL, cloneURL);
-        try {
-            const existingPBs = await this.workspaceDB.trace({ span }).findPrebuildsWithWorkpace(cloneURL);
-            for (const pb of existingPBs) {
-                if (!pb.workspace.contextURL.startsWith('prebuild')) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
-        }
-    }
-
-    async startPrebuild(ctx: TraceContext, { contextURL, cloneURL, commit, branch, project, user }: StartPrebuildParams): Promise<StartPrebuildResult> {
+    async startPrebuild(ctx: TraceContext, { context, project, user, commitInfo }: StartPrebuildParams): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
-        span.setTag("contextURL", contextURL);
+        const cloneURL = context.repository.cloneUrl;
+        const commitSHAIdentifier = CommitContext.computeHash(context);
         span.setTag("cloneURL", cloneURL);
-        span.setTag("commit", commit);
+        span.setTag("commit", commitInfo?.sha);
 
         try {
             if (user.blocked) {
                 throw new Error("Blocked users cannot start prebuilds.");
             }
-            const existingPB = await this.workspaceDB.trace({ span }).findPrebuiltWorkspaceByCommit(cloneURL, commit);
+            const existingPB = await this.workspaceDB.trace({ span }).findPrebuiltWorkspaceByCommit(cloneURL, commitSHAIdentifier);
             // If the existing prebuild is failed, we want to retrigger it.
             if (!!existingPB && existingPB.state !== 'aborted' && existingPB.state !== 'failed' && existingPB.state !== 'timeout') {
                 // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
                 const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
                 const existingConfig = existingPBWS?.config;
-                const newConfig = await this.fetchConfig({ span }, user, contextURL);
-                log.debug(`startPrebuild | commit: ${commit}, existingPB: ${existingPB.id}, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(newConfig)}}`);
+                const newConfig = await this.fetchConfig({ span }, user, context);
+                log.debug(`startPrebuild | commits: ${commitSHAIdentifier}, existingPB: ${existingPB.id}, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(newConfig)}}`);
                 const filterPrebuildTasks = (tasks: TaskConfig[] = []) => (tasks
                     .map(task => Object.keys(task)
                         .filter(key => ['before', 'init', 'prebuild'].includes(key))
@@ -98,35 +77,46 @@ export class PrebuildManager {
                 }
             }
 
-            const contextParser = this.getContextParserFor(contextURL);
-            if (!contextParser) {
-                throw new Error(`Cannot find context parser for URL: ${contextURL}`);
-            }
-            const actual = await contextParser.handle({ span }, user, contextURL) as CommitContext;
-            actual.revision = commit;  // Make sure we target the correct commit here (might have changed between trigger and contextParser lookup)
-            actual.ref = undefined;
-            actual.forceCreateNewWorkspace = true;
-
             const prebuildContext: StartPrebuildContext = {
-                title: `Prebuild of "${actual.title}"`,
-                actual,
+                title: `Prebuild of "${context.title}"`,
+                actual: context,
                 project,
-                branch,
-                normalizedContextURL: actual.normalizedContextURL
+                branch: context.ref,
+                normalizedContextURL: context.normalizedContextURL
             };
 
-            if (this.shouldPrebuildIncrementally(actual.repository.cloneUrl, project)) {
+            if (this.shouldPrebuildIncrementally(context.repository.cloneUrl, project)) {
                 const maxDepth = this.config.incrementalPrebuilds.commitHistory;
-                prebuildContext.commitHistory = await contextParser.fetchCommitHistory({ span }, user, contextURL, commit, maxDepth);
+                const hostContext = this.hostContextProvider.get(context.repository.host);
+                const repoProvider = hostContext?.services?.repositoryProvider;
+                if (repoProvider) {
+                    prebuildContext.commitHistory = await repoProvider.getCommitHistory(user, context.repository.owner, context.repository.name, context.revision, maxDepth);
+                    if (context.additionalRepositoryCheckoutInfo && context.additionalRepositoryCheckoutInfo.length > 0) {
+                        const histories = context.additionalRepositoryCheckoutInfo.map(async info => {
+                            const commitHistory = await repoProvider.getCommitHistory(user, info.repository.owner, info.repository.name, info.revision, maxDepth);
+                            return {
+                                cloneUrl: info.repository.cloneUrl,
+                                commitHistory
+                            }
+                        });
+                        prebuildContext.additionalRepositoryCommitHistories = await Promise.all(histories);
+                    }
+                }
             }
 
 
 
             const projectEnvVarsPromise = project ? this.projectService.getProjectEnvironmentVariables(project.id) : [];
-            const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, contextURL);
-            const prebuild = await this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
+
+            const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, context.normalizedContextURL!);
+            const prebuildPromise = this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
+
+            span.setTag("starting", true);
+            const projectEnvVars = await projectEnvVarsPromise;
+            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {excludeFeatureFlags: ['full_workspace_backup']});
+            const prebuild = await prebuildPromise;
             if (!prebuild) {
-                throw new Error(`Failed to create a prebuild for: ${contextURL}`);
+                throw new Error(`Failed to create a prebuild for: ${context.normalizedContextURL}`);
             }
 
             if (await this.shouldRateLimitPrebuild(span, cloneURL)) {
@@ -143,9 +133,20 @@ export class PrebuildManager {
                 };
             }
 
-            span.setTag("starting", true);
-            const projectEnvVars = await projectEnvVarsPromise;
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {excludeFeatureFlags: ['full_workspace_backup']});
+            if (project) {
+                let aCommitInfo = commitInfo;
+                if (!aCommitInfo) {
+                    aCommitInfo = await getCommitInfo(this.hostContextProvider, user, context.repository.cloneUrl, context.revision);
+                    if (!aCommitInfo) {
+                        aCommitInfo = {
+                            author: 'unknown',
+                            commitMessage: 'unknown',
+                            sha: context.revision
+                        }
+                    }
+                }
+                await this.storePrebuildInfo({ span }, project, prebuild, workspace, user, aCommitInfo);
+            }
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.setError({ span }, err);
@@ -214,17 +215,10 @@ export class PrebuildManager {
         return this.config.incrementalPrebuilds.repositoryPasslist.some(url => trimRepoUrl(url) === repoUrl);
     }
 
-    async fetchConfig(ctx: TraceContext, user: User, contextURL: string): Promise<WorkspaceConfig | undefined> {
+    async fetchConfig(ctx: TraceContext, user: User, context: CommitContext): Promise<WorkspaceConfig> {
         const span = TraceContext.startSpan("fetchConfig", ctx);
-        span.setTag("contextURL", contextURL);
-
         try {
-            const contextParser = this.getContextParserFor(contextURL);
-            if (!contextParser) {
-                return undefined;
-            }
-            const context = await contextParser!.handle({ span }, user, contextURL);
-            return (await this.configProvider.fetchConfig({ span }, user, context as CommitContext)).config;
+            return (await this.configProvider.fetchConfig({ span }, user, context)).config;
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
@@ -233,13 +227,31 @@ export class PrebuildManager {
         }
     }
 
-    protected getContextParserFor(contextURL: string) {
-        const host = new URL(contextURL).hostname;
-        const hostContext = this.hostContextProvider.get(host);
-        if (!hostContext) {
-            return undefined;
-        }
-        return hostContext.contextParser;
+    //TODO this doesn't belong so deep here. All this context should be stored on the surface not passed down.
+    protected async storePrebuildInfo(ctx: TraceContext, project: Project, pws: PrebuiltWorkspace, ws: Workspace, user: User, commit: CommitInfo) {
+        const span = TraceContext.startSpan("storePrebuildInfo", ctx);
+        const { userId, teamId, name: projectName, id: projectId } = project;
+        await this.workspaceDB.trace({span}).storePrebuildInfo({
+            id: pws.id,
+            buildWorkspaceId: pws.buildWorkspaceId,
+            basedOnPrebuildId: ws.basedOnPrebuildId,
+            teamId,
+            userId,
+            projectName,
+            projectId,
+            startedAt: pws.creationTime,
+            startedBy: "", // TODO
+            startedByAvatar: "", // TODO
+            cloneUrl: pws.cloneURL,
+            branch: pws.branch || "unknown",
+            changeAuthor: commit.author,
+            changeAuthorAvatar: commit.authorAvatarUrl,
+            changeDate: commit.authorDate || "",
+            changeHash: commit.sha,
+            changeTitle: commit.commitMessage,
+            // changePR
+            changeUrl: ws.contextURL,
+        });
     }
 
     private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
