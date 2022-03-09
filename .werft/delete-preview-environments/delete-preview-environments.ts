@@ -26,6 +26,11 @@ Tracing.initialize()
 async function deletePreviewEnvironment() {
     werft.phase("preparing deletion")
     const version = parseVersion();
+
+    // TODO: This won't work, we need to compute the namespace using the function in
+    // .werft/util/preview.ts. As this job isn't executed yet I'm leaving it broken for
+    // now until we can test what information Werft makes available to the jobs that are
+    // triggered by branch deletions.
     const namespace = `staging-${version.split(".")[0]}`
     werft.log("preparing deletion", `Proceeding to delete the ${namespace} namespace`)
     werft.done("preparing deletion")
