@@ -333,7 +333,7 @@ export default function () {
     const openSourceFeatures = <>
         <p className="truncate" title="Public Repositories">✓ Public &amp; Private Repositories</p>
         <p className="truncate" title="4 Parallel Workspaces">✓ 4 Parallel Workspaces</p>
-        <p className="truncate" title="30 min Inactivity  Timeout">✓ 30 min Inactivity Timeout</p>
+        <p className="truncate" title="30 min Inactivity Timeout">✓ 30 min Inactivity Timeout</p>
     </>;
     if (currentPlan.chargebeeId === freePlan.chargebeeId) {
         planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={freePlan} isCurrent={!!accountStatement}>{openSourceFeatures}</PlanCard>);
