@@ -81,10 +81,9 @@ pod:
     - /bin/bash
     - -c
     - |
-      sleep 1
-      set -Eeuo pipefail
+      set -euo
 
-      printf '{{ toJson . }}' > context.json
+      printf '{{ toJson .Annotations }}' > context.json
 
       echo "[prep] receiving config..."
       export GOOGLE_APPLICATION_CREDENTIALS="/config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
@@ -108,21 +107,22 @@ pod:
       /entrypoint.sh "${args[@]}" 2>&1 | ts "[int-tests] "
 
       RC=${PIPESTATUS[0]}
-      if [ $RC -eq 1 ]; then
-        context_name=$(jq -r '.Name' context.json)
-        context_host=$(jq -r '.Repository.host' context.json)
-        context_owner=$(jq -r '.Repository.owner' context.json)
-        context_repo=$(jq -r '.Repository.repo' context.json)
-        repo="${context_host}/${context_owner}/${context_repo}"
-        title=":X: *IDE integration test failure*\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}";
-        werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
-        body="Some IDE integration test failed, please check the werf job logs and fix them"
-        curl -X POST \
-          -H 'Content-type: application/json' \
-          -d "{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\"Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${body}\\n\`\`\`\"}}]}" \
-          "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
+      context_name={{ .Name }}
+      context_repo={{ .Repository.Repo }}
+      werftJobUrl="https://werft.gitpod-dev.com/job/${context_name}"
 
+      if [ $RC -eq 1 ]; then
+        title=":X: *IDE integration test failure*"
+        body="Some IDE integration test failed, please check the werf job logs and fix them"
         echo "[int-tests|FAIL]"
       else
+        title=":white_check_mark: *IDE integration test success*";
+        body="test success"
         echo "[int-tests|DONE]"
       fi
+      title=$title"\n_Repo:_ ${context_repo}\n_Build:_ ${context_name}\n_TestPattern_: {{ .Annotations.testPattern }}";
+      curl -X POST \
+          -H 'Content-type: application/json' \
+          -d "{\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"${title}\"},\"accessory\":{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\":werft: Go to Werft\",\"emoji\":true},\"value\":\"click_me_123\",\"url\":\"${werftJobUrl}\",\"action_id\":\"button-action\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"\`\`\`\\n${body}\\n\`\`\`\"}}]}" \
+          "https://hooks.slack.com/${SLACK_NOTIFICATION_PATH}"
+      exit $RC

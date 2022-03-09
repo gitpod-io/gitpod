@@ -82,18 +82,18 @@ func TestJetBrainsGatewayWorkspace(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			t.Logf("get or create user")
+			_, err = api.CreateUser(username, userToken)
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			t.Logf("connecting to server...")
 			server, err := api.GitpodServer(integration.WithGitpodUser(username))
 			if err != nil {
 				t.Fatal(err)
 			}
 			t.Logf("connected to server")
-
-			t.Logf("get or create user")
-			_, err = api.CreateUser(username, userToken)
-			if err != nil {
-				t.Fatal(err)
-			}
 
 			t.Logf("starting workspace")
 			nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(ctx, "referrer:jetbrains-gateway:"+ideName+"/https://github.com/gitpod-io/spring-petclinic", username, api)
