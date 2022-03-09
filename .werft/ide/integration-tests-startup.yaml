@@ -36,7 +36,7 @@ pod:
       function cleanup ()
       {
         werft log phase "cleanup preview environment" "cleanup preview environment"
-        BUILD_ID=$(werft run github -a namespace=staging-gitpod-test-main -j .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main)
+        BUILD_ID=$(werft run github -a namespace=staging-gitpod-test-main --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main)
 
         echo "start cleanup preview environment, job name: ${BUILD_ID}" | werft log slice "cleanup"
         werft log result -d "cleanup job" url "https://werft.gitpod-dev.com/job/${BUILD_ID}"
@@ -45,17 +45,18 @@ pod:
       }
 
       echo "preparing config." | werft log slice prepare
+      sudo chown -R gitpod:gitpod /workspace
       gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
       export GOOGLE_APPLICATION_CREDENTIALS="/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json"
-      export DOCKER_HOST=tcp://$NODENAME:2375
       echo "copied config..." | werft log slice prepare
+      go install github.com/csweichel/oci-tool@latest 2>&1 | werft log slice prepare
       werft log slice prepare --done
 
       werft log phase "build preview environment" "build preview environment"
       # this is because we don't want to increate gitpod-build-main number, we can choose a name
-      sudo cp .werft/build.yaml .werft/test.yaml
+      cp .werft/build.yaml .werft/test.yaml
       # version is actual namespace that werft is build, --job-file should be same with above
-      VERSION=$(werft run github -j .werft/test.yaml -s .werft/test.yaml github.com/gitpod-io/gitpod:main)
+      VERSION=$(werft run github -j .werft/test.yaml -a version=gitpod-test-main github.com/gitpod-io/gitpod:main)
       echo "start build preview environment, job name: ${VERSION}, this will take long time" | werft log slice "build test environment"
       werft log result -d "build job" url "https://werft.gitpod-dev.com/job/${VERSION}"
 
@@ -72,12 +73,14 @@ pod:
 
       werft log phase "integration test" "integration test"
       # we need get integration-test version like: jp-run-integration-test.61
-      INTEGRATION_VERSION=$(docker run eu.gcr.io/gitpod-core-dev/build/versions:${VERSION} cat versions.yaml | yq r - 'components.integrationTest.version')
+
+      oci-tool fetch file eu.gcr.io/gitpod-core-dev/build/versions:gitpod-test-main versions.yaml
+      INTEGRATION_VERSION=$(cat versions.yaml | yq r - 'components.integrationTest.version')
 
       echo "using integration-test image: ${INTEGRATION_VERSION}" | werft log slice "test"
 
 
-      TEST_BUILD_ID=$(werft run github -a version=${INTEGRATION_VERSION} -a namespace=staging-gitpod-test-main -j .werft/run-integration-tests-ide.yaml -a testPattern=vscode.test github.com/gitpod-io/gitpod:main)
+      TEST_BUILD_ID=$(werft run github -a version=${INTEGRATION_VERSION} -a namespace=staging-gitpod-test-main --remote-job-path .werft/ide/run-integration-tests-ide.yaml -a testPattern=vscode.test github.com/gitpod-io/gitpod:main)
 
       echo "running integration, job name: ${TEST_BUILD_ID}" | werft log slice "test"
       werft log result -d "integration test job" url "https://werft.gitpod-dev.com/job/${TEST_BUILD_ID}"
