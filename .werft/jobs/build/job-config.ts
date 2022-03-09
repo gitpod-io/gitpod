@@ -1,6 +1,6 @@
-import { config } from "process";
 import { exec } from "../../util/shell";
 import { Werft } from "../../util/werft";
+import { previewNameFromBranchName } from "../../util/preview";
 
 export interface JobConfig {
     analytics: string
@@ -95,10 +95,10 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     }
     const withVM = ("with-vm" in buildConfig || repository.branch.includes("with-vm")) && !mainBuild;
 
-    const previewDestName = version.split(".")[0];
-    const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewDestName}`;
+    const previewName = previewNameFromBranchName(repository.branch)
+    const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewName}`;
     const previewEnvironment = {
-        destname: previewDestName,
+        destname: previewName,
         namespace: previewEnvironmentNamespace
     }
 

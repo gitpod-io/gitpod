@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
-VM_NAME="$(git symbolic-ref HEAD 2>&1 | awk '{ sub(/^refs\/heads\//, ""); $0 = tolower($0); gsub(/[^-a-z0-9]/, "-"); print }')"
+source ./dev/preview/util/preview-name-from-branch.sh
+
+VM_NAME="$(preview-name-from-branch)"
 
 PRIVATE_KEY=$HOME/.ssh/vm_id_rsa
 PUBLIC_KEY=$HOME/.ssh/vm_id_rsa.pub
