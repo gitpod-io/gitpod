@@ -5,6 +5,7 @@ package gitpod.v1;
 option go_package = "github.com/gitpod-io/gitpod/public-api/v1";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
 import "gitpod/v1/pagination.proto";
 
 service WorkspacesService {
@@ -20,6 +21,12 @@ service WorkspacesService {
 
     // StartWorkspace starts an existing workspace.
     rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+
+    // GetRunningWorkspaceInstance returns the currently active instance of a workspace.
+    // Errors:
+    //   FAILED_PRECONDITION: if a workspace does not a currently active instance
+    //
+    rpc GetActiveWorkspaceInstance(GetActiveWorkspaceInstanceRequest) returns (GetActiveWorkspaceInstanceResponse) {}
 
     // ListenToWorkspaceInstance listens to workspace instance updates.
     rpc ListenToWorkspaceInstance(ListenToWorkspaceInstanceRequest) returns (stream ListenToWorkspaceInstanceResponse) {}
@@ -37,12 +44,18 @@ service WorkspacesService {
 
 message ListWorkspacesRequest {
     Pagination pagination = 1;
+    google.protobuf.FieldMask field_mask = 2;
 }
 message ListWorkspacesResponse {
     // Status status = 1;
     string next_page_token = 2;
 
-    repeated Workspace result = 3;
+    message WorkspaceAndInstance {
+        Workspace result = 1;
+        WorkspaceInstance last_active_instances = 2;
+    }
+
+    repeated WorkspaceAndInstance result = 1;
 }
 
 message GetWorkspaceRequest {
@@ -83,6 +96,15 @@ message StartWorkspaceResponse {
     string workspace_url = 3;
 }
 
+message GetActiveWorkspaceInstanceRequest {
+    string workspace_id = 1;
+}
+message GetActiveWorkspaceInstanceResponse {
+    // Status status = 1;
+
+    WorkspaceInstance instance = 2;
+}
+
 message ListenToWorkspaceInstanceRequest {
     string instance_id = 1;
 }
@@ -112,16 +134,25 @@ message StopWorkspaceResponse {}
 // Shared messages come here
 ////////////////////////////////
 
+// Workspace describes a single workspace
 message Workspace {
-    WorkspaceMetadata metadata = 1;
-}
-
-message WorkspaceMetadata {
+    // workspace_id is the ID of the workspace
     string workspace_id = 1;
+
+    // owner_id is the ID of the user who created this workspace
     string owner_id = 2;
+
+    // project_id is the ID of the project which this workspace belongs to
     string project_id = 3;
+
+    // context_url reports the original context URL the workspace was created from
+    string context_url = 4;
+
+    // description is a human readable description of the workspace
+    string description = 5;
 }
 
+// WorkspaceInstance describes a single workspace instance
 message WorkspaceInstance {
     // Instance ID is the unique identifier of the workspace instance
     string instance_id = 1;

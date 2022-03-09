@@ -1,15 +1,5 @@
 # Public-API
 
-# Open Questions
-
-## Error Handling
-
-### Rich Errors?
-
-### Errors as part of the protocol
-
-## Pagination
-
 # Example Flows
 This section gives examples how clients would use this API.
 

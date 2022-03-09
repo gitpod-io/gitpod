@@ -30,6 +30,11 @@ type WorkspacesServiceClient interface {
 	CreateWorkspace(ctx context.Context, in *CreateWorkspaceRequest, opts ...grpc.CallOption) (*CreateWorkspaceResponse, error)
 	// StartWorkspace starts an existing workspace.
 	StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error)
+	// GetRunningWorkspaceInstance returns the currently active instance of a workspace.
+	// Errors:
+	//   FAILED_PRECONDITION: if a workspace does not a currently active instance
+	//
+	GetActiveWorkspaceInstance(ctx context.Context, in *GetActiveWorkspaceInstanceRequest, opts ...grpc.CallOption) (*GetActiveWorkspaceInstanceResponse, error)
 	// ListenToWorkspaceInstance listens to workspace instance updates.
 	ListenToWorkspaceInstance(ctx context.Context, in *ListenToWorkspaceInstanceRequest, opts ...grpc.CallOption) (WorkspacesService_ListenToWorkspaceInstanceClient, error)
 	// ListenToImageBuildLogs streams (currently or previously) running workspace image build logs
@@ -79,6 +84,15 @@ func (c *workspacesServiceClient) CreateWorkspace(ctx context.Context, in *Creat
 func (c *workspacesServiceClient) StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error) {
 	out := new(StartWorkspaceResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/StartWorkspace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspacesServiceClient) GetActiveWorkspaceInstance(ctx context.Context, in *GetActiveWorkspaceInstanceRequest, opts ...grpc.CallOption) (*GetActiveWorkspaceInstanceResponse, error) {
+	out := new(GetActiveWorkspaceInstanceResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/GetActiveWorkspaceInstance", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +207,11 @@ type WorkspacesServiceServer interface {
 	CreateWorkspace(context.Context, *CreateWorkspaceRequest) (*CreateWorkspaceResponse, error)
 	// StartWorkspace starts an existing workspace.
 	StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error)
+	// GetRunningWorkspaceInstance returns the currently active instance of a workspace.
+	// Errors:
+	//   FAILED_PRECONDITION: if a workspace does not a currently active instance
+	//
+	GetActiveWorkspaceInstance(context.Context, *GetActiveWorkspaceInstanceRequest) (*GetActiveWorkspaceInstanceResponse, error)
 	// ListenToWorkspaceInstance listens to workspace instance updates.
 	ListenToWorkspaceInstance(*ListenToWorkspaceInstanceRequest, WorkspacesService_ListenToWorkspaceInstanceServer) error
 	// ListenToImageBuildLogs streams (currently or previously) running workspace image build logs
@@ -220,6 +239,9 @@ func (UnimplementedWorkspacesServiceServer) CreateWorkspace(context.Context, *Cr
 }
 func (UnimplementedWorkspacesServiceServer) StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartWorkspace not implemented")
+}
+func (UnimplementedWorkspacesServiceServer) GetActiveWorkspaceInstance(context.Context, *GetActiveWorkspaceInstanceRequest) (*GetActiveWorkspaceInstanceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetActiveWorkspaceInstance not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) ListenToWorkspaceInstance(*ListenToWorkspaceInstanceRequest, WorkspacesService_ListenToWorkspaceInstanceServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListenToWorkspaceInstance not implemented")
@@ -315,6 +337,24 @@ func _WorkspacesService_StartWorkspace_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspacesService_GetActiveWorkspaceInstance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetActiveWorkspaceInstanceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspacesServiceServer).GetActiveWorkspaceInstance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspacesService/GetActiveWorkspaceInstance",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspacesServiceServer).GetActiveWorkspaceInstance(ctx, req.(*GetActiveWorkspaceInstanceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _WorkspacesService_ListenToWorkspaceInstance_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ListenToWorkspaceInstanceRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -400,6 +440,10 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StartWorkspace",
 			Handler:    _WorkspacesService_StartWorkspace_Handler,
+		},
+		{
+			MethodName: "GetActiveWorkspaceInstance",
+			Handler:    _WorkspacesService_GetActiveWorkspaceInstance_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

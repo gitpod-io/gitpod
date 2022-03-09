@@ -4,6 +4,7 @@
 var grpc = require('@grpc/grpc-js');
 var gitpod_v1_workspaces_pb = require('../../gitpod/v1/workspaces_pb.js');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
+var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 var gitpod_v1_pagination_pb = require('../../gitpod/v1/pagination_pb.js');
 
 function serialize_gitpod_v1_CreateWorkspaceRequest(arg) {
@@ -26,6 +27,28 @@ function serialize_gitpod_v1_CreateWorkspaceResponse(arg) {
 
 function deserialize_gitpod_v1_CreateWorkspaceResponse(buffer_arg) {
   return gitpod_v1_workspaces_pb.CreateWorkspaceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_gitpod_v1_GetActiveWorkspaceInstanceRequest(arg) {
+  if (!(arg instanceof gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest)) {
+    throw new Error('Expected argument of type gitpod.v1.GetActiveWorkspaceInstanceRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_gitpod_v1_GetActiveWorkspaceInstanceRequest(buffer_arg) {
+  return gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_gitpod_v1_GetActiveWorkspaceInstanceResponse(arg) {
+  if (!(arg instanceof gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse)) {
+    throw new Error('Expected argument of type gitpod.v1.GetActiveWorkspaceInstanceResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_gitpod_v1_GetActiveWorkspaceInstanceResponse(buffer_arg) {
+  return gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_gitpod_v1_GetWorkspaceRequest(arg) {
@@ -209,6 +232,21 @@ startWorkspace: {
     requestDeserialize: deserialize_gitpod_v1_StartWorkspaceRequest,
     responseSerialize: serialize_gitpod_v1_StartWorkspaceResponse,
     responseDeserialize: deserialize_gitpod_v1_StartWorkspaceResponse,
+  },
+  // GetRunningWorkspaceInstance returns the currently active instance of a workspace.
+// Errors:
+//   FAILED_PRECONDITION: if a workspace does not a currently active instance
+//
+getActiveWorkspaceInstance: {
+    path: '/gitpod.v1.WorkspacesService/GetActiveWorkspaceInstance',
+    requestStream: false,
+    responseStream: false,
+    requestType: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest,
+    responseType: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse,
+    requestSerialize: serialize_gitpod_v1_GetActiveWorkspaceInstanceRequest,
+    requestDeserialize: deserialize_gitpod_v1_GetActiveWorkspaceInstanceRequest,
+    responseSerialize: serialize_gitpod_v1_GetActiveWorkspaceInstanceResponse,
+    responseDeserialize: deserialize_gitpod_v1_GetActiveWorkspaceInstanceResponse,
   },
   // ListenToWorkspaceInstance listens to workspace instance updates.
 listenToWorkspaceInstance: {
