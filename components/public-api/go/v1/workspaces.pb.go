@@ -6,14 +6,16 @@
 // versions:
 // 	protoc-gen-go v1.27.1
 // 	protoc        v3.19.1
-// source: workspaces.proto
+// source: gitpod/v1/workspaces.proto
 
 package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -23,46 +25,1847 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-var File_workspaces_proto protoreflect.FileDescriptor
+// WorkspaceInstancePhase is a simple, high-level summary of where the workspace instance is in its lifecycle.
+// The phase is not intended to be a comprehensive rollup of observations of the workspace state,
+// nor is it intended to be a comprehensive state machine.
+// (based on  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase)
+type WorkspaceInstancePhase int32
 
-var file_workspaces_proto_rawDesc = []byte{
-	0x0a, 0x10, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x12, 0x09, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x32, 0x0c, 0x0a,
-	0x0a, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x42, 0x2b, 0x5a, 0x29, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
-	0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69,
-	0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+const (
+	// Unknown indicates an issue within the workspace manager in that it cannot determine the actual phase of
+	// a workspace. This phase is usually accompanied by an error.
+	WorkspaceInstancePhase_UNKNOWN WorkspaceInstancePhase = 0
+	// Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
+	// some space within the cluster. If for example the cluster needs to scale up to accomodate the
+	// workspace, the workspace will be in Pending state until that happened.
+	WorkspaceInstancePhase_PENDING WorkspaceInstancePhase = 2
+	// Creating means the workspace is currently being created. That includes downloading the images required
+	// to run the workspace over the network. The time spent in this phase varies widely and depends on the current
+	// network speed, image size and cache states.
+	WorkspaceInstancePhase_CREATING WorkspaceInstancePhase = 3
+	// Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
+	// clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
+	WorkspaceInstancePhase_INITIALIZING WorkspaceInstancePhase = 4
+	// Running means the workspace is able to actively perform work, either by serving a user through Theia,
+	// or as a headless workspace.
+	WorkspaceInstancePhase_RUNNING WorkspaceInstancePhase = 5
+	// Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
+	// When in this state, we expect it to become running or stopping anytime soon.
+	WorkspaceInstancePhase_INTERRUPTED WorkspaceInstancePhase = 6
+	// Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
+	WorkspaceInstancePhase_STOPPING WorkspaceInstancePhase = 7
+	// Stopped means the workspace ended regularly because it was shut down.
+	WorkspaceInstancePhase_STOPPED WorkspaceInstancePhase = 8
+)
+
+// Enum value maps for WorkspaceInstancePhase.
+var (
+	WorkspaceInstancePhase_name = map[int32]string{
+		0: "UNKNOWN",
+		2: "PENDING",
+		3: "CREATING",
+		4: "INITIALIZING",
+		5: "RUNNING",
+		6: "INTERRUPTED",
+		7: "STOPPING",
+		8: "STOPPED",
+	}
+	WorkspaceInstancePhase_value = map[string]int32{
+		"UNKNOWN":      0,
+		"PENDING":      2,
+		"CREATING":     3,
+		"INITIALIZING": 4,
+		"RUNNING":      5,
+		"INTERRUPTED":  6,
+		"STOPPING":     7,
+		"STOPPED":      8,
+	}
+)
+
+func (x WorkspaceInstancePhase) Enum() *WorkspaceInstancePhase {
+	p := new(WorkspaceInstancePhase)
+	*p = x
+	return p
 }
 
-var file_workspaces_proto_goTypes = []interface{}{}
-var file_workspaces_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+func (x WorkspaceInstancePhase) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func init() { file_workspaces_proto_init() }
-func file_workspaces_proto_init() {
-	if File_workspaces_proto != nil {
+func (WorkspaceInstancePhase) Descriptor() protoreflect.EnumDescriptor {
+	return file_gitpod_v1_workspaces_proto_enumTypes[0].Descriptor()
+}
+
+func (WorkspaceInstancePhase) Type() protoreflect.EnumType {
+	return &file_gitpod_v1_workspaces_proto_enumTypes[0]
+}
+
+func (x WorkspaceInstancePhase) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WorkspaceInstancePhase.Descriptor instead.
+func (WorkspaceInstancePhase) EnumDescriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{0}
+}
+
+type AdmissionLevel int32
+
+const (
+	// ADMIT_OWNER_ONLY means the workspace can only be accessed using the owner token
+	AdmissionLevel_ADMIT_OWNER_ONLY AdmissionLevel = 0
+	// ADMIT_EVERYONE means the workspace (including ports) can be accessed by everyone.
+	AdmissionLevel_ADMIT_EVERYONE AdmissionLevel = 1
+)
+
+// Enum value maps for AdmissionLevel.
+var (
+	AdmissionLevel_name = map[int32]string{
+		0: "ADMIT_OWNER_ONLY",
+		1: "ADMIT_EVERYONE",
+	}
+	AdmissionLevel_value = map[string]int32{
+		"ADMIT_OWNER_ONLY": 0,
+		"ADMIT_EVERYONE":   1,
+	}
+)
+
+func (x AdmissionLevel) Enum() *AdmissionLevel {
+	p := new(AdmissionLevel)
+	*p = x
+	return p
+}
+
+func (x AdmissionLevel) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AdmissionLevel) Descriptor() protoreflect.EnumDescriptor {
+	return file_gitpod_v1_workspaces_proto_enumTypes[1].Descriptor()
+}
+
+func (AdmissionLevel) Type() protoreflect.EnumType {
+	return &file_gitpod_v1_workspaces_proto_enumTypes[1]
+}
+
+func (x AdmissionLevel) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AdmissionLevel.Descriptor instead.
+func (AdmissionLevel) EnumDescriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{1}
+}
+
+type ListWorkspacesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Pagination *Pagination `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (x *ListWorkspacesRequest) Reset() {
+	*x = ListWorkspacesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListWorkspacesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWorkspacesRequest) ProtoMessage() {}
+
+func (x *ListWorkspacesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWorkspacesRequest.ProtoReflect.Descriptor instead.
+func (*ListWorkspacesRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ListWorkspacesRequest) GetPagination() *Pagination {
+	if x != nil {
+		return x.Pagination
+	}
+	return nil
+}
+
+type ListWorkspacesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Status status = 1;
+	NextPageToken string       `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	Result        []*Workspace `protobuf:"bytes,3,rep,name=result,proto3" json:"result,omitempty"`
+}
+
+func (x *ListWorkspacesResponse) Reset() {
+	*x = ListWorkspacesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListWorkspacesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWorkspacesResponse) ProtoMessage() {}
+
+func (x *ListWorkspacesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWorkspacesResponse.ProtoReflect.Descriptor instead.
+func (*ListWorkspacesResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ListWorkspacesResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *ListWorkspacesResponse) GetResult() []*Workspace {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
+type GetWorkspaceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	WorkspaceId string `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+}
+
+func (x *GetWorkspaceRequest) Reset() {
+	*x = GetWorkspaceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetWorkspaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWorkspaceRequest) ProtoMessage() {}
+
+func (x *GetWorkspaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWorkspaceRequest.ProtoReflect.Descriptor instead.
+func (*GetWorkspaceRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetWorkspaceRequest) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+type GetWorkspaceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Result *Workspace `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+}
+
+func (x *GetWorkspaceResponse) Reset() {
+	*x = GetWorkspaceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetWorkspaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWorkspaceResponse) ProtoMessage() {}
+
+func (x *GetWorkspaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWorkspaceResponse.ProtoReflect.Descriptor instead.
+func (*GetWorkspaceResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetWorkspaceResponse) GetResult() *Workspace {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
+type CreateWorkspaceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	IdempotencyToken string `protobuf:"bytes,1,opt,name=idempotency_token,json=idempotencyToken,proto3" json:"idempotency_token,omitempty"`
+	ContextUrl       string `protobuf:"bytes,2,opt,name=context_url,json=contextUrl,proto3" json:"context_url,omitempty"`
+	// Types that are assignable to Prebuild:
+	//	*CreateWorkspaceRequest_IfAvailable
+	//	*CreateWorkspaceRequest_PrebuildId
+	Prebuild isCreateWorkspaceRequest_Prebuild `protobuf_oneof:"prebuild"`
+}
+
+func (x *CreateWorkspaceRequest) Reset() {
+	*x = CreateWorkspaceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateWorkspaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateWorkspaceRequest) ProtoMessage() {}
+
+func (x *CreateWorkspaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateWorkspaceRequest.ProtoReflect.Descriptor instead.
+func (*CreateWorkspaceRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *CreateWorkspaceRequest) GetIdempotencyToken() string {
+	if x != nil {
+		return x.IdempotencyToken
+	}
+	return ""
+}
+
+func (x *CreateWorkspaceRequest) GetContextUrl() string {
+	if x != nil {
+		return x.ContextUrl
+	}
+	return ""
+}
+
+func (m *CreateWorkspaceRequest) GetPrebuild() isCreateWorkspaceRequest_Prebuild {
+	if m != nil {
+		return m.Prebuild
+	}
+	return nil
+}
+
+func (x *CreateWorkspaceRequest) GetIfAvailable() bool {
+	if x, ok := x.GetPrebuild().(*CreateWorkspaceRequest_IfAvailable); ok {
+		return x.IfAvailable
+	}
+	return false
+}
+
+func (x *CreateWorkspaceRequest) GetPrebuildId() string {
+	if x, ok := x.GetPrebuild().(*CreateWorkspaceRequest_PrebuildId); ok {
+		return x.PrebuildId
+	}
+	return ""
+}
+
+type isCreateWorkspaceRequest_Prebuild interface {
+	isCreateWorkspaceRequest_Prebuild()
+}
+
+type CreateWorkspaceRequest_IfAvailable struct {
+	// if true, and there's a prebuild available (not running), use that prebuild
+	IfAvailable bool `protobuf:"varint,3,opt,name=if_available,json=ifAvailable,proto3,oneof"`
+}
+
+type CreateWorkspaceRequest_PrebuildId struct {
+	// uses a particular prebuild - the prebuild ID is scoped by the context URL.
+	// Use the PrebuildService to get ahold of the prebuild_id.
+	PrebuildId string `protobuf:"bytes,4,opt,name=prebuild_id,json=prebuildId,proto3,oneof"`
+}
+
+func (*CreateWorkspaceRequest_IfAvailable) isCreateWorkspaceRequest_Prebuild() {}
+
+func (*CreateWorkspaceRequest_PrebuildId) isCreateWorkspaceRequest_Prebuild() {}
+
+type CreateWorkspaceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	WorkspaceId string `protobuf:"bytes,2,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+}
+
+func (x *CreateWorkspaceResponse) Reset() {
+	*x = CreateWorkspaceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateWorkspaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateWorkspaceResponse) ProtoMessage() {}
+
+func (x *CreateWorkspaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateWorkspaceResponse.ProtoReflect.Descriptor instead.
+func (*CreateWorkspaceResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CreateWorkspaceResponse) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+type StartWorkspaceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	IdempotencyToken string `protobuf:"bytes,1,opt,name=idempotency_token,json=idempotencyToken,proto3" json:"idempotency_token,omitempty"`
+	WorkspaceId      string `protobuf:"bytes,2,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+}
+
+func (x *StartWorkspaceRequest) Reset() {
+	*x = StartWorkspaceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StartWorkspaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StartWorkspaceRequest) ProtoMessage() {}
+
+func (x *StartWorkspaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StartWorkspaceRequest.ProtoReflect.Descriptor instead.
+func (*StartWorkspaceRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *StartWorkspaceRequest) GetIdempotencyToken() string {
+	if x != nil {
+		return x.IdempotencyToken
+	}
+	return ""
+}
+
+func (x *StartWorkspaceRequest) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+type StartWorkspaceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	InstanceId   string `protobuf:"bytes,2,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+	WorkspaceUrl string `protobuf:"bytes,3,opt,name=workspace_url,json=workspaceUrl,proto3" json:"workspace_url,omitempty"`
+}
+
+func (x *StartWorkspaceResponse) Reset() {
+	*x = StartWorkspaceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StartWorkspaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StartWorkspaceResponse) ProtoMessage() {}
+
+func (x *StartWorkspaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StartWorkspaceResponse.ProtoReflect.Descriptor instead.
+func (*StartWorkspaceResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *StartWorkspaceResponse) GetInstanceId() string {
+	if x != nil {
+		return x.InstanceId
+	}
+	return ""
+}
+
+func (x *StartWorkspaceResponse) GetWorkspaceUrl() string {
+	if x != nil {
+		return x.WorkspaceUrl
+	}
+	return ""
+}
+
+type ListenToWorkspaceInstanceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	InstanceId string `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+}
+
+func (x *ListenToWorkspaceInstanceRequest) Reset() {
+	*x = ListenToWorkspaceInstanceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListenToWorkspaceInstanceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListenToWorkspaceInstanceRequest) ProtoMessage() {}
+
+func (x *ListenToWorkspaceInstanceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListenToWorkspaceInstanceRequest.ProtoReflect.Descriptor instead.
+func (*ListenToWorkspaceInstanceRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListenToWorkspaceInstanceRequest) GetInstanceId() string {
+	if x != nil {
+		return x.InstanceId
+	}
+	return ""
+}
+
+type ListenToWorkspaceInstanceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	InstanceStatus *WorkspaceInstanceStatus `protobuf:"bytes,2,opt,name=instance_status,json=instanceStatus,proto3" json:"instance_status,omitempty"`
+}
+
+func (x *ListenToWorkspaceInstanceResponse) Reset() {
+	*x = ListenToWorkspaceInstanceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListenToWorkspaceInstanceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListenToWorkspaceInstanceResponse) ProtoMessage() {}
+
+func (x *ListenToWorkspaceInstanceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListenToWorkspaceInstanceResponse.ProtoReflect.Descriptor instead.
+func (*ListenToWorkspaceInstanceResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListenToWorkspaceInstanceResponse) GetInstanceStatus() *WorkspaceInstanceStatus {
+	if x != nil {
+		return x.InstanceStatus
+	}
+	return nil
+}
+
+type ListenToImageBuildLogsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	InstanceId string `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+}
+
+func (x *ListenToImageBuildLogsRequest) Reset() {
+	*x = ListenToImageBuildLogsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListenToImageBuildLogsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListenToImageBuildLogsRequest) ProtoMessage() {}
+
+func (x *ListenToImageBuildLogsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListenToImageBuildLogsRequest.ProtoReflect.Descriptor instead.
+func (*ListenToImageBuildLogsRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListenToImageBuildLogsRequest) GetInstanceId() string {
+	if x != nil {
+		return x.InstanceId
+	}
+	return ""
+}
+
+type ListenToImageBuildLogsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Line string `protobuf:"bytes,2,opt,name=line,proto3" json:"line,omitempty"`
+}
+
+func (x *ListenToImageBuildLogsResponse) Reset() {
+	*x = ListenToImageBuildLogsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListenToImageBuildLogsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListenToImageBuildLogsResponse) ProtoMessage() {}
+
+func (x *ListenToImageBuildLogsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListenToImageBuildLogsResponse.ProtoReflect.Descriptor instead.
+func (*ListenToImageBuildLogsResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListenToImageBuildLogsResponse) GetLine() string {
+	if x != nil {
+		return x.Line
+	}
+	return ""
+}
+
+type StopWorkspaceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	IdempotencyToken string `protobuf:"bytes,1,opt,name=idempotency_token,json=idempotencyToken,proto3" json:"idempotency_token,omitempty"`
+	WorkspaceId      string `protobuf:"bytes,2,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+}
+
+func (x *StopWorkspaceRequest) Reset() {
+	*x = StopWorkspaceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StopWorkspaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopWorkspaceRequest) ProtoMessage() {}
+
+func (x *StopWorkspaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopWorkspaceRequest.ProtoReflect.Descriptor instead.
+func (*StopWorkspaceRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *StopWorkspaceRequest) GetIdempotencyToken() string {
+	if x != nil {
+		return x.IdempotencyToken
+	}
+	return ""
+}
+
+func (x *StopWorkspaceRequest) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+type StopWorkspaceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *StopWorkspaceResponse) Reset() {
+	*x = StopWorkspaceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StopWorkspaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopWorkspaceResponse) ProtoMessage() {}
+
+func (x *StopWorkspaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopWorkspaceResponse.ProtoReflect.Descriptor instead.
+func (*StopWorkspaceResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{13}
+}
+
+type Workspace struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Metadata *WorkspaceMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+}
+
+func (x *Workspace) Reset() {
+	*x = Workspace{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Workspace) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Workspace) ProtoMessage() {}
+
+func (x *Workspace) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Workspace.ProtoReflect.Descriptor instead.
+func (*Workspace) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *Workspace) GetMetadata() *WorkspaceMetadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+type WorkspaceMetadata struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	WorkspaceId string `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	OwnerId     string `protobuf:"bytes,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	ProjectId   string `protobuf:"bytes,3,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+}
+
+func (x *WorkspaceMetadata) Reset() {
+	*x = WorkspaceMetadata{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WorkspaceMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceMetadata) ProtoMessage() {}
+
+func (x *WorkspaceMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceMetadata.ProtoReflect.Descriptor instead.
+func (*WorkspaceMetadata) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *WorkspaceMetadata) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+func (x *WorkspaceMetadata) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+func (x *WorkspaceMetadata) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+type WorkspaceInstance struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Instance ID is the unique identifier of the workspace instance
+	InstanceId string `protobuf:"bytes,1,opt,name=instance_id,json=instanceId,proto3" json:"instance_id,omitempty"`
+	// Worksapce ID is the unique identifier of the workspace this instance belongs to
+	WorkspaceId string                   `protobuf:"bytes,2,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	CreatedAt   *timestamppb.Timestamp   `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Status      *WorkspaceInstanceStatus `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+}
+
+func (x *WorkspaceInstance) Reset() {
+	*x = WorkspaceInstance{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WorkspaceInstance) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceInstance) ProtoMessage() {}
+
+func (x *WorkspaceInstance) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceInstance.ProtoReflect.Descriptor instead.
+func (*WorkspaceInstance) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *WorkspaceInstance) GetInstanceId() string {
+	if x != nil {
+		return x.InstanceId
+	}
+	return ""
+}
+
+func (x *WorkspaceInstance) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+func (x *WorkspaceInstance) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *WorkspaceInstance) GetStatus() *WorkspaceInstanceStatus {
+	if x != nil {
+		return x.Status
+	}
+	return nil
+}
+
+// WorkspaceStatus describes a workspace status
+type WorkspaceInstanceStatus struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// version of the status update. Workspace instances themselves are unversioned,
+	// but their statuus has different versions.
+	// The value of this field has no semantic meaning (e.g. don't interpret it as
+	// as a timestemp), but it can be used to impose a partial order.
+	// If a.status_version < b.status_version then a was the status before b.
+	StatusVersion uint64 `protobuf:"varint,1,opt,name=status_version,json=statusVersion,proto3" json:"status_version,omitempty"`
+	// the phase of a workspace is a simple, high-level summary of where the workspace instance is in its lifecycle
+	Phase WorkspaceInstancePhase `protobuf:"varint,2,opt,name=phase,proto3,enum=gitpod.v1.WorkspaceInstancePhase" json:"phase,omitempty"`
+	// conditions detail the current state of the workspace instance
+	Conditions *WorkspaceInstanceConditions `protobuf:"bytes,3,opt,name=conditions,proto3" json:"conditions,omitempty"`
+	// message is an optional human-readable message detailing the current phase
+	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	// URL contains the endpoint at which the workspace instance is available
+	Url string `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	// auth provides authentication information about the workspace. This info is primarily used by ws-proxy.
+	Auth *WorkspaceInstanceAuthentication `protobuf:"bytes,6,opt,name=auth,proto3" json:"auth,omitempty"`
+}
+
+func (x *WorkspaceInstanceStatus) Reset() {
+	*x = WorkspaceInstanceStatus{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WorkspaceInstanceStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceInstanceStatus) ProtoMessage() {}
+
+func (x *WorkspaceInstanceStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceInstanceStatus.ProtoReflect.Descriptor instead.
+func (*WorkspaceInstanceStatus) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *WorkspaceInstanceStatus) GetStatusVersion() uint64 {
+	if x != nil {
+		return x.StatusVersion
+	}
+	return 0
+}
+
+func (x *WorkspaceInstanceStatus) GetPhase() WorkspaceInstancePhase {
+	if x != nil {
+		return x.Phase
+	}
+	return WorkspaceInstancePhase_UNKNOWN
+}
+
+func (x *WorkspaceInstanceStatus) GetConditions() *WorkspaceInstanceConditions {
+	if x != nil {
+		return x.Conditions
+	}
+	return nil
+}
+
+func (x *WorkspaceInstanceStatus) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *WorkspaceInstanceStatus) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *WorkspaceInstanceStatus) GetAuth() *WorkspaceInstanceAuthentication {
+	if x != nil {
+		return x.Auth
+	}
+	return nil
+}
+
+// WorkspaceInstanceConditions gives more detailed information as to the state of the workspace. Which condition actually
+// has a value depends on the phase the workspace is in.
+type WorkspaceInstanceConditions struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
+	// This field is filled exclusively when caused by system errors.
+	Failed string `protobuf:"bytes,1,opt,name=failed,proto3" json:"failed,omitempty"`
+	// timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
+	Timeout string `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// first_user_activity is the time when MarkActive was first called on the workspace
+	FirstUserActivity *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=first_user_activity,json=firstUserActivity,proto3" json:"first_user_activity,omitempty"`
+	// stopped_by_request is true if the workspace was stopped using a StopWorkspace call
+	StoppedByRequest *bool `protobuf:"varint,11,opt,name=stopped_by_request,json=stoppedByRequest,proto3,oneof" json:"stopped_by_request,omitempty"`
+}
+
+func (x *WorkspaceInstanceConditions) Reset() {
+	*x = WorkspaceInstanceConditions{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WorkspaceInstanceConditions) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceInstanceConditions) ProtoMessage() {}
+
+func (x *WorkspaceInstanceConditions) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceInstanceConditions.ProtoReflect.Descriptor instead.
+func (*WorkspaceInstanceConditions) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *WorkspaceInstanceConditions) GetFailed() string {
+	if x != nil {
+		return x.Failed
+	}
+	return ""
+}
+
+func (x *WorkspaceInstanceConditions) GetTimeout() string {
+	if x != nil {
+		return x.Timeout
+	}
+	return ""
+}
+
+func (x *WorkspaceInstanceConditions) GetFirstUserActivity() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FirstUserActivity
+	}
+	return nil
+}
+
+func (x *WorkspaceInstanceConditions) GetStoppedByRequest() bool {
+	if x != nil && x.StoppedByRequest != nil {
+		return *x.StoppedByRequest
+	}
+	return false
+}
+
+// WorkspaceInstanceAuthentication contains authentication information used to allow/deny access to
+// workspaces and their ports.
+type WorkspaceInstanceAuthentication struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Admission describes who can access the workspace and its ports.
+	Admission AdmissionLevel `protobuf:"varint,1,opt,name=admission,proto3,enum=gitpod.v1.AdmissionLevel" json:"admission,omitempty"`
+	// Owner token is the token one needs to access the workspace.
+	OwnerToken string `protobuf:"bytes,2,opt,name=owner_token,json=ownerToken,proto3" json:"owner_token,omitempty"`
+}
+
+func (x *WorkspaceInstanceAuthentication) Reset() {
+	*x = WorkspaceInstanceAuthentication{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_workspaces_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WorkspaceInstanceAuthentication) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkspaceInstanceAuthentication) ProtoMessage() {}
+
+func (x *WorkspaceInstanceAuthentication) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_workspaces_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkspaceInstanceAuthentication.ProtoReflect.Descriptor instead.
+func (*WorkspaceInstanceAuthentication) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_workspaces_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *WorkspaceInstanceAuthentication) GetAdmission() AdmissionLevel {
+	if x != nil {
+		return x.Admission
+	}
+	return AdmissionLevel_ADMIT_OWNER_ONLY
+}
+
+func (x *WorkspaceInstanceAuthentication) GetOwnerToken() string {
+	if x != nil {
+		return x.OwnerToken
+	}
+	return ""
+}
+
+var File_gitpod_v1_workspaces_proto protoreflect.FileDescriptor
+
+var file_gitpod_v1_workspaces_proto_rawDesc = []byte{
+	0x0a, 0x1a, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x76, 0x31, 0x2f, 0x77, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x09, 0x67, 0x69,
+	0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x1a, 0x1f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61,
+	0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1a, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
+	0x2f, 0x76, 0x31, 0x2f, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x22, 0x4e, 0x0a, 0x15, 0x4c, 0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x35, 0x0a,
+	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x15, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61,
+	0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x22, 0x6e, 0x0a, 0x16, 0x4c, 0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x26,
+	0x0a, 0x0f, 0x6e, 0x65, 0x78, 0x74, 0x5f, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65,
+	0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x6e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67,
+	0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x2c, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
+	0x76, 0x31, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x06, 0x72, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x22, 0x38, 0x0a, 0x13, 0x47, 0x65, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x21, 0x0a, 0x0c, 0x77,
+	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0b, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x22, 0x44,
+	0x0a, 0x14, 0x47, 0x65, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2c, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
+	0x76, 0x31, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x06, 0x72, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x22, 0xba, 0x01, 0x0a, 0x16, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x57,
+	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x2b, 0x0a, 0x11, 0x69, 0x64, 0x65, 0x6d, 0x70, 0x6f, 0x74, 0x65, 0x6e, 0x63, 0x79, 0x5f, 0x74,
+	0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x69, 0x64, 0x65, 0x6d,
+	0x70, 0x6f, 0x74, 0x65, 0x6e, 0x63, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x1f, 0x0a, 0x0b,
+	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x55, 0x72, 0x6c, 0x12, 0x23, 0x0a,
+	0x0c, 0x69, 0x66, 0x5f, 0x61, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x08, 0x48, 0x00, 0x52, 0x0b, 0x69, 0x66, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62,
+	0x6c, 0x65, 0x12, 0x21, 0x0a, 0x0b, 0x70, 0x72, 0x65, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x5f, 0x69,
+	0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x0a, 0x70, 0x72, 0x65, 0x62, 0x75,
+	0x69, 0x6c, 0x64, 0x49, 0x64, 0x42, 0x0a, 0x0a, 0x08, 0x70, 0x72, 0x65, 0x62, 0x75, 0x69, 0x6c,
+	0x64, 0x22, 0x3c, 0x0a, 0x17, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c,
+	0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x22,
+	0x67, 0x0a, 0x15, 0x53, 0x74, 0x61, 0x72, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2b, 0x0a, 0x11, 0x69, 0x64, 0x65, 0x6d,
+	0x70, 0x6f, 0x74, 0x65, 0x6e, 0x63, 0x79, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x10, 0x69, 0x64, 0x65, 0x6d, 0x70, 0x6f, 0x74, 0x65, 0x6e, 0x63, 0x79,
+	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
+	0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x77, 0x6f, 0x72,
+	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x22, 0x5e, 0x0a, 0x16, 0x53, 0x74, 0x61, 0x72,
+	0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x5f, 0x69,
+	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63,
+	0x65, 0x49, 0x64, 0x12, 0x23, 0x0a, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x77, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x55, 0x72, 0x6c, 0x22, 0x43, 0x0a, 0x20, 0x4c, 0x69, 0x73, 0x74,
+	0x65, 0x6e, 0x54, 0x6f, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73,
+	0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x0b,
+	0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0a, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x49, 0x64, 0x22, 0x70, 0x0a,
+	0x21, 0x4c, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x54, 0x6f, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
+	0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x4b, 0x0a, 0x0f, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x5f, 0x73,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x67, 0x69,
+	0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63,
+	0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52,
+	0x0e, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22,
+	0x40, 0x0a, 0x1d, 0x4c, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x54, 0x6f, 0x49, 0x6d, 0x61, 0x67, 0x65,
+	0x42, 0x75, 0x69, 0x6c, 0x64, 0x4c, 0x6f, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x49,
+	0x64, 0x22, 0x34, 0x0a, 0x1e, 0x4c, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x54, 0x6f, 0x49, 0x6d, 0x61,
+	0x67, 0x65, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x4c, 0x6f, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6c, 0x69, 0x6e, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x6c, 0x69, 0x6e, 0x65, 0x22, 0x66, 0x0a, 0x14, 0x53, 0x74, 0x6f, 0x70, 0x57,
+	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x2b, 0x0a, 0x11, 0x69, 0x64, 0x65, 0x6d, 0x70, 0x6f, 0x74, 0x65, 0x6e, 0x63, 0x79, 0x5f, 0x74,
+	0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x69, 0x64, 0x65, 0x6d,
+	0x70, 0x6f, 0x74, 0x65, 0x6e, 0x63, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x21, 0x0a, 0x0c,
+	0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x22,
+	0x17, 0x0a, 0x15, 0x53, 0x74, 0x6f, 0x70, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x45, 0x0a, 0x09, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x38, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
+	0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
+	0x2e, 0x76, 0x31, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x4d, 0x65, 0x74,
+	0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x22,
+	0x70, 0x0a, 0x11, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x4d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0x12, 0x21, 0x0a, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63,
+	0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x77, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x12, 0x19, 0x0a, 0x08, 0x6f, 0x77, 0x6e, 0x65, 0x72,
+	0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6f, 0x77, 0x6e, 0x65, 0x72,
+	0x49, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49,
+	0x64, 0x22, 0xce, 0x01, 0x0a, 0x11, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49,
+	0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x73, 0x74, 0x61,
+	0x6e, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x69, 0x6e,
+	0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x49, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x77, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
+	0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x12, 0x39, 0x0a, 0x0a, 0x63,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
+	0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63, 0x72, 0x65,
+	0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x3a, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
+	0x76, 0x31, 0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74,
+	0x61, 0x6e, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x22, 0xad, 0x02, 0x0a, 0x17, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x25,
+	0x0a, 0x0e, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x5f, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0d, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x56, 0x65,
+	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x37, 0x0a, 0x05, 0x70, 0x68, 0x61, 0x73, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x21, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31,
+	0x2e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e,
+	0x63, 0x65, 0x50, 0x68, 0x61, 0x73, 0x65, 0x52, 0x05, 0x70, 0x68, 0x61, 0x73, 0x65, 0x12, 0x46,
+	0x0a, 0x0a, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x26, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x57,
+	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65,
+	0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x0a, 0x63, 0x6f, 0x6e, 0x64,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x12, 0x10, 0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x75,
+	0x72, 0x6c, 0x12, 0x3e, 0x0a, 0x04, 0x61, 0x75, 0x74, 0x68, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x2a, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x57, 0x6f, 0x72,
+	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x41, 0x75,
+	0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x04, 0x61, 0x75,
+	0x74, 0x68, 0x22, 0xe5, 0x01, 0x0a, 0x1b, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x66, 0x61, 0x69, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x66, 0x61, 0x69, 0x6c, 0x65, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x74, 0x69,
+	0x6d, 0x65, 0x6f, 0x75, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x74, 0x69, 0x6d,
+	0x65, 0x6f, 0x75, 0x74, 0x12, 0x4a, 0x0a, 0x13, 0x66, 0x69, 0x72, 0x73, 0x74, 0x5f, 0x75, 0x73,
+	0x65, 0x72, 0x5f, 0x61, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x18, 0x09, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x11, 0x66,
+	0x69, 0x72, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79,
+	0x12, 0x31, 0x0a, 0x12, 0x73, 0x74, 0x6f, 0x70, 0x70, 0x65, 0x64, 0x5f, 0x62, 0x79, 0x5f, 0x72,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x08, 0x48, 0x00, 0x52, 0x10,
+	0x73, 0x74, 0x6f, 0x70, 0x70, 0x65, 0x64, 0x42, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x88, 0x01, 0x01, 0x42, 0x15, 0x0a, 0x13, 0x5f, 0x73, 0x74, 0x6f, 0x70, 0x70, 0x65, 0x64, 0x5f,
+	0x62, 0x79, 0x5f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x7b, 0x0a, 0x1f, 0x57, 0x6f,
+	0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x41,
+	0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x37, 0x0a,
+	0x09, 0x61, 0x64, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x19, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x6d,
+	0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x52, 0x09, 0x61, 0x64, 0x6d,
+	0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x1f, 0x0a, 0x0b, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x5f,
+	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x6f, 0x77, 0x6e,
+	0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x2a, 0x91, 0x01, 0x0a, 0x16, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x50, 0x68, 0x61,
+	0x73, 0x65, 0x12, 0x0b, 0x0a, 0x07, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x12,
+	0x0b, 0x0a, 0x07, 0x50, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0x10, 0x02, 0x12, 0x0c, 0x0a, 0x08,
+	0x43, 0x52, 0x45, 0x41, 0x54, 0x49, 0x4e, 0x47, 0x10, 0x03, 0x12, 0x10, 0x0a, 0x0c, 0x49, 0x4e,
+	0x49, 0x54, 0x49, 0x41, 0x4c, 0x49, 0x5a, 0x49, 0x4e, 0x47, 0x10, 0x04, 0x12, 0x0b, 0x0a, 0x07,
+	0x52, 0x55, 0x4e, 0x4e, 0x49, 0x4e, 0x47, 0x10, 0x05, 0x12, 0x0f, 0x0a, 0x0b, 0x49, 0x4e, 0x54,
+	0x45, 0x52, 0x52, 0x55, 0x50, 0x54, 0x45, 0x44, 0x10, 0x06, 0x12, 0x0c, 0x0a, 0x08, 0x53, 0x54,
+	0x4f, 0x50, 0x50, 0x49, 0x4e, 0x47, 0x10, 0x07, 0x12, 0x0b, 0x0a, 0x07, 0x53, 0x54, 0x4f, 0x50,
+	0x50, 0x45, 0x44, 0x10, 0x08, 0x22, 0x04, 0x08, 0x01, 0x10, 0x01, 0x2a, 0x3a, 0x0a, 0x0e, 0x41,
+	0x64, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x12, 0x14, 0x0a,
+	0x10, 0x41, 0x44, 0x4d, 0x49, 0x54, 0x5f, 0x4f, 0x57, 0x4e, 0x45, 0x52, 0x5f, 0x4f, 0x4e, 0x4c,
+	0x59, 0x10, 0x00, 0x12, 0x12, 0x0a, 0x0e, 0x41, 0x44, 0x4d, 0x49, 0x54, 0x5f, 0x45, 0x56, 0x45,
+	0x52, 0x59, 0x4f, 0x4e, 0x45, 0x10, 0x01, 0x32, 0xbb, 0x05, 0x0a, 0x11, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x57, 0x0a,
+	0x0e, 0x4c, 0x69, 0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x12,
+	0x20, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74,
+	0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x21, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69,
+	0x73, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x51, 0x0a, 0x0c, 0x47, 0x65, 0x74, 0x57, 0x6f, 0x72,
+	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x1e, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
+	0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
+	0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5a, 0x0a, 0x0f, 0x43, 0x72, 0x65,
+	0x61, 0x74, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x21, 0x2e, 0x67,
+	0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x57,
+	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x22, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x57, 0x0a, 0x0e, 0x53, 0x74, 0x61, 0x72, 0x74, 0x57, 0x6f,
+	0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x20, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
+	0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x61, 0x72, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
+	0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x67, 0x69, 0x74, 0x70,
+	0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x61, 0x72, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x7a,
+	0x0a, 0x19, 0x4c, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x54, 0x6f, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70,
+	0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x12, 0x2b, 0x2e, 0x67, 0x69,
+	0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x54, 0x6f,
+	0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f,
+	0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x54, 0x6f, 0x57, 0x6f, 0x72,
+	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12, 0x71, 0x0a, 0x16, 0x4c, 0x69,
+	0x73, 0x74, 0x65, 0x6e, 0x54, 0x6f, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x42, 0x75, 0x69, 0x6c, 0x64,
+	0x4c, 0x6f, 0x67, 0x73, 0x12, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31,
+	0x2e, 0x4c, 0x69, 0x73, 0x74, 0x65, 0x6e, 0x54, 0x6f, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x42, 0x75,
+	0x69, 0x6c, 0x64, 0x4c, 0x6f, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29,
+	0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x65,
+	0x6e, 0x54, 0x6f, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x4c, 0x6f, 0x67,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12, 0x56, 0x0a,
+	0x0d, 0x53, 0x74, 0x6f, 0x70, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x1f,
+	0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x6f, 0x70, 0x57,
+	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x20, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x6f, 0x70,
+	0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x30, 0x01, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
+	0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69,
+	0x74, 0x70, 0x6f, 0x64, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f,
+	0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+}
+
+var (
+	file_gitpod_v1_workspaces_proto_rawDescOnce sync.Once
+	file_gitpod_v1_workspaces_proto_rawDescData = file_gitpod_v1_workspaces_proto_rawDesc
+)
+
+func file_gitpod_v1_workspaces_proto_rawDescGZIP() []byte {
+	file_gitpod_v1_workspaces_proto_rawDescOnce.Do(func() {
+		file_gitpod_v1_workspaces_proto_rawDescData = protoimpl.X.CompressGZIP(file_gitpod_v1_workspaces_proto_rawDescData)
+	})
+	return file_gitpod_v1_workspaces_proto_rawDescData
+}
+
+var file_gitpod_v1_workspaces_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_gitpod_v1_workspaces_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_gitpod_v1_workspaces_proto_goTypes = []interface{}{
+	(WorkspaceInstancePhase)(0),               // 0: gitpod.v1.WorkspaceInstancePhase
+	(AdmissionLevel)(0),                       // 1: gitpod.v1.AdmissionLevel
+	(*ListWorkspacesRequest)(nil),             // 2: gitpod.v1.ListWorkspacesRequest
+	(*ListWorkspacesResponse)(nil),            // 3: gitpod.v1.ListWorkspacesResponse
+	(*GetWorkspaceRequest)(nil),               // 4: gitpod.v1.GetWorkspaceRequest
+	(*GetWorkspaceResponse)(nil),              // 5: gitpod.v1.GetWorkspaceResponse
+	(*CreateWorkspaceRequest)(nil),            // 6: gitpod.v1.CreateWorkspaceRequest
+	(*CreateWorkspaceResponse)(nil),           // 7: gitpod.v1.CreateWorkspaceResponse
+	(*StartWorkspaceRequest)(nil),             // 8: gitpod.v1.StartWorkspaceRequest
+	(*StartWorkspaceResponse)(nil),            // 9: gitpod.v1.StartWorkspaceResponse
+	(*ListenToWorkspaceInstanceRequest)(nil),  // 10: gitpod.v1.ListenToWorkspaceInstanceRequest
+	(*ListenToWorkspaceInstanceResponse)(nil), // 11: gitpod.v1.ListenToWorkspaceInstanceResponse
+	(*ListenToImageBuildLogsRequest)(nil),     // 12: gitpod.v1.ListenToImageBuildLogsRequest
+	(*ListenToImageBuildLogsResponse)(nil),    // 13: gitpod.v1.ListenToImageBuildLogsResponse
+	(*StopWorkspaceRequest)(nil),              // 14: gitpod.v1.StopWorkspaceRequest
+	(*StopWorkspaceResponse)(nil),             // 15: gitpod.v1.StopWorkspaceResponse
+	(*Workspace)(nil),                         // 16: gitpod.v1.Workspace
+	(*WorkspaceMetadata)(nil),                 // 17: gitpod.v1.WorkspaceMetadata
+	(*WorkspaceInstance)(nil),                 // 18: gitpod.v1.WorkspaceInstance
+	(*WorkspaceInstanceStatus)(nil),           // 19: gitpod.v1.WorkspaceInstanceStatus
+	(*WorkspaceInstanceConditions)(nil),       // 20: gitpod.v1.WorkspaceInstanceConditions
+	(*WorkspaceInstanceAuthentication)(nil),   // 21: gitpod.v1.WorkspaceInstanceAuthentication
+	(*Pagination)(nil),                        // 22: gitpod.v1.Pagination
+	(*timestamppb.Timestamp)(nil),             // 23: google.protobuf.Timestamp
+}
+var file_gitpod_v1_workspaces_proto_depIdxs = []int32{
+	22, // 0: gitpod.v1.ListWorkspacesRequest.pagination:type_name -> gitpod.v1.Pagination
+	16, // 1: gitpod.v1.ListWorkspacesResponse.result:type_name -> gitpod.v1.Workspace
+	16, // 2: gitpod.v1.GetWorkspaceResponse.result:type_name -> gitpod.v1.Workspace
+	19, // 3: gitpod.v1.ListenToWorkspaceInstanceResponse.instance_status:type_name -> gitpod.v1.WorkspaceInstanceStatus
+	17, // 4: gitpod.v1.Workspace.metadata:type_name -> gitpod.v1.WorkspaceMetadata
+	23, // 5: gitpod.v1.WorkspaceInstance.created_at:type_name -> google.protobuf.Timestamp
+	19, // 6: gitpod.v1.WorkspaceInstance.status:type_name -> gitpod.v1.WorkspaceInstanceStatus
+	0,  // 7: gitpod.v1.WorkspaceInstanceStatus.phase:type_name -> gitpod.v1.WorkspaceInstancePhase
+	20, // 8: gitpod.v1.WorkspaceInstanceStatus.conditions:type_name -> gitpod.v1.WorkspaceInstanceConditions
+	21, // 9: gitpod.v1.WorkspaceInstanceStatus.auth:type_name -> gitpod.v1.WorkspaceInstanceAuthentication
+	23, // 10: gitpod.v1.WorkspaceInstanceConditions.first_user_activity:type_name -> google.protobuf.Timestamp
+	1,  // 11: gitpod.v1.WorkspaceInstanceAuthentication.admission:type_name -> gitpod.v1.AdmissionLevel
+	2,  // 12: gitpod.v1.WorkspacesService.ListWorkspaces:input_type -> gitpod.v1.ListWorkspacesRequest
+	4,  // 13: gitpod.v1.WorkspacesService.GetWorkspace:input_type -> gitpod.v1.GetWorkspaceRequest
+	6,  // 14: gitpod.v1.WorkspacesService.CreateWorkspace:input_type -> gitpod.v1.CreateWorkspaceRequest
+	8,  // 15: gitpod.v1.WorkspacesService.StartWorkspace:input_type -> gitpod.v1.StartWorkspaceRequest
+	10, // 16: gitpod.v1.WorkspacesService.ListenToWorkspaceInstance:input_type -> gitpod.v1.ListenToWorkspaceInstanceRequest
+	12, // 17: gitpod.v1.WorkspacesService.ListenToImageBuildLogs:input_type -> gitpod.v1.ListenToImageBuildLogsRequest
+	14, // 18: gitpod.v1.WorkspacesService.StopWorkspace:input_type -> gitpod.v1.StopWorkspaceRequest
+	3,  // 19: gitpod.v1.WorkspacesService.ListWorkspaces:output_type -> gitpod.v1.ListWorkspacesResponse
+	5,  // 20: gitpod.v1.WorkspacesService.GetWorkspace:output_type -> gitpod.v1.GetWorkspaceResponse
+	7,  // 21: gitpod.v1.WorkspacesService.CreateWorkspace:output_type -> gitpod.v1.CreateWorkspaceResponse
+	9,  // 22: gitpod.v1.WorkspacesService.StartWorkspace:output_type -> gitpod.v1.StartWorkspaceResponse
+	11, // 23: gitpod.v1.WorkspacesService.ListenToWorkspaceInstance:output_type -> gitpod.v1.ListenToWorkspaceInstanceResponse
+	13, // 24: gitpod.v1.WorkspacesService.ListenToImageBuildLogs:output_type -> gitpod.v1.ListenToImageBuildLogsResponse
+	15, // 25: gitpod.v1.WorkspacesService.StopWorkspace:output_type -> gitpod.v1.StopWorkspaceResponse
+	19, // [19:26] is the sub-list for method output_type
+	12, // [12:19] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
+}
+
+func init() { file_gitpod_v1_workspaces_proto_init() }
+func file_gitpod_v1_workspaces_proto_init() {
+	if File_gitpod_v1_workspaces_proto != nil {
 		return
 	}
+	file_gitpod_v1_pagination_proto_init()
+	if !protoimpl.UnsafeEnabled {
+		file_gitpod_v1_workspaces_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListWorkspacesRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListWorkspacesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetWorkspaceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetWorkspaceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateWorkspaceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateWorkspaceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*StartWorkspaceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*StartWorkspaceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListenToWorkspaceInstanceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListenToWorkspaceInstanceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListenToImageBuildLogsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListenToImageBuildLogsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*StopWorkspaceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*StopWorkspaceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Workspace); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WorkspaceMetadata); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WorkspaceInstance); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WorkspaceInstanceStatus); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WorkspaceInstanceConditions); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_workspaces_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WorkspaceInstanceAuthentication); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	file_gitpod_v1_workspaces_proto_msgTypes[4].OneofWrappers = []interface{}{
+		(*CreateWorkspaceRequest_IfAvailable)(nil),
+		(*CreateWorkspaceRequest_PrebuildId)(nil),
+	}
+	file_gitpod_v1_workspaces_proto_msgTypes[18].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_workspaces_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   0,
+			RawDescriptor: file_gitpod_v1_workspaces_proto_rawDesc,
+			NumEnums:      2,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_workspaces_proto_goTypes,
-		DependencyIndexes: file_workspaces_proto_depIdxs,
+		GoTypes:           file_gitpod_v1_workspaces_proto_goTypes,
+		DependencyIndexes: file_gitpod_v1_workspaces_proto_depIdxs,
+		EnumInfos:         file_gitpod_v1_workspaces_proto_enumTypes,
+		MessageInfos:      file_gitpod_v1_workspaces_proto_msgTypes,
 	}.Build()
-	File_workspaces_proto = out.File
-	file_workspaces_proto_rawDesc = nil
-	file_workspaces_proto_goTypes = nil
-	file_workspaces_proto_depIdxs = nil
+	File_gitpod_v1_workspaces_proto = out.File
+	file_gitpod_v1_workspaces_proto_rawDesc = nil
+	file_gitpod_v1_workspaces_proto_goTypes = nil
+	file_gitpod_v1_workspaces_proto_depIdxs = nil
 }

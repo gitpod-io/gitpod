@@ -271,15 +271,15 @@ message WorkspaceStatus {
     WorkspaceAuthentication auth = 9;
 }
 
-    // IDEImage configures the IDE images a workspace will use
-    message IDEImage {
-        // web_ref is a reference to an OCI image used for serving the web-based IDE
-        string web_ref = 1;
-        // desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
-        string desktop_ref = 2;
-        // supervisor_ref is a reference to an OCI image used as supervisor
-        string supervisor_ref = 3;
-    }
+// IDEImage configures the IDE images a workspace will use
+message IDEImage {
+    // web_ref is a reference to an OCI image used for serving the web-based IDE
+    string web_ref = 1;
+    // desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
+    string desktop_ref = 2;
+    // supervisor_ref is a reference to an OCI image used as supervisor
+    string supervisor_ref = 3;
+}
 
 // WorkspaceSpec is the specification of a workspace at runtime
 message WorkspaceSpec {

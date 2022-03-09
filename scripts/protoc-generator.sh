@@ -19,6 +19,7 @@ install_dependencies() {
 
 go_protoc() {
     local ROOT_DIR=$1
+    local PROTO_DIR=${2:-.}
     # shellcheck disable=2035
     protoc \
         -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. \
@@ -26,11 +27,12 @@ go_protoc() {
         --go_opt=paths=source_relative \
         --go-grpc_out=go \
         --go-grpc_opt=paths=source_relative \
-        *.proto
+        "${PROTO_DIR}"/*.proto
 }
 
 typescript_protoc() {
     local ROOT_DIR=$1
+    local PROTO_DIR=${2:-.}
     local MODULE_DIR
     # Assigning external program output directly
     # after the `local` keyword masks the return value (Could be an error).
@@ -43,21 +45,22 @@ typescript_protoc() {
 
     rm -rf "$MODULE_DIR"/typescript/src/*pb*.*
 
+    echo "[protoc] Generating TypeScript files"
     protoc \
         --plugin=protoc-gen-grpc="$MODULE_DIR"/typescript/node_modules/.bin/grpc_tools_node_protoc_plugin \
         --js_out=import_style=commonjs,binary:src \
         --grpc_out=grpc_js:src \
-        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. -I"$MODULE_DIR" \
-        "$MODULE_DIR"/*.proto
+        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
+        "../$PROTO_DIR"/*.proto
 
     protoc \
         --plugin=protoc-gen-ts="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-ts \
         --ts_out=grpc_js:src \
-        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I. -I"$MODULE_DIR" \
-        "$MODULE_DIR"/*.proto
+        -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" \
+        "../$PROTO_DIR"/*.proto
 
     # shellcheck disable=SC2011
-    ls -1 "$MODULE_DIR"/typescript/src/*_pb.d.ts | xargs sed -i -e "s/[[:space:]]*$//" || exit
+    # ls -1 "$MODULE_DIR"/typescript/src/*_pb.d.ts | xargs sed -i -e "s/[[:space:]]*$//" || exit
 
     popd > /dev/null || exit
 }

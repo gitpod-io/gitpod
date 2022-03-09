@@ -1,0 +1,9 @@
+{
+    "protoc": {
+        "compile_on_save": false,
+        "options": [
+            "--proto_path=.",
+            "--proto_path=${workspaceRoot}/components/public-api"
+        ]
+    }
+}
