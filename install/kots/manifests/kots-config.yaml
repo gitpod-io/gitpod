@@ -353,3 +353,10 @@ spec:
           required: false
           when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
           help_text: A file with Gitpod config that will be used to patch the generated Gitpod config.
+
+        - name: certmanager_config_patch
+          title: Values file for cert-manager Helm chart
+          type: file
+          required: false
+          when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
+          help_text: Values YAML file that overrides the default cert-manager Helm chart config.

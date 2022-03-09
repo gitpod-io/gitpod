@@ -9,3 +9,8 @@ spec:
     chartVersion: 1.7.0
   helmVersion: v3
   useHelmInstall: true
+  optionalValues:
+    - when: '{{repl ConfigOptionNotEquals "certmanager_config_patch" "" }}'
+      recursiveMerge: false
+      values:
+        repl{{ if ConfigOptionNotEquals "certmanager_config_patch" ""}}repl{{ printf (ConfigOption "certmanager_config_patch") | nindent 8}}repl{{ end}}
