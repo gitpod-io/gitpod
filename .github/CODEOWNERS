@@ -52,6 +52,7 @@
 /components/local-app @gitpod-io/engineering-ide
 /components/openvsx-proxy @gitpod-io/engineering-ide
 /components/proxy @gitpod-io/engineering-webapp
+/components/public-api @csweichel @akosyakov @geropl
 /components/registry-facade-api @csweichel @aledbf
 /components/registry-facade @gitpod-io/engineering-workspace
 /components/server @gitpod-io/engineering-webapp
