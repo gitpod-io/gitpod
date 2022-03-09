@@ -1,0 +1,244 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/public-api/v1";
+
+import "google/protobuf/timestamp.proto";
+import "gitpod/v1/pagination.proto";
+
+service WorkspacesService {
+
+    // ListWorkspaces enumerates all workspaces belonging to the authenticated user.
+    rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
+
+    // GetWorkspace returns a single workspace.
+    rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
+
+    // CreateWorkspace creates a new workspace but does not start it.
+    rpc CreateWorkspace(CreateWorkspaceRequest) returns (CreateWorkspaceResponse) {}
+
+    // StartWorkspace starts an existing workspace.
+    rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+
+    // ListenToWorkspaceInstance listens to workspace instance updates.
+    rpc ListenToWorkspaceInstance(ListenToWorkspaceInstanceRequest) returns (stream ListenToWorkspaceInstanceResponse) {}
+
+    // ListenToImageBuildLogs streams (currently or previously) running workspace image build logs
+    rpc ListenToImageBuildLogs(ListenToImageBuildLogsRequest) returns (stream ListenToImageBuildLogsResponse) {}
+
+    // StopWorkspace stops a running workspace (instance).
+    // Errors:
+    //   NOT_FOUND:           the workspace_id is unkown
+    //   FAILED_PRECONDITION: if there's no running instance
+    rpc StopWorkspace(StopWorkspaceRequest) returns (stream StopWorkspaceResponse) {}
+
+}
+
+message ListWorkspacesRequest {
+    Pagination pagination = 1;
+}
+message ListWorkspacesResponse {
+    // Status status = 1;
+    string next_page_token = 2;
+
+    repeated Workspace result = 3;
+}
+
+message GetWorkspaceRequest {
+    string workspace_id = 1;
+}
+message GetWorkspaceResponse {
+    Workspace result = 1;
+}
+
+message CreateWorkspaceRequest {
+    string idempotency_token = 1;
+
+    string context_url = 2;
+
+    oneof prebuild {
+        // if true, and there's a prebuild available (not running), use that prebuild
+        bool if_available = 3;
+        // uses a particular prebuild - the prebuild ID is scoped by the context URL.
+        // Use the PrebuildService to get ahold of the prebuild_id.
+        string prebuild_id = 4;
+    }
+}
+message CreateWorkspaceResponse {
+    // Status status = 1;
+
+    string workspace_id = 2;
+}
+
+message StartWorkspaceRequest {
+    string idempotency_token = 1;
+
+    string workspace_id = 2;
+}
+message StartWorkspaceResponse {
+    // Status status = 1;
+
+    string instance_id = 2;
+    string workspace_url = 3;
+}
+
+message ListenToWorkspaceInstanceRequest {
+    string instance_id = 1;
+}
+message ListenToWorkspaceInstanceResponse {
+    // Status status = 1;
+
+    WorkspaceInstanceStatus instance_status = 2;
+}
+
+message ListenToImageBuildLogsRequest {
+    string instance_id = 1;
+}
+message ListenToImageBuildLogsResponse {
+    // Status status = 1;
+
+    string line = 2;
+}
+
+message StopWorkspaceRequest {
+    string idempotency_token = 1;
+
+    string workspace_id = 2;
+}
+message StopWorkspaceResponse {}
+
+////////////////////////////////
+// Shared messages come here
+////////////////////////////////
+
+message Workspace {
+    WorkspaceMetadata metadata = 1;
+}
+
+message WorkspaceMetadata {
+    string workspace_id = 1;
+    string owner_id = 2;
+    string project_id = 3;
+}
+
+message WorkspaceInstance {
+    // Instance ID is the unique identifier of the workspace instance
+    string instance_id = 1;
+
+    // Worksapce ID is the unique identifier of the workspace this instance belongs to
+    string workspace_id = 2;
+
+    google.protobuf.Timestamp created_at = 3;
+
+    WorkspaceInstanceStatus status = 4;
+}
+
+// WorkspaceStatus describes a workspace status
+message WorkspaceInstanceStatus {
+    // version of the status update. Workspace instances themselves are unversioned,
+    // but their statuus has different versions.
+    // The value of this field has no semantic meaning (e.g. don't interpret it as
+    // as a timestemp), but it can be used to impose a partial order.
+    // If a.status_version < b.status_version then a was the status before b.
+    uint64 status_version = 1;
+
+    // the phase of a workspace is a simple, high-level summary of where the workspace instance is in its lifecycle
+    WorkspaceInstancePhase phase = 2;
+
+    // conditions detail the current state of the workspace instance
+    WorkspaceInstanceConditions conditions = 3;
+
+    // message is an optional human-readable message detailing the current phase
+    string message = 4;
+
+    // URL contains the endpoint at which the workspace instance is available
+    string url = 5;
+
+    // auth provides authentication information about the workspace. This info is primarily used by ws-proxy.
+    WorkspaceInstanceAuthentication auth = 6;
+
+    // repo details the Git working copy status of the workspace.
+    // Note: this is a best-effort field and more often than not will not be present. Its absence does not
+    // indicate the absence of a working copy.
+    // contentservice.GitStatus repo = 7;
+}
+
+
+// WorkspaceInstancePhase is a simple, high-level summary of where the workspace instance is in its lifecycle.
+// The phase is not intended to be a comprehensive rollup of observations of the workspace state,
+// nor is it intended to be a comprehensive state machine.
+// (based on  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase)
+enum WorkspaceInstancePhase {
+    // Unknown indicates an issue within the workspace manager in that it cannot determine the actual phase of
+    // a workspace. This phase is usually accompanied by an error.
+    UNKNOWN = 0;
+
+    // This will become IMAGE_BUILD
+    reserved 1;
+
+    // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
+    // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+    // workspace, the workspace will be in Pending state until that happened.
+    PENDING = 2;
+
+    // Creating means the workspace is currently being created. That includes downloading the images required
+    // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
+    // network speed, image size and cache states.
+    CREATING = 3;
+
+    // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
+    // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
+    INITIALIZING = 4;
+
+    // Running means the workspace is able to actively perform work, either by serving a user through Theia,
+    // or as a headless workspace.
+    RUNNING = 5;
+
+    // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
+    // When in this state, we expect it to become running or stopping anytime soon.
+    INTERRUPTED = 6;
+
+    // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
+    STOPPING = 7;
+
+    // Stopped means the workspace ended regularly because it was shut down.
+    STOPPED = 8;
+}
+
+
+// WorkspaceInstanceConditions gives more detailed information as to the state of the workspace. Which condition actually
+// has a value depends on the phase the workspace is in.
+message WorkspaceInstanceConditions {
+    // failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
+    // This field is filled exclusively when caused by system errors.
+    string failed = 1;
+
+    // timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
+    string timeout = 2;
+
+    // first_user_activity is the time when MarkActive was first called on the workspace
+    google.protobuf.Timestamp first_user_activity = 9;
+
+    // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
+    optional bool stopped_by_request = 11;
+}
+
+
+// WorkspaceInstanceAuthentication contains authentication information used to allow/deny access to
+// workspaces and their ports.
+message WorkspaceInstanceAuthentication {
+    // Admission describes who can access the workspace and its ports.
+    AdmissionLevel admission = 1;
+
+    // Owner token is the token one needs to access the workspace.
+    string owner_token = 2;
+}
+
+enum AdmissionLevel {
+    // ADMIT_OWNER_ONLY means the workspace can only be accessed using the owner token
+    ADMIT_OWNER_ONLY = 0;
+
+    // ADMIT_EVERYONE means the workspace (including ports) can be accessed by everyone.
+    ADMIT_EVERYONE = 1;
+}

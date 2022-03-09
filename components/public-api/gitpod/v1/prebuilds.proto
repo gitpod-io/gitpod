@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/public-api/v1";
+
+import "gitpod/v1/pagination.proto";
+
+service PrebuildsService {
+
+    // GetRunningPrebuild returns the prebuild ID of a running prebuild,
+    // or NOT_FOUND if there is no prebuild running for the content_url.
+    rpc GetRunningPrebuild(GetRunningPrebuildRequest) returns (GetRunningPrebuildResponse) {}
+
+}
+
+message GetRunningPrebuildRequest {
+    string context_url = 1;
+}
+
+message GetRunningPrebuildResponse {
+    // Status status = 1;
+
+    string prebuild_id = 2;
+}
+
