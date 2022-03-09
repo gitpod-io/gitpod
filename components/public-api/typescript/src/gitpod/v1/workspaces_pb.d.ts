@@ -6,6 +6,7 @@
 
 import * as jspb from "google-protobuf";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
+import * as google_protobuf_field_mask_pb from "google-protobuf/google/protobuf/field_mask_pb";
 import * as gitpod_v1_pagination_pb from "../../gitpod/v1/pagination_pb";
 
 export class ListWorkspacesRequest extends jspb.Message { 
@@ -14,6 +15,11 @@ export class ListWorkspacesRequest extends jspb.Message {
     clearPagination(): void;
     getPagination(): gitpod_v1_pagination_pb.Pagination | undefined;
     setPagination(value?: gitpod_v1_pagination_pb.Pagination): ListWorkspacesRequest;
+
+    hasFieldMask(): boolean;
+    clearFieldMask(): void;
+    getFieldMask(): google_protobuf_field_mask_pb.FieldMask | undefined;
+    setFieldMask(value?: google_protobuf_field_mask_pb.FieldMask): ListWorkspacesRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListWorkspacesRequest.AsObject;
@@ -28,6 +34,7 @@ export class ListWorkspacesRequest extends jspb.Message {
 export namespace ListWorkspacesRequest {
     export type AsObject = {
         pagination?: gitpod_v1_pagination_pb.Pagination.AsObject,
+        fieldMask?: google_protobuf_field_mask_pb.FieldMask.AsObject,
     }
 }
 
@@ -35,9 +42,9 @@ export class ListWorkspacesResponse extends jspb.Message {
     getNextPageToken(): string;
     setNextPageToken(value: string): ListWorkspacesResponse;
     clearResultList(): void;
-    getResultList(): Array<Workspace>;
-    setResultList(value: Array<Workspace>): ListWorkspacesResponse;
-    addResult(value?: Workspace, index?: number): Workspace;
+    getResultList(): Array<ListWorkspacesResponse.WorkspaceAndInstance>;
+    setResultList(value: Array<ListWorkspacesResponse.WorkspaceAndInstance>): ListWorkspacesResponse;
+    addResult(value?: ListWorkspacesResponse.WorkspaceAndInstance, index?: number): ListWorkspacesResponse.WorkspaceAndInstance;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListWorkspacesResponse.AsObject;
@@ -52,8 +59,39 @@ export class ListWorkspacesResponse extends jspb.Message {
 export namespace ListWorkspacesResponse {
     export type AsObject = {
         nextPageToken: string,
-        resultList: Array<Workspace.AsObject>,
+        resultList: Array<ListWorkspacesResponse.WorkspaceAndInstance.AsObject>,
     }
+
+
+    export class WorkspaceAndInstance extends jspb.Message { 
+
+        hasResult(): boolean;
+        clearResult(): void;
+        getResult(): Workspace | undefined;
+        setResult(value?: Workspace): WorkspaceAndInstance;
+
+        hasLastActiveInstances(): boolean;
+        clearLastActiveInstances(): void;
+        getLastActiveInstances(): WorkspaceInstance | undefined;
+        setLastActiveInstances(value?: WorkspaceInstance): WorkspaceAndInstance;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): WorkspaceAndInstance.AsObject;
+        static toObject(includeInstance: boolean, msg: WorkspaceAndInstance): WorkspaceAndInstance.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: WorkspaceAndInstance, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): WorkspaceAndInstance;
+        static deserializeBinaryFromReader(message: WorkspaceAndInstance, reader: jspb.BinaryReader): WorkspaceAndInstance;
+    }
+
+    export namespace WorkspaceAndInstance {
+        export type AsObject = {
+            result?: Workspace.AsObject,
+            lastActiveInstances?: WorkspaceInstance.AsObject,
+        }
+    }
+
 }
 
 export class GetWorkspaceRequest extends jspb.Message { 
@@ -209,6 +247,49 @@ export namespace StartWorkspaceResponse {
     }
 }
 
+export class GetActiveWorkspaceInstanceRequest extends jspb.Message { 
+    getWorkspaceId(): string;
+    setWorkspaceId(value: string): GetActiveWorkspaceInstanceRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetActiveWorkspaceInstanceRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: GetActiveWorkspaceInstanceRequest): GetActiveWorkspaceInstanceRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetActiveWorkspaceInstanceRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetActiveWorkspaceInstanceRequest;
+    static deserializeBinaryFromReader(message: GetActiveWorkspaceInstanceRequest, reader: jspb.BinaryReader): GetActiveWorkspaceInstanceRequest;
+}
+
+export namespace GetActiveWorkspaceInstanceRequest {
+    export type AsObject = {
+        workspaceId: string,
+    }
+}
+
+export class GetActiveWorkspaceInstanceResponse extends jspb.Message { 
+
+    hasInstance(): boolean;
+    clearInstance(): void;
+    getInstance(): WorkspaceInstance | undefined;
+    setInstance(value?: WorkspaceInstance): GetActiveWorkspaceInstanceResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetActiveWorkspaceInstanceResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: GetActiveWorkspaceInstanceResponse): GetActiveWorkspaceInstanceResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetActiveWorkspaceInstanceResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetActiveWorkspaceInstanceResponse;
+    static deserializeBinaryFromReader(message: GetActiveWorkspaceInstanceResponse, reader: jspb.BinaryReader): GetActiveWorkspaceInstanceResponse;
+}
+
+export namespace GetActiveWorkspaceInstanceResponse {
+    export type AsObject = {
+        instance?: WorkspaceInstance.AsObject,
+    }
+}
+
 export class ListenToWorkspaceInstanceRequest extends jspb.Message { 
     getInstanceId(): string;
     setInstanceId(value: string): ListenToWorkspaceInstanceRequest;
@@ -333,11 +414,16 @@ export namespace StopWorkspaceResponse {
 }
 
 export class Workspace extends jspb.Message { 
-
-    hasMetadata(): boolean;
-    clearMetadata(): void;
-    getMetadata(): WorkspaceMetadata | undefined;
-    setMetadata(value?: WorkspaceMetadata): Workspace;
+    getWorkspaceId(): string;
+    setWorkspaceId(value: string): Workspace;
+    getOwnerId(): string;
+    setOwnerId(value: string): Workspace;
+    getProjectId(): string;
+    setProjectId(value: string): Workspace;
+    getContextUrl(): string;
+    setContextUrl(value: string): Workspace;
+    getDescription(): string;
+    setDescription(value: string): Workspace;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Workspace.AsObject;
@@ -351,33 +437,11 @@ export class Workspace extends jspb.Message {
 
 export namespace Workspace {
     export type AsObject = {
-        metadata?: WorkspaceMetadata.AsObject,
-    }
-}
-
-export class WorkspaceMetadata extends jspb.Message { 
-    getWorkspaceId(): string;
-    setWorkspaceId(value: string): WorkspaceMetadata;
-    getOwnerId(): string;
-    setOwnerId(value: string): WorkspaceMetadata;
-    getProjectId(): string;
-    setProjectId(value: string): WorkspaceMetadata;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): WorkspaceMetadata.AsObject;
-    static toObject(includeInstance: boolean, msg: WorkspaceMetadata): WorkspaceMetadata.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: WorkspaceMetadata, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): WorkspaceMetadata;
-    static deserializeBinaryFromReader(message: WorkspaceMetadata, reader: jspb.BinaryReader): WorkspaceMetadata;
-}
-
-export namespace WorkspaceMetadata {
-    export type AsObject = {
         workspaceId: string,
         ownerId: string,
         projectId: string,
+        contextUrl: string,
+        description: string,
     }
 }
 
