@@ -16,8 +16,14 @@ import { RepoURL } from '../repohost';
 import { ConfigProvider } from './config-provider';
 import { ImageSourceProvider } from './image-source-provider';
 
+export const IWorkspaceFactory = Symbol("IWorkspaceFactory")
+
+export interface IWorkspaceFactory {
+    createForContext(ctx: TraceContext, user: User, context: WorkspaceContext, normalizedContextURL: string): Promise<Workspace>
+}
+
 @injectable()
-export class WorkspaceFactory {
+export class WorkspaceFactory implements IWorkspaceFactory {
 
     @inject(TracedWorkspaceDB) protected readonly db: DBWithTracing<WorkspaceDB>;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;

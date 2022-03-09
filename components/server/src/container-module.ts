@@ -10,7 +10,7 @@ import { Server } from './server';
 import { Authenticator } from './auth/authenticator';
 import { SessionHandlerProvider } from './session-handler';
 import { GitpodFileParser } from '@gitpod/gitpod-protocol/lib/gitpod-file-parser';
-import { WorkspaceFactory } from './workspace/workspace-factory';
+import { WorkspaceFactory, IWorkspaceFactory } from './workspace/workspace-factory';
 import { UserController } from './user/user-controller';
 import { InstallationAdminController } from './installation-admin/installation-admin-controller';
 import { GitpodServerImpl } from './workspace/gitpod-server-impl';
@@ -109,6 +109,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ConfigurationService).toSelf().inSingletonScope();
 
     bind(WorkspaceFactory).toSelf().inSingletonScope();
+    bind(IWorkspaceFactory).to(WorkspaceFactory).inSingletonScope();
     bind(WorkspaceDeletionService).toSelf().inSingletonScope();
     bind(WorkspaceStarter).toSelf().inSingletonScope();
     bind(ImageSourceProvider).toSelf().inSingletonScope();

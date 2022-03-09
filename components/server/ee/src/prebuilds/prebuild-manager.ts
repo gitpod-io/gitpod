@@ -9,7 +9,7 @@ import { CommitContext, Project, ProjectEnvVar, StartPrebuildContext, StartPrebu
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
-import { WorkspaceFactory } from '../../../src/workspace/workspace-factory';
+import { IWorkspaceFactory } from '../../../src/workspace/workspace-factory';
 import { ConfigProvider } from '../../../src/workspace/config-provider';
 import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
 import { Config } from '../../../src/config';
@@ -41,7 +41,7 @@ const PREBUILD_LIMITER_DEFAULT_LIMIT = 50;
 @injectable()
 export class PrebuildManager {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-    @inject(WorkspaceFactory) protected readonly workspaceFactory: WorkspaceFactory;
+    @inject(IWorkspaceFactory) protected readonly workspaceFactory: IWorkspaceFactory;
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;

@@ -27,7 +27,7 @@ import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { IPrefixContextParser } from "../../src/workspace/context-parser";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { StartIncrementalPrebuildContextParser } from "./prebuilds/start-incremental-prebuild-context-parser";
-import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
+import { IWorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { MonitoringEndpointsAppEE } from "./monitoring-endpoint-ee";
 import { MonitoringEndpointsApp } from "../../src/monitoring-endpoints";
@@ -52,9 +52,11 @@ import { SnapshotService } from "./workspace/snapshot-service";
 import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
+    bind(WorkspaceFactoryEE).to(WorkspaceFactoryEE).inSingletonScope()
+
     rebind(Server).to(ServerEE).inSingletonScope();
     rebind(UserService).to(UserServiceEE).inSingletonScope();
-    rebind(WorkspaceFactory).to(WorkspaceFactoryEE).inSingletonScope();
+    rebind(IWorkspaceFactory).to(WorkspaceFactoryEE).inSingletonScope();
     rebind(MonitoringEndpointsApp).to(MonitoringEndpointsAppEE).inSingletonScope();
 
     bind(WorkspaceHealthMonitoring).toSelf().inSingletonScope();

@@ -9,7 +9,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceInstance, WorkspaceProbeContext, RunningWorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { URL } from "url";
-import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
+import { IWorkspaceFactory } from "../../../src/workspace/workspace-factory";
 import { UserDB, BUILTIN_WORKSPACE_PROBE_USER_ID, WorkspaceDB, TracedWorkspaceDB, DBWithTracing, TracedUserDB } from "@gitpod/gitpod-db/lib";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
 import fetch from "node-fetch";
@@ -30,7 +30,7 @@ export class WorkspaceHealthMonitoring {
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(Config) protected readonly config: Config;
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
-    @inject(WorkspaceFactory) protected readonly workspaceFactory: WorkspaceFactory;
+    @inject(IWorkspaceFactory) protected readonly workspaceFactory: IWorkspaceFactory;
 
     // startWorkspaceProbe creates and starts a new workspace which is independent of external services and curls a response URL as init task
     async startWorkspaceProbe(ctx: TraceContext, responseURL: string, responseToken: string): Promise<void> {

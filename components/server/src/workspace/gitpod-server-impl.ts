@@ -43,7 +43,7 @@ import { IClientDataPrometheusAdapter } from './client-data-prometheus-adapter';
 import { ContextParser } from './context-parser-service';
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { WorkspaceDeletionService } from './workspace-deletion-service';
-import { WorkspaceFactory } from './workspace-factory';
+import { IWorkspaceFactory } from './workspace-factory';
 import { WorkspaceStarter } from './workspace-starter';
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
@@ -74,7 +74,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(Config) protected readonly config: Config;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
-    @inject(WorkspaceFactory) protected readonly workspaceFactory: WorkspaceFactory;
+    @inject(IWorkspaceFactory) protected readonly workspaceFactory: IWorkspaceFactory;
     @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
     @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
     @inject(ContextParser) protected contextParser: ContextParser;

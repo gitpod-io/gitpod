@@ -5,7 +5,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
+import { IWorkspaceFactory, WorkspaceFactory } from "../../../src/workspace/workspace-factory";
 import { injectable, inject } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { User, StartPrebuildContext, Workspace, CommitContext, PrebuiltWorkspaceContext, WorkspaceContext, WithSnapshot, WithPrebuild, TaskConfig, Project, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
@@ -18,10 +18,11 @@ import { HostContextProvider } from '../../../src/auth/host-context-provider';
 import { RepoURL } from '../../../src/repohost';
 
 @injectable()
-export class WorkspaceFactoryEE extends WorkspaceFactory {
+export class WorkspaceFactoryEE implements IWorkspaceFactory {
 
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
+    @inject(WorkspaceFactory) protected readonly workspaceFactory: IWorkspaceFactory;
 
     protected requireEELicense(feature: Feature) {
         if (!this.licenseEvaluator.isEnabled(feature)) {
@@ -36,7 +37,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             return this.createForPrebuiltWorkspace(ctx, user, context, normalizedContextURL);
         }
 
-        return super.createForContext(ctx, user, context, normalizedContextURL);
+        return this.workspaceFactory.createForContext(ctx, user, context, normalizedContextURL);
     }
 
     protected async createForStartPrebuild(ctx: TraceContext, user: User, context: StartPrebuildContext, normalizedContextURL: string): Promise<Workspace> {
