@@ -236,8 +236,8 @@ listenToImageBuildLogs: {
   },
   // StopWorkspace stops a running workspace (instance).
 // Errors:
-// NOT_FOUND: the workspace_id is unkown
-// FAILED_PRECONDITION: if there's no running instance
+//   NOT_FOUND:           the workspace_id is unkown
+//   FAILED_PRECONDITION: if there's no running instance
 stopWorkspace: {
     path: '/gitpod.v1.WorkspacesService/StopWorkspace',
     requestStream: false,

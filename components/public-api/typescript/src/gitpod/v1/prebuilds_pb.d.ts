@@ -5,7 +5,6 @@
 /* eslint-disable */
 
 import * as jspb from "google-protobuf";
-import * as gitpod_v1_pagination_pb from "../../gitpod/v1/pagination_pb";
 
 export class GetRunningPrebuildRequest extends jspb.Message { 
     getContextUrl(): string;

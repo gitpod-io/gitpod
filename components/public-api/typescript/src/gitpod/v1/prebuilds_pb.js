@@ -21,8 +21,6 @@ var global = (function() {
   return Function('return this')();
 }.call(null));
 
-var gitpod_v1_pagination_pb = require('../../gitpod/v1/pagination_pb.js');
-goog.object.extend(proto, gitpod_v1_pagination_pb);
 goog.exportSymbol('proto.gitpod.v1.GetRunningPrebuildRequest', null, global);
 goog.exportSymbol('proto.gitpod.v1.GetRunningPrebuildResponse', null, global);
 /**
