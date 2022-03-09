@@ -123,6 +123,22 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         exec(`mv k3s.yml /home/gitpod/.kube/config`)
         werft.done(vmSlices.KUBECONFIG)
 
+        // wait until the api-server is ready
+        let wait = true
+        while (wait) {
+            werft.log(vmSlices.KUBECONFIG, 'Checking that k3s apiserver is ready...')
+            const result = (exec(`kubectl get --raw='/readyz?verbose'`, { slice:vmSlices.KUBECONFIG, dontCheckRc: true, async: false }));
+            wait = result.code !== 0;
+            sleep(10 * 100)
+        }
+        werft.log(vmSlices.KUBECONFIG, 'k3s apiserver is ready')
+
+        // wait until all kube-system pods are ready
+        werft.log(vmSlices.KUBECONFIG, 'checking that all pods in kube-system are ready')
+        exec("kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=300s", { slice:vmSlices.KUBECONFIG, async: false })
+        werft.log(vmSlices.KUBECONFIG, 'all pods in kube-system are ready')
+
+
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
         werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
