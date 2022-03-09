@@ -276,11 +276,11 @@ func Run(options ...RunOption) {
 	apiServices = append(apiServices, additionalServices...)
 
 	if !cfg.isHeadless() {
+		installDockerConfig()
 		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
 		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
 		installDotfiles(ctx, cfg, tokenService, childProcEnvvars)
 	}
-
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
 	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, ideReady, WebIDE)
@@ -362,6 +362,19 @@ func Run(options ...RunOption) {
 	terminateChildProcesses()
 
 	wg.Wait()
+}
+
+func installDockerConfig() {
+	const dockerConfigPath = "/home/gitpod/.docker/config.json"
+	if _, err := os.Stat(dockerConfigPath); err == nil {
+		// config exists already
+		return
+	}
+	cfgStr := []byte("{\n:\"auths\": {},\n\"credsStore\": \"gp\"}")
+	err := os.WriteFile(dockerConfigPath, cfgStr, 0600)
+	if err != nil {
+		log.WithError(err).Warn("installing docker config failed")
+	}
 }
 
 func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTokenService, childProcEnvvars []string) {
