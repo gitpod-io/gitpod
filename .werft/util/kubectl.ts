@@ -1,5 +1,6 @@
 import { ShellString } from 'shelljs';
 import { exec, ExecOptions } from './shell';
+import { sleep } from './util';
 import { getGlobalWerftInstance, Werft } from './werft';
 
 
@@ -180,7 +181,7 @@ export async function deleteNonNamespaceObjects(namespace: string, destname: str
 
     const promisedDeletes: Promise<any>[] = [];
     objs.forEach(o => {
-        promisedDeletes.push(exec(`kubectl delete ${o.kind} ${o.obj}`, {...shellOpts, async: true}) as Promise<any>);
+        promisedDeletes.push(exec(`kubectl delete ${o.kind} ${o.obj}`, { ...shellOpts, async: true }) as Promise<any>);
     });
     await Promise.all(promisedDeletes);
 }
@@ -217,7 +218,7 @@ export function findFreeHostPorts(ranges: PortRange[], shellOpts: ExecOptions): 
     for (const port of nodePorts) {
         alreadyReservedPorts.add(port);
     }
-    werft.log(shellOpts.slice, `already reserved ports: ${Array.from(alreadyReservedPorts.values()).map(p => ""+p).join(", ")}`);
+    werft.log(shellOpts.slice, `already reserved ports: ${Array.from(alreadyReservedPorts.values()).map(p => "" + p).join(", ")}`);
 
     const results: number[] = [];
     for (const range of ranges) {
@@ -239,4 +240,63 @@ export function findFreeHostPorts(ranges: PortRange[], shellOpts: ExecOptions): 
 
 export function waitForDeploymentToSucceed(name: string, namespace: string, type: string, shellOpts: ExecOptions) {
     exec(`kubectl rollout status ${type} ${name} -n ${namespace}`, shellOpts);
+}
+
+export async function waitUntilAllPodsAreReady(namespace: string, shellOpts: ExecOptions) {
+    interface Pod {
+        name: string
+        owner: string
+        phase: string
+    }
+    const werft = getGlobalWerftInstance();
+    werft.log(shellOpts.slice, `Waiting until all pods in namespace ${namespace} are Running/Succeeded/Completed.`)
+    for (let i = 0; i < 300; i++) {
+        const pods: Pod[] = exec(`kubectl get pods -n ${namespace}  -o=jsonpath='{range .items[*]}{@.metadata.name}:{@.metadata.ownerReferences[0].kind}:{@.status.phase};{end}'`, { silent: true, async: false })
+            .split(";")
+            .map(l => l.trim())
+            .filter(l => l)
+            .map(s => { const i = s.split(":"); return { name: i[0], owner: i[1], phase: i[2] } })
+
+        let unready: Pod[] = []
+        for (const pod of pods) {
+            if (pod.owner == "Job") {
+                if (pod.phase != "Succeeded") {
+                    unready.push(pod)
+                }
+            } else {
+                if (pod.phase != "Running") {
+                    unready.push(pod)
+                }
+            }
+        }
+
+        if (pods.length == 0) {
+            werft.log(shellOpts.slice, `The namespace is empty or does not exist.`)
+        } else {
+            if (unready.length == 0) {
+                werft.log(shellOpts.slice, `All pods are Running/Succeeded/Completed!`)
+                return;
+            }
+            const list = unready.map(p => `${p.name}:${p.phase}`).join(", ")
+            werft.log(shellOpts.slice, `Unready pods: ${list}`)
+        }
+
+        await sleep(2 * 1000)
+    }
+    exec(`kubectl get pods -n ${namespace}`, { ...shellOpts, async: false })
+    throw new Error(`Not all pods in namespace ${namespace} transitioned to 'Running' or 'Succeeded/Completed' during the expected time.`)
+}
+
+export async function waitForApiserver(shellOpts: ExecOptions) {
+    const werft = getGlobalWerftInstance();
+    for (let i = 0; i < 300; i++) {
+        werft.log(shellOpts.slice, 'Checking that k3s apiserver is ready...')
+        const result = exec(`kubectl get --raw='/readyz?verbose'`, { ...shellOpts, dontCheckRc: true, async: false });
+        if (result.code == 0) {
+            werft.log(shellOpts.slice, 'k3s apiserver is ready')
+            return;
+        }
+        await sleep(2 * 1000)
+    }
+    throw new Error(`The Apiserver did not become ready during the expected time.`)
 }
