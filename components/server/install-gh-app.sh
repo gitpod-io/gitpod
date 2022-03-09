@@ -9,6 +9,7 @@
 # -----END RSA PRIVATE KEY-----"
 #############################
 
+
 if [ -z "$GH_APP_ID" ]; then
   echo "Missing env GH_APP_ID"
   return
