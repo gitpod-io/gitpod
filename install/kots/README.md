@@ -20,12 +20,15 @@ commercially supported project.
 
 # Development
 
+> tl;dr the `make` command will build and push a release to your development channel
+
 ## Authentication
 
-Two environment variables are required to be able to publish to our Replicated account:
+The following environment variables are required to be able to publish to our Replicated account:
 
- - `REPLICATED_APP`: the unique application slug
+ - `REPLICATED_APP`: the unique application slug. If in doubt, use `gitpod-pov`.
  - `REPLICATED_API_TOKEN`: a [User API Token](https://vendor.replicated.com/account-settings) with `Read/Write` permissions
+ - `REPLICATED_DEV_CHANNEL`: the channel to push dev releases to. Use the naming convention `dev-<initials>` (eg, `dev-sje`).
 
 ## Naming conventions
 
@@ -42,7 +45,24 @@ and packages them up as a `.tgz` file.
 
 The `.tgz` files should not be committed to the repository.
 
+# Create a development release
+
+A development release can be created by running `make create_dev_release`. This builds and publishes
+a new development release to the account. This can then be applied to your development cluster.
+
+Development releases should be used by individual developers when testing and developing a KOTS release.
+
 ## Create an unstable release
 
 An unstable release can be created by running `make create_unstable_release`. This builds and publishes
-a new unstable release to the account. This can be then applied to your development cluster.
+a new unstable release to the account. This can then be applied to your development cluster.
+
+Unstable releases should be used as the first part of creating a stable release.
+
+## Promoting a release to beta and stable
+
+Beta and stable are the channels used to deliver a KOTS application to the general public. A beta release
+is considered a release candidate. Once testing has passed, it is promoted to the stable channel.
+
+Promotion of releases from unstable to stable should be done in the management console on the
+[Replicated vendor homepage](https://vendor.replicated.com/apps/gitpod).
