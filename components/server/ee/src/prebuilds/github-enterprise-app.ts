@@ -13,9 +13,11 @@ import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TokenService } from '../../../src/user/token-service';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { Project, StartPrebuildResult, User } from '@gitpod/gitpod-protocol';
+import { CommitContext, CommitInfo, Project, StartPrebuildResult, User } from '@gitpod/gitpod-protocol';
 import { GitHubService } from './github-service';
 import { URL } from 'url';
+import { ContextParser } from '../../../src/workspace/context-parser-service';
+import { RepoURL } from '../../../src/repohost';
 
 @injectable()
 export class GitHubEnterpriseApp {
@@ -26,6 +28,7 @@ export class GitHubEnterpriseApp {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(ContextParser) protected readonly contextParser: ContextParser;
 
     protected _router = express.Router();
     public static path = '/apps/ghe/';
@@ -103,7 +106,8 @@ export class GitHubEnterpriseApp {
         try {
             const contextURL = this.createContextUrl(payload);
             span.setTag('contextURL', contextURL);
-            const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
+            const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 log.info('GitHub Enterprise push event: No config. No prebuild.');
                 return undefined;
@@ -113,19 +117,27 @@ export class GitHubEnterpriseApp {
 
             const cloneURL = payload.repository.clone_url;
             const projectAndOwner = await this.findProjectAndOwner(cloneURL, user);
-
+            const commitInfo = await this.getCommitInfo(user, payload.repository.url, payload.after);
             const ws = await this.prebuildManager.startPrebuild({ span }, {
+                context,
                 user: projectAndOwner.user,
                 project: projectAndOwner?.project,
-                branch: this.getBranchFromRef(payload.ref),
-                contextURL,
-                cloneURL,
-                commit: payload.after,
+                commitInfo
             });
             return ws;
         } finally {
             span.finish();
         }
+    }
+
+    private async getCommitInfo(user: User, repoURL: string, commitSHA: string) {
+        const parsedRepo = RepoURL.parseRepoUrl(repoURL)!;
+        const hostCtx = this.hostContextProvider.get(parsedRepo.host);
+        let commitInfo: CommitInfo | undefined;
+        if (hostCtx?.services?.repositoryProvider) {
+            commitInfo = await hostCtx?.services?.repositoryProvider.getCommitInfo(user, parsedRepo.owner, parsedRepo.repo, commitSHA);
+        }
+        return commitInfo;
     }
 
     /**
