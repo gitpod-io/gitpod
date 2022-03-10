@@ -294,3 +294,12 @@ func (bl *ClampingBucketLimiter) Limit(budgetSpent CPUTime) (newLimit Bandwidth)
 	// empty bucket list
 	return 0
 }
+
+type CFSController interface {
+	// Usage returns the cpuacct.usage value of the cgroup
+	Usage() (usage CPUTime, err error)
+	// SetQuota sets a new CFS quota on the cgroup
+	SetLimit(limit Bandwidth) (changed bool, err error)
+	// NrThrottled returns the number of CFS periods the cgroup was throttled
+	NrThrottled() (uint64, error)
+}

@@ -11,6 +11,7 @@ export enum HeadlessWorkspaceEventType {
     FinishedButFailed = "finish-fail",
     AbortedTimedOut = "aborted-timeout",
     Aborted = "aborted",
+    Failed = "failed",
     Started = "started"
 }
 export namespace HeadlessWorkspaceEventType {

@@ -571,10 +571,10 @@ export function GitIntegrationModal(props: ({
     }
 
     const updateClientId = (value: string) => {
-        setClientId(value);
+        setClientId(value.trim());
     }
     const updateClientSecret = (value: string) => {
-        setClientSecret(value);
+        setClientSecret(value.trim());
     }
 
     const validate = () => {

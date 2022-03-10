@@ -19,7 +19,7 @@ const STACKDRIVER_SERVICEACCOUNT = JSON.parse(fs.readFileSync(`/mnt/secrets/moni
 const phases = {
     PREDEPLOY: 'predeploy',
     DEPLOY: 'deploy',
-    VM: 'vm'
+    VM: 'Ensure VM Readiness'
 }
 
 // Werft slices for deploy phase via installer
@@ -38,7 +38,7 @@ const installerSlices = {
 }
 
 const vmSlices = {
-    BOOT_VM: 'Booting VM',
+    VM_READINESS: 'Waiting for VM readiness',
     START_KUBECTL_PORT_FORWARDS: 'Start kubectl port forwards',
     COPY_CERT_MANAGER_RESOURCES: 'Copy CertManager resources from core-dev',
     INSTALL_LETS_ENCRYPT_ISSUER: 'Install Lets Encrypt issuer',
@@ -73,7 +73,7 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     const url = `https://${domain}`;
     const imagePullAuth = exec(`printf "%s" "_json_key:$(kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace=keys -o yaml \
         | yq r - data['.dockerconfigjson'] \
-        | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
+        | base64 -d)" | base64 -w 0`, { silent: true}).stdout.trim();
 
     const sweeperImage = exec(`tar xfO /tmp/dev.tar.gz ./sweeper.txt`).stdout.trim();
 
@@ -101,32 +101,16 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     exec(`kubectl get secret ${withVM ? 'preview-envs-authproviders-harvester' : 'preview-envs-authproviders'} --namespace=keys -o jsonpath="{.data.authProviders}" > auth-provider-secret.yml`, { silent: true })
 
     if (withVM) {
-        werft.phase(phases.VM, "Start VM");
+        werft.phase(phases.VM, "Ensuring VM is ready for deployment");
 
         werft.log(vmSlices.COPY_CERT_MANAGER_RESOURCES, 'Copy over CertManager resources from core-dev')
         exec(`kubectl get secret clouddns-dns01-solver-svc-acct -n certmanager -o yaml | sed 's/namespace: certmanager/namespace: cert-manager/g' > clouddns-dns01-solver-svc-acct.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
         exec(`kubectl get clusterissuer letsencrypt-issuer-gitpod-core-dev -o yaml | sed 's/letsencrypt-issuer-gitpod-core-dev/letsencrypt-issuer/g' > letsencrypt-issuer.yaml`, { slice: vmSlices.COPY_CERT_MANAGER_RESOURCES })
         werft.done(vmSlices.COPY_CERT_MANAGER_RESOURCES)
 
-        const existingVM = VM.vmExists({ name: destname })
-        if (!existingVM) {
-            werft.log(vmSlices.BOOT_VM, 'Starting VM')
-            VM.startVM({ name: destname })
-            werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", true)
-        } else if (cleanSlateDeployment) {
-            werft.log(vmSlices.BOOT_VM, 'Removing existing namespace')
-            VM.deleteVM({ name: destname })
-            werft.log(vmSlices.BOOT_VM, 'Starting VM')
-            VM.startVM({ name: destname })
-            werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", true)
-        } else {
-            werft.log(vmSlices.BOOT_VM, 'VM already exists')
-            werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
-        }
-
-        werft.log(vmSlices.BOOT_VM, 'Waiting for VM to be ready')
-        VM.waitForVM({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.BOOT_VM })
-        werft.done(vmSlices.BOOT_VM)
+        werft.log(vmSlices.VM_READINESS, 'Wait for VM readiness')
+        VM.waitForVMReadiness({ name: destname, timeoutSeconds: 60 * 10, slice: vmSlices.VM_READINESS })
+        werft.done(vmSlices.VM_READINESS)
 
         werft.log(vmSlices.START_KUBECTL_PORT_FORWARDS, 'Starting SSH port forwarding')
         VM.startSSHProxy({ name: destname, slice: vmSlices.START_KUBECTL_PORT_FORWARDS })
@@ -139,6 +123,24 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         exec(`mv k3s.yml /home/gitpod/.kube/config`)
         werft.done(vmSlices.KUBECONFIG)
 
+        // wait until the api-server is ready
+        let wait = true
+        while (wait) {
+            werft.log(vmSlices.KUBECONFIG, 'Checking that k3s apiserver is ready...')
+            const result = (exec(`kubectl get --raw='/readyz?verbose'`, { slice:vmSlices.KUBECONFIG, dontCheckRc: true, async: false }));
+            wait = result.code !== 0;
+            sleep(10 * 100)
+        }
+        werft.log(vmSlices.KUBECONFIG, 'k3s apiserver is ready')
+
+        // wait until all kube-system pods are ready
+        werft.log(vmSlices.KUBECONFIG, 'checking that all pods in kube-system are ready')
+        exec("kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=300s", { slice:vmSlices.KUBECONFIG, async: false })
+        werft.log(vmSlices.KUBECONFIG, 'all pods in kube-system are ready')
+
+
+
+        exec(`kubectl wait --for=condition=Complete -n cert-manager job --all --timeout=600s`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER })
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
         werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
@@ -260,7 +262,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
             werft.log(installerSlices.IMAGE_PULL_SECRET, "Adding the image pull secret to the namespace");
             const dockerConfig = { auths: { "eu.gcr.io": { auth: deploymentConfig.imagePullAuth }, "europe-docker.pkg.dev": { auth: deploymentConfig.imagePullAuth } } };
             fs.writeFileSync(`./${IMAGE_PULL_SECRET_NAME}`, JSON.stringify(dockerConfig));
-            exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`);
+            exec(`kubectl create secret docker-registry ${IMAGE_PULL_SECRET_NAME} -n ${namespace} --from-file=.dockerconfigjson=./${IMAGE_PULL_SECRET_NAME}`, { slice: installerSlices.IMAGE_PULL_SECRET });
         }
         catch (err) {
             if (!jobConfig.mainBuild) {
@@ -295,7 +297,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         // get some values we need to customize the config and write them to file
         exec(`yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers \
         | yq prefix - 'blockNewUsers' > ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing | yq prefix - 'workspace' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
+        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
 
         // merge values from files
         exec(`yq m -i --overwrite config.yaml ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
@@ -308,8 +310,6 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         exec(`yq w -i config.yaml containerRegistry.external.certificate.kind secret`, { slice: installerSlices.INSTALLER_RENDER });
         exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, { slice: installerSlices.INSTALLER_RENDER });
         exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, { slice: installerSlices.INSTALLER_RENDER });
-        // TODO: Get rid of JaegerOperator as part of https://github.com/gitpod-io/ops/issues/875
-        exec(`yq w -i config.yaml jaegerOperator.inCluster false`, { slice: installerSlices.INSTALLER_RENDER });
         exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: installerSlices.INSTALLER_RENDER });
 
         // Relax CPU contraints

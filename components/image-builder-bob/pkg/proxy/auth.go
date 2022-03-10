@@ -20,9 +20,9 @@ type authConfig struct {
 	Auth     string `json:"auth"`
 }
 
-type authorizerImpl map[string]authConfig
+type MapAuthorizer map[string]authConfig
 
-func (a authorizerImpl) Authorize(host string) (user, pass string, err error) {
+func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 	defer func() {
 		log.WithFields(logrus.Fields{
 			"host": host,
@@ -54,11 +54,25 @@ func (a authorizerImpl) Authorize(host string) (user, pass string, err error) {
 	return
 }
 
+func (a MapAuthorizer) AddIfNotExists(other MapAuthorizer) MapAuthorizer {
+	res := make(map[string]authConfig)
+	for k, v := range a {
+		res[k] = v
+	}
+	for k, v := range other {
+		if _, ok := a[k]; ok {
+			continue
+		}
+		res[k] = v
+	}
+	return MapAuthorizer(res)
+}
+
 type Authorizer interface {
 	Authorize(host string) (user, pass string, err error)
 }
 
-func NewAuthorizerFromEnvVar(content string) (auth Authorizer, err error) {
+func NewAuthorizerFromDockerEnvVar(content string) (auth MapAuthorizer, err error) {
 	var res struct {
 		Auths map[string]authConfig `json:"auths"`
 	}
@@ -66,5 +80,18 @@ func NewAuthorizerFromEnvVar(content string) (auth Authorizer, err error) {
 	if err != nil {
 		return
 	}
-	return authorizerImpl(res.Auths), nil
+	return MapAuthorizer(res.Auths), nil
+}
+
+func NewAuthorizerFromEnvVar(content string) (auth MapAuthorizer, err error) {
+	if content == "" {
+		return nil, nil
+	}
+
+	var res map[string]authConfig
+	err = json.Unmarshal([]byte(content), &res)
+	if err != nil {
+		return nil, err
+	}
+	return MapAuthorizer(res), nil
 }

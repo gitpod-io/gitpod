@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
@@ -52,12 +53,22 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	if err != nil {
 		return nil, err
 	}
-	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
+
+	listener := []dispatch.Listener{
 		cpulimit.NewDispatchListener(&config.Resources, reg),
-		CacheReclaim(config.Resources.CGroupBasePath),
 		cgCustomizer,
 		markUnmountFallback,
-	)
+	}
+
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		return nil, xerrors.Errorf("could not determine cgroup setup: %w", err)
+	}
+	if !unified {
+		listener = append(listener, CacheReclaim(config.Resources.CGroupBasePath))
+	}
+
+	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
 	if err != nil {
 		return nil, err
 	}

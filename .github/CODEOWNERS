@@ -76,6 +76,7 @@
 /operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/platform
 /.werft/observability @gitpod-io/platform
 /.werft/delete-preview-environments @gitpod-io/platform
+/.werft/ide @gitpod-io/engineering-ide
 
 #
 # Automation

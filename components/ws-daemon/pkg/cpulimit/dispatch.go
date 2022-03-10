@@ -15,6 +15,7 @@ import (
 	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/api/resource"
 
+	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -97,7 +98,7 @@ type DispatchListener struct {
 }
 
 type workspace struct {
-	CFS       CgroupCFSController
+	CFS       CFSController
 	OWI       logrus.Fields
 	HardLimit ResourceLimiter
 
@@ -175,8 +176,13 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		return xerrors.Errorf("cannot start governer: %w", err)
 	}
 
+	controller, err := newCFSController(d.Config.CGroupBasePath, cgroupPath)
+	if err != nil {
+		return err
+	}
+
 	d.workspaces[ws.InstanceID] = &workspace{
-		CFS: CgroupCFSController(filepath.Join(d.Config.CGroupBasePath, "cpu", cgroupPath)),
+		CFS: controller,
 		OWI: ws.OWI(),
 	}
 	go func() {
@@ -213,4 +219,22 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 	}
 
 	return nil
+}
+
+func newCFSController(basePath, cgroupPath string) (CFSController, error) {
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		return nil, xerrors.Errorf("could not determine cgroup setup: %w", err)
+	}
+
+	if unified {
+		fullPath := filepath.Join(basePath, cgroupPath)
+		if err := cgroups.EnsureCpuControllerEnabled(basePath, cgroupPath); err != nil {
+			return nil, err
+		}
+
+		return CgroupV2CFSController(fullPath), nil
+	} else {
+		return CgroupV1CFSController(filepath.Join(basePath, "cpu", cgroupPath)), nil
+	}
 }

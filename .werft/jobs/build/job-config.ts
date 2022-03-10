@@ -83,25 +83,23 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withPayment = "with-payment" in buildConfig && !mainBuild;
     const withObservability = "with-observability" in buildConfig && !mainBuild;
     const withHelm = "with-helm" in buildConfig && !mainBuild;
-    const withVM = "with-vm" in buildConfig && !mainBuild;
-
-    const previewDestName = version.split(".")[0];
-    const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewDestName}`;
-    const previewEnvironment = {
-        destname: previewDestName,
-        namespace: previewEnvironmentNamespace
-    }
-
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
         ref: context.Repository.ref,
         branch: context.Repository.ref,
     }
-
     const refsPrefix = "refs/heads/";
     if (repository.branch.startsWith(refsPrefix)) {
         repository.branch = repository.branch.substring(refsPrefix.length);
+    }
+    const withVM = ("with-vm" in buildConfig || repository.branch.includes("with-vm")) && !mainBuild;
+
+    const previewDestName = version.split(".")[0];
+    const previewEnvironmentNamespace = withVM ? `default` : `staging-${previewDestName}`;
+    const previewEnvironment = {
+        destname: previewDestName,
+        namespace: previewEnvironmentNamespace
     }
 
     const observability: Observability = {

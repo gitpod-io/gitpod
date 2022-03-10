@@ -16,6 +16,7 @@ import { UserContext } from "../user-context";
 import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
 import { adminMenu } from "./admin-menu";
 import WorkspaceDetail from "./WorkspaceDetail";
+import info from '../images/info.svg';
 
 interface Props {
     user?: User
@@ -66,6 +67,11 @@ export function WorkspaceSearch(props: Props) {
     }
 
     const search = async () => {
+        // Disables empty search on the workspace search page
+        if (!props.user && queryTerm.length === 0) {
+            return;
+        }
+
         setSearching(true);
         try {
             const query: AdminGetWorkspacesQuery = {
@@ -75,6 +81,9 @@ export function WorkspaceSearch(props: Props) {
                 query.instanceIdOrWorkspaceId = queryTerm;
             } else if (matchesNewWorkspaceIdExactly(queryTerm)) {
                 query.workspaceId = queryTerm;
+            }
+            if (!query.ownerId && !query.instanceIdOrWorkspaceId && !query.workspaceId) {
+                return;
             }
 
             const result = await getGitpodService().server.adminGetWorkspaces({
@@ -104,6 +113,10 @@ export function WorkspaceSearch(props: Props) {
                 </div>
                 <button disabled={searching} onClick={search}>Search</button>
             </div>
+        </div>
+        <div className={'flex rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 p-2 w-2/3 mb-2'}>
+            <img className="w-4 h-4 m-1 ml-2 mr-4" alt="info" src={info} />
+            <span>Please enter complete IDs - this search does not perform partial-matching.</span>
         </div>
         <div className="flex flex-col space-y-2">
             <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">

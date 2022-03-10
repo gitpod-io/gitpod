@@ -138,7 +138,7 @@ export class ProjectsService {
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const type = hostContext && hostContext.authProvider.info.authProviderType;
         // TODO: handle gitea
-        if (type === "GitLab" || type === "Bitbucket") {
+        if (type !== "github.com") {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier

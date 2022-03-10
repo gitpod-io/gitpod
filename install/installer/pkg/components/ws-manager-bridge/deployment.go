@@ -6,6 +6,7 @@ package wsmanagerbridge
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
@@ -28,14 +29,33 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		hashObj = append(hashObj, objs...)
 	}
 
-	hashObj = append(hashObj, &corev1.Pod{Spec: corev1.PodSpec{
-		Containers: []corev1.Container{{
-			Env: []corev1.EnvVar{{
-				Name:  "MESSAGEBUS_PASSWORD",
-				Value: ctx.Values.MessageBusPassword,
-			}},
-		}},
-	}})
+	hashObj = append(hashObj, &corev1.Pod{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Env: []corev1.EnvVar{
+						{
+							Name:  "MESSAGEBUS_PASSWORD",
+							Value: ctx.Values.MessageBusPassword,
+						},
+						{
+							// If the database type changes, this pod may stay up if no other changes are made.
+							Name: "DATABASE_TYPE",
+							Value: func() string {
+								if pointer.BoolDeref(ctx.Config.Database.InCluster, false) {
+									return "in-cluster"
+								}
+								if ctx.Config.Database.CloudSQL != nil {
+									return "cloudsql"
+								}
+								return "external"
+							}(),
+						},
+					},
+				},
+			},
+		},
+	})
 
 	configHash, err := common.ObjectHash(hashObj, nil)
 	if err != nil {

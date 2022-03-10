@@ -123,7 +123,7 @@ export function vmExists(options: { name: string }) {
  * Wait until the VM Instance reaches the Running status.
  * If the VM Instance doesn't reach Running before the timeoutMS it will throw an Error.
  */
-export function waitForVM(options: { name: string, timeoutSeconds: number, slice: string }) {
+export function waitForVMReadiness(options: { name: string, timeoutSeconds: number, slice: string }) {
     const werft = getGlobalWerftInstance()
     const namespace = `preview-${options.name}`
 

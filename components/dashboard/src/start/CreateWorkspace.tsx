@@ -258,7 +258,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
       }
 
       // TODO: this should be aware of already granted permissions
-      const missingScope = authProvider.host === 'github.com' ? 'repo' : 'read_repository';
+      const missingScope = authProvider.authProviderType === 'GitHub' ? 'repo' : 'read_repository';
       const authorizeURL = gitpodHostUrl.withApi({
         pathname: '/authorize',
         search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${host}&scopes=${missingScope}`

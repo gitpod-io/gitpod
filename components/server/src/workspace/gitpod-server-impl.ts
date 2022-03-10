@@ -518,7 +518,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
         }
         const userEnvVars = this.userDB.getEnvVars(user.id);
-        let projectEnvVarsPromise = this.internalGetPublicProjectEnvVars(workspace.projectId);
+        let projectEnvVarsPromise = this.internalGetProjectEnvVars(workspace.projectId);
 
         await mayStartPromise;
 
@@ -908,7 +908,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 throw err;
             }
 
-            let projectEnvVarsPromise = this.internalGetPublicProjectEnvVars(workspace.projectId);
+            let projectEnvVarsPromise = this.internalGetProjectEnvVars(workspace.projectId);
 
             logContext.workspaceId = workspace.id;
             traceWI(ctx, { workspaceId: workspace.id });
@@ -1582,7 +1582,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { projectId });
         const user = this.checkAndBlockUser("getProjectEnvironmentVariables");
         await this.guardProjectOperation(user, projectId, "get");
-        return this.projectsService.getProjectEnvironmentVariables(projectId);
+        return await this.projectsService.getProjectEnvironmentVariables(projectId);
     }
 
     async deleteProjectEnvironmentVariable(ctx: TraceContext, variableId: string): Promise<void> {
@@ -1596,16 +1596,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.projectsService.deleteProjectEnvironmentVariable(envVar.id);
     }
 
-    protected async internalGetPublicProjectEnvVars(projectId?: string): Promise<ProjectEnvVar[]> {
+    protected async internalGetProjectEnvVars(projectId?: string): Promise<ProjectEnvVar[]> {
         if (!projectId) {
             return [];
         }
-        const projectEnvVars = await this.projectsService.getProjectEnvironmentVariables(projectId);
-        // Instead of using an access guard for Project environment variables, we let Project owners decide whether
-        // a variable should be:
-        //   - exposed in all workspaces (even for non-Project members when the repository is public), or
-        //   - censored from all workspaces (even for Project members)
-        return projectEnvVars.filter(variable => !variable.censored);
+        return await this.projectsService.getProjectEnvironmentVariables(projectId);
     }
 
     protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<void> {

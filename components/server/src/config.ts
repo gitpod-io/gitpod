@@ -150,6 +150,12 @@ export interface ConfigSerialized {
      */
     chargebeeProviderOptionsFile?: string;
     enablePayment?: boolean;
+
+    /**
+     * Number of prebuilds that can be started in the last 1 minute.
+     * Key '*' specifies the default rate limit for a cloneURL, unless overriden by a specific cloneURL.
+     */
+    prebuildLimiter: {[cloneURL: string]: number } & {'*': number};
 }
 
 export namespace ConfigFile {

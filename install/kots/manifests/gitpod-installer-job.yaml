@@ -178,11 +178,20 @@ spec:
               echo "Gitpod: ${CONFIG_PATCH_FILE}=${config_patch}"
               yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' "${CONFIG_FILE}" /tmp/patch.yaml
 
-              echo "Gitpod: Generate the Kubernetes objects and apply"
+              echo "Gitpod: Generate the Kubernetes objects"
               config=$(cat "${CONFIG_FILE}")
               echo "Gitpod: ${CONFIG_FILE}=${config}"
 
-              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} | kubectl apply -f -
+              /app/installer render -c "${CONFIG_FILE}" --namespace {{repl Namespace }} > /tmp/gitpod.yaml
+
+              # Workaround for #8532 and #8529
+              echo "Gitpod: Remove the StatefulSet status object for OpenVSX Proxy"
+              yq eval-all --inplace \
+                'del(select(.kind == "StatefulSet" and .metadata.name == "openvsx-proxy").status)' \
+                /tmp/gitpod.yaml
+
+              echo "Gitpod: Apply the Kubernetes objects"
+              kubectl apply -f /tmp/gitpod.yaml
 
               echo "Gitpod: Installer job finished - goodbye"
       volumes:

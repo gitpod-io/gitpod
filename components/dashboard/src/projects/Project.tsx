@@ -250,7 +250,7 @@ export default function () {
                                 <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
                                     <button className={`primary mr-2 py-2 opacity-0 group-hover:opacity-100`}>New Workspace</button>
                                 </a>
-                                <ItemFieldContextMenu className="py-0.5" menuEntries={(!prebuild || prebuild.status === 'aborted' || prebuild.status === 'timeout' || !!prebuild.error)
+                                <ItemFieldContextMenu className="py-0.5" menuEntries={(!prebuild || prebuild.status === 'aborted' || prebuild.status === 'failed' || prebuild.status === 'timeout' || !!prebuild.error)
                                     ? [{
                                         title: `${prebuild ? 'Rerun' : 'Run'} Prebuild (${branch.name})`,
                                         onClick: () => triggerPrebuild(branch),

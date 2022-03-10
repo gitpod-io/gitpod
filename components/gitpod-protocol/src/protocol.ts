@@ -645,12 +645,14 @@ export type PrebuiltWorkspaceState
     = "queued"
     // the workspace prebuild is currently running (i.e. there's a workspace pod deployed)
     | "building"
-    // the prebuild failed due to some issue with the system (e.g. missed a message, could not start workspace)
+    // the prebuild was aborted
     | "aborted"
     // the prebuild timed out
     | "timeout"
-    // the prebuild has finished and a snapshot is available
-    | "available";
+    // the prebuild has finished (even if a headless task failed) and a snapshot is available
+    | "available"
+    // the prebuild (headless workspace) failed due to some system error
+    | "failed";
 
 export interface PrebuiltWorkspace {
     id: string;

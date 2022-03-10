@@ -818,6 +818,11 @@ func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *ap
 	return &api.WriteIDMappingResponse{}, nil
 }
 
+// Allow workspace users to manipulate the cgroups to which the user process belong by constructing the cgroups of the following form
+//
+// <container-cgorup>  drwxr-xr-x 3 root      root
+// └── workspace       drwxr-xr-x 5 gitpodUid gitpodGid
+//     └── user        drwxr-xr-x 5 gitpodUid gitpodGid
 func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *api.EvacuateCGroupRequest) (*api.EvacuateCGroupResponse, error) {
 	if cgroups.Mode() != cgroups.Unified {
 		return &api.EvacuateCGroupResponse{}, nil

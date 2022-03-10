@@ -44,7 +44,7 @@ export class GitHubGraphQlEndpoint {
         const { host } = this.config;
         const urlString = host === 'github.com' ?
             `https://raw.githubusercontent.com/${org}/${name}/${commitish}/${path}` :
-            `https://${host}/${org}/${name}/raw/${commitish}/${path}`;
+            `https://${host}/raw/${org}/${name}/${commitish}/${path}`;
         const response = await fetch(urlString, {
             timeout: 15000,
             method: 'GET',
@@ -174,7 +174,7 @@ export class GitHubRestApi {
         try {
             const response = (await operation(userApi));
             const statusCode = response.status;
-            if (statusCode !== 200) {
+            if (!(statusCode >= 200 && statusCode < 300)) {
                 throw new GitHubApiError(response);
             }
             return response;

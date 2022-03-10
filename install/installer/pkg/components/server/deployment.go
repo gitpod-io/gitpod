@@ -26,7 +26,38 @@ import (
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
-	configHash, err := common.ObjectHash(configmap(ctx))
+	var hashObj []runtime.Object
+	if objs, err := configmap(ctx); err != nil {
+		return nil, err
+	} else {
+		hashObj = append(hashObj, objs...)
+	}
+
+	hashObj = append(hashObj, &corev1.Pod{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Env: []corev1.EnvVar{
+						// If the database type changes, this pod may stay up if no other changes are made.
+						{
+							Name: "DATABASE_TYPE",
+							Value: func() string {
+								if pointer.BoolDeref(ctx.Config.Database.InCluster, false) {
+									return "in-cluster"
+								}
+								if ctx.Config.Database.CloudSQL != nil {
+									return "cloudsql"
+								}
+								return "external"
+							}(),
+						},
+					},
+				},
+			},
+		},
+	})
+
+	configHash, err := common.ObjectHash(hashObj, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -117,9 +117,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         });
 
         // Express configuration
-        // Read bodies as JSON
-        app.use(bodyParser.json())
-        app.use(bodyParser.urlencoded({ extended: true }))
+        // Read bodies as JSON (but keep the raw body just in case)
+        app.use(bodyParser.json({ verify: (req, res, buffer) => { (req as any).rawBody = buffer; }}));
+        app.use(bodyParser.urlencoded({ extended: true }));
         // Add cookie Parser
         app.use(cookieParser());
         app.set('trust proxy', 1)   // trust first proxy
