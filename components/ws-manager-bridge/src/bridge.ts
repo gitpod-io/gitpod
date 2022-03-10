@@ -300,7 +300,7 @@ export class WorkspaceManagerBridge implements Disposable {
                     disconnectStarted = Number.MAX_SAFE_INTEGER;    // Reset disconnect period
                 } catch (e) {
                     if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
-                        log.warn("error while controlling installation's workspaces", e, { installation: this.cluster.name });
+                        log.warn("Error while controlling installation's workspaces", e, { installation: this.cluster.name });
                     } else if (disconnectStarted > Date.now()) {
                         disconnectStarted = Date.now();
                     }
@@ -325,7 +325,7 @@ export class WorkspaceManagerBridge implements Disposable {
         for (const [instanceId, ri] of runningInstancesIdx.entries()) {
             const instance = ri.latestInstance;
             if (!(instance.status.phase === 'running' || durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds))) {
-                log.debug({ instanceId }, "skipping instance", { phase: instance.status.phase, creationTime: instance.creationTime, region: instance.region });
+                log.debug({ instanceId }, "Skipping instance", { phase: instance.status.phase, creationTime: instance.creationTime, region: instance.region });
                 continue;
             }
 

@@ -51,7 +51,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
         try {
             const prebuild = await this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(status.metadata!.metaId!);
             if (!prebuild) {
-                log.warn(logCtx, "headless workspace without prebuild");
+                log.warn(logCtx, "Headless workspace without prebuild");
                 TraceContext.setError({span}, new Error("headless workspace without prebuild"));
                 return
             }
