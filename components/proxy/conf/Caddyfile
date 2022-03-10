@@ -24,20 +24,20 @@
 
 # configure headers to force HTTPS and enable more strict rules for the browser
 (security_headers) {
-	header {
-		# enable HSTS
-		Strict-Transport-Security  max-age=31536000
-		# disable clients from sniffing the media type
-		X-Content-Type-Options     nosniff
-		# Define valid parents that may embed a page
-		Content-Security-Policy    "frame-ancestors self https://*.{$GITPOD_DOMAIN} https://{$GITPOD_DOMAIN}"
-		# keep referrer data off of HTTP connections
-		Referrer-Policy            no-referrer-when-downgrade
-		# Enable cross-site filter (XSS) and tell browser to block detected attacks
-		X-XSS-Protection           "1; mode=block"
+	# header {
+	# 	# enable HSTS
+	# 	Strict-Transport-Security  max-age=31536000
+	# 	# disable clients from sniffing the media type
+	# 	X-Content-Type-Options     nosniff
+	# 	# Define valid parents that may embed a page
+	# 	Content-Security-Policy    "frame-ancestors self https://*.{$GITPOD_DOMAIN} https://{$GITPOD_DOMAIN}"
+	# 	# keep referrer data off of HTTP connections
+	# 	Referrer-Policy            no-referrer-when-downgrade
+	# 	# Enable cross-site filter (XSS) and tell browser to block detected attacks
+	# 	X-XSS-Protection           "1; mode=block"
 
-		defer # delay changes
-	}
+	# 	defer # delay changes
+	# }
 }
 
 # workspace security headers
