@@ -1,6 +1,8 @@
 # Change Log
 
 ## March 2022
+- Support GitHub Enterprise ([#8574](https://github.com/gitpod-io/gitpod/pull/8574)) - [@jankeromnes](https://github.com/jankeromnes)
+- [kots]: create dev channels in KOTS and formalise the release process ([#8689](https://github.com/gitpod-io/gitpod/pull/8689)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Add support for private registries ([#8550](https://github.com/gitpod-io/gitpod/pull/8550)) - [@csweichel](https://github.com/csweichel)
 - Rate-limit workspace prebuilds to 50 per minute (rolling-window) by default, configurable through config. ([#8568](https://github.com/gitpod-io/gitpod/pull/8568)) - [@andrew-farries](https://github.com/andrew-farries)
 - [kots]: make the self-hosted cert more explicitly selectable ([#8633](https://github.com/gitpod-io/gitpod/pull/8633)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
