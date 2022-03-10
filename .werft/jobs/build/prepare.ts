@@ -63,7 +63,8 @@ function configureCoreDevAccess() {
 }
 
 function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
-    if (config.withVM && !VM.vmExists({ name: config.previewEnvironment.destname })) {
+    const namespace = "preview" + config.previewEnvironment.destname
+    if (config.withVM && !VM.vmExists({ name: namespace })) {
         prepareVM(werft, config)
     } else {
         werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
