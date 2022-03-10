@@ -19,7 +19,6 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { v4 as uuidv4 } from 'uuid';
 import { accessCodeSyncStorage, UserRateLimiter } from '../auth/rate-limiter';
 import { increaseApiCallUserCounter } from '../prometheus-metrics';
-import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
 import { Config } from '../config';
 import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/sugar';
 
@@ -52,10 +51,10 @@ interface ISettingsSyncContent {
     settings: string;
 }
 const userSettingsUri = 'user_storage:settings.json';
+const userPluginsUri = 'user-plugins://';
 
 @injectable()
 export class CodeSyncService {
-
     @inject(Config)
     private readonly config: Config;
 
@@ -67,9 +66,6 @@ export class CodeSyncService {
 
     @inject(CodeSyncResourceDB)
     private readonly db: CodeSyncResourceDB;
-
-    @inject(TheiaPluginService)
-    private readonly theiaPluginService: TheiaPluginService;
 
     @inject(UserStorageResourcesDB)
     private readonly userStorageResourcesDB: UserStorageResourcesDB;
@@ -173,7 +169,7 @@ export class CodeSyncService {
                 let version = 1;
                 let value = '';
                 if (resourceKey === SyncResource.Extensions) {
-                    value = await this.theiaPluginService.getCodeSyncResource(req.user.id);
+                    value = await this.getTheiaCodeSyncResource(req.user.id);
                     version = 5;
                 } else if (resourceKey === SyncResource.Settings) {
                     const settings = await this.userStorageResourcesDB.get(req.user.id, userSettingsUri);
@@ -303,4 +299,40 @@ export class CodeSyncService {
         return router;
     }
 
+    private parseFullPluginName(fullPluginName: string): { name: string; version?: string } {
+        const idx = fullPluginName.lastIndexOf('@');
+        if (idx === -1) {
+            return {
+                name: fullPluginName.toLowerCase(),
+            };
+        }
+        const name = fullPluginName.substring(0, idx).toLowerCase();
+        const version = fullPluginName.substr(idx + 1);
+        return { name, version };
+    }
+
+
+    protected async getTheiaCodeSyncResource(userId: string) {
+        interface ISyncExtension {
+            identifier: {
+                id: string;
+            };
+            version?: string;
+            installed?: boolean;
+        }
+        const extensions: ISyncExtension[] = [];
+        const content = await this.userStorageResourcesDB.get(userId, userPluginsUri);
+        const json = content && JSON.parse(content);
+        const userPlugins = new Set<string>(json);
+        for (const userPlugin of userPlugins) {
+            const fullPluginName = (userPlugin.substring(0, userPlugin.lastIndexOf(':')) || userPlugin).toLowerCase(); // drop hash
+            const { name, version } = this.parseFullPluginName(fullPluginName);
+            extensions.push({
+                identifier: { id: name },
+                version,
+                installed: true,
+            });
+        }
+        return JSON.stringify(extensions);
+    }
 }

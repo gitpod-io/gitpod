@@ -7,8 +7,8 @@
 import {
     User, WorkspaceInfo, WorkspaceCreationResult, WorkspaceInstanceUser,
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, CreateWorkspaceMode,
-    Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
-    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
+    Token, UserEnvVarValue, Terms,
+    Configuration, UserInfo, GitpodTokenType,
     GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, ProjectEnvVar
 } from './protocol';
 import {
@@ -196,15 +196,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * retrieves layout information for the given workspace
      */
     getLayout(workspaceId: string): Promise<string | undefined>;
-
-    /**
-     * @param params
-     * @returns promise resolves to an URL to be used for the upload
-     */
-    preparePluginUpload(params: PreparePluginUploadParams): Promise<string>
-    resolvePlugins(workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins>;
-    installUserPlugins(params: InstallPluginsParams): Promise<boolean>;
-    uninstallUserPlugin(params: UninstallPluginParams): Promise<boolean>;
 
     guessGitTokenScopes(params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes>;
 
