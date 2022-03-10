@@ -22,9 +22,13 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ClusterServiceClient interface {
+	// Register registers a new WorkspaceCluster.
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
+	// Update modififes properties of an already registered WorkspaceCluster.
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
+	// Deregister removes a WorkspaceCluster from available clusters.
 	Deregister(ctx context.Context, in *DeregisterRequest, opts ...grpc.CallOption) (*DeregisterResponse, error)
+	// List returns the currently registered WorkspaceClusters.
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 }
 
@@ -76,9 +80,13 @@ func (c *clusterServiceClient) List(ctx context.Context, in *ListRequest, opts .
 // All implementations must embed UnimplementedClusterServiceServer
 // for forward compatibility
 type ClusterServiceServer interface {
+	// Register registers a new WorkspaceCluster.
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
+	// Update modififes properties of an already registered WorkspaceCluster.
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
+	// Deregister removes a WorkspaceCluster from available clusters.
 	Deregister(context.Context, *DeregisterRequest) (*DeregisterResponse, error)
+	// List returns the currently registered WorkspaceClusters.
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	mustEmbedUnimplementedClusterServiceServer()
 }

@@ -793,8 +793,11 @@ type DeregisterRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name  string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Force bool   `protobuf:"varint,2,opt,name=force,proto3" json:"force,omitempty"`
+	// name is the name of the WorkspaceCluster to deregister
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// force causes the cluster to be deregistered even if there are
+	// intances still running on the cluster.
+	Force bool `protobuf:"varint,2,opt,name=force,proto3" json:"force,omitempty"`
 }
 
 func (x *DeregisterRequest) Reset() {

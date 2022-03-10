@@ -8,10 +8,18 @@ package workspacemanagerbridge;
 
 option go_package = "github.com/gitpod-io/gitpod/workspace-manager-bridge/api";
 
+// ClusterService enables WorkspaceClusters to be dynamically managed.
 service ClusterService {
+  // Register registers a new WorkspaceCluster.
   rpc Register(RegisterRequest) returns (RegisterResponse) {}
+
+  // Update modififes properties of an already registered WorkspaceCluster.
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
+
+  // Deregister removes a WorkspaceCluster from available clusters.
   rpc Deregister(DeregisterRequest) returns (DeregisterResponse) {}
+
+  // List returns the currently registered WorkspaceClusters.
   rpc List(ListRequest) returns (ListResponse) {}
 }
 
@@ -104,7 +112,10 @@ message ModifyAdmissionConstraint {
 message UpdateResponse {}
 
 message DeregisterRequest {
+  // name is the name of the WorkspaceCluster to deregister
   string name = 1;
+  // force causes the cluster to be deregistered even if there are
+  // intances still running on the cluster.
   bool force = 2;
 }
 
