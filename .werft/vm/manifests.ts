@@ -158,6 +158,13 @@ chpasswd:
     ubuntu:ubuntu
   expire: False
 write_files:
+  - path: /etc/rancher/k3s/registries.yaml
+    permissions: '0755'
+    content: |
+      mirrors:
+        docker.io:
+          endpoint:
+            - "https://mirror.gcr.io"
   - path: /etc/disable-services.sh
     permissions: '0755'
     content: |
