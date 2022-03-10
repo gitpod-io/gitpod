@@ -10,6 +10,12 @@
 function preview-name-from-branch {
     branch_name=$(git symbolic-ref HEAD 2>&1) || error "Cannot get current branch"
     sanitizedd_branch_name=$(echo "$branch_name" | awk '{ sub(/^refs\/heads\//, ""); $0 = tolower($0); gsub(/[^-a-z0-9]/, "-"); print }')
-    hashed=$(echo -n "${sanitizedd_branch_name}" | sha256sum)
-    echo "${sanitizedd_branch_name:0:10}${hashed:0:10}"
+    length=$(echo -n "$sanitizedd_branch_name" | wc -c)
+
+    if [ "$length" -gt 20 ]; then
+        hashed=$(echo -n "${sanitizedd_branch_name}" | sha256sum)
+        echo "${sanitizedd_branch_name:0:10}${hashed:0:10}"
+    else
+        echo "${sanitizedd_branch_name}"
+    fi
 }
