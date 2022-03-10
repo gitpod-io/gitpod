@@ -255,6 +255,7 @@ export async function waitUntilAllPodsAreReady(namespace: string, shellOpts: Exe
         const pods: Pod[] = getPods(namespace)
         if (pods.length == 0) {
             werft.log(shellOpts.slice, `The namespace is empty or does not exist.`)
+            await sleep(2 * 1000)
             continue
         }
 
