@@ -11,7 +11,7 @@ export class PrebuildUpdatableSHA1646803519382 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (!(await columnExists(queryRunner, "d_b_prebuilt_workspace_updatable", "commitSHA"))) {
-            await queryRunner.query("ALTER TABLE d_b_prebuilt_workspace_updatable ADD COLUMN commitSHA varchar(255) NOT NULL");
+            await queryRunner.query("ALTER TABLE d_b_prebuilt_workspace_updatable ADD COLUMN commitSHA varchar(255) NOT NULL DEFAULT ''");
         }
     }
 
