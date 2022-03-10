@@ -257,6 +257,7 @@ export async function waitUntilAllPodsAreReady(namespace: string, shellOpts: Exe
             pods = getPods(namespace)
         } catch (err) {
             werft.log(shellOpts.slice, err)
+            continue
         }
         if (pods.length == 0) {
             werft.log(shellOpts.slice, `The namespace is empty or does not exist.`)
