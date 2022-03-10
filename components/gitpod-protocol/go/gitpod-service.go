@@ -7,7 +7,6 @@
 package protocol
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -76,10 +75,6 @@ type APIInterface interface {
 	GetSnapshots(ctx context.Context, workspaceID string) (res []*string, err error)
 	StoreLayout(ctx context.Context, workspaceID string, layoutData string) (err error)
 	GetLayout(ctx context.Context, workspaceID string) (res string, err error)
-	PreparePluginUpload(ctx context.Context, params *PreparePluginUploadParams) (res string, err error)
-	ResolvePlugins(ctx context.Context, workspaceID string, params *ResolvePluginsParams) (res *ResolvedPlugins, err error)
-	InstallUserPlugins(ctx context.Context, params *InstallPluginsParams) (res bool, err error)
-	UninstallUserPlugin(ctx context.Context, params *UninstallPluginParams) (res bool, err error)
 	GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error)
 	TrackEvent(ctx context.Context, event *RemoteTrackMessage) (err error)
 
@@ -192,14 +187,6 @@ const (
 	FunctionStoreLayout FunctionName = "storeLayout"
 	// FunctionGetLayout is the name of the getLayout function
 	FunctionGetLayout FunctionName = "getLayout"
-	// FunctionPreparePluginUpload is the name of the preparePluginUpload function
-	FunctionPreparePluginUpload FunctionName = "preparePluginUpload"
-	// FunctionResolvePlugins is the name of the resolvePlugins function
-	FunctionResolvePlugins FunctionName = "resolvePlugins"
-	// FunctionInstallUserPlugins is the name of the installUserPlugins function
-	FunctionInstallUserPlugins FunctionName = "installUserPlugins"
-	// FunctionUninstallUserPlugin is the name of the uninstallUserPlugin function
-	FunctionUninstallUserPlugin FunctionName = "uninstallUserPlugin"
 	// FunctionGuessGitTokenScopes is the name of the guessGitTokenScopes function
 	FunctionGuessGitTokenScope FunctionName = "guessGitTokenScopes"
 	// FunctionTrackEvent is the name of the trackEvent function
@@ -1338,87 +1325,6 @@ func (gp *APIoverJSONRPC) GetLayout(ctx context.Context, workspaceID string) (re
 	return
 }
 
-// PreparePluginUpload calls preparePluginUpload on the server
-func (gp *APIoverJSONRPC) PreparePluginUpload(ctx context.Context, params *PreparePluginUploadParams) (res string, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, params)
-
-	var result string
-	err = gp.C.Call(ctx, "preparePluginUpload", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
-// ResolvePlugins calls resolvePlugins on the server
-func (gp *APIoverJSONRPC) ResolvePlugins(ctx context.Context, workspaceID string, params *ResolvePluginsParams) (res *ResolvedPlugins, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, workspaceID)
-	_params = append(_params, params)
-
-	var result ResolvedPlugins
-	err = gp.C.Call(ctx, "resolvePlugins", _params, &result)
-	if err != nil {
-		return
-	}
-	res = &result
-
-	return
-}
-
-// InstallUserPlugins calls installUserPlugins on the server
-func (gp *APIoverJSONRPC) InstallUserPlugins(ctx context.Context, params *InstallPluginsParams) (res bool, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, params)
-
-	var result bool
-	err = gp.C.Call(ctx, "installUserPlugins", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
-// UninstallUserPlugin calls uninstallUserPlugin on the server
-func (gp *APIoverJSONRPC) UninstallUserPlugin(ctx context.Context, params *UninstallPluginParams) (res bool, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, params)
-
-	var result bool
-	err = gp.C.Call(ctx, "uninstallUserPlugin", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
 // GuessGitTokenScopes calls GuessGitTokenScopes on the server
 func (gp *APIoverJSONRPC) GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (res *GuessedGitTokenScopes, err error) {
 	if gp == nil {
@@ -1550,11 +1456,6 @@ type APIToken struct {
 
 	// The user the token belongs to.
 	User *User `json:"user,omitempty"`
-}
-
-// InstallPluginsParams is the InstallPluginsParams message type
-type InstallPluginsParams struct {
-	PluginIds []string `json:"pluginIds,omitempty"`
 }
 
 // OAuth2Config is the OAuth2Config message type
@@ -1829,17 +1730,6 @@ type PortConfig struct {
 	Name        string  `json:"name,omitempty"`
 }
 
-// ResolvedPlugins is the ResolvedPlugins message type
-type ResolvedPlugins struct {
-	AdditionalProperties map[string]*ResolvedPlugin `json:"-,omitempty"`
-}
-
-// ResolvePluginsParams is the ResolvePluginsParams message type
-type ResolvePluginsParams struct {
-	Builtins *ResolvedPlugins `json:"builtins,omitempty"`
-	Config   *WorkspaceConfig `json:"config,omitempty"`
-}
-
 // TaskConfig is the TaskConfig message type
 type TaskConfig struct {
 	Before   string                 `json:"before,omitempty"`
@@ -1855,55 +1745,6 @@ type TaskConfig struct {
 // VSCodeConfig is the VSCodeConfig message type
 type VSCodeConfig struct {
 	Extensions []string `json:"extensions,omitempty"`
-}
-
-// MarshalJSON marshals to JSON
-func (strct *ResolvedPlugins) MarshalJSON() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 0))
-	buf.WriteString("{")
-	comma := false
-	// Marshal any additional Properties
-	for k, v := range strct.AdditionalProperties {
-		if comma {
-			buf.WriteString(",")
-		}
-		buf.WriteString(fmt.Sprintf("\"%s\":", k))
-		tmp, err := json.Marshal(v)
-		if err != nil {
-			return nil, err
-		}
-
-		buf.Write(tmp)
-		comma = true
-	}
-
-	buf.WriteString("}")
-	rv := buf.Bytes()
-	return rv, nil
-}
-
-// UnmarshalJSON marshals from JSON
-func (strct *ResolvedPlugins) UnmarshalJSON(b []byte) error {
-	var jsonMap map[string]json.RawMessage
-	if err := json.Unmarshal(b, &jsonMap); err != nil {
-		return err
-	}
-	// parse all the defined properties
-	for k, v := range jsonMap {
-		switch k {
-		default:
-			// an additional "*ResolvedPlugin" value
-			var additionalValue *ResolvedPlugin
-			if err := json.Unmarshal([]byte(v), &additionalValue); err != nil {
-				return err // invalid additionalProperty
-			}
-			if strct.AdditionalProperties == nil {
-				strct.AdditionalProperties = make(map[string]*ResolvedPlugin)
-			}
-			strct.AdditionalProperties[k] = additionalValue
-		}
-	}
-	return nil
 }
 
 // Configuration is the Configuration message type
@@ -1943,11 +1784,6 @@ type TakeSnapshotOptions struct {
 	DontWait    bool   `json:"dontWait,omitempty"`
 }
 
-// PreparePluginUploadParams is the PreparePluginUploadParams message type
-type PreparePluginUploadParams struct {
-	FullPluginName string `json:"fullPluginName,omitempty"`
-}
-
 // AdminBlockUserRequest is the AdminBlockUserRequest message type
 type AdminBlockUserRequest struct {
 	UserID    string `json:"id,omitempty"`
@@ -1983,21 +1819,6 @@ type UpdateOwnAuthProviderParams struct {
 type CreateWorkspaceOptions struct {
 	ContextURL string `json:"contextUrl,omitempty"`
 	Mode       string `json:"mode,omitempty"`
-}
-
-// Root is the Root message type
-type Root map[string]*ResolvedPlugin
-
-// ResolvedPlugin is the ResolvedPlugin message type
-type ResolvedPlugin struct {
-	FullPluginName string `json:"fullPluginName,omitempty"`
-	Kind           string `json:"kind,omitempty"`
-	URL            string `json:"url,omitempty"`
-}
-
-// UninstallPluginParams is the UninstallPluginParams message type
-type UninstallPluginParams struct {
-	PluginID string `json:"pluginId,omitempty"`
 }
 
 // DeleteOwnAuthProviderParams is the DeleteOwnAuthProviderParams message type

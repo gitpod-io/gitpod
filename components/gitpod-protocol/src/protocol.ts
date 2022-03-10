@@ -516,24 +516,6 @@ export namespace Workspace {
     }
 }
 
-export interface PreparePluginUploadParams {
-    fullPluginName: string;
-}
-
-export interface ResolvePluginsParams {
-    config?: WorkspaceConfig
-    builtins?: ResolvedPlugins
-    vsxRegistryUrl?: string
-}
-
-export interface InstallPluginsParams {
-    pluginIds: string[]
-}
-
-export interface UninstallPluginParams {
-    pluginId: string;
-}
-
 export interface GuessGitTokenScopesParams {
     host: string
     repoUrl: string
@@ -550,18 +532,6 @@ export interface GitToken {
 export interface GuessedGitTokenScopes {
     message?: string
     scopes?: string[]
-}
-
-export type ResolvedPluginKind = 'user' | 'workspace' | 'builtin';
-
-export interface ResolvedPlugins {
-    [pluginId: string]: ResolvedPlugin | undefined
-}
-
-export interface ResolvedPlugin {
-    fullPluginName: string;
-    url: string;
-    kind: ResolvedPluginKind;
 }
 
 export interface VSCodeConfig {

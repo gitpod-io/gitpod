@@ -125,10 +125,6 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "getSnapshots": { group: "default", points: 1 },
         "storeLayout": { group: "default", points: 1 },
         "getLayout": { group: "default", points: 1 },
-        "preparePluginUpload": { group: "default", points: 1 },
-        "resolvePlugins": { group: "default", points: 1 },
-        "installUserPlugins": { group: "default", points: 1 },
-        "uninstallUserPlugin": { group: "default", points: 1 },
         "guessGitTokenScopes": { group: "default", points: 1 },
 
         "adminGetUsers": { group: "default", points: 1 },
