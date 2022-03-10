@@ -251,11 +251,16 @@ interface Pod {
 export async function waitUntilAllPodsAreReady(namespace: string, shellOpts: ExecOptions) {
     const werft = getGlobalWerftInstance();
     werft.log(shellOpts.slice, `Waiting until all pods in namespace ${namespace} are Running/Succeeded/Completed.`)
-    for (let i = 0; i < 300; i++) {
-        const pods: Pod[] = getPods(namespace)
+    for (let i = 0; i < 200; i++) {
+        let pods: Pod[]
+        try {
+            pods = getPods(namespace)
+        } catch (err) {
+            werft.log(shellOpts.slice, err)
+        }
         if (pods.length == 0) {
             werft.log(shellOpts.slice, `The namespace is empty or does not exist.`)
-            await sleep(2 * 1000)
+            await sleep(3 * 1000)
             continue
         }
 
@@ -272,14 +277,18 @@ export async function waitUntilAllPodsAreReady(namespace: string, shellOpts: Exe
         const list = unreadyPods.map(p => `${p.name}:${p.phase}`).join(", ")
         werft.log(shellOpts.slice, `Unready pods: ${list}`)
 
-        await sleep(2 * 1000)
+        await sleep(3 * 1000)
     }
     exec(`kubectl get pods -n ${namespace}`, { ...shellOpts, async: false })
     throw new Error(`Not all pods in namespace ${namespace} transitioned to 'Running' or 'Succeeded/Completed' during the expected time.`)
 }
 
 function getPods(namespace: string): Pod[] {
-    const unsanitizedPods = exec(`kubectl get pods -n ${namespace}  -o=jsonpath='{range .items[*]}{@.metadata.name}:{@.metadata.ownerReferences[0].kind}:{@.status.phase};{end}'`, { silent: true, async: false });
+    const cmd = `kubectl get pods -n ${namespace}  -o=jsonpath='{range .items[*]}{@.metadata.name}:{@.metadata.ownerReferences[0].kind}:{@.status.phase};{end}'`
+    const unsanitizedPods = exec(cmd, { silent: true, async: false, dontCheckRc: true });
+    if (unsanitizedPods.code != 0) {
+        throw new Error(`"${cmd}" failed with code ${unsanitizedPods.code}; stdout: ${unsanitizedPods.stdout}; stderr: ${unsanitizedPods.stderr}`)
+    }
 
     return unsanitizedPods
         .split(";")
