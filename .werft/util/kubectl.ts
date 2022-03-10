@@ -283,7 +283,7 @@ export async function waitUntilAllPodsAreReady(namespace: string, slice: string)
 
         await sleep(2 * 1000)
     }
-    exec(`kubectl get pods -n ${namespace}`, { ...shellOpts, async: false })
+    exec(`kubectl get pods -n ${namespace}`, { slice, async: false })
     throw new Error(`Not all pods in namespace ${namespace} transitioned to 'Running' or 'Succeeded/Completed' during the expected time.`)
 }
 
