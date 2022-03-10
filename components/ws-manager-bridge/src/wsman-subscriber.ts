@@ -51,7 +51,7 @@ export class WsmanSubscriber implements Disposable {
 
                             try {
                                 callbacks.onStatusUpdate({ span }, status);
-                            } catch (e) {
+                            } catch (err) {
                                 log.error("Error handling onStatusUpdate", err, payload)
                             }
                         }
