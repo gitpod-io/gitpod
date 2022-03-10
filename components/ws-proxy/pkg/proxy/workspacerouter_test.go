@@ -167,17 +167,6 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			},
 		},
 		{
-			Name:       "webview workspace match",
-			HostHeader: "webview-amaranth-smelt-9ba20cc1" + wsHostSuffix,
-			Expected: matchResult{
-				MatchesWorkspace: true,
-				WorkspaceVars: map[string]string{
-					foreignOriginIdentifier: "webview-",
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-				},
-			},
-		},
-		{
 			Name:       "unique webview workspace match",
 			HostHeader: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-foreign" + wsHostSuffix,
 			Path:       "/amaranth-smelt-9ba20cc1/index.html",
@@ -187,53 +176,6 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					foreignOriginIdentifier: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-",
 					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "extension host workspace match",
-			HostHeader: "extensions-foreign" + wsHostSuffix,
-			Path:       "/amaranth-smelt-9ba20cc1/index.html",
-			Expected: matchResult{
-				MatchesWorkspace: true,
-				WorkspaceVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					foreignOriginIdentifier: "extensions-",
-					foreignPathIdentifier:   "/index.html",
-				},
-			},
-		},
-		{
-			Name:       "mini browser workspace match",
-			HostHeader: "browser-amaranth-smelt-9ba20cc1" + wsHostSuffix,
-			Expected: matchResult{
-				MatchesWorkspace: true,
-				WorkspaceVars: map[string]string{
-					foreignOriginIdentifier: "browser-",
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-				},
-			},
-		},
-		{
-			Name:       "port match",
-			HostHeader: "8080-amaranth-smelt-9ba20cc1" + wsHostSuffix,
-			Expected: matchResult{
-				MatchesPort: true,
-				PortVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
-				},
-			},
-		},
-		{
-			Name:       "webview port match",
-			HostHeader: "webview-8080-amaranth-smelt-9ba20cc1" + wsHostSuffix,
-			Expected: matchResult{
-				MatchesPort: true,
-				PortVars: map[string]string{
-					foreignOriginIdentifier: "webview-",
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
 				},
 			},
 		},
@@ -252,26 +194,65 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			},
 		},
 		{
-			Name:       "extension host port match",
-			HostHeader: "extensions-foreign" + wsHostSuffix,
+			Name:       "unique webview workspace match 2",
+			HostHeader: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
+			Path:       "/amaranth-smelt-9ba20cc1/index.html",
+			Expected: matchResult{
+				MatchesWorkspace: true,
+				WorkspaceVars: map[string]string{
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					foreignOriginIdentifier: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
+					foreignPathIdentifier:   "/index.html",
+				},
+			},
+		},
+		{
+			Name:       "unique webview port match 2",
+			HostHeader: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
 			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
 					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					workspacePortIdentifier: "8080",
-					foreignOriginIdentifier: "extensions-",
+					foreignOriginIdentifier: "0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
 					foreignPathIdentifier:   "/index.html",
 				},
 			},
 		},
 		{
-			Name:       "mini browser port match",
-			HostHeader: "browser-8080-amaranth-smelt-9ba20cc1" + wsHostSuffix,
+			Name:       "unique webworker workspace match",
+			HostHeader: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
+			Path:       "/amaranth-smelt-9ba20cc1/index.html",
+			Expected: matchResult{
+				MatchesWorkspace: true,
+				WorkspaceVars: map[string]string{
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					foreignOriginIdentifier: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
+					foreignPathIdentifier:   "/index.html",
+				},
+			},
+		},
+		{
+			Name:       "unique webworker port match",
+			HostHeader: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk" + wsHostSuffix,
+			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
-					foreignOriginIdentifier: "browser-",
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					workspacePortIdentifier: "8080",
+					foreignOriginIdentifier: "v--0d9rkrj560blqb5s07q431ru9mhg19k1k4bqgd1dbprtgmt7vuhk",
+					foreignPathIdentifier:   "/index.html",
+				},
+			},
+		},
+		{
+			Name:       "port match",
+			HostHeader: "8080-amaranth-smelt-9ba20cc1" + wsHostSuffix,
+			Expected: matchResult{
+				MatchesPort: true,
+				PortVars: map[string]string{
 					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					workspacePortIdentifier: "8080",
 				},
