@@ -6,7 +6,7 @@
 
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB, InstallationAdminDB, ProjectDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields, Permission, SnapshotContext } from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient as GitpodApiClient, GitpodServer, GitpodToken, GitpodTokenType, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields, Permission, SnapshotContext } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -34,7 +34,6 @@ import { Config } from '../config';
 import { NotFoundError, UnauthorizedError } from '../errors';
 import { RepoURL } from '../repohost/repo-url';
 import { TermsProvider } from '../terms/terms-provider';
-import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
 import { AuthorizationService } from '../user/authorization-service';
 import { TokenProvider } from '../user/token-provider';
 import { UserDeletionService } from '../user/user-deletion-service';
@@ -101,8 +100,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
 
     @inject(IClientDataPrometheusAdapter) protected readonly clientDataPrometheusAdapter: IClientDataPrometheusAdapter;
-
-    @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
 
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
 
@@ -2098,49 +2095,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = this.checkUser("hasPermission");
         return this.authorizationService.hasPermission(user, permission);
-    }
-
-    preparePluginUpload(ctx: TraceContext, params: PreparePluginUploadParams): Promise<string> {
-        traceAPIParams(ctx, { params });
-
-        const user = this.checkUser("preparePluginUpload");
-        return this.pluginService.preparePluginUpload(params, user.id);
-    }
-
-    async resolvePlugins(ctx: TraceContext, workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins> {
-        traceAPIParams(ctx, {
-            workspaceId,
-            params: {
-                ...censor(params, "config"),
-                ...(params.config?.vscode ? {
-                    config: {
-                        vscode: params.config.vscode,
-                    },
-                } : {}),
-            },
-        }); // censor config because of size/potential PII, except of vscode parts
-        traceWI(ctx, { workspaceId });
-
-        this.checkUser("resolvePlugins")
-
-        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
-        const result = await this.pluginService.resolvePlugins(workspace.ownerId, params);
-        return result.resolved;
-    };
-
-    installUserPlugins(ctx: TraceContext, params: InstallPluginsParams): Promise<boolean> {
-        traceAPIParams(ctx, { params });
-
-        const userId = this.checkUser("installUserPlugins").id;
-        return this.pluginService.installUserPlugins(userId, params);
-    }
-
-    uninstallUserPlugin(ctx: TraceContext, params: UninstallPluginParams): Promise<boolean> {
-        traceAPIParams(ctx, { params });
-
-        const userId = this.checkUser("uninstallUserPlugin").id;
-        return this.pluginService.uninstallUserPlugin(userId, params);
     }
 
     async guessGitTokenScopes(ctx: TraceContext, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {

@@ -36,7 +36,6 @@ import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientPr
 import { WorkspaceStarter } from './workspace/workspace-starter';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { AuthorizationService, AuthorizationServiceImpl } from './user/authorization-service';
-import { TheiaPluginService } from './theia-plugin/theia-plugin-service';
 import { ConsensusLeaderMessenger } from './consensus/consensus-leader-messenger';
 import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus-leader-messenger';
 import { ConsensusLeaderQorum } from './consensus/consensus-leader-quorum';
@@ -177,8 +176,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
     bind(IWorkspaceManagerClientCallMetrics).toService(IClientCallMetrics);
-
-    bind(TheiaPluginService).toSelf().inSingletonScope();
 
     bind(RabbitMQConsensusLeaderMessenger).toSelf().inSingletonScope();
     bind(ConsensusLeaderMessenger).toService(RabbitMQConsensusLeaderMessenger);
