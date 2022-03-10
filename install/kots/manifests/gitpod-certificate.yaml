@@ -8,7 +8,7 @@ spec:
   secretName: https-certificates
   issuerRef:
     name: '{{repl if (ConfigOptionEquals "tls_self_signed_enabled" "1" ) }}ca-issuer{{repl else }}gitpod-issuer{{repl end }}'
-    kind: '{{repl if or (ConfigOptionEquals "tls_self_signed_enabled" "1") (ConfigOptionNotEquals "cert_manager_provider" "azure") }}Issuer{{repl else }}ClusterIssuer{{repl end }}'
+    kind: Issuer
   dnsNames:
     - '{{repl ConfigOption "domain" }}'
     - '*.{{repl ConfigOption "domain" }}'

@@ -9,3 +9,12 @@ spec:
     chartVersion: 1.7.0
   helmVersion: v3
   useHelmInstall: true
+  optionalValues:
+    # Azure must have issuer-ambient-credentials set to true
+    # @link https://github.com/cert-manager/cert-manager/issues/4867
+    - when: "repl{{ and (ConfigOptionEquals `tls_self_signed_enabled` `0`) (ConfigOptionEquals `cert_manager_provider` `azure`) }}"
+      recursiveMerge: true
+      values:
+        cert-manager:
+          extraArgs:
+            - '--issuer-ambient-credentials=true'

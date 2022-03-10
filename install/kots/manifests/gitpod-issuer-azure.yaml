@@ -1,7 +1,5 @@
-# Azure doesn't seem to like using an Issuer
-# @link https://github.com/cert-manager/cert-manager/issues/4867c
 apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
+kind: Issuer
 metadata:
   name: gitpod-issuer
   annotations:
