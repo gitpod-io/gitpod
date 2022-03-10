@@ -218,6 +218,8 @@ write_files:
       # apply fix from https://github.com/k3s-io/klipper-lb/issues/6 so we can use the klipper servicelb
       # this can be removed if https://github.com/gitpod-io/gitpod-packer-gcp-image/pull/20 gets merged
       cat /var/lib/gitpod/manifests/calico.yaml | sed s/__KUBERNETES_NODE_NAME__\\"\\,/__KUBERNETES_NODE_NAME__\\",\\ \\"container_settings\\"\\:\\ \\{\\ \\"allow_ip_forwarding\\"\\:\\ true\\ \\}\\,/ > /var/lib/gitpod/manifests/calico2.yaml
+
+      sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico2.yaml
       kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
 
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
