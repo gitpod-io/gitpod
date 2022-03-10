@@ -98,8 +98,10 @@ function deserialize_workspacemanagerbridge_UpdateResponse(buffer_arg) {
 }
 
 
+// ClusterService enables WorkspaceClusters to be dynamically managed.
 var ClusterServiceService = exports.ClusterServiceService = {
-  register: {
+  // Register registers a new WorkspaceCluster.
+register: {
     path: '/workspacemanagerbridge.ClusterService/Register',
     requestStream: false,
     responseStream: false,
@@ -110,7 +112,8 @@ var ClusterServiceService = exports.ClusterServiceService = {
     responseSerialize: serialize_workspacemanagerbridge_RegisterResponse,
     responseDeserialize: deserialize_workspacemanagerbridge_RegisterResponse,
   },
-  update: {
+  // Update modififes properties of an already registered WorkspaceCluster.
+update: {
     path: '/workspacemanagerbridge.ClusterService/Update',
     requestStream: false,
     responseStream: false,
@@ -121,7 +124,8 @@ var ClusterServiceService = exports.ClusterServiceService = {
     responseSerialize: serialize_workspacemanagerbridge_UpdateResponse,
     responseDeserialize: deserialize_workspacemanagerbridge_UpdateResponse,
   },
-  deregister: {
+  // Deregister removes a WorkspaceCluster from available clusters.
+deregister: {
     path: '/workspacemanagerbridge.ClusterService/Deregister',
     requestStream: false,
     responseStream: false,
@@ -132,7 +136,8 @@ var ClusterServiceService = exports.ClusterServiceService = {
     responseSerialize: serialize_workspacemanagerbridge_DeregisterResponse,
     responseDeserialize: deserialize_workspacemanagerbridge_DeregisterResponse,
   },
-  list: {
+  // List returns the currently registered WorkspaceClusters.
+list: {
     path: '/workspacemanagerbridge.ClusterService/List',
     requestStream: false,
     responseStream: false,
