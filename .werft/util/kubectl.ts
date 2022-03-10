@@ -242,14 +242,14 @@ export function waitForDeploymentToSucceed(name: string, namespace: string, type
     exec(`kubectl rollout status ${type} ${name} -n ${namespace}`, shellOpts);
 }
 
-export async function waitUntilAllPodsAreReady(namespace: string, shellOpts: ExecOptions) {
+export async function waitUntilAllPodsAreReady(namespace: string, slice: string) {
     interface Pod {
         name: string
         owner: string
         phase: string
     }
     const werft = getGlobalWerftInstance();
-    werft.log(shellOpts.slice, `Waiting until all pods in namespace ${namespace} are Running/Succeeded/Completed.`)
+    werft.logOutput(slice, `Waiting until all pods in namespace ${namespace} are Running/Succeeded/Completed.`)
     for (let i = 0; i < 300; i++) {
         const pods: Pod[] = exec(`kubectl get pods -n ${namespace}  -o=jsonpath='{range .items[*]}{@.metadata.name}:{@.metadata.ownerReferences[0].kind}:{@.status.phase};{end}'`, { silent: true, async: false })
             .split(";")
@@ -271,14 +271,14 @@ export async function waitUntilAllPodsAreReady(namespace: string, shellOpts: Exe
         }
 
         if (pods.length == 0) {
-            werft.log(shellOpts.slice, `The namespace is empty or does not exist.`)
+            werft.logOutput(slice, `The namespace is empty or does not exist.`)
         } else {
             if (unready.length == 0) {
-                werft.log(shellOpts.slice, `All pods are Running/Succeeded/Completed!`)
+                werft.logOutput(slice, `All pods are Running/Succeeded/Completed!`)
                 return;
             }
             const list = unready.map(p => `${p.name}:${p.phase}`).join(", ")
-            werft.log(shellOpts.slice, `Unready pods: ${list}`)
+            werft.logOutput(slice, `Unready pods: ${list}`)
         }
 
         await sleep(2 * 1000)
@@ -287,13 +287,13 @@ export async function waitUntilAllPodsAreReady(namespace: string, shellOpts: Exe
     throw new Error(`Not all pods in namespace ${namespace} transitioned to 'Running' or 'Succeeded/Completed' during the expected time.`)
 }
 
-export async function waitForApiserver(shellOpts: ExecOptions) {
+export async function waitForApiserver(slice: string) {
     const werft = getGlobalWerftInstance();
     for (let i = 0; i < 300; i++) {
-        werft.log(shellOpts.slice, 'Checking that k3s apiserver is ready...')
-        const result = exec(`kubectl get --raw='/readyz?verbose'`, { ...shellOpts, dontCheckRc: true, async: false });
+        werft.logOutput(slice, 'Checking that k3s apiserver is ready...')
+        const result = exec(`kubectl get --raw='/readyz?verbose'`, { slice: slice, dontCheckRc: true, async: false });
         if (result.code == 0) {
-            werft.log(shellOpts.slice, 'k3s apiserver is ready')
+            werft.logOutput(slice, 'k3s apiserver is ready')
             return;
         }
         await sleep(2 * 1000)

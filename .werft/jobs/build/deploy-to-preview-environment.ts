@@ -126,12 +126,12 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         werft.done(vmSlices.KUBECONFIG)
 
         werft.log(vmSlices.WAIT_K3S, 'Wait for k3s')
-        await waitForApiserver({ slice:vmSlices.WAIT_K3S })
-        await waitUntilAllPodsAreReady("kube-system", { slice:vmSlices.WAIT_K3S } )
+        await waitForApiserver(vmSlices.WAIT_K3S)
+        await waitUntilAllPodsAreReady("kube-system", vmSlices.WAIT_K3S)
         werft.done(vmSlices.WAIT_K3S)
 
         werft.log(vmSlices.WAIT_CERTMANAGER, 'Wait for Cert-Manager')
-        await waitUntilAllPodsAreReady("cert-manager", { slice:vmSlices.WAIT_CERTMANAGER } )
+        await waitUntilAllPodsAreReady("cert-manager", vmSlices.WAIT_CERTMANAGER)
         werft.done(vmSlices.WAIT_CERTMANAGER)
 
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
@@ -448,7 +448,7 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     }
 
     werft.log(installerSlices.DEPLOYMENT_WAITING, "Waiting until all pods are ready.");
-    await waitUntilAllPodsAreReady(deploymentConfig.namespace, { slice: installerSlices.DEPLOYMENT_WAITING })
+    await waitUntilAllPodsAreReady(deploymentConfig.namespace, installerSlices.DEPLOYMENT_WAITING)
     werft.done(installerSlices.DEPLOYMENT_WAITING);
 
     await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, !withVM)
