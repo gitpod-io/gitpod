@@ -3,6 +3,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: gitpod-installation
+  labels:
+    app: gitpod
+    component: gitpod-installer
 data:
   channelName: '{{repl ChannelName }}'
   cursor: '{{repl Cursor }}'

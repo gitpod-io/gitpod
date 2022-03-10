@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: container-registry-s3-backend
+  labels:
+    app: gitpod
+    component: gitpod-installer
   annotations:
     kots.io/when: '{{repl and (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
 data:

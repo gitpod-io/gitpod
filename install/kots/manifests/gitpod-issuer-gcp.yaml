@@ -2,6 +2,9 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: gitpod-issuer
+  labels:
+    app: gitpod
+    component: gitpod-installer
   annotations:
     kots.io/when: '{{repl and (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
 spec:
