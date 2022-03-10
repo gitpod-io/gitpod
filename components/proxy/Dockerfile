@@ -19,7 +19,8 @@ RUN xcaddy build v2.4.5 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload=/plugins/workspacedownload \
   --with github.com/gitpod-io/gitpod/proxy/plugins/headlesslogdownload=/plugins/headlesslogdownload \
   --with github.com/gitpod-io/gitpod/proxy/plugins/logif=/plugins/logif \
-  --with github.com/gitpod-io/gitpod/proxy/plugins/jsonselect=/plugins/jsonselect
+  --with github.com/gitpod-io/gitpod/proxy/plugins/jsonselect=/plugins/jsonselect \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel
 
 FROM alpine:3.15
 
@@ -42,4 +43,4 @@ ARG VERSION
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
 
-CMD [ "caddy", "run", "-watch", "-config", "/etc/caddy/Caddyfile" ]
+CMD [ "caddy", "run", "-adapter", "inject-ssh-tunnel" , "-watch", "-config", "/etc/caddy/Caddyfile" ]

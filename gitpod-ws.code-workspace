@@ -6,7 +6,6 @@
       { "path": "components/content-service" },
       { "path": "components/docker-up" },
       { "path": "components/ee/agent-smith" },
-      { "path": "components/ee/ws-scheduler" },
       { "path": "components/gitpod-cli" },
       { "path": "components/gitpod-protocol" },
       { "path": "components/image-builder-bob" },
@@ -27,7 +26,7 @@
       { "path": "dev/loadgen" },
       { "path": "dev/poolkeeper" },
       { "path": "dev/sweeper" },
-      { "path": "installer" }
+      { "path": "install/installer" }
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",
@@ -49,16 +48,6 @@
       "go.formatTool": "goimports",
       "go.useLanguageServer": true,
       "workspace.supportMultiRootWorkspace": true,
-      "database.connections": [
-         {
-            "type": "mysql",
-            "name": "devstaging DB",
-            "host": "127.0.0.1:23306",
-            "username": "gitpod",
-            "database": "gitpod",
-            "password": "test"
-         }
-      ],
       "launch": {},
       "files.exclude": {
          "**/.git": true

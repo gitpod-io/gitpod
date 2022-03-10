@@ -124,3 +124,25 @@ const gitpodVersionInfo = new prometheusClient.Gauge({
 export function setGitpodVersion(gitpod_version: string){
     gitpodVersionInfo.set({gitpod_version}, 1)
 }
+
+const instanceStartsSuccessTotal = new prometheusClient.Counter({
+    name: 'gitpod_server_instance_starts_success_total',
+    help: 'Total amount of successfully performed instance starts',
+    labelNames: ['retries'],
+    registers: [prometheusClient.register],
+});
+
+export function increaseSuccessfulInstanceStartCounter(retries: number = 0) {
+    instanceStartsSuccessTotal.inc({ retries });
+}
+
+const instanceStartsFailedTotal = new prometheusClient.Counter({
+    name: 'gitpod_server_instance_starts_failed_total',
+    help: 'Total amount of failed performed instance starts',
+    labelNames: ['reason'],
+    registers: [prometheusClient.register],
+});
+
+export function increaseFailedInstanceStartCounter(reason: "clusterSelectionFailed" | "startOnClusterFailed") {
+    instanceStartsFailedTotal.inc({ reason });
+}

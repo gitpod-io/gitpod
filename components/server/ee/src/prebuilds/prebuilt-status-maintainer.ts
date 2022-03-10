@@ -46,7 +46,7 @@ export class PrebuildStatusMaintainer implements Disposable {
         this.disposables.push(
             repeat(this.periodicUpdatableCheck.bind(this), 60 * 1000)
         );
-        log.debug("prebuild updatatable status maintainer started");
+        log.debug("prebuild updatable status maintainer started");
     }
 
     public async registerCheckRun(ctx: TraceContext, installationId: number, pws: PrebuiltWorkspace, cri: CheckRunInfo, config?: WorkspaceConfig) {
@@ -64,6 +64,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                     id: uuidv4(),
                     owner: cri.owner,
                     repo: cri.repo,
+                    commitSHA: cri.head_sha,
                     isResolved: false,
                     installationId: installationId.toString(),
                     contextUrl: cri.details_url,
@@ -102,17 +103,18 @@ export class PrebuildStatusMaintainer implements Disposable {
     protected getConclusionFromPrebuildState(pws: PrebuiltWorkspace): "error" | "failure" | "pending" | "success" {
         if (pws.state === "aborted") {
             return "error";
-        } else if (pws.state === "queued") {
-            return "pending";
+        } else if (pws.state === "failed") {
+            return "error";
         } else if (pws.state === "timeout") {
             return "error";
+        } else if (pws.state === "queued") {
+            return "pending";
+        } else if (pws.state === "building") {
+            return "pending";
         } else if (pws.state === "available" && !pws.error) {
             return "success";
         } else if (pws.state === "available" && !!pws.error) {
-            // Not sure if this is the right choice - do we really want the check to fail if the prebuild fails?
             return "failure";
-        } else if (pws.state === "building") {
-            return "pending";
         } else {
             log.warn("Should have updated prebuilt workspace updatable, but don't know how. Resorting to error conclusion.", { pws });
             return "error";
@@ -130,8 +132,8 @@ export class PrebuildStatusMaintainer implements Disposable {
                 return;
             }
 
-            const updatatables = await this.workspaceDB.trace({span}).findUpdatablesForPrebuild(prebuild.id);
-            await Promise.all(updatatables.filter(u => !u.isResolved).map(u => this.doUpdate({span}, u, prebuild)));
+            const updatables = await this.workspaceDB.trace({span}).findUpdatablesForPrebuild(prebuild.id);
+            await Promise.all(updatables.filter(u => !u.isResolved).map(u => this.doUpdate({span}, u, prebuild)));
         } catch (err) {
             TraceContext.setError({span}, err);
             throw err;
@@ -140,34 +142,38 @@ export class PrebuildStatusMaintainer implements Disposable {
         }
     }
 
-    protected async doUpdate(ctx: TraceContext, updatatable: PrebuiltWorkspaceUpdatable, pws: PrebuiltWorkspace): Promise<void> {
+    protected async doUpdate(ctx: TraceContext, updatable: PrebuiltWorkspaceUpdatable, pws: PrebuiltWorkspace): Promise<void> {
         const span = TraceContext.startSpan("doUpdate", ctx);
 
         try {
-            const githubApi = await this.getGitHubApi(Number.parseInt(updatatable.installationId));
+            const githubApi = await this.getGitHubApi(Number.parseInt(updatable.installationId));
             if (!githubApi) {
                 log.error("unable to authenticate GitHub app - this leaves user-facing checks dangling.");
                 return;
             }
+            const workspace = await this.workspaceDB.trace({span}).findById(pws.buildWorkspaceId);
 
-            if (!!updatatable.contextUrl) {
+            if (!!updatable.contextUrl && !!workspace) {
                 const conclusion = this.getConclusionFromPrebuildState(pws);
+                if (conclusion === 'pending') {
+                    log.info(`Prebuild is still running.`, { prebuiltWorkspaceId: updatable.prebuiltWorkspaceId });
+                    return;
+                }
 
                 let found = true;
                 try {
                     await githubApi.repos.createCommitStatus({
-                        owner: updatatable.owner,
-                        repo: updatatable.repo,
+                        owner: updatable.owner,
+                        repo: updatable.repo,
                         context: "Gitpod",
-                        sha: pws.commit,
-                        target_url: updatatable.contextUrl,
-                        // at the moment we run in 'evergreen' mode where we always report success for status checks
+                        sha: updatable.commitSHA || pws.commit,
+                        target_url: updatable.contextUrl,
                         description: conclusion == 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
-                        state: "success"
+                        state: (workspace?.config?.github?.prebuilds?.addCheck === 'prevent-merge-on-error' ? conclusion : 'success')
                     });
                 } catch (err) {
                     if (err.message == "Not Found") {
-                        log.info("Did not find repository while updating updatable. Probably we lost the GitHub permission for the repo.", {owner: updatatable.owner, repo: updatatable.repo});
+                        log.info("Did not find repository while updating updatable. Probably we lost the GitHub permission for the repo.", {owner: updatable.owner, repo: updatable.repo});
                         found = true;
                     } else {
                         throw err;
@@ -180,10 +186,10 @@ export class PrebuildStatusMaintainer implements Disposable {
                     },
                 });
 
-                await this.workspaceDB.trace({span}).markUpdatableResolved(updatatable.id);
-                log.info(`Resolved updatable. Marked check on ${updatatable.contextUrl} as ${conclusion}`);
-            } else if (!!updatatable.issue) {
-                // this updatatable updates a label
+                await this.workspaceDB.trace({span}).markUpdatableResolved(updatable.id);
+                log.info(`Resolved updatable. Marked check on ${updatable.contextUrl} as ${conclusion}`);
+            } else if (!!updatable.issue) {
+                // this updatable updates a label
                 log.debug("Update label on a PR - we're not using this yet");
             }
         } catch (err) {

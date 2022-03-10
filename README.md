@@ -26,9 +26,9 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 🐳 [Integrated Docker build](https://www.gitpod.io/docs/config-docker/) - Gitpod instantly starts a container in the cloud based on your Docker image. Tools that are required for your project are easy to install and configure.
 
-👐 [GitLab, GitHub, and Bitbucket integration](https://www.gitpod.io/docs/integrations/) - Gitpod seamlessly integrates in your workflow and works with all major git hosting platforms including GitHub, GitLab and Bitbucket.
+👐 [GitLab, GitHub, and Bitbucket integration](https://www.gitpod.io/docs/integrations/) - Gitpod seamlessly integrates into your workflow and works with all major git hosting platforms including GitHub, GitLab and Bitbucket.
 
-👀 [Integrated code reviews](https://www.gitpod.io/docs/code-reviews/#code-reviews) - with Gitpod you can do native code reviews on any PR/MR. No need to switch context anymore and clutter your local machine with your colleagues PR/MR.
+👀 [Integrated code reviews](https://www.gitpod.io/docs/context-urls#pullmerge-request-context) - with Gitpod you can do native code reviews on any PR/MR. No need to switch context anymore and clutter your local machine with your colleagues' PR/MR.
 
 👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - invite team members to your dev environment or snapshot any state of your dev environment to share it with your team asynchronously.
 
@@ -40,8 +40,8 @@ Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free su
 
 ## Getting Started
 
-You can start using Gitpod with one or more of the following ways:
-1. Quick start using an [Example Project](https://www.gitpod.io/docs/quickstart) or [OSS Project](https://contribute.dev/)
+You can start using Gitpod in one or more of the following ways:
+1. Quickstart using an [Example Project](https://www.gitpod.io/docs/quickstart) or [OSS Project](https://contribute.dev/)
 1. Getting started with [one of your existing projects](https://www.gitpod.io/docs/getting-started)
 1. [Use a Prefixed URL](https://www.gitpod.io/docs/getting-started/#prefixed-url)
 1. [Install Browser Extension](https://www.gitpod.io/docs/getting-started#browser-extension)
@@ -71,11 +71,15 @@ You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/is
 We work with quarterly roadmaps in autonomous product teams.
 
  - [Gitpod Architecture](https://www.notion.so/gitpod/Architecture-0e39e570b10f4e8ba7b259629ee3cb74)
- - [Product Roadmap](https://github.com/gitpod-io/roadmap)
+ - [Product Roadmap](https://github.com/orgs/gitpod-io/projects/27)
+
+### How do GitHub Issues get prioritised?
+
+Most GitHub issues (except smaller or more urgent issues) relate to our [current product roadmap items](https://github.com/orgs/gitpod-io/projects/27). Gitpod teams work against these roadmap items. Each Gitpod team has [its own project board](https://github.com/orgs/gitpod-io/projects) that follows a similar structure. You can find these project boards attached to [the GitHub organisation](https://github.com/gitpod-io). Each team board has a "GroundWork" tab which shows current GitHub issues in progress. Each team project board also has an "inbox" where issues are sent for review by the team (and should be responded to within 48 hours). "Upvoting" by [reacting](https://docs.github.com/en/rest/reference/reactions) to GitHub issues helps signal to Gitpod that issues are important to you. If you are unsure of the status of an issue, please comment and a Gitpodder should respond to you shortly. For any other questions, please utilise the [Gitpod community](https://www.gitpod.io/community).
 
 ## Related Projects
 
-During the development of Gitpod we also developed some our own infrastructure tooling to make development easier and more efficient.
+During the development of Gitpod, we also developed some of our own infrastructure tooling to make development easier and more efficient.
 To this end we've developed a number of open source projects including:
 
 1. [**Werft**](https://github.com/csweichel/werft) - A Kubernetes native CI system

@@ -49,10 +49,10 @@ func TestPortsUpdateState(t *testing.T) {
 		{
 			Desc: "basic locally served",
 			Changes: []Change{
-				{Served: []ServedPort{{"0100007F", 8080, true}}},
+				{Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 8080, true}}},
 				{Exposed: []ExposedPort{{LocalPort: 8080, URL: "foobar"}}},
-				{Served: []ServedPort{{"0100007F", 8080, true}, {"00000000", 60000, false}}},
-				{Served: []ServedPort{{"00000000", 60000, false}}},
+				{Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 8080, true}, {net.IPv4zero, 60000, false}}},
+				{Served: []ServedPort{{net.IPv4zero, 60000, false}}},
 				{Served: []ServedPort{}},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -71,7 +71,7 @@ func TestPortsUpdateState(t *testing.T) {
 		{
 			Desc: "basic globally served",
 			Changes: []Change{
-				{Served: []ServedPort{{"00000000", 8080, false}}},
+				{Served: []ServedPort{{net.IPv4zero, 8080, false}}},
 				{Served: []ServedPort{}},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -102,7 +102,7 @@ func TestPortsUpdateState(t *testing.T) {
 			InternalPorts: []uint32{8080},
 			Changes: []Change{
 				{Served: []ServedPort{}},
-				{Served: []ServedPort{{"00000000", 8080, false}}},
+				{Served: []ServedPort{{net.IPv4zero, 8080, false}}},
 			},
 
 			ExpectedExposure: ExposureExpectation(nil),
@@ -125,8 +125,8 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 				{
 					Served: []ServedPort{
-						{"00000000", 8080, false},
-						{"0100007F", 9229, true},
+						{net.IPv4zero, 8080, false},
+						{net.IPv4(127, 0, 0, 1), 9229, true},
 					},
 				},
 			},
@@ -156,9 +156,9 @@ func TestPortsUpdateState(t *testing.T) {
 						Port:   "4000-5000",
 					}},
 				}},
-				{Served: []ServedPort{{"0100007F", 4040, true}}},
+				{Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 4040, true}}},
 				{Exposed: []ExposedPort{{LocalPort: 4040, Public: true, URL: "4040-foobar"}}},
-				{Served: []ServedPort{{"0100007F", 4040, true}, {"00000000", 60000, false}}},
+				{Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 4040, true}, {net.IPv4zero, 60000, false}}},
 			},
 			ExpectedExposure: []ExposedPort{
 				{LocalPort: 4040},
@@ -189,19 +189,19 @@ func TestPortsUpdateState(t *testing.T) {
 					Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{"0100007F", 8080, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 8080, true}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 8080, Public: true, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{"0100007F", 8080, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 8080, true}},
 				},
 				{
 					Served: []ServedPort{},
 				},
 				{
-					Served: []ServedPort{{"0100007F", 8080, false}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 8080, false}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -221,7 +221,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "starting multiple proxies for the same served event",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"0100007F", 8080, true}, {"00000000", 3000, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 8080, true}, {net.IPv4zero, 3000, true}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -245,7 +245,7 @@ func TestPortsUpdateState(t *testing.T) {
 					}},
 				},
 				{
-					Served: []ServedPort{{"00000000", 8080, false}},
+					Served: []ServedPort{{net.IPv4zero, 8080, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}},
@@ -265,13 +265,13 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "the same port served locally and then globally too, prefer globally (exposed in between)",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"0100007F", 5900, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 5900, true}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000", 5900, false}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 5900, true}, {net.IPv4zero, 5900, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
@@ -290,10 +290,10 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "the same port served locally and then globally too, prefer globally (exposed after)",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"0100007F", 5900, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 5900, true}},
 				},
 				{
-					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000", 5900, false}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 5900, true}, {net.IPv4zero, 5900, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
@@ -315,13 +315,13 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "the same port served globally and then locally too, prefer globally (exposed in between)",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"00000000", 5900, false}},
+					Served: []ServedPort{{net.IPv4zero, 5900, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{"00000000", 5900, false}, {"0100007F", 5900, true}},
+					Served: []ServedPort{{net.IPv4zero, 5900, false}, {net.IPv4(127, 0, 0, 1), 5900, true}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -337,10 +337,10 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "the same port served globally and then locally too, prefer globally (exposed after)",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"00000000", 5900, false}},
+					Served: []ServedPort{{net.IPv4zero, 5900, false}},
 				},
 				{
-					Served: []ServedPort{{"00000000", 5900, false}, {"0100007F", 5900, true}},
+					Served: []ServedPort{{net.IPv4zero, 5900, false}, {net.IPv4(127, 0, 0, 1), 5900, true}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
@@ -359,13 +359,13 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "the same port served locally on ip4 and then locally on ip6 too, prefer first (exposed in between)",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"0100007F", 5900, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 5900, true}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000000000000000010000000000", 5900, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 5900, true}, {net.IPv6zero, 5900, true}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -381,10 +381,10 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "the same port served locally on ip4 and then locally on ip6 too, prefer first (exposed after)",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"0100007F", 5900, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 5900, true}},
 				},
 				{
-					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000000000000000010000000000", 5900, true}},
+					Served: []ServedPort{{net.IPv4(127, 0, 0, 1), 5900, true}, {net.IPv6zero, 5900, true}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
@@ -403,13 +403,13 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "the same port served locally on ip4 and then globally on ip6 too, prefer first (exposed in between)",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"00000000", 5900, false}},
+					Served: []ServedPort{{net.IPv4zero, 5900, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{"00000000", 5900, false}, {"00000000000000000000000000000000", 5900, false}},
+					Served: []ServedPort{{net.IPv4zero, 5900, false}, {net.IPv6zero, 5900, false}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -425,10 +425,10 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "the same port served locally on ip4 and then globally on ip6 too, prefer first (exposed after)",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{"00000000", 5900, false}},
+					Served: []ServedPort{{net.IPv4zero, 5900, false}},
 				},
 				{
-					Served: []ServedPort{{"00000000", 5900, false}, {"00000000000000000000000000000000", 5900, false}},
+					Served: []ServedPort{{net.IPv4zero, 5900, false}, {net.IPv6zero, 5900, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 5900, URL: "foobar"}},
@@ -452,7 +452,7 @@ func TestPortsUpdateState(t *testing.T) {
 					}},
 				},
 				{
-					Served: []ServedPort{{"00000000", 8080, false}},
+					Served: []ServedPort{{net.IPv4zero, 8080, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 8080, Public: false, URL: "foobar"}},
@@ -477,7 +477,7 @@ func TestPortsUpdateState(t *testing.T) {
 					}},
 				},
 				{
-					Served: []ServedPort{{"00000000", 3000, false}},
+					Served: []ServedPort{{net.IPv4zero, 3000, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 3000, Public: false, URL: "foobar"}},

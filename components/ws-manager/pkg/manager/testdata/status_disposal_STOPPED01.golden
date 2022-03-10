@@ -20,7 +20,7 @@
         },
         "phase": 6,
         "conditions": {
-            "failed": "last backup failed: testing the backup failure mode. Please contact support if you need the workspace data.",
+            "failed": "last backup failed: testing the backup failure mode.",
             "final_backup_complete": 1
         },
         "runtime": {

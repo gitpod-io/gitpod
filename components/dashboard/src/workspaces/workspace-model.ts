@@ -26,9 +26,7 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
 
     constructor(
             protected setActiveWorkspaces: (ws: WorkspaceInfo[]) => void,
-            protected setInActiveWorkspaces: (ws: WorkspaceInfo[]) => void,
-            protected projectIds: Promise<string[]>,
-            protected includeWithoutProject?: boolean) {
+            protected setInActiveWorkspaces: (ws: WorkspaceInfo[]) => void) {
         this.internalRefetch();
     }
 
@@ -38,14 +36,12 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
         const [infos, pinned] = await Promise.all([
             getGitpodService().server.getWorkspaces({
                 limit: this.internalLimit,
-                projectId: await this.projectIds,
-                includeWithoutProject: !!this.includeWithoutProject
+                includeWithoutProject: true
             }),
             getGitpodService().server.getWorkspaces({
                 limit: this.internalLimit,
                 pinnedOnly: true,
-                projectId: await this.projectIds,
-                includeWithoutProject: !!this.includeWithoutProject
+                includeWithoutProject: true
             })
         ]);
 
@@ -60,14 +56,6 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     protected updateMap(workspaces: WorkspaceInfo[]) {
         for (const ws of workspaces) {
             this.workspaces.set(ws.workspace.id, ws);
-        }
-    }
-
-    protected async isIncluded(info: WorkspaceInfo): Promise<boolean> {
-        if (info.workspace.projectId) {
-            return (await this.projectIds).some(id => id === info.workspace.projectId);
-        } else {
-            return !!this.includeWithoutProject;
         }
     }
 
@@ -87,7 +75,7 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
                 try {
                     this.currentlyFetching.add(instance.workspaceId);
                     const info = await getGitpodService().server.getWorkspace(instance.workspaceId);
-                    if (info.workspace.type === 'regular' && await this.isIncluded(info)) {
+                    if (info.workspace.type === 'regular') {
                         this.workspaces.set(instance.workspaceId, info);
                         this.notifyWorkpaces();
                     }

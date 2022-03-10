@@ -78,32 +78,52 @@ options:
     title: "IntelliJ IDEA"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/intellijIdeaLogo.svg"
-    notes: ["While in beta, when you open a workspace with IntelliJ IDEA you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.intellij)) }}
   goland:
     orderKey: "05"
     title: "GoLand"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/golandLogo.svg"
-    notes: ["While in beta, when you open a workspace with GoLand you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.goland)) }}
   pycharm:
     orderKey: "06"
     title: "PyCharm"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/pycharmLogo.svg"
-    notes: ["While in beta, when you open a workspace with PyCharm you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.pycharm)) }}
   phpstorm:
     orderKey: "07"
     title: "PhpStorm"
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/phpstormLogo.svg"
-    notes: ["While in beta, when you open a workspace with PhpStorm you will need to use the password “gitpod”."]
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
+    latestImage: {{ (include "gitpod.comp.imageLatest" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.phpstorm)) }}
 
 defaultIde: "code"
 defaultDesktopIde: "code-desktop"
+
+clients:
+  vscode:
+    defaultDesktopIDE: "code-desktop"
+    desktopIDEs: ["code-desktop"]
+    installationSteps: [
+      "If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/download'>VS Code</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
+  vscode-insiders:
+    defaultDesktopIDE: "code-desktop-insiders"
+    desktopIDEs: ["code-desktop-insiders"]
+    installationSteps: [
+      "If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
+  jetbrains-gateway:
+    defaultDesktopIDE: "intellij"
+    desktopIDEs: ["intellij", "goland", "pycharm", "phpstorm"]
+    installationSteps: [
+      "If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+    ]
 {{ end }}
 
 {{- if $comp.serverIdeConfigDeploy.enabled }}

@@ -39,7 +39,7 @@ export class UserDeletionServiceEE extends UserDeletionService {
                         // we do not care about transient plans
                         continue;
                     } else {
-                        if (!paymentReference) {
+                        if (!paymentReference) {
                             const teamSlots = await this.teamSubscriptionService.findTeamSubscriptionSlotsByAssignee(id);
                             teamSlots.forEach(async ts => await this.teamSubscriptionService.deactivateSlot(ts.teamSubscriptionId, ts.id, now))
                         } else if (paymentReference.startsWith("github:")) {

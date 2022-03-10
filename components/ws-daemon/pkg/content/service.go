@@ -55,7 +55,7 @@ type WorkspaceService struct {
 type WorkspaceExistenceCheck func(instanceID string) bool
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
-func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, reg prometheus.Registerer) (res *WorkspaceService, err error) {
+func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, cgroupMountPoint string, reg prometheus.Registerer) (res *WorkspaceService, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
@@ -72,7 +72,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 	}
 
 	// read all session json files
-	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace, wec, uidmapper, xfs))
+	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace, wec, uidmapper, xfs, cgroupMountPoint))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create session store: %w", err)
 	}
@@ -235,7 +235,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)
 		if err != nil {
 			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
-			return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %s", err.Error()))
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		}
 	}
 
@@ -243,7 +243,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	err = workspace.MarkInitDone(ctx)
 	if err != nil {
 		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
-		return nil, status.Error(codes.Internal, fmt.Sprintf("cannot finish workspace init: %v", err))
+		return nil, status.Error(codes.FailedPrecondition, fmt.Sprintf("cannot finish workspace init: %v", err))
 	}
 
 	return &api.InitWorkspaceResponse{}, nil
@@ -282,8 +282,10 @@ func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
 		}
 	}
 	if ir, ok := spec.(*csapi.WorkspaceInitializer_Prebuild); ok {
-		if ir.Prebuild != nil && ir.Prebuild.Git != nil {
-			return ir.Prebuild.Git.CheckoutLocation
+		if ir.Prebuild != nil {
+			if len(ir.Prebuild.Git) > 0 {
+				return ir.Prebuild.Git[0].CheckoutLocation
+			}
 		}
 	}
 	return ""

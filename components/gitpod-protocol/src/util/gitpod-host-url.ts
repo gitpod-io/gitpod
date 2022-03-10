@@ -150,7 +150,7 @@ export class GitpodHostUrl {
         return undefined;
     }
 
-    get blobServe(): boolean {
+    get blobServe(): boolean {
         const hostSegments = this.url.host.split(".");
         if (hostSegments[0] === 'blobserve') {
             return true;

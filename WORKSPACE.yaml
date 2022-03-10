@@ -4,36 +4,36 @@ defaultArgs:
   coreYarnLockBase: ../..
   npmPublishTrigger: "false"
   publishToNPM: true
+  jbMarketplacePublishTrigger: "false"
+  publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 2467ffbd5d32c464d85debaf7e9e354b3df7c2e5
-
+  codeCommit: 96fc3d8b50d203c4b12aa0722aacc653208cedcc
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2021.3.2.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2021.3.3.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2021.3.2.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2021.3.2.tar.gz"
 provenance:
   enabled: true
   slsa: true
-
 defaultVariant:
   srcs:
     exclude:
-    # Make sure we don't include node_modules/**/*.ts by accident
-    - "**/node_modules/**"
+      # Make sure we don't include node_modules/**/*.ts by accident
+      - "**/node_modules/**"
   config:
     go:
       lintCommand: ["sh", "-c", "gokart scan && golangci-lint run --disable govet,errcheck,typecheck,staticcheck --allow-parallel-runners --timeout 5m"]
-
 variants:
-- name: oss
-  components:
-    exclude:
-      - components/ee/ws-scheduler
-  srcs:
-    exclude:
-    - "**/ee"
-    - "**/ee/**"
-    - "**/*_ee.*"
-    - "**/*_ee_*.*"
-  env:
-  - GITPOD_OSS_BUILD=true
-  config:
-    go:
-      buildTags:
-      - -tags oss
+  - name: oss
+    srcs:
+      exclude:
+        - "**/ee"
+        - "**/ee/**"
+        - "**/*_ee.*"
+        - "**/*_ee_*.*"
+    env:
+      - GITPOD_OSS_BUILD=true
+    config:
+      go:
+        buildTags:
+          - -tags oss

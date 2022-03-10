@@ -4,7 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { CommitContext, GitpodToken, Repository, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { UnauthorizedError } from "../errors";
+import { RepoURL } from "../repohost";
 import { HostContextProvider } from "./host-context-provider";
 
 declare var resourceInstance: GuardedResource;
@@ -61,9 +64,8 @@ export interface GuardedUser {
 
 export interface GuardedSnapshot {
     kind: "snapshot";
-    subject: Snapshot | undefined;
-    workspaceOwnerID: string;
-    workspaceID?: string;
+    subject?: Snapshot;
+    workspace: Workspace;
 }
 
 export interface GuardedUserStorage {
@@ -177,7 +179,7 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
             case "gitpodToken":
                 return resource.subject.user.id === this.userId;
             case "snapshot":
-                return resource.workspaceOwnerID === this.userId;
+                return resource.workspace.ownerId === this.userId;
             case "token":
                 return resource.tokenOwnerID === this.userId;
             case "user":
@@ -360,10 +362,7 @@ export namespace ScopedResourceGuard {
                 if (resource.subject) {
                     return resource.subject.id;
                 }
-                if (resource.workspaceID) {
-                    return SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + resource.workspaceID;
-                }
-                return undefined;
+                return SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + resource.workspace.id;
             case "token":
                 return resource.subject.value;
             case "user":
@@ -464,13 +463,13 @@ export namespace TokenResourceGuard {
 
 }
 
-export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
+export class RepositoryResourceGuard implements ResourceAccessGuard {
     constructor(
         protected readonly user: User,
         protected readonly hostContextProvider: HostContextProvider) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
-        if (resource.kind !== 'workspaceLog') {
+        if (resource.kind !== 'workspaceLog' && resource.kind !== 'snapshot') {
             return false;
         }
         // only get operations are supported
@@ -478,21 +477,42 @@ export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
             return false;
         }
 
-        // Check if user can access repositories headless logs
-        const ws = resource.subject;
-        const contextURL = ContextURL.parseToURL(ws.contextURL);
-        if (!contextURL) {
-            throw new Error(`unable to parse ContextURL: ${contextURL}`);
+        // Check if user has at least read access to the repository
+        const workspace = resource.kind === 'snapshot' ? resource.workspace : resource.subject;
+        const repos: Repository[] = [];
+        if (CommitContext.is(workspace.context)) {
+            repos.push(workspace.context.repository);
+            for (const additionalRepo of workspace.context.additionalRepositoryCheckoutInfo || []) {
+                repos.push(additionalRepo.repository);
+            }
         }
-        const hostContext = this.hostContextProvider.get(contextURL.hostname);
-        if (!hostContext) {
-            throw new Error(`no HostContext found for hostname: ${contextURL.hostname}`);
-        }
-
-        const svcs = hostContext.services;
-        if (!svcs) {
-            throw new Error(`no services found in HostContext for hostname: ${contextURL.hostname}`);
-        }
-        return svcs.repositoryService.canAccessHeadlessLogs(this.user, ws.context);
+        const result = await Promise.all(
+            repos.map(
+                async repo => {
+                    const repoUrl = RepoURL.parseRepoUrl(repo.cloneUrl);
+                    if (!repoUrl) {
+                        log.error("Cannot parse repoURL", {repo})
+                        return false;
+                    }
+                    const hostContext = this.hostContextProvider.get(repoUrl.host)
+                    if (!hostContext) {
+                        throw new Error(`no HostContext found for hostname: ${repoUrl.host}`);
+                    }
+                    const { authProvider } = hostContext;
+                    const identity = User.getIdentity(this.user, authProvider.authProviderId);
+                    if (!identity) {
+                        throw UnauthorizedError.create(repoUrl!.host, authProvider.info.requirements?.default || [], "missing-identity");
+                    }
+                    const { services } = hostContext;
+                    if (!services) {
+                        throw new Error(`no services found in HostContext for hostname: ${repoUrl.host}`);
+                    }
+                    if (!CommitContext.is(workspace.context)) {
+                        return false;
+                    }
+                    return services.repositoryProvider.hasReadAccess(this.user, repo.owner, repo.name);
+                }
+        ));
+        return result.every(b => b);
     }
 }

@@ -1,0 +1,45 @@
+pod:
+  serviceAccount: werft
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: dev/workload
+                operator: In
+                values:
+                  - "builds"
+  volumes:
+    - name: werft-build-caches
+      hostPath:
+        path: /mnt/disks/ssd0/builds
+        type: Directory
+  containers:
+    - name: build
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
+      workingDir: /workspace
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: WERFT_HOST
+          value: "werft.werft.svc.cluster.local:7777"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+      volumeMounts:
+        - mountPath: /werft-build-caches
+          name: werft-build-caches
+      command:
+        - bash
+        - -c
+        - |
+          sleep 1
+          set -Eeuo pipefail
+
+          export DOCKER_HOST=tcp://$NODENAME:2375
+
+          werft log phase docker-engine-prune "Cleaning up Docker Engine used by Werft builds"
+          docker system prune --force --all 2>&1 | werft log slice docker-engine-prune
+
+          werft log phase werft-build-cache-prune "Cleaning up Werft build caches older than 12 hours"
+          find /werft-build-caches/* -maxdepth 0 -mmin +720 -print -exec sudo rm -rf "{}" \; | werft log slice werft-build-cache-prune

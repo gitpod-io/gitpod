@@ -15,8 +15,6 @@ import (
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
-
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 var regexLocalhost = regexp.MustCompile(`((^(localhost|127\.0\.0\.1))|(https?://(localhost|127\.0\.0\.1)))(:[0-9]+)?`)
@@ -38,15 +36,6 @@ var previewCmd = &cobra.Command{
 			}
 			openPreview("GP_EXTERNAL_BROWSER", url)
 			return
-		}
-		if isTheiaIDE() {
-			if service, err := theialib.NewServiceFromEnv(); err == nil {
-				_, err = service.OpenPreview(theialib.OpenPreviewRequest{URL: url})
-				if err == nil {
-					// we've opened the preview. All is well.
-					return
-				}
-			}
 		}
 		openPreview("GP_PREVIEW_BROWSER", url)
 	},

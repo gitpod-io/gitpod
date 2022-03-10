@@ -26,6 +26,12 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
+var workspaceIPAdress string
+
+func init() {
+	workspaceIPAdress = defaultRoutableIP()
+}
+
 // NewManager creates a new port manager
 func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, config ConfigInterace, tunneled TunneledPortsInterface, slirp SlirpClient, internalPorts ...uint32) *Manager {
 	state := make(map[uint32]*managedPort)
@@ -159,42 +165,6 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 	defer cancel()
 
-	// set a health check for exposed port trough the proxies
-	go func() {
-		tick := time.NewTicker(2 * time.Second)
-		defer tick.Stop()
-
-		for {
-			<-tick.C
-
-			pm.mu.RLock()
-			servedGlobal := make(map[uint32]struct{})
-			for _, p := range pm.served {
-				if !p.BoundToLocalhost {
-					servedGlobal[p.Port] = struct{}{}
-				}
-			}
-			pm.mu.RUnlock()
-
-			for localPort, proxy := range pm.proxies {
-				_, openedGlobal := servedGlobal[localPort]
-				openedLocal := isLocalPortOpen(int(localPort))
-				if !openedLocal && openedGlobal {
-					pm.mu.Lock()
-					delete(pm.proxies, localPort)
-					pm.mu.Unlock()
-
-					err := proxy.Close()
-					if err != nil {
-						log.WithError(err).WithField("localPort", localPort).Warn("cannot stop localhost proxy")
-					} else {
-						log.WithField("localPort", localPort).Info("localhost proxy has been stopped")
-					}
-				}
-			}
-		}
-	}()
-
 	go pm.E.Run(ctx)
 	exposedUpdates, exposedErrors := pm.E.Observe(ctx)
 	servedUpdates, servedErrors := pm.S.Observe(ctx)
@@ -289,6 +259,12 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 	if served != nil {
 		servedMap := make(map[uint32]ServedPort)
 		for _, port := range served {
+			if _, existProxy := pm.proxies[port.Port]; existProxy && port.Address.String() == workspaceIPAdress {
+				// Ignore entries that are bound to the workspace ip address
+				// as they are created by the internal reverse proxy
+				continue
+			}
+
 			current, exists := servedMap[port.Port]
 			if !exists || (!port.BoundToLocalhost && current.BoundToLocalhost) {
 				servedMap[port.Port] = port
@@ -575,13 +551,20 @@ func (pm *Manager) updateSlirp() {
 }
 
 func (pm *Manager) updateProxies() {
-	servedLocal := make(map[uint32]struct{})
-	servedGlobal := make(map[uint32]struct{})
-	for _, p := range pm.served {
-		if p.BoundToLocalhost {
-			servedLocal[p.Port] = struct{}{}
-		} else {
-			servedGlobal[p.Port] = struct{}{}
+	servedPortMap := map[uint32]bool{}
+	for _, s := range pm.served {
+		servedPortMap[s.Port] = s.BoundToLocalhost
+	}
+
+	for port, proxy := range pm.proxies {
+		if boundToLocalhost, exists := servedPortMap[port]; !exists || !boundToLocalhost {
+			delete(pm.proxies, port)
+			err := proxy.Close()
+			if err != nil {
+				log.WithError(err).WithField("localPort", port).Warn("cannot stop localhost proxy")
+			} else {
+				log.WithField("localPort", port).Info("localhost proxy has been stopped")
+			}
 		}
 	}
 
@@ -801,11 +784,6 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 	return ps
 }
 
-var workspaceIPAdress string
-
-func init() {
-	workspaceIPAdress = defaultRoutableIP()
-}
 func startLocalhostProxy(port uint32) (io.Closer, error) {
 	host := fmt.Sprintf("localhost:%d", port)
 
@@ -863,20 +841,4 @@ func defaultRoutableIP() string {
 	}
 
 	return addresses[0].(*net.IPNet).IP.String()
-}
-
-func isLocalPortOpen(port int) bool {
-	timeout := 1 * time.Second
-	target := fmt.Sprintf("127.0.0.1:%d", port)
-	conn, err := net.DialTimeout("tcp", target, timeout)
-	if err != nil {
-		return false
-	}
-
-	if conn != nil {
-		conn.Close()
-		return true
-	}
-
-	return false
 }

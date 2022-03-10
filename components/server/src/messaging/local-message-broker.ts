@@ -170,7 +170,7 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
             const ls = listeners!;
             let idx = ls.findIndex((l) => l === listener);
             if (idx !== -1) {
-                ls.splice(idx);
+                ls.splice(idx, 1);
             }
             if (ls.length === 0) {
                 listenersStore.delete(key);

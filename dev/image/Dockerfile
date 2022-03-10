@@ -2,7 +2,10 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:latest
+# if you want to run this image in a workspace, follow these steps:
+# gcloud auth configure-docker europe-docker.pkg.dev
+# gcloud auth login --no-launch-browser
+FROM europe-docker.pkg.dev/gitpod-artifacts/docker-dev/workspace-full-vnc:2022-01-28-04-35-05
 
 ENV TRIGGER_REBUILD 16
 
@@ -56,7 +59,7 @@ RUN cd /usr/bin && curl -L https://github.com/praetorian-inc/gokart/releases/dow
 
 # leeway
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.16/leeway_0.2.16_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.2.17/leeway_0.2.17_Linux_x86_64.tar.gz | tar xz
 
 # dazzle
 RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/dazzle/releases/download/v0.1.4/dazzle_0.1.4_Darwin_x86_64.tar.gz| tar xz
@@ -105,10 +108,25 @@ RUN install-packages gperf \
     && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.2/libseccomp-2.5.2.tar.gz | tar xz \
     && cd libseccomp-2.5.2 && ./configure && make && make install
 
+### Cypress deps
+RUN install-packages \
+    libgtk2.0-0 \
+    libgtk-3-0 \
+    libgbm-dev \
+    libnotify-dev \
+    libgconf-2-4 \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
+    xauth
+# Install netcat to use it as proxy for SSH access to Harvester VMs
+RUN install-packages netcat
+
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=16.13.0
+ARG GITPOD_NODE_VERSION=16.14.0
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
@@ -139,7 +157,7 @@ RUN sudo install-packages \
     python-dev \
     python-setuptools
 
-RUN bash -c "pip uninstall crcmod; pip install --no-cache-dir -U crcmod"
+RUN sudo python3 -m pip uninstall crcmod; sudo python3 -m pip install --no-cache-dir -U crcmod
 
 ### gitpod-core specific gcloud/kubectl config
 # Copy GCloud default config that points to gitpod-dev
@@ -159,7 +177,7 @@ ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
 
 ### AWS Cli ###
-RUN pip install --no-cache-dir awscli
+RUN sudo python3 -m pip install --no-cache-dir awscli
 
 # Install aws-iam-authenticator
 RUN sudo curl -fsSL -o aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator" \
@@ -189,7 +207,7 @@ RUN sudo curl -fsSL https://uploader.codecov.io/latest/codecov-linux -o /usr/loc
 
 # Install pre-commit https://pre-commit.com/#install
 RUN sudo install-packages shellcheck \
-    && sudo pip3 install pre-commit
+    && sudo python3 -m pip install pre-commit
 
 # Install observability-related binaries
 ARG PROM_VERSION="2.30.0"
@@ -212,6 +230,10 @@ ARG GOJSONTOYAML_VERSION="0.1.0"
 RUN curl -LO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJSONTOYAML_VERSION}/gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     tar -xzvf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz && \
     sudo mv gojsontoyaml /usr/local/bin/gojsontoyaml
+
+# Install Replicated and KOTS
+RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/v0.38.0/install.sh | sudo bash && \
+    curl https://kots.io/install/1.65.0 | bash
 
 # Copy our own tools
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/

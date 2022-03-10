@@ -626,7 +626,7 @@
               {
                 "matchExpressions": [
                   {
-                    "key": "gitpod.io/workload_workspace",
+                    "key": "gitpod.io/workload_workspace_regular",
                     "operator": "Exists"
                   }
                 ]
@@ -635,7 +635,6 @@
           }
         }
       },
-      "schedulerName": "workspace-scheduler",
       "tolerations": [
         {
           "key": "node.kubernetes.io/disk-pressure",
@@ -862,7 +861,6 @@
         "creationTimestamp": "2021-07-27T18:29:06Z",
         "managedFields": [
           {
-            "manager": "ws-scheduler",
             "operation": "Update",
             "apiVersion": "v1",
             "time": "2021-07-27T18:29:06Z",

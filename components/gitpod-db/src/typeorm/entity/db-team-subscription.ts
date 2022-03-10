@@ -51,4 +51,9 @@ export class DBTeamSubscription implements TeamSubscription {
         default: false
     })
     deleted?: boolean;
+
+    @Column({
+        default: false
+    })
+    excludeFromMoreResources: boolean;
 }

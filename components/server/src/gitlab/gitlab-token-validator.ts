@@ -22,6 +22,7 @@ export class GitLabTokenValidator implements IGitTokenValidator {
 				query: `query {project(fullPath: "${repoFullName}") { visibility, userPermissions{ pushCode } } } `
 			};
 			const response = await fetch(`https://${host}/api/graphql`, {
+				timeout: 5000,
 				method: "POST",
 				body: JSON.stringify(request),
 				headers: {
@@ -31,7 +32,7 @@ export class GitLabTokenValidator implements IGitTokenValidator {
 			});
 			if (response.ok) {
 				found = true;
-				const json = await response.json();
+				const json = await response.json() as any;
 				const project = json.data && json.data.project;
 				if (project) {
 					isPrivateRepo = project.visibility !== "public";

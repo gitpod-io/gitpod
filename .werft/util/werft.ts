@@ -20,7 +20,7 @@ export class Werft {
     private tracer: Tracer;
     public rootSpan: Span;
     private sliceSpans: { [slice: string]: Span } = {}
-    private currentPhaseSpan: Span;
+    public currentPhaseSpan: Span;
 
     constructor(job: string) {
         if (werft) {
@@ -107,6 +107,11 @@ export class Werft {
     }
 
     public endAllSpans() {
+        const traceID = this.rootSpan.spanContext().traceId
+        const nowUnix =  Math.round(new Date().getTime() / 1000);
+        // At the moment we're just looking for traces in a 30 minutes timerange with the specific traceID
+        // A smarter approach would be to get a start timestamp from tracing.Initialize()
+        exec(`werft log result -d "Honeycomb trace" -c github-check-honeycomb-trace url "https://ui.honeycomb.io/gitpod/datasets/werft/trace?trace_id=${traceID}&trace_start_ts=${nowUnix - 1800}&trace_end_ts=${nowUnix + 5}"`);
         this.endPhase()
         this.rootSpan.end()
     }

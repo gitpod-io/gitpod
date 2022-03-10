@@ -13,6 +13,9 @@ on:
       productType:
         type: string
         required: true
+    secrets:
+      slackWebhook:
+        required: true
 
 jobs:
   update-jetbrains:
@@ -31,7 +34,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Used Release
         id: used-release
-        run: echo "::set-output name=result::$(yq e '.packages[] | select(.name == "${{ inputs.productId }}") | .config.buildArgs.JETBRAINS_BACKEND_URL' components/ide/jetbrains/image/BUILD.yaml)"
+        run: echo "::set-output name=result::$(yq e '.defaultArgs.${{ inputs.productId }}DownloadUrl' WORKSPACE.yaml)"
       - name: No Update Available
         if: steps.latest-release.outputs.result == steps.used-release.outputs.result
         run: |
@@ -44,7 +47,7 @@ jobs:
           echo "There is an update available!"
           echo "Latest release: ${{ steps.latest-release.outputs.result }}"
           echo "Used release:   ${{ steps.used-release.outputs.result }}"
-          yq -i e '(.packages[] | select(.name == "${{ inputs.productId }}") | .config.buildArgs.JETBRAINS_BACKEND_URL) = "${{ steps.latest-release.outputs.result }}"' components/ide/jetbrains/image/BUILD.yaml
+          yq -i e '.defaultArgs.${{ inputs.productId }}DownloadUrl = "${{ steps.latest-release.outputs.result }}"' WORKSPACE.yaml
           git diff
       - name: Create Pull Request
         if: steps.latest-release.outputs.result != steps.used-release.outputs.result
@@ -64,3 +67,12 @@ jobs:
             ```
           commit-message: "[${{ inputs.productId }}] Update IDE image to build version ${{ steps.latest-release.outputs.version }}"
           branch: "jetbrains/${{ inputs.productId }}-${{ steps.latest-release.outputs.version2 }}"
+          labels: "team: IDE"
+          team-reviewers: "gitpod-io/engineering-ide"
+      - name: Slack Notification
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: ${{ inputs.productName }}

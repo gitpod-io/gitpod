@@ -795,7 +795,7 @@ func shouldDisableRemoteStorage(pod *corev1.Pod) bool {
 		tpe = api.WorkspaceType_REGULAR
 	}
 	switch tpe {
-	case api.WorkspaceType_GHOST, api.WorkspaceType_IMAGEBUILD:
+	case api.WorkspaceType_IMAGEBUILD:
 		return true
 	default:
 		return false
@@ -976,7 +976,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 }
 
-// markTimedoutWorkspaces finds workspaces which haven't been active recently and marks them as timed out
+// markTimedoutWorkspaces finds workspaces which can be timeout due to inactivity or max lifetime allowed
 func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "markTimedoutWorkspaces")
 	defer tracing.FinishSpan(span, &err)

@@ -7,8 +7,10 @@ package manager
 import (
 	"context"
 	"strings"
+	"time"
 
 	"golang.org/x/xerrors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -79,8 +81,17 @@ const (
 
 // markWorkspaceAsReady adds annotations to a workspace pod
 func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotations ...*annotation) error {
+	// use custom backoff, as default one fails after 1.5s, this one will try for about 25s
+	// we want to try harder to remove or add annotation, as failure to remove "gitpod/never-ready" annotation
+	// would cause whole workspace to be marked as failed, hence the reason to try harder here.
+	var backoff = wait.Backoff{
+		Steps:    7,
+		Duration: 100 * time.Millisecond,
+		Factor:   2.0,
+		Jitter:   0.1,
+	}
 	// Retry on failure. Sometimes this doesn't work because of concurrent modification. The Kuberentes way is to just try again after waiting a bit.
-	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+	err := retry.RetryOnConflict(backoff, func() error {
 		pod, err := m.findWorkspacePod(ctx, workspaceID)
 		if err != nil {
 			return xerrors.Errorf("cannot find workspace %s: %w", workspaceID, err)

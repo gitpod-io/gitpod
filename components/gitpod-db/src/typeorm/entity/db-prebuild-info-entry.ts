@@ -10,7 +10,7 @@ import { PrebuildInfo } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "../../typeorm/typeorm";
 
 @Entity()
-export class DBPrebuildInfo  {
+export class DBPrebuildInfo {
 
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     prebuildId: string;

@@ -11,7 +11,8 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 export const accessCodeSyncStorage = 'accessCodeSyncStorage';
 export const accessHeadlessLogs = 'accessHeadlessLogs';
-type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs;
+type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accessHeadlessLogs;
+type GroupKey = "default" | "startWorkspace";
 type GroupsConfig = {
     [key: string]: {
         points: number,
@@ -20,7 +21,7 @@ type GroupsConfig = {
 }
 type FunctionsConfig = {
     [K in GitpodServerMethodType]: {
-        group: string,
+        group: GroupKey,
         points: number,
     }
 }
@@ -34,7 +35,11 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         default: {
             points: 60000, // 1,000 calls per user per second
             durationsSec: 60,
-        }
+        },
+        startWorkspace: {
+            points: 1,  // 1 workspace start per user per 10s
+            durationsSec: 10
+        },
     }
     const defaultFunctions: FunctionsConfig = {
         "getLoggedInUser": { group: "default", points: 1 },
@@ -55,10 +60,12 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "getWorkspaceOwner": { group: "default", points: 1 },
         "getWorkspaceUsers": { group: "default", points: 1 },
         "getFeaturedRepositories": { group: "default", points: 1 },
+        "getSuggestedContextURLs": { group: "default", points: 1 },
         "getWorkspace": { group: "default", points: 1 },
         "isWorkspaceOwner": { group: "default", points: 1 },
+        "getOwnerToken": { group: "default", points: 1 },
         "createWorkspace": { group: "default", points: 1 },
-        "startWorkspace": { group: "default", points: 1 },
+        "startWorkspace": { group: "startWorkspace", points: 1 },
         "stopWorkspace": { group: "default", points: 1 },
         "deleteWorkspace": { group: "default", points: 1 },
         "setWorkspaceDescription": { group: "default", points: 1 },
@@ -79,6 +86,9 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "getAllEnvVars": { group: "default", points: 1 },
         "setEnvVar": { group: "default", points: 1 },
         "deleteEnvVar": { group: "default", points: 1 },
+        "setProjectEnvironmentVariable": { group: "default", points: 1 },
+        "getProjectEnvironmentVariables": { group: "default", points: 1 },
+        "deleteProjectEnvironmentVariable": { group: "default", points: 1 },
         "getTeams": { group: "default", points: 1 },
         "getTeamMembers": { group: "default", points: 1 },
         "createTeam": { group: "default", points: 1 },
@@ -127,11 +137,21 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "adminDeleteUser": { group: "default", points: 1 },
         "adminModifyRoleOrPermission": { group: "default", points: 1 },
         "adminModifyPermanentWorkspaceFeatureFlag": { group: "default", points: 1 },
+        "adminGetTeams": { group: "default", points: 1 },
+        "adminGetTeamMembers": { group: "default", points: 1 },
+        "adminGetTeamById": { group: "default", points: 1 },
+        "adminSetTeamMemberRole": { group: "default", points: 1 },
         "adminGetWorkspaces": { group: "default", points: 1 },
         "adminGetWorkspace": { group: "default", points: 1 },
         "adminForceStopWorkspace": { group: "default", points: 1 },
         "adminRestoreSoftDeletedWorkspace": { group: "default", points: 1 },
+        "adminGetProjectsBySearchTerm": { group: "default", points: 1 },
+        "adminGetProjectById": { group: "default", points: 1 },
+        "adminFindPrebuilds": { group: "default", points: 1 },
         "adminSetLicense": { group: "default", points: 1 },
+        "adminGetSettings": { group: "default", points: 1 },
+        "adminUpdateSettings": { group: "default", points: 1 },
+        "adminGetTelemetryData": {group: "default", points: 1},
 
         "validateLicense": { group: "default", points: 1 },
         "getLicenseInfo": { group: "default", points: 1 },

@@ -2,7 +2,7 @@
   "$schema": "./config-schema.json",
   "manager": {
     "namespace": "default",
-    "workspaceSchedulerName": "default-scheduler",
+    "schedulerName": "default-scheduler",
     "container": {
       "workspace": {
         "image": "csweichel/noop:latest",
@@ -41,6 +41,7 @@
       "headlessWorkspace": "60m",
       "initialization": "30m",
       "regularWorkspace": "30m",
+      "maxLifetime": "36h",
       "startup": "30m"
     },
     "eventTraceLog": "-",

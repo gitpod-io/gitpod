@@ -72,6 +72,12 @@ class TestBitbucketRepositoryProvider {
         });
     }
 
+    @test public async testFetchCommitHistory() {
+        const result = await this.repoProvider.getCommitHistory(this.user, 'gitpod', 'integration-tests', 'dd0aef8097a7c521b8adfced795fcf96c9e598ef', 100);
+        expect(result).to.deep.equal([
+            'da2119f51b0e744cb6b36399f8433b477a4174ef',
+        ])
+    }
 }
 
 module.exports = new TestBitbucketRepositoryProvider();

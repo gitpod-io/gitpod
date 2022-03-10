@@ -8,7 +8,6 @@ import { inject, injectable } from "inversify";
 import { v4 as uuidv4 } from 'uuid';
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Disposable, GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
-import { SafePromise } from "@gitpod/gitpod-protocol/lib/util/safe-promise";
 import { StorageClient } from "../../../src/storage/storage-client";
 import { ConsensusLeaderQorum } from "../../../src/consensus/consensus-leader-quorum";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -58,7 +57,8 @@ export class SnapshotService {
                 continue;
             }
 
-            SafePromise.catchAndLog(this.driveSnapshotCached({ workspaceOwner: workspace.ownerId, snapshot }), { workspaceId: snapshot.originalWorkspaceId });
+            this.driveSnapshotCached({ workspaceOwner: workspace.ownerId, snapshot })
+                .catch(err => {/** ignore */});
         }
     }
 
@@ -84,9 +84,10 @@ export class SnapshotService {
             return running;
         }
 
-        const started = this.driveSnapshot(opts);
+        const started = this.driveSnapshot(opts)
+            .finally(() => this.runningSnapshots.delete(opts.snapshot.id))
+            .catch(err => log.error("driveSnapshot", err));
         this.runningSnapshots.set(opts.snapshot.id, started);
-        started.finally(() => this.runningSnapshots.delete(opts.snapshot.id));
         return started;
     }
 

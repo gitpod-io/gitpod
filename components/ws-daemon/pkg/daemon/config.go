@@ -7,10 +7,10 @@ package daemon
 import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 )
 
 // Config configures the workspace node daemon
@@ -20,7 +20,7 @@ type Config struct {
 
 	Content        content.Config      `json:"content"`
 	Uidmapper      iws.UidmapperConfig `json:"uidmapper"`
-	Resources      resources.Config    `json:"resources"`
+	Resources      cpulimit.Config     `json:"cpulimit"`
 	Hosts          hosts.Config        `json:"hosts"`
 	DiskSpaceGuard diskguard.Config    `json:"disk"`
 }

@@ -7,6 +7,7 @@ package main
 import (
 	"C"
 	"encoding/json"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 
@@ -14,15 +15,21 @@ import (
 )
 
 var (
-	instances map[int]*licensor.Evaluator = make(map[int]*licensor.Evaluator)
-	nextID    int                         = 1
+	instances map[int]licensor.Evaluator = make(map[int]licensor.Evaluator)
+	nextID    int                        = 1
 )
 
 // Init initializes the global license evaluator from an environment variable
 //export Init
 func Init(key *C.char, domain *C.char) (id int) {
 	id = nextID
-	instances[id] = licensor.NewEvaluator([]byte(C.GoString(key)), C.GoString(domain))
+	switch os.Getenv("GITPOD_LICENSE_TYPE") {
+	case string(licensor.LicenseTypeReplicated):
+		instances[id] = licensor.NewReplicatedEvaluator(C.GoString(domain))
+		break
+	default:
+		instances[id] = licensor.NewGitpodEvaluator([]byte(C.GoString(key)), C.GoString(domain))
+	}
 	nextID++
 
 	return id

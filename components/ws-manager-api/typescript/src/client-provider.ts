@@ -5,25 +5,18 @@
  */
 
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
-import { Disposable, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { Disposable, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WorkspaceClusterWoTLS, WorkspaceManagerConnectionInfo } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import * as grpc from "@grpc/grpc-js";
 import { inject, injectable, optional } from 'inversify';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource } from "./client-provider-source";
+import { ExtendedUser, workspaceClusterSetsAuthorized } from "./constraints";
 import { WorkspaceManagerClient } from './core_grpc_pb';
 import { linearBackoffStrategy, PromisifiedWorkspaceManagerClient } from "./promisified-client";
 
 export const IWorkspaceManagerClientCallMetrics = Symbol('IWorkspaceManagerClientCallMetrics')
-
-/**
- * ExtendedUser adds additional attributes to a user which are helpful
- * during cluster selection.
- */
-export interface ExtendedUser extends User  {
-    level?: string;
-}
 
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
@@ -39,41 +32,48 @@ export class WorkspaceManagerClientProvider implements Disposable {
     protected readonly connectionCache = new Map<string, WorkspaceManagerClient>();
 
     /**
-     * Throws an error if there is not WorkspaceManagerClient available.
+     * getStartClusterSets produces a set of workspace clusters we can try to start a workspace in.
+     * If starting a workspace fails in one cluster, the caller is expected to "pop" another cluster
+     * of the list until the workspace start has succeeded or pop returns undefined.
      *
-     * @returns The WorkspaceManagerClient that was chosen to start the next workspace with.
+     * @param user user who wants to starts a workspace manager
+     * @param workspace the workspace we want to start
+     * @param instance the instance we want to start
+     * @returns a set of workspace clusters we can start the workspace in
      */
-    public async getStartManager(user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance, exceptInstallations?: string[]): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string }> {
-        let availableCluster = await this.getAvailableStartCluster(user, workspace, instance);
-        if (!!exceptInstallations) {
-            availableCluster = availableCluster.filter(c => !exceptInstallations?.includes(c.name));
-        }
-
-        let chosenCluster = chooseCluster(availableCluster.filter(admissionPreferencesFilter(user)))
-        if (!chosenCluster) {
-            // We did not choose a prefered cluster. That's ok, we'll try with the remaining set.
-            chosenCluster = chooseCluster(availableCluster);
-        }
-        if (!chosenCluster) {
-            // We still haven't choosen a cluster. That's a problem.
-            throw new Error("no available workspace cluster to choose from!");
-        }
-
-
-        const grpcOptions: grpc.ClientOptions = {
-            ...defaultGRPCOptions,
-        };
-        const client = await this.get(chosenCluster.name, grpcOptions);
-        return {
-            manager: client,
-            installation: chosenCluster.name,
-        };
-    }
-
-    public async getAvailableStartCluster(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<WorkspaceClusterWoTLS[]> {
+    public async getStartClusterSets(user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance): Promise<IWorkspaceClusterStartSet> {
         const allClusters = await this.source.getAllWorkspaceClusters();
-        const availableClusters = allClusters.filter(c => c.score >= 0 && c.state === "available").filter(admissionConstraintsFilter(user, workspace, instance));
-        return availableClusters;
+        const availableClusters = allClusters.filter(c => c.score > 0 && c.state === "available");
+
+        const sets = workspaceClusterSetsAuthorized.map(constraints => {
+            const r = constraints.constraint(availableClusters, user, workspace, instance);
+            if (!r) {
+                return;
+            }
+            return new ClusterSet(this, r);
+        }).filter(s => s !== undefined) as ClusterSet[];
+
+        return {
+            [Symbol.asyncIterator]: (): AsyncIterator<ClusterClientEntry> => {
+                return {
+                    next: async (): Promise<IteratorResult<ClusterClientEntry>> => {
+                        while (true) {
+                            if (sets.length === 0) {
+                                return {done: true, value: undefined};
+                            }
+
+                            let res = await sets[0].next();
+                            if (!!res.done) {
+                                sets.splice(0, 1);
+                                continue;
+                            }
+
+                            return res;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -143,7 +143,39 @@ export class WorkspaceManagerClientProvider implements Disposable {
     }
 }
 
+export interface IWorkspaceClusterStartSet extends AsyncIterable<ClusterClientEntry> {}
 
+export interface ClusterClientEntry { manager: PromisifiedWorkspaceManagerClient, installation: string }
+
+/**
+ * ClusterSet is an iterator
+ */
+class ClusterSet implements AsyncIterator<ClusterClientEntry> {
+    protected usedCluster: string[] = [];
+    constructor(protected readonly provider: WorkspaceManagerClientProvider, protected readonly cluster: WorkspaceClusterWoTLS[]) {}
+
+    public async next(): Promise<IteratorResult<ClusterClientEntry>> {
+        const available = this.cluster.filter(c => !this.usedCluster.includes(c.name));
+        const chosenCluster = chooseCluster(available);
+        if (!chosenCluster) {
+            // empty set
+            return {done: true, value: undefined };
+        }
+        this.usedCluster.push(chosenCluster.name);
+
+        const grpcOptions: grpc.ClientOptions = {
+            ...defaultGRPCOptions,
+        };
+        const client = await this.provider.get(chosenCluster.name, grpcOptions);
+        return {
+            done: false,
+            value: {
+                manager: client,
+                installation: chosenCluster.name,
+            }
+        };
+    }
+}
 
 /**
  *
@@ -174,34 +206,4 @@ function chooseCluster(availableCluster: WorkspaceClusterWoTLS[]): WorkspaceClus
         }
     }
     return availableCluster[availableCluster.length - 1];
-}
-
-function admissionConstraintsFilter(user: User, workspace: Workspace, instance: WorkspaceInstance): (c: WorkspaceClusterWoTLS) => boolean {
-    return (c: WorkspaceClusterWoTLS) => {
-        if (!c.admissionConstraints) {
-            return true;
-        }
-
-        return (c.admissionConstraints || []).every(con => {
-            switch (con.type) {
-                case "has-feature-preview":
-                    return !!user.additionalData && !!user.additionalData.featurePreview;
-                case "has-permission":
-                    return user.rolesOrPermissions?.includes(con.permission);
-            }
-        });
-    };
-}
-
-function admissionPreferencesFilter(user: ExtendedUser): (c: WorkspaceClusterWoTLS) => boolean {
-    return (c: WorkspaceClusterWoTLS) => {
-        return (c.admissionPreferences || []).every(pref => {
-            switch (pref.type) {
-                case "user-level":
-                    return pref.level === user.level;
-                default:
-                    return false;
-            }
-        })
-    };
 }

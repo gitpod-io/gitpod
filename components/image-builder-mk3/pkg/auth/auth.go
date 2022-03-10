@@ -5,7 +5,9 @@
 package auth
 
 import (
+	"encoding/base64"
 	"os"
+	"strings"
 
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
@@ -67,16 +69,16 @@ type Authentication types.AuthConfig
 
 // AllowedAuthFor describes for which repositories authentication may be provided for
 type AllowedAuthFor struct {
-	All      bool
-	Explicit []string
+	All        bool
+	Explicit   []string
+	Additional map[string]string
 }
 
-var (
-	// AllowedAuthForAll means auth for all repositories is allowed
-	AllowedAuthForAll AllowedAuthFor = AllowedAuthFor{true, nil}
-	// AllowedAuthForNone means auth for no repositories is allowed
-	AllowedAuthForNone AllowedAuthFor = AllowedAuthFor{false, nil}
-)
+// AllowedAuthForAll means auth for all repositories is allowed
+func AllowedAuthForAll() AllowedAuthFor { return AllowedAuthFor{true, nil, nil} }
+
+// AllowedAuthForNone means auth for no repositories is allowed
+func AllowedAuthForNone() AllowedAuthFor { return AllowedAuthFor{false, nil, nil} }
 
 // IsAllowNone returns true if we are to allow authentication for no repos
 func (a AllowedAuthFor) IsAllowNone() bool {
@@ -96,7 +98,7 @@ func (a AllowedAuthFor) Elevate(ref string) AllowedAuthFor {
 		return a
 	}
 
-	return AllowedAuthFor{a.All, append(a.Explicit, reference.Domain(pref))}
+	return AllowedAuthFor{a.All, append(a.Explicit, reference.Domain(pref)), a.Additional}
 }
 
 // ExplicitlyAll produces an AllowedAuthFor that allows authentication for all
@@ -117,7 +119,7 @@ type Resolver struct {
 // ResolveRequestAuth computes the allowed authentication for a build based on its request
 func (r Resolver) ResolveRequestAuth(auth *api.BuildRegistryAuth) (authFor AllowedAuthFor) {
 	// by default we allow nothing
-	authFor = AllowedAuthForNone
+	authFor = AllowedAuthForNone()
 	if auth == nil {
 		return
 	}
@@ -125,9 +127,9 @@ func (r Resolver) ResolveRequestAuth(auth *api.BuildRegistryAuth) (authFor Allow
 	switch ath := auth.Mode.(type) {
 	case *api.BuildRegistryAuth_Total:
 		if ath.Total.AllowAll {
-			authFor = AllowedAuthForAll
+			authFor = AllowedAuthForAll()
 		} else {
-			authFor = AllowedAuthForNone
+			authFor = AllowedAuthForNone()
 		}
 	case *api.BuildRegistryAuth_Selective:
 		var explicit []string
@@ -140,10 +142,13 @@ func (r Resolver) ResolveRequestAuth(auth *api.BuildRegistryAuth) (authFor Allow
 			explicit = append(explicit, reference.Domain(ref))
 		}
 		explicit = append(explicit, ath.Selective.AnyOf...)
-		authFor = AllowedAuthFor{false, explicit}
+		authFor = AllowedAuthFor{false, explicit, nil}
 	default:
-		authFor = AllowedAuthForNone
+		authFor = AllowedAuthForNone()
 	}
+
+	authFor.Additional = auth.Additional
+
 	return
 }
 
@@ -157,8 +162,20 @@ func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (r
 	if err != nil {
 		return nil, xerrors.Errorf("cannot parse image ref: %v", err)
 	}
-
 	reg := reference.Domain(ref)
+
+	// If we haven't found authentication using the built-in way, we'll resort to additional auth
+	// the user sent us.
+	defer func() {
+		if err == nil && res == nil {
+			res = a.additionalAuth(reg)
+
+			if res != nil {
+				log.WithField("reg", reg).Debug("found additional auth")
+			}
+		}
+	}()
+
 	var regAllowed bool
 	if a.IsAllowAll() {
 		// free for all
@@ -179,57 +196,45 @@ func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (r
 	return auth.Authenticate(reg)
 }
 
+func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
+	ath, ok := a.Additional[domain]
+	if !ok {
+		return nil
+	}
+
+	res := &Authentication{
+		Auth: ath,
+	}
+	dec, err := base64.StdEncoding.DecodeString(ath)
+	if err == nil {
+		segs := strings.Split(string(dec), ":")
+		if len(segs) == 2 {
+			res.Username = segs[0]
+			res.Password = segs[1]
+		}
+	}
+	return res
+}
+
 // ImageBuildAuth is the format image builds needs
 type ImageBuildAuth map[string]types.AuthConfig
 
 // GetImageBuildAuthFor produces authentication in the format an image builds needs
-func (a AllowedAuthFor) GetImageBuildAuthFor(auth RegistryAuthenticator, refstr []string) (res ImageBuildAuth, err error) {
-	if auth == nil {
-		return nil, nil
-	}
-
+func (a AllowedAuthFor) GetImageBuildAuthFor(blocklist []string) (res ImageBuildAuth) {
 	res = make(ImageBuildAuth)
-	for _, r := range refstr {
-		ref, err := reference.ParseNormalizedNamed(r)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot parse image ref: %v", err)
-		}
-
-		reg := reference.Domain(ref)
-		var regAllowed bool
-		if a.IsAllowAll() {
-			// free for all
-			regAllowed = true
-		} else {
-			for _, a := range a.Explicit {
-				if a == reg {
-					regAllowed = true
-					break
-				}
+	for reg := range a.Additional {
+		var blocked bool
+		for _, blk := range blocklist {
+			if blk == reg {
+				blocked = true
+				break
 			}
 		}
-		if !regAllowed {
+		if blocked {
 			continue
 		}
-
-		ra, err := auth.Authenticate(reg)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot get registry authentication: %v", err)
-		}
-
-		res[reg] = types.AuthConfig(*ra)
-	}
-	for _, reg := range a.Explicit {
-		if _, ok := res[reg]; ok {
-			continue
-		}
-
-		ra, err := auth.Authenticate(reg)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot get registry authentication: %v", err)
-		}
-
-		res[reg] = types.AuthConfig(*ra)
+		ath := a.additionalAuth(reg)
+		res[reg] = types.AuthConfig(*ath)
 	}
 
 	return

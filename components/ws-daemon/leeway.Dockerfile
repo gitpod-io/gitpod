@@ -14,7 +14,10 @@ RUN apk upgrade \
   && rm -rf /var/cache/apk/*
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
-RUN apk add --no-cache git bash openssh-client lz4 e2fsprogs coreutils tar strace xfsprogs-extra
+RUN apk add --no-cache git git-lfs bash openssh-client lz4 e2fsprogs coreutils tar strace xfsprogs-extra
+
+RUN apk add --no-cache kubectl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+
 COPY --from=dl /dl/runc.amd64 /usr/bin/runc
 
 # Add gitpod user for operations (e.g. checkout because of the post-checkout hook!)

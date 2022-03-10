@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
 import { getAdminLinks } from "./gcp-info";
-import { Property } from "./UserDetail";
+import Property from "./Property";
 
 export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance }) {
     const [workspace, setWorkspace] = useState(props.workspace);
@@ -63,7 +63,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                 <div className="flex w-full mt-6">
                     <Property name="Created">{moment(workspace.workspaceCreationTime).format('MMM D, YYYY')}</Property>
                     <Property name="Last Start">{moment(workspace.instanceCreationTime).fromNow()}</Property>
-                    <Property name="Context"><a className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" href={ContextURL.parseToURL(workspace.contextURL)?.toString()}>{workspace.context.title}</a></Property>
+                    <Property name="Context"><a className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" href={ContextURL.getNormalizedURL(workspace)?.toString()}>{workspace.context.title}</a></Property>
                 </div>
                 <div className="flex w-full mt-6">
                     <Property name="User"><Link className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" to={"/admin/users/" + props.workspace.ownerId}>{user?.name || props.workspace.ownerId}</Link></Property>

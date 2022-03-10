@@ -15,6 +15,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -46,10 +47,11 @@ import (
 )
 
 // API provides access to the individual component's API
-func NewComponentAPI(ctx context.Context, namespace string, client klient.Client) *ComponentAPI {
+func NewComponentAPI(ctx context.Context, namespace string, kubeconfig string, client klient.Client) *ComponentAPI {
 	return &ComponentAPI{
-		namespace: namespace,
-		client:    client,
+		namespace:  namespace,
+		kubeconfig: kubeconfig,
+		client:     client,
 
 		closerMutex: sync.Mutex{},
 
@@ -71,8 +73,9 @@ type serverStatus struct {
 
 // ComponentAPI provides access to the individual component's API
 type ComponentAPI struct {
-	namespace string
-	client    klient.Client
+	namespace  string
+	kubeconfig string
+	client     klient.Client
 
 	closer      []func() error
 	closerMutex sync.Mutex
@@ -121,38 +124,37 @@ type ForwardPort struct {
 	RemotePort int32
 }
 
-type KeyParams struct {
-	Iv string
+type EncriptedDBData struct {
+	Data      string `json:"data"`
+	KeyParams struct {
+		Iv string `json:"iv"`
+	} `json:"keyParams"`
+	KeyMetadata struct {
+		Name    string `json:"name"`
+		Version int    `json:"version"`
+	} `json:"keyMetadata"`
 }
 
-type EncryptedData struct {
-	Data      string
-	KeyParams KeyParams
-}
-
-func EncryptValue(value []byte, key []byte) *EncryptedData {
+func EncryptValue(value []byte, key []byte) (data string, iv string) {
 	PKCS5Padding := func(ciphertext []byte, blockSize int, after int) []byte {
 		padding := (blockSize - len(ciphertext)%blockSize)
 		padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 		return append(ciphertext, padtext...)
 	}
 
-	iv := []byte("1234567890123456")
+	ivData := []byte("1234567890123456")
 
 	block, _ := aes.NewCipher(key)
-	mode := cipher.NewCBCEncrypter(block, iv)
+	mode := cipher.NewCBCEncrypter(block, ivData)
 
 	paddedValue := PKCS5Padding(value, aes.BlockSize, len(value))
 	ciphertext := make([]byte, len(paddedValue))
 	mode.CryptBlocks(ciphertext, paddedValue)
 
-	returnVal := EncryptedData{
-		Data: base64.StdEncoding.EncodeToString(ciphertext),
-		KeyParams: KeyParams{
-			Iv: base64.StdEncoding.EncodeToString(iv),
-		},
-	}
-	return &returnVal
+	data = base64.StdEncoding.EncodeToString(ciphertext)
+	iv = base64.StdEncoding.EncodeToString(ivData)
+
+	return
 }
 
 // Supervisor provides a gRPC connection to a workspace's supervisor
@@ -170,7 +172,7 @@ func (c *ComponentAPI) Supervisor(instanceID string) (grpc.ClientConnInterface, 
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ready, errc := common.ForwardPort(ctx, c.client.RESTConfig(), c.namespace, pod, fmt.Sprintf("%d:22999", localPort))
+	ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:22999", localPort))
 	select {
 	case err = <-errc:
 		cancel()
@@ -203,6 +205,14 @@ func WithGitpodUser(name string) GitpodServerOpt {
 	}
 }
 
+func (c *ComponentAPI) CreateOAuth2Token(user string, scopes []string) (string, error) {
+	tkn, err := c.createGitpodToken(user, scopes)
+	if err != nil {
+		return "", err
+	}
+	return tkn, nil
+}
+
 // GitpodServer provides access to the Gitpod server API
 func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterface, error) {
 	var options gitpodServerOpts
@@ -222,7 +232,10 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterfac
 		tkn := c.serverStatus.Token[options.User]
 		if tkn == "" {
 			var err error
-			tkn, err = c.createGitpodToken(options.User)
+			tkn, err = c.createGitpodToken(options.User, []string{
+				"resource:default",
+				"function:*",
+			})
 			if err != nil {
 				return err
 			}
@@ -353,7 +366,115 @@ func (c *ComponentAPI) GetUserId(user string) (userId string, err error) {
 	return id, nil
 }
 
-func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
+func (c *ComponentAPI) CreateUser(username string, token string) (string, error) {
+	dbConfig, err := FindDBConfigFromPodEnv("server", c.namespace, c.client)
+	if err != nil {
+		return "", err
+	}
+
+	db, err := c.DB()
+	if err != nil {
+		return "", err
+	}
+
+	var userId string
+	err = db.QueryRow(`SELECT id FROM d_b_user WHERE name = ?`, username).Scan(&userId)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return "", err
+	}
+
+	if userId == "" {
+		userUuid, err := uuid.NewRandom()
+		if err != nil {
+			return "", err
+		}
+
+		userId = userUuid.String()
+		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName) VALUES (?, ?, ?, ?, ?)`,
+			userId,
+			time.Now().Format(time.RFC3339),
+			"",
+			username,
+			username,
+		)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	var authId string
+	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ?`, userId).Scan(&authId)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return "", err
+	}
+	if authId == "" {
+		authId = strconv.FormatInt(time.Now().UnixMilli(), 10)
+		_, err = db.Exec(`INSERT IGNORE INTO d_b_identity (authProviderId, authId, authName, userId, tokens) VALUES (?, ?, ?, ?, ?)`,
+			"Public-GitHub",
+			authId,
+			username,
+			userId,
+			"[]",
+		)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	var cnt int
+	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ?`, authId).Scan(&cnt)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return "", err
+	}
+	if cnt == 0 {
+		uid, err := uuid.NewRandom()
+		if err != nil {
+			return "", err
+		}
+
+		// Double Marshalling to be compatible with EncryptionServiceImpl
+		value := struct {
+			Value  string   `json:"value"`
+			Scopes []string `json:"scopes"`
+		}{
+			Value:  token,
+			Scopes: []string{},
+		}
+		valueBytes, err := json.Marshal(value)
+		if err != nil {
+			return "", err
+		}
+		valueBytes2, err := json.Marshal(string(valueBytes))
+		if err != nil {
+			return "", err
+		}
+
+		encryptedData, iv := EncryptValue(valueBytes2, dbConfig.EncryptionKeys.Material)
+		encrypted := EncriptedDBData{}
+		encrypted.Data = encryptedData
+		encrypted.KeyParams.Iv = iv
+		encrypted.KeyMetadata.Name = dbConfig.EncryptionKeys.Metadata.Name
+		encrypted.KeyMetadata.Version = dbConfig.EncryptionKeys.Metadata.Version
+		encryptedJson, err := json.Marshal(encrypted)
+		if err != nil {
+			return "", err
+		}
+
+		_, err = db.Exec(`INSERT IGNORE INTO d_b_token_entry (authProviderId, authId, token, uid) VALUES (?, ?, ?, ?)`,
+			"Public-GitHub",
+			authId,
+			encryptedJson,
+			uid.String(),
+		)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return userId, nil
+}
+
+func (c *ComponentAPI) createGitpodToken(user string, scopes []string) (tkn string, err error) {
 	id, err := c.GetUserId(user)
 	if err != nil {
 		return "", err
@@ -381,7 +502,7 @@ func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
 		fmt.Sprintf("integration-test-%d", time.Now().UnixNano()),
 		tokenTypeMachineAuthToken,
 		id,
-		"resource:default,function:*",
+		strings.Join(scopes, ","),
 		time.Now().Format(time.RFC3339),
 	)
 	if err != nil {
@@ -423,20 +544,10 @@ func (c *ComponentAPI) CreateGitpodOneTimeSecret(value string) (id string, err e
 		return "", err
 	}
 
-	type EncriptedDBData struct {
-		Data      string `json:"data"`
-		KeyParams struct {
-			Iv string `json:"iv"`
-		} `json:"keyParams"`
-		KeyMetadata struct {
-			Name    string `json:"name"`
-			Version int    `json:"version"`
-		} `json:"keyMetadata"`
-	}
-	encryptedData := EncryptValue(valueBytes2, dbConfig.EncryptionKeys.Material)
+	encryptedData, iv := EncryptValue(valueBytes2, dbConfig.EncryptionKeys.Material)
 	encrypted := EncriptedDBData{}
-	encrypted.Data = encryptedData.Data
-	encrypted.KeyParams.Iv = encryptedData.KeyParams.Iv
+	encrypted.Data = encryptedData
+	encrypted.KeyParams.Iv = iv
 	encrypted.KeyMetadata.Name = dbConfig.EncryptionKeys.Metadata.Name
 	encrypted.KeyMetadata.Version = dbConfig.EncryptionKeys.Metadata.Version
 	encryptedJson, err := json.Marshal(encrypted)
@@ -483,7 +594,7 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPort(ctx, c.client.RESTConfig(), c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
 		select {
 		case err := <-errc:
 			cancel()
@@ -556,7 +667,7 @@ func (c *ComponentAPI) BlobService() (csapi.BlobServiceClient, error) {
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPort(ctx, c.client.RESTConfig(), c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
 		select {
 		case err := <-errc:
 			cancel()
@@ -609,7 +720,7 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 	// if configured: setup local port-forward to DB pod
 	if config.ForwardPort != nil {
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPort(ctx, c.client.RESTConfig(), c.namespace, config.ForwardPort.PodName, fmt.Sprintf("%d:%d", config.Port, config.ForwardPort.RemotePort))
+		ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, config.ForwardPort.PodName, fmt.Sprintf("%d:%d", config.Port, config.ForwardPort.RemotePort))
 		select {
 		case err := <-errc:
 			cancel()
@@ -855,7 +966,7 @@ func (c *ComponentAPI) ImageBuilder(opts ...APIImageBuilderOpt) (imgbldr.ImageBu
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
-			ready, errc := common.ForwardPort(ctx, c.client.RESTConfig(), c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+			ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
 			select {
 			case err = <-errc:
 				cancel()
@@ -904,7 +1015,7 @@ func (c *ComponentAPI) ContentService() (ContentService, error) {
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := common.ForwardPort(ctx, c.client.RESTConfig(), c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		ready, errc := common.ForwardPort(ctx, c.kubeconfig, c.namespace, pod, fmt.Sprintf("%d:8080", localPort))
 		select {
 		case err := <-errc:
 			cancel()

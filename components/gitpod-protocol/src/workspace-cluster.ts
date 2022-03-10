@@ -35,9 +35,6 @@ export interface WorkspaceCluster {
 
     // An optional set of constraints that limit who can start workspaces on the cluster
     admissionConstraints?: AdmissionConstraint[];
-
-    // An optional set of admission preferences that guide cluster selection
-    admissionPreferences?: AdmissionPreference[];
 }
 
 export type WorkspaceClusterState = "available" | "cordoned" | "draining";
@@ -55,14 +52,25 @@ export namespace TLSConfig {
 export type WorkspaceClusterWoTLS = Omit<WorkspaceCluster, "tls">;
 export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "name" | "url" | "tls">;
 
-export type AdmissionConstraint = AdmissionConstraintFeaturePreview | AdmissionConstraintHasRole | AdmissionConstraintHasUserLevel;
+export type AdmissionConstraint = AdmissionConstraintFeaturePreview | AdmissionConstraintHasPermission | AdmissionConstraintHasUserLevel | AdmissionConstraintHasMoreResources;
 export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
-export type AdmissionConstraintHasRole = { type: "has-permission", permission: PermissionName };
+export type AdmissionConstraintHasPermission = { type: "has-permission", permission: PermissionName };
 export type AdmissionConstraintHasUserLevel = { type: "has-user-level", level: string };
+export type AdmissionConstraintHasMoreResources = { type: "has-more-resources" };
 
-export type AdmissionPreference = AdmissionPreferenceUserLevel;
-export type AdmissionPreferenceUserLevel = { type: 'user-level', level: string };
-
+export namespace AdmissionConstraint {
+    export function is(o: any): o is AdmissionConstraint {
+        return !!o
+            && 'type' in o;
+    }
+    export function isHasPermissionConstraint(o: any): o is AdmissionConstraintHasPermission {
+        return is(o)
+            && o.type === "has-permission";
+    }
+    export function hasPermission(ac: AdmissionConstraint, permission: PermissionName): boolean {
+        return isHasPermissionConstraint(ac) && ac.permission === permission;
+    }
+}
 
 export const WorkspaceClusterDB = Symbol("WorkspaceClusterDB");
 export interface WorkspaceClusterDB {

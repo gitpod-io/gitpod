@@ -1805,7 +1805,7 @@ type GithubAppConfig struct {
 // GithubAppPrebuildConfig is the GithubAppPrebuildConfig message type
 type GithubAppPrebuildConfig struct {
 	AddBadge              bool        `json:"addBadge,omitempty"`
-	AddCheck              bool        `json:"addCheck,omitempty"`
+	AddCheck              interface{} `json:"addCheck,omitempty"`
 	AddComment            bool        `json:"addComment,omitempty"`
 	AddLabel              interface{} `json:"addLabel,omitempty"`
 	Branches              bool        `json:"branches,omitempty"`
@@ -2056,6 +2056,15 @@ type UpdateUserStorageResourceOptions struct {
 type AdditionalUserData struct {
 	EmailNotificationSettings *EmailNotificationSettings `json:"emailNotificationSettings,omitempty"`
 	Platforms                 []*UserPlatform            `json:"platforms,omitempty"`
+	IdeSettings               *IDESettings               `json:"ideSettings,omitempty"`
+}
+
+// IDESettings is the IDESettings message type
+type IDESettings struct {
+	DefaultIde        string `json:"defaultIde,omitempty"`
+	UseDesktopIde     bool   `json:"useDesktopIde,omitempty"`
+	DefaultDesktopIde string `json:"defaultDesktopIde,omitempty"`
+	UseLatestVersion  bool   `json:"useLatestVersion,omitempty"`
 }
 
 // EmailNotificationSettings is the EmailNotificationSettings message type

@@ -44,8 +44,9 @@ export class GitHubGraphQlEndpoint {
         const { host } = this.config;
         const urlString = host === 'github.com' ?
             `https://raw.githubusercontent.com/${org}/${name}/${commitish}/${path}` :
-            `https://${host}/${org}/${name}/raw/${commitish}/${path}`;
+            `https://${host}/raw/${org}/${name}/${commitish}/${path}`;
         const response = await fetch(urlString, {
+            timeout: 15000,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -82,6 +83,7 @@ export class GitHubGraphQlEndpoint {
 
     async runQueryWithToken<T>(token: string, request: object): Promise<QueryResult<T>> {
         const response = await fetch(this.baseURLv4, {
+            timeout: 15000,
             method: 'POST',
             body: JSON.stringify(request),
             headers: {
@@ -92,7 +94,7 @@ export class GitHubGraphQlEndpoint {
         if (!response.ok) {
             throw Error(response.statusText);
         }
-        const result: QueryResult<T> = await response.json();
+        const result = await response.json() as QueryResult<T>;
         if (!result.data && result.errors) {
             const error = new Error(JSON.stringify({
                 request,
@@ -172,7 +174,7 @@ export class GitHubRestApi {
         try {
             const response = (await operation(userApi));
             const statusCode = response.status;
-            if (statusCode !== 200) {
+            if (!(statusCode >= 200 && statusCode < 300)) {
                 throw new GitHubApiError(response);
             }
             return response;

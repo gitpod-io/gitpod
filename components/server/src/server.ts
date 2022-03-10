@@ -17,7 +17,7 @@ import { UserController } from './user/user-controller';
 import { EventEmitter } from 'events';
 import { toIWebSocket } from '@gitpod/gitpod-protocol/lib/messaging/node/connection';
 import { WsExpressHandler, WsRequestHandler } from './express/ws-handler';
-import { handleError, isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from './express-util';
+import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from './express-util';
 import { createWebSocketConnection } from 'vscode-ws-jsonrpc/lib';
 import { MessageBusIntegration } from './workspace/messagebus-integration';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -43,7 +43,8 @@ import { NewsletterSubscriptionController } from './user/newsletter-subscription
 import { Config } from './config';
 import { DebugApp } from './debug-app';
 import { LocalMessageBroker } from './messaging/local-message-broker';
-import { WsPingPongHandler } from './express/ws-ping-pong-handler';
+import { WsConnectionHandler } from './express/ws-connection-handler';
+import { InstallationAdminController } from './installation-admin/installation-admin-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -54,6 +55,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(SessionHandlerProvider) protected sessionHandlerProvider: SessionHandlerProvider;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
+    @inject(InstallationAdminController) protected readonly installationAdminController: InstallationAdminController;
     @inject(EnforcementController) protected readonly enforcementController: EnforcementController;
     @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
@@ -82,7 +84,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected app?: express.Application;
     protected httpServer?: http.Server;
     protected monitoringApp?: express.Application;
+    protected installationAdminApp?: express.Application;
     protected monitoringHttpServer?: http.Server;
+    protected installationAdminHttpServer?: http.Server;
     protected disposables = new DisposableCollection();
 
     public async init(app: express.Application) {
@@ -102,7 +106,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // metrics
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
             const startTime = Date.now();
-            req.on("end", () =>{
+            req.on("end", () => {
                 const method = req.method;
                 const route = req.route?.path || req.baseUrl || "unknown";
                 observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000)
@@ -113,9 +117,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         });
 
         // Express configuration
-        // Read bodies as JSON
-        app.use(bodyParser.json())
-        app.use(bodyParser.urlencoded({ extended: true }))
+        // Read bodies as JSON (but keep the raw body just in case)
+        app.use(bodyParser.json({ verify: (req, res, buffer) => { (req as any).rawBody = buffer; }}));
+        app.use(bodyParser.urlencoded({ extended: true }));
         // Add cookie Parser
         app.use(cookieParser());
         app.set('trust proxy', 1)   // trust first proxy
@@ -190,18 +194,18 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 }
             );
 
-            const wsPingPongHandler = new WsPingPongHandler();
+            const wsPingPongHandler = new WsConnectionHandler();
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
             wsHandler.ws(websocketConnectionHandler.path, (ws, request) => {
                 const websocket = toIWebSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
-            }, handleSession, ...initSessionHandlers, handleError, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
+            }, handleSession, ...initSessionHandlers, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
             });
             wsHandler.ws("/v1", (ws, request) => {
                 const websocket = toIWebSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
-            }, handleError, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
+            }, wsPingPongHandler.handler(), (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
             });
             wsHandler.ws(/.*/, (ws, request) => {
@@ -229,6 +233,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Health check + metrics endpoints
         this.monitoringApp = this.monitoringEndpointsApp.create();
 
+        // Installation Admin - host separately to avoid exposing publicly
+        this.installationAdminApp = this.installationAdminController.create();
+
         // Report current websocket connections
         this.installWebsocketConnectionGauge();
         this.installWebsocketClientContextGauge();
@@ -254,7 +261,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         this.oneTimeSecretServer.startPruningExpiredSecrets();
 
         // Start DB updater
-        this.startDbDeleter();
+        this.startDbDeleter().catch(err => log.error("starting DB deleter", err));
 
         this.app = app;
         log.info('server initialized.');
@@ -302,12 +309,19 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
+        if (this.installationAdminApp) {
+            this.installationAdminHttpServer = this.installationAdminApp.listen(9000, () => {
+                log.info(`installation admin app listening on port: ${(<AddressInfo>this.installationAdminHttpServer!.address()).port}`)
+            })
+        }
+
         this.debugApp.start(6060);
     }
 
     public async stop() {
         await this.debugApp.stop();
         await this.stopServer(this.monitoringHttpServer);
+        await this.stopServer(this.installationAdminHttpServer);
         await this.stopServer(this.httpServer);
         this.disposables.dispose();
         log.info('server stopped.');

@@ -13,6 +13,7 @@ import (
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -100,8 +101,8 @@ var runCmd = &cobra.Command{
 
 		if cfg.Prometheus.Addr != "" {
 			reg.MustRegister(
-				prometheus.NewGoCollector(),
-				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+				collectors.NewGoCollector(),
+				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 			)
 
 			handler := http.NewServeMux()

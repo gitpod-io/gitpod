@@ -16,6 +16,18 @@ EOF
     `)
 }
 
+
+/**
+ * Convenience function to kubectl delete a manifest from stdin.
+ */
+ function kubectlDeleteManifest(manifest: string, options?: { validate?: boolean }) {
+    exec(`
+        cat <<EOF | kubectl --kubeconfig ${KUBECONFIG_PATH} delete -f -
+${manifest}
+EOF
+    `)
+}
+
 /**
  * Start a VM
  * Does not wait for the VM to be ready.
@@ -56,6 +68,47 @@ export function startVM(options: { name: string }) {
     )
 }
 
+
+/**
+ * Remove a VM with its Namespace
+ */
+ export function deleteVM(options: { name: string }) {
+    const namespace = `preview-${options.name}`
+    const userDataSecretName = `userdata-${options.name}`
+
+    kubectlDeleteManifest(
+        Manifests.ServiceManifest({
+            vmName: options.name,
+            namespace
+        })
+    )
+
+    kubectlDeleteManifest(
+        Manifests.UserDataSecretManifest({
+            vmName: options.name,
+            namespace,
+            secretName: userDataSecretName,
+        })
+    )
+
+    kubectlDeleteManifest(
+        Manifests.VirtualMachineManifest({
+            namespace,
+            vmName: options.name,
+            claimName: `${options.name}-${Date.now()}`,
+            userDataSecretName
+        }),
+        { validate: false }
+    )
+
+    kubectlDeleteManifest(
+        Manifests.NamespaceManifest({
+            namespace
+        })
+    )
+}
+
+
 /**
  * Check if a VM with the given name already exists.
  * @returns true if the VM already exists
@@ -70,7 +123,7 @@ export function vmExists(options: { name: string }) {
  * Wait until the VM Instance reaches the Running status.
  * If the VM Instance doesn't reach Running before the timeoutMS it will throw an Error.
  */
-export function waitForVM(options: { name: string, timeoutSeconds: number, slice: string }) {
+export function waitForVMReadiness(options: { name: string, timeoutSeconds: number, slice: string }) {
     const werft = getGlobalWerftInstance()
     const namespace = `preview-${options.name}`
 
@@ -117,7 +170,7 @@ export function copyk3sKubeconfig(options: { name: string, path: string, timeout
  */
 export function startSSHProxy(options: { name: string, slice: string }) {
     const namespace = `preview-${options.name}`
-    exec(`sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:22`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
+    exec(`sudo kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${namespace} port-forward service/proxy 22:2200`, { async: true, silent: true, slice: options.slice, dontCheckRc: true })
 }
 
 /**
@@ -125,4 +178,14 @@ export function startSSHProxy(options: { name: string, slice: string }) {
  */
 export function stopKubectlPortForwards() {
     exec(`sudo killall kubectl || true`)
+}
+
+/**
+ * Install Fluent-Bit sending logs to GCP
+ */
+export function installFluentBit(options: {namespace: string, slice: string}) {
+    exec(`kubectl create secret generic fluent-bit-external --save-config --dry-run=client --from-file=credentials.json=/mnt/fluent-bit-external/credentials.json -o yaml | kubectl apply -n ${options.namespace} -f -`, { slice: options.slice, dontCheckRc: true})
+    exec(`helm3 repo add fluent https://fluent.github.io/helm-charts`, { slice: options.slice, dontCheckRc: true})
+    exec(`helm3 repo update`, { slice: options.slice, dontCheckRc: true})
+    exec(`helm3 upgrade --install fluent-bit fluent/fluent-bit -n ${options.namespace} -f .werft/vm/charts/fluentbit/values.yaml`, { slice: options.slice, dontCheckRc: true})
 }

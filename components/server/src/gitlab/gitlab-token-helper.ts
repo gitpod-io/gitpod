@@ -31,8 +31,8 @@ export class GitLabTokenHelper {
             if (this.containsScopes(token, requiredScopes)) {
                 return token;
             }
-        } catch {
-            // no token
+        } catch (e) {
+            console.error(e);
         }
         if (requiredScopes.length === 0) {
             requiredScopes = GitLabScope.Requirements.DEFAULT

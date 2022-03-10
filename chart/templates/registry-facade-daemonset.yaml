@@ -53,6 +53,10 @@ spec:
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
         - name: GRPC_GO_RETRY
           value: "on"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         volumeMounts:
         - name: cache
           mountPath: "/mnt/cache"
@@ -71,6 +75,19 @@ spec:
         - name: https-certificates
           mountPath: "/mnt/certificates"
         {{- end }}
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true
+          preStop:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - kubectl label nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}-
 {{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       volumes:
       - name: cache

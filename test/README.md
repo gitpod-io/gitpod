@@ -29,22 +29,45 @@ There is a [werft job](../.werft/run-integration-tests.yaml) that runs the integ
 
 Example command:
 ```
-werft job run github -j .werft/run-integration-tests.yaml -a namespace=staging-gpl-2658-int-tests -a version=gpl-2658-int-tests.57 -f
+werft run github -j .werft/run-integration-tests.yaml -a namespace=staging-gpl-2658-int-tests -a version=gpl-2658-int-tests.57 -f
 ```
 
-### Manually against a Kubernetes cluster
+### Manually
 
-You may want to run tests to assert whether your Gitpod installation is successfully integrated.
+You may want to run tests to assert whether a Gitpod installation is successfully integrated.
 
-To test your Gitpod installation:
+#### Using a pod
 
-1. Set your kubectl context to the cluster you want to test
-2. Integrate the Gitpod installation with OAuth for Github and/or Gitlab, otherwise related tests may fail
-3. Clone this repo, and `cd` to `./gitpod/test`
-4. Run the tests like so
-  ```bash
+Best for when you want to validate an environment.
+
+1. Update image name in `integration.yaml` for job `integration-job` to latest built by werft.
+2. Optionally add your username in that job argument or any other additional params.
+2. Apply yaml file that will add all necessary permissions and create a job that will run tests.
+   * [`kubectl apply -f ./integration.yaml`](./integration.yaml)
+3. Check logs to inspect test results like so `kubectl logs -f jobs/integration-job`.
+4. Tear down the integration user and job when testing is done.
+   * [`kubectl delete -f ./integration.yaml`](./integration.yaml)
+
+#### Go test
+
+Best for when you're actively developing Gitpod.
+Test will work if images that they use are already cached by Gitpod instance. If not, they might fail if it takes too long to pull an image.
+There are 4 different types of tests:
+1. Enterprise specific, that require valid license to be installed. Run those with `-enterprise=true`
+2. Tests that require correct user (user should have github OAuth integration setup with gitpod). Run those with `-username=<gitpod_username>`. Make sure to load https://github.com/gitpod-io/gitpod-test-repo and https://github.com/gitpod-io/gitpod workspaces inside your gitpod that you are testing to preload those images onto your node. Wait for it to finish pulling those image, this will ensure that test will not fail due to timeout while waiting to pull an image for the first time.
+3. To test gitlab integration, add `-gitlab=true`
+4. All other tests.
+
+To run the tests:
+1. Clone this repo (`git clone git@github.com:gitpod-io/gitpod.git`), and `cd` to `./gitpod/test`
+2. Run the tests like so
+  ```console
   go test -v ./... \
   -kubeconfig=<path_to_kube_config_file> \
   -namespace=<namespace_where_gitpod_is_installed> \
-  -username=<a_user_in_the_gitpod_database>
+  -username=<gitpod_user_with_oauth_setup> \
+  -enterprise=<true|false> \
+  -gitlab=<true|false>
   ```
+3. Tests `TestUploadDownloadBlob` and `TestUploadDownloadBlobViaServer` will fail when testing locally, as they are trying to connect to cluster local resources directly. To test them use docker image instead that runs within the cluster.
+4. If you want to run specific test, add `-run <test>` before `-kubeconfig` parameter.

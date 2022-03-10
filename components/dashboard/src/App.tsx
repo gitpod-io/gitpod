@@ -12,6 +12,7 @@ import { Login } from './Login';
 import { UserContext } from './user-context';
 import { TeamsContext } from './teams/teams-context';
 import { ThemeContext } from './theme-context';
+import { AdminContext } from './admin-context';
 import { getGitpodService } from './service/service';
 import { shouldSeeWhatsNew, WhatsNew } from './whatsnew/WhatsNew';
 import gitpodIcon from './icons/gitpod.svg';
@@ -21,7 +22,12 @@ import { trackButtonOrAnchor, trackPathChange, trackLocation } from './Analytics
 import { User } from '@gitpod/gitpod-protocol';
 import * as GitpodCookie from '@gitpod/gitpod-protocol/lib/util/gitpod-cookie';
 import { Experiment } from './experiments';
-import ProjectSettings from './projects/ProjectSettings';
+import { workspacesPathMain } from './workspaces/workspaces.routes';
+import { settingsPathAccount, settingsPathIntegrations, settingsPathMain, settingsPathNotifications, settingsPathPlans, settingsPathPreferences, settingsPathTeams, settingsPathTeamsJoin, settingsPathTeamsNew, settingsPathVariables } from './settings/settings.routes';
+import { projectsPathInstallGitHubApp, projectsPathMain, projectsPathMainWithParams, projectsPathNew } from './projects/projects.routes';
+import { refreshSearchData } from './components/RepositoryFinder';
+import { StartWorkspaceModal } from './workspaces/StartWorkspaceModal';
+import { parseProps } from './start/StartWorkspace';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -32,6 +38,7 @@ const Teams = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Te
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ './settings/EnvironmentVariables'));
 const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Integrations'));
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Preferences'));
+const Open = React.lazy(() => import(/* webpackPrefetch: true */ './start/Open'));
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/StartWorkspace'));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/CreateWorkspace'));
 const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ './teams/NewTeam'));
@@ -42,12 +49,17 @@ const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ './projec
 const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ './projects/ConfigureProject'));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Projects'));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Project'));
+const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ './projects/ProjectSettings'));
+const ProjectVariables = React.lazy(() => import(/* webpackPrefetch: true */ './projects/ProjectVariables'));
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuilds'));
 const Prebuild = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuild'));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './projects/InstallGitHubApp'));
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/UserSearch'));
 const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/WorkspacesSearch'));
+const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ './admin/Settings'));
+const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/ProjectsSearch'));
+const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/TeamsSearch'));
 const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ './OauthClientApproval'));
 
 function Loading() {
@@ -94,11 +106,12 @@ export function getURLHash() {
 function App() {
     const { user, setUser } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
+    const { setAdminSettings } = useContext(AdminContext);
     const { setIsDark } = useContext(ThemeContext);
 
-    const [ loading, setLoading ] = useState<boolean>(true);
-    const [ isWhatsNewShown, setWhatsNewShown ] = useState(false);
-    const [ isSetupRequired, setSetupRequired ] = useState(false);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [isWhatsNewShown, setWhatsNewShown] = useState(false);
+    const [isSetupRequired, setSetupRequired] = useState(false);
     const history = useHistory();
 
     useEffect(() => {
@@ -128,6 +141,11 @@ function App() {
                     }
                 }
                 setTeams(teams);
+
+                if (user?.rolesOrPermissions?.includes('admin')) {
+                    const adminSettings = await getGitpodService().server.adminGetSettings();
+                    setAdminSettings(adminSettings);
+                }
             } catch (error) {
                 console.error(error);
                 if (error && "code" in error) {
@@ -193,7 +211,7 @@ function App() {
             //check if current target or any ancestor up to document is button or anchor
             while (!(curr instanceof Document)) {
                 if (curr instanceof HTMLButtonElement || curr instanceof HTMLAnchorElement || (curr instanceof HTMLDivElement && curr.onclick)) {
-                    trackButtonOrAnchor(curr, !!user);
+                    trackButtonOrAnchor(curr);
                     break; //finding first ancestor is sufficient
                 }
                 curr = curr.parentNode as HTMLElement;
@@ -202,6 +220,12 @@ function App() {
         window.addEventListener("click", handleButtonOrAnchorTracking, true);
         return () => window.removeEventListener("click", handleButtonOrAnchorTracking, true);
     }, []);
+
+    useEffect(() => {
+        if (user) {
+            refreshSearchData('', user);
+        }
+    }, [user]);
 
     // redirect to website for any website slugs
     if (isGitpodIo() && isWebsiteSlug(window.location.pathname)) {
@@ -261,32 +285,36 @@ function App() {
         <div className="container">
             <Menu />
             <Switch>
-                <Route path="/new" exact component={NewProject} />
+                <Route path={projectsPathNew} exact component={NewProject} />
+                <Route path="/open" exact component={Open} />
                 <Route path="/setup" exact component={Setup} />
-                <Route path="/workspaces" exact component={Workspaces} />
-                <Route path="/account" exact component={Account} />
-                <Route path="/integrations" exact component={Integrations} />
-                <Route path="/notifications" exact component={Notifications} />
-                <Route path="/plans" exact component={Plans} />
-                <Route path="/variables" exact component={EnvironmentVariables} />
-                <Route path="/preferences" exact component={Preferences} />
-                <Route path="/install-github-app" exact component={InstallGitHubApp} />
+                <Route path={workspacesPathMain} exact component={Workspaces} />
+                <Route path={settingsPathAccount} exact component={Account} />
+                <Route path={settingsPathIntegrations} exact component={Integrations} />
+                <Route path={settingsPathNotifications} exact component={Notifications} />
+                <Route path={settingsPathPlans} exact component={Plans} />
+                <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
+                <Route path={settingsPathPreferences} exact component={Preferences} />
+                <Route path={projectsPathInstallGitHubApp} exact component={InstallGitHubApp} />
                 <Route path="/from-referrer" exact component={FromReferrer} />
 
                 <Route path="/admin/users" component={UserSearch} />
+                <Route path="/admin/teams" component={TeamsSearch} />
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
+                <Route path="/admin/settings" component={AdminSettings} />
+                <Route path="/admin/projects" component={ProjectsSearch} />
 
                 <Route path={["/", "/login"]} exact>
-                    <Redirect to="/projects" />
+                    <Redirect to={workspacesPathMain} />
                 </Route>
-                <Route path={["/settings"]} exact>
-                    <Redirect to="/account" />
+                <Route path={[settingsPathMain]} exact>
+                    <Redirect to={settingsPathAccount} />
                 </Route>
                 <Route path={["/access-control"]} exact>
-                    <Redirect to="/integrations" />
+                    <Redirect to={settingsPathIntegrations} />
                 </Route>
                 <Route path={["/subscription", "/usage", "/upgrade-subscription"]} exact>
-                    <Redirect to="/plans" />
+                    <Redirect to={settingsPathPlans} />
                 </Route>
                 <Route path={["/admin"]} exact>
                     <Redirect to="/admin/users" />
@@ -297,9 +325,9 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
-                <Route path="/projects">
-                    <Route exact path="/projects" component={Projects} />
-                    <Route exact path="/projects/:projectName/:resourceOrPrebuild?" render={(props) => {
+                <Route path={projectsPathMain}>
+                    <Route exact path={projectsPathMain} component={Projects} />
+                    <Route exact path={projectsPathMainWithParams} render={(props) => {
                         const { resourceOrPrebuild } = props.match.params;
                         if (resourceOrPrebuild === "settings") {
                             return <ProjectSettings />;
@@ -307,8 +335,8 @@ function App() {
                         if (resourceOrPrebuild === "configure") {
                             return <ConfigureProject />;
                         }
-                        if (resourceOrPrebuild === "workspaces") {
-                            return <Workspaces />;
+                        if (resourceOrPrebuild === "variables") {
+                            return <ProjectVariables />;
                         }
                         if (resourceOrPrebuild === "prebuilds") {
                             return <Prebuilds />;
@@ -316,10 +344,10 @@ function App() {
                         return resourceOrPrebuild ? <Prebuild /> : <Project />;
                     }} />
                 </Route>
-                <Route path="/teams">
-                    <Route exact path="/teams" component={Teams} />
-                    <Route exact path="/teams/new" component={NewTeam} />
-                    <Route exact path="/teams/join" component={JoinTeam} />
+                <Route path={settingsPathTeams}>
+                    <Route exact path={settingsPathTeams} component={Teams} />
+                    <Route exact path={settingsPathTeamsNew} component={NewTeam} />
+                    <Route exact path={settingsPathTeamsJoin} component={JoinTeam} />
                 </Route>
                 {(teams || []).map(team =>
                     <Route path={`/t/${team.slug}`} key={team.slug}>
@@ -340,14 +368,14 @@ function App() {
                             if (maybeProject === "settings") {
                                 return <TeamSettings />;
                             }
-                            if (resourceOrPrebuild === "configure") {
-                                return <ConfigureProject />;
-                            }
                             if (resourceOrPrebuild === "settings") {
                                 return <ProjectSettings />;
                             }
-                            if (resourceOrPrebuild === "workspaces") {
-                                return <Workspaces />;
+                            if (resourceOrPrebuild === "configure") {
+                                return <ConfigureProject />;
+                            }
+                            if (resourceOrPrebuild === "variables") {
+                                return <ProjectVariables />;
                             }
                             if (resourceOrPrebuild === "prebuilds") {
                                 return <Prebuilds />;
@@ -368,6 +396,7 @@ function App() {
                     }}>
                 </Route>
             </Switch>
+            <StartWorkspaceModal />
         </div>
     </Route>;
 
@@ -386,7 +415,7 @@ function App() {
     } else if (isCreation) {
         toRender = <CreateWorkspace contextUrl={hash} />;
     } else if (isWsStart) {
-        toRender = <StartWorkspace workspaceId={hash} />;
+        toRender = <StartWorkspace {...parseProps(hash, window.location.search)} />;
     } else if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
         let url = new URL(window.location.href)
         url.hash = url.pathname

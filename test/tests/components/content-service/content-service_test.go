@@ -68,7 +68,7 @@ func TestUploadUrl(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
@@ -128,7 +128,7 @@ func TestDownloadUrl(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
@@ -174,7 +174,7 @@ func TestUploadDownloadBlob(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
@@ -217,14 +217,13 @@ func TestUploadDownloadBlob(t *testing.T) {
 // TestUploadDownloadBlobViaServer uploads a blob via server → content-server and downloads it afterwards
 func TestUploadDownloadBlobViaServer(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
-
 	f := features.New("UploadDownloadBlobViaServer").
 		WithLabel("component", "content-server").
 		Assess("it should uploads a blob via server → content-server and downloads it afterwards", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})

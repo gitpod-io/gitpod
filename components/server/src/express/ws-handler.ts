@@ -47,10 +47,9 @@ export class WsExpressHandler {
         this.wss = new websocket.Server({
             verifyClient,
             noServer: true,
-            perMessageDeflate: {
-                // don't compress if a message is less than 256kb
-                threshold: 256 * 1024
-            },
+            // disabling to reduce memory consumption, cf.
+            // https://github.com/websockets/ws#websocket-compression
+            perMessageDeflate: false,
             // we don't use this feature, so avoid having another potential mem leak
             clientTracking: false,
         });
@@ -64,13 +63,13 @@ export class WsExpressHandler {
         const stack = WsLayer.createStack(...handlers);
         const dispatch = (ws: websocket, request: express.Request) => {
             handler(ws, request);
-            stack.dispatch(ws, request).catch(err => {
-                log.error("websocket stack error", err);
-                ws.terminate();
-            }).finally(() => {
+            stack.dispatch(ws, request).finally(() => {
                 const pathname = request.url ? url.parse(request.url).pathname : undefined;
                 const method = request.method || "UNKNOWN";
                 increaseHttpRequestCounter(method, pathname || "unkown-websocket", request.statusCode || 0);
+            }).catch(err => {
+                log.error("websocket stack error", err);
+                ws.terminate();
             });
         }
 

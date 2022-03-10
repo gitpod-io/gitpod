@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Branch, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, User } from "@gitpod/gitpod-protocol";
+import { Branch, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, ProjectEnvVar, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -37,9 +37,25 @@ export class ProjectsService {
         return this.projectDB.findProjectsByCloneUrls(cloneUrls);
     }
 
-    async getProjectOverview(user: User, project: Project): Promise<Project.Overview | undefined> {
-        const branches = await this.getBranchDetails(user, project);
-        return { branches };
+    async getProjectOverviewCached(user: User, project: Project): Promise<Project.Overview | undefined> {
+        // Check for a cached project overview (fast!)
+        const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
+
+        // ...but also refresh the cache on every request (asynchronously / in the background)
+        const refreshPromise = this.getBranchDetails(user, project).then(branches => {
+            const overview = { branches };
+            // No need to await here
+            this.projectDB.storeCachedProjectOverview(project.id, overview).catch(error => {
+                log.error(`Could not store cached project overview: ${error}`, { cloneUrl: project.cloneUrl })
+            });
+            return overview;
+        });
+
+        const cachedOverview = await cachedPromise;
+        if (cachedOverview) {
+            return cachedOverview;
+        }
+        return await refreshPromise;
     }
 
     protected getRepositoryProvider(project: Project) {
@@ -78,9 +94,7 @@ export class ProjectsService {
                 changeHash: commit.sha,
                 changeTitle: commit.commitMessage,
                 changeAuthorAvatar: commit.authorAvatarUrl,
-                isDefault: repository.defaultBranch === branch.name,
-                changePR: "changePR", // todo: compute in repositoryProvider
-                changeUrl: "changeUrl", // todo: compute in repositoryProvider
+                isDefault: repository.defaultBranch === branch.name
             });
         }
         result.sort((a, b) => (b.changeDate || "").localeCompare(a.changeDate || ""));
@@ -113,11 +127,15 @@ export class ProjectsService {
     }
 
     protected async onDidCreateProject(project: Project, installer: User) {
+        // Pre-fetch project details in the background -- don't await
+        /** no await */ this.getProjectOverviewCached(installer, project).catch(err => {/** ignore */});
+
+        // Install the prebuilds webhook if possible
         let { userId, teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const type = hostContext && hostContext.authProvider.info.authProviderType;
-        if (type === "GitLab" || type === "Bitbucket") {
+        if (type !== "github.com") {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
@@ -135,7 +153,7 @@ export class ProjectsService {
         return this.projectDB.markDeleted(projectId);
     }
 
-    async findPrebuilds(user: User, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
+    async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
@@ -179,6 +197,22 @@ export class ProjectsService {
 
     async updateProjectPartial(partialProject: PartialProject): Promise<void> {
         return this.projectDB.updateProject(partialProject);
+    }
+
+    async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void> {
+        return this.projectDB.setProjectEnvironmentVariable(projectId, name, value, censored);
+    }
+
+    async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {
+        return this.projectDB.getProjectEnvironmentVariables(projectId);
+    }
+
+    async getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined> {
+        return this.projectDB.getProjectEnvironmentVariableById(variableId);
+    }
+
+    async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
+        return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 
 }

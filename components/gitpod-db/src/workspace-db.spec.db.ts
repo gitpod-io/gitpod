@@ -7,15 +7,16 @@
 import * as chai from 'chai';
 const expect = chai.expect;
 import { suite, test, timeout } from 'mocha-typescript';
+import { fail } from 'assert';
 
-import { WorkspaceInstance, Workspace } from '@gitpod/gitpod-protocol';
+import { WorkspaceInstance, Workspace, PrebuiltWorkspace } from '@gitpod/gitpod-protocol';
 import { testContainer } from './test-container';
 import { TypeORMWorkspaceDBImpl } from './typeorm/workspace-db-impl';
-import { fail } from 'assert';
 import { TypeORM } from './typeorm/typeorm';
 import { DBWorkspace } from './typeorm/entity/db-workspace';
 import { DBPrebuiltWorkspace } from './typeorm/entity/db-prebuilt-workspace';
 import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
+import { secondsBefore } from '@gitpod/gitpod-protocol/lib/util/timeutil';
 
 @suite class WorkspaceDBSpec {
 
@@ -315,28 +316,6 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
     }
 
     @test(timeout(10000))
-    public async testFindAllWorkspaceAndInstances_contextUrl() {
-        await Promise.all([
-            this.db.store(this.ws),
-            this.db.storeInstance(this.wsi1),
-            this.db.storeInstance(this.wsi2),
-            this.db.store(this.ws2),
-            this.db.storeInstance(this.ws2i1),
-        ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
-        // It should only find one workspace instance
-        expect(dbResult.total).to.eq(1);
-
-        const workspaceAndInstance = dbResult.rows[0]
-
-        // It should find the workspace that uses the queried context url
-        expect(workspaceAndInstance.workspaceId).to.eq(this.ws.id)
-
-        // It should select the workspace instance that was most recently created
-        expect(workspaceAndInstance.instanceId).to.eq(this.wsi2.id)
-    }
-
-    @test(timeout(10000))
     public async testFindAllWorkspaceAndInstances_workspaceId() {
         await Promise.all([
             this.db.store(this.ws),
@@ -344,7 +323,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { workspaceId: this.ws2.id }, undefined);
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { workspaceId: this.ws2.id });
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);
 
@@ -361,7 +340,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { instanceIdOrWorkspaceId: this.ws2.id }, undefined);
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "workspaceId", "DESC", { instanceIdOrWorkspaceId: this.ws2.id });
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);
 
@@ -379,7 +358,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             this.db.store(this.ws2),
             this.db.storeInstance(this.ws2i1),
         ]);
-        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "instanceId", "DESC", { instanceId: this.wsi1.id }, undefined);
+        const dbResult = await this.db.findAllWorkspaceAndInstances(0, 10, "instanceId", "DESC", { instanceId: this.wsi1.id });
 
         // It should only find one workspace instance
         expect(dbResult.total).to.eq(1);
@@ -525,6 +504,62 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
 
         expect(dbResult[0].workspace.id).to.eq(this.ws2.id);
         expect(dbResult[1].workspace.id).to.eq(this.ws3.id);
+    }
+
+    @test(timeout(10000))
+    public async testCountUnabortedPrebuildsSince() {
+        const now = new Date();
+        const cloneURL = "https://github.com/gitpod-io/gitpod";
+
+        await Promise.all([
+            // Created now, and queued
+            this.storePrebuiltWorkspace({
+                id: 'prebuild123',
+                buildWorkspaceId: 'apples',
+                creationTime: now.toISOString(),
+                cloneURL: cloneURL,
+                commit: '',
+                state: 'queued'
+            }),
+            // now and aborted
+            this.storePrebuiltWorkspace({
+                id: 'prebuild456',
+                buildWorkspaceId: 'bananas',
+                creationTime: now.toISOString(),
+                cloneURL: cloneURL,
+                commit: '',
+                state: 'aborted'
+            }),
+            // completed over a minute ago
+            this.storePrebuiltWorkspace({
+                id: 'prebuild789',
+                buildWorkspaceId: 'oranges',
+                creationTime: secondsBefore(now.toISOString(), 62),
+                cloneURL: cloneURL,
+                commit: '',
+                state: 'available'
+            }),
+        ]);
+
+        const minuteAgo = secondsBefore(now.toISOString(), 60);
+        const unabortedCount = await this.db.countUnabortedPrebuildsSince(cloneURL, new Date(minuteAgo));
+        expect(unabortedCount).to.eq(1)
+    }
+
+    private async storePrebuiltWorkspace(pws: PrebuiltWorkspace) {
+        // store the creationTime directly, before it is modified by the store function in the ORM layer
+        const creationTime = pws.creationTime
+        await this.db.storePrebuiltWorkspace(pws)
+
+        const conn = await this.typeorm.getConnection();
+        const repo = conn.getRepository(DBPrebuiltWorkspace);
+
+        if (!!creationTime) {
+            // MySQL requires the time format to be 2022-03-07 15:44:01.746141
+            // Looks almost like an ISO time string, hack it a bit.
+            const mysqlTimeFormat = creationTime.replace("T", " ").replace("Z", "");
+            await repo.query("UPDATE d_b_prebuilt_workspace SET creationTime = ? WHERE id = ?", [mysqlTimeFormat, pws.id]);
+        }
     }
 }
 module.exports = new WorkspaceDBSpec()

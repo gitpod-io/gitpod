@@ -28,7 +28,7 @@ func TestBaseImageBuild(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
@@ -44,12 +44,12 @@ func TestBaseImageBuild(t *testing.T) {
 					From: &imgapi.BuildSource_File{
 						File: &imgapi.BuildSourceDockerfile{
 							DockerfileVersion: "some-version",
-							DockerfilePath:    ".gitpod.Dockerfile",
+							DockerfilePath:    "test/tests/components/image-builder/test.Dockerfile",
 							ContextPath:       ".",
 							Source: &csapi.WorkspaceInitializer{
 								Spec: &csapi.WorkspaceInitializer_Git{
 									Git: &csapi.GitInitializer{
-										RemoteUri:  "https://github.com/gitpod-io/dazzle.git",
+										RemoteUri:  "https://github.com/gitpod-io/gitpod.git",
 										TargetMode: csapi.CloneTargetMode_REMOTE_BRANCH,
 										CloneTaget: "main",
 										Config: &csapi.GitConfig{
@@ -104,7 +104,7 @@ func TestParallelBaseImageBuild(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
@@ -120,12 +120,12 @@ func TestParallelBaseImageBuild(t *testing.T) {
 					From: &imgapi.BuildSource_File{
 						File: &imgapi.BuildSourceDockerfile{
 							DockerfileVersion: "some-version",
-							DockerfilePath:    ".gitpod.Dockerfile",
+							DockerfilePath:    "test/tests/components/image-builder/test.Dockerfile",
 							ContextPath:       ".",
 							Source: &csapi.WorkspaceInitializer{
 								Spec: &csapi.WorkspaceInitializer_Git{
 									Git: &csapi.GitInitializer{
-										RemoteUri:  "https://github.com/gitpod-io/dazzle.git",
+										RemoteUri:  "https://github.com/gitpod-io/gitpod.git",
 										TargetMode: csapi.CloneTargetMode_REMOTE_BRANCH,
 										CloneTaget: "main",
 										Config: &csapi.GitConfig{

@@ -8,20 +8,20 @@ import { NamedWorkspaceFeatureFlag, Permissions, RoleOrPermission, Roles, User, 
 import { AccountStatement, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import moment from "moment";
-import { ReactChild, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CheckBox from "../components/CheckBox";
 import Modal from "../components/Modal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu"
 import { getGitpodService } from "../service/service";
 import { adminMenu } from "./admin-menu"
 import { WorkspaceSearch } from "./WorkspacesSearch";
+import Property from "./Property";
 
 
 export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
     const [user, setUser] = useState(p.user);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
-    const [viewAccountStatement, setViewAccountStatement] = useState(false);
     const [isStudent, setIsStudent] = useState<boolean>();
     const [editFeatureFlags, setEditFeatureFlags] = useState(false);
     const [editRoles, setEditRoles] = useState(false);
@@ -86,6 +86,23 @@ export default function UserDetail(p: { user: User }) {
     const flags = getFlags(user, updateUser);
     const rop = getRopEntries(user, updateUser);
 
+    const downloadAccountStatement = async () => {
+        if (!accountStatement) {
+            return;
+        }
+        try {
+            const blob = new Blob([JSON.stringify(accountStatement)], { type: 'application/json' });
+            const fileDownloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = fileDownloadUrl;
+            link.setAttribute('download', 'AccountStatement.json');
+            document.body.appendChild(link);
+            link.click();
+        } catch (error) {
+            console.error(`Error downloading account statement `, error);
+        }
+    }
+
     return <>
         <PageWithSubMenu subMenu={adminMenu} title="Users" subtitle="Search and manage all users.">
             <div className="flex">
@@ -106,8 +123,8 @@ export default function UserDetail(p: { user: User }) {
                         <Property name="Remaining Hours"
                             actions={
                                 accountStatement && [{
-                                    label: 'View Account Statement',
-                                    onClick: () => setViewAccountStatement(true)
+                                    label: 'Download Account Statement',
+                                    onClick: () => downloadAccountStatement()
                                 }, {
                                     label: 'Grant 20 Extra Hours',
                                     onClick: async () => {
@@ -146,7 +163,7 @@ export default function UserDetail(p: { user: User }) {
                             }]}
                         >{user.rolesOrPermissions?.join(', ') || '---'}</Property>
                         <Property name="Student"
-                            actions={ !isStudent ? [{
+                            actions={ (!isStudent && !['gmail.com', 'yahoo.com', 'hotmail.com'].includes(emailDomain)) ? [{
                                 label: `Make '${emailDomain}' a student domain`,
                                 onClick: addStudentDomain
                             }] :  undefined}
@@ -176,36 +193,11 @@ export default function UserDetail(p: { user: User }) {
                 }
             </div>
         </Modal>
-        <Modal visible={viewAccountStatement} onClose={() => setViewAccountStatement(false)} title="Edit Roles" buttons={[
-            <button className="secondary" onClick={() => setViewAccountStatement(false)}>Done</button>
-        ]}>
-            <div className="flex flex-col">
-                {
-                    JSON.stringify(accountStatement, null, '  ')
-                }
-            </div>
-        </Modal>
     </>;
 }
 
 function Label(p: { text: string, color: string }) {
     return <div className={`ml-3 text-sm text-${p.color}-600 truncate bg-${p.color}-100 px-1.5 py-0.5 rounded-md my-auto`}>{p.text}</div>;
-}
-
-export function Property(p: { name: string, children: string | ReactChild, actions?: { label: string, onClick: () => void }[] }) {
-    return <div className="ml-3 flex flex-col w-4/12 truncate">
-        <div className="text-base text-gray-500 truncate">
-            {p.name}
-        </div>
-        <div className="text-lg text-gray-600 font-semibold truncate">
-            {p.children}
-        </div>
-        {(p.actions || []).map(a =>
-            <div className="cursor-pointer text-sm text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400 truncate" onClick={a.onClick}>
-                {a.label || ''}
-            </div>
-        )}
-    </div>;
 }
 
 interface Entry {

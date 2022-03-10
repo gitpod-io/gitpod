@@ -12,7 +12,7 @@ packages:
       - :docker-versions
       - :publish-api
       - dev:all-app
-      - installer:docker
+      - install/installer:docker
       - components/gitpod-protocol:all
       - operations/observability/mixins:lint
   - name: docker-versions
@@ -37,7 +37,6 @@ packages:
       - components/ee/db-sync:docker
       - components/ee/kedge:docker
       - components/ee/payment-endpoint:docker
-      - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
@@ -80,6 +79,7 @@ packages:
       - components/local-app-api/typescript-grpcweb:publish
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor-api/typescript-grpcweb:publish
+      - components/ide/jetbrains/gateway-plugin:publish
   - name: all-apps
     type: generic
     deps:
@@ -91,7 +91,6 @@ packages:
       - components/ee/db-sync:app
       - components/ee/kedge:app
       - components/ee/payment-endpoint:app
-      - components/ee/ws-scheduler:app
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app
       - components/registry-facade:app
@@ -181,8 +180,8 @@ scripts:
     deps:
       - components/service-waiter:app
     script: |
-      export DB_USERNAME=root
-      export DB_PASSWORD=test
+      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
+      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
       kubectl port-forward statefulset/mysql 3306 &
       PID=$!
       service-waiter database -t 10s
@@ -213,8 +212,8 @@ scripts:
     deps:
       - components/service-waiter:app
     script: |
-      export DB_USERNAME=root
-      export DB_PASSWORD=test
+      export DB_USERNAME=$(kubectl get secrets mysql -o jsonpath="{.data.username}" | base64 -d)
+      export DB_PASSWORD=$(kubectl get secrets mysql -o jsonpath="{.data.password}" | base64 -d)
       kubectl port-forward statefulset/mysql 3306 &
       PID=$!
       service-waiter database -t 10s
@@ -230,7 +229,7 @@ scripts:
       printf "\nCurrent namespace:         $(kubens -c)\n"
 
       printf "\nAvailable users (max 10):\n$result\n\n"
-      printf "Enter user to unblock (empty to abort): "
+      printf "Enter user to make admin (empty to abort): "
       read user
       if [[ -z "$user" ]]; then
         echo "No input."

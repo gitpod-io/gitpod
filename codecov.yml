@@ -35,9 +35,6 @@ flags:
   components-ee-kedge-app:
     paths:
       - components/ee/kedge/
-  components-ee-ws-scheduler-app:
-    paths:
-      - components/ee/ws-scheduler/
   components-gitpod-cli-app:
     paths:
       - components/gitpod-cli/

@@ -14,7 +14,7 @@ pod:
       secretName: gcp-sa-gitpod-dev-deployer
   containers:
   - name: wipe-devstaging
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway.29
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:

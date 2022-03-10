@@ -48,7 +48,7 @@ type TestApp = {
         container.load(productionContainerModule);
         container.load(dbContainerModule);
         const server = container.get(Server);
-        server.init(app);
+        server.init(app).catch(err => {/** ignore */});
         const httpServer = app.listen(3000, "localhost");
 
         return { httpServer, app, server };

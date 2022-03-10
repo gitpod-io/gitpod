@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,7 +26,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:  "move-mount",
-				Usage: "calls move_mount with fd 3 to target",
+				Usage: "calls move_mount with the pipe-fd to target",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "target",
@@ -42,7 +43,7 @@ func main() {
 			},
 			{
 				Name:  "open-tree",
-				Usage: "opens a and writes the resulting mountfd to the Unix pipe on fd 3",
+				Usage: "opens a and writes the resulting mountfd to the Unix pipe on the pipe-fd",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "target",
@@ -205,8 +206,8 @@ func main() {
 				},
 			},
 			{
-				Name:  "mknod-fuse",
-				Usage: "creates /dev/fuse",
+				Name:  "prepare-dev",
+				Usage: "prepares a workspaces /dev directory",
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:     "uid",
@@ -218,40 +219,34 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					err := unix.Mknod("/dev/fuse", 0666|unix.S_IFCHR, int(unix.Mkdev(10, 229)))
+					err := ioutil.WriteFile("/dev/kmsg", nil, 0644)
 					if err != nil {
 						return err
 					}
 
+					_ = os.MkdirAll("/dev/net", 0755)
+					err = unix.Mknod("/dev/net/tun", 0666|unix.S_IFCHR, int(unix.Mkdev(10, 200)))
+					if err != nil {
+						return err
+					}
+					err = os.Chmod("/dev/net/tun", os.FileMode(0666))
+					if err != nil {
+						return err
+					}
+					err = os.Chown("/dev/net/tun", c.Int("uid"), c.Int("gid"))
+					if err != nil {
+						return err
+					}
+
+					err = unix.Mknod("/dev/fuse", 0666|unix.S_IFCHR, int(unix.Mkdev(10, 229)))
+					if err != nil {
+						return err
+					}
 					err = os.Chmod("/dev/fuse", os.FileMode(0666))
 					if err != nil {
 						return err
 					}
 					err = os.Chown("/dev/fuse", c.Int("uid"), c.Int("gid"))
-					if err != nil {
-						return err
-					}
-
-					return nil
-				},
-			},
-			{
-				Name:  "mknod-devnettun",
-				Usage: "creates /dev/net/tun",
-				Action: func(c *cli.Context) error {
-					_ = os.MkdirAll("/dev/net", 0755)
-
-					err := unix.Mknod("/dev/net/tun", 0666|unix.S_IFCHR, int(unix.Mkdev(10, 200)))
-					if err != nil {
-						return err
-					}
-
-					err = os.Chmod("/dev/net/tun", os.FileMode(0666))
-					if err != nil {
-						return err
-					}
-
-					err = os.Chown("/dev/net/tun", c.Int("uid"), c.Int("gid"))
 					if err != nil {
 						return err
 					}

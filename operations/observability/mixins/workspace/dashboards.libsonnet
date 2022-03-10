@@ -15,7 +15,7 @@
     'gitpod-component-ws-daemon.json': (import 'dashboards/components/ws-daemon.json'),
     'gitpod-component-ws-manager.json': (import 'dashboards/components/ws-manager.json'),
     'gitpod-component-ws-proxy.json': (import 'dashboards/components/ws-proxy.json'),
-    'gitpod-component-ws-scheduler.json': (import 'dashboards/components/ws-scheduler.json'),
     'gitpod-workspace-success-criteria.json': (import 'dashboards/success-criteria.json'),
+    'gitpod-workspace-coredns.json': (import 'dashboards/coredns.json'),
   },
 }

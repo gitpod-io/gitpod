@@ -1,0 +1,8 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+# We deliberately start with a very few selected rules to not enforce too much change at once to the grown server code base
+rules:
+  no-floating-promises: true
+

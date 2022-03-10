@@ -14,11 +14,11 @@
             labels: {
               severity: 'critical',
             },
-            'for': '1h',
+            'for': '20m',
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStarting.md',
               summary: '5 or more workspaces are stuck on starting',
-              description: '{{ printf "%.2f" $value }} regular workspaces are stuck on starting for more than 1 hour. Current status: "{{ $labels.reason }}"',
+              description: '{{ printf "%.2f" $value }} regular workspaces are stuck on starting for more than 20 minutes. Current status: "{{ $labels.reason }}"',
             },
             expr: |||
               count(
@@ -31,11 +31,11 @@
             labels: {
               severity: 'critical',
             },
-            'for': '1h',
+            'for': '20m',
             annotations: {
               runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopping.md',
               summary: '5 or more workspaces are stuck on stopping',
-              description: '{{ printf "%.2f" $value }} {{ $labels.workspace_type }} workspaces are stuck on stopping for more than 1 hour.',
+              description: '{{ printf "%.2f" $value }} {{ $labels.workspace_type }} workspaces are stuck on stopping for more than 20 minutes.',
             },
             expr: |||
               sum(
@@ -61,16 +61,16 @@
           {
             alert: 'GitpodWorkspaceTooManyRegularNotActive',
             labels: {
-              severity: 'warning',
+              severity: 'critical',
             },
-            'for': '10m',
+            'for': '15m',
             annotations: {
-              runbook_url: 'none',
+              runbook_url: 'https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceTooManyRegularNotActive.md',
               summary: 'too many running but inactive workspaces',
               description: 'too many running but inactive workspaces',
             },
             expr: |||
-              gitpod_workspace_regular_not_active_percentage > 0.10 AND sum(gitpod_ws_manager_workspace_activity_total) > 100
+              gitpod_workspace_regular_not_active_percentage > 0.15 AND sum(gitpod_ws_manager_workspace_activity_total) > 100
             |||,
           },
         ],

@@ -5,18 +5,24 @@
 package cmd
 
 import (
+	"context"
 	"net"
 	"os"
 	"path/filepath"
+	"time"
 
-	"github.com/bombsimon/logrusr"
+	"github.com/bombsimon/logrusr/v2"
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -40,7 +46,7 @@ var runCmd = &cobra.Command{
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
 
-		ctrl.SetLogger(logrusr.NewLogger(log.Log))
+		ctrl.SetLogger(logrusr.New(log.Log))
 
 		opts := ctrl.Options{
 			Scheme:                 scheme,
@@ -77,12 +83,39 @@ var runCmd = &cobra.Command{
 
 		log.Infof("workspace info provider started")
 
-		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider).MustServe()
-		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
+		var heartbeat sshproxy.Heartbeat
+		if wsm := cfg.WorkspaceManager; wsm != nil {
+			var dialOption grpc.DialOption = grpc.WithInsecure()
+			if wsm.TLS.CA != "" && wsm.TLS.Cert != "" && wsm.TLS.Key != "" {
+				tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+					wsm.TLS.CA, wsm.TLS.Cert, wsm.TLS.Key,
+					common_grpc.WithSetRootCAs(true),
+					common_grpc.WithServerName("ws-manager"),
+				)
+				if err != nil {
+					log.WithField("config", wsm.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
+					log.WithError(err).Fatal("cannot load ws-manager certs")
+				}
 
+				dialOption = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
+			}
+
+			dialctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			conn, err := grpc.DialContext(dialctx, wsm.Addr, dialOption, grpc.WithBlock())
+			cancel()
+			if err != nil {
+				log.WithError(err).Fatal("cannot connect to ws-manager")
+			}
+
+			heartbeat = &sshproxy.WorkspaceManagerHeartbeat{
+				Client: wsmanapi.NewWorkspaceManagerClient(conn),
+			}
+		}
+
+		// SSH Gateway
+		var signers []ssh.Signer
 		flist, err := os.ReadDir("/mnt/host-key")
 		if err == nil && len(flist) > 0 {
-			var signers []ssh.Signer
 			for _, f := range flist {
 				if f.IsDir() {
 					continue
@@ -98,7 +131,7 @@ var runCmd = &cobra.Command{
 				signers = append(signers, hostSigner)
 			}
 			if len(signers) > 0 {
-				server := sshproxy.New(signers, workspaceInfoProvider)
+				server := sshproxy.New(signers, workspaceInfoProvider, heartbeat)
 				l, err := net.Listen("tcp", ":2200")
 				if err != nil {
 					panic(err)
@@ -107,6 +140,9 @@ var runCmd = &cobra.Command{
 				log.Info("SSHGateway is up and running")
 			}
 		}
+
+		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), workspaceInfoProvider, signers).MustServe()
+		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
 
 		log.Info("🚪 ws-proxy is up and running")
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

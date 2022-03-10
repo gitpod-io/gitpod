@@ -17,6 +17,11 @@ service InWorkspaceService {
     // for user namespaces and is available four times every 10 seconds.
     rpc WriteIDMapping(WriteIDMappingRequest) returns (WriteIDMappingResponse) {}
 
+    // EvacuateCGroup empties the workspace pod cgroup and produces a new substructure.
+    // In combincation with introducing a new cgroup namespace, we can create a situation
+    // where the subcontroller are enabled and the ring2-visible cgroup is of type "domain".
+    rpc EvacuateCGroup(EvacuateCGroupRequest) returns (EvacuateCGroupResponse) {}
+
     // MountProc mounts a masked proc in the container's rootfs.
     // The PID must be in the PID namespace of the workspace container.
     // The path is relative to the mount namespace of the PID.
@@ -70,6 +75,9 @@ message WriteIDMappingRequest {
     bool gid = 2;
     repeated Mapping mapping = 3;
 }
+
+message EvacuateCGroupRequest {}
+message EvacuateCGroupResponse {}
 
 message MountProcRequest {
     string target = 1;

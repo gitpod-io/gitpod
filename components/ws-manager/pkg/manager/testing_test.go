@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -30,7 +33,6 @@ import (
 func forTestingOnlyManagerConfig() config.Configuration {
 	return config.Configuration{
 		Namespace:                "default",
-		SchedulerName:            "workspace-scheduler",
 		SeccompProfile:           "localhost/workspace-default",
 		HeartbeatInterval:        util.Duration(30 * time.Second),
 		WorkspaceHostPath:        "/tmp/workspaces",
@@ -57,6 +59,7 @@ func forTestingOnlyManagerConfig() config.Configuration {
 			Initialization:      util.Duration(30 * time.Minute),
 			TotalStartup:        util.Duration(45 * time.Minute),
 			RegularWorkspace:    util.Duration(60 * time.Minute),
+			MaxLifetime:         util.Duration(36 * time.Hour),
 			HeadlessWorkspace:   util.Duration(90 * time.Minute),
 			Stopping:            util.Duration(60 * time.Minute),
 			ContentFinalization: util.Duration(55 * time.Minute),
@@ -90,6 +93,18 @@ func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 	}
 
 	ctrlClient, err := client.New(cfg, client.Options{Scheme: scheme})
+	if err != nil {
+		t.Errorf("cannot create test environment: %v", err)
+		return nil
+	}
+
+	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+		err := ctrlClient.Get(context.Background(), types.NamespacedName{Name: "default"}, &corev1.Namespace{})
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
 	if err != nil {
 		t.Errorf("cannot create test environment: %v", err)
 		return nil

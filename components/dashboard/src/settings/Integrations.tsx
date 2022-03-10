@@ -43,6 +43,7 @@ function GitProviders() {
     const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
     const [editModal, setEditModal] = useState<{ provider: AuthProviderInfo, prevScopes: Set<string>, nextScopes: Set<string> } | undefined>(undefined);
     const [selectAccountModal, setSelectAccountModal] = useState<SelectAccountPayload | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     useEffect(() => {
         updateAuthProviders();
@@ -131,14 +132,15 @@ function GitProviders() {
             search: `returnTo=${returnTo}&host=${ap.host}`
         }).toString();
 
-        try {
-            await fetch(deauthorizeUrl);
-            console.log(`Deauthorized for ${ap.host}`);
-
-            updateUser();
-        } catch (error) {
-            console.log(`Failed to deauthorize for ${ap.host}`);
-        }
+        fetch(deauthorizeUrl)
+            .then((res) => {
+                if (!res.ok) {
+                    throw Error("Fetch failed");
+                }
+                return res;
+            })
+            .then((response) => updateUser())
+            .catch((error) => setErrorMessage("You cannot disconnect this integration because it is required for authentication and logging in with this account."))
     }
 
     const startEditPermissions = async (provider: AuthProviderInfo) => {
@@ -246,6 +248,13 @@ function GitProviders() {
                 onClose={() => setDisconnectModal(undefined)}
                 onConfirm={() => disconnect(disconnectModal.provider)}
             />
+        )}
+
+        {errorMessage && (
+            <div className="flex rounded-md bg-red-600 p-3 mb-4">
+                <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                <span className="text-white">{errorMessage}</span>
+            </div>
         )}
 
         {editModal && (
@@ -516,6 +525,7 @@ export function GitIntegrationModal(props: ({
                     updateProviderEntry();
                     onUpdate();
                     props.onAuthorize && props.onAuthorize(payload);
+                    onClose();
                 },
                 onError: (payload) => {
                     updateProviderEntry();
@@ -547,17 +557,24 @@ export function GitIntegrationModal(props: ({
 
     const updateHostValue = (host: string) => {
         if (mode === "new") {
-            setHost(host);
-            setRedirectURL(callbackUrl(host));
+
+            let newHostValue = host;
+
+            if (host.startsWith("https://")) {
+                newHostValue = host.replace("https://","");
+            }
+
+            setHost(newHostValue);
+            setRedirectURL(callbackUrl(newHostValue));
             setErrorMessage(undefined);
         }
     }
 
     const updateClientId = (value: string) => {
-        setClientId(value);
+        setClientId(value.trim());
     }
     const updateClientSecret = (value: string) => {
-        setClientSecret(value);
+        setClientSecret(value.trim());
     }
 
     const validate = () => {

@@ -17,4 +17,11 @@ rules:
     verbs: ["use"]
     resourceNames:
     - {{ .Release.Namespace }}-ns-registry-facade
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs:
+    - get
+    - list
+    - update
+    - patch
 {{- end -}}

@@ -57,6 +57,8 @@ import { ProjectDBImpl } from './typeorm/project-db-impl';
 import { EntityManager } from 'typeorm';
 import { OssAllowListDB } from './oss-allowlist-db';
 import { OssAllowListDBImpl } from './typeorm/oss-allowlist-db-impl';
+import { TypeORMInstallationAdminImpl } from './typeorm/installation-admin-db-impl';
+import { InstallationAdminDB } from './installation-admin-db';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -71,6 +73,9 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(TermsAcceptanceDBImpl).toSelf().inSingletonScope();
     bind(TermsAcceptanceDB).toService(TermsAcceptanceDBImpl);
     bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
+
+    bind(TypeORMInstallationAdminImpl).toSelf().inSingletonScope();
+    bind(InstallationAdminDB).toService(TypeORMInstallationAdminImpl);
 
     bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
 

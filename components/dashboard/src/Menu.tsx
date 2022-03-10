@@ -23,6 +23,7 @@ import PillMenuItem from "./components/PillMenuItem";
 import TabMenuItem from "./components/TabMenuItem";
 import { getTeamSettingsMenu } from "./teams/TeamSettings";
 import { getProjectSettingsMenu } from "./projects/ProjectSettings";
+import { ProjectContext } from "./projects/project-context";
 
 interface Entry {
     title: string,
@@ -30,22 +31,23 @@ interface Entry {
     alternatives?: string[]
 }
 
-
 export default function Menu() {
     const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
     const location = useLocation();
+    const team = getCurrentTeam(location, teams);
+    const { project, setProject } = useContext(ProjectContext);
 
     const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/(t/)?:segment1/:segment2?/:segment3?");
     const projectSlug = (() => {
         const resource = match?.params?.segment2;
-        if (resource && !["projects", "members", "users", "workspaces", "settings"].includes(resource)) {
+        if (resource && !["projects", "members", "users", "workspaces", "settings", "teams"].includes(resource)) {
             return resource;
         }
     })();
     const prebuildId = (() => {
         const resource = projectSlug && match?.params?.segment3;
-        if (resource !== "workspaces" && resource !== "prebuilds" && resource !== "settings" && resource !== "configure") {
+        if (resource !== "workspaces" && resource !== "prebuilds" && resource !== "settings" && resource !== "configure" && resource !== "variables") {
             return resource;
         }
     })();
@@ -57,7 +59,6 @@ export default function Menu() {
     }
 
     const userFullName = user?.fullName || user?.name || '...';
-    const team = getCurrentTeam(location, teams);
 
     {
         // updating last team selection
@@ -68,7 +69,7 @@ export default function Menu() {
     }
 
     // Hide most of the top menu when in a full-page form.
-    const isMinimalUI = ['/new', '/teams/new'].includes(location.pathname);
+    const isMinimalUI = ['/new', '/teams/new', '/open'].includes(location.pathname);
 
     const [ teamMembers, setTeamMembers ] = useState<Record<string, TeamMemberInfo[]>>({});
     useEffect(() => {
@@ -88,6 +89,24 @@ export default function Menu() {
         })();
     }, [ teams ]);
 
+    useEffect(() => {
+        if (!teams || !projectSlug) {
+            return;
+        }
+        (async () => {
+            const projects = (!!team
+                ? await getGitpodService().server.getTeamProjects(team.id)
+                : await getGitpodService().server.getUserProjects());
+
+            // Find project matching with slug, otherwise with name
+            const project = projectSlug && projects.find(p => p.slug ? p.slug === projectSlug : p.name === projectSlug);
+            if (!project) {
+                return;
+            }
+            setProject(project);
+        })();
+    }, [projectSlug, setProject, team, teams]);
+
     const teamOrUserSlug = !!team ? '/t/' + team.slug : '/projects';
     const leftMenu: Entry[] = (() => {
         // Project menu
@@ -96,10 +115,6 @@ export default function Menu() {
                 {
                     title: 'Branches',
                     link: `${teamOrUserSlug}/${projectSlug}`,
-                },
-                {
-                    title: 'Workspaces',
-                    link: `${teamOrUserSlug}/${projectSlug}/workspaces`,
                 },
                 {
                     title: 'Prebuilds',
@@ -120,11 +135,7 @@ export default function Menu() {
                 {
                     title: 'Projects',
                     link: `/t/${team.slug}/projects`,
-                },
-                {
-                    title: 'Workspaces',
-                    link: `/t/${team.slug}/workspaces`,
-                    alternatives: [`/t/${team.slug}`]
+                    alternatives: ([] as string[])
                 },
                 {
                     title: 'Members',
@@ -144,13 +155,13 @@ export default function Menu() {
         // User menu
         return [
             {
-                title: 'Projects',
-                link: '/projects'
-            },
-            {
                 title: 'Workspaces',
                 link: '/workspaces',
                 alternatives: ['/']
+            },
+            {
+                title: 'Projects',
+                link: '/projects'
             },
             {
                 title: 'Settings',
@@ -226,7 +237,7 @@ export default function Menu() {
                 { projectSlug && (
                     <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
                         <Link to={`${teamOrUserSlug}/${projectSlug}${prebuildId ? "/prebuilds" : ""}`}>
-                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{projectSlug}</span>
+                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{project?.name}</span>
                         </Link>
                     </div>
                 )}
@@ -240,18 +251,11 @@ export default function Menu() {
         )
     }
 
-    const gitpodIconUrl = () => {
-        if (team) {
-            return `/t/${team.slug}`;
-        }
-        return "/"
-    }
-
     return <>
         <header className={`app-container flex flex-col pt-4 space-y-4 ${isMinimalUI || !!prebuildId ? 'pb-4' : ''}`} data-analytics='{"button_type":"menu"}'>
             <div className="flex h-10">
                 <div className="flex justify-between items-center pr-3">
-                    <Link to={gitpodIconUrl()}>
+                    <Link to="/">
                         <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
                     </Link>
                     {!isMinimalUI && <div className="ml-2 text-base">
@@ -289,9 +293,9 @@ export default function Menu() {
                     </div>
                 </div>
             </div>
-            {!isMinimalUI && !prebuildId && <div className="flex">
+            {!isMinimalUI && !prebuildId && <nav className="flex">
                 {leftMenu.map((entry: Entry) => <TabMenuItem key={entry.title} name={entry.title} selected={isSelected(entry, location)} link={entry.link}/>)}
-            </div>}
+            </nav>}
         </header>
         <Separator />
     </>;

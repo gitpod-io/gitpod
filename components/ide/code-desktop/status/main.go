@@ -72,6 +72,8 @@ func main() {
 		response := make(map[string]string)
 		response["link"] = link.String()
 		response["label"] = label
+		response["clientID"] = schema
+		response["kind"] = "code-desktop"
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 	})

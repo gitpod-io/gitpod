@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ClientHeaderFields, Disposable, GitpodClient as GitpodApiClient, GitpodServerPath, User } from "@gitpod/gitpod-protocol";
+import { ClientHeaderFields, Disposable, GitpodClient as GitpodApiClient, GitpodServerPath, RateLimiterError, User } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler";
 import { JsonRpcConnectionHandler, JsonRpcProxy, JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
@@ -15,7 +15,7 @@ import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "v
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "../auth/function-access";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "../auth/rate-limiter";
-import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, TeamMemberResourceGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "../auth/resource-access";
+import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, TeamMemberResourceGuard, WithResourceAccessGuard, RepositoryResourceGuard } from "../auth/resource-access";
 import { takeFirst } from "../express-util";
 import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter, observeAPICallsDuration, apiCallDurationHistogram } from "../prometheus-metrics";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
@@ -31,7 +31,7 @@ const EVENT_CLIENT_CONTEXT_CREATED = "EVENT_CLIENT_CONTEXT_CREATED";
 const EVENT_CLIENT_CONTEXT_CLOSED = "EVENT_CLIENT_CONTEXT_CLOSED";
 
 /** TODO(gpl) Refine this list */
-export type WebsocketClientType = "browser" | "go-client" | "gitpod-code" | "supervisor" | "local-companion";
+export type WebsocketClientType = "browser" | "go-client" | "gitpod-code" | "supervisor" | "local-companion" | "io.gitpod.jetbrains.remote" | "io.gitpod.jetbrains.gateway";
 namespace WebsocketClientType {
     export function getClientType(req: express.Request): WebsocketClientType | undefined {
         const userAgent = req.headers["user-agent"];
@@ -48,6 +48,8 @@ namespace WebsocketClientType {
                 result = "supervisor";
             } else if (userAgent.startsWith("gitpod/local-companion")) {
                 result = "local-companion";
+            } else if(userAgent === 'io.gitpod.jetbrains.remote' || userAgent === 'io.gitpod.jetbrains.gateway') {
+                result = userAgent;
             }
         }
         if (result === undefined) {
@@ -61,18 +63,19 @@ export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
 export interface ClientMetadata {
     id: string,
     authLevel: WebsocketAuthenticationLevel,
-    sessionId?: string;
-    userId?: string;
-    type?: WebsocketClientType;
+    sessionId?: string,
+    userId?: string,
+    type?: WebsocketClientType,
     origin: ClientOrigin,
-    version?: string;
+    version?: string,
+    userAgent?: string,
 }
 interface ClientOrigin {
     workspaceId?: string,
     instanceId?: string,
 }
 export namespace ClientMetadata {
-    export function from(userId: string | undefined, sessionId?: string, type?: WebsocketClientType, origin?: ClientOrigin, version?: string): ClientMetadata {
+    export function from(userId: string | undefined, sessionId?: string, data?: Omit<ClientMetadata, "id" | "sessionId" | "authLevel">): ClientMetadata {
         let id = "anonymous";
         let authLevel: WebsocketAuthenticationLevel = "anonymous";
         if (userId) {
@@ -82,7 +85,7 @@ export namespace ClientMetadata {
             id = `session-${sessionId}`;
             authLevel = "session";
         }
-        return { id, authLevel, userId, sessionId, type, origin: { ...(origin || {}) }, version };
+        return { id, authLevel, userId, sessionId, ...data, origin: data?.origin || {}, };
     }
 
     export function fromRequest(req: any) {
@@ -91,13 +94,14 @@ export namespace ClientMetadata {
         const sessionId = expressReq.session?.id;
         const type = WebsocketClientType.getClientType(expressReq);
         const version = takeFirst(expressReq.headers["x-client-version"]);
+        const userAgent = takeFirst(expressReq.headers["user-agent"]);
         const instanceId = takeFirst(expressReq.headers["x-workspace-instance-id"]);
         const workspaceId = getOriginWorkspaceId(expressReq);
         const origin: ClientOrigin = {
             instanceId,
             workspaceId,
         };
-        return ClientMetadata.from(user?.id, sessionId, type, origin, version);
+        return ClientMetadata.from(user?.id, sessionId, { type, origin, version, userAgent });
     }
 
     function getOriginWorkspaceId(req: express.Request): string | undefined {
@@ -135,7 +139,7 @@ export class WebsocketClientContext {
     removeEndpoint(server: GitpodServerImpl) {
         const index = this.servers.findIndex(s => s.uuid === server.uuid);
         if (index !== -1) {
-            this.servers.splice(index);
+            this.servers.splice(index, 1);
         }
     }
 
@@ -187,7 +191,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
                 new OwnerResourceGuard(user.id),
                 new TeamMemberResourceGuard(user.id),
                 new SharedWorkspaceAccessGuard(),
-                new WorkspaceLogAccessGuard(user, this.hostContextProvider),
+                new RepositoryResourceGuard(user, this.hostContextProvider),
             ]);
         } else {
             resourceGuard = { canAccess: async () => false };
@@ -202,14 +206,19 @@ export class WebsocketConnectionManager implements ConnectionHandler {
 
         gitpodServer.initialize(client, user, resourceGuard, clientContext.clientMetadata, connectionCtx, clientHeaderFields);
         client.onDidCloseConnection(() => {
-            gitpodServer.dispose();
-            increaseApiConnectionClosedCounter();
-            this.events.emit(EVENT_CONNECTION_CLOSED, gitpodServer, expressReq);
+            try {
+                gitpodServer.dispose();
+                increaseApiConnectionClosedCounter();
+                this.events.emit(EVENT_CONNECTION_CLOSED, gitpodServer, expressReq);
 
-            clientContext.removeEndpoint(gitpodServer);
-            if (clientContext.hasNoEndpointsLeft()) {
-                this.contexts.delete(clientContext.clientId);
-                this.events.emit(EVENT_CLIENT_CONTEXT_CLOSED, clientContext);
+                clientContext.removeEndpoint(gitpodServer);
+                if (clientContext.hasNoEndpointsLeft()) {
+                    this.contexts.delete(clientContext.clientId);
+                    this.events.emit(EVENT_CLIENT_CONTEXT_CLOSED, clientContext);
+                }
+            } catch (err) {
+                // we want to be absolutely sure that we do not bubble up errors into ws.onClose here
+                log.error("onDidCloseConnection", err);
             }
         });
         clientContext.addEndpoint(gitpodServer);
@@ -328,7 +337,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             increaseApiCallUserCounter(method, "anonymous");
         }
 
-        const span = TraceContext.startSpan(method, undefined, this.connectionCtx.span);
+        const span = TraceContext.startSpan(method, undefined);
         const ctx = { span };
         const userId = this.clientMetadata.userId;
         try {
@@ -349,7 +358,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                     throw rlRejected;
                 }
                 log.warn({ userId }, "Rate limiter prevents accessing method due to too many requests.", rlRejected, { method });
-                throw new ResponseError(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { "Retry-After": String(Math.round(rlRejected.msBeforeNext / 1000)) || 1 });
+                throw new ResponseError<RateLimiterError>(ErrorCodes.TOO_MANY_REQUESTS, "too many requests", { method, retryAfter: Math.round(rlRejected.msBeforeNext / 1000) || 1 });
             }
 
             // access guard
@@ -391,7 +400,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
 }
 
-function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) {
+export function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) {
     TraceContext.addNestedTags(ctx, {
         client: {
             id: clientMetadata.id,
@@ -399,6 +408,7 @@ function traceClientMetadata(ctx: TraceContext, clientMetadata: ClientMetadata) 
             type: clientMetadata.type,
             version: clientMetadata.version,
             origin: clientMetadata.origin,
+            userAgent: clientMetadata.userAgent,
         },
     });
 }

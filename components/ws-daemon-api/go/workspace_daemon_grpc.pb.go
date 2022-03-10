@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -32,6 +32,10 @@ type InWorkspaceServiceClient interface {
 	// WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
 	// for user namespaces and is available four times every 10 seconds.
 	WriteIDMapping(ctx context.Context, in *WriteIDMappingRequest, opts ...grpc.CallOption) (*WriteIDMappingResponse, error)
+	// EvacuateCGroup empties the workspace pod cgroup and produces a new substructure.
+	// In combincation with introducing a new cgroup namespace, we can create a situation
+	// where the subcontroller are enabled and the ring2-visible cgroup is of type "domain".
+	EvacuateCGroup(ctx context.Context, in *EvacuateCGroupRequest, opts ...grpc.CallOption) (*EvacuateCGroupResponse, error)
 	// MountProc mounts a masked proc in the container's rootfs.
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
@@ -73,6 +77,15 @@ func (c *inWorkspaceServiceClient) PrepareForUserNS(ctx context.Context, in *Pre
 func (c *inWorkspaceServiceClient) WriteIDMapping(ctx context.Context, in *WriteIDMappingRequest, opts ...grpc.CallOption) (*WriteIDMappingResponse, error) {
 	out := new(WriteIDMappingResponse)
 	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/WriteIDMapping", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inWorkspaceServiceClient) EvacuateCGroup(ctx context.Context, in *EvacuateCGroupRequest, opts ...grpc.CallOption) (*EvacuateCGroupResponse, error) {
+	out := new(EvacuateCGroupResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/EvacuateCGroup", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +151,10 @@ type InWorkspaceServiceServer interface {
 	// WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
 	// for user namespaces and is available four times every 10 seconds.
 	WriteIDMapping(context.Context, *WriteIDMappingRequest) (*WriteIDMappingResponse, error)
+	// EvacuateCGroup empties the workspace pod cgroup and produces a new substructure.
+	// In combincation with introducing a new cgroup namespace, we can create a situation
+	// where the subcontroller are enabled and the ring2-visible cgroup is of type "domain".
+	EvacuateCGroup(context.Context, *EvacuateCGroupRequest) (*EvacuateCGroupResponse, error)
 	// MountProc mounts a masked proc in the container's rootfs.
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
@@ -169,6 +186,9 @@ func (UnimplementedInWorkspaceServiceServer) PrepareForUserNS(context.Context, *
 }
 func (UnimplementedInWorkspaceServiceServer) WriteIDMapping(context.Context, *WriteIDMappingRequest) (*WriteIDMappingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WriteIDMapping not implemented")
+}
+func (UnimplementedInWorkspaceServiceServer) EvacuateCGroup(context.Context, *EvacuateCGroupRequest) (*EvacuateCGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EvacuateCGroup not implemented")
 }
 func (UnimplementedInWorkspaceServiceServer) MountProc(context.Context, *MountProcRequest) (*MountProcResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MountProc not implemented")
@@ -230,6 +250,24 @@ func _InWorkspaceService_WriteIDMapping_Handler(srv interface{}, ctx context.Con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(InWorkspaceServiceServer).WriteIDMapping(ctx, req.(*WriteIDMappingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InWorkspaceService_EvacuateCGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EvacuateCGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).EvacuateCGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/EvacuateCGroup",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).EvacuateCGroup(ctx, req.(*EvacuateCGroupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -338,6 +376,10 @@ var InWorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WriteIDMapping",
 			Handler:    _InWorkspaceService_WriteIDMapping_Handler,
+		},
+		{
+			MethodName: "EvacuateCGroup",
+			Handler:    _InWorkspaceService_EvacuateCGroup_Handler,
 		},
 		{
 			MethodName: "MountProc",

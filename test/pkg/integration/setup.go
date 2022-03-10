@@ -8,6 +8,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -29,9 +30,46 @@ func SkipWithoutUsername(t *testing.T, username string) {
 		t.Skip("Skipping because requires a username")
 	}
 }
-func Setup(ctx context.Context) (string, string, env.Environment) {
+
+func SkipWithoutUserToken(t *testing.T, userToken string) {
+	if userToken == "" {
+		t.Skip("Skipping because requires a user token")
+	}
+}
+
+func SkipWithoutEnterpriseLicense(t *testing.T, enterpise bool) {
+	if !enterpise {
+		t.Skip("Skipping because requires enterprise license")
+	}
+}
+
+func EnsureUserExists(t *testing.T, username string, api *ComponentAPI) string {
+	if username == "" {
+		t.Logf("no username provided, creating temporary one")
+		rand.Seed(time.Now().UnixNano())
+		randN := rand.Intn(1000)
+		newUser := fmt.Sprintf("johndoe%d", randN)
+		userId, err := CreateUser(newUser, false, api)
+		if err != nil {
+			t.Fatalf("cannot create user: %q", err)
+		}
+		t.Cleanup(func() {
+			err := DeleteUser(userId, api)
+			if err != nil {
+				t.Fatalf("error deleting user %q", err)
+			}
+		})
+		t.Logf("user '%s' with ID %s created", newUser, userId)
+		return newUser
+	}
+	return username
+}
+
+func Setup(ctx context.Context) (string, string, env.Environment, bool, string, bool) {
 	var (
 		username        string
+		enterprise      bool
+		gitlab          bool
 		waitGitpodReady time.Duration
 
 		namespace  string
@@ -46,6 +84,8 @@ func Setup(ctx context.Context) (string, string, env.Environment) {
 	klog.InitFlags(flagset)
 
 	flagset.StringVar(&username, "username", "", "username to execute the tests with. Chooses one automatically if left blank.")
+	flagset.BoolVar(&enterprise, "enterprise", false, "whether to test enterprise features. requires enterprise lisence installed.")
+	flagset.BoolVar(&gitlab, "gitlab", false, "whether to test gitlab integration.")
 	flagset.DurationVar(&waitGitpodReady, "wait-gitpod-timeout", 5*time.Minute, `wait time for Gitpod components before starting integration test`)
 	flagset.StringVar(&namespace, "namespace", "", "Kubernetes cluster namespaces to use")
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "The path to the kubeconfig file")
@@ -90,7 +130,7 @@ func Setup(ctx context.Context) (string, string, env.Environment) {
 		waitOnGitpodRunning(e.Namespace(), waitGitpodReady),
 	)
 
-	return username, e.Namespace(), testenv
+	return username, e.Namespace(), testenv, enterprise, kubeconfig, gitlab
 }
 
 func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
@@ -110,7 +150,6 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 			"ws-manager",
 			"ws-manager-bridge",
 			"ws-proxy",
-			"ws-scheduler",
 		}
 
 		client := cfg.Client()

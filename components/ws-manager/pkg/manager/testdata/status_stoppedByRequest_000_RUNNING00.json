@@ -664,7 +664,6 @@
           }
         }
       },
-      "schedulerName": "workspace-scheduler",
       "tolerations": [
         {
           "key": "node.kubernetes.io/disk-pressure",
@@ -1000,7 +999,6 @@
         "creationTimestamp": "2021-10-14T19:11:23Z",
         "managedFields": [
           {
-            "manager": "ws-scheduler",
             "operation": "Update",
             "apiVersion": "v1",
             "time": "2021-10-14T19:11:23Z",

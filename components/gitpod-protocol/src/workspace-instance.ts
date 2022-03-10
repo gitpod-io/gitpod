@@ -51,6 +51,11 @@ export interface WorkspaceInstance {
 
     // instance is hard-deleted on the database and about to be collected by db-sync
     readonly deleted?: boolean;
+
+    /**
+     * Contains information about the image build, if there was any
+     */
+     imageBuildInfo?: ImageBuildInfo;
 }
 
 // WorkspaceInstanceStatus describes the current state of a workspace instance
@@ -212,4 +217,19 @@ export interface WorkspaceInstanceConfiguration {
 
     // supervisorImage is the ref of the supervisor image this instance uses.
     supervisorImage?: string;
+}
+
+/**
+ * Holds information about the image build (if there was one) for this WorkspaceInstance
+ */
+export interface ImageBuildInfo {
+    log?: ImageBuildLogInfo,
+}
+
+/**
+ * Holds information about how to access logs for this an image build
+ */
+export interface ImageBuildLogInfo {
+    url: string,
+    headers: { [key: string]: string },
 }

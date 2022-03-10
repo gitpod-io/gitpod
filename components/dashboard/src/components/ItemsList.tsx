@@ -22,7 +22,7 @@ export function Item(props: {
 }) {
     const headerClassName = "text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800";
     const notHeaderClassName = "rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light";
-    return <div className={`flex flex-grow flex-row w-full px-3 py-3 justify-between transition ease-in-out ${props.header ? headerClassName : notHeaderClassName} ${props.className || ""}`}>
+    return <div className={`flex flex-grow flex-row w-full p-3 justify-between transition ease-in-out ${props.header ? headerClassName : notHeaderClassName} ${props.className || ""}`}>
         {props.children}
     </div>;
 }

@@ -6,7 +6,7 @@
 
 import { Disposable, DisposableCollection, Emitter } from '@gitpod/gitpod-protocol';
 import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
-import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
+import { IDEClient, IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { repeat } from '@gitpod/gitpod-protocol/lib/util/repeat';
 import * as Ajv from 'ajv';
@@ -19,6 +19,7 @@ import debounce = require('lodash.debounce')
 export interface IDEConfig {
     supervisorImage: string;
     ideOptions: IDEOptions;
+    clients?: { [id: string]: IDEClient };
 }
 
 const scheme = {
@@ -44,6 +45,7 @@ const scheme = {
                             "nodes": { "type": "array", "items": { "type": "string" } },
                             "hidden": { "type": "boolean" },
                             "image": { "type": "string" },
+                            "latestImage": { "type": "string" },
                             "resolveImageDigest": { "type": "boolean" },
                         },
                         "required": [
@@ -56,13 +58,23 @@ const scheme = {
                 },
                 "defaultIde": { "type": "string" },
                 "defaultDesktopIde": { "type": "string" },
+                "clients": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "defaultDesktopIDE": { "type": "string" },
+                            "desktopIDEs": { "type": "array", "items": { "type": "string" } },
+                        }
+                    }
+                }
             },
             "required": [
                 "options",
                 "defaultIde",
                 "defaultDesktopIde",
             ],
-        },
+        }
     },
     "required": [
         "supervisorImage",
@@ -91,7 +103,11 @@ export class IDEConfigService {
         this.configPath = filePathTelepresenceAware(configPath);
         this.validate = this.ajv.compile(scheme);
         this.reconcile("initial");
-        fs.watchFile(this.configPath, () => this.reconcile("file changed"));
+        fs.watchFile(this.configPath, (curr, prev) => {
+            if (curr.mtimeMs != prev.mtimeMs) {
+                this.reconcile("file changed");
+            }
+        });
         repeat(() => this.reconcile("interval"), 60 * 60 * 1000 /* 1 hour */);
     }
 
@@ -122,7 +138,8 @@ export class IDEConfigService {
 
             const newValue: IDEConfig = JSON.parse(fileContent);
             const contentHash = crypto.createHash('sha256').update(fileContent, 'utf8').digest('hex');
-            if (this.contentHash !== contentHash) {
+            const contentChanged = this.contentHash !== contentHash
+            if (contentChanged) {
                 this.contentHash = contentHash;
 
                 this.validate(newValue);
@@ -143,11 +160,31 @@ export class IDEConfigService {
                     throw new Error(`invalid: Editor (desktop), '${newValue.ideOptions.defaultDesktopIde}' needs to be of type 'desktop' but is '${newValue.ideOptions.options[newValue.ideOptions.defaultIde].type}'.`);
                 }
 
+                if (newValue.ideOptions.clients) {
+                    for (const [clientId, client] of Object.entries(newValue.ideOptions.clients)) {
+                        if (client.defaultDesktopIDE && !(client.defaultDesktopIDE in newValue.ideOptions.options)) {
+                            throw new Error(`${clientId} client: there is no option entry for editor '${client.defaultDesktopIDE}'.`);
+                        }
+                        if (client.desktopIDEs) {
+                            for (const ide of client.desktopIDEs) {
+                                if (!(ide in newValue.ideOptions.options)) {
+                                    throw new Error(`${clientId} client: there is no option entry for editor '${ide}'.`);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 value = newValue;
             }
 
             if (!value) {
                 return;
+            }
+
+            // we only want to resolve image by interval or content changed
+            if (!(contentChanged || trigger === 'interval')) {
+                return
             }
 
             for (const [id, option] of Object.entries(newValue.ideOptions.options).filter(([_, x]) => !!x.resolveImageDigest)) {
@@ -161,6 +198,20 @@ export class IDEConfigService {
                     });
                 } catch (e) {
                     log.error('ide config: error while resolving image digest', e, { trigger });
+                }
+            }
+
+            for (const [id, option] of Object.entries(newValue.ideOptions.options).filter(([_, x]) => x.latestImage)) {
+                try {
+                    value.ideOptions.options[id].latestImage = await this.resolveImageDigest(option.latestImage!);
+                    log.info("ide config: successfully resolved latest image digest", {
+                        ide: id,
+                        latestImage: option.latestImage,
+                        resolvedImage: value.ideOptions.options[id].latestImage,
+                        trigger,
+                    });
+                } catch (e) {
+                    log.error('ide config: error while resolving latest image digest', e, { trigger });
                 }
             }
 

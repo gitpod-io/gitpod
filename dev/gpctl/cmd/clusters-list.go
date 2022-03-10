@@ -33,9 +33,9 @@ var clustersListCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		tpl := `NAME	URL	STATIC	STATE	SCORE	GOVERNED	ADMISSION CONSTRAINTS	ADMISSION PREFERNCES
+		tpl := `NAME	URL	STATIC	STATE	SCORE	GOVERNED	ADMISSION CONSTRAINTS
 {{- range .Status }}
-{{ .Name }}	{{ .Url }}	{{ .Static }}	{{ .State }}	{{ .Score }}	{{ .Governed }}	{{ .AdmissionConstraint -}}	{{ .AdmissionPreference -}}
+{{ .Name }}	{{ .Url }}	{{ .Static }}	{{ .State }}	{{ .Score }}	{{ .Governed }}	{{ .AdmissionConstraint -}}
 {{ end }}
 `
 		err = getOutputFormat(tpl, "{..name}").Print(resp)

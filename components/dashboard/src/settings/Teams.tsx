@@ -24,7 +24,7 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 export default function Teams() {
 
     return (<div>
-        <PageWithSubMenu subMenu={settingsMenu} title='Teams' subtitle='View and manage subscriptions for your team with one centralized billing.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Team Plans' subtitle='View and manage subscriptions for your team with one centralized billing.'>
             <AllTeams />
         </PageWithSubMenu>
     </div>);
@@ -435,7 +435,7 @@ function AllTeams() {
                     <button className="self-end my-auto secondary" onClick={() => showBilling()}>Billing</button>
                 )}
                 {getActiveSubs().length > 0 && (
-                    <button className="self-end my-auto" disabled={!!pendingPlanPurchase || getAvailableSubTypes().length === 0} onClick={() => showCreateTeamModal()}>Create Team</button>
+                    <button className="self-end my-auto" disabled={!!pendingPlanPurchase || getAvailableSubTypes().length === 0} onClick={() => showCreateTeamModal()}>Create Team Plan</button>
                 )}
             </div>
         </div>
@@ -564,7 +564,7 @@ function InviteMembersModal(props: {
     return (<Modal visible={true} onClose={props.onClose}>
         <h3 className="pb-2">Invite Members</h3>
         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
-            <p className="pb-2 text-gray-500 text-base">Invite members to the team using the URL below.</p>
+            <p className="pb-2 text-gray-500 text-base">Invite members to the team plan using the URL below.</p>
 
             <div className="flex flex-col space-y-2">
                 <label htmlFor="inviteUrl" className="font-medium">Invite URL</label>
@@ -574,7 +574,7 @@ function InviteMembersModal(props: {
                         <img src={copy} title="Copy Invite URL" className="absolute top-1/3 right-3" />
                     </div>
                 </div>
-                <p className="pb-4 text-gray-500 text-sm">{copied ? "Copied to clipboard!" : "Use this URL to join this team."}</p>
+                <p className="pb-4 text-gray-500 text-sm">{copied ? "Copied to clipboard!" : "Use this URL to join this team plan."}</p>
             </div>
 
         </div>
@@ -609,10 +609,10 @@ function AddMembersModal(props: {
     return (<Modal visible={true} onClose={props.onClose}>
         <h3 className="pb-2">Add Members</h3>
         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
-            <p className="pb-4 text-gray-500 text-base">Add members to the team plan.</p>
+            <p className="pb-4 text-gray-500 text-base">Select the number of members to add to the team plan.</p>
 
             <div className="flex flex-col space-y-2 pb-4">
-                <label htmlFor="quantity" className="font-medium">Members</label>
+                <label htmlFor="quantity" className="font-medium">Additional Members</label>
                 <select name="quantity" value={quantity} className="rounded-md w-full"
                     onChange={(e) => setQuantity(parseInt(e.target.value || '1', 10))}>
                     {quantities.map(n => (
@@ -621,11 +621,11 @@ function AddMembersModal(props: {
                 </select>
             </div>
 
-            <AlertBox>Total: {expectedPrice} per month</AlertBox>
+            <AlertBox>Additional Charge: {expectedPrice} per month</AlertBox>
 
         </div>
         <div className="flex justify-end mt-6">
-            <button className={"ml-2"} onClick={() => props.onBuy(getPlan(), quantity, props.sub)}>Continue to Billing</button>
+            <button className={"ml-2"} onClick={() => props.onBuy(getPlan(), quantity, props.sub)}>Continue</button>
         </div>
     </Modal>);
 }

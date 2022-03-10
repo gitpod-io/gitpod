@@ -49,11 +49,7 @@ venv/
 charts/gitpod_io/secrets/decrypted
 
 # Build artifacts
-components/ws-scheduler/ws-scheduler
 components/ws-proxy/ws-proxy
 
 # Logs
 components/server/*.log
-
-# IntelliJ
-.idea/

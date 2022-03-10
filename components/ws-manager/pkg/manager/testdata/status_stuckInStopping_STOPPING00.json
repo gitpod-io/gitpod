@@ -641,7 +641,6 @@
             "nodeName": "gke-gp-prod-ws-us14-us-workspace-pool-67d93ed3-l67s",
             "automountServiceAccountToken": false,
             "terminationGracePeriodSeconds": 30,
-            "schedulerName": "workspace-scheduler",
             "dnsConfig": {
                 "nameservers": [
                     "1.1.1.1",
@@ -655,7 +654,7 @@
                             {
                                 "matchExpressions": [
                                     {
-                                        "key": "gitpod.io/workload_workspace",
+                                        "key": "gitpod.io/workload_workspace_regulars",
                                         "operator": "Exists"
                                     }
                                 ]
@@ -1018,7 +1017,6 @@
                                 "f:generateName": {}
                             }
                         },
-                        "manager": "ws-scheduler",
                         "operation": "Update",
                         "fieldsType": "FieldsV1",
                         "time": "2021-08-19T05:14:19Z"

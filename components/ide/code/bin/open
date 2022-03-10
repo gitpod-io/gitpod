@@ -1,2 +1,0 @@
-#!/usr/bin/env sh
-exec /ide/bin/remote-cli/gitpod-code "$@"

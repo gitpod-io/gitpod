@@ -9,7 +9,7 @@ import {
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
-    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes
+    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, ProjectEnvVar
 } from './protocol';
 import {
     Team, TeamMemberInfo,
@@ -30,6 +30,7 @@ import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from './analytics';
 import { IDEServer } from './ide-protocol';
+import { InstallationAdminSettings, TelemetryData } from './installation-admin-protocol';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -71,8 +72,15 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
     getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
     getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
+    getSuggestedContextURLs(): Promise<string[]>;
+    /**
+     * **Security:**
+     * Sensitive information like an owner token is erased, since it allows access for all team members.
+     * If you need to access an owner token use `getOwnerToken` instead.
+     */
     getWorkspace(id: string): Promise<WorkspaceInfo>;
     isWorkspaceOwner(workspaceId: string): Promise<boolean>;
+    getOwnerToken(workspaceId: string): Promise<string>;
 
     /**
      * Creates and starts a workspace for the given context URL.
@@ -125,6 +133,11 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
     deleteTeam(teamId: string, userId: string): Promise<void>;
 
+    // Admin Settings
+    adminGetSettings(): Promise<InstallationAdminSettings>;
+    adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;
+    adminGetTelemetryData(): Promise<TelemetryData>;
+
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
     createProject(params: CreateProjectParams): Promise<Project>;
@@ -141,6 +154,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     guessRepositoryConfiguration(cloneUrl: string): Promise<string | undefined>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     updateProjectPartial(partialProject: PartialProject): Promise<void>;
+    setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>;
+    getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
+    deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>
@@ -236,6 +252,16 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     trackEvent(event: RemoteTrackMessage): Promise<void>;
     trackLocation(event: RemotePageMessage): Promise<void>;
     identifyUser(event: RemoteIdentifyMessage): Promise<void>;
+}
+
+export interface RateLimiterError {
+    method?: string,
+
+    /**
+     * Retry after this many seconds, earliest.
+     * cmp.: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
+     */
+    retryAfter: number,
 }
 
 export interface CreateProjectParams {
@@ -383,10 +409,12 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
 
     public registerClient(client: Partial<Client>): Disposable {
         this.clients.push(client);
-        const index = this.clients.length;
         return {
             dispose: () => {
-                this.clients.slice(index, 1);
+                const index = this.clients.indexOf(client);
+                if (index > -1) {
+                    this.clients.splice(index, 1);
+                }
             }
         }
     }
@@ -576,7 +604,7 @@ export class WorkspaceInstanceUpdateListener {
 }
 
 export interface GitpodServiceOptions {
-    onReconnect?: () => (void | Promise<void>)
+    onReconnect?: () => (void | Promise<void>)
 }
 
 export class GitpodServiceImpl<Client extends GitpodClient, Server extends GitpodServer> {

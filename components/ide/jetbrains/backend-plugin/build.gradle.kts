@@ -39,14 +39,8 @@ dependencies {
             type = "jar"
         }
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.2")
-    implementation("io.ktor:ktor-client-core:1.6.3")
-    implementation("io.ktor:ktor-client-cio:1.6.3")
-    implementation("io.ktor:ktor-client-jackson:1.6.3")
-
+    compileOnly("javax.websocket:javax.websocket-api:1.1")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
-
     testImplementation(kotlin("test"))
 }
 

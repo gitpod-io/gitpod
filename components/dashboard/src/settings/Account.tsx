@@ -45,7 +45,7 @@ export default function Account() {
             <input autoFocus className="w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
         </ConfirmationModal>
 
-        <PageWithSubMenu subMenu={settingsMenu}  title='Account' subtitle='Manage account and Git configuration.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Account' subtitle='Manage account and Git configuration.'>
             <h3>Profile</h3>
             <p className="text-base text-gray-500 pb-4 max-w-2xl">The following information will be used to set up Git configuration. You can override Git author name and email per project by using the default environment variables <CodeText>GIT_AUTHOR_NAME</CodeText>, <CodeText>GIT_COMMITTER_NAME</CodeText>, <CodeText>GIT_AUTHOR_EMAIL</CodeText> and <CodeText>GIT_COMMITTER_EMAIL</CodeText>.</p>
             <div className="flex flex-col lg:flex-row">

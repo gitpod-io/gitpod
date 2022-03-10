@@ -21,6 +21,9 @@ export class HostContainerMappingEE extends HostContainerMapping {
             return (modules || []).concat([gitlabContainerModuleEE]);
         case "Bitbucket":
             return (modules || []).concat([bitbucketContainerModuleEE]);
+        // case "BitbucketServer":
+            // FIXME
+            // return (modules || []).concat([bitbucketContainerModuleEE]);
         case "GitHub":
             return (modules || []).concat([gitHubContainerModuleEE]);
         default:

@@ -562,9 +562,8 @@ enum WorkspaceType {
     // interact with users directly.
     PROBE = 2;
 
-    // Ghost workspaces are placeholders that pre-scale a cluster for faster workspace startup. They request the same amount of resources
-    // as a regular workspace, but run no actual load. They're removed at will to make space for an actual workspace.
-    GHOST = 3;
+    // DEPRECATED Ghost workspaces
+    reserved 3;
 
     // Imagebuild workspaces build a workspace, incl. their Gitpod layer. They run headless and have no direct user-interaction.
     IMAGEBUILD = 4;

@@ -19,6 +19,7 @@ import { DBUser } from './entity/db-user';
 import { DBUserEnvVar } from "./entity/db-user-env-vars";
 import { DBWorkspace } from "./entity/db-workspace";
 import { TypeORM } from './typeorm';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
@@ -285,12 +286,12 @@ export class TypeORMUserDBImpl implements UserDB {
     public async findTokenForIdentity(identity: Identity): Promise<Token | undefined> {
         const tokenEntries = await this.findTokensForIdentity(identity);
         if (tokenEntries.length > 1) {
-            throw new Error(`Found more than one active token for ${identity.authProviderId} and user ${identity.authName}`);
+            log.warn(`Found more than one active token for ${identity.authProviderId}.`, { identity });
         }
         if (tokenEntries.length === 0) {
             return undefined;
         }
-        return tokenEntries[0].token;
+        return tokenEntries.sort((a, b) => `${a.token.updateDate}`.localeCompare(`${b.token.updateDate}`)).reverse()[0]?.token;
     }
 
     public async findTokensForIdentity(identity: Identity, includeDeleted?: boolean): Promise<TokenEntry[]> {

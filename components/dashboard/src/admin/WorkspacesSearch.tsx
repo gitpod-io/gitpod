@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { AdminGetListResult, AdminGetWorkspacesQuery, User, WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
+import { AdminGetListResult, AdminGetWorkspacesQuery, ContextURL, User, WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
 import { matchesInstanceIdOrLegacyWorkspaceIdExactly, matchesNewWorkspaceIdExactly } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import moment from "moment";
 import { useContext, useEffect, useState } from "react";
@@ -16,6 +16,7 @@ import { UserContext } from "../user-context";
 import { getProject, WorkspaceStatusIndicator } from "../workspaces/WorkspaceEntry";
 import { adminMenu } from "./admin-menu";
 import WorkspaceDetail from "./WorkspaceDetail";
+import info from '../images/info.svg';
 
 interface Props {
     user?: User
@@ -66,29 +67,31 @@ export function WorkspaceSearch(props: Props) {
     }
 
     const search = async () => {
+        // Disables empty search on the workspace search page
+        if (!props.user && queryTerm.length === 0) {
+            return;
+        }
+
         setSearching(true);
         try {
-            let searchTerm: string | undefined = queryTerm;
             const query: AdminGetWorkspacesQuery = {
-                ownerId: props?.user?.id,
+                ownerId: props?.user?.id, // Workspace search in admin user detail
             };
-            if (matchesInstanceIdOrLegacyWorkspaceIdExactly(searchTerm)) {
-                query.instanceIdOrWorkspaceId = searchTerm;
-            } else if (matchesNewWorkspaceIdExactly(searchTerm)) {
-                query.workspaceId = searchTerm;
+            if (matchesInstanceIdOrLegacyWorkspaceIdExactly(queryTerm)) {
+                query.instanceIdOrWorkspaceId = queryTerm;
+            } else if (matchesNewWorkspaceIdExactly(queryTerm)) {
+                query.workspaceId = queryTerm;
             }
-            if (query.workspaceId || query.instanceId || query.instanceIdOrWorkspaceId) {
-                searchTerm = undefined;
+            if (!query.ownerId && !query.instanceIdOrWorkspaceId && !query.workspaceId) {
+                return;
             }
 
-            // const searchTerm = searchTerm;
             const result = await getGitpodService().server.adminGetWorkspaces({
                 limit: 100,
                 orderBy: 'instanceCreationTime',
                 offset: 0,
                 orderDir: "desc",
                 ...query,
-                searchTerm,
             });
             setSearchResult(result);
         } finally {
@@ -104,10 +107,16 @@ export function WorkspaceSearch(props: Props) {
                             <path fillRule="evenodd" clipRule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E" />
                         </svg>
                     </div>
-                    <input type="search" placeholder="Search Workspaces" onKeyDown={(ke) => ke.key === 'Enter' && search() } onChange={(v) => { setQueryTerm(v.target.value) }} />
+                    <input type="search" placeholder="Search Workspace IDs"
+                        onKeyDown={(ke) => ke.key === 'Enter' && search() }
+                        onChange={(v) => { setQueryTerm((v.target.value).trim()) }} />
                 </div>
                 <button disabled={searching} onClick={search}>Search</button>
             </div>
+        </div>
+        <div className={'flex rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 p-2 w-2/3 mb-2'}>
+            <img className="w-4 h-4 m-1 ml-2 mr-4" alt="info" src={info} />
+            <span>Please enter complete IDs - this search does not perform partial-matching.</span>
         </div>
         <div className="flex flex-col space-y-2">
             <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
@@ -133,7 +142,7 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
             </div>
             <div className="flex flex-col w-5/12 self-center truncate">
                 <div className="text-gray-500 overflow-ellipsis truncate">{p.ws.description}</div>
-                <div className="text-sm text-gray-400 overflow-ellipsis truncate">{p.ws.contextURL}</div>
+                <div className="text-sm text-gray-400 overflow-ellipsis truncate">{ContextURL.getNormalizedURL(p.ws)?.toString()}</div>
             </div>
             <div className="flex w-2/12 self-center">
                 <div className="text-sm w-full text-gray-400 truncate">{moment(p.ws.instanceCreationTime || p.ws.workspaceCreationTime).fromNow()}</div>

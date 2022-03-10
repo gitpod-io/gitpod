@@ -7,20 +7,39 @@
 import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
+import { v4 as uuidv4 } from 'uuid';
+import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue } from "@gitpod/gitpod-protocol";
+import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
-import { PartialProject, Project } from "@gitpod/gitpod-protocol";
+import { DBProjectEnvVar } from "./entity/db-project-env-vars";
+import { DBProjectInfo } from "./entity/db-project-info";
+
+function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar {
+    const envVar = { ...envVarWithValue };
+    delete (envVar as any)['value'];
+    return envVar;
+}
 
 @injectable()
 export class ProjectDBImpl implements ProjectDB {
     @inject(TypeORM) typeORM: TypeORM;
+    @inject(EncryptionService) protected readonly encryptionService: EncryptionService;
 
     protected async getEntityManager() {
         return (await this.typeORM.getConnection()).manager;
     }
 
-    async getRepo(): Promise<Repository<DBProject>> {
+    protected async getRepo(): Promise<Repository<DBProject>> {
         return (await this.getEntityManager()).getRepository<DBProject>(DBProject);
+    }
+
+    protected async getProjectEnvVarRepo(): Promise<Repository<DBProjectEnvVar>> {
+        return (await this.getEntityManager()).getRepository<DBProjectEnvVar>(DBProjectEnvVar);
+    }
+
+    protected async getProjectInfoRepo(): Promise<Repository<DBProjectInfo>> {
+        return (await this.getEntityManager()).getRepository<DBProjectInfo>(DBProjectInfo);
     }
 
     public async findProjectById(projectId: string): Promise<Project | undefined> {
@@ -71,6 +90,25 @@ export class ProjectDBImpl implements ProjectDB {
         return repo.find({ userId, markedDeleted: false });
     }
 
+    public async findProjectsBySearchTerm(
+        offset: number,
+        limit: number,
+        orderBy: keyof Project,
+        orderDir: "DESC" | "ASC",
+        searchTerm?: string
+        ): Promise<{ total: number, rows: Project[] }> {
+        const projectRepo = await this.getRepo();
+
+        const queryBuilder = projectRepo.createQueryBuilder('project')
+            .where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
+            .skip(offset)
+            .take(limit)
+            .orderBy(orderBy, orderDir)
+
+        const [rows, total] = await queryBuilder.getManyAndCount();
+        return { total, rows };
+    }
+
     public async storeProject(project: Project): Promise<Project> {
         const repo = await this.getRepo();
         return repo.save(project);
@@ -92,5 +130,83 @@ export class ProjectDBImpl implements ProjectDB {
             project.markedDeleted = true;
             await repo.save(project);
         }
+        // Delete any additional cached infos about this project
+        const projectInfoRepo = await this.getProjectInfoRepo();
+        const info = await projectInfoRepo.findOne({ projectId, deleted: false });
+        if (info) {
+            await projectInfoRepo.update(projectId, { deleted: true });
+        }
+    }
+
+    public async setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void> {
+        if (!name) {
+            throw new Error('Variable name cannot be empty');
+        }
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+            throw new Error('Please choose a variable name containing only letters, numbers, or _, and which doesn\'t start with a number');
+        }
+        const envVarRepo = await this.getProjectEnvVarRepo();
+        const envVarWithValue = await envVarRepo.findOne({ projectId, name, deleted: false });
+        if (envVarWithValue) {
+            await envVarRepo.update({ id: envVarWithValue.id, projectId: envVarWithValue.projectId }, { value, censored });
+            return;
+        }
+        await envVarRepo.save({
+            id: uuidv4(),
+            projectId,
+            name,
+            value,
+            censored,
+            creationTime: new Date().toISOString(),
+            deleted: false,
+        });
+    }
+
+    public async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {
+        const envVarRepo = await this.getProjectEnvVarRepo();
+        const envVarsWithValue = await envVarRepo.find({ projectId, deleted: false });
+        const envVars = envVarsWithValue.map(toProjectEnvVar);
+        return envVars;
+    }
+
+    public async getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined> {
+        const envVarRepo = await this.getProjectEnvVarRepo();
+        const envVarWithValue = await envVarRepo.findOne({ id: variableId, deleted: false });
+        if (!envVarWithValue) {
+            return;
+        }
+        const envVar = toProjectEnvVar(envVarWithValue);
+        return envVar;
+    }
+
+    public async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
+        const envVarRepo = await this.getProjectEnvVarRepo();
+        const envVarWithValue = await envVarRepo.findOne({ id: variableId, deleted: false });
+        if (!envVarWithValue) {
+            throw new Error('A environment variable with this name could not be found for this project');
+        }
+        envVarWithValue.deleted = true;
+        await envVarRepo.update({ id: envVarWithValue.id, projectId: envVarWithValue.projectId }, envVarWithValue);
+    }
+
+    public async getProjectEnvironmentVariableValues(envVars: ProjectEnvVar[]): Promise<ProjectEnvVarWithValue[]> {
+        const envVarRepo = await this.getProjectEnvVarRepo();
+        const envVarsWithValues = await envVarRepo.findByIds(envVars);
+        return envVarsWithValues;
+    }
+
+    public async findCachedProjectOverview(projectId: string): Promise<Project.Overview | undefined> {
+        const projectInfoRepo = await this.getProjectInfoRepo();
+        const info = await projectInfoRepo.findOne({ projectId });
+        return info?.overview;
+    }
+
+    public async storeCachedProjectOverview(projectId: string, overview: Project.Overview): Promise<void> {
+        const projectInfoRepo = await this.getProjectInfoRepo();
+        await projectInfoRepo.save({
+            projectId,
+            overview,
+            creationTime: new Date().toISOString(),
+        });
     }
 }

@@ -375,7 +375,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 				if result.Conditions.Failed != "" {
 					result.Conditions.Failed += "; "
 				}
-				result.Conditions.Failed += fmt.Sprintf("last backup failed: %s. Please contact support if you need the workspace data.", ds.BackupFailure)
+				result.Conditions.Failed += fmt.Sprintf("last backup failed: %s.", ds.BackupFailure)
 			}
 		}
 
@@ -451,15 +451,6 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 				// this container was running before, but is currently recovering from an interruption
 				result.Phase = api.WorkspacePhase_INTERRUPTED
 				result.Message = fmt.Sprintf("container %s was terminated unexpectedly - workspace is recovering", cs.Name)
-				return nil
-			}
-
-			_, neverWereReady := pod.Annotations[workspaceNeverReadyAnnotation]
-			if neverWereReady && !cs.Ready {
-				// container isn't ready yet (never has been), thus we're still in the creating phase.
-				result.Phase = api.WorkspacePhase_CREATING
-				result.Message = "containers are starting"
-				result.Conditions.PullingImages = api.WorkspaceConditionBool_FALSE
 				return nil
 			}
 		}
@@ -667,6 +658,7 @@ const (
 	activityPullingImages      activity = "pulling images"
 	activityRunningHeadless    activity = "running the headless workspace"
 	activityNone               activity = "period of inactivity"
+	activityMaxLifetime        activity = "maximum lifetime"
 	activityClosed             activity = "after being closed"
 	activityInterrupted        activity = "workspace interruption"
 	activityStopping           activity = "stopping"
@@ -716,6 +708,11 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 		return decide(start, m.Config.Timeouts.TotalStartup, activity)
 
 	case api.WorkspacePhase_RUNNING:
+		// First check is always for the max lifetime
+		if msg, err := decide(start, m.Config.Timeouts.MaxLifetime, activityMaxLifetime); msg != "" {
+			return msg, err
+		}
+
 		timeout := m.Config.Timeouts.RegularWorkspace
 		activity := activityNone
 		if wso.IsWorkspaceHeadless() {

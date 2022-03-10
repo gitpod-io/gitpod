@@ -1,0 +1,355 @@
+apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: gitpod
+spec:
+  groups:
+    - name: general
+      title: General settings
+      description: General settings for your Gitpod instance
+      items:
+        - name: domain
+          title: What is your domain name?
+          help_text: This will be the URL that you use to access your Gitpod instance. This should be in the format "gitpod.domain.com".
+          type: text
+          required: true
+
+    - name: container_registry
+      title: Container registry
+      description: Gitpod requires a container registry to store container images. This can either be an in-cluster or external container registry.
+      items:
+        - name: reg_incluster
+          title: Use in-cluster container registry
+          type: bool
+          default: "1"
+          help_text: You may either use an in-cluster container registry or configure your own external container registry for better performance. This container registry must be accessible from your Kubernetes cluster.
+          recommended: false
+
+        - name: reg_url
+          title: Container registry URL
+          type: text
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          required: true
+          help_text: The container registry URL. This will usually be the fully qualified domain of your registry.
+
+        - name: reg_server
+          title: Container registry server
+          type: text
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          help_text: The container registry server. This is used when [generating your credentials](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line). Depending upon your provider, this may or may not be the same as the registry URL. If not specified, the URL will be used.
+
+        - name: reg_username
+          title: Container registry username
+          type: text
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          required: true
+          help_text: The username for your container registry.
+
+        - name: reg_password
+          title: Container registry password
+          type: password
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          required: true
+          help_text: The password for your container registry.
+
+        - name: reg_s3storage
+          title: Use S3 storage for your container registry
+          type: bool
+          default: "0"
+          when: '{{repl ConfigOptionEquals "reg_incluster" "0" }}'
+          help_text: If using AWS as your container registry, you must configure an S3 storage backend.
+
+        - name: reg_bucketname
+          title: S3 bucket name
+          type: text
+          when: '{{repl and (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
+          required: true
+          help_text: The name of the bucket to act as your S3 storage backend.
+
+        - name: reg_accesskey
+          title: S3 access key
+          type: text
+          when: '{{repl and (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
+          required: true
+          help_text: The access key to use for authentication of your S3 storage backend.
+
+        - name: reg_secretkey
+          title: S3 secret key
+          type: password
+          when: '{{repl and (ConfigOptionEquals "reg_incluster" "0") (ConfigOptionEquals "reg_s3storage" "1") }}'
+          required: true
+          help_text: The secret key to use for authentication of your S3 storage backend.
+
+    - name: database
+      title: Database
+      description: Gitpod requires an instance of MySQL 5.7 for data storage. This can either be an in-cluster or external database.
+      items:
+        - name: db_incluster
+          title: Use MySQL in-cluster
+          type: bool
+          default: "1"
+          help_text: You may either use an in-cluster database or configure your own external database for better performance. This database must be accessible from your Kubernetes cluster.
+          recommended: false
+
+        - name: db_cloudsql_enabled
+          title: Use Google Cloud SQL Proxy
+          when: '{{repl (ConfigOptionEquals "db_incluster" "0") }}'
+          type: bool
+          default: "0"
+          help_text: "Gitpod natively supports [Google Cloud SQL Proxy](https://cloud.google.com/sql/docs/mysql/sql-proxy) to secure the connection. If this is not used, you will need to ensure that the database route is secured. **NB.** this only works with GCP provided databases."
+
+        - name: db_cloudsql_instance
+          title: CloudSQL connection name
+          type: text
+          when: '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "1") }}'
+          required: true
+          help_text: The CloudSQL connection name. This will be in the format "<project>:<region>:<instance-name>".
+
+        - name: db_encryption_keys
+          title: Encryption keys
+          type: text
+          hidden: true
+          required: true
+          value: '[{"name":"general","version":1,"primary":true,"material":"4uGh1q8y2DYryJwrVMHs0kWXJlqvHWWt/KJuNi04edI="}]'
+
+        - name: db_host
+          title: Host
+          type: text
+          when: '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "0") }}'
+          required: true
+          help_text: The host of your database. This can be an IP address or a URL.
+
+        - name: db_username
+          title: Username
+          when: '{{repl (ConfigOptionEquals "db_incluster" "0") }}'
+          type: text
+          value: gitpod
+          required: true
+          help_text: The username for your database.
+
+        - name: db_password
+          title: Password
+          when: '{{repl (ConfigOptionEquals "db_incluster" "0") }}'
+          type: password
+          required: true
+          help_text: The password for your database.
+
+        - name: db_port
+          title: Port
+          type: text
+          when: '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "0") }}'
+          value: "3306"
+          required: true
+          help_text: The port for your database.
+
+        - name: db_gcp_credentials
+          title: GCP service account key
+          when: '{{repl and (ConfigOptionEquals "db_incluster" "0") (ConfigOptionEquals "db_cloudsql_enabled" "1") }}'
+          type: file
+          required: true
+          help_text: Download a [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) with the `roles/cloudsql.client` role attached.
+
+    - name: storage
+      title: Object storage
+      description: Gitpod requires object storage to store workspace data. This can either be in-cluster or an external S3 (AWS), Azure or GCP instance.
+      items:
+        - name: store_provider
+          title: Storage provider
+          type: select_one
+          default: incluster
+          help_text: You may either use in-cluster object storage or configure your own external object storage for better performance. This must be accessible from your Kubernetes cluster.
+          items:
+            - name: incluster
+              title: In-cluster
+            - name: azure
+              title: Azure
+            - name: gcp
+              title: GCP
+            - name: s3
+              title: S3
+
+        # Azure help_text
+        - name: store_region
+          title: Storage region
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "azure") }}'
+          help_text: ID of the region where your storage exists, such as `uksouth`.
+
+        # GCP help_text
+        - name: store_region
+          title: Storage region
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "gcp") }}'
+          help_text: ID of the region where your storage exists, such as `europe-west2`.
+
+        # S3 help_text
+        - name: store_region
+          title: Storage region
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
+          help_text: ID of the region where your storage exists, such as `eu-west-2`.
+
+        - name: store_azure_account_name
+          title: Account name
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "azure") }}'
+          help_text: The globally-unique storage account name.
+
+        - name: store_azure_access_key
+          title: Access key
+          type: password
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "azure") }}'
+          help_text: The access key for the storage account.
+
+        - name: store_gcp_project
+          title: Project ID
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "gcp") }}'
+          help_text: The ID of your GCP project.
+
+        - name: store_gcp_credentials
+          title: Service account key
+          type: file
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "gcp") }}'
+          help_text: Download a [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) with the `roles/storage.admin` and `roles/storage.objectAdmin` roles attached.
+
+        - name: store_s3_endpoint
+          title: Endpoint
+          type: text
+          required: true
+          value: s3.amazonaws.com
+          when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
+          help_text: The endpoint used to connect to the S3 storage.
+
+        - name: store_s3_access_key_id
+          title: Username
+          type: text
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
+          help_text: The username that has access to the S3 account. In AWS, this is an IAM user's credentials with `AmazonS3FullAccess` policy.
+
+        - name: store_s3_secret_access_key
+          title: Password
+          type: password
+          required: true
+          when: '{{repl (ConfigOptionEquals "store_provider" "s3") }}'
+          help_text: The password that has access to the S3 account. In AWS, this is an IAM user's credentials with `AmazonS3FullAccess` policy.
+
+    - name: certs
+      title: TLS certificates
+      description: Certificates are required to maintain a secure connection. The DNS names must be for `$DOMAIN`, `*.$DOMAIN` and `*.ws.$DOMAIN`.
+      items:
+        - name: tls_self_signed_enabled
+          title: Use a self-signed TLS certificate
+          type: bool
+          default: "0"
+          help_text: A self-signed certficate should only be used if applying TLS termination to your load balancer or other proxy.
+
+        - name: cert_manager_enabled
+          title: Use cert-manager
+          type: bool
+          default: "1"
+          when: '{{repl ConfigOptionEquals "tls_self_signed_enabled" "0" }}'
+          help_text: Automate certificate management with [cert-manager](https://cert-manager.io).
+
+        - name: cert_manager_acme_url
+          title: ACME URL
+          type: text
+          value: https://acme-v02.api.letsencrypt.org/directory
+          required: true
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
+          help_text: The ACME URL is used to issue the certificates.
+
+        - name: cert_manager_email
+          title: Email address
+          type: text
+          required: false
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
+          help_text: The email address to send renewal notifications to.
+
+        - name: cert_manager_provider
+          title: DNS01 provider
+          type: select_one
+          required: true
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
+          help_text: A DNS01 challenge provider is used by cert-manager in order to generate the certificate. See the [specific documentation](https://cert-manager.io/docs/configuration/acme/dns01) for instructions on configuring your provider.
+          items:
+            - name: azure
+              title: AzureDNS
+            - name: gcp
+              title: Google CloudDNS
+
+        - name: cert_manager_azure_subscription_id
+          title: Subscription ID
+          type: text
+          required: true
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
+          help_text: The Azure subscription ID.
+
+        - name: cert_manager_azure_resource_group
+          title: Resource group
+          type: text
+          required: true
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
+          help_text: The name of the resource group where the DNS zone exists.
+
+        - name: cert_manager_gcp_project
+          title: Project ID
+          type: text
+          required: true
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
+          help_text: The ID of your GCP project.
+
+        - name: cert_manager_gcp_credentials
+          title: GCP service account key
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
+          type: file
+          required: true
+          help_text: Download a [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) with the `roles/dns.admin` role attached.
+
+        - name: tls_crt
+          title: Certificate
+          type: file
+          required: true
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
+          help_text: A file containing the TLS crt.
+
+        - name: tls_key
+          title: Private key
+          type: file
+          required: true
+          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "0") }}'
+          help_text: A file containing the TLS private key.
+
+    - name: features
+      title: Additional features
+      items:
+        - name: ssh_gateway
+          title: Allow login to your workspace via SSH
+          type: bool
+          default: "0"
+          help_text: 'Enabling the SSH gateway allows use of additional desktop IDEs. IMPORTANT: This uses port 22 on your Kubernetes nodes. When enabled, this will prevent login to the cluster via SSH. If you wish to maintain SSH access to your cluster, please configure another SSH port on your nodes.'
+
+    - name: advanced
+      title: Advanced customizations (Expert Mode)
+      description: Use with care! Enable only when you know what you are doing!
+      items:
+        - name: advanced_mode_enabled
+          title: Enable advanced mode
+          type: bool
+          default: "0"
+          help_text: Enables advanced customization options. Enable only when you know what you are doing!
+
+        - name: config_patch
+          title: Gitpod config patch (YAML file)
+          type: file
+          required: false
+          when: '{{repl ConfigOptionEquals "advanced_mode_enabled" "1" }}'
+          help_text: A file with Gitpod config that will be used to patch the generated Gitpod config.

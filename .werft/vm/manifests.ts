@@ -26,7 +26,7 @@ kind: VirtualMachine
 metadata:
   namespace: ${namespace}
   annotations:
-    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-4vm9w"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"50Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-4vm9w"}}]'
+    harvesterhci.io/volumeClaimTemplates: '[{"metadata":{"name":"${claimName}","annotations":{"harvesterhci.io/imageId":"default/image-7cw7x"}},"spec":{"accessModes":["ReadWriteMany"],"resources":{"requests":{"storage":"150Gi"}},"volumeMode":"Block","storageClassName":"longhorn-image-7cw7x"}}]'
     network.harvesterhci.io/ips: "[]"
   labels:
     harvesterhci.io/creator: harvester
@@ -43,18 +43,18 @@ spec:
     spec:
       readinessProbe:
         tcpSocket:
-          port: 22
-        initialDelaySeconds: 120
-        periodSeconds: 20
-        timeoutSeconds: 10
-        failureThreshold: 10
-        successThreshold: 10
+          port: 2200
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 60
+        successThreshold: 1
       domain:
         hostname: ${vmName}
         machine:
           type: q35
         cpu:
-          cores: 4
+          cores: 6
           sockets: 1
           threads: 1
         devices:
@@ -106,10 +106,14 @@ metadata:
   namespace: ${namespace}
 spec:
   ports:
-    - name: ssh
+    - name: ssh-gateway
       protocol: TCP
       port: 22
       targetPort: 22
+    - name: vm-ssh
+      protocol: TCP
+      port: 2200
+      targetPort: 2200
     - name: http
       protocol: TCP
       port: 80
@@ -122,6 +126,14 @@ spec:
       protocol: TCP
       port: 6443
       targetPort: 6443
+    - name: prometheus
+      protocol: TCP
+      port: 9090
+      targetPort: 32001
+    - name: grafana
+      protocol: TCP
+      port: 3000
+      targetPort: 32000
   selector:
     harvesterhci.io/vmName: ${vmName}
   type: ClusterIP
@@ -134,7 +146,7 @@ type UserDataSecretManifestOptions = {
   secretName: string
 }
 
-export function UserDataSecretManifest({vmName, namespace, secretName }: UserDataSecretManifestOptions) {
+export function UserDataSecretManifest({ vmName, namespace, secretName }: UserDataSecretManifestOptions) {
   const userdata = Buffer.from(`#cloud-config
 users:
 - name: ubuntu
@@ -146,6 +158,24 @@ chpasswd:
     ubuntu:ubuntu
   expire: False
 write_files:
+  - path: /etc/disable-services.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      systemctl disable google-guest-agent &
+      systemctl disable google-startup-scripts &
+      systemctl disable google-osconfig-agent &
+      systemctl disable google-oslogin-cache.timer &
+      systemctl disable google-shutdown-scripts &
+      systemctl stop google-guest-agent &
+      systemctl stop google-startup-scripts &
+      systemctl stop google-osconfig-agent &
+      systemctl stop google-oslogin-cache.timer &
+      systemctl stop google-shutdown-scripts &
+  - path: /etc/ssh/sshd_config.d/101-change-ssh-port.conf
+    permission: 0644
+    owner: root
+    content: 'Port 2200'
   - path: /usr/local/bin/bootstrap-k3s.sh
     permissions: 0744
     owner: root
@@ -188,15 +218,18 @@ write_files:
       # apply fix from https://github.com/k3s-io/klipper-lb/issues/6 so we can use the klipper servicelb
       # this can be removed if https://github.com/gitpod-io/gitpod-packer-gcp-image/pull/20 gets merged
       cat /var/lib/gitpod/manifests/calico.yaml | sed s/__KUBERNETES_NODE_NAME__\\"\\,/__KUBERNETES_NODE_NAME__\\",\\ \\"container_settings\\"\\:\\ \\{\\ \\"allow_ip_forwarding\\"\\:\\ true\\ \\}\\,/ > /var/lib/gitpod/manifests/calico2.yaml
+
+      sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico2.yaml
       kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
 
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
       kubectl apply -f /var/lib/gitpod/manifests/metrics-server.yaml
 
-      cat <<EOF >> /root/.bashrc
+      cat <<EOF >> /etc/bash.bashrc
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       EOF
 runcmd:
+ - bash /etc/disable-services.sh
  - bash /usr/local/bin/bootstrap-k3s.sh`).toString("base64")
   return `
 apiVersion: v1

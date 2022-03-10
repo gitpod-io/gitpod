@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	p "github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	"golang.org/x/crypto/ssh"
@@ -18,18 +19,72 @@ import (
 	"google.golang.org/grpc"
 )
 
+const GitpodUsername = "gitpod"
+
 type Session struct {
-	Conn                *ssh.ServerConn
-	WorkspaceId         string
+	Conn *ssh.ServerConn
+
+	WorkspaceID string
+	InstanceID  string
+
 	PublicKey           ssh.PublicKey
-	WorkspaceIp         string
 	WorkspacePrivateKey ssh.Signer
 }
 
 type Server struct {
-	ConnectionTimeout     time.Duration
+	Heartbeater Heartbeat
+
 	sshConfig             *ssh.ServerConfig
 	workspaceInfoProvider p.WorkspaceInfoProvider
+}
+
+// New creates a new SSH proxy server
+
+func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider, heartbeat Heartbeat) *Server {
+	server := &Server{
+		workspaceInfoProvider: workspaceInfoProvider,
+		Heartbeater:           &noHeartbeat{},
+	}
+	if heartbeat != nil {
+		server.Heartbeater = heartbeat
+	}
+
+	server.sshConfig = &ssh.ServerConfig{
+		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
+		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
+			workspaceId, ownerToken := conn.User(), string(password)
+			err := server.Authenticator(workspaceId, ownerToken)
+			if err != nil {
+				return nil, err
+			}
+			return &ssh.Permissions{
+				Extensions: map[string]string{
+					"workspaceId": workspaceId,
+				},
+			}, nil
+		},
+		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
+			args := strings.Split(conn.User(), "#")
+			// workspaceId#ownerToken
+			if len(args) != 2 {
+				return nil, fmt.Errorf("username error")
+			}
+			workspaceId, ownerToken := args[0], args[1]
+			err := server.Authenticator(workspaceId, ownerToken)
+			if err != nil {
+				return nil, err
+			}
+			return &ssh.Permissions{
+				Extensions: map[string]string{
+					"workspaceId": workspaceId,
+				},
+			}, nil
+		},
+	}
+	for _, s := range signers {
+		server.sshConfig.AddHostKey(s)
+	}
+	return server
 }
 
 func (s *Server) HandleConn(c net.Conn) {
@@ -40,6 +95,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 	defer sshConn.Close()
 
+	go ssh.DiscardRequests(reqs)
 	if sshConn.Permissions == nil || sshConn.Permissions.Extensions == nil || sshConn.Permissions.Extensions["workspaceId"] == "" {
 		return
 	}
@@ -49,37 +105,54 @@ func (s *Server) HandleConn(c net.Conn) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
 	key, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress)
 	if err != nil {
+		cancel()
 		return
 	}
+	cancel()
+
 	session := &Session{
 		Conn:                sshConn,
-		WorkspaceId:         workspaceId,
+		WorkspaceID:         workspaceId,
+		InstanceID:          wsInfo.InstanceID,
 		WorkspacePrivateKey: key,
-		WorkspaceIp:         wsInfo.IPAddress + ":23001",
 	}
+	remoteAddr := wsInfo.IPAddress + ":23001"
+	conn, err := net.Dial("tcp", remoteAddr)
+	if err != nil {
+		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("dail failed")
+		return
+	}
+	defer conn.Close()
+
+	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, remoteAddr, &ssh.ClientConfig{
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		User:            GitpodUsername,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeysCallback(func() (signers []ssh.Signer, err error) {
+				return []ssh.Signer{key}, nil
+			}),
+		},
+		Timeout: 10 * time.Second,
+	})
+	if err != nil {
+		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("connect failed")
+		return
+	}
+	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID, false)
+	client := ssh.NewClient(clientConn, clientChans, clientReqs)
+	ctx, cancel = context.WithCancel(context.Background())
 
 	go func() {
-		for req := range reqs {
-			switch req.Type {
-			case "keepalive@openssh.com":
-				if req.WantReply {
-					req.Reply(true, []byte{})
-				}
-			default:
-				req.Reply(false, []byte{})
-			}
-		}
+		client.Wait()
+		cancel()
 	}()
 
 	for newChannel := range chans {
 		switch newChannel.ChannelType() {
-		case "session":
-			go s.SessionForward(session, newChannel)
-		case "direct-tcpip":
-			go s.ChannelForward(session, newChannel)
+		case "session", "direct-tcpip":
+			go s.ChannelForward(ctx, session, client, newChannel)
 		case "tcpip-forward":
 			newChannel.Reject(ssh.UnknownChannelType, "Gitpod SSH Gateway cannot remote forward ports")
 		default:
@@ -125,47 +198,4 @@ func (s *Server) Serve(l net.Listener) error {
 
 		go s.HandleConn(conn)
 	}
-}
-
-func New(signers []ssh.Signer, workspaceInfoProvider p.WorkspaceInfoProvider) *Server {
-	server := &Server{
-		workspaceInfoProvider: workspaceInfoProvider,
-	}
-
-	server.sshConfig = &ssh.ServerConfig{
-		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
-		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
-			workspaceId, ownerToken := conn.User(), string(password)
-			err := server.Authenticator(workspaceId, ownerToken)
-			if err != nil {
-				return nil, err
-			}
-			return &ssh.Permissions{
-				Extensions: map[string]string{
-					"workspaceId": workspaceId,
-				},
-			}, nil
-		},
-		PublicKeyCallback: func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
-			args := strings.Split(conn.User(), ":")
-			// workspaceId:ownerToken
-			if len(args) != 2 {
-				return nil, fmt.Errorf("username error")
-			}
-			workspaceId, ownerToken := args[0], args[1]
-			err := server.Authenticator(workspaceId, ownerToken)
-			if err != nil {
-				return nil, err
-			}
-			return &ssh.Permissions{
-				Extensions: map[string]string{
-					"workspaceId": workspaceId,
-				},
-			}, nil
-		},
-	}
-	for _, s := range signers {
-		server.sshConfig.AddHostKey(s)
-	}
-	return server
 }

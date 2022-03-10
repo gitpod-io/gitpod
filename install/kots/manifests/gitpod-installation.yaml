@@ -1,0 +1,12 @@
+# This exists as debug information for the support bundle
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitpod-installation
+data:
+  channelName: '{{repl ChannelName }}'
+  cursor: '{{repl Cursor }}'
+  isAirgap: '{{repl IsAirgap }}'
+  releaseNotes: '{{repl ReleaseNotes }}'
+  sequence: '{{repl Sequence }}'
+  version: '{{repl VersionLabel }}'

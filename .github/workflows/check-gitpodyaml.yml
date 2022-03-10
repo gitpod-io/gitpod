@@ -1,9 +1,5 @@
 name: Check gitpod.yaml changes
 on:
-  push:
-    paths:
-      - ".gitpod.yml"
-      - ".github/workflows/check-gitpodyaml.yml"
   pull_request:
     paths:
       - ".gitpod.yml"
@@ -15,10 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Notify
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
-          curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-          -X POST -d '{"body": ":warning: Hey reviewer! BE CAREFUL :warning: \n Review the code before opening in your Gitpod. .gitpod.yaml was changed and it might be harmful."}' \
-          "https://api.github.com/repos/gitpod-io/gitpod/issues/${pull_number}/comments"
+        uses: KeisukeYamashita/create-comment@v1
+        with:
+          number: ${{ github.event.pull_request.number }}
+          comment: |
+            :warning: Hey reviewer! BE CAREFUL :warning:
+            Review the code before opening in your Gitpod. `.gitpod.yml` was changed and it might be harmful.

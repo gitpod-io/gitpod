@@ -10,7 +10,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType, WorkspacePhase } from "@gitpod/ws-manager/lib";
 import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
@@ -38,15 +38,14 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
         }
     }
 
-    protected async updatePrebuiltWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject) {
+    protected async updatePrebuiltWorkspace(ctx: TraceContext, userId: string, status: WorkspaceStatus.AsObject, writeToDB: boolean) {
         if (status.spec && status.spec.type != WorkspaceType.PREBUILD) {
             return;
         }
 
         const instanceId = status.id!;
         const workspaceId = status.metadata!.metaId!;
-        const userId = status.metadata!.owner!;
-        const logCtx = { instanceId, workspaceId, userId };
+        const logCtx: LogContext = { instanceId, workspaceId, userId };
 
         const span = TraceContext.startSpan("updatePrebuiltWorkspace", ctx);
         try {
@@ -56,12 +55,15 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 TraceContext.setError({span}, new Error("headless workspace without prebuild"));
                 return
             }
+            span.setTag("updatePrebuiltWorkspace.prebuildId", prebuild.id);
 
             if (prebuild.state === 'queued') {
                 // We've received an update from ws-man for this workspace, hence it must be running.
                 prebuild.state = "building";
 
-                await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
+                if (writeToDB) {
+                    await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
+                }
                 await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessWorkspaceEvent>{
                     type: HeadlessWorkspaceEventType.Started,
                     workspaceID: workspaceId,
@@ -75,32 +77,40 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     prebuild.error = status.conditions!.timeout;
                     headlessUpdateType = HeadlessWorkspaceEventType.AbortedTimedOut;
                 } else if (!!status.conditions!.failed) {
-                    prebuild.state = "aborted";
+                    prebuild.state = "failed";
                     prebuild.error = status.conditions!.failed;
-                    headlessUpdateType = HeadlessWorkspaceEventType.Aborted;
+                    headlessUpdateType = HeadlessWorkspaceEventType.Failed;
                 } else if (!!status.conditions!.stoppedByRequest) {
                     prebuild.state = "aborted";
                     prebuild.error = "Cancelled";
                     headlessUpdateType = HeadlessWorkspaceEventType.Aborted;
                 } else if (!!status.conditions!.headlessTaskFailed) {
                     prebuild.state = "available";
-                    prebuild.error = status.conditions!.headlessTaskFailed;
+                    if (status.conditions!.headlessTaskFailed)
+                        prebuild.error = status.conditions!.headlessTaskFailed;
                     prebuild.snapshot = status.conditions!.snapshot;
                     headlessUpdateType = HeadlessWorkspaceEventType.FinishedButFailed;
-                } else {
+                } else if (!!status.conditions!.snapshot) {
                     prebuild.state = "available";
                     prebuild.snapshot = status.conditions!.snapshot;
                     headlessUpdateType = HeadlessWorkspaceEventType.FinishedSuccessfully;
+                } else {
+                    // stopping event with no clear outcome (i.e. no snapshot yet)
+                    return;
                 }
-                await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
 
+                if (writeToDB) {
+                    await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
+                }
+
+                // notify updates
+                // headless update
                 await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessWorkspaceEvent>{
                     type: headlessUpdateType,
                     workspaceID: workspaceId,
                 });
-            }
 
-            { // notify about prebuild updated
+                // prebuild info
                 const info = (await this.workspaceDB.trace({span}).findPrebuildInfos([prebuild.id]))[0];
                 if (info) {
                     this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
@@ -114,12 +124,21 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
         }
     }
 
-    protected async controlPrebuildInstance(instance: WorkspaceInstance): Promise<void> {
+    protected async stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void> {
+        const span = TraceContext.startSpan("stopPrebuildInstance", ctx);
+
         const prebuild = await this.workspaceDB.trace({}).findPrebuildByWorkspaceID(instance.workspaceId);
-        if (prebuild && prebuild.state == 'building') {
+        if (prebuild) {
             // this is a prebuild - set it to aborted
             prebuild.state = 'aborted';
             await this.workspaceDB.trace({}).storePrebuiltWorkspace(prebuild);
+
+            { // notify about prebuild updated
+                const info = (await this.workspaceDB.trace({span}).findPrebuildInfos([prebuild.id]))[0];
+                if (info) {
+                    this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
+                }
+            }
         }
     }
 

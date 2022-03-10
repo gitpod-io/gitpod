@@ -272,6 +272,9 @@ env:
   value: {{ $tracing.samplerType }}
 - name: JAEGER_SAMPLER_PARAM
   value: "{{ $tracing.samplerParam }}"
+{{- else }}
+- name: JAEGER_DISABLED
+  value: "true"
 {{- end }}
 {{- end -}}
 
@@ -308,6 +311,13 @@ registry.{{ .Values.hostname }}
 {{- $gp := .gp -}}
 {{- $comp := .comp -}}
 {{ template "gitpod.comp.imageRepo" . }}:{{- template "gitpod.comp.version" . -}}
+{{- end -}}
+
+{{- define "gitpod.comp.imageLatest" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- $comp := .comp -}}
+{{ template "gitpod.comp.imageRepo" . }}:latest
 {{- end -}}
 
 {{- define "gitpod.comp.configMap" -}}

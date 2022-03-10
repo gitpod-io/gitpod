@@ -52,7 +52,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})
@@ -113,7 +113,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 						}
 					}
 
-					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
+					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
 					if err != nil {
 						t.Fatalf("unexpected error instrumenting workspace: %v", err)
 					}

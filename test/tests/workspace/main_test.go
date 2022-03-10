@@ -14,12 +14,14 @@ import (
 )
 
 var (
-	testEnv   env.Environment
-	username  string
-	namespace string
+	testEnv    env.Environment
+	username   string
+	namespace  string
+	kubeconfig string
+	gitlab     bool
 )
 
 func TestMain(m *testing.M) {
-	username, namespace, testEnv = integration.Setup(context.Background())
+	username, namespace, testEnv, _, kubeconfig, gitlab = integration.Setup(context.Background())
 	os.Exit(testEnv.Run(m))
 }

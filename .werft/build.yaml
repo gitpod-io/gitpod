@@ -14,6 +14,9 @@ pod:
   - name: monitoring-satellite-preview-token
     secret:
       secretName: monitoring-satellite-preview-token
+  - name: monitoring-satellite-stackdriver-credentials
+    secret:
+      secretName: monitoring-satellite-stackdriver-credentials
   - name: gcp-sa
     secret:
       secretName: gcp-sa-gitpod-dev-deployer
@@ -42,6 +45,9 @@ pod:
   - name: harvester-vm-ssh-keys
     secret:
       secretName: harvester-vm-ssh-keys
+  - name: fluent-bit-external
+    secret:
+      secretName: fluent-bit-external
   # - name: deploy-key
   #   secret:
   #     secretName: deploy-key
@@ -62,10 +68,12 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway.29
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
+    - name: monitoring-satellite-stackdriver-credentials
+      mountPath: /mnt/secrets/monitoring-satellite-stackdriver-credentials
     - name: monitoring-satellite-preview-token
       mountPath: /mnt/secrets/monitoring-satellite-preview-token
     - name: gcp-sa
@@ -93,6 +101,8 @@ pod:
       mountPath: /mnt/secrets/harvester-kubeconfig
     - name: harvester-vm-ssh-keys
       mountPath: /mnt/secrets/harvester-vm-ssh-keys
+    - name: fluent-bit-external
+      mountPath: /mnt/fluent-bit-external
     # - name: deploy-key
     #   mountPath: /mnt/secrets/deploy-key
     #   readOnly: true
@@ -123,6 +133,11 @@ pod:
         secretKeyRef:
           name: npm-auth-token
           key: npm-auth-token.json
+    - name: JB_MARKETPLACE_PUBLISH_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: jb-marketplace-publish-token
+          key: token
     - name: SLACK_NOTIFICATION_PATH
       valueFrom:
         secretKeyRef:
@@ -166,6 +181,8 @@ pod:
         secretKeyRef:
           name: self-hosted
           key: segmentIOToken
+    - name: JAVA_HOME
+      value: /home/gitpod/.sdkman/candidates/java/current
     command:
       - bash
       - -c
@@ -176,7 +193,7 @@ pod:
         sudo chown gitpod:gitpod $GOCACHE
         export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
 
-        export DOCKER_HOST=tcp://$NODENAME:2475
+        export DOCKER_HOST=tcp://$NODENAME:2375
         sudo chown -R gitpod:gitpod /workspace
 
         mkdir /workspace/.ssh

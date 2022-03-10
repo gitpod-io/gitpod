@@ -68,7 +68,7 @@ func TestFindWorkspaces(t *testing.T) {
 					P:   &process{PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
 					Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
 				}
-				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
+				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "init"}}}
 				res[1].P.Children = []*process{res[2].P}
 				res[2].P.Children = []*process{res[3].P}
 				return res
@@ -87,7 +87,7 @@ func TestFindWorkspaces(t *testing.T) {
 					P:   &process{PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
 					Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
 				}
-				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
+				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "init"}}}
 				res[4] = memoryProcEntry{P: &process{PID: 4, Parent: res[2].P, Cmdline: []string{"slirp4netns"}}}
 				res[1].P.Children = []*process{res[2].P}
 				res[2].P.Children = []*process{res[3].P, res[4].P}
@@ -108,7 +108,7 @@ func TestFindWorkspaces(t *testing.T) {
 					P:   &process{PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
 					Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
 				}
-				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
+				res[3] = memoryProcEntry{P: &process{PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "init"}}}
 				res[1].P.Children = []*process{res[2].P}
 				res[2].P.Children = []*process{res[3].P}
 
@@ -116,7 +116,7 @@ func TestFindWorkspaces(t *testing.T) {
 					P:   &process{PID: 4, Parent: res[3].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
 					Env: []string{"GITPOD_WORKSPACE_ID=bla", "GITPOD_INSTANCE_ID=blabla"},
 				}
-				res[5] = memoryProcEntry{P: &process{PID: 5, Parent: res[4].P, Cmdline: []string{"supervisor", "run"}}}
+				res[5] = memoryProcEntry{P: &process{PID: 5, Parent: res[4].P, Cmdline: []string{"supervisor", "init"}}}
 				res[3].P.Children = []*process{res[4].P}
 				res[4].P.Children = []*process{res[5].P}
 
@@ -145,7 +145,7 @@ func TestFindWorkspaces(t *testing.T) {
 					P:   &process{PID: 4, Parent: res[3].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
 					Env: []string{"GITPOD_WORKSPACE_ID=bla", "GITPOD_INSTANCE_ID=blabla"},
 				}
-				res[5] = memoryProcEntry{P: &process{PID: 5, Parent: res[4].P, Cmdline: []string{"supervisor", "run"}}}
+				res[5] = memoryProcEntry{P: &process{PID: 5, Parent: res[4].P, Cmdline: []string{"supervisor", "init"}}}
 				res[3].P.Children = []*process{res[4].P}
 				res[4].P.Children = []*process{res[5].P}
 
@@ -153,7 +153,7 @@ func TestFindWorkspaces(t *testing.T) {
 					P:   &process{PID: 6, Parent: res[3].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
 					Env: []string{"GITPOD_WORKSPACE_ID=second-ws", "GITPOD_INSTANCE_ID=second-ws"},
 				}
-				res[7] = memoryProcEntry{P: &process{PID: 7, Parent: res[4].P, Cmdline: []string{"supervisor", "run"}}}
+				res[7] = memoryProcEntry{P: &process{PID: 7, Parent: res[4].P, Cmdline: []string{"supervisor", "init"}}}
 				res[3].P.Children = []*process{res[4].P, res[6].P}
 				res[6].P.Children = []*process{res[7].P}
 
@@ -217,7 +217,7 @@ func TestRunDetector(t *testing.T) {
 						P:   &process{Hash: 2, PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
 						Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
 					}
-					res[3] = memoryProcEntry{P: &process{Hash: 3, PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
+					res[3] = memoryProcEntry{P: &process{Hash: 3, PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "init"}}}
 					res[4] = memoryProcEntry{P: &process{Hash: 4, PID: 4, Parent: res[3].P, Cmdline: []string{"bad-actor", "has", "args"}}}
 					res[1].P.Children = []*process{res[2].P}
 					res[2].P.Children = []*process{res[3].P}
@@ -231,7 +231,7 @@ func TestRunDetector(t *testing.T) {
 						P:   &process{Hash: 2, PID: 2, Parent: res[1].P, Cmdline: []string{"/proc/self/exe", "ring1"}},
 						Env: []string{"GITPOD_WORKSPACE_ID=foobar", "GITPOD_INSTANCE_ID=baz"},
 					}
-					res[3] = memoryProcEntry{P: &process{Hash: 3, PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "run"}}}
+					res[3] = memoryProcEntry{P: &process{Hash: 3, PID: 3, Parent: res[2].P, Cmdline: []string{"supervisor", "init"}}}
 					res[4] = memoryProcEntry{P: &process{Hash: 4, PID: 4, Parent: res[3].P, Cmdline: []string{"bad-actor", "has", "args"}}}
 					res[5] = memoryProcEntry{P: &process{Hash: 5, PID: 5, Parent: res[3].P, Cmdline: []string{"another-bad-actor", "has", "args"}}}
 					res[1].P.Children = []*process{res[2].P}
@@ -254,6 +254,7 @@ func TestRunDetector(t *testing.T) {
 			det := ProcfsDetector{
 				indexSizeGuage:     prometheus.NewGauge(prometheus.GaugeOpts{Name: "dont"}),
 				cacheUseCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{}, []string{"use"}),
+				workspaceGauge:     prometheus.NewGauge(prometheus.GaugeOpts{Name: "dont"}),
 				cache:              cache,
 			}
 

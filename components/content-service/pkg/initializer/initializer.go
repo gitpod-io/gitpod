@@ -40,7 +40,7 @@ const (
 	GitpodGID = 33333
 
 	// otsDownloadAttempts is the number of times we'll attempt to download the one-time secret
-	otsDownloadAttempts = 10
+	otsDownloadAttempts = 20
 )
 
 // Initializer can initialize a workspace with content
@@ -57,15 +57,16 @@ func (e *EmptyInitializer) Run(ctx context.Context, mappings []archive.IDMapping
 }
 
 // CompositeInitializer does nothing
-type CompositeInitializer struct {
-	Initializer []Initializer
-}
+type CompositeInitializer []Initializer
 
 // Run calls run on all child initializers
-func (e *CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
+func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
 	_, ctx = opentracing.StartSpanFromContext(ctx, "CompositeInitializer.Run")
-	for _, init := range e.Initializer {
-		init.Run(ctx, mappings)
+	for _, init := range e {
+		_, err := init.Run(ctx, mappings)
+		if err != nil {
+			return csapi.WorkspaceInitFromOther, err
+		}
 	}
 	return csapi.WorkspaceInitFromOther, nil
 }
@@ -99,9 +100,7 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 				return nil, err
 			}
 		}
-		initializer = &CompositeInitializer{
-			Initializer: initializers,
-		}
+		initializer = CompositeInitializer(initializers)
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Git); ok {
 		if ir.Git == nil {
 			return nil, status.Error(codes.InvalidArgument, "missing Git initializer spec")
@@ -112,14 +111,6 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		if ir.Prebuild == nil {
 			return nil, status.Error(codes.InvalidArgument, "missing prebuild initializer spec")
 		}
-		if ir.Prebuild.Git == nil {
-			return nil, status.Error(codes.InvalidArgument, "missing prebuild Git initializer spec")
-		}
-
-		gitinit, err := newGitInitializer(ctx, loc, ir.Prebuild.Git, opts.ForceGitpodUserForGit)
-		if err != nil {
-			return nil, err
-		}
 		var snapshot *SnapshotInitializer
 		if ir.Prebuild.Prebuild != nil {
 			snapshot, err = newSnapshotInitializer(loc, rs, ir.Prebuild.Prebuild)
@@ -127,10 +118,17 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 				return nil, status.Error(codes.Internal, fmt.Sprintf("cannot setup prebuild init: %v", err))
 			}
 		}
-
+		var gits []*GitInitializer
+		for _, gi := range ir.Prebuild.Git {
+			gitinit, err := newGitInitializer(ctx, loc, gi, opts.ForceGitpodUserForGit)
+			if err != nil {
+				return nil, err
+			}
+			gits = append(gits, gitinit)
+		}
 		initializer = &PrebuildInitializer{
-			Git:      gitinit,
 			Prebuild: snapshot,
+			Git:      gits,
 		}
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Snapshot); ok {
 		initializer, err = newSnapshotInitializer(loc, rs, ir.Snapshot)
@@ -142,7 +140,7 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		initializer = &EmptyInitializer{}
 	}
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %v", err))
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	return initializer, nil
 }
@@ -316,6 +314,7 @@ func downloadOTS(ctx context.Context, url string) (user, pwd string, err error) 
 		log.WithError(err).WithField("attempt", i).Warn("cannot download OTS")
 	}
 	if err != nil {
+		log.WithError(err).Warn("failed to download OTS")
 		return "", "", err
 	}
 
@@ -431,6 +430,47 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	return
 }
 
+// Some workspace content may have a `/dst/.gitpod` file or directory. That would break
+// the workspace ready file placement (see https://github.com/gitpod-io/gitpod/issues/7694).
+// This function ensures that workspaces do not have a `.gitpod` file or directory present.
+func EnsureCleanDotGitpodDirectory(ctx context.Context, wspath string) error {
+	var mv func(src, dst string) error
+	if git.IsWorkingCopy(wspath) {
+		c := &git.Client{
+			Location: wspath,
+		}
+		mv = func(src, dst string) error {
+			return c.Git(ctx, "mv", src, dst)
+		}
+	} else {
+		mv = os.Rename
+	}
+
+	dotGitpod := filepath.Join(wspath, ".gitpod")
+	stat, err := os.Stat(dotGitpod)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if stat.IsDir() {
+		// we need this to be a directory, we're probably ok
+		return nil
+	}
+
+	candidateFN := filepath.Join(wspath, ".gitpod.yaml")
+	if _, err := os.Stat(candidateFN); err == nil {
+		// Our candidate file already exists, hence we cannot just move things.
+		// As fallback we'll delete the .gitpod entry.
+		return os.RemoveAll(dotGitpod)
+	}
+
+	err = mv(dotGitpod, candidateFN)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // PlaceWorkspaceReadyFile writes a file in the workspace which indicates that the workspace has been initialized
 func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.WorkspaceInitSource, uid, gid int) (err error) {
 	//nolint:ineffassign,staticcheck
@@ -449,29 +489,29 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 	gitpodDir := filepath.Join(wspath, filepath.Dir(WorkspaceReadyFile))
 	err = os.MkdirAll(gitpodDir, 0777)
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace ready file: %w", err)
+		return xerrors.Errorf("cannot create directory for workspace ready file: %w", err)
 	}
 	err = os.Chown(gitpodDir, uid, gid)
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace-ready file: %w", err)
+		return xerrors.Errorf("cannot chown directory for workspace ready file: %w", err)
 	}
 
 	tempWorkspaceReadyFile := WorkspaceReadyFile + ".tmp"
 	fn := filepath.Join(wspath, tempWorkspaceReadyFile)
 	err = os.WriteFile(fn, []byte(fc), 0644)
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace ready file: %w", err)
+		return xerrors.Errorf("cannot write workspace ready file content: %w", err)
 	}
 	err = os.Chown(fn, uid, gid)
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace ready file: %w", err)
+		return xerrors.Errorf("cannot chown workspace ready file: %w", err)
 	}
 
 	// Theia will listen for a rename event as trigger to start the tasks. This is a rename event
 	// because we're writing to the file and this is the most convenient way we can tell Theia that we're done writing.
 	err = os.Rename(fn, filepath.Join(wspath, WorkspaceReadyFile))
 	if err != nil {
-		return xerrors.Errorf("cannot write workspace ready file: %w", err)
+		return xerrors.Errorf("cannot rename workspace ready file: %w", err)
 	}
 
 	return nil

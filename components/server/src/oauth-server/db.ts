@@ -16,15 +16,6 @@ export interface InMemory {
   scopes: { [id: string]: OAuthScope };
 }
 
-// Scopes
-const scopes: OAuthScope[] = [
-  { name: "function:getGitpodTokenScopes" },
-  { name: "function:getWorkspace" },
-  { name: "function:getWorkspaces" },
-  { name: "function:listenForWorkspaceInstanceUpdates" },
-  { name: "resource:default" }
-];
-
 // Clients
 const localAppClientID = 'gplctl-1.0';
 const localClient: OAuthClient = {
@@ -35,16 +26,46 @@ const localClient: OAuthClient = {
   // NOTE: these need to be kept in sync with the port range in the local app
   redirectUris: Array.from({ length: 10 }, (_, i) => 'http://127.0.0.1:' + (63110 + i)),
   allowedGrants: ['authorization_code'],
-  scopes,
+  scopes: [
+    { name: "function:getGitpodTokenScopes" },
+    { name: "function:getWorkspace" },
+    { name: "function:getWorkspaces" },
+    { name: "function:listenForWorkspaceInstanceUpdates" },
+    { name: "resource:default" }
+  ],
 }
+
+const jetBrainsGateway: OAuthClient = {
+  id: 'jetbrains-gateway-gitpod-plugin',
+  name: 'JetBrains Gateway Gitpod Plugin',
+  // Set of valid redirect URIs
+  // NOTE: these need to be kept in sync with the port range in
+  // https://github.com/JetBrains/intellij-community/blob/8f07b83138bcb8a98a031e4508080c849a735644/platform/built-in-server/src/org/jetbrains/builtInWebServer/BuiltInServerOptions.java#L34
+  redirectUris: Array.from({ length: 20 }, (_, i) => `http://127.0.0.1:${63342 + i}/api/gitpod/oauth/authorization_code`),
+  allowedGrants: ['authorization_code'],
+  scopes: [
+    { name: "function:getGitpodTokenScopes" },
+    { name: "function:getIDEOptions" },
+    { name: "function:getOwnerToken" },
+    { name: "function:getWorkspace" },
+    { name: "function:getWorkspaces" },
+    { name: "function:listenForWorkspaceInstanceUpdates" },
+    { name: "resource:default" }
+  ],
+}
+
 
 export const inMemoryDatabase: InMemory = {
   clients: {
     [localClient.id]: localClient,
+    [jetBrainsGateway.id]: jetBrainsGateway
   },
   tokens: {},
   scopes: {},
 };
-for (const scope of scopes) {
-  inMemoryDatabase.scopes[scope.name] = scope;
+for (const clientId in inMemoryDatabase.clients) {
+  const client = inMemoryDatabase.clients[clientId];
+  for (const scope of client.scopes) {
+    inMemoryDatabase.scopes[scope.name] = scope;
+  }
 }

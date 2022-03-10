@@ -15,6 +15,7 @@ function clean(segment: string | undefined, maxChars: number = 15) {
   if (!segment) {
     return undefined;
   }
+  segment = segment.toLowerCase();
   let result = '';
   for (let i =0; i < segment.length; i++) {
     if (characters.indexOf(segment[i]) !== -1) {

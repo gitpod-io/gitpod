@@ -202,6 +202,12 @@ func extractBuildStatus(status *wsmanapi.WorkspaceStatus) *api.BuildInfo {
 		BaseRef:   status.Metadata.Annotations[annotationBaseRef],
 		Status:    s,
 		StartedAt: status.Metadata.StartedAt.Seconds,
+		LogInfo: &api.LogInfo{
+			Url: status.Spec.Url,
+			Headers: map[string]string{
+				"x-gitpod-owner-token": status.Auth.OwnerToken,
+			},
+		},
 	}
 }
 

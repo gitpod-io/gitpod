@@ -78,7 +78,7 @@ func getImagebuildsClient(ctx context.Context) (*grpc.ClientConn, api.ImageBuild
 		secopt = grpc.WithTransportCredentials(creds)
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", freePort), secopt)
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", freePort), secopt, util.WithClientUnaryInterceptor())
 	if err != nil {
 		return nil, nil, err
 	}

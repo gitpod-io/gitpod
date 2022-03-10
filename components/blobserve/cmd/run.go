@@ -5,17 +5,19 @@
 package cmd
 
 import (
-	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 
+	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
+
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 
@@ -82,8 +84,8 @@ var runCmd = &cobra.Command{
 		}
 		if cfg.PrometheusAddr != "" {
 			reg.MustRegister(
-				prometheus.NewGoCollector(),
-				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+				collectors.NewGoCollector(),
+				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 			)
 
 			handler := http.NewServeMux()

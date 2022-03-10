@@ -223,6 +223,18 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
+	@local_app {
+		path /static/bin/gitpod-local-companion-*
+	}
+	handle @local_app {
+		import compression
+
+		reverse_proxy ide-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:80 {
+			import upstream_headers
+			import upstream_connection
+		}
+	}
+
 	@to_server path /auth/github/callback /auth /auth/* /apps /apps/*
 	handle @to_server {
 		import compression

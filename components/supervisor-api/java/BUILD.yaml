@@ -8,8 +8,6 @@ packages:
       - "gradle/wrapper/*"
       - "gradlew"
       - "settings.gradle"
-    env:
-      - JAVA_HOME=/home/gitpod/.sdkman/candidates/java/current
     config:
       commands:
         - ["./gradlew", "build"]

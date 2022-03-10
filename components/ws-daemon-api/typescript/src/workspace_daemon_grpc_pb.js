@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -9,6 +9,28 @@
 'use strict';
 var grpc = require('@grpc/grpc-js');
 var workspace_daemon_pb = require('./workspace_daemon_pb.js');
+
+function serialize_iws_EvacuateCGroupRequest(arg) {
+  if (!(arg instanceof workspace_daemon_pb.EvacuateCGroupRequest)) {
+    throw new Error('Expected argument of type iws.EvacuateCGroupRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_EvacuateCGroupRequest(buffer_arg) {
+  return workspace_daemon_pb.EvacuateCGroupRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_EvacuateCGroupResponse(arg) {
+  if (!(arg instanceof workspace_daemon_pb.EvacuateCGroupResponse)) {
+    throw new Error('Expected argument of type iws.EvacuateCGroupResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_EvacuateCGroupResponse(buffer_arg) {
+  return workspace_daemon_pb.EvacuateCGroupResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
 
 function serialize_iws_MountProcRequest(arg) {
   if (!(arg instanceof workspace_daemon_pb.MountProcRequest)) {
@@ -151,6 +173,20 @@ writeIDMapping: {
     requestDeserialize: deserialize_iws_WriteIDMappingRequest,
     responseSerialize: serialize_iws_WriteIDMappingResponse,
     responseDeserialize: deserialize_iws_WriteIDMappingResponse,
+  },
+  // EvacuateCGroup empties the workspace pod cgroup and produces a new substructure.
+// In combincation with introducing a new cgroup namespace, we can create a situation
+// where the subcontroller are enabled and the ring2-visible cgroup is of type "domain".
+evacuateCGroup: {
+    path: '/iws.InWorkspaceService/EvacuateCGroup',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.EvacuateCGroupRequest,
+    responseType: workspace_daemon_pb.EvacuateCGroupResponse,
+    requestSerialize: serialize_iws_EvacuateCGroupRequest,
+    requestDeserialize: deserialize_iws_EvacuateCGroupRequest,
+    responseSerialize: serialize_iws_EvacuateCGroupResponse,
+    responseDeserialize: deserialize_iws_EvacuateCGroupResponse,
   },
   // MountProc mounts a masked proc in the container's rootfs.
 // The PID must be in the PID namespace of the workspace container.

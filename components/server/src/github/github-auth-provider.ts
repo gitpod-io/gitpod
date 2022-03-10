@@ -69,7 +69,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                 timeout: 5000,
             },
             userAgent: this.USER_AGENT,
-            baseUrl: this.baseURL
+            baseUrl: this.baseURL,
         });
         const fetchCurrentUser = async () => {
             const response = await api.users.getAuthenticated();

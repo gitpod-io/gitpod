@@ -21,10 +21,13 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -142,6 +145,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
+	clog.Info("StartWorkspace")
+	reqs, _ := protojson.Marshal(req)
+	safeReqs, _ := log.RedactJSON(reqs)
+	log.WithField("req", string(safeReqs)).Debug("StartWorkspace request received")
+
 	// Make sure the objects we're about to create do not exist already
 	switch req.Type {
 	case api.WorkspaceType_IMAGEBUILD:
@@ -184,27 +192,105 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	span.LogKV("event", "created start workspace context")
 	clog.Debug("starting new workspace")
-	// we must create the workspace pod first to make sure we don't clean up the services or configmap we're about to create
-	// because they're "dangling".
+
+	// create a Pod object for the workspace
 	pod, err := m.createWorkspacePod(startContext)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 	span.LogKV("event", "pod description created")
-	err = m.Clientset.Create(ctx, pod)
-	if err != nil {
-		m, _ := json.Marshal(pod)
-		safePod, _ := log.RedactJSON(m)
 
-		if k8serr.IsAlreadyExists(err) {
-			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Warn("was unable to start workspace which already exists")
-			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+	// create the Pod in the cluster and wait until is scheduled
+	// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.22.md#workloads-that-saturate-nodes-with-pods-may-see-pods-that-fail-due-to-node-admission
+	backoff := wait.Backoff{
+		Steps:    10,
+		Duration: 100 * time.Millisecond,
+		Factor:   2.5,
+		Jitter:   0.1,
+		Cap:      5 * time.Minute,
+	}
+
+	var retryErr error
+	err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+		// remove resource version so that we can attempt to re-create the pod
+		pod.ResourceVersion = ""
+		err = m.Clientset.Create(ctx, pod)
+		if err != nil {
+			m, _ := json.Marshal(pod)
+			safePod, _ := log.RedactJSON(m)
+
+			if k8serr.IsAlreadyExists(err) {
+				clog.WithError(err).WithField("req", req).WithField("pod", safePod).Warn("was unable to start workspace which already exists")
+				return false, status.Error(codes.AlreadyExists, "workspace instance already exists")
+			}
+
+			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
+			return false, err
 		}
 
-		clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
-		return nil, err
+		err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, podRunning(m.Clientset, pod.Name, pod.Namespace))
+		if err != nil {
+			jsonPod, _ := json.Marshal(pod)
+			safePod, _ := log.RedactJSON(jsonPod)
+			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to reach ready state")
+			retryErr = err
+
+			var tempPod corev1.Pod
+			finalizerRemoved := false
+			// We do below in loop as sometimes the pod might be already deleted or modified when we attempt to remove the finalizer
+			// so we first get the pod and then attempt to remove the finalizer
+			// in case the pod is not found in the first place, we return success
+			for i := 0; i < 3 && !finalizerRemoved; i++ {
+				getErr := m.Clientset.Get(ctx, types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}, &tempPod)
+				if getErr != nil {
+					if k8serr.IsNotFound(getErr) {
+						// pod doesn't exist, so we are safe to proceed with retry
+						return false, nil
+					}
+					clog.WithError(getErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to get pod")
+					// pod get call failed so we error out
+					return false, retryErr
+				}
+				// we successfully got the pod, now we attempt to remove finalizer
+				tempPod.Finalizers = []string{}
+				updateErr := m.Clientset.Update(ctx, &tempPod)
+				if updateErr != nil {
+					if k8serr.IsNotFound(updateErr) {
+						// pod doesn't exist, so we are safe to proceed with retry
+						return false, nil
+					}
+					clog.WithError(updateErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to remove finalizer")
+					continue
+				}
+				finalizerRemoved = true
+			}
+			// if even after retries we could not remove finalizers, then error out
+			if !finalizerRemoved {
+				return false, retryErr
+			}
+
+			deleteErr := m.Clientset.Delete(ctx, &tempPod)
+			if deleteErr != nil && !k8serr.IsNotFound(deleteErr) {
+				clog.WithError(deleteErr).WithField("pod.Namespace", pod.Namespace).WithField("pod.Name", pod.Name).Error("was unable to delete pod")
+				// failed to delete pod, so not going to be able to create a new pod, so bail out
+				return false, retryErr
+			}
+
+			// we deleted original pod, so now we can try to create a new one and see if this one will be able to be scheduled\started
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if err == wait.ErrWaitTimeout && retryErr != nil {
+		err = retryErr
 	}
-	span.LogKV("event", "pod created")
+
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
+	}
+
+	span.LogKV("event", "pod started successfully")
 
 	// all workspaces get a service now
 	okResponse := &api.StartWorkspaceResponse{
@@ -215,6 +301,41 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	m.metrics.OnWorkspaceStarted(req.Type)
 
 	return okResponse, nil
+}
+
+func podRunning(clientset client.Client, podName, namespace string) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (bool, error) {
+		var pod corev1.Pod
+		err := clientset.Get(ctx, types.NamespacedName{Namespace: namespace, Name: podName}, &pod)
+		if err != nil {
+			return false, nil
+		}
+
+		switch pod.Status.Phase {
+		case corev1.PodFailed:
+			if strings.HasPrefix(pod.Status.Reason, "OutOf") {
+				return false, xerrors.Errorf("cannot schedule pod due to out of resources, reason: %s", pod.Status.Reason)
+			}
+			return false, fmt.Errorf("pod failed with reason: %s", pod.Status.Reason)
+		case corev1.PodSucceeded:
+			return false, fmt.Errorf("pod ran to completion")
+		case corev1.PodPending:
+			for _, c := range pod.Status.Conditions {
+				if c.Type == corev1.PodScheduled && c.Status == corev1.ConditionTrue {
+					// even if pod is pending but was scheduled already, it means kubelet is pulling images and running init containers
+					// we can consider this as pod running
+					return true, nil
+				}
+			}
+
+			// if pod is pending, wait for it to get scheduled
+			return false, nil
+		case corev1.PodRunning:
+			return true, nil
+		}
+
+		return false, xerrors.Errorf("pod in unknown state: %s", pod.Status.Phase)
+	}
 }
 
 // validateStartWorkspaceRequest ensures that acting on this request will not leave the system in an invalid state
@@ -298,8 +419,12 @@ func areValidFeatureFlags(value interface{}) error {
 // StopWorkspace stops a running workspace
 func (m *Manager) StopWorkspace(ctx context.Context, req *api.StopWorkspaceRequest) (res *api.StopWorkspaceResponse, err error) {
 	span, ctx := tracing.FromContext(ctx, "StopWorkspace")
-	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
+	owi := log.OWI("", "", req.Id)
+	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
+
+	clog := log.WithFields(owi)
+	clog.Info("StopWorkspace")
 
 	gracePeriod := stopWorkspaceNormallyGracePeriod
 	if req.Policy == api.StopWorkspacePolicy_IMMEDIATELY {
@@ -928,17 +1053,13 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 		return nil, xerrors.Errorf("no nodeName found")
 	}
 
-	// Get all the ws-daemon endpoints (headless)
-	// NOTE: we could do a DNS lookup but currently keeping it k8s-centric
-	// to allow for transitioning to the newer service topology support.
-	// Also the Clientset is cache-enabled so we can leverage that.
-	var endpointsList corev1.EndpointsList
-	err = m.Clientset.List(ctx, &endpointsList,
+	var podList corev1.PodList
+	err = m.Clientset.List(ctx, &podList,
 		&client.ListOptions{
 			Namespace: m.Config.Namespace,
 			LabelSelector: labels.SelectorFromSet(labels.Set{
 				"component": "ws-daemon",
-				"kind":      "service",
+				"app":       "gitpod",
 			}),
 		},
 	)
@@ -946,21 +1067,17 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 		return nil, err
 	}
 
-	// Find the ws-daemon endpoint on this node
+	// find the ws-daemon on this node
 	var hostIP string
-	for _, pod := range endpointsList.Items {
-		for _, subset := range pod.Subsets {
-			for _, endpointAddress := range subset.Addresses {
-				if endpointAddress.NodeName != nil && strings.Compare(nodeName, *endpointAddress.NodeName) == 0 {
-					hostIP = endpointAddress.IP
-					break
-				}
-			}
+	for _, pod := range podList.Items {
+		if pod.Spec.NodeName == nodeName {
+			hostIP = pod.Status.PodIP
+			break
 		}
 	}
 
 	if hostIP == "" {
-		return nil, xerrors.Errorf("cannot connect to ws-daemon: pod has no matching endpoint")
+		return nil, xerrors.Errorf("no running ws-daemon pod found")
 	}
 	conn, err := m.wsdaemonPool.Get(hostIP)
 	if err != nil {
@@ -1015,28 +1132,24 @@ func newWssyncConnectionFactory(managerConfig config.Configuration) (grpcpool.Fa
 
 func checkWSDaemonEndpoint(namespace string, clientset client.Client) func(string) bool {
 	return func(address string) bool {
-		var endpointsList corev1.EndpointsList
-		err := clientset.List(context.Background(), &endpointsList,
+		var podList corev1.PodList
+		err := clientset.List(context.Background(), &podList,
 			&client.ListOptions{
 				Namespace: namespace,
 				LabelSelector: labels.SelectorFromSet(labels.Set{
 					"component": "ws-daemon",
-					"kind":      "service",
+					"app":       "gitpod",
 				}),
 			},
 		)
 		if err != nil {
-			log.WithError(err).Error("cannot list ws-daemon endpoints")
+			log.WithError(err).Error("cannot list ws-daemon pods")
 			return false
 		}
 
-		for _, endpoints := range endpointsList.Items {
-			for _, subset := range endpoints.Subsets {
-				for _, endpointAddress := range subset.Addresses {
-					if address == endpointAddress.IP {
-						return true
-					}
-				}
+		for _, pod := range podList.Items {
+			if pod.Status.PodIP == address {
+				return true
 			}
 		}
 

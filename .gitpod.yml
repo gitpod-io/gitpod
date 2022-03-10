@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway.29
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -14,15 +14,15 @@ ports:
     onOpen: ignore
   - port: 9229
     onOpen: ignore
-# Go proxy
+  # Go proxy
   - port: 9999
     onOpen: ignore
   - port: 13001
     onOpen: ignore
-# Werft
+  # Werft
   - port: 7777
     onOpen: ignore
-# Dev Theia
+  # Dev Theia
   - port: 13444
 tasks:
   - name: Add Harvester kubeconfig
@@ -33,15 +33,16 @@ tasks:
     init: |
       leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
       leeway exec --package components/ide/jetbrains/backend-plugin:plugin -- ./gradlew buildPlugin
+      leeway exec --package components/ide/jetbrains/gateway-plugin:publish -- ./gradlew buildPlugin
   - name: TypeScript
     before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
   - name: Go
+    before: pre-commit install
     init: leeway exec --filter-type go -v -- go mod verify
     openMode: split-right
 vscode:
   extensions:
-    - bajdzis.vscode-database
     - bradlc.vscode-tailwindcss
     - EditorConfig.EditorConfig
     - golang.go

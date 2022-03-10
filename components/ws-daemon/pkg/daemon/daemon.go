@@ -17,15 +17,16 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 )
 
 // NewDaemon produces a new daemon
@@ -47,16 +48,27 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("NODENAME env var isn't set")
 	}
 	cgCustomizer := &CgroupCustomizer{}
-	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupsBasePath)
+	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupBasePath)
 	markUnmountFallback, err := NewMarkUnmountFallback(reg)
 	if err != nil {
 		return nil, err
 	}
-	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
-		resources.NewDispatchListener(&config.Resources, reg),
+
+	listener := []dispatch.Listener{
+		cpulimit.NewDispatchListener(&config.Resources, reg),
 		cgCustomizer,
 		markUnmountFallback,
-	)
+	}
+
+	unified, err := cgroups.IsUnifiedCgroupSetup()
+	if err != nil {
+		return nil, xerrors.Errorf("could not determine cgroup setup: %w", err)
+	}
+	if !unified {
+		listener = append(listener, CacheReclaim(config.Resources.CGroupBasePath))
+	}
+
+	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +80,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		containerRuntime,
 		dsptch.WorkspaceExistsOnNode,
 		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+		config.Resources.CGroupBasePath,
 		reg,
 	)
 	if err != nil {

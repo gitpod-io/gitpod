@@ -240,7 +240,6 @@
                 "managedFields": [
                     {
                         "apiVersion": "v1",
-                        "manager": "ws-scheduler",
                         "operation": "Update",
                         "fieldsType": "FieldsV1",
                         "time": "2021-08-19T05:14:19Z",
@@ -1041,7 +1040,7 @@
                             {
                                 "matchExpressions": [
                                     {
-                                        "key": "gitpod.io/workload_workspace",
+                                        "key": "gitpod.io/workload_workspace_regular",
                                         "operator": "Exists"
                                     }
                                 ]
@@ -1068,7 +1067,6 @@
             },
             "nodeName": "gke-gp-prod-ws-us14-us-workspace-pool-67d93ed3-l67s",
             "priority": 0,
-            "schedulerName": "workspace-scheduler",
             "dnsPolicy": "None",
             "restartPolicy": "Never",
             "terminationGracePeriodSeconds": 30,

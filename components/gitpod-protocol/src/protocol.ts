@@ -7,6 +7,7 @@
 import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
+import { createHash } from "crypto";
 
 export interface UserInfo {
     name?: string
@@ -119,6 +120,7 @@ export type IDESettings = {
     defaultIde?: string
     useDesktopIde?: boolean
     defaultDesktopIde?: string
+    useLatestVersion?: boolean
 }
 
 export interface UserPlatform {
@@ -154,11 +156,22 @@ export interface UserFeatureSettings {
 export const WorkspaceFeatureFlags = { "full_workspace_backup": undefined, "fixed_resources": undefined };
 export type NamedWorkspaceFeatureFlag = keyof (typeof WorkspaceFeatureFlags);
 
-export interface UserEnvVarValue {
-    id?: string;
+export interface EnvVarWithValue {
     name: string;
-    repositoryPattern: string;
     value: string;
+}
+
+export interface ProjectEnvVarWithValue extends EnvVarWithValue {
+    id: string;
+    projectId: string;
+    censored: boolean;
+}
+
+export type ProjectEnvVar = Omit<ProjectEnvVarWithValue, 'value'>;
+
+export interface UserEnvVarValue extends EnvVarWithValue {
+    id?: string;
+    repositoryPattern: string; // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
 }
 export interface UserEnvVar extends UserEnvVarValue {
     id: string;
@@ -168,10 +181,12 @@ export interface UserEnvVar extends UserEnvVarValue {
 
 export namespace UserEnvVar {
 
+    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function normalizeRepoPattern(pattern: string) {
         return pattern.toLocaleLowerCase();
     }
 
+    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function score(value: UserEnvVarValue): number {
         // We use a score to enforce precedence:
         //      value/value = 0
@@ -194,6 +209,7 @@ export namespace UserEnvVar {
         return score;
     }
 
+    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
         let result = vars.filter(e => {
             const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
@@ -241,10 +257,11 @@ export namespace UserEnvVar {
         return result;
     }
 
+    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function splitRepositoryPattern(repositoryPattern: string): string[] {
         const patterns = repositoryPattern.split('/');
-        const repoPattern = patterns.pop() || "";
-        const ownerPattern = patterns.join('/');
+        const repoPattern = patterns.slice(1).join('/')
+        const ownerPattern = patterns[0];
         return [ownerPattern, repoPattern];
     }
 }
@@ -551,7 +568,14 @@ export interface VSCodeConfig {
     extensions?: string[];
 }
 
+export interface RepositoryCloneInformation {
+    url: string;
+    checkoutLocation?: string;
+}
+
 export interface WorkspaceConfig {
+    mainConfiguration?: string;
+    additionalRepositories?: RepositoryCloneInformation[];
     image?: ImageConfig;
     ports?: PortConfig[];
     tasks?: TaskConfig[];
@@ -629,12 +653,14 @@ export type PrebuiltWorkspaceState
     = "queued"
     // the workspace prebuild is currently running (i.e. there's a workspace pod deployed)
     | "building"
-    // the prebuild failed due to some issue with the system (e.g. missed a message, could not start workspace)
+    // the prebuild was aborted
     | "aborted"
     // the prebuild timed out
     | "timeout"
-    // the prebuild has finished and a snapshot is available
-    | "available";
+    // the prebuild has finished (even if a headless task failed) and a snapshot is available
+    | "available"
+    // the prebuild (headless workspace) failed due to some system error
+    | "failed";
 
 export interface PrebuiltWorkspace {
     id: string;
@@ -670,6 +696,10 @@ export interface PrebuiltWorkspaceUpdatable {
     repo: string;
     isResolved: boolean;
     installationId: string;
+    /**
+     * the commitSHA of the commit that triggered the prebuild
+     */
+    commitSHA?: string;
     issue?: string;
     contextUrl?: string;
 }
@@ -799,15 +829,14 @@ export namespace WithSnapshot {
     }
 }
 
-export interface WithPrebuild {
-    snapshotBucketId: string;
+export interface WithPrebuild extends WithSnapshot {
     prebuildWorkspaceId: string;
     wasPrebuilt: true;
 }
 export namespace WithPrebuild {
     export function is(context: any): context is WithPrebuild {
         return context
-            && 'snapshotBucketId' in context
+            && WithSnapshot.is(context)
             && 'prebuildWorkspaceId' in context
             && 'wasPrebuilt' in context;
     }
@@ -851,6 +880,10 @@ export namespace SnapshotContext {
 export interface StartPrebuildContext extends WorkspaceContext {
     actual: WorkspaceContext;
     commitHistory?: string[];
+    additionalRepositoryCommitHistories?: {
+        cloneUrl: string;
+        commitHistory: string[];
+    }[];
     project?: Project;
     branch?: string;
 }
@@ -876,8 +909,20 @@ export namespace PrebuiltWorkspaceContext {
     }
 }
 
+export interface WithReferrerContext extends WorkspaceContext {
+    referrer: string
+    referrerIde?: string
+}
+
+export namespace WithReferrerContext {
+    export function is(context: any): context is WithReferrerContext {
+        return context
+            && 'referrer' in context;
+    }
+}
+
 export interface WithEnvvarsContext extends WorkspaceContext {
-    envvars: UserEnvVarValue[];
+    envvars: EnvVarWithValue[];
 }
 
 export namespace WithEnvvarsContext {
@@ -941,9 +986,43 @@ export namespace AdditionalContentContext {
     }
 }
 
-export interface CommitContext extends WorkspaceContext, Commit {
+export interface CommitContext extends WorkspaceContext, GitCheckoutInfo {
     /** @deprecated Moved to .repository.cloneUrl, left here for backwards-compatibility for old workspace contextes in the DB */
     cloneUrl?: string
+
+    /**
+     * The clone and checkout information for additional repositories in case of multi-repo projects.
+     */
+    additionalRepositoryCheckoutInfo?: GitCheckoutInfo[];
+}
+
+export namespace CommitContext {
+
+    /**
+     * Creates a hash for all the commits of the CommitContext and all sub-repo commit infos.
+     * The hash is max 255 chars long.
+     * @param commitContext
+     * @returns hash for commitcontext
+     */
+    export function computeHash(commitContext: CommitContext): string {
+        // for single commits we use the revision to be backward compatible.
+        if (!commitContext.additionalRepositoryCheckoutInfo || commitContext.additionalRepositoryCheckoutInfo.length === 0) {
+            return commitContext.revision;
+        }
+        const hasher = createHash('sha256');
+        hasher.update(commitContext.revision);
+        for (const info of commitContext.additionalRepositoryCheckoutInfo) {
+            hasher.update(info.revision);
+        }
+        return hasher.digest('hex');
+    }
+
+}
+
+export interface GitCheckoutInfo extends Commit {
+    checkoutLocation?: string;
+    upstreamRemoteURI?: string;
+    localBranch?: string;
 }
 
 export namespace CommitContext {
@@ -1143,6 +1222,8 @@ export interface AuthProviderEntry {
     readonly status: AuthProviderEntry.Status;
 
     readonly oauth: OAuth2Config;
+    /** A random string that is to change whenever oauth changes (enforced on DB level) */
+    readonly oauthRevision?: string;
 }
 
 export interface OAuth2Config {

@@ -6,11 +6,14 @@
 
 import * as express from 'express';
 import { postConstruct, injectable, inject } from 'inversify';
-import { UserDB } from '@gitpod/gitpod-db/lib';
-import { User, StartPrebuildResult } from '@gitpod/gitpod-protocol';
+import { ProjectDB, TeamDB, UserDB } from '@gitpod/gitpod-db/lib';
+import { User, StartPrebuildResult, CommitContext, CommitInfo, Project } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TokenService } from '../../../src/user/token-service';
+import { ContextParser } from '../../../src/workspace/context-parser-service';
+import { HostContextProvider } from '../../../src/auth/host-context-provider';
+import { RepoURL } from '../../../src/repohost';
 
 @injectable()
 export class BitbucketApp {
@@ -18,6 +21,10 @@ export class BitbucketApp {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
+    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(ContextParser) protected readonly contextParser: ContextParser;
+    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
 
     protected _router = express.Router();
     public static path = '/apps/bitbucket/';
@@ -34,20 +41,24 @@ export class BitbucketApp {
                     }
                     const user = await this.findUser({ span }, secretToken);
                     if (!user) {
-                        res.statusCode = 503;
+                        // If the webhook installer is no longer found in Gitpod's DB
+                        // we should send a UNAUTHORIZED signal.
+                        res.statusCode = 401;
                         res.send();
                         return;
                     }
                     const data = toData(req.body);
-                    this.handlePushHook({ span }, data, user);
+                    if (data) {
+                        await this.handlePushHook({ span }, data, user);
+                    }
                 } else {
-                    console.log(`Ignoring unsupported bitbucket event: ${req.header('X-Event-Key')}`);
+                    console.warn(`Ignoring unsupported bitbucket event: ${req.header('X-Event-Key')}`);
                 }
-                res.send('OK');
             } catch (err) {
-                console.error(`Couldn't handle request.`, req.headers, req.body);
-                console.error(err);
-                res.sendStatus(500);
+                console.error(`Couldn't handle request.`, err, { headers: req.headers, reqBody: req.body });
+            } finally {
+                // we always respond with OK, when we received a valid event.
+                res.sendStatus(200);
             }
         });
     }
@@ -82,20 +93,63 @@ export class BitbucketApp {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
             const contextURL = this.createContextUrl(data);
+            const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
             span.setTag('contextURL', contextURL);
-            const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
-                console.log('No config. No prebuild.');
+                console.log('Bitbucket push event: No config. No prebuild.');
                 return undefined;
             }
 
             console.log('Starting prebuild.', { contextURL })
+            const {host, owner, repo} = RepoURL.parseRepoUrl(data.repoUrl)!;
+            const hostCtx = this.hostCtxProvider.get(host);
+            let commitInfo: CommitInfo | undefined;
+            if (hostCtx?.services?.repositoryProvider) {
+                commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(user, owner, repo, data.commitHash);
+            }
+            const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
             // todo@alex: add branch and project args
-            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: data.gitCloneUrl, commit: data.commitHash});
+            const ws = await this.prebuildManager.startPrebuild({ span }, { user, project: projectAndOwner?.project, context, commitInfo });
             return ws;
         } finally {
             span.finish();
         }
+    }
+
+    /**
+     * Finds the relevant user account and project to the provided webhook event information.
+     *
+     * First of all it tries to find the project for the given `cloneURL`, then it tries to
+     * find the installer, which is also supposed to be a team member. As a fallback, it
+     * looks for a team member which also has a bitbucket.org connection.
+     *
+     * @param cloneURL of the webhook event
+     * @param webhookInstaller the user account known from the webhook installation
+     * @returns a promise which resolves to a user account and an optional project.
+     */
+    protected async findProjectAndOwner(cloneURL: string, webhookInstaller: User): Promise<{ user: User, project?: Project }> {
+        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
+        if (project) {
+            if (project.userId) {
+                const user = await this.userDB.findUserById(project.userId);
+                if (user) {
+                    return { user, project };
+                }
+            } else if (project.teamId) {
+                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || '');
+                if (teamMembers.some(t => t.userId === webhookInstaller.id)) {
+                    return { user: webhookInstaller, project };
+                }
+                for (const teamMember of teamMembers) {
+                    const user = await this.userDB.findUserById(teamMember.userId);
+                    if (user && user.identities.some(i => i.authProviderId === "Public-Bitbucket")) {
+                        return { user, project };
+                    }
+                }
+            }
+        }
+        return { user: webhookInstaller };
     }
 
     protected createContextUrl(data: ParsedRequestData) {
@@ -108,15 +162,20 @@ export class BitbucketApp {
     }
 }
 
-function toData(body: BitbucketPushHook): ParsedRequestData {
+function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
+    const branchName = body.push.changes[0]?.new?.name;
+    const commitHash = body.push.changes[0]?.new?.target?.hash;
+    if (!branchName || !commitHash) {
+        return undefined;
+    }
     const result = {
-        branchName: body.push.changes[0].new.name,
-        commitHash: body.push.changes[0].new.target.hash,
+        branchName,
+        commitHash,
         repoUrl: body.repository.links.html.href,
         gitCloneUrl: body.repository.links.html.href + '.git'
     }
-    if (!result.branchName || !result.commitHash || !result.repoUrl) {
-        console.error('unexpected request body.', body);
+    if (!result.commitHash || !result.repoUrl) {
+        console.error('Bitbucket push event: unexpected request body.', body);
         throw new Error('Unexpected request body.');
     }
     return result;
@@ -140,6 +199,7 @@ interface BitbucketPushHook {
                     hash: string; // e.g. "1b283e4d7a849a89151548398cc836d15149179c"
                 }
             }
+            | null // in case where a branch is deleted
         }[]
     };
     actor: {

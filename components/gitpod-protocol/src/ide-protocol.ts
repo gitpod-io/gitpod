@@ -29,6 +29,28 @@ export interface IDEOptions {
      * The default desktop IDE when the user has not specified one.
      */
     defaultDesktopIde: string;
+
+    /**
+     * Client specific IDE options.
+     */
+    clients?: { [id: string]: IDEClient };
+}
+
+export interface IDEClient {
+    /**
+     * The default desktop IDE when the user has not specified one.
+     */
+    defaultDesktopIDE?: string;
+
+    /**
+     * Desktop IDEs supported by the client.
+     */
+    desktopIDEs?: string[]
+
+    /**
+     * Steps to install the client on user machine.
+     */
+    installationSteps?: string[]
 }
 
 export interface IDEOption {
@@ -79,6 +101,11 @@ export interface IDEOption {
      * The image ref to the IDE image.
      */
     image: string;
+
+    /**
+     * The latest image ref to the IDE image, this image ref always resolve to digest.
+     */
+    latestImage?: string;
 
     /**
      * When this is `true`, the tag of this image is resolved to the latest

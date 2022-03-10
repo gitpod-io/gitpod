@@ -23,7 +23,7 @@ func TestGetWorkspaces(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), cfg.Client())
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			t.Cleanup(func() {
 				api.Done(t)
 			})

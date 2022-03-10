@@ -1,6 +1,6 @@
 {
     "entrypoint": "/ide-desktop/startup.sh",
-    "entrypointArgs": [ "{DESKTOPIDEPORT}", "Open in PyCharm" ],
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "pycharm", "Open in PyCharm" ],
     "readinessProbe": {
         "type": "http",
         "http": {

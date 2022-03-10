@@ -72,7 +72,8 @@ export class TeamSubscriptionHandler implements EventHandler<chargebee.Subscript
                     planId: chargebeeSubscription.plan_id,
                     startDate: getStartDate(chargebeeSubscription),
                     endDate: chargebeeSubscription.cancelled_at ? getCancelledAt(chargebeeSubscription) : undefined,
-                    quantity
+                    quantity,
+                    excludeFromMoreResources: false,
                 });
                 await db.storeTeamSubscriptionEntry(ts);
                 await this.service.addSlots(ts, quantity);

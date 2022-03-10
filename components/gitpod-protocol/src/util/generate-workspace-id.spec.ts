@@ -34,6 +34,7 @@ const expect = chai.expect
             ['gitpod-io','gitpod','gitpodio-gitpod-'],
             ['this is rather long and has some "§$"% special chars','also here pretty long and needs abbreviation','thisisratherlon-alsohere-'],
             ['breatheco-de', 'python-flask-api-tutorial', 'breathecode-pythonflaska-'],
+            ['UPPER', "CaSe", "upper-case-"]
         ]
         for (const d of data) {
             const id = await generateWorkspaceID(d[0], d[1]);

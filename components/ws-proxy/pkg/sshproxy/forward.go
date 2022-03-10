@@ -5,9 +5,7 @@
 package sshproxy
 
 import (
-	"fmt"
 	"io"
-	"net"
 	"sync"
 	"time"
 
@@ -16,130 +14,32 @@ import (
 	"golang.org/x/net/context"
 )
 
-const GitpodUsername = "gitpod"
-
-func proxy(reqs1, reqs2 <-chan *ssh.Request, channel1, channel2 ssh.Channel) {
-	var closer sync.Once
-	closeFunc := func() {
-		channel1.Close()
-		channel2.Close()
-	}
-
-	defer closer.Do(closeFunc)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		io.Copy(channel1, channel2)
-		cancel()
-	}()
-
-	go func() {
-		io.Copy(channel2, channel1)
-		cancel()
-	}()
-
-	for {
-		select {
-		case req := <-reqs1:
-			if req == nil {
-				return
-			}
-			b, err := channel2.SendRequest(req.Type, req.WantReply, req.Payload)
-			if err != nil {
-				return
-			}
-			req.Reply(b, nil)
-		case req := <-reqs2:
-			if req == nil {
-				return
-			}
-			b, err := channel1.SendRequest(req.Type, req.WantReply, req.Payload)
-			if err != nil {
-				return
-			}
-			req.Reply(b, nil)
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (s *Server) ChannelForward(session *Session, newChannel ssh.NewChannel) {
-	clientConfig := &ssh.ClientConfig{
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		User:            GitpodUsername,
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeysCallback(func() (signers []ssh.Signer, err error) {
-				return []ssh.Signer{session.WorkspacePrivateKey}, nil
-			}),
-		},
-		Timeout: 10 * time.Second,
-	}
-
-	if s.ConnectionTimeout != 0 {
-		clientConfig.Timeout = s.ConnectionTimeout
-	}
-
-	conn, err := net.Dial("tcp", session.WorkspaceIp)
+func (s *Server) ChannelForward(ctx context.Context, session *Session, client *ssh.Client, newChannel ssh.NewChannel) {
+	workspaceChan, workspaceReqs, err := client.OpenChannel(newChannel.ChannelType(), newChannel.ExtraData())
 	if err != nil {
-		newChannel.Reject(ssh.ConnectionFailed, fmt.Sprintf("Connect failed: %v\r\n", err))
+		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("open workspace channel error")
+		newChannel.Reject(ssh.ConnectionFailed, "open workspace channel error")
 		return
 	}
-	defer conn.Close()
+	defer workspaceChan.Close()
 
-	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, session.WorkspaceIp, clientConfig)
+	clientChan, clientReqs, err := newChannel.Accept()
 	if err != nil {
-		newChannel.Reject(ssh.ConnectionFailed, fmt.Sprintf("Client connection setup failed: %v\r\n", err))
+		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("accept new channel failed")
 		return
 	}
-	client := ssh.NewClient(clientConn, clientChans, clientReqs)
-
-	directTCPIPChannel, _, err := client.OpenChannel("direct-tcpip", newChannel.ExtraData())
-	if err != nil {
-		newChannel.Reject(ssh.ConnectionFailed, fmt.Sprintf("Remote session setup failed: %v\r\n", err))
-		return
+	if newChannel.ChannelType() == "session" {
+		clientChan = startHeartbeatingChannel(clientChan, s.Heartbeater, session.InstanceID)
 	}
-
-	channel, reqs, err := newChannel.Accept()
-	if err != nil {
-		return
-	}
-
-	go ssh.DiscardRequests(reqs)
-	var closer sync.Once
-	closeFunc := func() {
-		channel.Close()
-		directTCPIPChannel.Close()
-		client.Close()
-	}
-
-	go func() {
-		io.Copy(channel, directTCPIPChannel)
-		closer.Do(closeFunc)
-	}()
-
-	io.Copy(directTCPIPChannel, channel)
-	closer.Do(closeFunc)
-}
-
-func (s *Server) SessionForward(session *Session, newChannel ssh.NewChannel) {
-	sessChan, sessReqs, err := newChannel.Accept()
-	if err != nil {
-		log.WithError(err).Error("SessionForward accept failed")
-		return
-	}
-	defer sessChan.Close()
+	defer clientChan.Close()
 
 	maskedReqs := make(chan *ssh.Request, 1)
+
 	go func() {
-		for req := range sessReqs {
+		for req := range clientReqs {
 			switch req.Type {
 			case "pty-req", "shell":
-				if req.WantReply {
-					req.Reply(true, []byte{})
-					req.WantReply = false
-				}
-			case "keepalive@openssh.com":
+				log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debugf("forwarding %s request", req.Type)
 				if req.WantReply {
 					req.Reply(true, []byte{})
 					req.WantReply = false
@@ -147,44 +47,100 @@ func (s *Server) SessionForward(session *Session, newChannel ssh.NewChannel) {
 			}
 			maskedReqs <- req
 		}
+		close(maskedReqs)
 	}()
 
-	stderr := sessChan.Stderr()
+	go func() {
+		io.Copy(workspaceChan, clientChan)
+		workspaceChan.CloseWrite()
+	}()
 
-	clientConfig := &ssh.ClientConfig{
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		User:            GitpodUsername,
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeysCallback(func() (signers []ssh.Signer, err error) {
-				return []ssh.Signer{session.WorkspacePrivateKey}, nil
-			}),
-		},
-		Timeout: 10 * time.Second,
+	go func() {
+		io.Copy(clientChan, workspaceChan)
+		clientChan.CloseWrite()
+	}()
+
+	wg := sync.WaitGroup{}
+	forward := func(sourceReqs <-chan *ssh.Request, targetChan ssh.Channel) {
+		defer wg.Done()
+		for ctx.Err() == nil {
+			select {
+			case req, ok := <-sourceReqs:
+				if !ok {
+					targetChan.Close()
+					return
+				}
+				b, err := targetChan.SendRequest(req.Type, req.WantReply, req.Payload)
+				_ = req.Reply(b, nil)
+				if err != nil {
+					return
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
 	}
 
-	if s.ConnectionTimeout != 0 {
-		clientConfig.Timeout = s.ConnectionTimeout
-	}
+	wg.Add(2)
+	go forward(maskedReqs, workspaceChan)
+	go forward(workspaceReqs, clientChan)
 
-	conn, err := net.Dial("tcp", session.WorkspaceIp)
-	if err != nil {
-		fmt.Fprintf(stderr, "Connect failed: %v\r\n", err)
-		return
-	}
-	defer conn.Close()
+	wg.Wait()
+	log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debug("session forward stop")
+}
 
-	clientConn, clientChans, clientReqs, err := ssh.NewClientConn(conn, session.WorkspaceIp, clientConfig)
-	if err != nil {
-		fmt.Fprintf(stderr, "Client connection setup failed: %v\r\n", err)
-		return
+func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, instanceID string) ssh.Channel {
+	ctx, cancel := context.WithCancel(context.Background())
+	res := &heartbeatingChannel{
+		Channel: c,
+		t:       time.NewTicker(30 * time.Second),
+		cancel:  cancel,
 	}
-	client := ssh.NewClient(clientConn, clientChans, clientReqs)
+	go func() {
+		for {
+			select {
+			case <-res.t.C:
+				res.mux.Lock()
+				if !res.sawActivity {
+					res.mux.Unlock()
+					continue
+				}
+				res.sawActivity = false
+				res.mux.Unlock()
+				heartbeat.SendHeartbeat(instanceID, false)
+			case <-ctx.Done():
+				heartbeat.SendHeartbeat(instanceID, true)
+				return
+			}
+		}
+	}()
 
-	forwardChannel, forwardReqs, err := client.OpenChannel("session", []byte{})
-	if err != nil {
-		fmt.Fprintf(stderr, "Remote session setup failed: %v\r\n", err)
-		return
+	return res
+}
+
+type heartbeatingChannel struct {
+	ssh.Channel
+
+	mux         sync.Mutex
+	sawActivity bool
+	t           *time.Ticker
+
+	cancel context.CancelFunc
+}
+
+// Read reads up to len(data) bytes from the channel.
+func (c *heartbeatingChannel) Read(data []byte) (written int, err error) {
+	written, err = c.Channel.Read(data)
+	if err == nil && written != 0 {
+		c.mux.Lock()
+		c.sawActivity = true
+		c.mux.Unlock()
 	}
+	return
+}
 
-	proxy(maskedReqs, forwardReqs, sessChan, forwardChannel)
+func (c *heartbeatingChannel) Close() error {
+	c.t.Stop()
+	c.cancel()
+	return c.Channel.Close()
 }

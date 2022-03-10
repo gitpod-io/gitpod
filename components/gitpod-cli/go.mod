@@ -24,6 +24,7 @@ require (
 
 require (
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/prometheus/procfs v0.7.3
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 )

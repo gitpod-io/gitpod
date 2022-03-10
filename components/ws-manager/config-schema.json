@@ -173,6 +173,7 @@
         "startup",
         "initialization",
         "regularWorkspace",
+        "maxLifetime",
         "headlessWorkspace",
         "afterClose",
         "stopping",
@@ -192,6 +193,9 @@
           "type": "string"
         },
         "regularWorkspace": {
+          "type": "string"
+        },
+        "maxLifetime": {
           "type": "string"
         },
         "startup": {

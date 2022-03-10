@@ -22,7 +22,6 @@
 
 export SHELL=/bin/bash
 export USER=gitpod
-export VSCODE_AGENT_FOLDER=/workspace/.vscode-remote
 
 # TODO ENVVAR CLEANUP: This stays here until we moved it to a central location, ideally workspace-full
 # (+ compatibility period)
@@ -37,8 +36,4 @@ export VSCODE_AGENT_FOLDER=/workspace/.vscode-remote
 grep -rl open-vsx.org /ide | xargs sed -i "s|https://open-vsx.org|$VSX_REGISTRY_URL|g"
 
 cd /ide || exit
-if [ "$SUPERVISOR_DEBUG_ENABLE" = "true" ]; then
-    exec /ide/bin/gitpod-code --inspect --verbose --log trace --connection-token 00000 "$@"
-else
-    exec /ide/bin/gitpod-code --connection-token 00000 "$@"
-fi
+exec /ide/codehelper "$@"

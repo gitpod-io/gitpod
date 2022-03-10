@@ -7,13 +7,15 @@
 import * as express from 'express';
 import { postConstruct, injectable, inject } from 'inversify';
 import { ProjectDB, TeamDB, UserDB } from '@gitpod/gitpod-db/lib';
-import { Project, User, StartPrebuildResult } from '@gitpod/gitpod-protocol';
+import { Project, User, StartPrebuildResult, CommitContext, CommitInfo } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TokenService } from '../../../src/user/token-service';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
 import { GitlabService } from './gitlab-service';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { ContextParser } from '../../../src/workspace/context-parser-service';
+import { RepoURL } from '../../../src/repohost';
 
 @injectable()
 export class GitLabApp {
@@ -24,6 +26,7 @@ export class GitLabApp {
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(ContextParser) protected readonly contextParser: ContextParser;
 
     protected _router = express.Router();
     public static path = '/apps/gitlab/';
@@ -48,7 +51,7 @@ export class GitLabApp {
                     res.send();
                     return;
                 }
-                this.handlePushHook({ span }, context, user);
+                await this.handlePushHook({ span }, context, user);
             } else {
                 log.debug("Unknown GitLab event received", { event });
             }
@@ -96,7 +99,9 @@ export class GitLabApp {
             const contextURL = this.createContextUrl(body);
             log.debug({ userId: user.id }, "GitLab push hook: Context URL", { context: body, contextURL });
             span.setTag('contextURL', contextURL);
-            const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
+            const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
+            const projectAndOwner = await this.findProjectAndOwner(context.repository.cloneUrl, user);
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
                 log.debug({ userId: user.id }, "GitLab push hook: There is no prebuild config.", { context: body, contextURL });
                 return undefined;
@@ -104,17 +109,12 @@ export class GitLabApp {
 
             log.debug({ userId: user.id }, "GitLab push hook: Starting prebuild", { body, contextURL });
 
-            const cloneURL = body.repository.git_http_url;
-            const branch = this.getBranchFromRef(body.ref);
-            const projectOwner = await this.findProjectOwner(cloneURL);
-
+            const commitInfo = await this.getCommitInfo(user, body.repository.git_http_url, body.after);
             const ws = await this.prebuildManager.startPrebuild({ span }, {
-                user: projectOwner?.user || user,
-                project: projectOwner?.project,
-                contextURL,
-                cloneURL,
-                commit: body.after,
-                branch,
+                user: projectAndOwner?.user || user,
+                project: projectAndOwner?.project,
+                context,
+                commitInfo
             });
 
             return ws;
@@ -123,19 +123,49 @@ export class GitLabApp {
         }
     }
 
-    protected async findProjectOwner(cloneURL: string): Promise<{ user: User, project?: Project } | undefined> {
+    private async getCommitInfo(user: User, repoURL: string, commitSHA: string) {
+        const parsedRepo = RepoURL.parseRepoUrl(repoURL)!;
+        const hostCtx = this.hostCtxProvider.get(parsedRepo.host);
+        let commitInfo: CommitInfo | undefined;
+        if (hostCtx?.services?.repositoryProvider) {
+            commitInfo = await hostCtx?.services?.repositoryProvider.getCommitInfo(user, parsedRepo.owner, parsedRepo.repo, commitSHA);
+        }
+        return commitInfo;
+    }
+
+    /**
+     * Finds the relevant user account and project to the provided webhook event information.
+     *
+     * First of all it tries to find the project for the given `cloneURL`, then it tries to
+     * find the installer, which is also supposed to be a team member. As a fallback, it
+     * looks for a team member which also has a gitlab.com connection.
+     *
+     * @param cloneURL of the webhook event
+     * @param webhookInstaller the user account known from the webhook installation
+     * @returns a promise which resolves to a user account and an optional project.
+     */
+    protected async findProjectAndOwner(cloneURL: string, webhookInstaller: User): Promise<{ user: User, project?: Project }> {
         const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
         if (project) {
-            const owner = !!project.userId
-                ? { userId: project.userId }
-                : (await this.teamDB.findMembersByTeam(project.teamId || '')).filter(m => m.role === "owner")[0];
-            if (owner) {
-                const user = await this.userDB.findUserById(owner.userId);
+            if (project.userId) {
+                const user = await this.userDB.findUserById(project.userId);
                 if (user) {
                     return { user, project };
                 }
+            } else if (project.teamId) {
+                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || '');
+                if (teamMembers.some(t => t.userId === webhookInstaller.id)) {
+                    return { user: webhookInstaller, project };
+                }
+                for (const teamMember of teamMembers) {
+                    const user = await this.userDB.findUserById(teamMember.userId);
+                    if (user && user.identities.some(i => i.authProviderId === "Public-GitLab")) {
+                        return { user, project };
+                    }
+                }
             }
         }
+        return { user: webhookInstaller };
     }
 
     protected createContextUrl(body: GitLabPushHook) {

@@ -64,7 +64,7 @@ message ResolveWorkspaceImageResponse {
 message BuildRequest {
     BuildSource source = 1;
     BuildRegistryAuth auth = 2;
-    bool forceRebuild = 3;
+    bool force_rebuild = 3;
 }
 
 message BuildRegistryAuth {
@@ -72,6 +72,7 @@ message BuildRegistryAuth {
         BuildRegistryAuthTotal total = 1;
         BuildRegistryAuthSelective selective = 2;
     }
+    map<string, string> additional = 3;
 }
 
 message BuildRegistryAuthTotal {
@@ -128,4 +129,10 @@ message BuildInfo {
     BuildStatus status = 2;
     int64 started_at = 3;
     string build_id = 5;
+    LogInfo log_info = 6;
+}
+
+message LogInfo {
+    string url = 1;
+    map<string, string> headers = 2;
 }

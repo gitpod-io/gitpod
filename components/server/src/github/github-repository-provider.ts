@@ -103,7 +103,96 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     }
 
     async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
-        const commit = await this.github.getCommit(user, { repo, owner, ref });
-        return commit;
+        try {
+            return await this.github.getCommit(user, { repo, owner, ref });
+        } catch (error) {
+            console.error(error);
+            return undefined;
+        }
+    }
+
+    public async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number = 100): Promise<string[]> {
+        try {
+            if (ref.length != 40) {
+                throw new Error(`Invalid commit ID ${ref}.`);
+            }
+
+            // TODO(janx): To get more results than GitHub API's max page size (seems to be 100), pagination should be handled.
+            // These additional history properties may be helfpul:
+            //     totalCount,
+            //     pageInfo {
+            //         haxNextPage,
+            //     },
+            const result: any = await this.githubQueryApi.runQuery(user, `
+                query {
+                    repository(name: "${repo}", owner: "${owner}") {
+                        object(oid: "${ref}") {
+                            ... on Commit {
+                                history(first: ${maxDepth}) {
+                                    edges {
+                                        node {
+                                            oid
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            `);
+
+            if (result.data.repository === null) {
+                throw new Error(`couldn't find repository ${owner}/${repo} on ${this.github.baseURL}`);
+            }
+
+            const commit = result.data.repository.object;
+            if (commit === null) {
+                throw new Error(`Couldn't find commit ${ref} in repository ${owner}/${repo}.`);
+            }
+
+            return commit.history.edges.slice(1).map((e: any) => e.node.oid) || [];
+        } catch (e) {
+            console.error(e);
+            return [];
+        }
+    }
+
+    async getUserRepos(user: User): Promise<string[]> {
+        // Hint: Use this to get richer results:
+        //   node {
+        //       nameWithOwner
+        //       shortDescriptionHTML(limit: 120)
+        //       url
+        //   }
+        const result: any = await this.githubQueryApi.runQuery(user, `
+            query {
+                viewer {
+                    repositoriesContributedTo(includeUserRepositories: true, first: 100) {
+                        edges {
+                            node {
+                                url
+                            }
+                        }
+                    }
+                }
+            }`);
+        return (result.data.viewer?.repositoriesContributedTo?.edges || []).map((edge: any) => edge.node.url)
+    }
+
+    async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
+        try {
+            // If you have no "viewerPermission" on a repository you may not read it
+            // Ref: https://docs.github.com/en/graphql/reference/enums#repositorypermission
+            const result: any = await this.githubQueryApi.runQuery(user, `
+                query {
+                    repository(name: "${repo}", owner: "${owner}") {
+                        viewerPermission
+                    }
+                }
+            `);
+            return result.data.repository !== null;
+        } catch (err) {
+            return false;
+        }
     }
 }

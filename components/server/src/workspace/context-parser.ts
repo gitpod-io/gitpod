@@ -14,7 +14,6 @@ export interface IContextParser {
     normalize?(contextUrl: string): string | undefined
     canHandle(user: User, contextUrl: string): boolean
     handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext>
-    fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, commit: string, maxDepth: number): Promise<string[] | undefined>
 }
 export const IContextParser = Symbol("IContextParser")
 
@@ -31,6 +30,9 @@ export abstract class AbstractContextParser implements IContextParser {
         let url = contextUrl.trim();
         if (url.startsWith(`${this.host}/`)) {
             url = `https://${url}`;
+        }
+        if (url.startsWith(`git@${this.host}:`)) {
+            return `https://${this.host}/` + url.slice(`git@${this.host}:`.length);
         }
         if (url.startsWith(`https://${this.host}/`)) {
             return url;
@@ -75,13 +77,6 @@ export abstract class AbstractContextParser implements IContextParser {
     }
 
     public abstract handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext>;
-
-    /**
-     * Fetches the commit history of a commit (used to find a relevant parent prebuild for incremental prebuilds).
-     *
-     * @returns the linear commit history starting from (but excluding) the given commit, in the same order as `git log`
-     */
-    public abstract fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, commit: string, maxDepth: number): Promise<string[] | undefined>;
 }
 
 export interface URLParts {

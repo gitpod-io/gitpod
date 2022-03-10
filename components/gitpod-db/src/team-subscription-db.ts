@@ -11,6 +11,7 @@ export const TeamSubscriptionDB = Symbol('TeamSubscriptionDB');
 export interface TeamSubscriptionDB {
     storeTeamSubscriptionEntry(ts: TeamSubscription): Promise<void>;
     findTeamSubscriptionById(id: string): Promise<TeamSubscription | undefined>;
+    findTeamSubscriptionBySlotId(slotId: string): Promise<TeamSubscription | undefined>;
     findTeamSubscriptionByPaymentRef(userId: string, paymentReference: string): Promise<TeamSubscription | undefined>;
     findTeamSubscriptionsForUser(userId: string, date: string): Promise<TeamSubscription[]>;
     findTeamSubscriptions(partial: DeepPartial<TeamSubscription>): Promise<TeamSubscription[]>;

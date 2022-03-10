@@ -36,7 +36,7 @@ workspaceSizing:
     memory: "2.25Gi"
     ephemeral-storage: "5Gi"
   limits:
-    cpu: "5"
+    cpu: "6"
     memory: "12Gi"
   dynamic:
     # Gitpod supports dynamic CPU limiting. We express those limits in "buckets of CPU time" (jiffies where 1 jiffie is 1% of a vCPU).
@@ -97,7 +97,6 @@ authProviders: []
 #     settingsUrl: "https://gitlab.com/-/profile/applications"
 #   description: ""
 #   icon: ""
-workspaceScheduler: workspace-scheduler
 
 components:
 
@@ -333,6 +332,8 @@ components:
       timeoutSeconds: 300
     insecureNoDomain: false
     chargebeeProviderOptionsFile: "/chargebee/providerOptions"
+    prebuildLimiter:
+      '*': 50
 
   serviceWaiter:
     imageName: "service-waiter"
@@ -357,7 +358,7 @@ components:
       version: "latest"
     codeImage:
       imageName: "ide/code"
-      stableVersion: "commit-2533c9bc91273bb35f7bb067b7127e2cc925a387"
+      stableVersion: "commit-a5d259949a3fa8d3bbfbb4cb19fd2c3fb0cdf00b"
       insidersVersion: "nightly"
     desktopIdeImages:
       codeDesktop:
@@ -401,6 +402,9 @@ components:
       https:
         expose: true
         containerPort: 443
+      ssh:
+        expose: true
+        containerPort: 22
       metrics:
         expose: false
         containerPort: 9500
@@ -474,6 +478,13 @@ components:
     clusterIP: "None"
     selectorKind: daemonset
     workspaceSizeLimit: "50g"
+    cpuLimit:
+      enabled: true
+      totalBandwidth: 12
+      limit: 2
+      burstLimit: 6
+      controlPeriod: "15s"
+      cgroupBasePath: "/mnt/node-cgroups"
     containerRuntime:
       enabled: true
       runtime: containerd
@@ -499,27 +510,6 @@ components:
       seccompProfileInstaller:
         enabled: true
         imageName: "seccomp-profile-installer"
-
-  wsScheduler:
-    name: "ws-scheduler"
-    disabled: false
-    resources:
-      cpu: 100m
-      memory: 32Mi
-    schedulerName: "workspace-scheduler"
-    ratelimit:
-      # Limits the # of scheduling attempts (per second) to limit traffic to the k8s master.
-      maxRPS: 10
-    scaler:
-      enabled: false
-      maxGhostWorkspaces: 10
-      renewal:
-        interval: "5m"
-        percentage: 20
-      controller:
-        kind: "constant"
-        constant:
-          setpoint: 5
 
   wsProxy:
     name: "ws-proxy"
@@ -592,9 +582,6 @@ mysql:
 rabbitmq:
   enabled: true
   fullnameOverride: "messagebus"
-  # non-standard configuration
-  # defined by gitpod.io
-  shovels: []
   persistence:
     enabled: false
   replicaCount: 1
@@ -617,7 +604,7 @@ rabbitmq:
     enabled: true
     allowExternal: true
   plugins: "rabbitmq_management rabbitmq_peer_discovery_k8s"
-  extraPlugins: "rabbitmq_shovel rabbitmq_shovel_management"
+  extraPlugins: ""
   extraSecrets:
     load-definition:
       load_definition.json: |
@@ -630,7 +617,7 @@ rabbitmq:
           "vhosts": [{
             "name": "/"
           }],
-          "parameters": {{ tpl (.Values.shovelsTemplate) . | fromYamlArray | toJson }},
+          "parameters": [],
           "permissions": [{
             "user": {{ .Values.auth.username | quote }},
             "vhost": "/",
@@ -639,22 +626,10 @@ rabbitmq:
             "read": ".*"
           }],
           "exchanges": [{
-            "name": "gitpod.ws",
-            "vhost": "/",
-            "type": "topic",
-            "durable": true,
-            "auto_delete": false
-          }, {
             "name": "gitpod.ws.local",
             "vhost": "/",
             "type": "topic",
             "durable": true,
-            "auto_delete": false
-          }, {
-            "name": "wsman",
-            "vhost": "/",
-            "type": "topic",
-            "durable": false,
             "auto_delete": false
           }, {
             "name": "consensus-leader",
@@ -663,14 +638,7 @@ rabbitmq:
             "durable": false,
             "auto_delete": false
           }],
-          "bindings": [{
-            "source": "gitpod.ws.local",
-            "vhost": "/",
-            "destination": "gitpod.ws",
-            "destination_type": "exchange",
-            "routing_key": "#",
-            "arguments": {}
-          }],
+          "bindings": [],
           "queues": [{
             "name": "consensus-peers",
             "vhost": "/",
@@ -706,25 +674,6 @@ rabbitmq:
     create: true
     minAvailable: 0
     maxUnavailable: 1
-  shovelsTemplate: |
-    {{ $auth := .Values.auth }}
-    {{- range $index, $shovel := .Values.shovels }}
-    - name: {{ $shovel.name | default (randAlphaNum 20) | quote }}
-      vhost: "/"
-      component: "shovel"
-      value:
-        ack-mode: "on-publish"
-        src-delete-after: "never"
-        src-exchange: {{ $shovel.srcExchange | default "gitpod.ws.local" | quote }}
-        src-exchange-key: {{ $shovel.srcExchangeKey | default "#" | quote  }}
-        src-protocol: "amqp091"
-        src-uri: {{ $shovel.srcUri | replace "$USERNAME" $auth.username | replace "$PASSWORD" $auth.password | quote }}
-        dest-add-forward-headers: {{ $shovel.destAddForwardHeaders | default true }}
-        dest-exchange: {{ $shovel.destExchange | default "gitpod.ws" | quote }}
-        dest-protocol: "amqp091"
-        dest-uri: {{ $shovel.destUri | default "amqp://" | quote }}
-        reconnect-delay: {{ $shovel.reconnectDelay | default 5 }}
-    {{- end }}
 
 cert-manager:
   enabled: false
