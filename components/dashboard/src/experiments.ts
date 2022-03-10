@@ -27,11 +27,18 @@ const Experiments = {
     /**
      * Experiment "example" will be activate on login for 10% of all clients.
      */
-    "example": 0.1,
+    example: 0.1,
 };
-type Experiments = Partial<{ [e in Experiment]: boolean }>;
-export type Experiment = keyof (typeof Experiments);
 
+// TODO: Both Experiment and Experiments are used for both code and typings here.
+// Not sure if it's safe to rename either, so I'm disabling linting while
+// I wait for Gero Posmyk-Leinemann to chime in.
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+type Experiments = Partial<{ [e in Experiment]: boolean }>;
+export type Experiment = keyof typeof Experiments;
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export namespace Experiment {
     /**
      * Randomly decides what the set of Experiments is the user participates in

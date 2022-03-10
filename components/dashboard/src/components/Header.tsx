@@ -18,14 +18,16 @@ export default function Header(p: HeaderProps) {
             return;
         }
         document.title = `${p.title} — Gitpod`;
-    }, []);
-    return <div className="app-container border-gray-200 dark:border-gray-800">
-        <div className="flex pb-8 pt-6">
-            <div className="">
-                {typeof p.title === "string" ? (<h1 className="tracking-tight">{p.title}</h1>) : p.title}
-                {typeof p.subtitle === "string" ? (<h2 className="tracking-wide">{p.subtitle}</h2>) : p.subtitle}
+    }, [p.title]);
+    return (
+        <div className="app-container border-gray-200 dark:border-gray-800">
+            <div className="flex pb-8 pt-6">
+                <div className="">
+                    {typeof p.title === "string" ? <h1 className="tracking-tight">{p.title}</h1> : p.title}
+                    {typeof p.subtitle === "string" ? <h2 className="tracking-wide">{p.subtitle}</h2> : p.subtitle}
+                </div>
             </div>
+            <Separator />
         </div>
-        <Separator />
-    </div>;
+    );
 }
