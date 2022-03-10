@@ -2,6 +2,9 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: https-certificates
+  labels:
+    app: gitpod
+    component: gitpod-installer
   annotations:
     kots.io/when: '{{repl or (ConfigOptionEquals "tls_self_signed_enabled" "1") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
 spec:
