@@ -7,6 +7,7 @@
 import { inject, injectable } from "inversify";
 import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
+    AuthProviderInfo,
     Branch,
     PrebuildWithStatus,
     CreateProjectParams,
@@ -147,8 +148,9 @@ export class ProjectsService {
         let { userId, teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
-        const type = hostContext && hostContext.authProvider.info.authProviderType;
-        if (type === "GitLab" || type === "Bitbucket") {
+        const authProvider = hostContext && hostContext.authProvider.info;
+        const type = authProvider && authProvider.authProviderType;
+        if (type === "GitLab" || type === "Bitbucket" || AuthProviderInfo.isGitHubEnterprise(authProvider)) {
             const repositoryService = hostContext?.services?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier

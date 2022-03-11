@@ -623,13 +623,14 @@ function GitProviders(props: {
         setErrorMessage(undefined);
 
         const token = await getGitpodService().server.getToken({ host: ap.host });
-        if (token) {
+        const isGitHubEnterprise = AuthProviderInfo.isGitHubEnterprise(ap);
+        if (token && !(isGitHubEnterprise && !token.scopes.includes("repo"))) {
             props.onHostSelected(ap.host);
             return;
         }
         await openAuthorizeWindow({
             host: ap.host,
-            scopes: ap.requirements?.default,
+            scopes: isGitHubEnterprise ? ["repo"] : ap.requirements?.default,
             onSuccess: async () => {
                 props.onHostSelected(ap.host, true);
             },
