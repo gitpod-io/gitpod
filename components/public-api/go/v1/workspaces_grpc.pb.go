@@ -26,8 +26,8 @@ type WorkspacesServiceClient interface {
 	ListWorkspaces(ctx context.Context, in *ListWorkspacesRequest, opts ...grpc.CallOption) (*ListWorkspacesResponse, error)
 	// GetWorkspace returns a single workspace.
 	GetWorkspace(ctx context.Context, in *GetWorkspaceRequest, opts ...grpc.CallOption) (*GetWorkspaceResponse, error)
-	// CreateWorkspace creates a new workspace but does not start it.
-	CreateWorkspace(ctx context.Context, in *CreateWorkspaceRequest, opts ...grpc.CallOption) (*CreateWorkspaceResponse, error)
+	// CreateAndStartWorkspace creates a new workspace and starts it.
+	CreateAndStartWorkspace(ctx context.Context, in *CreateAndStartWorkspaceRequest, opts ...grpc.CallOption) (*CreateAndStartWorkspaceResponse, error)
 	// StartWorkspace starts an existing workspace.
 	StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error)
 	// GetRunningWorkspaceInstance returns the currently active instance of a workspace.
@@ -72,9 +72,9 @@ func (c *workspacesServiceClient) GetWorkspace(ctx context.Context, in *GetWorks
 	return out, nil
 }
 
-func (c *workspacesServiceClient) CreateWorkspace(ctx context.Context, in *CreateWorkspaceRequest, opts ...grpc.CallOption) (*CreateWorkspaceResponse, error) {
-	out := new(CreateWorkspaceResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/CreateWorkspace", in, out, opts...)
+func (c *workspacesServiceClient) CreateAndStartWorkspace(ctx context.Context, in *CreateAndStartWorkspaceRequest, opts ...grpc.CallOption) (*CreateAndStartWorkspaceResponse, error) {
+	out := new(CreateAndStartWorkspaceResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/CreateAndStartWorkspace", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -203,8 +203,8 @@ type WorkspacesServiceServer interface {
 	ListWorkspaces(context.Context, *ListWorkspacesRequest) (*ListWorkspacesResponse, error)
 	// GetWorkspace returns a single workspace.
 	GetWorkspace(context.Context, *GetWorkspaceRequest) (*GetWorkspaceResponse, error)
-	// CreateWorkspace creates a new workspace but does not start it.
-	CreateWorkspace(context.Context, *CreateWorkspaceRequest) (*CreateWorkspaceResponse, error)
+	// CreateAndStartWorkspace creates a new workspace and starts it.
+	CreateAndStartWorkspace(context.Context, *CreateAndStartWorkspaceRequest) (*CreateAndStartWorkspaceResponse, error)
 	// StartWorkspace starts an existing workspace.
 	StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error)
 	// GetRunningWorkspaceInstance returns the currently active instance of a workspace.
@@ -234,8 +234,8 @@ func (UnimplementedWorkspacesServiceServer) ListWorkspaces(context.Context, *Lis
 func (UnimplementedWorkspacesServiceServer) GetWorkspace(context.Context, *GetWorkspaceRequest) (*GetWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkspace not implemented")
 }
-func (UnimplementedWorkspacesServiceServer) CreateWorkspace(context.Context, *CreateWorkspaceRequest) (*CreateWorkspaceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateWorkspace not implemented")
+func (UnimplementedWorkspacesServiceServer) CreateAndStartWorkspace(context.Context, *CreateAndStartWorkspaceRequest) (*CreateAndStartWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAndStartWorkspace not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartWorkspace not implemented")
@@ -301,20 +301,20 @@ func _WorkspacesService_GetWorkspace_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkspacesService_CreateWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateWorkspaceRequest)
+func _WorkspacesService_CreateAndStartWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAndStartWorkspaceRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkspacesServiceServer).CreateWorkspace(ctx, in)
+		return srv.(WorkspacesServiceServer).CreateAndStartWorkspace(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.WorkspacesService/CreateWorkspace",
+		FullMethod: "/gitpod.v1.WorkspacesService/CreateAndStartWorkspace",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkspacesServiceServer).CreateWorkspace(ctx, req.(*CreateWorkspaceRequest))
+		return srv.(WorkspacesServiceServer).CreateAndStartWorkspace(ctx, req.(*CreateAndStartWorkspaceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -434,8 +434,8 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _WorkspacesService_GetWorkspace_Handler,
 		},
 		{
-			MethodName: "CreateWorkspace",
-			Handler:    _WorkspacesService_CreateWorkspace_Handler,
+			MethodName: "CreateAndStartWorkspace",
+			Handler:    _WorkspacesService_CreateAndStartWorkspace_Handler,
 		},
 		{
 			MethodName: "StartWorkspace",

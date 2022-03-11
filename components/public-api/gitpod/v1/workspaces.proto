@@ -16,8 +16,8 @@ service WorkspacesService {
     // GetWorkspace returns a single workspace.
     rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
 
-    // CreateWorkspace creates a new workspace but does not start it.
-    rpc CreateWorkspace(CreateWorkspaceRequest) returns (CreateWorkspaceResponse) {}
+    // CreateAndStartWorkspace creates a new workspace and starts it.
+    rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
 
     // StartWorkspace starts an existing workspace.
     rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
@@ -65,7 +65,7 @@ message GetWorkspaceResponse {
     Workspace result = 1;
 }
 
-message CreateWorkspaceRequest {
+message CreateAndStartWorkspaceRequest {
     string idempotency_token = 1;
 
     string context_url = 2;
@@ -77,8 +77,10 @@ message CreateWorkspaceRequest {
         // Use the PrebuildService to get ahold of the prebuild_id.
         string prebuild_id = 4;
     }
+
+    StartWorkspaceSpec start_spec = 5;
 }
-message CreateWorkspaceResponse {
+message CreateAndStartWorkspaceResponse {
     // Status status = 1;
 
     string workspace_id = 2;
@@ -88,6 +90,7 @@ message StartWorkspaceRequest {
     string idempotency_token = 1;
 
     string workspace_id = 2;
+    StartWorkspaceSpec spec = 3;
 }
 message StartWorkspaceResponse {
     // Status status = 1;
@@ -145,11 +148,45 @@ message Workspace {
     // project_id is the ID of the project which this workspace belongs to
     string project_id = 3;
 
-    // context_url reports the original context URL the workspace was created from
-    string context_url = 4;
+    // context reports the original context the workspace was created from
+    WorkspaceContext context = 4;
 
     // description is a human readable description of the workspace
     string description = 5;
+}
+
+// WorkspaceContext describes the context a workspace was created from
+message WorkspaceContext {
+    // Explicit Git context
+    message Git {
+        string normalized_context_url = 1;
+        string commit = 2;
+    }
+
+    // Workspace was created from a prebuild
+    message Prebuild {
+        // original_context is the Git context which lead to the selection
+        // of a prebuild.
+        Git original_context = 1;
+
+        // prebuild_id is the ID of the prebuild which was used to create this workspace
+        string prebuild_id = 2;
+    }
+
+    // Snapshot context points to the snapshot which the workspace was created from
+    message Snapshot {
+        string snapshot_id = 1;
+    }
+
+    // All workspace context originates from a URL - this is the context URL
+    // which led to the creation of a workspace.
+    string context_url = 1;
+
+    oneof details {
+        Git git = 2;
+        Prebuild prebuild = 3;
+        Snapshot snapshot = 4;
+    }
 }
 
 // WorkspaceInstance describes a single workspace instance
@@ -237,7 +274,6 @@ enum WorkspaceInstancePhase {
     WORKSPACE_INSTANCE_PHASE_STOPPED = 8;
 }
 
-
 // WorkspaceInstanceConditions gives more detailed information as to the state of the workspace. Which condition actually
 // has a value depends on the phase the workspace is in.
 message WorkspaceInstanceConditions {
@@ -254,7 +290,6 @@ message WorkspaceInstanceConditions {
     // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
     optional bool stopped_by_request = 11;
 }
-
 
 // WorkspaceInstanceAuthentication contains authentication information used to allow/deny access to
 // workspaces and their ports.
@@ -274,4 +309,9 @@ enum AdmissionLevel {
 
     // ADMISSION_LEVEL_EVERYONE means the workspace (including ports) can be accessed by everyone.
     ADMISSION_LEVEL_EVERYONE = 2;
+}
+
+// StartWorkspaceSpec influences the workspace start
+message StartWorkspaceSpec {
+    // future per-workspace-start fields, e.g. region
 }

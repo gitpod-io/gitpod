@@ -7,26 +7,26 @@ var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/time
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 var gitpod_v1_pagination_pb = require('../../gitpod/v1/pagination_pb.js');
 
-function serialize_gitpod_v1_CreateWorkspaceRequest(arg) {
-  if (!(arg instanceof gitpod_v1_workspaces_pb.CreateWorkspaceRequest)) {
-    throw new Error('Expected argument of type gitpod.v1.CreateWorkspaceRequest');
+function serialize_gitpod_v1_CreateAndStartWorkspaceRequest(arg) {
+  if (!(arg instanceof gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest)) {
+    throw new Error('Expected argument of type gitpod.v1.CreateAndStartWorkspaceRequest');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_gitpod_v1_CreateWorkspaceRequest(buffer_arg) {
-  return gitpod_v1_workspaces_pb.CreateWorkspaceRequest.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_gitpod_v1_CreateAndStartWorkspaceRequest(buffer_arg) {
+  return gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_gitpod_v1_CreateWorkspaceResponse(arg) {
-  if (!(arg instanceof gitpod_v1_workspaces_pb.CreateWorkspaceResponse)) {
-    throw new Error('Expected argument of type gitpod.v1.CreateWorkspaceResponse');
+function serialize_gitpod_v1_CreateAndStartWorkspaceResponse(arg) {
+  if (!(arg instanceof gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse)) {
+    throw new Error('Expected argument of type gitpod.v1.CreateAndStartWorkspaceResponse');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_gitpod_v1_CreateWorkspaceResponse(buffer_arg) {
-  return gitpod_v1_workspaces_pb.CreateWorkspaceResponse.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_gitpod_v1_CreateAndStartWorkspaceResponse(buffer_arg) {
+  return gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_gitpod_v1_GetActiveWorkspaceInstanceRequest(arg) {
@@ -209,17 +209,17 @@ getWorkspace: {
     responseSerialize: serialize_gitpod_v1_GetWorkspaceResponse,
     responseDeserialize: deserialize_gitpod_v1_GetWorkspaceResponse,
   },
-  // CreateWorkspace creates a new workspace but does not start it.
-createWorkspace: {
-    path: '/gitpod.v1.WorkspacesService/CreateWorkspace',
+  // CreateAndStartWorkspace creates a new workspace and starts it.
+createAndStartWorkspace: {
+    path: '/gitpod.v1.WorkspacesService/CreateAndStartWorkspace',
     requestStream: false,
     responseStream: false,
-    requestType: gitpod_v1_workspaces_pb.CreateWorkspaceRequest,
-    responseType: gitpod_v1_workspaces_pb.CreateWorkspaceResponse,
-    requestSerialize: serialize_gitpod_v1_CreateWorkspaceRequest,
-    requestDeserialize: deserialize_gitpod_v1_CreateWorkspaceRequest,
-    responseSerialize: serialize_gitpod_v1_CreateWorkspaceResponse,
-    responseDeserialize: deserialize_gitpod_v1_CreateWorkspaceResponse,
+    requestType: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest,
+    responseType: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse,
+    requestSerialize: serialize_gitpod_v1_CreateAndStartWorkspaceRequest,
+    requestDeserialize: deserialize_gitpod_v1_CreateAndStartWorkspaceRequest,
+    responseSerialize: serialize_gitpod_v1_CreateAndStartWorkspaceResponse,
+    responseDeserialize: deserialize_gitpod_v1_CreateAndStartWorkspaceResponse,
   },
   // StartWorkspace starts an existing workspace.
 startWorkspace: {

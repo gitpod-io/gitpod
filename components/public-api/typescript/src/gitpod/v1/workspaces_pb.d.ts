@@ -137,40 +137,46 @@ export namespace GetWorkspaceResponse {
     }
 }
 
-export class CreateWorkspaceRequest extends jspb.Message { 
+export class CreateAndStartWorkspaceRequest extends jspb.Message { 
     getIdempotencyToken(): string;
-    setIdempotencyToken(value: string): CreateWorkspaceRequest;
+    setIdempotencyToken(value: string): CreateAndStartWorkspaceRequest;
     getContextUrl(): string;
-    setContextUrl(value: string): CreateWorkspaceRequest;
+    setContextUrl(value: string): CreateAndStartWorkspaceRequest;
 
     hasIfAvailable(): boolean;
     clearIfAvailable(): void;
     getIfAvailable(): boolean;
-    setIfAvailable(value: boolean): CreateWorkspaceRequest;
+    setIfAvailable(value: boolean): CreateAndStartWorkspaceRequest;
 
     hasPrebuildId(): boolean;
     clearPrebuildId(): void;
     getPrebuildId(): string;
-    setPrebuildId(value: string): CreateWorkspaceRequest;
+    setPrebuildId(value: string): CreateAndStartWorkspaceRequest;
 
-    getPrebuildCase(): CreateWorkspaceRequest.PrebuildCase;
+    hasStartSpec(): boolean;
+    clearStartSpec(): void;
+    getStartSpec(): StartWorkspaceSpec | undefined;
+    setStartSpec(value?: StartWorkspaceSpec): CreateAndStartWorkspaceRequest;
+
+    getPrebuildCase(): CreateAndStartWorkspaceRequest.PrebuildCase;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): CreateWorkspaceRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: CreateWorkspaceRequest): CreateWorkspaceRequest.AsObject;
+    toObject(includeInstance?: boolean): CreateAndStartWorkspaceRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: CreateAndStartWorkspaceRequest): CreateAndStartWorkspaceRequest.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: CreateWorkspaceRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): CreateWorkspaceRequest;
-    static deserializeBinaryFromReader(message: CreateWorkspaceRequest, reader: jspb.BinaryReader): CreateWorkspaceRequest;
+    static serializeBinaryToWriter(message: CreateAndStartWorkspaceRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): CreateAndStartWorkspaceRequest;
+    static deserializeBinaryFromReader(message: CreateAndStartWorkspaceRequest, reader: jspb.BinaryReader): CreateAndStartWorkspaceRequest;
 }
 
-export namespace CreateWorkspaceRequest {
+export namespace CreateAndStartWorkspaceRequest {
     export type AsObject = {
         idempotencyToken: string,
         contextUrl: string,
         ifAvailable: boolean,
         prebuildId: string,
+        startSpec?: StartWorkspaceSpec.AsObject,
     }
 
     export enum PrebuildCase {
@@ -181,21 +187,21 @@ export namespace CreateWorkspaceRequest {
 
 }
 
-export class CreateWorkspaceResponse extends jspb.Message { 
+export class CreateAndStartWorkspaceResponse extends jspb.Message { 
     getWorkspaceId(): string;
-    setWorkspaceId(value: string): CreateWorkspaceResponse;
+    setWorkspaceId(value: string): CreateAndStartWorkspaceResponse;
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): CreateWorkspaceResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: CreateWorkspaceResponse): CreateWorkspaceResponse.AsObject;
+    toObject(includeInstance?: boolean): CreateAndStartWorkspaceResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: CreateAndStartWorkspaceResponse): CreateAndStartWorkspaceResponse.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: CreateWorkspaceResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): CreateWorkspaceResponse;
-    static deserializeBinaryFromReader(message: CreateWorkspaceResponse, reader: jspb.BinaryReader): CreateWorkspaceResponse;
+    static serializeBinaryToWriter(message: CreateAndStartWorkspaceResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): CreateAndStartWorkspaceResponse;
+    static deserializeBinaryFromReader(message: CreateAndStartWorkspaceResponse, reader: jspb.BinaryReader): CreateAndStartWorkspaceResponse;
 }
 
-export namespace CreateWorkspaceResponse {
+export namespace CreateAndStartWorkspaceResponse {
     export type AsObject = {
         workspaceId: string,
     }
@@ -206,6 +212,11 @@ export class StartWorkspaceRequest extends jspb.Message {
     setIdempotencyToken(value: string): StartWorkspaceRequest;
     getWorkspaceId(): string;
     setWorkspaceId(value: string): StartWorkspaceRequest;
+
+    hasSpec(): boolean;
+    clearSpec(): void;
+    getSpec(): StartWorkspaceSpec | undefined;
+    setSpec(value?: StartWorkspaceSpec): StartWorkspaceRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceRequest.AsObject;
@@ -221,6 +232,7 @@ export namespace StartWorkspaceRequest {
     export type AsObject = {
         idempotencyToken: string,
         workspaceId: string,
+        spec?: StartWorkspaceSpec.AsObject,
     }
 }
 
@@ -420,8 +432,11 @@ export class Workspace extends jspb.Message {
     setOwnerId(value: string): Workspace;
     getProjectId(): string;
     setProjectId(value: string): Workspace;
-    getContextUrl(): string;
-    setContextUrl(value: string): Workspace;
+
+    hasContext(): boolean;
+    clearContext(): void;
+    getContext(): WorkspaceContext | undefined;
+    setContext(value?: WorkspaceContext): Workspace;
     getDescription(): string;
     setDescription(value: string): Workspace;
 
@@ -440,9 +455,128 @@ export namespace Workspace {
         workspaceId: string,
         ownerId: string,
         projectId: string,
-        contextUrl: string,
+        context?: WorkspaceContext.AsObject,
         description: string,
     }
+}
+
+export class WorkspaceContext extends jspb.Message { 
+    getContextUrl(): string;
+    setContextUrl(value: string): WorkspaceContext;
+
+    hasGit(): boolean;
+    clearGit(): void;
+    getGit(): WorkspaceContext.Git | undefined;
+    setGit(value?: WorkspaceContext.Git): WorkspaceContext;
+
+    hasPrebuild(): boolean;
+    clearPrebuild(): void;
+    getPrebuild(): WorkspaceContext.Prebuild | undefined;
+    setPrebuild(value?: WorkspaceContext.Prebuild): WorkspaceContext;
+
+    hasSnapshot(): boolean;
+    clearSnapshot(): void;
+    getSnapshot(): WorkspaceContext.Snapshot | undefined;
+    setSnapshot(value?: WorkspaceContext.Snapshot): WorkspaceContext;
+
+    getDetailsCase(): WorkspaceContext.DetailsCase;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WorkspaceContext.AsObject;
+    static toObject(includeInstance: boolean, msg: WorkspaceContext): WorkspaceContext.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WorkspaceContext, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WorkspaceContext;
+    static deserializeBinaryFromReader(message: WorkspaceContext, reader: jspb.BinaryReader): WorkspaceContext;
+}
+
+export namespace WorkspaceContext {
+    export type AsObject = {
+        contextUrl: string,
+        git?: WorkspaceContext.Git.AsObject,
+        prebuild?: WorkspaceContext.Prebuild.AsObject,
+        snapshot?: WorkspaceContext.Snapshot.AsObject,
+    }
+
+
+    export class Git extends jspb.Message { 
+        getNormalizedContextUrl(): string;
+        setNormalizedContextUrl(value: string): Git;
+        getCommit(): string;
+        setCommit(value: string): Git;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): Git.AsObject;
+        static toObject(includeInstance: boolean, msg: Git): Git.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: Git, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): Git;
+        static deserializeBinaryFromReader(message: Git, reader: jspb.BinaryReader): Git;
+    }
+
+    export namespace Git {
+        export type AsObject = {
+            normalizedContextUrl: string,
+            commit: string,
+        }
+    }
+
+    export class Prebuild extends jspb.Message { 
+
+        hasOriginalContext(): boolean;
+        clearOriginalContext(): void;
+        getOriginalContext(): WorkspaceContext.Git | undefined;
+        setOriginalContext(value?: WorkspaceContext.Git): Prebuild;
+        getPrebuildId(): string;
+        setPrebuildId(value: string): Prebuild;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): Prebuild.AsObject;
+        static toObject(includeInstance: boolean, msg: Prebuild): Prebuild.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: Prebuild, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): Prebuild;
+        static deserializeBinaryFromReader(message: Prebuild, reader: jspb.BinaryReader): Prebuild;
+    }
+
+    export namespace Prebuild {
+        export type AsObject = {
+            originalContext?: WorkspaceContext.Git.AsObject,
+            prebuildId: string,
+        }
+    }
+
+    export class Snapshot extends jspb.Message { 
+        getSnapshotId(): string;
+        setSnapshotId(value: string): Snapshot;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): Snapshot.AsObject;
+        static toObject(includeInstance: boolean, msg: Snapshot): Snapshot.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: Snapshot, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): Snapshot;
+        static deserializeBinaryFromReader(message: Snapshot, reader: jspb.BinaryReader): Snapshot;
+    }
+
+    export namespace Snapshot {
+        export type AsObject = {
+            snapshotId: string,
+        }
+    }
+
+
+    export enum DetailsCase {
+        DETAILS_NOT_SET = 0,
+        GIT = 2,
+        PREBUILD = 3,
+        SNAPSHOT = 4,
+    }
+
 }
 
 export class WorkspaceInstance extends jspb.Message { 
@@ -576,6 +710,23 @@ export namespace WorkspaceInstanceAuthentication {
     export type AsObject = {
         admission: AdmissionLevel,
         ownerToken: string,
+    }
+}
+
+export class StartWorkspaceSpec extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
+    static toObject(includeInstance: boolean, msg: StartWorkspaceSpec): StartWorkspaceSpec.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: StartWorkspaceSpec, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): StartWorkspaceSpec;
+    static deserializeBinaryFromReader(message: StartWorkspaceSpec, reader: jspb.BinaryReader): StartWorkspaceSpec;
+}
+
+export namespace StartWorkspaceSpec {
+    export type AsObject = {
     }
 }
 
