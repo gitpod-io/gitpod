@@ -16,6 +16,7 @@ interface IWorkspacesServiceService extends grpc.ServiceDefinition<grpc.UntypedS
     createAndStartWorkspace: IWorkspacesServiceService_ICreateAndStartWorkspace;
     startWorkspace: IWorkspacesServiceService_IStartWorkspace;
     getActiveWorkspaceInstance: IWorkspacesServiceService_IGetActiveWorkspaceInstance;
+    getWorkspaceInstanceOwnerToken: IWorkspacesServiceService_IGetWorkspaceInstanceOwnerToken;
     listenToWorkspaceInstance: IWorkspacesServiceService_IListenToWorkspaceInstance;
     listenToImageBuildLogs: IWorkspacesServiceService_IListenToImageBuildLogs;
     stopWorkspace: IWorkspacesServiceService_IStopWorkspace;
@@ -66,6 +67,15 @@ interface IWorkspacesServiceService_IGetActiveWorkspaceInstance extends grpc.Met
     responseSerialize: grpc.serialize<gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse>;
     responseDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse>;
 }
+interface IWorkspacesServiceService_IGetWorkspaceInstanceOwnerToken extends grpc.MethodDefinition<gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest, gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse> {
+    path: "/gitpod.v1.WorkspacesService/GetWorkspaceInstanceOwnerToken";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest>;
+    requestDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest>;
+    responseSerialize: grpc.serialize<gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse>;
+    responseDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse>;
+}
 interface IWorkspacesServiceService_IListenToWorkspaceInstance extends grpc.MethodDefinition<gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceRequest, gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceResponse> {
     path: "/gitpod.v1.WorkspacesService/ListenToWorkspaceInstance";
     requestStream: false;
@@ -102,6 +112,7 @@ export interface IWorkspacesServiceServer extends grpc.UntypedServiceImplementat
     createAndStartWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse>;
     startWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.StartWorkspaceRequest, gitpod_v1_workspaces_pb.StartWorkspaceResponse>;
     getActiveWorkspaceInstance: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse>;
+    getWorkspaceInstanceOwnerToken: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest, gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse>;
     listenToWorkspaceInstance: grpc.handleServerStreamingCall<gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceRequest, gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceResponse>;
     listenToImageBuildLogs: grpc.handleServerStreamingCall<gitpod_v1_workspaces_pb.ListenToImageBuildLogsRequest, gitpod_v1_workspaces_pb.ListenToImageBuildLogsResponse>;
     stopWorkspace: grpc.handleServerStreamingCall<gitpod_v1_workspaces_pb.StopWorkspaceRequest, gitpod_v1_workspaces_pb.StopWorkspaceResponse>;
@@ -123,6 +134,9 @@ export interface IWorkspacesServiceClient {
     getActiveWorkspaceInstance(request: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse) => void): grpc.ClientUnaryCall;
     getActiveWorkspaceInstance(request: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse) => void): grpc.ClientUnaryCall;
     getActiveWorkspaceInstance(request: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse) => void): grpc.ClientUnaryCall;
+    getWorkspaceInstanceOwnerToken(request: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse) => void): grpc.ClientUnaryCall;
+    getWorkspaceInstanceOwnerToken(request: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse) => void): grpc.ClientUnaryCall;
+    getWorkspaceInstanceOwnerToken(request: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse) => void): grpc.ClientUnaryCall;
     listenToWorkspaceInstance(request: gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceResponse>;
     listenToWorkspaceInstance(request: gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceRequest, metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceResponse>;
     listenToImageBuildLogs(request: gitpod_v1_workspaces_pb.ListenToImageBuildLogsRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<gitpod_v1_workspaces_pb.ListenToImageBuildLogsResponse>;
@@ -148,6 +162,9 @@ export class WorkspacesServiceClient extends grpc.Client implements IWorkspacesS
     public getActiveWorkspaceInstance(request: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse) => void): grpc.ClientUnaryCall;
     public getActiveWorkspaceInstance(request: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse) => void): grpc.ClientUnaryCall;
     public getActiveWorkspaceInstance(request: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse) => void): grpc.ClientUnaryCall;
+    public getWorkspaceInstanceOwnerToken(request: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse) => void): grpc.ClientUnaryCall;
+    public getWorkspaceInstanceOwnerToken(request: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse) => void): grpc.ClientUnaryCall;
+    public getWorkspaceInstanceOwnerToken(request: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse) => void): grpc.ClientUnaryCall;
     public listenToWorkspaceInstance(request: gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceResponse>;
     public listenToWorkspaceInstance(request: gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceRequest, metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceResponse>;
     public listenToImageBuildLogs(request: gitpod_v1_workspaces_pb.ListenToImageBuildLogsRequest, options?: Partial<grpc.CallOptions>): grpc.ClientReadableStream<gitpod_v1_workspaces_pb.ListenToImageBuildLogsResponse>;

@@ -35,6 +35,10 @@ type WorkspacesServiceClient interface {
 	//   FAILED_PRECONDITION: if a workspace does not a currently active instance
 	//
 	GetActiveWorkspaceInstance(ctx context.Context, in *GetActiveWorkspaceInstanceRequest, opts ...grpc.CallOption) (*GetActiveWorkspaceInstanceResponse, error)
+	// GetWorkspaceInstanceOwnerToken returns the owner token of a workspace instance.
+	// Note: the owner token is not part of the workspace instance status so that we can scope its access on the
+	//       API function level.
+	GetWorkspaceInstanceOwnerToken(ctx context.Context, in *GetWorkspaceInstanceOwnerTokenRequest, opts ...grpc.CallOption) (*GetWorkspaceInstanceOwnerTokenResponse, error)
 	// ListenToWorkspaceInstance listens to workspace instance updates.
 	ListenToWorkspaceInstance(ctx context.Context, in *ListenToWorkspaceInstanceRequest, opts ...grpc.CallOption) (WorkspacesService_ListenToWorkspaceInstanceClient, error)
 	// ListenToImageBuildLogs streams (currently or previously) running workspace image build logs
@@ -93,6 +97,15 @@ func (c *workspacesServiceClient) StartWorkspace(ctx context.Context, in *StartW
 func (c *workspacesServiceClient) GetActiveWorkspaceInstance(ctx context.Context, in *GetActiveWorkspaceInstanceRequest, opts ...grpc.CallOption) (*GetActiveWorkspaceInstanceResponse, error) {
 	out := new(GetActiveWorkspaceInstanceResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/GetActiveWorkspaceInstance", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspacesServiceClient) GetWorkspaceInstanceOwnerToken(ctx context.Context, in *GetWorkspaceInstanceOwnerTokenRequest, opts ...grpc.CallOption) (*GetWorkspaceInstanceOwnerTokenResponse, error) {
+	out := new(GetWorkspaceInstanceOwnerTokenResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspacesService/GetWorkspaceInstanceOwnerToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -212,6 +225,10 @@ type WorkspacesServiceServer interface {
 	//   FAILED_PRECONDITION: if a workspace does not a currently active instance
 	//
 	GetActiveWorkspaceInstance(context.Context, *GetActiveWorkspaceInstanceRequest) (*GetActiveWorkspaceInstanceResponse, error)
+	// GetWorkspaceInstanceOwnerToken returns the owner token of a workspace instance.
+	// Note: the owner token is not part of the workspace instance status so that we can scope its access on the
+	//       API function level.
+	GetWorkspaceInstanceOwnerToken(context.Context, *GetWorkspaceInstanceOwnerTokenRequest) (*GetWorkspaceInstanceOwnerTokenResponse, error)
 	// ListenToWorkspaceInstance listens to workspace instance updates.
 	ListenToWorkspaceInstance(*ListenToWorkspaceInstanceRequest, WorkspacesService_ListenToWorkspaceInstanceServer) error
 	// ListenToImageBuildLogs streams (currently or previously) running workspace image build logs
@@ -242,6 +259,9 @@ func (UnimplementedWorkspacesServiceServer) StartWorkspace(context.Context, *Sta
 }
 func (UnimplementedWorkspacesServiceServer) GetActiveWorkspaceInstance(context.Context, *GetActiveWorkspaceInstanceRequest) (*GetActiveWorkspaceInstanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetActiveWorkspaceInstance not implemented")
+}
+func (UnimplementedWorkspacesServiceServer) GetWorkspaceInstanceOwnerToken(context.Context, *GetWorkspaceInstanceOwnerTokenRequest) (*GetWorkspaceInstanceOwnerTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWorkspaceInstanceOwnerToken not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) ListenToWorkspaceInstance(*ListenToWorkspaceInstanceRequest, WorkspacesService_ListenToWorkspaceInstanceServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListenToWorkspaceInstance not implemented")
@@ -355,6 +375,24 @@ func _WorkspacesService_GetActiveWorkspaceInstance_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspacesService_GetWorkspaceInstanceOwnerToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWorkspaceInstanceOwnerTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspacesServiceServer).GetWorkspaceInstanceOwnerToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspacesService/GetWorkspaceInstanceOwnerToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspacesServiceServer).GetWorkspaceInstanceOwnerToken(ctx, req.(*GetWorkspaceInstanceOwnerTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _WorkspacesService_ListenToWorkspaceInstance_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ListenToWorkspaceInstanceRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -444,6 +482,10 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetActiveWorkspaceInstance",
 			Handler:    _WorkspacesService_GetActiveWorkspaceInstance_Handler,
+		},
+		{
+			MethodName: "GetWorkspaceInstanceOwnerToken",
+			Handler:    _WorkspacesService_GetWorkspaceInstanceOwnerToken_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
