@@ -302,6 +302,46 @@ export namespace GetActiveWorkspaceInstanceResponse {
     }
 }
 
+export class GetWorkspaceInstanceOwnerTokenRequest extends jspb.Message { 
+    getInstanceId(): string;
+    setInstanceId(value: string): GetWorkspaceInstanceOwnerTokenRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetWorkspaceInstanceOwnerTokenRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: GetWorkspaceInstanceOwnerTokenRequest): GetWorkspaceInstanceOwnerTokenRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetWorkspaceInstanceOwnerTokenRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetWorkspaceInstanceOwnerTokenRequest;
+    static deserializeBinaryFromReader(message: GetWorkspaceInstanceOwnerTokenRequest, reader: jspb.BinaryReader): GetWorkspaceInstanceOwnerTokenRequest;
+}
+
+export namespace GetWorkspaceInstanceOwnerTokenRequest {
+    export type AsObject = {
+        instanceId: string,
+    }
+}
+
+export class GetWorkspaceInstanceOwnerTokenResponse extends jspb.Message { 
+    getOwnerToken(): string;
+    setOwnerToken(value: string): GetWorkspaceInstanceOwnerTokenResponse;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetWorkspaceInstanceOwnerTokenResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: GetWorkspaceInstanceOwnerTokenResponse): GetWorkspaceInstanceOwnerTokenResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetWorkspaceInstanceOwnerTokenResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetWorkspaceInstanceOwnerTokenResponse;
+    static deserializeBinaryFromReader(message: GetWorkspaceInstanceOwnerTokenResponse, reader: jspb.BinaryReader): GetWorkspaceInstanceOwnerTokenResponse;
+}
+
+export namespace GetWorkspaceInstanceOwnerTokenResponse {
+    export type AsObject = {
+        ownerToken: string,
+    }
+}
+
 export class ListenToWorkspaceInstanceRequest extends jspb.Message { 
     getInstanceId(): string;
     setInstanceId(value: string): ListenToWorkspaceInstanceRequest;
@@ -628,11 +668,8 @@ export class WorkspaceInstanceStatus extends jspb.Message {
     setMessage(value: string): WorkspaceInstanceStatus;
     getUrl(): string;
     setUrl(value: string): WorkspaceInstanceStatus;
-
-    hasAuth(): boolean;
-    clearAuth(): void;
-    getAuth(): WorkspaceInstanceAuthentication | undefined;
-    setAuth(value?: WorkspaceInstanceAuthentication): WorkspaceInstanceStatus;
+    getAdmission(): AdmissionLevel;
+    setAdmission(value: AdmissionLevel): WorkspaceInstanceStatus;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceInstanceStatus.AsObject;
@@ -651,7 +688,7 @@ export namespace WorkspaceInstanceStatus {
         conditions?: WorkspaceInstanceConditions.AsObject,
         message: string,
         url: string,
-        auth?: WorkspaceInstanceAuthentication.AsObject,
+        admission: AdmissionLevel,
     }
 }
 
@@ -687,29 +724,6 @@ export namespace WorkspaceInstanceConditions {
         timeout: string,
         firstUserActivity?: google_protobuf_timestamp_pb.Timestamp.AsObject,
         stoppedByRequest?: boolean,
-    }
-}
-
-export class WorkspaceInstanceAuthentication extends jspb.Message { 
-    getAdmission(): AdmissionLevel;
-    setAdmission(value: AdmissionLevel): WorkspaceInstanceAuthentication;
-    getOwnerToken(): string;
-    setOwnerToken(value: string): WorkspaceInstanceAuthentication;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): WorkspaceInstanceAuthentication.AsObject;
-    static toObject(includeInstance: boolean, msg: WorkspaceInstanceAuthentication): WorkspaceInstanceAuthentication.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: WorkspaceInstanceAuthentication, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): WorkspaceInstanceAuthentication;
-    static deserializeBinaryFromReader(message: WorkspaceInstanceAuthentication, reader: jspb.BinaryReader): WorkspaceInstanceAuthentication;
-}
-
-export namespace WorkspaceInstanceAuthentication {
-    export type AsObject = {
-        admission: AdmissionLevel,
-        ownerToken: string,
     }
 }
 

@@ -51,6 +51,28 @@ function deserialize_gitpod_v1_GetActiveWorkspaceInstanceResponse(buffer_arg) {
   return gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenRequest(arg) {
+  if (!(arg instanceof gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest)) {
+    throw new Error('Expected argument of type gitpod.v1.GetWorkspaceInstanceOwnerTokenRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenRequest(buffer_arg) {
+  return gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenResponse(arg) {
+  if (!(arg instanceof gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse)) {
+    throw new Error('Expected argument of type gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenResponse(buffer_arg) {
+  return gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_gitpod_v1_GetWorkspaceRequest(arg) {
   if (!(arg instanceof gitpod_v1_workspaces_pb.GetWorkspaceRequest)) {
     throw new Error('Expected argument of type gitpod.v1.GetWorkspaceRequest');
@@ -247,6 +269,20 @@ getActiveWorkspaceInstance: {
     requestDeserialize: deserialize_gitpod_v1_GetActiveWorkspaceInstanceRequest,
     responseSerialize: serialize_gitpod_v1_GetActiveWorkspaceInstanceResponse,
     responseDeserialize: deserialize_gitpod_v1_GetActiveWorkspaceInstanceResponse,
+  },
+  // GetWorkspaceInstanceOwnerToken returns the owner token of a workspace instance.
+// Note: the owner token is not part of the workspace instance status so that we can scope its access on the
+//       API function level.
+getWorkspaceInstanceOwnerToken: {
+    path: '/gitpod.v1.WorkspacesService/GetWorkspaceInstanceOwnerToken',
+    requestStream: false,
+    responseStream: false,
+    requestType: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenRequest,
+    responseType: gitpod_v1_workspaces_pb.GetWorkspaceInstanceOwnerTokenResponse,
+    requestSerialize: serialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenRequest,
+    requestDeserialize: deserialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenRequest,
+    responseSerialize: serialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenResponse,
+    responseDeserialize: deserialize_gitpod_v1_GetWorkspaceInstanceOwnerTokenResponse,
   },
   // ListenToWorkspaceInstance listens to workspace instance updates.
 listenToWorkspaceInstance: {

@@ -28,6 +28,11 @@ service WorkspacesService {
     //
     rpc GetActiveWorkspaceInstance(GetActiveWorkspaceInstanceRequest) returns (GetActiveWorkspaceInstanceResponse) {}
 
+    // GetWorkspaceInstanceOwnerToken returns the owner token of a workspace instance.
+    // Note: the owner token is not part of the workspace instance status so that we can scope its access on the
+    //       API function level.
+    rpc GetWorkspaceInstanceOwnerToken(GetWorkspaceInstanceOwnerTokenRequest) returns (GetWorkspaceInstanceOwnerTokenResponse) {}
+
     // ListenToWorkspaceInstance listens to workspace instance updates.
     rpc ListenToWorkspaceInstance(ListenToWorkspaceInstanceRequest) returns (stream ListenToWorkspaceInstanceResponse) {}
 
@@ -106,6 +111,15 @@ message GetActiveWorkspaceInstanceResponse {
     // Status status = 1;
 
     WorkspaceInstance instance = 2;
+}
+
+message GetWorkspaceInstanceOwnerTokenRequest {
+    string instance_id = 1;
+}
+message GetWorkspaceInstanceOwnerTokenResponse {
+    // Status status = 1;
+
+    string owner_token = 2;
 }
 
 message ListenToWorkspaceInstanceRequest {
@@ -223,8 +237,8 @@ message WorkspaceInstanceStatus {
     // URL contains the endpoint at which the workspace instance is available
     string url = 5;
 
-    // auth provides authentication information about the workspace. This info is primarily used by ws-proxy.
-    WorkspaceInstanceAuthentication auth = 6;
+    // Admission describes who can access a workspace instance and its ports.
+    AdmissionLevel admission = 6;
 
     // repo details the Git working copy status of the workspace.
     // Note: this is a best-effort field and more often than not will not be present. Its absence does not
@@ -291,16 +305,7 @@ message WorkspaceInstanceConditions {
     optional bool stopped_by_request = 11;
 }
 
-// WorkspaceInstanceAuthentication contains authentication information used to allow/deny access to
-// workspaces and their ports.
-message WorkspaceInstanceAuthentication {
-    // Admission describes who can access the workspace and its ports.
-    AdmissionLevel admission = 1;
-
-    // Owner token is the token one needs to access the workspace.
-    string owner_token = 2;
-}
-
+// Admission level describes who can access a workspace instance and its ports.
 enum AdmissionLevel {
     ADMISSION_LEVEL_UNSPECIFIED = 0;
 
