@@ -1,7 +1,7 @@
 name: Team Labeler
 on:
   pull_request:
-    types: [review_requested]
+    types: [opened, closed, reopened, ready_for_review, converted_to_draft, review_requested]
 jobs:
   label:
     name: Apply team labels
