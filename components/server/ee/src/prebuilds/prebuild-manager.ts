@@ -58,7 +58,7 @@ export class PrebuildManager {
             }
             const existingPB = await this.workspaceDB.trace({ span }).findPrebuiltWorkspaceByCommit(cloneURL, commitSHAIdentifier);
             // If the existing prebuild is failed, we want to retrigger it.
-            if (!!existingPB && existingPB.state !== 'aborted' && existingPB.state !== 'failed' && existingPB.state !== 'timeout') {
+            if (!!existingPB && !['aborted', 'failed', 'timeout'].includes(existingPB.state) {
                 // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
                 const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
                 const existingConfig = existingPBWS?.config;

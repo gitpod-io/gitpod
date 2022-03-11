@@ -107,7 +107,7 @@ export class HeadlessLogService {
         return this.renderTasksHeadlessLogUrls(logCtx, instanceId, tasks);
     }
 
-    protected async supervisorListTasks(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint): Promise<TaskStatus[]> {
+    public async supervisorListTasks(logCtx: LogContext, logEndpoint: HeadlessLogEndpoint): Promise<TaskStatus[]> {
         if (logEndpoint.url === "") {
             // if ideUrl is not yet set we're too early and we deem the workspace not ready yet: retry later!
             throw new Error(`instance's ${logCtx.instanceId} has no ideUrl, yet`);

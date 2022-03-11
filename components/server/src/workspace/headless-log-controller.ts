@@ -39,9 +39,9 @@ export class HeadlessLogController {
         const router = express.Router();
 
         router.use(this.auth.restHandlerOptionally);
-        router.get("/:instanceId/:terminalId", [authenticateAndAuthorize, asyncHandler(async (req: express.Request, res: express.Response) => {
+        router.get("/:instanceId/:taskID", [authenticateAndAuthorize, asyncHandler(async (req: express.Request, res: express.Response) => {
             const span = opentracing.globalTracer().startSpan(HEADLESS_LOGS_PATH_PREFIX);
-            const params = { instanceId: req.params.instanceId, terminalId: req.params.terminalId };
+            const params = { instanceId: req.params.instanceId, taskID: req.params.taskID };
             const user = req.user as User;  // verified by authenticateAndAuthorize
 
             const instanceId = params.instanceId;
@@ -50,8 +50,17 @@ export class HeadlessLogController {
                 return;
             }
             const { workspace, instance } = ws;
-
             const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
+
+            // Try to get it from the content service, if there's nothing there, try to stream.
+            const tasks = await this.headlessLogService.supervisorListTasks(logCtx, HeadlessLogEndpoint.fromWithOwnerToken(instance))
+            const task = tasks.filter(t => t.getId() == params.taskID)
+            if (tasks.length == 0) {
+                res.status(404)
+                res.end()
+            }
+
+
             log.debug(logCtx, HEADLESS_LOGS_PATH_PREFIX);
 
             const aborted = new Deferred<boolean>();
