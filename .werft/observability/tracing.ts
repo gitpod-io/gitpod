@@ -37,10 +37,17 @@ export async function initialize() {
         process.exit(1)
     }
 
+    let didFlushTraces = false
     process.on('beforeExit', (code) => {
-        console.log(`About to exit with code ${code}. Shutting down tracing.`)
-        sdk.shutdown()
-            .then(() => console.log('Tracing terminated'))
-            .catch((error) => console.log('Error terminating tracing', error))
+        const sliceID = 'tracing shutdown'
+        if (!didFlushTraces) {
+            console.log(`[${sliceID}] About to exit with code ${code}. Shutting down tracing.`)
+            didFlushTraces = true
+            sdk.shutdown()
+                .then(() => console.log(`[${sliceID}] Tracing terminated`))
+                .catch((error) => console.log(`[${sliceID}] Error terminating tracing`, error))
+        } else {
+            console.log(`[${sliceID}] About to exit with code ${code}. Traces already flushed, no further action needed.`)
+        }
     })
 }
