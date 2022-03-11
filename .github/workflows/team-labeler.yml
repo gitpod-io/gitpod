@@ -7,6 +7,9 @@ jobs:
     name: Apply team labels
     runs-on: ubuntu-20.04
     steps:
+      - name: Output context
+        run: |
+          echo ${{ github }}
       - name: Set team labels as output
         id: team_labels
         run: |
