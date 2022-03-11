@@ -8,6 +8,7 @@ import * as grpc from "@grpc/grpc-js";
 import * as gitpod_v1_workspaces_pb from "../../gitpod/v1/workspaces_pb";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 import * as google_protobuf_field_mask_pb from "google-protobuf/google/protobuf/field_mask_pb";
+import * as google_rpc_status_pb from "../../google/rpc/status_pb";
 import * as gitpod_v1_pagination_pb from "../../gitpod/v1/pagination_pb";
 
 interface IWorkspacesServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {

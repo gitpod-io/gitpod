@@ -21,6 +21,8 @@ var global = (function() {
   return Function('return this')();
 }.call(null));
 
+var google_rpc_status_pb = require('../../google/rpc/status_pb.js');
+goog.object.extend(proto, google_rpc_status_pb);
 goog.exportSymbol('proto.gitpod.v1.GetRunningPrebuildRequest', null, global);
 goog.exportSymbol('proto.gitpod.v1.GetRunningPrebuildResponse', null, global);
 /**
@@ -227,6 +229,7 @@ proto.gitpod.v1.GetRunningPrebuildResponse.prototype.toObject = function(opt_inc
  */
 proto.gitpod.v1.GetRunningPrebuildResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     prebuildId: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -264,6 +267,11 @@ proto.gitpod.v1.GetRunningPrebuildResponse.deserializeBinaryFromReader = functio
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
       msg.setPrebuildId(value);
@@ -297,6 +305,14 @@ proto.gitpod.v1.GetRunningPrebuildResponse.prototype.serializeBinary = function(
  */
 proto.gitpod.v1.GetRunningPrebuildResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
   f = message.getPrebuildId();
   if (f.length > 0) {
     writer.writeString(
@@ -304,6 +320,43 @@ proto.gitpod.v1.GetRunningPrebuildResponse.serializeBinaryToWriter = function(me
       f
     );
   }
+};
+
+
+/**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.GetRunningPrebuildResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.GetRunningPrebuildResponse} returns this
+*/
+proto.gitpod.v1.GetRunningPrebuildResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.GetRunningPrebuildResponse} returns this
+ */
+proto.gitpod.v1.GetRunningPrebuildResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.GetRunningPrebuildResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 

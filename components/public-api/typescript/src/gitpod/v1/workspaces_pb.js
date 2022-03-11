@@ -25,6 +25,8 @@ var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/time
 goog.object.extend(proto, google_protobuf_timestamp_pb);
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
 goog.object.extend(proto, google_protobuf_field_mask_pb);
+var google_rpc_status_pb = require('../../google/rpc/status_pb.js');
+goog.object.extend(proto, google_rpc_status_pb);
 var gitpod_v1_pagination_pb = require('../../gitpod/v1/pagination_pb.js');
 goog.object.extend(proto, gitpod_v1_pagination_pb);
 goog.exportSymbol('proto.gitpod.v1.AdmissionLevel', null, global);
@@ -855,7 +857,7 @@ proto.gitpod.v1.ListWorkspacesRequest.prototype.hasFieldMask = function() {
  * @private {!Array<number>}
  * @const
  */
-proto.gitpod.v1.ListWorkspacesResponse.repeatedFields_ = [1];
+proto.gitpod.v1.ListWorkspacesResponse.repeatedFields_ = [3];
 
 
 
@@ -888,6 +890,7 @@ proto.gitpod.v1.ListWorkspacesResponse.prototype.toObject = function(opt_include
  */
 proto.gitpod.v1.ListWorkspacesResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     nextPageToken: jspb.Message.getFieldWithDefault(msg, 2, ""),
     resultList: jspb.Message.toObjectList(msg.getResultList(),
     proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance.toObject, includeInstance)
@@ -927,11 +930,16 @@ proto.gitpod.v1.ListWorkspacesResponse.deserializeBinaryFromReader = function(ms
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
       msg.setNextPageToken(value);
       break;
-    case 1:
+    case 3:
       var value = new proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance;
       reader.readMessage(value,proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance.deserializeBinaryFromReader);
       msg.addResult(value);
@@ -965,6 +973,14 @@ proto.gitpod.v1.ListWorkspacesResponse.prototype.serializeBinary = function() {
  */
 proto.gitpod.v1.ListWorkspacesResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
   f = message.getNextPageToken();
   if (f.length > 0) {
     writer.writeString(
@@ -975,7 +991,7 @@ proto.gitpod.v1.ListWorkspacesResponse.serializeBinaryToWriter = function(messag
   f = message.getResultList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
-      1,
+      3,
       f,
       proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance.serializeBinaryToWriter
     );
@@ -1186,6 +1202,43 @@ proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance.prototype.hasLastAct
 
 
 /**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.ListWorkspacesResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.ListWorkspacesResponse} returns this
+*/
+proto.gitpod.v1.ListWorkspacesResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.ListWorkspacesResponse} returns this
+ */
+proto.gitpod.v1.ListWorkspacesResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.ListWorkspacesResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
  * optional string next_page_token = 2;
  * @return {string}
  */
@@ -1204,12 +1257,12 @@ proto.gitpod.v1.ListWorkspacesResponse.prototype.setNextPageToken = function(val
 
 
 /**
- * repeated WorkspaceAndInstance result = 1;
+ * repeated WorkspaceAndInstance result = 3;
  * @return {!Array<!proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance>}
  */
 proto.gitpod.v1.ListWorkspacesResponse.prototype.getResultList = function() {
   return /** @type{!Array<!proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance, 1));
+    jspb.Message.getRepeatedWrapperField(this, proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance, 3));
 };
 
 
@@ -1218,7 +1271,7 @@ proto.gitpod.v1.ListWorkspacesResponse.prototype.getResultList = function() {
  * @return {!proto.gitpod.v1.ListWorkspacesResponse} returns this
 */
 proto.gitpod.v1.ListWorkspacesResponse.prototype.setResultList = function(value) {
-  return jspb.Message.setRepeatedWrapperField(this, 1, value);
+  return jspb.Message.setRepeatedWrapperField(this, 3, value);
 };
 
 
@@ -1228,7 +1281,7 @@ proto.gitpod.v1.ListWorkspacesResponse.prototype.setResultList = function(value)
  * @return {!proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance}
  */
 proto.gitpod.v1.ListWorkspacesResponse.prototype.addResult = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance, opt_index);
+  return jspb.Message.addToRepeatedWrapperField(this, 3, opt_value, proto.gitpod.v1.ListWorkspacesResponse.WorkspaceAndInstance, opt_index);
 };
 
 
@@ -1403,6 +1456,7 @@ proto.gitpod.v1.GetWorkspaceResponse.prototype.toObject = function(opt_includeIn
  */
 proto.gitpod.v1.GetWorkspaceResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     result: (f = msg.getResult()) && proto.gitpod.v1.Workspace.toObject(includeInstance, f)
   };
 
@@ -1441,6 +1495,11 @@ proto.gitpod.v1.GetWorkspaceResponse.deserializeBinaryFromReader = function(msg,
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
+    case 2:
       var value = new proto.gitpod.v1.Workspace;
       reader.readMessage(value,proto.gitpod.v1.Workspace.deserializeBinaryFromReader);
       msg.setResult(value);
@@ -1474,10 +1533,18 @@ proto.gitpod.v1.GetWorkspaceResponse.prototype.serializeBinary = function() {
  */
 proto.gitpod.v1.GetWorkspaceResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getResult();
+  f = message.getResponseStatus();
   if (f != null) {
     writer.writeMessage(
       1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
+  f = message.getResult();
+  if (f != null) {
+    writer.writeMessage(
+      2,
       f,
       proto.gitpod.v1.Workspace.serializeBinaryToWriter
     );
@@ -1486,12 +1553,49 @@ proto.gitpod.v1.GetWorkspaceResponse.serializeBinaryToWriter = function(message,
 
 
 /**
- * optional Workspace result = 1;
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.GetWorkspaceResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.GetWorkspaceResponse} returns this
+*/
+proto.gitpod.v1.GetWorkspaceResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.GetWorkspaceResponse} returns this
+ */
+proto.gitpod.v1.GetWorkspaceResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.GetWorkspaceResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional Workspace result = 2;
  * @return {?proto.gitpod.v1.Workspace}
  */
 proto.gitpod.v1.GetWorkspaceResponse.prototype.getResult = function() {
   return /** @type{?proto.gitpod.v1.Workspace} */ (
-    jspb.Message.getWrapperField(this, proto.gitpod.v1.Workspace, 1));
+    jspb.Message.getWrapperField(this, proto.gitpod.v1.Workspace, 2));
 };
 
 
@@ -1500,7 +1604,7 @@ proto.gitpod.v1.GetWorkspaceResponse.prototype.getResult = function() {
  * @return {!proto.gitpod.v1.GetWorkspaceResponse} returns this
 */
 proto.gitpod.v1.GetWorkspaceResponse.prototype.setResult = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
+  return jspb.Message.setWrapperField(this, 2, value);
 };
 
 
@@ -1518,7 +1622,7 @@ proto.gitpod.v1.GetWorkspaceResponse.prototype.clearResult = function() {
  * @return {boolean}
  */
 proto.gitpod.v1.GetWorkspaceResponse.prototype.hasResult = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.getField(this, 2) != null;
 };
 
 
@@ -1887,6 +1991,7 @@ proto.gitpod.v1.CreateAndStartWorkspaceResponse.prototype.toObject = function(op
  */
 proto.gitpod.v1.CreateAndStartWorkspaceResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     workspaceId: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -1924,6 +2029,11 @@ proto.gitpod.v1.CreateAndStartWorkspaceResponse.deserializeBinaryFromReader = fu
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
       msg.setWorkspaceId(value);
@@ -1957,6 +2067,14 @@ proto.gitpod.v1.CreateAndStartWorkspaceResponse.prototype.serializeBinary = func
  */
 proto.gitpod.v1.CreateAndStartWorkspaceResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
   f = message.getWorkspaceId();
   if (f.length > 0) {
     writer.writeString(
@@ -1964,6 +2082,43 @@ proto.gitpod.v1.CreateAndStartWorkspaceResponse.serializeBinaryToWriter = functi
       f
     );
   }
+};
+
+
+/**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.CreateAndStartWorkspaceResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.CreateAndStartWorkspaceResponse} returns this
+*/
+proto.gitpod.v1.CreateAndStartWorkspaceResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.CreateAndStartWorkspaceResponse} returns this
+ */
+proto.gitpod.v1.CreateAndStartWorkspaceResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.CreateAndStartWorkspaceResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -2228,6 +2383,7 @@ proto.gitpod.v1.StartWorkspaceResponse.prototype.toObject = function(opt_include
  */
 proto.gitpod.v1.StartWorkspaceResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     instanceId: jspb.Message.getFieldWithDefault(msg, 2, ""),
     workspaceUrl: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
@@ -2266,6 +2422,11 @@ proto.gitpod.v1.StartWorkspaceResponse.deserializeBinaryFromReader = function(ms
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
       msg.setInstanceId(value);
@@ -2303,6 +2464,14 @@ proto.gitpod.v1.StartWorkspaceResponse.prototype.serializeBinary = function() {
  */
 proto.gitpod.v1.StartWorkspaceResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
   f = message.getInstanceId();
   if (f.length > 0) {
     writer.writeString(
@@ -2317,6 +2486,43 @@ proto.gitpod.v1.StartWorkspaceResponse.serializeBinaryToWriter = function(messag
       f
     );
   }
+};
+
+
+/**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.StartWorkspaceResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.StartWorkspaceResponse} returns this
+*/
+proto.gitpod.v1.StartWorkspaceResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.StartWorkspaceResponse} returns this
+ */
+proto.gitpod.v1.StartWorkspaceResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.StartWorkspaceResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -2518,6 +2724,7 @@ proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.prototype.toObject = function
  */
 proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     instance: (f = msg.getInstance()) && proto.gitpod.v1.WorkspaceInstance.toObject(includeInstance, f)
   };
 
@@ -2555,6 +2762,11 @@ proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.deserializeBinaryFromReader =
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     case 2:
       var value = new proto.gitpod.v1.WorkspaceInstance;
       reader.readMessage(value,proto.gitpod.v1.WorkspaceInstance.deserializeBinaryFromReader);
@@ -2589,6 +2801,14 @@ proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.prototype.serializeBinary = f
  */
 proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
   f = message.getInstance();
   if (f != null) {
     writer.writeMessage(
@@ -2597,6 +2817,43 @@ proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.serializeBinaryToWriter = fun
       proto.gitpod.v1.WorkspaceInstance.serializeBinaryToWriter
     );
   }
+};
+
+
+/**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.GetActiveWorkspaceInstanceResponse} returns this
+*/
+proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.GetActiveWorkspaceInstanceResponse} returns this
+ */
+proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.GetActiveWorkspaceInstanceResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -2799,6 +3056,7 @@ proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.prototype.toObject = func
  */
 proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     ownerToken: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -2836,6 +3094,11 @@ proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.deserializeBinaryFromRead
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
       msg.setOwnerToken(value);
@@ -2869,6 +3132,14 @@ proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.prototype.serializeBinary
  */
 proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
   f = message.getOwnerToken();
   if (f.length > 0) {
     writer.writeString(
@@ -2876,6 +3147,43 @@ proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.serializeBinaryToWriter =
       f
     );
   }
+};
+
+
+/**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse} returns this
+*/
+proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse} returns this
+ */
+proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.GetWorkspaceInstanceOwnerTokenResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -3059,6 +3367,7 @@ proto.gitpod.v1.ListenToWorkspaceInstanceResponse.prototype.toObject = function(
  */
 proto.gitpod.v1.ListenToWorkspaceInstanceResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     instanceStatus: (f = msg.getInstanceStatus()) && proto.gitpod.v1.WorkspaceInstanceStatus.toObject(includeInstance, f)
   };
 
@@ -3096,6 +3405,11 @@ proto.gitpod.v1.ListenToWorkspaceInstanceResponse.deserializeBinaryFromReader = 
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     case 2:
       var value = new proto.gitpod.v1.WorkspaceInstanceStatus;
       reader.readMessage(value,proto.gitpod.v1.WorkspaceInstanceStatus.deserializeBinaryFromReader);
@@ -3130,6 +3444,14 @@ proto.gitpod.v1.ListenToWorkspaceInstanceResponse.prototype.serializeBinary = fu
  */
 proto.gitpod.v1.ListenToWorkspaceInstanceResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
   f = message.getInstanceStatus();
   if (f != null) {
     writer.writeMessage(
@@ -3138,6 +3460,43 @@ proto.gitpod.v1.ListenToWorkspaceInstanceResponse.serializeBinaryToWriter = func
       proto.gitpod.v1.WorkspaceInstanceStatus.serializeBinaryToWriter
     );
   }
+};
+
+
+/**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.ListenToWorkspaceInstanceResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.ListenToWorkspaceInstanceResponse} returns this
+*/
+proto.gitpod.v1.ListenToWorkspaceInstanceResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.ListenToWorkspaceInstanceResponse} returns this
+ */
+proto.gitpod.v1.ListenToWorkspaceInstanceResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.ListenToWorkspaceInstanceResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -3340,6 +3699,7 @@ proto.gitpod.v1.ListenToImageBuildLogsResponse.prototype.toObject = function(opt
  */
 proto.gitpod.v1.ListenToImageBuildLogsResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f),
     line: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -3377,6 +3737,11 @@ proto.gitpod.v1.ListenToImageBuildLogsResponse.deserializeBinaryFromReader = fun
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
       msg.setLine(value);
@@ -3410,6 +3775,14 @@ proto.gitpod.v1.ListenToImageBuildLogsResponse.prototype.serializeBinary = funct
  */
 proto.gitpod.v1.ListenToImageBuildLogsResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
   f = message.getLine();
   if (f.length > 0) {
     writer.writeString(
@@ -3417,6 +3790,43 @@ proto.gitpod.v1.ListenToImageBuildLogsResponse.serializeBinaryToWriter = functio
       f
     );
   }
+};
+
+
+/**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.ListenToImageBuildLogsResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.ListenToImageBuildLogsResponse} returns this
+*/
+proto.gitpod.v1.ListenToImageBuildLogsResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.ListenToImageBuildLogsResponse} returns this
+ */
+proto.gitpod.v1.ListenToImageBuildLogsResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.ListenToImageBuildLogsResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -3630,7 +4040,7 @@ proto.gitpod.v1.StopWorkspaceResponse.prototype.toObject = function(opt_includeI
  */
 proto.gitpod.v1.StopWorkspaceResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    responseStatus: (f = msg.getResponseStatus()) && google_rpc_status_pb.Status.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -3667,6 +4077,11 @@ proto.gitpod.v1.StopWorkspaceResponse.deserializeBinaryFromReader = function(msg
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new google_rpc_status_pb.Status;
+      reader.readMessage(value,google_rpc_status_pb.Status.deserializeBinaryFromReader);
+      msg.setResponseStatus(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -3696,6 +4111,51 @@ proto.gitpod.v1.StopWorkspaceResponse.prototype.serializeBinary = function() {
  */
 proto.gitpod.v1.StopWorkspaceResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getResponseStatus();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      google_rpc_status_pb.Status.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional google.rpc.Status response_status = 1;
+ * @return {?proto.google.rpc.Status}
+ */
+proto.gitpod.v1.StopWorkspaceResponse.prototype.getResponseStatus = function() {
+  return /** @type{?proto.google.rpc.Status} */ (
+    jspb.Message.getWrapperField(this, google_rpc_status_pb.Status, 1));
+};
+
+
+/**
+ * @param {?proto.google.rpc.Status|undefined} value
+ * @return {!proto.gitpod.v1.StopWorkspaceResponse} returns this
+*/
+proto.gitpod.v1.StopWorkspaceResponse.prototype.setResponseStatus = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.gitpod.v1.StopWorkspaceResponse} returns this
+ */
+proto.gitpod.v1.StopWorkspaceResponse.prototype.clearResponseStatus = function() {
+  return this.setResponseStatus(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.gitpod.v1.StopWorkspaceResponse.prototype.hasResponseStatus = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 

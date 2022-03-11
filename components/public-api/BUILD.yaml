@@ -1,0 +1,9 @@
+scripts:
+  - name: lint
+    deps:
+      - components/public-api/hack/protoc-gen-gplint:app
+    script: |
+      protoc \
+        -I /usr/lib/protoc/include -I. \
+        --gplint_out=. \
+        gitpod/v1/*.proto

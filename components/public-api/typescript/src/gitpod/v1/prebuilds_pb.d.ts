@@ -5,6 +5,7 @@
 /* eslint-disable */
 
 import * as jspb from "google-protobuf";
+import * as google_rpc_status_pb from "../../google/rpc/status_pb";
 
 export class GetRunningPrebuildRequest extends jspb.Message { 
     getContextUrl(): string;
@@ -27,6 +28,11 @@ export namespace GetRunningPrebuildRequest {
 }
 
 export class GetRunningPrebuildResponse extends jspb.Message { 
+
+    hasResponseStatus(): boolean;
+    clearResponseStatus(): void;
+    getResponseStatus(): google_rpc_status_pb.Status | undefined;
+    setResponseStatus(value?: google_rpc_status_pb.Status): GetRunningPrebuildResponse;
     getPrebuildId(): string;
     setPrebuildId(value: string): GetRunningPrebuildResponse;
 
@@ -42,6 +48,7 @@ export class GetRunningPrebuildResponse extends jspb.Message {
 
 export namespace GetRunningPrebuildResponse {
     export type AsObject = {
+        responseStatus?: google_rpc_status_pb.Status.AsObject,
         prebuildId: string,
     }
 }
