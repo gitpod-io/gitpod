@@ -5,6 +5,7 @@ var grpc = require('@grpc/grpc-js');
 var gitpod_v1_workspaces_pb = require('../../gitpod/v1/workspaces_pb.js');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
+var google_rpc_status_pb = require('../../google/rpc/status_pb.js');
 var gitpod_v1_pagination_pb = require('../../gitpod/v1/pagination_pb.js');
 
 function serialize_gitpod_v1_CreateAndStartWorkspaceRequest(arg) {

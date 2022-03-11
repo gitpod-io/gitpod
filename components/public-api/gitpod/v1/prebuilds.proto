@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package gitpod.v1;
 
+import "google/rpc/status.proto";
+
 option go_package = "github.com/gitpod-io/gitpod/public-api/v1";
 
 // import "gitpod/v1/pagination.proto";
@@ -19,7 +21,7 @@ message GetRunningPrebuildRequest {
 }
 
 message GetRunningPrebuildResponse {
-    // Status status = 1;
+    google.rpc.Status response_status = 1;
 
     string prebuild_id = 2;
 }

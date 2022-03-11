@@ -6,6 +6,7 @@ option go_package = "github.com/gitpod-io/gitpod/public-api/v1";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
+import "google/rpc/status.proto";
 import "gitpod/v1/pagination.proto";
 
 service WorkspacesService {
@@ -52,22 +53,25 @@ message ListWorkspacesRequest {
     google.protobuf.FieldMask field_mask = 2;
 }
 message ListWorkspacesResponse {
-    // Status status = 1;
-    string next_page_token = 2;
-
     message WorkspaceAndInstance {
         Workspace result = 1;
         WorkspaceInstance last_active_instances = 2;
     }
 
-    repeated WorkspaceAndInstance result = 1;
+    google.rpc.Status response_status = 1;
+
+    string next_page_token = 2;
+
+    repeated WorkspaceAndInstance result = 3;
 }
 
 message GetWorkspaceRequest {
     string workspace_id = 1;
 }
 message GetWorkspaceResponse {
-    Workspace result = 1;
+    google.rpc.Status response_status = 1;
+
+    Workspace result = 2;
 }
 
 message CreateAndStartWorkspaceRequest {
@@ -86,7 +90,7 @@ message CreateAndStartWorkspaceRequest {
     StartWorkspaceSpec start_spec = 5;
 }
 message CreateAndStartWorkspaceResponse {
-    // Status status = 1;
+    google.rpc.Status response_status = 1;
 
     string workspace_id = 2;
 }
@@ -98,7 +102,7 @@ message StartWorkspaceRequest {
     StartWorkspaceSpec spec = 3;
 }
 message StartWorkspaceResponse {
-    // Status status = 1;
+    google.rpc.Status response_status = 1;
 
     string instance_id = 2;
     string workspace_url = 3;
@@ -108,7 +112,7 @@ message GetActiveWorkspaceInstanceRequest {
     string workspace_id = 1;
 }
 message GetActiveWorkspaceInstanceResponse {
-    // Status status = 1;
+    google.rpc.Status response_status = 1;
 
     WorkspaceInstance instance = 2;
 }
@@ -117,7 +121,7 @@ message GetWorkspaceInstanceOwnerTokenRequest {
     string instance_id = 1;
 }
 message GetWorkspaceInstanceOwnerTokenResponse {
-    // Status status = 1;
+    google.rpc.Status response_status = 1;
 
     string owner_token = 2;
 }
@@ -126,7 +130,7 @@ message ListenToWorkspaceInstanceRequest {
     string instance_id = 1;
 }
 message ListenToWorkspaceInstanceResponse {
-    // Status status = 1;
+    google.rpc.Status response_status = 1;
 
     WorkspaceInstanceStatus instance_status = 2;
 }
@@ -135,7 +139,7 @@ message ListenToImageBuildLogsRequest {
     string instance_id = 1;
 }
 message ListenToImageBuildLogsResponse {
-    // Status status = 1;
+    google.rpc.Status response_status = 1;
 
     string line = 2;
 }
@@ -145,7 +149,9 @@ message StopWorkspaceRequest {
 
     string workspace_id = 2;
 }
-message StopWorkspaceResponse {}
+message StopWorkspaceResponse {
+    google.rpc.Status response_status = 1;
+}
 
 ////////////////////////////////
 // Shared messages come here
