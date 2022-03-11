@@ -5,21 +5,8 @@
 package cmd
 
 import (
-	"context"
-	"fmt"
-	"io"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
-	"github.com/gitpod-io/gitpod/supervisor/api"
-	log "github.com/sirupsen/logrus"
+	"github.com/gitpod-io/gitpod/gitpod-cli/cmd/tasks"
 	"github.com/spf13/cobra"
-
-	"github.com/olekukonko/tablewriter"
-	"golang.org/x/term"
-	"google.golang.org/grpc"
 )
 
 // tasksCmd represents the tasks command
@@ -38,124 +25,19 @@ var attachTaskCmdOpts struct {
 	ForceResize bool
 }
 
-// TODO(andreafalzetti): refactor tasks.go to only keep the tasks cmd initialisation, moving the subcommands in their own file
-
-// TODO(andreafalzetti): move it somewhere else so that it's reusable from other cmds
-func dialSupervisor() *grpc.ClientConn {
-	supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
-	if supervisorAddr == "" {
-		supervisorAddr = "localhost:22999"
-	}
-	supervisorConn, err := grpc.Dial(supervisorAddr, grpc.WithInsecure())
-	if err != nil {
-		log.WithError(err).Fatal("cannot connect to supervisor")
-	}
-
-	return supervisorConn
-}
-
 // listTasksCmd represents the tasks list command
 var listTasksCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the workspace tasks and their state",
-	Run: func(cmd *cobra.Command, args []string) {
-		client := api.NewStatusServiceClient(dialSupervisor())
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		// TODO(andreafalzetti): ask how to opt-out from the stream! {Observe: false} gives me a stream 😢
-		listen, err := client.TasksStatus(ctx, &api.TasksStatusRequest{Observe: false})
-		if err != nil {
-			log.WithError(err).Error("Cannot list tasks")
-		}
-
-		errchan := make(chan error, 5)
-		func() {
-			for {
-				resp, err := listen.Recv()
-				if err != nil {
-					errchan <- err
-				}
-
-				tasks := resp.GetTasks()
-
-				if tasks != nil {
-					table := tablewriter.NewWriter(os.Stdout)
-					table.SetHeader([]string{"ID", "Name", "State"})
-					table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-					table.SetCenterSeparator("|")
-
-					mapStatusToColor := map[api.TaskState]int{
-						0: tablewriter.FgHiGreenColor,
-						1: tablewriter.FgHiGreenColor,
-						2: tablewriter.FgHiBlackColor,
-					}
-
-					for _, task := range tasks {
-						table.Rich([]string{task.Id, task.Presentation.Name, task.State.String()}, []tablewriter.Colors{{}, {}, {mapStatusToColor[task.State]}})
-					}
-					table.Render()
-				} else {
-					break
-				}
-			}
-		}()
-	},
+	Run:   tasks.ListTasksCmd,
 }
 
 // attachTaskCmd represents the attach task command
 var attachTaskCmd = &cobra.Command{
 	Use:   "attach <taskId>",
-	Short: "Attach to a workspace task to retrieve its updates",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		client := api.NewStatusServiceClient(dialSupervisor())
-
-		listen, err := client.TasksStatus(context.Background(), &api.TasksStatusRequest{Observe: true})
-		if err != nil {
-			log.WithError(err).Error("Cannot list tasks")
-		}
-
-		errchan := make(chan error, 1)
-		func() {
-			for {
-				resp, err := listen.Recv()
-				if err != nil {
-					errchan <- err
-				}
-
-				tasks := resp.GetTasks()
-
-				if tasks != nil {
-					for _, task := range tasks {
-						if args[0] == task.Id {
-							fmt.Println(task.Id, task.Presentation.Name, task.State)
-						}
-					}
-				}
-			}
-		}()
-
-		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-		if err != nil {
-			panic(err)
-		}
-		defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
-
-		// wait indefinitely
-		stopch := make(chan os.Signal, 1)
-		signal.Notify(stopch, syscall.SIGTERM|syscall.SIGINT)
-		select {
-		case err := <-errchan:
-			if err != io.EOF {
-				log.WithError(err).Error("error")
-			} else {
-				os.Exit(0)
-			}
-		case <-stopch:
-		}
-	},
+	Short: "Attach to a workspace task",
+	Args:  cobra.MaximumNArgs(1),
+	Run:   tasks.AttachTasksCmd,
 }
 
 func init() {
