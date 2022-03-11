@@ -13,7 +13,7 @@ import * as gitpod_v1_pagination_pb from "../../gitpod/v1/pagination_pb";
 interface IWorkspacesServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     listWorkspaces: IWorkspacesServiceService_IListWorkspaces;
     getWorkspace: IWorkspacesServiceService_IGetWorkspace;
-    createWorkspace: IWorkspacesServiceService_ICreateWorkspace;
+    createAndStartWorkspace: IWorkspacesServiceService_ICreateAndStartWorkspace;
     startWorkspace: IWorkspacesServiceService_IStartWorkspace;
     getActiveWorkspaceInstance: IWorkspacesServiceService_IGetActiveWorkspaceInstance;
     listenToWorkspaceInstance: IWorkspacesServiceService_IListenToWorkspaceInstance;
@@ -39,14 +39,14 @@ interface IWorkspacesServiceService_IGetWorkspace extends grpc.MethodDefinition<
     responseSerialize: grpc.serialize<gitpod_v1_workspaces_pb.GetWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.GetWorkspaceResponse>;
 }
-interface IWorkspacesServiceService_ICreateWorkspace extends grpc.MethodDefinition<gitpod_v1_workspaces_pb.CreateWorkspaceRequest, gitpod_v1_workspaces_pb.CreateWorkspaceResponse> {
-    path: "/gitpod.v1.WorkspacesService/CreateWorkspace";
+interface IWorkspacesServiceService_ICreateAndStartWorkspace extends grpc.MethodDefinition<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse> {
+    path: "/gitpod.v1.WorkspacesService/CreateAndStartWorkspace";
     requestStream: false;
     responseStream: false;
-    requestSerialize: grpc.serialize<gitpod_v1_workspaces_pb.CreateWorkspaceRequest>;
-    requestDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.CreateWorkspaceRequest>;
-    responseSerialize: grpc.serialize<gitpod_v1_workspaces_pb.CreateWorkspaceResponse>;
-    responseDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.CreateWorkspaceResponse>;
+    requestSerialize: grpc.serialize<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest>;
+    requestDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest>;
+    responseSerialize: grpc.serialize<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse>;
+    responseDeserialize: grpc.deserialize<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse>;
 }
 interface IWorkspacesServiceService_IStartWorkspace extends grpc.MethodDefinition<gitpod_v1_workspaces_pb.StartWorkspaceRequest, gitpod_v1_workspaces_pb.StartWorkspaceResponse> {
     path: "/gitpod.v1.WorkspacesService/StartWorkspace";
@@ -99,7 +99,7 @@ export const WorkspacesServiceService: IWorkspacesServiceService;
 export interface IWorkspacesServiceServer extends grpc.UntypedServiceImplementation {
     listWorkspaces: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.ListWorkspacesRequest, gitpod_v1_workspaces_pb.ListWorkspacesResponse>;
     getWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.GetWorkspaceRequest, gitpod_v1_workspaces_pb.GetWorkspaceResponse>;
-    createWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.CreateWorkspaceRequest, gitpod_v1_workspaces_pb.CreateWorkspaceResponse>;
+    createAndStartWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse>;
     startWorkspace: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.StartWorkspaceRequest, gitpod_v1_workspaces_pb.StartWorkspaceResponse>;
     getActiveWorkspaceInstance: grpc.handleUnaryCall<gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceRequest, gitpod_v1_workspaces_pb.GetActiveWorkspaceInstanceResponse>;
     listenToWorkspaceInstance: grpc.handleServerStreamingCall<gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceRequest, gitpod_v1_workspaces_pb.ListenToWorkspaceInstanceResponse>;
@@ -114,9 +114,9 @@ export interface IWorkspacesServiceClient {
     getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
     getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
     getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
-    createWorkspace(request: gitpod_v1_workspaces_pb.CreateWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateWorkspaceResponse) => void): grpc.ClientUnaryCall;
-    createWorkspace(request: gitpod_v1_workspaces_pb.CreateWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateWorkspaceResponse) => void): grpc.ClientUnaryCall;
-    createWorkspace(request: gitpod_v1_workspaces_pb.CreateWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     startWorkspace(request: gitpod_v1_workspaces_pb.StartWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.StartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     startWorkspace(request: gitpod_v1_workspaces_pb.StartWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.StartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     startWorkspace(request: gitpod_v1_workspaces_pb.StartWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.StartWorkspaceResponse) => void): grpc.ClientUnaryCall;
@@ -139,9 +139,9 @@ export class WorkspacesServiceClient extends grpc.Client implements IWorkspacesS
     public getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public getWorkspace(request: gitpod_v1_workspaces_pb.GetWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.GetWorkspaceResponse) => void): grpc.ClientUnaryCall;
-    public createWorkspace(request: gitpod_v1_workspaces_pb.CreateWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateWorkspaceResponse) => void): grpc.ClientUnaryCall;
-    public createWorkspace(request: gitpod_v1_workspaces_pb.CreateWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateWorkspaceResponse) => void): grpc.ClientUnaryCall;
-    public createWorkspace(request: gitpod_v1_workspaces_pb.CreateWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public createAndStartWorkspace(request: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.CreateAndStartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public startWorkspace(request: gitpod_v1_workspaces_pb.StartWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.StartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public startWorkspace(request: gitpod_v1_workspaces_pb.StartWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.StartWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public startWorkspace(request: gitpod_v1_workspaces_pb.StartWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: gitpod_v1_workspaces_pb.StartWorkspaceResponse) => void): grpc.ClientUnaryCall;
