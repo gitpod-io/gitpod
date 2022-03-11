@@ -2,11 +2,13 @@ import { exec } from '../../util/shell';
 import { Werft } from "../../util/werft";
 import * as VM from '../../vm/vm'
 import { GCLOUD_SERVICE_ACCOUNT_PATH } from "./const";
+import { issueMetaCerts } from './deploy-to-preview-environment';
 import { JobConfig } from './job-config';
 
 const phaseName = "prepare";
 const prepareSlices = {
     CONFIGURE_CORE_DEV: "Configuring core-dev access.",
+    ISSUE_CERTIFICATE: "Issuing certificates with certmanager",
     BOOT_VM: "Booting VM."
 }
 
@@ -20,6 +22,7 @@ export async function prepare(werft: Werft, config: JobConfig) {
         configureCoreDevAccess()
         werft.done(prepareSlices.CONFIGURE_CORE_DEV)
 
+        issueCertificate(config)
         decideHarvesterVMCreation(werft, config)
     } catch (err) {
         werft.fail(phaseName, err);
@@ -60,6 +63,16 @@ function configureCoreDevAccess() {
     if (rc != 0) {
         throw new Error("Failed to get core-dev kubeconfig credentials.")
     }
+}
+
+function issueCertificate(config: JobConfig) {
+    if (config.noPreview) {
+        return
+    }
+
+    //FIXME(arthursens): domain should be available from JobConfig object without needing to compute it in here again.
+    const domain = config.withVM ? `${config.previewEnvironment.destname}.preview.gitpod-dev.com` : `${config.previewEnvironment.destname}.staging.gitpod-dev.com`;
+    issueMetaCerts(config.previewEnvironment.namespace, "certs", domain, config.withVM, prepareSlices.ISSUE_CERTIFICATE)
 }
 
 function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {

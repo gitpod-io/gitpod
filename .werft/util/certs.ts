@@ -1,7 +1,7 @@
 import { exec, ExecOptions } from './shell';
 import { sleep } from './util';
-import { readFileSync, writeFileSync } from 'fs';
 import * as path from 'path';
+import { getGlobalWerftInstance, Werft } from './werft';
 
 
 export class IssueCertificateParams {
@@ -23,51 +23,54 @@ export class InstallCertificateParams {
     destinationNamespace: string
 }
 
-export async function issueCertficate(werft, params: IssueCertificateParams, shellOpts: ExecOptions) {
+export async function issueCertficate(params: IssueCertificateParams, shellOpts: ExecOptions) {
+    const werft = getGlobalWerftInstance()
+
     var subdomains = [];
-    werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
+    werft.log(shellOpts.slice, `Subdomains: ${params.additionalSubdomains}`)
     for (const sd of params.additionalSubdomains) {
         subdomains.push(sd);
     }
 
-    // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
-    // source: https://community.letsencrypt.org/t/certbot-errors-with-obtaining-a-new-certificate-an-unexpected-error-occurred-the-csr-is-unacceptable-e-g-due-to-a-short-key-error-finalizing-order-issuing-precertificate-csr-doesnt-contain-a-san-short-enough-to-fit-in-cn/105513/2
-    if (!subdomains.some(sd => {
-        const san = sd + params.domain;
-        return san.length <= 63;
-    })) {
-        throw new Error(`there is no subdomain + '${params.domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
-    }
-    var cmd = `set -x \
-    && cd ${path.join(params.pathToTemplate)} \
-    && cp cert-manager_certificate.tpl cert.yaml \
-    && yq w -i cert.yaml metadata.name '${params.namespace}' \
-    && yq w -i cert.yaml spec.secretName '${params.namespace}' \
-    && yq w -i cert.yaml metadata.namespace '${params.certNamespace}' \
-    ${subdomains.map(s => `&& yq w -i cert.yaml spec.dnsNames[+] '${s+params.domain}'`).join('  ')} \
-    && kubectl apply -f cert.yaml`;
-
-    werft.log("certificate", "Kubectl command for cert creation: " + cmd)
-    exec(cmd, { ...shellOpts, slice: 'certificate' });
-
-    werft.log('certificate', `waiting until certificate ${params.certNamespace}/${params.namespace} is ready...`)
-    let notReadyYet = true;
-    for (let i = 0; i < 90 && notReadyYet; i++) {
-        werft.log('certificate', `polling state of ${params.certNamespace}/${params.namespace}...`)
-        const result = exec(`kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { ...shellOpts, silent: true, dontCheckRc: true, async: false });
-        if (result != undefined && result.code === 0 && result.stdout === "True") {
-            notReadyYet = false;
-            break;
-        }
-
-        await sleep(5000);
+    try {
+        checkCharacterLimit(params.domain, subdomains)
+        applyCertificateManifest(params.pathToTemplate, params.namespace, params.certNamespace, params.domain, subdomains, shellOpts)
+    } catch (err) {
+        throw new Error(err)
     }
 }
 
+// Check if there is a "SAN short enough to fit into CN (63 characters max)".
+// source: https://community.letsencrypt.org/t/certbot-errors-with-obtaining-a-new-certificate-an-unexpected-error-occurred-the-csr-is-unacceptable-e-g-due-to-a-short-key-error-finalizing-order-issuing-precertificate-csr-doesnt-contain-a-san-short-enough-to-fit-in-cn/105513/2
+function checkCharacterLimit(domain, subdomains) {
+    if (!subdomains.some(sd => {
+        const san = sd + domain;
+        return san.length <= 63;
+    })) {
+        throw new Error(`there is no subdomain + '${domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a shorter branch name...`);
+    }
+}
 
-export async function installCertficate(werft, params: InstallCertificateParams, shellOpts: ExecOptions) {
+function applyCertificateManifest(pathToTemplate: string, namespace: string, certNamespace: string, domain: string, subdomains: string[], shellOpts: ExecOptions) {
+    const werft = getGlobalWerftInstance()
+
+    var cmd = `set -x \
+    && cd ${path.join(pathToTemplate)} \
+    && cp cert-manager_certificate.tpl cert.yaml \
+    && yq w -i cert.yaml metadata.name '${namespace}' \
+    && yq w -i cert.yaml spec.secretName '${namespace}' \
+    && yq w -i cert.yaml metadata.namespace '${certNamespace}' \
+    ${subdomains.map(s => `&& yq w -i cert.yaml spec.dnsNames[+] '${s + domain}'`).join('  ')} \
+    && kubectl apply -f cert.yaml`;
+
+    werft.log(shellOpts.slice, "Kubectl command for cert creation: " + cmd)
+    exec(cmd, { ...shellOpts, slice: shellOpts.slice });
+}
+
+export async function installCertficate(params: InstallCertificateParams, shellOpts: ExecOptions) {
+    const werft = getGlobalWerftInstance()
     let notReadyYet = true;
-    werft.log('certificate', `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
+    werft.log(shellOpts.slice, `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
     const cmd = `kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
     | yq d - 'metadata.namespace' \
     | yq d - 'metadata.uid' \
@@ -82,13 +85,23 @@ export async function installCertficate(werft, params: InstallCertificateParams,
             notReadyYet = false;
             break;
         }
-        werft.log('certificate', `Could not copy "${params.certNamespace}/${params.certName}", will retry`);
+        werft.log(shellOpts.slice, `Could not copy "${params.certNamespace}/${params.certName}", will retry`);
         await sleep(5000);
     }
     if (!notReadyYet) {
-        werft.log('certificate', `copied certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
-        werft.done('certificate')
+        werft.log(shellOpts.slice, `copied certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
+        werft.done(shellOpts.slice)
     } else {
-        werft.fail('certificate', `failed to copy certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`)
+        werft.fail(shellOpts.slice, `failed to copy certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`)
+    }
+}
+
+export function waitForCertificateReadiness(name: string, certNamespace: string, slice: string) {
+    const werft = getGlobalWerftInstance()
+    werft.log(slice, `waiting until certificate ${certNamespace}/${name} is ready...`)
+    const execResult = exec(`kubectl wait --for=condition=Ready -n ${certNamespace} certificate ${name} --timeout=600s`, { slice: slice })
+
+    if (execResult.code != 0) {
+        throw new Error(execResult.stderr)
     }
 }
