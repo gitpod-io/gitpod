@@ -63,26 +63,30 @@ function configureCoreDevAccess() {
 }
 
 function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
-    if (config.withVM && !VM.vmExists({ name: config.previewEnvironment.destname })) {
-        prepareVM(werft, config)
+    if (shouldCreateVM(config)) {
+        createVM(werft, config)
     } else {
         werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", false)
     }
     werft.done(prepareSlices.BOOT_VM)
 }
 
-function prepareVM(werft: Werft, config: JobConfig) {
-    if (config.cleanSlateDeployment) {
-        werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM")
-        VM.deleteVM({ name: config.previewEnvironment.destname })
-    }
-    createVM(werft, config, prepareSlices.BOOT_VM)
+function shouldCreateVM(config: JobConfig) {
+    return config.withVM && (
+        !VM.vmExists({ name: config.previewEnvironment.destname }) ||
+        config.cleanSlateDeployment
+    )
 }
 
 // createVM only triggers the VM creation.
 // Readiness is not guaranted.
-function createVM(werft: Werft, config: JobConfig, slice: string) {
-    werft.log(slice, 'Booting  VM')
+function createVM(werft: Werft, config: JobConfig) {
+    if (config.cleanSlateDeployment) {
+        werft.log(prepareSlices.BOOT_VM, "Cleaning previously created VM")
+        VM.deleteVM({ name: config.previewEnvironment.destname })
+    }
+
+    werft.log(prepareSlices.BOOT_VM, 'Creating  VM')
     VM.startVM({ name: config.previewEnvironment.destname })
     werft.currentPhaseSpan.setAttribute("werft.harvester.created_vm", true)
 }
