@@ -51,5 +51,4 @@ pod:
 
         npx ts-node .werft/delete-preview-environments/delete-preview-environments-cron.ts
 plugins:
-  # Every hour at 15 minutes past. E.g. 10:15, 11:15, etc.
   cron: "15 * * * *"
