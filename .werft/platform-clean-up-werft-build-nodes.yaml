@@ -43,3 +43,5 @@ pod:
 
           werft log phase werft-build-cache-prune "Cleaning up Werft build caches older than 12 hours"
           find /werft-build-caches/* -maxdepth 0 -mmin +720 -print -exec sudo rm -rf "{}" \; | werft log slice werft-build-cache-prune
+plugins:
+  cron: "@midnight"
