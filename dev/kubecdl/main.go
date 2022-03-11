@@ -111,7 +111,7 @@ func getServerIP(clusterName, project string) (sererIP string, err error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal loadbalance description: %s: %w", string(out), err)
 	}
-	expectName := "server-ws-" + clusterName + "-external"
+	expectName := "server-ws-" + clusterName
 	for _, lb := range nfo {
 		if lb.Name == expectName {
 			return lb.IPAddress, nil
@@ -127,7 +127,7 @@ func getNodeName(clusterName, project string) (nodeName, zone string, err error)
 		Zone string `json:"zone"`
 	}
 
-	out, err := exec.Command("gcloud", "compute", "instances", "list", "--format=json", "--project", project, "--filter=tags:server-ws-"+clusterName).CombinedOutput()
+	out, err := exec.Command("gcloud", "compute", "instances", "list", "--format=json", "--project", project, "--filter=name:server-ws-"+clusterName).CombinedOutput()
 	if err != nil {
 		return "", "", fmt.Errorf("failed to describe node instances: %s: %w", string(out), err)
 	}
@@ -145,7 +145,7 @@ func getNodeName(clusterName, project string) (nodeName, zone string, err error)
 }
 
 func getK3sKubeconfig(nodeName, zone, project string) ([]byte, error) {
-	res, err := exec.Command("gcloud", "compute", "ssh", "--project", project, "--zone", zone, "--command", "sudo cat /etc/rancher/k3s/k3s.yaml", nodeName).CombinedOutput()
+	res, err := exec.Command("gcloud", "compute", "ssh", "--project", project, "--zone", zone, "--command", "sudo cat /etc/rancher/k3s/k3s.yaml", nodeName, "--ssh-flag=-p 2222").CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("cannot ssh into node: %s: %w", string(res), err)
 	}
