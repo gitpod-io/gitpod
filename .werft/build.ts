@@ -21,14 +21,11 @@ Tracing.initialize()
         werft = new Werft("build")
     })
     .then(() => run(context))
-    .then(() => VM.stopKubectlPortForwards())
-    .then(() => werft.endAllSpans())
     .catch((err) => {
         werft.rootSpan.setStatus({
             code: SpanStatusCode.ERROR,
             message: err
         })
-        werft.endAllSpans()
 
         if (context.Repository.ref === "refs/heads/main") {
             reportBuildFailureInSlack(context, err, () => process.exit(1));
@@ -37,8 +34,13 @@ Tracing.initialize()
             // Explicitly not using process.exit as we need to flush tracing, see tracing.js
             process.exitCode = 1
         }
-
+    })
+    .finally(() => {
+        werft.phase("Stop kubectl port forwards", "Stopping kubectl port forwards")
         VM.stopKubectlPortForwards()
+
+        werft.phase("Flushing telemetry", "Flushing telemetry before stopping job")
+        werft.endAllSpans()
     })
 
 async function run(context: any) {
