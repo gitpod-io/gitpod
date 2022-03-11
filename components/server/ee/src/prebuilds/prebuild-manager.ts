@@ -13,7 +13,6 @@ import {
     ProjectEnvVar,
     StartPrebuildContext,
     StartPrebuildResult,
-    TaskConfig,
     User,
     Workspace,
     WorkspaceConfig,
