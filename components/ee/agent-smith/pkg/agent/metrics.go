@@ -17,6 +17,7 @@ type metrics struct {
 	classificationBackpressureInCount  prometheus.GaugeFunc
 	classificationBackpressureOutCount prometheus.GaugeFunc
 	classificationBackpressureInDrop   prometheus.Counter
+	egressViolations                   *prometheus.CounterVec
 
 	mu sync.RWMutex
 	cl []prometheus.Collector
@@ -41,6 +42,14 @@ func newAgentMetrics() *metrics {
 			Help:      "The total amount of failed attempts that agent-smith is trying to apply a penalty.",
 		}, []string{"penalty", "reason"},
 	)
+	m.egressViolations = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "gitpod",
+			Subsystem: "agent_smith",
+			Name:      "egress_violations_total",
+			Help:      "The total amount of egress violations that agent-smith discovered.",
+		}, []string{"severity"},
+	)
 	m.classificationBackpressureInDrop = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "gitpod",
 		Subsystem: "agent_smith",
@@ -51,6 +60,7 @@ func newAgentMetrics() *metrics {
 		m.penaltyAttempts,
 		m.penaltyFailures,
 		m.classificationBackpressureInDrop,
+		m.egressViolations,
 	}
 	return m
 }
