@@ -42,7 +42,7 @@ export default function () {
     }, [teams, location]);
 
     return <>
-        <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
+        <Header title="Workspaces" subtitle="Hello Gitpodders!" />
 
         {workspaceModel?.initialized && (
             activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ?
