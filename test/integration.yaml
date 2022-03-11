@@ -49,7 +49,7 @@ spec:
       serviceAccountName: integration-svc
       containers:
       - name: tests
-        image: eu.gcr.io/gitpod-core-dev/build/integration-tests:kyleb-installer-integration.24
+        image: eu.gcr.io/gitpod-core-dev/build/integration-tests:to-cgv2-itest.39
         imagePullPolicy: Always
         #args: ["-username=sagor999"]
         #args: ["-enterprise=true"]
