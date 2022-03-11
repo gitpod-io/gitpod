@@ -6,6 +6,8 @@
 
 import { HostContext } from "./host-context";
 import { AuthProviderParams } from "./auth-provider";
+import { CommitInfo, User } from "@gitpod/gitpod-protocol";
+import { RepoURL } from "../repohost";
 
 export const HostContextProvider = Symbol("HostContextProvider");
 
@@ -16,6 +18,15 @@ export interface HostContextProvider {
     findByAuthProviderId(authProviderId: string): HostContext | undefined;
 }
 
+export async function getCommitInfo(hostContextProvider: HostContextProvider,  user: User, repoURL: string, commitSHA: string) {
+    const parsedRepo = RepoURL.parseRepoUrl(repoURL)!;
+    const hostCtx = hostContextProvider.get(parsedRepo.host);
+    let commitInfo: CommitInfo | undefined;
+    if (hostCtx?.services?.repositoryProvider) {
+        commitInfo = await hostCtx?.services?.repositoryProvider.getCommitInfo(user, parsedRepo.owner, parsedRepo.repo, commitSHA);
+    }
+    return commitInfo;
+}
 
 export const HostContextProviderFactory = Symbol("HostContextProviderFactory");
 

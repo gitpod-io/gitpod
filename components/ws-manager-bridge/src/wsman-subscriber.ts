@@ -26,7 +26,7 @@ export class WsmanSubscriber implements Disposable {
         const payload = logPayload || {} as LogPayload;
         while (this.run) {
             await new Promise<void>(async (resolve, reject) => {
-                log.info("attempting to establish wsman subscription", payload);
+                log.info("Attempting to establish wsman subscription", payload);
                 let client: PromisifiedWorkspaceManagerClient | undefined = undefined;
                 try {
                     client = await this.clientProvider();
@@ -49,7 +49,11 @@ export class WsmanSubscriber implements Disposable {
                             const spanCtx = opentracing.globalTracer().extract(opentracing.FORMAT_HTTP_HEADERS, header);
                             const span = !!spanCtx ? opentracing.globalTracer().startSpan('incomingSubscriptionResponse', {references: [opentracing.childOf(spanCtx!)]}) : undefined;
 
-                            callbacks.onStatusUpdate({ span }, status);
+                            try {
+                                callbacks.onStatusUpdate({ span }, status);
+                            } catch (err) {
+                                log.error("Error handling onStatusUpdate", err, payload)
+                            }
                         }
                     });
                     this.sub.on('end', function() {
@@ -60,7 +64,7 @@ export class WsmanSubscriber implements Disposable {
                         resolve();
                     });
                 } catch (err) {
-                    log.error("cannot maintain subscription to wsman", err, payload);
+                    log.error("Cannot maintain subscription to wsman", err, payload);
                     resolve();
                 } finally {
                     if (client) {
@@ -70,7 +74,7 @@ export class WsmanSubscriber implements Disposable {
             });
 
             if (!this.run) {
-                log.info("shutting down wsman subscriber", payload);
+                log.info("Shutting down wsman subscriber", payload);
                 return;
             } else {
                 // we have been disconnected forcefully - wait for some time and try again

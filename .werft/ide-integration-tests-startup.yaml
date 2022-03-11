@@ -91,3 +91,5 @@ pod:
           exit 1
       fi
       echo "integration test success" | werft log slice "test"
+plugins:
+  cron: "0 3 * * *"

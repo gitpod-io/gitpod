@@ -64,14 +64,14 @@ export class WorkspaceManagerBridge implements Disposable {
 
     public start(cluster: WorkspaceClusterInfo, clientProvider: ClientProvider) {
         const logPayload = { name: cluster.name, url: cluster.url, govern: cluster.govern };
-        log.info(`starting bridge to cluster...`, logPayload);
+        log.info(`Starting bridge to cluster...`, logPayload);
         this.cluster = cluster;
 
         const startStatusUpdateHandler = (writeToDB: boolean) => {
-            log.debug(`starting status update handler: ${cluster.name}`, logPayload);
+            log.debug(`Starting status update handler: ${cluster.name}`, logPayload);
             /* no await */ this.startStatusUpdateHandler(clientProvider, writeToDB, logPayload)
                 // this is a mere safe-guard: we do not expect the code inside to fail
-                .catch(err => log.error("cannot start status update handler", err));
+                .catch(err => log.error("Cannot start status update handler", err));
         };
 
         if (cluster.govern) {
@@ -83,7 +83,7 @@ export class WorkspaceManagerBridge implements Disposable {
             if (controllerInterval <= 0) {
                 throw new Error("controllerInterval <= 0!");
             }
-            log.debug(`starting controller: ${cluster.name}`, logPayload);
+            log.debug(`Starting controller: ${cluster.name}`, logPayload);
             this.startController(clientProvider, controllerInterval, this.config.controllerMaxDisconnectSeconds);
         } else {
             // _DO NOT_ update the DB (another bridge is responsible for that)
@@ -95,7 +95,7 @@ export class WorkspaceManagerBridge implements Disposable {
             this.disposables.push(updateEmulator);
             updateEmulator.start(cluster.name);
         }
-        log.info(`started bridge to cluster.`, logPayload);
+        log.info(`Started bridge to cluster.`, logPayload);
     }
 
     public stop() {
@@ -131,12 +131,11 @@ export class WorkspaceManagerBridge implements Disposable {
 
     protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
         const status = rawStatus.toObject();
+        log.info("Handling WorkspaceStatus update", status);
         if (!status.spec || !status.metadata || !status.conditions) {
             log.warn("Received invalid status update", status);
             return;
         }
-
-        log.debug("Received status update", status);
 
         const span = TraceContext.startSpan("handleStatusUpdate", ctx);
         span.setTag("status", JSON.stringify(filterStatus(status)));
@@ -301,7 +300,7 @@ export class WorkspaceManagerBridge implements Disposable {
                     disconnectStarted = Number.MAX_SAFE_INTEGER;    // Reset disconnect period
                 } catch (e) {
                     if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
-                        log.warn("error while controlling installation's workspaces", e, { installation: this.cluster.name });
+                        log.warn("Error while controlling installation's workspaces", e, { installation: this.cluster.name });
                     } else if (disconnectStarted > Date.now()) {
                         disconnectStarted = Date.now();
                     }
@@ -326,7 +325,7 @@ export class WorkspaceManagerBridge implements Disposable {
         for (const [instanceId, ri] of runningInstancesIdx.entries()) {
             const instance = ri.latestInstance;
             if (!(instance.status.phase === 'running' || durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds))) {
-                log.debug({ instanceId }, "skipping instance", { phase: instance.status.phase, creationTime: instance.creationTime, region: instance.region });
+                log.debug({ instanceId }, "Skipping instance", { phase: instance.status.phase, creationTime: instance.creationTime, region: instance.region });
                 continue;
             }
 

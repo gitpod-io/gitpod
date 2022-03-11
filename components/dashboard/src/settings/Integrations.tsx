@@ -448,7 +448,7 @@ export function GitIntegrationModal(props: ({
     const [providerEntry, setProviderEntry] = useState<AuthProviderEntry | undefined>(undefined);
 
     const [type, setType] = useState<string>("GitLab");
-    const [host, setHost] = useState<string>("gitlab.example.com");
+    const [host, setHost] = useState<string>("");
     const [redirectURL, setRedirectURL] = useState<string>(callbackUrl("gitlab.example.com"));
     const [clientId, setClientId] = useState<string>("");
     const [clientSecret, setClientSecret] = useState<string>("");
@@ -472,15 +472,6 @@ export function GitIntegrationModal(props: ({
         setErrorMessage(undefined);
         validate();
     }, [clientId, clientSecret, type])
-
-    useEffect(() => {
-        if (props.mode === "new") {
-            // If the host value has been modified e.g. not gitlab.example.com, assume it has been set by user and end operation
-            if (!host.includes(".example.com")) return;
-            const exampleHostname = `${type.toLowerCase()}.example.com`;
-            updateHostValue(exampleHostname);
-        }
-    }, [type]);
 
     const onClose = () => props.onClose && props.onClose();
     const onUpdate = () => props.onUpdate && props.onUpdate();
@@ -629,6 +620,14 @@ export function GitIntegrationModal(props: ({
         </span>);
     }
 
+    const getPlaceholderForIntegrationType = (type: string) => {
+      switch (type) {
+        case "GitHub": return "github.example.com";
+        case "GitLab": return "gitlab.example.com";
+        default: return "";
+      }
+    }
+
     const copyRedirectUrl = () => {
         const el = document.createElement("textarea");
         el.value = redirectURL;
@@ -665,7 +664,7 @@ export function GitIntegrationModal(props: ({
                 )}
                 <div className="flex flex-col space-y-2">
                     <label htmlFor="hostName" className="font-medium">Provider Host Name</label>
-                    <input name="hostName" disabled={mode === "edit"} type="text" value={host} className="w-full"
+                    <input name="hostName" disabled={mode === "edit"} type="text" placeholder={getPlaceholderForIntegrationType(type)} value={host} className="w-full"
                         onChange={(e) => updateHostValue(e.target.value)} />
                 </div>
                 <div className="flex flex-col space-y-2">

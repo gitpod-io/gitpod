@@ -74,9 +74,14 @@
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
 /operations/observability/mixins/cross-teams @gitpod-io/engineering-workspace @gitpod-io/engineering-webapp @gitpod-io/engineering-ide @gitpod-io/platform
+
 /.werft/observability @gitpod-io/platform
-/.werft/delete-preview-environments @gitpod-io/platform
-/.werft/ide @gitpod-io/engineering-ide
+
+/.werft/ide-* @gitpod-io/engineering-ide
+/.werft/platform-* @gitpod-io/platform
+/.werft/webapp-* @gitpod-io/engineering-webapp
+/.werft/workspace-* @gitpod-io/engineering-workspace
+/.werft/self-hosted-* @gitpod-io/engineering-self-hosted
 
 #
 # Automation

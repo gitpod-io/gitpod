@@ -31,6 +31,12 @@ export class DBPrebuiltWorkspaceUpdatable implements PrebuiltWorkspaceUpdatable 
     @Column()
     repo: string;
 
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    commitSHA?: string;
+
     @Column()
     isResolved: boolean;
 

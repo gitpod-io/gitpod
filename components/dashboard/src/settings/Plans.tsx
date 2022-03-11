@@ -333,7 +333,7 @@ export default function () {
     const openSourceFeatures = <>
         <p className="truncate" title="Public Repositories">✓ Public &amp; Private Repositories</p>
         <p className="truncate" title="4 Parallel Workspaces">✓ 4 Parallel Workspaces</p>
-        <p className="truncate" title="30 min Timeout">✓ 30 min Timeout</p>
+        <p className="truncate" title="30 min Inactivity Timeout">✓ 30 min Inactivity Timeout</p>
     </>;
     if (currentPlan.chargebeeId === freePlan.chargebeeId) {
         planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={freePlan} isCurrent={!!accountStatement}>{openSourceFeatures}</PlanCard>);
@@ -405,7 +405,7 @@ export default function () {
     const unleashedFeatures = <>
         <p className="truncate" title={'Everything in ' + professionalPlan.name}>← Everything in {professionalPlan.name}</p>
         <p className="truncate" title="16 Parallel Workspaces">✓ 16 Parallel Workspaces</p>
-        <p className="truncate" title="1h Timeout">✓ 1h Timeout</p>
+        <p className="truncate" title="1h Inactivity Timeout">✓ 1h Inactivity Timeout</p>
         <p className="truncate" title="3h Timeout Boost">✓ 3h Timeout Boost</p>
     </>;
     const isUnleashedTsAssigned = !!assignedStudentUnleashedTs || !!assignedUnleashedTs;

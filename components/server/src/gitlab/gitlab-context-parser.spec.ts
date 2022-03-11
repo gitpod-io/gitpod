@@ -604,14 +604,6 @@ class TestGitlabContextParser {
         })
     }
 
-    @test public async testFetchCommitHistory() {
-        const result = await this.parser.fetchCommitHistory({}, this.user, 'https://gitlab.com/AlexTugarev/gp-test', '80948e8cc8f0e851e89a10bc7c2ee234d1a5fbe7', 100);
-        expect(result).to.deep.equal([
-            '4447fbc4d46e6fd1ee41fb1b992702521ae078eb',
-            'f2d9790f2752a794517b949c65a773eb864844cd',
-        ])
-    }
-
 }
 
 module.exports = new TestGitlabContextParser();

@@ -202,7 +202,7 @@ is `true`. External dependencies can be used in their place
 | Property | Required | Description | Notes |
 | --- | --- | --- | --- |
 | `domain` | Y | The domain to deploy to | This will need to be changed on every deployment |
-| `kind` | Y | Installation type to run - for most users, this will be `Full` | Can be `Full`, `Meta` or `Workspace` |
+| `kind` | Y | Installation type to run - for most users, this will be `Full` | Available options are: <ul><li>`Meta`: To install the tools that make up the front-end facing side of `Gitpod` </li><li>`Workspace`: To install the components that make up the `Gitpod Workspaces`</li><li>`Full`: To install the complete setup, i.e. both `Meta` and `Workspace`</li> |
 | `metadata.region` | Y | Location for your `objectStorage` provider | If using Minio, set to `local` |
 | `workspace.runtime.containerdRuntimeDir` | Y | The location of containerd on host machine | Common values are: <ul><li>`/run/containerd/io.containerd.runtime.v2.task/k8s.io` (K3s)</li><li>`/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io` (AWS/Azure/GCP)</li><li>`/run/containerd/io.containerd.runtime.v1.linux/k8s.io`</li><li>`/run/containerd/io.containerd.runtime.v1.linux/moby`</li></ul> |
 | `workspace.runtime.containerdSocket` | Y | The location of containerd socket on the host machine |

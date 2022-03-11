@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -275,11 +275,10 @@ export class PrebuildInitializer extends jspb.Message {
     clearPrebuild(): void;
     getPrebuild(): SnapshotInitializer | undefined;
     setPrebuild(value?: SnapshotInitializer): PrebuildInitializer;
-
-    hasGit(): boolean;
-    clearGit(): void;
-    getGit(): GitInitializer | undefined;
-    setGit(value?: GitInitializer): PrebuildInitializer;
+    clearGitList(): void;
+    getGitList(): Array<GitInitializer>;
+    setGitList(value: Array<GitInitializer>): PrebuildInitializer;
+    addGit(value?: GitInitializer, index?: number): GitInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrebuildInitializer.AsObject;
@@ -294,7 +293,7 @@ export class PrebuildInitializer extends jspb.Message {
 export namespace PrebuildInitializer {
     export type AsObject = {
         prebuild?: SnapshotInitializer.AsObject,
-        git?: GitInitializer.AsObject,
+        gitList: Array<GitInitializer.AsObject>,
     }
 }
 

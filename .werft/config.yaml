@@ -3,6 +3,3 @@ rules:
   matchesAll:
   - or: ["repo.ref ~= refs/heads/"]
   - or: ["trigger !== deleted"]
-- path: ".werft/delete-preview-environments/delete-preview-environment.yaml"
-  matchesAll:
-  - or: ["trigger == deleted"]

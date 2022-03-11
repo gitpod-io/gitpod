@@ -7,6 +7,7 @@
 import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
+import { createHash } from "crypto";
 
 export interface UserInfo {
     name?: string
@@ -515,24 +516,6 @@ export namespace Workspace {
     }
 }
 
-export interface PreparePluginUploadParams {
-    fullPluginName: string;
-}
-
-export interface ResolvePluginsParams {
-    config?: WorkspaceConfig
-    builtins?: ResolvedPlugins
-    vsxRegistryUrl?: string
-}
-
-export interface InstallPluginsParams {
-    pluginIds: string[]
-}
-
-export interface UninstallPluginParams {
-    pluginId: string;
-}
-
 export interface GuessGitTokenScopesParams {
     host: string
     repoUrl: string
@@ -551,23 +534,18 @@ export interface GuessedGitTokenScopes {
     scopes?: string[]
 }
 
-export type ResolvedPluginKind = 'user' | 'workspace' | 'builtin';
-
-export interface ResolvedPlugins {
-    [pluginId: string]: ResolvedPlugin | undefined
-}
-
-export interface ResolvedPlugin {
-    fullPluginName: string;
-    url: string;
-    kind: ResolvedPluginKind;
-}
-
 export interface VSCodeConfig {
     extensions?: string[];
 }
 
+export interface RepositoryCloneInformation {
+    url: string;
+    checkoutLocation?: string;
+}
+
 export interface WorkspaceConfig {
+    mainConfiguration?: string;
+    additionalRepositories?: RepositoryCloneInformation[];
     image?: ImageConfig;
     ports?: PortConfig[];
     tasks?: TaskConfig[];
@@ -688,6 +666,10 @@ export interface PrebuiltWorkspaceUpdatable {
     repo: string;
     isResolved: boolean;
     installationId: string;
+    /**
+     * the commitSHA of the commit that triggered the prebuild
+     */
+    commitSHA?: string;
     issue?: string;
     contextUrl?: string;
 }
@@ -868,6 +850,10 @@ export namespace SnapshotContext {
 export interface StartPrebuildContext extends WorkspaceContext {
     actual: WorkspaceContext;
     commitHistory?: string[];
+    additionalRepositoryCommitHistories?: {
+        cloneUrl: string;
+        commitHistory: string[];
+    }[];
     project?: Project;
     branch?: string;
 }
@@ -970,9 +956,43 @@ export namespace AdditionalContentContext {
     }
 }
 
-export interface CommitContext extends WorkspaceContext, Commit {
+export interface CommitContext extends WorkspaceContext, GitCheckoutInfo {
     /** @deprecated Moved to .repository.cloneUrl, left here for backwards-compatibility for old workspace contextes in the DB */
     cloneUrl?: string
+
+    /**
+     * The clone and checkout information for additional repositories in case of multi-repo projects.
+     */
+    additionalRepositoryCheckoutInfo?: GitCheckoutInfo[];
+}
+
+export namespace CommitContext {
+
+    /**
+     * Creates a hash for all the commits of the CommitContext and all sub-repo commit infos.
+     * The hash is max 255 chars long.
+     * @param commitContext
+     * @returns hash for commitcontext
+     */
+    export function computeHash(commitContext: CommitContext): string {
+        // for single commits we use the revision to be backward compatible.
+        if (!commitContext.additionalRepositoryCheckoutInfo || commitContext.additionalRepositoryCheckoutInfo.length === 0) {
+            return commitContext.revision;
+        }
+        const hasher = createHash('sha256');
+        hasher.update(commitContext.revision);
+        for (const info of commitContext.additionalRepositoryCheckoutInfo) {
+            hasher.update(info.revision);
+        }
+        return hasher.digest('hex');
+    }
+
+}
+
+export interface GitCheckoutInfo extends Commit {
+    checkoutLocation?: string;
+    upstreamRemoteURI?: string;
+    localBranch?: string;
 }
 
 export namespace CommitContext {

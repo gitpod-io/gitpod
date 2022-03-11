@@ -115,10 +115,10 @@ message SnapshotInitializer {
 }
 
 // A prebuild initializer combines snapshots with Git: first we try the snapshot, then apply the Git clone target.
-// If restoring the snapshot fails, we fall back to a regular Git initializer.
+// If restoring the snapshot fails, we fall back to a regular Git initializer, which might be composite git initializer for multi-repo projects.
 message PrebuildInitializer {
     SnapshotInitializer prebuild = 1;
-    GitInitializer git = 2;
+    repeated GitInitializer git = 2;
 }
 
 // FromBackupInitializer initializes content from a previously made backup

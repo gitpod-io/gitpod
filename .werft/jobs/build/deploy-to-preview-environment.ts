@@ -3,7 +3,7 @@ import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { exec, ExecOptions } from '../../util/shell';
 import { InstallMonitoringSatelliteParams, installMonitoringSatellite } from '../../observability/monitoring-satellite';
-import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName, findLastHostPort } from '../../util/kubectl';
+import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace, helmInstallName, findLastHostPort, waitUntilAllPodsAreReady, waitForApiserver } from '../../util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from '../../util/certs';
 import { sleep, env } from '../../util/util';
 import { GCLOUD_SERVICE_ACCOUNT_PATH } from "./const";
@@ -43,6 +43,8 @@ const vmSlices = {
     COPY_CERT_MANAGER_RESOURCES: 'Copy CertManager resources from core-dev',
     INSTALL_LETS_ENCRYPT_ISSUER: 'Install Lets Encrypt issuer',
     KUBECONFIG: 'Getting kubeconfig',
+    WAIT_K3S: 'Waiting for k3s',
+    WAIT_CERTMANAGER: 'Waiting for Cert-Manager',
     EXTERNAL_LOGGING: 'Install credentials to send logs from fluent-bit to GCP'
 }
 
@@ -123,24 +125,15 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
         exec(`mv k3s.yml /home/gitpod/.kube/config`)
         werft.done(vmSlices.KUBECONFIG)
 
-        // wait until the api-server is ready
-        let wait = true
-        while (wait) {
-            werft.log(vmSlices.KUBECONFIG, 'Checking that k3s apiserver is ready...')
-            const result = (exec(`kubectl get --raw='/readyz?verbose'`, { slice:vmSlices.KUBECONFIG, dontCheckRc: true, async: false }));
-            wait = result.code !== 0;
-            sleep(10 * 100)
-        }
-        werft.log(vmSlices.KUBECONFIG, 'k3s apiserver is ready')
+        werft.log(vmSlices.WAIT_K3S, 'Wait for k3s')
+        await waitForApiserver({ slice:vmSlices.WAIT_K3S })
+        await waitUntilAllPodsAreReady("kube-system", { slice:vmSlices.WAIT_K3S } )
+        werft.done(vmSlices.WAIT_K3S)
 
-        // wait until all kube-system pods are ready
-        werft.log(vmSlices.KUBECONFIG, 'checking that all pods in kube-system are ready')
-        exec("kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=300s", { slice:vmSlices.KUBECONFIG, async: false })
-        werft.log(vmSlices.KUBECONFIG, 'all pods in kube-system are ready')
+        werft.log(vmSlices.WAIT_CERTMANAGER, 'Wait for Cert-Manager')
+        await waitUntilAllPodsAreReady("cert-manager", { slice:vmSlices.WAIT_CERTMANAGER } )
+        werft.done(vmSlices.WAIT_CERTMANAGER)
 
-
-
-        exec(`kubectl wait --for=condition=Complete -n cert-manager job --all --timeout=600s`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER })
         exec(`kubectl apply -f clouddns-dns01-solver-svc-acct.yaml -f letsencrypt-issuer.yaml`, { slice: vmSlices.INSTALL_LETS_ENCRYPT_ISSUER, dontCheckRc: true })
         werft.done(vmSlices.INSTALL_LETS_ENCRYPT_ISSUER)
 
@@ -454,16 +447,9 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
         exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
     }
 
-    try {
-        werft.log(installerSlices.DEPLOYMENT_WAITING, "Server not ready. Let the waiting...commence!");
-        exec(`kubectl -n ${namespace} rollout status deployment/server --timeout=10m`, { slice: installerSlices.DEPLOYMENT_WAITING });
-        werft.done(installerSlices.DEPLOYMENT_WAITING);
-    } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail(installerSlices.DEPLOYMENT_WAITING, err);
-        }
-        exec('exit 0')
-    }
+    werft.log(installerSlices.DEPLOYMENT_WAITING, "Waiting until all pods are ready.");
+    await waitUntilAllPodsAreReady(deploymentConfig.namespace, { slice: installerSlices.DEPLOYMENT_WAITING })
+    werft.done(installerSlices.DEPLOYMENT_WAITING);
 
     await addDNSRecord(werft, deploymentConfig.namespace, deploymentConfig.domain, !withVM)
 

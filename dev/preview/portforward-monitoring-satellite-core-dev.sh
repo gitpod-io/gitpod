@@ -3,8 +3,10 @@
 # Exposes Prometheus and Grafana's UI
 #
 
-VM_NAME="$(git symbolic-ref HEAD 2>&1 | awk '{ sub(/^refs\/heads\//, ""); $0 = tolower($0); gsub(/[^-a-z0-9]/, "-"); print }')"
-NAMESPACE="staging-${VM_NAME}"
+source ./dev/preview/util/preview-name-from-branch.sh
+
+PREVIEW_NAME="$(preview-name-from-branch)"
+NAMESPACE="staging-${PREVIEW_NAME}"
 
 function log {
     echo "[$(date)] $*"
