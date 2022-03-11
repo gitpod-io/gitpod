@@ -64,49 +64,12 @@ export class PrebuildManager {
     ): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
         const cloneURL = context.repository.cloneUrl;
-        const commitSHAIdentifier = CommitContext.computeHash(context);
         span.setTag("cloneURL", cloneURL);
         span.setTag("commit", commitInfo?.sha);
 
         try {
             if (user.blocked) {
                 throw new Error("Blocked users cannot start prebuilds.");
-            }
-            const existingPB = await this.workspaceDB
-                .trace({ span })
-                .findPrebuiltWorkspaceByCommit(cloneURL, commitSHAIdentifier);
-            // If the existing prebuild is failed, we want to retrigger it.
-            if (
-                !!existingPB &&
-                existingPB.state !== "aborted" &&
-                existingPB.state !== "failed" &&
-                existingPB.state !== "timeout"
-            ) {
-                // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
-                const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
-                const existingConfig = existingPBWS?.config;
-                const newConfig = await this.fetchConfig({ span }, user, context);
-                log.debug(
-                    `startPrebuild | commits: ${commitSHAIdentifier}, existingPB: ${
-                        existingPB.id
-                    }, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(newConfig)}}`,
-                );
-                const filterPrebuildTasks = (tasks: TaskConfig[] = []) =>
-                    tasks
-                        .map((task) =>
-                            Object.keys(task)
-                                .filter((key) => ["before", "init", "prebuild"].includes(key))
-                                // @ts-ignore
-                                .reduce((obj, key) => ({ ...obj, [key]: task[key] }), {}),
-                        )
-                        .filter((task) => Object.keys(task).length > 0);
-                const isSameConfig =
-                    JSON.stringify(filterPrebuildTasks(existingConfig?.tasks)) ===
-                    JSON.stringify(filterPrebuildTasks(newConfig?.tasks));
-                // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
-                if (isSameConfig) {
-                    return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
-                }
             }
 
             const prebuildContext: StartPrebuildContext = {
