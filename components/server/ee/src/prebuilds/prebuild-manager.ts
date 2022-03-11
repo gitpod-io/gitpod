@@ -4,20 +4,33 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, CommitInfo, PrebuiltWorkspace, Project, ProjectEnvVar, StartPrebuildContext, StartPrebuildResult, TaskConfig, User, Workspace, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { getCommitInfo, HostContextProvider } from '../../../src/auth/host-context-provider';
-import { WorkspaceFactory } from '../../../src/workspace/workspace-factory';
-import { ConfigProvider } from '../../../src/workspace/config-provider';
-import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
-import { Config } from '../../../src/config';
-import { ProjectsService } from '../../../src/projects/projects-service';
-import { secondsBefore } from '@gitpod/gitpod-protocol/lib/util/timeutil';
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import {
+    CommitContext,
+    CommitInfo,
+    PrebuiltWorkspace,
+    Project,
+    ProjectEnvVar,
+    StartPrebuildContext,
+    StartPrebuildResult,
+    TaskConfig,
+    User,
+    Workspace,
+    WorkspaceConfig,
+    WorkspaceInstance,
+} from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { getCommitInfo, HostContextProvider } from "../../../src/auth/host-context-provider";
+import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
+import { ConfigProvider } from "../../../src/workspace/config-provider";
+import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
+import { Config } from "../../../src/config";
+import { ProjectsService } from "../../../src/projects/projects-service";
+import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
-import { inject, injectable } from 'inversify';
-import * as opentracing from 'opentracing';
+import { inject, injectable } from "inversify";
+import * as opentracing from "opentracing";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -45,7 +58,10 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
 
-    async startPrebuild(ctx: TraceContext, { context, project, user, commitInfo }: StartPrebuildParams): Promise<StartPrebuildResult> {
+    async startPrebuild(
+        ctx: TraceContext,
+        { context, project, user, commitInfo }: StartPrebuildParams,
+    ): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
         const cloneURL = context.repository.cloneUrl;
         const commitSHAIdentifier = CommitContext.computeHash(context);
@@ -56,21 +72,37 @@ export class PrebuildManager {
             if (user.blocked) {
                 throw new Error("Blocked users cannot start prebuilds.");
             }
-            const existingPB = await this.workspaceDB.trace({ span }).findPrebuiltWorkspaceByCommit(cloneURL, commitSHAIdentifier);
+            const existingPB = await this.workspaceDB
+                .trace({ span })
+                .findPrebuiltWorkspaceByCommit(cloneURL, commitSHAIdentifier);
             // If the existing prebuild is failed, we want to retrigger it.
-            if (!!existingPB && existingPB.state !== 'aborted' && existingPB.state !== 'failed' && existingPB.state !== 'timeout') {
+            if (
+                !!existingPB &&
+                existingPB.state !== "aborted" &&
+                existingPB.state !== "failed" &&
+                existingPB.state !== "timeout"
+            ) {
                 // If the existing prebuild is based on an outdated project config, we also want to retrigger it.
                 const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
                 const existingConfig = existingPBWS?.config;
                 const newConfig = await this.fetchConfig({ span }, user, context);
-                log.debug(`startPrebuild | commits: ${commitSHAIdentifier}, existingPB: ${existingPB.id}, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(newConfig)}}`);
-                const filterPrebuildTasks = (tasks: TaskConfig[] = []) => (tasks
-                    .map(task => Object.keys(task)
-                        .filter(key => ['before', 'init', 'prebuild'].includes(key))
-                        // @ts-ignore
-                        .reduce((obj, key) => ({ ...obj, [key]: task[key] }), {}))
-                    .filter(task => Object.keys(task).length > 0));
-                const isSameConfig = JSON.stringify(filterPrebuildTasks(existingConfig?.tasks)) === JSON.stringify(filterPrebuildTasks(newConfig?.tasks));
+                log.debug(
+                    `startPrebuild | commits: ${commitSHAIdentifier}, existingPB: ${
+                        existingPB.id
+                    }, existingConfig: ${JSON.stringify(existingConfig)}, newConfig: ${JSON.stringify(newConfig)}}`,
+                );
+                const filterPrebuildTasks = (tasks: TaskConfig[] = []) =>
+                    tasks
+                        .map((task) =>
+                            Object.keys(task)
+                                .filter((key) => ["before", "init", "prebuild"].includes(key))
+                                // @ts-ignore
+                                .reduce((obj, key) => ({ ...obj, [key]: task[key] }), {}),
+                        )
+                        .filter((task) => Object.keys(task).length > 0);
+                const isSameConfig =
+                    JSON.stringify(filterPrebuildTasks(existingConfig?.tasks)) ===
+                    JSON.stringify(filterPrebuildTasks(newConfig?.tasks));
                 // If there is an existing prebuild that isn't failed and it's based on the current config, we return it here instead of triggering a new prebuild.
                 if (isSameConfig) {
                     return { prebuildId: existingPB.id, wsid: existingPB.buildWorkspaceId, done: true };
@@ -82,7 +114,7 @@ export class PrebuildManager {
                 actual: context,
                 project,
                 branch: context.ref,
-                normalizedContextURL: context.normalizedContextURL
+                normalizedContextURL: context.normalizedContextURL,
             };
 
             if (this.shouldPrebuildIncrementally(context.repository.cloneUrl, project)) {
@@ -90,30 +122,50 @@ export class PrebuildManager {
                 const hostContext = this.hostContextProvider.get(context.repository.host);
                 const repoProvider = hostContext?.services?.repositoryProvider;
                 if (repoProvider) {
-                    prebuildContext.commitHistory = await repoProvider.getCommitHistory(user, context.repository.owner, context.repository.name, context.revision, maxDepth);
-                    if (context.additionalRepositoryCheckoutInfo && context.additionalRepositoryCheckoutInfo.length > 0) {
-                        const histories = context.additionalRepositoryCheckoutInfo.map(async info => {
-                            const commitHistory = await repoProvider.getCommitHistory(user, info.repository.owner, info.repository.name, info.revision, maxDepth);
+                    prebuildContext.commitHistory = await repoProvider.getCommitHistory(
+                        user,
+                        context.repository.owner,
+                        context.repository.name,
+                        context.revision,
+                        maxDepth,
+                    );
+                    if (
+                        context.additionalRepositoryCheckoutInfo &&
+                        context.additionalRepositoryCheckoutInfo.length > 0
+                    ) {
+                        const histories = context.additionalRepositoryCheckoutInfo.map(async (info) => {
+                            const commitHistory = await repoProvider.getCommitHistory(
+                                user,
+                                info.repository.owner,
+                                info.repository.name,
+                                info.revision,
+                                maxDepth,
+                            );
                             return {
                                 cloneUrl: info.repository.cloneUrl,
-                                commitHistory
-                            }
+                                commitHistory,
+                            };
                         });
                         prebuildContext.additionalRepositoryCommitHistories = await Promise.all(histories);
                     }
                 }
             }
 
-
-
             const projectEnvVarsPromise = project ? this.projectService.getProjectEnvironmentVariables(project.id) : [];
 
-            const workspace = await this.workspaceFactory.createForContext({span}, user, prebuildContext, context.normalizedContextURL!);
-            const prebuildPromise = this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(workspace.id)!;
+            const workspace = await this.workspaceFactory.createForContext(
+                { span },
+                user,
+                prebuildContext,
+                context.normalizedContextURL!,
+            );
+            const prebuildPromise = this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspace.id)!;
 
             span.setTag("starting", true);
             const projectEnvVars = await projectEnvVarsPromise;
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {excludeFeatureFlags: ['full_workspace_backup']});
+            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], projectEnvVars, {
+                excludeFeatureFlags: ["full_workspace_backup"],
+            });
             const prebuild = await prebuildPromise;
             if (!prebuild) {
                 throw new Error(`Failed to create a prebuild for: ${context.normalizedContextURL}`);
@@ -121,7 +173,8 @@ export class PrebuildManager {
 
             if (await this.shouldRateLimitPrebuild(span, cloneURL)) {
                 prebuild.state = "aborted";
-                prebuild.error = "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
+                prebuild.error =
+                    "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
 
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
                 span.setTag("starting", false);
@@ -136,13 +189,18 @@ export class PrebuildManager {
             if (project) {
                 let aCommitInfo = commitInfo;
                 if (!aCommitInfo) {
-                    aCommitInfo = await getCommitInfo(this.hostContextProvider, user, context.repository.cloneUrl, context.revision);
+                    aCommitInfo = await getCommitInfo(
+                        this.hostContextProvider,
+                        user,
+                        context.repository.cloneUrl,
+                        context.revision,
+                    );
                     if (!aCommitInfo) {
                         aCommitInfo = {
-                            author: 'unknown',
-                            commitMessage: 'unknown',
-                            sha: context.revision
-                        }
+                            author: "unknown",
+                            commitMessage: "unknown",
+                            sha: context.revision,
+                        };
                     }
                 }
                 await this.storePrebuildInfo({ span }, project, prebuild, workspace, user, aCommitInfo);
@@ -164,17 +222,17 @@ export class PrebuildManager {
             const prebuildPromise = this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspaceId);
             const runningInstance = await this.workspaceDB.trace({ span }).findRunningInstance(workspaceId);
             if (runningInstance !== undefined) {
-                throw new WorkspaceRunningError('Workspace is still runnning', runningInstance);
+                throw new WorkspaceRunningError("Workspace is still runnning", runningInstance);
             }
             span.setTag("starting", true);
             const workspace = await workspacePromise;
             if (!workspace) {
-                console.error('Unknown workspace id.', { workspaceId });
-                throw new Error('Unknown workspace ' + workspaceId);
+                console.error("Unknown workspace id.", { workspaceId });
+                throw new Error("Unknown workspace " + workspaceId);
             }
             const prebuild = await prebuildPromise;
             if (!prebuild) {
-                throw new Error('No prebuild found for workspace ' + workspaceId);
+                throw new Error("No prebuild found for workspace " + workspaceId);
             }
             let projectEnvVars: ProjectEnvVar[] = [];
             if (workspace.projectId) {
@@ -191,14 +249,12 @@ export class PrebuildManager {
     }
 
     shouldPrebuild(config: WorkspaceConfig | undefined): boolean {
-        if (!config ||
-            !config._origin ||
-            config._origin !== 'repo') {
+        if (!config || !config._origin || config._origin !== "repo") {
             // we demand an explicit gitpod config
             return false;
         }
 
-        const hasPrebuildTask = !!config.tasks && config.tasks.find(t => !!t.init || !!t.prebuild);
+        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.init || !!t.prebuild);
         if (!hasPrebuildTask) {
             return false;
         }
@@ -210,9 +266,9 @@ export class PrebuildManager {
         if (project?.settings?.useIncrementalPrebuilds) {
             return true;
         }
-        const trimRepoUrl = (url: string) => url.replace(/\/$/, '').replace(/\.git$/, '');
+        const trimRepoUrl = (url: string) => url.replace(/\/$/, "").replace(/\.git$/, "");
         const repoUrl = trimRepoUrl(cloneUrl);
-        return this.config.incrementalPrebuilds.repositoryPasslist.some(url => trimRepoUrl(url) === repoUrl);
+        return this.config.incrementalPrebuilds.repositoryPasslist.some((url) => trimRepoUrl(url) === repoUrl);
     }
 
     async fetchConfig(ctx: TraceContext, user: User, context: CommitContext): Promise<WorkspaceConfig> {
@@ -228,10 +284,17 @@ export class PrebuildManager {
     }
 
     //TODO this doesn't belong so deep here. All this context should be stored on the surface not passed down.
-    protected async storePrebuildInfo(ctx: TraceContext, project: Project, pws: PrebuiltWorkspace, ws: Workspace, user: User, commit: CommitInfo) {
+    protected async storePrebuildInfo(
+        ctx: TraceContext,
+        project: Project,
+        pws: PrebuiltWorkspace,
+        ws: Workspace,
+        user: User,
+        commit: CommitInfo,
+    ) {
         const span = TraceContext.startSpan("storePrebuildInfo", ctx);
         const { userId, teamId, name: projectName, id: projectId } = project;
-        await this.workspaceDB.trace({span}).storePrebuildInfo({
+        await this.workspaceDB.trace({ span }).storePrebuildInfo({
             id: pws.id,
             buildWorkspaceId: pws.buildWorkspaceId,
             basedOnPrebuildId: ws.basedOnPrebuildId,
@@ -256,7 +319,9 @@ export class PrebuildManager {
 
     private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
         const windowStart = secondsBefore(new Date().toISOString(), PREBUILD_LIMITER_WINDOW_SECONDS);
-        const unabortedCount = await this.workspaceDB.trace({span}).countUnabortedPrebuildsSince(cloneURL, new Date(windowStart));
+        const unabortedCount = await this.workspaceDB
+            .trace({ span })
+            .countUnabortedPrebuildsSince(cloneURL, new Date(windowStart));
         const limit = this.getPrebuildRateLimitForCloneURL(cloneURL);
 
         if (unabortedCount >= limit) {
@@ -274,7 +339,7 @@ export class PrebuildManager {
         }
 
         // Find if there is a default value set under the '*' key
-        limit = this.config.prebuildLimiter['*'];
+        limit = this.config.prebuildLimiter["*"];
         if (limit > 0) {
             return limit;
         }
