@@ -1,6 +1,12 @@
 # Change Log
 
 ## March 2022
+- Fix setting sync limit failure in some cases ([#8644](https://github.com/gitpod-io/gitpod/pull/8644)) - [@mustard-mh](https://github.com/mustard-mh)
+- [kubecdl] Fix server name pattern ([#8770](https://github.com/gitpod-io/gitpod/pull/8770)) - [@aledbf](https://github.com/aledbf)
+- ws-manager-bridge logs WorkspaceStatus events ([#8718](https://github.com/gitpod-io/gitpod/pull/8718)) - [@easyCZ](https://github.com/easyCZ)
+- Clarified wording of "timeout" feature on the settings/plans page ([#8699](https://github.com/gitpod-io/gitpod/pull/8699)) - [@lucasvaltl](https://github.com/lucasvaltl)
+- Update code to 1.65.2 ([#8741](https://github.com/gitpod-io/gitpod/pull/8741)) - [@mustard-mh](https://github.com/mustard-mh)
+- [kots]: add standard labels to KOTS manifests ([#8708](https://github.com/gitpod-io/gitpod/pull/8708)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Document ClusterService rpcs and messages ([#8721](https://github.com/gitpod-io/gitpod/pull/8721)) - [@easyCZ](https://github.com/easyCZ)
 - [server] fix compile error ([#8711](https://github.com/gitpod-io/gitpod/pull/8711)) - [@svenefftinge](https://github.com/svenefftinge)
 - Support for multi-repo projects ([#7785](https://github.com/gitpod-io/gitpod/pull/7785)) - [@svenefftinge](https://github.com/svenefftinge)
