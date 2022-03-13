@@ -45,8 +45,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	if nodename == "" {
 		return nil, xerrors.Errorf("NODENAME env var isn't set")
 	}
-	cgCustomizer := &CgroupCustomizer{}
-	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupBasePath)
+
 	markUnmountFallback, err := NewMarkUnmountFallback(reg)
 	if err != nil {
 		return nil, err
@@ -54,7 +53,6 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 
 	listener := []dispatch.Listener{
 		cpulimit.NewDispatchListener(&config.Resources, reg),
-		cgCustomizer,
 		markUnmountFallback,
 	}
 
@@ -62,6 +60,9 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("could not determine cgroup setup: %w", err)
 	}
+
+	listener = append(listener, NewCGroupCustomizer(config.Resources.CGroupBasePath, unified))
+
 	if !unified {
 		listener = append(listener, CacheReclaim(config.Resources.CGroupBasePath))
 	}
