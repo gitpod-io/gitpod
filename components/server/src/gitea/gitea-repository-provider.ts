@@ -100,6 +100,27 @@ export class GiteaRepositoryProvider implements RepositoryProvider {
         };
     }
 
+    public async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number = 100): Promise<string[]> {
+        // TODO(janx): To get more results than GitLab API's max per_page (seems to be 100), pagination should be handled.
+        const result = await this.giteaApi.run<Gitea.Commit[]>(user, async g => {
+            return g.repos.repoGetAllCommits(owner, repo, {
+                // TODO(anbraten): pass ref to call
+                // ref_name: ref,
+                // per_page: maxDepth,
+                page: 1,
+            });
+        });
+        if (Gitea.ApiError.is(result)) {
+            if (result.message === 'GitLab responded with code 404') {
+                throw new Error(`Couldn't find commit #${ref} in repository ${owner}/${repo}.`);
+            }
+            throw result;
+        }
+
+        // TODO(anbraten): use some unique id instead of sha
+        return result.slice(1).map((c) => c.sha || '');
+    }
+
     async getUserRepos(user: User): Promise<string[]> {
         const result = await this.giteaApi.run<Gitea.Repository[]>(user, (g => g.user.userCurrentListRepos()));
         if (Gitea.ApiError.is(result)) {
