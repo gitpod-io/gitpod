@@ -1,4 +1,4 @@
-import { Span, Tracer, trace, context, SpanStatusCode } from '@opentelemetry/api';
+import { Span, Tracer, trace, context, SpanStatusCode, SpanAttributes } from '@opentelemetry/api';
 import { exec } from './shell';
 
 let werft: Werft;
@@ -21,6 +21,7 @@ export class Werft {
     public rootSpan: Span;
     private sliceSpans: { [slice: string]: Span } = {}
     public currentPhaseSpan: Span;
+    private globalSpanAttributes: SpanAttributes = {}
 
     constructor(job: string) {
         if (werft) {
@@ -46,6 +47,7 @@ export class Werft {
                 'werft.phase.description': desc
             }
         }, rootSpanCtx)
+        this.currentPhaseSpan.setAttributes(this.globalSpanAttributes)
 
         console.log(`[${name}|PHASE] ${desc || name}`)
     }
@@ -54,6 +56,7 @@ export class Werft {
         if (!this.sliceSpans[slice]) {
             const parentSpanCtx = trace.setSpan(context.active(), this.currentPhaseSpan);
             const sliceSpan = this.tracer.startSpan(`slice: ${slice}`, undefined, parentSpanCtx)
+            sliceSpan.setAttributes(this.globalSpanAttributes)
             this.sliceSpans[slice] = sliceSpan
         }
         console.log(`[${slice}] ${msg}`)
@@ -114,5 +117,24 @@ export class Werft {
         exec(`werft log result -d "Honeycomb trace" -c github-check-honeycomb-trace url "https://ui.honeycomb.io/gitpod/datasets/werft/trace?trace_id=${traceID}&trace_start_ts=${nowUnix - 1800}&trace_end_ts=${nowUnix + 5}"`);
         this.endPhase()
         this.rootSpan.end()
+    }
+
+    /**
+     * This allows you to set attributes on all open and future Werft spans.
+     * Any spans in phases that have already been closed won't get the attributes.
+     */
+    public addGlobalAttributes(attributes: SpanAttributes): void {
+
+        // Add the attributes to the root span.
+        this.rootSpan.setAttributes(attributes)
+
+        // Set the attribute on all spans for the current phase.
+        this.currentPhaseSpan.setAttributes(attributes)
+        Object.entries(this.sliceSpans).forEach((kv) => {
+            const [_, span] = kv
+            span.setAttributes(attributes)
+        })
+
+        this.globalSpanAttributes = {...this.globalSpanAttributes, ...attributes}
     }
 }
