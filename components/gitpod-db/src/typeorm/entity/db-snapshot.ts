@@ -11,23 +11,22 @@ import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
 
 @Entity()
-@Index("ind_dbsync", ["creationTime"])   // DBSync
+@Index("ind_dbsync", ["creationTime"]) // DBSync
 export class DBSnapshot implements Snapshot {
-
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     id: string;
 
     @Column({
-        type: 'timestamp',
+        type: "timestamp",
         precision: 6,
-        default: () => 'CURRENT_TIMESTAMP(6)',
-        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP
+        default: () => "CURRENT_TIMESTAMP(6)",
+        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
     creationTime: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     availableTime?: string;
 
@@ -43,14 +42,14 @@ export class DBSnapshot implements Snapshot {
 
     @Column({
         // because we introduced this as an afterthought the default is 'available'
-        default: <SnapshotState> 'available',
+        default: <SnapshotState>"available",
     })
     @Index("ind_state")
     state: SnapshotState;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     message?: string;
 }

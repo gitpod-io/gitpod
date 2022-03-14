@@ -21,27 +21,27 @@ export class DBTeamSubscriptionSlot implements TeamSubscriptionSlot {
 
     @Column({
         ...TypeORM.UUID_COLUMN_TYPE,
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     assigneeId?: string;
 
     @Column({
         ...TypeORM.UUID_COLUMN_TYPE,
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     subscriptionId?: string;
 
     @Column({
-        type: 'simple-json',
-        nullable: true
+        type: "simple-json",
+        nullable: true,
     })
     assigneeIdentifier?: AssigneeIdentifier;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     cancellationDate?: string;
 }

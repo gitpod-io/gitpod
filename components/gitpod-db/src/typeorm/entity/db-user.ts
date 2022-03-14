@@ -6,7 +6,7 @@
 
 import { PrimaryColumn, Entity, Column, OneToMany, JoinColumn, Index } from "typeorm";
 import { User, RoleOrPermission, AdditionalUserData, UserFeatureSettings } from "@gitpod/gitpod-protocol";
-import { DBIdentity } from './db-identity';
+import { DBIdentity } from "./db-identity";
 import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
 
@@ -21,64 +21,61 @@ export class DBUser implements User {
     creationDate: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     avatarUrl?: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     name?: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     fullName?: string;
 
-    @OneToMany(type => DBIdentity,
-        identity => identity.user,
-        {
-            eager: true,
-            cascade: ["insert", "update"],  // we do delete on our own
-        }
-    )
+    @OneToMany((type) => DBIdentity, (identity) => identity.user, {
+        eager: true,
+        cascade: ["insert", "update"], // we do delete on our own
+    })
     @JoinColumn()
     identities: DBIdentity[];
 
     @Column({
-        default: false
+        default: false,
     })
     blocked?: boolean;
 
     @Column({
-        type: 'simple-json',
-        nullable: true
+        type: "simple-json",
+        nullable: true,
     })
     featureFlags?: UserFeatureSettings;
 
     @Column({
-        type: 'simple-json',
-        nullable: true
+        type: "simple-json",
+        nullable: true,
     })
     rolesOrPermissions?: RoleOrPermission[];
 
     @Column({
-        default: false
+        default: false,
     })
     markedDeleted?: boolean;
 
     // TODO CLEANUP DB: delete after all usages have been deleted
     @Column({
-        default: false
+        default: false,
     })
     noReleasePeriod?: boolean;
 
     @Column({
-        type: 'simple-json',
-        nullable: true
+        type: "simple-json",
+        nullable: true,
     })
     additionalData?: AdditionalUserData;
 }

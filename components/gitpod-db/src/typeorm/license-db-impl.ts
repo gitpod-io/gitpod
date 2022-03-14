@@ -13,7 +13,6 @@ import { DBLicenseKey } from "./entity/db-license-key";
 
 @injectable()
 export class LicenseDBImpl implements LicenseDB {
-
     @inject(TypeORM) typeorm: TypeORM;
 
     protected async getRepo(): Promise<Repository<DBLicenseKey>> {
@@ -35,7 +34,7 @@ export class LicenseDBImpl implements LicenseDB {
     async get(): Promise<string | undefined> {
         const repo = await this.getRepo();
         const dbobj = await repo.findOne({
-            order: { installationTime: "DESC" }
+            order: { installationTime: "DESC" },
         });
         if (!dbobj) {
             return;
@@ -43,5 +42,4 @@ export class LicenseDBImpl implements LicenseDB {
 
         return dbobj.key;
     }
-
 }

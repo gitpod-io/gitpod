@@ -4,8 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
-export const UserStorageResourcesDB = Symbol('UserStorageResourcesDB');
+export const UserStorageResourcesDB = Symbol("UserStorageResourcesDB");
 
 export interface UserStorageResourcesDB {
     get(userId: string, uri: string): Promise<string>;

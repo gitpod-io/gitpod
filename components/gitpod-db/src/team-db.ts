@@ -6,9 +6,15 @@
 
 import { Team, TeamMemberInfo, TeamMemberRole, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
 
-export const TeamDB = Symbol('TeamDB');
+export const TeamDB = Symbol("TeamDB");
 export interface TeamDB {
-    findTeams(offset: number, limit: number, orderBy: keyof Team, orderDir: "ASC" | "DESC", searchTerm: string): Promise<{ total: number, rows: Team[] }>;
+    findTeams(
+        offset: number,
+        limit: number,
+        orderBy: keyof Team,
+        orderDir: "ASC" | "DESC",
+        searchTerm: string,
+    ): Promise<{ total: number; rows: Team[] }>;
     findTeamById(teamId: string): Promise<Team | undefined>;
     findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]>;
     findTeamsByUser(userId: string): Promise<Team[]>;

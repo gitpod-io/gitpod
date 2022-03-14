@@ -16,7 +16,6 @@ import { Transformer } from "../../typeorm/transformer";
 @Index("ind_user_startdate", ["userId", "startDate"])
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBTeamSubscription implements TeamSubscription {
-
     @PrimaryColumn("uuid")
     id: string;
 
@@ -30,30 +29,30 @@ export class DBTeamSubscription implements TeamSubscription {
     startDate: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     endDate?: string;
 
     @Column()
     planId: string;
 
-    @Column('int')
+    @Column("int")
     quantity: number;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     cancellationDate?: string;
 
     @Column({
-        default: false
+        default: false,
     })
     deleted?: boolean;
 
     @Column({
-        default: false
+        default: false,
     })
     excludeFromMoreResources: boolean;
 }

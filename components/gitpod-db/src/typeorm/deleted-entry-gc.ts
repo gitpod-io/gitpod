@@ -10,7 +10,6 @@ import { Config } from "../config";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 
-
 @injectable()
 export class DeletedEntryGC implements Disposable {
     @inject(TypeORM) protected readonly typeORM: TypeORM;
@@ -21,13 +20,16 @@ export class DeletedEntryGC implements Disposable {
     public start() {
         const cfg = this.config.deletedEntryGCConfig;
         if (!cfg.enabled) {
-            console.info("Deleted Entries GC disabled")
+            console.info("Deleted Entries GC disabled");
             return;
         }
 
-        console.info(`Deleted Entries GC enabled (running every ${cfg.intervalMS/(60*1000)} minutes)`);
+        console.info(`Deleted Entries GC enabled (running every ${cfg.intervalMS / (60 * 1000)} minutes)`);
         this.disposables.push(
-            repeat(() => this.gc().catch(e => console.error("error while removing deleted entries", e)), cfg.intervalMS)
+            repeat(
+                () => this.gc().catch((e) => console.error("error while removing deleted entries", e)),
+                cfg.intervalMS,
+            ),
         );
     }
 
@@ -37,9 +39,8 @@ export class DeletedEntryGC implements Disposable {
 
     protected async gc() {
         const conn = await this.typeORM.getConnection();
-        await Promise.all(tables.map(t => conn.query(`DELETE FROM ${t.name} WHERE ${t.deletionColumn} = 1`)));
+        await Promise.all(tables.map((t) => conn.query(`DELETE FROM ${t.name} WHERE ${t.deletionColumn} = 1`)));
     }
-
 }
 
 const tables: TableWithDeletion[] = [
@@ -66,4 +67,3 @@ interface TableWithDeletion {
     name: string;
     deletionColumn: string;
 }
-

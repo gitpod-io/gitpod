@@ -21,14 +21,14 @@ export class DBOneTimeSecret implements OneTimeSecret {
         // Relies on the initialization of the var in OneTimeSecretDbImpl
         transformer: Transformer.compose(
             Transformer.SIMPLE_JSON([]),
-            Transformer.encrypted(() => encryptionService)
-        )
+            Transformer.encrypted(() => encryptionService),
+        ),
     })
     value: string;
 
     @Column({
-        type: 'timestamp',
-        precision: 6
+        type: "timestamp",
+        precision: 6,
     })
     expirationTime: string;
 

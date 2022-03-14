@@ -7,15 +7,20 @@
 import { inject, injectable } from "inversify";
 import { PendingGithubEvent } from "@gitpod/gitpod-protocol";
 import { EntityManager, Repository } from "typeorm";
-import { TypeORM } from './typeorm';
-import { PendingGithubEventDB, PendingGithubEventWithUser, TransactionalPendingGithubEventDBFactory } from "../pending-github-event-db";
+import { TypeORM } from "./typeorm";
+import {
+    PendingGithubEventDB,
+    PendingGithubEventWithUser,
+    TransactionalPendingGithubEventDBFactory,
+} from "../pending-github-event-db";
 import { DBPendingGithubEvent } from "./entity/db-pending-github-event";
 import { DBIdentity } from "./entity/db-identity";
 
 @injectable()
 export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
     @inject(TypeORM) protected readonly typeorm: TypeORM;
-    @inject(TransactionalPendingGithubEventDBFactory) protected readonly transactionalFactory: TransactionalPendingGithubEventDBFactory;
+    @inject(TransactionalPendingGithubEventDBFactory)
+    protected readonly transactionalFactory: TransactionalPendingGithubEventDBFactory;
 
     protected async getManager(): Promise<EntityManager> {
         return (await this.typeorm.getConnection()).manager;
@@ -32,7 +37,7 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
     public async findByGithubUserID(type: string, accountId: number): Promise<PendingGithubEvent[]> {
         const repo = await this.getRepo();
         return await repo
-            .createQueryBuilder('pghe')
+            .createQueryBuilder("pghe")
             .where(`pghe.githubUserId = :accountId AND pghe.type LIKE :tpe`, { accountId, tpe: `${type}%` })
             .getMany();
     }
@@ -45,9 +50,9 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
     public async findWithUser(type: string): Promise<PendingGithubEventWithUser[]> {
         const repo = await this.getRepo();
         const res = await repo
-            .createQueryBuilder('pghe')
-            .innerJoinAndMapOne('pghe.identity', DBIdentity, 'ident', 'pghe.githubUserId = ident.authId')
-            .innerJoinAndSelect('ident.user', 'user')
+            .createQueryBuilder("pghe")
+            .innerJoinAndMapOne("pghe.identity", DBIdentity, "ident", "pghe.githubUserId = ident.authId")
+            .innerJoinAndSelect("ident.user", "user")
             .where('ident.authProviderId = "Public-GitHub"')
             .andWhere(`ident.deleted != true`)
             .orderBy("pghe.creationDate", "ASC")
@@ -58,7 +63,7 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
 
     async transaction<T>(code: (db: PendingGithubEventDB) => Promise<T>): Promise<T> {
         const manager = await this.getManager();
-        return await manager.transaction(async manager => {
+        return await manager.transaction(async (manager) => {
             const transactionalDB = this.transactionalFactory(manager);
             return await code(transactionalDB);
         });
@@ -66,9 +71,7 @@ export class TypeORMPendingGithubEventDBImpl implements PendingGithubEventDB {
 }
 
 export class TransactionalPendingGithubEventDBImpl extends TypeORMPendingGithubEventDBImpl {
-
-    constructor(
-        protected readonly manager: EntityManager) {
+    constructor(protected readonly manager: EntityManager) {
         super();
     }
 

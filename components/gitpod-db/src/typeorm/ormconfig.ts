@@ -12,6 +12,6 @@ import { Config } from "../config";
 
 module.exports = {
     ...TypeORM.defaultOptions(__dirname),
-    ...(new Config()).dbConfig,
-    database: process.env.DB_NAME || "gitpod"
-}
+    ...new Config().dbConfig,
+    database: process.env.DB_NAME || "gitpod",
+};

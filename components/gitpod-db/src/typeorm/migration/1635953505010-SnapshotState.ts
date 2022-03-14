@@ -4,17 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import {MigrationInterface, QueryRunner} from "typeorm";
+import { MigrationInterface, QueryRunner } from "typeorm";
 import { columnExists, indexExists } from "./helper/helper";
 
 const TABLE_NAME = "d_b_snapshot";
 const INDEX_NAME = "ind_state";
 
 export class SnapshotState1635953505010 implements MigrationInterface {
-
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (!(await columnExists(queryRunner, TABLE_NAME, "availableTime"))) {
-            await queryRunner.query(`ALTER TABLE ${TABLE_NAME} ADD COLUMN availableTime varchar(255) NOT NULL DEFAULT ''`);
+            await queryRunner.query(
+                `ALTER TABLE ${TABLE_NAME} ADD COLUMN availableTime varchar(255) NOT NULL DEFAULT ''`,
+            );
         }
         if (!(await columnExists(queryRunner, TABLE_NAME, "state"))) {
             await queryRunner.query(`ALTER TABLE ${TABLE_NAME} ADD COLUMN state char(32) NOT NULL DEFAULT 'available'`);
@@ -36,5 +37,4 @@ export class SnapshotState1635953505010 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE ${TABLE_NAME} DROP COLUMN message`);
         await queryRunner.query(`DROP INDEX ${INDEX_NAME} ON ${TABLE_NAME}`);
     }
-
 }
