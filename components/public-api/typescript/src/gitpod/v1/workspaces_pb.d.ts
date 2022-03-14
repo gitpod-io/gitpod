@@ -10,7 +10,7 @@ import * as google_protobuf_field_mask_pb from "google-protobuf/google/protobuf/
 import * as google_rpc_status_pb from "../../google/rpc/status_pb";
 import * as gitpod_v1_pagination_pb from "../../gitpod/v1/pagination_pb";
 
-export class ListWorkspacesRequest extends jspb.Message { 
+export class ListWorkspacesRequest extends jspb.Message {
 
     hasPagination(): boolean;
     clearPagination(): void;
@@ -39,7 +39,7 @@ export namespace ListWorkspacesRequest {
     }
 }
 
-export class ListWorkspacesResponse extends jspb.Message { 
+export class ListWorkspacesResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -70,7 +70,7 @@ export namespace ListWorkspacesResponse {
     }
 
 
-    export class WorkspaceAndInstance extends jspb.Message { 
+    export class WorkspaceAndInstance extends jspb.Message {
 
         hasResult(): boolean;
         clearResult(): void;
@@ -101,7 +101,7 @@ export namespace ListWorkspacesResponse {
 
 }
 
-export class GetWorkspaceRequest extends jspb.Message { 
+export class GetWorkspaceRequest extends jspb.Message {
     getWorkspaceId(): string;
     setWorkspaceId(value: string): GetWorkspaceRequest;
 
@@ -121,7 +121,7 @@ export namespace GetWorkspaceRequest {
     }
 }
 
-export class GetWorkspaceResponse extends jspb.Message { 
+export class GetWorkspaceResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -150,16 +150,14 @@ export namespace GetWorkspaceResponse {
     }
 }
 
-export class CreateAndStartWorkspaceRequest extends jspb.Message { 
+export class CreateAndStartWorkspaceRequest extends jspb.Message {
     getIdempotencyToken(): string;
     setIdempotencyToken(value: string): CreateAndStartWorkspaceRequest;
+
+    hasContextUrl(): boolean;
+    clearContextUrl(): void;
     getContextUrl(): string;
     setContextUrl(value: string): CreateAndStartWorkspaceRequest;
-
-    hasIfAvailable(): boolean;
-    clearIfAvailable(): void;
-    getIfAvailable(): boolean;
-    setIfAvailable(value: boolean): CreateAndStartWorkspaceRequest;
 
     hasPrebuildId(): boolean;
     clearPrebuildId(): void;
@@ -171,7 +169,7 @@ export class CreateAndStartWorkspaceRequest extends jspb.Message {
     getStartSpec(): StartWorkspaceSpec | undefined;
     setStartSpec(value?: StartWorkspaceSpec): CreateAndStartWorkspaceRequest;
 
-    getPrebuildCase(): CreateAndStartWorkspaceRequest.PrebuildCase;
+    getSourceCase(): CreateAndStartWorkspaceRequest.SourceCase;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): CreateAndStartWorkspaceRequest.AsObject;
@@ -187,20 +185,19 @@ export namespace CreateAndStartWorkspaceRequest {
     export type AsObject = {
         idempotencyToken: string,
         contextUrl: string,
-        ifAvailable: boolean,
         prebuildId: string,
         startSpec?: StartWorkspaceSpec.AsObject,
     }
 
-    export enum PrebuildCase {
-        PREBUILD_NOT_SET = 0,
-        IF_AVAILABLE = 3,
-        PREBUILD_ID = 4,
+    export enum SourceCase {
+        SOURCE_NOT_SET = 0,
+        CONTEXT_URL = 2,
+        PREBUILD_ID = 3,
     }
 
 }
 
-export class CreateAndStartWorkspaceResponse extends jspb.Message { 
+export class CreateAndStartWorkspaceResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -226,7 +223,7 @@ export namespace CreateAndStartWorkspaceResponse {
     }
 }
 
-export class StartWorkspaceRequest extends jspb.Message { 
+export class StartWorkspaceRequest extends jspb.Message {
     getIdempotencyToken(): string;
     setIdempotencyToken(value: string): StartWorkspaceRequest;
     getWorkspaceId(): string;
@@ -255,7 +252,7 @@ export namespace StartWorkspaceRequest {
     }
 }
 
-export class StartWorkspaceResponse extends jspb.Message { 
+export class StartWorkspaceResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -284,7 +281,7 @@ export namespace StartWorkspaceResponse {
     }
 }
 
-export class GetActiveWorkspaceInstanceRequest extends jspb.Message { 
+export class GetActiveWorkspaceInstanceRequest extends jspb.Message {
     getWorkspaceId(): string;
     setWorkspaceId(value: string): GetActiveWorkspaceInstanceRequest;
 
@@ -304,7 +301,7 @@ export namespace GetActiveWorkspaceInstanceRequest {
     }
 }
 
-export class GetActiveWorkspaceInstanceResponse extends jspb.Message { 
+export class GetActiveWorkspaceInstanceResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -333,7 +330,7 @@ export namespace GetActiveWorkspaceInstanceResponse {
     }
 }
 
-export class GetWorkspaceInstanceOwnerTokenRequest extends jspb.Message { 
+export class GetWorkspaceInstanceOwnerTokenRequest extends jspb.Message {
     getInstanceId(): string;
     setInstanceId(value: string): GetWorkspaceInstanceOwnerTokenRequest;
 
@@ -353,7 +350,7 @@ export namespace GetWorkspaceInstanceOwnerTokenRequest {
     }
 }
 
-export class GetWorkspaceInstanceOwnerTokenResponse extends jspb.Message { 
+export class GetWorkspaceInstanceOwnerTokenResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -379,7 +376,7 @@ export namespace GetWorkspaceInstanceOwnerTokenResponse {
     }
 }
 
-export class ListenToWorkspaceInstanceRequest extends jspb.Message { 
+export class ListenToWorkspaceInstanceRequest extends jspb.Message {
     getInstanceId(): string;
     setInstanceId(value: string): ListenToWorkspaceInstanceRequest;
 
@@ -399,7 +396,7 @@ export namespace ListenToWorkspaceInstanceRequest {
     }
 }
 
-export class ListenToWorkspaceInstanceResponse extends jspb.Message { 
+export class ListenToWorkspaceInstanceResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -428,7 +425,7 @@ export namespace ListenToWorkspaceInstanceResponse {
     }
 }
 
-export class ListenToImageBuildLogsRequest extends jspb.Message { 
+export class ListenToImageBuildLogsRequest extends jspb.Message {
     getInstanceId(): string;
     setInstanceId(value: string): ListenToImageBuildLogsRequest;
 
@@ -448,7 +445,7 @@ export namespace ListenToImageBuildLogsRequest {
     }
 }
 
-export class ListenToImageBuildLogsResponse extends jspb.Message { 
+export class ListenToImageBuildLogsResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -474,7 +471,7 @@ export namespace ListenToImageBuildLogsResponse {
     }
 }
 
-export class StopWorkspaceRequest extends jspb.Message { 
+export class StopWorkspaceRequest extends jspb.Message {
     getIdempotencyToken(): string;
     setIdempotencyToken(value: string): StopWorkspaceRequest;
     getWorkspaceId(): string;
@@ -497,7 +494,7 @@ export namespace StopWorkspaceRequest {
     }
 }
 
-export class StopWorkspaceResponse extends jspb.Message { 
+export class StopWorkspaceResponse extends jspb.Message {
 
     hasResponseStatus(): boolean;
     clearResponseStatus(): void;
@@ -520,7 +517,7 @@ export namespace StopWorkspaceResponse {
     }
 }
 
-export class Workspace extends jspb.Message { 
+export class Workspace extends jspb.Message {
     getWorkspaceId(): string;
     setWorkspaceId(value: string): Workspace;
     getOwnerId(): string;
@@ -555,7 +552,7 @@ export namespace Workspace {
     }
 }
 
-export class WorkspaceContext extends jspb.Message { 
+export class WorkspaceContext extends jspb.Message {
     getContextUrl(): string;
     setContextUrl(value: string): WorkspaceContext;
 
@@ -595,7 +592,7 @@ export namespace WorkspaceContext {
     }
 
 
-    export class Git extends jspb.Message { 
+    export class Git extends jspb.Message {
         getNormalizedContextUrl(): string;
         setNormalizedContextUrl(value: string): Git;
         getCommit(): string;
@@ -618,7 +615,7 @@ export namespace WorkspaceContext {
         }
     }
 
-    export class Prebuild extends jspb.Message { 
+    export class Prebuild extends jspb.Message {
 
         hasOriginalContext(): boolean;
         clearOriginalContext(): void;
@@ -644,7 +641,7 @@ export namespace WorkspaceContext {
         }
     }
 
-    export class Snapshot extends jspb.Message { 
+    export class Snapshot extends jspb.Message {
         getSnapshotId(): string;
         setSnapshotId(value: string): Snapshot;
 
@@ -674,7 +671,7 @@ export namespace WorkspaceContext {
 
 }
 
-export class WorkspaceInstance extends jspb.Message { 
+export class WorkspaceInstance extends jspb.Message {
     getInstanceId(): string;
     setInstanceId(value: string): WorkspaceInstance;
     getWorkspaceId(): string;
@@ -709,16 +706,16 @@ export namespace WorkspaceInstance {
     }
 }
 
-export class WorkspaceInstanceStatus extends jspb.Message { 
+export class WorkspaceInstanceStatus extends jspb.Message {
     getStatusVersion(): number;
     setStatusVersion(value: number): WorkspaceInstanceStatus;
-    getPhase(): WorkspaceInstancePhase;
-    setPhase(value: WorkspaceInstancePhase): WorkspaceInstanceStatus;
+    getPhase(): WorkspaceInstanceStatus.Phase;
+    setPhase(value: WorkspaceInstanceStatus.Phase): WorkspaceInstanceStatus;
 
     hasConditions(): boolean;
     clearConditions(): void;
-    getConditions(): WorkspaceInstanceConditions | undefined;
-    setConditions(value?: WorkspaceInstanceConditions): WorkspaceInstanceStatus;
+    getConditions(): WorkspaceInstanceStatus.Conditions | undefined;
+    setConditions(value?: WorkspaceInstanceStatus.Conditions): WorkspaceInstanceStatus;
     getMessage(): string;
     setMessage(value: string): WorkspaceInstanceStatus;
     getUrl(): string;
@@ -739,50 +736,65 @@ export class WorkspaceInstanceStatus extends jspb.Message {
 export namespace WorkspaceInstanceStatus {
     export type AsObject = {
         statusVersion: number,
-        phase: WorkspaceInstancePhase,
-        conditions?: WorkspaceInstanceConditions.AsObject,
+        phase: WorkspaceInstanceStatus.Phase,
+        conditions?: WorkspaceInstanceStatus.Conditions.AsObject,
         message: string,
         url: string,
         admission: AdmissionLevel,
     }
-}
 
-export class WorkspaceInstanceConditions extends jspb.Message { 
-    getFailed(): string;
-    setFailed(value: string): WorkspaceInstanceConditions;
-    getTimeout(): string;
-    setTimeout(value: string): WorkspaceInstanceConditions;
 
-    hasFirstUserActivity(): boolean;
-    clearFirstUserActivity(): void;
-    getFirstUserActivity(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setFirstUserActivity(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceInstanceConditions;
+    export class Conditions extends jspb.Message {
+        getFailed(): string;
+        setFailed(value: string): Conditions;
+        getTimeout(): string;
+        setTimeout(value: string): Conditions;
 
-    hasStoppedByRequest(): boolean;
-    clearStoppedByRequest(): void;
-    getStoppedByRequest(): boolean | undefined;
-    setStoppedByRequest(value: boolean): WorkspaceInstanceConditions;
+        hasFirstUserActivity(): boolean;
+        clearFirstUserActivity(): void;
+        getFirstUserActivity(): google_protobuf_timestamp_pb.Timestamp | undefined;
+        setFirstUserActivity(value?: google_protobuf_timestamp_pb.Timestamp): Conditions;
 
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): WorkspaceInstanceConditions.AsObject;
-    static toObject(includeInstance: boolean, msg: WorkspaceInstanceConditions): WorkspaceInstanceConditions.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: WorkspaceInstanceConditions, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): WorkspaceInstanceConditions;
-    static deserializeBinaryFromReader(message: WorkspaceInstanceConditions, reader: jspb.BinaryReader): WorkspaceInstanceConditions;
-}
+        hasStoppedByRequest(): boolean;
+        clearStoppedByRequest(): void;
+        getStoppedByRequest(): boolean | undefined;
+        setStoppedByRequest(value: boolean): Conditions;
 
-export namespace WorkspaceInstanceConditions {
-    export type AsObject = {
-        failed: string,
-        timeout: string,
-        firstUserActivity?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-        stoppedByRequest?: boolean,
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): Conditions.AsObject;
+        static toObject(includeInstance: boolean, msg: Conditions): Conditions.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: Conditions, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): Conditions;
+        static deserializeBinaryFromReader(message: Conditions, reader: jspb.BinaryReader): Conditions;
     }
+
+    export namespace Conditions {
+        export type AsObject = {
+            failed: string,
+            timeout: string,
+            firstUserActivity?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+            stoppedByRequest?: boolean,
+        }
+    }
+
+
+    export enum Phase {
+    PHASE_UNSPECIFIED = 0,
+    PHASE_IMAGEBUILD = 1,
+    PHASE_PENDING = 2,
+    PHASE_CREATING = 3,
+    PHASE_INITIALIZING = 4,
+    PHASE_RUNNING = 5,
+    PHASE_INTERRUPTED = 6,
+    PHASE_STOPPING = 7,
+    PHASE_STOPPED = 8,
+    }
+
 }
 
-export class StartWorkspaceSpec extends jspb.Message { 
+export class StartWorkspaceSpec extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -797,17 +809,6 @@ export class StartWorkspaceSpec extends jspb.Message {
 export namespace StartWorkspaceSpec {
     export type AsObject = {
     }
-}
-
-export enum WorkspaceInstancePhase {
-    WORKSPACE_INSTANCE_PHASE_UNSPECIFIED = 0,
-    WORKSPACE_INSTANCE_PHASE_PENDING = 2,
-    WORKSPACE_INSTANCE_PHASE_CREATING = 3,
-    WORKSPACE_INSTANCE_PHASE_INITIALIZING = 4,
-    WORKSPACE_INSTANCE_PHASE_RUNNING = 5,
-    WORKSPACE_INSTANCE_PHASE_INTERRUPTED = 6,
-    WORKSPACE_INSTANCE_PHASE_STOPPING = 7,
-    WORKSPACE_INSTANCE_PHASE_STOPPED = 8,
 }
 
 export enum AdmissionLevel {

@@ -77,14 +77,9 @@ message GetWorkspaceResponse {
 message CreateAndStartWorkspaceRequest {
     string idempotency_token = 1;
 
-    string context_url = 2;
-
-    oneof prebuild {
-        // if true, and there's a prebuild available (not running), use that prebuild
-        bool if_available = 3;
-        // uses a particular prebuild - the prebuild ID is scoped by the context URL.
-        // Use the PrebuildService to get ahold of the prebuild_id.
-        string prebuild_id = 4;
+    oneof source {
+        string context_url = 2;
+        string prebuild_id = 3;
     }
 
     StartWorkspaceSpec start_spec = 5;
@@ -224,6 +219,64 @@ message WorkspaceInstance {
 
 // WorkspaceStatus describes a workspace status
 message WorkspaceInstanceStatus {
+    // Phase is a simple, high-level summary of where the workspace instance is in its lifecycle.
+    // The phase is not intended to be a comprehensive rollup of observations of the workspace state,
+    // nor is it intended to be a comprehensive state machine.
+    // (based on  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase)
+    enum Phase {
+        // Unknown indicates an issue within the workspace manager in that it cannot determine the actual phase of
+        // a workspace. This phase is usually accompanied by an error.
+        PHASE_UNSPECIFIED = 0;
+
+        // ImageBuild indicates that there's an image build running for this workspace.
+        PHASE_IMAGEBUILD = 1;
+
+        // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
+        // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+        // workspace, the workspace will be in Pending state until that happened.
+        PHASE_PENDING = 2;
+
+        // Creating means the workspace is currently being created. That includes downloading the images required
+        // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
+        // network speed, image size and cache states.
+        PHASE_CREATING = 3;
+
+        // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
+        // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
+        PHASE_INITIALIZING = 4;
+
+        // Running means the workspace is able to actively perform work, either by serving a user through Theia,
+        // or as a headless workspace.
+        PHASE_RUNNING = 5;
+
+        // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
+        // When in this state, we expect it to become running or stopping anytime soon.
+        PHASE_INTERRUPTED = 6;
+
+        // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
+        PHASE_STOPPING = 7;
+
+        // Stopped means the workspace ended regularly because it was shut down.
+        PHASE_STOPPED = 8;
+    }
+
+    // Conditions gives more detailed information as to the state of the workspace. Which condition actually
+    // has a value depends on the phase the workspace is in.
+    message Conditions {
+        // failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
+        // This field is filled exclusively when caused by system errors.
+        string failed = 1;
+
+        // timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
+        string timeout = 2;
+
+        // first_user_activity is the time when MarkActive was first called on the workspace
+        google.protobuf.Timestamp first_user_activity = 9;
+
+        // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
+        optional bool stopped_by_request = 11;
+    }
+
     // version of the status update. Workspace instances themselves are unversioned,
     // but their statuus has different versions.
     // The value of this field has no semantic meaning (e.g. don't interpret it as
@@ -232,10 +285,10 @@ message WorkspaceInstanceStatus {
     uint64 status_version = 1;
 
     // the phase of a workspace is a simple, high-level summary of where the workspace instance is in its lifecycle
-    WorkspaceInstancePhase phase = 2;
+    Phase phase = 2;
 
     // conditions detail the current state of the workspace instance
-    WorkspaceInstanceConditions conditions = 3;
+    Conditions conditions = 3;
 
     // message is an optional human-readable message detailing the current phase
     string message = 4;
@@ -250,65 +303,6 @@ message WorkspaceInstanceStatus {
     // Note: this is a best-effort field and more often than not will not be present. Its absence does not
     // indicate the absence of a working copy.
     // contentservice.GitStatus repo = 7;
-}
-
-
-// WorkspaceInstancePhase is a simple, high-level summary of where the workspace instance is in its lifecycle.
-// The phase is not intended to be a comprehensive rollup of observations of the workspace state,
-// nor is it intended to be a comprehensive state machine.
-// (based on  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase)
-enum WorkspaceInstancePhase {
-    // Unknown indicates an issue within the workspace manager in that it cannot determine the actual phase of
-    // a workspace. This phase is usually accompanied by an error.
-    WORKSPACE_INSTANCE_PHASE_UNSPECIFIED = 0;
-
-    // This will become IMAGE_BUILD
-    reserved 1;
-
-    // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
-    // some space within the cluster. If for example the cluster needs to scale up to accomodate the
-    // workspace, the workspace will be in Pending state until that happened.
-    WORKSPACE_INSTANCE_PHASE_PENDING = 2;
-
-    // Creating means the workspace is currently being created. That includes downloading the images required
-    // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
-    // network speed, image size and cache states.
-    WORKSPACE_INSTANCE_PHASE_CREATING = 3;
-
-    // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
-    // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
-    WORKSPACE_INSTANCE_PHASE_INITIALIZING = 4;
-
-    // Running means the workspace is able to actively perform work, either by serving a user through Theia,
-    // or as a headless workspace.
-    WORKSPACE_INSTANCE_PHASE_RUNNING = 5;
-
-    // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
-    // When in this state, we expect it to become running or stopping anytime soon.
-    WORKSPACE_INSTANCE_PHASE_INTERRUPTED = 6;
-
-    // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
-    WORKSPACE_INSTANCE_PHASE_STOPPING = 7;
-
-    // Stopped means the workspace ended regularly because it was shut down.
-    WORKSPACE_INSTANCE_PHASE_STOPPED = 8;
-}
-
-// WorkspaceInstanceConditions gives more detailed information as to the state of the workspace. Which condition actually
-// has a value depends on the phase the workspace is in.
-message WorkspaceInstanceConditions {
-    // failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
-    // This field is filled exclusively when caused by system errors.
-    string failed = 1;
-
-    // timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
-    string timeout = 2;
-
-    // first_user_activity is the time when MarkActive was first called on the workspace
-    google.protobuf.Timestamp first_user_activity = 9;
-
-    // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
-    optional bool stopped_by_request = 11;
 }
 
 // Admission level describes who can access a workspace instance and its ports.

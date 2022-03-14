@@ -6,7 +6,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class Pagination extends jspb.Message { 
+export class Pagination extends jspb.Message {
     getPageSize(): number;
     setPageSize(value: number): Pagination;
     getPageToken(): string;
