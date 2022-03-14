@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 #
+# Comment to trigger code-owners.
+#
 # This script makes it possible to run load tests against VM-based preview
 # environments.
 #
