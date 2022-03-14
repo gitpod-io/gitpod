@@ -19,10 +19,16 @@ export function StartWorkspaceModal() {
         setIsStartWorkspaceModalVisible(false);
     }, [location]);
 
-    return <Modal onClose={() => setIsStartWorkspaceModalVisible(false)} onEnter={() => false} visible={!!isStartWorkspaceModalVisible}>
-        <h3 className="pb-2">Open in Gitpod</h3>
-        <div className="border-t border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 pt-4">
-            <RepositoryFinder />
-        </div>
-    </Modal>;
+    return (
+        <Modal
+            onClose={() => setIsStartWorkspaceModalVisible(false)}
+            onEnter={() => false}
+            visible={!!isStartWorkspaceModalVisible}
+        >
+            <h3 className="pb-2">Open in Gitpod</h3>
+            <div className="border-t border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 pt-4">
+                <RepositoryFinder />
+            </div>
+        </Modal>
+    );
 }
