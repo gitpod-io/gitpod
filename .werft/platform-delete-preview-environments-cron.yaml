@@ -49,6 +49,6 @@ pod:
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
 
-        npx ts-node .werft/delete-preview-environments/delete-preview-environments-cron.ts
+        npx ts-node .werft/platform-delete-preview-environments-cron.ts
 plugins:
   cron: "15 * * * *"
