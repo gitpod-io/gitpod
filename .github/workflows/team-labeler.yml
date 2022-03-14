@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Output context
         run: |
-          echo ${{ github }}
+          echo ${{ toJSON(github) }}
       - name: Set team labels as output
         id: team_labels
         run: |
