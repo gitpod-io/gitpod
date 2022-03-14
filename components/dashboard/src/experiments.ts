@@ -27,10 +27,10 @@ const Experiments = {
     /**
      * Experiment "example" will be activate on login for 10% of all clients.
      */
-    "example": 0.1,
+    example: 0.1,
 };
 type Experiments = Partial<{ [e in Experiment]: boolean }>;
-export type Experiment = keyof (typeof Experiments);
+export type Experiment = keyof typeof Experiments;
 
 export namespace Experiment {
     /**

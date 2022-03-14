@@ -10,19 +10,16 @@ import { useRef, useEffect } from "react";
 
 export default function ConfirmationModal(props: {
     title?: string;
-    areYouSureText?: string,
-    children?: Entity | React.ReactChild[] | React.ReactChild
-    buttonText?: string,
-    buttonDisabled?: boolean,
-    visible?: boolean,
-    warningText?: string,
-    onClose: () => void,
-    onConfirm: () => void,
+    areYouSureText?: string;
+    children?: Entity | React.ReactChild[] | React.ReactChild;
+    buttonText?: string;
+    buttonDisabled?: boolean;
+    visible?: boolean;
+    warningText?: string;
+    onClose: () => void;
+    onConfirm: () => void;
 }) {
-
-    const child: React.ReactChild[] = [
-        <p className="mt-3 mb-3 text-base text-gray-500">{props.areYouSureText}</p>,
-    ]
+    const child: React.ReactChild[] = [<p className="mt-3 mb-3 text-base text-gray-500">{props.areYouSureText}</p>];
 
     if (props.warningText) {
         child.unshift(<AlertBox>{props.warningText}</AlertBox>);
@@ -34,9 +31,11 @@ export default function ConfirmationModal(props: {
             child.push(
                 <div className="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-xl group">
                     <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{props.children.name}</p>
-                    {props.children.description && <p className="text-gray-500 truncate">{props.children.description}</p>}
-                </div>
-            )
+                    {props.children.description && (
+                        <p className="text-gray-500 truncate">{props.children.description}</p>
+                    )}
+                </div>,
+            );
         } else if (Array.isArray(props.children)) {
             child.push(...props.children);
         } else {
@@ -46,16 +45,18 @@ export default function ConfirmationModal(props: {
     const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
     const buttons = [
-        <button className="secondary" onClick={props.onClose} autoFocus ref={cancelButtonRef}>Cancel</button>,
+        <button className="secondary" onClick={props.onClose} autoFocus ref={cancelButtonRef}>
+            Cancel
+        </button>,
         <button className="ml-2 danger" onClick={props.onConfirm} disabled={props.buttonDisabled}>
             {props.buttonText || "Yes, I'm Sure"}
         </button>,
-    ]
+    ];
 
     const buttonDisabled = useRef(props.buttonDisabled);
     useEffect(() => {
         buttonDisabled.current = props.buttonDisabled;
-    })
+    });
 
     return (
         <Modal
@@ -69,7 +70,7 @@ export default function ConfirmationModal(props: {
                     return false;
                 }
                 if (buttonDisabled.current) {
-                    return false
+                    return false;
                 }
                 props.onConfirm();
                 return true;
@@ -81,6 +82,6 @@ export default function ConfirmationModal(props: {
 }
 
 export interface Entity {
-    name: string,
-    description?: string,
+    name: string;
+    description?: string;
 }

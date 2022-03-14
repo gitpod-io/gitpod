@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 export function toRemoteURL(cloneURL: string) {
     return cloneURL.replace(/(^https:\/\/)|(\.git$)/g, "");
 }
