@@ -357,7 +357,9 @@ export class WorkspaceStarter {
                 properties: {
                     workspaceId: workspace.id,
                     instanceId: instance.id,
+                    projectId: workspace.projectId,
                     contextURL: workspace.contextURL,
+                    type: workspace.type,
                     usesPrebuild: spec.getInitializer()?.hasPrebuild(),
                 },
             });
