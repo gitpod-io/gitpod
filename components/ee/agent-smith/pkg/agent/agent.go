@@ -6,7 +6,6 @@ package agent
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -255,7 +254,7 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 				// check if the workspace is already stopped
 				fi, err := os.Stat(fmt.Sprintf("/proc/%d", pid))
 				if err != nil {
-					if errors.Is(err, os.ErrNotExist) {
+					if os.IsNotExist(err) {
 						wssWriteMutex.Lock()
 						log.Debugf("deleting workspace with pid %d and workspaceId %s from workspaces", pid, ws.WorkspaceID)
 						delete(workspaces, pid)
@@ -271,8 +270,8 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 					continue
 				}
 				if infringement != nil {
-					// monitor metric here as we are not penalizing workspaces yet
-					log.Debugf("found infringing workspace with pid %d and worksapceId %s", pid, ws.WorkspaceID)
+					log.WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Info("found egress infringing workspace")
+					// monitor metric here, as we are not penalizing workspaces yet
 					agent.metrics.egressViolations.WithLabelValues(string(infringement.Kind)).Inc()
 				}
 
