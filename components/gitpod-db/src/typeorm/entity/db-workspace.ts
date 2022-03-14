@@ -68,6 +68,7 @@ export class DBWorkspace implements Workspace {
     })
     shareable?: boolean;
 
+    @Index("ind_type")
     @Column({
         default: "regular",
     })
