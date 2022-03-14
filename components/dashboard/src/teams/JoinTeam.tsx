@@ -9,18 +9,18 @@ import { useHistory } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "./teams-context";
 
-export default function() {
+export default function () {
     const { setTeams } = useContext(TeamsContext);
     const history = useHistory();
 
-    const [ joinError, setJoinError ] = useState<Error>();
-    const inviteId = new URL(window.location.href).searchParams.get('inviteId');
+    const [joinError, setJoinError] = useState<Error>();
+    const inviteId = new URL(window.location.href).searchParams.get("inviteId");
 
     useEffect(() => {
         (async () => {
             try {
                 if (!inviteId) {
-                    throw new Error('This invite URL is incorrect.');
+                    throw new Error("This invite URL is incorrect.");
                 }
 
                 let team;
@@ -46,9 +46,11 @@ export default function() {
                 setJoinError(error);
             }
         })();
-    }, []);
+    }, [history, inviteId, setTeams]);
 
-    useEffect(() => { document.title = 'Joining Team — Gitpod' }, []);
+    useEffect(() => {
+        document.title = "Joining Team — Gitpod";
+    }, []);
 
     return joinError ? <div className="mt-16 text-center text-gitpod-red">{String(joinError)}</div> : <></>;
 }
