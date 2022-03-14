@@ -13,7 +13,7 @@ import PrebuildLogs from "../components/PrebuildLogs";
 import Spinner from "../icons/Spinner.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
-import { PrebuildInstanceStatus } from "./Prebuilds";
+import { PrebuildStatus } from "./Prebuilds";
 import { shortCommitMessage } from "./render-utils";
 
 export default function () {
@@ -167,7 +167,7 @@ export default function () {
                         />
                     </div>
                     <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
-                        {prebuildInstance && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} />}
+                        {prebuildInstance && <PrebuildStatus prebuild={prebuild!} />}
                         <div className="flex-grow" />
                         {prebuild?.status === "aborted" || prebuild?.status === "timeout" || !!prebuild?.error ? (
                             <button
