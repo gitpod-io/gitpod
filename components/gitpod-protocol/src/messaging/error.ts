@@ -4,8 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
-
 export namespace ErrorCodes {
     // 401 Unauthorized
     export const NOT_AUTHENTICATED = 401;

@@ -4,22 +4,20 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
-import * as opentracing from 'opentracing';
-import { TracingConfig, initTracerFromEnv } from 'jaeger-client';
-import { Sampler, SamplingDecision } from './jaeger-client-types';
-import { initGlobalTracer } from 'opentracing';
-import { injectable } from 'inversify';
-import { ResponseError } from 'vscode-jsonrpc';
-import { log, LogContext } from './logging';
+import * as opentracing from "opentracing";
+import { TracingConfig, initTracerFromEnv } from "jaeger-client";
+import { Sampler, SamplingDecision } from "./jaeger-client-types";
+import { initGlobalTracer } from "opentracing";
+import { injectable } from "inversify";
+import { ResponseError } from "vscode-jsonrpc";
+import { log, LogContext } from "./logging";
 
 export interface TraceContext {
-    span?: opentracing.Span
+    span?: opentracing.Span;
 }
 export type TraceContextWithSpan = TraceContext & {
-    span: opentracing.Span
-}
-
+    span: opentracing.Span;
+};
 
 export namespace TraceContext {
     export function startSpan(operation: string, parentCtx?: TraceContext): opentracing.Span {
@@ -53,9 +51,9 @@ export namespace TraceContext {
 
         const span = TraceContext.startSpan(operation, ctx);
         try {
-            callback({span});
+            callback({ span });
         } catch (e) {
-            TraceContext.setError({span}, e);
+            TraceContext.setError({ span }, e);
             throw e;
         } finally {
             span.finish();
@@ -93,7 +91,12 @@ export namespace TraceContext {
         addNestedTags(ctx, tags);
     }
 
-    export function setJsonRPCError(ctx: TraceContext, method: string, err: ResponseError<any>, withStatusCode: boolean = false) {
+    export function setJsonRPCError(
+        ctx: TraceContext,
+        method: string,
+        err: ResponseError<any>,
+        withStatusCode: boolean = false,
+    ) {
         if (!ctx.span) {
             return;
         }
@@ -160,7 +163,7 @@ export namespace TraceContext {
         if (!ctx.span) {
             return;
         }
-        const namespace = _namespace ? `${_namespace}.` : '';
+        const namespace = _namespace ? `${_namespace}.` : "";
 
         try {
             for (const k of Object.keys(keyValueMap)) {
@@ -189,7 +192,6 @@ export namespace TraceContext {
 
 @injectable()
 export class TracingManager {
-
     public setup(serviceName: string, opts?: CustomTracerOpts) {
         initGlobalTracer(this.getTracerForService(serviceName, opts));
     }
@@ -198,16 +200,16 @@ export class TracingManager {
         const config: TracingConfig = {
             disable: false,
             reporter: {
-                logSpans: false
+                logSpans: false,
             },
             serviceName,
-        }
+        };
         const t = initTracerFromEnv(config, {
             logger: console,
             tags: {
-                'service.build.commit': process.env.GITPOD_BUILD_GIT_COMMIT,
-                'service.build.version': process.env.GITPOD_BUILD_VERSION,
-            }
+                "service.build.commit": process.env.GITPOD_BUILD_GIT_COMMIT,
+                "service.build.version": process.env.GITPOD_BUILD_VERSION,
+            },
         });
 
         if (opts) {
@@ -217,24 +219,22 @@ export class TracingManager {
         }
         return t;
     }
-
 }
 
 export interface CustomTracerOpts {
-    perOpSampling?: PerOperationSampling
+    perOpSampling?: PerOperationSampling;
 }
-
 
 // has to conform to https://github.com/jaegertracing/jaeger-client-node/blob/0042b1c0a0796bb655eb93e77ff76ab5e94c2bb6/src/_flow/sampler-thrift.js#L32
 export interface PerOperationSampling {
-    [key: string]: boolean
+    [key: string]: boolean;
 }
 
 export class PerOperationSampler implements Sampler {
     constructor(protected readonly fallback: Sampler, protected readonly strategies: PerOperationSampling) {}
 
     name(): string {
-        return 'PerOperationSampler';
+        return "PerOperationSampler";
     }
 
     toString(): string {
@@ -274,7 +274,7 @@ export class PerOperationSampler implements Sampler {
         return false; // TODO equal should be removed
     }
 
-    close(callback: ()=>void): void {
+    close(callback: () => void): void {
         // all nested samplers are of simple types, so we do not need to Close them
         if (callback) {
             callback();
@@ -283,18 +283,23 @@ export class PerOperationSampler implements Sampler {
 }
 
 // Augment interfaces with an leading parameter "TraceContext" on every method
-type IsValidArg<T> = T extends object ? keyof T extends never ? false : true : true;
-type AddTraceContext<T> =
-    T extends (a: infer A, b: infer B, c: infer C, d: infer D, e: infer E, f: infer F) => infer R ? (
-        IsValidArg<F> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E, f: F) => R :
-        IsValidArg<E> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E) => R :
-        IsValidArg<D> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D) => R :
-        IsValidArg<C> extends true ? (ctx: TraceContextWithSpan, a: A, b: B, c: C) => R :
-        IsValidArg<B> extends true ? (ctx: TraceContextWithSpan, a: A, b: B) => R :
-        IsValidArg<A> extends true ? (ctx: TraceContextWithSpan, a: A) => R :
-        (ctx: TraceContextWithSpan) => Promise<R>
-    ) : never;
+type IsValidArg<T> = T extends object ? (keyof T extends never ? false : true) : true;
+type AddTraceContext<T> = T extends (a: infer A, b: infer B, c: infer C, d: infer D, e: infer E, f: infer F) => infer R
+    ? IsValidArg<F> extends true
+        ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E, f: F) => R
+        : IsValidArg<E> extends true
+        ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D, e: E) => R
+        : IsValidArg<D> extends true
+        ? (ctx: TraceContextWithSpan, a: A, b: B, c: C, d: D) => R
+        : IsValidArg<C> extends true
+        ? (ctx: TraceContextWithSpan, a: A, b: B, c: C) => R
+        : IsValidArg<B> extends true
+        ? (ctx: TraceContextWithSpan, a: A, b: B) => R
+        : IsValidArg<A> extends true
+        ? (ctx: TraceContextWithSpan, a: A) => R
+        : (ctx: TraceContextWithSpan) => Promise<R>
+    : never;
 
 export type InterfaceWithTraceContext<T> = {
-    [P in keyof T]: AddTraceContext<T[P]>
+    [P in keyof T]: AddTraceContext<T[P]>;
 };

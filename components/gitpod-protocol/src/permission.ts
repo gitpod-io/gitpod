@@ -4,11 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 // see below for explanation
 export const Permissions = {
-    "monitor": undefined,
-    "enforcement": undefined,
+    monitor: undefined,
+    enforcement: undefined,
     "privileged-ws": undefined,
     "registry-access": undefined,
     "admin-users": undefined,
@@ -18,21 +17,20 @@ export const Permissions = {
     "ide-settings": undefined,
     "new-workspace-cluster": undefined,
 };
-export type PermissionName = keyof (typeof Permissions);
-export const Roles = {"devops": undefined, "viewer": undefined, "admin": undefined };
-export type RoleName = keyof (typeof Roles);
+export type PermissionName = keyof typeof Permissions;
+export const Roles = { devops: undefined, viewer: undefined, admin: undefined };
+export type RoleName = keyof typeof Roles;
 export type RoleOrPermission = RoleName | PermissionName;
 
 export namespace RoleName {
     export const is = (o: any): o is RoleName => {
-        return typeof(o) === 'string'
-            && Role.all().some(r => r.name === o);
-    }
+        return typeof o === "string" && Role.all().some((r) => r.name === o);
+    };
 }
 
 export interface Role {
-    name: RoleName,
-    permissions: PermissionName[],
+    name: RoleName;
+    permissions: PermissionName[];
 }
 
 export namespace RolesOrPermissions {
@@ -44,11 +42,11 @@ export namespace RolesOrPermissions {
             if (Permission.is(rop)) {
                 permissions.add(rop);
             } else if (RoleName.is(rop)) {
-                Role.getByName(rop).permissions.forEach(p => permissions.add(p));
+                Role.getByName(rop).permissions.forEach((p) => permissions.add(p));
             }
         }
         return permissions;
-    };
+    }
 }
 
 export namespace Permission {
@@ -77,9 +75,8 @@ export namespace Permission {
     export const IDE_SETTINGS: PermissionName = "ide-settings";
 
     export const is = (o: any): o is PermissionName => {
-        return typeof(o) === 'string'
-            && Permission.all().some(p => p === o);
-    }
+        return typeof o === "string" && Permission.all().some((p) => p === o);
+    };
 
     export const all = (): PermissionName[] => {
         return Object.keys(Permissions) as PermissionName[];
@@ -90,21 +87,13 @@ export namespace Role {
     /** The default role for all Gitpod developers */
     export const DEVOPS: Role = {
         name: "devops",
-        permissions: [
-            Permission.MONITOR,
-            Permission.ENFORCEMENT,
-            Permission.REGISTRY_ACCESS,
-            Permission.IDE_SETTINGS
-        ]
+        permissions: [Permission.MONITOR, Permission.ENFORCEMENT, Permission.REGISTRY_ACCESS, Permission.IDE_SETTINGS],
     };
 
     /** A role for people that are allowed to view Gitpod internals */
     export const VIEWER: Role = {
         name: "viewer",
-        permissions: [
-            Permission.MONITOR,
-            Permission.REGISTRY_ACCESS,
-        ]
+        permissions: [Permission.MONITOR, Permission.REGISTRY_ACCESS],
     };
 
     export const ADMIN: Role = {
@@ -115,11 +104,11 @@ export namespace Role {
             Permission.ADMIN_PROJECTS,
             Permission.ADMIN_API,
             Permission.ENFORCEMENT,
-        ]
-    }
+        ],
+    };
 
     export const getByName = (name: RoleName): Role => {
-        const result = Role.all().find(r => r.name === name)
+        const result = Role.all().find((r) => r.name === name);
         if (!result) {
             throw Error("Unknown RoleName: " + name);
         }
@@ -128,7 +117,7 @@ export namespace Role {
 
     export const all = (): Role[] => {
         return Object.keys(Role)
-            .map(k => (Role as any)[k])
-            .filter(k => typeof(k) === 'object');
+            .map((k) => (Role as any)[k])
+            .filter((k) => typeof k === "object");
     };
 }

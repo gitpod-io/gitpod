@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-const inspect: (object: any) => string = require('util').inspect;   // undefined in frontend
+const inspect: (object: any) => string = require("util").inspect; // undefined in frontend
 
 let jsonLogging: boolean = false;
 let component: string | undefined;
@@ -15,19 +15,19 @@ export interface LogContext {
     sessionId?: string;
     userId?: string;
     workspaceId?: string;
-};
+}
 export namespace LogContext {
-    export function from(params : { userId?: string, user?: any, request?: any } ) {
+    export function from(params: { userId?: string; user?: any; request?: any }) {
         return <LogContext>{
             sessionId: params.request?.requestID,
-            userId: params.userId || params.user?.id
-        }
+            userId: params.userId || params.user?.id,
+        };
     }
 }
 
 export interface LogPayload {
     // placeholder to indicate that only dictionary-style objects should be passed as payload
-};
+}
 
 export namespace log {
     export function error(context: LogContext, message: string, error: any, payload: LogPayload): void;
@@ -97,7 +97,11 @@ export namespace log {
     /**
      * Do not use in frontend.
      */
-    export function enableJSONLogging(componentArg: string, versionArg: string | undefined, logLevel?: LogrusLogLevel): void {
+    export function enableJSONLogging(
+        componentArg: string,
+        versionArg: string | undefined,
+        logLevel?: LogrusLogLevel,
+    ): void {
         component = componentArg;
         version = versionArg;
 
@@ -109,16 +113,16 @@ export namespace log {
 
         console.error = function (...args: any[]): void {
             errorLog(true, args);
-        }
+        };
         console.warn = function (...args: any[]): void {
             warnLog(true, args);
-        }
+        };
         console.info = function (...args: any[]): void {
             infoLog(true, args);
-        }
+        };
         console.debug = function (...args: any[]): void {
             debugLog(true, args);
-        }
+        };
 
         console.log = console.info;
         // FIXME wrap also other console methods (e.g. trace())
@@ -154,26 +158,26 @@ type DoLogFunction = (calledViaConsole: boolean, args: any[]) => void;
 
 let errorLog = doErrorLog;
 function doErrorLog(calledViaConsole: boolean, args: any[]): void {
-    doLog(calledViaConsole, errorConsoleLog, 'ERROR', args);
+    doLog(calledViaConsole, errorConsoleLog, "ERROR", args);
 }
 
 let warnLog = doWarnLog;
 function doWarnLog(calledViaConsole: boolean, args: any[]): void {
-    doLog(calledViaConsole, warnConsoleLog, 'WARNING', args);
+    doLog(calledViaConsole, warnConsoleLog, "WARNING", args);
 }
 
 let infoLog = doInfoLog;
 function doInfoLog(calledViaConsole: boolean, args: any[]): void {
-    doLog(calledViaConsole, infoConsoleLog, 'INFO', args);
+    doLog(calledViaConsole, infoConsoleLog, "INFO", args);
 }
 
 let debugLog = doDebugLog;
 function doDebugLog(calledViaConsole: boolean, args: any[]): void {
-    doLog(calledViaConsole, debugConsoleLog, 'DEBUG', args);
+    doLog(calledViaConsole, debugConsoleLog, "DEBUG", args);
 }
 
 // Ref: https://github.com/sirupsen/logrus#level-logging
-export type LogrusLogLevel = keyof (typeof LogrusLogLevels);
+export type LogrusLogLevel = keyof typeof LogrusLogLevels;
 export const LogrusLogLevels = {
     trace: true,
     debug: true,
@@ -182,7 +186,7 @@ export const LogrusLogLevels = {
     error: true,
     fatal: true,
     panic: true,
-}
+};
 export namespace LogrusLogLevel {
     export function isGreatherOrEqual(lvl: LogrusLogLevel | undefined, ref: LogrusLogLevel | undefined): boolean {
         if (lvl === undefined) {
@@ -194,8 +198,7 @@ export namespace LogrusLogLevel {
         return getLevelArity(lvl) >= getLevelArity(ref);
     }
     function getLevelArity(lvl: LogrusLogLevel): number {
-        return Object.keys(LogrusLogLevels)
-            .findIndex((l) => l === lvl);
+        return Object.keys(LogrusLogLevels).findIndex((l) => l === lvl);
     }
     export function getFromEnv(): LogrusLogLevel | undefined {
         const lvlStr = process.env.LOG_LEVEL;
@@ -203,7 +206,7 @@ export namespace LogrusLogLevel {
             return undefined;
         }
         const lvl = lvlStr as LogrusLogLevel;
-        const exists = LogrusLogLevels[lvl]
+        const exists = LogrusLogLevels[lvl];
         if (!exists) {
             return undefined;
         }
@@ -212,12 +215,12 @@ export namespace LogrusLogLevel {
 }
 
 // Source: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
-type GoogleLogSeverity = 'EMERGENCY' | 'ALERT' | 'CRITICAL' | 'ERROR' | 'WARNING' | 'INFO' | 'DEBUG';
+type GoogleLogSeverity = "EMERGENCY" | "ALERT" | "CRITICAL" | "ERROR" | "WARNING" | "INFO" | "DEBUG";
 namespace GoogleLogSeverity {
     export const isGreaterOrEqualThanWarning = (severity: GoogleLogSeverity) => {
         switch (severity) {
-            case 'INFO':
-            case 'DEBUG':
+            case "INFO":
+            case "DEBUG":
                 return false;
             default:
                 return true;
@@ -245,7 +248,7 @@ function doLog(calledViaConsole: boolean, consoleLog: ConsoleLog, severity: Goog
         // console.xyz(Error, ...any) / log.xyz(Error) / log.xyz(Error, LogPayload)
         error = args[0];
         payloadArgs = args.slice(1);
-    } else if (typeof args[0] === 'string') {
+    } else if (typeof args[0] === "string") {
         message = args[0];
         if (args.length < 2 || !(args[1] instanceof Error)) {
             // console.xyz(string) / console.xyz(string, !Error, ...any) / log.xyz(string) / log.xyz(string, LogPayload)
@@ -265,7 +268,7 @@ function doLog(calledViaConsole: boolean, consoleLog: ConsoleLog, severity: Goog
             // log.xyz(LogContext, Error) / log.xyz(LogContext, Error, LogPayload)
             error = args[1];
             payloadArgs = args.slice(2);
-        } else if (typeof args[1] === 'string') {
+        } else if (typeof args[1] === "string") {
             message = args[1];
             if (args.length < 3 || !(args[2] instanceof Error)) {
                 // log.xyz(LogContext, string) / log.xyz(LogContext, string, LogPayload)
@@ -288,9 +291,14 @@ function doLog(calledViaConsole: boolean, consoleLog: ConsoleLog, severity: Goog
     }
 }
 
-function makeLogItem(severity: GoogleLogSeverity, context: LogContext | undefined, message: string | undefined,
-        error: Error | undefined, payloadArgs: any[], calledViaConsole: boolean): string | undefined {
-
+function makeLogItem(
+    severity: GoogleLogSeverity,
+    context: LogContext | undefined,
+    message: string | undefined,
+    error: Error | undefined,
+    payloadArgs: any[],
+    calledViaConsole: boolean,
+): string | undefined {
     if (context !== undefined && Object.keys(context).length == 0) {
         context = undefined;
     }
@@ -312,7 +320,7 @@ function makeLogItem(severity: GoogleLogSeverity, context: LogContext | undefine
         message,
         error,
         payload,
-        loggedViaConsole: calledViaConsole ? true : undefined
+        loggedViaConsole: calledViaConsole ? true : undefined,
     };
     let result: string = stringifyLogItem(logItem);
 
@@ -323,11 +331,11 @@ function makeLogItem(severity: GoogleLogSeverity, context: LogContext | undefine
         result = stringifyLogItem(logItem);
 
         if (result.length <= maxAllowedLogItemLength) {
-            log.warn('Log item too large, stripping payload', { logItemStub: makeLogItemStub(logItem) });
+            log.warn("Log item too large, stripping payload", { logItemStub: makeLogItemStub(logItem) });
         }
     }
     if (result.length > maxAllowedLogItemLength) {
-        log.error('Log item too large w/o payload, discarding', { logItemStub: makeLogItemStub(logItem) });
+        log.error("Log item too large w/o payload, discarding", { logItemStub: makeLogItemStub(logItem) });
         return undefined;
     }
 
@@ -341,10 +349,10 @@ function makeReportedErrorEvent(error: Error | undefined) {
         // Serves as marker only
         "@type": "type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent",
         // This is useful for filtering in the UI
-        "serviceContext": {
-            "service": component || "<ts-not-set>",
-            "version": version || "<ts-not-set>",
-        }
+        serviceContext: {
+            service: component || "<ts-not-set>",
+            version: version || "<ts-not-set>",
+        },
     };
 
     if (error) {
@@ -364,9 +372,9 @@ function makeLogItemStub(logItem: any): any {
         severity: logItem.severity,
         time: logItem.time,
         environment: logItem.environment,
-        region: logItem.region
+        region: logItem.region,
     };
-    if (typeof (logItem.message) === 'string') {
+    if (typeof logItem.message === "string") {
         if (logItem.message.length <= maxMessageStubLength) {
             result.message = logItem.message;
         } else {
@@ -400,10 +408,12 @@ function stringifyLogItem(logItem: any): string {
  * Jsonifies Errors properly, not as {} only.
  */
 function jsonStringifyWithErrors(value: any): string {
-    return JSON.stringify(value, (key: string, value: any): any => { return value instanceof Error ? value.stack : value });
+    return JSON.stringify(value, (key: string, value: any): any => {
+        return value instanceof Error ? value.stack : value;
+    });
 }
 
-type ConsoleLog = (message?: any, ...optionalArgs: any[]) => void;  // signature of console.xyz
+type ConsoleLog = (message?: any, ...optionalArgs: any[]) => void; // signature of console.xyz
 const logConsoleLog: ConsoleLog = console.log;
 const errorConsoleLog: ConsoleLog = console.error;
 const warnConsoleLog: ConsoleLog = console.warn;
