@@ -13,14 +13,21 @@ import { ConfigInferrer } from "./config-inferrer";
 
 @injectable()
 export class ConfigurationService {
-
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
     // a static cache used to prefetch inferrer related files in parallel in advance
     private requestedPaths = new Set<string>();
 
-    async guessRepositoryConfiguration(ctx: TraceContext, user: User, context: CommitContext): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, context);
+    async guessRepositoryConfiguration(
+        ctx: TraceContext,
+        user: User,
+        context: CommitContext,
+    ): Promise<string | undefined> {
+        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(
+            ctx,
+            user,
+            context,
+        );
         const cache: { [path: string]: Promise<string | undefined> } = {};
         const readFile = async (path: string) => {
             if (path in cache) {
@@ -30,9 +37,9 @@ export class ConfigurationService {
             const content = fileProvider.getFileContent(commitContext, user, path);
             cache[path] = content;
             return await content;
-        }
+        };
         // eagerly fetch for all files that the inferrer usually asks for.
-        this.requestedPaths.forEach(path => !(path in cache) && readFile(path));
+        this.requestedPaths.forEach((path) => !(path in cache) && readFile(path));
         const configInferrer = new ConfigInferrer();
         const config: WorkspaceConfig = await configInferrer.getConfig({
             // TODO(se) pass down information about currently used IDE. Defaulting to disabling vscode extensions for now, to not bother non VS Code users.
@@ -53,13 +60,25 @@ ${configString}
 `;
     }
 
-    async fetchRepositoryConfiguration(ctx: TraceContext, user: User, context: CommitContext): Promise<string | undefined> {
-        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(ctx, user, context);
+    async fetchRepositoryConfiguration(
+        ctx: TraceContext,
+        user: User,
+        context: CommitContext,
+    ): Promise<string | undefined> {
+        const { fileProvider, commitContext } = await this.getRepositoryFileProviderAndCommitContext(
+            ctx,
+            user,
+            context,
+        );
         const configString = await fileProvider.getGitpodFileContent(commitContext, user);
         return configString;
     }
 
-    protected async getRepositoryFileProviderAndCommitContext(ctx: TraceContext, user: User, commitContext: CommitContext): Promise<{fileProvider: FileProvider, commitContext: CommitContext}> {
+    protected async getRepositoryFileProviderAndCommitContext(
+        ctx: TraceContext,
+        user: User,
+        commitContext: CommitContext,
+    ): Promise<{ fileProvider: FileProvider; commitContext: CommitContext }> {
         const { host } = commitContext.repository;
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext || !hostContext.services) {

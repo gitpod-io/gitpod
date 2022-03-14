@@ -25,7 +25,7 @@ export namespace TosFlow {
         token: Token;
         additionalIdentity?: Identity;
         additionalToken?: Token;
-        envVars?: UserEnvVar[]
+        envVars?: UserEnvVar[];
     }
     export namespace WithIdentity {
         export function is(data?: any): data is WithIdentity {
@@ -59,4 +59,3 @@ export namespace TosFlow {
         }
     }
 }
-

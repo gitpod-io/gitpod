@@ -6,8 +6,8 @@
 
 import { injectable } from "inversify";
 import { WorkspaceConfig, GithubAppConfig } from "@gitpod/gitpod-protocol";
-import * as deepmerge from 'deepmerge';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import * as deepmerge from "deepmerge";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const defaultConfig: GithubAppConfig = {
     prebuilds: {
@@ -18,14 +18,12 @@ const defaultConfig: GithubAppConfig = {
         branches: false,
         master: true,
         pullRequests: true,
-        pullRequestsFromForks: false
-    }
+        pullRequestsFromForks: false,
+    },
 };
-
 
 @injectable()
 export class GithubAppRules {
-
     protected mergeWithDefaultConfig(cfg: WorkspaceConfig | undefined): GithubAppConfig {
         let result: GithubAppConfig = defaultConfig;
 
@@ -36,12 +34,17 @@ export class GithubAppRules {
         return deepmerge(defaultConfig, cfg.github);
     }
 
-    public shouldRunPrebuild(config: WorkspaceConfig | undefined, isDefaultBranch: boolean, isPR: boolean, isFork: boolean): boolean {
+    public shouldRunPrebuild(
+        config: WorkspaceConfig | undefined,
+        isDefaultBranch: boolean,
+        isPR: boolean,
+        isFork: boolean,
+    ): boolean {
         if (!config) {
             return false;
         }
 
-        const hasPrebuildTask = !!config.tasks && config.tasks.find(t => !!t.before || !!t.init || !!t.prebuild);
+        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.before || !!t.init || !!t.prebuild);
         if (!hasPrebuildTask) {
             return false;
         }
@@ -60,26 +63,28 @@ export class GithubAppRules {
         }
     }
 
-    public shouldDo(cfg: WorkspaceConfig | undefined, action: 'addCheck' | 'addBadge' | 'addLabel' | 'addComment'): boolean {
+    public shouldDo(
+        cfg: WorkspaceConfig | undefined,
+        action: "addCheck" | "addBadge" | "addLabel" | "addComment",
+    ): boolean {
         const config = this.mergeWithDefaultConfig(cfg);
         const prebuildCfg = config.prebuilds!;
 
-        if (typeof(prebuildCfg) === "boolean") {
+        if (typeof prebuildCfg === "boolean") {
             return !!prebuildCfg;
         }
 
-        if (action === 'addCheck') {
+        if (action === "addCheck") {
             return !!prebuildCfg.addCheck;
-        } else if (action === 'addBadge') {
+        } else if (action === "addBadge") {
             return !!prebuildCfg.addBadge;
-        } else if (action === 'addLabel') {
+        } else if (action === "addLabel") {
             return !!prebuildCfg.addLabel;
-        } else if (action === 'addComment') {
+        } else if (action === "addComment") {
             return !!prebuildCfg.addComment;
         } else {
             log.warn("In GitHub app we asked whether we should do an unknown action. This is a bug!", { action });
             return false;
         }
     }
-
 }

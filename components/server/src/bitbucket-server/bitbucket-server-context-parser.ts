@@ -18,7 +18,6 @@ const DEFAULT_BRANCH = "master";
 
 @injectable()
 export class BitbucketServerContextParser extends AbstractContextParser implements IContextParser {
-
     @inject(BitbucketServerTokenHelper) protected readonly tokenHelper: BitbucketServerTokenHelper;
     @inject(BitbucketServerApi) protected readonly api: BitbucketServerApi;
 
@@ -26,7 +25,10 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
         const span = TraceContext.startSpan("BitbucketServerContextParser.handle", ctx);
 
         try {
-            const { resourceKind, host, owner, repoName, /*moreSegments, searchParams*/ } = await this.parseURL(user, contextUrl);
+            const { resourceKind, host, owner, repoName /*moreSegments, searchParams*/ } = await this.parseURL(
+                user,
+                contextUrl,
+            );
 
             return await this.handleNavigatorContext(ctx, user, resourceKind, host, owner, repoName);
         } catch (e) {
@@ -41,7 +43,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
     public async parseURL(user: User, contextUrl: string): Promise<{ resourceKind: string } & URLParts> {
         const url = new URL(contextUrl);
         const pathname = url.pathname.replace(/^\//, "").replace(/\/$/, ""); // pathname without leading and trailing slash
-        const segments = pathname.split('/');
+        const segments = pathname.split("/");
 
         const host = this.host; // as per contract, cf. `canHandle(user, contextURL)`
 
@@ -64,27 +66,55 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             owner,
             repoName: this.parseRepoName(repoName, endsWithRepoName),
             moreSegments: endsWithRepoName ? [] : segments.slice(moreSegmentsStart),
-            searchParams
-        }
+            searchParams,
+        };
     }
 
-    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, commit: string, maxDepth: number): Promise<string[] | undefined> {
+    public async fetchCommitHistory(
+        ctx: TraceContext,
+        user: User,
+        contextUrl: string,
+        commit: string,
+        maxDepth: number,
+    ): Promise<string[] | undefined> {
         return undefined;
     }
 
-    protected async handleNavigatorContext(ctx: TraceContext, user: User, resourceKind: string, host: string, owner: string, repoName: string, more: Partial<NavigatorContext> = {}): Promise<NavigatorContext> {
+    protected async handleNavigatorContext(
+        ctx: TraceContext,
+        user: User,
+        resourceKind: string,
+        host: string,
+        owner: string,
+        repoName: string,
+        more: Partial<NavigatorContext> = {},
+    ): Promise<NavigatorContext> {
         const span = TraceContext.startSpan("BitbucketServerContextParser.handleNavigatorContext", ctx);
         try {
             if (resourceKind !== "users" && resourceKind !== "projects") {
                 throw new Error("Only /users/ and /projects/ resources are supported.");
             }
-            const repo = (await this.api.getRepository(user, { kind: resourceKind, userOrProject: owner, repositorySlug: repoName }));
-            const defaultBranch = (await this.api.getDefaultBranch(user, { kind: resourceKind, userOrProject: owner, repositorySlug: repoName }));
+            const repo = await this.api.getRepository(user, {
+                kind: resourceKind,
+                userOrProject: owner,
+                repositorySlug: repoName,
+            });
+            const defaultBranch = await this.api.getDefaultBranch(user, {
+                kind: resourceKind,
+                userOrProject: owner,
+                repositorySlug: repoName,
+            });
             const repository = await this.toRepository(user, host, repo, defaultBranch);
             span.log({ "request.finished": "" });
 
             if (!repo) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                throw await NotFoundError.create(
+                    await this.tokenHelper.getCurrentToken(user),
+                    user,
+                    this.config.host,
+                    owner,
+                    repoName,
+                );
             }
 
             if (!more.revision) {
@@ -93,7 +123,12 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             more.refType = more.refType || "branch";
 
             if (!more.revision) {
-                const tipCommitOnDefaultBranch = await this.api.getCommits(user, { kind: resourceKind, userOrProject: owner, repositorySlug: repoName, q: { limit: 1 } });
+                const tipCommitOnDefaultBranch = await this.api.getCommits(user, {
+                    kind: resourceKind,
+                    userOrProject: owner,
+                    repositorySlug: repoName,
+                    q: { limit: 1 },
+                });
                 const commits = tipCommitOnDefaultBranch?.values || [];
                 if (commits.length === 0) {
                     // empty repo
@@ -108,7 +143,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
 
             return {
                 ...more,
-                title: `${owner}/${repoName} - ${more.ref || more.revision}${more.path ? ':' + more.path : ''}`,
+                title: `${owner}/${repoName} - ${more.ref || more.revision}${more.path ? ":" + more.path : ""}`,
                 repository,
             } as NavigatorContext;
         } catch (e) {
@@ -120,15 +155,19 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
         }
     }
 
-
-    protected async toRepository(user: User, host: string, repo: BitbucketServer.Repository, defaultBranch: BitbucketServer.Branch): Promise<Repository> {
+    protected async toRepository(
+        user: User,
+        host: string,
+        repo: BitbucketServer.Repository,
+        defaultBranch: BitbucketServer.Branch,
+    ): Promise<Repository> {
         if (!repo) {
-            throw new Error('Unknown repository.');
+            throw new Error("Unknown repository.");
         }
 
         const owner = repo.project.owner ? repo.project.owner.slug : repo.project.key;
         const name = repo.name;
-        const cloneUrl = repo.links.clone.find(u => u.name === "http")?.href!;
+        const cloneUrl = repo.links.clone.find((u) => u.name === "http")?.href!;
 
         const result: Repository = {
             cloneUrl,
@@ -137,9 +176,8 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             owner,
             private: !repo.public,
             defaultBranch: defaultBranch.displayId || DEFAULT_BRANCH,
-        }
+        };
 
         return result;
     }
-
 }

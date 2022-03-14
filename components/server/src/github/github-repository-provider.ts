@@ -4,13 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from 'inversify';
+import { injectable, inject } from "inversify";
 
-import { User, Repository } from "@gitpod/gitpod-protocol"
+import { User, Repository } from "@gitpod/gitpod-protocol";
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
-import { RepositoryProvider } from '../repohost/repository-provider';
-import { RepoURL } from '../repohost/repo-url';
-import { Branch, CommitInfo } from '@gitpod/gitpod-protocol/src/protocol';
+import { RepositoryProvider } from "../repohost/repository-provider";
+import { RepoURL } from "../repohost/repo-url";
+import { Branch, CommitInfo } from "@gitpod/gitpod-protocol/src/protocol";
 
 @injectable()
 export class GithubRepositoryProvider implements RepositoryProvider {
@@ -39,10 +39,14 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         let hasNextPage: boolean = true;
 
         while (hasNextPage) {
-            const result: any = await this.githubQueryApi.runQuery(user, `
+            const result: any = await this.githubQueryApi.runQuery(
+                user,
+                `
                 query {
                     repository(name: "${repo}", owner: "${owner}") {
-                        refs(refPrefix: "refs/heads/", orderBy: {field: TAG_COMMIT_DATE, direction: ASC}, first: 100 ${endCursor ? `, after: "${endCursor}"` : ""}) {
+                        refs(refPrefix: "refs/heads/", orderBy: {field: TAG_COMMIT_DATE, direction: ASC}, first: 100 ${
+                            endCursor ? `, after: "${endCursor}"` : ""
+                        }) {
                             nodes {
                                 name
                                 target {
@@ -78,14 +82,14 @@ export class GithubRepositoryProvider implements RepositoryProvider {
                         }
                     }
                 }
-            `);
+            `,
+            );
 
             endCursor = result.data.repository?.refs?.pageInfo?.endCursor;
             hasNextPage = result.data.repository?.refs?.pageInfo?.hasNextPage;
 
             const nodes = result.data.repository?.refs?.nodes;
-            for (const node of (nodes || [])) {
-
+            for (const node of nodes || []) {
                 branches.push({
                     name: node.name,
                     commit: {
@@ -95,7 +99,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
                         authorAvatarUrl: node.target.history.nodes[0].author.avatarUrl,
                         authorDate: node.target.history.nodes[0].author.date,
                     },
-                    htmlUrl: node.target.history.nodes[0].treeUrl.replace(node.target.oid, node.name)
+                    htmlUrl: node.target.history.nodes[0].treeUrl.replace(node.target.oid, node.name),
                 });
             }
         }
@@ -111,7 +115,13 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         }
     }
 
-    public async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number = 100): Promise<string[]> {
+    public async getCommitHistory(
+        user: User,
+        owner: string,
+        repo: string,
+        ref: string,
+        maxDepth: number = 100,
+    ): Promise<string[]> {
         try {
             if (ref.length != 40) {
                 throw new Error(`Invalid commit ID ${ref}.`);
@@ -123,7 +133,9 @@ export class GithubRepositoryProvider implements RepositoryProvider {
             //     pageInfo {
             //         haxNextPage,
             //     },
-            const result: any = await this.githubQueryApi.runQuery(user, `
+            const result: any = await this.githubQueryApi.runQuery(
+                user,
+                `
                 query {
                     repository(name: "${repo}", owner: "${owner}") {
                         object(oid: "${ref}") {
@@ -139,7 +151,8 @@ export class GithubRepositoryProvider implements RepositoryProvider {
                         }
                     }
                 }
-            `);
+            `,
+            );
 
             if (result.data.repository === null) {
                 throw new Error(`couldn't find repository ${owner}/${repo} on ${this.github.baseURL}`);
@@ -164,7 +177,9 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         //       shortDescriptionHTML(limit: 120)
         //       url
         //   }
-        const result: any = await this.githubQueryApi.runQuery(user, `
+        const result: any = await this.githubQueryApi.runQuery(
+            user,
+            `
             query {
                 viewer {
                     repositoriesContributedTo(includeUserRepositories: true, first: 100) {
@@ -175,21 +190,25 @@ export class GithubRepositoryProvider implements RepositoryProvider {
                         }
                     }
                 }
-            }`);
-        return (result.data.viewer?.repositoriesContributedTo?.edges || []).map((edge: any) => edge.node.url)
+            }`,
+        );
+        return (result.data.viewer?.repositoriesContributedTo?.edges || []).map((edge: any) => edge.node.url);
     }
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
         try {
             // If you have no "viewerPermission" on a repository you may not read it
             // Ref: https://docs.github.com/en/graphql/reference/enums#repositorypermission
-            const result: any = await this.githubQueryApi.runQuery(user, `
+            const result: any = await this.githubQueryApi.runQuery(
+                user,
+                `
                 query {
                     repository(name: "${repo}", owner: "${owner}") {
                         viewerPermission
                     }
                 }
-            `);
+            `,
+            );
             return result.data.repository !== null;
         } catch (err) {
             return false;

@@ -32,8 +32,16 @@ import { MonitoringEndpointsAppEE } from "./monitoring-endpoint-ee";
 import { MonitoringEndpointsApp } from "../../src/monitoring-endpoints";
 import { WorkspaceHealthMonitoring } from "./workspace/workspace-health-monitoring";
 import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting/account-service";
-import { AccountServiceImpl, SubscriptionService, TeamSubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { ChargebeeProvider, ChargebeeProviderOptions, UpgradeHelper } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
+import {
+    AccountServiceImpl,
+    SubscriptionService,
+    TeamSubscriptionService,
+} from "@gitpod/gitpod-payment-endpoint/lib/accounting";
+import {
+    ChargebeeProvider,
+    ChargebeeProviderOptions,
+    UpgradeHelper,
+} from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import { ChargebeeCouponComputer } from "./user/coupon-computer";
 import { ChargebeeService } from "./user/chargebee-service";
 import { EligibilityService } from "./user/eligibility-service";
@@ -100,10 +108,12 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
 
     // payment/billing
     bind(ChargebeeProvider).toSelf().inSingletonScope();
-    bind(ChargebeeProviderOptions).toDynamicValue(ctx => {
-        const config = ctx.container.get<Config>(Config);
-        return config.chargebeeProviderOptions;
-    }).inSingletonScope();
+    bind(ChargebeeProviderOptions)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            return config.chargebeeProviderOptions;
+        })
+        .inSingletonScope();
     bind(UpgradeHelper).toSelf().inSingletonScope();
     bind(ChargebeeCouponComputer).toSelf().inSingletonScope();
     bind(ChargebeeService).toSelf().inSingletonScope();

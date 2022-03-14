@@ -13,22 +13,20 @@ import { bitbucketServerContainerModule } from "../bitbucket-server/bitbucket-se
 
 @injectable()
 export class HostContainerMapping {
-
     public get(type: string): interfaces.ContainerModule[] | undefined {
         switch (type) {
-        case "GitHub":
-            return [githubContainerModule];
-        case "GitLab":
-            return [gitlabContainerModule];
-        case "OAuth":
-            return [genericAuthContainerModule];
-        case "Bitbucket":
-            return [bitbucketContainerModule];
-        case "BitbucketServer":
-            return [bitbucketServerContainerModule];
-        default:
-            return undefined;
+            case "GitHub":
+                return [githubContainerModule];
+            case "GitLab":
+                return [gitlabContainerModule];
+            case "OAuth":
+                return [genericAuthContainerModule];
+            case "Bitbucket":
+                return [bitbucketContainerModule];
+            case "BitbucketServer":
+                return [bitbucketServerContainerModule];
+            default:
+                return undefined;
         }
     }
-
 }

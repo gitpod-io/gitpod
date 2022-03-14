@@ -10,10 +10,12 @@ import { GitTokenValidator } from "./git-token-validator";
 
 @injectable()
 export class GitTokenScopeGuesser {
-
     @inject(GitTokenValidator) tokenValidator: GitTokenValidator;
 
-    async guessGitTokenScopes(authProvider: AuthProviderInfo | undefined, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {
+    async guessGitTokenScopes(
+        authProvider: AuthProviderInfo | undefined,
+        params: GuessGitTokenScopesParams,
+    ): Promise<GuessedGitTokenScopes> {
         if (!authProvider) {
             return { message: "Unknown host" };
         }
@@ -26,17 +28,23 @@ export class GitTokenScopeGuesser {
 
         // in case of git operation which require write access to a remote
         if (gitCommand === "push") {
-            const validationResult = await this.tokenValidator.checkWriteAccess({ host: authProvider.host, repoFullName, token: currentToken.token });
+            const validationResult = await this.tokenValidator.checkWriteAccess({
+                host: authProvider.host,
+                repoFullName,
+                token: currentToken.token,
+            });
             const hasWriteAccess = validationResult && validationResult.writeAccessToRepo === true;
             if (hasWriteAccess) {
                 const isPublic = validationResult && !validationResult.isPrivateRepo;
-                const requiredScopesForGitCommand = isPublic ? authProvider.requirements!.publicRepo : authProvider.requirements!.privateRepo;
-                return { scopes: requiredScopesForGitCommand }
+                const requiredScopesForGitCommand = isPublic
+                    ? authProvider.requirements!.publicRepo
+                    : authProvider.requirements!.privateRepo;
+                return { scopes: requiredScopesForGitCommand };
             } else {
-                return { message: `The remote repository "${repoUrl}" is not accessible with the current token.`} ;
+                return { message: `The remote repository "${repoUrl}" is not accessible with the current token.` };
             }
         }
-        return { scopes: authProvider.requirements!.default }
+        return { scopes: authProvider.requirements!.default };
     }
 
     /**

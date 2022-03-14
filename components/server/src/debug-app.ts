@@ -4,19 +4,17 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as http from 'http';
-import * as express from 'express';
+import * as http from "http";
+import * as express from "express";
 import { injectable, postConstruct } from "inversify";
-import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
-
+import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export interface SetLogLevelRequest {
-    level: LogrusLogLevel,
+    level: LogrusLogLevel;
 }
 export namespace SetLogLevelRequest {
     export function is(o: any): o is SetLogLevelRequest {
-        return typeof o === 'object'
-            && 'level' in o;
+        return typeof o === "object" && "level" in o;
     }
 }
 
@@ -36,7 +34,7 @@ export class DebugApp {
         app.use(express.json());
         app.use(express.urlencoded({ extended: true }));
 
-        app.post('/debug/logging', (req, res) => {
+        app.post("/debug/logging", (req, res) => {
             try {
                 const levelRequest = req.body;
                 if (!SetLogLevelRequest.is(levelRequest)) {
@@ -56,7 +54,7 @@ export class DebugApp {
     }
 
     public start(port: number) {
-        this.httpServer = this._app.listen(port, 'localhost', () => {
+        this.httpServer = this._app.listen(port, "localhost", () => {
             log.info(`debug server listening on port: ${port}`);
         });
     }
@@ -66,13 +64,15 @@ export class DebugApp {
         if (!server) {
             return;
         }
-        return new Promise<void>((resolve) => server.close((err: any) => {
-            if (err) {
-                log.warn(`error while closing http server`, { err });
-            }
-            this.httpServer = undefined;
-            resolve();
-        }));
+        return new Promise<void>((resolve) =>
+            server.close((err: any) => {
+                if (err) {
+                    log.warn(`error while closing http server`, { err });
+                }
+                this.httpServer = undefined;
+                resolve();
+            }),
+        );
     }
 
     public get app(): express.Application {

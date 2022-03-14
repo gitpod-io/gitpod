@@ -6,18 +6,17 @@
 
 import { Disposable } from "@gitpod/gitpod-protocol";
 
-export type ConsensusLeaderMessageType = 'heartbeat' | 'requestVote' | 'castVote';
+export type ConsensusLeaderMessageType = "heartbeat" | "requestVote" | "castVote";
 
-export const ConsensusLeaderMessenger = Symbol('ConsensusLeaderMessenger');
+export const ConsensusLeaderMessenger = Symbol("ConsensusLeaderMessenger");
 export interface ConsensusLeaderMessenger {
-
     // register makes a server known to the messenger. This has to be called prior to calling any other function.
     // The UID is optional. If not given, the messenger will come up with one and return it.
     register(uid?: string): Promise<string>;
 
-    on(event: 'heartbeat', cb: (msg: HeartbeatMessage) => void): Disposable,
-    on(event: 'requestVote', cb: (msg: RequestVoteMessage) => void): Disposable,
-    on(event: 'castVote', cb: (msg: CastVoteMessage) => void): Disposable;
+    on(event: "heartbeat", cb: (msg: HeartbeatMessage) => void): Disposable;
+    on(event: "requestVote", cb: (msg: RequestVoteMessage) => void): Disposable;
+    on(event: "castVote", cb: (msg: CastVoteMessage) => void): Disposable;
 
     // requestVote is invoked by candidates to gather votes.
     requestVote(sender: string, term: number): Promise<void>;
@@ -41,32 +40,32 @@ export interface RaftMessage {
 }
 
 export interface HeartbeatMessage extends RaftMessage {
-    type: 'heartbeat';
+    type: "heartbeat";
 }
 
 export namespace HeartbeatMessage {
     export function is(obj: any): obj is HeartbeatMessage {
-        return !!obj && obj.type == 'heartbeat';
+        return !!obj && obj.type == "heartbeat";
     }
 }
 
 export interface RequestVoteMessage extends RaftMessage {
-    type: 'requestVote';
+    type: "requestVote";
 }
 
 export namespace RequestVoteMessage {
     export function is(obj: any): obj is RequestVoteMessage {
-        return !!obj && obj.type == 'requestVote';
+        return !!obj && obj.type == "requestVote";
     }
 }
 
 export interface CastVoteMessage extends RaftMessage {
-    type: 'castVote';
+    type: "castVote";
     forCandidate: string;
 }
 
 export namespace CastVoteMessage {
     export function is(obj: any): obj is CastVoteMessage {
-        return !!obj && obj.type == 'castVote';
+        return !!obj && obj.type == "castVote";
     }
 }

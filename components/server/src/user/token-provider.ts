@@ -6,7 +6,7 @@
 
 import { Token, User } from "@gitpod/gitpod-protocol";
 
-export const TokenProvider = Symbol('TokenProvider');
+export const TokenProvider = Symbol("TokenProvider");
 export interface TokenProvider {
     /**
      * Returns a valid authentication token for the given host and user

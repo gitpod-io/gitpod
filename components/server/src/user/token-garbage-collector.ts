@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import * as opentracing from 'opentracing';
+import * as opentracing from "opentracing";
 import { UserDB, DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
@@ -23,7 +23,7 @@ export class TokenGarbageCollector {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
 
     public async start(intervalSeconds?: number): Promise<Disposable> {
-        const intervalSecs = (intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS);
+        const intervalSecs = intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS;
         return repeat(async () => {
             try {
                 if (await this.leaderQuorum.areWeLeader()) {

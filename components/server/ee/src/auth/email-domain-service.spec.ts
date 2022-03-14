@@ -4,11 +4,11 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import * as chai from 'chai';
-import { suite, test, timeout } from 'mocha-typescript';
-import { testContainer as dbTestContainer } from '@gitpod/gitpod-db/lib/test-container';
-import { ContainerModule } from 'inversify';
-import { EMailDomainService, EMailDomainServiceImpl } from '../auth/email-domain-service';
+import * as chai from "chai";
+import { suite, test, timeout } from "mocha-typescript";
+import { testContainer as dbTestContainer } from "@gitpod/gitpod-db/lib/test-container";
+import { ContainerModule } from "inversify";
+import { EMailDomainService, EMailDomainServiceImpl } from "../auth/email-domain-service";
 const expect = chai.expect;
 
 const testContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {

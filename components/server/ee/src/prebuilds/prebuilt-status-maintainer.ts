@@ -4,15 +4,21 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { ProbotOctokit } from 'probot';
-import { injectable, inject } from 'inversify';
-import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
-import { v4 as uuidv4 } from 'uuid';
-import { HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { PrebuiltWorkspaceUpdatable, PrebuiltWorkspace, Disposable, DisposableCollection, WorkspaceConfig } from '@gitpod/gitpod-protocol';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { LocalMessageBroker } from '../../../src/messaging/local-message-broker';
+import { ProbotOctokit } from "probot";
+import { injectable, inject } from "inversify";
+import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib";
+import { v4 as uuidv4 } from "uuid";
+import { HeadlessWorkspaceEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import {
+    PrebuiltWorkspaceUpdatable,
+    PrebuiltWorkspace,
+    Disposable,
+    DisposableCollection,
+    WorkspaceConfig,
+} from "@gitpod/gitpod-protocol";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { LocalMessageBroker } from "../../../src/messaging/local-message-broker";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 export interface CheckRunInfo {
@@ -27,7 +33,9 @@ const MAX_UPDATABLE_AGE = 6 * 60 * 60 * 1000;
 const DEFAULT_STATUS_DESCRIPTION = "Open a prebuilt online workspace in Gitpod";
 const NON_PREBUILT_STATUS_DESCRIPTION = "Open an online workspace in Gitpod";
 
-export type AuthenticatedGithubProvider = (installationId: number) => Promise<InstanceType<typeof ProbotOctokit> | undefined>;
+export type AuthenticatedGithubProvider = (
+    installationId: number,
+) => Promise<InstanceType<typeof ProbotOctokit> | undefined>;
 
 @injectable()
 export class PrebuildStatusMaintainer implements Disposable {
@@ -41,15 +49,21 @@ export class PrebuildStatusMaintainer implements Disposable {
         this.githubApiProvider = githubApiProvider;
 
         this.disposables.push(
-            this.localMessageBroker.listenForPrebuildUpdatableEvents((ctx, msg) => this.handlePrebuildFinished(ctx, msg))
+            this.localMessageBroker.listenForPrebuildUpdatableEvents((ctx, msg) =>
+                this.handlePrebuildFinished(ctx, msg),
+            ),
         );
-        this.disposables.push(
-            repeat(this.periodicUpdatableCheck.bind(this), 60 * 1000)
-        );
+        this.disposables.push(repeat(this.periodicUpdatableCheck.bind(this), 60 * 1000));
         log.debug("prebuild updatable status maintainer started");
     }
 
-    public async registerCheckRun(ctx: TraceContext, installationId: number, pws: PrebuiltWorkspace, cri: CheckRunInfo, config?: WorkspaceConfig) {
+    public async registerCheckRun(
+        ctx: TraceContext,
+        installationId: number,
+        pws: PrebuiltWorkspace,
+        cri: CheckRunInfo,
+        config?: WorkspaceConfig,
+    ) {
         const span = TraceContext.startSpan("registerCheckRun", ctx);
         span.setTag("pws-state", pws.state);
 
@@ -59,8 +73,8 @@ export class PrebuildStatusMaintainer implements Disposable {
                 throw new Error("unable to authenticate GitHub app");
             }
 
-            if (pws.state == 'queued' || pws.state == "building") {
-                await this.workspaceDB.trace({span}).attachUpdatableToPrebuild(pws.id, {
+            if (pws.state == "queued" || pws.state == "building") {
+                await this.workspaceDB.trace({ span }).attachUpdatableToPrebuild(pws.id, {
                     id: uuidv4(),
                     owner: cri.owner,
                     repo: cri.repo,
@@ -88,12 +102,12 @@ export class PrebuildStatusMaintainer implements Disposable {
                     sha: cri.head_sha,
                     target_url: cri.details_url,
                     context: "Gitpod",
-                    description: conclusion == 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
-                    state: (config?.github?.prebuilds?.addCheck === 'prevent-merge-on-error' ? conclusion : 'success')
+                    description: conclusion == "success" ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
+                    state: config?.github?.prebuilds?.addCheck === "prevent-merge-on-error" ? conclusion : "success",
                 });
             }
         } catch (err) {
-            TraceContext.setError({span}, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -116,33 +130,40 @@ export class PrebuildStatusMaintainer implements Disposable {
         } else if (pws.state === "available" && !!pws.error) {
             return "failure";
         } else {
-            log.warn("Should have updated prebuilt workspace updatable, but don't know how. Resorting to error conclusion.", { pws });
+            log.warn(
+                "Should have updated prebuilt workspace updatable, but don't know how. Resorting to error conclusion.",
+                { pws },
+            );
             return "error";
         }
     }
 
     protected async handlePrebuildFinished(ctx: TraceContext, msg: HeadlessWorkspaceEvent) {
-        const span = TraceContext.startSpan("PrebuildStatusMaintainer.handlePrebuildFinished", ctx)
+        const span = TraceContext.startSpan("PrebuildStatusMaintainer.handlePrebuildFinished", ctx);
 
         try {
             // this code assumes that the prebuild is updated in the database before the msgbus msg is received
-            const prebuild = await this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(msg.workspaceID);
+            const prebuild = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(msg.workspaceID);
             if (!prebuild) {
                 log.warn("received headless log message without associated prebuild", msg);
                 return;
             }
 
-            const updatables = await this.workspaceDB.trace({span}).findUpdatablesForPrebuild(prebuild.id);
-            await Promise.all(updatables.filter(u => !u.isResolved).map(u => this.doUpdate({span}, u, prebuild)));
+            const updatables = await this.workspaceDB.trace({ span }).findUpdatablesForPrebuild(prebuild.id);
+            await Promise.all(updatables.filter((u) => !u.isResolved).map((u) => this.doUpdate({ span }, u, prebuild)));
         } catch (err) {
-            TraceContext.setError({span}, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
         }
     }
 
-    protected async doUpdate(ctx: TraceContext, updatable: PrebuiltWorkspaceUpdatable, pws: PrebuiltWorkspace): Promise<void> {
+    protected async doUpdate(
+        ctx: TraceContext,
+        updatable: PrebuiltWorkspaceUpdatable,
+        pws: PrebuiltWorkspace,
+    ): Promise<void> {
         const span = TraceContext.startSpan("doUpdate", ctx);
 
         try {
@@ -151,11 +172,11 @@ export class PrebuildStatusMaintainer implements Disposable {
                 log.error("unable to authenticate GitHub app - this leaves user-facing checks dangling.");
                 return;
             }
-            const workspace = await this.workspaceDB.trace({span}).findById(pws.buildWorkspaceId);
+            const workspace = await this.workspaceDB.trace({ span }).findById(pws.buildWorkspaceId);
 
             if (!!updatable.contextUrl && !!workspace) {
                 const conclusion = this.getConclusionFromPrebuildState(pws);
-                if (conclusion === 'pending') {
+                if (conclusion === "pending") {
                     log.info(`Prebuild is still running.`, { prebuiltWorkspaceId: updatable.prebuiltWorkspaceId });
                     return;
                 }
@@ -168,32 +189,42 @@ export class PrebuildStatusMaintainer implements Disposable {
                         context: "Gitpod",
                         sha: updatable.commitSHA || pws.commit,
                         target_url: updatable.contextUrl,
-                        description: conclusion == 'success' ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
-                        state: (workspace?.config?.github?.prebuilds?.addCheck === 'prevent-merge-on-error' ? conclusion : 'success')
+                        description:
+                            conclusion == "success" ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
+                        state:
+                            workspace?.config?.github?.prebuilds?.addCheck === "prevent-merge-on-error"
+                                ? conclusion
+                                : "success",
                     });
                 } catch (err) {
                     if (err.message == "Not Found") {
-                        log.info("Did not find repository while updating updatable. Probably we lost the GitHub permission for the repo.", {owner: updatable.owner, repo: updatable.repo});
+                        log.info(
+                            "Did not find repository while updating updatable. Probably we lost the GitHub permission for the repo.",
+                            { owner: updatable.owner, repo: updatable.repo },
+                        );
                         found = true;
                     } else {
                         throw err;
                     }
                 }
-                TraceContext.addNestedTags({ span }, {
-                    doUpdate: {
-                        update: 'done',
-                        found,
+                TraceContext.addNestedTags(
+                    { span },
+                    {
+                        doUpdate: {
+                            update: "done",
+                            found,
+                        },
                     },
-                });
+                );
 
-                await this.workspaceDB.trace({span}).markUpdatableResolved(updatable.id);
+                await this.workspaceDB.trace({ span }).markUpdatableResolved(updatable.id);
                 log.info(`Resolved updatable. Marked check on ${updatable.contextUrl} as ${conclusion}`);
             } else if (!!updatable.issue) {
                 // this updatable updates a label
                 log.debug("Update label on a PR - we're not using this yet");
             }
         } catch (err) {
-            TraceContext.setError({span}, err);
+            TraceContext.setError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -203,9 +234,9 @@ export class PrebuildStatusMaintainer implements Disposable {
     protected async getGitHubApi(installationId: number): Promise<InstanceType<typeof ProbotOctokit> | undefined> {
         const api = await this.githubApiProvider(installationId);
         if (!api) {
-            return undefined
+            return undefined;
         }
-        return (api as InstanceType<typeof ProbotOctokit>);
+        return api as InstanceType<typeof ProbotOctokit>;
     }
 
     protected async periodicUpdatableCheck() {
@@ -214,8 +245,11 @@ export class PrebuildStatusMaintainer implements Disposable {
         try {
             const unresolvedUpdatables = await this.workspaceDB.trace(ctx).getUnresolvedUpdatables();
             for (const updatable of unresolvedUpdatables) {
-                if ((Date.now() - Date.parse(updatable.workspace.creationTime)) > MAX_UPDATABLE_AGE) {
-                    log.info("found unresolved updatable that's older than MAX_UPDATABLE_AGE and is inconclusive. Resolving.", updatable);
+                if (Date.now() - Date.parse(updatable.workspace.creationTime) > MAX_UPDATABLE_AGE) {
+                    log.info(
+                        "found unresolved updatable that's older than MAX_UPDATABLE_AGE and is inconclusive. Resolving.",
+                        updatable,
+                    );
                     await this.doUpdate(ctx, updatable, updatable.prebuild);
                 }
             }

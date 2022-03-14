@@ -5,14 +5,13 @@
  */
 
 import { Repository, User } from "@gitpod/gitpod-protocol";
-import { inject, injectable } from 'inversify';
-import { LanguagesProvider } from '../repohost/languages-provider';
-import { BitbucketApiFactory } from './bitbucket-api-factory';
+import { inject, injectable } from "inversify";
+import { LanguagesProvider } from "../repohost/languages-provider";
+import { BitbucketApiFactory } from "./bitbucket-api-factory";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class BitbucketLanguagesProvider implements LanguagesProvider {
-
     @inject(BitbucketApiFactory) protected readonly apiFactory: BitbucketApiFactory;
 
     async getLanguages(repository: Repository, user: User): Promise<object> {

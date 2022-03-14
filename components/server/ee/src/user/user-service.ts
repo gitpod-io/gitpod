@@ -47,7 +47,6 @@ export class UserServiceEE extends UserService {
     }
 
     async checkSignUp(params: CheckSignUpParams) {
-
         // todo@at: check if we need an optimization for SaaS here. used to be a no-op there.
 
         // 1. check the license
@@ -80,14 +79,16 @@ export class UserServiceEE extends UserService {
     }
 
     async checkAutomaticOssEligibility(user: User): Promise<boolean> {
-        const idsWithHost = user.identities.map(id => {
-            const hostContext = this.hostContextProvider.findByAuthProviderId(id.authProviderId);
-            if (!hostContext) {
-                return undefined;
-            }
-            const info = hostContext.authProvider.info;
-            return `${info.host}/${id.authName}`;
-        }).filter(i => !!i) as string[];
+        const idsWithHost = user.identities
+            .map((id) => {
+                const hostContext = this.hostContextProvider.findByAuthProviderId(id.authProviderId);
+                if (!hostContext) {
+                    return undefined;
+                }
+                const info = hostContext.authProvider.info;
+                return `${info.host}/${id.authName}`;
+            })
+            .filter((i) => !!i) as string[];
 
         return this.OssAllowListDb.hasAny(idsWithHost);
     }

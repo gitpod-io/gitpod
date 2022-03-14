@@ -10,7 +10,7 @@ import { IPrefixContextParser } from "../../../src/workspace/context-parser";
 
 @injectable()
 export class StartPrebuildContextParser implements IPrefixContextParser {
-    static PREFIX = ContextURL.PREBUILD_PREFIX + '/';
+    static PREFIX = ContextURL.PREBUILD_PREFIX + "/";
 
     findPrefix(user: User, context: string): string | undefined {
         if (context.startsWith(StartPrebuildContextParser.PREFIX)) {
@@ -20,14 +20,13 @@ export class StartPrebuildContextParser implements IPrefixContextParser {
 
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
         if (IssueContext.is(context)) {
-            throw new Error("cannot start prebuilds on an issue context")
+            throw new Error("cannot start prebuilds on an issue context");
         }
 
         const result: StartPrebuildContext = {
             title: `Prebuild of "${context.title}"`,
-            actual: context
+            actual: context,
         };
         return result;
     }
-
 }
