@@ -37,7 +37,8 @@ export class TypeORMEMailDBImpl implements EMailDB {
 
     async findEMailsToSend(limit: number): Promise<EMail[]> {
         const repo = await this.getEMailRepo();
-        const query = repo.createQueryBuilder('email')
+        const query = repo
+            .createQueryBuilder("email")
             .where("email.scheduledSendgridTime = ''")
             .orderBy("email.scheduledInternalTime")
             .limit(limit);
@@ -47,7 +48,8 @@ export class TypeORMEMailDBImpl implements EMailDB {
 
     async findEMailsByCampaignAndUserId(campaignId: string, userId: string): Promise<EMail[]> {
         const repo = await this.getEMailRepo();
-        const qb = repo.createQueryBuilder('email')
+        const qb = repo
+            .createQueryBuilder("email")
             .where("email.campaignId = :campaignId", { campaignId })
             .andWhere("email.userId = :userId", { userId });
         return qb.getMany();

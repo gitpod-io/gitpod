@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { TraceContext, TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { interfaces } from 'inversify';
-import * as opentracing from 'opentracing';
+import { TraceContext, TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { interfaces } from "inversify";
+import * as opentracing from "opentracing";
 
 export class DBWithTracing<T> {
     protected tracer: opentracing.Tracer;
@@ -38,14 +38,14 @@ export class DBWithTracing<T> {
                     } finally {
                         span.finish();
                     }
-                }
-            }
+                };
+            },
         });
     }
 }
 
 export function bindDbWithTracing<T>(traceKey: string | symbol, bind: interfaces.Bind, delegateKey: string | symbol) {
-    return bind(traceKey).toDynamicValue(ctx => {
+    return bind(traceKey).toDynamicValue((ctx) => {
         const root = ctx.container.get(delegateKey) as T;
         const tracingManager = ctx.container.get(TracingManager);
         return new DBWithTracing(root, tracingManager);

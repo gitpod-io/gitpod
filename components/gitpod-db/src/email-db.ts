@@ -10,7 +10,7 @@ import { DBEmail } from "./typeorm/entity/db-email";
 
 export type PartialEMailUpdate = DeepPartial<EMail> & Pick<EMail, "uid">;
 
-export const EMailDB = Symbol('EMailDB');
+export const EMailDB = Symbol("EMailDB");
 export interface EMailDB {
     scheduleEmail(newEmail: EMail): Promise<EMail>;
     updatePartial(partial: PartialEMailUpdate): Promise<void>;

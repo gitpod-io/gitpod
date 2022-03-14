@@ -12,19 +12,17 @@ import { TypeORM } from "../typeorm";
 
 @Entity()
 export class DBLayoutData implements LayoutData {
-
     @PrimaryColumn(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
     workspaceId: string;
 
     @Column({
-        type: 'timestamp',
+        type: "timestamp",
         precision: 6,
-        default: () => 'CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)',
-        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP
+        default: () => "CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)",
+        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
     lastUpdatedTime: string;
 
     @Column()
     layoutData: string;
-
 }

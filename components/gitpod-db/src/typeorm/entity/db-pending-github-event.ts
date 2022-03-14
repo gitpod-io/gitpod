@@ -16,7 +16,7 @@ export class DBPendingGithubEvent implements PendingGithubEvent {
     @Column()
     githubUserId: string;
 
-    @Column({type: 'timestamp', precision: 6})
+    @Column({ type: "timestamp", precision: 6 })
     creationDate: Date;
 
     @Column()

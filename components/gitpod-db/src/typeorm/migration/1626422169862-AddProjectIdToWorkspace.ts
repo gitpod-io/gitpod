@@ -8,7 +8,6 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 import { columnExists, tableExists } from "./helper/helper";
 
 export class AddProjectIdToWorkspace1626422169862 implements MigrationInterface {
-
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (await tableExists(queryRunner, "d_b_workspace")) {
             if (!(await columnExists(queryRunner, "d_b_workspace", "projectId"))) {
@@ -17,7 +16,5 @@ export class AddProjectIdToWorkspace1626422169862 implements MigrationInterface 
         }
     }
 
-    public async down(queryRunner: QueryRunner): Promise<any> {
-    }
-
+    public async down(queryRunner: QueryRunner): Promise<any> {}
 }

@@ -33,8 +33,8 @@ export class DBUserEnvVar implements UserEnvVar {
         // Relies on the initialization of the var in UserDbImpl
         transformer: Transformer.compose(
             Transformer.SIMPLE_JSON([]),
-            Transformer.encrypted(() => encryptionService)
-        )
+            Transformer.encrypted(() => encryptionService),
+        ),
     })
     value: string;
 

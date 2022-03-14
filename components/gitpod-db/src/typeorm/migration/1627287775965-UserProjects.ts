@@ -8,7 +8,6 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 import { columnExists } from "./helper/helper";
 
 export class UserProjects1627287775965 implements MigrationInterface {
-
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (!(await columnExists(queryRunner, "d_b_project", "userId"))) {
             await queryRunner.query("ALTER TABLE d_b_project MODIFY COLUMN `teamId` char(36) NULL");
@@ -17,7 +16,5 @@ export class UserProjects1627287775965 implements MigrationInterface {
         }
     }
 
-    public async down(queryRunner: QueryRunner): Promise<any> {
-    }
-
+    public async down(queryRunner: QueryRunner): Promise<any> {}
 }

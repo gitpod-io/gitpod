@@ -4,18 +4,18 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import * as chai from 'chai';
-import { suite, test, timeout } from 'mocha-typescript';
-import { testContainer } from './test-container';
-import { TypeORM } from './typeorm/typeorm';
-import { AuthProviderEntryDB } from '.';
-import { DBAuthProviderEntry } from './typeorm/entity/db-auth-provider-entry';
-import { DeepPartial } from '@gitpod/gitpod-protocol/lib/util/deep-partial';
+import * as chai from "chai";
+import { suite, test, timeout } from "mocha-typescript";
+import { testContainer } from "./test-container";
+import { TypeORM } from "./typeorm/typeorm";
+import { AuthProviderEntryDB } from ".";
+import { DBAuthProviderEntry } from "./typeorm/entity/db-auth-provider-entry";
+import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 const expect = chai.expect;
 
-@suite @timeout(5000)
+@suite
+@timeout(5000)
 export class AuthProviderEntryDBSpec {
-
     typeORM = testContainer.get<TypeORM>(TypeORM);
     db = testContainer.get<AuthProviderEntryDB>(AuthProviderEntryDB);
 
@@ -40,7 +40,7 @@ export class AuthProviderEntryDBSpec {
             id: "0049b9d2-005f-43c2-a0ae-76377805d8b8",
             host,
             ownerId,
-            status: 'verified',
+            status: "verified",
             type: "GitHub",
             oauthRevision: undefined,
             deleted: false,
@@ -87,8 +87,10 @@ export class AuthProviderEntryDBSpec {
 
         const loadedAp = await this.db.findByHost(ap.host);
         expect(loadedAp, "findByHost()").to.deep.equal(ap);
-        expect(loadedAp?.oauthRevision, "findByHost()").to.equal("e05ea6fab8efcaba4b3246c2b2d3931af897c3bc2c1cf075c31614f0954f9840");
+        expect(loadedAp?.oauthRevision, "findByHost()").to.equal(
+            "e05ea6fab8efcaba4b3246c2b2d3931af897c3bc2c1cf075c31614f0954f9840",
+        );
     }
 }
 
-module.exports = AuthProviderEntryDBSpec
+module.exports = AuthProviderEntryDBSpec;
