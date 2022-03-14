@@ -14,7 +14,6 @@ export interface Context {
 }
 
 export class ConfigInferrer {
-
     protected contributions: ((ctx: Context) => Promise<void>)[] = [
         this.checkNode.bind(this),
         this.checkJava.bind(this),
@@ -24,7 +23,7 @@ export class ConfigInferrer {
         this.checkMake.bind(this),
         this.checkNuget.bind(this),
         this.checkRuby.bind(this),
-    ]
+    ];
 
     async getConfig(ctx: Context): Promise<WorkspaceConfig> {
         for (const contrib of this.contributions) {
@@ -38,57 +37,57 @@ export class ConfigInferrer {
     }
 
     protected async checkNode(ctx: Context): Promise<void> {
-        const pckjsonContent = await ctx.read('package.json');
+        const pckjsonContent = await ctx.read("package.json");
         if (!pckjsonContent) {
             return;
         }
-        let command: 'yarn' | 'npm' = 'npm';
-        if (await ctx.exists('yarn.lock')) {
-            command = 'yarn';
+        let command: "yarn" | "npm" = "npm";
+        if (await ctx.exists("yarn.lock")) {
+            command = "yarn";
         }
-        this.addCommand(ctx.config, command + ' install', 'init');
+        this.addCommand(ctx.config, command + " install", "init");
         try {
             const pckjson = JSON.parse(pckjsonContent);
             if (pckjson.scripts) {
                 if (pckjson.scripts.build) {
-                    this.addCommand(ctx.config, command + ' run build', 'init');
+                    this.addCommand(ctx.config, command + " run build", "init");
                 } else if (pckjson.scripts.compile) {
-                    this.addCommand(ctx.config, command + ' run compile', 'init');
+                    this.addCommand(ctx.config, command + " run compile", "init");
                 }
                 if (pckjson.scripts.start) {
-                    this.addCommand(ctx.config, command + ' run start', 'command');
+                    this.addCommand(ctx.config, command + " run start", "command");
                 } else if (pckjson.scripts.dev) {
-                    this.addCommand(ctx.config, command + ' run dev', 'command');
+                    this.addCommand(ctx.config, command + " run dev", "command");
                 } else if (pckjson.scripts.watch) {
-                    this.addCommand(ctx.config, command + ' run watch', 'command');
+                    this.addCommand(ctx.config, command + " run watch", "command");
                 }
             }
         } catch (e) {
             console.log(e, pckjsonContent);
         }
-        this.addExtension(ctx, 'dbaeumer.vscode-eslint');
+        this.addExtension(ctx, "dbaeumer.vscode-eslint");
     }
 
     protected async checkJava(ctx: Context): Promise<void> {
-        if (await ctx.exists('build.gradle')) {
-            let cmd = 'gradle';
-            if (await ctx.exists('gradlew')) {
-                cmd = './gradlew';
+        if (await ctx.exists("build.gradle")) {
+            let cmd = "gradle";
+            if (await ctx.exists("gradlew")) {
+                cmd = "./gradlew";
             }
-            this.addCommand(ctx.config, cmd + ' build', 'init');
-            this.addExtension(ctx, 'redhat.java');
-            this.addExtension(ctx, 'vscjava.vscode-java-debug');
+            this.addCommand(ctx.config, cmd + " build", "init");
+            this.addExtension(ctx, "redhat.java");
+            this.addExtension(ctx, "vscjava.vscode-java-debug");
             return;
         }
-        if (await ctx.exists('pom.xml')) {
-            let cmd = 'mvn';
-            if (await ctx.exists('mvnw')) {
-                cmd = './mvnw';
+        if (await ctx.exists("pom.xml")) {
+            let cmd = "mvn";
+            if (await ctx.exists("mvnw")) {
+                cmd = "./mvnw";
             }
-            this.addCommand(ctx.config, cmd + ' install -DskipTests=false', 'init');
-            this.addExtension(ctx, 'redhat.java');
-            this.addExtension(ctx, 'vscjava.vscode-java-debug');
-            this.addExtension(ctx, 'vscjava.vscode-maven');
+            this.addCommand(ctx.config, cmd + " install -DskipTests=false", "init");
+            this.addExtension(ctx, "redhat.java");
+            this.addExtension(ctx, "vscjava.vscode-java-debug");
+            this.addExtension(ctx, "vscjava.vscode-maven");
             return;
         }
     }
@@ -99,7 +98,7 @@ export class ConfigInferrer {
         }
         if (!ctx.config.vscode || !ctx.config.vscode.extensions) {
             ctx.config.vscode = {
-                extensions: []
+                extensions: [],
             };
         }
         if (ctx.config.vscode.extensions?.indexOf(extensionName) === -1)
@@ -107,14 +106,14 @@ export class ConfigInferrer {
     }
 
     protected async isMake(ctx: Context) {
-        return await ctx.exists('Makefile') || await ctx.exists('makefile');
+        return (await ctx.exists("Makefile")) || (await ctx.exists("makefile"));
     }
 
     protected async checkMake(ctx: Context) {
-        if (await ctx.exists('CMakeLists.txt')) {
-            this.addCommand(ctx.config, 'cmake .', 'init');
+        if (await ctx.exists("CMakeLists.txt")) {
+            this.addCommand(ctx.config, "cmake .", "init");
         } else if (await this.isMake(ctx)) {
-            this.addCommand(ctx.config, 'make', 'init');
+            this.addCommand(ctx.config, "make", "init");
         }
     }
 
@@ -123,63 +122,68 @@ export class ConfigInferrer {
             // https://docs.python-guide.org/writing/structure/#makefile
             return;
         }
-        if (await ctx.exists('requirements.txt')) {
-            this.addCommand(ctx.config, 'pip install -r requirements.txt', 'init');
-            this.addExtension(ctx, 'ms-python.python');
-        } else if (await ctx.exists('setup.py')) {
-            this.addCommand(ctx.config, 'pip install .', 'init');
-            this.addExtension(ctx, 'ms-python.python');
+        if (await ctx.exists("requirements.txt")) {
+            this.addCommand(ctx.config, "pip install -r requirements.txt", "init");
+            this.addExtension(ctx, "ms-python.python");
+        } else if (await ctx.exists("setup.py")) {
+            this.addCommand(ctx.config, "pip install .", "init");
+            this.addExtension(ctx, "ms-python.python");
         }
-        if (await ctx.exists('main.py')) {
-            this.addCommand(ctx.config, 'python main.py', 'command');
-            this.addExtension(ctx, 'ms-python.python');
-        } else if (await ctx.exists('app.py')) {
-            this.addCommand(ctx.config, 'python app.py', 'command');
-            this.addExtension(ctx, 'ms-python.python');
-        } else if (await ctx.exists('runserver.py')) {
-            this.addCommand(ctx.config, 'python runserver.py', 'command');
-            this.addExtension(ctx, 'ms-python.python');
+        if (await ctx.exists("main.py")) {
+            this.addCommand(ctx.config, "python main.py", "command");
+            this.addExtension(ctx, "ms-python.python");
+        } else if (await ctx.exists("app.py")) {
+            this.addCommand(ctx.config, "python app.py", "command");
+            this.addExtension(ctx, "ms-python.python");
+        } else if (await ctx.exists("runserver.py")) {
+            this.addCommand(ctx.config, "python runserver.py", "command");
+            this.addExtension(ctx, "ms-python.python");
         }
     }
 
     protected async checkGo(ctx: Context) {
-        if (await ctx.exists('go.mod')) {
-            this.addCommand(ctx.config, 'go get', 'init');
-            this.addCommand(ctx.config, 'go build ./...', 'init');
-            this.addCommand(ctx.config, 'go test ./...', 'init');
-            this.addCommand(ctx.config, 'go run', 'command');
-            this.addExtension(ctx, 'golang.go');
+        if (await ctx.exists("go.mod")) {
+            this.addCommand(ctx.config, "go get", "init");
+            this.addCommand(ctx.config, "go build ./...", "init");
+            this.addCommand(ctx.config, "go test ./...", "init");
+            this.addCommand(ctx.config, "go run", "command");
+            this.addExtension(ctx, "golang.go");
         }
     }
 
     protected async checkRust(ctx: Context) {
-        if (await ctx.exists('Cargo.toml')) {
-            this.addCommand(ctx.config, 'cargo build', 'init');
-            this.addCommand(ctx.config, 'cargo watch -x run', 'command');
-            this.addExtension(ctx, 'matklad.rust-analyzer');
+        if (await ctx.exists("Cargo.toml")) {
+            this.addCommand(ctx.config, "cargo build", "init");
+            this.addCommand(ctx.config, "cargo watch -x run", "command");
+            this.addExtension(ctx, "matklad.rust-analyzer");
         }
     }
 
     protected async checkNuget(ctx: Context) {
-        if (await ctx.exists('packages.config')) {
-            this.addCommand(ctx.config, 'nuget install', 'init');
+        if (await ctx.exists("packages.config")) {
+            this.addCommand(ctx.config, "nuget install", "init");
         }
     }
 
     protected async checkRuby(ctx: Context) {
-        if (await ctx.exists('bin/setup')) {
-            this.addCommand(ctx.config, 'bin/setup', 'init');
-        } else if (await ctx.exists('Gemfile')) {
-            this.addCommand(ctx.config, 'bundle install', 'init');
+        if (await ctx.exists("bin/setup")) {
+            this.addCommand(ctx.config, "bin/setup", "init");
+        } else if (await ctx.exists("Gemfile")) {
+            this.addCommand(ctx.config, "bundle install", "init");
         }
-        if (await ctx.exists('bin/startup')) {
-            this.addCommand(ctx.config, 'bin/startup', 'command');
-        } else if (await ctx.exists('bin/rails')) {
-            this.addCommand(ctx.config, 'bin/rails server', 'command');
+        if (await ctx.exists("bin/startup")) {
+            this.addCommand(ctx.config, "bin/startup", "command");
+        } else if (await ctx.exists("bin/rails")) {
+            this.addCommand(ctx.config, "bin/rails server", "command");
         }
     }
 
-    protected addCommand(config: WorkspaceConfig, command: string, phase: 'before' | 'init' | 'command', unless?: string): void {
+    protected addCommand(
+        config: WorkspaceConfig,
+        command: string,
+        phase: "before" | "init" | "command",
+        unless?: string,
+    ): void {
         if (!config.tasks) {
             config.tasks = [];
         }
@@ -191,18 +195,26 @@ export class ConfigInferrer {
             // skip
             return;
         }
-        config.tasks[0][phase] = (existing ? existing + ' && ' : '') + command;
+        config.tasks[0][phase] = (existing ? existing + " && " : "") + command;
     }
 
     toYaml(config: WorkspaceConfig): string {
-        const i = '  ';
-        let tasks = '';
+        const i = "  ";
+        let tasks = "";
         if (config.tasks) {
-            tasks = `tasks:\n${i}- ${config.tasks.map(task => Object.entries(task).map(([phase, command]) => `${phase}: ${command}`).join('\n    ')).join('\n  - ')}`
+            tasks = `tasks:\n${i}- ${config.tasks
+                .map((task) =>
+                    Object.entries(task)
+                        .map(([phase, command]) => `${phase}: ${command}`)
+                        .join("\n    "),
+                )
+                .join("\n  - ")}`;
         }
-        let vscode = '';
+        let vscode = "";
         if (config.vscode?.extensions) {
-            vscode = `vscode:\n${i}extensions:\n${config.vscode.extensions.map(extension => `${i + i}- ${extension}`).join('\n')}`
+            vscode = `vscode:\n${i}extensions:\n${config.vscode.extensions
+                .map((extension) => `${i + i}- ${extension}`)
+                .join("\n")}`;
         }
         return `${tasks}
 ${vscode}

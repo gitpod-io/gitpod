@@ -22,17 +22,19 @@ export namespace NotFoundError {
         const userScopes = token ? [...token.scopes] : [];
 
         const userIsOwner = owner == user.name; // TODO: shouldn't this be a comparison with `identity.authName`?
-        const data = <NotFoundError.Data>{ host, owner, repoName, userIsOwner, userScopes, lastUpdate }
+        const data = <NotFoundError.Data>{ host, owner, repoName, userIsOwner, userScopes, lastUpdate };
         const error = Object.assign(new Error("NotFoundError"), { data });
         return error;
     }
     export function is(error: any): error is NotFoundError {
-        return !!error
-            && !!error.data
-            && !!error.data.host
-            && !!error.data.owner
-            && !!error.data.repoName
-            && error.message === 'NotFoundError';
+        return (
+            !!error &&
+            !!error.data &&
+            !!error.data.host &&
+            !!error.data.owner &&
+            !!error.data.repoName &&
+            error.message === "NotFoundError"
+        );
     }
 }
 
@@ -47,16 +49,18 @@ export namespace UnauthorizedError {
     }
     const message = "UnauthorizedError";
     export function create(host: string, scopes: string[], messageHint?: string) {
-        const data = <UnauthorizedError.Data>{ host, scopes, messageHint: (messageHint || 'unauthorized') }
+        const data = <UnauthorizedError.Data>{ host, scopes, messageHint: messageHint || "unauthorized" };
         const error = Object.assign(new Error(message), { data });
         return error;
     }
     export function is(error: any): error is UnauthorizedError {
-        return !!error
-            && !!error.data
-            && !!error.data.host
-            && !!error.data.scopes
-            && !!error.data.messageHint
-            && error.message === message;
+        return (
+            !!error &&
+            !!error.data &&
+            !!error.data.host &&
+            !!error.data.scopes &&
+            !!error.data.messageHint &&
+            error.message === message
+        );
     }
 }

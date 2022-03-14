@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import * as express from 'express';
+import * as express from "express";
 import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Permission, User } from "@gitpod/gitpod-protocol";
@@ -40,7 +40,10 @@ export class WorkspaceDownloadService {
                     return;
                 }
 
-                if (wsi.ownerId !== userId && !this.authorizationService.hasPermission(req.user, Permission.ADMIN_WORKSPACES)) {
+                if (
+                    wsi.ownerId !== userId &&
+                    !this.authorizationService.hasPermission(req.user, Permission.ADMIN_WORKSPACES)
+                ) {
                     log.warn({ workspaceId, userId }, "user attempted to download someone else's workspace");
                     res.sendStatus(500);
                     return;
@@ -51,10 +54,9 @@ export class WorkspaceDownloadService {
                 log.info({ workspaceId, userId }, "user is downloading workspace content");
                 res.send(signedUrl);
             } catch (err) {
-                log.error({workspaceId}, "cannot prepare workspace download", err);
+                log.error({ workspaceId }, "cannot prepare workspace download", err);
                 res.sendStatus(500);
             }
         });
     }
-
 }

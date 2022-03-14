@@ -11,7 +11,6 @@ import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { IPrefixContextParser } from "./context-parser";
 
-
 /**
  * mostly for testing purpose
  */
@@ -21,7 +20,7 @@ export class AdditionalContentPrefixContextParser implements IPrefixContextParse
     static PREFIX = /^\/?additionalcontent\/([^\/]*)\//;
 
     findPrefix(user: User, context: string): string | undefined {
-        if (this.config.hostUrl.url.host !== 'gitpod.io') {
+        if (this.config.hostUrl.url.host !== "gitpod.io") {
             const result = AdditionalContentPrefixContextParser.PREFIX.exec(context);
             if (result) {
                 return result[0];
@@ -33,12 +32,12 @@ export class AdditionalContentPrefixContextParser implements IPrefixContextParse
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
         const match = AdditionalContentPrefixContextParser.PREFIX.exec(prefix);
         if (!match) {
-            log.error('Could not parse prefix ' + prefix);
+            log.error("Could not parse prefix " + prefix);
             return context;
         }
         const text = base64decode(decodeURIComponent(match[1]));
         const files = JSON.parse(text);
-        (context as AdditionalContentContext).additionalFiles = files
+        (context as AdditionalContentContext).additionalFiles = files;
         return context;
     }
 }

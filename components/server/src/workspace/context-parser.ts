@@ -11,15 +11,14 @@ import { AuthProviderParams } from "../auth/auth-provider";
 import { URLSearchParams, URL } from "url";
 
 export interface IContextParser {
-    normalize?(contextUrl: string): string | undefined
-    canHandle(user: User, contextUrl: string): boolean
-    handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext>
+    normalize?(contextUrl: string): string | undefined;
+    canHandle(user: User, contextUrl: string): boolean;
+    handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext>;
 }
-export const IContextParser = Symbol("IContextParser")
+export const IContextParser = Symbol("IContextParser");
 
 @injectable()
 export abstract class AbstractContextParser implements IContextParser {
-
     @inject(AuthProviderParams) protected config: AuthProviderParams;
 
     protected get host(): string {
@@ -47,7 +46,7 @@ export abstract class AbstractContextParser implements IContextParser {
     public async parseURL(user: User, contextUrl: string): Promise<URLParts> {
         const url = new URL(contextUrl);
         const pathname = url.pathname.replace(/^\//, "").replace(/\/$/, ""); // pathname without leading and trailing slash
-        const segments = pathname.split('/');
+        const segments = pathname.split("/");
 
         const host = this.host; // as per contract, cf. `canHandle(user, contextURL)`
 
@@ -68,12 +67,14 @@ export abstract class AbstractContextParser implements IContextParser {
             owner,
             repoName: this.parseRepoName(repoName, endsWithRepoName),
             moreSegments: endsWithRepoName ? [] : segments.slice(moreSegmentsStart),
-            searchParams
-        }
+            searchParams,
+        };
     }
 
     protected parseRepoName(urlSegment: string, lastSegment: boolean): string {
-        return lastSegment && urlSegment.endsWith('.git') ? urlSegment.substring(0, urlSegment.length - '.git'.length) : urlSegment;
+        return lastSegment && urlSegment.endsWith(".git")
+            ? urlSegment.substring(0, urlSegment.length - ".git".length)
+            : urlSegment;
     }
 
     public abstract handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext>;
@@ -95,21 +96,25 @@ export interface URLParts {
  * and expects "othercontext" to be parsed and passed back.
  */
 export interface IPrefixContextParser {
-    normalize?(contextURL: string): string | undefined
-    findPrefix(user: User, context: string): string | undefined
-    handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext>
+    normalize?(contextURL: string): string | undefined;
+    findPrefix(user: User, context: string): string | undefined;
+    handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext>;
 }
-export const IPrefixContextParser = Symbol("IPrefixContextParser")
+export const IPrefixContextParser = Symbol("IPrefixContextParser");
 
 export namespace IssueContexts {
     export function toBranchName(user: User, issueTitle: string, issueNr: number): string {
-        const titleWords = issueTitle.toLowerCase().replace(/[^a-z]/g, '-').split('-').filter(w => w.length > 0)
-        let localBranch = (user.name + '/').toLowerCase();
+        const titleWords = issueTitle
+            .toLowerCase()
+            .replace(/[^a-z]/g, "-")
+            .split("-")
+            .filter((w) => w.length > 0);
+        let localBranch = (user.name + "/").toLowerCase();
         for (const segment of titleWords) {
             if (localBranch.length > 30) {
                 break;
             }
-            localBranch += segment + '-';
+            localBranch += segment + "-";
         }
         localBranch += issueNr;
         return localBranch;

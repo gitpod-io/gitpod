@@ -10,7 +10,7 @@ import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/account
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { ChargebeeService } from "./chargebee-service";
 import { TeamSubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class UserDeletionServiceEE extends UserDeletionService {
@@ -27,7 +27,10 @@ export class UserDeletionServiceEE extends UserDeletionService {
         const errors = [];
         if (this.config.enablePayment) {
             const now = new Date();
-            const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, now.toISOString());
+            const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(
+                user,
+                now.toISOString(),
+            );
             for (const subscription of subscriptions) {
                 try {
                     const planId = subscription.planId!;
@@ -40,27 +43,40 @@ export class UserDeletionServiceEE extends UserDeletionService {
                         continue;
                     } else {
                         if (!paymentReference) {
-                            const teamSlots = await this.teamSubscriptionService.findTeamSubscriptionSlotsByAssignee(id);
-                            teamSlots.forEach(async ts => await this.teamSubscriptionService.deactivateSlot(ts.teamSubscriptionId, ts.id, now))
+                            const teamSlots = await this.teamSubscriptionService.findTeamSubscriptionSlotsByAssignee(
+                                id,
+                            );
+                            teamSlots.forEach(
+                                async (ts) =>
+                                    await this.teamSubscriptionService.deactivateSlot(
+                                        ts.teamSubscriptionId,
+                                        ts.id,
+                                        now,
+                                    ),
+                            );
                         } else if (paymentReference.startsWith("github:")) {
-                            throw new Error("Cannot delete user subscription from GitHub")
+                            throw new Error("Cannot delete user subscription from GitHub");
                         } else {
                             // cancel Chargebee subscriptions
                             const subscriptionId = subscription.uid;
                             const chargebeeSubscriptionId = subscription.paymentReference!;
-                            await this.chargebeeService.cancelSubscription(chargebeeSubscriptionId, { userId: user.id }, { subscriptionId, chargebeeSubscriptionId });
+                            await this.chargebeeService.cancelSubscription(
+                                chargebeeSubscriptionId,
+                                { userId: user.id },
+                                { subscriptionId, chargebeeSubscriptionId },
+                            );
                         }
                     }
                 } catch (error) {
                     errors.push(error);
-                    log.error("Error cancelling subscription", error, { subscription })
+                    log.error("Error cancelling subscription", error, { subscription });
                 }
             }
         }
 
         await super.deleteUser(id);
         if (errors.length > 0) {
-            throw new Error(errors.join("\n"))
+            throw new Error(errors.join("\n"));
         }
     }
 }

@@ -23,7 +23,7 @@ export const gitlabContainerModule = new ContainerModule((bind, _unbind, _isBoun
     bind(GitLabApi).toSelf().inSingletonScope();
     bind(GitlabContextParser).toSelf().inSingletonScope();
     bind(GitLabAuthProvider).toSelf().inSingletonScope();
-    bind(AuthProvider).toService(GitLabAuthProvider)
+    bind(AuthProvider).toService(GitLabAuthProvider);
     bind(GitlabFileProvider).toSelf().inSingletonScope();
     bind(FileProvider).toService(GitlabFileProvider);
     bind(GitlabLanguagesProvider).toSelf().inSingletonScope();

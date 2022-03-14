@@ -4,7 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ConsensusLeaderMessenger, HeartbeatMessage, RequestVoteMessage, ConsensusLeaderMessageType, CastVoteMessage } from "./consensus-leader-messenger";
+import {
+    ConsensusLeaderMessenger,
+    HeartbeatMessage,
+    RequestVoteMessage,
+    ConsensusLeaderMessageType,
+    CastVoteMessage,
+} from "./consensus-leader-messenger";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { EventEmitter } from "events";
 import { injectable } from "inversify";
@@ -23,7 +29,7 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
 
     on(event: ConsensusLeaderMessageType, cb: (msg: any) => void): Disposable {
         this.events.on(event, cb);
-        return {dispose: () => this.events.off(event, cb)};
+        return { dispose: () => this.events.off(event, cb) };
     }
 
     async requestVote(sender: string, term: number): Promise<void> {
@@ -31,8 +37,8 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
             return;
         }
 
-        const t: ConsensusLeaderMessageType = 'requestVote';
-        const p: RequestVoteMessage = { type: 'requestVote', sender, term };
+        const t: ConsensusLeaderMessageType = "requestVote";
+        const p: RequestVoteMessage = { type: "requestVote", sender, term };
         this.events.emit(t, p);
     }
 
@@ -41,8 +47,8 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
             return;
         }
 
-        const t: ConsensusLeaderMessageType = 'castVote';
-        const p: CastVoteMessage = { type: 'castVote', sender, term, forCandidate };
+        const t: ConsensusLeaderMessageType = "castVote";
+        const p: CastVoteMessage = { type: "castVote", sender, term, forCandidate };
         this.events.emit(t, p);
 
         if (forCandidate == sender) {
@@ -55,8 +61,8 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
             return;
         }
 
-        const t: ConsensusLeaderMessageType = 'heartbeat';
-        const p: HeartbeatMessage = { type: 'heartbeat', sender, term };
+        const t: ConsensusLeaderMessageType = "heartbeat";
+        const p: HeartbeatMessage = { type: "heartbeat", sender, term };
         this.events.emit(t, p);
     }
 
@@ -67,5 +73,4 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
     public blockSender(sender: string) {
         this.blockedSenders.set(sender, true);
     }
-
 }

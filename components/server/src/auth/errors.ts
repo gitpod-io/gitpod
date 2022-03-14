@@ -15,7 +15,7 @@ export namespace TosNotAcceptedYetException {
         return Object.assign(new Error("TosNotAcceptedYetException"), { identity });
     }
     export function is(error: any): error is TosNotAcceptedYetException {
-        return !!error && error.message === 'TosNotAcceptedYetException';
+        return !!error && error.message === "TosNotAcceptedYetException";
     }
 }
 
@@ -32,7 +32,7 @@ export namespace AuthException {
     }
 }
 
-export interface EMailDomainFilterException extends AuthException { }
+export interface EMailDomainFilterException extends AuthException {}
 export namespace EMailDomainFilterException {
     const type = "EMailDomainFilterException";
     const message = "We do not allow disposable email addresses.";
@@ -44,7 +44,7 @@ export namespace EMailDomainFilterException {
     }
 }
 
-export interface UnconfirmedUserException extends AuthException { }
+export interface UnconfirmedUserException extends AuthException {}
 export namespace UnconfirmedUserException {
     const type = "UnconfirmedUserException";
     export function create(message: string, payload: any) {
@@ -68,8 +68,7 @@ export namespace SelectAccountException {
     }
 }
 
-export interface EmailAddressAlreadyTakenException extends AuthException {
-}
+export interface EmailAddressAlreadyTakenException extends AuthException {}
 export namespace EmailAddressAlreadyTakenException {
     const type = "EmailAddressAlreadyTakenException";
     export function create(message: string, payload: object | undefined) {

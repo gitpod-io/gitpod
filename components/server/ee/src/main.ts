@@ -16,8 +16,7 @@ container.load(productionContainerModule);
 container.load(productionEEContainerModule);
 container.load(dbContainerModule);
 
-start(container)
-    .catch(err => {
-        log.error("Error during startup or operation. Exiting.", err);
-        process.exit(1);
-    });
+start(container).catch((err) => {
+    log.error("Error during startup or operation. Exiting.", err);
+    process.exit(1);
+});
