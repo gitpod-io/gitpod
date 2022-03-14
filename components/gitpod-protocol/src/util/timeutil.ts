@@ -24,28 +24,32 @@ export function oneMonthLater(fromDate: string, day?: number): string {
     }
     return later.toISOString();
 }
-export const yearsLater = (fromDate: string, years: number): string => liftDate1(fromDate, (d) => {
-    d.setUTCFullYear(d.getUTCFullYear() + years);
-    return d.toISOString();
-});
+export const yearsLater = (fromDate: string, years: number): string =>
+    liftDate1(fromDate, (d) => {
+        d.setUTCFullYear(d.getUTCFullYear() + years);
+        return d.toISOString();
+    });
 
 // tslint:disable-next-line:no-shadowed-variable
-export const addMillis = (d1: string, millis: number) => liftDate1(d1, (d1) => new Date(d1.getTime() + millis).toISOString());
-export const durationInHours = (d1: string, d2: string) => liftDate(d1, d2, (d1, d2) => millisecondsToHours(d1.getTime() - d2.getTime()));
+export const addMillis = (d1: string, millis: number) =>
+    liftDate1(d1, (d1) => new Date(d1.getTime() + millis).toISOString());
+export const durationInHours = (d1: string, d2: string) =>
+    liftDate(d1, d2, (d1, d2) => millisecondsToHours(d1.getTime() - d2.getTime()));
 export const durationInMillis = (d1: string, d2: string) => liftDate(d1, d2, (d1, d2) => d1.getTime() - d2.getTime());
 // tslint:disable-next-line:no-shadowed-variable
-export const isDateGreaterOrEqual = (d1: string, d2: string): boolean => liftDate(d1, d2, (d1, d2) => d1.getTime() >= d2.getTime());
+export const isDateGreaterOrEqual = (d1: string, d2: string): boolean =>
+    liftDate(d1, d2, (d1, d2) => d1.getTime() >= d2.getTime());
 export const isDateSmallerOrEqual = (d1: string, d2: string | undefined) => !d2 || d1 <= d2;
 export const isDateSmaller = (d1: string, d2: string | undefined) => !d2 || d1 < d2;
-export const oldest = (d1: string, d2: string): string => d1 > d2 ? d1 : d2;
-export const earliest = (d1: string, d2: string): string => d1 < d2 ? d1 : d2;
+export const oldest = (d1: string, d2: string): string => (d1 > d2 ? d1 : d2);
+export const earliest = (d1: string, d2: string): string => (d1 < d2 ? d1 : d2);
 export const orderAsc = (d1: string, d2: string): number => liftDate(d1, d2, (d1, d2) => d1.getTime() - d2.getTime());
 export const liftDate1 = <T>(d1: string, f: (d1: Date) => T): T => f(new Date(d1));
 export const liftDate = <T>(d1: string, d2: string, f: (d1: Date, d2: Date) => T): T => f(new Date(d1), new Date(d2));
 
 export function hoursLater(date: string, hours: number): string {
-    const result = new Date(date)
-    result.setHours(result.getHours() + hours)
+    const result = new Date(date);
+    result.setHours(result.getHours() + hours);
     return result.toISOString();
 }
 

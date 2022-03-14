@@ -93,10 +93,10 @@ export interface SamplingDecision {
 
 // added by TypeFox
 export interface Sampler {
-    name(): string
+    name(): string;
     isSampled(operation: string, tags: any): boolean;
     onCreateSpan(span: opentracing.Span): SamplingDecision;
     onSetOperationName(span: opentracing.Span, operationName: string): SamplingDecision;
     onSetTag(span: opentracing.Span, key: string, value: any): SamplingDecision;
-    close(callback: () => void): void
+    close(callback: () => void): void;
 }

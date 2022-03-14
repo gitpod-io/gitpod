@@ -9,12 +9,11 @@ import { injectable, inject } from "inversify";
 import { EncryptedData, EncryptionEngine } from "./encryption-engine";
 import { KeyProvider, KeyMetadata } from "./key-provider";
 
-
 export interface Encrypted<_T> extends EncryptedData {
-    keyMetadata: KeyMetadata
+    keyMetadata: KeyMetadata;
 }
 
-export const EncryptionService = Symbol('EncryptionService');
+export const EncryptionService = Symbol("EncryptionService");
 export interface EncryptionService {
     encrypt<T>(data: T): Encrypted<T>;
     decrypt<T>(encrypted: Encrypted<T>): T;
@@ -32,7 +31,7 @@ export class EncryptionServiceImpl implements EncryptionService {
         const encryptedData = this.engine.encrypt(dataStr, key.material);
         return {
             ...encryptedData,
-            keyMetadata: key.metadata
+            keyMetadata: key.metadata,
         };
     }
 

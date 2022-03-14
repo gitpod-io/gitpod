@@ -16,10 +16,10 @@ export interface Disposable {
 export namespace Disposable {
     export function create(func: () => void): Disposable {
         return {
-            dispose: func
+            dispose: func,
         };
     }
-    export const NULL = create(() => { });
+    export const NULL = create(() => {});
 }
 
 export class DisposableCollection implements Disposable {
@@ -69,9 +69,6 @@ export class DisposableCollection implements Disposable {
     }
 
     pushAll(disposables: Disposable[]): Disposable[] {
-        return disposables.map(disposable =>
-            this.push(disposable)
-        );
+        return disposables.map((disposable) => this.push(disposable));
     }
-
 }

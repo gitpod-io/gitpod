@@ -11,14 +11,14 @@ export interface SelectAccountPayload {
         authHost: string;
         authName: string;
         authProviderType: string;
-    },
+    };
     otherUser: {
         name: string;
         avatarUrl: string;
         authHost: string;
         authName: string;
         authProviderType: string;
-    }
+    };
 }
 export namespace SelectAccountPayload {
     export function is(data: any): data is SelectAccountPayload {
