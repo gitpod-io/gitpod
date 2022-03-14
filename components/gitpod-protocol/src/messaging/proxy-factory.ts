@@ -8,8 +8,8 @@
 import { MessageConnection, ResponseError } from "vscode-jsonrpc";
 import { Event, Emitter } from "../util/event";
 import { Disposable } from "../util/disposable";
-import { ConnectionHandler } from './handler';
-import { log } from '../util/logging';
+import { ConnectionHandler } from "./handler";
+import { log } from "../util/logging";
 
 export type JsonRpcServer<Client> = Disposable & {
     /**
@@ -27,10 +27,7 @@ export interface JsonRpcConnectionEventEmitter {
 export type JsonRpcProxy<T> = T & JsonRpcConnectionEventEmitter;
 
 export class JsonRpcConnectionHandler<T extends object> implements ConnectionHandler {
-    constructor(
-        readonly path: string,
-        readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object) => any
-    ) { }
+    constructor(readonly path: string, readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object) => any) {}
 
     onConnection(connection: MessageConnection, request?: object): void {
         const factory = new JsonRpcProxyFactory<T>();
@@ -83,7 +80,6 @@ export class JsonRpcConnectionHandler<T extends object> implements ConnectionHan
  * @param <T> - The type of the object to expose to JSON-RPC.
  */
 export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
-
     protected readonly onDidOpenConnectionEmitter = new Emitter<void>();
     protected readonly onDidCloseConnectionEmitter = new Emitter<void>();
 
@@ -101,17 +97,15 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
     }
 
     protected waitForConnection(): void {
-        this.connectionPromise = new Promise(resolve =>
-            this.connectionPromiseResolve = resolve
-        );
-        this.connectionPromise.then(connection => {
+        this.connectionPromise = new Promise((resolve) => (this.connectionPromiseResolve = resolve));
+        this.connectionPromise.then((connection) => {
             connection.onClose(() => this.fireConnectionClosed());
             this.fireConnectionOpened();
         });
     }
 
     fireConnectionClosed() {
-        this.onDidCloseConnectionEmitter.fire(undefined)
+        this.onDidCloseConnectionEmitter.fire(undefined);
     }
 
     fireConnectionOpened() {
@@ -204,35 +198,34 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
      * @returns A callable that executes the JSON-RPC call.
      */
     get(target: T, p: PropertyKey, receiver: any): any {
-        if (p === 'setClient') {
+        if (p === "setClient") {
             return (client: any) => {
                 this.target = client;
             };
         }
-        if (p === 'onDidOpenConnection') {
+        if (p === "onDidOpenConnection") {
             return this.onDidOpenConnectionEmitter.event;
         }
-        if (p === 'onDidCloseConnection') {
+        if (p === "onDidCloseConnection") {
             return this.onDidCloseConnectionEmitter.event;
         }
         const isNotify = this.isNotification(p);
         return (...args: any[]) =>
-            this.connectionPromise.then(connection =>
-                new Promise((resolve, reject) => {
-                    try {
-                        if (isNotify) {
-                            connection.sendNotification(p.toString(), ...args);
-                            resolve(undefined);
-                        } else {
-                            const resultPromise = connection.sendRequest(p.toString(), ...args) as Promise<any>;
-                            resultPromise
-                                .catch((err: any) => reject(err))
-                                .then((result: any) => resolve(result));
+            this.connectionPromise.then(
+                (connection) =>
+                    new Promise((resolve, reject) => {
+                        try {
+                            if (isNotify) {
+                                connection.sendNotification(p.toString(), ...args);
+                                resolve(undefined);
+                            } else {
+                                const resultPromise = connection.sendRequest(p.toString(), ...args) as Promise<any>;
+                                resultPromise.catch((err: any) => reject(err)).then((result: any) => resolve(result));
+                            }
+                        } catch (err) {
+                            reject(err);
                         }
-                    } catch (err) {
-                        reject(err);
-                    }
-                })
+                    }),
             );
     }
 

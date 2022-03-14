@@ -5,11 +5,11 @@
  */
 
 import { PrebuiltWorkspaceState } from "./protocol";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { DeepPartial } from "./util/deep-partial";
 
 export interface ProjectConfig {
-    '.gitpod.yml': string;
+    ".gitpod.yml": string;
 }
 
 export interface ProjectSettings {
@@ -33,13 +33,13 @@ export interface Project {
 }
 
 export namespace Project {
-    export const create = (project: Omit<Project, 'id' | 'creationTime'>): Project => {
+    export const create = (project: Omit<Project, "id" | "creationTime">): Project => {
         return {
             ...project,
             id: uuidv4(),
-            creationTime: new Date().toISOString()
+            creationTime: new Date().toISOString(),
         };
-    }
+    };
 
     export interface Overview {
         branches: BranchDetails[];
@@ -67,7 +67,7 @@ export namespace Project {
     }
 }
 
-export type PartialProject = DeepPartial<Project> & Pick<Project, 'id'>;
+export type PartialProject = DeepPartial<Project> & Pick<Project, "id">;
 
 export interface PrebuildWithStatus {
     info: PrebuildInfo;
@@ -103,7 +103,7 @@ export interface PrebuildInfo {
 }
 export namespace PrebuildInfo {
     export function is(data?: any): data is PrebuildInfo {
-        return typeof data === "object" && ["id", "buildWorkspaceId", "projectId", "branch"].every(p => p in data);
+        return typeof data === "object" && ["id", "buildWorkspaceId", "projectId", "branch"].every((p) => p in data);
     }
 }
 

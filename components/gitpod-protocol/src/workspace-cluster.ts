@@ -4,10 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as fs from 'fs';
-import { filePathTelepresenceAware } from './env';
+import * as fs from "fs";
+import { filePathTelepresenceAware } from "./env";
 import { DeepPartial } from "./util/deep-partial";
-import { PermissionName } from './permission';
+import { PermissionName } from "./permission";
 
 export interface WorkspaceCluster {
     // Name of the workspace cluster.
@@ -47,25 +47,28 @@ export interface TLSConfig {
     crt: string;
 }
 export namespace TLSConfig {
-    export const loadFromBase64File = (path: string): string => fs.readFileSync(filePathTelepresenceAware(path)).toString("base64");
+    export const loadFromBase64File = (path: string): string =>
+        fs.readFileSync(filePathTelepresenceAware(path)).toString("base64");
 }
 export type WorkspaceClusterWoTLS = Omit<WorkspaceCluster, "tls">;
 export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "name" | "url" | "tls">;
 
-export type AdmissionConstraint = AdmissionConstraintFeaturePreview | AdmissionConstraintHasPermission | AdmissionConstraintHasUserLevel | AdmissionConstraintHasMoreResources;
+export type AdmissionConstraint =
+    | AdmissionConstraintFeaturePreview
+    | AdmissionConstraintHasPermission
+    | AdmissionConstraintHasUserLevel
+    | AdmissionConstraintHasMoreResources;
 export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
-export type AdmissionConstraintHasPermission = { type: "has-permission", permission: PermissionName };
-export type AdmissionConstraintHasUserLevel = { type: "has-user-level", level: string };
+export type AdmissionConstraintHasPermission = { type: "has-permission"; permission: PermissionName };
+export type AdmissionConstraintHasUserLevel = { type: "has-user-level"; level: string };
 export type AdmissionConstraintHasMoreResources = { type: "has-more-resources" };
 
 export namespace AdmissionConstraint {
     export function is(o: any): o is AdmissionConstraint {
-        return !!o
-            && 'type' in o;
+        return !!o && "type" in o;
     }
     export function isHasPermissionConstraint(o: any): o is AdmissionConstraintHasPermission {
-        return is(o)
-            && o.type === "has-permission";
+        return is(o) && o.type === "has-permission";
     }
     export function hasPermission(ac: AdmissionConstraint, permission: PermissionName): boolean {
         return isHasPermissionConstraint(ac) && ac.permission === permission;

@@ -13,5 +13,5 @@ export enum WorkspaceInitSource {
     WorkspaceInitFromOther = "from-other",
 }
 export interface WorkspaceReadyMessage {
-    source: WorkspaceInitSource
+    source: WorkspaceInitSource;
 }

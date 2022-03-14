@@ -9,10 +9,10 @@ import { Disposable } from "./disposable";
 export class Cancelable<T> implements Disposable {
     protected canceled: boolean;
 
-    constructor(protected readonly activity: (cancel: boolean) => Promise<T> | undefined) { }
+    constructor(protected readonly activity: (cancel: boolean) => Promise<T> | undefined) {}
 
     public async run(): Promise<T | undefined> {
-        for(let r = await this.activity(this.canceled); ; r = await this.activity(this.canceled)) {
+        for (let r = await this.activity(this.canceled); ; r = await this.activity(this.canceled)) {
             if (this.canceled) {
                 return;
             } else if (r !== undefined) {

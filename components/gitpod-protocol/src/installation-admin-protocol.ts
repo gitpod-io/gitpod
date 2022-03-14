@@ -4,11 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 const InstallationAdminSettingsPrototype = {
-    sendTelemetry: true
-}
+    sendTelemetry: true,
+};
 
 export type InstallationAdminSettings = typeof InstallationAdminSettingsPrototype;
 
@@ -24,10 +24,10 @@ export interface InstallationAdmin {
 }
 
 export interface TelemetryData {
-    installationAdmin: InstallationAdmin
-    totalUsers: number
-    totalWorkspaces: number
-    totalInstances: number
+    installationAdmin: InstallationAdmin;
+    totalUsers: number;
+    totalWorkspaces: number;
+    totalInstances: number;
 }
 
 export namespace InstallationAdmin {
@@ -36,7 +36,7 @@ export namespace InstallationAdmin {
             id: uuidv4(),
             settings: {
                 ...InstallationAdminSettingsPrototype,
-            }
+            },
         };
     }
 }

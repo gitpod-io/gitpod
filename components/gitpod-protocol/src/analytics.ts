@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 export const IAnalyticsWriter = Symbol("IAnalyticsWriter");
 
 type Identity =
@@ -15,24 +14,27 @@ interface Message {
     messageId?: string;
 }
 
-export type IdentifyMessage = Message & Identity & {
-    traits?: any;
-    timestamp?: Date;
-    context?: any;
-};
+export type IdentifyMessage = Message &
+    Identity & {
+        traits?: any;
+        timestamp?: Date;
+        context?: any;
+    };
 
-export type TrackMessage = Message & Identity & {
-    event: string;
-    properties?: any;
-    timestamp?: Date;
-    context?: any;
-};
+export type TrackMessage = Message &
+    Identity & {
+        event: string;
+        properties?: any;
+        timestamp?: Date;
+        context?: any;
+    };
 
-export type PageMessage = Message & Identity & {
-    properties?: any;
-    timestamp?: Date;
-    context?: any;
-};
+export type PageMessage = Message &
+    Identity & {
+        properties?: any;
+        timestamp?: Date;
+        context?: any;
+    };
 
 export type RemoteTrackMessage = Omit<TrackMessage, "timestamp" | "userId">;
 export type RemotePageMessage = Omit<PageMessage, "timestamp" | "userId"> & {
@@ -42,11 +44,9 @@ export type RemotePageMessage = Omit<PageMessage, "timestamp" | "userId"> & {
 export type RemoteIdentifyMessage = Omit<IdentifyMessage, "timestamp" | "userId">;
 
 export interface IAnalyticsWriter {
-
     identify(msg: IdentifyMessage): void;
 
     track(msg: TrackMessage): void;
 
     page(msg: PageMessage): void;
-
 }
