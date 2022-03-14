@@ -29,8 +29,8 @@ export class DBTeamMembershipInvite {
     invalidationTime: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     invitedEmail?: string;
 

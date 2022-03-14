@@ -29,8 +29,8 @@ export class DBProjectEnvVar implements ProjectEnvVarWithValue {
         type: "simple-json",
         transformer: Transformer.compose(
             Transformer.SIMPLE_JSON([]),
-            Transformer.encrypted(() => encryptionService)
-        )
+            Transformer.encrypted(() => encryptionService),
+        ),
     })
     value: string;
 

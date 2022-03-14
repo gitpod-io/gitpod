@@ -12,12 +12,11 @@ import { TypeORM } from "../../typeorm/typeorm";
 @Entity()
 // on DB but not Typeorm: @Index("ind_dbsync", ["_lastModified"])   // DBSync
 export class DBProjectInfo {
-
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     projectId: string;
 
     @Column({
-        type: 'simple-json',
+        type: "simple-json",
         transformer: (() => {
             return {
                 to(value: any): any {
@@ -29,11 +28,10 @@ export class DBProjectInfo {
                         if (Project.Overview.is(obj)) {
                             return obj;
                         }
-                    } catch (error) {
-                    }
-                }
+                    } catch (error) {}
+                },
             };
-        })()
+        })(),
     })
     overview: Project.Overview;
 

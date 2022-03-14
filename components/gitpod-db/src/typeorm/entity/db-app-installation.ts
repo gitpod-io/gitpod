@@ -10,7 +10,7 @@ import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
 
 @Entity()
-@Index("ind_dbsync", ["creationTime"])   // DBSync
+@Index("ind_dbsync", ["creationTime"]) // DBSync
 export class DBAppInstallation implements AppInstallation {
     @PrimaryColumn()
     platform: AppInstallationPlatform;
@@ -20,7 +20,7 @@ export class DBAppInstallation implements AppInstallation {
 
     @Column({
         ...TypeORM.UUID_COLUMN_TYPE,
-        nullable: true
+        nullable: true,
     })
     ownerUserID?: string;
 
@@ -31,19 +31,18 @@ export class DBAppInstallation implements AppInstallation {
     state: AppInstallationState;
 
     @Column({
-        type: 'timestamp',
+        type: "timestamp",
         precision: 6,
-        default: () => 'CURRENT_TIMESTAMP(6)',
-        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP
+        default: () => "CURRENT_TIMESTAMP(6)",
+        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
     creationTime: string;
 
     @Column({
-        type: 'timestamp',
+        type: "timestamp",
         precision: 6,
-        default: () => 'CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)',
-        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP
+        default: () => "CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)",
+        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
     lastUpdateTime: string;
-
 }

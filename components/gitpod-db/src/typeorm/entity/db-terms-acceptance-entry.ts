@@ -15,7 +15,6 @@ import { TermsAcceptanceEntry } from "@gitpod/gitpod-protocol";
 @Entity()
 // on DB but not Typeorm: @Index("ind_userId", ["userId"])   // DBSync
 export class DBTermsAcceptanceEntry implements TermsAcceptanceEntry {
-
     @PrimaryColumn()
     userId: string;
 

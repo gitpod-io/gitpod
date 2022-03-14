@@ -6,8 +6,8 @@
 
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
-import { v4 as uuidv4 } from 'uuid';
-import { TypeORM } from './typeorm';
+import { v4 as uuidv4 } from "uuid";
+import { TypeORM } from "./typeorm";
 import { OneTimeSecretDB } from "../one-time-secret-db";
 import { DBOneTimeSecret } from "./entity/db-one-time-secret";
 
@@ -28,7 +28,7 @@ export class TypeORMOneTimeSecretDBImpl implements OneTimeSecretDB {
             deleted: false,
             expirationTime: expirationTime.toISOString(),
             id: uuidv4(),
-            value: secret
+            value: secret,
         };
 
         const repo = await this.getRepo();
@@ -64,8 +64,8 @@ export class TypeORMOneTimeSecretDBImpl implements OneTimeSecretDB {
     }
 
     public async pruneExpired(): Promise<void> {
-        await (await this.getEntityManager()).query("UPDATE d_b_one_time_secret SET deleted = 1 WHERE deleted = 0 AND expirationTime < NOW()");
+        await (
+            await this.getEntityManager()
+        ).query("UPDATE d_b_one_time_secret SET deleted = 1 WHERE deleted = 0 AND expirationTime < NOW()");
     }
-
-
 }

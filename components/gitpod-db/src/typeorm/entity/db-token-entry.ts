@@ -18,16 +18,16 @@ export class DBTokenEntry implements TokenEntry {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     uid: string;
 
-    @Column('varchar')
+    @Column("varchar")
     authProviderId: string;
 
-    @Column('varchar')
+    @Column("varchar")
     authId: string;
 
-    @Index('ind_expiryDate')
+    @Index("ind_expiryDate")
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     expiryDate?: string;
 
@@ -39,8 +39,8 @@ export class DBTokenEntry implements TokenEntry {
         transformer: Transformer.compose(
             Transformer.SIMPLE_JSON([]),
             // Relies on the initialization of the var in UserDbImpl
-            Transformer.encrypted(() => encryptionService)
-        )
+            Transformer.encrypted(() => encryptionService),
+        ),
     })
     token: Token;
 

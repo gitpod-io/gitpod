@@ -4,21 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
-import * as chai from 'chai';
+import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from 'mocha-typescript';
+import { suite, test, timeout } from "mocha-typescript";
 
-import { testContainer } from './test-container';
-import { TypeORM } from './typeorm/typeorm';
-import { Repository } from 'typeorm';
-import { UserStorageResourcesDB } from './user-storage-resources-db';
-import { DBUserStorageResource } from './typeorm/entity/db-user-storage-resource';
-
+import { testContainer } from "./test-container";
+import { TypeORM } from "./typeorm/typeorm";
+import { Repository } from "typeorm";
+import { UserStorageResourcesDB } from "./user-storage-resources-db";
+import { DBUserStorageResource } from "./typeorm/entity/db-user-storage-resource";
 
 @suite
 class UserStorageResourcesDBSpec {
-
     typeORM = testContainer.get<TypeORM>(TypeORM);
     resourcesDb = testContainer.get<UserStorageResourcesDB>(UserStorageResourcesDB);
 
@@ -33,16 +30,16 @@ class UserStorageResourcesDBSpec {
 
     @test(timeout(10000))
     public async testGetEmpty() {
-        const content = await this.resourcesDb.get('user1', 'some://uri');
-        expect(content).to.be.eq('');
+        const content = await this.resourcesDb.get("user1", "some://uri");
+        expect(content).to.be.eq("");
     }
 
     @test(timeout(10000))
     public async testUpdate() {
-        await this.resourcesDb.update('user1', 'some://uri', 'content');
-        const content = await this.resourcesDb.get('user1', 'some://uri');
-        expect(content).to.be.eq('content');
+        await this.resourcesDb.update("user1", "some://uri", "content");
+        const content = await this.resourcesDb.get("user1", "some://uri");
+        expect(content).to.be.eq("content");
     }
 }
 
-module.exports = new UserStorageResourcesDBSpec()
+module.exports = new UserStorageResourcesDBSpec();
