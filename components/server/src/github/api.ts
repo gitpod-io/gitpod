@@ -266,7 +266,7 @@ export class GitHubRestApi {
         user: User,
         params: RestEndpointMethodTypes["repos"]["get"]["parameters"],
     ): Promise<Repository> {
-        const key = `getRepository:${params.owner}/${params.owner}:${user.id}`;
+        const key = `getRepository:${params.owner}/${params.repo}:${user.id}`;
         const response = await this.runWithCache(key, user, (api) => api.repos.get(params));
         return response.data;
     }
@@ -275,7 +275,7 @@ export class GitHubRestApi {
         user: User,
         params: RestEndpointMethodTypes["repos"]["getBranch"]["parameters"],
     ): Promise<Branch> {
-        const key = `getBranch:${params.owner}/${params.owner}/${params.branch}:${user.id}`;
+        const key = `getBranch:${params.owner}/${params.repo}/${params.branch}:${user.id}`;
         const getBranchResponse = (await this.runWithCache(key, user, (api) =>
             api.repos.getBranch(params),
         )) as RestEndpointMethodTypes["repos"]["getBranch"]["response"];
@@ -298,7 +298,7 @@ export class GitHubRestApi {
         user: User,
         params: RestEndpointMethodTypes["repos"]["listBranches"]["parameters"],
     ): Promise<Branch[]> {
-        const key = `getBranches:${params.owner}/${params.owner}:${user.id}`;
+        const key = `getBranches:${params.owner}/${params.repo}:${user.id}`;
         const listBranchesResponse = (await this.runWithCache(key, user, (api) =>
             api.repos.listBranches(params),
         )) as RestEndpointMethodTypes["repos"]["listBranches"]["response"];
@@ -311,7 +311,7 @@ export class GitHubRestApi {
             } = branch;
             const commit = await this.getCommit(user, { ...params, ref: sha });
 
-            const key = `getBranch:${params.owner}/${params.owner}/${params.branch}:${user.id}`;
+            const key = `getBranch:${params.owner}/${params.repo}/${params.branch}:${user.id}`;
             const getBranchResponse = (await this.runWithCache(key, user, (api) =>
                 api.repos.listBranches(params),
             )) as RestEndpointMethodTypes["repos"]["getBranch"]["response"];
@@ -331,7 +331,7 @@ export class GitHubRestApi {
         user: User,
         params: RestEndpointMethodTypes["repos"]["getCommit"]["parameters"],
     ): Promise<CommitInfo> {
-        const key = `getCommit:${params.owner}/${params.owner}/${params.ref}:${user.id}`;
+        const key = `getCommit:${params.owner}/${params.repo}/${params.ref}:${user.id}`;
         const getCommitResponse = (await this.runWithCache(key, user, (api) =>
             api.repos.getCommit(params),
         )) as RestEndpointMethodTypes["repos"]["getCommit"]["response"];
