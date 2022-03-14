@@ -3,7 +3,7 @@ CHANNEL_BETA = Beta
 CHANNEL_UNSTABLE = Unstable
 YAML_DIR = manifests
 
-all: helm lint create_dev_release
+all: lint create_dev_release
 
 create_dev_release:
 	@if [ "${REPLICATED_DEV_CHANNEL}" = "" ]; then \
@@ -27,8 +27,3 @@ lint:
 	replicated release lint --yaml-dir ${YAML_DIR}
 .PHONY: lint
 
-helm:
-	@echo "Installing Helm dependencies"
-	@rm -f manifests/*.tgz
-	@for f in $(shell ls -d charts/*/); do cd $${f} && helm dep up && helm package . --destination ../../manifests && cd -; done
-.PHONY: helm

@@ -259,60 +259,26 @@ spec:
           when: '{{repl ConfigOptionEquals "tls_self_signed_enabled" "0" }}'
           help_text: Automate certificate management with [cert-manager](https://cert-manager.io).
 
-        - name: cert_manager_acme_url
-          title: ACME URL
+        - name: cert_manager_issuer_name
+          title: Issuer name
           type: text
-          value: https://acme-v02.api.letsencrypt.org/directory
+          value: gitpod-issuer
           required: true
           when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
-          help_text: The ACME URL is used to issue the certificates.
+          help_text: The name of the issuer you wish to use to generate your certificate. This will be the Kubernetes resource name.
 
-        - name: cert_manager_email
-          title: Email address
-          type: text
-          required: false
-          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
-          help_text: The email address to send renewal notifications to.
-
-        - name: cert_manager_provider
-          title: DNS01 provider
+        - name: cert_manager_issuer
+          title: Issuer type
           type: select_one
+          default: "ClusterIssuer" # Default to ClusterIssuer so it can be stored in a different namespace
           required: true
           when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") }}'
-          help_text: A DNS01 challenge provider is used by cert-manager in order to generate the certificate. See the [specific documentation](https://cert-manager.io/docs/configuration/acme/dns01) for instructions on configuring your provider.
+          help_text: A [DNS01](https://cert-manager.io/docs/configuration/acme/dns01) `Issuer` or `ClusterIssuer` is required on the cluster to generate the certificate.
           items:
-            - name: azure
-              title: AzureDNS
-            - name: gcp
-              title: Google CloudDNS
-
-        - name: cert_manager_azure_subscription_id
-          title: Subscription ID
-          type: text
-          required: true
-          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
-          help_text: The Azure subscription ID.
-
-        - name: cert_manager_azure_resource_group
-          title: Resource group
-          type: text
-          required: true
-          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "azure") }}'
-          help_text: The name of the resource group where the DNS zone exists.
-
-        - name: cert_manager_gcp_project
-          title: Project ID
-          type: text
-          required: true
-          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
-          help_text: The ID of your GCP project.
-
-        - name: cert_manager_gcp_credentials
-          title: GCP service account key
-          when: '{{repl and (ConfigOptionEquals "tls_self_signed_enabled" "0") (ConfigOptionEquals "cert_manager_enabled" "1") (ConfigOptionEquals "cert_manager_provider" "gcp") }}'
-          type: file
-          required: true
-          help_text: Download a [service account key](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) with the `roles/dns.admin` role attached.
+            - name: ClusterIssuer
+              title: Cluster issuer
+            - name: Issuer
+              title: Issuer
 
         - name: tls_crt
           title: Certificate
