@@ -6,25 +6,26 @@
 
 import { suite, test } from "mocha-typescript";
 
-import * as chai from 'chai';
-import chaiHttp = require('chai-http');
+import * as chai from "chai";
+import chaiHttp = require("chai-http");
 import * as http from "http";
 import * as express from "express";
-import { Server } from "../server"
-import { Container } from 'inversify';
-import { productionContainerModule } from '../container-module';
-import { dbContainerModule } from '@gitpod/gitpod-db/lib/container-module';
+import { Server } from "../server";
+import { Container } from "inversify";
+import { productionContainerModule } from "../container-module";
+import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
 import { GitpodClient, GitpodServer } from "@gitpod/gitpod-protocol";
 
 const expect = chai.expect;
 
 type TestApp = {
-    httpServer: http.Server
-    app: express.Application
-    server: Server<GitpodClient, GitpodServer>
-}
+    httpServer: http.Server;
+    app: express.Application;
+    server: Server<GitpodClient, GitpodServer>;
+};
 
-@suite class TestAuthenticationGitHub {
+@suite
+class TestAuthenticationGitHub {
     protected testApp: TestApp;
 
     static before() {
@@ -48,7 +49,9 @@ type TestApp = {
         container.load(productionContainerModule);
         container.load(dbContainerModule);
         const server = container.get(Server);
-        server.init(app).catch(err => {/** ignore */});
+        server.init(app).catch((err) => {
+            /** ignore */
+        });
         const httpServer = app.listen(3000, "localhost");
 
         return { httpServer, app, server };
@@ -60,4 +63,4 @@ type TestApp = {
     }
 }
 
-module.exports = new TestAuthenticationGitHub();   // Only to circumvent no usage warning :-/
+module.exports = new TestAuthenticationGitHub(); // Only to circumvent no usage warning :-/

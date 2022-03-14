@@ -4,18 +4,19 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from 'inversify';
-import * as express from 'express';
-import { InstallationAdminTelemetryDataProvider } from './telemetry-data-provider';
+import { injectable, inject } from "inversify";
+import * as express from "express";
+import { InstallationAdminTelemetryDataProvider } from "./telemetry-data-provider";
 
 @injectable()
 export class InstallationAdminController {
-    @inject(InstallationAdminTelemetryDataProvider) protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
+    @inject(InstallationAdminTelemetryDataProvider)
+    protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
 
     public create(): express.Application {
         const app = express();
 
-        app.get('/data', async (req: express.Request, res: express.Response) => {
+        app.get("/data", async (req: express.Request, res: express.Response) => {
             res.status(200).json(await this.telemetryDataProvider.getTelemetryData());
         });
 

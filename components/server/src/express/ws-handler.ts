@@ -4,15 +4,15 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as websocket from 'ws';
-import * as express from 'express';
-import * as http from 'http';
-import * as https from 'https';
-import * as url from 'url';
-import * as net from 'net';
-import { WsLayer } from './ws-layer';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { increaseHttpRequestCounter } from '../prometheus-metrics';
+import * as websocket from "ws";
+import * as express from "express";
+import * as http from "http";
+import * as https from "https";
+import * as url from "url";
+import * as net from "net";
+import { WsLayer } from "./ws-layer";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { increaseHttpRequestCounter } from "../prometheus-metrics";
 
 export type HttpServer = http.Server | https.Server;
 export type RouteMatcher = string | RegExp;
@@ -37,13 +37,10 @@ interface Route {
 }
 
 export class WsExpressHandler {
-
     protected readonly wss: websocket.Server;
     protected readonly routes: Route[] = [];
 
-    constructor(
-            protected readonly httpServer: HttpServer,
-            protected readonly verifyClient?: WsConnectionFilter) {
+    constructor(protected readonly httpServer: HttpServer, protected readonly verifyClient?: WsConnectionFilter) {
         this.wss = new websocket.Server({
             verifyClient,
             noServer: true,
@@ -53,25 +50,34 @@ export class WsExpressHandler {
             // we don't use this feature, so avoid having another potential mem leak
             clientTracking: false,
         });
-        this.wss.on('error', (err) => {
-            log.error('websocket server error', err, { wss: this.wss });
+        this.wss.on("error", (err) => {
+            log.error("websocket server error", err, { wss: this.wss });
         });
-        this.httpServer.on('upgrade', (req: http.IncomingMessage, socket: net.Socket, head: Buffer) => this.onUpgrade(req, socket, head));
+        this.httpServer.on("upgrade", (req: http.IncomingMessage, socket: net.Socket, head: Buffer) =>
+            this.onUpgrade(req, socket, head),
+        );
     }
 
-    ws(matcher: RouteMatcher, handler: (ws: websocket, request: express.Request) => void, ...handlers: WsHandler[]): void {
+    ws(
+        matcher: RouteMatcher,
+        handler: (ws: websocket, request: express.Request) => void,
+        ...handlers: WsHandler[]
+    ): void {
         const stack = WsLayer.createStack(...handlers);
         const dispatch = (ws: websocket, request: express.Request) => {
             handler(ws, request);
-            stack.dispatch(ws, request).finally(() => {
-                const pathname = request.url ? url.parse(request.url).pathname : undefined;
-                const method = request.method || "UNKNOWN";
-                increaseHttpRequestCounter(method, pathname || "unkown-websocket", request.statusCode || 0);
-            }).catch(err => {
-                log.error("websocket stack error", err);
-                ws.terminate();
-            });
-        }
+            stack
+                .dispatch(ws, request)
+                .finally(() => {
+                    const pathname = request.url ? url.parse(request.url).pathname : undefined;
+                    const method = request.method || "UNKNOWN";
+                    increaseHttpRequestCounter(method, pathname || "unkown-websocket", request.statusCode || 0);
+                })
+                .catch((err) => {
+                    log.error("websocket stack error", err);
+                    ws.terminate();
+                });
+        };
 
         this.routes.push({
             matcher,
@@ -79,9 +85,9 @@ export class WsExpressHandler {
                 if (ws.readyState === ws.OPEN) {
                     dispatch(ws, req);
                 } else {
-                    ws.on('open', () => dispatch(ws, req));
+                    ws.on("open", () => dispatch(ws, req));
                 }
-            }
+            },
         });
     }
 

@@ -9,7 +9,6 @@ import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 
-
 export type CachedAccountStatement = Pick<AccountStatement, "remainingHours" | "endDate">;
 
 /**
@@ -35,7 +34,7 @@ export class AccountStatementProvider {
         // Fill cache
         this.setCachedStatement({
             remainingHours: statement.remainingHours,
-            endDate: statement.endDate
+            endDate: statement.endDate,
         });
         return statement;
     }

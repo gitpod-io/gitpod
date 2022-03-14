@@ -16,16 +16,23 @@ export namespace BitbucketOAuthScopes {
     /** Lists and read pull requests */
     export const PULL_REQUEST_READ = "pullrequest";
     /** Create, comment and merge pull requests */
-    export const PULL_REQUEST_WRITE = "pullrequest:write"
+    export const PULL_REQUEST_WRITE = "pullrequest:write";
     /** Create, list web hooks */
-    export const WEBHOOK = "webhook"
+    export const WEBHOOK = "webhook";
 
-    export const ALL = [ACCOUNT_READ, REPOSITORY_READ, REPOSITORY_WRITE, PULL_REQUEST_READ, PULL_REQUEST_WRITE, WEBHOOK];
+    export const ALL = [
+        ACCOUNT_READ,
+        REPOSITORY_READ,
+        REPOSITORY_WRITE,
+        PULL_REQUEST_READ,
+        PULL_REQUEST_WRITE,
+        WEBHOOK,
+    ];
 
     export const Requirements = {
         /**
          * Minimal required permission.
          */
-        DEFAULT: ALL
-    }
+        DEFAULT: ALL,
+    };
 }

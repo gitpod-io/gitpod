@@ -11,7 +11,6 @@ import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
 
 @injectable()
 export class EnvvarPrefixParser implements IPrefixContextParser {
-
     public findPrefix(user: User, context: string): string | undefined {
         const result = this.parse(context);
         return result && result.prefix;
@@ -29,7 +28,7 @@ export class EnvvarPrefixParser implements IPrefixContextParser {
         }
         return <WithEnvvarsContext>{
             ...context,
-            envvars
+            envvars,
         };
     }
 
@@ -53,8 +52,7 @@ export class EnvvarPrefixParser implements IPrefixContextParser {
         }
         return {
             prefix: prefix + "/",
-            envVarMap
-        }
+            envVarMap,
+        };
     }
-
 }

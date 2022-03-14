@@ -4,4 +4,4 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-declare module 'swot-js';
+declare module "swot-js";

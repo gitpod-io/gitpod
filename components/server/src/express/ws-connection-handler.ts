@@ -4,19 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
- import * as express from 'express';
- import * as websocket from 'ws';
+import * as express from "express";
+import * as websocket from "ws";
 import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WsNextFunction, WsRequestHandler } from './ws-handler';
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { WsNextFunction, WsRequestHandler } from "./ws-handler";
 
 /**
  * This class provides a websocket handler that manages ping-pong behavior for all incoming websocket requests.
  * Clients that to not respond in time are terminated.
  */
 export class WsConnectionHandler implements Disposable {
-
     protected readonly disposables: DisposableCollection = new DisposableCollection();
     protected readonly clients: Set<websocket> = new Set();
 
@@ -71,11 +70,10 @@ export class WsConnectionHandler implements Disposable {
                     }
                     // if no ping was sent, yet, this is a fresh ws connection
 
-
                     // note: decoupling by using `setImmediate` in order to offload to the following event loop iteration.
                     setImmediate(() => {
                         try {
-                            ws.ping();  // if this fails it triggers a ws error, and fails the ws anyway
+                            ws.ping(); // if this fails it triggers a ws error, and fails the ws anyway
                             setPingSent(ws, Date.now());
                         } catch (err) {
                             log.error("websocket ping error", err);
@@ -93,13 +91,13 @@ export class WsConnectionHandler implements Disposable {
         return (ws: websocket, req: express.Request, next: WsNextFunction) => {
             // maintain set of clients
             this.clients.add(ws);
-            ws.on('close', () => this.clients.delete(ws));
+            ws.on("close", () => this.clients.delete(ws));
 
             // setup ping-pong
-            ws.on('pong', () => {
+            ws.on("pong", () => {
                 setPongReceived(ws, Date.now());
             });
-            ws.on('ping', (data: any) => {
+            ws.on("ping", (data: any) => {
                 // answer browser-side ping to conform RFC6455 (https://tools.ietf.org/html/rfc6455#section-5.5.2)
                 // note: decoupling by using `setImmediate` in order to offload to the following event loop iteration.
                 setImmediate(() => {
@@ -112,9 +110,10 @@ export class WsConnectionHandler implements Disposable {
             });
 
             // error handling
-            ws.on('error', (err: any) => {
-                if (err.code !== 'ECONNRESET' && err.code !== 'EPIPE') {    // exclude very common errors
-                    log.warn('websocket error, closing.', err, { ws, req });
+            ws.on("error", (err: any) => {
+                if (err.code !== "ECONNRESET" && err.code !== "EPIPE") {
+                    // exclude very common errors
+                    log.warn("websocket error, closing.", err, { ws, req });
                 }
                 ws.close(); // ws should trigger close() itself on any socket error. We do this just to be sure.
             });
@@ -145,5 +144,5 @@ function getPingSent(ws: websocket): number | undefined {
 }
 
 function getOrSetClosingTimestamp(ws: websocket, timestamp: number = Date.now()): number {
-    return (ws as any).closingTimestamp = (ws as any).closingTimestamp || timestamp;
+    return ((ws as any).closingTimestamp = (ws as any).closingTimestamp || timestamp);
 }

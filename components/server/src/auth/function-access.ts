@@ -14,7 +14,7 @@ export interface WithFunctionAccessGuard {
     functionGuard?: FunctionAccessGuard;
 }
 export function isWithFunctionAccessGuard(obj: any): obj is WithFunctionAccessGuard {
-    return !!obj && typeof obj === 'object' && 'functionGuard' in obj;
+    return !!obj && typeof obj === "object" && "functionGuard" in obj;
 }
 
 @injectable()
@@ -25,9 +25,9 @@ export class AllAccessFunctionGuard {
 }
 
 export class ExplicitFunctionAccessGuard {
-    constructor(protected readonly allowedCalls: string[]) { }
+    constructor(protected readonly allowedCalls: string[]) {}
 
     canAccess(name: string): boolean {
-        return this.allowedCalls.some(c => c === name);
+        return this.allowedCalls.some((c) => c === name);
     }
 }

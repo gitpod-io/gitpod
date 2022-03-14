@@ -4,24 +4,23 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import * as express from 'express';
-import { createHmac } from 'crypto';
-import { postConstruct, injectable, inject } from 'inversify';
-import { ProjectDB, TeamDB, UserDB } from '@gitpod/gitpod-db/lib';
-import { PrebuildManager } from '../prebuilds/prebuild-manager';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { TokenService } from '../../../src/user/token-service';
-import { HostContextProvider } from '../../../src/auth/host-context-provider';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { CommitContext, CommitInfo, Project, StartPrebuildResult, User } from '@gitpod/gitpod-protocol';
-import { GitHubService } from './github-service';
-import { URL } from 'url';
-import { ContextParser } from '../../../src/workspace/context-parser-service';
-import { RepoURL } from '../../../src/repohost';
+import * as express from "express";
+import { createHmac } from "crypto";
+import { postConstruct, injectable, inject } from "inversify";
+import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { TokenService } from "../../../src/user/token-service";
+import { HostContextProvider } from "../../../src/auth/host-context-provider";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { CommitContext, CommitInfo, Project, StartPrebuildResult, User } from "@gitpod/gitpod-protocol";
+import { GitHubService } from "./github-service";
+import { URL } from "url";
+import { ContextParser } from "../../../src/workspace/context-parser-service";
+import { RepoURL } from "../../../src/repohost";
 
 @injectable()
 export class GitHubEnterpriseApp {
-
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
@@ -31,13 +30,13 @@ export class GitHubEnterpriseApp {
     @inject(ContextParser) protected readonly contextParser: ContextParser;
 
     protected _router = express.Router();
-    public static path = '/apps/ghe/';
+    public static path = "/apps/ghe/";
 
     @postConstruct()
     protected init() {
-        this._router.post('/', async (req, res) => {
-            const event = req.header('X-Github-Event');
-            if (event === 'push') {
+        this._router.post("/", async (req, res) => {
+            const event = req.header("X-Github-Event");
+            if (event === "push") {
                 const payload = req.body as GitHubEnterprisePushPayload;
                 const span = TraceContext.startSpan("GitHubEnterpriseApp.handleEvent", {});
                 span.setTag("payload", payload);
@@ -45,7 +44,7 @@ export class GitHubEnterpriseApp {
                 try {
                     user = await this.findUser({ span }, payload, req);
                 } catch (error) {
-                    log.error("Cannot find user.", error, { req })
+                    log.error("Cannot find user.", error, { req });
                 }
                 if (!user) {
                     res.statusCode = 401;
@@ -56,17 +55,21 @@ export class GitHubEnterpriseApp {
             } else {
                 log.info("Unknown GitHub Enterprise event received", { event });
             }
-            res.send('OK');
+            res.send("OK");
         });
     }
 
-    protected async findUser(ctx: TraceContext, payload: GitHubEnterprisePushPayload, req: express.Request): Promise<User> {
+    protected async findUser(
+        ctx: TraceContext,
+        payload: GitHubEnterprisePushPayload,
+        req: express.Request,
+    ): Promise<User> {
         const span = TraceContext.startSpan("GitHubEnterpriseApp.findUser", ctx);
         try {
-            const host = req.header('X-Github-Enterprise-Host');
-            const hostContext = this.hostContextProvider.get(host || '');
+            const host = req.header("X-Github-Enterprise-Host");
+            const hostContext = this.hostContextProvider.get(host || "");
             if (!host || !hostContext) {
-                throw new Error('Unsupported GitHub Enterprise host: ' + host);
+                throw new Error("Unsupported GitHub Enterprise host: " + host);
             }
             const { authProviderId } = hostContext.authProvider;
             const authId = payload.sender.id;
@@ -76,20 +79,24 @@ export class GitHubEnterpriseApp {
             } else if (!!user.blocked) {
                 throw new Error(`Blocked user ${user.id} tried to start prebuild.`);
             }
-            const gitpodIdentity = user.identities.find(i => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID);
+            const gitpodIdentity = user.identities.find(
+                (i) => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID,
+            );
             if (!gitpodIdentity) {
                 throw new Error(`User ${user.id} has no identity for '${TokenService.GITPOD_AUTH_PROVIDER_ID}'.`);
             }
             // Verify the webhook signature
-            const signature = req.header('X-Hub-Signature-256');
+            const signature = req.header("X-Hub-Signature-256");
             const body = (req as any).rawBody;
-            const tokenEntries = (await this.userDB.findTokensForIdentity(gitpodIdentity)).filter(tokenEntry => {
+            const tokenEntries = (await this.userDB.findTokensForIdentity(gitpodIdentity)).filter((tokenEntry) => {
                 return tokenEntry.token.scopes.includes(GitHubService.PREBUILD_TOKEN_SCOPE);
             });
-            const signingToken = tokenEntries.find(tokenEntry => {
-                const sig = 'sha256=' + createHmac('sha256', user.id + '|' + tokenEntry.token.value)
-                    .update(body)
-                    .digest('hex');
+            const signingToken = tokenEntries.find((tokenEntry) => {
+                const sig =
+                    "sha256=" +
+                    createHmac("sha256", user.id + "|" + tokenEntry.token.value)
+                        .update(body)
+                        .digest("hex");
                 return sig === signature;
             });
             if (!signingToken) {
@@ -101,29 +108,36 @@ export class GitHubEnterpriseApp {
         }
     }
 
-    protected async handlePushHook(ctx: TraceContext, payload: GitHubEnterprisePushPayload, user: User): Promise<StartPrebuildResult | undefined> {
+    protected async handlePushHook(
+        ctx: TraceContext,
+        payload: GitHubEnterprisePushPayload,
+        user: User,
+    ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("GitHubEnterpriseApp.handlePushHook", ctx);
         try {
             const contextURL = this.createContextUrl(payload);
-            span.setTag('contextURL', contextURL);
-            const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
+            span.setTag("contextURL", contextURL);
+            const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
-                log.info('GitHub Enterprise push event: No config. No prebuild.');
+                log.info("GitHub Enterprise push event: No config. No prebuild.");
                 return undefined;
             }
 
-            log.debug('GitHub Enterprise push event: Starting prebuild.', { contextURL });
+            log.debug("GitHub Enterprise push event: Starting prebuild.", { contextURL });
 
             const cloneURL = payload.repository.clone_url;
             const projectAndOwner = await this.findProjectAndOwner(cloneURL, user);
             const commitInfo = await this.getCommitInfo(user, payload.repository.url, payload.after);
-            const ws = await this.prebuildManager.startPrebuild({ span }, {
-                context,
-                user: projectAndOwner.user,
-                project: projectAndOwner?.project,
-                commitInfo
-            });
+            const ws = await this.prebuildManager.startPrebuild(
+                { span },
+                {
+                    context,
+                    user: projectAndOwner.user,
+                    project: projectAndOwner?.project,
+                    commitInfo,
+                },
+            );
             return ws;
         } finally {
             span.finish();
@@ -135,7 +149,12 @@ export class GitHubEnterpriseApp {
         const hostCtx = this.hostContextProvider.get(parsedRepo.host);
         let commitInfo: CommitInfo | undefined;
         if (hostCtx?.services?.repositoryProvider) {
-            commitInfo = await hostCtx?.services?.repositoryProvider.getCommitInfo(user, parsedRepo.owner, parsedRepo.repo, commitSHA);
+            commitInfo = await hostCtx?.services?.repositoryProvider.getCommitInfo(
+                user,
+                parsedRepo.owner,
+                parsedRepo.repo,
+                commitSHA,
+            );
         }
         return commitInfo;
     }
@@ -151,7 +170,10 @@ export class GitHubEnterpriseApp {
      * @param webhookInstaller the user account known from the webhook installation
      * @returns a promise which resolves to a user account and an optional project.
      */
-    protected async findProjectAndOwner(cloneURL: string, webhookInstaller: User): Promise<{ user: User, project?: Project }> {
+    protected async findProjectAndOwner(
+        cloneURL: string,
+        webhookInstaller: User,
+    ): Promise<{ user: User; project?: Project }> {
         const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
         if (project) {
             if (project.userId) {
@@ -160,15 +182,15 @@ export class GitHubEnterpriseApp {
                     return { user, project };
                 }
             } else if (project.teamId) {
-                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || '');
-                if (teamMembers.some(t => t.userId === webhookInstaller.id)) {
+                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || "");
+                if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
                     return { user: webhookInstaller, project };
                 }
                 const hostContext = this.hostContextProvider.get(new URL(cloneURL).host);
                 const authProviderId = hostContext?.authProvider.authProviderId;
                 for (const teamMember of teamMembers) {
                     const user = await this.userDB.findUserById(teamMember.userId);
-                    if (user && user.identities.some(i => i.authProviderId === authProviderId)) {
+                    if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                         return { user, project };
                     }
                 }

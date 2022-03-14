@@ -12,11 +12,13 @@ import { Gitlab } from "@gitbeaker/node";
 
 @injectable()
 export class GitLabAppSupport {
-
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
 
-    async getProviderRepositoriesForUser(params: { user: User, provider: AuthProviderInfo }): Promise<ProviderRepository[]> {
+    async getProviderRepositoriesForUser(params: {
+        user: User;
+        provider: AuthProviderInfo;
+    }): Promise<ProviderRepository[]> {
         const token = await this.tokenProvider.getTokenForHost(params.user, params.provider.host);
         const oauthToken = token.value;
         const api = new Gitlab({ oauthToken, host: `https://${params.provider.host}` });
@@ -24,7 +26,7 @@ export class GitLabAppSupport {
         const result: ProviderRepository[] = [];
         const ownersRepos: ProviderRepository[] = [];
 
-        const identity = params.user.identities.find(i => i.authProviderId === params.provider.authProviderId);
+        const identity = params.user.identities.find((i) => i.authProviderId === params.provider.authProviderId);
         if (!identity) {
             return result;
         }
@@ -52,12 +54,11 @@ export class GitLabAppSupport {
                 updatedAt,
                 accountAvatarUrl,
                 // inUse: // todo(at) compute usage via ProjectHooks API
-            })
+            });
         }
 
         // put owner's repos first. the frontend will pick first account to continue with
         result.unshift(...ownersRepos);
         return result;
     }
-
 }

@@ -20,6 +20,6 @@ export namespace BitbucketServerOAuthScopes {
         /**
          * Minimal required permission.
          */
-        DEFAULT: ALL
-    }
+        DEFAULT: ALL,
+    };
 }

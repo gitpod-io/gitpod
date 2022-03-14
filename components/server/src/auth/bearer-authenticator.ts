@@ -4,14 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { UserDB } from '@gitpod/gitpod-db/lib';
-import { GitpodTokenType } from '@gitpod/gitpod-protocol';
-import * as crypto from 'crypto';
-import * as express from 'express';
-import { IncomingHttpHeaders } from 'http';
-import { inject, injectable } from 'inversify';
-import { AllAccessFunctionGuard, ExplicitFunctionAccessGuard, WithFunctionAccessGuard } from './function-access';
-import { TokenResourceGuard, WithResourceAccessGuard } from './resource-access';
+import { UserDB } from "@gitpod/gitpod-db/lib";
+import { GitpodTokenType } from "@gitpod/gitpod-protocol";
+import * as crypto from "crypto";
+import * as express from "express";
+import { IncomingHttpHeaders } from "http";
+import { inject, injectable } from "inversify";
+import { AllAccessFunctionGuard, ExplicitFunctionAccessGuard, WithFunctionAccessGuard } from "./function-access";
+import { TokenResourceGuard, WithResourceAccessGuard } from "./resource-access";
 
 export function getBearerToken(headers: IncomingHttpHeaders): string | undefined {
     const authorizationHeader = headers["authorization"];
@@ -23,16 +23,16 @@ export function getBearerToken(headers: IncomingHttpHeaders): string | undefined
     }
 
     const token = authorizationHeader.substring("Bearer ".length);
-    const hash = crypto.createHash('sha256').update(token, 'utf8').digest("hex");
+    const hash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
     return hash;
 }
 
-const bearerAuthCode = 'BearerAuth';
+const bearerAuthCode = "BearerAuth";
 interface BearerAuthError extends Error {
-    code: typeof bearerAuthCode
+    code: typeof bearerAuthCode;
 }
 export function isBearerAuthError(error: Error): error is BearerAuthError {
-    return 'code' in error && (error as any)['code'] === bearerAuthCode;
+    return "code" in error && (error as any)["code"] === bearerAuthCode;
 }
 function createBearerAuthError(message: string): BearerAuthError {
     return Object.assign(new Error(message), { code: bearerAuthCode } as { code: typeof bearerAuthCode });
@@ -69,9 +69,9 @@ export class BearerAuth {
     }
 
     async auth(req: express.Request): Promise<void> {
-        const token = getBearerToken(req.headers)
+        const token = getBearerToken(req.headers);
         if (!token) {
-            throw createBearerAuthError('missing Bearer token');
+            throw createBearerAuthError("missing Bearer token");
         }
         const userAndToken = await this.userDB.findUserByGitpodToken(token, GitpodTokenType.API_AUTH_TOKEN);
         if (!userAndToken) {
@@ -86,8 +86,8 @@ export class BearerAuth {
         (req as WithResourceAccessGuard).resourceGuard = resourceGuard;
 
         const functionScopes = userAndToken.token.scopes
-            .filter(s => s.startsWith("function:"))
-            .map(s => s.substring("function:".length));
+            .filter((s) => s.startsWith("function:"))
+            .map((s) => s.substring("function:".length));
         if (functionScopes.length === 1 && functionScopes[0] === "*") {
             (req as WithFunctionAccessGuard).functionGuard = new AllAccessFunctionGuard();
         } else {
@@ -97,5 +97,4 @@ export class BearerAuth {
 
         req.user = user;
     }
-
 }

@@ -16,7 +16,6 @@ import * as BitbucketServer from "@atlassian/bitbucket-server";
 
 @injectable()
 export class BitbucketServerAuthProvider extends GenericAuthProvider {
-
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
@@ -26,7 +25,7 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
                 publicRepo: BitbucketServerOAuthScopes.Requirements.DEFAULT,
                 privateRepo: BitbucketServerOAuthScopes.Requirements.DEFAULT,
             },
-        }
+        };
     }
 
     /**
@@ -41,7 +40,7 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
             tokenUrl: oauth.tokenUrl || `https://${this.params.host}/rest/oauth2/latest/token`,
             settingsUrl: oauth.settingsUrl || `https://${this.params.host}/plugins/servlet/oauth/users/access-tokens/`,
             scope: BitbucketServerOAuthScopes.ALL.join(scopeSeparator),
-            scopeSeparator
+            scopeSeparator,
         };
     }
 
@@ -58,8 +57,8 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
             const fetchResult = await fetch(`https://${this.params.host}/plugins/servlet/applinks/whoami`, {
                 timeout: 10000,
                 headers: {
-                    "Authorization": `Bearer ${accessToken}`,
-                }
+                    Authorization: `Bearer ${accessToken}`,
+                },
             });
             if (!fetchResult.ok) {
                 throw new Error(fetchResult.statusText);
@@ -92,18 +91,17 @@ export class BitbucketServerAuthProvider extends GenericAuthProvider {
                     // avatarUrl: user.links!.avatar!.href // TODO
                 },
                 currentScopes: BitbucketServerOAuthScopes.ALL,
-            }
-
+            };
         } catch (error) {
             log.error(`(${this.strategyName}) Reading current user info failed`, error, { accessToken, error });
             throw error;
         }
-    }
+    };
 
     protected normalizeScopes(scopes: string[]) {
         const set = new Set(scopes);
         for (const item of set.values()) {
-            if (!(BitbucketServerOAuthScopes.Requirements.DEFAULT.includes(item))) {
+            if (!BitbucketServerOAuthScopes.Requirements.DEFAULT.includes(item)) {
                 set.delete(item);
             }
         }

@@ -4,20 +4,19 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import * as express from 'express';
-import { postConstruct, injectable, inject } from 'inversify';
-import { ProjectDB, TeamDB, UserDB } from '@gitpod/gitpod-db/lib';
-import { User, StartPrebuildResult, CommitContext, CommitInfo, Project } from '@gitpod/gitpod-protocol';
-import { PrebuildManager } from '../prebuilds/prebuild-manager';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { TokenService } from '../../../src/user/token-service';
-import { ContextParser } from '../../../src/workspace/context-parser-service';
-import { HostContextProvider } from '../../../src/auth/host-context-provider';
-import { RepoURL } from '../../../src/repohost';
+import * as express from "express";
+import { postConstruct, injectable, inject } from "inversify";
+import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { User, StartPrebuildResult, CommitContext, CommitInfo, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { TokenService } from "../../../src/user/token-service";
+import { ContextParser } from "../../../src/workspace/context-parser-service";
+import { HostContextProvider } from "../../../src/auth/host-context-provider";
+import { RepoURL } from "../../../src/repohost";
 
 @injectable()
 export class BitbucketApp {
-
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
@@ -27,17 +26,17 @@ export class BitbucketApp {
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
 
     protected _router = express.Router();
-    public static path = '/apps/bitbucket/';
+    public static path = "/apps/bitbucket/";
 
     @postConstruct()
     protected init() {
-        this._router.post('/', async (req, res) => {
+        this._router.post("/", async (req, res) => {
             try {
-                if (req.header('X-Event-Key') === 'repo:push') {
+                if (req.header("X-Event-Key") === "repo:push") {
                     const span = TraceContext.startSpan("BitbucketApp.handleEvent", {});
-                    const secretToken = req.query['token'] as string;
+                    const secretToken = req.query["token"] as string;
                     if (!secretToken) {
-                        throw new Error('No secretToken provided.');
+                        throw new Error("No secretToken provided.");
                     }
                     const user = await this.findUser({ span }, secretToken);
                     if (!user) {
@@ -52,7 +51,7 @@ export class BitbucketApp {
                         await this.handlePushHook({ span }, data, user);
                     }
                 } else {
-                    console.warn(`Ignoring unsupported bitbucket event: ${req.header('X-Event-Key')}`);
+                    console.warn(`Ignoring unsupported bitbucket event: ${req.header("X-Event-Key")}`);
                 }
             } catch (err) {
                 console.error(`Couldn't handle request.`, err, { headers: req.headers, reqBody: req.body });
@@ -66,20 +65,20 @@ export class BitbucketApp {
     protected async findUser(ctx: TraceContext, secretToken: string): Promise<User> {
         const span = TraceContext.startSpan("BitbucketApp.findUser", ctx);
         try {
-            span.setTag('secret-token', secretToken);
-            const [userid, tokenValue] = secretToken.split('|');
+            span.setTag("secret-token", secretToken);
+            const [userid, tokenValue] = secretToken.split("|");
             const user = await this.userDB.findUserById(userid);
             if (!user) {
-                throw new Error('No user found for ' + secretToken + ' found.');
+                throw new Error("No user found for " + secretToken + " found.");
             } else if (!!user.blocked) {
                 throw new Error(`Blocked user ${user.id} tried to start prebuild.`);
             }
-            const identity = user.identities.find(i => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID);
+            const identity = user.identities.find((i) => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID);
             if (!identity) {
                 throw new Error(`User ${user.id} has no identity for '${TokenService.GITPOD_AUTH_PROVIDER_ID}'.`);
             }
             const tokens = await this.userDB.findTokensForIdentity(identity);
-            const token = tokens.find(t => t.token.value === tokenValue);
+            const token = tokens.find((t) => t.token.value === tokenValue);
             if (!token) {
                 throw new Error(`User ${user.id} has no token with given value.`);
             }
@@ -89,28 +88,40 @@ export class BitbucketApp {
         }
     }
 
-    protected async handlePushHook(ctx: TraceContext, data: ParsedRequestData, user: User): Promise<StartPrebuildResult | undefined> {
+    protected async handlePushHook(
+        ctx: TraceContext,
+        data: ParsedRequestData,
+        user: User,
+    ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
             const contextURL = this.createContextUrl(data);
-            const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
-            span.setTag('contextURL', contextURL);
+            const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
+            span.setTag("contextURL", contextURL);
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
-                console.log('Bitbucket push event: No config. No prebuild.');
+                console.log("Bitbucket push event: No config. No prebuild.");
                 return undefined;
             }
 
-            console.log('Starting prebuild.', { contextURL })
-            const {host, owner, repo} = RepoURL.parseRepoUrl(data.repoUrl)!;
+            console.log("Starting prebuild.", { contextURL });
+            const { host, owner, repo } = RepoURL.parseRepoUrl(data.repoUrl)!;
             const hostCtx = this.hostCtxProvider.get(host);
-            let commitInfo: CommitInfo | undefined;
+            let commitInfo: CommitInfo | undefined;
             if (hostCtx?.services?.repositoryProvider) {
-                commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(user, owner, repo, data.commitHash);
+                commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(
+                    user,
+                    owner,
+                    repo,
+                    data.commitHash,
+                );
             }
             const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
             // todo@alex: add branch and project args
-            const ws = await this.prebuildManager.startPrebuild({ span }, { user, project: projectAndOwner?.project, context, commitInfo });
+            const ws = await this.prebuildManager.startPrebuild(
+                { span },
+                { user, project: projectAndOwner?.project, context, commitInfo },
+            );
             return ws;
         } finally {
             span.finish();
@@ -128,7 +139,10 @@ export class BitbucketApp {
      * @param webhookInstaller the user account known from the webhook installation
      * @returns a promise which resolves to a user account and an optional project.
      */
-    protected async findProjectAndOwner(cloneURL: string, webhookInstaller: User): Promise<{ user: User, project?: Project }> {
+    protected async findProjectAndOwner(
+        cloneURL: string,
+        webhookInstaller: User,
+    ): Promise<{ user: User; project?: Project }> {
         const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
         if (project) {
             if (project.userId) {
@@ -137,13 +151,13 @@ export class BitbucketApp {
                     return { user, project };
                 }
             } else if (project.teamId) {
-                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || '');
-                if (teamMembers.some(t => t.userId === webhookInstaller.id)) {
+                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || "");
+                if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
                     return { user: webhookInstaller, project };
                 }
                 for (const teamMember of teamMembers) {
                     const user = await this.userDB.findUserById(teamMember.userId);
-                    if (user && user.identities.some(i => i.authProviderId === "Public-Bitbucket")) {
+                    if (user && user.identities.some((i) => i.authProviderId === "Public-Bitbucket")) {
                         return { user, project };
                     }
                 }
@@ -172,15 +186,14 @@ function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
         branchName,
         commitHash,
         repoUrl: body.repository.links.html.href,
-        gitCloneUrl: body.repository.links.html.href + '.git'
-    }
+        gitCloneUrl: body.repository.links.html.href + ".git",
+    };
     if (!result.commitHash || !result.repoUrl) {
-        console.error('Bitbucket push event: unexpected request body.', body);
-        throw new Error('Unexpected request body.');
+        console.error("Bitbucket push event: unexpected request body.", body);
+        throw new Error("Unexpected request body.");
     }
     return result;
 }
-
 
 interface ParsedRequestData {
     branchName: string;
@@ -194,13 +207,12 @@ interface BitbucketPushHook {
         changes: {
             new: {
                 name: string; // e.g. "foo/bar-bazz"
-                type: 'branch' | string;
+                type: "branch" | string;
                 target: {
                     hash: string; // e.g. "1b283e4d7a849a89151548398cc836d15149179c"
-                }
-            }
-            | null // in case where a branch is deleted
-        }[]
+                };
+            } | null; // in case where a branch is deleted
+        }[];
     };
     actor: {
         account_id: string; // e.g. "557058:964d5de0-9ae8-47e7-9ca2-9448caeb50ea"
@@ -212,8 +224,8 @@ interface BitbucketRepository {
     links: {
         html: {
             href: string; //e.g. "https://bitbucket.org/sefftinge/sample-repository"
-        }
-    },
+        };
+    };
     full_name: string; // e.g. "sefftinge/sample-repository",
     is_private: boolean;
 }

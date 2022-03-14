@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 export namespace GitLabScope {
     export const READ_USER = "read_user";
     export const API = "api";
@@ -19,5 +18,5 @@ export namespace GitLabScope {
         DEFAULT: [READ_USER, API],
 
         REPO: [API, READ_REPO],
-    }
+    };
 }

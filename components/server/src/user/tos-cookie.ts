@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as express from 'express';
-import { injectable, inject } from 'inversify';
-import { Config } from '../config';
+import * as express from "express";
+import { injectable, inject } from "inversify";
+import { Config } from "../config";
 
 @injectable()
 export class TosCookie {
@@ -18,7 +18,7 @@ export class TosCookie {
         }
         res.cookie("tosHints", JSON.stringify(tosHints), {
             httpOnly: false, // we need this hin on frontend
-            domain: `${this.config.hostUrl.url.host}`
+            domain: `${this.config.hostUrl.url.host}`,
         });
     }
 
@@ -26,9 +26,9 @@ export class TosCookie {
         if (res.headersSent) {
             return;
         }
-        res.clearCookie('tosHints', {
+        res.clearCookie("tosHints", {
             path: "/",
-            domain: `.${this.config.hostUrl.url.host}`
+            domain: `.${this.config.hostUrl.url.host}`,
         });
     }
 }

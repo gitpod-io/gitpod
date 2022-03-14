@@ -8,9 +8,9 @@ import { injectable } from "inversify";
 
 import { RoleOrPermission, PermissionName, RolesOrPermissions } from "@gitpod/gitpod-protocol/lib/permission";
 import { User } from "@gitpod/gitpod-protocol";
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
-export const AuthorizationService = Symbol('AuthorizationService');
+export const AuthorizationService = Symbol("AuthorizationService");
 export interface AuthorizationService {
     hasPermission(user: User, permission: PermissionName): boolean;
 }
@@ -23,7 +23,7 @@ export class AuthorizationServiceImpl implements AuthorizationService {
             const permissions = RolesOrPermissions.toPermissionSet(rop);
             return permissions.has(permission);
         } catch (err) {
-            log.error({ userId: user.id }, 'Invalid role or permission', { rolesOrPermissions: rop });
+            log.error({ userId: user.id }, "Invalid role or permission", { rolesOrPermissions: rop });
             return false;
         }
     }

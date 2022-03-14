@@ -4,22 +4,22 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as express from 'express';
+import * as express from "express";
 import { injectable, inject } from "inversify";
-import { WorkspaceDB, UserDB } from '@gitpod/gitpod-db/lib';
-import { User } from '@gitpod/gitpod-protocol';
-import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { Config } from '../config';
-import { UserDeletionService } from '../user/user-deletion-service';
-import { AuthorizationService } from './authorization-service';
-import { Permission } from '@gitpod/gitpod-protocol/lib/permission';
-import { ResponseError } from 'vscode-jsonrpc';
-import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { GitpodServerImpl } from '../workspace/gitpod-server-impl';
-import { ResourceAccessGuard, OwnerResourceGuard } from '../auth/resource-access';
-import { ClientMetadata } from '../websocket/websocket-connection-manager';
+import { WorkspaceDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { User } from "@gitpod/gitpod-protocol";
+import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { Config } from "../config";
+import { UserDeletionService } from "../user/user-deletion-service";
+import { AuthorizationService } from "./authorization-service";
+import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
+import { ResponseError } from "vscode-jsonrpc";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
+import { ResourceAccessGuard, OwnerResourceGuard } from "../auth/resource-access";
+import { ClientMetadata } from "../websocket/websocket-connection-manager";
 
-export const EnforcementControllerServerFactory = Symbol('EnforcementControllerServerFactory');
+export const EnforcementControllerServerFactory = Symbol("EnforcementControllerServerFactory");
 export type EnforcementControllerServerFactory = () => GitpodServerImpl;
 
 @injectable()
@@ -47,12 +47,14 @@ export class EnforcementController {
             Since we want to get rid of this enforcement endpoint in the long term having this hack does not harm and looking for
             another architecture is not necessary.
         */
-        const server = this.serverFactory()
+        const server = this.serverFactory();
         server.initialize(undefined, user, resourceAccessGuard, ClientMetadata.from(user.id), undefined, {});
         return server;
     }
 
-    protected getAuthorizedUser(req: express.Request): { callingUser: User, resourceAccessGuard: ResourceAccessGuard } | undefined {
+    protected getAuthorizedUser(
+        req: express.Request,
+    ): { callingUser: User; resourceAccessGuard: ResourceAccessGuard } | undefined {
         if (!req.isAuthenticated() || !req.user) {
             return;
         }
@@ -87,7 +89,9 @@ export class EnforcementController {
             }
 
             const actionUrl = this.blockUserUrl(targetUserID as string);
-            res.send(`<html><body><h1>Click button below</h1><p>User will be blocked and all running workspaces will be stopped.</p><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`);
+            res.send(
+                `<html><body><h1>Click button below</h1><p>User will be blocked and all running workspaces will be stopped.</p><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`,
+            );
         });
         router.post("/block-user/:userid", async (req, res, next) => {
             const auth = this.getAuthorizedUser(req);
@@ -130,8 +134,12 @@ export class EnforcementController {
                 return;
             }
 
-            const actionUrl = this.config.hostUrl.withApi({ pathname: `/enforcement/kill-workspace/${req.params.wsid}` }).toString();
-            res.send(`<html><body><h1>Click button below</h1><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`)
+            const actionUrl = this.config.hostUrl
+                .withApi({ pathname: `/enforcement/kill-workspace/${req.params.wsid}` })
+                .toString();
+            res.send(
+                `<html><body><h1>Click button below</h1><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`,
+            );
         });
         router.post("/kill-workspace/:wsid", async (req, res, next) => {
             const auth = this.getAuthorizedUser(req);
@@ -151,7 +159,10 @@ export class EnforcementController {
                 const target = (await this.workspaceDb.findById(targetWsID))!;
                 const owner = await this.userDB.findUserById(target!.ownerId);
                 if (!owner) {
-                    log.warn({ userId: callingUser.id }, `Owner ${target.ownerId} of workspace ${target.id} does not exist`);
+                    log.warn(
+                        { userId: callingUser.id },
+                        `Owner ${target.ownerId} of workspace ${target.id} does not exist`,
+                    );
                     res.status(404);
                     res.send(`Workspace owner ${target.ownerId} does not exist.`);
                     return;
@@ -160,7 +171,9 @@ export class EnforcementController {
                 const blockURL = this.blockUserUrl(owner.id);
                 log.info({ userId: callingUser.id }, `Stopped workspace ${target.id} through enforcement endpoint`);
                 res.status(200);
-                res.send(`Workspace was stopped. Do you want to <a href="${blockURL}">block the user ${owner.id} immediately?</a>`);
+                res.send(
+                    `Workspace was stopped. Do you want to <a href="${blockURL}">block the user ${owner.id} immediately?</a>`,
+                );
             } catch (e) {
                 if (e instanceof ResponseError && e.code === ErrorCodes.NOT_FOUND) {
                     log.info({ userId: callingUser.id }, `Tried to kill non-existent workspace id=${targetWsID}`);
@@ -172,7 +185,7 @@ export class EnforcementController {
                     res.send(e);
                 }
             } finally {
-                server.dispose()
+                server.dispose();
             }
         });
     }
@@ -189,7 +202,9 @@ export class EnforcementController {
 
             const targetUserID = req.params.userid;
             const actionUrl = this.deleteUserUrl(targetUserID);
-            res.send(`<html><body><h1>Click button below</h1><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`)
+            res.send(
+                `<html><body><h1>Click button below</h1><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`,
+            );
         });
 
         router.post("/delete-user/:userid", async (req, res, next) => {
@@ -205,14 +220,20 @@ export class EnforcementController {
             const logCtx: LogContext = { userId: callingUser.id };
             const targetUserID = req.params.userid;
             try {
-                log.info(logCtx, `Trying to delete user id=${targetUserID}...`, { action: 'delete-user', status: 'started' });
+                log.info(logCtx, `Trying to delete user id=${targetUserID}...`, {
+                    action: "delete-user",
+                    status: "started",
+                });
                 await this.userDeletionService.deleteUser(targetUserID);
-                log.info(logCtx, `Deleted user id=${targetUserID}.`, { action: 'delete-user', status: 'success' });
+                log.info(logCtx, `Deleted user id=${targetUserID}.`, { action: "delete-user", status: "success" });
                 res.sendStatus(200);
             } catch (err) {
-                log.error(logCtx, `Tried to delete user id=${targetUserID}`, err, { action: 'delete-user', status: 'error' });
+                log.error(logCtx, `Tried to delete user id=${targetUserID}`, err, {
+                    action: "delete-user",
+                    status: "error",
+                });
                 res.status(404);
-                const message = !!err && err.message ? err.message + '' : '<no message>';
+                const message = !!err && err.message ? err.message + "" : "<no message>";
                 res.send(`An error occurred while deleting ${targetUserID}: ${message}`);
             }
         });
