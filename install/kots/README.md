@@ -34,16 +34,7 @@ The following environment variables are required to be able to publish to our Re
 
 - Starts with `kots` - part of the KOTS configuration. Typically, this will follow the KOTS documentation/conventions
 - Starts with `gitpod` - part of the Gitpod application. Typically, this will be something we define/own
-- Starts with `helm` - a Helm chart
 - Starts with `crd` - a Custom Resource Definition
-
-## Helm charts
-
-KOTS [requires](https://kots.io/reference/v1beta1/helmchart) Helm charts to be uploaded as a `.tgz`
-file. The `make helm` command iterates through everything inside `charts`, installs the dependencies
-and packages them up as a `.tgz` file.
-
-The `.tgz` files should not be committed to the repository.
 
 # Create a development release
 
