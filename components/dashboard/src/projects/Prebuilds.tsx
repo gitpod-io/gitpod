@@ -329,12 +329,66 @@ export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
     }
 }
 
+function PrebuildStatusDescription(props: { prebuild: PrebuildWithStatus }) {
+    switch (props.prebuild.status) {
+        case "queued":
+            return <span>Prebuild is queued and will be processed when there is execution capacity.</span>;
+        case "building":
+            return <span>Prebuild is currently in progress.</span>;
+        case "aborted":
+            return (
+                <span>
+                    Prebuild has been cancelled. Either a user cancelled it, or the prebuild rate limit has been
+                    exceeded. {props.prebuild.error}
+                </span>
+            );
+        case "failed":
+            return <span>Prebuild failed for system reasons. Please contact support. {props.prebuild.error}</span>;
+        case "timeout":
+            return (
+                <span>
+                    Prebuild timed out. Either the image, or the prebuild tasks took too long. {props.prebuild.error}
+                </span>
+            );
+        case "available":
+            if (props.prebuild?.error) {
+                return (
+                    <span>
+                        The tasks executed in the prebuild returned a non-zero exit code. {props.prebuild.error}
+                    </span>
+                );
+            }
+            return <span>Prebuild completed succesfully.</span>;
+        default:
+            return <span>Unknown prebuild status.</span>;
+    }
+}
+
 function formatDuration(milliseconds: number) {
     const hours = Math.floor(milliseconds / (1000 * 60 * 60));
     return (hours > 0 ? `${hours}:` : "") + moment(milliseconds).format("mm:ss");
 }
 
-export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInstance }) {
+export function PrebuildStatus(props: { prebuild: PrebuildWithStatus }) {
+    const prebuild = props.prebuild;
+
+    return (
+        <div className="flex flex-col space-y-1 justify-center text-sm font-semibold">
+            <div>
+                <div className="flex space-x-1 items-center">
+                    {prebuildStatusIcon(prebuild)}
+                    {prebuildStatusLabel(prebuild)}
+                </div>
+            </div>
+            <div className="flex space-x-1 items-center text-gray-400">
+                <PrebuildStatusDescription prebuild={prebuild} />
+            </div>
+        </div>
+    );
+}
+
+// Deprecated. Use PrebuildStatus instead.
+export function PrebuildInstanceStatus(props: { prebuildInstance?: WorkspaceInstance; prebuild?: PrebuildWithStatus }) {
     let status = <></>;
     let details = <></>;
     switch (props.prebuildInstance?.status.phase) {
