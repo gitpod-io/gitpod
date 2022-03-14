@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export const projectsPathMain = '/projects';
-export const projectsPathMainWithParams = [projectsPathMain, ':projectName', ':resourceOrPrebuild?'].join('/');
+export const projectsPathMain = "/projects";
+export const projectsPathMainWithParams = [projectsPathMain, ":projectName", ":resourceOrPrebuild?"].join("/");
 
 export const projectsPathInstallGitHubApp = "/install-github-app";
-export const projectsPathNew = '/new'
+export const projectsPathNew = "/new";

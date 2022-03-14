@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import RepositoryFinder from "../components/RepositoryFinder";
 
 export default function Open() {
-    const [ initialQuery, setInitialQuery ] = useState<string | undefined>();
+    const [initialQuery, setInitialQuery] = useState<string | undefined>();
 
     // Support pre-filling the search bar via the URL hash
     useEffect(() => {
@@ -17,18 +17,20 @@ export default function Open() {
             if (hash) {
                 setInitialQuery(hash);
             }
-        }
+        };
         onHashChange();
-        window.addEventListener('hashchange', onHashChange, false);
+        window.addEventListener("hashchange", onHashChange, false);
         return () => {
-            window.removeEventListener('hashchange', onHashChange, false);
-        }
+            window.removeEventListener("hashchange", onHashChange, false);
+        };
     }, []);
 
-    return <div className="mt-24 mx-auto w-96 flex flex-col items-stretch">
-        <h1 className="text-center">Open in Gitpod</h1>
-        <div className="mt-8">
-            <RepositoryFinder initialQuery={initialQuery}/>
+    return (
+        <div className="mt-24 mx-auto w-96 flex flex-col items-stretch">
+            <h1 className="text-center">Open in Gitpod</h1>
+            <div className="mt-8">
+                <RepositoryFinder initialQuery={initialQuery} />
+            </div>
         </div>
-    </div>;
+    );
 }

@@ -6,31 +6,31 @@
 
 export default [
     {
-        title: 'Account',
-        link: ['/account','/settings']
+        title: "Account",
+        link: ["/account", "/settings"],
     },
     {
-        title: 'Notifications',
-        link: ['/notifications']
+        title: "Notifications",
+        link: ["/notifications"],
     },
     {
-        title: 'Plans',
-        link: ['/plans']
+        title: "Plans",
+        link: ["/plans"],
     },
     {
-        title: 'Team Plans',
-        link: ['/teams']
+        title: "Team Plans",
+        link: ["/teams"],
     },
     {
-        title: 'Variables',
-        link: ['/variables']
+        title: "Variables",
+        link: ["/variables"],
     },
     {
-        title: 'Integrations',
-        link: ["/integrations", "/access-control"]
+        title: "Integrations",
+        link: ["/integrations", "/access-control"],
     },
     {
-        title: 'Preferences',
-        link: ['/preferences']
+        title: "Preferences",
+        link: ["/preferences"],
     },
 ];
