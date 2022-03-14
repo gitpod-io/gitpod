@@ -7,7 +7,6 @@ import * as VM from './vm/vm'
 import { buildAndPublish } from './jobs/build/build-and-publish';
 import { validateChanges } from './jobs/build/validate-changes';
 import { prepare } from './jobs/build/prepare';
-import { coverage } from './jobs/build/coverage';
 import { deployToPreviewEnvironment } from './jobs/build/deploy-to-preview-environment';
 import { triggerIntegrationTests } from './jobs/build/trigger-integration-tests';
 import { jobConfig } from './jobs/build/job-config';
@@ -49,7 +48,6 @@ async function run(context: any) {
     await validateChanges(werft, config)
     await prepare(werft, config)
     await buildAndPublish(werft, config)
-    await coverage(werft, config)
 
     if (config.noPreview) {
         werft.phase("deploy", "not deploying");
