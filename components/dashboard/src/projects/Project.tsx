@@ -261,7 +261,7 @@ export default function () {
 
                                     const avatar = branch.changeAuthorAvatar && (
                                         <img
-                                            className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
+                                            className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
                                             src={branch.changeAuthorAvatar || ""}
                                             alt={branch.changeAuthor}
                                         />
