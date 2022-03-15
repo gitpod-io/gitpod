@@ -237,7 +237,11 @@ export default function NewProject() {
 
     const accounts = new Map<string, { avatarUrl: string }>();
     reposInAccounts.forEach((r) => {
-        if (!accounts.has(r.account)) accounts.set(r.account, { avatarUrl: r.accountAvatarUrl });
+        if (!accounts.has(r.account)) {
+            accounts.set(r.account, { avatarUrl: r.accountAvatarUrl });
+        } else if (!accounts.get(r.account)?.avatarUrl && r.accountAvatarUrl) {
+            accounts.get(r.account)!.avatarUrl = r.accountAvatarUrl;
+        }
     });
 
     const getDropDownEntries = (accounts: Map<string, { avatarUrl: string }>) => {
