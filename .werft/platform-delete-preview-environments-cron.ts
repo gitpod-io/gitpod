@@ -1,9 +1,9 @@
-import { Werft } from '../util/werft';
-import * as Tracing from '../observability/tracing';
+import { Werft } from './util/werft';
+import * as Tracing from './observability/tracing';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { wipePreviewEnvironmentAndNamespace, helmInstallName, listAllPreviewNamespaces } from '../util/kubectl';
-import { exec } from '../util/shell';
-import { previewNameFromBranchName } from '../util/preview';
+import { wipePreviewEnvironmentAndNamespace, helmInstallName, listAllPreviewNamespaces } from './util/kubectl';
+import { exec } from './util/shell';
+import { previewNameFromBranchName } from './util/preview';
 
 // Will be set once tracing has been initialized
 let werft: Werft
