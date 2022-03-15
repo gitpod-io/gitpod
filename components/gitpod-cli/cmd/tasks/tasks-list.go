@@ -32,7 +32,7 @@ func ListTasksCmd(cmd *cobra.Command, args []string) {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"ID", "Name", "State"})
+	table.SetHeader([]string{"ID", "Name", "State", "Terminal"})
 	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 	table.SetCenterSeparator("|")
 
@@ -43,7 +43,7 @@ func ListTasksCmd(cmd *cobra.Command, args []string) {
 	}
 
 	for _, task := range tasks {
-		table.Rich([]string{task.Id, task.Presentation.Name, task.State.String()}, []tablewriter.Colors{{}, {}, {mapStatusToColor[task.State]}})
+		table.Rich([]string{task.Id, task.Presentation.Name, task.State.String(), task.Terminal}, []tablewriter.Colors{{}, {}, {mapStatusToColor[task.State]}})
 	}
 
 	table.Render()
