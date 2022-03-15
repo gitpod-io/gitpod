@@ -240,6 +240,8 @@ export default function NewProject() {
         if (!accounts.has(r.account)) accounts.set(r.account, { avatarUrl: r.accountAvatarUrl });
     });
 
+    console.log('reposInAccounts', reposInAccounts, 'accounts', accounts);
+
     const getDropDownEntries = (accounts: Map<string, { avatarUrl: string }>) => {
         const renderItemContent = (label: string, icon: string, addClasses?: string) => (
             <div className="w-full flex">

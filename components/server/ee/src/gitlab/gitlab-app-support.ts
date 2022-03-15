@@ -9,6 +9,7 @@ import { inject, injectable } from "inversify";
 import { TokenProvider } from "../../../src/user/token-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { Gitlab } from "@gitbeaker/node";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class GitLabAppSupport {
@@ -38,6 +39,7 @@ export class GitLabAppSupport {
         //
         const projectsWithAccess = await api.Projects.all({ min_access_level: "40", perPage: 100 });
         for (const project of projectsWithAccess) {
+            log.info("GitLab project with access: " + JSON.stringify(project));
             const anyProject = project as any;
             const path = anyProject.path as string;
             const fullPath = anyProject.path_with_namespace as string;
