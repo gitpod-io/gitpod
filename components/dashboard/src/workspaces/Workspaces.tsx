@@ -48,7 +48,7 @@ export default function () {
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || workspaceModel.searchTerm ? (
                     <>
                         <div className="app-container py-2 flex">
-                            <div className="flex">
+                            <div className="flex-1">
                                 <div className="py-4">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -72,8 +72,6 @@ export default function () {
                                     }}
                                 />
                             </div>
-                            <div className="flex-1" />
-                            <div className="py-3"></div>
                             <div className="py-3 pl-3">
                                 <DropDown
                                     prefix="Limit: "
