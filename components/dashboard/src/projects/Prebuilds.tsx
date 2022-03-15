@@ -10,7 +10,7 @@ import { useContext, useEffect, useState } from "react";
 import { useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import DropDown, { DropDownEntry } from "../components/DropDown";
-import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
+import { ItemsList, Item, ItemField } from "../components/ItemsList";
 import Spinner from "../icons/Spinner.svg";
 import StatusDone from "../icons/StatusDone.svg";
 import StatusFailed from "../icons/StatusFailed.svg";
@@ -19,7 +19,6 @@ import StatusPaused from "../icons/StatusPaused.svg";
 import StatusRunning from "../icons/StatusRunning.svg";
 import { getGitpodService } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
-import { ContextMenuEntry } from "../components/ContextMenu";
 import { shortCommitMessage } from "./render-utils";
 import { Link } from "react-router-dom";
 import { Disposable } from "vscode-jsonrpc";
@@ -104,27 +103,6 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
         }
     }, [prebuilds]);
 
-    const prebuildContextMenu = (p: PrebuildWithStatus) => {
-        const isFailed = p.status === "aborted" || p.status === "timeout" || p.status === "failed" || !!p.error;
-        const isRunning = p.status === "building";
-        const entries: ContextMenuEntry[] = [];
-        if (isFailed) {
-            entries.push({
-                title: `Rerun Prebuild (${p.info.branch})`,
-                onClick: () => triggerPrebuild(p.info.branch),
-                separator: isRunning,
-            });
-        }
-        if (isRunning) {
-            entries.push({
-                title: "Cancel Prebuild",
-                customFontStyle: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                onClick: () => cancelPrebuild(p.info.id),
-            });
-        }
-        return entries;
-    };
-
     const statusFilterEntries = () => {
         const entries: DropDownEntry[] = [];
         entries.push({
@@ -166,13 +144,6 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
             return;
         }
         getGitpodService().server.triggerPrebuild(project.id, branchName);
-    };
-
-    const cancelPrebuild = (prebuildId: string) => {
-        if (!project) {
-            return;
-        }
-        getGitpodService().server.cancelPrebuild(project.id, prebuildId);
     };
 
     const formatDate = (date: string | undefined) => {
@@ -218,14 +189,14 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                     )}
                 </div>
                 <ItemsList className="mt-2">
-                    <Item header={true} className="grid grid-cols-3">
-                        <ItemField className="my-auto">
+                    <Item header={true}>
+                        <ItemField className="my-auto w-5/12">
                             <span>Prebuild</span>
                         </ItemField>
-                        <ItemField className="my-auto">
+                        <ItemField className="my-auto w-5/12">
                             <span>Commit</span>
                         </ItemField>
-                        <ItemField className="my-auto">
+                        <ItemField className="my-auto w-3/12">
                             <span>Branch</span>
                         </ItemField>
                     </Item>
@@ -239,74 +210,73 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                         .filter(filter)
                         .sort(prebuildSorter)
                         .map((p, index) => (
-                            <Item key={`prebuild-${p.info.id}`} className="grid grid-cols-3">
-                                <ItemField
-                                    className={`flex items-center my-auto ${
-                                        props.isAdminDashboard ? "pointer-events-none" : ""
-                                    }`}
-                                >
-                                    <Link
-                                        to={`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/${p.info.id}`}
-                                        className="cursor-pointer"
+                            <Link
+                                to={`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/${p.info.id}`}
+                                className="cursor-pointer"
+                            >
+                                <Item key={`prebuild-${p.info.id}`}>
+                                    <ItemField
+                                        className={`flex items-center my-auto w-5/12 ${
+                                            props.isAdminDashboard ? "pointer-events-none" : ""
+                                        }`}
                                     >
-                                        <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1">
-                                            <div className="inline-block align-text-bottom mr-2 w-4 h-4">
-                                                {prebuildStatusIcon(p)}
+                                        <div>
+                                            <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1">
+                                                <div className="inline-block align-text-bottom mr-2 w-4 h-4">
+                                                    {prebuildStatusIcon(p)}
+                                                </div>
+                                                {prebuildStatusLabel(p)}
                                             </div>
-                                            {prebuildStatusLabel(p)}
+                                            <p>
+                                                {p.info.startedByAvatar && (
+                                                    <img
+                                                        className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
+                                                        src={p.info.startedByAvatar || ""}
+                                                        alt={p.info.startedBy}
+                                                    />
+                                                )}
+                                                Triggered {formatDate(p.info.startedAt)}
+                                            </p>
                                         </div>
-                                        <p>
-                                            {p.info.startedByAvatar && (
-                                                <img
-                                                    className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
-                                                    src={p.info.startedByAvatar || ""}
-                                                    alt={p.info.startedBy}
-                                                />
-                                            )}
-                                            Triggered {formatDate(p.info.startedAt)}
-                                        </p>
-                                    </Link>
-                                </ItemField>
-                                <ItemField className="flex items-center my-auto">
-                                    <div className="truncate">
+                                    </ItemField>
+                                    <ItemField className="flex items-center my-auto w-5/12">
+                                        <div className="truncate">
+                                            <a href={p.info.changeUrl} className="cursor-pointer">
+                                                <div
+                                                    className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate"
+                                                    title={shortCommitMessage(p.info.changeTitle)}
+                                                >
+                                                    {shortCommitMessage(p.info.changeTitle)}
+                                                </div>
+                                            </a>
+                                            <p>
+                                                {p.info.changeAuthorAvatar && (
+                                                    <img
+                                                        className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
+                                                        src={p.info.changeAuthorAvatar || ""}
+                                                        alt={p.info.changeAuthor}
+                                                    />
+                                                )}
+                                                Authored {formatDate(p.info.changeDate)} ·{" "}
+                                                {p.info.changeHash?.substring(0, 8)}
+                                            </p>
+                                        </div>
+                                    </ItemField>
+                                    <ItemField className="flex w-3/12">
                                         <a href={p.info.changeUrl} className="cursor-pointer">
-                                            <div
-                                                className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate"
-                                                title={shortCommitMessage(p.info.changeTitle)}
-                                            >
-                                                {shortCommitMessage(p.info.changeTitle)}
+                                            <div className="flex space-x-2 truncate">
+                                                <span
+                                                    className="font-medium text-gray-500 dark:text-gray-50 truncate"
+                                                    title={p.info.branch}
+                                                >
+                                                    {p.info.branch}
+                                                </span>
                                             </div>
                                         </a>
-                                        <p>
-                                            {p.info.changeAuthorAvatar && (
-                                                <img
-                                                    className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
-                                                    src={p.info.changeAuthorAvatar || ""}
-                                                    alt={p.info.changeAuthor}
-                                                />
-                                            )}
-                                            Authored {formatDate(p.info.changeDate)} ·{" "}
-                                            {p.info.changeHash?.substring(0, 8)}
-                                        </p>
-                                    </div>
-                                </ItemField>
-                                <ItemField className="flex">
-                                    <a href={p.info.changeUrl} className="cursor-pointer">
-                                        <div className="flex space-x-2 truncate">
-                                            <span
-                                                className="font-medium text-gray-500 dark:text-gray-50 truncate"
-                                                title={p.info.branch}
-                                            >
-                                                {p.info.branch}
-                                            </span>
-                                        </div>
-                                    </a>
-                                    <span className="flex-grow" />
-                                    {!props.isAdminDashboard && (
-                                        <ItemFieldContextMenu menuEntries={prebuildContextMenu(p)} />
-                                    )}
-                                </ItemField>
-                            </Item>
+                                        <span className="flex-grow" />
+                                    </ItemField>
+                                </Item>
+                            </Link>
                         ))}
                 </ItemsList>
                 {!isLoadingPrebuilds && prebuilds.length === 0 && (
