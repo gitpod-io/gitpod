@@ -32,8 +32,10 @@ export class GitHubService extends RepositoryService {
             return <ProviderRepository>{
                 name: r.name,
                 cloneUrl: r.clone_url,
-                account: r.owner?.login,
-                accountAvatarUrl: r.owner?.avatar_url,
+                account: r.owner.login,
+                accountAvatarUrl: r.owner.gravatar_id
+                    ? `https://www.gravatar.com/avatar/${r.owner.gravatar_id}?size=128`
+                    : r.owner.avatar_url,
                 updatedAt: r.updated_at,
             };
         });
