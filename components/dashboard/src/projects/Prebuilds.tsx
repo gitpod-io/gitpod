@@ -280,7 +280,7 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
                                         <p>
                                             {p.info.changeAuthorAvatar && (
                                                 <img
-                                                    className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
+                                                    className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
                                                     src={p.info.changeAuthorAvatar || ""}
                                                     alt={p.info.changeAuthor}
                                                 />
