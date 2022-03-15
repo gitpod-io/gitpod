@@ -7,9 +7,10 @@ import { exec } from "../../util/shell";
  */
 export async function typecheckWerftJobs(werft: Werft) {
     werft.phase("Typecheck Typescript Werft files", "Typechecking Werft Typescript files");
-    const slice = "tsc";
+    const slice = "tsc --noEmit";
     try {
         exec("cd .werft && tsc --noEmit", { slice });
+        werft.log(slice, 'No compilation errors.')
     } catch (e) {
         werft.fail(slice, e);
     }
