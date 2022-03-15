@@ -414,11 +414,6 @@ func installUidMap() error {
 }
 
 func installRunc() error {
-	_, exists := os.LookupEnv(DaemonArgs)
-	if !exists {
-		return nil
-	}
-
 	runc, _ := exec.LookPath("runc")
 	if runc != "" {
 		// if the required version or a more recent one is already
