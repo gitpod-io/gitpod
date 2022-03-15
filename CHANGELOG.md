@@ -1,6 +1,8 @@
 # Change Log
 
 ## March 2022
+- Make the licensing match what's advertised ([#8593](https://github.com/gitpod-io/gitpod/pull/8593)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- fix caching of GitHub server<->server queries ([#8793](https://github.com/gitpod-io/gitpod/pull/8793)) - [@geropl](https://github.com/geropl)
 - Fix setting sync limit failure in some cases ([#8644](https://github.com/gitpod-io/gitpod/pull/8644)) - [@mustard-mh](https://github.com/mustard-mh)
 - [kubecdl] Fix server name pattern ([#8770](https://github.com/gitpod-io/gitpod/pull/8770)) - [@aledbf](https://github.com/aledbf)
 - ws-manager-bridge logs WorkspaceStatus events ([#8718](https://github.com/gitpod-io/gitpod/pull/8718)) - [@easyCZ](https://github.com/easyCZ)
