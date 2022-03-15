@@ -9,7 +9,6 @@ import (
 )
 
 func GetTasksList(ctx context.Context, client api.StatusServiceClient) []*api.TaskStatus {
-	// TODO(andreafalzetti): ask how to opt-out from the stream! {Observe: false} gives me a stream 😢
 	listen, err := client.TasksStatus(ctx, &api.TasksStatusRequest{Observe: false})
 	if err != nil {
 		log.WithError(err).Error("Cannot list tasks")
@@ -36,4 +35,18 @@ func GetTasksList(ctx context.Context, client api.StatusServiceClient) []*api.Ta
 	}()
 
 	return <-taskschan
+}
+
+func GetTasksListByState(ctx context.Context, client api.StatusServiceClient, filterState api.TaskState) []*api.TaskStatus {
+	tasks := GetTasksList(ctx, client)
+
+	var filteredTasks []*api.TaskStatus
+
+	for _, task := range tasks {
+		if task.State == filterState {
+			filteredTasks = append(filteredTasks, task)
+		}
+	}
+
+	return filteredTasks
 }

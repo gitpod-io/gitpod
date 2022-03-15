@@ -23,6 +23,7 @@ require (
 )
 
 require (
+	github.com/creack/pty v1.1.17
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/procfs v0.7.3
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
@@ -34,7 +35,6 @@ require (
 	github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/client9/misspell v0.3.4 // indirect
-	github.com/creack/pty v1.1.17 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/golang/lint v0.0.0-20181026193005-c67002cb31c3 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

@@ -16,14 +16,21 @@ import (
 )
 
 func AttachTasksCmd(cmd *cobra.Command, args []string) {
-	if len(args) == 0 {
+	var terminalAlias string
+
+	conn := supervisor.Dial()
+
+	if len(args) > 0 {
+		terminalAlias = args[0]
+	} else {
+		statusClient := api.NewStatusServiceClient(conn)
+
+		stateToFilter := api.TaskState(api.TaskState_value["running"])
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		conn := supervisor.Dial()
-		statusClient := api.NewStatusServiceClient(conn)
-
-		tasks := supervisor.GetTasksList(ctx, statusClient)
+		tasks := supervisor.GetTasksListByState(ctx, statusClient, stateToFilter)
 
 		if len(tasks) == 0 {
 			fmt.Println("There are no tasks available")
@@ -31,33 +38,43 @@ func AttachTasksCmd(cmd *cobra.Command, args []string) {
 		}
 
 		var taskNames []string
-		// var taskIds []string
 
 		for _, task := range tasks {
 			taskNames = append(taskNames, task.Presentation.Name)
-			// taskIds = append(taskIds, task.Id)
 		}
 
 		prompt := promptui.Select{
 			Label: "What task do you want attach to?",
 			Items: taskNames,
 			Templates: &promptui.SelectTemplates{
-				Selected: "Selected Task: {{ . }}",
+				Selected: "Attaching to task: {{ . }}",
 			},
 		}
 
-		// fmt.Println(prompt)
-		choice, _, err := prompt.Run()
+		selectedIndex, selectedValue, err := prompt.Run()
+
+		fmt.Println("selectedValue", selectedValue)
+		fmt.Println("selectedIndex", selectedIndex)
+
+		if selectedValue == "" {
+			fmt.Println("NOTHING SELECTED")
+			return
+		}
+
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Println(choice)
-		terminalClient := api.NewTerminalServiceClient(conn)
-
-		supervisor.AttachToTerminal(context.Background(), terminalClient, tasks[choice].Terminal, supervisor.AttachToTerminalOpts{
-			ForceResize: true,
-			Interactive: true,
-		})
+		terminalAlias = tasks[selectedIndex].Terminal
 	}
+
+	interactive, _ := cmd.Flags().GetBool("interactive")
+	forceResize, _ := cmd.Flags().GetBool("force-resize")
+
+	terminalClient := api.NewTerminalServiceClient(conn)
+
+	supervisor.AttachToTerminal(context.Background(), terminalClient, terminalAlias, supervisor.AttachToTerminalOpts{
+		ForceResize: forceResize,
+		Interactive: interactive,
+	})
 }
