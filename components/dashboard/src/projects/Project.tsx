@@ -7,7 +7,7 @@
 import moment from "moment";
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { useLocation, useRouteMatch } from "react-router";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -21,6 +21,7 @@ import { openAuthorizeWindow } from "../provider-utils";
 
 export default function () {
     const location = useLocation();
+    const history = useHistory();
 
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
@@ -30,6 +31,7 @@ export default function () {
 
     const [project, setProject] = useState<Project | undefined>();
 
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
     const [branches, setBranches] = useState<Project.BranchDetails[]>([]);
     const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus | undefined>>(new Map());
@@ -158,11 +160,17 @@ export default function () {
         return true;
     };
 
-    const triggerPrebuild = (branch: Project.BranchDetails) => {
+    const triggerPrebuild = async (branch: Project.BranchDetails) => {
         if (!project) {
             return;
         }
-        getGitpodService().server.triggerPrebuild(project.id, branch.name);
+        try {
+            setIsLoading(true);
+            const prebuildResult = await getGitpodService().server.triggerPrebuild(project.id, branch.name);
+            history.push(`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/${prebuildResult.prebuildId}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const cancelPrebuild = (prebuildId: string) => {
@@ -233,7 +241,11 @@ export default function () {
                                 />
                             </div>
                             <div className="flex-1" />
-                            <div className="py-3 pl-3"></div>
+                            {isLoading && (
+                                <div className="flex justify-center w-1/12">
+                                    <img alt="" className="h-4 w-4 animate-spin" src={Spinner} />
+                                </div>
+                            )}
                         </div>
                         <ItemsList className="mt-2">
                             <Item header={true} className="grid grid-cols-3">
@@ -362,6 +374,7 @@ export default function () {
                     </>
                 )}
             </div>
+            <div></div>
         </>
     );
 }
