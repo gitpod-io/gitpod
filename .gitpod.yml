@@ -62,6 +62,8 @@ vscode:
     - timonwong.shellcheck
     - vscjava.vscode-java-pack
     - fwcd.kotlin
+    - dbaeumer.vscode-eslint
+    - esbenp.prettier-vscode
 jetbrains:
   goland:
     prebuilds:
