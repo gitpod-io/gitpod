@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
 	github.com/containerd/cgroups v1.0.3
-	github.com/containerd/containerd v1.6.0
+	github.com/containerd/containerd v1.6.1
 	github.com/containerd/typeurl v1.0.2
 	github.com/docker/docker v20.10.5+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000

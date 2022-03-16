@@ -3,7 +3,7 @@ module github.com/gitpod-io/gitpod/blobserve
 go 1.17
 
 require (
-	github.com/containerd/containerd v1.6.0
+	github.com/containerd/containerd v1.6.1
 	github.com/docker/cli v20.10.7+incompatible
 	github.com/docker/distribution v2.8.0+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
