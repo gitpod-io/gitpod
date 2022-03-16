@@ -486,9 +486,6 @@ var ring1Cmd = &cobra.Command{
 		slirpCmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig: syscall.SIGKILL,
 		}
-		slirpCmd.Stdin = os.Stdin
-		slirpCmd.Stdout = os.Stdout
-		slirpCmd.Stderr = os.Stderr
 
 		err = slirpCmd.Start()
 		if err != nil {
