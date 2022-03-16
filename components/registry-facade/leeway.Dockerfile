@@ -6,7 +6,7 @@ FROM alpine:3.15
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
-  && apk add --no-cache ca-certificates bash
+  && apk add --no-cache ca-certificates bash wait4x
 
 RUN apk add --no-cache kubectl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 

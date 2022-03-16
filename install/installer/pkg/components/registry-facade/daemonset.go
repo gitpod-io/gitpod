@@ -212,7 +212,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							PostStart: &corev1.LifecycleHandler{
 								Exec: &corev1.ExecAction{
 									Command: []string{
-										"/bin/bash", "-c", fmt.Sprintf(`wait4x http http://localhost:%v/ready -t30 --expect-status-code 200 -- kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true`, ReadinessPort),
+										"/bin/bash", "-c", fmt.Sprintf(`wait4x http http://localhost:%v/ready -t30s --expect-status-code 200 && kubectl label --overwrite nodes ${NODENAME} gitpod.io/registry-facade_ready_ns_${KUBE_NAMESPACE}=true`, ReadinessPort),
 									},
 								},
 							},
