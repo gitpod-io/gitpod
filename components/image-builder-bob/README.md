@@ -3,8 +3,8 @@
 Prerequisite: make sure you have buildkit in the path
 ```bash
 cd /tmp
-curl -OL https://github.com/moby/buildkit/releases/download/v0.9.0/buildkit-v0.9.0.linux-amd64.tar.gz
-tar xzfv buildkit-v0.9.0.linux-amd64.tar.gz
+curl -OL https://github.com/moby/buildkit/releases/download/v0.10.0/buildkit-v0.10.0.linux-amd64.tar.gz
+tar xzfv buildkit-v0.10.0.linux-amd64.tar.gz
 sudo mv bin/* /usr/bin
 ```
 
