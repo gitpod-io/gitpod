@@ -114,3 +114,10 @@ spec:
               message: The cluster must have least 16GB of memory
           - pass:
               message: There is at least 16GB of memory in the cluster
+    - storageClass:
+        checkName: Check for default storage class
+        outcomes:
+          - fail:
+              message: No default storage class found
+          - pass:
+              message: Default storage class found
