@@ -18,9 +18,9 @@ export class InstallationAdminTelemetryDataProvider {
     async getTelemetryData(): Promise<TelemetryData> {
         const data: TelemetryData = {
             installationAdmin: await this.installationAdminDb.getData(),
-            totalUsers: 0, //await this.userDb.getUserCount(true),
-            totalWorkspaces: 0, //await this.workspaceDb.getWorkspaceCount(),
-            totalInstances: 0, //await this.workspaceDb.getInstanceCount(),
+            totalUsers: await this.userDb.getUserCount(true),
+            totalWorkspaces: await this.workspaceDb.getWorkspaceCount(),
+            totalInstances: await this.workspaceDb.getInstanceCount(),
         } as TelemetryData;
 
         return data;

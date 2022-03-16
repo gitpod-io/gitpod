@@ -26,11 +26,13 @@ export default function Settings() {
             return; // temporarily disable to avoid hight CPU on the DB
         }
         (async () => {
-            const data = await getGitpodService().server.adminGetTelemetryData();
-            setTelemetryData(data);
-
             const setting = await getGitpodService().server.adminGetSettings();
             setAdminSettings(setting);
+
+            if (setting.sendTelemetry) {
+                const data = await getGitpodService().server.adminGetTelemetryData();
+                setTelemetryData(data);
+            }
         })();
     }, []);
 
