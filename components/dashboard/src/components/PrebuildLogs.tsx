@@ -19,7 +19,6 @@ const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
 export interface PrebuildLogsProps {
     workspaceId?: string;
-    onInstanceUpdate?: (instance: WorkspaceInstance) => void;
 }
 
 export default function PrebuildLogs(props: PrebuildLogsProps) {
@@ -81,9 +80,6 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     }, [props.workspaceId]);
 
     useEffect(() => {
-        if (props.onInstanceUpdate && workspaceInstance) {
-            props.onInstanceUpdate(workspaceInstance);
-        }
         switch (workspaceInstance?.status.phase) {
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
             // are still preparing for launch. This means we're building the Docker image for the workspace.
