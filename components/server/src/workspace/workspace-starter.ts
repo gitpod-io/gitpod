@@ -718,8 +718,7 @@ export class WorkspaceStarter {
             if (WorkspaceImageSourceDocker.is(imgsrc)) {
                 let source: WorkspaceInitializer;
                 const disp = new DisposableCollection();
-                let checkoutLocation =
-                    (CommitContext.is(workspace.context) && workspace.context.checkoutLocation) || ".";
+                let checkoutLocation = ".";
                 if (
                     !AdditionalContentContext.hasDockerConfig(workspace.context, workspace.config) &&
                     imgsrc.dockerFileSource
