@@ -1,6 +1,11 @@
 # Change Log
 
 ## March 2022
+- Allow use of the --privileged flag with docker. ([#8827](https://github.com/gitpod-io/gitpod/pull/8827)) - [@Furisto](https://github.com/Furisto)
+- [kots]: use Helm for the Installer job ([#8491](https://github.com/gitpod-io/gitpod/pull/8491)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Enable egress metrics for agent-smith ([#8742](https://github.com/gitpod-io/gitpod/pull/8742)) - [@princerachit](https://github.com/princerachit)
+- fix missing index on Workspace (id, deleted) ([#8821](https://github.com/gitpod-io/gitpod/pull/8821)) - [@geropl](https://github.com/geropl)
+- [loadgen] Update benchmark images ([#8808](https://github.com/gitpod-io/gitpod/pull/8808)) - [@aledbf](https://github.com/aledbf)
 - Make the licensing match what's advertised ([#8593](https://github.com/gitpod-io/gitpod/pull/8593)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - fix caching of GitHub server<->server queries ([#8793](https://github.com/gitpod-io/gitpod/pull/8793)) - [@geropl](https://github.com/geropl)
 - Fix setting sync limit failure in some cases ([#8644](https://github.com/gitpod-io/gitpod/pull/8644)) - [@mustard-mh](https://github.com/mustard-mh)
