@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
 import { AuthProviderInfo, Project, ProviderRepository, Team, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
@@ -42,6 +42,29 @@ export default function NewProject() {
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
 
+    const updateReposInAccounts = useCallback(
+        async (installationId?: string) => {
+            setLoaded(false);
+            setReposInAccounts([]);
+            if (!selectedProviderHost) {
+                return [];
+            }
+            try {
+                const repos = await getGitpodService().server.getProviderRepositoriesForUser({
+                    provider: selectedProviderHost,
+                    hints: { installationId },
+                });
+                setReposInAccounts(repos);
+                setLoaded(true);
+                return repos;
+            } catch (error) {
+                console.log(error);
+            }
+            return [];
+        },
+        [selectedProviderHost],
+    );
+
     useEffect(() => {
         if (user && selectedProviderHost === undefined) {
             if (user.identities.find((i) => i.authProviderId === "Public-GitLab")) {
@@ -55,7 +78,7 @@ export default function NewProject() {
                 setAuthProviders(await getGitpodService().server.getAuthProviders());
             })();
         }
-    }, [user]);
+    }, [selectedProviderHost, user]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -69,7 +92,7 @@ export default function NewProject() {
             window.history.replaceState({}, "", window.location.pathname);
             setSelectedTeamOrUser(user);
         }
-    }, []);
+    }, [location.search, teams, user]);
 
     const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
     useEffect(() => {
@@ -123,10 +146,34 @@ export default function NewProject() {
     }, [selectedRepo]);
 
     useEffect(() => {
+        const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
+            if (!selectedProviderHost) {
+                return;
+            }
+            const repoSlug = repo.path || repo.name;
+
+            try {
+                const project = await getGitpodService().server.createProject({
+                    name: repo.name,
+                    slug: repoSlug,
+                    cloneUrl: repo.cloneUrl,
+                    account: repo.account,
+                    provider: selectedProviderHost,
+                    ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
+                    appInstallationId: String(repo.installationId),
+                });
+
+                setProject(project);
+            } catch (error) {
+                const message = (error && error?.message) || "Failed to create new project.";
+                window.alert(message);
+            }
+        };
+
         if (selectedTeamOrUser && selectedRepo) {
             createProject(selectedTeamOrUser, selectedRepo);
         }
-    }, [selectedTeamOrUser, selectedRepo]);
+    }, [selectedTeamOrUser, selectedRepo, selectedProviderHost]);
 
     useEffect(() => {
         if (reposInAccounts.length === 0) {
@@ -155,7 +202,7 @@ export default function NewProject() {
         (async () => {
             await updateReposInAccounts();
         })();
-    }, [selectedProviderHost]);
+    }, [selectedProviderHost, updateReposInAccounts]);
 
     useEffect(() => {
         if (project && sourceOfConfig) {
@@ -166,29 +213,9 @@ export default function NewProject() {
                 await getGitpodService().server.triggerPrebuild(project.id, null);
             })();
         }
-    }, [project, sourceOfConfig]);
+    }, [guessedConfigString, project, sourceOfConfig]);
 
     const isGitHub = () => selectedProviderHost === "github.com";
-
-    const updateReposInAccounts = async (installationId?: string) => {
-        setLoaded(false);
-        setReposInAccounts([]);
-        if (!selectedProviderHost) {
-            return [];
-        }
-        try {
-            const repos = await getGitpodService().server.getProviderRepositoriesForUser({
-                provider: selectedProviderHost,
-                hints: { installationId },
-            });
-            setReposInAccounts(repos);
-            setLoaded(true);
-            return repos;
-        } catch (error) {
-            console.log(error);
-        }
-        return [];
-    };
 
     const reconfigure = () => {
         openReconfigureWindow({
@@ -201,30 +228,6 @@ export default function NewProject() {
                 });
             },
         });
-    };
-
-    const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
-        if (!selectedProviderHost) {
-            return;
-        }
-        const repoSlug = repo.path || repo.name;
-
-        try {
-            const project = await getGitpodService().server.createProject({
-                name: repo.name,
-                slug: repoSlug,
-                cloneUrl: repo.cloneUrl,
-                account: repo.account,
-                provider: selectedProviderHost,
-                ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
-                appInstallationId: String(repo.installationId),
-            });
-
-            setProject(project);
-        } catch (error) {
-            const message = (error && error?.message) || "Failed to create new project.";
-            window.alert(message);
-        }
     };
 
     const toSimpleName = (fullName: string) => {
@@ -243,7 +246,7 @@ export default function NewProject() {
     const getDropDownEntries = (accounts: Map<string, { avatarUrl: string }>) => {
         const renderItemContent = (label: string, icon: string, addClasses?: string) => (
             <div className="w-full flex">
-                <img src={icon} className="rounded-full w-6 h-6 my-auto" />
+                <img src={icon} className="rounded-full w-6 h-6 my-auto" alt="" />
                 <span className={"pl-2 text-gray-600 dark:text-gray-100 text-base " + (addClasses || "")}>{label}</span>
             </div>
         );
@@ -311,9 +314,9 @@ export default function NewProject() {
                 <p className="text-gray-500 text-center text-base mt-12">
                     {loaded && noReposAvailable ? "Select account on " : "Select a Git repository on "}
                     <b>{selectedProviderHost}</b> (
-                    <a className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>
+                    <button className="gp-link cursor-pointer" onClick={() => setShowGitProviders(true)}>
                         change
-                    </a>
+                    </button>
                     )
                 </p>
                 <div className={`mt-2 flex-col ${noReposAvailable && isGitHub() ? "w-96" : ""}`}>
@@ -325,6 +328,7 @@ export default function NewProject() {
                                         <img
                                             src={user?.avatarUrl}
                                             className="rounded-full w-6 h-6 absolute my-2.5 left-3"
+                                            alt=""
                                         />
                                         <input
                                             className="w-full px-12 cursor-pointer font-semibold"
@@ -339,6 +343,7 @@ export default function NewProject() {
                                         <img
                                             src={icon ? icon : ""}
                                             className="rounded-full w-6 h-6 absolute my-2.5 left-3"
+                                            alt=""
                                         />
                                         <input
                                             className="w-full px-12 cursor-pointer font-semibold"
@@ -352,12 +357,18 @@ export default function NewProject() {
                                     src={CaretDown}
                                     title="Select Account"
                                     className="filter-grayscale absolute top-1/2 right-3"
+                                    alt=""
                                 />
                             </div>
                         </ContextMenu>
                         {showSearchInput && (
                             <div className="w-full relative ">
-                                <img src={search} title="Search" className="filter-grayscale absolute top-1/3 left-3" />
+                                <img
+                                    src={search}
+                                    title="Search"
+                                    alt="Search"
+                                    className="filter-grayscale absolute top-1/3 left-3"
+                                />
                                 <input
                                     className="w-96 pl-10 border-0"
                                     type="text"
@@ -430,13 +441,12 @@ export default function NewProject() {
                     <div>
                         <div className="text-gray-500 text-center w-96 mx-8">
                             Repository not found?{" "}
-                            <a
-                                href="javascript:void(0)"
+                            <button
                                 onClick={(e) => reconfigure()}
-                                className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600"
+                                className="gp-link text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600"
                             >
                                 Reconfigure
-                            </a>
+                            </button>
                         </div>
                     </div>
                 )}
@@ -682,7 +692,7 @@ function GitProviders(props: {
                 {errorMessage && (
                     <div className="mt-16 flex space-x-2 py-6 px-6 w-96 justify-between bg-gitpod-kumquat-light rounded-xl">
                         <div className="pr-3 self-center w-6">
-                            <img src={exclamation} />
+                            <img src={exclamation} alt="Heads up!" />
                         </div>
                         <div className="flex-1 flex flex-col">
                             <p className="text-gitpod-red text-sm">{errorMessage}</p>
