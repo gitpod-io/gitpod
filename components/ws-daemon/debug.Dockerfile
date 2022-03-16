@@ -6,7 +6,7 @@ FROM alpine:3.15
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
-  && apk add --no-cache git bash openssh-client lz4 e2fsprogs
+  && apk add --no-cache git bash openssh-client lz4 e2fsprogs wait4x
 
 RUN apk add --no-cache kubectl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 

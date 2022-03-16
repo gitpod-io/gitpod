@@ -5,22 +5,31 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 )
 
@@ -58,7 +67,11 @@ var runCmd = &cobra.Command{
 			log.Warn("no TLS configured - gRPC server will be unsecured")
 		}
 
+		healthServer := health.NewServer()
+
 		server := grpc.NewServer(grpcOpts...)
+		server.RegisterService(&grpc_health_v1.Health_ServiceDesc, healthServer)
+
 		dmn.Register(server)
 		lis, err := net.Listen("tcp", cfg.Service.Addr)
 		if err != nil {
@@ -94,6 +107,19 @@ var runCmd = &cobra.Command{
 			go pprof.Serve(cfg.PProf.Addr)
 		}
 
+		if cfg.ReadinessProbeAddr != "" {
+			// Ensure we can access the GRPC server is healthy, the etc hosts file was updated and containerd is available.
+			health := healthcheck.NewHandler()
+			health.AddReadinessCheck("grpc-server", grpcProbe(cfg.Service))
+			health.AddReadinessCheck("ws-daemon", dmn.ReadinessProbe())
+
+			go func() {
+				if err := http.ListenAndServe(cfg.ReadinessProbeAddr, health); err != nil && err != http.ErrServerClosed {
+					log.WithError(err).Panic("error starting HTTP server")
+				}
+			}()
+		}
+
 		err = dmn.Start()
 		if err != nil {
 			log.WithError(err).Fatal("cannot start daemon")
@@ -115,4 +141,43 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+}
+
+func grpcProbe(tlsConfig config.AddrTLS) func() error {
+	return func() error {
+		secopt := grpc.WithInsecure()
+		if tlsConfig.TLS != nil && tlsConfig.TLS.Certificate != "" {
+			tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+				tlsConfig.TLS.Authority, tlsConfig.TLS.Certificate, tlsConfig.TLS.PrivateKey,
+				common_grpc.WithSetRootCAs(true),
+				common_grpc.WithServerName("wsdaemon"),
+			)
+			if err != nil {
+				return xerrors.Errorf("cannot load ws-daemon certificate: %w", err)
+			}
+
+			secopt = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		conn, err := grpc.DialContext(ctx, tlsConfig.Addr, secopt)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		client := grpc_health_v1.NewHealthClient(conn)
+		check, err := client.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
+		if err != nil {
+			return err
+		}
+
+		if check.Status == grpc_health_v1.HealthCheckResponse_SERVING {
+			return nil
+		}
+
+		return fmt.Errorf("grpc service not ready")
+	}
 }

@@ -7,7 +7,6 @@ package daemon
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,7 +17,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/gitpod-io/gitpod/common-go/cgroups"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
@@ -151,49 +149,12 @@ func (d *Daemon) Start() error {
 		go d.hosts.Start()
 	}
 
-	if d.Config.ReadinessSignal.Enabled {
-		go d.startReadinessSignal()
-	}
-
 	return nil
 }
 
 // Register registers all gRPC services provided by this daemon
 func (d *Daemon) Register(srv *grpc.Server) {
 	api.RegisterWorkspaceContentServiceServer(srv, d.content)
-}
-
-func (d *Daemon) startReadinessSignal() {
-	path := d.Config.ReadinessSignal.Path
-	if path == "" {
-		path = "/"
-	}
-
-	mux := http.NewServeMux()
-	mux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if d.hosts != nil && !d.hosts.DidUpdate() {
-			http.Error(w, "host controller not ready yet", http.StatusTooEarly)
-			return
-		}
-
-		isContainerdReady, err := d.dispatch.Runtime.IsContainerdReady(context.Background())
-		if err != nil {
-			http.Error(w, fmt.Sprintf("containerd error: %v", err), http.StatusTooEarly)
-			return
-		}
-
-		if !isContainerdReady {
-			http.Error(w, "containerd is not ready", http.StatusServiceUnavailable)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-	}))
-	log.WithField("addr", d.Config.ReadinessSignal.Addr).Info("started readiness signal")
-	err := http.ListenAndServe(d.Config.ReadinessSignal.Addr, mux)
-	if err != nil {
-		log.WithError(err).Error("cannot start readiness probe")
-	}
 }
 
 // Stop gracefully shuts down the daemon. Once stopped, it
@@ -213,4 +174,23 @@ func (d *Daemon) Stop() error {
 	}
 
 	return nil
+}
+
+func (d *Daemon) ReadinessProbe() func() error {
+	return func() error {
+		if d.hosts != nil && !d.hosts.DidUpdate() {
+			return fmt.Errorf("host controller not ready yet")
+		}
+
+		isContainerdReady, err := d.dispatch.Runtime.IsContainerdReady(context.Background())
+		if err != nil {
+			return fmt.Errorf("containerd error: %v", err)
+		}
+
+		if !isContainerdReady {
+			return fmt.Errorf("containerd is not ready")
+		}
+
+		return nil
+	}
 }
