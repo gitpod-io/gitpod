@@ -16,10 +16,11 @@ import (
 )
 
 type Config struct {
-	Daemon     daemon.Config `json:"daemon"`
-	Service    AddrTLS       `json:"service"`
-	Prometheus Addr          `json:"prometheus"`
-	PProf      Addr          `json:"pprof"`
+	Daemon             daemon.Config `json:"daemon"`
+	Service            AddrTLS       `json:"service"`
+	Prometheus         Addr          `json:"prometheus"`
+	PProf              Addr          `json:"pprof"`
+	ReadinessProbeAddr string        `json:"readinessProbeAddr"`
 }
 
 type Addr struct {

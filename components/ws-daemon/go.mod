@@ -34,7 +34,10 @@ require (
 	k8s.io/client-go v0.23.4
 )
 
-require github.com/opencontainers/runc v1.1.0
+require (
+	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
+	github.com/opencontainers/runc v1.1.0
+)
 
 require (
 	cloud.google.com/go v0.83.0 // indirect
@@ -108,6 +111,7 @@ require (
 	google.golang.org/api v0.48.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
+	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

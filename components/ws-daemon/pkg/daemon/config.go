@@ -15,8 +15,7 @@ import (
 
 // Config configures the workspace node daemon
 type Config struct {
-	Runtime         RuntimeConfig         `json:"runtime"`
-	ReadinessSignal ReadinessSignalConfig `json:"readiness"`
+	Runtime RuntimeConfig `json:"runtime"`
 
 	Content        content.Config      `json:"content"`
 	Uidmapper      iws.UidmapperConfig `json:"uidmapper"`
@@ -29,10 +28,4 @@ type RuntimeConfig struct {
 	Container           *container.Config `json:"containerRuntime"`
 	Kubeconfig          string            `json:"kubeconfig"`
 	KubernetesNamespace string            `json:"namespace"`
-}
-
-type ReadinessSignalConfig struct {
-	Enabled bool   `json:"enabled"`
-	Addr    string `json:"addr"`
-	Path    string `json:"path"`
 }
