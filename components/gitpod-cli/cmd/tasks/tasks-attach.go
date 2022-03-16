@@ -24,7 +24,6 @@ func AttachTasksCmd(cmd *cobra.Command, args []string) {
 		terminalAlias = args[0]
 	} else {
 		statusClient := api.NewStatusServiceClient(conn)
-
 		stateToFilter := api.TaskState(api.TaskState_value["running"])
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -36,6 +35,8 @@ func AttachTasksCmd(cmd *cobra.Command, args []string) {
 			fmt.Println("There are no tasks available")
 			return
 		}
+
+		// todo: if there is only 1 task, attach directly
 
 		var taskNames []string
 
@@ -67,6 +68,9 @@ func AttachTasksCmd(cmd *cobra.Command, args []string) {
 
 		terminalAlias = tasks[selectedIndex].Terminal
 	}
+
+	// todo: call terminal get to fetch terminal pid and avoid attaching to itself
+	// ppid := os.Getppid()
 
 	interactive, _ := cmd.Flags().GetBool("interactive")
 	forceResize, _ := cmd.Flags().GetBool("force-resize")
