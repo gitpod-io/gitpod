@@ -74,9 +74,6 @@ func AttachTasksCmd(cmd *cobra.Command, args []string) {
 		terminalAlias = tasks[taskIndex].Terminal
 	}
 
-	interactive, _ := cmd.Flags().GetBool("interactive")
-	forceResize, _ := cmd.Flags().GetBool("force-resize")
-
 	terminalClient := api.NewTerminalServiceClient(conn)
 
 	terminal, err := terminalClient.Get(context.Background(), &api.GetTerminalRequest{Alias: terminalAlias})
@@ -99,6 +96,9 @@ func AttachTasksCmd(cmd *cobra.Command, args []string) {
 		fmt.Println("You are already in terminal:", terminalAlias)
 		return
 	}
+
+	interactive, _ := cmd.Flags().GetBool("interactive")
+	forceResize, _ := cmd.Flags().GetBool("force-resize")
 
 	supervisor.AttachToTerminal(context.Background(), terminalClient, terminalAlias, supervisor.AttachToTerminalOpts{
 		ForceResize: forceResize,
