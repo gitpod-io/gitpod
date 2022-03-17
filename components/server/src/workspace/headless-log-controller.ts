@@ -33,6 +33,7 @@ import { accessHeadlessLogs } from "../auth/rate-limiter";
 import { BearerAuth } from "../auth/bearer-authenticator";
 import { ProjectsService } from "../projects/projects-service";
 import { HostContextProvider } from "../auth/host-context-provider";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 
 export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
 export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
@@ -54,79 +55,86 @@ export class HeadlessLogController {
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {
                 const span = opentracing.globalTracer().startSpan(HEADLESS_LOGS_PATH_PREFIX);
-                const params = { instanceId: req.params.instanceId, terminalId: req.params.terminalId };
-                const user = req.user as User; // verified by authenticateAndAuthorize
-
-                const instanceId = params.instanceId;
-                const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
-                if (!ws) {
-                    return;
-                }
-                const { workspace, instance } = ws;
-
-                const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
-                log.debug(logCtx, HEADLESS_LOGS_PATH_PREFIX);
-
-                const aborted = new Deferred<boolean>();
                 try {
-                    const head = {
-                        "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
-                        "Transfer-Encoding": "chunked",
-                        "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
-                    };
-                    res.writeHead(200, head);
+                    const params = { instanceId: req.params.instanceId, terminalId: req.params.terminalId };
+                    const user = req.user as User; // verified by authenticateAndAuthorize
 
-                    const abort = (err: any) => {
-                        aborted.resolve(true);
-                        log.debug(logCtx, "headless-log: aborted");
-                    };
-                    req.on("abort", abort); // abort handling if the reqeuest was aborted
+                    const instanceId = params.instanceId;
+                    const ws = await this.authorizeHeadlessLogAccess(span, user, instanceId, res);
+                    if (!ws) {
+                        return;
+                    }
+                    const { workspace, instance } = ws;
 
-                    const queue = new Queue(); // Make sure we forward in the correct order
-                    const writeToResponse = async (chunk: string) =>
-                        queue.enqueue(
-                            () =>
-                                new Promise<void>(async (resolve, reject) => {
-                                    if (aborted.isResolved && (await aborted.promise)) {
-                                        return;
-                                    }
+                    const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
+                    log.debug(logCtx, HEADLESS_LOGS_PATH_PREFIX);
 
-                                    const done = res.write(chunk, "utf-8", (err?: Error | null) => {
-                                        if (err) {
-                                            reject(err); // propagate write error to upstream
+                    const aborted = new Deferred<boolean>();
+                    try {
+                        const head = {
+                            "Content-Type": "text/html; charset=utf-8", // is text/plain, but with that node.js won't stream...
+                            "Transfer-Encoding": "chunked",
+                            "Cache-Control": "no-cache, no-store, must-revalidate", // make sure stream are not re-used on reconnect
+                        };
+                        res.writeHead(200, head);
+
+                        const abort = (err: any) => {
+                            aborted.resolve(true);
+                            log.debug(logCtx, "headless-log: aborted");
+                        };
+                        req.on("abort", abort); // abort handling if the reqeuest was aborted
+
+                        const queue = new Queue(); // Make sure we forward in the correct order
+                        const writeToResponse = async (chunk: string) =>
+                            queue.enqueue(
+                                () =>
+                                    new Promise<void>(async (resolve, reject) => {
+                                        if (aborted.isResolved && (await aborted.promise)) {
                                             return;
                                         }
-                                    });
-                                    // handle as per doc: https://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback
-                                    if (!done) {
-                                        res.once("drain", resolve);
-                                    } else {
-                                        setImmediate(resolve);
-                                    }
-                                }),
+
+                                        const done = res.write(chunk, "utf-8", (err?: Error | null) => {
+                                            if (err) {
+                                                reject(err); // propagate write error to upstream
+                                                return;
+                                            }
+                                        });
+                                        // handle as per doc: https://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback
+                                        if (!done) {
+                                            res.once("drain", resolve);
+                                        } else {
+                                            setImmediate(resolve);
+                                        }
+                                    }),
+                            );
+                        const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(instance);
+                        await this.headlessLogService.streamWorkspaceLogWhileRunning(
+                            logCtx,
+                            logEndpoint,
+                            instanceId,
+                            params.terminalId,
+                            writeToResponse,
+                            aborted,
                         );
-                    const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(instance);
-                    await this.headlessLogService.streamWorkspaceLogWhileRunning(
-                        logCtx,
-                        logEndpoint,
-                        instanceId,
-                        params.terminalId,
-                        writeToResponse,
-                        aborted,
-                    );
 
-                    // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
-                    // So we resort to this hand-written solution
-                    res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
+                        // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
+                        // So we resort to this hand-written solution
+                        res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 200`);
 
-                    res.end();
-                } catch (err) {
-                    log.debug(logCtx, "error streaming headless logs", err);
+                        res.end();
+                    } catch (err) {
+                        log.debug(logCtx, "error streaming headless logs", err);
 
-                    res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
-                    res.end();
+                        res.write(`\n${HEADLESS_LOG_STREAM_STATUS_CODE}: 500`);
+                        res.end();
+                    } finally {
+                        aborted.resolve(true); // ensure that the promise gets resolved eventually!
+                    }
+                } catch (e) {
+                    TraceContext.setError({ span }, e);
+                    throw e;
                 } finally {
-                    aborted.resolve(true); // ensure that the promise gets resolved eventually!
+                    span.finish();
                 }
             }),
         ]);
