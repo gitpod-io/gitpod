@@ -46,6 +46,6 @@ func init() {
 	tasksCmd.AddCommand(listTasksCmd)
 	tasksCmd.AddCommand(attachTaskCmd)
 
-	attachTaskCmd.Flags().BoolVarP(&attachTaskCmdOpts.Interactive, "interactive", "i", false, "assume control over the terminal")
-	attachTaskCmd.Flags().BoolVarP(&attachTaskCmdOpts.ForceResize, "force-resize", "r", false, "force this terminal's size irregardless of other clients")
+	attachTaskCmd.Flags().BoolVarP(&attachTaskCmdOpts.Interactive, "interactive", "i", true, "assume control over the terminal")
+	attachTaskCmd.Flags().BoolVarP(&attachTaskCmdOpts.ForceResize, "force-resize", "r", true, "force this terminal's size irregardless of other clients")
 }

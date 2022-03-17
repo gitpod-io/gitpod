@@ -7,12 +7,15 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func AttachTasksCmd(cmd *cobra.Command, args []string) {
@@ -32,50 +35,70 @@ func AttachTasksCmd(cmd *cobra.Command, args []string) {
 		tasks := supervisor.GetTasksListByState(ctx, statusClient, stateToFilter)
 
 		if len(tasks) == 0 {
-			fmt.Println("There are no tasks available")
+			fmt.Println("There are no running tasks")
 			return
 		}
-
-		// todo: if there is only 1 task, attach directly
 
 		var taskNames []string
+		var taskIndex int
 
-		for _, task := range tasks {
-			taskNames = append(taskNames, task.Presentation.Name)
+		if len(tasks) == 1 {
+			taskIndex = 0
+		} else {
+
+			for _, task := range tasks {
+				taskNames = append(taskNames, task.Presentation.Name)
+			}
+
+			prompt := promptui.Select{
+				Label: "What task do you want attach to?",
+				Items: taskNames,
+				Templates: &promptui.SelectTemplates{
+					Selected: "Attaching to task: {{ . }}",
+				},
+			}
+
+			selectedIndex, selectedValue, err := prompt.Run()
+
+			if selectedValue == "" {
+				return
+			}
+
+			if err != nil {
+				panic(err)
+			}
+
+			taskIndex = selectedIndex
 		}
 
-		prompt := promptui.Select{
-			Label: "What task do you want attach to?",
-			Items: taskNames,
-			Templates: &promptui.SelectTemplates{
-				Selected: "Attaching to task: {{ . }}",
-			},
-		}
-
-		selectedIndex, selectedValue, err := prompt.Run()
-
-		fmt.Println("selectedValue", selectedValue)
-		fmt.Println("selectedIndex", selectedIndex)
-
-		if selectedValue == "" {
-			fmt.Println("NOTHING SELECTED")
-			return
-		}
-
-		if err != nil {
-			panic(err)
-		}
-
-		terminalAlias = tasks[selectedIndex].Terminal
+		terminalAlias = tasks[taskIndex].Terminal
 	}
-
-	// todo: call terminal get to fetch terminal pid and avoid attaching to itself
-	// ppid := os.Getppid()
 
 	interactive, _ := cmd.Flags().GetBool("interactive")
 	forceResize, _ := cmd.Flags().GetBool("force-resize")
 
 	terminalClient := api.NewTerminalServiceClient(conn)
+
+	terminal, err := terminalClient.Get(context.Background(), &api.GetTerminalRequest{Alias: terminalAlias})
+	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			switch e.Code() {
+			case codes.NotFound:
+				fmt.Println("Terminal is inactive:", terminalAlias)
+			default:
+				fmt.Println(e.Code(), e.Message())
+			}
+			return
+		} else {
+			panic(err)
+		}
+	}
+	ppid := int64(os.Getppid())
+
+	if ppid == terminal.Pid {
+		fmt.Println("You are already in terminal:", terminalAlias)
+		return
+	}
 
 	supervisor.AttachToTerminal(context.Background(), terminalClient, terminalAlias, supervisor.AttachToTerminalOpts{
 		ForceResize: forceResize,
