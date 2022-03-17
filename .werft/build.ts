@@ -11,6 +11,7 @@ import { deployToPreviewEnvironment } from './jobs/build/deploy-to-preview-envir
 import { triggerIntegrationTests } from './jobs/build/trigger-integration-tests';
 import { jobConfig } from './jobs/build/job-config';
 import { typecheckWerftJobs } from './jobs/build/typecheck-werft-jobs';
+import { publishKotsUnstable } from './jobs/build/publish-kots-unstable'
 
 // Will be set once tracing has been initialized
 let werft: Werft
@@ -59,4 +60,5 @@ async function run(context: any) {
 
     await deployToPreviewEnvironment(werft, config)
     await triggerIntegrationTests(werft, config, context.Owner)
+    await publishKotsUnstable(werft, config)
 }
