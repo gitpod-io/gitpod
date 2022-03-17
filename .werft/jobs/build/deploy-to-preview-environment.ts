@@ -10,6 +10,7 @@ import { GCLOUD_SERVICE_ACCOUNT_PATH } from "./const";
 import { Werft } from "../../util/werft";
 import { JobConfig } from "./job-config";
 import * as VM from '../../vm/vm'
+import { Analytics, newInstaller } from "./installer/installer";
 
 // used by both deploys (helm and Installer)
 const PROXY_SECRET_NAME = "proxy-config-certificates";
@@ -30,6 +31,8 @@ const installerSlices = {
     CLEAN_ENV_STATE: "clean envirionment",
     SET_CONTEXT: "set namespace",
     INSTALLER_INIT: "installer init",
+    PREVIEW_CONFIG: "Adding preview-specific configuration",
+    VALIDATE_CONFIG: "Validating configuration",
     INSTALLER_RENDER: "installer render",
     INSTALLER_POST_PROCESSING: "installer post processing",
     APPLY_INSTALL_MANIFESTS: "installer apply",
@@ -197,6 +200,8 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     let registryNodePortMeta = findLastHostPort(namespace, 'registry-facade', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
     let nodeExporterPort = findLastHostPort(namespace, 'node-exporter', metaEnv({ slice: installerSlices.FIND_FREE_HOST_PORTS, silent: true }))
 
+
+
     if (isNaN(wsdaemonPortMeta) || isNaN(wsdaemonPortMeta) || (isNaN(nodeExporterPort) && !withVM && withObservability)) {
         werft.log(installerSlices.FIND_FREE_HOST_PORTS, "Can't reuse, check for some free ports.");
         [wsdaemonPortMeta, registryNodePortMeta, nodeExporterPort] = findFreeHostPorts([
@@ -208,6 +213,11 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     werft.log(installerSlices.FIND_FREE_HOST_PORTS,
         `wsdaemonPortMeta: ${wsdaemonPortMeta}, registryNodePortMeta: ${registryNodePortMeta}.`);
     werft.done(installerSlices.FIND_FREE_HOST_PORTS);
+
+    const gitpodDaemonsetPorts = {
+        registryFacade: registryNodePortMeta,
+        wsDaemon: wsdaemonPortMeta
+    }
 
     // clean environment state
     try {
@@ -266,185 +276,25 @@ async function deployToDevWithInstaller(werft: Werft, jobConfig: JobConfig, depl
     }
     werft.done(installerSlices.IMAGE_PULL_SECRET);
 
-    // download and init with the installer
-    try {
-        werft.log(installerSlices.INSTALLER_INIT, "Downloading installer and initializing config file");
-        exec(`docker run --entrypoint sh --rm eu.gcr.io/gitpod-core-dev/build/installer:${version} -c "cat /app/installer" > /tmp/installer`, { slice: installerSlices.INSTALLER_INIT });
-        exec(`chmod +x /tmp/installer`, { slice: installerSlices.INSTALLER_INIT });
-        exec(`/tmp/installer init > config.yaml`, { slice: installerSlices.INSTALLER_INIT });
-        werft.done(installerSlices.INSTALLER_INIT);
-    } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail(installerSlices.INSTALLER_INIT, err)
-        }
-        exec('exit 0')
+    let analytics: Analytics
+    if ((deploymentConfig.analytics || "").startsWith("segment|")) {
+        analytics.type = "segment"
+        analytics.token = deploymentConfig.analytics!.substring("segment|".length)
     }
 
-    // prepare a proper config file
+    const installer = newInstaller("config.yaml", version, PROXY_SECRET_NAME, deploymentConfig.domain, deploymentConfig.destname, IMAGE_PULL_SECRET_NAME, namespace, analytics, deploymentConfig.installEELicense, withVM, workspaceFeatureFlags, gitpodDaemonsetPorts)
     try {
-        werft.log(installerSlices.INSTALLER_RENDER, "Post process the base installer config file and render k8s manifests");
-        const PROJECT_NAME = "gitpod-core-dev";
-        const CONTAINER_REGISTRY_URL = `eu.gcr.io/${PROJECT_NAME}/build/`;
-        const CONTAINERD_RUNTIME_DIR = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io";
-
-        // get some values we need to customize the config and write them to file
-        exec(`yq r ./.werft/jobs/build/helm/values.dev.yaml components.server.blockNewUsers \
-        | yq prefix - 'blockNewUsers' > ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq r ./.werft/jobs/build/helm/values.variant.cpuLimits.yaml workspaceSizing.dynamic.cpu.buckets | yq prefix - 'workspace.resources.dynamicLimits.cpu' > ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
-
-        // merge values from files
-        exec(`yq m -i --overwrite config.yaml ./blockNewUsers`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq m -i config.yaml ./workspaceSizing`, { slice: installerSlices.INSTALLER_RENDER });
-
-        // write some values inline
-        exec(`yq w -i config.yaml certificate.name ${PROXY_SECRET_NAME}`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq w -i config.yaml containerRegistry.inCluster false`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq w -i config.yaml containerRegistry.external.url ${CONTAINER_REGISTRY_URL}`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq w -i config.yaml containerRegistry.external.certificate.kind secret`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq w -i config.yaml containerRegistry.external.certificate.name ${IMAGE_PULL_SECRET_NAME}`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq w -i config.yaml domain ${deploymentConfig.domain}`, { slice: installerSlices.INSTALLER_RENDER });
-        exec(`yq w -i config.yaml workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}`, { slice: installerSlices.INSTALLER_RENDER });
-
-        // Relax CPU contraints
-        exec(`yq w -i config.yaml workspace.resources.requests.cpu "100m"`, { slice: installerSlices.INSTALLER_RENDER });
-
-        if ((deploymentConfig.analytics || "").startsWith("segment|")) {
-            exec(`yq w -i config.yaml analytics.writer segment`, { slice: installerSlices.INSTALLER_RENDER });
-            exec(`yq w -i config.yaml analytics.segmentKey ${deploymentConfig.analytics!.substring("segment|".length)}`, { slice: installerSlices.INSTALLER_RENDER });
-        } else if (!!deploymentConfig.analytics) {
-            exec(`yq w -i config.yaml analytics.writer ${deploymentConfig.analytics!}`, { slice: installerSlices.INSTALLER_RENDER });
-        }
-
-        if (withVM || withObservability) {
-            // TODO: there's likely more to do...
-            const tracingEndpoint = exec(`yq r ./.werft/jobs/build/helm/values.tracing.yaml tracing.endpoint`, { slice: installerSlices.INSTALLER_RENDER }).stdout.trim();
-            exec(`yq w -i config.yaml observability.tracing.endpoint ${tracingEndpoint}`, { slice: installerSlices.INSTALLER_RENDER });
-
-            // If the preview is running on Harvester, we've already deployed monitoring-satellite during 'VM' phase.
-            // Therefore, we want to skip installing it here.
-            if(!withVM) {
-                try {
-                    installMonitoring(deploymentConfig.namespace, nodeExporterPort, monitoringDomain, STACKDRIVER_SERVICEACCOUNT, withVM, jobConfig.observability.branch);
-                } catch (err) {
-                    werft.fail('observability', err)
-                } finally {
-                    werft.done('observability')
-                }
-            }
-        }
-
-        werft.log("authProviders", "copy authProviders from secret")
-        try {
-            // auth-provider-secret.yml is a file generated by this job by reading a secret from core-dev cluster
-            // 'preview-envs-authproviders' for previews running in core-dev and
-            // 'preview-envs-authproviders-harvester' for previews running in Harvester VMs.
-            // To understand how it is generated, search for 'auth-provider-secret.yml' in the code.
-            exec(`for row in $(cat auth-provider-secret.yml \
-                    | base64 -d -w 0 \
-                    | yq r - authProviders -j \
-                    | jq -r 'to_entries | .[] | @base64'); do
-                        key=$(echo $row | base64 -d | jq -r '.key')
-                        providerId=$(echo $row | base64 -d | jq -r '.value.id | ascii_downcase')
-                        data=$(echo $row | base64 -d | yq r - value --prettyPrint)
-
-                        yq w -i ./config.yaml authProviders[$key].kind "secret"
-                        yq w -i ./config.yaml authProviders[$key].name "$providerId"
-
-                        kubectl create secret generic "$providerId" \
-                            --namespace "${namespace}" \
-                            --from-literal=provider="$data" \
-                            --dry-run=client -o yaml | \
-                            kubectl replace --force -f -
-                    done`, { silent: true })
-
-            werft.done('authProviders');
-        } catch (err) {
-            if (!jobConfig.mainBuild) {
-                werft.fail('authProviders', err);
-            }
-            exec('exit 0')
-        }
-
-        werft.log("SSH gateway hostkey", "copy host-key from secret")
-        try {
-            exec(`cat /workspace/host-key.yaml \
-            | yq w - metadata.namespace ${namespace} \
-            | yq d - metadata.uid \
-            | yq d - metadata.resourceVersion \
-            | yq d - metadata.creationTimestamp \
-            | kubectl apply -f -`, { silent: true })
-            exec(`yq w -i ./config.yaml sshGatewayHostKey.kind "secret"`)
-            exec(`yq w -i ./config.yaml sshGatewayHostKey.name "host-key"`)
-            werft.done('SSH gateway hostkey');
-        } catch (err) {
-            if (!jobConfig.mainBuild) {
-                werft.fail('SSH gateway hostkey', err);
-            }
-            exec('exit 0')
-        }
-
-        // validate the config
-        exec(`/tmp/installer validate config -c config.yaml`, { slice: installerSlices.INSTALLER_RENDER });
-
-        // validate the cluster
-        exec(`/tmp/installer validate cluster -c config.yaml || true`, { slice: installerSlices.INSTALLER_RENDER });
-
-        // render the k8s manifest
-        exec(`/tmp/installer render --namespace ${deploymentConfig.namespace} --config config.yaml > k8s.yaml`, { silent: true });
-        werft.done(installerSlices.INSTALLER_RENDER);
+        installer.init(installerSlices.INSTALLER_INIT)
+        installer.addPreviewConfiguration(installerSlices.PREVIEW_CONFIG)
+        installer.validateConfiguration(installerSlices.VALIDATE_CONFIG)
+        installer.render(installerSlices.INSTALLER_RENDER)
+        installer.postProcessing(installerSlices.INSTALLER_POST_PROCESSING)
+        installer.install(installerSlices.APPLY_INSTALL_MANIFESTS)
     } catch (err) {
         if (!jobConfig.mainBuild) {
-            werft.fail(installerSlices.INSTALLER_RENDER, err)
+            werft.fail(phases.DEPLOY, err)
         }
         exec('exit 0')
-    }
-
-    try {
-        werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Let's post process some k8s manifests...");
-        const nodepoolIndex = getNodePoolIndex(namespace);
-
-        if (deploymentConfig.installEELicense) {
-            werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Adding the EE License...");
-            // Previews in core-dev and harvester use different domain, which requires different licenses.
-            exec(`cp /mnt/secrets/gpsh-${withVM ? 'harvester' : 'coredev'}/license /tmp/license`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
-            // post-process.sh looks for /tmp/license, and if it exists, adds it to the configmap
-        } else {
-            exec(`touch /tmp/license`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
-        }
-        exec(`touch /tmp/defaultFeatureFlags`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
-        if (workspaceFeatureFlags && workspaceFeatureFlags.length > 0) {
-            werft.log(installerSlices.INSTALLER_POST_PROCESSING, "Adding feature flags...");
-            workspaceFeatureFlags.forEach(featureFlag => {
-                exec(`echo \'"${featureFlag}"\' >> /tmp/defaultFeatureFlags`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
-            })
-            // post-process.sh looks for /tmp/defaultFeatureFlags
-            // each "flag" string gets added to the configmap
-        }
-
-        const flags = withVM ? "WITH_VM=true " : ""
-        exec(`${flags}./.werft/jobs/build/installer/post-process.sh ${registryNodePortMeta} ${wsdaemonPortMeta} ${nodepoolIndex} ${deploymentConfig.destname}`, { slice: installerSlices.INSTALLER_POST_PROCESSING });
-        werft.done(installerSlices.INSTALLER_POST_PROCESSING);
-    } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail(installerSlices.INSTALLER_POST_PROCESSING, err);
-        }
-        exec('exit 0')
-    }
-
-    werft.log(installerSlices.APPLY_INSTALL_MANIFESTS, "Installing preview environment.");
-    try {
-        exec(`kubectl delete -n ${deploymentConfig.namespace} job migrations || true`, { slice: installerSlices.APPLY_INSTALL_MANIFESTS, silent: true });
-        // errors could result in outputing a secret to the werft log when kubernetes patches existing objects...
-        exec(`kubectl apply -f k8s.yaml`, { slice: installerSlices.APPLY_INSTALL_MANIFESTS, silent: true });
-        werft.done(installerSlices.APPLY_INSTALL_MANIFESTS);
-    } catch (err) {
-        if (!jobConfig.mainBuild) {
-            werft.fail(installerSlices.APPLY_INSTALL_MANIFESTS, err);
-        }
-        exec('exit 0')
-    } finally {
-        // produce the result independently of install succeding, so that in case fails we still have the URL.
-        exec(`werft log result -d "dev installation" -c github-check-preview-env url ${url}/workspaces`);
     }
 
     werft.log(installerSlices.DEPLOYMENT_WAITING, "Waiting until all pods are ready.");
@@ -743,7 +593,7 @@ async function deployToDevWithHelm(werft: Werft, jobConfig: JobConfig, deploymen
     is used to generate a pseudo-random number that consistent as long as the branchname persists.
     We use it to reduce the number of preview-environments accumulating on a singe nodepool.
 */
-function getNodePoolIndex(namespace: string): number {
+export function getNodePoolIndex(namespace: string): number {
     const nodeAffinityValues = getNodeAffinities();
 
     return parseInt(createHash('sha256').update(namespace).digest('hex').substring(0, 5), 16) % nodeAffinityValues.length;
