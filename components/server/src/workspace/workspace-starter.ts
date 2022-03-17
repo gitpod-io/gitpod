@@ -726,13 +726,13 @@ export class WorkspaceStarter {
                 ) {
                     // TODO(se): we cannot change this initializer structure now because it is part of how baserefs are computed in image-builder.
                     // Image builds should however just use the initialization if the workspace they are running for (i.e. the one from above).
-
+                    checkoutLocation = ".";
                     const { initializer, disposable } = await this.createCommitInitializer(
                         { span },
                         workspace,
                         {
                             ...imgsrc.dockerFileSource,
-                            checkoutLocation: ".",
+                            checkoutLocation,
                             title: "irrelevant",
                             ref: undefined,
                         },
