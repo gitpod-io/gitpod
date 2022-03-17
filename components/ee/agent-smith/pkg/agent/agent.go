@@ -214,7 +214,7 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 	agent.metrics.RegisterClassificationQueues(cli, clo)
 
 	workspaces := make(map[int]*common.Workspace)
-	wssWriteMutex := &sync.Mutex{}
+	wsMutex := &sync.Mutex{}
 
 	defer wg.Wait()
 	for i := 0; i < 25; i++ {
@@ -223,17 +223,12 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 			defer wg.Done()
 			for i := range cli {
 				// Update the workspaces map if this process belongs to a new workspace
-				//
-				// When agent-smith starts there could be multiple attempts to update
-				// the workspaces map. This is because we do not lock before reading from the map.
-				// So, if multiple processes written to the cli chan are
-				// read in parallel, all of them will get inside the below if check.
+				wsMutex.Lock()
 				if _, ok := workspaces[i.Workspace.PID]; !ok {
-					wssWriteMutex.Lock()
 					log.Debugf("adding workspace with pid %d and workspaceId %s to workspaces", i.Workspace.PID, i.Workspace.WorkspaceID)
 					workspaces[i.Workspace.PID] = i.Workspace
-					wssWriteMutex.Unlock()
 				}
+				wsMutex.Unlock()
 				// perform classification of the process
 				class, err := agent.classifier.Matches(i.Path, i.CommandLine)
 				// optimisation: early out to not block on the CLO chan
@@ -250,15 +245,14 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 	go func() {
 		for {
 			<-egressTicker.C
+			wsMutex.Lock()
 			for pid, ws := range workspaces {
 				// check if the workspace is already stopped
 				fi, err := os.Stat(fmt.Sprintf("/proc/%d", pid))
 				if err != nil {
 					if os.IsNotExist(err) {
-						wssWriteMutex.Lock()
 						log.Debugf("deleting workspace with pid %d and workspaceId %s from workspaces", pid, ws.WorkspaceID)
 						delete(workspaces, pid)
-						wssWriteMutex.Unlock()
 					} else {
 						log.WithError(err).WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Error("could not stat workspace, stale entries will continue to exist in workspaces state")
 					}
@@ -276,6 +270,7 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 				}
 
 			}
+			wsMutex.Unlock()
 		}
 	}()
 
