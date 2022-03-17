@@ -1,3 +1,6 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
 # This exists as debug information for the support bundle
 apiVersion: v1
 kind: ConfigMap
