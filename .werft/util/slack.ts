@@ -1,6 +1,6 @@
 import * as https from 'https';
 
-export function reportBuildFailureInSlack(context, err, onErr) {
+export function reportBuildFailureInSlack(context, err: Error): Promise<void> {
     const repo = context.Repository.host + "/" + context.Repository.owner + "/" + context.Repository.repo;
     const data = JSON.stringify({
         "blocks": [
@@ -31,17 +31,19 @@ export function reportBuildFailureInSlack(context, err, onErr) {
             }
         ]
     });
-    const req = https.request({
-        hostname: "hooks.slack.com",
-        port: 443,
-        path: process.env.SLACK_NOTIFICATION_PATH.trim(),
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': data.length,
-        }
-    }, onErr);
-    req.on('error', onErr);
-    req.write(data);
-    req.end();
+    return new Promise((resolve, reject) => {
+        const req = https.request({
+            hostname: "hooks.slack.com",
+            port: 443,
+            path: process.env.SLACK_NOTIFICATION_PATH.trim(),
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': data.length,
+            }
+        }, () => resolve());
+        req.on('error', (error: Error) => reject(error))
+        req.write(data);
+        req.end();
+    })
 }
