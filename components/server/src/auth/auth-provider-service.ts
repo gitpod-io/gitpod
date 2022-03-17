@@ -9,7 +9,7 @@ import { AuthProviderEntry as AuthProviderEntry, User } from "@gitpod/gitpod-pro
 import { AuthProviderParams } from "./auth-provider";
 import { AuthProviderEntryDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { oauthUrls as githubUrls } from "../github/github-urls";
 import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
 import { oauthUrls as giteaUrls } from "../gitea/gitea-urls";
@@ -17,7 +17,6 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class AuthProviderService {
-
     @inject(AuthProviderEntryDB)
     protected authProviderDB: AuthProviderEntryDB;
 
@@ -48,19 +47,20 @@ export class AuthProviderService {
         return this.authProviderDB.findAllHosts();
     }
 
-    protected toAuthProviderParams = (oap: AuthProviderEntry) => <AuthProviderParams>{
-        ...oap,
-        host: oap.host.toLowerCase(),
-        verified: oap.status === "verified",
-        builtin: false,
-        // hiddenOnDashboard: true, // i.e. show only if it's used
-        loginContextMatcher: `https://${oap.host}/`,
-        oauth: {
-            ...oap.oauth,
-            clientId: oap.oauth.clientId || "no",
-            clientSecret: oap.oauth.clientSecret || "no",
-        }
-    };
+    protected toAuthProviderParams = (oap: AuthProviderEntry) =>
+        <AuthProviderParams>{
+            ...oap,
+            host: oap.host.toLowerCase(),
+            verified: oap.status === "verified",
+            builtin: false,
+            // hiddenOnDashboard: true, // i.e. show only if it's used
+            loginContextMatcher: `https://${oap.host}/`,
+            oauth: {
+                ...oap.oauth,
+                clientId: oap.oauth.clientId || "no",
+                clientSecret: oap.oauth.clientSecret || "no",
+            },
+        };
 
     async getAuthProvidersOfUser(user: User | string): Promise<AuthProviderEntry[]> {
         const result = await this.authProviderDB.findByUserId(User.is(user) ? user.id : user);
@@ -71,16 +71,19 @@ export class AuthProviderService {
         await this.authProviderDB.delete(authProvider);
     }
 
-    async updateAuthProvider(entry: AuthProviderEntry.UpdateEntry | AuthProviderEntry.NewEntry): Promise<AuthProviderEntry> {
+    async updateAuthProvider(
+        entry: AuthProviderEntry.UpdateEntry | AuthProviderEntry.NewEntry,
+    ): Promise<AuthProviderEntry> {
         let authProvider: AuthProviderEntry;
         if ("id" in entry) {
             const { id, ownerId } = entry;
-            const existing = (await this.authProviderDB.findByUserId(ownerId)).find(p => p.id === id);
+            const existing = (await this.authProviderDB.findByUserId(ownerId)).find((p) => p.id === id);
             if (!existing) {
                 throw new Error("Provider does not exist.");
             }
-            const changed = entry.clientId !== existing.oauth.clientId
-                || (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret);
+            const changed =
+                entry.clientId !== existing.oauth.clientId ||
+                (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret);
 
             if (!changed) {
                 return existing;
@@ -96,7 +99,7 @@ export class AuthProviderService {
                 ...existing,
                 oauth,
                 status: "pending",
-            }
+            };
         } else {
             const existing = await this.authProviderDB.findByHost(entry.host);
             if (existing) {
@@ -143,19 +146,19 @@ export class AuthProviderService {
                 // "no-user" is the magic user id assigned during the initial setup
                 authProviders = await this.authProviderDB.findByUserId("no-user");
             }
-            ap = authProviders.find(p => p.id === id);
+            ap = authProviders.find((p) => p.id === id);
             if (ap) {
                 ap = {
                     ...ap,
                     ownerId: ownerId,
-                    status: "verified"
+                    status: "verified",
                 };
                 await this.authProviderDB.storeAuthProvider(ap, true);
             } else {
                 log.warn("Failed to find the AuthProviderEntry to be activated.", { params, id, ap });
             }
         } catch (error) {
-            log.error("Failed to activate AuthProviderEntry.", { params, id, ap })
+            log.error("Failed to activate AuthProviderEntry.", { params, id, ap });
         }
     }
 

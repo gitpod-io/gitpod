@@ -6,7 +6,7 @@
 
 import { User, Repository } from "@gitpod/gitpod-protocol";
 
-export const LanguagesProvider = Symbol('LanguagesProvider');
+export const LanguagesProvider = Symbol("LanguagesProvider");
 export interface LanguagesProvider {
     getLanguages(repository: Repository, user: User): Promise<object>;
 }

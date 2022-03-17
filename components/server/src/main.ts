@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import 'source-map-support/register';
+import "source-map-support/register";
 
 import { start } from "./init";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -16,8 +16,7 @@ const container = new Container();
 container.load(productionContainerModule);
 container.load(dbContainerModule);
 
-start(container)
-    .catch(err => {
-        log.error("Error during startup or operation. Exiting.", err);
-        process.exit(1);
-    });
+start(container).catch((err) => {
+    log.error("Error during startup or operation. Exiting.", err);
+    process.exit(1);
+});

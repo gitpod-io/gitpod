@@ -80,9 +80,9 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		regexPrefix = workspacePortRegex + workspaceIDRegex
 	}
 
-	// remove (webview-|browser-|extensions-) prefix as soon as Theia removed and new VS Code is used in all workspaces
-	r := regexp.MustCompile("^(webview-|browser-|extensions-)?" + regexPrefix + wsHostSuffix)
+	r := regexp.MustCompile("^" + regexPrefix + wsHostSuffix)
 	foreignContentHostR := regexp.MustCompile("^(.+)(?:foreign)" + wsHostSuffix)
+	foreignContentHost2R := regexp.MustCompile("^((?:v--)?[0-9a-v]+)" + wsHostSuffix)
 	foreignContentPathR := regexp.MustCompile("^/" + regexPrefix + "(/.*)")
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
@@ -92,6 +92,9 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 
 		var workspaceID, workspacePort, foreignOrigin, foreignPath string
 		matches := foreignContentHostR.FindStringSubmatch(hostname)
+		if len(matches) == 0 {
+			matches = foreignContentHost2R.FindStringSubmatch(hostname)
+		}
 		if len(matches) == 2 {
 			foreignOrigin = matches[1]
 			matches = foreignContentPathR.FindStringSubmatch(req.URL.Path)
@@ -122,7 +125,7 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		} else {
 			matches = r.FindStringSubmatch(hostname)
 			if matchPort {
-				if len(matches) < 4 {
+				if len(matches) < 3 {
 					return false
 				}
 				// https://3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
@@ -130,18 +133,10 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 				// workspacePort: 3000
 				// foreignOrigin:
 				// foreignPath:
-				workspaceID = matches[3]
-				workspacePort = matches[2]
-				if len(matches) == 4 {
-					// https://extensions-3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
-					// workspaceID: coral-dragon-ilr0r6eq
-					// workspacePort: 3000
-					// foreignOrigin: extensions-
-					// foreignPath:
-					foreignOrigin = matches[1]
-				}
+				workspaceID = matches[2]
+				workspacePort = matches[1]
 			} else {
-				if len(matches) < 3 {
+				if len(matches) < 2 {
 					return false
 				}
 				// https://coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
@@ -149,15 +144,7 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 				// workspacePort:
 				// foreignOrigin:
 				// foreignPath:
-				workspaceID = matches[2]
-				if len(matches) == 3 {
-					// https://extensions-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
-					// workspaceID: coral-dragon-ilr0r6eq
-					// workspacePort:
-					// foreignOrigin: extensions-
-					// foreignPath:
-					foreignOrigin = matches[1]
-				}
+				workspaceID = matches[1]
 			}
 		}
 

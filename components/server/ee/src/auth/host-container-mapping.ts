@@ -17,19 +17,19 @@ export class HostContainerMappingEE extends HostContainerMapping {
         let modules = super.get(type) || [];
 
         switch (type) {
-        case "GitLab":
-            return (modules || []).concat([gitlabContainerModuleEE]);
-        case "Bitbucket":
-            return (modules || []).concat([bitbucketContainerModuleEE]);
-        // case "BitbucketServer":
+            case "GitLab":
+                return (modules || []).concat([gitlabContainerModuleEE]);
+            case "Bitbucket":
+                return (modules || []).concat([bitbucketContainerModuleEE]);
+            // case "BitbucketServer":
             // FIXME
             // return (modules || []).concat([bitbucketContainerModuleEE]);
-        case "GitHub":
-            return (modules || []).concat([gitHubContainerModuleEE]);
-        case "Gitea":
-              return (modules || []).concat([giteaContainerModuleEE]);
-        default:
-            return modules;
+            case "GitHub":
+                return (modules || []).concat([gitHubContainerModuleEE]);
+            case "Gitea":
+                return (modules || []).concat([giteaContainerModuleEE]);
+            default:
+                return modules;
         }
     }
 }

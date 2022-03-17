@@ -13,41 +13,40 @@ import { Transformer } from "../../typeorm/transformer";
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBAccountEntry implements AccountEntry {
-
     @PrimaryColumn("uuid")
     uid: string;
 
     @Column(TypeORM.UUID_COLUMN_TYPE)
     userId: string;
 
-    @Column('double')
+    @Column("double")
     amount: number;
 
     @Column()
     date: string;
 
     @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     expiryDate?: string;
 
     @Column({
-        type: 'char',
-        length: 7
+        type: "char",
+        length: 7,
     })
-    kind: AccountEntryKind
+    kind: AccountEntryKind;
 
     @Column({
-        type: 'simple-json',
-        nullable: true
+        type: "simple-json",
+        nullable: true,
     })
     description?: object;
 
     @Column({
-        type: 'char',
+        type: "char",
         length: 36,
-        nullable: true
+        nullable: true,
     })
     creditId?: string;
 }

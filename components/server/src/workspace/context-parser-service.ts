@@ -20,7 +20,10 @@ export class ContextParser {
 
     protected get allContextParsers(): IContextParser[] {
         const result = [...this.contextParsers];
-        const hostContextParsers = this.hostContextProvider.getAll().filter(host => !!host.contextParser).map(host => host.contextParser!);
+        const hostContextParsers = this.hostContextProvider
+            .getAll()
+            .filter((host) => !!host.contextParser)
+            .map((host) => host.contextParser!);
         result.push(...hostContextParsers);
         return result;
     }
@@ -63,7 +66,11 @@ export class ContextParser {
         return result;
     }
 
-    protected async internalHandleWithoutPrefix(ctx: TraceContext, user: User, nonPrefixedContextURL: string): Promise<WorkspaceContext> {
+    protected async internalHandleWithoutPrefix(
+        ctx: TraceContext,
+        user: User,
+        nonPrefixedContextURL: string,
+    ): Promise<WorkspaceContext> {
         const span = TraceContext.startSpan("ContextParser.internalHandle", ctx);
         try {
             let result: WorkspaceContext | undefined;
@@ -100,7 +107,11 @@ export class ContextParser {
         return upstreamCloneUrl;
     }
 
-    protected async handleMultiRepositoryContext(ctx: TraceContext, user: User, context: WorkspaceContext): Promise<WorkspaceContext> {
+    protected async handleMultiRepositoryContext(
+        ctx: TraceContext,
+        user: User,
+        context: WorkspaceContext,
+    ): Promise<WorkspaceContext> {
         if (!CommitContext.is(context)) {
             return context;
         }
@@ -109,9 +120,15 @@ export class ContextParser {
             let config = await this.configProvider.fetchConfig({ span }, user, context);
             let mainRepoContext: WorkspaceContext | undefined;
             if (config.config.mainConfiguration) {
-                mainRepoContext = await this.internalHandleWithoutPrefix({ span }, user, config.config.mainConfiguration);
+                mainRepoContext = await this.internalHandleWithoutPrefix(
+                    { span },
+                    user,
+                    config.config.mainConfiguration,
+                );
                 if (!CommitContext.is(mainRepoContext)) {
-                    throw new InvalidGitpodYMLError([`Cannot find main repository '${config.config.mainConfiguration}'.`]);
+                    throw new InvalidGitpodYMLError([
+                        `Cannot find main repository '${config.config.mainConfiguration}'.`,
+                    ]);
                 }
                 config = await this.configProvider.fetchConfig({ span }, user, mainRepoContext);
             }
@@ -119,7 +136,11 @@ export class ContextParser {
             if (config.config.additionalRepositories && config.config.additionalRepositories.length > 0) {
                 const subRepoCommits: GitCheckoutInfo[] = [];
                 for (const subRepo of config.config.additionalRepositories) {
-                    let subContext = await this.internalHandleWithoutPrefix({ span }, user, subRepo.url) as CommitContext;
+                    let subContext = (await this.internalHandleWithoutPrefix(
+                        { span },
+                        user,
+                        subRepo.url,
+                    )) as CommitContext;
                     if (!CommitContext.is(subContext)) {
                         throw new InvalidGitpodYMLError([`Cannot find sub-repository '${subRepo.url}'.`]);
                     }
@@ -129,13 +150,13 @@ export class ContextParser {
                     }
 
                     subRepoCommits.push({
-                        ... subContext,
-                        checkoutLocation: (subRepo.checkoutLocation || subContext.repository.name),
+                        ...subContext,
+                        checkoutLocation: subRepo.checkoutLocation || subContext.repository.name,
                         upstreamRemoteURI: this.buildUpstreamCloneUrl(subContext),
                         // we want to create a local branch on all repos, in case it's a multi-repo change. If it's not there are no drawbacks anyway.
                         ref: context.ref,
                         refType: context.refType,
-                        localBranch: context.localBranch
+                        localBranch: context.localBranch,
                     });
                 }
                 context.additionalRepositoryCheckoutInfo = subRepoCommits;
@@ -145,7 +166,7 @@ export class ContextParser {
                 context.repository = mainRepoContext.repository;
                 context.revision = mainRepoContext.revision;
             }
-            context.checkoutLocation = (config.config.checkoutLocation || context.repository.name);
+            context.checkoutLocation = config.config.checkoutLocation || context.repository.name;
             context.upstreamRemoteURI = this.buildUpstreamCloneUrl(context);
             return context;
         } finally {
@@ -153,7 +174,7 @@ export class ContextParser {
         }
     }
 
-    protected findPrefix(user: User, context: string): { prefix: string, parser: IPrefixContextParser } | undefined {
+    protected findPrefix(user: User, context: string): { prefix: string; parser: IPrefixContextParser } | undefined {
         for (const parser of this.prefixParser) {
             const prefix = parser.findPrefix(user, context);
             if (prefix) {
@@ -161,5 +182,4 @@ export class ContextParser {
             }
         }
     }
-
 }

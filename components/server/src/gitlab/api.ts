@@ -5,10 +5,21 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User } from "@gitpod/gitpod-protocol"
+import { User } from "@gitpod/gitpod-protocol";
 
 import { Gitlab } from "@gitbeaker/node";
-import { Projects, Users, Commits, ProjectHooks, Repositories, Branches, Tags, MergeRequests, Issues, RepositoryFiles } from "@gitbeaker/core";
+import {
+    Projects,
+    Users,
+    Commits,
+    ProjectHooks,
+    Repositories,
+    Branches,
+    Tags,
+    MergeRequests,
+    Issues,
+    RepositoryFiles,
+} from "@gitbeaker/core";
 import { ProjectSchemaDefault } from "@gitbeaker/core/dist/types/services/Projects";
 import { UserSchemaDefault } from "@gitbeaker/core/dist/types/services/Users";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -18,29 +29,34 @@ import { GitLabTokenHelper } from "./gitlab-token-helper";
 
 @injectable()
 export class GitLabApi {
-
     @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(GitLabTokenHelper) protected readonly tokenHelper: GitLabTokenHelper;
 
     async create(userOrToken: User | string) {
         let oauthToken: string | undefined;
-        if (typeof userOrToken === 'string') {
+        if (typeof userOrToken === "string") {
             oauthToken = userOrToken;
         } else {
-            const gitlabToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GitLabScope.Requirements.DEFAULT);
+            const gitlabToken = await this.tokenHelper.getTokenWithScopes(
+                userOrToken,
+                GitLabScope.Requirements.DEFAULT,
+            );
             oauthToken = gitlabToken.value;
         }
         return GitLab.create({
             host: `https://${this.config.host}`,
-            oauthToken
+            oauthToken,
         });
     }
 
-    public async run<R>(userOrToken: User | string, operation: (g: GitLab.Api) => Promise<any>): Promise<R | GitLab.ApiError> {
+    public async run<R>(
+        userOrToken: User | string,
+        operation: (g: GitLab.Api) => Promise<any>,
+    ): Promise<R | GitLab.ApiError> {
         const before = new Date().getTime();
         const userApi = await this.create(userOrToken);
         try {
-            const response = (await operation(userApi) as R);
+            const response = (await operation(userApi)) as R;
             return response as R;
         } catch (error) {
             if (error && typeof error?.response?.status === "number" && error?.response?.status !== 200) {
@@ -63,9 +79,15 @@ export class GitLabApi {
         }
     }
 
-    public async getRawContents(user: User, org: string, name: string, commitish: string, path: string): Promise<string | undefined> {
+    public async getRawContents(
+        user: User,
+        org: string,
+        name: string,
+        commitish: string,
+        path: string,
+    ): Promise<string | undefined> {
         const projectId = `${org}/${name}`;
-        const result = await this.run<string>(user, api => api.RepositoryFiles.showRaw(projectId, path, commitish))
+        const result = await this.run<string>(user, (api) => api.RepositoryFiles.showRaw(projectId, path, commitish));
         if (GitLab.ApiError.is(result)) {
             return undefined; // e.g. 404 error, because the file isn't found
         }
@@ -73,7 +95,7 @@ export class GitLabApi {
     }
 }
 export namespace GitLab {
-    export function create(options: { host: string, oauthToken: string }): GitLab.Api {
+    export function create(options: { host: string; oauthToken: string }): GitLab.Api {
         return new Gitlab(options) as unknown as Api;
     }
     export interface Api {
@@ -89,16 +111,16 @@ export namespace GitLab {
         RepositoryFiles: RepositoryFiles;
     }
     export class ApiError extends Error {
-        readonly httpError: { name: string, description: string } | undefined;
+        readonly httpError: { name: string; description: string } | undefined;
         constructor(msg?: string, httpError?: any) {
             super(msg);
             this.httpError = httpError;
-            this.name = 'GitLabApiError';
+            this.name = "GitLabApiError";
         }
     }
     export namespace ApiError {
         export function is(something: any): something is ApiError {
-            return !!something && something.name === 'GitLabApiError';
+            return !!something && something.name === "GitLabApiError";
         }
         export function isNotFound(error: ApiError): boolean {
             return !!error.httpError?.description.startsWith("404");
@@ -111,7 +133,7 @@ export namespace GitLab {
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#get-single-project
      */
     export interface Project extends ProjectSchemaDefault {
-        visibility: 'public' | 'private' | 'internal';
+        visibility: "public" | "private" | "internal";
         archived: boolean;
         path: string; // "diaspora-project-site"
         path_with_namespace: string; // "diaspora/diaspora-project-site"
@@ -132,26 +154,26 @@ export namespace GitLab {
         mode: string;
         name: string;
         path: string;
-        type: 'tree' | 'blob'
+        type: "tree" | "blob";
     }
 
     export interface ProjectHook {
-        id: number,
-        url: string,
-        project_id: number,
-        push_events: boolean,
-        push_events_branch_filter: string,
-        issues_events: boolean,
-        confidential_issues_events: boolean,
-        merge_requests_events: boolean,
-        tag_push_events: boolean,
-        note_events: boolean,
-        job_events: boolean,
-        pipeline_events: boolean,
-        wiki_page_events: boolean,
-        enable_ssl_verification: boolean,
-        created_at: string,
-        token?: string
+        id: number;
+        url: string;
+        project_id: number;
+        push_events: boolean;
+        push_events_branch_filter: string;
+        issues_events: boolean;
+        confidential_issues_events: boolean;
+        merge_requests_events: boolean;
+        tag_push_events: boolean;
+        note_events: boolean;
+        job_events: boolean;
+        pipeline_events: boolean;
+        wiki_page_events: boolean;
+        enable_ssl_verification: boolean;
+        created_at: string;
+        token?: string;
     }
     /**
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/merge_requests.md#get-single-mr
@@ -181,7 +203,7 @@ export namespace GitLab {
             base_sha: string;
             head_sha: string;
             start_sha: string;
-        }
+        };
     }
     /**
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/issues.md#single-issue
@@ -200,7 +222,7 @@ export namespace GitLab {
     export interface User extends UserSchemaDefault {
         email: string;
         state: "active" | string;
-        confirmed_at: string | undefined,
+        confirmed_at: string | undefined;
         private_profile: boolean;
     }
     export interface Permissions {
@@ -213,7 +235,7 @@ export namespace GitLab {
              * 50 => Owner accesss
             `*/
             access_level: number;
-        },
+        };
         group_access?: {
             /**`
              * 10 => Guest access
@@ -223,7 +245,7 @@ export namespace GitLab {
              * 50 => Owner accesss
             `*/
             access_level: number;
-        }
+        };
     }
     export namespace Permissions {
         export function hasWriteAccess(repo: Project): boolean {
@@ -261,10 +283,10 @@ export namespace GitLab {
         web_url: string;
     }
     export interface Tag {
-        name: string,
-        message: string | null,
-        target: string,
-        commit: Commit,
-        release: string | null
+        name: string;
+        message: string | null;
+        target: string;
+        commit: Commit;
+        release: string | null;
     }
 }

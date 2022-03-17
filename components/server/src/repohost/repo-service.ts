@@ -9,7 +9,6 @@ import { injectable } from "inversify";
 
 @injectable()
 export class RepositoryService {
-
     async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
         return [];
     }
@@ -19,7 +18,6 @@ export class RepositoryService {
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
-        throw new Error('unsupported');
+        throw new Error("unsupported");
     }
-
 }

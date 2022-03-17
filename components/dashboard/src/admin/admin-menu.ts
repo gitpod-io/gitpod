@@ -6,23 +6,23 @@
 
 export const adminMenu = [
     {
-        title: 'Users',
-        link: ['/admin/users', '/admin']
+        title: "Users",
+        link: ["/admin/users", "/admin"],
     },
     {
-        title: 'Workspaces',
-        link: ['/admin/workspaces']
+        title: "Workspaces",
+        link: ["/admin/workspaces"],
     },
     {
-        title: 'Projects',
-        link: ['/admin/projects']
+        title: "Projects",
+        link: ["/admin/projects"],
     },
     {
-        title: 'Teams',
-        link: ['/admin/teams']
+        title: "Teams",
+        link: ["/admin/teams"],
     },
     {
-        title: 'Settings',
-        link: ['/admin/settings']
-    }
+        title: "Settings",
+        link: ["/admin/settings"],
+    },
 ];

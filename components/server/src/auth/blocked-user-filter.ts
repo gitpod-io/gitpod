@@ -13,12 +13,10 @@ export const BlockedUserFilter = Symbol("BlockedUserFilter");
  * have previously been blocked from the service.
  */
 export interface BlockedUserFilter {
-
     /**
      * isBlocked returns true if the email is blocked and the user cannot sign up.
      */
     isBlocked(primaryEmail: string): Promise<boolean>;
-
 }
 
 /**
@@ -26,9 +24,7 @@ export interface BlockedUserFilter {
  */
 @injectable()
 export class NoOneBlockedUserFilter implements BlockedUserFilter {
-
     async isBlocked(primaryEmail: string): Promise<boolean> {
         return false;
     }
-
 }

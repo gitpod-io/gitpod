@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 // The following is copied (license: MIT) from https://github.com/typeorm/typeorm/blob/master/src/naming-strategy/DefaultNamingStrategy.ts
 // to be able to adjust it to be backwards compatible with https://github.com/typeorm/typeorm/blob/0.1.19/src/naming-strategy/DefaultNamingStrategy.ts
 // by replacing calls to "snakeCase" with "snakeCase_0_1_20" (cmp. https://github.com/typeorm/typeorm/blob/0.1.19/src/util/StringUtils.ts#L13-L20).
@@ -14,11 +13,9 @@ import { NamingStrategyInterface } from "typeorm/naming-strategy/NamingStrategyI
 import { RandomGenerator } from "typeorm/util/RandomGenerator";
 import { camelCase, titleCase } from "typeorm/util/StringUtils";
 
-
 const snakeCase_0_1_20 = (str: string) => {
-    return str.replace(/(?:^|\.?)([A-Z])/g, (x, y) => "_" + y.toLowerCase())
-        .replace(/^_/, "");
-}
+    return str.replace(/(?:^|\.?)([A-Z])/g, (x, y) => "_" + y.toLowerCase()).replace(/^_/, "");
+};
 
 /**
  * Naming strategy that is used by default.
@@ -53,8 +50,7 @@ export class DefaultNamingStrategy implements NamingStrategyInterface {
     columnName(propertyName: string, customName: string, embeddedPrefixes: string[]): string {
         const name = customName || propertyName;
 
-        if (embeddedPrefixes.length)
-            return camelCase(embeddedPrefixes.join("_")) + titleCase(name);
+        if (embeddedPrefixes.length) return camelCase(embeddedPrefixes.join("_")) + titleCase(name);
 
         return name;
     }
@@ -90,8 +86,7 @@ export class DefaultNamingStrategy implements NamingStrategyInterface {
         const tableName = this.getTableName(tableOrName);
         const replacedTableName = tableName.replace(".", "_");
         let key = `${replacedTableName}_${clonedColumnNames.join("_")}`;
-        if (where)
-            key += `_${where}`;
+        if (where) key += `_${where}`;
 
         return "REL_" + RandomGenerator.sha1(key).substr(0, 26);
     }
@@ -103,7 +98,12 @@ export class DefaultNamingStrategy implements NamingStrategyInterface {
         return "DF_" + RandomGenerator.sha1(key).substr(0, 27);
     }
 
-    foreignKeyName(tableOrName: Table | string, columnNames: string[], _referencedTablePath?: string, _referencedColumnNames?: string[]): string {
+    foreignKeyName(
+        tableOrName: Table | string,
+        columnNames: string[],
+        _referencedTablePath?: string,
+        _referencedColumnNames?: string[],
+    ): string {
         // sort incoming column names to avoid issue when ["id", "name"] and ["name", "id"] arrays
         const clonedColumnNames = [...columnNames];
         clonedColumnNames.sort();
@@ -120,8 +120,7 @@ export class DefaultNamingStrategy implements NamingStrategyInterface {
         const tableName = this.getTableName(tableOrName);
         const replacedTableName = tableName.replace(".", "_");
         let key = `${replacedTableName}_${clonedColumnNames.join("_")}`;
-        if (where)
-            key += `_${where}`;
+        if (where) key += `_${where}`;
 
         return "IDX_" + RandomGenerator.sha1(key).substr(0, 26);
     }
@@ -145,10 +144,12 @@ export class DefaultNamingStrategy implements NamingStrategyInterface {
         return camelCase(relationName + "_" + referencedColumnName);
     }
 
-    joinTableName(firstTableName: string,
+    joinTableName(
+        firstTableName: string,
         secondTableName: string,
         firstPropertyName: string,
-        secondPropertyName: string): string {
+        secondPropertyName: string,
+    ): string {
         return snakeCase_0_1_20(firstTableName + "_" + firstPropertyName.replace(/\./gi, "_") + "_" + secondTableName);
     }
 

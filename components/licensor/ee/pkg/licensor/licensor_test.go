@@ -23,11 +23,12 @@ const (
 )
 
 type licenseTest struct {
-	Name         string
-	License      *LicensePayload
-	Validate     func(t *testing.T, eval Evaluator)
-	Type         LicenseType
-	NeverExpires bool
+	Name                  string
+	License               *LicensePayload
+	Validate              func(t *testing.T, eval *Evaluator)
+	Type                  LicenseType
+	NeverExpires          bool
+	ReplicatedLicenseType *ReplicatedLicenseType
 }
 
 // roundTripFunc .
@@ -47,7 +48,7 @@ func newTestClient(fn roundTripFunc) *http.Client {
 
 func (test *licenseTest) Run(t *testing.T) {
 	t.Run(test.Name, func(t *testing.T) {
-		var eval Evaluator
+		var eval *Evaluator
 		if test.Type == LicenseTypeGitpod {
 			if test.NeverExpires {
 				t.Fatal("gitpod licenses must have an expiry date")
@@ -76,6 +77,12 @@ func (test *licenseTest) Run(t *testing.T) {
 				}
 
 				payload, err := json.Marshal(replicatedLicensePayload{
+					LicenseType: func() ReplicatedLicenseType {
+						if test.ReplicatedLicenseType == nil {
+							return ReplicatedLicenseTypePaid
+						}
+						return *test.ReplicatedLicenseType
+					}(),
 					ExpirationTime: func() *time.Time {
 						if test.License != nil {
 							return &test.License.ValidUntil
@@ -94,15 +101,6 @@ func (test *licenseTest) Run(t *testing.T) {
 									return test.License.Domain
 								}
 								return domain
-							}(),
-						},
-						{
-							Field: "levelId",
-							Value: func() LicenseLevel {
-								if test.License != nil {
-									return test.License.Level
-								}
-								return LevelTeam
 							}(),
 						},
 						{
@@ -195,10 +193,10 @@ func TestSeats(t *testing.T) {
 				Seats:      test.Licensed,
 				ValidUntil: validUntil,
 			},
-			Validate: func(t *testing.T, eval Evaluator) {
-				withinLimits := eval.HasEnoughSeats(test.Probe)
+			Validate: func(t *testing.T, eval *Evaluator) {
+				withinLimits := eval.hasEnoughSeats(test.Probe)
 				if withinLimits != test.WithinLimits {
-					t.Errorf("HasEnoughSeats did not behave as expected: lic=%d probe=%d expected=%v actual=%v", test.Licensed, test.Probe, test.WithinLimits, withinLimits)
+					t.Errorf("hasEnoughSeats did not behave as expected: lic=%d probe=%d expected=%v actual=%v", test.Licensed, test.Probe, test.WithinLimits, withinLimits)
 				}
 			},
 			Type:         test.LicenseType,
@@ -212,31 +210,70 @@ func TestSeats(t *testing.T) {
 }
 
 func TestFeatures(t *testing.T) {
-	tests := []struct {
-		Name           string
-		DefaultLicense bool
-		Level          LicenseLevel
-		Features       []Feature
-		LicenseType    LicenseType
-	}{
-		{"Gitpod: no license", true, LicenseLevel(0), []Feature{FeaturePrebuild}, LicenseTypeGitpod},
-		{"Gitpod: invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeGitpod},
-		{"Gitpod: enterprise license", false, LevelEnterprise, []Feature{
-			FeatureAdminDashboard,
-			FeatureSetTimeout,
-			FeatureWorkspaceSharing,
-			FeatureSnapshot,
-			FeaturePrebuild,
-		}, LicenseTypeGitpod},
+	replicatedCommunity := ReplicatedLicenseTypeCommunity
+	replicatedPaid := ReplicatedLicenseTypePaid
 
-		{"Replicated: invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeReplicated},
-		{"Replicated: enterprise license", false, LevelEnterprise, []Feature{
+	tests := []struct {
+		Name                  string
+		DefaultLicense        bool
+		Level                 LicenseLevel
+		Features              []Feature
+		LicenseType           LicenseType
+		UserCount             int
+		ReplicatedLicenseType *ReplicatedLicenseType
+	}{
+		{"Gitpod (in seats): no license", true, LicenseLevel(0), []Feature{
 			FeatureAdminDashboard,
 			FeatureSetTimeout,
 			FeatureWorkspaceSharing,
 			FeatureSnapshot,
 			FeaturePrebuild,
-		}, LicenseTypeReplicated},
+		}, LicenseTypeGitpod, 10, nil},
+		{"Gitpod (in seats): invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeGitpod, seats, nil},
+		{"Gitpod (in seats): enterprise license", false, LevelEnterprise, []Feature{
+			FeatureAdminDashboard,
+			FeatureSetTimeout,
+			FeatureWorkspaceSharing,
+			FeatureSnapshot,
+			FeaturePrebuild,
+		}, LicenseTypeGitpod, seats, nil},
+
+		{"Gitpod (over seats): no license", true, LicenseLevel(0), []Feature{}, LicenseTypeGitpod, 11, nil},
+		{"Gitpod (over seats): invalid license level", false, LicenseLevel(666), []Feature{}, LicenseTypeGitpod, seats + 1, nil},
+		{"Gitpod (over seats): enterprise license", false, LevelEnterprise, []Feature{}, LicenseTypeGitpod, seats + 1, nil},
+
+		{"Replicated (in seats): invalid license level", false, LicenseLevel(666), []Feature{
+			FeatureAdminDashboard,
+			FeatureSetTimeout,
+			FeatureWorkspaceSharing,
+			FeatureSnapshot,
+			FeaturePrebuild,
+		}, LicenseTypeReplicated, seats, &replicatedPaid},
+		{"Replicated (in seats): enterprise license", false, LevelEnterprise, []Feature{
+			FeatureAdminDashboard,
+			FeatureSetTimeout,
+			FeatureWorkspaceSharing,
+			FeatureSnapshot,
+			FeaturePrebuild,
+		}, LicenseTypeReplicated, seats, &replicatedPaid},
+
+		{"Replicated (over seats - no fallback): invalid license level", true, LicenseLevel(666), []Feature{
+			FeatureAdminDashboard,
+			FeatureSetTimeout,
+			FeatureWorkspaceSharing,
+			FeatureSnapshot,
+			FeaturePrebuild,
+		}, LicenseTypeReplicated, seats + 1, &replicatedPaid},
+		{"Replicated (over seats - no fallback): enterprise license", true, LevelEnterprise, []Feature{
+			FeatureAdminDashboard,
+			FeatureSetTimeout,
+			FeatureWorkspaceSharing,
+			FeatureSnapshot,
+			FeaturePrebuild,
+		}, LicenseTypeReplicated, seats + 1, &replicatedPaid},
+
+		{"Replicated (over seats - fallback): invalid license level", false, LicenseLevel(666), []Feature{FeatureAdminDashboard}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
+		{"Replicated (over seats - fallback): enterprise license", false, LevelEnterprise, []Feature{FeatureAdminDashboard}, LicenseTypeReplicated, seats + 1, &replicatedCommunity},
 	}
 
 	for _, test := range tests {
@@ -251,9 +288,10 @@ func TestFeatures(t *testing.T) {
 			lic = nil
 		}
 		lt := licenseTest{
-			Name:    test.Name,
-			License: lic,
-			Validate: func(t *testing.T, eval Evaluator) {
+			Name:                  test.Name,
+			License:               lic,
+			ReplicatedLicenseType: test.ReplicatedLicenseType,
+			Validate: func(t *testing.T, eval *Evaluator) {
 				unavailableFeatures := featureSet{}
 				for f := range allowanceMap[LevelEnterprise].Features {
 					unavailableFeatures[f] = struct{}{}
@@ -261,13 +299,13 @@ func TestFeatures(t *testing.T) {
 				for _, f := range test.Features {
 					delete(unavailableFeatures, f)
 
-					if !eval.Enabled(f) {
+					if !eval.Enabled(f, test.UserCount) {
 						t.Errorf("license does not enable %s, but should", f)
 					}
 				}
 
 				for f := range unavailableFeatures {
-					if eval.Enabled(f) {
+					if eval.Enabled(f, test.UserCount) {
 						t.Errorf("license not enables %s, but shouldn't", f)
 					}
 				}

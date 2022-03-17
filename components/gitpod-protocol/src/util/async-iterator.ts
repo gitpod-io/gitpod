@@ -5,8 +5,8 @@
  */
 
 // Use asyncIterators with es2015
-if (typeof (Symbol as any).asyncIterator === 'undefined') {
-    (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol('asyncIterator');
+if (typeof (Symbol as any).asyncIterator === "undefined") {
+    (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol("asyncIterator");
 }
 
 export async function find<T>(it: AsyncIterableIterator<T>, predicate: (value: T) => boolean): Promise<T | undefined> {
@@ -31,12 +31,11 @@ export interface AsyncCachingIterator<T> extends AsyncIterableIterator<T> {
     resetCursor(): void;
 }
 export class AsyncCachingIteratorImpl<T> implements AsyncIterableIterator<T>, AsyncCachingIterator<T> {
-
     protected cache: T[] = [];
     protected cursor = 0;
     protected cacheRead = false;
 
-    constructor(protected readonly iterable: AsyncIterableIterator<T>) { }
+    constructor(protected readonly iterable: AsyncIterableIterator<T>) {}
 
     public resetCursor() {
         this.cursor = 0;
@@ -47,7 +46,7 @@ export class AsyncCachingIteratorImpl<T> implements AsyncIterableIterator<T>, As
         if (!this.cacheRead && this.cursor < this.cache.length) {
             return {
                 done: false,
-                value: this.cache[this.cursor++]
+                value: this.cache[this.cursor++],
             };
         }
         this.cacheRead = true;

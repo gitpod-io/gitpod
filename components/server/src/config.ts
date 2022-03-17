@@ -4,18 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
-import { AuthProviderParams, normalizeAuthProviderParams } from './auth/auth-provider';
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import { AuthProviderParams, normalizeAuthProviderParams } from "./auth/auth-provider";
 
-import { NamedWorkspaceFeatureFlag } from '@gitpod/gitpod-protocol';
+import { NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
 
-import { RateLimiterConfig } from './auth/rate-limiter';
-import { CodeSyncConfig } from './code-sync/code-sync-service';
+import { RateLimiterConfig } from "./auth/rate-limiter";
+import { CodeSyncConfig } from "./code-sync/code-sync-service";
 import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
-import { log, LogrusLogLevel } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { filePathTelepresenceAware, KubeStage, translateLegacyStagename } from '@gitpod/gitpod-protocol/lib/env';
+import * as fs from "fs";
+import * as yaml from "js-yaml";
+import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { filePathTelepresenceAware, KubeStage, translateLegacyStagename } from "@gitpod/gitpod-protocol/lib/env";
 
 export const Config = Symbol("Config");
 export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile"> & {
@@ -23,7 +23,7 @@ export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOption
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
-}
+};
 
 export interface WorkspaceDefaults {
     workspaceImage: string;
@@ -59,7 +59,7 @@ export interface ConfigSerialized {
 
     workspaceHeartbeat: {
         intervalSeconds: number;
-        timeoutSeconds: number,
+        timeoutSeconds: number;
     };
 
     workspaceDefaults: Omit<WorkspaceDefaults, "ideImage">;
@@ -107,7 +107,7 @@ export interface ConfigSerialized {
     blockNewUsers: {
         enabled: boolean;
         passlist: string[];
-    }
+    };
 
     makeNewUsersAdmin: boolean;
 
@@ -122,7 +122,7 @@ export interface ConfigSerialized {
     oauthServer: {
         enabled: boolean;
         jwtSecret: string;
-    }
+    };
 
     /**
      * The configuration for the rate limiter we (mainly) use for the websocket API
@@ -132,13 +132,13 @@ export interface ConfigSerialized {
     /**
      * The address content service clients connect to
      * Example: content-service:8080
-    */
+     */
     contentServiceAddr: string;
 
     /**
      * The address content service clients connect to
      * Example: image-builder:8080
-    */
+     */
     imageBuilderAddr: string;
 
     codeSync: CodeSyncConfig;
@@ -155,7 +155,7 @@ export interface ConfigSerialized {
      * Number of prebuilds that can be started in the last 1 minute.
      * Key '*' specifies the default rate limit for a cloneURL, unless overriden by a specific cloneURL.
      */
-    prebuildLimiter: {[cloneURL: string]: number } & {'*': number};
+    prebuildLimiter: { [cloneURL: string]: number } & { "*": number };
 }
 
 export namespace ConfigFile {
@@ -175,29 +175,33 @@ export namespace ConfigFile {
 
     function loadAndCompleteConfig(config: ConfigSerialized): Config {
         const hostUrl = new GitpodHostUrl(config.hostUrl);
-        let authProviderConfigs: AuthProviderParams[] = []
-        const rawProviderConfigs = config.authProviderConfigs
+        let authProviderConfigs: AuthProviderParams[] = [];
+        const rawProviderConfigs = config.authProviderConfigs;
         if (rawProviderConfigs) {
             /* Add raw provider data */
             authProviderConfigs.push(...rawProviderConfigs);
         }
-        const rawProviderConfigFiles = config.authProviderConfigFiles
+        const rawProviderConfigFiles = config.authProviderConfigFiles;
         if (rawProviderConfigFiles) {
             /* Add providers from files */
-            const authProviderConfigFiles: AuthProviderParams[] = rawProviderConfigFiles.map<AuthProviderParams>((providerFile) => {
-                const rawProviderData = fs.readFileSync(filePathTelepresenceAware(providerFile), "utf-8")
+            const authProviderConfigFiles: AuthProviderParams[] = rawProviderConfigFiles.map<AuthProviderParams>(
+                (providerFile) => {
+                    const rawProviderData = fs.readFileSync(filePathTelepresenceAware(providerFile), "utf-8");
 
-                return yaml.load(rawProviderData) as AuthProviderParams
-            });
+                    return yaml.load(rawProviderData) as AuthProviderParams;
+                },
+            );
 
             authProviderConfigs.push(...authProviderConfigFiles);
         }
-        authProviderConfigs = normalizeAuthProviderParams(authProviderConfigs)
+        authProviderConfigs = normalizeAuthProviderParams(authProviderConfigs);
 
         const builtinAuthProvidersConfigured = authProviderConfigs.length > 0;
-        const chargebeeProviderOptions = readOptionsFromFile(filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""));
-        let license = config.license
-        const licenseFile = config.licenseFile
+        const chargebeeProviderOptions = readOptionsFromFile(
+            filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""),
+        );
+        let license = config.license;
+        const licenseFile = config.licenseFile;
         if (licenseFile) {
             license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
         }
@@ -211,8 +215,10 @@ export namespace ConfigFile {
             license,
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,
-                startDate: config.workspaceGarbageCollection.startDate ? new Date(config.workspaceGarbageCollection.startDate).getTime() : Date.now(),
+                startDate: config.workspaceGarbageCollection.startDate
+                    ? new Date(config.workspaceGarbageCollection.startDate).getTime()
+                    : Date.now(),
             },
-        }
+        };
     }
 }

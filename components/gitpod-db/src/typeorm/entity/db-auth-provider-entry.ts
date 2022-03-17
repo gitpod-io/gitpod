@@ -18,13 +18,13 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
     @Column()
     ownerId: string;
 
-    @Column('varchar')
+    @Column("varchar")
     status: AuthProviderEntry.Status;
 
     @Column()
     host: string;
 
-    @Column('varchar')
+    @Column("varchar")
     type: AuthProviderEntry.Type;
 
     @Column({
@@ -32,14 +32,14 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
         transformer: Transformer.compose(
             Transformer.SIMPLE_JSON([]),
             // Relies on the initialization of the var in UserDbImpl
-            Transformer.encrypted(() => encryptionService)
-        )
+            Transformer.encrypted(() => encryptionService),
+        ),
     })
     oauth: OAuth2Config;
 
     @Index("ind_oauthRevision")
     @Column({
-        default: '',
+        default: "",
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     oauthRevision?: string;

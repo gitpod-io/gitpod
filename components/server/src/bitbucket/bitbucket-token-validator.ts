@@ -10,7 +10,6 @@ import { CheckWriteAccessResult, IGitTokenValidator, IGitTokenValidatorParams } 
 
 @injectable()
 export class BitbucketTokenValidator implements IGitTokenValidator {
-
     async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult> {
         const { token, host, repoFullName } = params;
 
@@ -19,7 +18,7 @@ export class BitbucketTokenValidator implements IGitTokenValidator {
             isPrivateRepo: undefined,
             writeAccessToRepo: undefined,
             mayWritePrivate: true,
-            mayWritePublic: true
+            mayWritePublic: true,
         };
 
         const options = {
@@ -28,7 +27,8 @@ export class BitbucketTokenValidator implements IGitTokenValidator {
             baseUrl: `https://api.${host}/2.0`,
         };
         const api = new Bitbucket(options);
-        const repos = (await api.user.listPermissionsForRepos({ q: `repository.full_name="${repoFullName}"` })).data.values
+        const repos = (await api.user.listPermissionsForRepos({ q: `repository.full_name="${repoFullName}"` })).data
+            .values;
 
         if (repos && repos.length > 0) {
             if (repos.length > 1) {
@@ -36,7 +36,7 @@ export class BitbucketTokenValidator implements IGitTokenValidator {
             }
             result.found = true;
             result.isPrivateRepo = repos[0].repository!.is_private;
-            const matchingRepo = repos.find(r => r.permission == "write" || r.permission == "admin");
+            const matchingRepo = repos.find((r) => r.permission == "write" || r.permission == "admin");
             if (matchingRepo) {
                 result.writeAccessToRepo = true;
             }
@@ -45,4 +45,3 @@ export class BitbucketTokenValidator implements IGitTokenValidator {
         return result;
     }
 }
-

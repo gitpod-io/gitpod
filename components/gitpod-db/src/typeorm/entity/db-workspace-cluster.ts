@@ -5,7 +5,12 @@
  */
 
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
-import { AdmissionConstraint, TLSConfig, WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import {
+    AdmissionConstraint,
+    TLSConfig,
+    WorkspaceCluster,
+    WorkspaceClusterState,
+} from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
 
 @Entity()
@@ -24,7 +29,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
         transformer: (() => {
             const defaultValue = {};
             const jsonifiedDefault = JSON.stringify(defaultValue);
-            return <ValueTransformer> {
+            return <ValueTransformer>{
                 // tls | undefined => <tls> | "{}"
                 to(value: any): any {
                     if (!value) {
@@ -38,9 +43,9 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
                         return undefined;
                     }
                     return JSON.parse(value);
-                }
+                },
             };
-        })()
+        })(),
     })
     tls?: TLSConfig;
 
@@ -65,7 +70,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
         transformer: (() => {
             const defaultValue: AdmissionConstraint[] = [];
             const jsonifiedDefault = JSON.stringify(defaultValue);
-            return <ValueTransformer> {
+            return <ValueTransformer>{
                 to(value: any): any {
                     if (!value) {
                         return jsonifiedDefault;
@@ -74,9 +79,9 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
                 },
                 from(value: any): any {
                     return JSON.parse(value);
-                }
+                },
             };
-        })()
+        })(),
     })
     admissionConstraints?: AdmissionConstraint[];
 }

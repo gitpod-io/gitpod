@@ -8,14 +8,11 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 import { columnExists } from "./helper/helper";
 
 export class ProjectConfiguration1626853418369 implements MigrationInterface {
-
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (!(await columnExists(queryRunner, "d_b_project", "config"))) {
             await queryRunner.query("ALTER TABLE d_b_project ADD COLUMN config text");
         }
     }
 
-    public async down(queryRunner: QueryRunner): Promise<any> {
-    }
-
+    public async down(queryRunner: QueryRunner): Promise<any> {}
 }

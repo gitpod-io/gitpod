@@ -9,8 +9,8 @@ import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
 
 @Entity()
-@Index("ind_dbsync", ["viewedAt"])   // DBSync
-export class DBUserMessageViewEntry  {
+@Index("ind_dbsync", ["viewedAt"]) // DBSync
+export class DBUserMessageViewEntry {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     userId: string;
 
@@ -18,11 +18,10 @@ export class DBUserMessageViewEntry  {
     userMessageId: string;
 
     @Column({
-        type: 'timestamp',
+        type: "timestamp",
         precision: 6,
-        default: () => 'CURRENT_TIMESTAMP(6)',
-        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP
+        default: () => "CURRENT_TIMESTAMP(6)",
+        transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
     viewedAt: string;
-
 }

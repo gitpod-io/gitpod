@@ -4,10 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
-export type EMailState = "scheduledInternal"
-    | "scheduledSendgrid";
+export type EMailState = "scheduledInternal" | "scheduledSendgrid";
 
 export interface EMailStatus {
     /** The time the email entry was inserted into the DB */
@@ -58,9 +57,9 @@ export type EMail = {
 } & EMailStatus;
 
 export namespace EMail {
-    export const create = (ts: Omit<EMail, 'uid'>): EMail => {
+    export const create = (ts: Omit<EMail, "uid">): EMail => {
         const withId = ts as EMail;
         withId.uid = uuidv4();
         return withId;
-    }
+    };
 }

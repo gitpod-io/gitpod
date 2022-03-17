@@ -1,6 +1,23 @@
 # Change Log
 
 ## March 2022
+- [server] Improve GitHub Enterprise avatars handling ([#8825](https://github.com/gitpod-io/gitpod/pull/8825)) - [@jankeromnes](https://github.com/jankeromnes)
+- Made the `gitpod.io/cpuLimit` annotation work again ([#8459](https://github.com/gitpod-io/gitpod/pull/8459)) - [@csweichel](https://github.com/csweichel), [@princerachit](https://github.com/princerachit)
+- [installer]: allow for minified config YAML ([#8837](https://github.com/gitpod-io/gitpod/pull/8837)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [kots] Remove `cert-manager` from the Gitpod package ([#8785](https://github.com/gitpod-io/gitpod/pull/8785)) - [@Pothulapati](https://github.com/Pothulapati)
+- Allow use of the --privileged flag with docker. ([#8827](https://github.com/gitpod-io/gitpod/pull/8827)) - [@Furisto](https://github.com/Furisto)
+- [kots]: use Helm for the Installer job ([#8491](https://github.com/gitpod-io/gitpod/pull/8491)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- Enable egress metrics for agent-smith ([#8742](https://github.com/gitpod-io/gitpod/pull/8742)) - [@princerachit](https://github.com/princerachit)
+- fix missing index on Workspace (id, deleted) ([#8821](https://github.com/gitpod-io/gitpod/pull/8821)) - [@geropl](https://github.com/geropl)
+- [loadgen] Update benchmark images ([#8808](https://github.com/gitpod-io/gitpod/pull/8808)) - [@aledbf](https://github.com/aledbf)
+- Make the licensing match what's advertised ([#8593](https://github.com/gitpod-io/gitpod/pull/8593)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- fix caching of GitHub server<->server queries ([#8793](https://github.com/gitpod-io/gitpod/pull/8793)) - [@geropl](https://github.com/geropl)
+- Fix setting sync limit failure in some cases ([#8644](https://github.com/gitpod-io/gitpod/pull/8644)) - [@mustard-mh](https://github.com/mustard-mh)
+- [kubecdl] Fix server name pattern ([#8770](https://github.com/gitpod-io/gitpod/pull/8770)) - [@aledbf](https://github.com/aledbf)
+- ws-manager-bridge logs WorkspaceStatus events ([#8718](https://github.com/gitpod-io/gitpod/pull/8718)) - [@easyCZ](https://github.com/easyCZ)
+- Clarified wording of "timeout" feature on the settings/plans page ([#8699](https://github.com/gitpod-io/gitpod/pull/8699)) - [@lucasvaltl](https://github.com/lucasvaltl)
+- Update code to 1.65.2 ([#8741](https://github.com/gitpod-io/gitpod/pull/8741)) - [@mustard-mh](https://github.com/mustard-mh)
+- [kots]: add standard labels to KOTS manifests ([#8708](https://github.com/gitpod-io/gitpod/pull/8708)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - Document ClusterService rpcs and messages ([#8721](https://github.com/gitpod-io/gitpod/pull/8721)) - [@easyCZ](https://github.com/easyCZ)
 - [server] fix compile error ([#8711](https://github.com/gitpod-io/gitpod/pull/8711)) - [@svenefftinge](https://github.com/svenefftinge)
 - Support for multi-repo projects ([#7785](https://github.com/gitpod-io/gitpod/pull/7785)) - [@svenefftinge](https://github.com/svenefftinge)

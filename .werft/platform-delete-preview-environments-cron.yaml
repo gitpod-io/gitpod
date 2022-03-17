@@ -18,7 +18,7 @@ pod:
       secretName: gcp-sa-gitpod-release-deployer
   containers:
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:sje-add-kots.6
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-update-dep.2
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -49,6 +49,6 @@ pod:
 
         (cd .werft && yarn install && mv node_modules ..) | werft log slice prep
 
-        npx ts-node .werft/delete-preview-environments/delete-preview-environments-cron.ts
+        npx ts-node .werft/platform-delete-preview-environments-cron.ts
 plugins:
   cron: "15 * * * *"

@@ -5,12 +5,11 @@
  */
 
 import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
-import { injectable } from 'inversify';
-import { RepositoryProvider } from '../repohost/repository-provider';
+import { injectable } from "inversify";
+import { RepositoryProvider } from "../repohost/repository-provider";
 
 @injectable()
 export class BitbucketServerRepositoryProvider implements RepositoryProvider {
-
     async getRepo(user: User, owner: string, name: string): Promise<Repository> {
         // const api = await this.apiFactory.create(user);
         // const repo = (await api.repositories.get({ workspace: owner, repo_slug: name })).data;
@@ -107,7 +106,7 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         return false;
     }
 
-    async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number): Promise<string[]>  {
+    async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number): Promise<string[]> {
         return [];
     }
 }

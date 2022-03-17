@@ -5,7 +5,13 @@
  */
 
 import { injectable, inject } from "inversify";
-import { ConsensusLeaderMessenger, HeartbeatMessage, RequestVoteMessage, CastVoteMessage, RaftMessage } from "./consensus-leader-messenger";
+import {
+    ConsensusLeaderMessenger,
+    HeartbeatMessage,
+    RequestVoteMessage,
+    CastVoteMessage,
+    RaftMessage,
+} from "./consensus-leader-messenger";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -13,10 +19,10 @@ import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 @injectable()
 /* Implements the leader election mechanism of the Raft concensus algorithm:
-*      In Search of an Understandable Consensus Algorithm. Ongaro and Ousterhout. 2014.
-*      https://raft.github.io/raft.pdf
-*
-*/
+ *      In Search of an Understandable Consensus Algorithm. Ongaro and Ousterhout. 2014.
+ *      https://raft.github.io/raft.pdf
+ *
+ */
 export class ConsensusLeaderQorum implements Disposable {
     @inject(ConsensusLeaderMessenger) protected readonly messenger: ConsensusLeaderMessenger;
 
@@ -38,7 +44,7 @@ export class ConsensusLeaderQorum implements Disposable {
     protected currentLeader: string | undefined;
     // The state/role of this server - in normal operation there is exactly one leader and all of the other servers are followers.
     // When servers start up, they begin as followers.
-    protected role: 'leader' | 'follower' | 'candidate' = 'follower';
+    protected role: "leader" | "follower" | "candidate" = "follower";
 
     // clockPeriod is the time between our local clock beats. The shorter this period the quicker we'll detect leader loss
     // and reestablish consensus, but also the more overhead we'll produce.
@@ -54,7 +60,6 @@ export class ConsensusLeaderQorum implements Disposable {
     protected readonly heartbeatPeriod = 4 * this.clockPeriod;
     protected readonly termTimeoutMilliseconds = 2 * this.heartbeatPeriod;
 
-
     public get name(): string {
         return this.uid;
     }
@@ -67,10 +72,12 @@ export class ConsensusLeaderQorum implements Disposable {
         // register with the messenger
         this.uid = await this.messenger.register();
 
-        this.disposables.push(repeat(() => this.beatClock().catch((err) => log.error("consensus beatClock", err)), this.clockPeriod));
-        this.disposables.push(this.messenger.on("heartbeat", msg => this.messages.push(msg)));
-        this.disposables.push(this.messenger.on("requestVote", msg => this.messages.push(msg)));
-        this.disposables.push(this.messenger.on("castVote", msg => this.messages.push(msg)));
+        this.disposables.push(
+            repeat(() => this.beatClock().catch((err) => log.error("consensus beatClock", err)), this.clockPeriod),
+        );
+        this.disposables.push(this.messenger.on("heartbeat", (msg) => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on("requestVote", (msg) => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on("castVote", (msg) => this.messages.push(msg)));
     }
 
     protected async beatClock() {
@@ -83,7 +90,7 @@ export class ConsensusLeaderQorum implements Disposable {
                 if (msg.term == this.currentTerm && this.currentLeader === msg.sender) {
                     // regular heartbeat in this term
                     this.lastHeartbeatFromLeader = Date.now();
-                } else if (msg.term >= this.currentTerm || this.role === 'candidate') {
+                } else if (msg.term >= this.currentTerm || this.role === "candidate") {
                     // we seem to have missed an election or someone else won the current one, but now have a new leader
                     this.acceptLeader(msg.sender, msg.term);
                 }
@@ -101,22 +108,23 @@ export class ConsensusLeaderQorum implements Disposable {
 
             if (CastVoteMessage.is(msg)) {
                 // someone cast a vote - let's see if that was for us
-                if (this.role === 'candidate' && msg.term === this.currentTerm && msg.forCandidate === this.uid) {
+                if (this.role === "candidate" && msg.term === this.currentTerm && msg.forCandidate === this.uid) {
                     await this.recordVoteInOurFavour(msg.sender);
                 }
             }
         }
 
-        if (this.role === 'leader') {
+        if (this.role === "leader") {
             if (!this.lastHeartbeatSend || Date.now() - this.lastHeartbeatSend > this.heartbeatPeriod) {
                 // we must send our regular heartbeats
-                /** no await */ this.messenger.sendHeartbeat(this.uid, this.currentTerm)
-                    .catch(err => {/** ignore */});
+                /** no await */ this.messenger.sendHeartbeat(this.uid, this.currentTerm).catch((err) => {
+                    /** ignore */
+                });
 
                 this.lastHeartbeatSend = Date.now();
             }
         }
-        if (this.role === 'follower') {
+        if (this.role === "follower") {
             if (!this.lastHeartbeatFromLeader) {
                 // we have never seen a heartbeat, let's assume someone else is the leader and we had just seen one.
                 this.lastHeartbeatFromLeader = Date.now();
@@ -128,10 +136,11 @@ export class ConsensusLeaderQorum implements Disposable {
                 await this.startElection();
             }
         }
-        if (this.role === 'candidate') {
+        if (this.role === "candidate") {
             if (!this.electionDeadline) {
                 // we seem to have forgotten to record the election start.
-                this.electionDeadline = Date.now() + (Math.random() * this.electionTimeoutVariation + this.electionTimeout);
+                this.electionDeadline =
+                    Date.now() + (Math.random() * this.electionTimeoutVariation + this.electionTimeout);
             }
 
             // console.log(`[${this.uid} ${this.currentTerm} ${this.role} ${s}] beat (t - electionDeadline: ${Date.now() - this.electionDeadline})`);
@@ -147,9 +156,9 @@ export class ConsensusLeaderQorum implements Disposable {
         this.newTerm(inTerm);
 
         if (leader == this.uid) {
-            this.role = 'leader';
+            this.role = "leader";
         } else {
-            this.role = 'follower';
+            this.role = "follower";
         }
         this.currentLeader = leader;
         this.lastHeartbeatFromLeader = Date.now();
@@ -196,7 +205,7 @@ export class ConsensusLeaderQorum implements Disposable {
         this.consensusAchieved.resolve();
         this.consensusAchieved = new Deferred<boolean>();
 
-        this.role = 'candidate';
+        this.role = "candidate";
         await this.voteFor(this.uid);
         await this.messenger.requestVote(this.uid, this.currentTerm);
     }
@@ -211,11 +220,10 @@ export class ConsensusLeaderQorum implements Disposable {
 
     async areWeLeader(): Promise<boolean> {
         await this.awaitConsensus();
-        return this.role === 'leader';
+        return this.role === "leader";
     }
 
     public dispose() {
-        this.disposables.forEach(d => d.dispose());
+        this.disposables.forEach((d) => d.dispose());
     }
-
 }

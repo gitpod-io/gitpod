@@ -28,11 +28,11 @@ function iconForAuthProvider(type: string) {
 function simplifyProviderName(host: string) {
     switch (host) {
         case "github.com":
-            return "GitHub"
+            return "GitHub";
         case "gitlab.com":
-            return "GitLab"
+            return "GitLab";
         case "bitbucket.org":
-            return "Bitbucket"
+            return "Bitbucket";
         default:
             return host;
     }
@@ -45,35 +45,45 @@ interface OpenAuthorizeWindowParams {
     overrideScopes?: boolean;
     overrideReturn?: string;
     onSuccess?: (payload?: string) => void;
-    onError?: (error: string | { error: string, description?: string }) => void;
+    onError?: (error: string | { error: string; description?: string }) => void;
 }
 
 async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     const { login, host, scopes, overrideScopes, onSuccess, onError } = params;
-    let search = 'message=success';
+    let search = "message=success";
     const redirectURL = getSafeURLRedirect();
     if (redirectURL) {
-        search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`
+        search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`;
     }
-    const returnTo = gitpodHostUrl.with({ pathname: 'complete-auth', search: search }).toString();
+    const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search: search }).toString();
     const requestedScopes = scopes || [];
     const url = login
-        ? gitpodHostUrl.withApi({
-            pathname: '/login',
-            search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`
-        }).toString()
-        : gitpodHostUrl.withApi({
-            pathname: '/authorize',
-            search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}${overrideScopes ? "&override=true" : ""}&scopes=${requestedScopes.join(',')}`
-        }).toString();
+        ? gitpodHostUrl
+              .withApi({
+                  pathname: "/login",
+                  search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`,
+              })
+              .toString()
+        : gitpodHostUrl
+              .withApi({
+                  pathname: "/authorize",
+                  search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}${
+                      overrideScopes ? "&override=true" : ""
+                  }&scopes=${requestedScopes.join(",")}`,
+              })
+              .toString();
 
     const width = 800;
     const height = 800;
-    const left = (window.screen.width / 2) - (width / 2);
-    const top = (window.screen.height / 2) - (height / 2);
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
 
     // Optimistically assume that the new window was opened.
-    window.open(url, "gitpod-auth-window", `width=${width},height=${height},top=${top},left=${left}status=yes,scrollbars=yes,resizable=yes`);
+    window.open(
+        url,
+        "gitpod-auth-window",
+        `width=${width},height=${height},top=${top},left=${left}status=yes,scrollbars=yes,resizable=yes`,
+    );
 
     const eventListener = (event: MessageEvent) => {
         // todo: check event.origin
@@ -85,14 +95,14 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
                 console.log(`Received Auth Window Result. Closing Window.`);
                 event.source.close();
             }
-        }
+        };
 
         if (typeof event.data === "string" && event.data.startsWith("success")) {
             killAuthWindow();
             onSuccess && onSuccess(event.data);
         }
         if (typeof event.data === "string" && event.data.startsWith("error:")) {
-            let error: string | { error: string, description?: string } = atob(event.data.substring("error:".length));
+            let error: string | { error: string; description?: string } = atob(event.data.substring("error:".length));
             try {
                 const payload = JSON.parse(error);
                 if (typeof payload === "object" && payload.error) {
@@ -112,11 +122,14 @@ const getSafeURLRedirect = (source?: string) => {
     const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
     if (returnToURL) {
         // Only allow oauth on the same host
-        if (returnToURL.toLowerCase().startsWith(`${window.location.protocol}//${window.location.host}/api/oauth/`.toLowerCase())) {
+        if (
+            returnToURL
+                .toLowerCase()
+                .startsWith(`${window.location.protocol}//${window.location.host}/api/oauth/`.toLowerCase())
+        ) {
             return returnToURL;
         }
     }
-}
+};
 
-
-export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, getSafeURLRedirect }
+export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, getSafeURLRedirect };

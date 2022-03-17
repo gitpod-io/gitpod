@@ -10,7 +10,7 @@ import { IPrefixContextParser } from "./context-parser";
 
 @injectable()
 export class ImageBuildPrefixContextParser implements IPrefixContextParser {
-    static PREFIX = ContextURL.IMAGEBUILD_PREFIX + '/';
+    static PREFIX = ContextURL.IMAGEBUILD_PREFIX + "/";
 
     findPrefix(user: User, context: string): string | undefined {
         if (context.startsWith(ImageBuildPrefixContextParser.PREFIX)) {
@@ -19,7 +19,7 @@ export class ImageBuildPrefixContextParser implements IPrefixContextParser {
     }
 
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
-        context.forceImageBuild = true
+        context.forceImageBuild = true;
         return context;
     }
 }

@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 export namespace GitHubScope {
     export const EMAIL = "user:email";
     export const READ_USER = "read:user";
@@ -23,5 +22,5 @@ export namespace GitHubScope {
 
         PUBLIC_REPO: [PUBLIC],
         PRIVATE_REPO: [PRIVATE],
-    }
+    };
 }

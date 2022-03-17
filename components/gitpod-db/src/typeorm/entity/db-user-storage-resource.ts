@@ -9,11 +9,11 @@ import { TypeORM } from "../typeorm";
 
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
-export class DBUserStorageResource  {
+export class DBUserStorageResource {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     userId: string;
 
-    @PrimaryColumn('varchar')
+    @PrimaryColumn("varchar")
     uri: string;
 
     @Column("text")

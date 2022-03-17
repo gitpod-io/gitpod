@@ -6,8 +6,7 @@
 
 import { TermsAcceptanceEntry } from "@gitpod/gitpod-protocol";
 
-
-export const TermsAcceptanceDB = Symbol('TermsAcceptanceDB');
+export const TermsAcceptanceDB = Symbol("TermsAcceptanceDB");
 export interface TermsAcceptanceDB {
     getAcceptedRevision(userId: string): Promise<TermsAcceptanceEntry | undefined>;
     updateAcceptedRevision(userId: string, revision: string): Promise<void>;

@@ -4,28 +4,31 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { suite, test } from "mocha-typescript"
-import * as chai from "chai"
+import { suite, test } from "mocha-typescript";
+import * as chai from "chai";
 import { TraceContext } from "./tracing";
 import { MockTracer } from "opentracing";
 
-const expect = chai.expect
+const expect = chai.expect;
 
-@suite class TestTracing {
-
+@suite
+class TestTracing {
     @test public async testTracingContext_addNestedTags() {
         const tracer = new MockTracer();
-        const span = tracer.startSpan('testTracingContext_addNestedTags');
-        TraceContext.addNestedTags({ span }, {
-            rpc: {
-                system: "jsonrpc",
-                jsonrpc: {
-                    version: "1.0",
-                    method: "test",
-                    parameters: ["abc", "def"],
+        const span = tracer.startSpan("testTracingContext_addNestedTags");
+        TraceContext.addNestedTags(
+            { span },
+            {
+                rpc: {
+                    system: "jsonrpc",
+                    jsonrpc: {
+                        version: "1.0",
+                        method: "test",
+                        parameters: ["abc", "def"],
+                    },
                 },
             },
-        });
+        );
 
         const mockSpan = tracer.report().spans[0];
         expect(mockSpan.tags()).to.deep.equal({
@@ -39,13 +42,16 @@ const expect = chai.expect
 
     @test public async testTracingContext_addNestedTags_null() {
         const tracer = new MockTracer();
-        const span = tracer.startSpan('testTracingContext_addNestedTags_null');
-        TraceContext.addNestedTags({ span }, {
-            someShape: {
-                thisIsNull: null,
-                thisIsUndefined: undefined,
+        const span = tracer.startSpan("testTracingContext_addNestedTags_null");
+        TraceContext.addNestedTags(
+            { span },
+            {
+                someShape: {
+                    thisIsNull: null,
+                    thisIsUndefined: undefined,
+                },
             },
-        });
+        );
 
         const mockSpan = tracer.report().spans[0];
         expect(mockSpan.tags()).to.deep.equal({
@@ -56,7 +62,7 @@ const expect = chai.expect
 
     @test public async testTracingContext_addJsonRPCParameters() {
         const tracer = new MockTracer();
-        const span = tracer.startSpan('testTracingContext_addJsonRPCParameters');
+        const span = tracer.startSpan("testTracingContext_addJsonRPCParameters");
         const ctx = { span };
         TraceContext.addJsonRPCParameters(ctx, {
             one: "one",
@@ -78,6 +84,5 @@ const expect = chai.expect
             "rpc.system": "jsonrpc",
         });
     }
-
 }
-module.exports = new TestTracing()
+module.exports = new TestTracing();

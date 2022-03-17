@@ -11,22 +11,22 @@ import { TypeORM } from "../typeorm";
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBTeam implements Team {
-  @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
-  id: string;
+    @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
+    id: string;
 
-  @Column("varchar")
-  name: string;
+    @Column("varchar")
+    name: string;
 
-  @Column("varchar")
-  slug: string;
+    @Column("varchar")
+    slug: string;
 
-  @Column("varchar")
-  creationTime: string;
+    @Column("varchar")
+    creationTime: string;
 
-  @Column()
-  markedDeleted?: boolean;
+    @Column()
+    markedDeleted?: boolean;
 
-  // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
-  @Column()
-  deleted: boolean;
+    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    @Column()
+    deleted: boolean;
 }

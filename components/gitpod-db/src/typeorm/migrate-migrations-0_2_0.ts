@@ -13,7 +13,6 @@ import { columnExists, tableExists } from "./migration/helper/helper";
  * entrypoint that triggers this "meta-migration", which re-uses the common migration interface.
  */
 export class MigrateMigrations0_2_0 implements MigrationInterface {
-
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (await tableExists(queryRunner, "migrations")) {
             const idColumnExists = await columnExists(queryRunner, "migrations", "id");
@@ -39,5 +38,4 @@ export class MigrateMigrations0_2_0 implements MigrationInterface {
             }
         }
     }
-
 }

@@ -4,4 +4,4 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export const workspacesPathMain = '/workspaces';
+export const workspacesPathMain = "/workspaces";

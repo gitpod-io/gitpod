@@ -7,7 +7,7 @@
 
 import { MessageConnection } from "vscode-jsonrpc";
 
-export const ConnectionHandler = Symbol('ConnectionHandler');
+export const ConnectionHandler = Symbol("ConnectionHandler");
 
 export interface ConnectionHandler {
     readonly path: string;
@@ -18,10 +18,10 @@ export interface ConnectionEventHandler {
     /**
      * Called when the transport underpinning the connection got closed
      */
-     onTransportDidClose(): void;
+    onTransportDidClose(): void;
 
-     /**
-      * Called when the transport underpinning the connection is (re-)opened
-      */
-     onTransportDidOpen(): void;
+    /**
+     * Called when the transport underpinning the connection is (re-)opened
+     */
+    onTransportDidOpen(): void;
 }

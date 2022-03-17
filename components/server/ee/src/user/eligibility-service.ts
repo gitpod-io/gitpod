@@ -12,7 +12,7 @@ import { RemainingHours } from "@gitpod/gitpod-protocol/lib/accounting-protocol"
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Plans, MAX_PARALLEL_WORKSPACES } from "@gitpod/gitpod-protocol/lib/plans";
 import { Accounting, SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { millisecondsToHours} from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { millisecondsToHours } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { AccountStatementProvider, CachedAccountStatement } from "./account-statement-provider";
 import { EMailDomainService } from "../auth/email-domain-service";
 import fetch from "node-fetch";
@@ -36,13 +36,12 @@ export interface HitParallelWorkspaceLimit {
  *
  */
 export interface GitHubEducationPack {
-    student: boolean
-    faculty: boolean
+    student: boolean;
+    faculty: boolean;
 }
 
 @injectable()
 export class EligibilityService {
-
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
@@ -86,7 +85,7 @@ export class EligibilityService {
     async getGitHubEducationPack(user: User): Promise<GitHubEducationPack> {
         let token: string;
         try {
-            token = (await this.tokenProvider.getTokenForHost(user, "github.com")).value
+            token = (await this.tokenProvider.getTokenForHost(user, "github.com")).value;
         } catch (err) {
             // user has no GitHub token, thus cannot have the student/faculty pack
             return { student: false, faculty: false };
@@ -97,17 +96,24 @@ export class EligibilityService {
             const rawResponse = await fetch("https://education.github.com/api/user", {
                 timeout: 5000,
                 headers: {
-                    "Authorization": `token ${token}`,
-                    "faculty-check-preview": "true"
-                }
+                    Authorization: `token ${token}`,
+                    "faculty-check-preview": "true",
+                },
             });
             if (!rawResponse.ok) {
-                log.warn(logCtx, `fetching the GitHub Education API failed with status ${rawResponse.status}: ${rawResponse.statusText}`);
+                log.warn(
+                    logCtx,
+                    `fetching the GitHub Education API failed with status ${rawResponse.status}: ${rawResponse.statusText}`,
+                );
             }
-            const result : GitHubEducationPack = JSON.parse(await rawResponse.text());
-            if(result.student && result.faculty) {
+            const result: GitHubEducationPack = JSON.parse(await rawResponse.text());
+            if (result.student && result.faculty) {
                 // That violates the API contract: `student` and `faculty` need to be mutually exclusive
-                log.warn(logCtx, "result of GitHub Eduction API violates the API contract: student and faculty need to be mutually exclusive", result);
+                log.warn(
+                    logCtx,
+                    "result of GitHub Eduction API violates the API contract: student and faculty need to be mutually exclusive",
+                    result,
+                );
                 return { student: false, faculty: false };
             }
             return result;
@@ -124,19 +130,23 @@ export class EligibilityService {
      * @param date now
      * @param runningInstances
      */
-    async mayStartWorkspace(user: User, date: Date, runningInstances: Promise<WorkspaceInstance[]>): Promise<MayStartWorkspaceResult> {
+    async mayStartWorkspace(
+        user: User,
+        date: Date,
+        runningInstances: Promise<WorkspaceInstance[]>,
+    ): Promise<MayStartWorkspaceResult> {
         if (!this.config.enablePayment) {
             return { enoughCredits: true };
         }
 
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
             const max = await this.getMaxParallelWorkspaces(user);
-            const instances = (await runningInstances).filter(i => i.status.phase !== "unknown");
-            const current = instances.length;   // >= parallelWorkspaceAllowance;
+            const instances = (await runningInstances).filter((i) => i.status.phase !== "unknown");
+            const current = instances.length; // >= parallelWorkspaceAllowance;
             if (current >= max) {
                 return {
                     current,
-                    max
+                    max,
                 };
             } else {
                 return undefined;
@@ -144,12 +154,12 @@ export class EligibilityService {
         };
         const [enoughCredits, hitParallelWorkspaceLimit] = await Promise.all([
             this.checkEnoughCreditForWorkspaceStart(user.id, date, runningInstances),
-            hasHitParallelWorkspaceLimit()
+            hasHitParallelWorkspaceLimit(),
         ]);
 
         return {
             enoughCredits: !!enoughCredits,
-            hitParallelWorkspaceLimit
+            hitParallelWorkspaceLimit,
         };
     }
 
@@ -165,18 +175,26 @@ export class EligibilityService {
         }
 
         const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, date.toISOString());
-        return subscriptions.map(s => Plans.getParallelWorkspacesById(s.planId)).reduce((p, v) => Math.max(p, v));
+        return subscriptions.map((s) => Plans.getParallelWorkspacesById(s.planId)).reduce((p, v) => Math.max(p, v));
     }
 
-    protected async checkEnoughCreditForWorkspaceStart(userId: string, date: Date, runningInstances: Promise<WorkspaceInstance[]>): Promise<boolean> {
+    protected async checkEnoughCreditForWorkspaceStart(
+        userId: string,
+        date: Date,
+        runningInstances: Promise<WorkspaceInstance[]>,
+    ): Promise<boolean> {
         // As retrieving a full AccountStatement is expensive we want to cache it as much as possible.
         const cachedAccountStatement = this.accountStatementProvider.getCachedStatement();
         const lowerBound = this.getRemainingUsageHoursLowerBound(cachedAccountStatement, date.toISOString());
-        if (lowerBound && (lowerBound === 'unlimited' || lowerBound > Accounting.MINIMUM_CREDIT_FOR_OPEN_IN_HOURS)) {
+        if (lowerBound && (lowerBound === "unlimited" || lowerBound > Accounting.MINIMUM_CREDIT_FOR_OPEN_IN_HOURS)) {
             return true;
         }
 
-        const remainingUsageHours = await this.accountStatementProvider.getRemainingUsageHours(userId, date.toISOString(), runningInstances)
+        const remainingUsageHours = await this.accountStatementProvider.getRemainingUsageHours(
+            userId,
+            date.toISOString(),
+            runningInstances,
+        );
         return remainingUsageHours > Accounting.MINIMUM_CREDIT_FOR_OPEN_IN_HOURS;
     }
 
@@ -184,12 +202,15 @@ export class EligibilityService {
      * Tries to calculate the lower bound of remaining usage hours based on cached AccountStatements
      * with the goal to improve workspace startup times.
      */
-    protected getRemainingUsageHoursLowerBound(cachedStatement: CachedAccountStatement | undefined, date: string): RemainingHours | undefined {
+    protected getRemainingUsageHoursLowerBound(
+        cachedStatement: CachedAccountStatement | undefined,
+        date: string,
+    ): RemainingHours | undefined {
         if (!cachedStatement) {
             return undefined;
         }
-        if (cachedStatement.remainingHours === 'unlimited') {
-            return 'unlimited';
+        if (cachedStatement.remainingHours === "unlimited") {
+            return "unlimited";
         }
 
         const diffInMillis = new Date(cachedStatement.endDate).getTime() - new Date(date).getTime();
@@ -218,9 +239,9 @@ export class EligibilityService {
             Plans.TEAM_PROFESSIONAL_USD,
             Plans.TEAM_PROFESSIONAL_STUDENT_EUR,
             Plans.TEAM_PROFESSIONAL_STUDENT_USD,
-        ].map(p => p.chargebeeId);
+        ].map((p) => p.chargebeeId);
 
-        return subscriptions.filter(s => eligblePlans.includes(s.planId!)).length > 0;
+        return subscriptions.filter((s) => eligblePlans.includes(s.planId!)).length > 0;
     }
 
     /**
@@ -246,9 +267,9 @@ export class EligibilityService {
             Plans.PROFESSIONAL_USD,
             Plans.TEAM_PROFESSIONAL_EUR,
             Plans.TEAM_PROFESSIONAL_USD,
-        ].map(p => p.chargebeeId);
+        ].map((p) => p.chargebeeId);
 
-        return subscriptions.filter(s => eligblePlans.includes(s.planId!)).length > 0;
+        return subscriptions.filter((s) => eligblePlans.includes(s.planId!)).length > 0;
     }
 
     /**
@@ -261,29 +282,34 @@ export class EligibilityService {
             return true;
         }
 
-        const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, new Date().toISOString());
+        const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(
+            user,
+            new Date().toISOString(),
+        );
         const eligblePlans = [
             Plans.PROFESSIONAL_EUR,
             Plans.PROFESSIONAL_USD,
             Plans.TEAM_PROFESSIONAL_EUR,
             Plans.TEAM_PROFESSIONAL_USD,
-        ].map(p => p.chargebeeId);
+        ].map((p) => p.chargebeeId);
 
-        const relevantSubscriptions = subscriptions.filter(s => eligblePlans.includes(s.planId!));
+        const relevantSubscriptions = subscriptions.filter((s) => eligblePlans.includes(s.planId!));
         if (relevantSubscriptions.length === 0) {
             // user has no subscription that grants "more resources"
             return false;
         }
 
         // some TeamSubscriptions are marked with 'excludeFromMoreResources' to convey that those are _not_ receiving more resources
-        const excludeFromMoreResources = await Promise.all(relevantSubscriptions.map(async (s): Promise<boolean> => {
-            if (!s.teamSubscriptionSlotId) {
-                return false;
-            }
-            const ts = await this.teamSubscriptionDb.findTeamSubscriptionBySlotId(s.teamSubscriptionSlotId);
-            return !!ts?.excludeFromMoreResources;
-        }));
-        if (excludeFromMoreResources.every(b => b)) {
+        const excludeFromMoreResources = await Promise.all(
+            relevantSubscriptions.map(async (s): Promise<boolean> => {
+                if (!s.teamSubscriptionSlotId) {
+                    return false;
+                }
+                const ts = await this.teamSubscriptionDb.findTeamSubscriptionBySlotId(s.teamSubscriptionSlotId);
+                return !!ts?.excludeFromMoreResources;
+            }),
+        );
+        if (excludeFromMoreResources.every((b) => b)) {
             // if all TS the user is part of are marked this way, we deny that privilege
             return false;
         }
@@ -292,7 +318,7 @@ export class EligibilityService {
     }
 
     protected async getUser(user: User | string): Promise<User> {
-        if (typeof user === 'string') {
+        if (typeof user === "string") {
             const realUser = await this.userDb.findUserById(user);
             if (!realUser) {
                 throw new Error(`No User found for id ${user}!`);
@@ -302,5 +328,4 @@ export class EligibilityService {
             return user;
         }
     }
-
 }

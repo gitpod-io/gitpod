@@ -19,8 +19,7 @@ import { EncryptionService, EncryptionServiceImpl } from "./encryption-service";
  *      };
  *  }).inSingletonScope();
  */
-export const encryptionModule: interfaces.ContainerModuleCallBack = bind => {
-
+export const encryptionModule: interfaces.ContainerModuleCallBack = (bind) => {
     bind(KeyProvider).to(KeyProviderImpl).inSingletonScope();
 
     bind(EncryptionEngine).to(EncryptionEngineImpl).inSingletonScope();

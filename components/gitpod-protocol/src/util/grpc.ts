@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
- export const defaultGRPCOptions = {
+export const defaultGRPCOptions = {
     "grpc.keepalive_timeout_ms": 10000,
     "grpc.keepalive_time_ms": 60000,
     "grpc.http2.min_time_between_pings_ms": 10000,

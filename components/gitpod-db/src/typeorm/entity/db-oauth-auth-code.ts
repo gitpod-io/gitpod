@@ -9,7 +9,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "t
 import { Transformer } from "../transformer";
 import { DBUser } from "./db-user";
 
-@Entity({ name: 'd_b_oauth_auth_code_entry' })
+@Entity({ name: "d_b_oauth_auth_code_entry" })
 export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
     @PrimaryGeneratedColumn()
     id: number;
@@ -23,8 +23,8 @@ export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
     @Column({
         type: "varchar",
         length: 1024,
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     redirectURI?: string;
 
@@ -32,33 +32,33 @@ export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
         type: "varchar",
         length: 128,
     })
-    codeChallenge: string
+    codeChallenge: string;
 
     @Column({
         type: "varchar",
         length: 10,
     })
-    codeChallengeMethod: string
+    codeChallengeMethod: string;
 
     @Column({
-        type: 'timestamp',
-        precision: 6
+        type: "timestamp",
+        precision: 6,
     })
     expiresAt: Date;
 
-    @ManyToOne(type => DBUser)
+    @ManyToOne((type) => DBUser)
     @JoinColumn()
-    user: DBUser
+    user: DBUser;
 
     @Column({
-        type: 'simple-json',
+        type: "simple-json",
         nullable: false,
     })
-    client: OAuthClient
+    client: OAuthClient;
 
     @Column({
-        type: 'simple-json',
+        type: "simple-json",
         nullable: false,
     })
-    scopes: OAuthScope[]
+    scopes: OAuthScope[];
 }

@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Container } from 'inversify';
-import { dbContainerModule } from './container-module';
+import { Container } from "inversify";
+import { dbContainerModule } from "./container-module";
 
 export const testContainer = new Container();
 testContainer.load(dbContainerModule);

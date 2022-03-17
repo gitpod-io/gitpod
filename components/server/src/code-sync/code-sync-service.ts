@@ -4,28 +4,41 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { status } from '@grpc/grpc-js';
-import fetch from 'node-fetch';
-import { User } from '@gitpod/gitpod-protocol/lib/protocol';
-import bodyParser = require('body-parser');
-import * as util from 'util';
-import * as express from 'express';
-import { inject, injectable } from 'inversify';
-import { BearerAuth } from '../auth/bearer-authenticator';
-import { isWithFunctionAccessGuard } from '../auth/function-access';
-import { CodeSyncResourceDB, UserStorageResourcesDB, ALL_SERVER_RESOURCES, ServerResource, SyncResource } from '@gitpod/gitpod-db/lib';
-import { DeleteRequest, DeleteResponse, DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { v4 as uuidv4 } from 'uuid';
-import { accessCodeSyncStorage, UserRateLimiter } from '../auth/rate-limiter';
-import { increaseApiCallUserCounter } from '../prometheus-metrics';
-import { Config } from '../config';
-import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/sugar';
+import { status } from "@grpc/grpc-js";
+import fetch from "node-fetch";
+import { User } from "@gitpod/gitpod-protocol/lib/protocol";
+import bodyParser = require("body-parser");
+import * as util from "util";
+import * as express from "express";
+import { inject, injectable } from "inversify";
+import { BearerAuth } from "../auth/bearer-authenticator";
+import { isWithFunctionAccessGuard } from "../auth/function-access";
+import {
+    CodeSyncResourceDB,
+    UserStorageResourcesDB,
+    ALL_SERVER_RESOURCES,
+    ServerResource,
+    SyncResource,
+} from "@gitpod/gitpod-db/lib";
+import {
+    DeleteRequest,
+    DeleteResponse,
+    DownloadUrlRequest,
+    DownloadUrlResponse,
+    UploadUrlRequest,
+    UploadUrlResponse,
+} from "@gitpod/content-service/lib/blobs_pb";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { v4 as uuidv4 } from "uuid";
+import { accessCodeSyncStorage, UserRateLimiter } from "../auth/rate-limiter";
+import { increaseApiCallUserCounter } from "../prometheus-metrics";
+import { Config } from "../config";
+import { CachingBlobServiceClientProvider } from "@gitpod/content-service/lib/sugar";
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defaultRevLimit = 20;
 // It should keep it aligned with client_max_body_size for /code-sync location.
-const defaultContentLimit = '1Mb';
+const defaultContentLimit = "1Mb";
 export type CodeSyncConfig = Partial<{
     revLimit: number;
     contentLimit: number;
@@ -36,12 +49,12 @@ export type CodeSyncConfig = Partial<{
     };
 }>;
 
-const objectPrefix = 'code-sync/';
+const objectPrefix = "code-sync/";
 function toObjectName(resource: ServerResource, rev: string): string {
-    return objectPrefix + resource + '/' + rev;
+    return objectPrefix + resource + "/" + rev;
 }
 
-const fromTheiaRev = 'from-theia';
+const fromTheiaRev = "from-theia";
 interface ISyncData {
     version: number;
     machineId?: string;
@@ -50,8 +63,8 @@ interface ISyncData {
 interface ISettingsSyncContent {
     settings: string;
 }
-const userSettingsUri = 'user_storage:settings.json';
-const userPluginsUri = 'user-plugins://';
+const userSettingsUri = "user_storage:settings.json";
+const userPluginsUri = "user-plugins://";
 
 @injectable()
 export class CodeSyncService {
@@ -75,7 +88,7 @@ export class CodeSyncService {
         const router = express.Router();
         router.use((_, res, next) => {
             // to correlate errors reported by users with errors logged by the server
-            res.setHeader('x-operation-id', uuidv4());
+            res.setHeader("x-operation-id", uuidv4());
             return next();
         });
         router.use(this.auth.restHandler);
@@ -93,8 +106,8 @@ export class CodeSyncService {
                 if (e instanceof Error) {
                     throw e;
                 }
-                res.setHeader('Retry-After', String(Math.round(e.msBeforeNext / 1000)) || 1);
-                res.status(429).send('Too Many Requests');
+                res.setHeader("Retry-After", String(Math.round(e.msBeforeNext / 1000)) || 1);
+                res.status(429).send("Too Many Requests");
                 return;
             }
 
@@ -104,7 +117,7 @@ export class CodeSyncService {
             }
             return next();
         });
-        router.get('/v1/manifest', async (req, res) => {
+        router.get("/v1/manifest", async (req, res) => {
             if (!User.is(req.user)) {
                 res.sendStatus(204);
                 return;
@@ -119,30 +132,30 @@ export class CodeSyncService {
             res.json(manifest);
             return;
         });
-        router.get('/v1/resource/:resource', async (req, res) => {
+        router.get("/v1/resource/:resource", async (req, res) => {
             if (!User.is(req.user)) {
                 res.sendStatus(204);
                 return;
             }
-            const resourceKey = ALL_SERVER_RESOURCES.find(key => key === req.params.resource);
+            const resourceKey = ALL_SERVER_RESOURCES.find((key) => key === req.params.resource);
             const revs = resourceKey && (await this.db.getResources(req.user.id, resourceKey));
             if (!revs || !revs.length) {
                 res.sendStatus(204);
                 return;
             }
-            const result: { url: string; created: number }[] = revs.map(e => ({
-                url: req.originalUrl + '/' + e.rev,
+            const result: { url: string; created: number }[] = revs.map((e) => ({
+                url: req.originalUrl + "/" + e.rev,
                 created: Date.parse(e.created) / 1000 /* client expects in secondsm */,
             }));
             res.json(result);
             return;
         });
-        router.get('/v1/resource/:resource/:ref', async (req, res) => {
+        router.get("/v1/resource/:resource/:ref", async (req, res) => {
             if (!User.is(req.user)) {
                 res.sendStatus(204);
                 return;
             }
-            const resourceKey = ALL_SERVER_RESOURCES.find(key => key === req.params.resource);
+            const resourceKey = ALL_SERVER_RESOURCES.find((key) => key === req.params.resource);
             if (!resourceKey) {
                 res.sendStatus(204);
                 return;
@@ -155,11 +168,11 @@ export class CodeSyncService {
                 resourceRev = fromTheiaRev;
             }
             if (!resourceRev) {
-                res.setHeader('etag', '0');
+                res.setHeader("etag", "0");
                 res.sendStatus(204);
                 return;
             }
-            if (req.headers['If-None-Match'] === resourceRev) {
+            if (req.headers["If-None-Match"] === resourceRev) {
                 res.sendStatus(304);
                 return;
             }
@@ -167,7 +180,7 @@ export class CodeSyncService {
             let content: string;
             if (resourceRev === fromTheiaRev) {
                 let version = 1;
-                let value = '';
+                let value = "";
                 if (resourceKey === SyncResource.Extensions) {
                     value = await this.getTheiaCodeSyncResource(req.user.id);
                     version = 5;
@@ -178,22 +191,26 @@ export class CodeSyncService {
                 }
                 content = JSON.stringify(<ISyncData>{ version, content: value });
             } else {
-                const contentType = req.headers['content-type'] || '*/*';
+                const contentType = req.headers["content-type"] || "*/*";
                 const request = new DownloadUrlRequest();
                 request.setOwnerId(req.user.id);
                 request.setName(toObjectName(resourceKey, resourceRev));
                 request.setContentType(contentType);
                 try {
                     const blobsClient = this.blobsProvider.getDefault();
-                    const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(blobsClient.downloadUrl.bind(blobsClient))(request);
+                    const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(
+                        blobsClient.downloadUrl.bind(blobsClient),
+                    )(request);
                     const response = await fetch(urlResponse.getUrl(), {
                         timeout: 10000,
                         headers: {
-                            'content-type': contentType,
+                            "content-type": contentType,
                         },
                     });
                     if (response.status !== 200) {
-                        throw new Error(`code sync: blob service: download failed with ${response.status} ${response.statusText}`);
+                        throw new Error(
+                            `code sync: blob service: download failed with ${response.status} ${response.statusText}`,
+                        );
                     }
                     content = await response.text();
                 } catch (e) {
@@ -204,64 +221,80 @@ export class CodeSyncService {
                     throw e;
                 }
             }
-            res.setHeader('etag', resourceRev);
-            res.type('text/plain');
+            res.setHeader("etag", resourceRev);
+            res.type("text/plain");
             res.send(content);
         });
-        router.post('/v1/resource/:resource', bodyParser.text({
-            limit: config?.contentLimit || defaultContentLimit
-        }), async (req, res) => {
-            if (!User.is(req.user)) {
-                res.sendStatus(204);
-                return;
-            }
-            const resourceKey = ALL_SERVER_RESOURCES.find(key => key === req.params.resource);
-            if (!resourceKey) {
-                res.sendStatus(204);
-                return;
-            }
-            let latestRev = typeof req.headers['If-Match'] === 'string' ? req.headers['If-Match'] : undefined;
-            if (latestRev === fromTheiaRev) {
-                latestRev = undefined;
-            }
-            const revLimit = resourceKey === 'machines' ? 1 : config.resources?.[resourceKey]?.revLimit || config?.revLimit || defaultRevLimit;
-            const userId = req.user.id;
-            const contentType = req.headers['content-type'] || '*/*';
-            let oldRevList: string[] = [];
-            const rev = await this.db.insert(userId, resourceKey, async (rev, oldRevs) => {
-                const request = new UploadUrlRequest();
-                request.setOwnerId(userId);
-                request.setName(toObjectName(resourceKey, rev));
-                request.setContentType(contentType);
-                const blobsClient = this.blobsProvider.getDefault();
-                const urlResponse = await util.promisify<UploadUrlRequest, UploadUrlResponse>(blobsClient.uploadUrl.bind(blobsClient))(request);
-                const url = urlResponse.getUrl();
-                const content = req.body as string;
-                const response = await fetch(url, {
-                    timeout: 10000,
-                    method: 'PUT',
-                    body: content,
-                    headers: {
-                        'content-length': req.headers['content-length'] || String(content.length),
-                        'content-type': contentType
-                    }
-                });
-                if (response.status !== 200) {
-                    throw new Error(`code sync: blob service: upload failed with ${response.status} ${response.statusText}`);
+        router.post(
+            "/v1/resource/:resource",
+            bodyParser.text({
+                limit: config?.contentLimit || defaultContentLimit,
+            }),
+            async (req, res) => {
+                if (!User.is(req.user)) {
+                    res.sendStatus(204);
+                    return;
                 }
-                oldRevList = oldRevs
-            }, { latestRev, revLimit });
-            // sync delete old revs from storage
-            this.deleteObjects(userId, resourceKey, oldRevList).catch(e => {});
-            if (!rev) {
-                res.sendStatus(412);
+                const resourceKey = ALL_SERVER_RESOURCES.find((key) => key === req.params.resource);
+                if (!resourceKey) {
+                    res.sendStatus(204);
+                    return;
+                }
+                let latestRev = typeof req.headers["If-Match"] === "string" ? req.headers["If-Match"] : undefined;
+                if (latestRev === fromTheiaRev) {
+                    latestRev = undefined;
+                }
+                const revLimit =
+                    resourceKey === "machines"
+                        ? 1
+                        : config.resources?.[resourceKey]?.revLimit || config?.revLimit || defaultRevLimit;
+                const userId = req.user.id;
+                const contentType = req.headers["content-type"] || "*/*";
+                let oldRevList: string[] = [];
+                const rev = await this.db.insert(
+                    userId,
+                    resourceKey,
+                    async (rev, oldRevs) => {
+                        const request = new UploadUrlRequest();
+                        request.setOwnerId(userId);
+                        request.setName(toObjectName(resourceKey, rev));
+                        request.setContentType(contentType);
+                        const blobsClient = this.blobsProvider.getDefault();
+                        const urlResponse = await util.promisify<UploadUrlRequest, UploadUrlResponse>(
+                            blobsClient.uploadUrl.bind(blobsClient),
+                        )(request);
+                        const url = urlResponse.getUrl();
+                        const content = req.body as string;
+                        const response = await fetch(url, {
+                            timeout: 10000,
+                            method: "PUT",
+                            body: content,
+                            headers: {
+                                "content-length": req.headers["content-length"] || String(content.length),
+                                "content-type": contentType,
+                            },
+                        });
+                        if (response.status !== 200) {
+                            throw new Error(
+                                `code sync: blob service: upload failed with ${response.status} ${response.statusText}`,
+                            );
+                        }
+                        oldRevList = oldRevs;
+                    },
+                    { latestRev, revLimit },
+                );
+                // sync delete old revs from storage
+                this.deleteObjects(userId, resourceKey, oldRevList).catch((e) => {});
+                if (!rev) {
+                    res.sendStatus(412);
+                    return;
+                }
+                res.setHeader("etag", rev);
+                res.sendStatus(200);
                 return;
-            }
-            res.setHeader('etag', rev);
-            res.sendStatus(200);
-            return;
-        });
-        router.delete('/v1/resource', async (req, res) => {
+            },
+        );
+        router.delete("/v1/resource", async (req, res) => {
             if (!User.is(req.user)) {
                 res.sendStatus(204);
                 return;
@@ -275,7 +308,7 @@ export class CodeSyncService {
                     const blobsClient = this.blobsProvider.getDefault();
                     await util.promisify(blobsClient.delete.bind(blobsClient))(request);
                 } catch (e) {
-                    log.error({ userId }, 'code sync: failed to delete', e);
+                    log.error({ userId }, "code sync: failed to delete", e);
                 }
             });
             res.sendStatus(200);
@@ -286,7 +319,7 @@ export class CodeSyncService {
     }
 
     private parseFullPluginName(fullPluginName: string): { name: string; version?: string } {
-        const idx = fullPluginName.lastIndexOf('@');
+        const idx = fullPluginName.lastIndexOf("@");
         if (idx === -1) {
             return {
                 name: fullPluginName.toLowerCase(),
@@ -310,7 +343,7 @@ export class CodeSyncService {
         const json = content && JSON.parse(content);
         const userPlugins = new Set<string>(json);
         for (const userPlugin of userPlugins) {
-            const fullPluginName = (userPlugin.substring(0, userPlugin.lastIndexOf(':')) || userPlugin).toLowerCase(); // drop hash
+            const fullPluginName = (userPlugin.substring(0, userPlugin.lastIndexOf(":")) || userPlugin).toLowerCase(); // drop hash
             const { name, version } = this.parseFullPluginName(fullPluginName);
             extensions.push({
                 identifier: { id: name },
@@ -322,24 +355,30 @@ export class CodeSyncService {
     }
 
     protected async deleteObjects(userId: string, resourceKey: ServerResource, revs: string[]) {
-        const tasks = revs.map(rev => this.db.deleteResource(userId, resourceKey, rev, async (rev: string) => {
-            const obj = toObjectName(resourceKey, rev);
-            try {
-                const request = new DeleteRequest();
-                request.setOwnerId(userId);
-                request.setExact(obj);
-                const blobsClient = this.blobsProvider.getDefault();
-                await util.promisify<DeleteRequest, DeleteResponse>(blobsClient.delete.bind(blobsClient))(request);
-            } catch (err) {
-                if (err.code === status.NOT_FOUND) {
-                    return;
-                }
-                log.error({ userId }, 'code sync: failed to delete obj', err, { object: obj });
-                throw err;
-            }
-        }).catch(err => {
-            log.error({ userId }, 'code sync: failed to delete', err);
-        }))
+        const tasks = revs.map((rev) =>
+            this.db
+                .deleteResource(userId, resourceKey, rev, async (rev: string) => {
+                    const obj = toObjectName(resourceKey, rev);
+                    try {
+                        const request = new DeleteRequest();
+                        request.setOwnerId(userId);
+                        request.setExact(obj);
+                        const blobsClient = this.blobsProvider.getDefault();
+                        await util.promisify<DeleteRequest, DeleteResponse>(blobsClient.delete.bind(blobsClient))(
+                            request,
+                        );
+                    } catch (err) {
+                        if (err.code === status.NOT_FOUND) {
+                            return;
+                        }
+                        log.error({ userId }, "code sync: failed to delete obj", err, { object: obj });
+                        throw err;
+                    }
+                })
+                .catch((err) => {
+                    log.error({ userId }, "code sync: failed to delete", err);
+                }),
+        );
         await Promise.allSettled(tasks);
         return;
     }

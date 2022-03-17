@@ -10,9 +10,9 @@ import { TypeORM } from "../typeorm";
 
 @Entity()
 export class DBInstallationAdmin implements InstallationAdmin {
-  @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
-  id: string;
+    @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
+    id: string;
 
-  @Column('simple-json')
-  settings: InstallationAdminSettings;
+    @Column("simple-json")
+    settings: InstallationAdminSettings;
 }

@@ -4,10 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User as GitpodUser } from '@gitpod/gitpod-protocol';
-import { AuthFlow } from './auth/auth-provider';
-import { TosFlow } from './terms/tos-flow';
-import * as session from 'express-session';
+import { User as GitpodUser } from "@gitpod/gitpod-protocol";
+import { AuthFlow } from "./auth/auth-provider";
+import { TosFlow } from "./terms/tos-flow";
+import * as session from "express-session";
 
 // use declaration merging (https://www.typescriptlang.org/docs/handbook/declaration-merging.html) to augment the standard passport/express definitions
 declare global {
@@ -16,7 +16,7 @@ declare global {
     }
 }
 
-declare module 'express-session' {
+declare module "express-session" {
     interface SessionData {
         tosFlowInfo?: TosFlow;
         authFlow?: AuthFlow;

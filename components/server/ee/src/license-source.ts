@@ -15,10 +15,10 @@ export class DBLicenseKeySource implements LicenseKeySource {
     @inject(Config) protected readonly config: Config;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
 
-    async getKey(): Promise<{ key: string; domain: string; }> {
+    async getKey(): Promise<{ key: string; domain: string }> {
         let key: string = "";
         try {
-            key = await this.licenseDB.get() || "";
+            key = (await this.licenseDB.get()) || "";
         } catch (err) {
             log.error("cannot get license key - even if you have a license, the EE features won't work", err);
         }

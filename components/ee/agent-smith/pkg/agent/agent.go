@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -211,12 +212,24 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 		clo = make(chan classifiedProcess, 50)
 	)
 	agent.metrics.RegisterClassificationQueues(cli, clo)
+
+	workspaces := make(map[int]*common.Workspace)
+	wsMutex := &sync.Mutex{}
+
 	defer wg.Wait()
 	for i := 0; i < 25; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for i := range cli {
+				// Update the workspaces map if this process belongs to a new workspace
+				wsMutex.Lock()
+				if _, ok := workspaces[i.Workspace.PID]; !ok {
+					log.Debugf("adding workspace with pid %d and workspaceId %s to workspaces", i.Workspace.PID, i.Workspace.WorkspaceID)
+					workspaces[i.Workspace.PID] = i.Workspace
+				}
+				wsMutex.Unlock()
+				// perform classification of the process
 				class, err := agent.classifier.Matches(i.Path, i.CommandLine)
 				// optimisation: early out to not block on the CLO chan
 				if err == nil && class.Level == classifier.LevelNoMatch {
@@ -226,6 +239,40 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 			}
 		}()
 	}
+
+	egressTicker := time.NewTicker(2 * time.Minute)
+
+	go func() {
+		for {
+			<-egressTicker.C
+			wsMutex.Lock()
+			for pid, ws := range workspaces {
+				// check if the workspace is already stopped
+				fi, err := os.Stat(fmt.Sprintf("/proc/%d", pid))
+				if err != nil {
+					if os.IsNotExist(err) {
+						log.Debugf("deleting workspace with pid %d and workspaceId %s from workspaces", pid, ws.WorkspaceID)
+						delete(workspaces, pid)
+					} else {
+						log.WithError(err).WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Error("could not stat workspace, stale entries will continue to exist in workspaces state")
+					}
+					continue
+				}
+				infringement, err := agent.checkEgressTrafficCallback(pid, fi.ModTime())
+				if err != nil {
+					log.WithError(err).WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Error("error calling checkEgressTrafficCallback")
+					continue
+				}
+				if infringement != nil {
+					log.WithFields(log.OWI(ws.OwnerID, ws.WorkspaceID, ws.InstanceID)).Info("found egress infringing workspace")
+					// monitor metric here, as we are not penalizing workspaces yet
+					agent.metrics.egressViolations.WithLabelValues(string(infringement.Kind)).Inc()
+				}
+
+			}
+			wsMutex.Unlock()
+		}
+	}()
 
 	defer log.Info("agent smith main loop ended")
 
@@ -265,7 +312,7 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 				continue
 			}
 
-			agent.Penalize(InfringingWorkspace{
+			_, _ = agent.Penalize(InfringingWorkspace{
 				SupervisorPID: proc.Workspace.PID,
 				Owner:         proc.Workspace.OwnerID,
 				InstanceID:    proc.Workspace.InstanceID,
@@ -394,6 +441,7 @@ func (agent *Smith) checkEgressTrafficCallback(pid int, pidCreationTime time.Tim
 		return nil, err
 	}
 
+	log.Debugf("total egress bytes %d", resp)
 	if resp <= 0 {
 		log.WithField("total egress bytes", resp).Warn("GetEgressTraffic returned <= 0 value")
 		return nil, nil

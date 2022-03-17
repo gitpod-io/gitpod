@@ -6,15 +6,14 @@
 
 import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
 import { Schema } from "bitbucket";
-import { inject, injectable } from 'inversify';
+import { inject, injectable } from "inversify";
 import { URL } from "url";
-import { RepoURL } from '../repohost/repo-url';
-import { RepositoryProvider } from '../repohost/repository-provider';
-import { BitbucketApiFactory } from './bitbucket-api-factory';
+import { RepoURL } from "../repohost/repo-url";
+import { RepositoryProvider } from "../repohost/repository-provider";
+import { BitbucketApiFactory } from "./bitbucket-api-factory";
 
 @injectable()
 export class BitbucketRepositoryProvider implements RepositoryProvider {
-
     @inject(BitbucketApiFactory) protected readonly apiFactory: BitbucketApiFactory;
 
     async getRepo(user: User, owner: string, name: string): Promise<Repository> {
@@ -23,7 +22,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         let cloneUrl = repo.links!.clone!.find((x: any) => x.name === "https")!.href!;
         if (cloneUrl) {
             const url = new URL(cloneUrl);
-            url.username = '';
+            url.username = "";
             cloneUrl = url.toString();
         }
         const host = RepoURL.parseRepoUrl(cloneUrl)!.host;
@@ -39,8 +38,8 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         const response = await api.repositories.getBranch({
             workspace: owner,
             repo_slug: repo,
-            name: branchName
-        })
+            name: branchName,
+        });
 
         const branch = response.data;
 
@@ -53,7 +52,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
                 authorAvatarUrl: branch.target?.author?.user?.links?.avatar?.href,
                 authorDate: branch.target?.date!,
                 commitMessage: branch.target?.message || "missing commit message",
-            }
+            },
         };
     }
 
@@ -63,8 +62,8 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         const response = await api.repositories.listBranches({
             workspace: owner,
             repo_slug: repo,
-            sort: "target.date"
-        })
+            sort: "target.date",
+        });
 
         for (const branch of response.data.values!) {
             branches.push({
@@ -76,7 +75,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
                     authorAvatarUrl: branch.target?.author?.user?.links?.avatar?.href,
                     authorDate: branch.target?.date!,
                     commitMessage: branch.target?.message || "missing commit message",
-                }
+                },
             });
         }
 
@@ -88,8 +87,8 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         const response = await api.commits.get({
             workspace: owner,
             repo_slug: repo,
-            commit: ref
-        })
+            commit: ref,
+        });
         const commit = response.data;
         return {
             sha: commit.hash!,
@@ -110,7 +109,13 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         return false;
     }
 
-    public async getCommitHistory(user: User, owner: string, repo: string, revision: string, maxDepth: number = 100): Promise<string[]> {
+    public async getCommitHistory(
+        user: User,
+        owner: string,
+        repo: string,
+        revision: string,
+        maxDepth: number = 100,
+    ): Promise<string[]> {
         const api = await this.apiFactory.create(user);
         // TODO(janx): To get more results than Bitbucket API's max pagelen (seems to be 100), pagination should be handled.
         // The additional property 'page' may be helfpul.

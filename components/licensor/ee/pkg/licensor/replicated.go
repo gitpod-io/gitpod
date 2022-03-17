@@ -23,15 +23,25 @@ type replicatedFields struct {
 	Value interface{} `json:"value"` // This is of type "fieldType"
 }
 
+type ReplicatedLicenseType string
+
+// variable names are what Replicated calls them in the vendor portal
+const (
+	ReplicatedLicenseTypeCommunity   ReplicatedLicenseType = "community"
+	ReplicatedLicenseTypeDevelopment ReplicatedLicenseType = "dev"
+	ReplicatedLicenseTypePaid        ReplicatedLicenseType = "prod"
+	ReplicatedLicenseTypeTrial       ReplicatedLicenseType = "trial"
+)
+
 // replicatedLicensePayload exists to convert the JSON structure to a LicensePayload
 type replicatedLicensePayload struct {
-	LicenseID      string             `json:"license_id"`
-	InstallationID string             `json:"installation_id"`
-	Assignee       string             `json:"assignee"`
-	ReleaseChannel string             `json:"release_channel"`
-	LicenseType    string             `json:"license_type"`
-	ExpirationTime *time.Time         `json:"expiration_time,omitempty"` // Not set if license never expires
-	Fields         []replicatedFields `json:"fields"`
+	LicenseID      string                `json:"license_id"`
+	InstallationID string                `json:"installation_id"`
+	Assignee       string                `json:"assignee"`
+	ReleaseChannel string                `json:"release_channel"`
+	LicenseType    ReplicatedLicenseType `json:"license_type"`
+	ExpirationTime *time.Time            `json:"expiration_time,omitempty"` // Not set if license never expires
+	Fields         []replicatedFields    `json:"fields"`
 }
 
 type ReplicatedEvaluator struct {
@@ -69,28 +79,29 @@ func (e *ReplicatedEvaluator) Validate() (msg string, valid bool) {
 }
 
 // defaultReplicatedLicense this is the default license if call fails
-func defaultReplicatedLicense() *ReplicatedEvaluator {
-	return &ReplicatedEvaluator{
+func defaultReplicatedLicense() *Evaluator {
+	return &Evaluator{
 		lic: defaultLicense,
 	}
 }
 
 // newReplicatedEvaluator exists to allow mocking of client
-func newReplicatedEvaluator(client *http.Client, domain string) (res *ReplicatedEvaluator) {
+func newReplicatedEvaluator(client *http.Client, domain string) (res *Evaluator) {
 	resp, err := client.Get(replicatedLicenseApiEndpoint)
 	if err != nil {
-		return &ReplicatedEvaluator{invalid: fmt.Sprintf("cannot query kots admin, %q", err)}
+		return &Evaluator{invalid: fmt.Sprintf("cannot query kots admin, %q", err)}
 	}
 	defer resp.Body.Close()
 
 	var replicatedPayload replicatedLicensePayload
 	err = json.NewDecoder(resp.Body).Decode(&replicatedPayload)
 	if err != nil {
-		return &ReplicatedEvaluator{invalid: fmt.Sprintf("cannot decode json data, %q", err)}
+		return &Evaluator{invalid: fmt.Sprintf("cannot decode json data, %q", err)}
 	}
 
 	lic := LicensePayload{
-		ID: replicatedPayload.LicenseID,
+		ID:    replicatedPayload.LicenseID,
+		Level: LevelEnterprise,
 	}
 
 	// Search for the fields
@@ -98,9 +109,6 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Replicated
 		switch i.Field {
 		case "domain":
 			lic.Domain = i.Value.(string)
-
-		case "levelId":
-			lic.Level = LicenseLevel(i.Value.(float64))
 
 		case "seats":
 			lic.Seats = int(i.Value.(float64))
@@ -119,12 +127,13 @@ func newReplicatedEvaluator(client *http.Client, domain string) (res *Replicated
 		}
 	}
 
-	return &ReplicatedEvaluator{
-		lic: lic,
+	return &Evaluator{
+		lic:           lic,
+		allowFallback: replicatedPayload.LicenseType == ReplicatedLicenseTypeCommunity, // Only community licenses are allowed to fallback
 	}
 }
 
 // NewReplicatedEvaluator gets the license data from the kots admin panel
-func NewReplicatedEvaluator(domain string) (res *ReplicatedEvaluator) {
+func NewReplicatedEvaluator(domain string) (res *Evaluator) {
 	return newReplicatedEvaluator(&http.Client{Timeout: replicatedLicenseApiTimeout}, domain)
 }

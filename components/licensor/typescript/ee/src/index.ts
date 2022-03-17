@@ -49,8 +49,8 @@ export class LicenseEvaluator {
         return { msg: v.msg, valid: false };
     }
 
-    public isEnabled(feature: Feature): boolean {
-        return isEnabled(this.instanceID, feature);
+    public isEnabled(feature: Feature, seats: number): boolean {
+        return isEnabled(this.instanceID, feature, seats);
     }
 
     public hasEnoughSeats(seats: number): boolean {

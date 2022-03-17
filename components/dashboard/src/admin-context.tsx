@@ -4,23 +4,19 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React, { createContext, useState } from 'react';
-import {  InstallationAdminSettings } from "@gitpod/gitpod-protocol";
+import React, { createContext, useState } from "react";
+import { InstallationAdminSettings } from "@gitpod/gitpod-protocol";
 
 const AdminContext = createContext<{
-    adminSettings?: InstallationAdminSettings,
-    setAdminSettings: React.Dispatch<InstallationAdminSettings>,
+    adminSettings?: InstallationAdminSettings;
+    setAdminSettings: React.Dispatch<InstallationAdminSettings>;
 }>({
     setAdminSettings: () => null,
 });
 
 const AdminContextProvider: React.FC = ({ children }) => {
     const [adminSettings, setAdminSettings] = useState<InstallationAdminSettings>();
-    return (
-        <AdminContext.Provider value={{ adminSettings, setAdminSettings }}>
-            {children}
-        </AdminContext.Provider>
-    );
+    return <AdminContext.Provider value={{ adminSettings, setAdminSettings }}>{children}</AdminContext.Provider>;
 };
 
 export { AdminContext, AdminContextProvider };

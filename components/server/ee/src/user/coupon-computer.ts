@@ -55,7 +55,9 @@ export class ChargebeeCouponComputer {
             if (!subscription.paymentReference) {
                 continue;
             }
-            const additionalData = await this.accountingDB.findSubscriptionAdditionalData(subscription.paymentReference);
+            const additionalData = await this.accountingDB.findSubscriptionAdditionalData(
+                subscription.paymentReference,
+            );
             if (!additionalData || !additionalData.coupons) {
                 continue;
             }
