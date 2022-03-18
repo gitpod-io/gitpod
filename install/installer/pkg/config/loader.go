@@ -106,7 +106,7 @@ func Load(overrideConfig string) (cfg interface{}, version string, err error) {
 	// `apiVersion: vx` line is removed from config since the version dependant
 	// Config structure doesn't have that field
 	// The line-ending is either comma (minified YAML) or newline (unminified)
-	apiVersionRegexp := regexp.MustCompile(`apiVersion: ` + apiVersion + `(,|\n)`)
+	apiVersionRegexp := regexp.MustCompile(`apiVersion: ` + apiVersion + `(,)?`)
 	overrideConfig = apiVersionRegexp.ReplaceAllString(overrideConfig, "")
 
 	// Override passed configuration onto the default
