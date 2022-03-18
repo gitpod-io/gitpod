@@ -123,7 +123,7 @@ export class Werft {
      * This allows you to set attributes on all open and future Werft spans.
      * Any spans in phases that have already been closed won't get the attributes.
      */
-    public addGlobalAttributes(attributes: SpanAttributes): void {
+    public addAttributes(attributes: SpanAttributes): void {
 
         // Add the attributes to the root span.
         this.rootSpan.setAttributes(attributes)

@@ -49,9 +49,9 @@ export interface Observability {
 }
 
 export function jobConfig(werft: Werft, context: any): JobConfig {
-    const slideId = 'Parsing job configuration'
+    const sliceId = 'Parsing job configuration'
     werft.phase('Job configuration')
-    werft.log(slideId, "Parsing the job configuration")
+    werft.log(sliceId , "Parsing the job configuration")
     const version = parseVersion(context)
     const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
     const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
@@ -144,9 +144,9 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         return [`werft.job.config.${key}`, value]
     }))
     globalAttributes['werft.job.config.branch'] = context.Repository.ref
-    werft.addGlobalAttributes(globalAttributes)
+    werft.addAttributes(globalAttributes)
 
-    werft.done(slideId)
+    werft.done(sliceId)
 
     return jobConfig
 }
