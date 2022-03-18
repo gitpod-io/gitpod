@@ -1,6 +1,9 @@
 # Change Log
 
 ## March 2022
+- [kots]: remove GCP DNS resolver ([#8870](https://github.com/gitpod-io/gitpod/pull/8870)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
+- [gitpod-db] add index on `workspaceDB.Type` Column ([#8858](https://github.com/gitpod-io/gitpod/pull/8858)) - [@Pothulapati](https://github.com/Pothulapati)
+- fix broken image builds ([#8854](https://github.com/gitpod-io/gitpod/pull/8854)) - [@geropl](https://github.com/geropl)
 - [server] Improve GitHub Enterprise avatars handling ([#8825](https://github.com/gitpod-io/gitpod/pull/8825)) - [@jankeromnes](https://github.com/jankeromnes)
 - Made the `gitpod.io/cpuLimit` annotation work again ([#8459](https://github.com/gitpod-io/gitpod/pull/8459)) - [@csweichel](https://github.com/csweichel), [@princerachit](https://github.com/princerachit)
 - [installer]: allow for minified config YAML ([#8837](https://github.com/gitpod-io/gitpod/pull/8837)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
