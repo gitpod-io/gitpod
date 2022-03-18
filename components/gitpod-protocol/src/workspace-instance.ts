@@ -204,6 +204,11 @@ export interface WorkspaceInstanceRepoStatus {
     totalUnpushedCommits?: number;
 }
 
+// ConfigurationIdeConfig ide config of WorkspaceInstanceConfiguration
+export interface ConfigurationIdeConfig {
+    useLatest?: boolean;
+}
+
 // WorkspaceInstanceConfiguration contains all per-instance configuration
 export interface WorkspaceInstanceConfiguration {
     // theiaVersion is the version of Theia this workspace instance uses
@@ -221,6 +226,8 @@ export interface WorkspaceInstanceConfiguration {
 
     // supervisorImage is the ref of the supervisor image this instance uses.
     supervisorImage?: string;
+
+    ideConfig?: ConfigurationIdeConfig;
 }
 
 /**

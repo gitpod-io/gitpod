@@ -27,7 +27,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	typeDesktop := "desktop"
 
 	codeDesktop := "code-desktop"
-	codeDesktopInsiders := "code-desktop-insiders"
 
 	intellij := "intellij"
 	goland := "goland"
@@ -60,8 +59,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				"vscode-insiders": {
-					DefaultDesktopIDE: codeDesktopInsiders,
-					DesktopIDEs:       []string{codeDesktopInsiders},
+					DefaultDesktopIDE: codeDesktop,
+					DesktopIDEs:       []string{codeDesktop},
 					InstallationSteps: []string{
 						"If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
@@ -76,37 +75,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Options: map[string]IDEOption{
 				"code": {
-					OrderKey: pointer.String("00"),
-					Title:    "VS Code",
-					Type:     typeBrowser,
-					Logo:     getIdeLogoPath("vscode"),
-					Image:    common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
-				},
-				"code-latest": {
-					OrderKey:           pointer.String("01"),
-					Title:              "VS Code",
-					Type:               typeBrowser,
-					Logo:               getIdeLogoPath("vscodeInsiders"),
-					Tooltip:            pointer.String("Early access version, still subject to testing."),
-					Label:              pointer.String("Insiders"),
-					Image:              resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
-					ResolveImageDigest: pointer.Bool(true),
+					OrderKey:    pointer.String("00"),
+					Title:       "VS Code",
+					Type:        typeBrowser,
+					Label:       pointer.String("Browser"),
+					Logo:        getIdeLogoPath("vscode"),
+					Image:       common.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
+					LatestImage: resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
 				},
 				codeDesktop: {
-					OrderKey: pointer.String("02"),
-					Title:    "VS Code",
-					Type:     typeDesktop,
-					Logo:     getIdeLogoPath("vscode"),
-					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
-				},
-				codeDesktopInsiders: {
-					OrderKey: pointer.String("03"),
-					Title:    "VS Code",
-					Type:     typeDesktop,
-					Logo:     getIdeLogoPath("vscodeInsiders"),
-					Tooltip:  pointer.String("Visual Studio Code Insiders for early adopters."),
-					Label:    pointer.String("Insiders"),
-					Image:    common.ImageName(ctx.Config.Repository, ide.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
+					OrderKey:    pointer.String("02"),
+					Title:       "VS Code",
+					Type:        typeDesktop,
+					Logo:        getIdeLogoPath("vscode"),
+					Image:       common.ImageName(ctx.Config.Repository, ide.CodeDesktopIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImage.Version),
+					LatestImage: common.ImageName(ctx.Config.Repository, ide.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
 				},
 				intellij: {
 					OrderKey:    pointer.String("04"),

@@ -56,6 +56,7 @@ import {
     ImageConfigFile,
     ProjectEnvVar,
     ImageBuildLogInfo,
+    IDESettings,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -103,7 +104,7 @@ import * as grpc from "@grpc/grpc-js";
 import { IDEConfig, IDEConfigService } from "../ide-config";
 import { EnvVarWithValue } from "@gitpod/gitpod-protocol/src/protocol";
 import { WithReferrerContext } from "@gitpod/gitpod-protocol/lib/protocol";
-import { IDEOption } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import { increaseFailedInstanceStartCounter, increaseSuccessfulInstanceStartCounter } from "../prometheus-metrics";
@@ -117,6 +118,63 @@ export interface StartWorkspaceOptions {
 
 const MAX_INSTANCE_START_RETRIES = 2;
 const INSTANCE_START_RETRY_INTERVAL_SECONDS = 2;
+
+export const migrationIDESettings = (user: User) => {
+    if (!user?.additionalData?.ideSettings || user.additionalData.ideSettings.settingVersion === "2.0") {
+        return;
+    }
+    const newIDESettings: IDESettings = {
+        settingVersion: "2.0",
+    };
+    const ideSettings = user.additionalData.ideSettings;
+    if (ideSettings.useDesktopIde) {
+        if (ideSettings.defaultDesktopIde === "code-desktop") {
+            newIDESettings.defaultIde = "code-desktop";
+        } else if (ideSettings.defaultDesktopIde === "code-desktop-insiders") {
+            newIDESettings.defaultIde = "code-desktop";
+            newIDESettings.useLatestVersion = true;
+        } else {
+            newIDESettings.defaultIde = ideSettings.defaultDesktopIde;
+            newIDESettings.useLatestVersion = ideSettings.useLatestVersion;
+        }
+    } else {
+        const useLatest = ideSettings.defaultIde === "code-latest";
+        newIDESettings.defaultIde = "code";
+        newIDESettings.useLatestVersion = useLatest;
+    }
+    return newIDESettings;
+};
+
+export const chooseIDE = (
+    ideChoice: string,
+    ideOptions: IDEOptions,
+    useLatest: boolean,
+    hasIdeSettingPerm: boolean,
+) => {
+    const defaultIDEOption = ideOptions.options[ideOptions.defaultIde];
+    const defaultIdeImage = useLatest ? defaultIDEOption.latestImage ?? defaultIDEOption.image : defaultIDEOption.image;
+    const data: { desktopIdeImage?: string; ideImage: string } = {
+        ideImage: defaultIdeImage,
+    };
+    const chooseOption = ideOptions.options[ideChoice];
+    const isDesktopIde = chooseOption.type === "desktop";
+    if (isDesktopIde) {
+        data.desktopIdeImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
+        if (hasIdeSettingPerm) {
+            data.desktopIdeImage = data.desktopIdeImage || ideChoice;
+        }
+    } else {
+        data.ideImage = useLatest ? chooseOption?.latestImage ?? chooseOption?.image : chooseOption?.image;
+        if (hasIdeSettingPerm) {
+            data.ideImage = data.ideImage || ideChoice;
+        }
+    }
+    if (!data.ideImage) {
+        data.ideImage = defaultIdeImage;
+        // throw new Error("cannot choose correct browser ide");
+    }
+    return data;
+};
 
 @injectable()
 export class WorkspaceStarter {
@@ -533,26 +591,37 @@ export class WorkspaceStarter {
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IDEConfig,
     ): Promise<WorkspaceInstance> {
+        const migratted = migrationIDESettings(user);
+        if (user.additionalData?.ideSettings && migratted) {
+            user.additionalData.ideSettings = migratted;
+        }
+
+        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
+        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
+
         // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
         //           give that value precedence over the default choice.
         const configuration: WorkspaceInstanceConfiguration = {
             ideImage: ideConfig.ideOptions.options[ideConfig.ideOptions.defaultIde].image,
             supervisorImage: ideConfig.supervisorImage,
+            ideConfig: {
+                // We only check user setting because if code(insider) but desktopIde has no latestImage
+                // it still need to notice user that this workspace is using latest IDE
+                useLatest: user.additionalData?.ideSettings?.useLatestVersion,
+            },
         };
 
-        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
         if (!!ideChoice) {
-            const mappedImage = ideConfig.ideOptions.options[ideChoice];
-            if (!!mappedImage && mappedImage.image) {
-                configuration.ideImage = mappedImage.image;
-            } else if (this.authService.hasPermission(user, "ide-settings")) {
-                // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
-                // For now, this feature requires special permissions.
-                configuration.ideImage = ideChoice;
-            }
+            const choose = chooseIDE(
+                ideChoice,
+                ideConfig.ideOptions,
+                useLatest,
+                this.authService.hasPermission(user, "ide-settings"),
+            );
+            configuration.ideImage = choose.ideImage;
+            configuration.desktopIdeImage = choose.desktopIdeImage;
         }
 
-        const useLatest = !!user.additionalData?.ideSettings?.useLatestVersion;
         const referrerIde = this.resolveReferrerIDE(workspace, user, ideConfig);
         if (referrerIde) {
             configuration.desktopIdeImage = useLatest
@@ -562,8 +631,8 @@ export class WorkspaceStarter {
                 // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                 const additionalData = user?.additionalData || {};
                 const settings = additionalData.ideSettings || {};
-                settings.useDesktopIde = true;
-                settings.defaultDesktopIde = referrerIde.id;
+                settings.settingVersion = "2.0";
+                settings.defaultIde = referrerIde.id;
                 additionalData.ideSettings = settings;
                 user.additionalData = additionalData;
                 this.userDB
@@ -572,23 +641,6 @@ export class WorkspaceStarter {
                     .catch((e) => {
                         log.error({ userId: user.id }, "cannot configure default desktop ide", e);
                     });
-            }
-        } else {
-            const useDesktopIdeChoice = user.additionalData?.ideSettings?.useDesktopIde || false;
-            if (useDesktopIdeChoice) {
-                const desktopIdeChoice = user.additionalData?.ideSettings?.defaultDesktopIde;
-                if (!!desktopIdeChoice) {
-                    const mappedImage = ideConfig.ideOptions.options[desktopIdeChoice];
-                    if (!!mappedImage && mappedImage.image) {
-                        configuration.desktopIdeImage = useLatest
-                            ? mappedImage.latestImage ?? mappedImage.image
-                            : mappedImage.image;
-                    } else if (this.authService.hasPermission(user, "ide-settings")) {
-                        // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
-                        // For now, this feature requires special permissions.
-                        configuration.desktopIdeImage = desktopIdeChoice;
-                    }
-                }
             }
         }
 
