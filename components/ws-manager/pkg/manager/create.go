@@ -301,6 +301,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		kubernetes.WorkspaceURLAnnotation:       startContext.WorkspaceURL,
 		workspaceInitializerAnnotation:          initializerConfig,
 		workspaceNeverReadyAnnotation:           "true",
+		workspaceCheckoutLocation:               req.Spec.CheckoutLocation,
 		kubernetes.WorkspaceAdmissionAnnotation: admissionLevel,
 		kubernetes.WorkspaceImageSpecAnnotation: imageSpec,
 		kubernetes.OwnerTokenAnnotation:         startContext.OwnerToken,

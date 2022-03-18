@@ -52,6 +52,9 @@ message InitWorkspaceRequest {
     // remote_storage_disabled disables any support for remote storage operations, specifically backups and snapshots.
     // When any such operation is attempted, a FAILED_PRECONDITION error will be the result.
     bool remote_storage_disabled = 7;
+
+    // provides the checkout location for workspace content
+    string checkout_location = 8;
 }
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function

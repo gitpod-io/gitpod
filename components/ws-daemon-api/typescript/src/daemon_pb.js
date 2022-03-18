@@ -309,7 +309,8 @@ proto.wsdaemon.InitWorkspaceRequest.toObject = function(includeInstance, msg) {
     initializer: (f = msg.getInitializer()) && content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
     fullWorkspaceBackup: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
     contentManifest: msg.getContentManifest_asB64(),
-    remoteStorageDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
+    remoteStorageDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
+    checkoutLocation: jspb.Message.getFieldWithDefault(msg, 8, "")
   };
 
   if (includeInstance) {
@@ -371,6 +372,10 @@ proto.wsdaemon.InitWorkspaceRequest.deserializeBinaryFromReader = function(msg, 
     case 7:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setRemoteStorageDisabled(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setCheckoutLocation(value);
       break;
     default:
       reader.skipField();
@@ -442,6 +447,13 @@ proto.wsdaemon.InitWorkspaceRequest.serializeBinaryToWriter = function(message, 
   if (f) {
     writer.writeBool(
       7,
+      f
+    );
+  }
+  f = message.getCheckoutLocation();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
       f
     );
   }
@@ -615,6 +627,24 @@ proto.wsdaemon.InitWorkspaceRequest.prototype.getRemoteStorageDisabled = functio
  */
 proto.wsdaemon.InitWorkspaceRequest.prototype.setRemoteStorageDisabled = function(value) {
   return jspb.Message.setProto3BooleanField(this, 7, value);
+};
+
+
+/**
+ * optional string checkout_location = 8;
+ * @return {string}
+ */
+proto.wsdaemon.InitWorkspaceRequest.prototype.getCheckoutLocation = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
+ */
+proto.wsdaemon.InitWorkspaceRequest.prototype.setCheckoutLocation = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
 };
 
 

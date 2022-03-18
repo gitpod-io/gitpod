@@ -77,6 +77,9 @@ const (
 
 	// stoppedByRequestAnnotation is set on a pod when it was requested to stop using a StopWorkspace call
 	stoppedByRequestAnnotation = "gitpod.io/stoppedByRequest"
+
+	// checkoutLocation is the location where the workspace content will be checkout out
+	workspaceCheckoutLocation = "gitpod.io/checkoutLocation"
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod

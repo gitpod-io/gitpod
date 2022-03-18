@@ -268,7 +268,7 @@ func (s *Workspace) UpdateGitStatus(ctx context.Context) (res *csapi.GitStatus, 
 
 	loc = filepath.Join(loc, s.CheckoutLocation)
 	if !git.IsWorkingCopy(loc) {
-		log.WithField("loc", loc).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")
+		log.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")
 		return nil, nil
 	}
 

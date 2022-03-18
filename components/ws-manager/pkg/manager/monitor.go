@@ -669,6 +669,8 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		return xerrors.Errorf("pod %s has no owner", pod.Name)
 	}
 
+	checkoutLocation := pod.Annotations[workspaceCheckoutLocation]
+
 	var (
 		initializer     csapi.WorkspaceInitializer
 		snc             wsdaemon.WorkspaceContentServiceClient
@@ -746,6 +748,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			FullWorkspaceBackup:   fullWorkspaceBackup,
 			ContentManifest:       contentManifest,
 			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
+			CheckoutLocation:      checkoutLocation,
 		})
 		return err
 	})

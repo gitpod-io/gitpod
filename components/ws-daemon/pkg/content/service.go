@@ -288,7 +288,8 @@ func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
 			}
 		}
 	}
-	return ""
+
+	return req.CheckoutLocation
 }
 
 // DisposeWorkspace cleans up a workspace, possibly after taking a final backup
@@ -369,6 +370,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		span.LogKV("error", err.Error())
 		return nil, status.Error(codes.Internal, "cannot get git status")
 	}
+
 	if repo != nil {
 		resp.GitStatus = repo
 	}
