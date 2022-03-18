@@ -220,6 +220,7 @@ write_files:
       cat /var/lib/gitpod/manifests/calico.yaml | sed s/__KUBERNETES_NODE_NAME__\\"\\,/__KUBERNETES_NODE_NAME__\\",\\ \\"container_settings\\"\\:\\ \\{\\ \\"allow_ip_forwarding\\"\\:\\ true\\ \\}\\,/ > /var/lib/gitpod/manifests/calico2.yaml
 
       sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico2.yaml
+      sed -i 's/interface=ens/interface=en/g' /var/lib/gitpod/manifests/calico2.yaml
       kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
 
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
