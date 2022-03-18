@@ -4,10 +4,11 @@
  * See License.enterprise.txt in the project root folder.
  */
 
+// @ts-nocheck
 import { AuthProviderInfo, ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TokenProvider } from "../../../src/user/token-provider";
-import { Bitbucket } from "bitbucket";
+import { Bitbucket, Schema } from "bitbucket";
 import { URL } from "url";
 
 @injectable()
@@ -41,44 +42,55 @@ export class BitbucketAppSupport {
         const workspaces =
             (await api.workspaces.getWorkspaces({ pagelen: 100 })).data.values?.map((w) => w.slug!) || [];
 
-        const reposPromise = Promise.all(
-            workspaces.map((workspace) =>
-                api.repositories
+        const fetchAllRepos = async (workspace: string) => {
+            const result: Schema.Repository[] = [];
+            let page = 1;
+            let hasMorePages = true;
+            const pagelen = 100;
+
+            while (hasMorePages) {
+                const response = await api.repositories
                     .list({
                         workspace,
-                        pagelen: 100,
+                        pagelen,
+                        page,
                         role: "admin", // installation of webhooks is allowed for admins only
                     })
                     .catch((e) => {
                         console.error(e);
-                    }),
-            ),
-        );
-
-        const reposInWorkspace = await reposPromise;
-        for (const repos of reposInWorkspace) {
-            if (repos) {
-                for (const repo of repos.data.values || []) {
-                    let cloneUrl = repo.links!.clone!.find((x: any) => x.name === "https")!.href!;
-                    if (cloneUrl) {
-                        const url = new URL(cloneUrl);
-                        url.username = "";
-                        cloneUrl = url.toString();
-                    }
-                    const fullName = repo.full_name!;
-                    const updatedAt = repo.updated_on!;
-                    const accountAvatarUrl = repo.links!.avatar?.href!;
-                    const account = fullName.split("/")[0];
-
-                    (account === usersBitbucketAccount ? ownersRepos : result).push({
-                        name: repo.name!,
-                        account,
-                        cloneUrl,
-                        updatedAt,
-                        accountAvatarUrl,
                     });
+                if (response) {
+                    result.push(...response.data.values);
+                    hasMorePages = response.data.size! > pagelen * page;
+                    page++;
+                } else {
+                    hasMorePages = false;
                 }
             }
+            return result;
+        };
+
+        const repos = (await Promise.all(workspaces.map((workspace) => fetchAllRepos(workspace)))).flat();
+
+        for (let repo of repos) {
+            let cloneUrl = repo.links!.clone.find((x: any) => x.name === "https").href;
+            if (cloneUrl) {
+                const url = new URL(cloneUrl);
+                url.username = "";
+                cloneUrl = url.toString();
+            }
+            const fullName = repo.full_name!;
+            const updatedAt = repo.updated_on!;
+            const accountAvatarUrl = repo.links!.avatar?.href!;
+            const account = fullName.split("/")[0];
+
+            (account === usersBitbucketAccount ? ownersRepos : result).push({
+                name: repo.name!,
+                account,
+                cloneUrl,
+                updatedAt,
+                accountAvatarUrl,
+            });
         }
 
         // put owner's repos first. the frontend will pick first account to continue with
