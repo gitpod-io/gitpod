@@ -221,6 +221,8 @@ write_files:
 
       sed -i 's/docker.io/quay.io/g' /var/lib/gitpod/manifests/calico2.yaml
       sed -i 's/interface=ens/interface=en/g' /var/lib/gitpod/manifests/calico2.yaml
+      sed -i 's/\\$CLUSTER_IP_RANGE/10.20.0.0\\/16/g' /var/lib/gitpod/manifests/calico2.yaml
+
       kubectl apply -f /var/lib/gitpod/manifests/calico2.yaml
 
       kubectl apply -f /var/lib/gitpod/manifests/cert-manager.yaml
