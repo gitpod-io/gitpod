@@ -167,7 +167,7 @@ spec:
               apiVersion: v2
               name: gitpod-kots
               description: Always ready-to-code
-              Version: "1.0.0"
+              version: "1.0.0"
               appVersion: "$(/app/installer version | yq e '.version' -)"
               EOF
 
@@ -179,6 +179,9 @@ spec:
               yq eval-all --inplace \
                 'del(select(.kind == "StatefulSet" and .metadata.name == "openvsx-proxy").status)' \
                 "${GITPOD_OBJECTS}/templates/gitpod.yaml"
+
+              echo "Gitpod: Escape any Golang template values"
+              sed -i -r 's/(.*\{\{.*)/{{`\1`}}/' "${GITPOD_OBJECTS}/templates/gitpod.yaml"
 
               # The long timeout is to ensure the TLS cert is created (if required)
               echo "Gitpod: Apply the Kubernetes objects"
