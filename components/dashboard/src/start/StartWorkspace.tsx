@@ -524,13 +524,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     {openLinkLabel}
                                 </button>
                             </div>
-                            <div className="text-sm text-gray-400 dark:text-gray-500 mt-5">
-                                These IDE options are based on{" "}
-                                <a className="gp-link" href={gitpodHostUrl.asPreferences().toString()} target="_parent">
-                                    your user preferences
-                                </a>
-                                .
-                            </div>
                             {this.state.isSSHModalVisible === true && this.state.ownerToken && (
                                 <ConnectToSSHModal
                                     workspaceId={this.props.workspaceId}
@@ -633,9 +626,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 );
                 break;
         }
-
+        const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
         return (
-            <StartPage phase={phase} error={error} title={title}>
+            <StartPage phase={phase} error={error} title={title} showLatestIdeWarning={useLatest}>
                 {statusMessage}
             </StartPage>
         );

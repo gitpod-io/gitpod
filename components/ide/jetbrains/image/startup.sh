@@ -25,4 +25,4 @@ export IJ_HOST_SYSTEM_BASE_DIR=/workspace/.cache/JetBrains
 # Enable host status endpoint
 export CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod
 
-/ide-desktop/status "$1" "$2"
+/ide-desktop/status "$@"
