@@ -46,17 +46,10 @@ options:
     orderKey: "00"
     title: "VS Code"
     type: "browser"
+    label: "Browser"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscode.svg"
     image: {{ (include "stable-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
-  code-latest:
-    orderKey: "01"
-    title: "VS Code"
-    type: "browser"
-    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscodeInsiders.svg"
-    tooltip: "Early access version, still subject to testing."
-    label: "Insiders"
-    image: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
-    resolveImageDigest: true
+    latestImage: {{ (include "insider-image-full" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.codeImage)) }}
 
   # Desktop IDEs
   code-desktop:
@@ -65,14 +58,7 @@ options:
     type: "desktop"
     logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscode.svg"
     image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktop)) }}
-  code-desktop-insiders:
-    orderKey: "03"
-    title: "VS Code"
-    type: "desktop"
-    logo: "https://ide.{{ $.Values.hostname }}/image/ide-logo/vscodeInsiders.svg"
-    tooltip: "Visual Studio Code Insiders for early adopters."
-    label: "Insiders"
-    image: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktopInsiders)) }}
+    latestImage: {{ (include "gitpod.comp.imageFull" (dict "root" $ "gp" $gp "comp" $gp.components.workspace.desktopIdeImages.codeDesktopInsiders)) }}
   intellij:
     orderKey: "04"
     title: "IntelliJ IDEA"
@@ -113,8 +99,8 @@ clients:
       "If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/download'>VS Code</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
     ]
   vscode-insiders:
-    defaultDesktopIDE: "code-desktop-insiders"
-    desktopIDEs: ["code-desktop-insiders"]
+    defaultDesktopIDE: "code-desktop"
+    desktopIDEs: ["code-desktop"]
     installationSteps: [
       "If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'>VS Code Insiders</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
     ]

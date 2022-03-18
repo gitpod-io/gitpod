@@ -314,9 +314,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         delete res.status.ownerToken;
         // is an operational internal detail
         delete res.status.nodeName;
-        // configuration contains feature flags and theia version.
-        // we might want to share that in the future, but for the time being there's no need
-        delete res.configuration;
         // internal operation detail
         // @ts-ignore
         delete res.workspaceImage;
