@@ -17,6 +17,7 @@ packages:
       - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib
       - components/supervisor-api/typescript-grpcweb:lib
+      - components/public-api/typescript:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock
