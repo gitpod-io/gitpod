@@ -48,3 +48,4 @@ else
 fi
 echo 'restarting server deployment'
 kubectl rollout restart deployment server
+
