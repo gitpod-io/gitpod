@@ -63,7 +63,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		PProfAddr:          ":60060",
-		PrometheusAddr:     ":60095",
+		PrometheusAddr:     "127.0.0.1:9500",
 		ReadinessProbeAddr: ":60088",
 		WorkspaceManager: &config.WorkspaceManagerConn{
 			Addr: "ws-manager:8080",
