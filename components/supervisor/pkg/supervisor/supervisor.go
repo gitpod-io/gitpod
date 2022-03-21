@@ -298,7 +298,11 @@ func Run(options ...RunOption) {
 	go startSSHServer(ctx, cfg, &wg, childProcEnvvars)
 	wg.Add(1)
 	tasksSuccessChan := make(chan taskSuccess, 1)
-	go taskManager.Run(ctx, &wg, tasksSuccessChan)
+	go func() {
+		// Run tasks after ide ready
+		<-ideReady.Wait()
+		taskManager.Run(ctx, &wg, tasksSuccessChan)
+	}()
 	wg.Add(1)
 	go socketActivationForDocker(ctx, &wg, termMux)
 
