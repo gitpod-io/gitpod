@@ -1,6 +1,10 @@
 # Change Log
 
 ## March 2022
+- Rerunning prebuilds direct to the prebuild logs view, and rerunning is not allowed from the /prebuilds page. ([#8835](https://github.com/gitpod-io/gitpod/pull/8835)) - [@laushinka](https://github.com/laushinka)
+- Remove truncation and overflow team invitation URL ([#8875](https://github.com/gitpod-io/gitpod/pull/8875)) - [@gtsiolis](https://github.com/gtsiolis)
+- fix findPrebuildsWithWorkpace query ([#8878](https://github.com/gitpod-io/gitpod/pull/8878)) - [@geropl](https://github.com/geropl)
+- [kots]: remove wait-for-jobs ([#8871](https://github.com/gitpod-io/gitpod/pull/8871)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [kots]: remove GCP DNS resolver ([#8870](https://github.com/gitpod-io/gitpod/pull/8870)) - [@MrSimonEmms](https://github.com/MrSimonEmms)
 - [gitpod-db] add index on `workspaceDB.Type` Column ([#8858](https://github.com/gitpod-io/gitpod/pull/8858)) - [@Pothulapati](https://github.com/Pothulapati)
 - fix broken image builds ([#8854](https://github.com/gitpod-io/gitpod/pull/8854)) - [@geropl](https://github.com/geropl)
