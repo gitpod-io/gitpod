@@ -13,6 +13,8 @@ do
     esac
 done
 
+// We don't delete the namespace "distribute-${IMAGEID} because we want to avoid
+// images from being garbage collected
 NODES=$(kubectl get nodes -o=jsonpath='{.items[*].metadata.name}')
 NAMESPACE="distribute-${IMAGEID}"
 
