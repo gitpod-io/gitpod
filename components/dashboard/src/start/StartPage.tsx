@@ -86,7 +86,7 @@ export function StartPage(props: StartPageProps) {
     const { phase, error } = props;
     let title = props.title || getPhaseTitle(phase, error);
     useEffect(() => {
-        document.title = "Starting — Gitpod";
+        document.title = "Starting — Britpod";
     }, []);
     return (
         <div className="w-screen h-screen align-middle">
@@ -94,11 +94,20 @@ export function StartPage(props: StartPageProps) {
                 <div className="h-1/3"></div>
                 <img
                     src={gitpodIconUA}
-                    alt="Gitpod's logo"
+                    alt="Britpod's logo"
                     className={`h-16 flex-shrink-0 ${
                         error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady ? "" : "animate-bounce"
                     }`}
                 />
+
+                <iframe
+                    width="1"
+                    height="1"
+                    src="https://www.youtube.com/embed/hcnz8vViWdE&autoplay=1"
+                    title="YouTube video player"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                ></iframe>
+
                 <h3 className="mt-8 text-xl">{title}</h3>
                 {typeof phase === "number" && phase < StartPhase.IdeReady && (
                     <ProgressBar phase={phase} error={!!error} />
