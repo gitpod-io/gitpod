@@ -118,7 +118,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
         let phase = StartPhase.Checking;
         let statusMessage = (
             <p className="text-base text-gray-400">
-                {this.state.stillParsing ? "Parsing context …" : "Preparing workspace …"}
+                {this.state.stillParsing ? "🇬🇧 I’m chuffed to bits 🇬🇧" : "🇬🇧 Fancy a cuppa 🇬🇧"}
             </p>
         );
 
