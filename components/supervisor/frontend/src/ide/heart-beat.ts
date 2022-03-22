@@ -7,7 +7,6 @@
 import { DisposableCollection, Disposable } from '@gitpod/gitpod-protocol/lib/util/disposable';
 
 let lastActivity = 0;
-let rotation = 0;
 const updateLastActivitiy = () => {
     lastActivity = new Date().getTime();
 };
@@ -43,22 +42,6 @@ export function schedule(instanceId: string): void {
             clearTimeout(unloadTimeout);
         }
     }
-
-    const rotate = () => {
-        if (rotation >= 365)
-        {
-            rotation = 0;
-        }
-        else
-        {
-            rotation++;
-        }
-
-        window.document.getElementsByTagName('body')[0].style.transform = 'rotate(' + rotation +'deg)';
-    };
-
-    window.document.addEventListener('keydown', rotate, { capture: true });
-
     window.addEventListener('beforeunload', beforeUnloadListener);
     window.addEventListener('unload', unloadListener);
     toCancel.push(Disposable.create(() => window.removeEventListener('beforeunload', beforeUnloadListener)));
